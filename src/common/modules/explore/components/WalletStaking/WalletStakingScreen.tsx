@@ -25,6 +25,7 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WALLET_STAKING_ROUTE_STORAGE_KEY } from '@common/modules/explore/constants/walletStaking'
+import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
 import Header from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
@@ -57,8 +58,6 @@ const STAKING_APY_TOOLTIP_ID = 'wallet-staking-apy-tooltip'
 const PERCENTAGES = [25, 50, 75, 100] as const
 const WALLET_STAKING_COMMITMENT_ABI = 'function commitments(bytes32) view returns (uint256)'
 
-type Mode = 'stake' | 'unstake'
-
 const getAmountInWei = (amount: string) => {
   const normalizedAmount = amount.endsWith('.') ? amount.slice(0, -1) : amount
   if (!normalizedAmount) return 0n
@@ -74,10 +73,10 @@ const selectIsPortfolioReady = (state: AllControllersMappingType['SelectedAccoun
   state.portfolio.isReadyToVisualize
 
 interface TabProps {
-  mode: Mode
-  activeMode: Mode
+  mode: WalletStakingMode
+  activeMode: WalletStakingMode
   label: string
-  onSelect: (mode: Mode) => void
+  onSelect: (mode: WalletStakingMode) => void
 }
 
 const StakingTab = ({ mode, activeMode, label, onSelect }: TabProps) => {
@@ -140,7 +139,9 @@ const WalletStakingScreen = () => {
   )
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { dispatchAndWait: providersDispatchAndWait } = useController('ProvidersController')
-  const [mode, setMode] = useState<Mode>('stake')
+  const [mode, setMode] = useState<WalletStakingMode>(() =>
+    params?.mode === 'unstake' ? 'unstake' : 'stake'
+  )
   const [amount, setAmount] = useState('')
   const [shareValue, setShareValue] = useState<bigint | null>(null)
   const [isLoadingShareValue, setIsLoadingShareValue] = useState(false)
@@ -428,17 +429,16 @@ const WalletStakingScreen = () => {
   }, [addToast, isLoadingShareValue, providersDispatchAndWait, shareValue, t])
 
   const handleSelectMode = useCallback(
-    (nextMode: Mode) => {
+    (nextMode: WalletStakingMode) => {
       setMode(nextMode)
       setAmount('')
       setIsSubmitting(false)
       shouldPersistStakingRouteRef.current = false
-      if (nextMode === 'unstake' && !pendingWithdrawal) void loadShareValue()
       if (nextMode === 'unstake' && hasPendingWithdrawalLoadFailed) {
         void loadPendingWithdrawal()
       }
     },
-    [hasPendingWithdrawalLoadFailed, loadPendingWithdrawal, loadShareValue, pendingWithdrawal]
+    [hasPendingWithdrawalLoadFailed, loadPendingWithdrawal]
   )
 
   const handleSelectPercentage = useCallback(
@@ -612,6 +612,13 @@ const WalletStakingScreen = () => {
     shareValue,
     t
   ])
+
+  useEffect(() => {
+    if (mode !== 'unstake') return undefined
+
+    const loadTimeout = setTimeout(() => void loadShareValue(), 0)
+    return () => clearTimeout(loadTimeout)
+  }, [loadShareValue, mode])
 
   useEffect(() => {
     const abortController = new AbortController()
