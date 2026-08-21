@@ -5,7 +5,6 @@ import { View } from 'react-native'
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
-import { FEE_PERCENT } from '@ambire-common/services/socketv3/constants'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
@@ -32,7 +31,7 @@ const RouteInfo: FC<Props> = ({
   openRoutesModal
 }) => {
   const {
-    state: { formStatus, signAccountOpController, quote, swapSignErrors },
+    state: { feePercent, formStatus, signAccountOpController, quote, swapSignErrors },
     dispatch: swapAndBridgeDispatch
   } = useController('SwapAndBridgeController')
   const { theme } = useTheme()
@@ -162,7 +161,7 @@ const RouteInfo: FC<Props> = ({
                       weight="medium"
                     >
                       {t('Ambire fee: {{fee}}', {
-                        fee: `${quote?.selectedRoute?.withConvenienceFee ? FEE_PERCENT : 0}%`
+                        fee: `${quote?.selectedRoute?.withConvenienceFee ? feePercent : 0}%`
                       })}
                     </Text>
                     {!quote?.selectedRoute?.withConvenienceFee && (
