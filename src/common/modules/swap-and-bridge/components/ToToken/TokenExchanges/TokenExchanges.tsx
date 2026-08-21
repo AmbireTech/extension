@@ -5,7 +5,6 @@ import { View } from 'react-native'
 import HelpIcon from '@common/assets/svg/HelpIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ManifestImage from '@common/components/ManifestImage'
-import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -51,10 +50,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
   // Opted out of the feature
   if (!marketData) return null
 
-  if (marketData.status === 'LOADING')
-    return <Spinner style={{ width: LOGO_SIZE, height: LOGO_SIZE, ...spacings.mlTy }} />
-
-  // Nothing to show for a failed fetch, the controller retries it shortly
+  // Nothing to show while loading or for a failed fetch, the controller retries it shortly
   if (marketData.status === 'FAIL') return null
 
   if (marketData.status === 'NOT_FOUND')
