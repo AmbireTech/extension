@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -8,7 +8,7 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/const
 import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
-import HoverablePressable from '@common/components/HoverablePressable'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
@@ -21,7 +21,6 @@ import RetryButton from '@web/components/RetryButton'
 
 import FeeInfoBottomSheet from '../FeeInfoBottomSheet'
 import SelectRoute from './SelectRoute'
-import getStyles from './styles'
 
 type Props = {
   isEstimatingRoute: boolean
@@ -45,14 +44,13 @@ const RouteInfo: FC<Props> = ({
     },
     dispatch: swapAndBridgeDispatch
   } = useController('SwapAndBridgeController')
-  const { theme, styles } = useTheme(getStyles)
+  const { theme } = useTheme()
   const { t } = useTranslation()
   const {
     ref: feeInfoSheetRef,
     open: openFeeInfoBottomSheet,
     close: closeFeeInfoBottomSheet
   } = useModalize()
-  const [isFeeInfoHovered, setIsFeeInfoHovered] = useState(false)
   const proceededRouteIdRef = useRef<string | null>(null)
   const selectedRouteId = quote?.selectedRoute?.routeId
   const displayedFeePercent =
@@ -118,8 +116,6 @@ const RouteInfo: FC<Props> = ({
   const handleOpenFeeInfoBottomSheet = useCallback(() => {
     openFeeInfoBottomSheet()
   }, [openFeeInfoBottomSheet])
-  const handleFeeInfoHoverIn = useCallback(() => setIsFeeInfoHovered(true), [])
-  const handleFeeInfoHoverOut = useCallback(() => setIsFeeInfoHovered(false), [])
 
   return (
     <View style={[{ minHeight: 20 }, spacings.mtSm]}>
@@ -132,49 +128,26 @@ const RouteInfo: FC<Props> = ({
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <HoverablePressable
-            onPress={handleOpenFeeInfoBottomSheet}
-            onHoverIn={handleFeeInfoHoverIn}
-            onHoverOut={handleFeeInfoHoverOut}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('Ambire fee: {{fee}}. Learn more about Swap & Bridge fees', {
-              fee: `${displayedFeePercent}%`
-            })}
-            testID="swap-and-bridge-fee-info-button"
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              spacings.phTy,
-              spacings.pvMi,
-              styles.feeButton,
-              isFeeSuccess && styles.feeButtonSuccess
-            ]}
-          >
-            <Text
-              appearance={isFeeSuccess ? 'successText' : 'primary'}
-              fontSize={12}
-              weight="medium"
-              underline={isFeeInfoHovered}
-            >
-              {t('Ambire fee:')}
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text appearance="secondaryText" fontSize={12} weight="medium">
+              {t('Ambire fee')}
             </Text>
-            <Text
-              appearance={isFeeSuccess ? 'successText' : 'primary'}
-              fontSize={12}
-              weight="semiBold"
-              underline={isFeeInfoHovered}
-              style={spacings.mlMi}
-            >
+            <Text appearance="primary" fontSize={12} weight="semiBold" style={spacings.mlMi}>
               {`${displayedFeePercent}%`}
             </Text>
-            <InfoIcon
-              width={12}
-              height={12}
-              style={spacings.mlMi}
-              color={isFeeSuccess ? theme.successText : theme.primaryAccent}
-            />
-          </HoverablePressable>
+          </View>
+
+          <Button
+            text={isFeeSuccess ? t('Details') : t('Reduce fee')}
+            type={isFeeSuccess ? 'success' : 'primary'}
+            size="tiny"
+            onPress={handleOpenFeeInfoBottomSheet}
+            accessibilityLabel={isFeeSuccess ? t('Details') : t('Reduce fee')}
+            testID="swap-and-bridge-fee-info-button"
+            hasBottomSpacing={false}
+            submitOnEnter={false}
+            style={[spacings.phTy, spacings.pvMi, spacings.mlTy, { height: 'auto' }]}
+          />
 
           {shouldShowSelectRoute && quote?.selectedRoute?.serviceTime ? (
             <Text appearance="tertiaryText" fontSize={12} weight="medium" style={spacings.mlLg}>
