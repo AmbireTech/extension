@@ -11,6 +11,8 @@ export interface DashboardPagesCarouselProps {
    * pages the user hasn't opened yet are populated before they are swiped into view.
    */
   initAllTabs: () => void
+  /** Pulling the header down past the top refreshes, as pulling a page down does. */
+  onRefresh?: () => void
   children: ReactNode
 }
 

@@ -128,6 +128,7 @@ const DashboardPages = ({
       setOpenTab={setOpenTab}
       sessionId={sessionId}
       initAllTabs={initAllTabs}
+      onRefresh={onRefresh}
     >
       <Tokens
         openTab={pagesOpenTab}

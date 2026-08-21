@@ -38,11 +38,16 @@ const PAGE_RENDER_STEP = 200
 // not a tap on a banner or a tab.
 const HEADER_PAN_THRESHOLD = 5
 
+// How far past the top the header has to be pulled to refresh. The pages are already
+// back at the top by then, so this is the distance on top of undoing the collapse.
+const HEADER_PULL_TO_REFRESH_DISTANCE = 80
+
 const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   openTab,
   setOpenTab,
   sessionId,
   initAllTabs,
+  onRefresh,
   children
 }) => {
   const { styles } = useTheme(getStyles)
@@ -280,6 +285,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // dragging the open page by the header there would be nothing left to drag it by.
   const touchStartY = useRef(0)
   const touchStartOffset = useRef(0)
+  const hasPulledToRefresh = useRef(false)
 
   // Taps are left to the banners and the tabs, so this only records where the touch
   // began - and asks the native side where the open page is, which has landed well
@@ -287,6 +293,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const onHeaderTouchStart = useCallback(
     ({ nativeEvent }: GestureResponderEvent) => {
       touchStartY.current = nativeEvent.pageY
+      hasPulledToRefresh.current = false
       scrollY.stopAnimation((offset) => {
         touchStartOffset.current = Math.max(offset, 0)
       })
@@ -307,10 +314,27 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const onHeaderDrag = useCallback(
     ({ nativeEvent }: GestureResponderEvent) => {
       const dragged = nativeEvent.pageY - touchStartY.current
+      const offset = touchStartOffset.current - dragged
 
-      pageHandles.current[openTab]?.scrollToOffset(Math.max(touchStartOffset.current - dragged, 0))
+      // Pulled past the top, which the open page cannot be scrolled to. Refreshing is
+      // requested here instead, and the page's refresh control shows it as its own.
+      if (offset <= -HEADER_PULL_TO_REFRESH_DISTANCE) {
+        if (hasPulledToRefresh.current || !onRefresh) return
+
+        hasPulledToRefresh.current = true
+        // The page's refresh control reveals itself by scrolling up by its own height
+        // from wherever the page is, and on that path it draws at the page's top rather
+        // than at the offset that keeps it clear of the header. Pulling the page down by
+        // the header first leaves the spinner where a pulled page would have put it.
+        pageHandles.current[openTab]?.scrollToOffset(-(bannersHeight + tabsHeight))
+        onRefresh()
+
+        return
+      }
+
+      pageHandles.current[openTab]?.scrollToOffset(Math.max(offset, 0))
     },
-    [openTab]
+    [bannersHeight, onRefresh, openTab, tabsHeight]
   )
 
   const openTabFloatingBar = floatingBars[openTab]
