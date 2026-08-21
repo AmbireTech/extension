@@ -154,8 +154,16 @@ const MainRoutes = () => {
               path={WEB_ROUTES.qrPermission}
               element={<AuthGroupScreen pick={(m) => m.QrCameraPermissionPage} />}
             />
+            <Route
+              path={WEB_ROUTES.importAccountsFromMobile}
+              element={<AuthGroupScreen pick={(m) => m.ImportAccountsFromMobileScreen} />}
+            />
 
             <Route element={<AuthenticatedRoute />}>
+              <Route
+                path={WEB_ROUTES.exportAccountsToMobile}
+                element={<AuthGroupScreen pick={(m) => m.ExportAccountsToMobileScreen} />}
+              />
               <Route element={<SettingsRoutesProvider />}>
                 <Route
                   path={WEB_ROUTES.generalSettings}

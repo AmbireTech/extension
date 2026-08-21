@@ -5,6 +5,13 @@ import { View } from 'react-native'
 import { useTranslation } from '@common/config/localization'
 import { browser, engine, isExtension } from '@web/constants/browserapi'
 import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
+import {
+  emptyQrScanLastRead,
+  getQrCodeCoverage,
+  getQrScanFeedback,
+  QR_SCAN_FEEDBACK_INTERVAL,
+  QrScanProgress
+} from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 
 // Firefox does not implement `BarcodeDetector`, so `qr-scanner` falls back to a Web Worker that it
 // spawns from a `blob:` URL (see `qr-scanner-worker.min.js`). Firefox MV3 extension pages reject
@@ -19,6 +26,8 @@ if (engine === 'gecko' && isExtension && browser?.runtime?.getURL) {
 type Props = {
   onComplete: (payload: Uint8Array) => void
   onError?: (message: string, rawError?: any) => void
+  /** Reports how the scan is going, so the caller can tell the user what to do */
+  onProgress?: (progress: QrScanProgress) => void
   disabled?: boolean
 }
 
@@ -73,12 +82,25 @@ const getFragmentFromResult = (result: string | { data?: unknown }) => {
   throw new Error('Invalid QR scan result.')
 }
 
-const QrScanner = ({ onComplete, onError, disabled }: Props) => {
+/**
+ * `qr-scanner` looks for codes in a centered square of two thirds of the smaller video side
+ * and hands the corner points back in video pixels, so both are in the same units.
+ */
+const getScannedSpan = (video: HTMLVideoElement) =>
+  (2 / 3) * Math.min(video.videoWidth, video.videoHeight)
+
+const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
   const { t } = useTranslation()
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const scannerRef = useRef<QrScannerLib | null>(null)
   const decoderRef = useRef(new UrFragmentDecoder())
   const isCompletedRef = useRef(false)
+  // Kept in a ref so that a caller re-creating the callback does not restart the camera
+  const onProgressRef = useRef(onProgress)
+
+  useEffect(() => {
+    onProgressRef.current = onProgress
+  }, [onProgress])
 
   useEffect(() => {
     const video = videoRef.current
@@ -90,9 +112,18 @@ const QrScanner = ({ onComplete, onError, disabled }: Props) => {
     isCompletedRef.current = false
     decoderRef.current.reset()
 
+    const lastRead = emptyQrScanLastRead()
+    let lastProgress: QrScanProgress | null = null
+
     const reportError = (error: any, fallbackMessage = 'Failed to decode QR payload.') => {
       if (disposed) return
       onError?.(error?.message || fallbackMessage, error)
+    }
+
+    const recordRead = (result: any) => {
+      lastRead.count += 1
+      lastRead.at = Date.now()
+      lastRead.coverage = getQrCodeCoverage(result?.cornerPoints, getScannedSpan(video))
     }
 
     const scanner = new QrScannerLib(
@@ -102,6 +133,8 @@ const QrScanner = ({ onComplete, onError, disabled }: Props) => {
 
         try {
           const fragment = getFragmentFromResult(result)
+
+          if (onProgressRef.current) recordRead(result)
 
           if (fragment.toLowerCase().startsWith('ur:')) {
             decoderRef.current.add(fragment)
@@ -144,6 +177,28 @@ const QrScanner = ({ onComplete, onError, disabled }: Props) => {
       }
     )
 
+    const progressInterval = setInterval(() => {
+      if (!onProgressRef.current || isCompletedRef.current || disposed) return
+
+      const progress = {
+        feedback: getQrScanFeedback(lastRead),
+        expectedParts: decoderRef.current.expectedPartCount(),
+        progress: decoderRef.current.progress()
+      }
+
+      // Only on change, so that the message the user is reading is not re-rendered while
+      // nothing about the scan moved
+      if (
+        progress.feedback === lastProgress?.feedback &&
+        progress.expectedParts === lastProgress?.expectedParts &&
+        progress.progress === lastProgress?.progress
+      )
+        return
+
+      lastProgress = progress
+      onProgressRef.current(progress)
+    }, QR_SCAN_FEEDBACK_INTERVAL)
+
     scannerRef.current = scanner
     ;(async () => {
       try {
@@ -164,6 +219,7 @@ const QrScanner = ({ onComplete, onError, disabled }: Props) => {
 
     return () => {
       disposed = true
+      clearInterval(progressInterval)
       decoderRef.current.reset()
       isCompletedRef.current = false
 

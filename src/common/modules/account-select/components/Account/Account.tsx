@@ -23,21 +23,11 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 import getStyles from './styles'
 
-const { isSidePanel } = getUiType()
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-// The side panel is as narrow as a phone screen, so it reuses the mobile layout, which stacks
-// the label, the address and the balance with the key icons and badges on separate rows. Keeping
-// them on one row leaves the label with a few visible characters and clips the address suffix.
-const withStackedRows = isMobile || isSidePanel
-
-// On the stacked layout the copy and receive buttons sit next to the account instead of inline
-// with the address, which gives the address the whole row. The side panel is too narrow for the
-// mobile touch target size.
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
 
 const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
@@ -52,6 +42,7 @@ const Account = ({
   withSettings = true,
   isSelectable = true,
   withKeyType = true,
+  renderLeftChildren,
   renderRightChildren,
   inverseInteractionColors = false,
   options = {
@@ -59,7 +50,9 @@ const Account = ({
   },
   containerStyle,
   withReceive = false,
-  withCopy = true
+  withCopy = true,
+  switchAccountOnPress = true,
+  withBalance = true
 }: {
   account: AccountInterface
   onSelect?: (addr: string) => void
@@ -68,6 +61,8 @@ const Account = ({
   isSelectable?: boolean
   inverseInteractionColors?: boolean
   withKeyType?: boolean
+  /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
+  renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
   options?: {
     withOptionsButton?: boolean
@@ -79,6 +74,9 @@ const Account = ({
   containerStyle?: ViewStyle
   withReceive?: boolean
   withCopy?: boolean
+  /** Set to false when pressing the row means something else than switching to it */
+  switchAccountOnPress?: boolean
+  withBalance?: boolean
 }) => {
   const { addr, preferences } = account
   const { t } = useTranslation()
@@ -120,7 +118,7 @@ const Account = ({
       return
     }
 
-    if (selectedAccount?.addr !== addr) {
+    if (switchAccountOnPress && selectedAccount?.addr !== addr) {
       mainDispatch({
         type: 'method',
         params: { method: 'selectAccount', args: [addr] }
@@ -128,7 +126,14 @@ const Account = ({
     }
 
     onSelect && onSelect(addr)
-  }, [addr, mainDispatch, onSelect, selectedAccount, options.setAccountToImportOrExport])
+  }, [
+    addr,
+    mainDispatch,
+    onSelect,
+    selectedAccount,
+    switchAccountOnPress,
+    options.setAccountToImportOrExport
+  ])
 
   const onSave = useCallback(
     (value: string) => {
@@ -211,41 +216,25 @@ const Account = ({
           }
       ]}
     >
-      <View style={[flexbox.flex1, flexbox.directionRow, withStackedRows && flexbox.alignCenter]}>
+      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+        {renderLeftChildren && renderLeftChildren()}
         <Avatar
           address={account.addr}
           pfp={account.preferences.pfp}
           smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
           showTooltip
         />
-        <View style={[flexbox.flex1, withStackedRows && flexbox.justifyCenter]}>
-          <View
-            style={[
-              !withStackedRows && flexbox.flex1,
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              spacings.mrTy
-            ]}
-          >
+        <View style={[flexbox.flex1, flexbox.justifyCenter]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
             {!withSettings ? (
-              <>
-                <Text
-                  fontSize={withSettings ? 16 : 14}
-                  weight="medium"
-                  numberOfLines={1}
-                  style={{ flexShrink: 1 }}
-                >
-                  {account.preferences.label}
-                </Text>
-                {/* On mobile and in the side panel the key icons and badges move to the balance row below */}
-                {!withStackedRows && !!withKeyType && (
-                  <View style={[spacings.mlMi]}>
-                    <AccountKeyIcons isExtended account={account} />
-                  </View>
-                )}
-
-                {!withStackedRows && <AccountBadges accountData={account} />}
-              </>
+              <Text
+                fontSize={withSettings ? 16 : 14}
+                weight="medium"
+                numberOfLines={1}
+                style={{ flexShrink: 1 }}
+              >
+                {account.preferences.label}
+              </Text>
             ) : (
               <Editable
                 initialValue={account.preferences.label}
@@ -257,15 +246,7 @@ const Account = ({
                 }}
                 minWidth={120}
                 maxLength={40}
-              >
-                {!withStackedRows && !!withKeyType && (
-                  <View style={[spacings.mlMi]}>
-                    <AccountKeyIcons isExtended account={account} />
-                  </View>
-                )}
-
-                {!withStackedRows && <AccountBadges accountData={account} />}
-              </Editable>
+              />
             )}
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -274,59 +255,42 @@ const Account = ({
               containerStyle={spacings.pb0}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
-              withCopy={!withStackedRows && withCopy}
-              withReceive={!withStackedRows && withReceive}
+              // On web the copy button fits next to the address, unlike on mobile, where it
+              // sits next to the account to keep the touch targets apart
+              withCopy={isWeb && withCopy}
+              withReceive={false}
               withUpdateEnsInTooltip={isSelectable}
             />
           </View>
-          {withStackedRows && (
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                spacings.mtMi,
-                { columnGap: SPACING_TY }
-              ]}
-            >
-              {balance !== null && (
-                <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
-                  {formatDecimals(balance, 'value')}
-                </Text>
-              )}
-              {!!withKeyType && (
-                <AccountKeyIcons isExtended account={account} withContainerSpacing={false} />
-              )}
-              <AccountBadges accountData={account} withSpacing={false} />
-            </View>
-          )}
+          {/* The balance, the key icons and the badges share the row below the address */}
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              spacings.mtMi,
+              { columnGap: SPACING_TY }
+            ]}
+          >
+            {balance !== null && withBalance && (
+              <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
+                {formatDecimals(balance, 'value')}
+              </Text>
+            )}
+            {!!withKeyType && (
+              <AccountKeyIcons isExtended account={account} withContainerSpacing={false} />
+            )}
+            <AccountBadges accountData={account} withSpacing={false} />
+          </View>
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-        {balance !== null && !withSettings && !withStackedRows && (
-          <Text
-            fontSize={14}
-            weight="semiBold"
-            color={theme.secondaryText}
-            style={[
-              isMobile || renderRightChildren ? spacings.mrTy : {},
-              isMobile || renderRightChildren ? flexbox.alignSelfCenter : flexbox.alignSelfStart,
-              { textAlign: 'right' }
-            ]}
-          >
-            {formatDecimals(balance, 'value')}
-          </Text>
-        )}
         {renderRightChildren && renderRightChildren()}
-        {withStackedRows && (
-          <>
-            {withCopy && (
-              <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
-                <CopyIcon width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} strokeWidth="1" />
-              </AnimatedPressable>
-            )}
-            {withReceive && <ReceiveButton address={addr} fontSize={ACTION_ICON_SIZE - 8} />}
-          </>
+        {!isWeb && withCopy && (
+          <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
+            <CopyIcon width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} strokeWidth="1" />
+          </AnimatedPressable>
         )}
+        {withReceive && <ReceiveButton address={addr} fontSize={ACTION_ICON_SIZE - 8} />}
         {!!options.withOptionsButton && (
           <Dropdown
             data={submenu}
