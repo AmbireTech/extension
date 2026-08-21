@@ -13,6 +13,9 @@ import useStackEntries from './useStackEntries'
 
 // Screens that are not on top are only frozen once this is switched on. Without
 // it a screen the user cannot see keeps re-rendering on every controller update.
+// Freezing hides the screen behind a Suspense boundary, so React unmounts the class
+// components inside it and mounts them again on the way back - which Reanimated does
+// not survive unpatched, see `patches/react-native-reanimated+4.1.1.patch`.
 enableFreeze(true)
 
 /**

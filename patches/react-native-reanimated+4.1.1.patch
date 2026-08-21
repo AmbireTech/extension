@@ -1,0 +1,127 @@
+diff --git a/node_modules/react-native-reanimated/lib/module/createAnimatedComponent/AnimatedComponent.js b/node_modules/react-native-reanimated/lib/module/createAnimatedComponent/AnimatedComponent.js
+index ddf0421..6fc32f9 100644
+--- a/node_modules/react-native-reanimated/lib/module/createAnimatedComponent/AnimatedComponent.js
++++ b/node_modules/react-native-reanimated/lib/module/createAnimatedComponent/AnimatedComponent.js
+@@ -58,7 +58,7 @@ export default class AnimatedComponent extends ReanimatedAnimatedComponent {
+       this._NativeEventsManager = new NativeEventsManager(this, this._options);
+     }
+     this._NativeEventsManager?.attachEvents();
+-    this._updateAnimatedStylesAndProps();
++    this._updateAnimatedStylesAndProps(true);
+     this._InlinePropManager.attachInlineProps(this, this._getViewInfo());
+     if (this._options?.jsProps?.length) {
+       jsPropsUpdater.registerComponent(this, this._options.jsProps);
+@@ -114,7 +114,21 @@ export default class AnimatedComponent extends ReanimatedAnimatedComponent {
+       this._componentRef?.setNativeProps?.(props);
+     }
+   }
+-  _handleAnimatedStylesUpdate(prevStyles, currentStyles, jestAnimatedStyleOrProps) {
++  /**
++   * PATCH (Ambire): re-registering the view on (re)mount.
++   *
++   * `react-freeze` (used by react-native-screens when screens are frozen) hides a
++   * subtree behind a Suspense boundary. React calls `componentWillUnmount` on class
++   * components inside a hidden tree - which runs `_detachStyles()` here - and calls
++   * `componentDidMount` again when the tree is shown. The fast path below is written
++   * for updates: for a view with a single, unchanged animated style it returns before
++   * re-adding the view descriptor (and the dedup loop below would drop it from
++   * `newStyles` anyway), so a frozen-then-unfrozen view is never re-registered and
++   * its animated style stops being applied. `isMounting` skips the diffing so the
++   * current styles are always (re)attached; `viewDescriptors.add` replaces an entry
++   * with the same tag, so this is idempotent.
++   */
++  _handleAnimatedStylesUpdate(prevStyles, currentStyles, jestAnimatedStyleOrProps, isMounting = false) {
+     const {
+       viewTag,
+       shadowNodeWrapper
+@@ -122,7 +136,7 @@ export default class AnimatedComponent extends ReanimatedAnimatedComponent {
+     const newStyles = new Set(currentStyles);
+ 
+     // remove old styles
+-    if (prevStyles) {
++    if (prevStyles && !isMounting) {
+       // in most of the cases, views have only a single animated style and it remains unchanged
+       const hasOneSameStyle = currentStyles.length === 1 && prevStyles.length === 1 && currentStyles[0] === prevStyles[0];
+       if (hasOneSameStyle) {
+@@ -161,9 +175,9 @@ export default class AnimatedComponent extends ReanimatedAnimatedComponent {
+       }
+     });
+   }
+-  _updateAnimatedStylesAndProps() {
+-    this._handleAnimatedStylesUpdate(this._prevAnimatedStyles, this._animatedStyles, this.jestAnimatedStyle);
+-    this._handleAnimatedStylesUpdate(this._prevAnimatedProps, this._animatedProps, this.jestAnimatedProps);
++  _updateAnimatedStylesAndProps(isMounting = false) {
++    this._handleAnimatedStylesUpdate(this._prevAnimatedStyles, this._animatedStyles, this.jestAnimatedStyle, isMounting);
++    this._handleAnimatedStylesUpdate(this._prevAnimatedProps, this._animatedProps, this.jestAnimatedProps, isMounting);
+   }
+   componentDidUpdate(prevProps, _prevState, snapshot) {
+     this._configureLayoutAnimation(LayoutAnimationType.LAYOUT, this.props.layout, prevProps.layout);
+diff --git a/node_modules/react-native-reanimated/src/createAnimatedComponent/AnimatedComponent.tsx b/node_modules/react-native-reanimated/src/createAnimatedComponent/AnimatedComponent.tsx
+index 1b4e127..5efe7f7 100644
+--- a/node_modules/react-native-reanimated/src/createAnimatedComponent/AnimatedComponent.tsx
++++ b/node_modules/react-native-reanimated/src/createAnimatedComponent/AnimatedComponent.tsx
+@@ -103,7 +103,7 @@ export default class AnimatedComponent
+       this._NativeEventsManager = new NativeEventsManager(this, this._options);
+     }
+     this._NativeEventsManager?.attachEvents();
+-    this._updateAnimatedStylesAndProps();
++    this._updateAnimatedStylesAndProps(true);
+     this._InlinePropManager.attachInlineProps(this, this._getViewInfo());
+ 
+     if (this._options?.jsProps?.length) {
+@@ -199,16 +199,31 @@ export default class AnimatedComponent
+     }
+   }
+ 
++  /**
++   * PATCH (Ambire): re-registering the view on (re)mount.
++   *
++   * `react-freeze` (used by react-native-screens when screens are frozen) hides a
++   * subtree behind a Suspense boundary. React calls `componentWillUnmount` on class
++   * components inside a hidden tree - which runs `_detachStyles()` here - and calls
++   * `componentDidMount` again when the tree is shown. The fast path below is written
++   * for updates: for a view with a single, unchanged animated style it returns before
++   * re-adding the view descriptor (and the dedup loop below would drop it from
++   * `newStyles` anyway), so a frozen-then-unfrozen view is never re-registered and
++   * its animated style stops being applied. `isMounting` skips the diffing so the
++   * current styles are always (re)attached; `viewDescriptors.add` replaces an entry
++   * with the same tag, so this is idempotent.
++   */
+   _handleAnimatedStylesUpdate(
+     prevStyles: StyleProps[],
+     currentStyles: StyleProps[],
+-    jestAnimatedStyleOrProps: { value: StyleProps }
++    jestAnimatedStyleOrProps: { value: StyleProps },
++    isMounting = false
+   ) {
+     const { viewTag, shadowNodeWrapper } = this._getViewInfo();
+     const newStyles = new Set<StyleProps>(currentStyles);
+ 
+     // remove old styles
+-    if (prevStyles) {
++    if (prevStyles && !isMounting) {
+       // in most of the cases, views have only a single animated style and it remains unchanged
+       const hasOneSameStyle =
+         currentStyles.length === 1 &&
+@@ -255,16 +270,18 @@ export default class AnimatedComponent
+     });
+   }
+ 
+-  _updateAnimatedStylesAndProps() {
++  _updateAnimatedStylesAndProps(isMounting = false) {
+     this._handleAnimatedStylesUpdate(
+       this._prevAnimatedStyles,
+       this._animatedStyles,
+-      this.jestAnimatedStyle
++      this.jestAnimatedStyle,
++      isMounting
+     );
+     this._handleAnimatedStylesUpdate(
+       this._prevAnimatedProps,
+       this._animatedProps,
+-      this.jestAnimatedProps
++      this.jestAnimatedProps,
++      isMounting
+     );
+   }
+ 
