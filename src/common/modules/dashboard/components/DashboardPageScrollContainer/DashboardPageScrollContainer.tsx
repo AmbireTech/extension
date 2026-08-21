@@ -1,5 +1,13 @@
-import React, { FC, useContext, useEffect, useMemo, useRef } from 'react'
-import { Animated, FlatList, FlatListProps, RefreshControl, ViewStyle } from 'react-native'
+import React, { FC, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import {
+  Animated,
+  FlatList,
+  FlatListProps,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  RefreshControl,
+  ViewStyle
+} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isMobile } from '@common/config/env'
@@ -122,6 +130,31 @@ const DashboardPageScrollContainer: FC<Props> = ({
     }
   }, [animatedOverviewHeight, openTab, tab])
 
+  // Lets the header scroll this page when it is the open one - a drag on the header
+  // never reaches the list it is laid over. The resting offset is recorded at the end
+  // of a gesture only, so following the header costs no per frame scroll reporting.
+  const restingOffset = useRef(0)
+  const registerPage = carousel?.registerPage
+
+  const scrollToOffset = useCallback((offset: number) => {
+    restingOffset.current = offset
+    flatlistRef.current?.scrollToOffset({ offset, animated: false })
+  }, [])
+
+  const getRestingOffset = useCallback(() => restingOffset.current, [])
+
+  const onScrollSettled = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    restingOffset.current = event.nativeEvent.contentOffset.y
+  }, [])
+
+  useEffect(() => {
+    if (!registerPage) return undefined
+
+    registerPage(tab, { getRestingOffset, scrollToOffset })
+
+    return () => registerPage(tab, null)
+  }, [getRestingOffset, registerPage, scrollToOffset, tab])
+
   // A swipe resets every page, not only the open one, because any of them can be
   // the one the swipe lands on.
   const carouselResetToken = carousel?.resetToken
@@ -129,8 +162,8 @@ const DashboardPageScrollContainer: FC<Props> = ({
   useEffect(() => {
     if (carouselResetToken === undefined) return
 
-    flatlistRef.current?.scrollToOffset({ offset: 0, animated: false })
-  }, [carouselResetToken])
+    scrollToOffset(0)
+  }, [carouselResetToken, scrollToOffset])
 
   const ListComponent = carousel ? AnimatedFlatList : FlatList
 
@@ -146,6 +179,8 @@ const DashboardPageScrollContainer: FC<Props> = ({
       alwaysBounceVertical
       scrollEventThrottle={16}
       onScroll={handleScroll}
+      onScrollEndDrag={carousel ? onScrollSettled : undefined}
+      onMomentumScrollEnd={carousel ? onScrollSettled : undefined}
       refreshControl={
         isMobile ? (
           <RefreshControl

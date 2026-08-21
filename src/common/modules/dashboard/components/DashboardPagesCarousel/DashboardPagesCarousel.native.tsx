@@ -4,6 +4,7 @@ import {
   Dimensions,
   InteractionManager,
   LayoutChangeEvent,
+  GestureResponderEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
@@ -19,7 +20,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import CarouselPage from './CarouselPage'
-import DashboardCarouselContext from './context'
+import DashboardCarouselContext, { DashboardPageHandle } from './context'
 import { DashboardPagesCarouselProps } from './DashboardPagesCarousel'
 import getStyles from './styles'
 
@@ -31,6 +32,10 @@ const TABS: TabType[] = ['tokens', 'collectibles', 'defi', 'activity']
 // filling its own render window, so none of it lands during a gesture.
 const PAGE_RENDER_DELAY = 400
 const PAGE_RENDER_STEP = 200
+
+// How far a touch on the header has to travel before it is taken to be a scroll and
+// not a tap on a banner or a tab.
+const HEADER_PAN_THRESHOLD = 5
 
 const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   openTab,
@@ -53,6 +58,15 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     [openTab]: true
   }))
   const openTabIndex = Math.max(TABS.indexOf(openTab), 0)
+  const pageHandles = useRef<Partial<Record<TabType, DashboardPageHandle>>>({})
+
+  const registerPage = useCallback((tab: TabType, handle: DashboardPageHandle | null) => {
+    if (handle) {
+      pageHandles.current[tab] = handle
+    } else {
+      delete pageHandles.current[tab]
+    }
+  }, [])
 
   const renderTabs = useCallback((tabs: (TabType | undefined)[]) => {
     setRenderedTabs((prev) => {
@@ -211,8 +225,41 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   )
 
   const carousel = useMemo(
-    () => ({ scrollY, headerHeight: bannersHeight + tabsHeight, resetToken }),
-    [bannersHeight, resetToken, scrollY, tabsHeight]
+    () => ({ scrollY, headerHeight: bannersHeight + tabsHeight, resetToken, registerPage }),
+    [bannersHeight, registerPage, resetToken, scrollY, tabsHeight]
+  )
+
+  // Enough banners cover a page whole, and the header is laid over it, so without
+  // dragging the open page by the header there would be nothing left to drag it by.
+  const touchStartY = useRef(0)
+  const touchStartOffset = useRef(0)
+
+  // Taps are left to the banners and the tabs, so this only records where they began
+  const onHeaderTouchStart = useCallback(({ nativeEvent }: GestureResponderEvent) => {
+    touchStartY.current = nativeEvent.pageY
+
+    return false
+  }, [])
+
+  // Captured, so a drag that started on a banner is taken away from it the way a
+  // scroll view takes over from a button inside it
+  const onHeaderTouchMove = useCallback(
+    ({ nativeEvent }: GestureResponderEvent) =>
+      Math.abs(nativeEvent.pageY - touchStartY.current) > HEADER_PAN_THRESHOLD,
+    []
+  )
+
+  const onHeaderDragStart = useCallback(() => {
+    touchStartOffset.current = pageHandles.current[openTab]?.getRestingOffset() || 0
+  }, [openTab])
+
+  const onHeaderDrag = useCallback(
+    ({ nativeEvent }: GestureResponderEvent) => {
+      const dragged = nativeEvent.pageY - touchStartY.current
+
+      pageHandles.current[openTab]?.scrollToOffset(Math.max(touchStartOffset.current - dragged, 0))
+    },
+    [openTab]
   )
 
   const pages = useMemo(
@@ -257,6 +304,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       not enough to keep them on top on Android. The pages used to render them
       inside a list that adds this padding on top of the one the tabs row has */}
       <Animated.View
+        onStartShouldSetResponderCapture={onHeaderTouchStart}
+        onMoveShouldSetResponderCapture={onHeaderTouchMove}
+        onResponderGrant={onHeaderDragStart}
+        onResponderMove={onHeaderDrag}
         style={[styles.header, spacings.phSm, { transform: [{ translateY: headerTranslateY }] }]}
       >
         <View onLayout={onBannersLayout}>
