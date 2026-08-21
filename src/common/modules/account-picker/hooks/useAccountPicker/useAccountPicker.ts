@@ -40,6 +40,7 @@ const useAccountPicker = () => {
   const { accounts } = useController('AccountsController').state
 
   const prevIsInitialized = usePrevious(isInitialized)
+  const prevAddAccountsStatus = usePrevious(addAccountsStatus)
   const shouldResetAccountsSelectionOnUnmount = useRef(true)
   const [isReady, setIsReady] = useState(false)
   const [onImportPressed, setOnImportPressed] = useState(false)
@@ -105,15 +106,27 @@ const useAccountPicker = () => {
     }
   }, [pageSize, isReady, ACCOUNT_PICKER_PAGE_SIZE])
 
-  // Controller actions are fire-and-forget, so wait until the selected accounts have been added
-  // before opening the personalization screen.
+  // Controller actions are fire-and-forget, so wait until the selected accounts have
+  // been added before opening the personalization screen. Keyed on the import having
+  // *left* the loading state rather than on `addAccountsStatus === 'SUCCESS'`: the
+  // controller sets that and resets it to 'INITIAL' one tick later, and both updates
+  // can reach the UI in the same render batch - which is what happens on mobile, where
+  // they cross the webview bridge and `flushSync` cannot split them - so the transient
+  // 'SUCCESS' is not reliably rendered. Leaving 'LOADING' is, because the import does
+  // real async work in between.
   useEffect(() => {
-    if (onImportPressed && addAccountsStatus === 'SUCCESS') {
-      goToNextRoute(WEB_ROUTES.accountPersonalize)
-    }
-  }, [addAccountsStatus, goToNextRoute, onImportPressed])
+    if (!onImportPressed) return
+    if (prevAddAccountsStatus !== 'LOADING' || addAccountsStatus === 'LOADING') return
+
+    goToNextRoute(WEB_ROUTES.accountPersonalize)
+  }, [addAccountsStatus, prevAddAccountsStatus, goToNextRoute, onImportPressed])
 
   const onImportReady = useCallback(() => {
+    // The button only disables once the controller reports back that it is importing,
+    // so a second press before that would dispatch a second import of the same
+    // selection - and the selection is cleared by the first one.
+    if (onImportPressed) return
+
     shouldResetAccountsSelectionOnUnmount.current = false
     setOnImportPressed(true)
     accountPickerDispatch({
@@ -123,7 +136,7 @@ const useAccountPicker = () => {
         args: []
       }
     })
-  }, [accountPickerDispatch])
+  }, [accountPickerDispatch, onImportPressed])
 
   useEffect(() => {
     return () => {
