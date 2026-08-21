@@ -4,8 +4,6 @@ import { Animated } from 'react-native'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 
 export interface DashboardPageHandle {
-  /** Where the page rests. Read off the end of a gesture, never per frame. */
-  getRestingOffset: () => number
   scrollToOffset: (offset: number) => void
 }
 
@@ -15,10 +13,12 @@ export interface DashboardCarouselContextValue {
   /** Height of the overlaid header, which the pages must be padded by to start below it. */
   headerHeight: number
   /**
-   * Bumped when a swipe starts, so every page is back at the top by the time the
-   * swipe lands and the shared header doesn't have to jump to match a new page.
+   * How much of the header collapses away. Every page has to be able to scroll at
+   * least this far, or it cannot put the header in the state the others left it in.
    */
-  resetToken: number
+  collapsibleHeight: number
+  /** Height of a page, which its content has to exceed to be scrollable at all. */
+  pageHeight: number
   /**
    * The header is laid over the pages, so a drag on it never reaches the list below.
    * A registered page can be scrolled by the header instead, which is what makes the

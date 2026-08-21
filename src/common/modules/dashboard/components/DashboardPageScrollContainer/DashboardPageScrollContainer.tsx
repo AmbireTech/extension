@@ -17,6 +17,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
 import DashboardCarouselContext from '../DashboardPagesCarousel/context'
+import debugCarousel from '../DashboardPagesCarousel/debug'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import useListTopSpacing from './useListTopSpacing'
 
@@ -80,6 +81,14 @@ const DashboardPageScrollContainer: FC<Props> = ({
       topSpacing,
       { flexGrow: 1 },
       isMobile && { paddingBottom: bottom || SPACING_SM },
+      // A page with less content than this cannot scroll far enough to hold the header
+      // collapsed, and would report its way back to the top the moment it is touched.
+      // Padding would not do: flexGrow stretches the content box to the page either
+      // way, padding included, leaving nothing to scroll.
+      !!carousel &&
+        !!carousel.pageHeight && {
+          minHeight: carousel.pageHeight + carousel.collapsibleHeight
+        },
       // Must come last, as it overrides the padding of the non-carousel layout
       !!carousel && { paddingTop: carousel.headerHeight }
     ]
@@ -101,19 +110,24 @@ const DashboardPageScrollContainer: FC<Props> = ({
   // Bound to the value and not to the whole context, so measuring the header
   // doesn't detach and reattach the native scroll listener. Mobile passes no
   // onScroll, which leaves the offset to be mapped natively with no JS listener.
+  //
+  // Only the open page reports into it. The value is shared by all of them, and a
+  // page with too little content to scroll as far as the others reports the offset
+  // it stopped at instead - which, coming in last, would be the one that stuck.
   const carouselScrollY = carousel?.scrollY
   const handleScroll = useMemo(() => {
-    if (!carouselScrollY) return onScroll
+    if (!carouselScrollY || openTab !== tab) return onScroll
 
     return Animated.event(
       [{ nativeEvent: { contentOffset: { y: carouselScrollY } } }],
       onScroll ? { useNativeDriver: true, listener: onScroll } : { useNativeDriver: true }
     )
-  }, [carouselScrollY, onScroll])
+  }, [carouselScrollY, onScroll, openTab, tab])
 
-  // Reset scroll position when switching tabs (new)
+  // Reset scroll position when switching tabs (new). The carousel does this itself,
+  // for every page and carrying over how far the banners are collapsed.
   useEffect(() => {
-    if (!flatlistRef.current) return
+    if (!flatlistRef.current || carousel) return
 
     if (openTab === tab) {
       // Scroll to top
@@ -128,42 +142,46 @@ const DashboardPageScrollContainer: FC<Props> = ({
         useNativeDriver: false
       }).start()
     }
-  }, [animatedOverviewHeight, openTab, tab])
+  }, [animatedOverviewHeight, carousel, openTab, tab])
 
-  // Lets the header scroll this page when it is the open one - a drag on the header
-  // never reaches the list it is laid over. The resting offset is recorded at the end
-  // of a gesture only, so following the header costs no per frame scroll reporting.
-  const restingOffset = useRef(0)
+  // Lets the header and a swipe scroll this page - a drag on the header never reaches
+  // the list it is laid over, and a swipe has to take every page to the top.
   const registerPage = carousel?.registerPage
 
-  const scrollToOffset = useCallback((offset: number) => {
-    restingOffset.current = offset
-    flatlistRef.current?.scrollToOffset({ offset, animated: false })
-  }, [])
+  const scrollToOffset = useCallback(
+    (offset: number) => {
+      debugCarousel('page:scrollToOffset', {
+        tab,
+        offset,
+        canScroll: typeof flatlistRef.current?.scrollToOffset === 'function'
+      })
+      flatlistRef.current?.scrollToOffset({ offset, animated: false })
+    },
+    [tab]
+  )
 
-  const getRestingOffset = useCallback(() => restingOffset.current, [])
+  // TEMPORARY: reports where the list actually came to rest, to compare against the
+  // offset the carousel reads off the native animated node.
+  const onScrollSettled = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      debugCarousel('page:settled', { tab, offset: event.nativeEvent.contentOffset.y })
+    },
+    [tab]
+  )
 
-  const onScrollSettled = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    restingOffset.current = event.nativeEvent.contentOffset.y
-  }, [])
+  useEffect(() => {
+    debugCarousel('page:mounted', { tab })
+
+    return () => debugCarousel('page:unmounted', { tab })
+  }, [tab])
 
   useEffect(() => {
     if (!registerPage) return undefined
 
-    registerPage(tab, { getRestingOffset, scrollToOffset })
+    registerPage(tab, { scrollToOffset })
 
     return () => registerPage(tab, null)
-  }, [getRestingOffset, registerPage, scrollToOffset, tab])
-
-  // A swipe resets every page, not only the open one, because any of them can be
-  // the one the swipe lands on.
-  const carouselResetToken = carousel?.resetToken
-
-  useEffect(() => {
-    if (carouselResetToken === undefined) return
-
-    scrollToOffset(0)
-  }, [carouselResetToken, scrollToOffset])
+  }, [registerPage, scrollToOffset, tab])
 
   const ListComponent = carousel ? AnimatedFlatList : FlatList
 

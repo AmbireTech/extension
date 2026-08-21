@@ -21,6 +21,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import CarouselPage from './CarouselPage'
 import DashboardCarouselContext, { DashboardPageHandle } from './context'
+import debugCarousel from './debug'
 import { DashboardPagesCarouselProps } from './DashboardPagesCarousel'
 import getStyles from './styles'
 
@@ -53,20 +54,55 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const [pageSize, setPageSize] = useState({ width: Dimensions.get('window').width, height: 0 })
   const [bannersHeight, setBannersHeight] = useState(0)
   const [tabsHeight, setTabsHeight] = useState(0)
-  const [resetToken, setResetToken] = useState(0)
   const [renderedTabs, setRenderedTabs] = useState<Partial<Record<TabType, boolean>>>(() => ({
     [openTab]: true
   }))
   const openTabIndex = Math.max(TABS.indexOf(openTab), 0)
   const pageHandles = useRef<Partial<Record<TabType, DashboardPageHandle>>>({})
 
+  // How far the banners are collapsed, which every page shares. A page whose items
+  // start right below the tabs row sits at this offset, not at zero.
+  const collapsedBy = useRef(0)
+
   const registerPage = useCallback((tab: TabType, handle: DashboardPageHandle | null) => {
-    if (handle) {
-      pageHandles.current[tab] = handle
-    } else {
+    if (!handle) {
       delete pageHandles.current[tab]
+      return
     }
+
+    pageHandles.current[tab] = handle
+    debugCarousel('registerPage', { tab, collapsedBy: collapsedBy.current })
+    // A page rendered while the banners are already collapsed would start below them
+    if (collapsedBy.current) handle.scrollToOffset(collapsedBy.current)
   }, [])
+
+  // Opening another tab takes the items of the page it opens to the top, but leaves
+  // the banners as collapsed as they were - they belong to the dashboard, not to the
+  // page, so a tab change is no reason to bring them back.
+  //
+  // The offset has to be read back from the native side: the pages report their scroll
+  // straight into the native animated node, so the value this side holds is only ever
+  // whatever JS last wrote to it.
+  const takePagesToTop = useCallback(
+    (reason: string) => {
+      debugCarousel('takePagesToTop:requested', {
+        reason,
+        bannersHeight,
+        registered: Object.keys(pageHandles.current)
+      })
+
+      scrollY.stopAnimation((offset) => {
+        const carried = Math.min(Math.max(offset, 0), bannersHeight)
+
+        debugCarousel('takePagesToTop:applying', { reason, nativeOffset: offset, carried })
+
+        collapsedBy.current = carried
+        scrollY.setValue(carried)
+        TABS.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
+      })
+    },
+    [bannersHeight, scrollY]
+  )
 
   const renderTabs = useCallback((tabs: (TabType | undefined)[]) => {
     setRenderedTabs((prev) => {
@@ -132,6 +168,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   }, [])
 
   const onBannersLayout = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => {
+    debugCarousel('bannersLayout', { height: layout.height })
     setBannersHeight(layout.height)
   }, [])
 
@@ -146,20 +183,25 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const dragStartTabRef = useRef(openTab)
 
   useEffect(() => {
-    const animated = alignedTabIndexRef.current !== openTabIndex
+    const previousTabIndex = alignedTabIndexRef.current
+    const hasTabChanged = previousTabIndex !== openTabIndex
     alignedTabIndexRef.current = openTabIndex
 
-    // A swipe already put the pager where the open tab followed it to
+    // A swipe already put the pager where the open tab followed it to, and took the
+    // pages to the top when it started
+    debugCarousel('align', {
+      previousTabIndex,
+      openTabIndex,
+      hasTabChanged,
+      isPagerDriven: isPagerDrivenRef.current
+    })
+
     if (isPagerDrivenRef.current) return
 
-    scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated })
-  }, [openTabIndex, pageSize.width])
+    if (hasTabChanged) takePagesToTop('tabPress')
 
-  // Opening another tab scrolls its list back to the top, so the banners have to
-  // be revealed again. The list itself won't report it if it already was at the top.
-  useEffect(() => {
-    scrollY.setValue(0)
-  }, [openTab, scrollY])
+    scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated: hasTabChanged })
+  }, [openTab, openTabIndex, pageSize.width, takePagesToTop])
 
   // Only the banners are scrolled out of view - the tabs row below them stays. With
   // no banners there is nothing to collapse, and interpolating over a zero range
@@ -174,19 +216,19 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     })
   }, [bannersHeight, scrollY])
 
-  // The header is shared by all pages, so it would have to jump to match the page
-  // the swipe lands on. Returning every page to the top while the swipe is still
-  // in progress keeps that in line with opening a tab by pressing it.
+  // The header is shared by all pages, so it would have to jump to match the page the
+  // swipe lands on. Taking them all to the top while the swipe is still in progress
+  // keeps that in line with opening a tab by pressing it.
   //
   // The pages a swipe can reach are rendered here too, in case it comes in before
   // they were reached in order.
   const onScrollBeginDrag = useCallback(() => {
+    debugCarousel('pager:dragBegin', { openTab })
     isPagerDrivenRef.current = true
     dragStartTabRef.current = openTab
-    scrollY.setValue(0)
-    setResetToken((prev) => prev + 1)
+    takePagesToTop('swipe')
     renderTabs([TABS[openTabIndex - 1], TABS[openTabIndex + 1]])
-  }, [openTab, openTabIndex, renderTabs, scrollY])
+  }, [openTab, openTabIndex, renderTabs, takePagesToTop])
 
   // The open tab follows the pager as soon as it is past the halfway point, so the
   // tabs row doesn't wait for the swipe to settle to catch up with it. Only while the
@@ -200,6 +242,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
       if (!tab || tab === openTab) return
 
+      debugCarousel('pager:passedHalfway', { from: openTab, to: tab })
       setOpenTab(tab)
     },
     [openTab, pageSize.width, setOpenTab]
@@ -209,6 +252,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const wasDragged = isPagerDrivenRef.current
       isPagerDrivenRef.current = false
+      debugCarousel('pager:momentumEnd', { wasDragged })
 
       const tab = TABS[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
 
@@ -225,8 +269,14 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   )
 
   const carousel = useMemo(
-    () => ({ scrollY, headerHeight: bannersHeight + tabsHeight, resetToken, registerPage }),
-    [bannersHeight, registerPage, resetToken, scrollY, tabsHeight]
+    () => ({
+      scrollY,
+      headerHeight: bannersHeight + tabsHeight,
+      collapsibleHeight: bannersHeight,
+      pageHeight: pageSize.height,
+      registerPage
+    }),
+    [bannersHeight, pageSize.height, registerPage, scrollY, tabsHeight]
   )
 
   // Enough banners cover a page whole, and the header is laid over it, so without
@@ -234,12 +284,20 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const touchStartY = useRef(0)
   const touchStartOffset = useRef(0)
 
-  // Taps are left to the banners and the tabs, so this only records where they began
-  const onHeaderTouchStart = useCallback(({ nativeEvent }: GestureResponderEvent) => {
-    touchStartY.current = nativeEvent.pageY
+  // Taps are left to the banners and the tabs, so this only records where the touch
+  // began - and asks the native side where the open page is, which has landed well
+  // before the touch has travelled far enough to count as a drag.
+  const onHeaderTouchStart = useCallback(
+    ({ nativeEvent }: GestureResponderEvent) => {
+      touchStartY.current = nativeEvent.pageY
+      scrollY.stopAnimation((offset) => {
+        touchStartOffset.current = Math.max(offset, 0)
+      })
 
-    return false
-  }, [])
+      return false
+    },
+    [scrollY]
+  )
 
   // Captured, so a drag that started on a banner is taken away from it the way a
   // scroll view takes over from a button inside it
@@ -248,10 +306,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       Math.abs(nativeEvent.pageY - touchStartY.current) > HEADER_PAN_THRESHOLD,
     []
   )
-
-  const onHeaderDragStart = useCallback(() => {
-    touchStartOffset.current = pageHandles.current[openTab]?.getRestingOffset() || 0
-  }, [openTab])
 
   const onHeaderDrag = useCallback(
     ({ nativeEvent }: GestureResponderEvent) => {
@@ -306,7 +360,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       <Animated.View
         onStartShouldSetResponderCapture={onHeaderTouchStart}
         onMoveShouldSetResponderCapture={onHeaderTouchMove}
-        onResponderGrant={onHeaderDragStart}
         onResponderMove={onHeaderDrag}
         style={[styles.header, spacings.phSm, { transform: [{ translateY: headerTranslateY }] }]}
       >
