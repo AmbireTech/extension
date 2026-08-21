@@ -27,6 +27,11 @@ import getStyles from './styles'
 // index is what maps a swipe to a tab.
 const TABS: TabType[] = ['tokens', 'collectibles', 'defi', 'activity']
 
+// Every page is rendered, but one at a time and only once the open one is done
+// filling its own render window, so none of it lands during a gesture.
+const PAGE_RENDER_DELAY = 400
+const PAGE_RENDER_STEP = 200
+
 const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   openTab,
   setOpenTab,
@@ -44,11 +49,59 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const [bannersHeight, setBannersHeight] = useState(0)
   const [tabsHeight, setTabsHeight] = useState(0)
   const [resetToken, setResetToken] = useState(0)
-  // A page is only worth rendering once the user is on their way to it. Every page
-  // that was rendered is kept, but frozen, so returning to it costs nothing.
-  const [mountedTabs, setMountedTabs] = useState<Partial<Record<TabType, boolean>>>({})
-  const [isSwiping, setIsSwiping] = useState(false)
+  const [renderedTabs, setRenderedTabs] = useState<Partial<Record<TabType, boolean>>>(() => ({
+    [openTab]: true
+  }))
   const openTabIndex = Math.max(TABS.indexOf(openTab), 0)
+
+  const renderTabs = useCallback((tabs: (TabType | undefined)[]) => {
+    setRenderedTabs((prev) => {
+      const missing = tabs.filter((tab): tab is TabType => !!tab && !prev[tab])
+
+      if (!missing.length) return prev
+
+      const next = { ...prev }
+
+      missing.forEach((tab) => {
+        next[tab] = true
+      })
+
+      return next
+    })
+  }, [])
+
+  // Every page ends up rendered, so no swipe can outrun them however fast they come.
+  // Closest first, and one at a time, so a page is never built during a gesture and
+  // never in the same frame as another one.
+  useEffect(() => {
+    let isCancelled = false
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+
+    const byDistanceToOpenTab = TABS.map((tab, index) => ({
+      tab,
+      distance: Math.abs(index - openTabIndex)
+    }))
+      .sort((a, b) => a.distance - b.distance)
+      .map(({ tab }) => tab)
+
+    const renderFrom = (index: number) => {
+      if (isCancelled || index >= byDistanceToOpenTab.length) return
+
+      renderTabs([byDistanceToOpenTab[index]])
+
+      timeoutId = setTimeout(() => renderFrom(index + 1), PAGE_RENDER_STEP)
+    }
+
+    const interaction = InteractionManager.runAfterInteractions(() => {
+      timeoutId = setTimeout(() => renderFrom(0), PAGE_RENDER_DELAY)
+    })
+
+    return () => {
+      isCancelled = true
+      interaction.cancel()
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [openTabIndex, renderTabs])
 
   useEffect(() => {
     const interaction = InteractionManager.runAfterInteractions(initAllTabs)
@@ -107,30 +160,16 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // the swipe lands on. Returning every page to the top while the swipe is still
   // in progress keeps that in line with opening a tab by pressing it.
   //
-  // The neighbours are rendered here and not upfront, so the pages the user never
-  // swipes to never cost anything. The pager itself scrolls on the UI thread, so
-  // rendering them mid gesture doesn't make the swipe stutter.
+  // The pages a swipe can reach are rendered here too, in case it comes in before
+  // they were reached in order.
   const onScrollBeginDrag = useCallback(() => {
     scrollY.setValue(0)
     setResetToken((prev) => prev + 1)
-    setIsSwiping(true)
-    setMountedTabs((prev) => {
-      const next = { ...prev }
-
-      ;[openTabIndex - 1, openTabIndex, openTabIndex + 1].forEach((index) => {
-        const tab = TABS[index]
-
-        if (tab) next[tab] = true
-      })
-
-      return next
-    })
-  }, [openTabIndex, scrollY])
+    renderTabs([TABS[openTabIndex - 1], TABS[openTabIndex + 1]])
+  }, [openTabIndex, renderTabs, scrollY])
 
   const onMomentumScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      setIsSwiping(false)
-
       const tab = TABS[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
 
       if (!tab || tab === openTab) return
@@ -150,21 +189,17 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     () =>
       React.Children.map(children, (child, index) => {
         const tab = TABS[index]
-        const isOpen = !!tab && tab === openTab
 
         return (
           <CarouselPage
             style={pageSize}
-            mounted={isOpen || (!!tab && !!mountedTabs[tab])}
-            // Only the page the user is on is reconciled. The ones next to it are
-            // thawed for the duration of the swipe, so they are ready when it lands.
-            frozen={!isOpen && !isSwiping}
+            rendered={!!tab && (tab === openTab || !!renderedTabs[tab])}
           >
             {child}
           </CarouselPage>
         )
       }),
-    [children, isSwiping, mountedTabs, openTab, pageSize]
+    [children, openTab, pageSize, renderedTabs]
   )
 
   return (

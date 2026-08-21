@@ -7,8 +7,8 @@ import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import DashboardCarouselContext from '../DashboardPagesCarousel/context'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
+import DashboardCarouselContext from '../DashboardPagesCarousel/context'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import useListTopSpacing from './useListTopSpacing'
 
@@ -40,6 +40,15 @@ const getFlatListStyle = (tab: TabType, openTab: TabType) => {
 // The pages of the carousel report their scroll offset natively, so the header
 // laid over them can collapse without a round trip through JS.
 const AnimatedFlatList = Animated.FlatList as unknown as typeof FlatList
+
+// All four pages of the carousel are rendered, so none of them may build more than
+// it has to: a screenful up front, the rest as the list is scrolled. Overrides what
+// the pages ask for, as those values are sized for being the only rendered list.
+const CAROUSEL_VIRTUALIZATION = {
+  initialNumToRender: 10,
+  maxToRenderPerBatch: 10,
+  windowSize: 10
+}
 
 const DashboardPageScrollContainer: FC<Props> = ({
   tab,
@@ -134,6 +143,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
         ) : undefined
       }
       {...rest}
+      {...(carousel ? CAROUSEL_VIRTUALIZATION : {})}
     />
   )
 }
