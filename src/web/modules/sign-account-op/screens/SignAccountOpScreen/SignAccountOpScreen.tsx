@@ -185,8 +185,13 @@ const SignAccountOpScreen = () => {
       requestsDispatch({
         type: 'method',
         params: {
-          method: 'buildOnchainSafeRejection',
-          args: [accountOpRequest.id]
+          method: 'build',
+          args: [
+            {
+              type: 'onchainSafeRejection',
+              params: { requestId: accountOpRequest.id }
+            }
+          ]
         }
       })
       return
