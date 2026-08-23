@@ -22,13 +22,17 @@ type Props = {
   closeBottomSheet: () => void
   feePercent: number
   feeExemptionReason?: FeeExemptionReason
+  withActions?: boolean
+  withCloseAction?: boolean
 }
 
 const FeeInfoBottomSheet = ({
   sheetRef,
   closeBottomSheet,
   feePercent,
-  feeExemptionReason
+  feeExemptionReason,
+  withActions = true,
+  withCloseAction = false
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -146,25 +150,31 @@ const FeeInfoBottomSheet = ({
             })}
           </View>
 
-          <Button
-            text={t('Stake $WALLET')}
-            onPress={handleStakePress}
-            hasBottomSpacing={false}
-            style={spacings.mtLg}
-            testID="swap-and-bridge-stake-wallet-button"
-          />
-          <View style={[flexbox.alignCenter, spacings.mtSm]}>
-            <HoverablePressable
-              onPress={closeBottomSheet}
-              hitSlop={8}
-              accessibilityRole="button"
-              testID="swap-and-bridge-fee-info-not-now"
-            >
-              <Text appearance="primary" fontSize={14} weight="medium">
-                {t('Not now')}
-              </Text>
-            </HoverablePressable>
-          </View>
+          {withActions && (
+            <Button
+              text={t('Stake $WALLET')}
+              onPress={handleStakePress}
+              hasBottomSpacing={false}
+              style={spacings.mtLg}
+              testID="swap-and-bridge-stake-wallet-button"
+            />
+          )}
+          {(withActions || withCloseAction) && (
+            <View style={[flexbox.alignCenter, withActions ? spacings.mtSm : spacings.mtLg]}>
+              <HoverablePressable
+                onPress={closeBottomSheet}
+                hitSlop={8}
+                accessibilityRole="button"
+                testID={
+                  withActions ? 'swap-and-bridge-fee-info-not-now' : 'wallet-staking-fee-info-close'
+                }
+              >
+                <Text appearance="primary" fontSize={14} weight="medium">
+                  {withActions ? t('Not now') : t('Close')}
+                </Text>
+              </HoverablePressable>
+            </View>
+          )}
         </>
       )}
     </BottomSheet>

@@ -41,6 +41,8 @@ interface Styles {
   amountSliderThumb: ViewStyle
   amountSliderLabels: ViewStyle
   feePreviewRow: ViewStyle
+  feePreviewLabel: ViewStyle
+  feeDetailsButton: ViewStyle
   details: ViewStyle
   detailRow: ViewStyle
   footerRow: ViewStyle
@@ -261,6 +263,15 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.pbSm,
       borderRadius: 12,
       backgroundColor: theme.tertiaryBackground
+    },
+    feePreviewLabel: {
+      ...flexbox.alignStart
+    },
+    feeDetailsButton: {
+      ...spacings.mtTy,
+      ...spacings.mb0,
+      height: 24,
+      borderColor: theme.primaryAccent300
     },
     details: {
       ...spacings.phSm

@@ -1,6 +1,7 @@
 import { formatUnits, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { getTokenBalanceInUSD, getTokenUsdPrice } from '@ambire-common/libs/portfolio/helpers'
@@ -30,6 +31,7 @@ import { WALLET_STAKING_ROUTE_STORAGE_KEY } from '@common/modules/explore/consta
 import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
 import Header from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
+import FeeInfoBottomSheet from '@common/modules/swap-and-bridge/components/FeeInfoBottomSheet'
 import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -107,6 +109,11 @@ const WalletStakingScreen = () => {
   const { navigate } = useNavigation()
   const { params } = useRoute()
   const { addToast } = useToast()
+  const {
+    ref: feeInfoSheetRef,
+    open: openFeeInfoBottomSheet,
+    close: closeFeeInfoBottomSheet
+  } = useModalize()
   const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: portfolioTokens } = useController(
     'SelectedAccountController',
@@ -439,6 +446,10 @@ const WalletStakingScreen = () => {
   const handleSliderValueChange = useCallback(
     (nextAmount: bigint) => setAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
     []
+  )
+  const handleOpenFeeInfoBottomSheet = useCallback(
+    () => openFeeInfoBottomSheet(),
+    [openFeeInfoBottomSheet]
   )
 
   const handleOpenHelp = useCallback(() => {
@@ -819,9 +830,22 @@ const WalletStakingScreen = () => {
 
                   {mode === 'stake' && (
                     <View style={styles.feePreviewRow}>
-                      <Text fontSize={12} appearance="secondaryText">
-                        {t('Swap & Bridge fee')}
-                      </Text>
+                      <View style={styles.feePreviewLabel}>
+                        <Text fontSize={12} appearance="secondaryText">
+                          {t('Swap & Bridge fee')}
+                        </Text>
+                        <Button
+                          text={t('Details')}
+                          type="outline"
+                          size="tiny"
+                          accentColor={theme.primaryAccent300}
+                          onPress={handleOpenFeeInfoBottomSheet}
+                          hasBottomSpacing={false}
+                          submitOnEnter={false}
+                          style={styles.feeDetailsButton}
+                          testID="wallet-staking-fee-details-button"
+                        />
+                      </View>
                       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                         <Text fontSize={12} appearance="secondaryText">
                           {currentFeePercent.toFixed(2)}%
@@ -902,6 +926,13 @@ const WalletStakingScreen = () => {
             </GlassView>
           </View>
         )}
+        <FeeInfoBottomSheet
+          sheetRef={feeInfoSheetRef}
+          closeBottomSheet={closeFeeInfoBottomSheet}
+          feePercent={currentFeePercent}
+          withActions={false}
+          withCloseAction
+        />
       </View>
     </LayoutWrapper>
   )

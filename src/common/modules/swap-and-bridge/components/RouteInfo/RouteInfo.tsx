@@ -7,6 +7,7 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import InfoIcon from '@common/assets/svg/InfoIcon'
+import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
@@ -147,7 +148,15 @@ const RouteInfo: FC<Props> = ({
             hasBottomSpacing={false}
             submitOnEnter={false}
             style={[spacings.phTy, spacings.pvMi, spacings.mlTy, { height: 'auto' }]}
-          />
+            childrenPosition="right"
+          >
+            <RightArrowIcon
+              width={10}
+              height={10}
+              color={theme.primaryText}
+              style={spacings.mlMi}
+            />
+          </Button>
 
           {shouldShowSelectRoute && quote?.selectedRoute?.serviceTime ? (
             <Text appearance="tertiaryText" fontSize={12} weight="medium" style={spacings.mlLg}>
