@@ -81,14 +81,14 @@ const FeeInfoBottomSheet = ({
       ) : (
         <>
           <Text fontSize={20} weight="semiBold" style={[styles.centeredText, spacings.mtSm]}>
-            {t('Reduce your Swap & Bridge fee')}
+            {t('Stake $WALLET and pay less in trading fees')}
           </Text>
           <Text
             appearance="secondaryText"
-            fontSize={14}
+            fontSize={12}
             style={[styles.centeredText, spacings.mtTy]}
           >
-            {t('Stake $WALLET and pay less in trading fees.')}
+            {t('(100% of accrued fees are used for $WALLET buybacks)')}
           </Text>
 
           <View style={[styles.table, spacings.mtLg]}>

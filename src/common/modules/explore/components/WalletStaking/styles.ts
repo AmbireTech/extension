@@ -1,6 +1,6 @@
 import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -35,8 +35,12 @@ interface Styles {
   amountInput: ViewStyle
   amountInputWrapper: ViewStyle
   amountNativeInput: TextStyle
-  percentages: ViewStyle
-  percentageButton: ViewStyle
+  amountSlider: ViewStyle
+  amountSliderTrack: ViewStyle
+  amountSliderProgress: ViewStyle
+  amountSliderThumb: ViewStyle
+  amountSliderLabels: ViewStyle
+  feePreviewRow: ViewStyle
   details: ViewStyle
   detailRow: ViewStyle
   footerRow: ViewStyle
@@ -44,6 +48,8 @@ interface Styles {
   footerButton: ViewStyle
   validation: TextStyle
 }
+
+const SLIDER_THUMB_SIZE = 20
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
@@ -208,17 +214,53 @@ const getStyles = (theme: ThemeProps) =>
       fontSize: 16,
       textAlign: 'left'
     },
-    percentages: {
-      ...flexbox.directionRow,
-      columnGap: SPACING_TY
+    amountSlider: {
+      ...flexbox.justifyCenter,
+      height: 28,
+      position: 'relative'
     },
-    percentageButton: {
-      ...flexbox.flex1,
-      height: 34,
-      ...spacings.mb0,
-      ...spacings.phTy,
-      borderRadius: 20,
-      backgroundColor: theme.primaryBackground
+    amountSliderTrack: {
+      position: 'absolute',
+      top: 12,
+      right: SLIDER_THUMB_SIZE / 2,
+      left: SLIDER_THUMB_SIZE / 2,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.tertiaryText
+    },
+    amountSliderProgress: {
+      position: 'absolute',
+      top: 12,
+      left: SLIDER_THUMB_SIZE / 2,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.primaryAccent300
+    },
+    amountSliderThumb: {
+      position: 'absolute',
+      top: 4,
+      width: SLIDER_THUMB_SIZE,
+      height: SLIDER_THUMB_SIZE,
+      borderRadius: SLIDER_THUMB_SIZE / 2,
+      borderWidth: 3,
+      borderColor: theme.primaryAccent200,
+      backgroundColor: theme.primaryAccent300
+    },
+    amountSliderLabels: {
+      ...flexbox.directionRow,
+      ...flexbox.justifySpaceBetween,
+      ...spacings.phTy
+    },
+    feePreviewRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifySpaceBetween,
+      ...spacings.mtSm,
+      ...spacings.phSm,
+      ...spacings.ptSm,
+      ...spacings.pbSm,
+      borderRadius: 12,
+      backgroundColor: theme.tertiaryBackground
     },
     details: {
       ...spacings.phSm

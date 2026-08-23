@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { getTokenBalanceInUSD, getTokenUsdPrice } from '@ambire-common/libs/portfolio/helpers'
+import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
@@ -34,6 +36,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
+import AmountSlider from './AmountSlider'
 import {
   decodePendingWalletWithdrawals,
   formatPendingWalletWithdrawalDuration,
@@ -55,7 +58,6 @@ const STAKING_HELP_URL = 'https://help.ambire.com/en/collections/18211458-wallet
 const STAKING_APY_PROPOSAL_URL =
   'https://snapshot.org/#/s:ambire.eth/proposal/0xfc8edfdf451b2aa25575ea198019572de9dd0cdc1949d83e2176c75b62d6c913'
 const STAKING_APY_TOOLTIP_ID = 'wallet-staking-apy-tooltip'
-const PERCENTAGES = [25, 50, 75, 100] as const
 const WALLET_STAKING_COMMITMENT_ABI = 'function commitments(bytes32) view returns (uint256)'
 
 const getAmountInWei = (amount: string) => {
@@ -98,29 +100,6 @@ const StakingTab = ({ mode, activeMode, label, onSelect }: TabProps) => {
 }
 
 const MemoizedStakingTab = React.memo(StakingTab)
-
-interface PercentageButtonProps {
-  percentage: (typeof PERCENTAGES)[number]
-  onSelect: (percentage: number) => void
-}
-
-const PercentageButton = ({ percentage, onSelect }: PercentageButtonProps) => {
-  const { styles } = useTheme(getStyles)
-  const handlePress = useCallback(() => onSelect(percentage), [onSelect, percentage])
-
-  return (
-    <Button
-      type="secondary"
-      size="small"
-      text={`${percentage}%`}
-      onPress={handlePress}
-      hasBottomSpacing={false}
-      style={styles.percentageButton}
-    />
-  )
-}
-
-const MemoizedPercentageButton = React.memo(PercentageButton)
 
 const WalletStakingScreen = () => {
   const { t } = useTranslation()
@@ -207,6 +186,22 @@ const WalletStakingScreen = () => {
   const amountInUsd = useMemo(
     () => formatDecimals(Number(amount || 0) * price, 'value'),
     [amount, price]
+  )
+  const walletPrice = useMemo(
+    () => (walletToken ? getTokenUsdPrice(walletToken) : 0),
+    [walletToken]
+  )
+  const currentStkWalletValueInUsd = useMemo(
+    () => (stkWalletToken ? getTokenBalanceInUSD(stkWalletToken) : 0),
+    [stkWalletToken]
+  )
+  const currentFeePercent = useMemo(
+    () => getFeePercent(currentStkWalletValueInUsd),
+    [currentStkWalletValueInUsd]
+  )
+  const projectedFeePercent = useMemo(
+    () => getFeePercent(currentStkWalletValueInUsd + Number(amount || 0) * walletPrice),
+    [amount, currentStkWalletValueInUsd, walletPrice]
   )
   const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const isSubmitDisabled = useMemo(() => {
@@ -441,12 +436,9 @@ const WalletStakingScreen = () => {
     [hasPendingWithdrawalLoadFailed, loadPendingWithdrawal]
   )
 
-  const handleSelectPercentage = useCallback(
-    (percentage: number) => {
-      const nextAmount = (balance * BigInt(percentage)) / 100n
-      setAmount(formatUnits(nextAmount, TOKEN_DECIMALS))
-    },
-    [balance]
+  const handleSliderValueChange = useCallback(
+    (nextAmount: bigint) => setAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
+    []
   )
 
   const handleOpenHelp = useCallback(() => {
@@ -818,15 +810,31 @@ const WalletStakingScreen = () => {
                     }
                   />
 
-                  <View style={styles.percentages}>
-                    {PERCENTAGES.map((percentage) => (
-                      <MemoizedPercentageButton
-                        key={percentage}
-                        percentage={percentage}
-                        onSelect={handleSelectPercentage}
-                      />
-                    ))}
-                  </View>
+                  <AmountSlider
+                    value={amountInWei}
+                    maximumValue={balance}
+                    maximumLabel={balanceLabel}
+                    onValueChange={handleSliderValueChange}
+                  />
+
+                  {mode === 'stake' && (
+                    <View style={styles.feePreviewRow}>
+                      <Text fontSize={12} appearance="secondaryText">
+                        {t('Swap & Bridge fee')}
+                      </Text>
+                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                        <Text fontSize={12} appearance="secondaryText">
+                          {currentFeePercent.toFixed(2)}%
+                        </Text>
+                        <Text fontSize={12} appearance="secondaryText" style={spacings.phTy}>
+                          →
+                        </Text>
+                        <Text fontSize={12} weight="semiBold" color={theme.primaryAccent200}>
+                          {projectedFeePercent.toFixed(2)}%
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.details}>
