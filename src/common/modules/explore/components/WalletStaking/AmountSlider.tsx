@@ -24,9 +24,16 @@ interface Props {
   maximumValue: bigint
   maximumLabel: string
   onValueChange: (value: bigint) => void
+  accessibilityLabel?: string
 }
 
-const AmountSlider = ({ value, maximumValue, maximumLabel, onValueChange }: Props) => {
+const AmountSlider = ({
+  value,
+  maximumValue,
+  maximumLabel,
+  onValueChange,
+  accessibilityLabel
+}: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const [width, setWidth] = useState(0)
@@ -89,7 +96,7 @@ const AmountSlider = ({ value, maximumValue, maximumLabel, onValueChange }: Prop
         <HoverablePressable
           accessible
           accessibilityActions={ACCESSIBILITY_ACTIONS}
-          accessibilityLabel={t('$WALLET amount')}
+          accessibilityLabel={accessibilityLabel || t('$WALLET amount')}
           accessibilityRole="adjustable"
           accessibilityValue={accessibilityValue}
           onAccessibilityAction={handleAccessibilityAction}

@@ -6,6 +6,7 @@ import { Call } from '@ambire-common/libs/accountOp/types'
 const walletInterface = new Interface(['function approve(address spender, uint256 amount)'])
 const stkWalletInterface = new Interface([
   'function enter(uint256 amount)',
+  'function wrap(uint256 shareAmount)',
   'function unwrap(uint256 shareAmount)'
 ])
 const walletStakingInterface = new Interface([
@@ -24,6 +25,20 @@ export const getStakeWalletCalls = (amount: bigint): Call[] => [
     to: STK_WALLET,
     value: 0n,
     data: stkWalletInterface.encodeFunctionData('enter', [amount])
+  }
+]
+
+/** Builds the Ethereum calls that approve xWALLET and migrate it into stkWALLET. */
+export const getMigrateXWalletCalls = (shares: bigint): Call[] => [
+  {
+    to: WALLET_STAKING_ADDR,
+    value: 0n,
+    data: walletInterface.encodeFunctionData('approve', [STK_WALLET, shares])
+  },
+  {
+    to: STK_WALLET,
+    value: 0n,
+    data: stkWalletInterface.encodeFunctionData('wrap', [shares])
   }
 ]
 

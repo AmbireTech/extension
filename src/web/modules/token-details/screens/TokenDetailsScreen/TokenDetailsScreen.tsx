@@ -16,6 +16,7 @@ import TokenBalanceCard from '@common/modules/token-details/components/TokenBala
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import TokenDetailsTransactionHistory from '@common/modules/token-details/components/TransactionHistory'
+import XWalletMigrationCard from '@common/modules/token-details/components/XWalletMigrationCard'
 import useTokenDetails from '@common/modules/token-details/hooks/useTokenDetails'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -94,6 +95,7 @@ const TokenDetailsScreen = () => {
           xWalletAmount={token.amount}
           containerStyle={isWalletStakingToken(token) ? spacings.mbTy : undefined}
         />
+        <XWalletMigrationCard token={token} />
         <SwapAndBridgeFeeCard token={token} />
         <TokenData token={token} />
         <Exchanges exchanges={token.meta?.exchanges || []} />

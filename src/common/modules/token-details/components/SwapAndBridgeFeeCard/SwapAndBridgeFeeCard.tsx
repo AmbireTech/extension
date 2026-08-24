@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
@@ -22,10 +22,6 @@ import getStyles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 
-const WALLET_STAKING_TOKEN_ADDRESSES = new Set(
-  [WALLET_TOKEN, WALLET_STAKING_ADDR, STK_WALLET].map((address) => address.toLowerCase())
-)
-
 const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio.tokens
 
@@ -33,7 +29,7 @@ export const isWalletStakingToken = ({
   chainId,
   address
 }: Pick<TokenResult, 'chainId' | 'address'>) =>
-  chainId === ETHEREUM_CHAIN_ID && WALLET_STAKING_TOKEN_ADDRESSES.has(address.toLowerCase())
+  chainId === ETHEREUM_CHAIN_ID && WALLET_TOKEN.toLowerCase() === address.toLowerCase()
 
 const SwapAndBridgeFeeCardContent = () => {
   const { t } = useTranslation()

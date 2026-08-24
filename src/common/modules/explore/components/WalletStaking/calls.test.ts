@@ -2,11 +2,17 @@ import { Interface, parseUnits } from 'ethers'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 
-import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
+import {
+  getMigrateXWalletCalls,
+  getStakeWalletCalls,
+  getUnstakeWalletCalls,
+  getWithdrawWalletCalls
+} from './calls'
 
 const walletInterface = new Interface(['function approve(address spender, uint256 amount)'])
 const stkWalletInterface = new Interface([
   'function enter(uint256 amount)',
+  'function wrap(uint256 shareAmount)',
   'function unwrap(uint256 shareAmount)'
 ])
 const walletStakingInterface = new Interface([
@@ -27,6 +33,20 @@ describe('WALLET staking calls', () => {
     ])
     expect(calls[1]?.to).toBe(STK_WALLET)
     expect(stkWalletInterface.decodeFunctionData('enter', calls[1]!.data)).toEqual([amount])
+  })
+
+  test('builds xWALLET approval and migration calls', () => {
+    const shares = parseUnits('12.5', 18)
+    const calls = getMigrateXWalletCalls(shares)
+
+    expect(calls).toHaveLength(2)
+    expect(calls[0]?.to).toBe(WALLET_STAKING_ADDR)
+    expect(walletInterface.decodeFunctionData('approve', calls[0]!.data)).toEqual([
+      STK_WALLET,
+      shares
+    ])
+    expect(calls[1]?.to).toBe(STK_WALLET)
+    expect(stkWalletInterface.decodeFunctionData('wrap', calls[1]!.data)).toEqual([shares])
   })
 
   test('converts stkWALLET to shares and starts the unstaking period', () => {

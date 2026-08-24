@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
+import WalletMigrationScreen from '@common/modules/explore/components/WalletMigration'
 import WalletStakingScreen from '@common/modules/explore/components/WalletStaking/WalletStakingScreen'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
@@ -283,6 +284,7 @@ const MainRoutes = () => {
             <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
             <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
             <Route path={WEB_ROUTES.walletStaking} element={<WalletStakingScreen />} />
+            <Route path={WEB_ROUTES.walletMigration} element={<WalletMigrationScreen />} />
             <Route path={WEB_ROUTES.trendingTokens} element={<TrendingTokensScreen />} />
             <Route
               path={WEB_ROUTES.trendingTokenDetails}

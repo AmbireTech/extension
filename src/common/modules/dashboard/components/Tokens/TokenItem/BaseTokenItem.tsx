@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo } from 'react'
 import { Image, View } from 'react-native'
 
+import { WALLET_STAKING_ADDR } from '@ambire-common/consts/addresses'
+import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
-// @ts-ignore
 import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
@@ -84,6 +85,8 @@ const BaseTokenItem = ({
   })
 
   const tokenId = getTokenId(token)
+  const isLegacyXWallet =
+    chainId === ETHEREUM_CHAIN_ID && address.toLowerCase() === WALLET_STAKING_ADDR.toLowerCase()
 
   const {
     balanceFormatted,
@@ -209,6 +212,14 @@ const BaseTokenItem = ({
                     xWalletAmount={token.amount}
                     tooltipId={`dashboard-x-wallet-conversion-${tokenId}`}
                   />
+                  {isLegacyXWallet && (
+                    <View style={styles.legacyBadge}>
+                      <View style={styles.legacyBadgeDot} />
+                      <Text fontSize={8} weight="medium" appearance="warningText">
+                        {t('LEGACY')}
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <Text
                   selectable
