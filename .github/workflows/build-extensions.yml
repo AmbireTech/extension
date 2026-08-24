@@ -150,7 +150,6 @@ jobs:
       contents: write # Needed to upload assets to this repo's release
     env:
       TAG: ${{ github.event.release.tag_name }}
-      PUBLIC_REPO: AmbireTech/extension
     steps:
       - name: Download the built extension .zips 📥
         uses: actions/download-artifact@v6
@@ -207,43 +206,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" assets/*.zip assets/SHA256SUMS sourcemaps/*.zip --clobber
-        shell: bash
-
-      # The public repo is where users download from, so its releases are the ones
-      # that must be immutable (and therefore signed by GitHub). Immutable releases
-      # lock their assets on publish, so everything is attached to a draft and a
-      # human publishes it after a look.
-      - name: Create the public repo draft release with the same assets
-        env:
-          GH_TOKEN: ${{ secrets.PUBLIC_REPO_RELEASE_TOKEN }}
-          RELEASE_TITLE: ${{ github.event.release.name }}
-          RELEASE_BODY: ${{ github.event.release.body }}
-          IS_PRERELEASE: ${{ github.event.release.prerelease }}
-        run: |
-          set -euo pipefail
-
-          if gh release view "$TAG" --repo "$PUBLIC_REPO" > /dev/null 2>&1; then
-            gh release upload "$TAG" assets/*.zip assets/SHA256SUMS --repo "$PUBLIC_REPO" --clobber
-            exit 0
-          fi
-
-          # Passed through a file, because release notes contain characters that
-          # would break (or be interpreted by) the shell.
-          printf '%s' "$RELEASE_BODY" > release-notes.md
-
-          PRERELEASE_FLAG=()
-          if [ "$IS_PRERELEASE" = "true" ]; then
-            PRERELEASE_FLAG=(--prerelease)
-          fi
-
-          # --target is only used when the tag isn't mirrored to the public repo yet.
-          # It fails if the release commit isn't there, which is the correct outcome:
-          # the public repo must never hold a release pointing at unmirrored code.
-          gh release create "$TAG" assets/*.zip assets/SHA256SUMS \
-            --repo "$PUBLIC_REPO" \
-            --draft \
-            --target "${{ github.sha }}" \
-            --title "$RELEASE_TITLE" \
-            --notes-file release-notes.md \
-            "${PRERELEASE_FLAG[@]}"
         shell: bash
