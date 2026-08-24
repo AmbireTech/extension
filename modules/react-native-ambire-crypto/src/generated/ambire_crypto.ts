@@ -36,12 +36,11 @@ const uniffiIsDebug =
 // Public interface members begin here.
 
 /**
- * Lowercase `0x`-prefixed hex for the given bytes, as ethers' `hexlify` and
- * viem's `bytesToHex` produce it. Empty input gives `0x`.
+ * Lowercase `0x` hex, as ethers' `hexlify` and viem's `bytesToHex` produce it.
+ * Empty input gives `0x`.
  *
- * Worth the FFI hop only for large buffers. The caller keeps a byte-count
- * threshold and stays in JS below it, because the fixed per-call marshalling
- * cost dwarfs the hex loop for the 20-32 byte values that dominate.
+ * Only worth the FFI hop for large buffers, so the caller keeps a byte-count
+ * threshold and stays in JS below it.
  */
 export function bytesToHex(input: ArrayBuffer): string {
   return ((__rb: Uint8Array) => {
@@ -64,14 +63,11 @@ export function bytesToHex(input: ArrayBuffer): string {
 }
 
 /**
- * EIP-55 checksummed form of a 20-byte hex address, as viem's
- * `checksumAddress` produces it. Errors on anything that is not a
- * `0x`-prefixed 40-character hex string, which lets the caller fall back to
- * viem rather than this changing what an invalid input does.
+ * EIP-55 checksummed address, as viem's `checksumAddress` produces it. The
+ * EIP-1191 chain-id variant stays in JS so there is no second copy of it here.
  *
- * Only the plain EIP-55 form is handled here. viem also supports the EIP-1191
- * chain-id variant, which the caller keeps in JS so there is no second
- * implementation of it to keep in sync.
+ * # Errors
+ * Anything viem's `isAddress` would reject, so those calls fall back to viem.
  */
 export function checksumAddress(address: string): string /*throws*/ {
   return ((__rb: Uint8Array) => {
@@ -95,18 +91,16 @@ export function checksumAddress(address: string): string /*throws*/ {
 }
 
 /**
- * Decodes the return data of a contract function, mirroring viem's
- * `decodeFunctionResult`. Returns a JSON string whose shape matches viem:
- * a single output is unwrapped, named tuples become objects, unnamed ones
- * become arrays, addresses are EIP-55 checksummed, bytes are `0x`-hex.
+ * Mirrors viem's `decodeFunctionResult`, returning viem's shape as JSON: a
+ * single output unwrapped, a fully named tuple as an object and any other tuple
+ * as an array, addresses checksummed, bytes as `0x` hex, no outputs as `null`.
  *
- * Integers wider than `JS_SAFE_INT_BITS` cannot survive JSON, so those leaves
- * are emitted as the tagged object `{"$bigint":"<decimal>"}` — the exact
- * convention the JS `richJson` parser reconstructs into a real BigInt. Narrower
- * integers become plain JSON numbers, because that is what viem returns.
+ * Integers past `JS_SAFE_INT_BITS` cannot survive JSON, so they come back as
+ * `{"$bigint":"<decimal>"}` for the JS `richJson` parser to rebuild.
  *
- * A function with no outputs decodes to JSON `null`, which the JS side turns
- * back into the `undefined` viem returns.
+ * # Errors
+ * An unparseable ABI, an unknown or overloaded name, data that is not a single
+ * lower-case `0x` hex string, or data that does not decode against the outputs.
  */
 export function decodeFunctionResult(
   abiJson: string,
@@ -136,11 +130,13 @@ export function decodeFunctionResult(
 }
 
 /**
- * Encodes a contract function call, mirroring viem's `encodeFunctionData`.
- * `args_json` is a JSON array of the arguments in ABI order; integers may be
- * plain JSON numbers/strings or the `{"$bigint":"<decimal>"}` tag that the JS
- * `richJson` serializer produces. Returns the `0x` calldata (4-byte selector
- * followed by the ABI-encoded arguments).
+ * Mirrors viem's `encodeFunctionData`, returning the `0x` calldata. `args_json`
+ * holds the arguments in ABI order, integers as JSON numbers, decimal strings or
+ * the `{"$bigint":"<decimal>"}` tag the JS `richJson` serializer produces.
+ *
+ * # Errors
+ * An unparseable ABI, an unknown or overloaded name, or any argument viem would
+ * not encode to the same bytes.
  */
 export function encodeFunctionData(
   abiJson: string,
@@ -170,12 +166,12 @@ export function encodeFunctionData(
 }
 
 /**
- * Bytes of a `0x`-prefixed hex string, accepting exactly what ethers'
- * `getBytes` accepts: whole bytes only, either case, prefix required.
+ * Accepts exactly what ethers' `getBytes` accepts: whole bytes, either case,
+ * prefix required.
  *
- * Errors on anything else, including an odd number of hex digits and a missing
- * prefix, which lets the caller fall back to the JS implementation rather than
- * this changing what an invalid input does.
+ * # Errors
+ * Anything else, so the caller falls back to ethers rather than this changing
+ * what an invalid input does.
  */
 export function hexToBytes(input: string): ArrayBuffer /*throws*/ {
   return ((__rb: Uint8Array) => {
@@ -199,8 +195,7 @@ export function hexToBytes(input: string): ArrayBuffer /*throws*/ {
 }
 
 /**
- * keccak256 of the given bytes. Returns the 32-byte hash.
- * The JS shim handles hex encoding on either side of this call.
+ * Returns the 32-byte hash. The JS shim handles hex on both sides.
  */
 export function keccak256(input: ArrayBuffer): ArrayBuffer {
   return ((__rb: Uint8Array) => {
@@ -284,8 +279,22 @@ export enum AbiError_Tags {
   ArityMismatch = 'ArityMismatch',
   DecodeFailed = 'DecodeFailed',
   EncodeFailed = 'EncodeFailed',
-  InvalidArgument = 'InvalidArgument'
+  InvalidArgument = 'InvalidArgument',
+  InvalidAddress = 'InvalidAddress',
+  BytesSizeMismatch = 'BytesSizeMismatch',
+  IntegerOutOfRange = 'IntegerOutOfRange'
 }
+/**
+ * Every way a native ABI call can hand back to viem. The JS shims catch all of
+ * these and call the real viem implementation, so an error is a handover rather
+ * than a failure.
+ *
+ * Variant order and field types are the FFI wire format, and the TypeScript
+ * bindings are generated separately from the library. **Add new variants at the
+ * end and leave existing fields alone**: stale bindings throw
+ * `UnexpectedEnumCase` on an unknown trailing variant, but read a reordered or
+ * resized one as the wrong error with the wrong payload.
+ */
 export const AbiError = (() => {
   type InvalidAbi__interface = {
     tag: AbiError_Tags.InvalidAbi
@@ -358,8 +367,7 @@ export const AbiError = (() => {
     inner: Readonly<{ name: string; count: number }>
   }
   /**
-   * Picking between overloads needs the call's arguments, which this API does
-   * not take. The caller is expected to fall back to viem.
+   * Only the call's arguments can disambiguate, and this API does not take them.
    */
   class AmbiguousOverload_ extends UniffiError implements AmbiguousOverload__interface {
     /**
@@ -427,6 +435,9 @@ export const AbiError = (() => {
     tag: AbiError_Tags.UnsupportedType
     inner: Readonly<{ ty: string }>
   }
+  /**
+   * No native implementation, so only viem can serve the call.
+   */
   class UnsupportedType_ extends UniffiError implements UnsupportedType__interface {
     /**
      * @private
@@ -590,6 +601,115 @@ export const AbiError = (() => {
     }
   }
 
+  type InvalidAddress__interface = {
+    tag: AbiError_Tags.InvalidAddress
+    inner: Readonly<{ msg: string }>
+  }
+  /**
+   * viem rejects these too, so falling back surfaces its `InvalidAddressError`.
+   */
+  class InvalidAddress_ extends UniffiError implements InvalidAddress__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AbiError'
+    readonly tag = AbiError_Tags.InvalidAddress
+    readonly inner: Readonly<{ msg: string }>
+    constructor(inner: { msg: string }) {
+      super('AbiError', 'InvalidAddress')
+
+      this.inner = Object.freeze(inner)
+    }
+    static new(inner: { msg: string }): InvalidAddress_ {
+      return new InvalidAddress_(inner)
+    }
+
+    static instanceOf(obj: any): obj is InvalidAddress_ {
+      return obj.tag === AbiError_Tags.InvalidAddress
+    }
+    static hasInner(obj: any): obj is InvalidAddress_ {
+      return InvalidAddress_.instanceOf(obj)
+    }
+
+    static getInner(obj: InvalidAddress_): Readonly<{ msg: string }> {
+      return obj.inner
+    }
+  }
+
+  type BytesSizeMismatch__interface = {
+    tag: AbiError_Tags.BytesSizeMismatch
+    inner: Readonly<{ expected: number; actual: number }>
+  }
+  /**
+   * Mirrors viem's `AbiEncodingBytesSizeMismatchError`.
+   */
+  class BytesSizeMismatch_ extends UniffiError implements BytesSizeMismatch__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AbiError'
+    readonly tag = AbiError_Tags.BytesSizeMismatch
+    readonly inner: Readonly<{ expected: number; actual: number }>
+    constructor(inner: { expected: number; actual: number }) {
+      super('AbiError', 'BytesSizeMismatch')
+
+      this.inner = Object.freeze(inner)
+    }
+    static new(inner: { expected: number; actual: number }): BytesSizeMismatch_ {
+      return new BytesSizeMismatch_(inner)
+    }
+
+    static instanceOf(obj: any): obj is BytesSizeMismatch_ {
+      return obj.tag === AbiError_Tags.BytesSizeMismatch
+    }
+    static hasInner(obj: any): obj is BytesSizeMismatch_ {
+      return BytesSizeMismatch_.instanceOf(obj)
+    }
+
+    static getInner(obj: BytesSizeMismatch_): Readonly<{ expected: number; actual: number }> {
+      return obj.inner
+    }
+  }
+
+  type IntegerOutOfRange__interface = {
+    tag: AbiError_Tags.IntegerOutOfRange
+    inner: Readonly<{ value: string; ty: string }>
+  }
+  /**
+   * viem's `encodeNumber` throws for these, so falling back surfaces that
+   * rather than calldata built from a value the parameter cannot hold.
+   */
+  class IntegerOutOfRange_ extends UniffiError implements IntegerOutOfRange__interface {
+    /**
+     * @private
+     * This field is private and should not be used, use `tag` instead.
+     */
+    readonly [uniffiTypeNameSymbol] = 'AbiError'
+    readonly tag = AbiError_Tags.IntegerOutOfRange
+    readonly inner: Readonly<{ value: string; ty: string }>
+    constructor(inner: { value: string; ty: string }) {
+      super('AbiError', 'IntegerOutOfRange')
+
+      this.inner = Object.freeze(inner)
+    }
+    static new(inner: { value: string; ty: string }): IntegerOutOfRange_ {
+      return new IntegerOutOfRange_(inner)
+    }
+
+    static instanceOf(obj: any): obj is IntegerOutOfRange_ {
+      return obj.tag === AbiError_Tags.IntegerOutOfRange
+    }
+    static hasInner(obj: any): obj is IntegerOutOfRange_ {
+      return IntegerOutOfRange_.instanceOf(obj)
+    }
+
+    static getInner(obj: IntegerOutOfRange_): Readonly<{ value: string; ty: string }> {
+      return obj.inner
+    }
+  }
+
   function instanceOf(obj: any): obj is AbiError {
     return obj[uniffiTypeNameSymbol] === 'AbiError'
   }
@@ -604,9 +724,23 @@ export const AbiError = (() => {
     ArityMismatch: ArityMismatch_,
     DecodeFailed: DecodeFailed_,
     EncodeFailed: EncodeFailed_,
-    InvalidArgument: InvalidArgument_
+    InvalidArgument: InvalidArgument_,
+    InvalidAddress: InvalidAddress_,
+    BytesSizeMismatch: BytesSizeMismatch_,
+    IntegerOutOfRange: IntegerOutOfRange_
   })
 })()
+/**
+ * Every way a native ABI call can hand back to viem. The JS shims catch all of
+ * these and call the real viem implementation, so an error is a handover rather
+ * than a failure.
+ *
+ * Variant order and field types are the FFI wire format, and the TypeScript
+ * bindings are generated separately from the library. **Add new variants at the
+ * end and leave existing fields alone**: stale bindings throw
+ * `UnexpectedEnumCase` on an unknown trailing variant, but read a reordered or
+ * resized one as the wrong error with the wrong payload.
+ */
 export type AbiError = InstanceType<
   (typeof AbiError)[
     | 'InvalidAbi'
@@ -617,7 +751,10 @@ export type AbiError = InstanceType<
     | 'ArityMismatch'
     | 'DecodeFailed'
     | 'EncodeFailed'
-    | 'InvalidArgument']
+    | 'InvalidArgument'
+    | 'InvalidAddress'
+    | 'BytesSizeMismatch'
+    | 'IntegerOutOfRange']
 >
 
 // FfiConverter for enum AbiError
@@ -652,6 +789,18 @@ const FfiConverterTypeAbiError = (() => {
           return new AbiError.EncodeFailed({ msg: FfiConverterString.read(from) })
         case 9:
           return new AbiError.InvalidArgument({ msg: FfiConverterString.read(from) })
+        case 10:
+          return new AbiError.InvalidAddress({ msg: FfiConverterString.read(from) })
+        case 11:
+          return new AbiError.BytesSizeMismatch({
+            expected: FfiConverterUInt32.read(from),
+            actual: FfiConverterUInt32.read(from)
+          })
+        case 12:
+          return new AbiError.IntegerOutOfRange({
+            value: FfiConverterString.read(from),
+            ty: FfiConverterString.read(from)
+          })
         default:
           throw new UniffiInternalError.UnexpectedEnumCase()
       }
@@ -713,6 +862,26 @@ const FfiConverterTypeAbiError = (() => {
           ordinalConverter.write(9, into)
           const inner = value.inner
           FfiConverterString.write(inner.msg, into)
+          return
+        }
+        case AbiError_Tags.InvalidAddress: {
+          ordinalConverter.write(10, into)
+          const inner = value.inner
+          FfiConverterString.write(inner.msg, into)
+          return
+        }
+        case AbiError_Tags.BytesSizeMismatch: {
+          ordinalConverter.write(11, into)
+          const inner = value.inner
+          FfiConverterUInt32.write(inner.expected, into)
+          FfiConverterUInt32.write(inner.actual, into)
+          return
+        }
+        case AbiError_Tags.IntegerOutOfRange: {
+          ordinalConverter.write(12, into)
+          const inner = value.inner
+          FfiConverterString.write(inner.value, into)
+          FfiConverterString.write(inner.ty, into)
           return
         }
         default:
@@ -779,6 +948,26 @@ const FfiConverterTypeAbiError = (() => {
           size += FfiConverterString.allocationSize(inner.msg)
           return size
         }
+        case AbiError_Tags.InvalidAddress: {
+          const inner = value.inner
+          let size = ordinalConverter.allocationSize(10)
+          size += FfiConverterString.allocationSize(inner.msg)
+          return size
+        }
+        case AbiError_Tags.BytesSizeMismatch: {
+          const inner = value.inner
+          let size = ordinalConverter.allocationSize(11)
+          size += FfiConverterUInt32.allocationSize(inner.expected)
+          size += FfiConverterUInt32.allocationSize(inner.actual)
+          return size
+        }
+        case AbiError_Tags.IntegerOutOfRange: {
+          const inner = value.inner
+          let size = ordinalConverter.allocationSize(12)
+          size += FfiConverterString.allocationSize(inner.value)
+          size += FfiConverterString.allocationSize(inner.ty)
+          return size
+        }
         default:
           throw new UniffiInternalError.UnexpectedEnumCase()
       }
@@ -808,32 +997,32 @@ function uniffiEnsureInitialized() {
       bindingsContractVersion
     )
   }
-  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_bytes_to_hex() !== 24670) {
+  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_bytes_to_hex() !== 58083) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_ambire_crypto_checksum_func_bytes_to_hex'
     )
   }
-  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_checksum_address() !== 49414) {
+  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_checksum_address() !== 59690) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_ambire_crypto_checksum_func_checksum_address'
     )
   }
-  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_decode_function_result() !== 5001) {
+  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_decode_function_result() !== 27744) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_ambire_crypto_checksum_func_decode_function_result'
     )
   }
-  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_encode_function_data() !== 34637) {
+  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_encode_function_data() !== 11749) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_ambire_crypto_checksum_func_encode_function_data'
     )
   }
-  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_hex_to_bytes() !== 11620) {
+  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_hex_to_bytes() !== 12413) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_ambire_crypto_checksum_func_hex_to_bytes'
     )
   }
-  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_keccak256() !== 5433) {
+  if (nativeModule().ubrn_uniffi_ambire_crypto_checksum_func_keccak256() !== 54508) {
     throw new UniffiInternalError.ApiChecksumMismatch(
       'uniffi_ambire_crypto_checksum_func_keccak256'
     )

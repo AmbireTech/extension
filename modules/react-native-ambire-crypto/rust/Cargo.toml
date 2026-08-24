@@ -15,3 +15,18 @@ alloy-dyn-abi = "1"
 alloy-json-abi = "1"
 serde_json = "1"
 thiserror = "2"
+
+[lints.rust]
+nonstandard_style = "deny"
+future_incompatible = "warn"
+
+[lints.clippy]
+all = { level = "deny", priority = 10 }
+pedantic = { level = "warn", priority = 3 }
+# uniffi generates the FFI shim from the exported signatures and needs owned
+# arguments, so every `#[uniffi::export]` function trips this. The internal
+# helpers all take references already.
+needless_pass_by_value = { level = "allow", priority = 4 }
+# `#[must_use]` says nothing across an FFI boundary, where the caller is
+# generated code that always uses the return value.
+must_use_candidate = { level = "allow", priority = 4 }

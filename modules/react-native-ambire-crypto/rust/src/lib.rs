@@ -1,94 +1,153 @@
+//! Native counterparts to the ethers and viem calls that dominate a portfolio
+//! update on mobile.
+//!
+//! The JS shims fall back to the originals on any error, so refusing work is
+//! always safe and returning a value the JS would not have returned never is.
+//! Where the two disagree, these functions refuse.
+
 use std::str::FromStr;
 
 use alloy_dyn_abi::{DynSolType, DynSolValue, FunctionExt, JsonAbiExt, Specifier};
-use alloy_json_abi::{JsonAbi, Param};
-use alloy_primitives::{hex, keccak256 as alloy_keccak256, Address, I256, U256};
+use alloy_json_abi::{Function, JsonAbi, Param};
+use alloy_primitives::{hex, keccak256 as alloy_keccak256, Address, B256, I256, U256};
 use serde_json::{Map, Value};
 
-/// keccak256 of the given bytes. Returns the 32-byte hash.
-/// The JS shim handles hex encoding on either side of this call.
+const HEX_PREFIX: &str = "0x";
+const HEX_PREFIX_UPPER: &str = "0X";
+
+/// Must stay in step with `src/ambire-common/src/libs/richJson/richJson.ts`.
+const BIGINT_TAG: &str = "$bigint";
+
+/// Where viem switches from a plain JS number to a `BigInt`. See `decodeNumber`
+/// in viem's `utils/abi/decodeAbiParameters.js`.
+const JS_SAFE_INT_BITS: usize = 48;
+
+/// Returns the 32-byte hash. The JS shim handles hex on both sides.
 #[uniffi::export]
 pub fn keccak256(input: Vec<u8>) -> Vec<u8> {
     alloy_keccak256(&input).to_vec()
 }
 
-/// Removes exactly one `0x` or `0X` prefix, or None when there is no prefix.
-///
-/// `trim_start_matches` is deliberately avoided: it strips a repeated prefix, so
-/// `0x0x12` would decode rather than fail.
-fn strip_hex_prefix(value: &str) -> Option<&str> {
-    value.strip_prefix("0x").or_else(|| value.strip_prefix("0X"))
+/// Not `trim_start_matches`, which strips a repeated prefix, so `0x0x12` would
+/// decode rather than fail.
+fn strip_one_hex_prefix(value: &str) -> Option<&str> {
+    value
+        .strip_prefix(HEX_PREFIX)
+        .or_else(|| value.strip_prefix(HEX_PREFIX_UPPER))
 }
 
-/// Lowercase `0x`-prefixed hex for the given bytes, as ethers' `hexlify` and
-/// viem's `bytesToHex` produce it. Empty input gives `0x`.
-///
-/// Worth the FFI hop only for large buffers. The caller keeps a byte-count
-/// threshold and stays in JS below it, because the fixed per-call marshalling
-/// cost dwarfs the hex loop for the 20-32 byte values that dominate.
-#[uniffi::export]
-pub fn bytes_to_hex(input: Vec<u8>) -> String {
-    hex::encode_prefixed(input)
-}
-
-/// Bytes of a `0x`-prefixed hex string, accepting exactly what ethers'
-/// `getBytes` accepts: whole bytes only, either case, prefix required.
-///
-/// Errors on anything else, including an odd number of hex digits and a missing
-/// prefix, which lets the caller fall back to the JS implementation rather than
-/// this changing what an invalid input does.
-#[uniffi::export]
-pub fn hex_to_bytes(input: String) -> Result<Vec<u8>, AbiError> {
-    let body = strip_hex_prefix(&input).ok_or_else(|| AbiError::InvalidHex {
-        msg: "missing 0x prefix".to_string(),
-    })?;
-
-    // `hex::decode` strips a `0x` prefix of its own, so `0x0x1234` would decode
-    // to `0x1234` here instead of failing the way ethers' regex fails it. No
-    // valid body can start with a prefix anyway, since `x` is not a hex digit.
-    if strip_hex_prefix(body).is_some() {
+/// `hex::decode` strips a prefix of its own, so without this `0x0x1234` decodes
+/// instead of failing. No valid body starts with a prefix, `x` not being a hex
+/// digit.
+fn reject_repeated_hex_prefix(body: &str) -> Result<&str, AbiError> {
+    if strip_one_hex_prefix(body).is_some() {
         return Err(AbiError::InvalidHex {
             msg: "repeated 0x prefix".to_string(),
         });
     }
 
+    Ok(body)
+}
+
+/// Accepts what ethers' `isHexString` regex does, `0X` included via its `i` flag.
+fn ethers_hex_body(value: &str) -> Result<&str, AbiError> {
+    let body = strip_one_hex_prefix(value).ok_or_else(|| AbiError::InvalidHex {
+        msg: "missing 0x prefix".to_string(),
+    })?;
+
+    reject_repeated_hex_prefix(body)
+}
+
+/// Requires the lower-case prefix every viem `Hex` carries. `0X` is refused
+/// because no viem regex has an `i` flag on the prefix, so viem either throws or
+/// carries the stray `X` into its output.
+fn viem_hex_body(value: &str) -> Result<&str, AbiError> {
+    let body = value
+        .strip_prefix(HEX_PREFIX)
+        .ok_or_else(|| AbiError::InvalidHex {
+            msg: format!("{value}: expected a lower-case 0x prefix"),
+        })?;
+
+    reject_repeated_hex_prefix(body)
+}
+
+fn decode_viem_hex(value: &str) -> Result<Vec<u8>, AbiError> {
+    let body = viem_hex_body(value)?;
+
     hex::decode(body).map_err(|e| AbiError::InvalidHex { msg: e.to_string() })
 }
 
-/// EIP-55 checksummed form of a 20-byte hex address, as viem's
-/// `checksumAddress` produces it. Errors on anything that is not a
-/// `0x`-prefixed 40-character hex string, which lets the caller fall back to
-/// viem rather than this changing what an invalid input does.
+/// Accepts only what viem's `isAddress` does. `Address::from_str` alone is too
+/// lax: it makes the prefix optional and accepts `0X`, parsing inputs viem
+/// rejects outright.
+fn parse_viem_address(value: &str) -> Result<Address, AbiError> {
+    if !value.starts_with(HEX_PREFIX) {
+        return Err(AbiError::InvalidAddress {
+            msg: format!("{value}: expected a lower-case 0x prefix"),
+        });
+    }
+
+    Address::from_str(value).map_err(|e| AbiError::InvalidAddress {
+        msg: format!("{value}: {e}"),
+    })
+}
+
+/// Lowercase `0x` hex, as ethers' `hexlify` and viem's `bytesToHex` produce it.
+/// Empty input gives `0x`.
 ///
-/// Only the plain EIP-55 form is handled here. viem also supports the EIP-1191
-/// chain-id variant, which the caller keeps in JS so there is no second
-/// implementation of it to keep in sync.
+/// Only worth the FFI hop for large buffers, so the caller keeps a byte-count
+/// threshold and stays in JS below it.
+#[uniffi::export]
+pub fn bytes_to_hex(input: Vec<u8>) -> String {
+    hex::encode_prefixed(input)
+}
+
+/// Accepts exactly what ethers' `getBytes` accepts: whole bytes, either case,
+/// prefix required.
+///
+/// # Errors
+/// Anything else, so the caller falls back to ethers rather than this changing
+/// what an invalid input does.
+#[uniffi::export]
+pub fn hex_to_bytes(input: String) -> Result<Vec<u8>, AbiError> {
+    let body = ethers_hex_body(&input)?;
+
+    hex::decode(body).map_err(|e| AbiError::InvalidHex { msg: e.to_string() })
+}
+
+/// EIP-55 checksummed address, as viem's `checksumAddress` produces it. The
+/// EIP-1191 chain-id variant stays in JS so there is no second copy of it here.
+///
+/// # Errors
+/// Anything viem's `isAddress` would reject, so those calls fall back to viem.
 #[uniffi::export]
 pub fn checksum_address(address: String) -> Result<String, AbiError> {
-    let parsed = Address::from_str(&address).map_err(|e| AbiError::InvalidHex {
-        msg: format!("{address}: {e}"),
-    })?;
+    let parsed = parse_viem_address(&address)?;
 
     Ok(parsed.to_checksum(None))
 }
 
-/// viem returns a plain JS number for integers this wide or narrower and a
-/// BigInt for anything wider. See `decodeNumber` in viem's
-/// `utils/abi/decodeAbiParameters.js`.
-const JS_SAFE_INT_BITS: usize = 48;
-
+/// Every way a native ABI call can hand back to viem. The JS shims catch all of
+/// these and call the real viem implementation, so an error is a handover rather
+/// than a failure.
+///
+/// Variant order and field types are the FFI wire format, and the TypeScript
+/// bindings are generated separately from the library. **Add new variants at the
+/// end and leave existing fields alone**: stale bindings throw
+/// `UnexpectedEnumCase` on an unknown trailing variant, but read a reordered or
+/// resized one as the wrong error with the wrong payload.
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum AbiError {
     #[error("invalid abi json: {msg}")]
     InvalidAbi { msg: String },
     #[error("function not found in abi: {name}")]
     FunctionNotFound { name: String },
-    /// Picking between overloads needs the call's arguments, which this API does
-    /// not take. The caller is expected to fall back to viem.
+    /// Only the call's arguments can disambiguate, and this API does not take them.
     #[error("{name} is overloaded {count} ways and cannot be resolved by name alone")]
     AmbiguousOverload { name: String, count: u32 },
     #[error("invalid hex: {msg}")]
     InvalidHex { msg: String },
+    /// No native implementation, so only viem can serve the call.
     #[error("unsupported abi type: {ty}")]
     UnsupportedType { ty: String },
     #[error("expected {expected} {what}, got {actual}")]
@@ -103,67 +162,75 @@ pub enum AbiError {
     EncodeFailed { msg: String },
     #[error("bad argument: {msg}")]
     InvalidArgument { msg: String },
+    /// viem rejects these too, so falling back surfaces its `InvalidAddressError`.
+    #[error("invalid address: {msg}")]
+    InvalidAddress { msg: String },
+    /// Mirrors viem's `AbiEncodingBytesSizeMismatchError`.
+    #[error("expected {expected} bytes for bytes{expected}, got {actual}")]
+    BytesSizeMismatch { expected: u32, actual: u32 },
+    /// viem's `encodeNumber` throws for these, so falling back surfaces that
+    /// rather than calldata built from a value the parameter cannot hold.
+    #[error("{value} does not fit {ty}")]
+    IntegerOutOfRange { value: String, ty: String },
+}
+
+/// ABI counts always fit a `u32`, which is what the generated bindings read.
+fn abi_count(count: usize) -> u32 {
+    u32::try_from(count).unwrap_or(u32::MAX)
 }
 
 fn arity_mismatch(what: &str, expected: usize, actual: usize) -> AbiError {
     AbiError::ArityMismatch {
         what: what.to_string(),
-        expected: expected as u32,
-        actual: actual as u32,
+        expected: abi_count(expected),
+        actual: abi_count(actual),
     }
 }
 
-/// Looks up a function by name, refusing overloaded names because only the
-/// call's arguments can disambiguate those.
-fn find_function<'a>(abi: &'a JsonAbi, name: &str) -> Result<&'a alloy_json_abi::Function, AbiError> {
-    let overloads = abi
-        .function(name)
-        .ok_or_else(|| AbiError::FunctionNotFound {
-            name: name.to_string(),
-        })?;
-
-    if overloads.len() > 1 {
-        return Err(AbiError::AmbiguousOverload {
-            name: name.to_string(),
-            count: overloads.len() as u32,
-        });
-    }
-
-    overloads.first().ok_or_else(|| AbiError::FunctionNotFound {
+fn find_function<'a>(abi: &'a JsonAbi, name: &str) -> Result<&'a Function, AbiError> {
+    let not_found = || AbiError::FunctionNotFound {
         name: name.to_string(),
-    })
+    };
+
+    match abi.function(name).ok_or_else(not_found)?.as_slice() {
+        [] => Err(not_found()),
+        [func] => Ok(func),
+        overloads => Err(AbiError::AmbiguousOverload {
+            name: name.to_string(),
+            count: abi_count(overloads.len()),
+        }),
+    }
 }
 
-/// Decodes the return data of a contract function, mirroring viem's
-/// `decodeFunctionResult`. Returns a JSON string whose shape matches viem:
-/// a single output is unwrapped, named tuples become objects, unnamed ones
-/// become arrays, addresses are EIP-55 checksummed, bytes are `0x`-hex.
+/// Mirrors viem's `decodeFunctionResult`, returning viem's shape as JSON: a
+/// single output unwrapped, a fully named tuple as an object and any other tuple
+/// as an array, addresses checksummed, bytes as `0x` hex, no outputs as `null`.
 ///
-/// Integers wider than `JS_SAFE_INT_BITS` cannot survive JSON, so those leaves
-/// are emitted as the tagged object `{"$bigint":"<decimal>"}` — the exact
-/// convention the JS `richJson` parser reconstructs into a real BigInt. Narrower
-/// integers become plain JSON numbers, because that is what viem returns.
+/// Integers past `JS_SAFE_INT_BITS` cannot survive JSON, so they come back as
+/// `{"$bigint":"<decimal>"}` for the JS `richJson` parser to rebuild.
 ///
-/// A function with no outputs decodes to JSON `null`, which the JS side turns
-/// back into the `undefined` viem returns.
+/// # Errors
+/// An unparseable ABI, an unknown or overloaded name, data that is not a single
+/// lower-case `0x` hex string, or data that does not decode against the outputs.
 #[uniffi::export]
 pub fn decode_function_result(
     abi_json: String,
     function_name: String,
     data_hex: String,
 ) -> Result<String, AbiError> {
-    let abi: JsonAbi = serde_json::from_str(&abi_json)
-        .map_err(|e| AbiError::InvalidAbi { msg: e.to_string() })?;
+    let abi: JsonAbi =
+        serde_json::from_str(&abi_json).map_err(|e| AbiError::InvalidAbi { msg: e.to_string() })?;
 
     let func = find_function(&abi, &function_name)?;
 
-    let data = hex::decode(data_hex.trim_start_matches("0x"))
-        .map_err(|e| AbiError::InvalidHex { msg: e.to_string() })?;
+    let data = decode_viem_hex(&data_hex)?;
 
     let values = func
         .abi_decode_output(&data)
         .map_err(|e| AbiError::DecodeFailed { msg: e.to_string() })?;
 
+    // Unreachable while alloy decodes one value per output, and what makes the
+    // indexing below safe.
     if values.len() != func.outputs.len() {
         return Err(arity_mismatch(
             "decoded outputs",
@@ -172,8 +239,6 @@ pub fn decode_function_result(
         ));
     }
 
-    // viem returns undefined for no outputs, unwraps a single output, and gives
-    // an array for more than one.
     let json = match func.outputs.len() {
         0 => Value::Null,
         1 => value_to_json(&func.outputs[0], &values[0])?,
@@ -191,42 +256,41 @@ pub fn decode_function_result(
 
 fn bigint_tag(decimal: String) -> Value {
     let mut obj = Map::new();
-    obj.insert("$bigint".to_string(), Value::String(decimal));
+    obj.insert(BIGINT_TAG.to_string(), Value::String(decimal));
     Value::Object(obj)
 }
 
-/// Emits an integer the way viem does: a plain JSON number up to
-/// `JS_SAFE_INT_BITS`, a `$bigint` tag beyond it. `decimal` is the value already
-/// rendered in base 10, which keeps this identical for signed and unsigned.
+/// Takes the value already rendered in base 10, which keeps this identical for
+/// signed and unsigned.
 fn int_to_json(decimal: String, size: usize) -> Result<Value, AbiError> {
     if size > JS_SAFE_INT_BITS {
         return Ok(bigint_tag(decimal));
     }
 
-    // Anything this narrow fits an i64, signed or not.
-    let number = decimal
-        .parse::<i64>()
-        .map_err(|e| AbiError::DecodeFailed { msg: format!("int{size} {decimal}: {e}") })?;
+    // Reachable: nothing range-checks a decoded word against its declared width,
+    // so a non-canonical `uint48` can hold far more than 48 bits. Failing hands
+    // the call to viem instead of truncating.
+    let number = decimal.parse::<i64>().map_err(|e| AbiError::DecodeFailed {
+        msg: format!("{decimal} does not fit the declared {size}-bit width: {e}"),
+    })?;
 
     Ok(Value::Number(number.into()))
 }
 
-/// Recursively converts a decoded value into viem-shaped JSON. `param` carries
-/// the ABI names used to key tuple fields; its `components` describe the fields
-/// of a tuple (and, for an array of tuples, the fields of each element).
+/// `param` carries the names that key tuple fields. Its `components` describe a
+/// tuple's fields, or the fields of each element in an array of tuples.
 fn value_to_json(param: &Param, value: &DynSolValue) -> Result<Value, AbiError> {
     match value {
         DynSolValue::Uint(u, size) => int_to_json(u.to_string(), *size),
         DynSolValue::Int(i, size) => int_to_json(i.to_string(), *size),
         DynSolValue::Bool(b) => Ok(Value::Bool(*b)),
         DynSolValue::Address(a) => Ok(Value::String(a.to_checksum(None))),
-        DynSolValue::Bytes(b) => Ok(Value::String(format!("0x{}", hex::encode(b)))),
+        DynSolValue::Bytes(b) => Ok(Value::String(hex::encode_prefixed(b))),
         DynSolValue::FixedBytes(word, size) => {
-            Ok(Value::String(format!("0x{}", hex::encode(&word[..*size]))))
+            Ok(Value::String(hex::encode_prefixed(&word[..*size])))
         }
         DynSolValue::String(s) => Ok(Value::String(s.clone())),
-        // The element type of an array reuses the same `param`; the value itself
-        // tells us whether each element is a tuple (needs names) or a scalar.
+        // Elements reuse the same `param`; the value says whether each is a tuple.
         DynSolValue::Array(items) | DynSolValue::FixedArray(items) => Ok(Value::Array(
             items
                 .iter()
@@ -234,7 +298,8 @@ fn value_to_json(param: &Param, value: &DynSolValue) -> Result<Value, AbiError> 
                 .collect::<Result<Vec<_>, _>>()?,
         )),
         DynSolValue::Tuple(fields) => tuple_to_json(&param.components, fields),
-        other => Err(AbiError::UnsupportedType {
+        // Named, not a wildcard, so a new alloy variant breaks the build here.
+        other @ DynSolValue::Function(_) => Err(AbiError::UnsupportedType {
             ty: format!("{other:?}"),
         }),
     }
@@ -242,11 +307,14 @@ fn value_to_json(param: &Param, value: &DynSolValue) -> Result<Value, AbiError> 
 
 fn tuple_to_json(components: &[Param], fields: &[DynSolValue]) -> Result<Value, AbiError> {
     if components.len() != fields.len() {
-        return Err(arity_mismatch("tuple fields", components.len(), fields.len()));
+        return Err(arity_mismatch(
+            "tuple fields",
+            components.len(),
+            fields.len(),
+        ));
     }
 
-    // viem keys a tuple by name only when every component is named, and falls
-    // back to a positional array otherwise.
+    // viem keys by name only when every component has one.
     let all_named = !components.is_empty() && components.iter().all(|c| !c.name.is_empty());
 
     if all_named {
@@ -267,19 +335,21 @@ fn tuple_to_json(components: &[Param], fields: &[DynSolValue]) -> Result<Value, 
     ))
 }
 
-/// Encodes a contract function call, mirroring viem's `encodeFunctionData`.
-/// `args_json` is a JSON array of the arguments in ABI order; integers may be
-/// plain JSON numbers/strings or the `{"$bigint":"<decimal>"}` tag that the JS
-/// `richJson` serializer produces. Returns the `0x` calldata (4-byte selector
-/// followed by the ABI-encoded arguments).
+/// Mirrors viem's `encodeFunctionData`, returning the `0x` calldata. `args_json`
+/// holds the arguments in ABI order, integers as JSON numbers, decimal strings or
+/// the `{"$bigint":"<decimal>"}` tag the JS `richJson` serializer produces.
+///
+/// # Errors
+/// An unparseable ABI, an unknown or overloaded name, or any argument viem would
+/// not encode to the same bytes.
 #[uniffi::export]
 pub fn encode_function_data(
     abi_json: String,
     function_name: String,
     args_json: String,
 ) -> Result<String, AbiError> {
-    let abi: JsonAbi = serde_json::from_str(&abi_json)
-        .map_err(|e| AbiError::InvalidAbi { msg: e.to_string() })?;
+    let abi: JsonAbi =
+        serde_json::from_str(&abi_json).map_err(|e| AbiError::InvalidAbi { msg: e.to_string() })?;
 
     let func = find_function(&abi, &function_name)?;
 
@@ -304,12 +374,11 @@ pub fn encode_function_data(
         .abi_encode_input(&values)
         .map_err(|e| AbiError::EncodeFailed { msg: e.to_string() })?;
 
-    Ok(format!("0x{}", hex::encode(calldata)))
+    Ok(hex::encode_prefixed(calldata))
 }
 
-/// Splits an array type into its element type and length, e.g. `uint256[]` into
-/// `("uint256", None)` and `bytes32[3]` into `("bytes32", Some(3))`. Returns
-/// None for non-array types.
+/// `uint256[]` into `("uint256", None)`, `bytes32[3]` into `("bytes32", Some(3))`,
+/// None for anything that is not an array.
 fn split_array_type(ty: &str) -> Option<(&str, Option<usize>)> {
     let open = ty.rfind('[')?;
     if !ty.ends_with(']') {
@@ -325,14 +394,12 @@ fn split_array_type(ty: &str) -> Option<(&str, Option<usize>)> {
     Some((&ty[..open], len))
 }
 
-/// Reads an integer argument as a decimal string, accepting the richJson
-/// `{"$bigint":"..."}` tag, a plain string, or a JSON number.
+/// Accepts the richJson `{"$bigint":"..."}` tag, a plain string or a JSON number.
 ///
-/// A fractional or exponent-form JSON number is rejected rather than truncated.
-/// JS numbers that large have already lost precision by the time they reach
-/// here, so the caller is better off falling back to viem.
+/// Fractional and exponent-form numbers are rejected rather than truncated,
+/// having already lost precision before they reach here.
 fn arg_to_decimal(value: &Value) -> Result<String, AbiError> {
-    if let Some(tag) = value.get("$bigint").and_then(Value::as_str) {
+    if let Some(tag) = value.get(BIGINT_TAG).and_then(Value::as_str) {
         return Ok(tag.to_string());
     }
     if let Some(s) = value.as_str() {
@@ -359,9 +426,8 @@ fn arg_to_str<'a>(value: &'a Value, what: &str) -> Result<&'a str, AbiError> {
     })
 }
 
-/// Coerces a JSON argument into a DynSolValue according to its ABI param,
-/// recursing through arrays and tuples (objects keyed by component name, or
-/// arrays in ABI order).
+/// Recurses through arrays and tuples, taking a tuple either as an object keyed
+/// by component name or as an array in ABI order.
 fn json_to_value(param: &Param, value: &Value) -> Result<DynSolValue, AbiError> {
     if let Some((base, len)) = split_array_type(&param.ty) {
         let items = value.as_array().ok_or_else(|| AbiError::InvalidArgument {
@@ -369,7 +435,11 @@ fn json_to_value(param: &Param, value: &Value) -> Result<DynSolValue, AbiError> 
         })?;
         if let Some(expected) = len {
             if items.len() != expected {
-                return Err(arity_mismatch(&format!("{} items", param.ty), expected, items.len()));
+                return Err(arity_mismatch(
+                    &format!("{} items", param.ty),
+                    expected,
+                    items.len(),
+                ));
             }
         }
 
@@ -396,9 +466,10 @@ fn json_to_value(param: &Param, value: &Value) -> Result<DynSolValue, AbiError> 
                 .iter()
                 .map(|component| {
                     let field =
-                        obj.get(&component.name).ok_or_else(|| AbiError::InvalidArgument {
-                            msg: format!("missing tuple field: {}", component.name),
-                        })?;
+                        obj.get(&component.name)
+                            .ok_or_else(|| AbiError::InvalidArgument {
+                                msg: format!("missing tuple field: {}", component.name),
+                            })?;
                     json_to_value(component, field)
                 })
                 .collect::<Result<Vec<_>, _>>()?
@@ -434,18 +505,29 @@ fn json_to_value(param: &Param, value: &Value) -> Result<DynSolValue, AbiError> 
 
 fn coerce_scalar(ty: &DynSolType, value: &Value) -> Result<DynSolValue, AbiError> {
     match ty {
-        DynSolType::Bool => value
-            .as_bool()
-            .map(DynSolValue::Bool)
-            .ok_or_else(|| AbiError::InvalidArgument {
-                msg: format!("expected a bool, got {value}"),
-            }),
+        DynSolType::Bool => {
+            value
+                .as_bool()
+                .map(DynSolValue::Bool)
+                .ok_or_else(|| AbiError::InvalidArgument {
+                    msg: format!("expected a bool, got {value}"),
+                })
+        }
         DynSolType::Uint(size) => {
             let decimal = arg_to_decimal(value)?;
             let parsed =
                 U256::from_str_radix(&decimal, 10).map_err(|e| AbiError::InvalidArgument {
                     msg: format!("invalid uint {decimal}: {e}"),
                 })?;
+            // alloy keeps the declared width but encodes the full word without
+            // checking against it, so without this the native path would build
+            // calldata viem's `encodeNumber` refuses to build.
+            if parsed.bit_len() > *size {
+                return Err(AbiError::IntegerOutOfRange {
+                    value: decimal,
+                    ty: format!("uint{size}"),
+                });
+            }
             Ok(DynSolValue::Uint(parsed, *size))
         }
         DynSolType::Int(size) => {
@@ -453,33 +535,38 @@ fn coerce_scalar(ty: &DynSolType, value: &Value) -> Result<DynSolValue, AbiError
             let parsed = I256::from_dec_str(&decimal).map_err(|e| AbiError::InvalidArgument {
                 msg: format!("invalid int {decimal}: {e}"),
             })?;
+            // `bits` counts the sign bit, so this is exactly the `intN` range.
+            if parsed.bits() as usize > *size {
+                return Err(AbiError::IntegerOutOfRange {
+                    value: decimal,
+                    ty: format!("int{size}"),
+                });
+            }
             Ok(DynSolValue::Int(parsed, *size))
         }
         DynSolType::Address => {
-            let parsed =
-                Address::from_str(arg_to_str(value, "address")?).map_err(|e| {
-                    AbiError::InvalidArgument {
-                        msg: format!("invalid address: {e}"),
-                    }
-                })?;
+            let parsed = parse_viem_address(arg_to_str(value, "address")?)?;
             Ok(DynSolValue::Address(parsed))
         }
         DynSolType::Bytes => {
-            let bytes = hex::decode(arg_to_str(value, "bytes")?.trim_start_matches("0x"))
-                .map_err(|e| AbiError::InvalidHex { msg: e.to_string() })?;
+            let bytes = decode_viem_hex(arg_to_str(value, "bytes")?)?;
             Ok(DynSolValue::Bytes(bytes))
         }
         DynSolType::FixedBytes(n) => {
-            let bytes = hex::decode(arg_to_str(value, "bytes")?.trim_start_matches("0x"))
-                .map_err(|e| AbiError::InvalidHex { msg: e.to_string() })?;
+            let bytes = decode_viem_hex(arg_to_str(value, "bytes")?)?;
             if bytes.len() != *n {
-                return Err(arity_mismatch(&format!("bytes{n} bytes"), *n, bytes.len()));
+                return Err(AbiError::BytesSizeMismatch {
+                    expected: abi_count(*n),
+                    actual: abi_count(bytes.len()),
+                });
             }
-            let mut word = [0u8; 32];
+            let mut word = B256::ZERO;
             word[..*n].copy_from_slice(&bytes);
-            Ok(DynSolValue::FixedBytes(word.into(), *n))
+            Ok(DynSolValue::FixedBytes(word, *n))
         }
-        DynSolType::String => Ok(DynSolValue::String(arg_to_str(value, "string")?.to_string())),
+        DynSolType::String => Ok(DynSolValue::String(
+            arg_to_str(value, "string")?.to_string(),
+        )),
         other => Err(AbiError::UnsupportedType {
             ty: format!("{other:?}"),
         }),
@@ -489,163 +576,4 @@ fn coerce_scalar(ty: &DynSolType, value: &Value) -> Result<DynSolValue, AbiError
 uniffi::setup_scaffolding!();
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    const ERC20_ABI: &str = r#"[
-        {"type":"function","name":"transfer","inputs":[
-            {"name":"to","type":"address"},
-            {"name":"amount","type":"uint256"}
-        ],"outputs":[{"name":"","type":"bool"}],"stateMutability":"nonpayable"}
-    ]"#;
-
-    #[test]
-    fn encodes_erc20_transfer_like_viem() {
-        let calldata = encode_function_data(
-            ERC20_ABI.to_string(),
-            "transfer".to_string(),
-            r#"["0x1111111111111111111111111111111111111111",{"$bigint":"256"}]"#.to_string(),
-        )
-        .unwrap();
-
-        // selector a9059cbb, address left-padded to 32 bytes, amount 0x100
-        assert_eq!(
-            calldata,
-            "0xa9059cbb0000000000000000000000001111111111111111111111111111111111111111\
-0000000000000000000000000000000000000000000000000000000000000100"
-        );
-    }
-
-    #[test]
-    fn decodes_bool_result_like_viem() {
-        let json = decode_function_result(
-            ERC20_ABI.to_string(),
-            "transfer".to_string(),
-            "0x0000000000000000000000000000000000000000000000000000000000000001".to_string(),
-        )
-        .unwrap();
-
-        assert_eq!(json, "true");
-    }
-
-    // The BalanceGetter.TokenInfo shape that a portfolio update decodes, reduced
-    // to the two fields that pin down the int-width rule: viem gives a plain
-    // number for the uint8 decimals and a BigInt for the uint256 amount.
-    const TOKEN_INFO_ABI: &str = r#"[
-        {"type":"function","name":"info","inputs":[],"outputs":[{"name":"","type":"tuple","components":[
-            {"name":"amount","type":"uint256"},
-            {"name":"decimals","type":"uint8"}
-        ]}],"stateMutability":"view"}
-    ]"#;
-
-    #[test]
-    fn narrow_ints_decode_as_plain_numbers_and_wide_ints_as_bigint_tags() {
-        let json = decode_function_result(
-            TOKEN_INFO_ABI.to_string(),
-            "info".to_string(),
-            "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000\
-             0000000000000000000000000000000000000000000000000000000000000012"
-                .replace(['\n', ' '], ""),
-        )
-        .unwrap();
-
-        assert_eq!(json, r#"{"amount":{"$bigint":"1000000000000000000"},"decimals":18}"#);
-    }
-
-    // The mixed-case cases matter because viem's checksumAddress never validates
-    // the checksum it is handed, it only recomputes one. A wrong-checksum input
-    // must come back corrected, not rejected, or the shim would start throwing
-    // where viem does not.
-    #[test]
-    fn checksum_address_matches_viem() {
-        let expected = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
-
-        for input in [
-            "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",
-            "0xD8DA6BF26964AF9D7EED9E03E53415D37AA96045",
-            "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
-            "0xD8da6bf26964af9d7eed9e03e53415d37aa96045",
-        ] {
-            assert_eq!(checksum_address(input.to_string()).unwrap(), expected);
-        }
-
-        assert_eq!(
-            checksum_address("0x0000000000000000000000000000000000000000".to_string()).unwrap(),
-            "0x0000000000000000000000000000000000000000"
-        );
-    }
-
-    #[test]
-    fn bytes_to_hex_matches_hexlify() {
-        // Empty gives the bare prefix, the same as ethers' `hexlify(new Uint8Array())`.
-        assert_eq!(bytes_to_hex(vec![]), "0x");
-        assert_eq!(bytes_to_hex(vec![0x00]), "0x00");
-        assert_eq!(bytes_to_hex(vec![0x12, 0x34]), "0x1234");
-        // Every nibble above 9 must come out lowercase, which is what both
-        // ethers and viem emit.
-        assert_eq!(bytes_to_hex(vec![0xde, 0xad, 0xbe, 0xef]), "0xdeadbeef");
-        assert_eq!(bytes_to_hex(vec![0xff; 32]), format!("0x{}", "ff".repeat(32)));
-    }
-
-    #[test]
-    fn hex_to_bytes_matches_get_bytes() {
-        assert_eq!(hex_to_bytes("0x".to_string()).unwrap(), Vec::<u8>::new());
-        assert_eq!(hex_to_bytes("0x00".to_string()).unwrap(), vec![0x00]);
-        assert_eq!(hex_to_bytes("0xdeadbeef".to_string()).unwrap(), vec![0xde, 0xad, 0xbe, 0xef]);
-        // ethers' regex carries the `i` flag, so uppercase digits and an
-        // uppercase `0X` prefix are both valid input.
-        assert_eq!(hex_to_bytes("0xDEADBEEF".to_string()).unwrap(), vec![0xde, 0xad, 0xbe, 0xef]);
-        assert_eq!(hex_to_bytes("0XdeAdBeEf".to_string()).unwrap(), vec![0xde, 0xad, 0xbe, 0xef]);
-    }
-
-    #[test]
-    fn hex_to_bytes_rejects_what_ethers_rejects() {
-        for input in [
-            // Odd number of digits: not whole bytes.
-            "0x1",
-            "0xabc",
-            // No prefix at all.
-            "",
-            "1234",
-            "deadbeef",
-            // Non-hex characters.
-            "0xzz",
-            "0x12 34",
-            "0x12,34",
-            // A repeated prefix must not be stripped twice.
-            "0x0x1234",
-        ] {
-            assert!(
-                hex_to_bytes(input.to_string()).is_err(),
-                "expected {input:?} to be rejected so the caller falls back to JS"
-            );
-        }
-    }
-
-    #[test]
-    fn hex_round_trips_a_deployless_sized_payload() {
-        // A BalanceGetter call for a few hundred tokens encodes to roughly this
-        // much, which is the size range the native path exists for.
-        const PAYLOAD_BYTES: usize = 16 * 1024;
-
-        let bytes: Vec<u8> = (0..PAYLOAD_BYTES).map(|i| (i % 256) as u8).collect();
-        let hex = bytes_to_hex(bytes.clone());
-
-        assert_eq!(hex.len(), 2 + PAYLOAD_BYTES * 2, "hex is 2 chars per byte plus the prefix");
-        assert_eq!(
-            hex_to_bytes(hex).unwrap(),
-            bytes,
-            "a {PAYLOAD_BYTES}-byte payload must survive the round trip exactly"
-        );
-    }
-
-    #[test]
-    fn checksum_address_rejects_what_it_cannot_parse() {
-        for input in ["", "0x", "0xd8da6bf26964af9d7eed9e03e53415d37aa960", "not an address"] {
-            assert!(
-                checksum_address(input.to_string()).is_err(),
-                "expected {input} to be rejected so the caller falls back to viem"
-            );
-        }
-    }
-}
+mod tests;

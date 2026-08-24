@@ -29,7 +29,11 @@
     "ubrn:android": "../../node_modules/.bin/ubrn build android --config ubrn.config.yaml --release --and-generate && yarn ubrn:postgenerate",
     "ubrn:ios": "../../node_modules/.bin/ubrn build ios --config ubrn.config.yaml --release --and-generate && yarn ubrn:postgenerate",
     "ubrn:postgenerate": "node scripts/forceNativeStringDecoder.js",
-    "ubrn:clean": "rm -rfv cpp/ android/CMakeLists.txt android/src/main/java android/*.cpp ios/ src/Native* src/index.*ts* src/generated/"
+    "ubrn:clean": "rm -rfv cpp/ android/CMakeLists.txt android/src/main/java android/*.cpp ios/ src/Native* src/index.*ts* src/generated/",
+    "rust:test": "cd rust && cargo test --locked",
+    "rust:lint": "cd rust && cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "rust:fmt": "cd rust && cargo fmt",
+    "rust:check": "yarn rust:fmt --check && yarn rust:lint && yarn rust:test"
   },
   "keywords": [
     "react-native",
