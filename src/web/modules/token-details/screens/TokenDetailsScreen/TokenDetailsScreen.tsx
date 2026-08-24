@@ -9,6 +9,9 @@ import Header from '@common/modules/header/components/Header/Header'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
 import Exchanges from '@common/modules/token-details/components/Exchanges'
 import HideTokenModal from '@common/modules/token-details/components/HideTokenModal'
+import SwapAndBridgeFeeCard, {
+  isWalletStakingToken
+} from '@common/modules/token-details/components/SwapAndBridgeFeeCard'
 import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
@@ -89,7 +92,9 @@ const TokenDetailsScreen = () => {
           isRewards={isRewards}
           isVesting={isVesting}
           xWalletAmount={token.amount}
+          containerStyle={isWalletStakingToken(token) ? spacings.mbTy : undefined}
         />
+        <SwapAndBridgeFeeCard token={token} />
         <TokenData token={token} />
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />
