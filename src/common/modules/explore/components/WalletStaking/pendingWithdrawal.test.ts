@@ -5,6 +5,7 @@ import {
   formatPendingWalletWithdrawalDuration,
   getPendingWalletWithdrawalCommitmentId,
   getPendingWalletWithdrawalStorageKey,
+  getPendingWalletWithdrawalSummary,
   isPendingWalletWithdrawalReady,
   LOG_LEAVE_TOPIC,
   parseCachedPendingWalletWithdrawal,
@@ -23,10 +24,30 @@ const pendingWithdrawal = {
 }
 
 describe('pending WALLET withdrawal helpers', () => {
-  test('uses the lock-time flow only for xWALLET balances of at least 0.01', () => {
-    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n - 1n)).toBe(false)
-    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n)).toBe(true)
-    expect(shouldUsePendingWalletWithdrawalMode(null, 10n ** 16n)).toBe(false)
+  test('selects the latest timer and totals the shares from all active withdrawals', () => {
+    const latestWithdrawal = {
+      shares: 20n,
+      unlocksAt: pendingWithdrawal.unlocksAt + 2n * 24n * 60n * 60n,
+      maxTokens: 24n
+    }
+
+    expect(getPendingWalletWithdrawalSummary([pendingWithdrawal, latestWithdrawal])).toEqual({
+      latestWithdrawal,
+      totalShares: 30n
+    })
+  })
+
+  test('uses the lock-time flow only when xWALLET can back all pending shares', () => {
+    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n - 1n, 10n)).toBe(
+      false
+    )
+    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n, 10n ** 16n)).toBe(
+      true
+    )
+    expect(
+      shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n, 10n ** 16n + 1n)
+    ).toBe(false)
+    expect(shouldUsePendingWalletWithdrawalMode(null, 10n ** 16n, 10n)).toBe(false)
   })
 
   test('serializes and parses an account-specific cache entry', () => {

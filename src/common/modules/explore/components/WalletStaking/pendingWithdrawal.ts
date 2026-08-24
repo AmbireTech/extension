@@ -33,11 +33,31 @@ export const walletStakingInterface = new Interface([
 export const LOG_LEAVE_TOPIC = walletStakingInterface.getEvent('LogLeave')!.topicHash
 export const X_WALLET_PENDING_WITHDRAWAL_THRESHOLD = parseUnits('0.01', 18)
 
-/** Uses the lock-time flow only when the account still holds a meaningful xWALLET balance. */
+/** Uses the lock-time flow only when xWALLET can back every active commitment. */
 export const shouldUsePendingWalletWithdrawalMode = (
   pendingWithdrawal: PendingWalletWithdrawal | null,
-  xWalletBalance: bigint
-) => !!pendingWithdrawal && xWalletBalance >= X_WALLET_PENDING_WITHDRAWAL_THRESHOLD
+  xWalletBalance: bigint,
+  totalPendingShares: bigint
+) =>
+  !!pendingWithdrawal &&
+  xWalletBalance >= X_WALLET_PENDING_WITHDRAWAL_THRESHOLD &&
+  xWalletBalance >= totalPendingShares
+
+/** Selects the latest active withdrawal and totals all shares needed to back active commitments. */
+export const getPendingWalletWithdrawalSummary = (pendingWithdrawals: PendingWalletWithdrawal[]) =>
+  pendingWithdrawals.reduce<{
+    latestWithdrawal: PendingWalletWithdrawal | null
+    totalShares: bigint
+  }>(
+    (summary, withdrawal) => ({
+      latestWithdrawal:
+        !summary.latestWithdrawal || withdrawal.unlocksAt > summary.latestWithdrawal.unlocksAt
+          ? withdrawal
+          : summary.latestWithdrawal,
+      totalShares: summary.totalShares + withdrawal.shares
+    }),
+    { latestWithdrawal: null, totalShares: 0n }
+  )
 
 /** Validates and extracts raw WALLET staking logs returned by the relayer. */
 export const parseWalletStakingRelayerLogsResponse = (

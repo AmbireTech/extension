@@ -48,6 +48,7 @@ import {
   formatPendingWalletWithdrawalDuration,
   getPendingWalletWithdrawalCommitmentId,
   getPendingWalletWithdrawalStorageKey,
+  getPendingWalletWithdrawalSummary,
   isPendingWalletWithdrawalReady,
   LOG_LEAVE_TOPIC,
   parseCachedPendingWalletWithdrawal,
@@ -135,6 +136,7 @@ const WalletStakingScreen = () => {
   const [shareValue, setShareValue] = useState<bigint | null>(null)
   const [isLoadingShareValue, setIsLoadingShareValue] = useState(false)
   const [pendingWithdrawal, setPendingWithdrawal] = useState<PendingWalletWithdrawal | null>(null)
+  const [totalPendingShares, setTotalPendingShares] = useState(0n)
   const [isLoadingPendingWithdrawal, setIsLoadingPendingWithdrawal] = useState(false)
   const [hasPendingWithdrawalLoadFailed, setHasPendingWithdrawalLoadFailed] = useState(false)
   const [nowMs, setNowMs] = useState(() => Date.now())
@@ -178,7 +180,8 @@ const WalletStakingScreen = () => {
   )
   const xWalletBalance = useMemo(() => BigInt(xWalletToken?.amount || 0n), [xWalletToken?.amount])
   const isPendingWithdrawalMode =
-    mode === 'unstake' && shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, xWalletBalance)
+    mode === 'unstake' &&
+    shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, xWalletBalance, totalPendingShares)
   const isWithdrawalReady = pendingWithdrawal
     ? isPendingWalletWithdrawalReady(pendingWithdrawal.unlocksAt, nowMs)
     : false
@@ -276,6 +279,7 @@ const WalletStakingScreen = () => {
       const accountAddr = account?.addr
       const requestId = ++pendingWithdrawalRequestIdRef.current
       setPendingWithdrawal(null)
+      setTotalPendingShares(0n)
       setHasPendingWithdrawalLoadFailed(false)
 
       if (!accountAddr) {
@@ -336,31 +340,6 @@ const WalletStakingScreen = () => {
           captureException(error)
         }
 
-        if (
-          cachedPendingWithdrawal &&
-          !isPendingWalletWithdrawalReady(cachedPendingWithdrawal.unlocksAt)
-        ) {
-          if (requestId === pendingWithdrawalRequestIdRef.current && !signal?.aborted) {
-            setPendingWithdrawal(cachedPendingWithdrawal)
-          }
-          return
-        }
-
-        if (cachedPendingWithdrawal) {
-          const maxTokens = await getCommitmentMaxTokens(cachedPendingWithdrawal)
-          if (maxTokens > 0n) {
-            const activeCachedWithdrawal = { ...cachedPendingWithdrawal, maxTokens }
-            await persistPendingWithdrawal(activeCachedWithdrawal)
-            if (requestId === pendingWithdrawalRequestIdRef.current && !signal?.aborted) {
-              setPendingWithdrawal(activeCachedWithdrawal)
-            }
-            return
-          }
-
-          await removeCachedPendingWithdrawal()
-          cachedPendingWithdrawal = null
-        }
-
         const response = await fetch(`${CONFIG.RELAYER_URL}/v2/identity/logs`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -375,23 +354,33 @@ const WalletStakingScreen = () => {
 
         const logs = parseWalletStakingRelayerLogsResponse(await response.json())
         const decodedWithdrawals = decodePendingWalletWithdrawals(logs, accountAddr)
+        const withdrawalsById = new Map<string, PendingWalletWithdrawal>()
+        if (cachedPendingWithdrawal) {
+          withdrawalsById.set(
+            `${cachedPendingWithdrawal.shares}:${cachedPendingWithdrawal.unlocksAt}`,
+            cachedPendingWithdrawal
+          )
+        }
+        decodedWithdrawals.forEach((withdrawal) => {
+          withdrawalsById.set(`${withdrawal.shares}:${withdrawal.unlocksAt}`, withdrawal)
+        })
         const activeWithdrawals = (
           await Promise.all(
-            decodedWithdrawals.map(async (withdrawal) => {
+            Array.from(withdrawalsById.values()).map(async (withdrawal) => {
               const maxTokens = await getCommitmentMaxTokens(withdrawal)
               return maxTokens > 0n ? { ...withdrawal, maxTokens } : null
             })
           )
-        )
-          .filter((withdrawal): withdrawal is PendingWalletWithdrawal => !!withdrawal)
-          .sort((a, b) => (a.unlocksAt < b.unlocksAt ? -1 : a.unlocksAt > b.unlocksAt ? 1 : 0))
-        const nextPendingWithdrawal = activeWithdrawals[0] || null
+        ).filter((withdrawal): withdrawal is PendingWalletWithdrawal => !!withdrawal)
+        const { latestWithdrawal, totalShares } =
+          getPendingWalletWithdrawalSummary(activeWithdrawals)
 
-        if (nextPendingWithdrawal) await persistPendingWithdrawal(nextPendingWithdrawal)
+        if (latestWithdrawal) await persistPendingWithdrawal(latestWithdrawal)
         else await removeCachedPendingWithdrawal()
 
         if (requestId === pendingWithdrawalRequestIdRef.current && !signal?.aborted) {
-          setPendingWithdrawal(nextPendingWithdrawal)
+          setPendingWithdrawal(latestWithdrawal)
+          setTotalPendingShares(totalShares)
         }
       } catch (error) {
         if (signal?.aborted || (error instanceof Error && error.name === 'AbortError')) return
@@ -400,6 +389,7 @@ const WalletStakingScreen = () => {
         captureException(error)
         if (requestId === pendingWithdrawalRequestIdRef.current) {
           setPendingWithdrawal(cachedPendingWithdrawal)
+          setTotalPendingShares(cachedPendingWithdrawal?.shares || 0n)
           setHasPendingWithdrawalLoadFailed(true)
           addToast(t("We couldn't check your pending withdrawal. Please try again."), {
             type: 'error'
@@ -561,9 +551,7 @@ const WalletStakingScreen = () => {
     }
 
     const missingPendingShares =
-      pendingWithdrawal && pendingWithdrawal.shares > xWalletBalance
-        ? pendingWithdrawal.shares - xWalletBalance
-        : 0n
+      totalPendingShares > xWalletBalance ? totalPendingShares - xWalletBalance : 0n
     const calls =
       mode === 'stake'
         ? getStakeWalletCalls(amountInWei)
@@ -608,6 +596,7 @@ const WalletStakingScreen = () => {
     requestsDispatch,
     shareValue,
     t,
+    totalPendingShares,
     xWalletBalance
   ])
 

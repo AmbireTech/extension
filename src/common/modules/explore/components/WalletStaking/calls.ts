@@ -22,6 +22,10 @@ const BASIS_POINTS_DIVISOR = 10000n
 export const getWalletStakingMaxAmount = (balance: bigint, mode: WalletStakingMode) =>
   mode === 'unstake' ? (balance * UNSTAKE_MAX_AMOUNT_BASIS_POINTS) / BASIS_POINTS_DIVISOR : balance
 
+/** Excludes xWALLET shares reserved by active withdrawal commitments. */
+export const getMigratableXWalletBalance = (balance: bigint, lockedShares: bigint) =>
+  balance > lockedShares ? balance - lockedShares : 0n
+
 /** Builds the Ethereum calls that approve WALLET and stake it into stkWALLET. */
 export const getStakeWalletCalls = (amount: bigint): Call[] => [
   {
