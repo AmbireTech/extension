@@ -2,17 +2,13 @@ import * as SplashScreen from 'expo-splash-screen'
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { AppState, View } from 'react-native'
 import { KeyboardController } from 'react-native-keyboard-controller'
-import { Navigate } from 'react-router-native'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useFonts from '@common/hooks/useFonts'
-import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
-import { ROUTES } from '@common/modules/router/constants/common'
-import { getInitialRoute } from '@common/modules/router/helpers'
 import eventBus from '@common/services/event/eventBus'
 import flexbox from '@common/styles/utils/flexbox'
 import useNativeThemeSync from '@mobile/hooks/useNativeThemeSync'
@@ -20,22 +16,12 @@ import useLedgerConnectionLifecycle from '@mobile/modules/hardware-wallet/hooks/
 import RequestsBottomSheet from '@mobile/modules/router/components/RequestsBottomSheet'
 import NavigationStack from '@mobile/modules/router/stack'
 import { markSplashHidden } from '@mobile/services/bootProfiler'
-import { shouldShowMigrationOnboarding } from '@mobile/services/legacyMigration/legacyMigration'
 
 const Router = () => {
-  const { path } = useRoute()
-  const pathname = path?.substring(1)
   const { authStatus } = useAuth()
   const keystoreState = useController('KeystoreController').state
-  const {
-    state: requestsState,
-    requestModalRef,
-    closeRequestModal,
-    onBottomSheetClosed,
-    onBottomSheetOpened
-  } = useController('RequestsController')
-  const swapAndBridgeState = useController('SwapAndBridgeController').state
-  const transferState = useController('TransferController').state
+  const { requestModalRef, closeRequestModal, onBottomSheetClosed, onBottomSheetOpened } =
+    useController('RequestsController')
   const { canRenderRoute } = useContext(ControllersStateLoadedContext)
   const { dispatch } = useContext(ControllersMiddlewareContext)
   // Fonts load in parallel with controller boot (the tree mounts before fonts
@@ -100,28 +86,8 @@ const Router = () => {
     return null
   }
 
-  // Determine where to navigate initially based on state
-  const initialRoute = getInitialRoute({
-    keystoreState,
-    authStatus,
-    requestsState,
-    swapAndBridgeState,
-    transferState,
-    // Mobile has no request window; that flow is extension-only.
-    isRequestWindow: false
-  })
-
-  // Users updating from the legacy v1 app land on the migration onboarding
-  // (once) before the get-started screen, so they understand why their data
-  // is gone and can back up their v1 email accounts.
-  const startRoute =
-    initialRoute === ROUTES.getStarted && shouldShowMigrationOnboarding()
-      ? ROUTES.migrationOnboarding
-      : initialRoute
-
   return (
     <View style={flexbox.flex1}>
-      {startRoute && !pathname && <Navigate to={startRoute} replace />}
       <NavigationStack />
 
       <RequestsBottomSheet

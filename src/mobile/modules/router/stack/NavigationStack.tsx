@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { KeyboardController } from 'react-native-keyboard-controller'
-import { enableFreeze, ScreenStack } from 'react-native-screens'
+import { ScreenStack } from 'react-native-screens'
 
 import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
 import useNavigation from '@common/hooks/useNavigation'
@@ -11,12 +11,14 @@ import flexbox from '@common/styles/utils/flexbox'
 import StackScreen from './StackScreen'
 import useStackEntries from './useStackEntries'
 
-// Screens that are not on top are only frozen once this is switched on. Without
-// it a screen the user cannot see keeps re-rendering on every controller update.
-// Freezing hides the screen behind a Suspense boundary, so React unmounts the class
-// components inside it and mounts them again on the way back - which Reanimated does
-// not survive unpatched, see `patches/react-native-reanimated+4.1.1.patch`.
-enableFreeze(true)
+// A screen the user is not on keeps its views and its state, and is kept from
+// working for nothing by not being subscribed to the controllers rather than by
+// being frozen - `react-freeze` hides the screen with `display: none`, which drops
+// every view it had, and putting them back costs more than all the re-renders it
+// saved. See `useControllerState`.
+
+/** Longer than any transition, for the navigations the platform does not animate. */
+const SETTLE_FALLBACK_MS = 800
 
 /**
  * Renders the router's history as a native stack: one platform screen per history
@@ -42,23 +44,28 @@ const NavigationStack = () => {
   const isBrowserWalkingItsOwnHistory =
     topEntry?.location.pathname === `/${ROUTES.dappWebView}` && canGoBackInWebViewHistory
 
-  const stackSignature = entries.map((e) => `${e.location.pathname}#${e.cardKey}`).join(' | ')
-
   /**
-   * Which arrangement of screens the platform has finished transitioning to. A
-   * screen is only frozen - it renders nothing while it is - once the stack has
-   * come to rest in a state where that screen is not the one on top, so a screen
-   * that is still sliding, or still visible underneath one that is, keeps
-   * rendering. Driven by the stack's own event rather than by focus, which flips
-   * at the start of a transition, while both screens are still on screen.
+   * The card the platform has finished transitioning to. Work a screen puts off
+   * until it is the one the user is on - reading the controller state it stopped
+   * subscribing to while it was away, above all - waits for this, so a screen
+   * coming back does not hold up the transition that brings it back with a render
+   * of everything it missed.
    */
-  const [settledSignature, setSettledSignature] = useState('')
-  const hasSettled = settledSignature === stackSignature
+  const [settledCardKey, setSettledCardKey] = useState('')
 
   const handleFinishTransitioning = useCallback(
-    () => setSettledSignature(stackSignature),
-    [stackSignature]
+    () => setSettledCardKey(topCardKey ?? ''),
+    [topCardKey]
   )
+
+  // The platform does not report a transition it never ran (a card put up without
+  // animating, a navigation the stack collapsed), and a screen waiting to catch up
+  // would then wait forever.
+  useEffect(() => {
+    const timer = setTimeout(() => setSettledCardKey(topCardKey ?? ''), SETTLE_FALLBACK_MS)
+
+    return () => clearTimeout(timer)
+  }, [topCardKey])
 
   // The screen left behind stays mounted, so its focused input would otherwise
   // hold the keyboard up over the screen coming in.
@@ -83,7 +90,7 @@ const NavigationStack = () => {
           key={entry.cardKey}
           entry={entry}
           isFocused={entry.cardKey === topCardKey}
-          shouldFreeze={entry.cardKey !== topCardKey && hasSettled}
+          isSettled={entry.cardKey === settledCardKey}
           gestureEnabled={index > 0 && !isSheetOpen && !isBrowserWalkingItsOwnHistory}
           onDismissed={handleDismissed}
         />

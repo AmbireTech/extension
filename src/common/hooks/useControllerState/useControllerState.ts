@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useSyncExternalStore } fro
 
 import { isDev } from '@common/config/env'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -123,6 +124,49 @@ export default function useControllerState<
     helpersSubscriptionManager,
     isStoreReady
   } = useContext(ControllerStoreContext)
+  const screenFocus = useScreenFocusStore()
+
+  /**
+   * A screen only subscribes while it is the one the user is on. Screens stay
+   * mounted underneath the one on top, and a subscription of theirs costs the
+   * whole chain: the worker serializes the controller's state, it crosses the
+   * bridge, it is parsed, and the screen behind re-renders on it - with nothing
+   * to see for any of it. Dropping the subscription is also what tells the worker
+   * to stop sending that controller's state at all (see
+   * `setOnSubscribedControllersChange`).
+   *
+   * Subscribing back is driven by the focus store rather than by a re-render, so
+   * the screen being left does not have to render again in the commit that starts
+   * the transition - the one commit that has to stay small.
+   */
+  const subscribeWhileFocused = useCallback(
+    (subscribeToStore: (notify: () => void) => () => void, onChange: () => void) => {
+      let unsubscribeFromStore = screenFocus.isFocused.current
+        ? subscribeToStore(onChange)
+        : undefined
+
+      const unsubscribeFromFocus = screenFocus.subscribe(() => {
+        if (!screenFocus.isFocused.current) {
+          unsubscribeFromStore?.()
+          unsubscribeFromStore = undefined
+          return
+        }
+
+        if (unsubscribeFromStore) return
+
+        unsubscribeFromStore = subscribeToStore(onChange)
+        // The state the screen was rendered with is from before it was left, and
+        // the worker held everything back since - so it has to be read again.
+        onChange()
+      })
+
+      return () => {
+        unsubscribeFromStore?.()
+        unsubscribeFromFocus()
+      }
+    },
+    [screenFocus]
+  )
 
   const derivedSelector = useMemo(() => {
     if (typeof selector === 'function') return selector
@@ -134,9 +178,20 @@ export default function useControllerState<
     useCallback(
       (cb) => {
         if (!subscriptionEnabled) return () => {}
-        return stateSubscriptionManager.subscribe(id, cb, controllerStore, derivedSelector)
+        return subscribeWhileFocused(
+          (notify) =>
+            stateSubscriptionManager.subscribe(id, notify, controllerStore, derivedSelector),
+          cb
+        )
       },
-      [id, controllerStore, derivedSelector, stateSubscriptionManager, subscriptionEnabled]
+      [
+        id,
+        controllerStore,
+        derivedSelector,
+        stateSubscriptionManager,
+        subscribeWhileFocused,
+        subscriptionEnabled
+      ]
     ),
     useCallback(() => {
       return stateSubscriptionManager.getSnapshot(id, controllerStore, derivedSelector)
@@ -147,9 +202,18 @@ export default function useControllerState<
     useCallback(
       (cb) => {
         if (!subscriptionEnabled) return () => {}
-        return helpersSubscriptionManager.subscribe(id, cb, controllerHelpersStore)
+        return subscribeWhileFocused(
+          (notify) => helpersSubscriptionManager.subscribe(id, notify, controllerHelpersStore),
+          cb
+        )
       },
-      [id, controllerHelpersStore, helpersSubscriptionManager, subscriptionEnabled]
+      [
+        id,
+        controllerHelpersStore,
+        helpersSubscriptionManager,
+        subscribeWhileFocused,
+        subscriptionEnabled
+      ]
     ),
     useCallback(() => {
       return helpersSubscriptionManager.getSnapshot(id, controllerHelpersStore)

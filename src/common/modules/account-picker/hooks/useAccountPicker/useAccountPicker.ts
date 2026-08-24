@@ -37,7 +37,7 @@ const useAccountPicker = () => {
     },
     dispatch: accountPickerDispatch
   } = useController('AccountPickerController')
-  const { accounts } = useController('AccountsController').state
+  const { state: accounts } = useController('AccountsController', 'accounts')
 
   const prevIsInitialized = usePrevious(isInitialized)
   const prevAddAccountsStatus = usePrevious(addAccountsStatus)

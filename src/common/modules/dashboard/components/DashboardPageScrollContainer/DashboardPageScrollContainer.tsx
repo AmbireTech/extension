@@ -1,14 +1,18 @@
-import React, { FC, useEffect, useMemo, useRef } from 'react'
+import React, { FC, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { Animated, FlatList, FlatListProps, RefreshControl, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
-import useBanners from '../../hooks/useBanners'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
+import DashboardCarouselContext, {
+  DashboardFloatingBarProps
+} from '../DashboardPagesCarousel/context'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
+import useListTopSpacing from './useListTopSpacing'
 
 interface Props extends FlatListProps<any> {
   tab: TabType
@@ -16,6 +20,8 @@ interface Props extends FlatListProps<any> {
   animatedOverviewHeight: Animated.Value
   refreshing?: boolean
   onRefresh?: () => void
+  /** What the page wants in the bar the carousel renders above the pager. */
+  floatingBar?: DashboardFloatingBarProps
 }
 
 // We do this instead of unmounting the component to prevent component rerendering when switching tabs.
@@ -27,10 +33,28 @@ const HIDDEN_STYLE: ViewStyle = {
   pointerEvents: 'none'
 }
 
-const getFlatListStyle = (tab: TabType, openTab: TabType) => [
-  spacings.phSm,
-  openTab !== tab ? HIDDEN_STYLE : {}
-]
+const getFlatListStyle = (tab: TabType, openTab: TabType) => {
+  // On mobile every page is a slide of the dashboard carousel, so they are all
+  // laid out next to each other instead of only the open one being visible.
+  if (isMobile) return [spacings.phSm, flexbox.flex1]
+
+  return [spacings.phSm, openTab !== tab ? HIDDEN_STYLE : {}]
+}
+
+// The pages of the carousel report their scroll offset natively, so the header
+// laid over them can collapse without a round trip through JS.
+const AnimatedFlatList = Animated.FlatList as unknown as typeof FlatList
+
+// All four pages of the carousel are rendered, so none of them may build more than
+// it has to: a screenful up front, the rest as the list is scrolled. Overrides what
+// the pages ask for, as those values are sized for being the only rendered list.
+const CAROUSEL_VIRTUALIZATION = {
+  initialNumToRender: 10,
+  maxToRenderPerBatch: 10,
+  windowSize: 10
+}
+
+const NO_PROPS = {}
 
 const DashboardPageScrollContainer: FC<Props> = ({
   tab,
@@ -38,24 +62,79 @@ const DashboardPageScrollContainer: FC<Props> = ({
   animatedOverviewHeight,
   refreshing,
   onRefresh,
+  onScroll,
+  floatingBar,
   ...rest
 }) => {
-  const [controllerBanners] = useBanners()
+  const topSpacing = useListTopSpacing()
   const flatlistRef = useRef<FlatList | null>(null)
   const { bottom } = useSafeAreaInsets()
   const style = useMemo(() => getFlatListStyle(tab, openTab), [openTab, tab])
   const { theme } = useTheme()
+  const carousel = useContext(DashboardCarouselContext)
+  // The part of the header that never collapses, which is the tabs row. The list
+  // starts below it instead of underneath it, so its refresh spinner - which is
+  // anchored to the top of the list itself - is not drawn behind the tabs.
+  const stickyHeaderHeight = carousel ? carousel.headerHeight - carousel.collapsibleHeight : 0
+
+  const carouselListStyle = useMemo(
+    () => (carousel ? { marginTop: stickyHeaderHeight } : undefined),
+    [carousel, stickyHeaderHeight]
+  )
+
   const contentContainerStyle = useMemo(() => {
     return [
-      controllerBanners.length && isWeb ? spacings.ptTy : spacings.pt0,
+      topSpacing,
       { flexGrow: 1 },
-      isMobile && { paddingBottom: bottom || SPACING_SM }
+      isMobile && { paddingBottom: bottom || SPACING_SM },
+      // A page with less content than this cannot scroll far enough to hold the header
+      // collapsed, and would report its way back to the top the moment it is touched.
+      // Padding would not do: flexGrow stretches the content box to the page either
+      // way, padding included, leaving nothing to scroll.
+      !!carousel &&
+        !!carousel.pageHeight && {
+          minHeight: carousel.pageHeight - stickyHeaderHeight + carousel.collapsibleHeight
+        },
+      // Must come last, as it overrides the padding of the non-carousel layout. Only
+      // the collapsing part of the header is padded for, the rest is above the list
+      !!carousel && { paddingTop: carousel.collapsibleHeight }
     ]
-  }, [bottom, controllerBanners.length])
+  }, [bottom, carousel, stickyHeaderHeight, topSpacing])
 
-  // Reset scroll position when switching tabs (new)
+  // iOS draws the scroll indicator against the scroll view's frame rather than its
+  // content, so padding the content away from the banners laid over it leaves the
+  // indicator running underneath them. It has to be inset by them separately.
+  const carouselIndicatorProps = useMemo(() => {
+    if (!carousel) return NO_PROPS
+
+    return {
+      scrollIndicatorInsets: { top: carousel.collapsibleHeight },
+      // Left on, iOS recomputes the insets off the safe area and drops the one above
+      automaticallyAdjustsScrollIndicatorInsets: false
+    }
+  }, [carousel])
+
+  // Bound to the value and not to the whole context, so measuring the header
+  // doesn't detach and reattach the native scroll listener. Mobile passes no
+  // onScroll, which leaves the offset to be mapped natively with no JS listener.
+  //
+  // Only the open page reports into it. The value is shared by all of them, and a
+  // page with too little content to scroll as far as the others reports the offset
+  // it stopped at instead - which, coming in last, would be the one that stuck.
+  const carouselScrollY = carousel?.scrollY
+  const handleScroll = useMemo(() => {
+    if (!carouselScrollY || openTab !== tab) return onScroll
+
+    return Animated.event(
+      [{ nativeEvent: { contentOffset: { y: carouselScrollY } } }],
+      onScroll ? { useNativeDriver: true, listener: onScroll } : { useNativeDriver: true }
+    )
+  }, [carouselScrollY, onScroll, openTab, tab])
+
+  // Reset scroll position when switching tabs (new). The carousel does this itself,
+  // for every page and carrying over how far the banners are collapsed.
   useEffect(() => {
-    if (!flatlistRef.current) return
+    if (!flatlistRef.current || carousel) return
 
     if (openTab === tab) {
       // Scroll to top
@@ -70,18 +149,48 @@ const DashboardPageScrollContainer: FC<Props> = ({
         useNativeDriver: false
       }).start()
     }
-  }, [animatedOverviewHeight, openTab, tab])
+  }, [animatedOverviewHeight, carousel, openTab, tab])
+
+  // Lets the header and a swipe scroll this page - a drag on the header never reaches
+  // the list it is laid over, and a swipe has to take every page to the top.
+  const registerPage = carousel?.registerPage
+
+  const scrollToOffset = useCallback((offset: number) => {
+    flatlistRef.current?.scrollToOffset({ offset, animated: false })
+  }, [])
+
+  useEffect(() => {
+    if (!registerPage) return undefined
+
+    registerPage(tab, { scrollToOffset })
+
+    return () => registerPage(tab, null)
+  }, [registerPage, scrollToOffset, tab])
+
+  const registerFloatingBar = carousel?.registerFloatingBar
+
+  useEffect(() => {
+    if (!registerFloatingBar) return undefined
+
+    registerFloatingBar(tab, floatingBar || null)
+
+    return () => registerFloatingBar(tab, null)
+  }, [floatingBar, registerFloatingBar, tab])
+
+  const ListComponent = carousel ? AnimatedFlatList : FlatList
 
   return (
-    <FlatList
+    <ListComponent
       ref={flatlistRef}
-      style={style}
+      style={[style, carouselListStyle]}
       contentContainerStyle={contentContainerStyle}
-      stickyHeaderIndices={[1]} // Makes the header sticky
+      // Makes the header sticky. The carousel lays its own header over the pages instead
+      stickyHeaderIndices={carousel ? undefined : [1]}
       removeClippedSubviews
       bounces
       alwaysBounceVertical
       scrollEventThrottle={16}
+      onScroll={handleScroll}
       refreshControl={
         isMobile ? (
           <RefreshControl
@@ -93,8 +202,10 @@ const DashboardPageScrollContainer: FC<Props> = ({
         ) : undefined
       }
       {...rest}
+      {...(carousel ? CAROUSEL_VIRTUALIZATION : NO_PROPS)}
+      {...carouselIndicatorProps}
     />
   )
 }
 
-export default DashboardPageScrollContainer
+export default React.memo(DashboardPageScrollContainer)

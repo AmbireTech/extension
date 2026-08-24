@@ -25,7 +25,7 @@ interface Props {
 
 const SignedMessageSummary = ({ signedMessage, style }: Props) => {
   const { styles } = useTheme(getStyles)
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
 
   const humanizedMessage = useMemo(() => {
     return humanizeMessage(signedMessage)

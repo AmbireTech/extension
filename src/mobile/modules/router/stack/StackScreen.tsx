@@ -12,17 +12,13 @@ type Props = {
   entry: StackEntry
   /** The screen the user is on - the top of the stack. */
   isFocused: boolean
-  /**
-   * Whether this screen may stop rendering. A frozen screen renders nothing, so
-   * this must only be true once the stack has settled with another screen on top
-   * of it - see `NavigationStack`.
-   */
-  shouldFreeze: boolean
+  /** Whether the platform has finished transitioning to this screen. */
+  isSettled: boolean
   gestureEnabled: boolean
   onDismissed: (dismissCount: number) => void
 }
 
-const StackScreen = ({ entry, isFocused, shouldFreeze, gestureEnabled, onDismissed }: Props) => {
+const StackScreen = ({ entry, isFocused, isSettled, gestureEnabled, onDismissed }: Props) => {
   const { theme } = useTheme()
 
   const handleDismissed = useCallback(
@@ -45,11 +41,9 @@ const StackScreen = ({ entry, isFocused, shouldFreeze, gestureEnabled, onDismiss
       replaceAnimation={entry.replaceAnimation}
       gestureEnabled={gestureEnabled}
       hideKeyboardOnSwipe
-      freezeOnBlur
-      shouldFreeze={shouldFreeze}
       onDismissed={handleDismissed}
     >
-      <ScreenFocusProvider isFocused={isFocused}>
+      <ScreenFocusProvider isFocused={isFocused} isSettled={isSettled}>
         <AppRoutes location={entry.location} />
       </ScreenFocusProvider>
     </ScreenStackItem>

@@ -46,7 +46,7 @@ const SafeOwners = ({
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
-  const { accountStates } = useController('AccountsController').state
+  const { state: accountStates } = useController('AccountsController', 'accountStates')
   const [ownerAddrToChooseKeyFor, setOwnerAddrToChooseKeyFor] = useState<Key['addr'] | null>(null)
 
   const owners = useMemo(() => {

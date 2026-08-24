@@ -16,7 +16,7 @@ export default function useCreateNewSeedAccount() {
     state: { statuses },
     dispatch: mainDispatch
   } = useController('MainController')
-  const { hasPasswordSecret } = useController('KeystoreController').state
+  const { state: hasPasswordSecret } = useController('KeystoreController', 'hasPasswordSecret')
   const { getExtraEntropy } = useExtraEntropy()
   const [isCreating, setIsCreating] = useState(false)
   // The account picker may already hold init params from an abandoned flow, so waiting

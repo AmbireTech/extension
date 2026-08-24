@@ -76,9 +76,7 @@ const SendToken: FC<Props> = ({
   sections,
   renderSectionHeader
 }) => {
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()

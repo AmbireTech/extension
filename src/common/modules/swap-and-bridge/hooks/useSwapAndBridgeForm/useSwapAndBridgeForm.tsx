@@ -104,7 +104,7 @@ const useSwapAndBridgeForm = () => {
     closePriceImpactModal()
   }, [closePriceImpactModal])
 
-  const { visibleUserRequests } = useController('RequestsController').state
+  const { state: visibleUserRequests } = useController('RequestsController', 'visibleUserRequests')
   const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
   const sessionId = useMemo(() => {
     if (isPopup) return 'popup'

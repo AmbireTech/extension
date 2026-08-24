@@ -10,9 +10,10 @@ import {
 } from '@ambire-common/libs/banners/banners'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useNavigation from '@common/hooks/useNavigation'
-import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner'
@@ -36,10 +37,10 @@ interface Props {
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll: FlatListProps<any>['onScroll']
+  onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
-  isSearchHidden: boolean
+  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
@@ -63,16 +64,12 @@ const DeFiPositions: FC<Props> = ({
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme } = useTheme()
   const searchValue = watch('search')
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const { dispatch: portfolioDispatch } = useController('PortfolioController')
   const {
     state: { account, portfolio, dashboardNetworkFilter, banners }
   } = useController('SelectedAccountController')
   const { setSearchParams, navigate } = useNavigation()
-
-  const prevInitTab: any = usePrevious(initTab)
 
   const currentAccountBanners = useMemo(
     () =>
@@ -86,8 +83,11 @@ const DeFiPositions: FC<Props> = ({
     setValue('search', '')
   }, [openTab, setValue])
 
-  useEffect(() => {
-    if (!prevInitTab?.defi && initTab?.defi) {
+  // The session is what keeps the portfolio fetching defi positions, so it lasts for
+  // as long as the tab is open and this is the screen the user is on.
+  useControllerSession({
+    isEnabled: !!initTab?.defi,
+    open: () => {
       portfolioDispatch({
         type: 'method',
         params: {
@@ -95,13 +95,14 @@ const DeFiPositions: FC<Props> = ({
           args: [sessionId]
         }
       })
+      // Initialize the port session, so the background can terminate it when the tab
+      // is closed - there is no reliable window event for that.
       setSearchParams((prev: any) => {
         prev.set('sessionId', sessionId)
         return prev
       })
-    }
-
-    if (prevInitTab?.defi && !initTab?.defi) {
+    },
+    close: () =>
       portfolioDispatch({
         type: 'method',
         params: {
@@ -109,20 +110,7 @@ const DeFiPositions: FC<Props> = ({
           args: [sessionId]
         }
       })
-    }
-  }, [portfolioDispatch, setSearchParams, prevInitTab?.defi, initTab?.defi, sessionId])
-
-  useEffect(() => {
-    return () => {
-      portfolioDispatch({
-        type: 'method',
-        params: {
-          method: 'removeDefiSession',
-          args: [sessionId]
-        }
-      })
-    }
-  }, [sessionId, portfolioDispatch])
+  })
 
   const filteredPositions = useMemo(() => {
     const defiToSearch = portfolio.defiPositions
@@ -271,7 +259,7 @@ const DeFiPositions: FC<Props> = ({
   }, [])
 
   const dataItems = useMemo(() => {
-    const items = ['header']
+    const items: string[] = isMobile ? [] : ['header']
 
     if (currentAccountBanners.length > 0) {
       items.push('banners')
@@ -295,12 +283,19 @@ const DeFiPositions: FC<Props> = ({
     portfolio.isAllReady
   ])
 
+  // Rendered above the carousel on mobile, so it stays put through a swipe
+  const floatingBar = useMemo(
+    () => ({ control, searchPlaceholder: t('Search DeFi') }),
+    [control, t]
+  )
+
   return (
     <>
       <DashboardPageScrollContainer
+        floatingBar={floatingBar}
         tab="defi"
         openTab={openTab}
-        ListHeaderComponent={<DashboardBanners />}
+        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         data={dataItems}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
@@ -313,12 +308,9 @@ const DeFiPositions: FC<Props> = ({
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-      {openTab === 'defi' && (
-        <FloatingBottomBar
-          control={control}
-          isHidden={isSearchHidden}
-          searchPlaceholder={t('Search DeFi')}
-        />
+      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
+      {!isMobile && openTab === 'defi' && (
+        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
       )}
     </>
   )

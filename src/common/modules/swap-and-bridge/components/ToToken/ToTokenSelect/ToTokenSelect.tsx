@@ -82,9 +82,7 @@ const ToTokenSelect: React.FC<Props> = ({
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const { errors, isTokenListLoading, toTokenSearchTerm } =
     useController('SwapAndBridgeController').state
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const [didAttemptSearchingTokenByAddress, setDidAttemptSearchingTokenByAddress] =
     React.useState(false)
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')

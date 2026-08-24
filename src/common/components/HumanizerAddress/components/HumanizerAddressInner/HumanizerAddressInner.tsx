@@ -31,9 +31,7 @@ const HumanizerAddressInner: FC<Props> = ({
   isToken,
   ...rest
 }) => {
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const accountsState = useController('AccountsController').state
   const { contacts = [] } = useController('AddressBookController').state
   const checksummedAddress = getAddressCaught(address)

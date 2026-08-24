@@ -32,7 +32,7 @@ const NetworksSettings = () => {
     open: openNetworkDetailsSheet,
     close: closeNetworkDetailsSheet
   } = useModalize()
-  const { allNetworks } = useController('NetworksController').state
+  const { state: allNetworks } = useController('NetworksController', 'allNetworks')
   const {
     state: { providers }
   } = useController('ProvidersController')
