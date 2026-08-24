@@ -1,10 +1,11 @@
 import { BlurView } from 'expo-blur'
-import { CameraView } from 'expo-camera'
+import { BarcodeScanningResult, CameraView } from 'expo-camera'
 import React, { useCallback, useState } from 'react'
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
+import { getQrCodeCoverage } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import flexbox from '@common/styles/utils/flexbox'
 import MaskedView from '@react-native-masked-view/masked-view'
 
@@ -14,7 +15,9 @@ interface Props {
   // Raw decoded value of a scanned QR code. Fires on every camera frame that
   // decodes (so multi-part / animated QR flows keep receiving fragments); the
   // caller owns any dedupe or single-shot guarding.
-  onScan: (data: string) => void
+  // `coverage` is how much of the scan frame the code took up (0 when the platform
+  // reported no corner points), which the caller can turn into aiming hints.
+  onScan: (data: string, coverage: number) => void
   // When true, scans are ignored (e.g. while the caller processes a result).
   isProcessing?: boolean
   frameSize?: number
@@ -36,12 +39,15 @@ const CameraScanner = ({ onScan, isProcessing = false, frameSize = SCAN_FRAME_SI
   }, [])
 
   const handleBarcodeScanned = useCallback(
-    (event: { data: string }) => {
+    (event: BarcodeScanningResult) => {
       if (isProcessing) return
       if (!event?.data) return
-      onScan(event.data)
+
+      // The corner points come in the coordinates of the camera preview, which the frame
+      // is the visible window of, so the two are directly comparable
+      onScan(event.data, getQrCodeCoverage(event.cornerPoints, frameSize))
     },
-    [isProcessing, onScan]
+    [frameSize, isProcessing, onScan]
   )
 
   return (

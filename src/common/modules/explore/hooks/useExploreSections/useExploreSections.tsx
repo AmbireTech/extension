@@ -63,13 +63,6 @@ const useExploreSections = (): ExploreSection[] => {
   return useMemo(() => {
     const all: ExploreSection[] = [
       {
-        type: 'trending',
-        title: t('Trending'),
-        icon: <TrendingIcon width={ICON_SIZE} height={ICON_SIZE} />,
-        trendingTokens,
-        showTrash: false
-      },
-      {
         type: 'recent',
         title: t('Recent'),
         icon: <RecentIcon width={ICON_SIZE + 2} height={ICON_SIZE} />,
@@ -95,6 +88,13 @@ const useExploreSections = (): ExploreSection[] => {
         title: t('Explore apps'),
         icon: <ExploreIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth="1.3" />,
         data: featured,
+        showTrash: false
+      },
+      {
+        type: 'trending',
+        title: t('Trending'),
+        icon: <TrendingIcon width={ICON_SIZE} height={ICON_SIZE} />,
+        trendingTokens,
         showTrash: false
       }
     ]

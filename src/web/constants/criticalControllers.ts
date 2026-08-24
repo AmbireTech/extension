@@ -5,10 +5,9 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 type CriticalController = keyof AllControllersMappingType
 
 // Controllers whose state must be present in the controllerStore before a given
-// initial route can render and the splash can hide. The background resolves the
-// initial route and pushes only that route's critical states in the first burst;
-// every other controller is initialized after first paint instead of blocking it.
-// Routes not listed here fall back to full readiness (all controllers).
+// initial route can render and the splash can hide. Every other controller is
+// initialized after first paint instead of blocking it. Routes not listed here
+// fall back to full readiness (all controllers).
 
 export const KEYSTORE_UNLOCK_CRITICAL_CONTROLLERS: CriticalController[] = [
   'KeystoreController',
@@ -29,3 +28,12 @@ export const ROUTE_CRITICAL_CONTROLLERS: Record<string, CriticalController[]> = 
   [ROUTES.keyStoreUnlock]: KEYSTORE_UNLOCK_CRITICAL_CONTROLLERS,
   [ROUTES.dashboard]: DASHBOARD_CRITICAL_CONTROLLERS
 }
+
+/**
+ * Everything a newly opened view might need before it can paint, whichever of the routes above it
+ * turns out to open on. The background pushes these to a connecting view without waiting to learn
+ * where it is headed, which is only one or two states more than the exact route would need.
+ */
+export const CRITICAL_CONTROLLERS: CriticalController[] = [
+  ...new Set(Object.values(ROUTE_CRITICAL_CONTROLLERS).flat())
+]

@@ -8,7 +8,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -213,6 +213,7 @@ const RoutesModal = ({
       id="select-routes-modal"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
+      adjustToContentHeight={isWeb}
       HeaderComponent={
         <ModalHeader
           title={t('Select route')}

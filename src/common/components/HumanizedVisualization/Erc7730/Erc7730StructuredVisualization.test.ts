@@ -11,6 +11,7 @@ import {
 import {
   getErc7730DescriptionRows,
   getVisibleErc7730Rows,
+  getVisibleErc7730RowsExcludingTitleParts,
   hasErc7730NativeValueRow,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
@@ -128,6 +129,26 @@ describe('getVisibleErc7730Rows', () => {
     }
 
     expect(getVisibleErc7730Rows(visualization).map((row) => row.label)).toEqual(['Beneficiary'])
+  })
+})
+
+describe('getVisibleErc7730RowsExcludingTitleParts', () => {
+  test('returns no rows when every row value is already shown in the interpolated intent', () => {
+    const token = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+    const recipient = '0xd8293ad21678c6f09da139b4b62d38e514a03b78'
+    const amount = getToken(token, 300000n)
+    const recipientAddress = getAddressVisualization(recipient)
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Send',
+      titleParts: [getAction('Send'), amount, getLabel('to'), recipientAddress],
+      rows: [
+        { label: 'Amount', value: [amount] },
+        { label: 'Recipient', value: [recipientAddress] }
+      ]
+    }
+
+    expect(getVisibleErc7730RowsExcludingTitleParts(visualization)).toEqual([])
   })
 })
 

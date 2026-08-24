@@ -6,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import SyncIcon from '@common/assets/svg/SyncIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoverablePressable from '@common/components/HoverablePressable'
@@ -20,6 +21,7 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
+import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -51,7 +53,7 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 const ACCOUNT_OPTIONS = { markSelected: true }
 
 const AccountSelectScreen = () => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const flatlistRef = useRef(null)
   const {
     accounts,
@@ -67,6 +69,11 @@ const AccountSelectScreen = () => {
     state: { account }
   } = useController('SelectedAccountController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const {
+    ref: syncSheetRef,
+    open: openSyncBottomSheet,
+    close: closeSyncBottomSheet
+  } = useModalize()
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
@@ -142,20 +149,48 @@ const AccountSelectScreen = () => {
           ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
         />
         <FooterGlassView isSimpleBlur={false}>
-          <Button
-            testID="button-add-account"
-            text={t('Add account')}
-            size="smaller"
-            hasBottomSpacing={false}
-            onPress={openBottomSheet as any}
-            childrenPosition="left"
-            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-          >
-            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-          </Button>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Button
+              testID="button-sync-with-mobile"
+              type="secondary"
+              text={t('Sync with mobile')}
+              size="smaller"
+              hasBottomSpacing={false}
+              onPress={openSyncBottomSheet as any}
+              childrenPosition="left"
+              // Only as wide as its own label, so it never wraps on two rows. The
+              // primary action next to it takes whatever is left.
+              style={spacings.mrTy}
+            >
+              <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
+            </Button>
+            <Button
+              testID="button-add-account"
+              text={t('Add account')}
+              size="smaller"
+              hasBottomSpacing={false}
+              onPress={openBottomSheet as any}
+              childrenPosition="left"
+              style={flexbox.flex1}
+            >
+              <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+            </Button>
+          </View>
         </FooterGlassView>
       </View>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      <SyncBottomSheet
+        sheetRef={syncSheetRef}
+        closeBottomSheet={closeSyncBottomSheet}
+        onExportPress={() => {
+          closeSyncBottomSheet()
+          navigate(WEB_ROUTES.exportAccountsToMobile)
+        }}
+        onImportPress={() => {
+          closeSyncBottomSheet()
+          navigate(WEB_ROUTES.importAccountsFromMobile)
+        }}
+      />
     </LayoutWrapper>
   ) : (
     <DashboardSkeleton />

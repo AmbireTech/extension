@@ -364,10 +364,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             <SuccessIcon color={theme.successDecorative} />
             <Text
               color={theme.successDecorative}
-              style={spacings.mlSm}
-              fontSize={16}
+              style={[spacings.mlSm, flexbox.flex1]}
+              fontSize={isMobile ? 14 : 16}
               appearance="secondaryText"
-              numberOfLines={1}
             >
               {t('No token balance changes detected')}
             </Text>

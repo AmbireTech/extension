@@ -11,6 +11,7 @@ import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -150,6 +151,13 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(WEB_ROUTES.importSmartAccountJson)
         },
         icon: ImportJsonIcon
+      },
+      {
+        title: 'Watch an address',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.viewOnlyAccountAdder)
+        },
+        icon: ViewOnlyIcon
       }
     ],
     [goToNextRoute, addToast, dispatch, t, setTriggeredHwWalletFlow]

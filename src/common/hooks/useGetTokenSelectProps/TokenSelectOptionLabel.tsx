@@ -10,12 +10,14 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
 import CopyText from '@common/components/CopyText'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
+import { TokenExchanges } from '@common/modules/swap-and-bridge/components/ToToken/TokenExchanges'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -144,7 +146,7 @@ const TokenSelectOptionLabel = React.memo(
       </View>
     )
 
-    const isNameDifferentThanSymbol = name.toLowerCase() !== symbol.toLowerCase()
+    const isNameDifferentThanSymbol = !!name && name.toLowerCase() !== symbol.toLowerCase()
 
     if (isToToken)
       return (
@@ -153,18 +155,35 @@ const TokenSelectOptionLabel = React.memo(
             dataSet={tooltipIdNotSupported ? { tooltipId: tooltipIdNotSupported } : undefined}
             style={[flexbox.flex1]}
           >
-            <Text numberOfLines={1} style={{ lineHeight: 20 }}>
-              <Text fontSize={isMobile ? 14 : 16} weight="medium" numberOfLines={1}>
-                {symbol}{' '}
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              {/* Shrinks instead of growing, so that the exchanges sit right next to the
+              symbol rather than being pushed to the far end of the row */}
+              <Text
+                fontSize={isMobile ? 14 : 16}
+                weight="medium"
+                numberOfLines={1}
+                style={{ lineHeight: 20, flexShrink: 1 }}
+                dataSet={
+                  // Displaying the name of the token is confusing for native tokens. Example
+                  // ETH (Ethereum) may confuse the user that the ETH is on Ethereum.
+                  isNameDifferentThanSymbol && !isNative
+                    ? createGlobalTooltipDataSet({
+                        id: `token-${currentToken.chainId}-${currentToken.address}-name`,
+                        content: name
+                      })
+                    : undefined
+                }
+              >
+                {symbol}
               </Text>
-              {/* Displaying the name of the token is confusing for native tokens. Example
-            ETH (Ethereum) may confuse the user that the ETH is on Ethereum  */}
-              {isNameDifferentThanSymbol && !isNative && (!isMobile || !isSelected) && (
-                <Text fontSize={isMobile ? 14 : 16} appearance="secondaryText">
-                  ({name})
-                </Text>
+              {/* The tokens in the current account are represented by their balance instead */}
+              {!isSelected && !tokenInPortfolio && (
+                <TokenExchanges
+                  chainId={Number(currentToken.chainId)}
+                  address={currentToken.address}
+                />
               )}
-            </Text>
+            </View>
             {isNative ? (
               <Text
                 numberOfLines={1}
@@ -183,7 +202,7 @@ const TokenSelectOptionLabel = React.memo(
                   weight="mono_regular"
                   {...(isMobile ? { ellipsizeMode: 'middle' } : {})}
                 >
-                  {isSelected ? shortenAddress(currentToken.address, 13) : currentToken.address}
+                  {shortenAddress(currentToken.address, 13)}
                 </Text>
                 {!isSelected && (
                   <CopyText

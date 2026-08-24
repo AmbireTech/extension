@@ -42,13 +42,16 @@ export type Dispatch<K extends keyof AllControllersMappingType> = (
 export type DispatchAndWait<K extends keyof AllControllersMappingType> = <
   M extends MethodKeys<AllControllersMappingType[K]>,
   R = any
->(action: {
-  type: 'method'
-  params: {
-    method: M
-    args: DropLast<Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>>
-  }
-}) => Promise<R>
+>(
+  action: {
+    type: 'method'
+    params: {
+      method: M
+      args: DropLast<Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>>
+    }
+  },
+  timeoutMs?: number
+) => Promise<R>
 
 interface BaseControllerReturn<K extends keyof AllControllersMappingType, S> {
   /**
@@ -110,15 +113,20 @@ export default function useController<
   )
 
   const dispatchAndWait = useCallback(
-    <M extends MethodKeys<AllControllersMappingType[K]>, R = any>(action: {
-      type: 'method'
-      params: {
-        method: M
-        args: DropLast<
-          Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>
-        >
-      }
-    }) => {
+    <M extends MethodKeys<AllControllersMappingType[K]>, R = any>(
+      action: {
+        type: 'method'
+        params: {
+          method: M
+          args: DropLast<
+            Parameters<Extract<AllControllersMappingType[K][M], (...args: any[]) => any>>
+          >
+        }
+      },
+      // Some calls take longer than the default (e.g. anything deriving a key with
+      // scrypt on a low end device), so the caller can raise the timeout
+      timeoutMs: number = 10_000
+    ) => {
       const requestId = uuidv4()
 
       const ctrlAction = {
@@ -155,8 +163,12 @@ export default function useController<
           settled = true
 
           cleanup()
-          reject(new Error(`Calling ${id}.${ctrlAction.params.method} timed out after 10 seconds`))
-        }, 10_000)
+          reject(
+            new Error(
+              `Calling ${id}.${ctrlAction.params.method} timed out after ${timeoutMs / 1000} seconds`
+            )
+          )
+        }, timeoutMs)
 
         eventBus.addEventListener('receiveOneTimeData', onResponse)
       })

@@ -11,7 +11,11 @@ import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
-import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import {
+  MOBILE_ROUTES,
+  ONBOARDING_WEB_ROUTES,
+  WEB_ROUTES
+} from '@common/modules/router/constants/common'
 import { syncSessionStorage } from '@common/services/storage'
 import { getUiType } from '@common/utils/uiType'
 
@@ -169,7 +173,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           false,
           false
         ),
-        new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false)
+        new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false),
+        new RouteNode(WEB_ROUTES.importAccountsFromMobile, common, false, false),
+        new RouteNode(MOBILE_ROUTES.importAccountsFromExtension, common, false, false)
       ],
       authStatus !== AUTH_STATUS.NOT_AUTHENTICATED,
       false
