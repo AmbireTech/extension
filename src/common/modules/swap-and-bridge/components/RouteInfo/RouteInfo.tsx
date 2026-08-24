@@ -147,7 +147,11 @@ const RouteInfo: FC<Props> = ({
             testID="swap-and-bridge-fee-info-button"
             hasBottomSpacing={false}
             submitOnEnter={false}
-            style={[spacings.phTy, spacings.pvMi, spacings.mlTy, { height: 'auto' }]}
+            style={[
+              spacings.phTy,
+              spacings.mlTy,
+              { height: 'auto', paddingTop: 2, paddingBottom: 2 }
+            ]}
             childrenPosition="right"
           >
             <RightArrowIcon

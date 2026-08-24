@@ -37,7 +37,12 @@ import { openInTab } from '@common/utils/links'
 
 import AmountSlider from './AmountSlider'
 import BalanceWithMax from './BalanceWithMax'
-import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
+import {
+  getStakeWalletCalls,
+  getUnstakeWalletCalls,
+  getWalletStakingMaxAmount,
+  getWithdrawWalletCalls
+} from './calls'
 import {
   decodePendingWalletWithdrawals,
   formatPendingWalletWithdrawalDuration,
@@ -48,7 +53,8 @@ import {
   parseCachedPendingWalletWithdrawal,
   parseWalletStakingRelayerLogsResponse,
   PendingWalletWithdrawal,
-  serializePendingWalletWithdrawal
+  serializePendingWalletWithdrawal,
+  shouldUsePendingWalletWithdrawalMode
 } from './pendingWithdrawal'
 import getStyles from './styles'
 import WalletStakingApy from './WalletStakingApy'
@@ -156,12 +162,23 @@ const WalletStakingScreen = () => {
       ),
     [portfolioTokens]
   )
+  const xWalletToken = useMemo(
+    () =>
+      portfolioTokens.find(
+        (token) =>
+          token.chainId === ETHEREUM_CHAIN_ID &&
+          token.address.toLowerCase() === WALLET_STAKING_ADDR.toLowerCase()
+      ),
+    [portfolioTokens]
+  )
   const walletBalance = useMemo(() => BigInt(walletToken?.amount || 0n), [walletToken?.amount])
   const stkWalletBalance = useMemo(
     () => BigInt(stkWalletToken?.amount || 0n),
     [stkWalletToken?.amount]
   )
-  const isPendingWithdrawalMode = mode === 'unstake' && !!pendingWithdrawal
+  const xWalletBalance = useMemo(() => BigInt(xWalletToken?.amount || 0n), [xWalletToken?.amount])
+  const isPendingWithdrawalMode =
+    mode === 'unstake' && shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, xWalletBalance)
   const isWithdrawalReady = pendingWithdrawal
     ? isPendingWalletWithdrawalReady(pendingWithdrawal.unlocksAt, nowMs)
     : false
@@ -444,10 +461,10 @@ const WalletStakingScreen = () => {
     (nextAmount: bigint) => setAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
     []
   )
-  const handleMaxPress = useCallback(
-    () => setAmount(formatUnits(balance, TOKEN_DECIMALS)),
-    [balance]
-  )
+  const handleMaxPress = useCallback(() => {
+    const maxAmount = getWalletStakingMaxAmount(balance, mode)
+    setAmount(formatUnits(maxAmount, TOKEN_DECIMALS))
+  }, [balance, mode])
   const handleOpenFeeInfoBottomSheet = useCallback(
     () => openFeeInfoBottomSheet(),
     [openFeeInfoBottomSheet]
@@ -543,10 +560,14 @@ const WalletStakingScreen = () => {
       return
     }
 
+    const missingPendingShares =
+      pendingWithdrawal && pendingWithdrawal.shares > xWalletBalance
+        ? pendingWithdrawal.shares - xWalletBalance
+        : 0n
     const calls =
       mode === 'stake'
         ? getStakeWalletCalls(amountInWei)
-        : getUnstakeWalletCalls(amountInWei, shareValue!)
+        : getUnstakeWalletCalls(amountInWei, shareValue!, missingPendingShares)
 
     shouldPersistStakingRouteRef.current = false
     setHasMadeRequest(true)
@@ -586,7 +607,8 @@ const WalletStakingScreen = () => {
     pendingWithdrawal,
     requestsDispatch,
     shareValue,
-    t
+    t,
+    xWalletBalance
   ])
 
   useEffect(() => {
@@ -874,7 +896,8 @@ const WalletStakingScreen = () => {
                   text={submitButtonText}
                   onPress={handleSubmit}
                   disabled={
-                    isSubmitDisabled || (mode === 'unstake' && !pendingWithdrawal && !shareValue)
+                    isSubmitDisabled ||
+                    (mode === 'unstake' && !isPendingWithdrawalMode && !shareValue)
                   }
                   hasBottomSpacing={false}
                   style={styles.footerButton}

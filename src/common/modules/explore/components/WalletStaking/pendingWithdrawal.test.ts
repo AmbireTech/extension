@@ -10,6 +10,7 @@ import {
   parseCachedPendingWalletWithdrawal,
   parseWalletStakingRelayerLogsResponse,
   serializePendingWalletWithdrawal,
+  shouldUsePendingWalletWithdrawalMode,
   walletStakingInterface
 } from './pendingWithdrawal'
 
@@ -22,6 +23,12 @@ const pendingWithdrawal = {
 }
 
 describe('pending WALLET withdrawal helpers', () => {
+  test('uses the lock-time flow only for xWALLET balances of at least 0.01', () => {
+    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n - 1n)).toBe(false)
+    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n)).toBe(true)
+    expect(shouldUsePendingWalletWithdrawalMode(null, 10n ** 16n)).toBe(false)
+  })
+
   test('serializes and parses an account-specific cache entry', () => {
     expect(getPendingWalletWithdrawalStorageKey(ACCOUNT.toUpperCase())).toBe(
       `walletStakingPendingWithdrawal:${ACCOUNT}`

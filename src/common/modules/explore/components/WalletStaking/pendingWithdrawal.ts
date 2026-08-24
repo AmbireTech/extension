@@ -1,4 +1,4 @@
-import { AbiCoder, Interface, keccak256 } from 'ethers'
+import { AbiCoder, Interface, keccak256, parseUnits } from 'ethers'
 
 export interface PendingWalletWithdrawal {
   shares: bigint
@@ -31,6 +31,13 @@ export const walletStakingInterface = new Interface([
 ])
 
 export const LOG_LEAVE_TOPIC = walletStakingInterface.getEvent('LogLeave')!.topicHash
+export const X_WALLET_PENDING_WITHDRAWAL_THRESHOLD = parseUnits('0.01', 18)
+
+/** Uses the lock-time flow only when the account still holds a meaningful xWALLET balance. */
+export const shouldUsePendingWalletWithdrawalMode = (
+  pendingWithdrawal: PendingWalletWithdrawal | null,
+  xWalletBalance: bigint
+) => !!pendingWithdrawal && xWalletBalance >= X_WALLET_PENDING_WITHDRAWAL_THRESHOLD
 
 /** Validates and extracts raw WALLET staking logs returned by the relayer. */
 export const parseWalletStakingRelayerLogsResponse = (

@@ -6,6 +6,7 @@ import {
   getMigrateXWalletCalls,
   getStakeWalletCalls,
   getUnstakeWalletCalls,
+  getWalletStakingMaxAmount,
   getWithdrawWalletCalls
 } from './calls'
 
@@ -21,6 +22,14 @@ const walletStakingInterface = new Interface([
 ])
 
 describe('WALLET staking calls', () => {
+  test('uses the full WALLET balance for the stake max amount', () => {
+    expect(getWalletStakingMaxAmount(parseUnits('1', 18), 'stake')).toBe(parseUnits('1', 18))
+  })
+
+  test('leaves a small stkWALLET remainder for the unstake max amount', () => {
+    expect(getWalletStakingMaxAmount(parseUnits('1', 18), 'unstake')).toBe(parseUnits('0.9999', 18))
+  })
+
   test('approves WALLET and enters stkWALLET', () => {
     const amount = parseUnits('12.5', 18)
     const calls = getStakeWalletCalls(amount)
@@ -64,6 +73,34 @@ describe('WALLET staking calls', () => {
     expect(walletStakingInterface.decodeFunctionData('leave', calls[1]!.data)).toEqual([
       expectedShares,
       false
+    ])
+  })
+
+  test('restores migrated pending shares before starting a new unstaking period', () => {
+    const amount = parseUnits('12.5', 18)
+    const shareValue = parseUnits('1.25', 18)
+    const calls = getUnstakeWalletCalls(amount, shareValue, parseUnits('3', 18))
+
+    expect(calls).toHaveLength(2)
+    expect(stkWalletInterface.decodeFunctionData('unwrap', calls[0]!.data)).toEqual([
+      parseUnits('10', 18)
+    ])
+    expect(walletStakingInterface.decodeFunctionData('leave', calls[1]!.data)).toEqual([
+      parseUnits('7', 18),
+      false
+    ])
+  })
+
+  test('only restores migrated pending shares when there are no new shares to leave', () => {
+    const calls = getUnstakeWalletCalls(
+      parseUnits('2.5', 18),
+      parseUnits('1.25', 18),
+      parseUnits('3', 18)
+    )
+
+    expect(calls).toHaveLength(1)
+    expect(stkWalletInterface.decodeFunctionData('unwrap', calls[0]!.data)).toEqual([
+      parseUnits('2', 18)
     ])
   })
 
