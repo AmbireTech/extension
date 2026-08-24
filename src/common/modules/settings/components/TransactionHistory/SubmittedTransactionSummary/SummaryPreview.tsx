@@ -75,7 +75,7 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                     weight="semiBold"
                     numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
                   >
-                    {interaction.name}
+                    {t(interaction.name)}
                   </Text>
                   {(!!interaction.address || !!interaction.description) && (
                     <View
@@ -157,7 +157,6 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 fontSize={12}
                 weight="medium"
                 appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                // @ts-ignore
                 style={{
                   cursor: 'pointer',
                   ...(isCompactSidePanelLayout ? { lineHeight: 16 } : {})
