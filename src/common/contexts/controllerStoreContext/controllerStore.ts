@@ -1,7 +1,6 @@
 import { flushSync } from 'react-dom'
 
-import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
-import { isDev, isMobile } from '@common/config/env'
+import { isDev } from '@common/config/env'
 import eventBus from '@common/services/event/eventBus'
 import { reconcileState } from '@common/utils/reconcileState'
 import { isExtension } from '@web/constants/browserapi'
@@ -12,8 +11,6 @@ export const CONTROLLER_STORE_MAX_LOADING_TIME = 10000
 
 export class ControllerStore {
   isReady = false
-
-  readonly hasStructurallySharedSnapshots = !isExtension && isMobile
 
   // Flips to true as soon as the subset of controllers required to decide the
   // initial route is initialized. Used on mobile to hide the splash screen
@@ -126,13 +123,11 @@ export class ControllerStore {
       // a reference check instead of a full deep comparison.
       if (isExtension) {
         this.#states[id] = { ...ctrl }
-      } else if (this.hasStructurallySharedSnapshots) {
+      } else {
         this.#states[id] = reconcileState(this.#states[id], ctrl, {
           label: id as string,
           detectCycles: isDev
         })
-      } else {
-        this.#states[id] = parse(stringify(ctrl))
       }
     } catch (error) {
       // Leaving the snapshot unset means every consumer reads the empty state and

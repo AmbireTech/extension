@@ -36,12 +36,7 @@ export const ControllerStoreProvider: React.FC<{
       })
   )
 
-  const [stateSubscriptionManager] = useState(
-    () =>
-      new SubscriptionManager({
-        hasStructurallySharedSnapshots: controllerStore.hasStructurallySharedSnapshots
-      })
-  )
+  const [stateSubscriptionManager] = useState(() => new SubscriptionManager())
   // The helpers are merged shallowly into a fresh object on every update and are read
   // without selectors, so every reference differs and the deep comparison is the only
   // thing keeping an update that carried no change from re-rendering.

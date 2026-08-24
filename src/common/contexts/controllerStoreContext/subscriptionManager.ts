@@ -1,6 +1,7 @@
 import isEqual from 'react-fast-compare'
 
 import { isDev } from '@common/config/env'
+import { isExtension } from '@web/constants/browserapi'
 
 import { ControllerHelpersStore } from './controllerHelpersStore'
 import { ControllerStore } from './controllerStore'
@@ -16,25 +17,11 @@ type Unsubscribe = () => void
  * 2. Smart updates: It uses `react-fast-compare` to check for deep equality, preventing
  *    re-renders when the state reference changes but the content remains the same. A store
  *    that reconciles its snapshots answers that question with the reference alone, so there
- *    the comparison is skipped (see `hasStructurallySharedSnapshots`).
+ *    the comparison is skipped
  * 3. Selector support: It allows components to subscribe to specific slices of state via selectors,
  *    triggering updates only when that specific slice changes.
  */
 export class SubscriptionManager {
-  /**
-   * Set for a store whose snapshots reuse every unchanged top-level value, where reference
-   * inequality already proves a real change and the deep comparison can only ever
-   * confirm it. Costs one walk of the selected slice per subscriber per emit, so it
-   * is skipped there.
-   */
-  readonly #hasStructurallySharedSnapshots: boolean
-
-  constructor({
-    hasStructurallySharedSnapshots = false
-  }: { hasStructurallySharedSnapshots?: boolean } = {}) {
-    this.#hasStructurallySharedSnapshots = hasStructurallySharedSnapshots
-  }
-
   #stores: Map<
     any,
     Map<
@@ -116,7 +103,7 @@ export class SubscriptionManager {
       // Shallow check for performance
       if (newValue === lastValue) return
 
-      if (this.#hasStructurallySharedSnapshots) {
+      if (!isExtension) {
         if (isDev && selector) this.#warnOnAllocatingSelector(id, newValue, lastValue)
 
         entry.lastValue = newValue
