@@ -1,26 +1,17 @@
 import { getAddress } from 'ethers'
-import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
 import { isValidAddress } from '@ambire-common/services/address'
 import Alert from '@common/components/Alert/Alert'
-import BottomSheet from '@common/components/BottomSheet'
-import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import Button from '@common/components/Button'
 import CoingeckoConfirmedBadge from '@common/components/CoingeckoConfirmedBadge'
-import Input from '@common/components/Input'
-import NetworkIcon from '@common/components/NetworkIcon'
-import { NetworkIconIdType } from '@common/components/NetworkIcon/NetworkIcon'
-import Select from '@common/components/Select'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import {
   getTokenEligibility,
@@ -28,27 +19,19 @@ import {
   getTokenFromTemporaryTokens,
   handleTokenIsInPortfolio
 } from '@common/modules/action-requests/utils/watchTokenRequest'
+import AddAssetBottomSheet from '@common/modules/settings/components/AddAssetBottomSheet'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-
-type NetworkOption = {
-  value: string
-  label: ReactNode
-  icon: ReactNode
-}
 
 type Props = {
   sheetRef: React.RefObject<any>
   handleClose: () => void
 }
 
-const NETWORK_ICON_SIZE = isMobile ? 28 : 32
-
 const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { t } = useTranslation()
   const { networks, isInitialized } = useController('NetworksController').state
   const { addToast } = useToast()
-  const { theme } = useTheme()
   const {
     state: { validTokens, customTokens, temporaryTokens },
     dispatch: portfolioDispatch
@@ -57,7 +40,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     state: { portfolio: selectedAccountPortfolio, account }
   } = useController('SelectedAccountController')
   const [network, setNetwork] = useState<Network | undefined>(
-    isInitialized ? (networks.find((n) => n.chainId.toString() === '1') ?? networks[0]) : undefined
+    isInitialized ? (networks.find((n) => n.chainId === 1n) ?? networks[0]) : undefined
   )
   const [showAlreadyInPortfolioMessage, setShowAlreadyInPortfolioMessage] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -69,41 +52,9 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     setError,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm({
-    mode: 'all',
-    defaultValues: {
-      address: ''
-    }
-  })
-  const address = watch('address', '')
-
-  const handleSetNetworkValue = useCallback(
-    (networkOption: NetworkOption) => {
-      const selectedNetwork = networks.find((net) => net.name === networkOption.value)
-
-      if (!selectedNetwork) return
-
-      setNetwork(selectedNetwork)
-    },
-    [networks]
-  )
-
-  const networksOptions: NetworkOption[] = useMemo(
-    () =>
-      networks.map((n) => ({
-        value: n.name,
-        label: <Text weight="medium">{t(n.name)}</Text>,
-        icon: (
-          <NetworkIcon
-            key={n.chainId.toString()}
-            id={n.chainId.toString()}
-            name={n.name as NetworkIconIdType}
-            size={NETWORK_ICON_SIZE}
-          />
-        )
-      })),
-    [t, networks]
-  )
+  } = useForm({ mode: 'all', defaultValues: { address: '' } })
+  // Pasted addresses often carry whitespace, which fails the validation
+  const address = watch('address', '').trim()
 
   const tokenTypeEligibility = useMemo(
     () => getTokenEligibility({ address }, validTokens, network),
@@ -112,6 +63,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
 
   const tokenValidation = useMemo(() => {
     if (!address || !network) return null
+
     return validTokens.erc20[`${address}-${network.chainId}`]
   }, [validTokens, address, network])
 
@@ -161,13 +113,22 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       params: {
         method: 'addCustomToken',
         args: [
-          { address: temporaryToken.address, standard: 'ERC20', chainId: network.chainId },
+          {
+            address: getAddress(temporaryToken.address),
+            standard: 'ERC20',
+            chainId: network.chainId
+          },
           account.addr,
           true
         ]
       }
     })
-    addToast(t(`Added token ${address} on ${network.name} to your portfolio`))
+    addToast(
+      t('Added token {{address}} on {{network}} to your portfolio', {
+        address,
+        network: network.name
+      })
+    )
     handleCloseAndReset()
   }, [
     address,
@@ -278,139 +239,86 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   }, [address, network])
 
   return (
-    <BottomSheet id="add-custom-token" sheetRef={sheetRef} closeBottomSheet={handleCloseAndReset}>
-      <ModalHeader
-        title={t('Add token')}
-        handleClose={handleCloseAndReset}
-        headerTestID="add-token-modal-title-text"
-      />
-      {isInitialized && network ? (
-        <View>
-          <Select
-            setValue={handleSetNetworkValue as any}
-            options={networksOptions}
-            value={networksOptions.filter((opt) => opt.value === network.name)[0]}
-            label={t('Choose network')}
-            containerStyle={spacings.mbMd}
-            selectStyle={{
-              backgroundColor: theme.secondaryBackground
-            }}
-          />
-          <Controller
-            control={control}
-            name="address"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                testID="token-address-field"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                label={t('Token address')}
-                placeholder={t('0x...')}
-                value={value}
-                containerStyle={spacings.mbSm}
-                error={errors.address && errors.address.message}
-                backgroundColor={theme.secondaryBackground}
-              />
-            )}
-          />
-          <View
-            style={[
-              isMobile && spacings.mbLg,
-              isWeb && spacings.mbXl,
-              {
-                minHeight: 50 // To prevent the bottom sheet from resizing
-              }
-            ]}
-          >
-            {temporaryToken || portfolioToken ? (
-              <View
-                style={[
-                  flexbox.directionRow,
-                  flexbox.justifySpaceBetween,
-                  flexbox.alignCenter,
-                  spacings.phTy,
-                  spacings.pvTy
-                ]}
-              >
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <TokenIcon
-                    containerHeight={32}
-                    containerWidth={32}
-                    width={22}
-                    height={22}
-                    withContainer
-                    chainId={network.chainId}
-                    address={address}
-                  />
-                  <Text
-                    testID="custom-token-name"
-                    fontSize={16}
-                    style={spacings.mlTy}
-                    weight="semiBold"
-                  >
-                    {temporaryToken?.symbol || portfolioToken?.symbol}
-                  </Text>
-                </View>
-                <View testID="confirmed-pill-text" style={flexbox.directionRow}>
-                  {temporaryToken?.priceIn?.length || portfolioToken?.priceIn?.length ? (
-                    <CoingeckoConfirmedBadge text="Confirmed" address={address} network={network} />
-                  ) : null}
-                </View>
-              </View>
-            ) : null}
-
-            {address && tokenValidation && tokenValidation?.error?.message ? (
-              <Alert
-                type={tokenValidation.error.type === 'network' ? 'warning' : 'error'}
-                isTypeLabelHidden
-                title={tokenValidation.error.message}
-                style={{ ...spacings.phSm, ...spacings.pvSm }}
-              />
-            ) : null}
-
-            {address && showAlreadyInPortfolioMessage ? (
-              <Alert
-                type="warning"
-                isTypeLabelHidden
-                title={t('This token is already handled in your wallet')}
-                style={{ ...spacings.phSm, ...spacings.pvSm }}
-              />
-            ) : null}
-
-            {isLoading ||
-            (isAdditionalHintRequested && !temporaryToken && !tokenValidation?.error) ? (
-              <View style={[flexbox.alignCenter, flexbox.justifyCenter, { height: 48 }]}>
-                <Spinner style={{ width: 18, height: 18 }} />
-              </View>
+    <AddAssetBottomSheet
+      id="add-custom-token"
+      sheetRef={sheetRef}
+      handleClose={handleCloseAndReset}
+      title={t('Add token')}
+      headerTestID="add-token-modal-title-text"
+      addressLabel={t('Token address')}
+      addressFieldTestID="token-address-field"
+      addressError={errors.address && errors.address.message}
+      network={network}
+      onNetworkChange={setNetwork}
+      submitText={t('Add token')}
+      submitTestID="add-token-button"
+      isSubmitDisabled={
+        showAlreadyInPortfolioMessage ||
+        (!temporaryToken && !tokenTypeEligibility) ||
+        !!tokenValidation?.error?.message ||
+        !isValidAddress(address) ||
+        !network ||
+        isSubmitting
+      }
+      onSubmit={handleAddToken}
+      control={control}
+    >
+      {temporaryToken || portfolioToken ? (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.justifySpaceBetween,
+            flexbox.alignCenter,
+            spacings.phTy,
+            spacings.pvTy
+          ]}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <TokenIcon
+              containerHeight={32}
+              containerWidth={32}
+              width={22}
+              height={22}
+              withContainer
+              chainId={network?.chainId}
+              address={address}
+            />
+            <Text testID="custom-token-name" fontSize={16} style={spacings.mlTy} weight="semiBold">
+              {temporaryToken?.symbol || portfolioToken?.symbol}
+            </Text>
+          </View>
+          <View testID="confirmed-pill-text" style={flexbox.directionRow}>
+            {(temporaryToken?.priceIn?.length || portfolioToken?.priceIn?.length) && network ? (
+              <CoingeckoConfirmedBadge text="Confirmed" address={address} network={network} />
             ) : null}
           </View>
-          <Button
-            testID="add-token-button"
-            disabled={
-              showAlreadyInPortfolioMessage ||
-              (!temporaryToken && !tokenTypeEligibility) ||
-              !!tokenValidation?.error?.message ||
-              !isValidAddress(address) ||
-              !network ||
-              isSubmitting
-            }
-            text={t('Add token')}
-            hasBottomSpacing={false}
-            onPress={handleAddToken}
-          />
         </View>
-      ) : (
-        <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.pv]}>
-          <Text fontSize={16} weight="medium">
-            {t('Preparing networks. Please wait...')}
-          </Text>
-          <Text fontSize={16} style={spacings.mbMd} weight="medium">
-            {t('If this takes too long, please try again later.')}
-          </Text>
-          <Spinner style={{ width: 24, height: 24 }} />
+      ) : null}
+
+      {address && tokenValidation && tokenValidation?.error?.message ? (
+        <Alert
+          type={tokenValidation.error.type === 'network' ? 'warning' : 'error'}
+          isTypeLabelHidden
+          title={tokenValidation.error.message}
+          style={{ ...spacings.phSm, ...spacings.pvSm }}
+        />
+      ) : null}
+
+      {address && showAlreadyInPortfolioMessage ? (
+        <Alert
+          type="warning"
+          isTypeLabelHidden
+          title={t('This token is already handled in your wallet')}
+          style={{ ...spacings.phSm, ...spacings.pvSm }}
+        />
+      ) : null}
+
+      {isLoading || (isAdditionalHintRequested && !temporaryToken && !tokenValidation?.error) ? (
+        <View style={[flexbox.alignCenter, flexbox.justifyCenter, { height: 48 }]}>
+          <Spinner style={{ width: 18, height: 18 }} />
         </View>
-      )}
-    </BottomSheet>
+      ) : null}
+    </AddAssetBottomSheet>
   )
 }
 

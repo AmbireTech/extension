@@ -4,13 +4,15 @@ import { View } from 'react-native'
 import { Network } from '@ambire-common/interfaces/network'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Collectible from '@common/components/Collectible'
+import { COLLECTIBLE_SIZE } from '@common/components/Collectible/styles'
+import CollectionThumbnail from '@common/components/CollectionThumbnail'
 import { SelectedCollectible } from '@common/components/CollectibleModal'
 import NetworkIcon from '@common/components/NetworkIcon'
 import { NetworkIconIdType } from '@common/components/NetworkIcon/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -25,7 +27,7 @@ interface Props {
     baseCurrency: string
     price: number
   }[]
-  openCollectibleModal: (collectible: SelectedCollectible) => void
+  openCollectibleModal?: (collectible: SelectedCollectible) => void
   networks: Network[]
 }
 
@@ -46,7 +48,7 @@ export const formatCollectiblePrice = ({
 
 const { isTab } = getUiType()
 
-const Collection: FC<Props> = ({
+const CollectionCard: FC<Props> = ({
   address,
   name,
   chainId,
@@ -76,20 +78,22 @@ const Collection: FC<Props> = ({
           <Text testID="collection-item" weight="medium" numberOfLines={1} lineBreakMode="tail">
             {name}
           </Text>
-          <View
-            style={{
-              minWidth: 20,
-              height: 20,
-              ...flexbox.center,
-              ...spacings.mlTy,
-              ...common.borderRadiusPrimary,
-              backgroundColor: theme.primaryBackground
-            }}
-          >
-            <Text fontSize={12} appearance="secondaryText">
-              {collectibles.length}
-            </Text>
-          </View>
+          {
+            <View
+              style={{
+                minWidth: 20,
+                height: 20,
+                ...flexbox.center,
+                ...spacings.mlTy,
+                ...common.borderRadiusPrimary,
+                backgroundColor: theme.primaryBackground
+              }}
+            >
+              <Text fontSize={12} appearance="secondaryText">
+                {collectibles.length}
+              </Text>
+            </View>
+          }
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <View
@@ -112,6 +116,15 @@ const Collection: FC<Props> = ({
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.wrap]}>
+        {!collectibles.length && (
+          <CollectionThumbnail
+            address={address}
+            chainId={BigInt(chainId)}
+            size={COLLECTIBLE_SIZE}
+            borderRadius={BORDER_RADIUS_PRIMARY}
+            networks={networks}
+          />
+        )}
         {collectibles.map((collectible, index) => (
           <Collectible
             style={{
@@ -135,4 +148,4 @@ const Collection: FC<Props> = ({
   )
 }
 
-export default React.memo(Collection)
+export default React.memo(CollectionCard)

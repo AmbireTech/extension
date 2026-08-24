@@ -7,6 +7,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
+import CollectionCard from '@common/components/CollectionCard'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -14,11 +15,11 @@ import DashboardBanners from '@common/modules/dashboard/components/DashboardBann
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
+import useDebouncedPortfolioUpdate from '@common/hooks/useDebouncedPortfolioUpdate'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
 import FloatingBottomBar from '../FloatingBottomBar'
-import Collection from './Collection'
 import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
 
@@ -58,6 +59,7 @@ const Collections: FC<Props> = ({
     state: { portfolio, dashboardNetworkFilter }
   } = useController('SelectedAccountController')
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
+  const updatePortfolio = useDebouncedPortfolioUpdate()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [selectedCollectible, setSelectedCollectible] = useState<SelectedCollectible | null>(null)
@@ -78,14 +80,18 @@ const Collections: FC<Props> = ({
 
   const filteredPortfolioCollections = useMemo(() => {
     const searchableCollections = (portfolio?.collections || []).filter(
-      ({ chainId, collectibles }) => {
+      ({ chainId, collectibles, flags }) => {
+        if (flags.isHidden) return false
+
         let isMatchingNetwork = true
 
         if (dashboardNetworkFilter) {
           isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
         }
 
-        return isMatchingNetwork && collectibles.length
+        // Custom collections are displayed without collectibles too, the same
+        // way custom tokens are displayed with a zero balance
+        return isMatchingNetwork && (!!collectibles.length || !!flags.isCustom)
       }
     )
 
@@ -131,13 +137,16 @@ const Collections: FC<Props> = ({
               t("You don't have any collectibles (NFTs) yet.")}
             {!searchValue &&
               !!dashboardNetworkFilter &&
-              t(`You don't have any collectibles (NFTs) on ${dashboardNetworkFilterName}.`)}
+              t("You don't have any collectibles (NFTs) on {{network}}.", {
+                network: dashboardNetworkFilterName
+              })}
             {searchValue &&
-              t(
-                `No collectibles (NFTs) match "${searchValue}"${
-                  dashboardNetworkFilterName ? ` on ${dashboardNetworkFilterName}` : ''
-                }.`
-              )}
+              (dashboardNetworkFilterName
+                ? t('No collectibles (NFTs) match "{{search}}" on {{network}}.', {
+                    search: searchValue,
+                    network: dashboardNetworkFilterName
+                  })
+                : t('No collectibles (NFTs) match "{{search}}".', { search: searchValue }))}
           </Text>
         )
       }
@@ -151,7 +160,7 @@ const Collections: FC<Props> = ({
       const { name, address, chainId, collectibles, priceIn } = item
 
       return (
-        <Collection
+        <CollectionCard
           key={address}
           name={name}
           address={address}
@@ -195,6 +204,7 @@ const Collections: FC<Props> = ({
         modalRef={modalRef}
         handleClose={closeCollectibleModal}
         selectedCollectible={selectedCollectible}
+        onCollectionPreferenceChange={updatePortfolio}
       />
       <DashboardPageScrollContainer
         tab="collectibles"

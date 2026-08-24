@@ -6,7 +6,8 @@ import { SelectedCollectible } from '@common/components/CollectibleModal'
 import ManifestImage from '@common/components/ManifestImage'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import { formatCollectiblePrice } from '@common/modules/dashboard/components/Collections/Collection/Collection'
+import { formatCollectiblePrice } from '@common/components/CollectionCard/CollectionCard'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { NFT_CDN_URL } from '@env'
 import ImageIcon from '@web/assets/svg/ImageIcon'
@@ -27,6 +28,8 @@ type Props = {
   }
   openCollectibleModal?: (collectible: SelectedCollectible) => void
   size?: number
+  /** Applied to both the image and its container, which clips it */
+  borderRadius?: number
   networks: Network[]
 }
 
@@ -36,6 +39,7 @@ const Collectible: FC<Props> = ({
   openCollectibleModal,
   size = COLLECTIBLE_SIZE,
   style,
+  borderRadius = BORDER_RADIUS_PRIMARY,
   networks
 }) => {
   const { theme } = useTheme()
@@ -58,6 +62,7 @@ const Collectible: FC<Props> = ({
         width: size,
         height: size,
         ...styles.container,
+        borderRadius,
         ...style
       }}
       onPress={() => {
@@ -102,7 +107,7 @@ const Collectible: FC<Props> = ({
               />
             </View>
           )}
-          imageStyle={styles.image}
+          imageStyle={{ ...styles.image, borderRadius }}
         />
       </Animated.View>
     </Pressable>

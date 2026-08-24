@@ -32,7 +32,10 @@ const getStyles = () =>
       alignSelf: 'center'
     },
     imageContainer: {
-      ...spacings.mbLg
+      ...spacings.mbLg,
+      // Sized to the image, so the hide action can be positioned relative to it
+      width: COLLECTIBLE_IMAGE_SIZE,
+      maxWidth: '100%'
     },
     image: {
       borderRadius: BORDER_RADIUS_PRIMARY,

@@ -1,8 +1,4 @@
-import { useCallback } from 'react'
-
-import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
-import useToast from '@common/hooks/useToast'
+import useManageAsset from '@common/modules/settings/hooks/useManageAsset'
 
 type Props = {
   address: string
@@ -21,67 +17,14 @@ const useManageToken = ({
   chainId,
   onTokenPreferenceOrCustomTokenChange
 }: Props): UseManageTokenReturnType => {
-  const { t } = useTranslation()
-  const { addToast } = useToast()
-  const {
-    state: { tokenPreferences },
-    dispatch: portfolioDispatch
-  } = useController('PortfolioController')
-  const { account } = useController('SelectedAccountController').state
-
-  // flags.isHidden is updated after the portfolio is updated
-  // so we use tokenPreferences to get the value faster
-  const isHidden = !!tokenPreferences?.find(
-    ({ address: addr, chainId: nChainId }) =>
-      addr.toLowerCase() === address.toLowerCase() && nChainId === chainId
-  )?.isHidden
-
-  const toggleHideToken = useCallback(() => {
-    addToast(t('Token is now visible. You can hide it again from the dashboard.'), {
-      timeout: 2000
-    })
-
-    portfolioDispatch({
-      type: 'method',
-      params: {
-        method: 'toggleHideToken',
-        args: [{ address, chainId }, account?.addr]
-      }
-    })
-    onTokenPreferenceOrCustomTokenChange()
-  }, [
-    addToast,
-    t,
-    portfolioDispatch,
+  const { isHidden, toggleHideAsset, removeCustomAsset } = useManageAsset({
     address,
     chainId,
-    onTokenPreferenceOrCustomTokenChange,
-    account?.addr
-  ])
+    standard: 'ERC20',
+    onAssetPreferenceChange: onTokenPreferenceOrCustomTokenChange
+  })
 
-  const removeCustomToken = useCallback(() => {
-    addToast(t('Token removed'), {
-      timeout: 2000
-    })
-    portfolioDispatch({
-      type: 'method',
-      params: {
-        method: 'removeCustomToken',
-        args: [{ address, chainId }, account?.addr]
-      }
-    })
-    onTokenPreferenceOrCustomTokenChange()
-  }, [
-    addToast,
-    t,
-    portfolioDispatch,
-    address,
-    chainId,
-    onTokenPreferenceOrCustomTokenChange,
-    account?.addr
-  ])
-
-  return { isHidden, toggleHideToken, removeCustomToken }
+  return { isHidden, toggleHideToken: toggleHideAsset, removeCustomToken: removeCustomAsset }
 }
 
 export default useManageToken

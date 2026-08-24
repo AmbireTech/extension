@@ -16,6 +16,7 @@ import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 
+import HideCollectibleButton from './HideCollectibleButton'
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
 
@@ -35,12 +36,15 @@ const CollectibleModal = ({
   handleClose,
   modalRef,
   selectedCollectible,
-  hideSendNft
+  hideSendNft,
+  onCollectionPreferenceChange
 }: {
   handleClose: () => void
   modalRef: any
   selectedCollectible: SelectedCollectible
   hideSendNft?: boolean
+  /** Triggers a portfolio update after hiding. Pass it to display the hide action */
+  onCollectionPreferenceChange?: () => void
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -48,6 +52,9 @@ const CollectibleModal = ({
   const {
     state: { networks }
   } = useController('NetworksController')
+  // No actions on a collectible that is only being previewed (in a simulation)
+  const shouldDisplayHideCollectionAction = !hideSendNft && !!onCollectionPreferenceChange
+
   const modalContent = useMemo(() => {
     if (!selectedCollectible) return null
 
@@ -55,27 +62,37 @@ const CollectibleModal = ({
     const networkData = networks.find(({ chainId: networkChainId }) => chainId === networkChainId)
     return (
       <>
-        <ManifestImage
-          uri={image}
-          size={COLLECTIBLE_IMAGE_SIZE}
-          containerStyle={styles.imageContainer}
-          imageStyle={styles.image}
-          fallback={() => (
-            <View
-              style={[
-                flexbox.flex1,
-                flexbox.center,
-                { backgroundColor: theme.primaryBackground, width: '100%' }
-              ]}
-            >
-              <ImageIcon
-                color={theme.secondaryText}
-                width={COLLECTIBLE_IMAGE_SIZE / 2}
-                height={COLLECTIBLE_IMAGE_SIZE / 2}
-              />
-            </View>
+        <View style={styles.imageContainer}>
+          <ManifestImage
+            uri={image}
+            size={COLLECTIBLE_IMAGE_SIZE}
+            imageStyle={styles.image}
+            fallback={() => (
+              <View
+                style={[
+                  flexbox.flex1,
+                  flexbox.center,
+                  { backgroundColor: theme.primaryBackground, width: '100%' }
+                ]}
+              >
+                <ImageIcon
+                  color={theme.secondaryText}
+                  width={COLLECTIBLE_IMAGE_SIZE / 2}
+                  height={COLLECTIBLE_IMAGE_SIZE / 2}
+                />
+              </View>
+            )}
+          />
+          {shouldDisplayHideCollectionAction && onCollectionPreferenceChange && (
+            <HideCollectibleButton
+              address={address}
+              chainId={chainId}
+              tokenId={id}
+              onCollectionPreferenceChange={onCollectionPreferenceChange}
+              handleClose={handleClose}
+            />
           )}
-        />
+        </View>
         <View
           style={[
             flexbox.directionRow,
@@ -116,7 +133,6 @@ const CollectibleModal = ({
           style={[
             spacings.phSm,
             spacings.pvSm,
-            // !hideSendNft && spacings.mbSm,
             {
               borderRadius: BORDER_RADIUS_PRIMARY,
               backgroundColor: theme.secondaryBackground,
@@ -147,8 +163,11 @@ const CollectibleModal = ({
       </>
     )
   }, [
+    handleClose,
     networks,
+    onCollectionPreferenceChange,
     selectedCollectible,
+    shouldDisplayHideCollectionAction,
     styles.image,
     styles.imageContainer,
     t,
