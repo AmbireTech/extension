@@ -33,6 +33,7 @@ interface Styles {
   buyWalletButton: ViewStyle
   amountCard: ViewStyle
   balanceRow: ViewStyle
+  maxButton: ViewStyle
   amountInput: ViewStyle
   amountInputWrapper: ViewStyle
   amountNativeInput: TextStyle
@@ -204,6 +205,10 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.justifySpaceBetween,
       ...spacings.mbTy,
       minHeight: 20
+    },
+    maxButton: {
+      ...spacings.mlTy,
+      ...spacings.phTy
     },
     amountInput: {
       ...spacings.mbSm

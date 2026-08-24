@@ -7,11 +7,9 @@ import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { getTokenUsdPrice } from '@ambire-common/libs/portfolio/helpers'
 import { getWalletAmountFromXWallet } from '@ambire-common/libs/walletStaking/shareValue'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
@@ -25,8 +23,10 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import AmountSlider from '../WalletStaking/AmountSlider'
+import BalanceWithMax from '../WalletStaking/BalanceWithMax'
 import { getMigrateXWalletCalls } from '../WalletStaking/calls'
 import getStyles from '../WalletStaking/styles'
+import WalletStakingApy from '../WalletStaking/WalletStakingApy'
 
 const TOKEN_DECIMALS = 18
 
@@ -98,20 +98,16 @@ const WalletMigrationScreen = () => {
   )
   const amountInUsd = useMemo(() => formatDecimals(amountValueInUsd, 'value'), [amountValueInUsd])
 
-  const apyTooltipDataSet = useMemo(
-    () =>
-      createGlobalTooltipDataSet({
-        id: 'wallet-migration-apy-tooltip',
-        content: t('The staking yield is variable and may change over time.')
-      }),
-    [t]
-  )
   const isSubmitDisabled = !account || isSubmitting || amountInWei <= 0n || hasInsufficientBalance
   const submitButtonText = isSubmitting ? t('Migrating...') : t('Migrate')
 
   const handleSliderValueChange = useCallback(
     (nextAmount: bigint) => setAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
     []
+  )
+  const handleMaxPress = useCallback(
+    () => setAmount(formatUnits(balance, TOKEN_DECIMALS)),
+    [balance]
   )
 
   const handleBack = useCallback(() => navigate(-1), [navigate])
@@ -166,9 +162,12 @@ const WalletMigrationScreen = () => {
                   {amountInUsd}
                 </Text>
               </View>
-              <Text fontSize={12} appearance="secondaryText">
-                {t('Balance: {{balance}}', { balance: balanceLabel })}
-              </Text>
+              <BalanceWithMax
+                balanceLabel={balanceLabel}
+                disabled={balance <= 0n}
+                onMaxPress={handleMaxPress}
+                testID="wallet-migration-max-button"
+              />
             </View>
 
             <NumberInput
@@ -197,23 +196,7 @@ const WalletMigrationScreen = () => {
           </View>
 
           <View style={styles.details}>
-            <View style={styles.detailRow}>
-              <Text fontSize={13} appearance="secondaryText">
-                {t('APY')}
-              </Text>
-              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                <Text fontSize={13} appearance="secondaryText">
-                  {t('2% (variable rate)')}
-                </Text>
-                <InfoIcon
-                  width={14}
-                  height={14}
-                  color={theme.secondaryText}
-                  dataSet={apyTooltipDataSet}
-                  style={spacings.mlTy}
-                />
-              </View>
-            </View>
+            <WalletStakingApy />
             <Text fontSize={11} appearance="errorText" style={styles.validation}>
               {hasInsufficientBalance ? t('The amount is higher than your balance.') : ''}
             </Text>

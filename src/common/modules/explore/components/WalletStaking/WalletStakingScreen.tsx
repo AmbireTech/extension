@@ -13,11 +13,9 @@ import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
-import HoverablePressable from '@common/components/HoverablePressable'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import CONFIG, { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -38,6 +36,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import AmountSlider from './AmountSlider'
+import BalanceWithMax from './BalanceWithMax'
 import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
 import {
   decodePendingWalletWithdrawals,
@@ -52,14 +51,12 @@ import {
   serializePendingWalletWithdrawal
 } from './pendingWithdrawal'
 import getStyles from './styles'
+import WalletStakingApy from './WalletStakingApy'
 
 import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
 const TOKEN_DECIMALS = 18
 const EMPTY_STATE_BALANCE_THRESHOLD = parseUnits('0.001', TOKEN_DECIMALS)
 const STAKING_HELP_URL = 'https://help.ambire.com/en/collections/18211458-wallet-token-governance'
-const STAKING_APY_PROPOSAL_URL =
-  'https://snapshot.org/#/s:ambire.eth/proposal/0xfc8edfdf451b2aa25575ea198019572de9dd0cdc1949d83e2176c75b62d6c913'
-const STAKING_APY_TOOLTIP_ID = 'wallet-staking-apy-tooltip'
 const WALLET_STAKING_COMMITMENT_ABI = 'function commitments(bytes32) view returns (uint256)'
 
 const getAmountInWei = (amount: string) => {
@@ -447,6 +444,10 @@ const WalletStakingScreen = () => {
     (nextAmount: bigint) => setAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
     []
   )
+  const handleMaxPress = useCallback(
+    () => setAmount(formatUnits(balance, TOKEN_DECIMALS)),
+    [balance]
+  )
   const handleOpenFeeInfoBottomSheet = useCallback(
     () => openFeeInfoBottomSheet(),
     [openFeeInfoBottomSheet]
@@ -459,34 +460,6 @@ const WalletStakingScreen = () => {
       addToast(t("We couldn't open the staking guide."), { type: 'error' })
     })
   }, [addToast, t])
-
-  const handleOpenStakingApyProposal = useCallback(() => {
-    openInTab({ url: STAKING_APY_PROPOSAL_URL }).catch((error) => {
-      console.error('Failed to open the WALLET staking APY proposal', error)
-      captureException(error)
-      addToast(t("We couldn't open the DAO vote."), { type: 'error' })
-    })
-  }, [addToast, t])
-
-  const stakingApyTooltipContent = useMemo(
-    () => (
-      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
-        <Text fontSize={14} appearance="secondaryText">
-          {t('Currently')}{' '}
-        </Text>
-        <HoverablePressable onPress={handleOpenStakingApyProposal}>
-          <Text fontSize={14} weight="medium" appearance="primary">
-            {t('voted by the DAO')}
-          </Text>
-        </HoverablePressable>
-        <Text fontSize={14} appearance="secondaryText">
-          {' '}
-          {t('as a fair staking incentive')}
-        </Text>
-      </View>
-    ),
-    [handleOpenStakingApyProposal, t]
-  )
 
   const handleBuyWallet = useCallback(() => {
     navigate(ROUTES.swapAndBridge, {
@@ -800,9 +773,12 @@ const WalletStakingScreen = () => {
                         {amountInUsd}
                       </Text>
                     </View>
-                    <Text fontSize={12} appearance="secondaryText">
-                      {t('Balance: {{balance}}', { balance: balanceLabel })}
-                    </Text>
+                    <BalanceWithMax
+                      balanceLabel={balanceLabel}
+                      disabled={balance <= 0n}
+                      onMaxPress={handleMaxPress}
+                      testID="wallet-staking-max-button"
+                    />
                   </View>
 
                   <NumberInput
@@ -862,26 +838,7 @@ const WalletStakingScreen = () => {
                 </View>
 
                 <View style={styles.details}>
-                  <View style={styles.detailRow}>
-                    <Text fontSize={13} appearance="secondaryText">
-                      {t('APY')}
-                    </Text>
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <Text fontSize={13} appearance="secondaryText">
-                        {t('2% (variable rate)')}
-                      </Text>
-                      <InfoIcon
-                        width={14}
-                        height={14}
-                        color={theme.secondaryText}
-                        data-tooltip-id={STAKING_APY_TOOLTIP_ID}
-                        style={spacings.mlTy}
-                      />
-                      <Tooltip id={STAKING_APY_TOOLTIP_ID} clickable>
-                        {stakingApyTooltipContent}
-                      </Tooltip>
-                    </View>
-                  </View>
+                  <WalletStakingApy />
                   {mode === 'unstake' && (
                     <View style={styles.detailRow}>
                       <Text fontSize={13} appearance="secondaryText">
