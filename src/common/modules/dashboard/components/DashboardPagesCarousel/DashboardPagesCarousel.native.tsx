@@ -10,7 +10,6 @@ import {
   ScrollView,
   View
 } from 'react-native'
-import { useSearchParams } from 'react-router-dom'
 
 import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
 import useTheme from '@common/hooks/useTheme'
@@ -54,7 +53,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const { styles } = useTheme(getStyles)
   const isScreenFocused = useIsScreenFocused()
   const scrollRef = useRef<ScrollView>(null)
-  const [, setSearchParams] = useSearchParams()
   const scrollY = useMemo(() => new Animated.Value(0), [])
   // The pages are explicitly sized because a page taller than the pager would
   // make the pager scroll vertically instead of the list inside it.
@@ -196,7 +194,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // on mount (a deep link may open another tab) must not animate.
   const alignedTabIndexRef = useRef(openTabIndex)
   const isPagerDrivenRef = useRef(false)
-  const dragStartTabRef = useRef(openTab)
 
   useEffect(() => {
     const previousTabIndex = alignedTabIndexRef.current
@@ -229,10 +226,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // pages a swipe can reach are rendered here too, in case it beats the ordered build.
   const onScrollBeginDrag = useCallback(() => {
     isPagerDrivenRef.current = true
-    dragStartTabRef.current = openTab
     takePagesToTop()
     renderTabs([TABS[openTabIndex - 1], TABS[openTabIndex + 1]])
-  }, [openTab, openTabIndex, renderTabs, takePagesToTop])
+  }, [openTabIndex, renderTabs, takePagesToTop])
 
   // The open tab follows the pager past the halfway point, so the tabs row does not wait
   // for the swipe to settle. Only under a gesture: scrolling to a pressed tab reports
@@ -252,7 +248,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
   const onMomentumScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const wasDragged = isPagerDrivenRef.current
       isPagerDrivenRef.current = false
 
       const tab = TABS[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
@@ -260,12 +255,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       if (!tab) return
 
       if (tab !== openTab) setOpenTab(tab)
-
-      // Left until the swipe is over, so no route update is dragged through the gesture.
-      // A swipe back to where it started changed nothing, and a pressed tab wrote it.
-      if (wasDragged && tab !== dragStartTabRef.current) setSearchParams({ tab, sessionId })
     },
-    [openTab, pageSize.width, sessionId, setOpenTab, setSearchParams]
+    [openTab, pageSize.width, setOpenTab]
   )
 
   const carousel = useMemo(

@@ -20,7 +20,7 @@ import MainRoutes from '@mobile/modules/router/components/MainRoutes'
  * react-router's `LocationContext` to it - which is what lets a screen stay mounted
  * and keep reading its own params while the router has moved on.
  */
-const AppRoutes = ({ location }: { location?: Location }) => {
+const AppRoutes = ({ location }: { location: Location }) => {
   /**
    * Provided here rather than through `<Routes location>`, which spreads the location
    * into a fresh context object on every render - churning the identity of everything
@@ -28,12 +28,12 @@ const AppRoutes = ({ location }: { location?: Location }) => {
    * card. `Pop` is what react-router reports for an overridden location.
    */
   const scopedLocation = useMemo(
-    () => (location ? { location, navigationType: NavigationType.Pop } : null),
+    () => ({ location, navigationType: NavigationType.Pop }),
     [location]
   )
 
-  const routes = (
-    <>
+  return (
+    <LocationContext.Provider value={scopedLocation}>
       <Routes>
         <Route element={<KeystoreUnlockedRoute />}>
           <Route element={<AuthenticatedRoute />}>
@@ -45,12 +45,8 @@ const AppRoutes = ({ location }: { location?: Location }) => {
         <Route path="*" element={null} />
       </Routes>
       <MainRoutes />
-    </>
+    </LocationContext.Provider>
   )
-
-  if (!scopedLocation) return routes
-
-  return <LocationContext.Provider value={scopedLocation}>{routes}</LocationContext.Provider>
 }
 
 // Memoized because there is one instance per card: a re-render of the stack must not

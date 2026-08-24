@@ -7,7 +7,6 @@ import { useSearchParams } from 'react-router-dom'
 
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useControllerSession from '@common/hooks/useControllerSession'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import DashboardPagesCarousel from '@common/modules/dashboard/components/DashboardPagesCarousel'
@@ -44,7 +43,6 @@ const DashboardPages = ({
   )
 
   const { state: networks } = useController('NetworksController', 'networks')
-  const { dispatch: activityDispatch } = useController('ActivityController')
 
   const [openTab, setOpenTab] = useState(() => {
     const params = new URLSearchParams(route?.search)
@@ -104,23 +102,18 @@ const DashboardPages = ({
     }
   }, [openTab, prevOpenTab, initTab])
 
-  useControllerSession({
-    open: () =>
-      // Initialize the port session. This is necessary to automatically terminate the session when the tab is closed.
-      // The process is managed in the background using port.onDisconnect,
-      // as there is no reliable window event triggered when a tab is closed.
-      setSearchParams((prev) => {
-        prev.set('sessionId', sessionId)
-        return prev
-      }),
-    // The session removal when the window is forcefully closed is handled
-    // in the port.onDisconnect callback in the background.
-    close: () =>
-      activityDispatch({
-        type: 'method',
-        params: { method: 'resetAccountsOpsFilters', args: [sessionId] }
-      })
-  })
+  // The sessions this screen's pages open are tied to the extension's port through the
+  // id in the url, so the background can drop them when the tab goes away (there is no
+  // window event for that - see `port.onDisconnect`). Each page owns the lifecycle of
+  // its own session, so there is nothing to undo here.
+  useEffect(() => {
+    setSearchParams((prev) => {
+      prev.set('sessionId', sessionId)
+      return prev
+    })
+    // setSearchParams changes identity on every call, so it must stay out of the deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId])
 
   return (
     <DashboardPagesCarousel

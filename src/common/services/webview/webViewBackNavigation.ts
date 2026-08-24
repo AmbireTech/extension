@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from 'react'
 
-// The in-app browser registers a handler here while its WebView has page history.
-// The app-level back gesture and Android back button consult it first, so back
-// walks the page history before popping the route (e.g. back to the apps catalog).
+// The in-app browser registers a handler here while its WebView has page history, so
+// back walks the page history before popping the route. The Android back button calls
+// it, and the navigation stack asks whether to leave the swipe to the page.
 const state: { goBack: (() => void) | null } = { goBack: null }
 
 const listeners = new Set<() => void>()

@@ -10,9 +10,9 @@ import { MOBILE_ROOT_ROUTE_PATHS } from '@common/modules/router/constants/common
 import { goBackInWebViewHistory } from '@common/services/webview/webViewBackNavigation'
 
 /**
- * What "back" means on mobile, in order: dismiss any open bottom sheet, walk the
- * in-app browser's page history, then pop the route. Shared by the Android back
- * button and the swipe back gesture so both stay in sync.
+ * What "back" means on mobile, in order: dismiss any open bottom sheet, walk the in-app
+ * browser's page history, then pop the route. Used by the Android hardware back button;
+ * the swipe is the platform's own, and the stack reconciles the router with it.
  */
 const useBackAction = () => {
   const { goBack, canGoBack } = useNavigation()

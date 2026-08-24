@@ -54,11 +54,6 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
       style={[flexbox.flex1, { backgroundColor: theme.primaryBackground }]}
       {...entropyTouchHandlers}
     >
-      {/* Only the edge-swipe-back Pan gesture remains. The former app-wide */}
-      {/* Gesture.Manual() touch observer (used to dismiss dropdowns on an outside */}
-      {/* tap) was removed: left unresolved — and its manager.fail() was a no-op */}
-      {/* because .runOnJS(true) runs it off-worklet — it held the touch responder */}
-      {/* and froze every Pressable until the app was killed. */}
       {children}
     </GestureHandlerRootView>
   )

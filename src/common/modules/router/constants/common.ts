@@ -104,11 +104,11 @@ const MOBILE_ROOT_ROUTE_PATHS = [
 ]
 
 /**
- * Location state marking a navigation that means "back" although it is performed
- * as a push or a replace: some flows return to the previous step, or send the user
- * home, instead of popping (the onboarding steps, the "go home" back buttons, the
- * in-app browser leaving for the apps catalog). The mobile stack reads it to
- * animate the transition backwards - other environments ignore it.
+ * Location state marking a navigation that means "back" although it is performed as a
+ * push or a replace - a flow returning to a step it has no card for, as the onboarding
+ * steps do when they skip screens. The mobile stack reads it to animate the transition
+ * backwards; a step back onto a screen the stack still has needs nothing, since
+ * revealing that card is a pop already. Other environments ignore it.
  */
 const BACK_NAVIGATION_STATE = { navDirection: 'back' } as const
 

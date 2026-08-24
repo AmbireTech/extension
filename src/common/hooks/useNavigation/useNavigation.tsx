@@ -88,10 +88,11 @@ const useNavigation = (): UseNavigationReturnType => {
     // All other options are not supported directly here
   }, [])
 
-  const setSearchParams = useCallback<UseNavigationReturnType['setSearchParams']>((params) => {
-    // Stub for mobile. If search params are heavily used in routing logic,
-    // we would need to manually reconstruct the search string and replace the URL here.
-    console.warn('setSearchParams is currently a stub on mobile.')
+  // A stub: nothing on mobile routes on the search params, and the screens that write
+  // them do it for the extension's port session. Reconstructing the search string and
+  // replacing the url would be the way, if a mobile flow ever needs to read them back.
+  const setSearchParams = useCallback<UseNavigationReturnType['setSearchParams']>(() => {
+    if (isDev) console.warn('navigation: setSearchParams is a stub on mobile')
   }, [])
 
   // The real depth of the history, so back is offered only when there is an entry to
