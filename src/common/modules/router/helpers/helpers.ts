@@ -3,9 +3,13 @@ import { IRequestsController } from '@ambire-common/interfaces/requests'
 import { ISurveyController } from '@ambire-common/interfaces/survey'
 import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
 import { ITransferController } from '@ambire-common/interfaces/transfer'
+import { REQUEST_VIEW_TYPE, View } from '@ambire-common/interfaces/ui'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { ROUTES } from '@common/modules/router/constants/common'
+import { awaitControllersInitialLoad } from '@common/utils/controllers'
+
+import type { MainController } from '@ambire-common/controllers/main/main'
 
 /**
  * Maps the current user request to the route that renders it. Shared between the request
@@ -115,4 +119,38 @@ const getInitialRoute = ({
   return null
 }
 
-export { getInitialRoute, getRouteForUserRequest }
+/**
+ * Tells where a view should be, based on the state of the controllers its screens depend on.
+ * Awaits the initial load of only those controllers, so the route is known without syncing every
+ * controller's state to the UI first. A `null` answer means the view has nowhere to go.
+ */
+const resolveViewRoute = async (mainCtrl: MainController, view: View): Promise<string | null> => {
+  const routeControllers = {
+    keystoreState: mainCtrl.keystore,
+    requestsState: mainCtrl.requests,
+    swapAndBridgeState: mainCtrl.swapAndBridge,
+    transferState: mainCtrl.transfer,
+    surveyState: mainCtrl.survey
+  }
+
+  await awaitControllersInitialLoad([...Object.values(routeControllers), mainCtrl.accounts])
+
+  const authStatus = mainCtrl.accounts.accounts.length
+    ? AUTH_STATUS.AUTHENTICATED
+    : AUTH_STATUS.NOT_AUTHENTICATED
+
+  return getInitialRoute({
+    ...routeControllers,
+    authStatus,
+    isRequestWindow: view.type === REQUEST_VIEW_TYPE,
+    isSidePanel: view.type === 'side-panel'
+  })
+}
+
+/**
+ * Puts a route in the form the router reports it in, so the two can be compared. `ROUTES` values
+ * carry no leading slash while a location's pathname always does.
+ */
+const toAbsoluteRoute = (route: string) => (route.startsWith('/') ? route : `/${route}`)
+
+export { getInitialRoute, resolveViewRoute, toAbsoluteRoute, getRouteForUserRequest }

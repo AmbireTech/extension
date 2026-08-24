@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
+import { NavigateOptions } from '@ambire-common/interfaces/ui'
 import wait from '@ambire-common/utils/wait'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
@@ -11,6 +12,11 @@ import useIsAppFocused from '@common/hooks/useIsAppFocused'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
+import {
+  MAX_VIEW_ROUTE_SYNC_ATTEMPTS,
+  VIEW_ROUTE_SYNC_RE_ASK_INTERVAL
+} from '@common/modules/router/constants/viewRouteSync'
+import { toAbsoluteRoute } from '@common/modules/router/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
 import { getUiType } from '@common/utils/uiType'
@@ -24,14 +30,16 @@ import useKeystoreControllerHelpers from '@web/hooks/useKeystoreControllerHelper
 import useSelectedAccountControllerHelpers from '@web/hooks/useSelectedAccountControllerHelpers'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+type NavigateMessage = { route: string; options?: NavigateOptions }
+
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger
 const actionsBeforeBackgroundReady: (MethodAction | Action)[] = []
 let backgroundReady: boolean = false
-// Ensure we won't miss the background's initial route if it arrives before the view mounts.
-// kept here for whoever mounts next. `undefined` means the background hasn't answered yet,
-// `null` that it answered there is nowhere to go.
-let lastReceivedInitialRoute: string | null | undefined
+// Ensure we won't miss the navigation the controllers send if it arrives before the view mounts.
+// Kept here for whoever mounts next. `undefined` means nothing has been sent yet.
+let lastReceivedNavigate: NavigateMessage | undefined
 let controllerReady: boolean = false
 let connectPort: () => Promise<void> = () => Promise.resolve()
 
@@ -42,9 +50,6 @@ const DEFERRED_CONTROLLER_REQUEST_DELAY = 10
 // Safety-net cadence for re-requesting controller states that never arrived.
 const CONTROLLER_STATE_RECONCILE_INTERVAL = 2000
 const MAX_CONTROLLER_STATE_RECONCILE_ATTEMPTS = 5
-// Used to ensure the app doesn't get stuck on a blank screen
-const INITIAL_ROUTE_RE_ASK_INTERVAL = 500
-const MAX_INITIAL_ROUTE_ASK_ATTEMPTS = 4
 // Facilitate communication between the different parts of the browser extension.
 // Utilizes the PortMessenger class to establish a connection between the popup
 // and background pages, and the eventBus to emit and listen for events.
@@ -85,9 +90,9 @@ if (isExtension) {
         eventBus.emit('allControllerNames', params.names)
         return
       }
-      if (method === 'initialRoute') {
-        lastReceivedInitialRoute = params.route
-        eventBus.emit('initialRoute', params.route)
+      if (method === 'navigate') {
+        lastReceivedNavigate = { route: params.route, options: params.options }
+        eventBus.emit('navigate', lastReceivedNavigate)
         return
       }
       if (messageType === '> ui') {
@@ -146,7 +151,7 @@ if (isExtension) {
   const ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
     'INIT_CONTROLLER_STATE',
     'GET_ALL_CONTROLLER_NAMES',
-    'GET_INITIAL_ROUTE'
+    'SYNC_VIEW_ROUTE'
   ]
 
   const ACTION_METHODS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
@@ -193,8 +198,8 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   const { navigate } = useNavigation()
   const isOnRootRoute = !route.pathname || route.pathname === '/'
 
-  // The controller names and the resolved route arrive in separate messages, in
-  // either order. `namesReceivedRef` lets `onInitialRoute` know the store has been
+  // The controller names and the route to navigate to arrive in separate messages, in
+  // either order. `namesReceivedRef` lets `handleNavigate` know the store has been
   // initialized before it narrows the critical set (init resets that set).
   const namesRef = useRef<(keyof AllControllersMappingType)[]>([])
   const namesReceivedRef = useRef(false)
@@ -207,10 +212,10 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     [windowId]
   )
 
-  const requestInitialRoute = useCallback(() => {
+  const requestViewRouteSync = useCallback(() => {
     if (!backgroundReady) return false
 
-    globalDispatch({ type: 'GET_INITIAL_ROUTE' })
+    globalDispatch({ type: 'SYNC_VIEW_ROUTE', params: {} })
 
     return true
   }, [])
@@ -224,26 +229,25 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
       controllerStore.setCriticalControllers(routeCriticalRef.current)
   }, [controllerStore])
 
-  // The background is authoritative for routing: it sends the route to load, and that route
-  // decides both which controllers the splash waits for and where the view goes.
-  const handleInitialRoute = useCallback(
-    (initialRoute: string | null) => {
-      // A null route (nothing to navigate to) falls back to full readiness via an empty set.
-      routeCriticalRef.current = (initialRoute && ROUTE_CRITICAL_CONTROLLERS[initialRoute]) || []
+  // The controllers are authoritative for routing: they send the route to go to, and that route
+  // decides both which controllers the splash waits for and where the view goes. Whether a view
+  // may be moved at all is decided there too, so nothing is second-guessed here.
+  const handleNavigate = useCallback(
+    ({ route: nextRoute, options }: NavigateMessage) => {
+      // The initial navigation, or a retry of it, can arrive after the user has already moved on.
+      // Honouring it then would throw them back to where the app started, and the splash gate
+      // would be narrowed to controllers the view no longer depends on.
+      if (options?.isInitialNavigation && !isOnRootRoute) return
+
+      routeCriticalRef.current = ROUTE_CRITICAL_CONTROLLERS[nextRoute] || []
       applyCriticalControllers()
 
-      if (!initialRoute) return
-      // The request window follows every route it is sent, since it exists to show whatever
-      // request is current. The popup and tabs are opened by the user, sometimes straight
-      // into a screen, so for them the route only says where to start.
-      if (!getUiType().isRequestWindow && !isOnRootRoute) return
-
       // Don't navigate if already there
-      if (`${route.pathname}${route.search}` === `/${initialRoute}`) return
+      if (`${route.pathname}${route.search}` === toAbsoluteRoute(nextRoute)) return
 
-      navigate(initialRoute, { replace: true })
+      navigate(nextRoute, options)
     },
-    [applyCriticalControllers, isOnRootRoute, route.pathname, route.search, navigate]
+    [applyCriticalControllers, route.pathname, route.search, navigate, isOnRootRoute]
   )
 
   useEffect(() => {
@@ -266,10 +270,10 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
       namesReceivedRef.current = true
       applyCriticalControllers()
 
-      // Request every controller's state regardless of the route. The background
-      // pushes the route's critical states proactively (GET_INITIAL_ROUTE), so a tick
-      // later we only ask for the ones that haven't arrived yet, and deferring keeps
-      // the heavy controllers from competing with the first paint.
+      // Request every controller's state regardless of the route. The background pushes the
+      // route's critical states proactively along with the navigation, so a tick later we only
+      // ask for the ones that haven't arrived yet, and deferring keeps the heavy controllers
+      // from competing with the first paint.
       initialRequestTimer = setTimeout(() => {
         requestControllerStates(getUninitializedControllers())
       }, DEFERRED_CONTROLLER_REQUEST_DELAY)
@@ -349,23 +353,24 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.pathname, route.search, route.hash])
 
-  // Get the initial route from the background
+  // Follow where the controllers send this view
   useEffect(() => {
-    eventBus.addEventListener('initialRoute', handleInitialRoute)
+    eventBus.addEventListener('navigate', handleNavigate)
 
-    return () => eventBus.removeEventListener('initialRoute', handleInitialRoute)
-  }, [handleInitialRoute])
+    return () => eventBus.removeEventListener('navigate', handleNavigate)
+  }, [handleNavigate])
 
-  // The route usually arrives before this view mounts, so the one remembered from then has
+  // The navigation usually arrives before this view mounts, so the one remembered from then has
   // to be handled here.
   useEffect(() => {
-    if (lastReceivedInitialRoute === undefined) return
+    if (!lastReceivedNavigate) return
 
-    handleInitialRoute(lastReceivedInitialRoute)
+    handleNavigate(lastReceivedNavigate)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Retry asking for the initial route
+  // Ask again while there is still nothing on screen, in case the navigation sent when this
+  // view registered never arrived.
   useEffect(() => {
     if (!isExtension || !isOnRootRoute) return
 
@@ -373,17 +378,17 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     let reAskTimeout: NodeJS.Timeout
 
     const askForRoute = () => {
-      if (attempts >= MAX_INITIAL_ROUTE_ASK_ATTEMPTS) return
+      if (attempts >= MAX_VIEW_ROUTE_SYNC_ATTEMPTS) return
 
-      if (requestInitialRoute()) attempts += 1
+      if (requestViewRouteSync()) attempts += 1
 
-      reAskTimeout = setTimeout(askForRoute, INITIAL_ROUTE_RE_ASK_INTERVAL)
+      reAskTimeout = setTimeout(askForRoute, VIEW_ROUTE_SYNC_RE_ASK_INTERVAL)
     }
 
     askForRoute()
 
     return () => clearTimeout(reAskTimeout)
-  }, [isOnRootRoute, requestInitialRoute])
+  }, [isOnRootRoute, requestViewRouteSync])
 
   useEffect(() => {
     if (!isExtension) return
