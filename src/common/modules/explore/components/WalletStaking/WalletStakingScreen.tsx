@@ -80,6 +80,8 @@ const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccount
   state.portfolio.tokens
 const selectIsPortfolioReady = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio.isReadyToVisualize
+const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
+  state.currentUserRequest
 
 interface TabProps {
   mode: WalletStakingMode
@@ -128,7 +130,10 @@ const WalletStakingScreen = () => {
     'SelectedAccountController',
     selectIsPortfolioReady
   )
-  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { state: currentUserRequest, dispatch: requestsDispatch } = useController(
+    'RequestsController',
+    selectCurrentUserRequest
+  )
   const { dispatchAndWait: providersDispatchAndWait } = useController('ProvidersController')
   const [mode, setMode] = useState<WalletStakingMode>(() =>
     params?.mode === 'unstake' ? 'unstake' : 'stake'
@@ -144,6 +149,8 @@ const WalletStakingScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasMadeRequest, setHasMadeRequest] = useState(false)
   const shareValueRequestIdRef = useRef(0)
+  const isLoadingShareValueRef = useRef(false)
+  const hasActiveSubmissionRef = useRef(false)
   const pendingWithdrawalRequestIdRef = useRef(0)
   const shouldPersistStakingRouteRef = useRef(false)
 
@@ -197,9 +204,9 @@ const WalletStakingScreen = () => {
   const price = useMemo(
     () =>
       activeToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ||
+        ?.price ??
       walletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ||
+        ?.price ??
       0,
     [activeToken?.priceIn, walletToken?.priceIn]
   )
@@ -407,9 +414,10 @@ const WalletStakingScreen = () => {
   )
 
   const loadShareValue = useCallback(async () => {
-    if (shareValue || isLoadingShareValue) return
+    if (shareValue !== null || isLoadingShareValueRef.current) return
 
     const requestId = ++shareValueRequestIdRef.current
+    isLoadingShareValueRef.current = true
     setIsLoadingShareValue(true)
     try {
       const nextShareValue = await providersDispatchAndWait<
@@ -422,9 +430,12 @@ const WalletStakingScreen = () => {
           args: []
         }
       })
-      if (requestId === shareValueRequestIdRef.current) {
-        setShareValue(BigInt(nextShareValue))
+      const normalizedShareValue = BigInt(nextShareValue)
+      if (normalizedShareValue <= 0n) {
+        throw new Error('The WALLET staking conversion rate is unavailable.')
       }
+
+      if (requestId === shareValueRequestIdRef.current) setShareValue(normalizedShareValue)
     } catch (error) {
       if (requestId !== shareValueRequestIdRef.current) return
 
@@ -432,9 +443,10 @@ const WalletStakingScreen = () => {
       captureException(error)
       addToast(t("We couldn't load the unstaking details. Please try again."), { type: 'error' })
     } finally {
+      isLoadingShareValueRef.current = false
       if (requestId === shareValueRequestIdRef.current) setIsLoadingShareValue(false)
     }
-  }, [addToast, isLoadingShareValue, providersDispatchAndWait, shareValue, t])
+  }, [addToast, providersDispatchAndWait, shareValue, t])
 
   const handleSelectMode = useCallback(
     (nextMode: WalletStakingMode) => {
@@ -546,7 +558,7 @@ const WalletStakingScreen = () => {
 
     if (amountInWei <= 0n || hasInsufficientBalance) return
 
-    if (mode === 'unstake' && !shareValue) {
+    if (mode === 'unstake' && shareValue === null) {
       addToast(t("We couldn't load the unstaking details. Please try again."), { type: 'error' })
       void loadShareValue()
       return
@@ -608,6 +620,26 @@ const WalletStakingScreen = () => {
     const loadTimeout = setTimeout(() => void loadShareValue(), 0)
     return () => clearTimeout(loadTimeout)
   }, [loadShareValue, mode])
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      hasActiveSubmissionRef.current = false
+      return
+    }
+
+    const isSubmittedRequestActive =
+      currentUserRequest?.kind === 'calls' &&
+      currentUserRequest.meta.accountAddr === account?.addr &&
+      currentUserRequest.meta.chainId === ETHEREUM_CHAIN_ID
+    if (isSubmittedRequestActive) {
+      hasActiveSubmissionRef.current = true
+      return
+    }
+    if (!hasActiveSubmissionRef.current) return
+
+    hasActiveSubmissionRef.current = false
+    setIsSubmitting(false)
+  }, [account?.addr, currentUserRequest, isSubmitting])
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -895,7 +927,7 @@ const WalletStakingScreen = () => {
                   onPress={handleSubmit}
                   disabled={
                     isSubmitDisabled ||
-                    (mode === 'unstake' && !isPendingWithdrawalMode && !shareValue)
+                    (mode === 'unstake' && !isPendingWithdrawalMode && shareValue === null)
                   }
                   hasBottomSpacing={false}
                   style={styles.footerButton}
