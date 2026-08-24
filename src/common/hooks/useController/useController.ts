@@ -86,12 +86,6 @@ export default function useController<K extends keyof AllControllersMappingType,
   selector: (state: AllControllersMappingType[K]) => S
 ): UseControllerReturn<K, S>
 
-/**
- * The name of the one field the component reads. Subscribing to the whole state
- * instead re-renders it on every change to the controller - and the busiest
- * controllers (a portfolio arriving in pieces, request statuses) change far more
- * often than the field being read.
- */
 export default function useController<
   K extends keyof AllControllersMappingType,
   S extends keyof AllControllersMappingType[K]

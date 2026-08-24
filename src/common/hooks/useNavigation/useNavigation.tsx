@@ -18,24 +18,19 @@ const useNavigation = (): UseNavigationReturnType => {
   const isFocusedRef = useIsScreenFocusedRef()
 
   /**
-   * Screens stay mounted underneath the one on top, and they keep reacting to
-   * controller state. Navigating is only ever the business of the screen the user
-   * is looking at: an effect on a screen further back would otherwise send the
-   * user somewhere else entirely, or move a flow on a step too far. Refused here
-   * rather than guarded at each call site, so a screen cannot reintroduce it.
-   * Read through a ref, so a screen losing focus does not re-render everything
-   * that navigates - most of the tree - while a transition is starting.
+   * Navigating is the business of the screen the user is on. Screens stay mounted
+   * underneath it, so an effect on one further back would otherwise send the user
+   * somewhere else or move a flow on a step too far. Refused here rather than at each
+   * call site, and read through a ref, so losing focus re-renders nothing.
    */
   const refuseFromBackgroundScreen = useCallback(
     (action: string) => {
       if (isFocusedRef.current) return false
 
-      // Asked a second way, because the flag is only as good as the last commit
-      // that set it, and refusing a navigation from the screen the user is
-      // actually on leaves them with buttons that do nothing. The history knows
-      // where the router stands with no render in between. Two cards can show the
-      // same path - a flow that steps onto a screen it is already on - so this is
-      // a second opinion rather than the whole answer.
+      // A second opinion, since the flag is only as good as the last commit that set
+      // it, and refusing the screen the user is on leaves them with dead buttons. The
+      // history needs no render to be current. Not the whole answer on its own: two
+      // cards can show the same path.
       if (currentRoute.pathname === history.location.pathname) return false
 
       if (isDev) {
@@ -99,10 +94,8 @@ const useNavigation = (): UseNavigationReturnType => {
     console.warn('setSearchParams is currently a stub on mobile.')
   }, [])
 
-  // The real depth of the memory history stack, so going back is offered only
-  // when there actually is an entry to pop to. `index` is a getter on the
-  // history instance, read on every render - and a navigation always re-renders
-  // this hook through `useLocation` above.
+  // The real depth of the history, so back is offered only when there is an entry to
+  // pop to. Read on every render, which `useLocation` above guarantees per navigation.
   const canGoBack = history.index > 0
 
   return {

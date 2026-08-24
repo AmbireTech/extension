@@ -87,10 +87,8 @@ const useAccountPicker = () => {
         args: []
       }
     })
-    // initParams is intentionally excluded from the deps array — it's read as
-    // a gate only, not a trigger. Including it causes double-init because every
-    // state update through the extension messaging layer creates a new object
-    // reference, making React see a "change" and re-firing the effect.
+    // initParams is a gate, not a trigger: the messaging layer hands over a new object
+    // on every state update, so having it in the deps double-initializes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountPickerDispatch, isInitialized])
 
@@ -106,14 +104,11 @@ const useAccountPicker = () => {
     }
   }, [pageSize, isReady, ACCOUNT_PICKER_PAGE_SIZE])
 
-  // Controller actions are fire-and-forget, so wait until the selected accounts have
-  // been added before opening the personalization screen. Keyed on the import having
-  // *left* the loading state rather than on `addAccountsStatus === 'SUCCESS'`: the
-  // controller sets that and resets it to 'INITIAL' one tick later, and both updates
-  // can reach the UI in the same render batch - which is what happens on mobile, where
-  // they cross the webview bridge and `flushSync` cannot split them - so the transient
-  // 'SUCCESS' is not reliably rendered. Leaving 'LOADING' is, because the import does
-  // real async work in between.
+  // Controller actions are fire-and-forget, so the personalization screen waits for the
+  // accounts to be added. Keyed on the import having *left* 'LOADING' rather than on
+  // 'SUCCESS', which the controller resets a tick later: both updates can land in one
+  // render batch (mobile batches them across the webview bridge), so 'SUCCESS' is not
+  // reliably rendered, while leaving 'LOADING' is.
   useEffect(() => {
     if (!onImportPressed) return
     if (prevAddAccountsStatus !== 'LOADING' || addAccountsStatus === 'LOADING') return
@@ -122,9 +117,8 @@ const useAccountPicker = () => {
   }, [addAccountsStatus, prevAddAccountsStatus, goToNextRoute, onImportPressed])
 
   const onImportReady = useCallback(() => {
-    // The button only disables once the controller reports back that it is importing,
-    // so a second press before that would dispatch a second import of the same
-    // selection - and the selection is cleared by the first one.
+    // The button disables only once the controller reports it is importing, so a second
+    // press before that would import a selection the first one has already cleared.
     if (onImportPressed) return
 
     shouldResetAccountsSelectionOnUnmount.current = false

@@ -16,22 +16,19 @@ const useStackEntries = (): StackState => {
     navigationType: navigationType as StackNavigationType
   }
 
-  // The stack the app boots with runs through the same rules, so the route it
-  // starts on is the first card there ever was - and the platform puts up the
-  // first card without animating it. A boot that starts on the redirect hub
-  // therefore has no card until the redirect resolves.
+  // The route the app boots on runs through the same rules, so it is the first card -
+  // and the platform puts the first card up without animating it.
   const [entries, setEntries] = useState<StackState>(() => reduceStack([], event))
 
   const top = entries[entries.length - 1]
 
-  // Adjusting the stack while rendering (instead of in an effect) commits the new
-  // screen in the same frame as the location change, so the stack never renders
-  // one frame behind the router.
+  // Adjusted while rendering rather than in an effect, so the new screen is committed
+  // in the same frame as the location change instead of one behind it.
   if (top?.key !== location.key) {
     const next = reduceStack(entries, event)
 
-    // A navigation can leave every card as it was (the redirect hub), and setting
-    // state with a stack that did not change would never settle.
+    // A navigation can leave every card as it was, and re-setting an unchanged stack
+    // would never settle.
     if (next !== entries) setEntries(next)
   }
 

@@ -101,13 +101,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     if (collapsedBy.current) handle.scrollToOffset(collapsedBy.current)
   }, [])
 
-  // Opening another tab takes the items of the page it opens to the top, but leaves
-  // the banners as collapsed as they were - they belong to the dashboard, not to the
-  // page, so a tab change is no reason to bring them back.
-  //
-  // The offset has to be read back from the native side: the pages report their scroll
-  // straight into the native animated node, so the value this side holds is only ever
-  // whatever JS last wrote to it.
+  // Opening a tab takes its page to the top but leaves the banners as collapsed as they
+  // were: they belong to the dashboard, not to the page. The offset is read back from
+  // the native side, since the pages report their scroll straight into the animated
+  // node and the value held here is only whatever JS last wrote.
   const takePagesToTop = useCallback(() => {
     scrollY.stopAnimation((offset) => {
       const carried = Math.min(Math.max(offset, 0), bannersHeight)
@@ -134,12 +131,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     })
   }, [])
 
-  // Every page ends up rendered, so no swipe can outrun them however fast they come.
-  // Closest first, and one at a time, so a page is never built during a gesture and
-  // never in the same frame as another one.
-  //
-  // Only while this is the screen the user is on, or the pages still to be built
-  // would be built on top of whichever screen the dashboard was left for.
+  // Every page ends up rendered, so no swipe can outrun them: closest first and one at
+  // a time, never during a gesture or in the same frame as another. Only while this is
+  // the screen the user is on, or the rest would be built over the screen it was left for.
   useEffect(() => {
     if (!isScreenFocused) return undefined
 
@@ -218,9 +212,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated: hasTabChanged })
   }, [openTab, openTabIndex, pageSize.width, takePagesToTop])
 
-  // Only the banners are scrolled out of view - the tabs row below them stays. With
-  // no banners there is nothing to collapse, and interpolating over a zero range
-  // would shift the tabs row by the range's lower bound on the first pixel scrolled.
+  // Only the banners scroll out of view; the tabs row stays. With no banners there is
+  // nothing to collapse, and a zero range would shift the tabs row on the first pixel.
   const headerTranslateY = useMemo(() => {
     if (!bannersHeight) return 0
 
@@ -231,12 +224,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     })
   }, [bannersHeight, scrollY])
 
-  // The header is shared by all pages, so it would have to jump to match the page the
-  // swipe lands on. Taking them all to the top while the swipe is still in progress
-  // keeps that in line with opening a tab by pressing it.
-  //
-  // The pages a swipe can reach are rendered here too, in case it comes in before
-  // they were reached in order.
+  // The header is shared, so it would have to jump to match the page a swipe lands on:
+  // taking every page to the top mid-swipe keeps that in line with pressing a tab. The
+  // pages a swipe can reach are rendered here too, in case it beats the ordered build.
   const onScrollBeginDrag = useCallback(() => {
     isPagerDrivenRef.current = true
     dragStartTabRef.current = openTab
@@ -244,10 +234,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     renderTabs([TABS[openTabIndex - 1], TABS[openTabIndex + 1]])
   }, [openTab, openTabIndex, renderTabs, takePagesToTop])
 
-  // The open tab follows the pager as soon as it is past the halfway point, so the
-  // tabs row doesn't wait for the swipe to settle to catch up with it. Only while the
-  // pager follows a gesture - scrolling it to a tab that was pressed reports every
-  // page it passes on the way, and those are not the selection.
+  // The open tab follows the pager past the halfway point, so the tabs row does not wait
+  // for the swipe to settle. Only under a gesture: scrolling to a pressed tab reports
+  // every page it passes, and those are not the selection.
   const onPagerScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (!isPagerDrivenRef.current) return
@@ -272,9 +261,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
       if (tab !== openTab) setOpenTab(tab)
 
-      // Left until the swipe is over, so it doesn't drag a route update through the
-      // gesture. A swipe that ends back where it started changed nothing, and a tab
-      // that was pressed wrote it already.
+      // Left until the swipe is over, so no route update is dragged through the gesture.
+      // A swipe back to where it started changed nothing, and a pressed tab wrote it.
       if (wasDragged && tab !== dragStartTabRef.current) setSearchParams({ tab, sessionId })
     },
     [openTab, pageSize.width, sessionId, setOpenTab, setSearchParams]
@@ -298,9 +286,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const touchStartOffset = useRef(0)
   const hasPulledToRefresh = useRef(false)
 
-  // Taps are left to the banners and the tabs, so this only records where the touch
-  // began - and asks the native side where the open page is, which has landed well
-  // before the touch has travelled far enough to count as a drag.
+  // Taps belong to the banners and the tabs, so this only records where the touch began
+  // and asks the native side where the open page is - answered long before a drag.
   const onHeaderTouchStart = useCallback(
     ({ nativeEvent }: GestureResponderEvent) => {
       touchStartY.current = nativeEvent.pageY
@@ -333,9 +320,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
         if (hasPulledToRefresh.current || !onRefresh) return
 
         hasPulledToRefresh.current = true
-        // The page is at the top by now and its refresh control reveals itself by
-        // scrolling up by its own height from there, which is where a pulled page
-        // would have left the spinner too.
+        // The page is at the top, and its refresh control reveals itself by scrolling up
+        // by its own height - where a pulled page would have left the spinner too.
         onRefresh()
 
         return

@@ -11,16 +11,13 @@ import flexbox from '@common/styles/utils/flexbox'
 import StackScreen from './StackScreen'
 import useStackEntries from './useStackEntries'
 
-// A screen the user is not on keeps its views and its state, and is kept from
-// working for nothing by not being subscribed to the controllers rather than by
-// being frozen - `react-freeze` hides the screen with `display: none`, which drops
-// every view it had, and putting them back costs more than all the re-renders it
-// saved. See `useControllerState`.
+// Screens the user is not on keep their views and their state, and are kept from
+// working for nothing by unsubscribing from the controllers (see `useControllerState`)
+// rather than by `enableFreeze`, which hides them with `display: none` - dropping
+// every view, and costing more to put back than the re-renders it saves.
 //
-// Freezing also needed a patch on Reanimated, since React remounts the class
-// components in a tree it hides and Reanimated's animated styles did not survive
-// it. The patch was removed with the freezing, so bringing `enableFreeze` back
-// means bringing it back with it:
+// Freezing also needs this Reanimated patch, removed along with it, because React
+// remounts the class components in a tree it hides:
 // https://github.com/AmbireTech/ambire-mobile-wallet/blob/465eed493572512ccb22e30264753f313508ad8a/patches/react-native-reanimated+4.1.1.patch
 
 /** Longer than any transition, for the navigations the platform does not animate. */
@@ -28,11 +25,10 @@ const SETTLE_FALLBACK_MS = 800
 
 /**
  * Renders the router's history as a native stack: one platform screen per history
- * entry, so pushes, pops and the interactive back swipe are performed by
- * UINavigationController on iOS and by fragment transactions on Android. The
- * router stays the source of truth - the stack is derived from its history, and
- * the one case where the platform acts first (a swipe or the native back button)
- * is reconciled in `onDismissed`.
+ * entry, so pushes, pops and the back swipe are run by UINavigationController on iOS
+ * and by fragment transactions on Android. The router stays the source of truth - the
+ * stack is derived from its history, and the one case where the platform acts first
+ * (a swipe, the native back button) is reconciled in `onDismissed`.
  */
 const NavigationStack = () => {
   const entries = useStackEntries()
@@ -43,19 +39,15 @@ const NavigationStack = () => {
   const topEntry = entries[entries.length - 1]
   const topCardKey = topEntry?.cardKey
 
-  // While the in-app browser has page history, the swipe belongs to the page: the
-  // browser screen runs its own edge gesture for that, and this one has to stay
-  // out of its way. Once the page history runs out, the platform gesture takes
-  // over again and popping the route is the right thing to do.
+  // While the in-app browser has page history the swipe belongs to the page, which
+  // runs its own edge gesture; once that history runs out, popping the route is right.
   const isBrowserWalkingItsOwnHistory =
     topEntry?.location.pathname === `/${ROUTES.dappWebView}` && canGoBackInWebViewHistory
 
   /**
-   * The card the platform has finished transitioning to. Work a screen puts off
-   * until it is the one the user is on - reading the controller state it stopped
-   * subscribing to while it was away, above all - waits for this, so a screen
-   * coming back does not hold up the transition that brings it back with a render
-   * of everything it missed.
+   * The card the platform has finished transitioning to. Work a screen defers until it
+   * is the one the user is on - catching up on controller state above all - waits for
+   * this, so a screen coming back does not hold up the transition that brings it.
    */
   const [settledCardKey, setSettledCardKey] = useState('')
 
@@ -64,26 +56,24 @@ const NavigationStack = () => {
     [topCardKey]
   )
 
-  // The platform does not report a transition it never ran (a card put up without
-  // animating, a navigation the stack collapsed), and a screen waiting to catch up
-  // would then wait forever.
+  // The platform reports no transition where it ran none - a card put up without
+  // animating, a navigation the stack collapsed - and the wait would never end.
   useEffect(() => {
     const timer = setTimeout(() => setSettledCardKey(topCardKey ?? ''), SETTLE_FALLBACK_MS)
 
     return () => clearTimeout(timer)
   }, [topCardKey])
 
-  // The screen left behind stays mounted, so its focused input would otherwise
-  // hold the keyboard up over the screen coming in.
+  // The screen left behind stays mounted, so its focused input would hold the keyboard
+  // up over the screen coming in.
   useEffect(() => {
     void KeyboardController.dismiss()
   }, [topCardKey])
 
   const handleDismissed = useCallback(
     (dismissCount: number) => {
-      // The platform has already taken the screen off; the router only has to
-      // catch up. The entries this drops are the ones that are already gone, so
-      // nothing is animated a second time.
+      // The platform has already taken the screen off and the router only catches up:
+      // the entries this drops are gone, so nothing is animated a second time.
       navigate(-Math.max(dismissCount, 1))
     },
     [navigate]

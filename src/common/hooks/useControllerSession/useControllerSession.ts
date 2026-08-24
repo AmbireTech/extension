@@ -6,9 +6,8 @@ interface Props {
   /** Whether the session should exist at all - for a screen that opens it conditionally. */
   isEnabled?: boolean
   /**
-   * Reopens the session when it changes - for a session that is opened with
-   * arguments, so that the controller is asked again when they are no longer the
-   * ones it was asked with. Compared by identity, so it has to be a primitive.
+   * Reopens the session when it changes, for a session opened with arguments.
+   * Compared by identity, so it has to be a primitive.
    */
   reopenOn?: string | number | boolean
   open: () => void
@@ -16,35 +15,28 @@ interface Props {
 }
 
 /**
- * Ties a controller-side session to the screen that owns it being the one the user is
- * on, rather than to that screen being mounted.
+ * Ties a controller-side session to its screen being the one the user is on, rather
+ * than to that screen being mounted: on mobile the screens below the top one stay
+ * mounted, so a session closed on unmount keeps the controller working for a screen
+ * nobody is looking at. In the extension sessions die with the UI port (see
+ * `handleCleanUpOnPortDisconnect`) and every mounted screen is focused, so there this
+ * is open-on-mount / close-on-unmount.
  *
- * On mobile the screens below the top one stay mounted, so a session closed on unmount
- * outlives its screen for as long as the user is somewhere else, and the controller
- * keeps working for a screen nobody is looking at. The extension does not have that problem, because
- * its sessions die with the UI port (see `handleCleanUpOnPortDisconnect`), and there
- * every mounted screen is the focused one - so this behaves exactly like the
- * open-on-mount / close-on-unmount it replaces.
- *
- * `open` and `close` need not be memoized: they are read through refs, so a screen that
- * rebuilds them on every render - writing the session id into the search params is
- * enough to do that - cannot reopen its session on every render.
+ * `open` and `close` are read through refs, so they need no memoization.
  */
 const useControllerSession = ({ isEnabled = true, reopenOn, open, close }: Props) => {
   const screenFocus = useScreenFocusStore()
   const openRef = useRef(open)
   const closeRef = useRef(close)
 
-  // Declared before the effect that opens the session, so that by the time a reopen
-  // runs, the refs hold what the latest render passed.
+  // Declared first, so a reopen always calls what the latest render passed.
   useEffect(() => {
     openRef.current = open
     closeRef.current = close
   }, [close, open])
 
-  // Focus is listened to rather than rendered from: the screens that own a session
-  // are the heavy ones, and re-rendering them as they lose focus lands in the commit
-  // that starts the transition away from them.
+  // Focus is listened to, not rendered from: these screens are the heavy ones, and a
+  // re-render as they lose focus lands in the commit that starts the transition.
   useEffect(() => {
     if (!isEnabled) return undefined
 
