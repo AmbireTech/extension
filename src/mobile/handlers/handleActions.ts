@@ -118,10 +118,6 @@ export const handleActions = async (
       break
     }
 
-    // Fired once the portfolio has fully landed (or Explore is opened), so the dapp
-    // catalog and phishing storage reads stay off the boot path. The two are started a
-    // macrotask apart, because each parses a multi-megabyte blob synchronously and back
-    // to back they hold the JS thread for the sum of both.
     case 'INIT_DEFERRED_CONTROLLERS': {
       void mainCtrl.phishing.init()
       setTimeout(() => {

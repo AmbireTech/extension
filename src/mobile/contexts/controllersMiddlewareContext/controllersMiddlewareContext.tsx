@@ -31,6 +31,17 @@ import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/service
 import { dispatchToControllers, initControllerHost } from '@mobile/services/controllerHost'
 import { shouldShowMigrationOnboarding } from '@mobile/services/legacyMigration/legacyMigration'
 
+const CONTROLLER_HOST_CONFIG = {
+  APP_VERSION,
+  RELAYER_URL,
+  VELCRO_URL,
+  LIFI_EXPLORER_URL,
+  BUNGEE_API_KEY,
+  SQUID_INTEGRATOR_ID,
+  criticalControllers: MOBILE_CRITICAL_CONTROLLERS,
+  UNISWAP_API_KEY
+}
+
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
@@ -116,21 +127,10 @@ export const ControllersMiddlewareProvider: React.FC<{
   }, [stateSubscriptionManager, dispatch])
 
   useEffect(() => {
-    const config = {
-      APP_VERSION,
-      RELAYER_URL,
-      VELCRO_URL,
-      LIFI_EXPLORER_URL,
-      BUNGEE_API_KEY,
-      SQUID_INTEGRATOR_ID,
-      criticalControllers: MOBILE_CRITICAL_CONTROLLERS,
-      UNISWAP_API_KEY
-    }
-
-    const ctrlsNames = initControllerHost(config)
+    const ctrlsNames = initControllerHost(CONTROLLER_HOST_CONFIG)
 
     // Webview has no controllers now
-    // void webviewRef.current?.init(config)
+    // void webviewRef.current?.init(CONTROLLER_HOST_CONFIG)
 
     controllerStore.init(
       ctrlsNames as any[],
@@ -186,6 +186,10 @@ export const ControllersMiddlewareProvider: React.FC<{
     dispatch({ type: 'SET_VIEW_FOCUS', params: { id: MOBILE_VIEW_ID } })
   }, [isFocused, dispatch])
 
+  const path = route.pathname?.replace('/', '') || ''
+  const isOnExploreRoute = path.startsWith(ROUTES.explore)
+  const isOnDashboard = path.startsWith(ROUTES.dashboard)
+
   // The dapp catalog and the phishing lists are the two heaviest storage reads, so they
   // stay off the boot path until the portfolio has fully landed - up to that point every
   // frame is contended and their parsing would stall the dashboard. Opening Explore also
@@ -195,10 +199,6 @@ export const ControllersMiddlewareProvider: React.FC<{
   // visit or a flow that needed them earlier and initialized them on demand.
   // Covers the section and webview routes too, which a deep link can open directly
   // without ever passing through Explore itself.
-  const path = route.pathname?.replace('/', '') || ''
-  const isOnExploreRoute = path.startsWith(ROUTES.explore)
-  const isOnDashboard = path.startsWith(ROUTES.dashboard)
-
   useEffect(() => {
     if (hasRequestedDeferredControllers.current) return
     if ((!isAllReady || !isOnDashboard) && !isOnExploreRoute) return

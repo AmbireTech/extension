@@ -1,15 +1,15 @@
 import * as SplashScreen from 'expo-splash-screen'
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { AppState, StyleSheet, View } from 'react-native'
+import { AppState, View } from 'react-native'
 import { KeyboardController } from 'react-native-keyboard-controller'
 import { Route, Routes } from 'react-router-native'
 
-import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useFonts from '@common/hooks/useFonts'
+import useToast from '@common/hooks/useToast'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
@@ -27,6 +27,7 @@ import { markSplashHidden } from '@mobile/services/bootProfiler'
 
 const Router = () => {
   const { t } = useTranslation()
+  const { addToast, removeToast } = useToast()
 
   const { canRenderRoute, areAllControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
     ControllersStateLoadedContext
@@ -99,18 +100,20 @@ const Router = () => {
     return () => sub.remove()
   }, [])
 
-  if (hasStalledLoading) {
-    return (
-      <View style={[StyleSheet.absoluteFill, flexbox.center]}>
-        <Alert
-          type="warning"
-          title={t(
-            "The initial loading is taking longer than expected. This might be due to a connection issue on your side - or a glitch on ours. If it doesn't resolve soon, please close and reopen the app."
-          )}
-        />
-      </View>
+  // Warn about the wait without taking over the screen, so whatever the app already
+  // managed to render stays up. Clears itself the moment the states arrive.
+  useEffect(() => {
+    if (!hasStalledLoading) return
+
+    const toastId = addToast(
+      t(
+        "The initial loading is taking longer than expected. This might be due to a connection issue on your side - or a glitch on ours. If it doesn't resolve soon, please close and reopen the app."
+      ),
+      { type: 'warning', sticky: true }
     )
-  }
+
+    return () => removeToast(toastId)
+  }, [hasStalledLoading, addToast, removeToast, t])
 
   // Keep the native splash screen visible until controllers, auth and fonts are ready
   if (!isReady) {
