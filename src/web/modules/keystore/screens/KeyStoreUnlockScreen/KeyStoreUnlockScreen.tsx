@@ -56,7 +56,7 @@ const KeyStoreUnlockScreen = () => {
     state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
-  const { requestWindow } = useController('RequestsController').state
+  const { state: requestWindow } = useController('RequestsController', 'requestWindow')
   const { theme } = useTheme()
   const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
   const { isPopup, isTab, isSidePanel } = getUiType()

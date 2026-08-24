@@ -1,3 +1,4 @@
+import isEqual from 'react-fast-compare'
 import type { Location } from 'react-router-native'
 
 import {
@@ -81,6 +82,40 @@ const resolveReplaceAnimation = (location: Location): StackReplaceAnimation =>
     ? 'pop'
     : 'push'
 
+/**
+ * The keys `useNavigation` adds to every navigation for its own bookkeeping. They
+ * say where the user came from, not what the screen shows.
+ */
+const ROUTER_OWNED_STATE_KEYS = ['prevRoute', 'navDirection']
+
+const screenInputOf = (location: Location) => {
+  const state = location.state as Record<string, unknown> | null
+
+  if (!state) return null
+
+  const screenInput = Object.entries(state).filter(
+    ([key]) => !ROUTER_OWNED_STATE_KEYS.includes(key)
+  )
+
+  return screenInput.length ? Object.fromEntries(screenInput) : null
+}
+
+/**
+ * Whether two locations put the same thing on screen. Compared instead of taken
+ * apart, because a card that is revealed keeps rendering the location object it
+ * was rendered with when they do - and everything the screen derives from that
+ * object keeps its identity, so revealing the card costs no render at all. A new
+ * object equal to the old one would instead re-run the route matching and every
+ * memo below it, in the commit that starts the transition back to the card.
+ */
+const showsTheSameScreen = (one: Location, other: Location) =>
+  one.pathname === other.pathname &&
+  one.search === other.search &&
+  isEqual(screenInputOf(one), screenInputOf(other))
+
+const revealedLocation = (revealed: StackEntry, location: Location) =>
+  showsTheSameScreen(revealed.location, location) ? revealed.location : location
+
 const toEntry = ({ location, index }: NavigationEvent): StackEntry => ({
   cardKey: location.key,
   key: location.key,
@@ -134,7 +169,12 @@ const reduceStack = (entries: StackState, event: NavigationEvent): StackState =>
 
     return [
       ...entries.slice(0, ownerIndex),
-      { ...entry, cardKey: owner.cardKey, firstIndex: owner.firstIndex }
+      {
+        ...entry,
+        cardKey: owner.cardKey,
+        firstIndex: owner.firstIndex,
+        location: revealedLocation(owner, entry.location)
+      }
     ]
   }
 
@@ -156,7 +196,12 @@ const reduceStack = (entries: StackState, event: NavigationEvent): StackState =>
 
     return [
       ...entries.slice(0, revealedIndex),
-      { ...entry, cardKey: revealed.cardKey, firstIndex: revealed.firstIndex }
+      {
+        ...entry,
+        cardKey: revealed.cardKey,
+        firstIndex: revealed.firstIndex,
+        location: revealedLocation(revealed, entry.location)
+      }
     ]
   }
 

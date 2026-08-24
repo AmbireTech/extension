@@ -13,7 +13,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import usePrevious from '@common/hooks/usePrevious'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useTheme from '@common/hooks/useTheme'
 import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
@@ -83,7 +83,6 @@ const ActivityPositions: FC<Props> = ({
   const {
     state: { account, dashboardNetworkFilter }
   } = useController('SelectedAccountController')
-  const prevOpenTab = usePrevious(openTab)
 
   const currentAccountBanners = useMemo(() => {
     return getCurrentAccountBanners(banners, account?.addr)
@@ -95,39 +94,41 @@ const ActivityPositions: FC<Props> = ({
     void preloadSummaryPreview()
   }, [])
 
-  useEffect(() => {
-    if (prevOpenTab === 'activity' && openTab !== 'activity') {
+  // The filtered set of account ops is the session: it is what the list renders,
+  // and what tells an account with no transactions apart from one whose
+  // transactions have not been asked for yet. Tied to the screen being the one the
+  // user is on rather than to an effect, because the session is closed while the
+  // user is elsewhere - and it is this that asks for it again on the way back.
+  useControllerSession({
+    // Optimization: Don't apply filtration if we are not on Activity tab
+    isEnabled: openTab === 'activity' && !!account?.addr,
+    reopenOn: `${account?.addr}-${dashboardNetworkFilter ?? ''}`,
+    open: () =>
+      activityDispatch({
+        type: 'method',
+        params: {
+          method: 'filterAccountsOps',
+          args: [
+            sessionId,
+            {
+              account: account!.addr,
+              ...(dashboardNetworkFilter && {
+                chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
+              })
+            },
+            {
+              itemsPerPage: ITEMS_PER_PAGE,
+              fromPage: 0
+            }
+          ]
+        }
+      }),
+    close: () =>
       activityDispatch({
         type: 'method',
         params: { method: 'resetAccountsOpsFilters', args: [sessionId] }
       })
-    }
-  }, [prevOpenTab, openTab, activityDispatch, sessionId])
-
-  useEffect(() => {
-    // Optimization: Don't apply filtration if we are not on Activity tab
-    if (!account?.addr || openTab !== 'activity') return
-
-    activityDispatch({
-      type: 'method',
-      params: {
-        method: 'filterAccountsOps',
-        args: [
-          sessionId,
-          {
-            account: account.addr,
-            ...(dashboardNetworkFilter && {
-              chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
-            })
-          },
-          {
-            itemsPerPage: ITEMS_PER_PAGE,
-            fromPage: 0
-          }
-        ]
-      }
-    })
-  }, [openTab, account?.addr, activityDispatch, dashboardNetworkFilter, sessionId])
+  })
 
   const renderItem = useCallback(
     ({ item }: { item: Item }) => {

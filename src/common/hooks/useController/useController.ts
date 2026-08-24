@@ -86,10 +86,24 @@ export default function useController<K extends keyof AllControllersMappingType,
   selector: (state: AllControllersMappingType[K]) => S
 ): UseControllerReturn<K, S>
 
+/**
+ * The name of the one field the component reads. Subscribing to the whole state
+ * instead re-renders it on every change to the controller - and the busiest
+ * controllers (a portfolio arriving in pieces, request statuses) change far more
+ * often than the field being read.
+ */
+export default function useController<
+  K extends keyof AllControllersMappingType,
+  S extends keyof AllControllersMappingType[K]
+>(id: K, selector: S): UseControllerReturn<K, AllControllersMappingType[K][S]>
+
 export default function useController<
   K extends keyof AllControllersMappingType,
   S = AllControllersMappingType[K]
->(id: K, selector?: (state: AllControllersMappingType[K]) => S): UseControllerReturn<K, S> {
+>(
+  id: K,
+  selector?: ((state: AllControllersMappingType[K]) => S) | keyof AllControllersMappingType[K]
+): UseControllerReturn<K, S> {
   const controllersMiddleware = useContext(ControllersMiddlewareContext)
 
   if (!controllersMiddleware) {
@@ -97,7 +111,11 @@ export default function useController<
   }
 
   const [isSubscribed, setIsSubscribed] = useState(false)
-  const { state, helpers } = useControllerState({ id, selector, subscriptionEnabled: isSubscribed })
+  const { state, helpers } = useControllerState({
+    id,
+    selector: selector as any,
+    subscriptionEnabled: isSubscribed
+  })
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
   const dispatch = useCallback(

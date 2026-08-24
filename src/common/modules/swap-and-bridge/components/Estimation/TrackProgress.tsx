@@ -62,9 +62,9 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const { activeRoutes } = useController('SwapAndBridgeController').state
+  const { state: activeRoutes } = useController('SwapAndBridgeController', 'activeRoutes')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { account } = useController('SelectedAccountController').state
+  const { state: account } = useController('SelectedAccountController', 'account')
 
   const lastCompletedRoute =
     activeRoutes.find((r) => r.activeRouteId === activeRoute?.activeRouteId) || activeRoute

@@ -40,9 +40,26 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
   const prevForceHoveredStyle = usePrevious(forceHoveredStyle)
   const [isHovered, setIsHovered] = useState(false)
 
+  // Nothing hovers on the mobile app: `animate` returns early there, so the press
+  // opacity is the only channel that ever moves. One Animated.Value instead of one
+  // per property - plus an interpolation node per color - is what every
+  // interactive element in the app would otherwise pay at mount, for nothing.
+  const isMobileApp = getUiType().isMobileApp
+
   // Initialize the values that will be animated
   const animatedValues = useMemo(() => {
     const opacity = memoizedValues.find(({ property }) => property === 'opacity')
+
+    if (isMobileApp)
+      return [
+        {
+          value: new Animated.Value((opacity?.from as number) ?? 1),
+          property: 'opacity',
+          from: opacity?.from ?? 1,
+          to: opacity?.to ?? 1,
+          duration: DURATIONS.FAST
+        }
+      ]
 
     const newValues = memoizedValues.map(({ property, from, to, duration: valueDuration }) => {
       const shouldInterpolate = INTERPOLATE_PROPERTIES.includes(property)
@@ -72,7 +89,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
     })
 
     return newValues
-  }, [memoizedValues])
+  }, [isMobileApp, memoizedValues])
 
   const animate = useCallback(
     (reversed?: boolean, customDuration?: number, skipStateUpdate?: boolean) => {
@@ -167,6 +184,17 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
   )
 
   const style = useMemo(() => {
+    // The hovered style is never reached on the mobile app, so the properties
+    // stay at the value they start from - only the opacity has to stay animated.
+    if (isMobileApp) {
+      const staticStyle = memoizedValues.reduce(
+        (acc, { property, from }) => ({ ...acc, [property]: from }),
+        {}
+      )
+
+      return { ...staticStyle, opacity: animatedValues[0]?.value }
+    }
+
     if (animatedValues)
       return animatedValues?.reduce((acc, { property, value, from, to }) => {
         const shouldInterpolate = INTERPOLATE_PROPERTIES.includes(property)
@@ -181,7 +209,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
 
     // Prevents the hook from returning an empty style object on the first render
     return memoizedValues.reduce((acc, { property, from }) => ({ ...acc, [property]: from }), {})
-  }, [animatedValues, memoizedValues])
+  }, [animatedValues, isMobileApp, memoizedValues])
 
   return [bind, style, isHovered || forceHoveredStyle, onHoverIn, animatedValues] as [
     {

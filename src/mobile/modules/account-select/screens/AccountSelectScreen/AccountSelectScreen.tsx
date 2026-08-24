@@ -60,9 +60,7 @@ const AccountSelectScreen = () => {
   )
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const {
     ref: syncSheetRef,
@@ -195,7 +193,10 @@ const AccountSelectScreen = () => {
           navigate(ROUTES.importAccountsFromExtension)
         }}
       />
-      <ExportAccountsToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
+      <ExportAccountsToExtensionSheet
+        sheetRef={exportSheetRef}
+        closeBottomSheet={closeExportSheet}
+      />
     </MobileLayoutContainer>
   ) : (
     <DashboardSkeleton />

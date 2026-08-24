@@ -178,6 +178,32 @@ describe('reduceStack', () => {
       expect(cardKeys(next)).toEqual(['a', 'b'])
     })
 
+    it('keeps the location object the revealed card was rendered with', () => {
+      const deep = push(dashboard, '/explore', 'b', 1)
+      const next = push(deep, '/dashboard', 'c', 2, { prevRoute: loc('/explore', 'b') })
+
+      // Everything the screen derives from its location keeps its identity, so
+      // revealing the card costs no render.
+      expect(next[0]!.location).toBe(dashboard[0]!.location)
+      // The card still follows the history entry it is revealed at.
+      expect(next[0]!.key).toBe('c')
+      expect(next[0]!.index).toBe(2)
+    })
+
+    it('takes the new location when the revealed card is asked to show something else', () => {
+      const withParams: StackState = [
+        {
+          ...entry('/token-details', 'a', 0),
+          location: { ...loc('/token-details', 'a'), search: '?address=0x1' }
+        }
+      ]
+      const deep = push(withParams, '/explore', 'b', 1)
+      const next = push(deep, '/token-details', 'c', 2)
+
+      expect(next[0]!.location).not.toBe(withParams[0]!.location)
+      expect(next[0]!.location.search).toBe('')
+    })
+
     it('reveals it on a replace too, so the screen it leaves does not linger', () => {
       const browsing = push(push(dashboard, '/explore', 'b', 1), '/dapp-web-view', 'c', 2)
       const next = replace(browsing, '/explore', 'd', 2)

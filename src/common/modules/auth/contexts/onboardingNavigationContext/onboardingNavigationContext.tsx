@@ -74,7 +74,7 @@ const getAccountsToPersonalizeFromSession = (): Account[] => {
 }
 
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
-  const { hasPasswordSecret } = useController('KeystoreController').state
+  const { state: hasPasswordSecret } = useController('KeystoreController', 'hasPasswordSecret')
   const { statuses: emailVaultStatuses } = useController('EmailVaultController').state
   const { path, params } = useRoute()
   const prevPath: string | undefined = usePrevious(path)
@@ -85,7 +85,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const { authStatus } = useAuth()
   const { dispatch } = useControllersMiddleware()
   const { isSetupComplete } = useController('WalletStateController').state
-  const { accounts } = useController('AccountsController').state
+  const { state: accounts } = useController('AccountsController', 'accounts')
   const {
     state: { isInitialized, subType, initParams, type },
     dispatch: accountPickerDispatch

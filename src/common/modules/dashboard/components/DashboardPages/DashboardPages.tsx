@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
@@ -37,13 +38,12 @@ const DashboardPages = ({
   const route = useRoute()
   const [sessionId] = useState(`dashboard-${nanoid()}`)
   const [, setSearchParams] = useSearchParams()
-  const {
-    state: { dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    'dashboardNetworkFilter'
+  )
 
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const { dispatch: activityDispatch } = useController('ActivityController')
 
   const [openTab, setOpenTab] = useState(() => {

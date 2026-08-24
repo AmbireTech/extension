@@ -46,12 +46,10 @@ interface Props {
 }
 
 const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, sessionId }) => {
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { state: activityState, dispatch: activityDispatch } = useController('ActivityController')
-  const { accounts } = useController('AccountsController').state
-  const {
-    state: { account: accountData }
-  } = useController('SelectedAccountController')
+  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: accountData } = useController('SelectedAccountController', 'account')
   const [page, setPage] = useState(1)
   const { t } = useTranslation()
   const { maxWidthSize } = useWindowSize()

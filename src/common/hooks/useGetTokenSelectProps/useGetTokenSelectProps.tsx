@@ -73,9 +73,7 @@ const useGetTokenSelectProps = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
 
   if (isLoading)
     return {

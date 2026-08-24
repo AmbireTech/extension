@@ -360,7 +360,7 @@ const DappWebViewScreen = () => {
     [searchControl, t]
   )
 
-  const { account } = useController('SelectedAccountController').state
+  const { state: account } = useController('SelectedAccountController', 'account')
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'

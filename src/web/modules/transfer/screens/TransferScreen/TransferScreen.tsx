@@ -86,18 +86,18 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { navigate } = useNavigation()
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const { t } = useTranslation()
-  const { visibleUserRequests } = useController('RequestsController').state
+  const { state: visibleUserRequests } = useController('RequestsController', 'visibleUserRequests')
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
-  const { userRequests } = useController('RequestsController').state
+  const { state: userRequests } = useController('RequestsController', 'userRequests')
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { accountsOps } = useController('ActivityController').state
+  const { state: accountsOps } = useController('ActivityController', 'accountsOps')
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 

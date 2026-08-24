@@ -50,9 +50,7 @@ const BaseAddress: FC<Props> = ({
   const { addToast } = useToast()
   const { benzinNetworks } = useBenzinNetworksContext()
   // Standalone Benzin doesn't have access to controllers
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
 
   const actualNetworks = networks ?? benzinNetworks
   const network = actualNetworks?.find((n) => n.chainId === chainId)

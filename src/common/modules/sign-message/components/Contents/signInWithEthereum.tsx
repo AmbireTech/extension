@@ -154,7 +154,7 @@ const SignInWithEthereum = ({
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
   const siweMessageToSign = useMemo(() => {

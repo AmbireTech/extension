@@ -15,7 +15,7 @@ type Props = {
 }
 
 const AmbireLogoHorizontalWithOG: React.FC<Props & SvgProps> = ({ withOG, ...rest }) => {
-  const { isOG } = useController('InviteController').state
+  const { state: isOG } = useController('InviteController', 'isOG')
   const prevIsOG = usePrevious(isOG)
 
   const hasJustBecomeOG = prevIsOG !== undefined && isOG && !prevIsOG

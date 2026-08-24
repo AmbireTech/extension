@@ -162,9 +162,7 @@ const TransactionSummary = ({
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()

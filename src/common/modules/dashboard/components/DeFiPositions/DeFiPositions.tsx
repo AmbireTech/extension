@@ -64,9 +64,7 @@ const DeFiPositions: FC<Props> = ({
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme } = useTheme()
   const searchValue = watch('search')
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const { dispatch: portfolioDispatch } = useController('PortfolioController')
   const {
     state: { account, portfolio, dashboardNetworkFilter, banners }

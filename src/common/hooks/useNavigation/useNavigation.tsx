@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-native'
 import { Subject } from 'rxjs'
 
 import { isDev } from '@common/config/env'
-import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
+import { useIsScreenFocusedRef } from '@common/contexts/screenFocusContext'
 import useRouterHistory from '@common/hooks/useRouterHistory'
 
 import { TitleChangeEventStreamType, UseNavigationReturnType } from './types'
@@ -15,7 +15,7 @@ const useNavigation = (): UseNavigationReturnType => {
   const nav = useNavigate()
   const currentRoute = useLocation()
   const history = useRouterHistory()
-  const isFocused = useIsScreenFocused()
+  const isFocusedRef = useIsScreenFocusedRef()
 
   /**
    * Screens stay mounted underneath the one on top, and they keep reacting to
@@ -23,10 +23,20 @@ const useNavigation = (): UseNavigationReturnType => {
    * is looking at: an effect on a screen further back would otherwise send the
    * user somewhere else entirely, or move a flow on a step too far. Refused here
    * rather than guarded at each call site, so a screen cannot reintroduce it.
+   * Read through a ref, so a screen losing focus does not re-render everything
+   * that navigates - most of the tree - while a transition is starting.
    */
   const refuseFromBackgroundScreen = useCallback(
     (action: string) => {
-      if (isFocused) return false
+      if (isFocusedRef.current) return false
+
+      // Asked a second way, because the flag is only as good as the last commit
+      // that set it, and refusing a navigation from the screen the user is
+      // actually on leaves them with buttons that do nothing. The history knows
+      // where the router stands with no render in between. Two cards can show the
+      // same path - a flow that steps onto a screen it is already on - so this is
+      // a second opinion rather than the whole answer.
+      if (currentRoute.pathname === history.location.pathname) return false
 
       if (isDev) {
         console.warn(`navigation: ignored ${action} from a screen that is not on top`)
@@ -34,7 +44,7 @@ const useNavigation = (): UseNavigationReturnType => {
 
       return true
     },
-    [isFocused]
+    [currentRoute.pathname, history, isFocusedRef]
   )
 
   // Native doesn't have useSearchParams out of the box like DOM
