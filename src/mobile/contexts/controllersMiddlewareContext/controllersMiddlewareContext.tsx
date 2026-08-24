@@ -62,6 +62,10 @@ export const ControllersMiddlewareProvider: React.FC<{
     dispatchToControllers(action)
   }, [])
 
+  // Boot profiling only. Goes to the worker directly rather than through `dispatch`,
+  // which reaches the controllers in this realm and not the WebView.
+  const flushWorkerBootProfile = useCallback(() => !!webviewRef.current?.flushBootProfile(), [])
+
   // The controllers are authoritative for routing: they send the route to go to and whether the
   // view may be moved at all, so nothing is second-guessed here.
   const handleNavigate = useCallback(
@@ -219,7 +223,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   useRequestsControllerHelpers(dispatch)
   useDappsControllerHelpers(dispatch)
   useCacheDashboardBalance()
-  useBootProfileReport()
+  useBootProfileReport(flushWorkerBootProfile)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

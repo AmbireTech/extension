@@ -7,8 +7,9 @@ import { WebView } from 'react-native-webview'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
-import { storage } from '@common/services/storage'
+import { getAllSerialized, storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
+import { BOOT_SNAPSHOT_STORAGE_KEYS } from '@mobile/constants/storageSnapshot'
 import {
   approveWalletConnectSession,
   approveWcAuthenticate,
@@ -23,6 +24,19 @@ import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBund
 import materializeWorkerBundle, {
   getMaterializedWorkerBundleUri
 } from '@mobile/modules/webview/services/materializeWorkerBundle'
+import {
+  BOOT_MARK,
+  BOOT_MARK_PREFIX,
+  BOOT_PROFILE_MARKS_EVENT,
+  BOOT_PROFILE_MARKS_MESSAGE,
+  bootProfiler,
+  IS_BOOT_PROFILING_ENABLED,
+  markBoot,
+  markBootOnce,
+  markStorageSnapshotKeys,
+  monotonicNow,
+  setWorkerBootProfile
+} from '@mobile/services/bootProfiler'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 import { beginNfcPinSessions, endNfcPinSessions, getNfcCardService } from '@mobile/services/nfc'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
@@ -69,6 +83,12 @@ const globalErrorHandler = `
 export interface WebViewWorkerRef {
   dispatch: (action: any, raw?: boolean) => void
   init: (config: any) => Promise<string[]>
+  /**
+   * Asks the worker to post its boot marks. Returns false when the worker has not
+   * loaded its bundle yet, so the caller can print the report without waiting for
+   * marks that are never coming.
+   */
+  flushBootProfile: () => boolean
 }
 
 export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
@@ -80,7 +100,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   const initReadyWarningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingConfig = useRef<any>(null)
   // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live
-  // reload, renderer crash).
+  // reload, renderer crash). Holds no storage snapshot — that is taken fresh per injection.
   const lastConfig = useRef<any>(null)
   // Incrementing the key forces a full WebView remount (used for Android dev reload)
   const [webviewKey, setWebviewKey] = useState(0)
@@ -149,9 +169,11 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
     let isActive = true
     // Falls back to the native-asset bundle baked into the signed app if the OTA copy
     // cannot be materialized, so the worker always has a working bundle to load.
-    materializeWorkerBundle().then((uri) => {
-      if (isActive) setProdBundleUri(uri || getWebviewBundleUri())
-    })
+    bootProfiler
+      .measureAsync(BOOT_MARK.rnWorkerBundleMaterialized, materializeWorkerBundle())
+      .then((uri) => {
+        if (isActive) setProdBundleUri(uri || getWebviewBundleUri())
+      })
 
     return () => {
       isActive = false
@@ -199,14 +221,45 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
   // Shared by the two paths that hand the worker its config: init() when the
   // WebView has already loaded, and the system.loaded handler otherwise (plus dev
-  // reloads).
+  // reloads). The richJson stringify here covers the whole storage snapshot, which
+  // is why it is measured separately from the injectJavaScript hop.
+  //
+  // PERF: ship a one-shot snapshot of the async storage keys a controller hosted in
+  // the worker needs to construct (see BOOT_SNAPSHOT_STORAGE_KEYS), so it can seed an
+  // in-memory cache and serve those reads locally instead of making one bridged
+  // storage.get round-trip per key, each delivered via its own injectJavaScript. The
+  // snapshot's `allKeys` is what lets the worker tell a key it has to fetch over the
+  // bridge from one that simply is not stored.
+  //
+  // The snapshot is taken here, not once in init(), so a worker that reloads (dev
+  // HMR, a renderer crash) is seeded with what storage holds NOW. Reusing the
+  // boot-time snapshot would hide every write made since from the new context.
   const injectInitPayload = (configToSend: any) => {
-    const initPayload = encode({ type: 'init', config: configToSend }, true)
+    bootProfiler.startSpan(BOOT_MARK.rnStorageSnapshot)
+    const storageSnapshot = getAllSerialized(BOOT_SNAPSHOT_STORAGE_KEYS)
+    bootProfiler.endSpan(BOOT_MARK.rnStorageSnapshot, {
+      count: Object.keys(storageSnapshot.values).length
+    })
+    markStorageSnapshotKeys(storageSnapshot)
+
+    bootProfiler.startSpan(BOOT_MARK.rnInitPayloadEncoded)
+    const initPayload = encode(
+      {
+        type: 'init',
+        config: {
+          ...configToSend,
+          __storageSnapshot: storageSnapshot
+        }
+      },
+      true
+    )
+    bootProfiler.endSpan(BOOT_MARK.rnInitPayloadEncoded, { bytes: initPayload.length })
 
     webviewRef.current?.injectJavaScript(`
         window.postMessage(${JSON.stringify(initPayload)}, '*');
         true;
       `)
+    markBoot(BOOT_MARK.rnInitPayloadInjected)
   }
 
   useImperativeHandle(ref, () => ({
@@ -225,17 +278,52 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           pendingConfig.current = config
         }
       })
+    },
+    flushBootProfile: () => {
+      // `isLoaded`, not `isReady`: the worker answers this before it is configured,
+      // and its bundle-eval and page timings are worth having even when it hosts
+      // nothing and therefore never reports ready.
+      if (!isLoaded) return false
+
+      dispatchToWebView({ type: 'FLUSH_BOOT_PROFILE' })
+      return true
     }
   }))
+
+  // Times the richJson parse of the first state received per controller, together
+  // with the wire size that produced it. The message type is only known after
+  // decoding, so the duration is captured first and attributed afterwards. Guarded
+  // by the flag because every dapp JSON-RPC message also flows through here.
+  const decodeAndProfile = (raw: string) => {
+    if (!IS_BOOT_PROFILING_ENABLED) return decode(raw)
+
+    const startedAt = monotonicNow()
+    const data = decode(raw)
+    if (data?.type !== 'ctrl.update') return data
+
+    const markName = `${BOOT_MARK_PREFIX.rnCtrlDecode}${data.payload?.ctrlName}`
+    if (bootProfiler.reserveOnce(markName))
+      markBoot(markName, { durationMs: monotonicNow() - startedAt, bytes: raw.length })
+
+    return data
+  }
 
   const handleMessage = async (event: any) => {
     try {
       const raw: string = event.nativeEvent.data
-      const data = decode(raw)
+      const data = decodeAndProfile(raw)
 
       switch (data.type) {
+        case BOOT_PROFILE_MARKS_MESSAGE:
+          // The worker's half of the timeline. Handed to the profiler and also
+          // re-emitted so whoever asked for it knows it has landed.
+          setWorkerBootProfile(data.payload)
+          eventBus.emit(BOOT_PROFILE_MARKS_EVENT, data.payload)
+          break
+
         case 'system.loaded': {
           const isReload = isReadyRef.current
+          markBootOnce(BOOT_MARK.rnWorkerLoadedReceived)
           if (__DEV__) {
             const isReloadStr = isReload ? ' (RELOAD detected)' : ''
             console.log(`[WebViewWorker] WebView internal script loaded${isReloadStr}`)
@@ -272,6 +360,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
         case 'system.ready':
           clearInitWarningTimeout()
+          markBootOnce(BOOT_MARK.rnWorkerReadyReceived, {
+            count: data.payload.controllers?.length
+          })
           isReadyRef.current = true
           setIsReady(true)
           if (initResolver.current) {
@@ -708,6 +799,11 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // The worker is invisible and init() queues via pendingConfig, so this only defers boot.
   if (!__DEV__ && !prodBundleUri) return null
 
+  // Past this point the WebView element is returned, so the gap from here to
+  // `worker.bundle.evalStart` is WebView process spawn + HTML load + bundle
+  // fetch and parse — the part no JS inside either realm can see on its own.
+  markBootOnce(BOOT_MARK.rnWebviewMounted)
+
   return (
     <>
       {__DEV__ && hasDevServerFailed && !isReady && (
@@ -718,6 +814,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         ref={webviewRef}
         source={source}
         onMessage={handleMessage}
+        onLoadStart={() => markBootOnce(BOOT_MARK.rnWebviewLoadStart)}
+        onLoadEnd={() => markBootOnce(BOOT_MARK.rnWebviewLoadEnd)}
         onError={(syntheticEvent) => {
           if (__DEV__) {
             const { nativeEvent } = syntheticEvent

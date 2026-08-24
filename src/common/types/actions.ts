@@ -236,6 +236,12 @@ type SetSubscribedControllersAction = {
   params: { controllers: string[] }
 }
 
+// Mobile-only, boot profiling. Asks the WebView worker to post its boot marks so
+// the RN side can assemble one timeline across both JS realms.
+type FlushBootProfileAction = {
+  type: 'FLUSH_BOOT_PROFILE'
+}
+
 // Mobile-only. Loads the dapp catalog and phishing lists after the dashboard has
 // rendered, keeping them off the boot path. Idempotent.
 type InitDeferredControllersAction = {
@@ -275,4 +281,5 @@ export type Action =
   | DispatchDappTabFocusAction
   | SetBootPhaseAction
   | SetSubscribedControllersAction
+  | FlushBootProfileAction
   | InitDeferredControllersAction

@@ -1,9 +1,14 @@
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
+import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
+import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
 
 import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
+import { flushWorkerBootProfile, workerBootProfiler } from './workerBootProfiler'
+
+import type { SerializedStorageSnapshot } from '@common/services/storage/types'
 
 // The worker hosts no controllers. The wallet's controllers run in the React
 // Native realm (see @mobile/services/controllerHost), so this bundle is only the
@@ -11,11 +16,25 @@ import { sendToReactEvent } from './webviewLogger'
 // a bridged fetch and storage, and the registry wiring that streams controller
 // state to the UI. `initControllers` below is where such a controller gets built.
 
+// Everything this bundle pulls in has now been evaluated. The gap to
+// `worker.bundle.evalStart` is the cost of the module graph alone, before a single
+// controller is constructed.
+workerBootProfiler.mark(BOOT_MARK.workerImportsEvaluated)
+
 // Bridge setup
 const pendingPromises: Record<number, { resolve: any; reject: any }> = {}
 let messageIdCounter = 0
 
 const ctrlOnUpdateIsDirtyFlags: Record<string, boolean> = {}
+
+// Times the first state build per controller. Later emits are not boot cost and
+// would grow the mark list forever.
+function buildStateForFE(ctrlName: string, ctrl: any) {
+  const markName = `${BOOT_MARK_PREFIX.workerCtrlSerialize}${ctrlName}`
+  if (!workerBootProfiler.reserveOnce(markName)) return serializeControllerForUI(ctrl)
+
+  return workerBootProfiler.measure(markName, () => serializeControllerForUI(ctrl))
+}
 
 function debounceFrontEndEventUpdatesOnSameTick(
   ctrlName: string,
@@ -30,7 +49,7 @@ function debounceFrontEndEventUpdatesOnSameTick(
 
     sendToReactEvent('ctrl.update', {
       ctrlName,
-      state: serializeControllerForUI(registeredCtrl),
+      state: buildStateForFE(ctrlName, registeredCtrl),
       forceEmit
     })
   }
@@ -93,15 +112,71 @@ const bridgedFetch = createBridgedFetch(sendToRNAsync)
 // @ts-ignore — override the global fetch with our bridge
 window.fetch = bridgedFetch
 
+// PERF: in-memory mirror of async storage, seeded once from the init snapshot RN
+// takes of its MMKV instance. Holds the same RAW serialized strings RN's storage
+// layer stores, so reads parse with richJson exactly as a bridged storage.get would
+// have, and a controller's boot reads resolve locally instead of each making a
+// separate injectJavaScript round-trip. Which keys travel in the snapshot is RN's
+// call (see BOOT_SNAPSHOT_STORAGE_KEYS).
+const storageCache: Record<string, string> = {}
+let storageCacheSeeded = false
+// Every key RN's storage holds, including the ones left out of the snapshot. What
+// tells "not stored" apart from "stored but not snapshotted", which is the difference
+// between returning the default value and going to the bridge for it.
+const storedKeys = new Set<string>()
+
+const seedStorageCache = (snapshot: SerializedStorageSnapshot | undefined) => {
+  if (!snapshot) return
+  Object.entries(snapshot.values).forEach(([key, serialized]) => {
+    storageCache[key] = serialized
+  })
+  snapshot.allKeys.forEach((key) => storedKeys.add(key))
+  storageCacheSeeded = true
+}
+
+// Records the first read of each storage key.
+const markFirstStorageRead = (key: string) => {
+  const markName = `${BOOT_MARK_PREFIX.workerStorageRead}${key}`
+  if (workerBootProfiler.reserveOnce(markName)) workerBootProfiler.mark(markName)
+}
+
 /**
- * Storage for controllers running in this worker. Every read and write is a bridge
- * round-trip to RN's MMKV instance, which owns the data. Nothing is read at boot —
- * the worker only touches storage once a controller asks it to.
+ * Storage for controllers running in this worker. RN's MMKV instance owns the data;
+ * reads are served from the seeded cache where possible and fall back to a bridge
+ * round-trip, writes always go through the bridge.
  */
 const storageAPI = {
-  get: (key: string, defaultValue?: any) => sendToRNAsync('storage.get', { key, defaultValue }),
-  set: (key: string, value: any) => sendToRNAsync('storage.set', { key, value }),
-  remove: (key: string) => sendToRNAsync('storage.remove', { key })
+  get: (key: string, defaultValue?: any) => {
+    markFirstStorageRead(key)
+
+    // Serve from the seeded cache to avoid a bridge round-trip.
+    if (storageCacheSeeded) {
+      const serialized = storageCache[key]
+      if (serialized !== undefined) return Promise.resolve(richJson.parse(serialized))
+
+      // A key RN listed as stored but did not snapshot is fetched over the bridge on
+      // this first read. A miss on both means the key genuinely isn't stored →
+      // defaultValue, matching RN's storage.get semantics. Do NOT go to the bridge in
+      // that case: many of the keys read at boot are absent from storage, and one
+      // round-trip each is what the snapshot exists to get rid of.
+      if (storedKeys.has(key)) return sendToRNAsync('storage.get', { key, defaultValue })
+
+      return Promise.resolve(defaultValue)
+    }
+    // Cache not seeded yet (no snapshot for some reason) → fall back to bridge.
+    return sendToRNAsync('storage.get', { key, defaultValue })
+  },
+  set: (key: string, value: any) => {
+    // Keep the cache coherent with the write, then persist through the bridge.
+    storageCache[key] = richJson.stringify(value)
+    storedKeys.add(key)
+    return sendToRNAsync('storage.set', { key, value })
+  },
+  remove: (key: string) => {
+    delete storageCache[key]
+    storedKeys.delete(key)
+    return sendToRNAsync('storage.remove', { key })
+  }
 }
 
 const eventEmitterRegistry = new EventEmitterRegistryController(() => {
@@ -133,12 +208,21 @@ const initControllers = (config: any) => {
     // console forwarding is wired up, so its logs never reach Metro.
     console.log((globalThis as any).__structuredCloneShimStatus)
 
+    // PERF: seed the storage cache BEFORE constructing controllers, so their
+    // initial-load storage reads hit the in-memory cache instead of the bridge.
+    workerBootProfiler.measure(
+      BOOT_MARK.workerStorageCacheSeeded,
+      () => seedStorageCache(config.__storageSnapshot),
+      { count: Object.keys(config.__storageSnapshot?.values || {}).length }
+    )
+
     // No controller is hosted here yet. Construct one against `eventEmitterRegistry`,
     // `storageAPI` and `bridgedFetch` and it streams to the UI through the wiring above.
     if (__DEV__) console.log('[WebView] Worker configured with', Object.keys(config).join(', '))
 
     // Notify RN that we are ready with ALL controller names
     const allControllerNames = eventEmitterRegistry.values().map((c) => c.name)
+    workerBootProfiler.mark(BOOT_MARK.workerReady, { count: allControllerNames.length })
     sendToReactEvent('system.ready', { controllers: allControllerNames })
     isConfigured = true
   } catch (e: any) {
@@ -192,8 +276,20 @@ window.addEventListener('message', (event) => {
       else pendingPromises[id]?.resolve(result)
       delete pendingPromises[id]
     } else if (data.type === 'init') {
+      // Recorded after the decode above, so the gap to `rn.initPayload.injected`
+      // is the injectJavaScript hop plus the richJson parse of the storage snapshot.
+      workerBootProfiler.mark(BOOT_MARK.workerInitReceived, {
+        bytes: typeof event.data === 'string' ? event.data.length : undefined
+      })
       initControllers(data.config)
     } else if (data.type === 'dispatchAction') {
+      // Answered before the configured gate: a worker hosting nothing still has its
+      // bundle eval and page timings to report.
+      if (data.action?.type === 'FLUSH_BOOT_PROFILE') {
+        flushWorkerBootProfile()
+        return
+      }
+
       if (!isConfigured) {
         return
       }

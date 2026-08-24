@@ -4,6 +4,8 @@ import { createMMKV, MMKV } from 'react-native-mmkv'
 import { Storage, StorageProps } from '@ambire-common/interfaces/storage'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 
+import { SerializedStorageSnapshot } from './types'
+
 const asyncStorageInstance: MMKV = createMMKV({ id: 'asyncStorage' })
 const syncStorageInstance: MMKV = createMMKV({ id: 'syncStorage' })
 // NOTE: for testing while settings are still not implemented
@@ -51,6 +53,17 @@ const storage: Storage = {
   }
 }
 
+const getAllSerialized = (keysToSnapshot: readonly string[]): SerializedStorageSnapshot => {
+  const values: Record<string, string> = {}
+
+  keysToSnapshot.forEach((key) => {
+    const serialized = asyncStorageInstance.getString(key)
+    if (serialized !== undefined) values[key] = serialized
+  })
+
+  return { values, allKeys: asyncStorageInstance.getAllKeys() }
+}
+
 const syncStorage = {
   get: (key: string, defaultValue?: any): any => {
     return syncStorageInstance.getString(key) ?? defaultValue
@@ -94,4 +107,4 @@ const secureStorage = {
   }
 }
 
-export { storage, syncStorage, syncSessionStorage, secureStorage }
+export { storage, syncStorage, syncSessionStorage, secureStorage, getAllSerialized }
