@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useControllerSession from '@common/hooks/useControllerSession'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import DashboardPagesCarousel from '@common/modules/dashboard/components/DashboardPagesCarousel'
@@ -65,7 +66,11 @@ const DashboardPages = ({
   // The mobile carousel keeps all pages mounted side by side, so they must be
   // populated upfront instead of when the tab is opened.
   const initAllTabs = useCallback(() => {
-    setInitTab({ tokens: true, collectibles: true, defi: true, activity: true })
+    setInitTab((prev) =>
+      prev.tokens && prev.collectibles && prev.defi && prev.activity
+        ? prev
+        : { tokens: true, collectibles: true, defi: true, activity: true }
+    )
   }, [])
 
   // Every page must stay mounted on mobile, because the carousel maps a page
@@ -99,28 +104,23 @@ const DashboardPages = ({
     }
   }, [openTab, prevOpenTab, initTab])
 
-  useEffect(() => {
-    // Initialize the port session. This is necessary to automatically terminate the session when the tab is closed.
-    // The process is managed in the background using port.onDisconnect,
-    // as there is no reliable window event triggered when a tab is closed.
-    setSearchParams((prev) => {
-      prev.set('sessionId', sessionId)
-      return prev
-    })
-
-    return () => {
-      // Remove session - this will be triggered only when navigation to another screen internally in the extension.
-      // The session removal when the window is forcefully closed is handled
-      // in the port.onDisconnect callback in the background.
+  useControllerSession({
+    open: () =>
+      // Initialize the port session. This is necessary to automatically terminate the session when the tab is closed.
+      // The process is managed in the background using port.onDisconnect,
+      // as there is no reliable window event triggered when a tab is closed.
+      setSearchParams((prev) => {
+        prev.set('sessionId', sessionId)
+        return prev
+      }),
+    // The session removal when the window is forcefully closed is handled
+    // in the port.onDisconnect callback in the background.
+    close: () =>
       activityDispatch({
         type: 'method',
         params: { method: 'resetAccountsOpsFilters', args: [sessionId] }
       })
-    }
-    // setSearchParams must not be in the dependency array
-    // as it changes on call and kills the session prematurely
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activityDispatch, sessionId])
+  })
 
   return (
     <DashboardPagesCarousel

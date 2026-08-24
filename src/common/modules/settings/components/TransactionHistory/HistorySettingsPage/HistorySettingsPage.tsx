@@ -23,6 +23,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
@@ -172,19 +173,18 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
     }
   }, [activityDispatch, account?.addr, network, page, sessionId, historyType])
 
-  useEffect(() => {
-    // Initialize the port session. This is necessary to automatically terminate the session when the tab is closed.
-    // The process is managed in the background using port.onDisconnect,
-    // as there is no reliable window event triggered when a tab is closed.
-    setSearchParams((prev) => {
-      prev.set('sessionId', sessionId)
-      return prev
-    })
-
-    // Remove session - this will be triggered only when navigation to another screen internally in the extension.
+  useControllerSession({
+    open: () =>
+      // Initialize the port session. This is necessary to automatically terminate the session when the tab is closed.
+      // The process is managed in the background using port.onDisconnect,
+      // as there is no reliable window event triggered when a tab is closed.
+      setSearchParams((prev) => {
+        prev.set('sessionId', sessionId)
+        return prev
+      }),
     // The session removal when the window is forcefully closed is handled
     // in the port.onDisconnect callback in the background.
-    const killSession = () => {
+    close: () => {
       if (historyType === 'transactions') {
         activityDispatch({
           type: 'method',
@@ -193,24 +193,19 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
             args: [sessionId]
           }
         })
-      } else {
-        activityDispatch({
-          type: 'method',
-          params: {
-            method: 'resetSignedMessagesFilters',
-            args: [sessionId]
-          }
-        })
-      }
-    }
 
-    return () => {
-      killSession()
+        return
+      }
+
+      activityDispatch({
+        type: 'method',
+        params: {
+          method: 'resetSignedMessagesFilters',
+          args: [sessionId]
+        }
+      })
     }
-    // setSearchParams must not be in the dependency array
-    // as it changes on call and kills the session prematurely
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyType, sessionId, activityDispatch])
+  })
 
   // Reset network filter state when a network is removed
   useEffect(() => {

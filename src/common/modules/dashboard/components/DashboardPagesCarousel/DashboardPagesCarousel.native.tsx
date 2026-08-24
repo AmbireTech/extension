@@ -12,6 +12,7 @@ import {
 } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
+import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
@@ -51,6 +52,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   children
 }) => {
   const { styles } = useTheme(getStyles)
+  const isScreenFocused = useIsScreenFocused()
   const scrollRef = useRef<ScrollView>(null)
   const [, setSearchParams] = useSearchParams()
   const scrollY = useMemo(() => new Animated.Value(0), [])
@@ -135,7 +137,12 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // Every page ends up rendered, so no swipe can outrun them however fast they come.
   // Closest first, and one at a time, so a page is never built during a gesture and
   // never in the same frame as another one.
+  //
+  // Only while this is the screen the user is on, or the pages still to be built
+  // would be built on top of whichever screen the dashboard was left for.
   useEffect(() => {
+    if (!isScreenFocused) return undefined
+
     let isCancelled = false
     let timeoutId: ReturnType<typeof setTimeout> | undefined
 
@@ -163,13 +170,17 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       interaction.cancel()
       if (timeoutId) clearTimeout(timeoutId)
     }
-  }, [openTabIndex, renderTabs])
+  }, [isScreenFocused, openTabIndex, renderTabs])
 
+  // Deferred until the interactions are over, and a navigation away is one of them,
+  // so this has to ask whether the dashboard is still the screen it was deferred on.
   useEffect(() => {
+    if (!isScreenFocused) return undefined
+
     const interaction = InteractionManager.runAfterInteractions(initAllTabs)
 
     return () => interaction.cancel()
-  }, [initAllTabs])
+  }, [initAllTabs, isScreenFocused])
 
   const onLayout = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => {
     setPageSize((prev) =>

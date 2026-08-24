@@ -12,8 +12,8 @@ import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useNavigation from '@common/hooks/useNavigation'
-import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner'
@@ -73,8 +73,6 @@ const DeFiPositions: FC<Props> = ({
   } = useController('SelectedAccountController')
   const { setSearchParams, navigate } = useNavigation()
 
-  const prevInitTab: any = usePrevious(initTab)
-
   const currentAccountBanners = useMemo(
     () =>
       getCurrentAccountBanners(banners, account?.addr).filter(
@@ -87,8 +85,11 @@ const DeFiPositions: FC<Props> = ({
     setValue('search', '')
   }, [openTab, setValue])
 
-  useEffect(() => {
-    if (!prevInitTab?.defi && initTab?.defi) {
+  // The session is what keeps the portfolio fetching defi positions, so it lasts for
+  // as long as the tab is open and this is the screen the user is on.
+  useControllerSession({
+    isEnabled: !!initTab?.defi,
+    open: () => {
       portfolioDispatch({
         type: 'method',
         params: {
@@ -96,13 +97,14 @@ const DeFiPositions: FC<Props> = ({
           args: [sessionId]
         }
       })
+      // Initialize the port session, so the background can terminate it when the tab
+      // is closed - there is no reliable window event for that.
       setSearchParams((prev: any) => {
         prev.set('sessionId', sessionId)
         return prev
       })
-    }
-
-    if (prevInitTab?.defi && !initTab?.defi) {
+    },
+    close: () =>
       portfolioDispatch({
         type: 'method',
         params: {
@@ -110,20 +112,7 @@ const DeFiPositions: FC<Props> = ({
           args: [sessionId]
         }
       })
-    }
-  }, [portfolioDispatch, setSearchParams, prevInitTab?.defi, initTab?.defi, sessionId])
-
-  useEffect(() => {
-    return () => {
-      portfolioDispatch({
-        type: 'method',
-        params: {
-          method: 'removeDefiSession',
-          args: [sessionId]
-        }
-      })
-    }
-  }, [sessionId, portfolioDispatch])
+  })
 
   const filteredPositions = useMemo(() => {
     const defiToSearch = portfolio.defiPositions
