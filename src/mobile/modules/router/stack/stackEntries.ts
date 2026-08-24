@@ -52,8 +52,8 @@ export type NavigationEvent = {
 }
 
 /**
- * Not a screen but the router's redirect hub: no route matches it, and `Router`
- * sends the user on from it as soon as it can resolve where to.
+ * Not a screen but the router's redirect hub: no route matches it, and the
+ * controllers send the view on from it as soon as they resolve where it belongs.
  */
 const REDIRECT_HUB_PATH = '/'
 
