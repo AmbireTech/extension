@@ -333,11 +333,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
         if (hasPulledToRefresh.current || !onRefresh) return
 
         hasPulledToRefresh.current = true
-        // The page's refresh control reveals itself by scrolling up by its own height
-        // from wherever the page is, and on that path it draws at the page's top rather
-        // than at the offset that keeps it clear of the header. Pulling the page down by
-        // the header first leaves the spinner where a pulled page would have put it.
-        pageHandles.current[openTab]?.scrollToOffset(-(bannersHeight + tabsHeight))
+        // The page is at the top by now and its refresh control reveals itself by
+        // scrolling up by its own height from there, which is where a pulled page
+        // would have left the spinner too.
         onRefresh()
 
         return
@@ -345,7 +343,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
       pageHandles.current[openTab]?.scrollToOffset(Math.max(offset, 0))
     },
-    [bannersHeight, onRefresh, openTab, tabsHeight]
+    [onRefresh, openTab]
   )
 
   const openTabFloatingBar = floatingBars[openTab]

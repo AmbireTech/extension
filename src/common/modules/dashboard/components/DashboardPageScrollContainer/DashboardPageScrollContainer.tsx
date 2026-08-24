@@ -72,6 +72,16 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const style = useMemo(() => getFlatListStyle(tab, openTab), [openTab, tab])
   const { theme } = useTheme()
   const carousel = useContext(DashboardCarouselContext)
+  // The part of the header that never collapses, which is the tabs row. The list
+  // starts below it instead of underneath it, so its refresh spinner - which is
+  // anchored to the top of the list itself - is not drawn behind the tabs.
+  const stickyHeaderHeight = carousel ? carousel.headerHeight - carousel.collapsibleHeight : 0
+
+  const carouselListStyle = useMemo(
+    () => (carousel ? { marginTop: stickyHeaderHeight } : undefined),
+    [carousel, stickyHeaderHeight]
+  )
+
   const contentContainerStyle = useMemo(() => {
     return [
       topSpacing,
@@ -83,21 +93,22 @@ const DashboardPageScrollContainer: FC<Props> = ({
       // way, padding included, leaving nothing to scroll.
       !!carousel &&
         !!carousel.pageHeight && {
-          minHeight: carousel.pageHeight + carousel.collapsibleHeight
+          minHeight: carousel.pageHeight - stickyHeaderHeight + carousel.collapsibleHeight
         },
-      // Must come last, as it overrides the padding of the non-carousel layout
-      !!carousel && { paddingTop: carousel.headerHeight }
+      // Must come last, as it overrides the padding of the non-carousel layout. Only
+      // the collapsing part of the header is padded for, the rest is above the list
+      !!carousel && { paddingTop: carousel.collapsibleHeight }
     ]
-  }, [bottom, carousel, topSpacing])
+  }, [bottom, carousel, stickyHeaderHeight, topSpacing])
 
   // iOS draws the scroll indicator against the scroll view's frame rather than its
-  // content, so padding the content away from the overlaid header leaves the
-  // indicator running underneath it. It has to be inset by the header separately.
+  // content, so padding the content away from the banners laid over it leaves the
+  // indicator running underneath them. It has to be inset by them separately.
   const carouselIndicatorProps = useMemo(() => {
     if (!carousel) return NO_PROPS
 
     return {
-      scrollIndicatorInsets: { top: carousel.headerHeight },
+      scrollIndicatorInsets: { top: carousel.collapsibleHeight },
       // Left on, iOS recomputes the insets off the safe area and drops the one above
       automaticallyAdjustsScrollIndicatorInsets: false
     }
@@ -171,7 +182,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
   return (
     <ListComponent
       ref={flatlistRef}
-      style={style}
+      style={[style, carouselListStyle]}
       contentContainerStyle={contentContainerStyle}
       // Makes the header sticky. The carousel lays its own header over the pages instead
       stickyHeaderIndices={carousel ? undefined : [1]}
@@ -187,7 +198,6 @@ const DashboardPageScrollContainer: FC<Props> = ({
             onRefresh={onRefresh}
             tintColor={theme.iconPrimary}
             progressBackgroundColor={theme.secondaryBackground}
-            progressViewOffset={carousel?.headerHeight}
           />
         ) : undefined
       }
