@@ -16,11 +16,13 @@ interface Styles {
   walletStakingIconWrapper: ViewStyle
   walletStakingIcon: ImageStyle
   screenContent: ViewStyle
+  mainContent: ViewStyle
   learnMore: ViewStyle
   tabs: ViewStyle
   tab: ViewStyle
   activeTab: ViewStyle
   stakingFormContainer: ViewStyle
+  loadingState: ViewStyle
   pendingWithdrawalCard: ViewStyle
   pendingWithdrawalIcon: ViewStyle
   pendingWithdrawalText: TextStyle
@@ -111,6 +113,9 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.ph2Xl,
       ...spacings.pbSm
     },
+    mainContent: {
+      ...flexbox.flex1
+    },
     learnMore: {
       ...flexbox.directionRow,
       ...flexbox.justifyCenter,
@@ -133,6 +138,13 @@ const getStyles = (theme: ThemeProps) =>
     },
     stakingFormContainer: {
       position: 'relative'
+    },
+    loadingState: {
+      ...flexbox.flex1,
+      ...flexbox.directionRow,
+      ...flexbox.justifyCenter,
+      columnGap: SPACING / 2,
+      ...spacings.mt2Xl
     },
     pendingWithdrawalCard: {
       ...flexbox.alignCenter,

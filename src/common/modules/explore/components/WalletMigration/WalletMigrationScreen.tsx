@@ -1,5 +1,5 @@
 import { formatUnits, parseUnits } from 'ethers'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
@@ -13,25 +13,22 @@ import GlassView from '@common/components/GlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
-import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
 import Header from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import AmountSlider from '../WalletStaking/AmountSlider'
 import BalanceWithMax from '../WalletStaking/BalanceWithMax'
-import { getMigratableXWalletBalance, getMigrateXWalletCalls } from '../WalletStaking/calls'
+import { getMigrateXWalletCalls } from '../WalletStaking/calls'
 import getStyles from '../WalletStaking/styles'
 import WalletStakingApy from '../WalletStaking/WalletStakingApy'
 
 const TOKEN_DECIMALS = 18
-const X_WALLET_LOCKED_SHARES_ABI = 'function lockedShares(address) view returns (uint256)'
 
 const getAmountInWei = (amount: string) => {
   const normalizedAmount = amount.endsWith('.') ? amount.slice(0, -1) : amount
@@ -51,7 +48,6 @@ const WalletMigrationScreen = () => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
-  const { addToast } = useToast()
 
   const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: portfolioTokens } = useController(
@@ -60,13 +56,8 @@ const WalletMigrationScreen = () => {
   )
   const { state: shareValue } = useController('SelectedAccountController', selectXWalletShareValue)
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { dispatchAndWait: providersDispatchAndWait } = useController('ProvidersController')
   const [amount, setAmount] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [lockedSharesResult, setLockedSharesResult] = useState<{
-    accountAddr: string
-    value: bigint
-  } | null>(null)
 
   const xWalletToken = useMemo(
     () =>
@@ -86,21 +77,7 @@ const WalletMigrationScreen = () => {
       ),
     [portfolioTokens]
   )
-  const xWalletBalance = useMemo(() => BigInt(xWalletToken?.amount || 0n), [xWalletToken?.amount])
-  const lockedShares = useMemo(() => {
-    if (
-      !lockedSharesResult ||
-      lockedSharesResult.accountAddr.toLowerCase() !== account?.addr.toLowerCase()
-    ) {
-      return null
-    }
-
-    return lockedSharesResult.value
-  }, [account?.addr, lockedSharesResult])
-  const balance = useMemo(
-    () => (lockedShares === null ? 0n : getMigratableXWalletBalance(xWalletBalance, lockedShares)),
-    [lockedShares, xWalletBalance]
-  )
+  const balance = useMemo(() => BigInt(xWalletToken?.amount || 0n), [xWalletToken?.amount])
   const amountInWei = getAmountInWei(amount)
   const hasInsufficientBalance = amountInWei > balance
   const balanceLabel = useMemo(
@@ -121,8 +98,7 @@ const WalletMigrationScreen = () => {
   )
   const amountInUsd = useMemo(() => formatDecimals(amountValueInUsd, 'value'), [amountValueInUsd])
 
-  const isSubmitDisabled =
-    !account || lockedShares === null || isSubmitting || amountInWei <= 0n || hasInsufficientBalance
+  const isSubmitDisabled = !account || isSubmitting || amountInWei <= 0n || hasInsufficientBalance
   const submitButtonText = isSubmitting ? t('Migrating...') : t('Migrate')
 
   const handleSliderValueChange = useCallback(
@@ -161,46 +137,6 @@ const WalletMigrationScreen = () => {
       }
     })
   }, [account, amountInWei, hasInsufficientBalance, isSubmitting, requestsDispatch])
-
-  useEffect(() => {
-    const accountAddr = account?.addr
-    if (!accountAddr) return undefined
-
-    let isActive = true
-    providersDispatchAndWait<'callContractAndSendResToUi', bigint>({
-      type: 'method',
-      params: {
-        method: 'callContractAndSendResToUi',
-        args: [
-          {
-            chainId: ETHEREUM_CHAIN_ID,
-            address: WALLET_STAKING_ADDR,
-            abi: X_WALLET_LOCKED_SHARES_ABI,
-            method: 'lockedShares',
-            args: [accountAddr]
-          }
-        ]
-      }
-    })
-      .then((nextLockedShares) => {
-        if (isActive) {
-          setLockedSharesResult({ accountAddr, value: BigInt(nextLockedShares) })
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to load locked xWALLET shares', error)
-        captureException(error)
-        if (isActive) {
-          addToast(t("We couldn't check how much xWALLET is available to migrate."), {
-            type: 'error'
-          })
-        }
-      })
-
-    return () => {
-      isActive = false
-    }
-  }, [account?.addr, addToast, providersDispatchAndWait, t])
 
   return (
     <LayoutWrapper>

@@ -15,6 +15,7 @@ import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NumberInput from '@common/components/NumberInput'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import CONFIG, { isWeb } from '@common/config/env'
@@ -137,7 +138,7 @@ const WalletStakingScreen = () => {
   const [isLoadingShareValue, setIsLoadingShareValue] = useState(false)
   const [pendingWithdrawal, setPendingWithdrawal] = useState<PendingWalletWithdrawal | null>(null)
   const [totalPendingShares, setTotalPendingShares] = useState(0n)
-  const [isLoadingPendingWithdrawal, setIsLoadingPendingWithdrawal] = useState(false)
+  const [isLoadingPendingWithdrawal, setIsLoadingPendingWithdrawal] = useState(true)
   const [hasPendingWithdrawalLoadFailed, setHasPendingWithdrawalLoadFailed] = useState(false)
   const [nowMs, setNowMs] = useState(() => Date.now())
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -182,6 +183,7 @@ const WalletStakingScreen = () => {
   const isPendingWithdrawalMode =
     mode === 'unstake' &&
     shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, xWalletBalance, totalPendingShares)
+  const shouldShowPendingWithdrawalLoader = mode === 'unstake' && isLoadingPendingWithdrawal
   const isWithdrawalReady = pendingWithdrawal
     ? isPendingWalletWithdrawalReady(pendingWithdrawal.unlocksAt, nowMs)
     : false
@@ -229,7 +231,7 @@ const WalletStakingScreen = () => {
   )
   const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const isSubmitDisabled = useMemo(() => {
-    if (!account || isSubmitting || isLoadingPendingWithdrawal) return true
+    if (!account || isSubmitting || (mode === 'unstake' && isLoadingPendingWithdrawal)) return true
     if (isPendingWithdrawalMode) return !isWithdrawalReady || hasPendingWithdrawalLoadFailed
 
     return (
@@ -675,7 +677,7 @@ const WalletStakingScreen = () => {
         <Header.Container side="right" />
       </Header.Wrapper>
       <View style={styles.screenContent}>
-        <View>
+        <View style={styles.mainContent}>
           <View style={styles.learnMore}>
             <Text fontSize={12} appearance="secondaryText">
               {t('Learn more about')}{' '}
@@ -702,174 +704,181 @@ const WalletStakingScreen = () => {
             />
           </View>
 
-          <View style={styles.stakingFormContainer}>
-            {isPendingWithdrawalMode && (
-              <View style={styles.pendingWithdrawalCard}>
-                <View style={styles.pendingWithdrawalIcon}>
-                  <LockWithTimerIcon width={54} height={54} color={theme.errorText} />
-                </View>
-                {isWithdrawalReady ? (
-                  <>
-                    <Text fontSize={18} weight="semiBold" style={styles.pendingWithdrawalText}>
-                      {t('Ready to withdraw')}
-                    </Text>
-                    <Text fontSize={24} weight="number_bold" style={styles.pendingWithdrawalText}>
-                      {pendingWithdrawalAmount} $WALLET
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Text fontSize={20} weight="number_bold" style={styles.pendingWithdrawalText}>
-                      {pendingWithdrawalAmount} $WALLET
-                    </Text>
-                    <Text fontSize={16} weight="medium" style={styles.pendingWithdrawalText}>
-                      {t('will be available in')}
-                    </Text>
-                    <Text fontSize={24} weight="number_bold" style={styles.pendingWithdrawalText}>
-                      {pendingWithdrawalTime}
-                    </Text>
-                  </>
-                )}
-                <Text
-                  fontSize={13}
-                  appearance="secondaryText"
-                  style={styles.pendingWithdrawalDescription}
-                >
-                  {isWithdrawalReady
-                    ? t('Your $WALLET is ready. Withdraw it before starting another unstake.')
-                    : t(
-                        'You can withdraw and unstake more as soon as the locking period has ended.'
-                      )}
-                </Text>
-              </View>
-            )}
-
-            {shouldShowEmptyState ? (
-              <View style={styles.emptyState}>
-                <View style={styles.emptyIcon}>
-                  <InfoIcon width={64} height={64} color={theme.infoText} />
-                </View>
-                <Text fontSize={16} style={styles.emptyText}>
-                  {t('You don’t have any $WALLET or stkWALLET tokens in your portfolio.')}
-                </Text>
-                <GlassView borderRadius={32} cssStyle={{ overflow: 'hidden' }}>
-                  <View style={styles.buyWalletWrapper}>
-                    <Button
-                      type="primary"
-                      text={t('Buy $WALLET')}
-                      onPress={handleBuyWallet}
-                      hasBottomSpacing={false}
-                      style={styles.buyWalletButton}
-                      testID="wallet-staking-buy-wallet"
-                      size="smaller"
-                    />
+          {shouldShowPendingWithdrawalLoader ? (
+            <View style={styles.loadingState}>
+              <Text fontSize={24}>{t('Loading...')}</Text>
+              <Spinner style={{ width: 28, height: 28 }} />
+            </View>
+          ) : (
+            <View style={styles.stakingFormContainer}>
+              {isPendingWithdrawalMode && (
+                <View style={styles.pendingWithdrawalCard}>
+                  <View style={styles.pendingWithdrawalIcon}>
+                    <LockWithTimerIcon width={54} height={54} color={theme.errorText} />
                   </View>
-                </GlassView>
-              </View>
-            ) : (
-              <View
-                pointerEvents={isPendingWithdrawalMode ? 'none' : 'auto'}
-                style={isPendingWithdrawalMode ? styles.disabledStakingForm : undefined}
-              >
-                <View style={styles.amountCard}>
-                  <View style={styles.balanceRow}>
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <SwapAndBridgeIcon
-                        width={14}
-                        height={14}
-                        color={theme.primaryAccent200}
-                        strokeWidth={1.8}
-                      />
-                      <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
-                        {amountInUsd}
+                  {isWithdrawalReady ? (
+                    <>
+                      <Text fontSize={18} weight="semiBold" style={styles.pendingWithdrawalText}>
+                        {t('Ready to withdraw')}
                       </Text>
-                    </View>
-                    <BalanceWithMax
-                      balanceLabel={balanceLabel}
-                      disabled={balance <= 0n}
-                      onMaxPress={handleMaxPress}
-                      testID="wallet-staking-max-button"
-                    />
-                  </View>
-
-                  <NumberInput
-                    value={amount}
-                    onChangeText={setAmount}
-                    precision={TOKEN_DECIMALS}
-                    placeholder="0.00"
-                    borderless
-                    containerStyle={styles.amountInput}
-                    inputWrapperStyle={styles.amountInputWrapper}
-                    nativeInputStyle={styles.amountNativeInput}
-                    childrenBeforeButtons={
-                      <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
-                        {tokenSymbol}
+                      <Text fontSize={24} weight="number_bold" style={styles.pendingWithdrawalText}>
+                        {pendingWithdrawalAmount} $WALLET
                       </Text>
-                    }
-                  />
-
-                  <AmountSlider
-                    value={amountInWei}
-                    maximumValue={balance}
-                    maximumLabel={balanceLabel}
-                    onValueChange={handleSliderValueChange}
-                  />
-
-                  {mode === 'stake' && (
-                    <View style={styles.feePreviewRow}>
-                      <View style={styles.feePreviewLabel}>
-                        <Text fontSize={12} appearance="secondaryText">
-                          {t('Swap & Bridge fee')}
-                        </Text>
-                        <Button
-                          text={t('Details')}
-                          type="outline"
-                          size="tiny"
-                          accentColor={theme.primaryAccent300}
-                          onPress={handleOpenFeeInfoBottomSheet}
-                          hasBottomSpacing={false}
-                          submitOnEnter={false}
-                          style={styles.feeDetailsButton}
-                          testID="wallet-staking-fee-details-button"
-                        />
-                      </View>
-                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <Text fontSize={12} appearance="secondaryText">
-                          {currentFeePercent.toFixed(2)}%
-                        </Text>
-                        <Text fontSize={12} appearance="secondaryText" style={spacings.phTy}>
-                          →
-                        </Text>
-                        <Text fontSize={12} weight="semiBold" color={theme.primaryAccent200}>
-                          {projectedFeePercent.toFixed(2)}%
-                        </Text>
-                      </View>
-                    </View>
+                    </>
+                  ) : (
+                    <>
+                      <Text fontSize={20} weight="number_bold" style={styles.pendingWithdrawalText}>
+                        {pendingWithdrawalAmount} $WALLET
+                      </Text>
+                      <Text fontSize={16} weight="medium" style={styles.pendingWithdrawalText}>
+                        {t('will be available in')}
+                      </Text>
+                      <Text fontSize={24} weight="number_bold" style={styles.pendingWithdrawalText}>
+                        {pendingWithdrawalTime}
+                      </Text>
+                    </>
                   )}
-                </View>
-
-                <View style={styles.details}>
-                  <WalletStakingApy />
-                  {mode === 'unstake' && (
-                    <View style={styles.detailRow}>
-                      <Text fontSize={13} appearance="secondaryText">
-                        {t('Lock')}
-                      </Text>
-                      <Text fontSize={13} appearance="secondaryText">
-                        {t('30 days unbond period')}
-                      </Text>
-                    </View>
-                  )}
-                  <Text fontSize={11} appearance="errorText" style={styles.validation}>
-                    {hasInsufficientBalance ? t('The amount is higher than your balance.') : ''}
+                  <Text
+                    fontSize={13}
+                    appearance="secondaryText"
+                    style={styles.pendingWithdrawalDescription}
+                  >
+                    {isWithdrawalReady
+                      ? t('Your $WALLET is ready. Withdraw it before starting another unstake.')
+                      : t(
+                          'You can withdraw and unstake more as soon as the locking period has ended.'
+                        )}
                   </Text>
                 </View>
-              </View>
-            )}
-          </View>
+              )}
+
+              {shouldShowEmptyState ? (
+                <View style={styles.emptyState}>
+                  <View style={styles.emptyIcon}>
+                    <InfoIcon width={64} height={64} color={theme.infoText} />
+                  </View>
+                  <Text fontSize={16} style={styles.emptyText}>
+                    {t('You don’t have any $WALLET or stkWALLET tokens in your portfolio.')}
+                  </Text>
+                  <GlassView borderRadius={32} cssStyle={{ overflow: 'hidden' }}>
+                    <View style={styles.buyWalletWrapper}>
+                      <Button
+                        type="primary"
+                        text={t('Buy $WALLET')}
+                        onPress={handleBuyWallet}
+                        hasBottomSpacing={false}
+                        style={styles.buyWalletButton}
+                        testID="wallet-staking-buy-wallet"
+                        size="smaller"
+                      />
+                    </View>
+                  </GlassView>
+                </View>
+              ) : (
+                <View
+                  pointerEvents={isPendingWithdrawalMode ? 'none' : 'auto'}
+                  style={isPendingWithdrawalMode ? styles.disabledStakingForm : undefined}
+                >
+                  <View style={styles.amountCard}>
+                    <View style={styles.balanceRow}>
+                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                        <SwapAndBridgeIcon
+                          width={14}
+                          height={14}
+                          color={theme.primaryAccent200}
+                          strokeWidth={1.8}
+                        />
+                        <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
+                          {amountInUsd}
+                        </Text>
+                      </View>
+                      <BalanceWithMax
+                        balanceLabel={balanceLabel}
+                        disabled={balance <= 0n}
+                        onMaxPress={handleMaxPress}
+                        testID="wallet-staking-max-button"
+                      />
+                    </View>
+
+                    <NumberInput
+                      value={amount}
+                      onChangeText={setAmount}
+                      precision={TOKEN_DECIMALS}
+                      placeholder="0.00"
+                      borderless
+                      containerStyle={styles.amountInput}
+                      inputWrapperStyle={styles.amountInputWrapper}
+                      nativeInputStyle={styles.amountNativeInput}
+                      childrenBeforeButtons={
+                        <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
+                          {tokenSymbol}
+                        </Text>
+                      }
+                    />
+
+                    <AmountSlider
+                      value={amountInWei}
+                      maximumValue={balance}
+                      maximumLabel={balanceLabel}
+                      onValueChange={handleSliderValueChange}
+                    />
+
+                    {mode === 'stake' && (
+                      <View style={styles.feePreviewRow}>
+                        <View style={styles.feePreviewLabel}>
+                          <Text fontSize={12} appearance="secondaryText">
+                            {t('Swap & Bridge fee')}
+                          </Text>
+                          <Button
+                            text={t('Details')}
+                            type="outline"
+                            size="tiny"
+                            accentColor={theme.primaryAccent300}
+                            onPress={handleOpenFeeInfoBottomSheet}
+                            hasBottomSpacing={false}
+                            submitOnEnter={false}
+                            style={styles.feeDetailsButton}
+                            testID="wallet-staking-fee-details-button"
+                          />
+                        </View>
+                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                          <Text fontSize={12} appearance="secondaryText">
+                            {currentFeePercent.toFixed(2)}%
+                          </Text>
+                          <Text fontSize={12} appearance="secondaryText" style={spacings.phTy}>
+                            →
+                          </Text>
+                          <Text fontSize={12} weight="semiBold" color={theme.primaryAccent200}>
+                            {projectedFeePercent.toFixed(2)}%
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.details}>
+                    <WalletStakingApy />
+                    {mode === 'unstake' && (
+                      <View style={styles.detailRow}>
+                        <Text fontSize={13} appearance="secondaryText">
+                          {t('Lock')}
+                        </Text>
+                        <Text fontSize={13} appearance="secondaryText">
+                          {t('30 days unbond period')}
+                        </Text>
+                      </View>
+                    )}
+                    <Text fontSize={11} appearance="errorText" style={styles.validation}>
+                      {hasInsufficientBalance ? t('The amount is higher than your balance.') : ''}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
-        {!shouldShowEmptyState && (
+        {!shouldShowPendingWithdrawalLoader && !shouldShowEmptyState && (
           <View style={styles.footerRow}>
             <GlassView borderRadius={32} cssStyle={{ overflow: 'hidden' }}>
               <View style={styles.footer}>

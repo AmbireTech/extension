@@ -3,7 +3,6 @@ import { Interface, parseUnits } from 'ethers'
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 
 import {
-  getMigratableXWalletBalance,
   getMigrateXWalletCalls,
   getStakeWalletCalls,
   getUnstakeWalletCalls,
@@ -23,13 +22,6 @@ const walletStakingInterface = new Interface([
 ])
 
 describe('WALLET staking calls', () => {
-  test('only allows unlocked xWALLET shares to be migrated', () => {
-    expect(getMigratableXWalletBalance(parseUnits('10', 18), parseUnits('3', 18))).toBe(
-      parseUnits('7', 18)
-    )
-    expect(getMigratableXWalletBalance(parseUnits('3', 18), parseUnits('3', 18))).toBe(0n)
-  })
-
   test('uses the full WALLET balance for the stake max amount', () => {
     expect(getWalletStakingMaxAmount(parseUnits('1', 18), 'stake')).toBe(parseUnits('1', 18))
   })
