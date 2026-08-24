@@ -1,4 +1,5 @@
-import React from 'react'
+import { LinearGradient } from 'expo-linear-gradient'
+import React, { useMemo } from 'react'
 import { Image, ImageSourcePropType, View } from 'react-native'
 
 import walletStakingIcon from '@common/assets/images/WalletStakingIcon.png'
@@ -8,6 +9,7 @@ import { useTranslation } from '@common/config/localization'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
@@ -17,9 +19,22 @@ interface Props {
   onPress: () => void
 }
 
+const GRADIENT_LOCATIONS = [0, 0.5, 1] as const
+const GRADIENT_START = { x: 0, y: 0.5 } as const
+const GRADIENT_END = { x: 1, y: 0.5 } as const
+
 const WalletStakingCard = ({ onPress }: Props) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  const gradientColors = useMemo(
+    () =>
+      [
+        hexToRgba(theme.secondaryAccent300, 0.12),
+        hexToRgba(theme.secondaryAccent300, 0),
+        hexToRgba(theme.primaryAccent200, 0.16)
+      ] as const,
+    [theme.primaryAccent200, theme.secondaryAccent300]
+  )
   const [bindAnimation, animatedStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -36,6 +51,14 @@ const WalletStakingCard = ({ onPress }: Props) => {
         style={[styles.card, animatedStyle]}
         {...bindAnimation}
       >
+        <LinearGradient
+          pointerEvents="none"
+          colors={gradientColors}
+          locations={GRADIENT_LOCATIONS}
+          start={GRADIENT_START}
+          end={GRADIENT_END}
+          style={styles.cardGradient}
+        />
         <View style={[styles.cardContent, { backgroundColor: 'transparent' }]}>
           <View style={styles.cardHeader}>
             <View style={[styles.walletStakingIconWrapper, spacings.mrTy]}>

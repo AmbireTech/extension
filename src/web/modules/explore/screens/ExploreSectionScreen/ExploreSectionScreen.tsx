@@ -19,6 +19,7 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
 import WalletStaking from '@common/modules/explore/components/WalletStaking'
+import { shouldShowWalletStaking } from '@common/modules/explore/helpers/shouldShowWalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -59,6 +60,7 @@ const ExploreSectionScreen = () => {
     network,
     category
   })
+  const isWalletStakingVisible = shouldShowWalletStaking(network?.chainId ?? null, category)
 
   const ALL_NETWORKS_OPTION = useMemo(
     () => ({
@@ -214,7 +216,9 @@ const ExploreSectionScreen = () => {
           data={dapps}
           renderItem={renderItem}
           keyExtractor={(item: Dapp) => item.id}
-          ListHeaderComponent={sectionType === 'apps' ? WalletStaking : undefined}
+          ListHeaderComponent={
+            sectionType === 'apps' && isWalletStakingVisible ? WalletStaking : undefined
+          }
           style={spacings.phSm}
           contentContainerStyle={spacings.pr0}
           ListEmptyComponent={

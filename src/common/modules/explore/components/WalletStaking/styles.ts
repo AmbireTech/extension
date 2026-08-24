@@ -8,6 +8,7 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Styles {
   cardWrapper: ViewStyle
   card: ViewStyle
+  cardGradient: ViewStyle
   cardContent: ViewStyle
   cardHeader: ViewStyle
   cardTitleWrapper: ViewStyle
@@ -67,6 +68,9 @@ const getStyles = (theme: ThemeProps) =>
       borderRightColor: theme.primaryAccent200,
       borderBottomColor: theme.primaryAccent200,
       overflow: 'hidden'
+    },
+    cardGradient: {
+      ...StyleSheet.absoluteFillObject
     },
     cardContent: {
       ...spacings.phSm,
