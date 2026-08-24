@@ -70,7 +70,6 @@ const sharedResolve = {
     react: path.resolve(ROOT_DIR, 'node_modules/react'),
     'react-native$': 'react-native-web',
     'react-native-quick-crypto': 'crypto-browserify',
-    'react-native-quick-base64': 'buffer',
     'scrypt-js': path.resolve(ROOT_DIR, 'src/mobile/shims/scrypt-js.ts'),
     pbkdf2: path.resolve(ROOT_DIR, 'src/mobile/shims/pbkdf2.ts'),
     '@react-native-community/netinfo': false,

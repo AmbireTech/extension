@@ -21,7 +21,7 @@ export const nativeCrypto: NativeCryptoModule | null = (() => {
     // and the portfolio is what pays for it. Without this the app just gets slow,
     // with the only trace of why sitting in Sentry.
     console.error(
-      '[Ambire] react-native-ambire-crypto failed to load; ABI decoding, hex conversion and address checksumming all fall back to JS',
+      '[Ambire] react-native-ambire-crypto failed to load; ABI encoding, ABI decoding and address checksumming all fall back to JS',
       error
     )
 

@@ -64,13 +64,7 @@ config.transformer.minifierConfig = {
 const shimRedirects = {
   'scrypt-js': path.resolve(__dirname, 'src/mobile/shims/scrypt-js.ts'),
   pbkdf2: path.resolve(__dirname, 'src/mobile/shims/pbkdf2.ts'),
-  'eth-crypto': path.resolve(__dirname, 'src/mobile/shims/eth-crypto.ts'),
-  // Keyed on the package name rather than a resolved file so that every consumer
-  // is covered at once. React Native reaches base64-js from five places
-  // (binaryToBase64, FileReader, XMLHttpRequest and both WebSocket modules), and
-  // the two that matter for the portfolio — the request body encode and the
-  // response blob decode — are on opposite sides of the fetch.
-  'base64-js': path.resolve(__dirname, 'src/mobile/shims/base64-js.ts')
+  'eth-crypto': path.resolve(__dirname, 'src/mobile/shims/eth-crypto.ts')
 }
 
 // Swap two of viem's own modules for Rust-backed shims. Redirecting these
@@ -121,50 +115,8 @@ viemNativeModules.forEach((modulePath) => {
 // Collaborators of the shims that are not themselves replaced. They are
 // registered as originals so a shim reaches them without the redirect map
 // applying to viem's own imports of them. isAddress and lru back the getAddress
-// shim; toHex and toBytes back the ethers `utils/data` shim, which falls back to
-// viem's hex codec for the sizes the Rust crate is not worth crossing into.
-;['utils/address/isAddress', 'utils/lru', 'utils/encoding/toHex', 'utils/encoding/toBytes'].forEach(
-  registerViemOriginal
-)
-
-shimOriginals['@base64-js-original'] = path.resolve(__dirname, 'node_modules/base64-js/index.js')
-
-// Swap ethers' `utils/data` for a shim that replaces its per-byte hex loops —
-// a `substring` + `parseInt` per byte and a validation regex per call — with a
-// byte-to-hex table for small values and the Rust crate for large ones. The
-// shim is self-contained (no viem dependency) so ethers only ever crosses into
-// react-native-ambire-crypto, never into viem's own hex codec.
-//
-// Both builds are registered. ethers' exports map is `{ import, default }`, and
-// the condition Metro matches it against depends on how the importing module
-// spelled the import: `matchSubpathFromExportsLike` adds `import` when the
-// requester used ESM syntax and `require` otherwise, on top of
-// `unstable_conditionNames` and the platform conditions. So `import ... from
-// 'ethers'` resolves to lib.esm and a `require('ethers')` resolves to
-// lib.commonjs, and keying only one of them is what made this redirect silently
-// no-op before — the app imports ethers as ESM and got the unshimmed lib.esm
-// copy.
-const ETHERS_BUILD_FLAVORS = ['lib.esm', 'lib.commonjs']
-
-// The flavor the app actually resolves, and so the one the shim reads its errors
-// from. Serving both flavors' `data.js` from a single shim means the errors it
-// throws can come from the other flavor's module, which is harmless: ethers'
-// `isError` compares `error.code`, it does not check the error's identity.
-// Pinning this to one flavor just keeps a second copy of ethers' error module
-// out of the bundle.
-const ETHERS_ERRORS_FLAVOR = 'lib.esm'
-
-shimOriginals['@ethers-original/errors'] = path.resolve(
-  __dirname,
-  `node_modules/ethers/${ETHERS_ERRORS_FLAVOR}/utils/errors.js`
-)
-
-const ethersModuleRedirects = {}
-
-ETHERS_BUILD_FLAVORS.forEach((flavor) => {
-  const ethersFilePath = path.resolve(__dirname, `node_modules/ethers/${flavor}/utils/data.js`)
-  ethersModuleRedirects[ethersFilePath] = path.resolve(__dirname, 'src/mobile/shims/ethers/data.ts')
-})
+// shim.
+;['utils/address/isAddress', 'utils/lru'].forEach(registerViemOriginal)
 
 // Redirect node built-ins to browserified/native versions
 const nodeCoreRedirects = {
@@ -190,8 +142,7 @@ const resolvedFileRedirects = {
     __dirname,
     'src/mobile/shims/colibri.ts'
   ),
-  ...viemModuleRedirects,
-  ...ethersModuleRedirects
+  ...viemModuleRedirects
 }
 
 const originalResolveRequest = config.resolver.resolveRequest
