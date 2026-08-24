@@ -75,12 +75,16 @@ const Value = ({
   children,
   tooltipId = '',
   responsiveSizeMultiplier,
-  withWrap = false
+  withWrap = false,
+  breakWords = true
 }: {
   children: React.ReactNode
   tooltipId?: string
   responsiveSizeMultiplier: number
   withWrap?: boolean
+  // Forces breaks mid-word (e.g. a hex address), unwanted for plain text that already
+  // has spaces to wrap on
+  breakWords?: boolean
 }) => {
   const fontSize = isMobile ? 12 : 14 * responsiveSizeMultiplier
 
@@ -96,8 +100,8 @@ const Value = ({
           // Custom fontSize clears Text's default lineHeight; without an explicit value the
           // wrapped lines overlap
           lineHeight: Math.ceil(fontSize * 1.5),
-          // @ts-expect-error web-only style, needed because a hex address has no word boundaries
-          wordBreak: 'break-all'
+          // web-only style, needed because a hex address has no word boundaries
+          ...(breakWords && { wordBreak: 'break-all' as const })
         }
       ]}
     >
@@ -316,7 +320,13 @@ const SignInWithEthereum = ({
               }}
             >
               <Label responsiveSizeMultiplier={responsiveSizeMultiplier}>{t('Message')}</Label>
-              <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>
+              <Value
+                responsiveSizeMultiplier={responsiveSizeMultiplier}
+                // The full statement must stay readable, so it wraps onto multiple lines
+                // instead of being cut off at the end
+                withWrap
+                breakWords={false}
+              >
                 {siweMessageToSign.parsedMessage.statement}
               </Value>
             </View>
