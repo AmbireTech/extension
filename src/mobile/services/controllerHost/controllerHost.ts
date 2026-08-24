@@ -2,6 +2,7 @@ import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { UiManager, View } from '@ambire-common/interfaces/ui'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { isAndroid } from '@common/config/env'
 import { AutoLockController } from '@common/controllers/auto-lock'
@@ -11,6 +12,7 @@ import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
 import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
+import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { handleActions } from '@mobile/handlers/handleActions'
@@ -118,7 +120,7 @@ let mainCtrl: MainController | null = null
 let nextWindowId = 1
 let currentWindowId = 1
 
-const buildUiManager = () => ({
+const buildUiManager = (): UiManager => ({
   window: {
     open: async () => {
       currentWindowId = nextWindowId++
@@ -166,7 +168,10 @@ const buildUiManager = () => ({
     sendUiMessage: (params: any) => emitOneTimeData(params),
     sendNavigateMessage: (_viewId: string, route: string, params: any) =>
       emitNavigate(route, params)
-  }
+  },
+  // Reads `mainCtrl` when called rather than when built, because the ui manager is
+  // constructed as an argument to the MainController that assigns it.
+  resolveViewRoute: (view: View) => resolveViewRoute(mainCtrl!, view)
 })
 
 /**
@@ -219,7 +224,7 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
         qr: qrCtrl,
         nfc: nfcCtrl
       } as any,
-      uiManager: buildUiManager() as any
+      uiManager: buildUiManager()
     })
     bootProfiler.endSpan(BOOT_MARK.rnMainCtrlConstructed)
 
