@@ -1,7 +1,7 @@
 /**
  * Produces a snapshot of a controller's state that is fully detached from the
- * controller's own objects, keeping the previous snapshot's top-level values
- * wherever they did not change.
+ * controller's own objects, reusing the previous snapshot's objects wherever the
+ * content did not change.
  *
  * Needed where the controllers run in the same JS realm as the UI. There the state
  * the controller hands over still holds its live nested objects, so the previous
@@ -9,14 +9,19 @@
  * SubscriptionManager reports them equal and the re-render is dropped. Platforms
  * whose state arrives over a port get a fresh object for free and do not need this.
  *
- * Works in two steps: `detachState` copies everything, then each top-level value is
- * compared against the previous snapshot's and the old one is kept when the two are
- * equal. Comparing two detached snapshots is what makes this safe, since comparing
- * against the controller's own objects would compare them to themselves. Reuse stops
- * at the top level, so a change anywhere inside `portfolio` gives the whole
- * `portfolio` value a new identity while `activity` and `keystore` keep theirs.
- * Returns `prev` itself when no top-level value changed, so every subscriber exits
- * on a reference check.
+ * Sharing goes all the way down, so only the objects on the path from the root to
+ * an actual change get a new identity. One chain finishing a portfolio update
+ * leaves every other chain's tokens with the identity they already had, a selector
+ * reading them returns the very same value it returned before, and its subscriber
+ * exits on a reference check instead of re-rendering. Returns `prev` itself when
+ * nothing changed at all.
+ *
+ * The copy and the comparison happen in the same walk, so the live state is read
+ * once. `prev` is only ever read, and only ever the snapshot this function
+ * returned before, which is what makes comparing it to the controller's live
+ * objects safe: it shares none of them. A shallow copy of the state would not be
+ * safe here, since its nested objects would be the controller's own and comparing
+ * them would compare them to themselves.
  *
  * Value handling matches `richJson`, which is what the port-based platforms get:
  * BigInt survives, `Error` is rebuilt, `toJSON` is honored, and functions,
@@ -32,25 +37,9 @@ export function reconcileState<T>(
   next: T,
   { label, detectCycles }: { label?: string; detectCycles?: boolean } = {}
 ): T {
-  const detached: unknown = detachState(next, { label, detectCycles })
+  const reconciled = reconcileNode(prev, next, detectCycles ? new WeakSet<object>() : null, label)
 
-  if (!isReusableObject(prev) || !isReusableObject(detached)) {
-    return (isEqualSnapshot(prev, detached) ? prev : detached) as T
-  }
-
-  const nextKeys = Object.keys(detached)
-  let hasChanged = Object.keys(prev).length !== nextKeys.length
-
-  nextKeys.forEach((key) => {
-    if (isEqualSnapshot(prev[key], detached[key])) {
-      // Safe to write into, `detached` was just built here and nobody has seen it yet.
-      detached[key] = prev[key]
-      return
-    }
-    hasChanged = true
-  })
-
-  return (hasChanged ? detached : prev) as T
+  return (reconciled === UNCHANGED ? prev : reconciled) as T
 }
 
 /**
@@ -63,55 +52,55 @@ export function detachState<T>(
   value: T,
   { label, detectCycles }: { label?: string; detectCycles?: boolean } = {}
 ): T {
-  return detachNode(value, detectCycles ? new WeakSet<object>() : null, label) as T
+  // With nothing to compare against, every node is rebuilt and `UNCHANGED` can
+  // never come back, which is the whole difference from `reconcileState`.
+  return reconcileNode(NO_PREV, value, detectCycles ? new WeakSet<object>() : null, label) as T
 }
 
 /**
- * Whether two snapshots produced by `detachState` hold the same content. Handles
- * only what such a snapshot can contain: primitives, plain objects, arrays and
- * errors. Not a general-purpose deep equality, so don't reach for it on live state.
+ * Marks a node that holds the same content as the previous snapshot's, so the
+ * caller reuses the previous node instead of the one just built. A returned value
+ * cannot say this on its own, because `undefined` and `NaN` are both legal node
+ * values and neither compares equal to itself the way a caller would need.
  */
-export function isEqualSnapshot(a: unknown, b: unknown): boolean {
-  if (a === b) return true
-  // The only pair that is equal without being identical is NaN, which every other
-  // number pair falls through to as false.
-  if (typeof a === 'number' && typeof b === 'number') return a !== a && b !== b
-  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false
+const UNCHANGED = Symbol('unchanged')
 
-  const isArray = Array.isArray(a)
-  if (isArray !== Array.isArray(b)) return false
-  if (isArray) {
-    const arrayB = b as unknown[]
-    return (
-      (a as unknown[]).length === arrayB.length &&
-      (a as unknown[]).every((item, index) => isEqualSnapshot(item, arrayB[index]))
-    )
-  }
-
-  const isError = a instanceof Error
-  if (isError !== b instanceof Error) return false
-  // `message` and `stack` are own but non-enumerable, so a key walk alone reports
-  // two errors carrying different messages as equal.
-  if (isError) {
-    const errorA = a as Error
-    const errorB = b as Error
-    if (errorA.message !== errorB.message || errorA.stack !== errorB.stack) return false
-  }
-
-  const keysA = Object.keys(a)
-  return (
-    keysA.length === Object.keys(b).length &&
-    keysA.every((key) => hasOwn(b, key) && isEqualSnapshot((a as any)[key], (b as any)[key]))
-  )
-}
+/**
+ * Stands in for "there is no previous node here", which is not the same as a
+ * previous `undefined`. Never equal to any value a snapshot can hold, so every
+ * node reached with it is rebuilt.
+ */
+const NO_PREV = Symbol('noPrev')
 
 const hasOwn = (obj: object, key: string) => Object.prototype.hasOwnProperty.call(obj, key)
 
-const isReusableObject = (value: unknown): value is Record<string, unknown> =>
+/** Whether the previous node is one whose keys can be shared into a new object. */
+const isSharableRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Error)
 
-function detachNode(value: unknown, seen: WeakSet<object> | null, label?: string): unknown {
-  if (value === null || typeof value !== 'object') return detachPrimitive(value)
+/**
+ * Whether two snapshot primitives hold the same value. The only pair that is equal
+ * without being identical is NaN.
+ */
+const isSamePrimitive = (a: unknown, b: unknown): boolean =>
+  a === b || (typeof a === 'number' && typeof b === 'number' && a !== a && b !== b)
+
+/**
+ * The detached form of `value`, or `UNCHANGED` when that form holds the same
+ * content as `prev`. Returns `undefined` for a value a snapshot drops, which is
+ * what tells the caller to leave the key out or write a `null` in an array.
+ */
+function reconcileNode(
+  prev: unknown,
+  value: unknown,
+  seen: WeakSet<object> | null,
+  label?: string
+): unknown {
+  if (value === null || typeof value !== 'object') {
+    const detached = detachPrimitive(value)
+
+    return isSamePrimitive(prev, detached) ? UNCHANGED : detached
+  }
 
   if (seen) {
     if (seen.has(value)) {
@@ -123,15 +112,19 @@ function detachNode(value: unknown, seen: WeakSet<object> | null, label?: string
   }
 
   try {
-    if (value instanceof Error) return detachError(value, seen, label)
-    if (Array.isArray(value)) return detachArray(value, seen, label)
+    if (value instanceof Error) return reconcileError(prev, value, seen, label)
+    if (Array.isArray(value)) return reconcileArray(prev, value, seen, label)
 
     const source = typeof (value as any).toJSON === 'function' ? (value as any).toJSON() : value
 
-    if (Array.isArray(source)) return detachArray(source, seen, label)
-    if (source !== null && typeof source === 'object') return detachObject(source, seen, label)
+    if (Array.isArray(source)) return reconcileArray(prev, source, seen, label)
+    if (source !== null && typeof source === 'object') {
+      return reconcileRecord(prev, source, seen, label)
+    }
 
-    return detachPrimitive(source)
+    const detached = detachPrimitive(source)
+
+    return isSamePrimitive(prev, detached) ? UNCHANGED : detached
   } finally {
     // Dropped on the way back up so the same object appearing in two sibling
     // branches stays legal, exactly as it is for JSON.
@@ -145,35 +138,105 @@ function detachPrimitive(value: unknown): unknown {
   return value
 }
 
-function detachArray(value: unknown[], seen: WeakSet<object> | null, label?: string): unknown[] {
+function reconcileArray(
+  prev: unknown,
+  value: unknown[],
+  seen: WeakSet<object> | null,
+  label?: string
+): unknown {
+  const prevArray = Array.isArray(prev) ? prev : null
   const out = new Array(value.length)
+  let isUnchanged = prevArray !== null && prevArray.length === value.length
 
-  for (let i = 0; i < value.length; i++) {
-    const item = detachNode(value[i], seen, label)
+  for (let index = 0; index < value.length; index += 1) {
+    const hasPrevItem = prevArray !== null && index < prevArray.length
+    const prevItem = hasPrevItem ? prevArray[index] : undefined
+    const item = reconcileNode(hasPrevItem ? prevItem : NO_PREV, value[index], seen, label)
+
+    if (item === UNCHANGED) {
+      out[index] = prevItem
+      continue
+    }
+
     // JSON turns a hole, a function or an undefined inside an array into null.
-    out[i] = item === undefined ? null : item
+    const detached = item === undefined ? null : item
+    out[index] = detached
+    // Compared again because a dropped item becomes the `null` the previous
+    // snapshot may already hold for it, which `reconcileNode` cannot see.
+    if (detached !== prevItem) isUnchanged = false
   }
 
-  return out
+  return isUnchanged ? UNCHANGED : out
 }
 
-function detachObject(source: object, seen: WeakSet<object> | null, label?: string): object {
+function reconcileRecord(
+  prev: unknown,
+  source: object,
+  seen: WeakSet<object> | null,
+  label?: string
+): unknown {
+  const prevRecord = isSharableRecord(prev) ? prev : null
   const out: Record<string, unknown> = {}
+  let isUnchanged = prevRecord !== null
+  let keptKeys = 0
 
   for (const key in source) {
     if (!hasOwn(source, key)) continue
 
-    const value = detachNode((source as any)[key], seen, label)
-    if (value === undefined) continue
+    const hasPrevValue = prevRecord !== null && hasOwn(prevRecord, key)
+    const child = reconcileNode(
+      hasPrevValue ? prevRecord![key] : NO_PREV,
+      (source as any)[key],
+      seen,
+      label
+    )
 
-    out[key] = value
+    // `UNCHANGED` can only come back when there was a previous value to match,
+    // since `NO_PREV` never compares equal to anything.
+    if (child === UNCHANGED) {
+      out[key] = prevRecord![key]
+      keptKeys += 1
+      continue
+    }
+
+    // Dropped from the snapshot. Not marked as a change here: a key `prev` carried
+    // and this one does not is what the `keptKeys` count below catches, and a key
+    // neither of them ends up with is no change at all.
+    if (child === undefined) continue
+
+    out[key] = child
+    keptKeys += 1
+    isUnchanged = false
   }
 
-  return out
+  // Equal key counts plus every kept key having come from `prev` is what makes the
+  // two key sets the same, which is how a removed key is caught.
+  if (isUnchanged && keptKeys !== Object.keys(prevRecord!).length) isUnchanged = false
+
+  return isUnchanged ? UNCHANGED : out
 }
 
-function detachError(value: Error, seen: WeakSet<object> | null, label?: string): Error {
-  const error: any = new Error(value.message)
+/**
+ * The descriptor `new Error()` gives `message` and `stack`. Reproduced here because
+ * the error below is not built with `new Error()`, and a key walk over the snapshot
+ * has to see the same properties as one over an error richJson rebuilt.
+ */
+const NON_ENUMERABLE = { writable: true, enumerable: false, configurable: true }
+
+function reconcileError(
+  prev: unknown,
+  value: Error,
+  seen: WeakSet<object> | null,
+  label?: string
+): unknown {
+  const prevError = prev instanceof Error ? prev : null
+  // Built without `new Error()`, whose stack capture is the expensive part of
+  // rebuilding an error and is thrown away by the copy of `stack` below anyway.
+  const error = Object.create(Error.prototype, {
+    message: { value: value.message, ...NON_ENUMERABLE }
+  }) as Error
+  let isUnchanged = prevError !== null && prevError.message === value.message
+  let keptKeys = 0
 
   // An error carries whatever the thrower attached to it, so a prop can hold a live
   // nested object just like a state key can. Detached rather than copied by
@@ -182,11 +245,34 @@ function detachError(value: Error, seen: WeakSet<object> | null, label?: string)
   Object.getOwnPropertyNames(value).forEach((propName) => {
     if (propName === 'message') return
 
-    const propValue = detachNode((value as any)[propName], seen, label)
-    if (propValue === undefined) return
+    const hasPrevValue = prevError !== null && hasOwn(prevError, propName)
+    const child = reconcileNode(
+      hasPrevValue ? (prevError as any)[propName] : NO_PREV,
+      (value as any)[propName],
+      seen,
+      label
+    )
 
-    error[propName] = propValue
+    if (child === undefined) {
+      if (hasPrevValue) isUnchanged = false
+      return
+    }
+
+    const propValue = child === UNCHANGED ? (prevError as any)[propName] : child
+    if (child !== UNCHANGED) isUnchanged = false
+
+    // `stack` is own but non-enumerable on a real error, so it is defined rather
+    // than assigned and stays off every key walk, `keptKeys` included.
+    if (propName === 'stack') {
+      Object.defineProperty(error, 'stack', { value: propValue, ...NON_ENUMERABLE })
+      return
+    }
+
+    ;(error as any)[propName] = propValue
+    keptKeys += 1
   })
 
-  return error
+  if (isUnchanged && keptKeys !== Object.keys(prevError!).length) isUnchanged = false
+
+  return isUnchanged ? UNCHANGED : error
 }
