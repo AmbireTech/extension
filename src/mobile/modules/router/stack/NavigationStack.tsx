@@ -16,6 +16,12 @@ import useStackEntries from './useStackEntries'
 // being frozen - `react-freeze` hides the screen with `display: none`, which drops
 // every view it had, and putting them back costs more than all the re-renders it
 // saved. See `useControllerState`.
+//
+// Freezing also needed a patch on Reanimated, since React remounts the class
+// components in a tree it hides and Reanimated's animated styles did not survive
+// it. The patch was removed with the freezing, so bringing `enableFreeze` back
+// means bringing it back with it:
+// https://github.com/AmbireTech/ambire-mobile-wallet/blob/465eed493572512ccb22e30264753f313508ad8a/patches/react-native-reanimated+4.1.1.patch
 
 /** Longer than any transition, for the navigations the platform does not animate. */
 const SETTLE_FALLBACK_MS = 800
