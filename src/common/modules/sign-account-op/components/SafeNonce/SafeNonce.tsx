@@ -1,20 +1,35 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View, ViewStyle } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
 
+import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { isValidSafeNonce } from './helpers'
 
-const getNonce = (safeTxNonce: string | undefined, accountOpNonce: bigint | null) =>
-  safeTxNonce === undefined ? (accountOpNonce ?? 0n) : BigInt(safeTxNonce)
+// Walks up from startNonce until it finds one not already used by a queued request.
+const getFirstFreeNonce = (startNonce: bigint, queuedNonces: bigint[]): bigint => {
+  let candidate = startNonce
+  while (queuedNonces.includes(candidate)) candidate += 1n
+  return candidate
+}
+
+const getNonce = (
+  safeTxNonce: string | undefined,
+  accountOpNonce: bigint | null,
+  queuedNonces: bigint[]
+) =>
+  safeTxNonce === undefined
+    ? getFirstFreeNonce(accountOpNonce ?? 0n, queuedNonces)
+    : BigInt(safeTxNonce)
 
 interface Props {
   withNetwork?: boolean
@@ -26,13 +41,48 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
   const { state: signAccountOpState, dispatch } = useController('SignAccountOpController')
   const { accountStates } = useController('AccountsController').state
   const { networks } = useController('NetworksController').state
+  const { userRequests } = useController('RequestsController').state
+  const fromRequestId = signAccountOpState?.fromRequestId
+
+  // Nonces already used by every OTHER queued Safe request for this account/chain. Computed
+  // straight from already-loaded UI state (userRequests), independent of the current request's
+  // own committed nonce - which lags a dispatch -> background -> emitUpdate round trip.
+  const queuedSafeNonces = useMemo(() => {
+    if (!signAccountOpState) return []
+
+    const { accountOp } = signAccountOpState
+
+    return userRequests.reduce<bigint[]>((nonces, request) => {
+      if (
+        request.kind !== 'calls' ||
+        request.id === fromRequestId ||
+        !request.signAccountOp.account.safeCreation ||
+        request.signAccountOp.accountOp.accountAddr !== accountOp.accountAddr ||
+        request.signAccountOp.accountOp.chainId !== accountOp.chainId
+      )
+        return nonces
+
+      const requestNonce = getAccountOpNonce(request.signAccountOp.accountOp)
+      if (requestNonce !== null) nonces.push(requestNonce)
+      return nonces
+    }, [])
+  }, [fromRequestId, signAccountOpState, userRequests])
+
+  // Defaults to the first free nonce (skipping past ones already queued) rather than just
+  // the account's next on-chain nonce, so the field doesn't open on a value that's already
+  // guaranteed to conflict with a pending request.
   const nonce = useMemo(
     () =>
       getNonce(
         signAccountOpState?.accountOp.safeTx?.nonce,
-        signAccountOpState?.accountOp.nonce || null
+        signAccountOpState?.accountOp.nonce || null,
+        queuedSafeNonces
       ),
-    [signAccountOpState?.accountOp.nonce, signAccountOpState?.accountOp.safeTx?.nonce]
+    [
+      queuedSafeNonces,
+      signAccountOpState?.accountOp.nonce,
+      signAccountOpState?.accountOp.safeTx?.nonce
+    ]
   )
   const latestNonce = useMemo(() => {
     if (!signAccountOpState) return undefined
@@ -46,7 +96,6 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     [networks, signAccountOpState?.accountOp.chainId]
   )
   const nonceString = nonce.toString()
-  const fromRequestId = signAccountOpState?.fromRequestId
   const [draftNonceState, setDraftNonceState] = useState({
     fromRequestId,
     sourceNonce: nonceString,
@@ -90,12 +139,155 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     [dispatch, fromRequestId, latestNonce, nonceString]
   )
 
+  // If the default nonce above (`nonce`) had to skip past queued ones, sync that correction
+  // back to the controller - not just the display - since the accountOp actually used for
+  // signing must match what's shown. Runs once per request, and only before the user edits.
+  const autoCorrectedRequestIdRef = useRef<string | number | undefined>(undefined)
+  useEffect(() => {
+    if (
+      !canEdit ||
+      !signAccountOpState ||
+      signAccountOpState.accountOp.safeTx?.nonce !== undefined ||
+      !isDraftForCurrentNonce ||
+      autoCorrectedRequestIdRef.current === fromRequestId
+    )
+      return
+
+    const committedNonce = signAccountOpState.accountOp.nonce ?? 0n
+    if (nonce === committedNonce) return
+
+    autoCorrectedRequestIdRef.current = fromRequestId
+    dispatch({
+      type: 'method',
+      params: { method: 'setSafeNonce', args: [nonce] }
+    })
+  }, [canEdit, dispatch, fromRequestId, isDraftForCurrentNonce, nonce, signAccountOpState])
+
+  // The message bubble only pops up while the nonce input is focused, like a tooltip.
+  // Closing is driven by an outside click rather than the input's onBlur, so pressing the
+  // bubble's own action (which would otherwise blur the input first) doesn't race it shut -
+  // same pattern used by the Recipient/Select dropdowns (see useSelect.ts).
+  const [isNonceInputFocused, setIsNonceInputFocused] = useState(false)
+  const containerRef = useRef<View>(null)
+  const handleNonceInputFocus = useCallback(() => setIsNonceInputFocused(true), [])
+
+  useEffect(() => {
+    if (!isWeb || !isNonceInputFocused) return undefined
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const node = containerRef.current as unknown as HTMLElement | null
+      if (node && !node.contains(event.target as Node)) setIsNonceInputFocused(false)
+    }
+
+    document.addEventListener('mousedown', handleClickOutside, { passive: true })
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isNonceInputFocused])
+
+  // Compares the raw keystroke (draftNonce) against the already-loaded nonces above, so the
+  // bubble reacts the instant the value becomes a conflict - the same way the "too low"
+  // validationMessage above reacts instantly against the already-loaded latestNonce.
+  const nonceConflict = useMemo(() => {
+    if (!isDraftValid || signAccountOpState?.accountOp.meta?.isOnchainSafeRejection) return null
+
+    const draftNonceBig = BigInt(draftNonce)
+    if (!queuedSafeNonces.includes(draftNonceBig)) return null
+
+    const highestQueuedNonce = queuedSafeNonces.reduce(
+      (highestNonce, queuedNonce) => (queuedNonce > highestNonce ? queuedNonce : highestNonce),
+      draftNonceBig
+    )
+
+    return { nextNonce: highestQueuedNonce + 1n }
+  }, [
+    draftNonce,
+    isDraftValid,
+    queuedSafeNonces,
+    signAccountOpState?.accountOp.meta?.isOnchainSafeRejection
+  ])
+
+  const handleUseNextAvailableNonce = useCallback(() => {
+    if (!nonceConflict) return
+
+    // Unfocusing hides the bubble immediately, without waiting on the
+    // dispatch -> background -> emitUpdate round trip to clear the conflict.
+    setIsNonceInputFocused(false)
+    setDraftNonceState({
+      fromRequestId,
+      sourceNonce: nonceString,
+      value: nonceConflict.nextNonce.toString()
+    })
+    dispatch({
+      type: 'method',
+      params: {
+        method: 'setSafeNonce',
+        args: [nonceConflict.nextNonce]
+      }
+    })
+  }, [dispatch, fromRequestId, nonceConflict, nonceString])
+
+  // Small floating card styled like the app's real Tooltip (Tooltip.web.tsx), so the
+  // conflict reads as an Ambire tooltip popup rather than a one-off alert card. The
+  // "too low" validation error is shown separately, as plain text under the input.
+  const nonceConflictBubble = useMemo(() => {
+    if (!canEdit || !isNonceInputFocused || !nonceConflict) return null
+
+    return (
+      <Pressable onPress={handleUseNextAvailableNonce}>
+        <View style={{ position: 'relative' }}>
+          {/* Small diamond acting as the tooltip's pointer arrow, aimed at the nonce input below */}
+          <View
+            style={{
+              position: 'absolute',
+              bottom: -5,
+              right: 24,
+              width: 10,
+              height: 10,
+              backgroundColor: theme.tertiaryBackground,
+              borderColor: theme.secondaryBorder,
+              borderBottomWidth: 1,
+              borderRightWidth: 1,
+              transform: [{ rotate: '45deg' }]
+            }}
+          />
+          <View
+            style={[
+              spacings.phSm,
+              spacings.pvTy,
+              {
+                width: 280,
+                borderRadius: BORDER_RADIUS_PRIMARY,
+                borderWidth: 1,
+                borderColor: theme.secondaryBorder,
+                backgroundColor: theme.tertiaryBackground,
+                shadowColor: theme.shadowPrimary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 1,
+                shadowRadius: 8,
+                elevation: 8
+              }
+            ]}
+          >
+            <Text fontSize={14} appearance="secondaryText">
+              {t('A pending transaction already uses this nonce. ')}
+              <Text fontSize={14} appearance="linkText" underline>
+                {t('You can use nonce {{nextNonce}}', {
+                  nextNonce: nonceConflict.nextNonce.toString()
+                })}
+              </Text>
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+    )
+  }, [canEdit, handleUseNextAvailableNonce, isNonceInputFocused, nonceConflict, t, theme])
+
   const nonceInput = useMemo(
     () => (
       <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd, flexbox.flex1]}>
         <NumberInput
           value={canEdit ? draftNonce : nonce.toString()}
           onChangeText={handleNonceChange}
+          onFocus={handleNonceInputFocus}
           precision={0}
           disabled={!canEdit}
           containerStyle={[
@@ -117,13 +309,22 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
         />
       </View>
     ),
-    [canEdit, draftNonce, handleNonceChange, hasNetworkLayout, nonce, theme, validationMessage]
+    [
+      canEdit,
+      draftNonce,
+      handleNonceChange,
+      handleNonceInputFocus,
+      hasNetworkLayout,
+      nonce,
+      theme,
+      validationMessage
+    ]
   )
 
   if (!signAccountOpState?.account.safeCreation) return null
 
   return !hasNetworkLayout ? (
-    <View style={{ width: 165, height: 40 }}>
+    <View ref={containerRef} style={{ width: 165, height: 40 }}>
       <View
         style={[
           flexbox.directionRow,
@@ -152,9 +353,17 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
           {validationMessage}
         </Text>
       )}
+      {!!nonceConflictBubble && (
+        <View
+          style={{ position: 'absolute', bottom: '100%', right: -40, marginBottom: 8, zIndex: 10 }}
+        >
+          {nonceConflictBubble}
+        </View>
+      )}
     </View>
   ) : (
     <View
+      ref={containerRef}
       style={[
         flexbox.directionRow,
         flexbox.alignStart,
@@ -216,6 +425,19 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
           >
             {validationMessage}
           </Text>
+        )}
+        {!!nonceConflictBubble && (
+          <View
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              right: -40,
+              marginBottom: 8,
+              zIndex: 10
+            }}
+          >
+            {nonceConflictBubble}
+          </View>
         )}
       </View>
     </View>
