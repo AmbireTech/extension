@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { getTokenBalanceInUSD, getTokenUsdPrice } from '@ambire-common/libs/portfolio/helpers'
 import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -28,7 +29,6 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WALLET_STAKING_ROUTE_STORAGE_KEY } from '@common/modules/explore/constants/walletStaking'
-import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
 import Header from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import FeeInfoBottomSheet from '@common/modules/swap-and-bridge/components/FeeInfoBottomSheet'
@@ -37,8 +37,8 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
-import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
 import AmountSlider from './AmountSlider'
+import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
 import {
   decodePendingWalletWithdrawals,
   formatPendingWalletWithdrawalDuration,
@@ -53,7 +53,7 @@ import {
 } from './pendingWithdrawal'
 import getStyles from './styles'
 
-const ETHEREUM_CHAIN_ID = 1n
+import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
 const TOKEN_DECIMALS = 18
 const EMPTY_STATE_BALANCE_THRESHOLD = parseUnits('0.001', TOKEN_DECIMALS)
 const STAKING_HELP_URL = 'https://help.ambire.com/en/collections/18211458-wallet-token-governance'

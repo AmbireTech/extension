@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
 import Button from '@common/components/Button'
@@ -21,7 +22,6 @@ import getStyles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 
-const ETHEREUM_CHAIN_ID = 1n
 const WALLET_STAKING_TOKEN_ADDRESSES = new Set(
   [WALLET_TOKEN, WALLET_STAKING_ADDR, STK_WALLET].map((address) => address.toLowerCase())
 )

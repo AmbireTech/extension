@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import EarnIcon from '@common/assets/svg/EarnIcon'
@@ -44,7 +45,6 @@ type UseTokenActionsOptions = {
   enableWalletStakingAction?: boolean
 }
 
-const ETHEREUM_CHAIN_ID = 1n
 const WALLET_STAKING_ACTIONS: Record<
   string,
   { text: 'Stake' | 'Withdraw' | 'Unstake'; icon: typeof EarnIcon; mode: WalletStakingMode }
