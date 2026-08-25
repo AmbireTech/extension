@@ -149,7 +149,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
   // bubble reacts the instant the value becomes a conflict - the same way the "too low"
   // validationMessage above reacts instantly against the already-loaded latestNonce.
   const nonceConflict = useMemo(() => {
-    if (!isDraftValid || signAccountOpState?.accountOp.meta?.isOnchainSafeRejection) return null
+    if (!isDraftValid) return null
 
     const draftNonceBig = BigInt(draftNonce)
     if (!queuedSafeNonces.includes(draftNonceBig)) return null
@@ -160,12 +160,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     )
 
     return { nextNonce: highestQueuedNonce + 1n }
-  }, [
-    draftNonce,
-    isDraftValid,
-    queuedSafeNonces,
-    signAccountOpState?.accountOp.meta?.isOnchainSafeRejection
-  ])
+  }, [draftNonce, isDraftValid, queuedSafeNonces])
 
   const handleUseNextAvailableNonce = useCallback(() => {
     if (!nonceConflict) return

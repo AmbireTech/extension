@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -172,8 +173,12 @@ const SignAccountOpScreen = () => {
     return !!signature && signature !== '0x' && signedCount > 0
   }, [signAccountOpState])
 
-  const isCancelDisabled =
-    shouldRejectOnchain && !!signAccountOpState?.accountOp.meta?.isOnchainSafeRejection
+  const isCancelDisabled = useMemo(() => {
+    if (!shouldRejectOnchain || !signAccountOpState) return false
+
+    const { calls, accountAddr } = signAccountOpState.accountOp
+    return isSafeRejectionCall(calls, accountAddr)
+  }, [shouldRejectOnchain, signAccountOpState])
 
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return

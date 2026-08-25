@@ -1,5 +1,5 @@
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
+import { AccountOp, isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
@@ -52,7 +52,7 @@ export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
 export const getDappInteractions = (
   submittedAccountOp: SubmittedAccountOpLike
 ): DappInteraction[] => {
-  if (submittedAccountOp.meta?.isOnchainSafeRejection) {
+  if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
     const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
 
     return [

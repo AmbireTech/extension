@@ -5,6 +5,7 @@ import { NativeScrollEvent, ScrollView, View } from 'react-native'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import Alert from '@common/components/Alert'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -150,8 +151,12 @@ const SignAccountOpScreen = () => {
     return !!signature && signature !== '0x' && signedCount > 0
   }, [signAccountOpState])
 
-  const isCancelDisabled =
-    shouldRejectOnchain && !!signAccountOpState?.accountOp.meta?.isOnchainSafeRejection
+  const isCancelDisabled = useMemo(() => {
+    if (!shouldRejectOnchain || !signAccountOpState) return false
+
+    const { calls, accountAddr } = signAccountOpState.accountOp
+    return isSafeRejectionCall(calls, accountAddr)
+  }, [shouldRejectOnchain, signAccountOpState])
 
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return

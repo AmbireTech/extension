@@ -24,9 +24,7 @@ const buildSubmittedAccountOp = (
 
 describe('getDappInteractions Safe cancellation', () => {
   test('shows a Safe cancellation with its nonce', () => {
-    const interactions = getDappInteractions(
-      buildSubmittedAccountOp({ meta: { isOnchainSafeRejection: true } })
-    )
+    const interactions = getDappInteractions(buildSubmittedAccountOp())
 
     expect(interactions).toEqual([
       {
@@ -39,15 +37,15 @@ describe('getDappInteractions Safe cancellation', () => {
   })
 
   test('preserves nonce zero in the cancellation description', () => {
-    const interactions = getDappInteractions(
-      buildSubmittedAccountOp({ nonce: 0n, meta: { isOnchainSafeRejection: true } })
-    )
+    const interactions = getDappInteractions(buildSubmittedAccountOp({ nonce: 0n }))
 
     expect(interactions[0]?.safeNonce).toBe(0n)
   })
 
-  test('keeps an unmarked empty zero-address call as a regular send', () => {
-    const interactions = getDappInteractions(buildSubmittedAccountOp())
+  test('treats a call that carries a value as a regular send, not a cancellation', () => {
+    const interactions = getDappInteractions(
+      buildSubmittedAccountOp({ calls: [{ to: ZeroAddress, value: 1n, data: '0x' }] })
+    )
 
     expect(interactions[0]).toMatchObject({
       id: 'fallback:send',
