@@ -31,7 +31,9 @@ export class AuthPage extends BasePage {
 
   // TODO: add more assertions
   async importViewOnlyAccount(account: string): Promise<void> {
-    await this.click(selectors.settings.watchAnAddressButton)
+    await this.click(selectors.getStarted.importExistingAccBtn)
+    await this.click(selectors.getStarted.showMoreBtn)
+    await this.click(selectors.getStarted.importMethodWatchAddress)
     await this.page.locator(locators.viewOnlyInputAddressField).fill(account)
     await this.click(selectors.getStarted.viewOnlyBtnImport)
     await this.setExtensionPassword()
