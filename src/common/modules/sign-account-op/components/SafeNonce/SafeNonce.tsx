@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Keyboard, Pressable, View, ViewStyle } from 'react-native'
 
-import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
+import { getAccountOpNonce, isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
@@ -83,10 +83,18 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
   const isDraftForCurrentNonce =
     draftNonceState.fromRequestId === fromRequestId && draftNonceState.sourceNonce === nonceString
   const draftNonce = isDraftForCurrentNonce ? draftNonceState.value : nonceString
+  // A cancellation must stay at the exact nonce of the transaction it's meant to replace.
+  const isCancellation = signAccountOpState
+    ? isSafeRejectionCall(
+        signAccountOpState.accountOp.calls,
+        signAccountOpState.accountOp.accountAddr
+      )
+    : false
   const canEdit =
     !signAccountOpState?.isSignInProgress &&
     !signAccountOpState?.accountOp.signed?.length &&
-    !signAccountOpState?.accountOp.safeTx?.confirmations?.length
+    !signAccountOpState?.accountOp.safeTx?.confirmations?.length &&
+    !isCancellation
   const hasNetworkLayout = isMobile || withNetwork
   const isDraftValid = isValidSafeNonce(draftNonce, latestNonce)
   const isDraftBelowLatestNonce =
