@@ -6,19 +6,10 @@ import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Badge from '@common/components/Badge'
-import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
 
 import getStyles from './styles'
-
-export interface SafetyCheckBannerAction {
-  id: string
-  text: string
-  onPress: () => void
-}
 
 interface Props {
   title?: string
@@ -26,8 +17,6 @@ interface Props {
   secondaryText?: string | React.ReactNode
   type: 'error' | 'warning'
   style?: ViewStyle
-  primaryAction?: SafetyCheckBannerAction
-  secondaryActions?: SafetyCheckBannerAction[]
 }
 
 const ICON_MAP = {
@@ -35,15 +24,7 @@ const ICON_MAP = {
   warning: WarningIcon
 }
 
-const SafetyCheckBanner = ({
-  type,
-  title,
-  text,
-  secondaryText,
-  style,
-  primaryAction,
-  secondaryActions
-}: Props) => {
+const SafetyCheckBanner = ({ type, title, text, secondaryText, style }: Props) => {
   const Icon = ICON_MAP[type]
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
@@ -100,41 +81,6 @@ const SafetyCheckBanner = ({
             <Text selectable fontSize={12} appearance={`${type}Text`} style={styles.secondaryText}>
               {translatedSecondaryText}
             </Text>
-          </View>
-        )}
-        {(!!primaryAction || !!secondaryActions?.length) && (
-          <View style={styles.actions}>
-            {!!primaryAction && (
-              <Button
-                testID={primaryAction.id}
-                type="primary"
-                size="small"
-                text={t(primaryAction.text)}
-                onPress={primaryAction.onPress}
-                submitOnEnter={false}
-                hasBottomSpacing={false}
-                style={secondaryActions?.length ? styles.primaryAction : undefined}
-              />
-            )}
-            {secondaryActions?.map((action, index) => (
-              <Button
-                key={action.id}
-                testID={action.id}
-                type="outline"
-                size="small"
-                text={t(action.text)}
-                onPress={action.onPress}
-                submitOnEnter={false}
-                hasBottomSpacing={false}
-                style={
-                  index < secondaryActions.length - 1
-                    ? isMobile
-                      ? spacings.mbTy
-                      : spacings.mrTy
-                    : undefined
-                }
-              />
-            ))}
           </View>
         )}
       </View>
