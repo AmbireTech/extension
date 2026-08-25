@@ -88,8 +88,9 @@ const AccountsOnPageList = ({
   }, [importedAccounts, keys])
 
   // Mirrors how the import status counts keys: the stored `associatedKeys` can
-  // be stale or incomplete, so they get merged with the ones found on the page,
-  // and a key counts as imported only when it is of the type being imported now.
+  // be stale or incomplete, so they get merged with the ones found on the page
+  // to know the total. A key counts as imported only when the stored record
+  // already lists it and it is of the key type being imported right now.
   const associatedKeysStatsByAccountAddr = useMemo(() => {
     const byAddr: { [addr: string]: { total: number; imported: number } } = {}
 
@@ -109,8 +110,10 @@ const AccountsOnPageList = ({
 
       byAddr[account.addr] = {
         total: mergedAssociatedKeys.length,
-        imported: mergedAssociatedKeys.filter((keyAddr) =>
-          keys.some((key) => key.addr === keyAddr && (!state.type || key.type === state.type))
+        imported: mergedAssociatedKeys.filter(
+          (keyAddr) =>
+            storedAssociatedKeys.includes(keyAddr) &&
+            keys.some((key) => key.addr === keyAddr && (!state.type || key.type === state.type))
         ).length
       }
     })
