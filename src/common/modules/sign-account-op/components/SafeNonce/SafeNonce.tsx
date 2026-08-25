@@ -157,17 +157,25 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
   // bubble reacts the instant the value becomes a conflict - the same way the "too low"
   // validationMessage above reacts instantly against the already-loaded latestNonce.
   const nonceConflict = useMemo(() => {
-    if (!isDraftValid) return null
+    if (!isDraftValid || !queuedSafeNonces.length) return null
 
     const draftNonceBig = BigInt(draftNonce)
-    if (!queuedSafeNonces.includes(draftNonceBig)) return null
-
-    const highestQueuedNonce = queuedSafeNonces.reduce(
-      (highestNonce, queuedNonce) => (queuedNonce > highestNonce ? queuedNonce : highestNonce),
-      draftNonceBig
+    const highestQueuedNonce = queuedSafeNonces.reduce((highestNonce, queuedNonce) =>
+      queuedNonce > highestNonce ? queuedNonce : highestNonce
     )
+    const nextFreeNonce = highestQueuedNonce + 1n
 
-    return { nextNonce: highestQueuedNonce + 1n }
+    // The typed nonce is already occupied by another queued Safe request.
+    if (queuedSafeNonces.includes(draftNonceBig)) {
+      return { kind: 'taken' as const, nextNonce: nextFreeNonce }
+    }
+
+    // The typed nonce skips over a still-free nonce right after the queue, leaving a gap.
+    if (draftNonceBig > nextFreeNonce) {
+      return { kind: 'gap' as const, nextNonce: nextFreeNonce }
+    }
+
+    return null
   }, [draftNonce, isDraftValid, queuedSafeNonces])
 
   const handleUseNextAvailableNonce = useCallback(() => {
@@ -243,7 +251,9 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
             ]}
           >
             <Text fontSize={14} appearance="secondaryText">
-              {t('A pending transaction already uses this nonce. ')}
+              {nonceConflict.kind === 'taken'
+                ? t('A pending transaction already uses this nonce. ')
+                : t('Latest free pending nonce is lower. ')}
               <Text fontSize={14} appearance="linkText" underline>
                 {t('You can use nonce {{nextNonce}}', {
                   nextNonce: nonceConflict.nextNonce.toString()
