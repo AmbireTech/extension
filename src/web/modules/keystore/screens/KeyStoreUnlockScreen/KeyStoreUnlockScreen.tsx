@@ -53,7 +53,7 @@ const KeyStoreUnlockScreen = () => {
   } = useController('WalletStateController')
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
-    state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked },
+    state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
   const { requestWindow } = useController('RequestsController').state
@@ -70,7 +70,8 @@ const KeyStoreUnlockScreen = () => {
     return shouldSkip
   })
 
-  const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
+  const canUseBiometrics =
+    !!hasBiometricsSecret && !!hasBiometricsHardware && !isPasswordUnlockRequired
 
   const shouldUseTabForBiometrics = IS_FIREFOX && isPopup
   const isBiometricsUnlockLoading =
@@ -171,7 +172,7 @@ const KeyStoreUnlockScreen = () => {
           height: 324,
           width: '100%',
           ...spacings.phSm,
-          marginBottom: canUseBiometrics ? 42 : 56
+          marginBottom: canUseBiometrics ? 42 : isPasswordUnlockRequired ? 24 : 56
         }}
       >
         <View
@@ -281,6 +282,18 @@ const KeyStoreUnlockScreen = () => {
 
         {unlockMethod === 'password' && (
           <>
+            {!!isPasswordUnlockRequired && (
+              <Text
+                fontSize={12}
+                weight="medium"
+                appearance="secondaryText"
+                style={[text.center, spacings.mbSm]}
+              >
+                {t(
+                  'Enter your password to finish a security update. Biometric unlock will be available right after.'
+                )}
+              </Text>
+            )}
             <Controller
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
@@ -352,7 +365,7 @@ const KeyStoreUnlockScreen = () => {
                     windowId: requestWindow?.windowProps?.createdFromWindowId
                   })
                 }
-                style={spacings.mtXl}
+                style={isPasswordUnlockRequired ? spacings.mtLg : spacings.mtXl}
                 hitSlop={FOOTER_BUTTON_HIT_SLOP}
               >
                 <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
