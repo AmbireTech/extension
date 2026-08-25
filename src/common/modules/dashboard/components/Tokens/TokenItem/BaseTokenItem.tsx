@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Image, View } from 'react-native'
 
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -14,6 +14,7 @@ import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
@@ -25,6 +26,7 @@ import { privateValue } from '@common/utils/ui'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
 
+import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 type Props = {
   token: TokenResult
@@ -54,8 +56,12 @@ const BaseTokenItem = ({
   )
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const { state: networks } = useController('NetworksController', (state) => state.networks)
-  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { state: visibleUserRequests, dispatch: requestsDispatch } = useController(
+    'RequestsController',
+    (state) => state.visibleUserRequests
+  )
   const { t } = useTranslation()
+  const { addToast } = useToast()
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
 
@@ -92,6 +98,33 @@ const BaseTokenItem = ({
   } = getAndFormatTokenDetails(token, networks, simulatedAccountOp, { decimalRulesType })
 
   const isPending = !!hasPendingBadges
+
+  const openPendingRequest = useCallback(() => {
+    const networkRequests = visibleUserRequests.filter(
+      (r) =>
+        r.kind === 'calls' &&
+        r.meta.accountAddr === simulatedAccountOp?.accountAddr &&
+        r.meta.chainId === simulatedAccountOp?.chainId
+    ) as CallsUserRequest[]
+    const pendingRequest =
+      networkRequests.find((r) => r.signAccountOp.accountOp.id === simulatedAccountOp?.id) ||
+      networkRequests[0]
+    if (!pendingRequest) {
+      addToast(
+        t('Failed to open the pending transaction. If this error persists please reject it.'),
+        { type: 'error' }
+      )
+      return
+    }
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'setCurrentUserRequestById',
+        args: [pendingRequest.id]
+      }
+    })
+  }, [simulatedAccountOp, visibleUserRequests, requestsDispatch, addToast, t])
 
   const textColor = useMemo(() => {
     if (!isPending) return theme.primaryText
@@ -233,16 +266,7 @@ const BaseTokenItem = ({
                   Icon={BatchIcon}
                   borderColor="transparent"
                   hoverBorderColor={theme.warning400}
-                  onPress={() => {
-                    if (!simulatedAccountOp) return
-                    requestsDispatch({
-                      type: 'method',
-                      params: {
-                        method: 'setCurrentUserRequestById',
-                        args: [`${simulatedAccountOp.accountAddr}-${simulatedAccountOp.chainId}`]
-                      }
-                    })
-                  }}
+                  onPress={openPendingRequest}
                 />
               )}
 
