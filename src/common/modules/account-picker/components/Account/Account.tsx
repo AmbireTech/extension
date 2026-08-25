@@ -45,6 +45,7 @@ const Account = ({
   isDisabled,
   importStatus,
   importedKeyTypes,
+  associatedKeysStats,
   currentKeyType,
   displayTypeBadge = true,
   displayTypePill = true,
@@ -64,6 +65,8 @@ const Account = ({
   importStatus: ImportStatus
   /** The key types this account is already imported with, if any. */
   importedKeyTypes?: Key['type'][]
+  /** How many keys can sign for this account and how many of them are imported. */
+  associatedKeysStats?: { total: number; imported: number }
   /** The key type the user is importing with right now. */
   currentKeyType?: Key['type']
   displayTypeBadge?: boolean
@@ -371,12 +374,15 @@ const Account = ({
             isMobile ? { alignSelf: 'stretch' } : flexbox.alignSelfStart
           ]}
         >
-          {importStatus === ImportStatus.ImportedWithSomeOfTheKeys && (
+          {importStatus === ImportStatus.ImportedWithSomeOfTheKeys && !!associatedKeysStats && (
             <Label
               isTypeLabelHidden
               customTextStyle={styles.label}
               hasBottomSpacing={false}
-              text={t('Already imported with some of these keys. Import again to add the rest.')}
+              text={t(
+                'This account has {{total}} keys, {{imported}} of them already imported. Import again to add the rest.',
+                associatedKeysStats
+              )}
               type="success"
             />
           )}

@@ -87,6 +87,37 @@ const AccountsOnPageList = ({
     return byAddr
   }, [importedAccounts, keys])
 
+  // Mirrors how the import status counts keys: the stored `associatedKeys` can
+  // be stale or incomplete, so they get merged with the ones found on the page,
+  // and a key counts as imported only when it is of the type being imported now.
+  const associatedKeysStatsByAccountAddr = useMemo(() => {
+    const byAddr: { [addr: string]: { total: number; imported: number } } = {}
+
+    state.accountsOnPage.forEach(({ account }) => {
+      if (byAddr[account.addr]) return
+
+      const storedAssociatedKeys =
+        importedAccounts.find(({ addr }) => addr === account.addr)?.associatedKeys || []
+      const mergedAssociatedKeys = [
+        ...new Set([
+          ...state.accountsOnPage
+            .filter((x) => x.account.addr === account.addr)
+            .flatMap((x) => x.account.associatedKeys),
+          ...storedAssociatedKeys
+        ])
+      ]
+
+      byAddr[account.addr] = {
+        total: mergedAssociatedKeys.length,
+        imported: mergedAssociatedKeys.filter((keyAddr) =>
+          keys.some((key) => key.addr === keyAddr && (!state.type || key.type === state.type))
+        ).length
+      }
+    })
+
+    return byAddr
+  }, [state.accountsOnPage, state.type, importedAccounts, keys])
+
   const slots = useMemo(() => {
     return groupBy(
       [
@@ -179,6 +210,7 @@ const AccountsOnPageList = ({
             isSelected={isSelected}
             importStatus={acc.importStatus}
             importedKeyTypes={importedKeyTypesByAccountAddr[acc.account.addr]}
+            associatedKeysStats={associatedKeysStatsByAccountAddr[acc.account.addr]}
             currentKeyType={state.type}
             onSelect={handleSelectAccount}
             onDeselect={handleDeselectAccount}
@@ -202,6 +234,7 @@ const AccountsOnPageList = ({
       state.selectedAccounts,
       state.type,
       importedKeyTypesByAccountAddr,
+      associatedKeysStatsByAccountAddr,
       handleSelectAccount,
       handleDeselectAccount
     ]
