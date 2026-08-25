@@ -29,7 +29,7 @@ export class AuthPage extends BasePage {
     await this.page.getByTestId(selectors.submitButton).click()
   }
 
-  // TODO: improve method assertions
+  // TODO: add more assertions
   async importViewOnlyAccount(account: string): Promise<void> {
     await this.click(selectors.settings.watchAnAddressButton)
     await this.page.locator(locators.viewOnlyInputAddressField).fill(account)
