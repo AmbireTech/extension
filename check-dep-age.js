@@ -9,6 +9,20 @@ const MIN_DAYS = Number(process.argv[2] || 14)
 const LOCKFILE = 'yarn.lock'
 const REGISTRY = 'https://registry.npmjs.org'
 const BASE_REF = process.env.GITHUB_BASE_REF ? `origin/${process.env.GITHUB_BASE_REF}` : 'origin/v2'
+// Selector ranges resolved from somewhere other than the npm registry (local
+// modules, git checkouts, tarball URLs). They have no publish time to check.
+const NON_REGISTRY_PROTOCOLS = [
+  'link:',
+  'file:',
+  'portal:',
+  'workspace:',
+  'patch:',
+  'git:',
+  'git+',
+  'github:',
+  'http:',
+  'https:'
+]
 
 /* -------- helpers -------- */
 
@@ -21,6 +35,10 @@ function readBaseLockfile() {
 function parseLockfile(text) {
   // Keep it strict: if parsing doesn't succeed, `object` will be undefined and the script will fail.
   return lockfile.parse(text).object
+}
+
+function isRegistryRange(range) {
+  return !NON_REGISTRY_PROTOCOLS.some((protocol) => range.startsWith(protocol))
 }
 
 function extractResolvedPackages(lockObject) {
@@ -36,6 +54,8 @@ function extractResolvedPackages(lockObject) {
     for (const selector of key.split(/,\s*/)) {
       const at = selector.lastIndexOf('@')
       if (at > 0) {
+        if (!isRegistryRange(selector.slice(at + 1))) continue
+
         let name = selector.slice(0, at)
         // yarn npm-alias selectors look like "alias@npm:real-name@range"
         // (e.g. "string-width-cjs@npm:string-width@^4.2.0"). Only the real
