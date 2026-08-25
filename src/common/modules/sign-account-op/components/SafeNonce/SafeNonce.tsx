@@ -15,21 +15,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import { isValidSafeNonce } from './helpers'
 
-// Walks up from startNonce until it finds one not already used by a queued request.
-const getFirstFreeNonce = (startNonce: bigint, queuedNonces: bigint[]): bigint => {
-  let candidate = startNonce
-  while (queuedNonces.includes(candidate)) candidate += 1n
-  return candidate
-}
-
-const getNonce = (
-  safeTxNonce: string | undefined,
-  accountOpNonce: bigint | null,
-  queuedNonces: bigint[]
-) =>
-  safeTxNonce === undefined
-    ? getFirstFreeNonce(accountOpNonce ?? 0n, queuedNonces)
-    : BigInt(safeTxNonce)
+const getNonce = (safeTxNonce: string | undefined, accountOpNonce: bigint | null) =>
+  safeTxNonce === undefined ? (accountOpNonce ?? 0n) : BigInt(safeTxNonce)
 
 interface Props {
   withNetwork?: boolean
@@ -68,21 +55,13 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     }, [])
   }, [fromRequestId, signAccountOpState, userRequests])
 
-  // Defaults to the first free nonce (skipping past ones already queued) rather than just
-  // the account's next on-chain nonce, so the field doesn't open on a value that's already
-  // guaranteed to conflict with a pending request.
   const nonce = useMemo(
     () =>
       getNonce(
         signAccountOpState?.accountOp.safeTx?.nonce,
-        signAccountOpState?.accountOp.nonce || null,
-        queuedSafeNonces
+        signAccountOpState?.accountOp.nonce || null
       ),
-    [
-      queuedSafeNonces,
-      signAccountOpState?.accountOp.nonce,
-      signAccountOpState?.accountOp.safeTx?.nonce
-    ]
+    [signAccountOpState?.accountOp.nonce, signAccountOpState?.accountOp.safeTx?.nonce]
   )
   const latestNonce = useMemo(() => {
     if (!signAccountOpState) return undefined
@@ -138,30 +117,6 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     },
     [dispatch, fromRequestId, latestNonce, nonceString]
   )
-
-  // If the default nonce above (`nonce`) had to skip past queued ones, sync that correction
-  // back to the controller - not just the display - since the accountOp actually used for
-  // signing must match what's shown. Runs once per request, and only before the user edits.
-  const autoCorrectedRequestIdRef = useRef<string | number | undefined>(undefined)
-  useEffect(() => {
-    if (
-      !canEdit ||
-      !signAccountOpState ||
-      signAccountOpState.accountOp.safeTx?.nonce !== undefined ||
-      !isDraftForCurrentNonce ||
-      autoCorrectedRequestIdRef.current === fromRequestId
-    )
-      return
-
-    const committedNonce = signAccountOpState.accountOp.nonce ?? 0n
-    if (nonce === committedNonce) return
-
-    autoCorrectedRequestIdRef.current = fromRequestId
-    dispatch({
-      type: 'method',
-      params: { method: 'setSafeNonce', args: [nonce] }
-    })
-  }, [canEdit, dispatch, fromRequestId, isDraftForCurrentNonce, nonce, signAccountOpState])
 
   // The message bubble only pops up while the nonce input is focused, like a tooltip.
   // Closing is driven by an outside click rather than the input's onBlur, so pressing the
