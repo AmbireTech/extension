@@ -1,11 +1,13 @@
 import React, { useCallback, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 
+import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import {
   Account as AccountInterface,
   AccountWithNetworkMeta,
   ImportStatus
 } from '@ambire-common/interfaces/account'
+import { Key } from '@ambire-common/interfaces/keystore'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -42,6 +44,8 @@ const Account = ({
   onDeselect,
   isDisabled,
   importStatus,
+  importedKeyTypes,
+  currentKeyType,
   displayTypeBadge = true,
   displayTypePill = true,
   shouldBeDisplayedAsNew = false,
@@ -58,6 +62,10 @@ const Account = ({
   onDeselect: (account: AccountInterface) => void
   isDisabled?: boolean
   importStatus: ImportStatus
+  /** The key types this account is already imported with, if any. */
+  importedKeyTypes?: Key['type'][]
+  /** The key type the user is importing with right now. */
+  currentKeyType?: Key['type']
   displayTypeBadge?: boolean
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
@@ -132,6 +140,25 @@ const Account = ({
     [account.addr, isCompactWebIdentity]
   )
   const shouldShowOnlyResolvedName = isCompactWebIdentity && !!reverseLookupName
+
+  const getKeyTypeLabel = useCallback(
+    (keyType: Key['type']) =>
+      keyType === 'internal'
+        ? t('recovery phrase or private key')
+        : t('{{deviceName}} key', { deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType] }),
+    [t]
+  )
+  const importedKeyTypesLabel = useMemo(
+    () =>
+      importedKeyTypes?.length
+        ? importedKeyTypes.map(getKeyTypeLabel).join(', ')
+        : t('existing key'),
+    [getKeyTypeLabel, importedKeyTypes, t]
+  )
+  const currentKeyTypeLabel = useMemo(
+    () => (currentKeyType ? getKeyTypeLabel(currentKeyType) : t('key')),
+    [currentKeyType, getKeyTypeLabel, t]
+  )
 
   const backgroundColor = useMemo(() => {
     if (identityDisplayMode === 'compact') return theme.secondaryBackground
@@ -349,9 +376,7 @@ const Account = ({
               isTypeLabelHidden
               customTextStyle={styles.label}
               hasBottomSpacing={false}
-              text={t(
-                'Already imported with some of the keys found on this page but not all. Re-import now to use this account with multiple keys.'
-              )}
+              text={t('Already imported with some of these keys. Import again to add the rest.')}
               type="success"
             />
           )}
@@ -361,7 +386,8 @@ const Account = ({
               customTextStyle={styles.label}
               hasBottomSpacing={false}
               text={t(
-                'Already imported, associated with a different key. Re-import now to use this account with multiple keys.'
+                'Already imported with your {{importedKeyTypesLabel}}. Import again to also sign with this {{currentKeyTypeLabel}}.',
+                { importedKeyTypesLabel, currentKeyTypeLabel }
               )}
               type="info"
             />
@@ -371,9 +397,7 @@ const Account = ({
               isTypeLabelHidden
               customTextStyle={styles.label}
               hasBottomSpacing={false}
-              text={t(
-                'Already imported as a view only account. Import now to be able to manage this account.'
-              )}
+              text={t('Already imported as view-only. Import now to be able to sign.')}
               type="info"
             />
           )}
