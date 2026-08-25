@@ -1,119 +1,112 @@
 # react-native-ambire-crypto
 
-Rust-backed primitives for the Ambire mobile wallet, exposed to Hermes over JSI
-with [uniffi-bindgen-react-native][ubrn] (ubrn). It exists because a few
-hot functions cost more in Hermes than the whole rest of a portfolio update.
+Rust functions for the Ambire mobile wallet, exposed to Hermes over JSI with
+[uniffi-bindgen-react-native][ubrn] (ubrn). It exists because a few hot functions
+cost more in Hermes than the whole rest of a portfolio update.
 
-Not published. The app consumes it through
+Not published. The app uses it through
 `"react-native-ambire-crypto": "link:./modules/react-native-ambire-crypto"`.
 
 ## What it exports
+checkSumAddress, decodeFunctionResult, encodeFunctionData and keccak256.
 
-| Function | Replaces | Why |
-| --- | --- | --- |
-| `checksumAddress` | viem's `checksumAddress` | ~2,250 cold calls per portfolio reload at ~0.5ms each. viem already caches, so every one of those is a cache miss and only the cold call can be made cheaper. |
-| `decodeFunctionResult` | viem's `decodeFunctionResult` | Called once per token per network. |
-| `encodeFunctionData` | viem's `encodeFunctionData` | Builds the deployless balance-getter calldata. |
-| `keccak256` | — | Available to callers that want the raw hash. |
-
-Nothing imports this package directly. Metro rewrites viem's own modules to the
-shims in `src/mobile/shims/viem/`, so viem's internals get the native versions
-too — see the redirect table in `metro.config.js`. Each shim falls back to viem
-when the native module is missing or refuses an input, so a build without the
-Rust side is slower but still correct.
+Nothing imports this package directly. Metro redirects viem's own modules to the
+shims in `src/mobile/shims/viem/`, so viem's internals also use the native
+versions. See the redirect table in `metro.config.js`. Each shim falls back to
+viem when the native module is missing or does not accept the input, so a build
+without the Rust part is slower but still correct.
 
 ## Building
 
-Requires Rust, plus the platform toolchain. Everything ubrn produces is
-committed, so you only need this when you change `rust/`.
+Needs Rust plus the platform toolchain. Everything ubrn generates is committed,
+so you only need this when you change `rust/`.
 
 ```sh
-# Android — needs cargo-ndk and the Android NDK
+# Android, needs cargo-ndk and the Android NDK
 rustup target add aarch64-linux-android armv7-linux-androideabi \
                   x86_64-linux-android i686-linux-android
 cargo install cargo-ndk
 yarn ubrn:android
 
-# iOS — needs macOS and Xcode
+# iOS, needs macOS and Xcode
 rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
 yarn ubrn:ios
 cd ../../ios && pod install
 ```
 
 The target lists match `ubrn.config.yaml`, which covers every Android ABI React
-Native builds for and both iOS device and simulator architectures. Dropping one
-does not fail the build — it produces an app that installs on those devices and
-then crashes when the module loads.
+Native builds for and both iOS device and simulator architectures. If you drop
+one, the build still passes. The app then installs on those devices and crashes
+when the module loads.
 
-Both scripts run `ubrn build <platform> --release --and-generate` followed by
-`yarn ubrn:postgenerate`. Two details in there are not optional:
+Both scripts run `ubrn build <platform> --release --and-generate` and then
+`yarn ubrn:postgenerate`. Neither part is optional:
 
-- **`--release`.** Without it cargo builds the `dev` profile and the crate ends
-  up slower than the JavaScript it replaces, with nothing in the logs to say so.
-- **`yarn ubrn:postgenerate`.** See below.
+- Without `--release`, cargo builds the `dev` profile and the crate ends up
+  slower than the JavaScript it replaces, with nothing in the logs to say so.
+- `yarn ubrn:postgenerate` applies the patch described below.
 
-Changing the Rust means committing the regenerated output alongside it. The
-`.a`, the bindings and the platform glue are all in git so that a clone can
-build the app without a Rust toolchain; only `rust/target/` is ignored.
+When you change the Rust, commit the regenerated output with it. The `.a` files,
+the bindings and the platform glue are all in git, so a clone can build the app
+without Rust installed. Only `rust/target/` is ignored.
 
-Adding, removing or changing the signature of an exported function changes the
-uniffi checksums, so stale bindings make `initialize()` throw at boot rather
-than fail quietly. Regenerating is not optional.
+Adding, removing or changing an exported function changes the uniffi checksums.
+Stale bindings then make `initialize()` throw at boot, so regenerating is not
+optional.
 
 ## The post-generate patch
 
 `scripts/forceNativeStringDecoder.js` rewrites one block of
 `src/generated/ambire_crypto.ts` after every generate.
 
-ubrn's template prefers a global `TextDecoder` when one exists and treats its own
-C++ helper as the fallback, assuming Hermes has none. This app installs a
+ubrn's template uses a global `TextDecoder` if one exists and keeps its own C++
+helper as the fallback, because it assumes Hermes has none. This app installs a
 JavaScript polyfill (`@zxing/text-encoding`, via `@ethersproject/shims` in
-`shim.js`), so the check passes and every string Rust returns is UTF-8 decoded
-byte by byte on the JS thread — about a second per portfolio reload, more than
-the native decode saves. The patch forces the C++ decoder, which is compiled in
-unconditionally.
+`shim.js`), so the check passes and every string Rust returns is decoded byte by
+byte on the JS thread. That costs about a second per portfolio reload, more than
+the native decode saves. The patch forces the C++ decoder, which is always
+compiled in.
 
 The script is idempotent and exits non-zero if the generated code no longer
-matches what it expects, so a ubrn upgrade breaks the build instead of silently
-restoring the slow path.
+looks like what it expects, so a ubrn upgrade breaks the build instead of
+silently bringing back the slow path.
 
 `src/generated/ambire_crypto.ts` is shared by both platforms, so an iOS build
 that skips this step also reverts Android.
 
 ## Layout
 
-Generated by ubrn (do not edit; `yarn ubrn:clean` lists them):
+Generated by ubrn, do not edit (`yarn ubrn:clean` lists them):
 
-    cpp/                        C++ bindings and the JSI installer
-    src/generated/              TypeScript bindings
-    src/index.ts                package entry
-    src/NativeAmbireCrypto.ts   turbo-module spec
-    android/CMakeLists.txt
-    android/cpp-adapter.cpp
-    android/build.gradle        also carries the ABI list from ubrn.config.yaml
-    android/src/main/           manifests, Kotlin module and package
-    ios/                        Objective-C++ turbo-module
-    AmbireCrypto.podspec
+- `cpp/` C++ bindings and the JSI installer
+- `src/generated/` TypeScript bindings
+- `src/index.ts` package entry
+- `src/NativeAmbireCrypto.ts` turbo-module spec
+- `android/CMakeLists.txt`
+- `android/cpp-adapter.cpp`
+- `android/build.gradle` also carries the ABI list from `ubrn.config.yaml`
+- `android/src/main/` manifests, Kotlin module and package
+- `ios/` Objective-C++ turbo-module
+- `AmbireCrypto.podspec`
 
 Written by hand:
 
-    rust/src/lib.rs             the implementation and its tests
-    ubrn.config.yaml            build configuration
-    scripts/                    the post-generate patch
-    android/proguard-rules.pro  see the comment in the file
+- `rust/src/lib.rs` the implementation and its tests
+- `ubrn.config.yaml` build configuration
+- `scripts/` the post-generate patch
+- `android/proguard-rules.pro` see the comment in the file
 
 Build output, committed:
+- android/src/main/jniLibs/   one static library per ABI
+- AmbireCryptoFramework.xcframework
 
-    android/src/main/jniLibs/   one static library per ABI, ~93MB in total
-    AmbireCryptoFramework.xcframework
-
-Changing the ABI or architecture list means editing `ubrn.config.yaml`, not
-`android/build.gradle` — the generated gradle file takes its `ndk.abiFilters`
+To change the ABI or architecture list, edit `ubrn.config.yaml`, not
+`android/build.gradle`. The generated gradle file takes its `ndk.abiFilters`
 from the config, so an edit there is overwritten by the next build.
 
-React Native Codegen output is *not* committed. Gradle regenerates it into
+React Native Codegen output is not committed. Gradle regenerates it into
 `android/build/generated/source/codegen`, which is also the only way the spec
-lands in the `com.ambirecrypto` package the Kotlin module expects — the script
+ends up in the `com.ambirecrypto` package the Kotlin module expects. The script
 that produces shippable codegen hardcodes `com.facebook.fbreact.specs` instead.
 `codegenConfig.outputDir` in `package.json` points both platforms at the right
 place.
@@ -123,9 +116,10 @@ place.
 `cd rust && cargo test` covers the exported functions, including the viem parity
 rules that are easy to get wrong: integers of 48 bits or fewer decode to plain
 JavaScript numbers and anything wider to a BigInt tag, and `checksum_address`
-recomputes a checksum rather than validating the one it is given.
+recomputes a checksum instead of validating the one it is given.
 
-The JavaScript side has no tests here. The shims were verified against viem with
-throwaway differential harnesses instead — worth rebuilding if you touch them.
+The JavaScript shims are tested in the app, not here. See
+`src/mobile/shims/viem/getAddress.test.ts` and
+`src/mobile/services/nativeAbi/nativeAbiDecode.test.ts`.
 
 [ubrn]: https://jhugman.github.io/uniffi-bindgen-react-native/
