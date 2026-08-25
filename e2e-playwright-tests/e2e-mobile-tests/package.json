@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@mobilewright/test": "^0.0.53",
+    "mobilewright": "^0.0.53"
+  },
+  "devDependencies": {
+    "@mobilewright/test": "0.0.51",
+    "mobilewright": "0.0.51",
+    "@types/node": "latest"
+  },
+  "scripts": {
+    "android": "npx mobilewright test --project=android"
+  }
+}
