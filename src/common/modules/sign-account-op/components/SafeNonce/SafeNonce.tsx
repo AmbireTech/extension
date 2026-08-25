@@ -189,20 +189,24 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     return (
       <Pressable onPress={handleUseNextAvailableNonce}>
         <View style={{ position: 'relative' }}>
-          {/* Small diamond acting as the tooltip's pointer arrow, aimed at the nonce input below */}
+          {/* Small diamond acting as the tooltip's pointer arrow. On mobile the bubble renders
+          below the input instead of above it (there's no scroll room above, since SafeNonce
+          sits at the top of the screen), so the arrow points up at it instead of down. */}
           <View
-            style={{
-              position: 'absolute',
-              bottom: -5,
-              right: 24,
-              width: 10,
-              height: 10,
-              backgroundColor: theme.tertiaryBackground,
-              borderColor: theme.secondaryBorder,
-              borderBottomWidth: 1,
-              borderRightWidth: 1,
-              transform: [{ rotate: '45deg' }]
-            }}
+            style={[
+              {
+                position: 'absolute',
+                right: 24,
+                width: 10,
+                height: 10,
+                backgroundColor: theme.tertiaryBackground,
+                borderColor: theme.secondaryBorder,
+                transform: [{ rotate: '45deg' }]
+              },
+              isMobile
+                ? { top: -5, borderTopWidth: 1, borderLeftWidth: 1 }
+                : { bottom: -5, borderBottomWidth: 1, borderRightWidth: 1 }
+            ]}
           />
           <View
             style={[
@@ -383,13 +387,13 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
         )}
         {!!nonceConflictBubble && (
           <View
-            style={{
-              position: 'absolute',
-              bottom: '100%',
-              right: -40,
-              marginBottom: 8,
-              zIndex: 10
-            }}
+            style={[
+              { position: 'absolute', right: -40, zIndex: 10 },
+              // On mobile the bubble renders below the input instead of above it, because
+              // this component sits at the top of the screen's ScrollView, leaving no
+              // scroll room above it for an upward-opening bubble to be visible in.
+              isMobile ? { top: '100%', marginTop: 8 } : { bottom: '100%', marginBottom: 8 }
+            ]}
           >
             {nonceConflictBubble}
           </View>
