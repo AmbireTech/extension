@@ -114,9 +114,9 @@ viemNativeModules.forEach((modulePath) => {
 
 // Collaborators of the shims that are not themselves replaced. They are
 // registered as originals so a shim reaches them without the redirect map
-// applying to viem's own imports of them. isAddress and lru back the getAddress
-// shim.
-;['utils/address/isAddress', 'utils/lru'].forEach(registerViemOriginal)
+// applying to viem's own imports of them. lru backs the getAddress shim's cache
+// and errors/address is the InvalidAddressError it throws.
+;['utils/lru', 'errors/address'].forEach(registerViemOriginal)
 
 // Redirect node built-ins to browserified/native versions
 const nodeCoreRedirects = {

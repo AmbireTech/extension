@@ -8,8 +8,7 @@
 // where a value can be lost without either side being wrong.
 //
 // The Rust codec itself can only be checked on a device, so a mismatch there
-// would not show up here. That is what `VERIFY_AGAINST_VIEM` in the module under
-// test is for.
+// would not show up here.
 
 import { beforeEach, describe, expect, jest, test } from '@jest/globals'
 
@@ -31,7 +30,11 @@ const { encodeAbiParameters } = require('viem') as {
   encodeAbiParameters: (params: any[], values: any[]) => `0x${string}`
 }
 
-const AbiError_Tags = { AmbiguousOverload: 'AmbiguousOverload', UnsupportedType: 'UnsupportedType' }
+const AbiError_Tags = {
+  AmbiguousOverload: 'AmbiguousOverload',
+  UnsupportedType: 'UnsupportedType',
+  InvalidArgument: 'InvalidArgument'
+}
 
 /** What the stand-in was asked to do, so the handover rules can be asserted. */
 const nativeCalls: { fn: string; abiJson: string; functionName: string }[] = []
@@ -40,7 +43,11 @@ let nativeRefusal: { tag?: string } | null = null
 
 jest.mock('@mobile/services/nativeCrypto/nativeCrypto', () => ({
   nativeCrypto: {
-    AbiError_Tags: { AmbiguousOverload: 'AmbiguousOverload', UnsupportedType: 'UnsupportedType' },
+    AbiError_Tags: {
+      AmbiguousOverload: 'AmbiguousOverload',
+      UnsupportedType: 'UnsupportedType',
+      InvalidArgument: 'InvalidArgument'
+    },
 
     // Both of these answer only from what crossed the boundary: the ABI is
     // re-parsed from the JSON string rather than closed over, so a broken
@@ -355,6 +362,33 @@ describe('native ABI codec wrappers', () => {
     })
   })
 
+  test('a Uint8Array bytes arg throws exactly as viem does, without reporting', () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const abi = [
+      {
+        type: 'function',
+        name: 'store',
+        stateMutability: 'nonpayable',
+        inputs: [{ type: 'bytes', name: 'blob' }],
+        outputs: outputs([])
+      }
+    ]
+    // richJson has no representation for a typed array, so the native side can
+    // only refuse. viem refuses it too, which is why no special handling is
+    // needed: the caller gets viem's error, the same one it would get without
+    // the shim in the way.
+    nativeRefusal = { tag: AbiError_Tags.InvalidArgument }
+    const args = [new Uint8Array([0xde, 0xad, 0xbe, 0xef])]
+
+    try {
+      expect(() => shimEncode({ abi, functionName: 'store', args })).toThrow()
+      expect(() => viemEncode({ abi, functionName: 'store', args })).toThrow()
+      expect(consoleError).not.toHaveBeenCalled()
+    } finally {
+      consoleError.mockRestore()
+    }
+  })
+
   test('propagates viem error when both sides refuse the data', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
     const { abi, functionName } = CASES[0]!
@@ -362,6 +396,9 @@ describe('native ABI codec wrappers', () => {
 
     try {
       expect(() => shimDecode({ abi, functionName, data: '0xnothex' })).toThrow()
+      // viem is called before the refusal is reported, so its throw is what the
+      // caller sees and the native refusal never reaches the log.
+      expect(consoleError).not.toHaveBeenCalled()
     } finally {
       consoleError.mockRestore()
     }

@@ -22,8 +22,8 @@ module.exports = {
     // these paths behind an exports map, so they are mapped by file path rather
     // than left to the resolver.
     '^@viem-original/getAddress$': '<rootDir>/node_modules/viem/_cjs/utils/address/getAddress.js',
-    '^@viem-original/isAddress$': '<rootDir>/node_modules/viem/_cjs/utils/address/isAddress.js',
     '^@viem-original/lru$': '<rootDir>/node_modules/viem/_cjs/utils/lru.js',
+    '^@viem-original/address$': '<rootDir>/node_modules/viem/_cjs/errors/address.js',
     '^@viem-original/decodeFunctionResult$':
       '<rootDir>/node_modules/viem/_cjs/utils/abi/decodeFunctionResult.js',
     '^@viem-original/encodeFunctionData$':

@@ -7,8 +7,8 @@
 // native path shows up as a mismatch against viem.
 //
 // What is under test is therefore the part of the shim that is not the hash:
-// which inputs may take the native path, the cache, and the fallback for input
-// the native side refuses. The Rust codec itself can only be checked on a
+// the EIP-1191 gate, the cache, and the fallback for input the native side
+// refuses. The Rust codec itself can only be checked on a
 // device.
 
 import { keccak256, toUtf8Bytes } from 'ethers'
@@ -59,12 +59,18 @@ const referenceChecksum = (address: string): string => {
 
 const checksumCalls: string[] = []
 
+// A getter, so a test can take the turbo-module away the way a device without
+// the native library has it: the shim reads the binding on every call.
 jest.mock('@mobile/services/nativeCrypto/nativeCrypto', () => ({
-  nativeCrypto: {
-    checksumAddress: (address: string) => {
-      ;(global as any).__checksumCalls.push(address)
+  get nativeCrypto() {
+    if ((global as any).__nativeCryptoMissing) return null
 
-      return module.exports.__reference(address)
+    return {
+      checksumAddress: (address: string) => {
+        ;(global as any).__checksumCalls.push(address)
+
+        return module.exports.__reference(address)
+      }
     }
   }
 }))
@@ -162,6 +168,7 @@ const outcomeOf = (run: () => string): string => {
 describe('viem getAddress shim', () => {
   beforeEach(() => {
     checksumCalls.length = 0
+    ;(global as any).__nativeCryptoMissing = false
   })
 
   test('reproduces viem checksumAddress for every input in the corpus', () => {
@@ -185,18 +192,17 @@ describe('viem getAddress shim', () => {
     expect(mismatches).toEqual([])
   })
 
-  test('takes the native path for a plain address and only for a plain address', () => {
+  test('keeps the EIP-1191 chain variant away from the native path', () => {
     const address = referenceChecksum(`${HEX_PREFIX}${'ab'.repeat(20)}`)
 
     shim.checksumAddress(address)
     expect(checksumCalls).toEqual([address])
 
     checksumCalls.length = 0
-    // A chain id selects EIP-1191, which the shim must not send to Rust.
+    // Rust does not implement EIP-1191 and would answer with the plain EIP-55
+    // form instead of refusing, so a chain id must never reach it.
     shim.checksumAddress(address, 30)
-    // Prefixless, which viem interprets differently than Rust would.
-    shim.checksumAddress('ab'.repeat(20))
-    shim.checksumAddress('')
+    shim.getAddress(address, 30)
     expect(checksumCalls).toEqual([])
   })
 
@@ -211,9 +217,33 @@ describe('viem getAddress shim', () => {
     expect(checksumCalls).toEqual([address])
   })
 
+  test('hands malformed input to viem after the native side refuses it', () => {
+    // Not gated out in JS, so it crosses into the native side and comes back
+    // refused, which is what keeps viem's reading of it.
+    const prefixless = 'ab'.repeat(20)
+
+    expect(shim.checksumAddress(prefixless)).toBe(viem.checksumAddress(prefixless))
+    expect(outcomeOf(() => shim.getAddress(prefixless))).toBe(
+      outcomeOf(() => viem.getAddress(prefixless))
+    )
+    expect(checksumCalls).toEqual([prefixless, prefixless])
+  })
+
+  test('serves a valid address from viem when the turbo-module is missing', () => {
+    // A refused address and an absent native side both come back as a null
+    // internally, so getting these confused would throw for every address on a
+    // device that failed to load the library.
+    const address = referenceChecksum(`${HEX_PREFIX}${'12'.repeat(20)}`)
+    ;(global as any).__nativeCryptoMissing = true
+
+    expect(shim.getAddress(address.toLowerCase())).toBe(address)
+    expect(shim.checksumAddress(address.toLowerCase())).toBe(address)
+    expect(checksumCalls).toEqual([])
+  })
+
   test('falls back to viem when the native side refuses the address', () => {
-    // 40 hex digits, so the shim's own gate lets it through, but the stand-in
-    // throws for it the way the Rust crate throws for what it cannot parse.
+    // A well-formed address the stand-in throws for anyway, standing in for a
+    // native side that is present but cannot serve the call.
     const address = `${HEX_PREFIX}${'ef'.repeat(20)}`
     const reference = module.exports.__reference
     module.exports.__reference = () => {
@@ -226,5 +256,12 @@ describe('viem getAddress shim', () => {
     } finally {
       module.exports.__reference = reference
     }
+  })
+
+  test("throws viem's own error rather than the native one", () => {
+    const error = outcomeOf(() => shim.getAddress('not an address'))
+
+    expect(error).toBe(outcomeOf(() => viem.getAddress('not an address')))
+    expect(error).toContain('throw:InvalidAddressError:')
   })
 })

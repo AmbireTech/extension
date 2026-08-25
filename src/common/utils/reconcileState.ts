@@ -16,16 +16,8 @@
  * exits on a reference check instead of re-rendering. Returns `prev` itself when
  * nothing changed at all.
  *
- * The copy and the comparison happen in the same walk, so the live state is read
- * once. `prev` is only ever read, and only ever the snapshot this function
- * returned before, which is what makes comparing it to the controller's live
- * objects safe: it shares none of them. A shallow copy of the state would not be
- * safe here, since its nested objects would be the controller's own and comparing
- * them would compare them to themselves.
- *
- * Value handling matches `richJson`, which is what the port-based platforms get:
- * BigInt survives, `Error` is rebuilt, `toJSON` is honored, and functions,
- * symbols and `undefined` are dropped from objects and become `null` in arrays.
+ * In short: the controller state is first detached from the controller (cloned), then every
+ * update updates only the changed parts of the state, and the rest of the state is reused from the previous snapshot.
  *
  * `label` names the controller in the error a cycle raises. `detectCycles` is meant
  * to be passed `isDev`: a cycle would otherwise recurse forever, but the check costs
@@ -45,8 +37,7 @@ export function reconcileState<T>(
 /**
  * Deep copy of a controller's state that shares no object with it, so a later
  * in-place mutation inside the controller cannot reach the copy. Never touches the
- * value it is given. See `reconcileState` for how values are handled and for what
- * `label` and `detectCycles` do.
+ * value it is given.
  */
 export function detachState<T>(
   value: T,
@@ -59,16 +50,12 @@ export function detachState<T>(
 
 /**
  * Marks a node that holds the same content as the previous snapshot's, so the
- * caller reuses the previous node instead of the one just built. A returned value
- * cannot say this on its own, because `undefined` and `NaN` are both legal node
- * values and neither compares equal to itself the way a caller would need.
+ * caller reuses the previous node instead of the one just built.
  */
 const UNCHANGED = Symbol('unchanged')
 
 /**
- * Stands in for "there is no previous node here", which is not the same as a
- * previous `undefined`. Never equal to any value a snapshot can hold, so every
- * node reached with it is rebuilt.
+ * Stands in for "there is no previous node here"
  */
 const NO_PREV = Symbol('noPrev')
 

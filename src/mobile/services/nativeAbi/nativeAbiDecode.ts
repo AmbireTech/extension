@@ -4,11 +4,17 @@ import {
 } from '@ambire-common/libs/richJson/richJson'
 import { nativeCrypto } from '@mobile/services/nativeCrypto/nativeCrypto'
 
-// POC safety net. While true, every native call is compared against viem and
-// viem's result is used on any mismatch, so a decoder bug cannot corrupt
-// balances — only cost a parallel viem call. Flip to false to measure the real
-// speed-up once the device logs show no mismatches.
-const VERIFY_AGAINST_VIEM = false
+/**
+ * The refusals that mean "only viem can serve this call" rather than "something
+ * went wrong". Overloaded functions need the call's arguments to disambiguate
+ * and types outside the supported set have no native path, so both are ordinary
+ * handovers and must not be reported.
+ */
+const EXPECTED_HANDOVER_TAGS = new Set<string | undefined>(
+  nativeCrypto
+    ? [nativeCrypto.AbiError_Tags.AmbiguousOverload, nativeCrypto.AbiError_Tags.UnsupportedType]
+    : []
+)
 
 // The ABI object is stable between calls, so its JSON string is cached by
 // reference instead of re-serialized on every call.
@@ -26,49 +32,23 @@ function abiToJson(abi: any): string {
   return json
 }
 
+/** Both shimmed viem functions take a single params object and return a value. */
+type ViemAbiFn = (params: any) => any
+
 /**
- * True for the errors that mean "only viem can serve this call" rather than
- * "something went wrong". Overloaded functions need the call's arguments to
- * disambiguate and types outside the supported set have no native path, so both
- * are ordinary handovers and must not be reported.
+ * Serves a call viem's way after the native codec refused it, and reports the
+ * refusal unless it was an ordinary handover. Viem runs before the report so
+ * that data both sides reject surfaces as viem's error rather than a logged
+ * native one.
  */
-function isExpectedHandover(error: unknown): boolean {
-  if (!nativeCrypto) return false
+function handBackToViem(nativeError: unknown, runViem: ViemAbiFn, params: any): any {
+  const viemResult = runViem(params)
 
-  const { tag } = (error ?? {}) as { tag?: string }
+  if (!EXPECTED_HANDOVER_TAGS.has((nativeError as { tag?: string })?.tag))
+    console.error(nativeError)
 
-  return (
-    tag === nativeCrypto.AbiError_Tags.AmbiguousOverload ||
-    tag === nativeCrypto.AbiError_Tags.UnsupportedType
-  )
+  return viemResult
 }
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-/** Structural equality that understands bigint, arrays and plain objects. */
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true
-  if (typeof a !== typeof b) return false
-
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) return false
-    return a.every((item, index) => deepEqual(item, b[index]))
-  }
-
-  if (isPlainObject(a) && isPlainObject(b)) {
-    const aKeys = Object.keys(a)
-    const bKeys = Object.keys(b)
-    if (aKeys.length !== bKeys.length) return false
-    return aKeys.every((key) => deepEqual(a[key], b[key]))
-  }
-
-  return false
-}
-
-type ViemDecodeFunctionResult = (params: any) => any
-type ViemEncodeFunctionData = (params: any) => any
 
 /**
  * Builds a drop-in replacement for viem's `decodeFunctionResult` that decodes in
@@ -76,9 +56,7 @@ type ViemEncodeFunctionData = (params: any) => any
  * the real viem decode passed in whenever the native path cannot serve it, and
  * returns that function untouched when the turbo-module is unavailable.
  */
-export function makeNativeDecodeFunctionResult(
-  realViemDecodeFunctionResult: ViemDecodeFunctionResult
-): ViemDecodeFunctionResult {
+export function makeNativeDecodeFunctionResult(realViemDecodeFunctionResult: ViemAbiFn): ViemAbiFn {
   if (!nativeCrypto) return realViemDecodeFunctionResult
   // Captured so the closure below keeps the non-null narrowing, which an
   // imported binding does not carry on its own.
@@ -91,36 +69,16 @@ export function makeNativeDecodeFunctionResult(
     // item from the ABI itself, so leave those calls to it.
     if (!functionName || typeof data !== 'string') return realViemDecodeFunctionResult(params)
 
-    let nativeResult: any
     try {
       const decoded = richParse(native.decodeFunctionResult(abiToJson(abi), functionName, data))
 
       // A function with no outputs decodes to JSON null, and viem returns
       // undefined for that. No ABI type decodes to null, so this cannot swallow
       // a real value.
-      nativeResult = decoded === null ? undefined : decoded
+      return decoded === null ? undefined : decoded
     } catch (nativeError) {
-      // Letting viem throw here is correct: if it also rejects the data, the
-      // caller should see viem's error, and this is not a parity gap.
-      const viemResult = realViemDecodeFunctionResult(params)
-
-      // Native refused data that viem decoded, so the two disagree on what is
-      // decodable and that is worth knowing about.
-      if (!isExpectedHandover(nativeError)) console.error(nativeError)
-
-      return viemResult
+      return handBackToViem(nativeError, realViemDecodeFunctionResult, params)
     }
-
-    if (VERIFY_AGAINST_VIEM) {
-      const viemResult = realViemDecodeFunctionResult(params)
-      if (!deepEqual(nativeResult, viemResult)) {
-        console.error(new Error(`native decode mismatch for ${functionName}; used the viem result`))
-
-        return viemResult
-      }
-    }
-
-    return nativeResult
   }
 }
 
@@ -131,9 +89,7 @@ export function makeNativeDecodeFunctionResult(
  * passed in whenever the native path cannot serve it, and returns that function
  * untouched when the turbo-module is unavailable.
  */
-export function makeNativeEncodeFunctionData(
-  realViemEncodeFunctionData: ViemEncodeFunctionData
-): ViemEncodeFunctionData {
+export function makeNativeEncodeFunctionData(realViemEncodeFunctionData: ViemAbiFn): ViemAbiFn {
   if (!nativeCrypto) return realViemEncodeFunctionData
   // Captured so the closure below keeps the non-null narrowing, which an
   // imported binding does not carry on its own.
@@ -146,30 +102,10 @@ export function makeNativeEncodeFunctionData(
     // item from the ABI itself, so leave those calls to it.
     if (!functionName) return realViemEncodeFunctionData(params)
 
-    let nativeResult: string
     try {
-      nativeResult = native.encodeFunctionData(
-        abiToJson(abi),
-        functionName,
-        richStringify(args ?? [])
-      )
+      return native.encodeFunctionData(abiToJson(abi), functionName, richStringify(args ?? []))
     } catch (nativeError) {
-      const viemResult = realViemEncodeFunctionData(params)
-
-      if (!isExpectedHandover(nativeError)) console.error(nativeError)
-
-      return viemResult
+      return handBackToViem(nativeError, realViemEncodeFunctionData, params)
     }
-
-    if (VERIFY_AGAINST_VIEM) {
-      const viemResult = realViemEncodeFunctionData(params)
-      if (nativeResult !== viemResult) {
-        console.error(new Error(`native encode mismatch for ${functionName}; used the viem result`))
-
-        return viemResult
-      }
-    }
-
-    return nativeResult
   }
 }
