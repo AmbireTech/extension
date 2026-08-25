@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { Keyboard, Pressable, View, ViewStyle } from 'react-native'
 
 import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -125,6 +125,13 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
   const [isNonceInputFocused, setIsNonceInputFocused] = useState(false)
   const containerRef = useRef<View>(null)
   const handleNonceInputFocus = useCallback(() => setIsNonceInputFocused(true), [])
+  // Mobile has no outside-click concept, so onBlur is the only dismiss signal there. Web
+  // ignores it and keeps using the outside-click effect below, for the race-avoidance
+  // reason explained above.
+  const handleNonceInputBlur = useCallback(() => {
+    if (isWeb) return
+    setIsNonceInputFocused(false)
+  }, [])
 
   useEffect(() => {
     if (!isWeb || !isNonceInputFocused) return undefined
@@ -166,6 +173,9 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     // Unfocusing hides the bubble immediately, without waiting on the
     // dispatch -> background -> emitUpdate round trip to clear the conflict.
     setIsNonceInputFocused(false)
+    // setIsNonceInputFocused only hides our own bubble state - it doesn't blur the actual
+    // native input, so the keyboard would otherwise stay open after picking a nonce.
+    if (isMobile) Keyboard.dismiss()
     setDraftNonceState({
       fromRequestId,
       sourceNonce: nonceString,
@@ -213,7 +223,10 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
               spacings.phSm,
               spacings.pvTy,
               {
-                width: 280,
+                // A little wider than the text strictly needs, so the wrap point between
+                // the plain and underlined nested Text fragments lands with slack instead
+                // of right at the card's edge - too tight and the last glyph gets clipped.
+                width: 300,
                 borderRadius: BORDER_RADIUS_PRIMARY,
                 borderWidth: 1,
                 borderColor: theme.secondaryBorder,
@@ -247,6 +260,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
           value={canEdit ? draftNonce : nonce.toString()}
           onChangeText={handleNonceChange}
           onFocus={handleNonceInputFocus}
+          onBlur={handleNonceInputBlur}
           precision={0}
           disabled={!canEdit}
           containerStyle={[
@@ -272,6 +286,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
       canEdit,
       draftNonce,
       handleNonceChange,
+      handleNonceInputBlur,
       handleNonceInputFocus,
       hasNetworkLayout,
       nonce,

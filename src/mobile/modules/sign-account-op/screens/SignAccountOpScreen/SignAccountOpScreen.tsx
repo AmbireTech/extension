@@ -364,6 +364,10 @@ const SignAccountOpScreen = () => {
           scrollEventThrottle={16}
           contentContainerStyle={spacings.pbSm}
           showsVerticalScrollIndicator={false}
+          // Without this, a tap on a child (e.g. the SafeNonce conflict bubble) while the
+          // keyboard is open gets swallowed to dismiss the keyboard instead of reaching the
+          // child's own press handler.
+          keyboardShouldPersistTaps="handled"
         >
           {signAccountOpState?.account.safeCreation ? (
             <SafeNonce />
