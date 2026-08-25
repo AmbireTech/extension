@@ -35,7 +35,8 @@ const selectors = {
     changeHDPathButton: 'change-hd-path-btn',
     hdPathConfirmButton: 'hd-path-confirm-btn',
     hdPathLegerLegacy: 'hd-path-option-ledger-legacy',
-    smartAccountPicker: 'add-account-' // need add index 5
+    smartAccountPicker: 'add-account-', // need add index 5
+    viewOnlyInputAddressField: 'view-only-address-field-0'
   },
   dashboard: {
     dashboardGasTankBalance: 'dashboard-gas-tank-balance',

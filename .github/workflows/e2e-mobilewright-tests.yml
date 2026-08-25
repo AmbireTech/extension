@@ -1,0 +1,32 @@
+name: Mobilewright Tests
+
+on:
+  push:
+    branches:
+      - v2
+      - main
+  pull_request:
+    types: ['opened', 'ready_for_review', 'synchronize']
+    branches:
+      - v2
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: npm ci
+      - run: npx mobilewright test --reporter html
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: mobilewright-report
+          path: mobilewright-report/
+          retention-days: 30
