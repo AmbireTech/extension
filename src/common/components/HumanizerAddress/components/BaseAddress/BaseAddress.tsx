@@ -27,6 +27,7 @@ import Option from './BaseAddressOption'
 interface Props extends TextProps {
   address: string
   chainId?: bigint
+  hideActions?: boolean
   actionsMode?: 'tooltip' | 'inline'
   shouldWrapInlineActions?: boolean
   verification?: BlacklistedStatus
@@ -38,6 +39,7 @@ const BaseAddress: FC<Props> = ({
   children,
   address,
   chainId,
+  hideActions = false,
   actionsMode = 'tooltip',
   shouldWrapInlineActions = true,
   verification,
@@ -93,9 +95,10 @@ const BaseAddress: FC<Props> = ({
   // will be show at the same time. We cannot use a shared tooltip as the content
   // is JSX and not a string.
   const tooltipId = useMemo(() => `address-${address}-${nanoid(6)}`, [address])
-  const showInlineActions = actionsMode === 'inline'
+  const isInlineMode = actionsMode === 'inline'
+  const showInlineActions = isInlineMode && !hideActions
   const displayValue =
-    showInlineActions && isDisplayingPlainAddress ? shortenAddress(address, 18, 4) : children
+    isInlineMode && isDisplayingPlainAddress ? shortenAddress(address, 18, 4) : children
   const textStyle = {
     flexShrink: 1,
     ...(isWeb ? { wordBreak: 'break-all' } : {})
@@ -116,8 +119,8 @@ const BaseAddress: FC<Props> = ({
         flexbox.alignCenter,
         flexbox.directionRow,
         flexbox.wrap,
-        isWeb && !showInlineActions && flexbox.flex1,
-        showInlineActions && { maxWidth: '100%' }
+        isWeb && !isInlineMode && flexbox.flex1,
+        isInlineMode && { maxWidth: '100%' }
       ]}
     >
       {showInlineActions && !!network?.explorerUrl ? (
@@ -168,7 +171,7 @@ const BaseAddress: FC<Props> = ({
           {...rest}
         >
           {displayValue}
-          {isWeb && !showInlineActions && (
+          {isWeb && !isInlineMode && !hideActions && (
             <Pressable style={spacings.mlMi}>
               {({ hovered }: any) => (
                 <InfoIcon
@@ -182,7 +185,7 @@ const BaseAddress: FC<Props> = ({
           )}
         </Text>
       )}
-      {!showInlineActions && (
+      {!isInlineMode && !hideActions && (
         <Tooltip
           id={tooltipId}
           style={{ padding: 0, overflow: 'hidden' }}

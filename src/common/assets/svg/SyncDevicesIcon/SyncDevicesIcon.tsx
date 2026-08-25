@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react'
+import { FC, memo } from 'react'
 import Svg, { Circle, Line, Path, Rect, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'

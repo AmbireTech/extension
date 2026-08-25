@@ -24,6 +24,13 @@ describe('getParsedMessageValue', () => {
     expect(isParsedMessageValueShortened('messageHash', value)).toBe(true)
   })
 
+  test('supports a compact hex string preview length', () => {
+    const value = `0x${'1'.repeat(100)}`
+
+    expect(getParsedMessageValue('data', value, new Set(), 24)).toHaveLength(24)
+    expect(isParsedMessageValueShortened('data', value, new Set(), 24)).toBe(true)
+  })
+
   test('does not shorten short values', () => {
     const value = 'short value'
 

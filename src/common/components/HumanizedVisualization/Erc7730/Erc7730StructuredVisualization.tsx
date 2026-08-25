@@ -38,6 +38,7 @@ import {
 
 const { isSidePanel } = getUiType()
 const withMobileLayout = isMobile || isSidePanel
+const withMobileSummaryLayout = isMobile
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
   item,
@@ -521,7 +522,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       : undefined
     const subtitleTextSize = Math.max(textSize - 3, 11)
 
-    if (withMobileLayout) {
+    if (withMobileSummaryLayout) {
       return (
         <MobileErc7730SummaryVisualization
           item={item}
