@@ -22,7 +22,6 @@ import {
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
-  getErc7730DescriptionRows,
   getVisibleErc7730RowsExcludingTitleParts,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
@@ -69,7 +68,7 @@ interface Props {
 
 export { sizeMultiplier }
 
-type Tab = 'description' | 'raw' | 'parsed'
+type Tab = 'raw' | 'parsed'
 
 const approveAbi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)'])
 const permitAbi = parseAbi([
@@ -191,22 +190,7 @@ const TransactionSummary = ({
     [call.fullVisualization]
   )
 
-  const erc7730DescriptionVisualization = useMemo(() => {
-    if (!erc7730Visualization) return null
-    if (!shouldUseErc7730DetailedLayout(erc7730Visualization)) return null
-
-    const descriptionRows = getErc7730DescriptionRows(erc7730Visualization)
-    if (!descriptionRows.length) return null
-
-    return {
-      ...erc7730Visualization,
-      rows: descriptionRows
-    }
-  }, [erc7730Visualization])
-
-  const [currentTxDataTab, setCurrentTxDataTab] = useState<Tab>(
-    !!erc7730DescriptionVisualization ? 'description' : 'raw'
-  )
+  const [currentTxDataTab, setCurrentTxDataTab] = useState<Tab>('raw')
 
   const shouldUseDetailedErc7730Layout = useMemo(
     () => !!erc7730Visualization && shouldUseErc7730DetailedLayout(erc7730Visualization),
@@ -735,13 +719,12 @@ const TransactionSummary = ({
 
   const tabOptions = useMemo(() => {
     let tabs: ([Tab, string] | null)[] = [
-      !!erc7730DescriptionVisualization ? ['description', t('Additional description')] : null,
       ['raw', t('Raw data')],
       decodedFunction ? ['parsed', t('Parsed data')] : null
     ]
 
     return tabs.filter((x) => !!x)
-  }, [erc7730DescriptionVisualization, decodedFunction, t])
+  }, [decodedFunction, t])
   const shouldAlignContentStart = useMemo(() => {
     if (shouldUseErc7730TransactionSummaryLayout) return true
     if (type !== 'default') return false
@@ -962,19 +945,7 @@ const TransactionSummary = ({
               })}
             </View>
           )}
-          {!!erc7730DescriptionVisualization && currentTxDataTab === 'description' ? (
-            <HumanizedVisualization
-              data={[erc7730DescriptionVisualization]}
-              sizeMultiplierSize={sizeMultiplier[size]}
-              textSize={Math.max(textSize - 1, 12)}
-              imageSize={imageSize}
-              chainId={chainId}
-              type={type}
-              hasPadding={false}
-              erc7730Mode="description"
-              editApprovalCallInfo={editApprovalCallInfo}
-            />
-          ) : currentTxDataTab === 'raw' ? (
+          {currentTxDataTab === 'raw' ? (
             <ExpandedContent
               call={call}
               size={size}
