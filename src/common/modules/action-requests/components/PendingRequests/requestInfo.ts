@@ -4,6 +4,21 @@ import { toBeHex } from 'ethers'
 
 import type { TFunction } from 'i18next'
 
+export const getUniquePreviewRequestsByIcon = (requests: UserRequest[]) => {
+  const previewRequests: UserRequest[] = []
+  const seenIcons = new Set<string>()
+
+  for (const request of requests) {
+    const icon = request.dappPromises[0]?.session.icon || ''
+    if (seenIcons.has(icon)) continue
+
+    seenIcons.add(icon)
+    previewRequests.push(request)
+  }
+
+  return previewRequests
+}
+
 export const getRequestDappInfo = (request: UserRequest, t: TFunction) => {
   const session = request.dappPromises[0]?.session
   const label = session?.name || request.meta.dappName || session?.id || t('Unknown app')

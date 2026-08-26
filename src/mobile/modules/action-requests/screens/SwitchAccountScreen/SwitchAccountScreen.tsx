@@ -105,7 +105,7 @@ const SwitchAccountScreen = () => {
                 </Text>
               )}
             </View>
-            <PendingRequests style={[spacings.mhSm, spacings.mvSm]} />
+            <PendingRequests />
             <View
               style={{
                 backgroundColor: theme.primaryBackground,

@@ -15,7 +15,6 @@ import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import useWatchToken from '@common/modules/action-requests/hooks/useWatchToken'
-import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -33,9 +32,8 @@ export type TokenData = {
 
 const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const {
-    userRequest,
     tokenData,
     tokenNetwork,
     isLoading,
@@ -47,7 +45,6 @@ const WatchTokenRequestScreen = () => {
     handleCancel,
     isTokenCustom,
     temporaryToken,
-    portfolioToken,
     handleAddToken,
     tokenDetails
   } = useWatchToken()
@@ -128,7 +125,7 @@ const WatchTokenRequestScreen = () => {
               </View>
             ) : null}
           </View>
-          <PendingRequests style={[spacings.mhSm, spacings.mbSm]} />
+          <PendingRequests style={{ borderRadius: 0 }} />
 
           <View style={styles.contentBody}>
             <Text fontSize={14} weight="medium" style={spacings.mbTy}>

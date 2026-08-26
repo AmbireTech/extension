@@ -16,8 +16,8 @@ import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAcc
 import spacings, { SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { getUiType } from '@common/utils/uiType'
+import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
 import getStyles from './styles'
 
@@ -129,7 +129,7 @@ const SwitchAccountScreen = () => {
                 </Text>
               )}
             </View>
-            <PendingRequests style={[spacings.mhLg, spacings.mvSm]} />
+            <PendingRequests />
             <View
               style={{
                 backgroundColor: theme.primaryBackground,

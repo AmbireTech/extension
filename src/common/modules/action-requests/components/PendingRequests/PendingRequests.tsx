@@ -19,7 +19,8 @@ import {
   getRequestDappInfo,
   getRequestDescription,
   getRequestNetworkLabel,
-  getRequestTitle
+  getRequestTitle,
+  getUniquePreviewRequestsByIcon
 } from './requestInfo'
 import getStyles from './styles'
 
@@ -151,7 +152,10 @@ const PendingRequests = ({ style }: Props) => {
 
     return visibleUserRequests.filter(({ id }) => id !== currentUserRequest.id)
   }, [currentUserRequest, visibleUserRequests])
-  const previewRequests = useMemo(() => otherRequests.slice(0, 2), [otherRequests])
+  const previewRequests = useMemo(
+    () => getUniquePreviewRequestsByIcon(otherRequests),
+    [otherRequests]
+  )
   const handleClose = useCallback(() => closeBottomSheet(), [closeBottomSheet])
   const openRequest = useCallback(
     (requestId: UserRequest['id']) => {

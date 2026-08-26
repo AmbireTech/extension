@@ -6,14 +6,14 @@ import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
-import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import DAppConnectAccountSettings from '@common/modules/action-requests/components/DAppConnect/DAppConnectAccountSettings'
 import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
+import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import useDappConnect from '@common/modules/action-requests/hooks/useDappConnect'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
-import spacings, { SPACING_LG, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
@@ -80,9 +80,7 @@ const DappConnectScreen = () => {
               style={[
                 styles.content,
                 {
-                  marginBottom: minHeightSize(650)
-                    ? SPACING_SM
-                    : SPACING_LG * responsiveSizeMultiplier
+                  marginBottom: minHeightSize(650) ? SPACING_SM : SPACING * responsiveSizeMultiplier
                 }
               ]}
             >
@@ -93,7 +91,7 @@ const DappConnectScreen = () => {
                 securityCheck={dappToConnect.blacklisted}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
-              <PendingRequests style={[spacings.mhSm, spacings.mvSm]} />
+              <PendingRequests style={{ borderRadius: 0 }} />
               <DAppConnectBody
                 securityCheck={dappToConnect.blacklisted}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}

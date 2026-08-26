@@ -6,7 +6,8 @@ import {
   getRequestDappInfo,
   getRequestDescription,
   getRequestNetworkLabel,
-  getRequestTitle
+  getRequestTitle,
+  getUniquePreviewRequestsByIcon
 } from './requestInfo'
 
 const networks = [{ chainId: 8453n, name: 'Base' }] as Network[]
@@ -57,5 +58,16 @@ describe('pending request information', () => {
 
     expect(getRequestTitle(request, i18n.t)).toBe('Switch account')
     expect(getRequestNetworkLabel(request, networks, i18n.t)).toBe('Current network')
+  })
+
+  test('keeps the first request for each icon in the preview', () => {
+    const firstRequest = buildRequest('calls')
+    const duplicateIconRequest = buildRequest('message')
+    const secondRequest = buildRequest('switchAccount')
+    secondRequest.dappPromises[0]!.session.icon = 'https://safe.global/icon.png'
+
+    expect(
+      getUniquePreviewRequestsByIcon([firstRequest, duplicateIconRequest, secondRequest])
+    ).toEqual([firstRequest, secondRequest])
   })
 })

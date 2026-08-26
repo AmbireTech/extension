@@ -4,10 +4,10 @@ import { View } from 'react-native'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
-import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
+import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import useDappConnect from '@common/modules/action-requests/hooks/useDappConnect'
 import spacings from '@common/styles/spacings'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
@@ -68,7 +68,7 @@ const DappConnectScreen = () => {
             icon={dappToConnect.icon!}
             securityCheck={dappToConnect.blacklisted}
           />
-          <PendingRequests style={[spacings.mhSm, spacings.mvSm]} />
+          <PendingRequests style={{ borderRadius: 0 }} />
           <DAppConnectBody securityCheck={dappToConnect.blacklisted} />
         </View>
       )}

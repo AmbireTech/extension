@@ -28,7 +28,7 @@ const getStyles = (theme: ThemeProps) =>
       ...common.borderRadiusPrimary,
       ...flexbox.center,
       ...spacings.phSm,
-      ...spacings.ptTy,
+      ...spacings.ptMi,
       ...spacings.pbMi,
       minHeight: 44,
       backgroundColor: theme.primaryBackground,
