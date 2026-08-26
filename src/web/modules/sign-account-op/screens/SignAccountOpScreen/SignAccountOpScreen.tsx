@@ -354,7 +354,10 @@ const SignAccountOpScreen = () => {
               setContentHeight(height)
             }}
             scrollEventThrottle={16}
-            style={contentHeight > containerHeight ? spacings.prMi : {}}
+            // A ScrollView needs a bounded height on itself to know where its own scroll
+            // boundary is (https://reactnative.dev/docs/scrollview) - without it, content
+            // that doesn't fit can get clipped by an ancestor instead of being scrollable
+            style={[flexbox.flex1, contentHeight > containerHeight ? spacings.prMi : {}]}
           >
             <PendingTransactions
               network={network}
