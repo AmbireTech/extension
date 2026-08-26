@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -12,9 +12,9 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 import { browser, engine, isSafari } from '@web/constants/browserapi'
-import { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import QrScanner from '@web/modules/hardware-wallet/screens/QrScannerWithPermission/QrScanner'
 
+import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 type Props = {
   onComplete: (payload: Uint8Array) => void
   onOpenFullScreenScanner?: () => void
