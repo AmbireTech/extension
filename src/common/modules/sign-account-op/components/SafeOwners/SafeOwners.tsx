@@ -4,22 +4,109 @@ import { View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
-import AccountKey from '@common/components/AccountKey'
+import CopyIcon from '@common/assets/svg/CopyIcon'
+import AccountKeyIcon from '@common/components/AccountKeyIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import SafeKeyWrapper from '@common/components/SafeKeyWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import SigningKeySelect from '@common/modules/sign-message/components/SignKeySelect'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
+import { setStringAsync } from '@common/utils/clipboard'
 
 import { getSignAndCloseOwnerAddr } from './helpers'
+
+const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
+  address,
+  chainId,
+  isDisabled,
+  type
+}: {
+  address: string
+  chainId: bigint
+  isDisabled: boolean
+  type: Key['type']
+}) {
+  const { t } = useTranslation()
+  const { theme } = useTheme()
+  const { addToast } = useToast()
+  const [bindCopyIconAnim, copyIconAnimStyle] = useHover({
+    preset: 'opacityInverted'
+  })
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await setStringAsync(address)
+      addToast(t('Address copied to clipboard'))
+    } catch {
+      addToast(t('Failed to copy address'), { type: 'error' })
+    }
+  }, [addToast, address, t])
+
+  return (
+    <View
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        spacings.phSm,
+        spacings.pvTy,
+        {
+          width: '100%',
+          minWidth: 0,
+          minHeight: 38,
+          borderRadius: BORDER_RADIUS_PRIMARY,
+          backgroundColor: theme.primaryBackground
+        }
+      ]}
+    >
+      <View style={spacings.mrTy}>
+        <AccountKeyIcon iconSize={20} type={type} color={theme.neutral600} />
+      </View>
+      <View
+        style={[flexbox.flex1, { minWidth: 0 }]}
+        dataSet={
+          isDisabled
+            ? createGlobalTooltipDataSet({
+                id: `safe-owner-${address}-not-imported-tooltip`,
+                content: t('Not imported')
+              })
+            : undefined
+        }
+      >
+        <HumanizerAddress
+          address={address}
+          chainId={chainId}
+          fontSize={15}
+          hideActions
+          actionsMode="inline"
+          shouldWrapInlineActions={false}
+        />
+      </View>
+      <AnimatedPressable
+        accessibilityRole="button"
+        accessibilityLabel={t('Copy address')}
+        onPress={handleCopy}
+        style={[
+          copyIconAnimStyle,
+          spacings.mlMi,
+          { flexShrink: 0 },
+          isWeb && { cursor: 'pointer' }
+        ]}
+        {...bindCopyIconAnim}
+      >
+        <CopyIcon width={17} height={17} color={theme.secondaryText} />
+      </AnimatedPressable>
+    </View>
+  )
+})
 
 const SafeOwners = ({
   account,
@@ -45,7 +132,6 @@ const SafeOwners = ({
   style?: ViewStyle
 }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
   const { accountStates } = useController('AccountsController').state
   const [ownerAddrToChooseKeyFor, setOwnerAddrToChooseKeyFor] = useState<Key['addr'] | null>(null)
 
@@ -118,7 +204,7 @@ const SafeOwners = ({
   )
 
   return (
-    <View style={[style]}>
+    <View style={[style, isWeb ? ({ cursor: 'default' } as any) : undefined]}>
       <Text
         fontSize={16}
         weight="semiBold"
@@ -144,23 +230,11 @@ const SafeOwners = ({
             onSign={getOwnerSignHandler(o)}
             isSignLoading={isSignLoading && signingKeyAddr === o.addr}
           >
-            <AccountKey
-              addr={o.addr}
-              label={o.addr}
-              singleLineLabel={withMobileLayout}
-              type={o.type || 'internal'}
-              dedicatedToOneSA={false}
-              isImported
-              account={account}
-              isLast
-              keyIconColor={theme.neutral600 as string}
-              tooltipContent={o.hasSigned ? 'Signed' : o.isImported ? 'Pending' : 'Not imported'}
-              itemHeight={38}
-              containerStyle={{
-                borderWidth: 1,
-                borderColor: 'transparent',
-                backgroundColor: themeType === THEME_TYPES.LIGHT ? '#fff' : '#000'
-              }}
+            <SafeOwnerAddress
+              address={o.addr}
+              chainId={BigInt(chainId)}
+              isDisabled={!o.isImported}
+              type={o.type}
             />
           </SafeKeyWrapper>
         ))}

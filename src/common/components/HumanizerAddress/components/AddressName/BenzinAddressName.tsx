@@ -13,6 +13,7 @@ import InlineAddressAvatar from './InlineAddressAvatar'
 interface Props extends TextProps {
   address: string
   chainId: bigint
+  hideActions?: boolean
   actionsMode?: 'tooltip' | 'inline'
   fallbackLabel?: string
   isToken?: boolean
@@ -21,6 +22,7 @@ interface Props extends TextProps {
 const BenzinAddressName: FC<Props> = ({
   address,
   chainId,
+  hideActions = false,
   actionsMode = 'tooltip',
   fallbackLabel,
   isToken,
@@ -67,6 +69,7 @@ const BenzinAddressName: FC<Props> = ({
         address={address}
         isDisplayingPlainAddress={!name && !fallbackLabel && !foundContractName}
         chainId={chainId}
+        hideActions={hideActions}
         actionsMode={actionsMode}
         isToken={isToken}
         {...rest}

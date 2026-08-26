@@ -1,5 +1,4 @@
 import React, { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
@@ -30,7 +29,6 @@ const PendingTransactions: FC<Props> = ({
   signAccountOpState,
   size = 'lg'
 }) => {
-  const { t } = useTranslation()
   const controllerSignAccountOpState = useController('SignAccountOpController').state
   const { humanization, banners } = signAccountOpState || controllerSignAccountOpState || {}
 

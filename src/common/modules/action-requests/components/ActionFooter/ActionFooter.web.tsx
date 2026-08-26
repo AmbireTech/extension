@@ -4,9 +4,9 @@ import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
@@ -75,11 +75,11 @@ const ActionFooter = ({
     return (
       <View style={[spacings.ptSm, spacings.phSm, spacings.pbMd, { width: '100%' }]}>
         {children}
-        <ActionsPagination />
         <View style={[flexbox.directionRow, { width: '100%', gap: SPACING_TY }]}>
           {rejectButton}
           {resolveButton}
         </View>
+        <ActionsPagination />
       </View>
     )
   }
@@ -87,8 +87,8 @@ const ActionFooter = ({
   return (
     <View style={[flexbox.alignCenter, spacings.pb]}>
       {children}
-      <GlassView borderRadius={28}>
-        <View style={[flexbox.directionRow, spacings.phSm, spacings.pvSm]}>
+      <GlassView borderRadius={28} cssStyle={{ flexDirection: 'column', padding: SPACING }}>
+        <View style={[flexbox.directionRow]}>
           <View style={flexbox.flex1}>
             {showReject && (
               <View style={[flexbox.flex1, spacings.mrLg]}>
@@ -104,7 +104,7 @@ const ActionFooter = ({
               </View>
             )}
           </View>
-          <ActionsPagination />
+          <View style={flexbox.flex1} />
           {resolveNode || (
             <View style={flexbox.flex1}>
               <Button
@@ -127,6 +127,7 @@ const ActionFooter = ({
             </View>
           )}
         </View>
+        <ActionsPagination />
       </GlassView>
     </View>
   )
