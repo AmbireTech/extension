@@ -4,12 +4,47 @@ import { toBeHex } from 'ethers'
 
 import type { TFunction } from 'i18next'
 
+const getIsSwapAndBridgeRequest = (request: UserRequest) =>
+  request.kind === 'calls' &&
+  !!(request.meta.isSwapAndBridgeCall || request.signAccountOp?.accountOp.meta?.swapTxn)
+
+export const getIsSafeRequest = (request: UserRequest) => {
+  if (request.kind === 'calls') {
+    return !!(
+      request.meta.safeTxnProps ||
+      request.meta.safeTx ||
+      request.signAccountOp?.accountOp.safeTx
+    )
+  }
+
+  if (request.kind !== 'message' && request.kind !== 'typedMessage') return false
+
+  return (
+    !request.dappPromises[0]?.session &&
+    request.meta.keepRequestAlive === true &&
+    request.meta.created !== undefined &&
+    !!request.meta.hash &&
+    Array.isArray(request.meta.signatures)
+  )
+}
+
+export const getIsAmbireWalletRequest = (request: UserRequest) =>
+  !getIsSafeRequest(request) &&
+  request.kind === 'calls' &&
+  (getIsSwapAndBridgeRequest(request) ||
+    (!request.dappPromises[0]?.session &&
+      !request.meta.dappName &&
+      !request.meta.dappUrl &&
+      !request.meta.safeTxnProps))
+
 export const getUniquePreviewRequestsByIcon = (requests: UserRequest[]) => {
   const previewRequests: UserRequest[] = []
   const seenIcons = new Set<string>()
 
   for (const request of requests) {
-    const icon = request.dappPromises[0]?.session.icon || ''
+    let icon = request.dappPromises[0]?.session.icon || 'fallback'
+    if (getIsSafeRequest(request)) icon = 'safe'
+    if (getIsAmbireWalletRequest(request)) icon = 'ambire-wallet'
     if (seenIcons.has(icon)) continue
 
     seenIcons.add(icon)
@@ -20,6 +55,22 @@ export const getUniquePreviewRequestsByIcon = (requests: UserRequest[]) => {
 }
 
 export const getRequestDappInfo = (request: UserRequest, t: TFunction) => {
+  if (getIsSafeRequest(request)) {
+    return {
+      icon: undefined,
+      label: t('Safe'),
+      url: t('Safe')
+    }
+  }
+
+  if (getIsAmbireWalletRequest(request)) {
+    return {
+      icon: undefined,
+      label: t('Ambire Wallet'),
+      url: t('Ambire Wallet')
+    }
+  }
+
   const session = request.dappPromises[0]?.session
   const label = session?.name || request.meta.dappName || session?.id || t('Unknown app')
   const url = request.meta.dappUrl || session?.id || session?.origin || label
@@ -34,6 +85,7 @@ export const getRequestDappInfo = (request: UserRequest, t: TFunction) => {
 export const getRequestTitle = (request: UserRequest, t: TFunction) => {
   switch (request.kind) {
     case 'calls':
+      if (getIsSwapAndBridgeRequest(request)) return t('Swap and bridge')
       return t('Sign transaction')
     case 'message':
     case 'typedMessage':
@@ -66,10 +118,22 @@ export const getRequestTitle = (request: UserRequest, t: TFunction) => {
 }
 
 export const getRequestDescription = (request: UserRequest, t: TFunction) => {
+  if (getIsSafeRequest(request)) {
+    return request.kind === 'calls'
+      ? t('This transaction was proposed in Safe and is waiting for your signature.')
+      : t('This message was proposed in Safe and is waiting for your signature.')
+  }
+
   const { label: appName } = getRequestDappInfo(request, t)
 
   switch (request.kind) {
     case 'calls':
+      if (getIsAmbireWalletRequest(request)) {
+        return getIsSwapAndBridgeRequest(request)
+          ? t('Swap and bridge request created in Ambire Wallet.')
+          : t('Transaction created in Ambire Wallet.')
+      }
+
       return t('{{appName}} wants you to approve a transaction.', { appName })
     case 'message':
     case 'typedMessage':
