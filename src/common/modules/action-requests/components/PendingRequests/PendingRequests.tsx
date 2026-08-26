@@ -5,7 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
-import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
+import SafeIcon from '@common/assets/svg/SafeIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import HoverablePressable from '@common/components/HoverablePressable'
 import ManifestImage from '@common/components/ManifestImage'
@@ -54,7 +54,7 @@ const RequestIcon = React.memo(function RequestIcon({
   const { t } = useTranslation()
   const { icon } = useMemo(() => getRequestDappInfo(request, t), [request, t])
 
-  if (getIsSafeRequest(request)) return <SafeBadgeIcon width={size} height={size} />
+  if (getIsSafeRequest(request)) return <SafeIcon width={size} height={size} />
 
   if (getIsAmbireWalletRequest(request)) {
     return <AmbireLogoWithBackgroundAndLogotype width={size} withText={false} />
