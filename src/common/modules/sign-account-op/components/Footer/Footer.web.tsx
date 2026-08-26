@@ -3,10 +3,8 @@ import { TextStyle, View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { isWeb } from '@common/config/env'
@@ -19,8 +17,8 @@ import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
+import RejectButton from './RejectButton'
 import getStyles from './styles'
-import useRejectConfirmation from './useRejectConfirmation'
 
 // An exception to the `size="large"` height (56). The sign screen is dense and the
 // footer is always visible, so all of its buttons are slightly shorter in order to
@@ -40,6 +38,8 @@ const Footer = ({
   inProgressButtonText,
   buttonText,
   shouldHoldToProceed,
+  shouldRejectOnchain,
+  isRejectDisabled,
   holdToProceedButtonType = 'primary',
   signButtonType = 'primary'
 }: Props) => {
@@ -93,33 +93,6 @@ const Footer = ({
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
 
-  const { sheetRef, closeModal, handleReject, handleConfirmedReject } = useRejectConfirmation({
-    isMultisigSigned,
-    onReject
-  })
-
-  const confirmRejectModal = (
-    <BottomSheet
-      id="confirm-hide"
-      type="modal"
-      sheetRef={sheetRef}
-      closeBottomSheet={closeModal}
-      onBackdropPress={closeModal}
-    >
-      <DualChoiceWarningModal
-        title={t('Are you sure?')}
-        description={t(
-          'You are about to reject an already signed transaction. It will no longer be visible in Ambire.'
-        )}
-        primaryButtonText={t('Proceed')}
-        secondaryButtonText={t('Return')}
-        onPrimaryButtonPress={handleConfirmedReject}
-        onSecondaryButtonPress={closeModal}
-        type="error"
-      />
-    </BottomSheet>
-  )
-
   const rejectButton = ({
     fullWidth,
     compact = false
@@ -127,14 +100,13 @@ const Footer = ({
     fullWidth: boolean
     compact?: boolean
   }) => (
-    <Button
-      testID="transaction-button-reject"
-      type="danger"
-      text={t('Reject')}
-      onPress={handleReject}
-      hasBottomSpacing={false}
+    <RejectButton
+      onReject={onReject}
+      isSignLoading={isSignLoading}
+      shouldRejectOnchain={shouldRejectOnchain}
+      isRejectDisabled={isRejectDisabled}
       size={compact ? 'smaller' : 'large'}
-      disabled={isSignLoading}
+      containerStyle={fullWidth ? { width: '100%' } : undefined}
       style={
         fullWidth ? { width: '100%', minWidth: 0 } : { width: 98, height: FOOTER_BUTTON_HEIGHT }
       }
@@ -243,11 +215,7 @@ const Footer = ({
           }
         ]}
       >
-        <ActionsPagination />
-        <View style={{ width: '100%' }}>
-          {signButton(true)}
-          {confirmRejectModal}
-        </View>
+        <View style={{ width: '100%' }}>{signButton(true)}</View>
         {isAddToCartDisplayed ? (
           <View
             style={[
@@ -267,24 +235,26 @@ const Footer = ({
             {rejectButton({ fullWidth: true })}
           </View>
         )}
+        <ActionsPagination />
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
-        {rejectButton({ fullWidth: false })}
-        {confirmRejectModal}
+    <>
+      <View style={styles.container}>
+        <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
+          {rejectButton({ fullWidth: false })}
+        </View>
+        <View
+          style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
+        >
+          {isAddToCartDisplayed && batchButton({ fullWidth: false })}
+          {signButton(false)}
+        </View>
       </View>
       <ActionsPagination />
-      <View
-        style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
-      >
-        {isAddToCartDisplayed && batchButton({ fullWidth: false })}
-        {signButton(false)}
-      </View>
-    </View>
+    </>
   )
 }
 
