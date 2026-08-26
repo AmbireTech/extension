@@ -14,6 +14,7 @@ interface Styles {
   card: ViewStyle
   cardIcon: ViewStyle
   cardContent: ViewStyle
+  cardHumanization: ViewStyle
   cardMetadata: ViewStyle
   metadataItem: ViewStyle
   metadataText: TextStyle
@@ -78,6 +79,16 @@ const getStyles = (theme: ThemeProps) =>
     cardContent: {
       ...flexbox.flex1,
       minWidth: 0
+    },
+    cardHumanization: {
+      ...spacings.mtSm,
+      ...spacings.phTy,
+      ...spacings.pvTy,
+      borderWidth: 1,
+      borderColor: theme.primaryBorder,
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      backgroundColor: theme.secondaryBackground,
+      overflow: 'hidden'
     },
     cardMetadata: {
       ...flexbox.directionRow,

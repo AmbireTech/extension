@@ -14,6 +14,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -104,6 +105,14 @@ const RequestCard = React.memo(function RequestCard({
         <Text appearance="secondaryText" fontSize={14}>
           {description}
         </Text>
+        {request.kind === 'calls' && request.signAccountOp.humanization?.length ? (
+          <View style={styles.cardHumanization}>
+            <CompactHumanizedCalls
+              humanization={request.signAccountOp.humanization}
+              chainId={request.signAccountOp.accountOp.chainId}
+            />
+          </View>
+        ) : null}
         <View style={styles.cardMetadata}>
           <View style={styles.metadataItem}>
             <Text fontSize={12} weight="medium" appearance="secondaryText" numberOfLines={1}>
