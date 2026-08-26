@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { Suspense, useCallback, useMemo, useState } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -14,7 +14,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
-import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls'
+import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls/lazyCompactHumanizedCalls'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -73,11 +73,13 @@ const RequestIcon = React.memo(function RequestIcon({
 const RequestCard = React.memo(function RequestCard({
   request,
   networks,
-  onOpen
+  onOpen,
+  shouldRenderHumanization
 }: {
   request: UserRequest
   networks: Network[]
   onOpen: (requestId: UserRequest['id']) => void
+  shouldRenderHumanization: boolean
 }) {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -105,13 +107,17 @@ const RequestCard = React.memo(function RequestCard({
         <Text appearance="secondaryText" fontSize={14}>
           {description}
         </Text>
-        {request.kind === 'calls' && request.signAccountOp.humanization?.length ? (
-          <View style={styles.cardHumanization}>
-            <CompactHumanizedCalls
-              humanization={request.signAccountOp.humanization}
-              chainId={request.signAccountOp.accountOp.chainId}
-            />
-          </View>
+        {shouldRenderHumanization &&
+        request.kind === 'calls' &&
+        request.signAccountOp.humanization?.length ? (
+          <Suspense fallback={null}>
+            <View style={styles.cardHumanization}>
+              <CompactHumanizedCalls
+                humanization={request.signAccountOp.humanization}
+                chainId={request.signAccountOp.accountOp.chainId}
+              />
+            </View>
+          </Suspense>
         ) : null}
         <View style={styles.cardMetadata}>
           <View style={styles.metadataItem}>
@@ -155,6 +161,7 @@ const PendingRequests = ({ style }: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactActionRequestLayout()
+  const [shouldRenderHumanization, setShouldRenderHumanization] = useState(false)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { state: currentUserRequest, dispatch: requestsDispatch } = useController(
     'RequestsController',
@@ -176,6 +183,8 @@ const PendingRequests = ({ style }: Props) => {
     [otherRequests]
   )
   const handleClose = useCallback(() => closeBottomSheet(), [closeBottomSheet])
+  const handleSheetOpen = useCallback(() => setShouldRenderHumanization(true), [])
+  const handleSheetClosed = useCallback(() => setShouldRenderHumanization(false), [])
   const openRequest = useCallback(
     (requestId: UserRequest['id']) => {
       closeBottomSheet()
@@ -248,6 +257,8 @@ const PendingRequests = ({ style }: Props) => {
         id="pending-requests"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
+        onOpen={handleSheetOpen}
+        onClosed={handleSheetClosed}
         type={isCompactLayout ? 'bottom-sheet' : 'modal'}
         backgroundColor="secondaryBackground"
       >
@@ -274,6 +285,7 @@ const PendingRequests = ({ style }: Props) => {
             request={request}
             networks={networks}
             onOpen={openRequest}
+            shouldRenderHumanization={shouldRenderHumanization}
           />
         ))}
       </BottomSheet>
