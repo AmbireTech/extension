@@ -6,6 +6,7 @@ import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import DAppConnectAccountSettings from '@common/modules/action-requests/components/DAppConnect/DAppConnectAccountSettings'
 import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
@@ -92,6 +93,7 @@ const DappConnectScreen = () => {
                 securityCheck={dappToConnect.blacklisted}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
+              <PendingRequests style={[spacings.mhSm, spacings.mvSm]} />
               <DAppConnectBody
                 securityCheck={dappToConnect.blacklisted}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}

@@ -13,6 +13,7 @@ import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import useWatchToken from '@common/modules/action-requests/hooks/useWatchToken'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
@@ -127,6 +128,7 @@ const WatchTokenRequestScreen = () => {
               </View>
             ) : null}
           </View>
+          <PendingRequests style={[spacings.mhSm, spacings.mbSm]} />
 
           <View style={styles.contentBody}>
             <Text fontSize={14} weight="medium" style={spacings.mbTy}>

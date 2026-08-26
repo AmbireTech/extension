@@ -10,6 +10,7 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
 import spacings, { SPACING_LG, SPACING_MD } from '@common/styles/spacings'
@@ -128,6 +129,7 @@ const SwitchAccountScreen = () => {
                 </Text>
               )}
             </View>
+            <PendingRequests style={[spacings.mhLg, spacings.mvSm]} />
             <View
               style={{
                 backgroundColor: theme.primaryBackground,

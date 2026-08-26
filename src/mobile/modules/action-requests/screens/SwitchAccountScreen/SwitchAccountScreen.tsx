@@ -9,6 +9,7 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
 import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
@@ -55,22 +56,13 @@ const SwitchAccountScreen = () => {
               style={{
                 ...flexbox.center,
                 backgroundColor: theme.tertiaryBackground,
-                ...spacings.pvLg
-              }}
-            >
-              <Text fontSize={20} weight="medium">
-                {t('Switch Account Request')}
-              </Text>
-            </View>
-            <View
-              style={{
-                backgroundColor: theme.primaryBackground,
-                ...flexbox.alignCenter,
-                ...spacings.pv,
-                ...flexbox.flex1,
+                ...spacings.pvLg,
                 ...spacings.phSm
               }}
             >
+              <Text fontSize={20} weight="medium" style={!!dAppData && spacings.mbLg}>
+                {t('Switch Account Request')}
+              </Text>
               {!!dAppData && (
                 <View
                   style={[
@@ -100,7 +92,7 @@ const SwitchAccountScreen = () => {
                 </View>
               )}
               {!!dAppData && (
-                <Text appearance="secondaryText" style={[spacings.mbSm, text.center]} fontSize={16}>
+                <Text appearance="secondaryText" style={text.center} fontSize={16}>
                   <Text appearance="primaryText" fontSize={16} weight="medium">
                     {dAppData.name}
                   </Text>{' '}
@@ -112,7 +104,17 @@ const SwitchAccountScreen = () => {
                   </Text>
                 </Text>
               )}
-
+            </View>
+            <PendingRequests style={[spacings.mhSm, spacings.mvSm]} />
+            <View
+              style={{
+                backgroundColor: theme.primaryBackground,
+                ...flexbox.alignCenter,
+                ...spacings.pv,
+                ...flexbox.flex1,
+                ...spacings.phSm
+              }}
+            >
               {account && <Account style={spacings.mbSm} {...account} />}
               <DownArrowLongIcon
                 style={[spacings.mbSm]}
