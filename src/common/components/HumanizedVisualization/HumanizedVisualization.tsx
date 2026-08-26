@@ -20,6 +20,7 @@ interface Props {
   imageSize?: number
   style?: StyleProp<ViewStyle>
   erc7730Mode?: 'summary' | 'description'
+  showErc7730DescriptionTitle?: boolean
   hideNestedErc7730Rows?: boolean
   hideMobileErc7730Title?: boolean
   isErc7730TransactionSummaryLayout?: boolean
@@ -47,6 +48,7 @@ const HumanizedVisualization: FC<Props> = ({
   imageSize = 36,
   style,
   erc7730Mode = 'summary',
+  showErc7730DescriptionTitle = false,
   hideNestedErc7730Rows = false,
   hideMobileErc7730Title = false,
   isErc7730TransactionSummaryLayout = false,
@@ -102,6 +104,7 @@ const HumanizedVisualization: FC<Props> = ({
               type={type}
               imageSize={imageSize}
               erc7730Mode={erc7730Mode}
+              showErc7730DescriptionTitle={showErc7730DescriptionTitle}
               hideNestedErc7730Rows={hideNestedErc7730Rows}
               hideMobileErc7730Title={hideMobileErc7730Title}
               isErc7730TransactionSummaryLayout={isErc7730TransactionSummaryLayout}

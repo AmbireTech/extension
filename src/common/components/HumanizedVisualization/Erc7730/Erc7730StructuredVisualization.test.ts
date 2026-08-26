@@ -12,6 +12,7 @@ import {
   getVisibleErc7730Rows,
   getVisibleErc7730RowsExcludingTitleParts,
   hasErc7730NativeValueRow,
+  shouldUseErc7730DetailedLayout,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
 
@@ -58,6 +59,22 @@ describe('getDetailedRows', () => {
     expect(
       detailedRows.map((row) => row.value.find((value) => value.type === 'action')?.content)
     ).toEqual(['Transfer', 'Supply', 'Borrow', 'Transfer'])
+    expect(shouldUseErc7730DetailedLayout(visualization)).toBe(true)
+  })
+
+  test('keeps a simple token action in the compact summary layout', () => {
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Send',
+      rows: [
+        {
+          label: 'Amount',
+          value: [getToken('0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', 300000n)]
+        }
+      ]
+    }
+
+    expect(shouldUseErc7730DetailedLayout(visualization)).toBe(false)
   })
 })
 
