@@ -114,8 +114,6 @@ const isComplexActionRow = (row: Erc7730Row) =>
 
 const isActionValue = (value: HumanizerVisualization) => value.type === 'action' && !!value.content
 
-const getActionContent = (row: Erc7730Row) => row.value.find(isActionValue)?.content
-
 export const isNestedErc7730Value = (
   value: HumanizerVisualization
 ): value is HumanizerVisualization & HumanizerErc7730Visualization => value.type === 'erc7730'
@@ -123,21 +121,7 @@ export const isNestedErc7730Value = (
 export const isNestedErc7730Row = (row: Erc7730Row) =>
   row.value.length > 0 && row.value.every(isNestedErc7730Value)
 
-const isMorphoBundlerMulticall = (item: HumanizerErc7730Visualization) =>
-  (item.title || '').trim().toLowerCase() === 'bundler3 multicall'
-
-const isTransferActionRow = (row: Erc7730Row) =>
-  getActionContent(row)?.trim().toLowerCase() === 'transfer'
-
-export const getDetailedRows = (item: HumanizerErc7730Visualization) => {
-  const visibleRows = getVisibleErc7730Rows(item)
-
-  if (!isMorphoBundlerMulticall(item)) return visibleRows
-
-  const nonTransferRows = visibleRows.filter((row) => !isTransferActionRow(row))
-
-  return nonTransferRows.length ? nonTransferRows : visibleRows
-}
+export const getDetailedRows = (item: HumanizerErc7730Visualization) => getVisibleErc7730Rows(item)
 
 const isToLabelValue = (value: HumanizerVisualization) =>
   value.type === 'label' && value.content?.trim().toLowerCase() === 'to'
@@ -226,12 +210,6 @@ export const shouldShowErc7730SummaryRowLabel = (
   if (!rowLabel) return false
 
   return rowLabel !== item.title?.trim()
-}
-
-export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) => {
-  if (!isMorphoBundlerMulticall(item)) return []
-
-  return item.rows.filter(isTransferActionRow)
 }
 
 export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualization) => {
