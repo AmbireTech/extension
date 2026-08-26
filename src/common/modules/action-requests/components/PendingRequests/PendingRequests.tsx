@@ -207,45 +207,23 @@ const PendingRequests = ({ style }: Props) => {
   return (
     <>
       <View style={[styles.summary, style]}>
-        {isCompactLayout ? (
-          <View style={styles.compactSummaryContent}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter]}>
-              {previewIcons}
-              <Text fontSize={14} weight="medium" style={{ textAlign: 'center' }}>
-                {requestCountText}
-              </Text>
-            </View>
-            <HoverablePressable
-              onPress={handleSummaryPress}
-              hitSlop={12}
-              style={spacings.mtMi}
-              accessibilityRole="button"
-              accessibilityLabel={`${requestCountText}. ${actionText}`}
-            >
-              <Text appearance="linkText" underline fontSize={14} weight="medium">
-                {actionText}
-              </Text>
-            </HoverablePressable>
-          </View>
-        ) : (
-          <View style={styles.summaryContent}>
-            {previewIcons}
-            <Text fontSize={14} weight="medium">
-              {requestCountText}
+        <View style={styles.summaryContent}>
+          {previewIcons}
+          <Text fontSize={14} weight="medium">
+            {requestCountText}
+          </Text>
+          <HoverablePressable
+            onPress={handleSummaryPress}
+            hitSlop={12}
+            style={spacings.mlSm}
+            accessibilityRole="button"
+            accessibilityLabel={`${requestCountText}. ${actionText}`}
+          >
+            <Text appearance="linkText" underline fontSize={14} weight="medium">
+              {actionText}
             </Text>
-            <HoverablePressable
-              onPress={handleSummaryPress}
-              hitSlop={12}
-              style={spacings.mlSm}
-              accessibilityRole="button"
-              accessibilityLabel={`${requestCountText}. ${actionText}`}
-            >
-              <Text appearance="linkText" underline fontSize={14} weight="medium">
-                {actionText}
-              </Text>
-            </HoverablePressable>
-          </View>
-        )}
+          </HoverablePressable>
+        </View>
       </View>
       <BottomSheet
         id="pending-requests"
