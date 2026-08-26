@@ -639,49 +639,77 @@ const TransactionSummary = ({
   const mobileErc7730Title = useMemo(() => {
     if (!erc7730Visualization) return null
 
-    const icon = shouldUseDetailedErc7730Layout
-      ? erc7730DetailedIcon
-      : erc7730Visualization.dapp?.icon
-    const title = shouldUseDetailedErc7730Layout ? erc7730DetailedTitle : erc7730Visualization.title
+    if (shouldUseDetailedErc7730Layout) {
+      if (!erc7730DetailedIcon && !erc7730DetailedTitle) return null
 
-    if (!icon && !title) return null
+      return (
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+          {!!erc7730DetailedIcon && (
+            <ManifestImage
+              uri={erc7730DetailedIcon}
+              containerStyle={spacings.mrTy}
+              size={24 * sizeMultiplier[size]}
+              skeletonAppearance="secondaryBackground"
+              imageStyle={{
+                borderRadius: 12 * sizeMultiplier[size],
+                backgroundColor: 'transparent'
+              }}
+              hideOnError
+            />
+          )}
+          {!!erc7730DetailedTitle && (
+            <Text
+              fontSize={textSize + 2}
+              weight="semiBold"
+              color={theme.secondaryAccent400}
+              numberOfLines={1}
+              style={{ flexShrink: 1 }}
+            >
+              {erc7730DetailedTitle}
+            </Text>
+          )}
+        </View>
+      )
+    }
+
+    // Non-detailed ("transaction summary") intents can be an interpolated sentence
+    // (erc7730Visualization.titleParts, e.g. "Swap {amount} for at least {amount}" with real
+    // token icons/amounts) rather than a static string. Reading `.title` directly like the
+    // detailed branch above would silently drop that interpolated detail, so this goes through
+    // the same HumanizedVisualization/Erc7730StructuredVisualization renderer the desktop
+    // title (content row, erc7730TransactionSummarySection="title") already uses.
+    if (
+      !erc7730Visualization.dapp?.icon &&
+      !erc7730Visualization.title &&
+      !erc7730Visualization.titleParts?.length
+    )
+      return null
 
     return (
-      <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
-        {!!icon && (
-          <ManifestImage
-            uri={icon}
-            containerStyle={spacings.mrTy}
-            size={24 * sizeMultiplier[size]}
-            skeletonAppearance="secondaryBackground"
-            imageStyle={{
-              borderRadius: 12 * sizeMultiplier[size],
-              backgroundColor: 'transparent'
-            }}
-            hideOnError
-          />
-        )}
-        {!!title && (
-          <Text
-            fontSize={textSize + 2}
-            weight="semiBold"
-            color={theme.secondaryAccent400}
-            numberOfLines={1}
-            style={{ flexShrink: 1 }}
-          >
-            {title}
-          </Text>
-        )}
-      </View>
+      <HumanizedVisualization
+        data={[erc7730Visualization]}
+        sizeMultiplierSize={sizeMultiplier[size]}
+        textSize={textSize + 2}
+        imageSize={24 * sizeMultiplier[size]}
+        chainId={chainId}
+        type={type}
+        hasPadding={false}
+        disableFlex
+        isErc7730TransactionSummaryLayout
+        erc7730TransactionSummarySection="title"
+        style={{ minWidth: 0 }}
+      />
     )
   }, [
+    chainId,
     erc7730DetailedIcon,
     erc7730DetailedTitle,
     erc7730Visualization,
     shouldUseDetailedErc7730Layout,
     size,
     textSize,
-    theme
+    theme,
+    type
   ])
   const mobileFlatVisualization = useMemo(() => {
     if (!withMobileLayout || !callVisualization || erc7730Visualization) return null
