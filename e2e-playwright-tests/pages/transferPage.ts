@@ -244,45 +244,78 @@ export class TransferPage extends BasePage {
     }
   }
 
+  // async checkRecepientTransactionOnExplorer({
+  //   newPage,
+  //   recepientAddress,
+  //   options
+  // }: {
+  //   newPage: Page
+  //   recepientAddress: string
+  //   options?: { expectedTransactionsCount?: number }
+  // }): Promise<void> {
+  //   const expectedTransactionsCount = options?.expectedTransactionsCount ?? 1 // expect at least 1 transaction
+  //   let transactionDetails: any
+
+  //   // assert signed block
+  //   await expect(newPage.getByTestId(selectors.transaction.explorer.txnSignedStep)).toContainText(
+  //     'Signed'
+  //   )
+
+  //   // assert transaction details block
+  //   await expect(newPage.getByTestId(selectors.transaction.explorer.txnProgressStep)).toContainText(
+  //     'Transaction details'
+  //   )
+
+  //   for (let i = 0; i < expectedTransactionsCount; i++) {
+  //     // eslint-disable-next-line no-await-in-loop
+  //     transactionDetails = newPage
+  //       .getByTestId(selectors.transaction.explorer.recepientAddressBlock)
+  //       .nth(i)
+  //   }
+  //   await expect(transactionDetails).toHaveText(/Send/)
+  //   await expect(transactionDetails).toHaveText(/0\.001/)
+  //   await expect(transactionDetails).toHaveText(/USDC/)
+
+  //   // commenting out this for now as this could be different values from now on:
+  //   // 1. an ens, if one exists
+  //   // 2. a name in the extension for the address, if one is added
+  //   // 3. a shortened address like 0x1234...abab
+  //   // await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
+
+  //   // assert confirmed block
+  //   await expect(
+  //     newPage.getByTestId(selectors.transaction.explorer.txnConfirmedStep)
+  //   ).toContainText('confirmed')
+  // }
   async checkRecepientTransactionOnExplorer({
     newPage,
-    recepientAddress,
     options
   }: {
     newPage: Page
     recepientAddress: string
     options?: { expectedTransactionsCount?: number }
   }): Promise<void> {
-    const expectedTransactionsCount = options?.expectedTransactionsCount ?? 1 // expect at least 1 transaction
-    let transactionDetails: any
+    const expectedTransactionsCount = options?.expectedTransactionsCount ?? 1
 
-    // assert signed block
     await expect(newPage.getByTestId(selectors.transaction.explorer.txnSignedStep)).toContainText(
       'Signed'
     )
 
-    // assert transaction details block
-    await expect(newPage.getByTestId(selectors.transaction.explorer.txnProgressStep)).toContainText(
-      'Transaction details'
-    )
+    const details = newPage.getByTestId(selectors.transaction.explorer.txnProgressStep)
+    await expect(details).toContainText('Transaction details')
 
-    for (let i = 0; i < expectedTransactionsCount; i++) {
-      // eslint-disable-next-line no-await-in-loop
-      transactionDetails = newPage
-        .getByTestId(selectors.transaction.explorer.recepientAddressBlock)
-        .nth(i)
+    const blocks = details.locator('[data-testid^="recipient-address-"]')
+    await expect(blocks).toHaveCount(expectedTransactionsCount)
+
+    for (let i = 0; i < expectedTransactionsCount; i += 1) {
+      const block = blocks.nth(i)
+      if (!(await block.getByText('Amount').isVisible())) {
+        await block.getByText('Send', { exact: true }).click()
+      }
+      await expect(block).toContainText('0.001')
+      await expect(block).toContainText('USDC')
     }
-    await expect(transactionDetails).toHaveText(/Send/)
-    await expect(transactionDetails).toHaveText(/0\.001/)
-    await expect(transactionDetails).toHaveText(/USDC/)
 
-    // commenting out this for now as this could be different values from now on:
-    // 1. an ens, if one exists
-    // 2. a name in the extension for the address, if one is added
-    // 3. a shortened address like 0x1234...abab
-    // await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
-
-    // assert confirmed block
     await expect(
       newPage.getByTestId(selectors.transaction.explorer.txnConfirmedStep)
     ).toContainText('confirmed')
