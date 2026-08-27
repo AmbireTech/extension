@@ -27,11 +27,13 @@ import {
   getDetailedValueLines,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
+  getErc7730TitlePartsForRendering,
   getVisibleErc7730RowsExcludingTitleParts,
   hasErc7730NativeValueRow,
   hasTokenValue,
   isNestedErc7730Row,
   isNestedErc7730Value,
+  MOBILE_ERC7730_TITLE_TEXT_SIZE,
   shouldShowErc7730SpenderRowInSummary,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
@@ -96,6 +98,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   // Rows shown directly under the transaction-summary title/intent should not repeat
   // values already rendered as part of the interpolated intent (item.titleParts).
   const visibleRows = useMemo(() => getVisibleErc7730RowsExcludingTitleParts(item), [item])
+  const renderableTitleParts = useMemo(
+    () => getErc7730TitlePartsForRendering(item.titleParts || []),
+    [item.titleParts]
+  )
   const renderValue = useCallback(
     (valueItem: HumanizerVisualization, overrideTextSize = textSize): React.ReactNode => {
       if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
@@ -278,10 +284,17 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             { minWidth: 0, flexShrink: 1 }
           ]}
         >
-          {item.titleParts.map((part) => renderValue(part, overrideTextSize))}
+          {renderableTitleParts.map(({ part, shouldSpaceBefore }) => (
+            <View
+              key={part.id}
+              style={[{ minWidth: 0, flexShrink: 1 }, shouldSpaceBefore && spacings.mlMi]}
+            >
+              {renderValue(part, overrideTextSize)}
+            </View>
+          ))}
         </View>
       ) : null,
-    [item.titleParts, renderValue]
+    [item.titleParts, renderValue, renderableTitleParts]
   )
 
   const renderDetailedValueLine = useCallback(
@@ -410,6 +423,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
   if (mode === 'summary') {
     if (isTransactionSummaryLayout) {
+      const titleTextSize = withMobileLayout ? MOBILE_ERC7730_TITLE_TEXT_SIZE : textSize + 2
+
       return (
         <View style={{ width: '100%', minWidth: 0 }}>
           {shouldShowTransactionSummaryTitle && (
@@ -437,10 +452,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 />
               )}
               {item.titleParts?.length
-                ? renderTitleParts(textSize + 2)
+                ? renderTitleParts(titleTextSize)
                 : !!item.title && (
                     <Text
-                      fontSize={textSize + 2}
+                      fontSize={titleTextSize}
                       weight="semiBold"
                       color={theme.secondaryAccent400}
                       numberOfLines={1}
@@ -699,9 +714,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
         {shouldShowDescriptionTitle && (
           <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
             {item.titleParts?.length ? (
-              renderTitleParts(textSize)
+              renderTitleParts(MOBILE_ERC7730_TITLE_TEXT_SIZE)
             ) : (
-              <Text fontSize={textSize} color={theme.secondaryAccent400}>
+              <Text fontSize={MOBILE_ERC7730_TITLE_TEXT_SIZE} color={theme.secondaryAccent400}>
                 {item.title}
               </Text>
             )}

@@ -23,6 +23,7 @@ import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
   getVisibleErc7730RowsExcludingTitleParts,
+  MOBILE_ERC7730_TITLE_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -204,6 +205,8 @@ const TransactionSummary = ({
       getVisibleErc7730RowsExcludingTitleParts(erc7730Visualization).length > 0,
     [erc7730Visualization]
   )
+  const shouldPadMobileErc7730TitleBottom =
+    shouldUseErc7730TransactionSummaryLayout && !hasErc7730TransactionSummaryRows && !hasCallFailed
 
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
@@ -659,7 +662,7 @@ const TransactionSummary = ({
           )}
           {!!erc7730DetailedTitle && (
             <Text
-              fontSize={textSize + 2}
+              fontSize={MOBILE_ERC7730_TITLE_TEXT_SIZE}
               weight="semiBold"
               color={theme.secondaryAccent400}
               numberOfLines={1}
@@ -689,7 +692,7 @@ const TransactionSummary = ({
       <HumanizedVisualization
         data={[erc7730Visualization]}
         sizeMultiplierSize={sizeMultiplier[size]}
-        textSize={textSize + 2}
+        textSize={MOBILE_ERC7730_TITLE_TEXT_SIZE}
         imageSize={24 * sizeMultiplier[size]}
         chainId={chainId}
         type={type}
@@ -707,7 +710,6 @@ const TransactionSummary = ({
     erc7730Visualization,
     shouldUseDetailedErc7730Layout,
     size,
-    textSize,
     theme,
     type
   ])
@@ -787,7 +789,9 @@ const TransactionSummary = ({
           ? spacings.pvTy
           : withMobileLayout && shouldUseDetailedErc7730Layout
             ? spacings.pt
-            : undefined
+            : withMobileLayout && shouldPadMobileErc7730TitleBottom
+              ? spacings.pbTy
+              : undefined
       }
       hideMobileContent={
         !!mobileFlatVisualization ||
