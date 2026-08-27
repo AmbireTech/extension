@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GestureResponderEvent, Pressable, View, ViewStyle } from 'react-native'
 import {
@@ -11,7 +11,6 @@ import {
   zeroAddress
 } from 'viem'
 
-import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { noStateUpdateStatuses, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import {
   getAction,
@@ -45,6 +44,7 @@ import { getUiType } from '@common/utils/uiType'
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
 
+import type { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import type {
   HumanizerErc7730Visualization,
   IrCall
@@ -60,7 +60,7 @@ interface Props {
   type?: 'history' | 'benzin' | 'default'
   index?: number
   enableExpand?: boolean
-  rightIcon?: React.ReactNode
+  rightIcon?: ReactNode
   onRightIconPress?: () => void
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
@@ -724,7 +724,7 @@ const TransactionSummary = ({
       <HumanizedVisualization
         data={visualizationData}
         sizeMultiplierSize={sizeMultiplier[size]}
-        textSize={textSize}
+        textSize={isMobile ? 14 : textSize}
         imageSize={imageSize}
         chainId={chainId}
         type={type}
@@ -1046,4 +1046,4 @@ const TransactionSummary = ({
   )
 }
 
-export default React.memo(TransactionSummary)
+export default memo(TransactionSummary)
