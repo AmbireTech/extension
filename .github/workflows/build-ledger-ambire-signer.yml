@@ -3,15 +3,18 @@
 # sideloader in src/web/modules/hardware-wallet/controllers/LedgerController
 # always ships the load scripts of the latest app build.
 #
-# The build itself lives in a separate repo (AmbireTech/ledger-ambire-signer).
-# That repo's build_ambire.yml is NOT a reusable workflow - it only declares
-# `workflow_dispatch` and `push`, so it cannot be consumed with `uses:`. It is
-# therefore triggered through the REST API and waited on here.
+# The app sources live in AmbireTech/ledger-ambire-signer. That repo's own
+# build_ambire.yml cannot be reused from here (it declares only `workflow_dispatch`
+# and `push`, no `workflow_call`), so this workflow calls the LedgerHQ reusable
+# workflow that build_ambire.yml itself delegates to, pointing it at the signer
+# repo through `app_repository`. Every repo in that chain is public, so the default
+# GITHUB_TOKEN is enough - no personal access token, GitHub App or deploy key is
+# involved (and an organization cannot own a PAT in the first place).
 #
-# build_ambire.yml delegates to LedgerHQ's reusable_build.yml, which uploads one
-# artifact per device and then merges them into a single "ambire_signer_builds"
-# artifact (deleting the per-device ones). The merged artifact holds one directory
-# per Ledger SDK build target, each containing "bin/app.apdu".
+# The device list is read from the signer repo's ledger_app.toml (apex_p, nanox,
+# nanos+, stax, flex). The build uploads one artifact per device and then merges
+# them into a single "ambire_signer_builds" artifact holding one directory per
+# Ledger SDK build target, each containing "bin/app.apdu".
 
 name: Build Ledger "Ambire Signer" 📒
 
@@ -21,6 +24,8 @@ on:
       signer_ref:
         description: 'Branch, tag or commit of ledger-ambire-signer to build'
         required: false
+        # ledger-ambire-signer has no tags, so a branch is the only usable ref.
+        # This matches that repo's default branch.
         default: feat/apa/add_contracts_in_7702_whitelist
         type: string
   push:
@@ -35,18 +40,31 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # Only consumed by steps in the sync job below. The `env` context is not
+  # available in `jobs.<job_id>.with`, so the build job repeats these literals.
   SIGNER_REPOSITORY: AmbireTech/ledger-ambire-signer
-  SIGNER_WORKFLOW: build_ambire.yml
-  # ledger-ambire-signer has no tags, so a branch is the only usable ref. The
-  # default matches that repo's default branch.
-  SIGNER_REF: ${{ inputs.signer_ref || 'feat/apa/add_contracts_in_7702_whitelist' }}
-  # Set by build_ambire.yml as `upload_app_binaries_artifact`.
   SIGNER_ARTIFACT: ambire_signer_builds
   DOWNLOAD_DIR: ledger-artifacts
 
 jobs:
-  build-and-sync:
-    name: Build the Ledger app and sync its .apdu load scripts
+  build:
+    name: Build the Ledger app for all supported devices
+    # No `use_case` or `flags` are passed, which mirrors what the signer repo's own
+    # build_ambire.yml does. Note ledger_app.toml also defines a `whitelist_keys`
+    # use case (EIP7702_TEST_WHITELIST=1) - pass `use_case: whitelist_keys` here if
+    # the bundled load scripts are meant to have the Ambire delegator whitelisted.
+    uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@v1
+    permissions:
+      contents: read
+      actions: write # The called workflow needs this to upload the artifacts
+    with:
+      app_repository: AmbireTech/ledger-ambire-signer
+      app_branch_name: ${{ inputs.signer_ref || 'feat/apa/add_contracts_in_7702_whitelist' }}
+      upload_app_binaries_artifact: ambire_signer_builds
+
+  sync-apdu-artifacts:
+    name: Sync the built .apdu load scripts and open a pull request
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -67,95 +85,14 @@ jobs:
         with:
           node-version: ${{ steps.node-version.outputs.NODE_VERSION }}
 
-      # GITHUB_TOKEN is scoped to this repository only, so dispatching a workflow
-      # in ledger-ambire-signer and reading its artifacts needs a separate token
-      # with `actions: write` on that repo.
-      - name: Check that the cross-repo token is configured
-        env:
-          SIGNER_TOKEN: ${{ secrets.LEDGER_SIGNER_TOKEN }}
-        run: |
-          if [ -z "${SIGNER_TOKEN}" ]; then
-            echo "::error::Secret LEDGER_SIGNER_TOKEN is missing. Add a token with 'actions: write' on ${SIGNER_REPOSITORY}."
-            exit 1
-          fi
-        shell: bash
-
-      - name: Trigger the Ledger app build and wait for it 🏗️
-        id: signer-build
-        timeout-minutes: 45
-        env:
-          SIGNER_TOKEN: ${{ secrets.LEDGER_SIGNER_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          API="https://api.github.com/repos/${SIGNER_REPOSITORY}"
-          # Retries keep a transient 5xx during the long poll below from throwing
-          # away a Ledger app build that actually succeeded.
-          api() {
-            curl --silent --show-error --fail \
-              --retry 3 --retry-delay 2 --retry-all-errors \
-              --header "Authorization: Bearer ${SIGNER_TOKEN}" \
-              --header "Accept: application/vnd.github+json" \
-              --header "X-GitHub-Api-Version: 2022-11-28" \
-              "$@"
-          }
-
-          # The dispatch endpoint returns no body, so remember the newest existing
-          # manual run to tell ours apart from it once it shows up.
-          PREVIOUS_RUN_ID=$(api "${API}/actions/workflows/${SIGNER_WORKFLOW}/runs?event=workflow_dispatch&per_page=1" \
-            | jq '.workflow_runs[0].id // 0')
-          echo "Newest existing manual run: ${PREVIOUS_RUN_ID}"
-
-          echo "Dispatching ${SIGNER_WORKFLOW} on ${SIGNER_REPOSITORY}@${SIGNER_REF}..."
-          api --request POST \
-            --header "Content-Type: application/json" \
-            "${API}/actions/workflows/${SIGNER_WORKFLOW}/dispatches" \
-            --data "$(jq --null-input --arg ref "${SIGNER_REF}" '{ref: $ref}')"
-
-          RUN_ID=""
-          for _ in $(seq 1 30); do
-            sleep 5
-            RUN_ID=$(api "${API}/actions/workflows/${SIGNER_WORKFLOW}/runs?event=workflow_dispatch&per_page=20" \
-              | jq --argjson previous "${PREVIOUS_RUN_ID}" \
-                  '[.workflow_runs[] | select(.id > $previous)] | sort_by(.id) | last | .id // empty')
-            if [ -n "${RUN_ID}" ]; then break; fi
-            echo "The dispatched run has not appeared yet, retrying..."
-          done
-
-          if [ -z "${RUN_ID}" ]; then
-            echo "::error::Dispatched ${SIGNER_WORKFLOW} but no new run appeared within 150s."
-            exit 1
-          fi
-
-          RUN_URL="https://github.com/${SIGNER_REPOSITORY}/actions/runs/${RUN_ID}"
-          echo "Waiting for ${RUN_URL}"
-          echo "run-id=${RUN_ID}" >> "${GITHUB_OUTPUT}"
-          echo "run-url=${RUN_URL}" >> "${GITHUB_OUTPUT}"
-
-          while true; do
-            RUN=$(api "${API}/actions/runs/${RUN_ID}")
-            STATUS=$(echo "${RUN}" | jq --raw-output '.status')
-            if [ "${STATUS}" = "completed" ]; then break; fi
-            echo "Status: ${STATUS}"
-            sleep 20
-          done
-
-          CONCLUSION=$(echo "${RUN}" | jq --raw-output '.conclusion')
-          echo "Conclusion: ${CONCLUSION}"
-          if [ "${CONCLUSION}" != "success" ]; then
-            echo "::error::The Ledger app build finished as '${CONCLUSION}'. See ${RUN_URL}"
-            exit 1
-          fi
-        shell: bash
-
       - name: Download the built Ledger app artifact ⬇️
+        # Uploaded by the build job in this same run, so no cross-repo token is
+        # needed. Fails the job when the artifact is missing, which is what we
+        # want - a silent "nothing to do" would look like a successful sync.
         uses: actions/download-artifact@v6
         with:
           name: ${{ env.SIGNER_ARTIFACT }}
           path: ${{ env.DOWNLOAD_DIR }}
-          repository: ${{ env.SIGNER_REPOSITORY }}
-          run-id: ${{ steps.signer-build.outputs.run-id }}
-          github-token: ${{ secrets.LEDGER_SIGNER_TOKEN }}
 
       - name: Write the artifact generator
         run: |
@@ -318,9 +255,8 @@ jobs:
             [ledger-ambire-signer](https://github.com/${{ env.SIGNER_REPOSITORY }}) build.
 
             - Synced devices: ${{ steps.generate.outputs.synced-models }}
-            - Built from: `${{ env.SIGNER_REF }}`
-            - Ledger app build: ${{ steps.signer-build.outputs.run-url }}
-            - Sync run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Built from: `${{ inputs.signer_ref || 'feat/apa/add_contracts_in_7702_whitelist' }}`
+            - Build run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
             Before merging, validate each build against the checks described in
             `artifacts/index.ts` (app name "Ambire Signer" + Ambire delegator whitelisted).
