@@ -25,6 +25,7 @@ import {
   getDetailedActionParts,
   getDetailedRows,
   getDetailedValueLines,
+  getErc7730IntentText,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
   getVisibleErc7730RowsExcludingTitleParts,
@@ -89,12 +90,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     () => getDetailedRows(item).filter((row) => !hideNestedRows || !isNestedErc7730Row(row)),
     [hideNestedRows, item]
   )
+  const intentText = getErc7730IntentText(item)
   const shouldShowDescriptionTitle =
     showDescriptionTitle &&
-    !!item.title?.trim() &&
-    detailedRows[0]?.label.trim() !== item.title.trim()
+    !!intentText?.trim() &&
+    detailedRows[0]?.label.trim() !== intentText.trim()
   // Rows shown directly under the transaction-summary title/intent should not repeat
-  // values already rendered as part of the interpolated intent (item.titleParts).
+  // values already rendered as part of the interpolated intent (item.intent).
   const visibleRows = useMemo(() => getVisibleErc7730RowsExcludingTitleParts(item), [item])
   const renderValue = useCallback(
     (valueItem: HumanizerVisualization, overrideTextSize = textSize): React.ReactNode => {
@@ -261,15 +263,15 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     [chainId, editApprovalCallInfo, mode, nestingDepth, sizeMultiplierSize, t, textSize, theme]
   )
 
-  // Renders an interpolated title (e.g. "Swap {amount} for at least {amount}")
+  // Renders `item.intent` (e.g. "Swap {amount} for at least {amount}")
   // as inline parts instead of a single string, reusing `renderValue` so a
   // `type: 'token'` part gets the same live decimals/symbol/price lookup as a
   // row value - this doesn't depend on a static token registry being
-  // exhaustive, unlike the plain-text `title` fallback used when there's no
-  // `titleParts` (e.g. non-interpolated intents).
+  // exhaustive. Handles both display modes: the plain `[action]` form and the
+  // richer interpolated breakdown both render through the same path.
   const renderTitleParts = useCallback(
     (overrideTextSize: number) =>
-      item.titleParts?.length ? (
+      item.intent.length ? (
         <View
           style={[
             flexbox.directionRow,
@@ -278,10 +280,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             { minWidth: 0, flexShrink: 1 }
           ]}
         >
-          {item.titleParts.map((part) => renderValue(part, overrideTextSize))}
+          {item.intent.map((part) => renderValue(part, overrideTextSize))}
         </View>
       ) : null,
-    [item.titleParts, renderValue]
+    [item.intent, renderValue]
   )
 
   const renderDetailedValueLine = useCallback(
@@ -335,7 +337,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
         )
       }
 
-      const nestedTitle = nestedVisualization.title?.trim()
+      const nestedTitle = getErc7730IntentText(nestedVisualization)?.trim()
       const shouldShowNestedConnector = getDetailedRows(nestedVisualization).some(
         (row) => !nestedTitle || row.label.trim() !== nestedTitle
       )
@@ -436,19 +438,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   hideOnError
                 />
               )}
-              {item.titleParts?.length
-                ? renderTitleParts(textSize + 2)
-                : !!item.title && (
-                    <Text
-                      fontSize={textSize + 2}
-                      weight="semiBold"
-                      color={theme.secondaryAccent400}
-                      numberOfLines={1}
-                      style={{ flexShrink: 1 }}
-                    >
-                      {item.title}
-                    </Text>
-                  )}
+              {renderTitleParts(textSize + 2)}
             </View>
           )}
           {shouldShowTransactionSummaryRows && (
@@ -579,18 +569,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               }
             ]}
           >
-            {item.titleParts?.length
-              ? renderTitleParts(textSize + 2)
-              : !!item.title && (
-                  <Text
-                    fontSize={textSize + 2}
-                    color={theme.secondaryAccent400}
-                    numberOfLines={1}
-                    style={spacings.mrSm}
-                  >
-                    {item.title}
-                  </Text>
-                )}
+            {renderTitleParts(textSize + 2)}
             {spenderRow && (
               <View
                 style={[
@@ -698,13 +677,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       <View style={{ width: '100%' }}>
         {shouldShowDescriptionTitle && (
           <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
-            {item.titleParts?.length ? (
-              renderTitleParts(textSize)
-            ) : (
-              <Text fontSize={textSize} color={theme.secondaryAccent400}>
-                {item.title}
-              </Text>
-            )}
+            {renderTitleParts(textSize)}
           </View>
         )}
         {detailedRows.map((row) => {
@@ -769,13 +742,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     <View style={{ width: '100%' }}>
       {shouldShowDescriptionTitle && (
         <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
-          {item.titleParts?.length ? (
-            renderTitleParts(textSize)
-          ) : (
-            <Text fontSize={textSize} color={theme.secondaryAccent400}>
-              {item.title}
-            </Text>
-          )}
+          {renderTitleParts(textSize)}
         </View>
       )}
       {detailedRows.map((row) => {

@@ -4,7 +4,12 @@ import type {
 } from '@ambire-common/libs/humanizer/interfaces'
 import { zeroAddress } from 'viem'
 
-type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
+type Erc7730Row = HumanizerErc7730Visualization['fields'][number]
+
+// The plain-text form of the rendered intent (e.g. "Swap") - the leading part
+// is always an `action`, so it's safe to read as a string for label
+// comparisons/heuristics/non-rich surfaces.
+export const getErc7730IntentText = (item: HumanizerErc7730Visualization) => item.intent[0]?.content
 
 const labelIncludes = (label: string, needles: string[]) => {
   const normalizedLabel = label.trim().toLowerCase()
@@ -30,54 +35,17 @@ const isZeroAddressBeneficiaryRow = (row: Erc7730Row) =>
     (value) => value.type === 'address' && value.address?.toLowerCase() === zeroAddress
   )
 
+// Every field, regardless of what's already shown inline in the intent - for
+// heuristics (spender/recipient detection, swap pairing, layout complexity,
+// nested-call structure) that need full context.
 export const getVisibleErc7730Rows = (item: HumanizerErc7730Visualization) =>
-  item.rows.filter((row) => !isZeroAddressBeneficiaryRow(row))
+  item.fields.filter((row) => !isZeroAddressBeneficiaryRow(row))
 
-const isSameTitlePartValue = (
-  rowValue: HumanizerVisualization,
-  titlePart: HumanizerVisualization
-) => {
-  if (rowValue.type === 'token' && titlePart.type === 'token') {
-    return (
-      rowValue.address.toLowerCase() === titlePart.address.toLowerCase() &&
-      rowValue.value === titlePart.value &&
-      (rowValue.chainId ?? undefined) === (titlePart.chainId ?? undefined)
-    )
-  }
-
-  if (rowValue.type === 'address' && titlePart.type === 'address') {
-    return (
-      !!rowValue.address &&
-      rowValue.address.toLowerCase() === titlePart.address?.toLowerCase() &&
-      (rowValue.chainId ?? undefined) === (titlePart.chainId ?? undefined)
-    )
-  }
-
-  return false
-}
-
-// A row is redundant with the interpolated intent (titleParts) only if every one of
-// its values (token amounts, addresses) is already rendered as part of the intent
-// title - a partial match keeps the row, since it still carries info the title
-// doesn't show. Plain text/label/action title parts are intentionally not matched:
-// they carry no stable identity to compare against, so treating them as duplicates
-// risks hiding unrelated rows that happen to share the same text.
-const isRowRedundantWithTitleParts = (row: Erc7730Row, titleParts: HumanizerVisualization[]) =>
-  row.value.length > 0 &&
-  row.value.every((rowValue) =>
-    titleParts.some((titlePart) => isSameTitlePartValue(rowValue, titlePart))
-  )
-
-// Same as getVisibleErc7730Rows, but additionally drops rows whose values are
-// already shown in the interpolated intent title (item.titleParts), per the
-// ERC-7730 spec: wallets MAY show both the interpolated intent and the field
-// rows, but shouldn't repeat the same data twice.
+// The rows to actually render below the intent: `fields` minus whatever the
+// intent already shows inline (`excludedFieldPaths`).
 export const getVisibleErc7730RowsExcludingTitleParts = (item: HumanizerErc7730Visualization) => {
-  const visibleRows = getVisibleErc7730Rows(item)
-  if (!item.titleParts?.length) return visibleRows
-
-  const { titleParts } = item
-  return visibleRows.filter((row) => !isRowRedundantWithTitleParts(row, titleParts))
+  const excludedPaths = new Set(item.excludedFieldPaths)
+  return getVisibleErc7730Rows(item).filter((row) => !excludedPaths.has(row.path ?? ''))
 }
 
 export const hasTokenValue = (row: Erc7730Row) => row.value.some((value) => value.type === 'token')
@@ -174,7 +142,7 @@ export const getErc7730SpenderRow = (item: HumanizerErc7730Visualization) =>
   getVisibleErc7730Rows(item).find((row) => isSpenderRow(row))
 
 export const shouldShowErc7730SpenderRowInSummary = (item: HumanizerErc7730Visualization) =>
-  !isSwapLikeTitle(item.title)
+  !isSwapLikeTitle(getErc7730IntentText(item))
 
 const getErc7730SwapSummaryRows = (item: HumanizerErc7730Visualization) => {
   const tokenRows = getVisibleErc7730Rows(item).filter((row) => hasTokenValue(row))
@@ -184,7 +152,7 @@ const getErc7730SwapSummaryRows = (item: HumanizerErc7730Visualization) => {
   const incomingRow = tokenRows.find((row) => isIncomingTokenRow(row))
   const hasDirectionalPair = !!outgoingRow && !!incomingRow && outgoingRow !== incomingRow
 
-  if (!hasDirectionalPair && !isSwapLikeTitle(item.title)) return null
+  if (!hasDirectionalPair && !isSwapLikeTitle(getErc7730IntentText(item))) return null
 
   if (hasDirectionalPair) return [outgoingRow, incomingRow]
 
@@ -209,11 +177,11 @@ export const shouldShowErc7730SummaryRowLabel = (
   const rowLabel = row.label.trim()
   if (!rowLabel) return false
 
-  return rowLabel !== item.title?.trim()
+  return rowLabel !== getErc7730IntentText(item)?.trim()
 }
 
 export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualization) => {
-  if (labelIncludes(item.title || '', ['multicall', 'batch', 'bundle'])) return true
+  if (labelIncludes(getErc7730IntentText(item) || '', ['multicall', 'batch', 'bundle'])) return true
   if (getVisibleErc7730Rows(item).some(isNestedErc7730Row)) return true
 
   const summaryRows = getErc7730SummaryRows(item)

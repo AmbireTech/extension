@@ -39,4 +39,4 @@ export interface Erc7730StructuredVisualizationProps {
   nestingDepth?: number
 }
 
-export type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
+export type Erc7730Row = HumanizerErc7730Visualization['fields'][number]

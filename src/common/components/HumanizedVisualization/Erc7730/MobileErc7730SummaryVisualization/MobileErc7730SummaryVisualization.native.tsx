@@ -4,7 +4,6 @@ import { SvgUri } from 'react-native-svg'
 
 import { shouldShowErc7730SummaryRowLabel } from '@common/components/HumanizedVisualization/Erc7730/helpers'
 import Text from '@common/components/Text'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -20,7 +19,6 @@ const MobileErc7730SummaryVisualization = ({
   renderValue,
   hideTitle
 }: Props) => {
-  const { theme } = useTheme()
   const subtitleTextSize = Math.max(textSize - 3, 11)
   const dappIconUri = item.dapp?.icon
   const dappIconSize = 24 * sizeMultiplierSize
@@ -58,14 +56,13 @@ const MobileErc7730SummaryVisualization = ({
     ),
     [renderValue]
   )
-  // Same reasoning as the desktop Erc7730StructuredVisualization: prefer the
-  // structured `titleParts` (rendered via the shared `renderValue`, so a
-  // `type: 'token'` part gets a live decimals/symbol lookup) over the plain
-  // `title` string, which is only a best-effort fallback for tokens that
-  // aren't statically known.
+  // Same reasoning as the desktop Erc7730StructuredVisualization: render
+  // `item.intent` via the shared `renderValue`, so a `type: 'token'`
+  // part gets a live decimals/symbol lookup - covers both the plain `[action]`
+  // form and the richer interpolated breakdown through the same path.
   const renderTitleParts = useCallback(
     (overrideTextSize?: number) =>
-      item.titleParts?.length ? (
+      item.intent.length ? (
         <View
           style={[
             flexbox.directionRow,
@@ -74,10 +71,10 @@ const MobileErc7730SummaryVisualization = ({
             { minWidth: 0, flexShrink: 1 }
           ]}
         >
-          {item.titleParts.map((part) => renderValue(part, overrideTextSize))}
+          {item.intent.map((part) => renderValue(part, overrideTextSize))}
         </View>
       ) : null,
-    [item.titleParts, renderValue]
+    [item.intent, renderValue]
   )
 
   return (
@@ -93,15 +90,7 @@ const MobileErc7730SummaryVisualization = ({
               )}
             </View>
           )}
-          <View style={{ flex: 1, minWidth: 0 }}>
-            {item.titleParts?.length
-              ? renderTitleParts(textSize + 2)
-              : !!item.title && (
-                  <Text fontSize={textSize + 2} color={theme.secondaryAccent400}>
-                    {item.title}
-                  </Text>
-                )}
-          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>{renderTitleParts(textSize + 2)}</View>
         </View>
       )}
       {spenderRow && (

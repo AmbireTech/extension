@@ -1,47 +1,14 @@
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { AccountOp, isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { submittedAccountOpToAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import {
-  flattenHumanizerVisualizations,
-  hasErc7730Humanization
-} from '@ambire-common/libs/humanizer/utils'
+import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
 
 import { DappInteraction, SubmittedAccountOpLike } from './types'
 
 export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): IrCall[] => {
-  const clearSigningHum = submittedAccountOp.meta?.clearSigningHumanization
-  const clearSign = hasErc7730Humanization(clearSigningHum) ? clearSigningHum : null
-  if (clearSign) {
-    return clearSign.map((call, index) => ({
-      ...call,
-      id: call.id || String(index)
-    }))
-  }
-
-  const accountOp: AccountOp = {
-    id: submittedAccountOp.id,
-    accountAddr: submittedAccountOp.accountAddr,
-    chainId: submittedAccountOp.chainId,
-    signingKeyAddr: submittedAccountOp.signingKeyAddr ?? null,
-    signingKeyType: submittedAccountOp.signingKeyType ?? null,
-    nonce: submittedAccountOp.nonce ?? null,
-    eoaNonce: submittedAccountOp.eoaNonce,
-    calls: submittedAccountOp.calls,
-    feeCall: submittedAccountOp.feeCall,
-    activatorCall: submittedAccountOp.activatorCall,
-    gasLimit: submittedAccountOp.gasLimit ?? null,
-    signature: submittedAccountOp.signature ?? null,
-    gasFeePayment: submittedAccountOp.gasFeePayment,
-    txnId: submittedAccountOp.txnId,
-    status: submittedAccountOp.status,
-    asUserOperation: submittedAccountOp.asUserOperation,
-    signers: submittedAccountOp.signers,
-    signed: submittedAccountOp.signed,
-    safeTx: submittedAccountOp.safeTx,
-    meta: submittedAccountOp.meta,
-    flags: submittedAccountOp.flags
-  }
+  const accountOp = submittedAccountOpToAccountOp(submittedAccountOp)
 
   return humanizeAccountOp(accountOp).map((call, index) => ({
     ...call,
@@ -74,7 +41,7 @@ export const getDappInteractions = (
         const firstVisualization = call.fullVisualization?.[0]
         const isSend =
           firstVisualization?.type === 'erc7730'
-            ? firstVisualization.title === 'Send'
+            ? firstVisualization.intent[0]?.content === 'Send'
             : firstVisualization?.content === 'Send'
         if (!isSend) return []
 
