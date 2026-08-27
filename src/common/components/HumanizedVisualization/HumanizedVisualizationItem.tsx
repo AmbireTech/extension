@@ -40,6 +40,7 @@ interface Props {
   type: 'history' | 'benzin' | 'default'
   imageSize: number
   erc7730Mode: 'summary' | 'description'
+  showErc7730DescriptionTitle: boolean
   hideNestedErc7730Rows: boolean
   hideMobileErc7730Title: boolean
   isErc7730TransactionSummaryLayout: boolean
@@ -57,6 +58,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
   type,
   imageSize,
   erc7730Mode,
+  showErc7730DescriptionTitle,
   hideNestedErc7730Rows,
   hideMobileErc7730Title,
   isErc7730TransactionSummaryLayout,
@@ -74,6 +76,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
         sizeMultiplierSize={sizeMultiplierSize}
         textSize={textSize}
         mode={erc7730Mode}
+        showDescriptionTitle={showErc7730DescriptionTitle}
         editApprovalCallInfo={editApprovalCallInfo}
         hideNestedRows={hideNestedErc7730Rows}
         hideMobileSummaryTitle={hideMobileErc7730Title}

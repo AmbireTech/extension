@@ -22,7 +22,6 @@ import {
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
-  getErc7730DescriptionRows,
   getVisibleErc7730RowsExcludingTitleParts,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
@@ -69,7 +68,7 @@ interface Props {
 
 export { sizeMultiplier }
 
-type Tab = 'description' | 'raw' | 'parsed'
+type Tab = 'raw' | 'parsed'
 
 const approveAbi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)'])
 const permitAbi = parseAbi([
@@ -191,22 +190,7 @@ const TransactionSummary = ({
     [call.fullVisualization]
   )
 
-  const erc7730DescriptionVisualization = useMemo(() => {
-    if (!erc7730Visualization) return null
-    if (!shouldUseErc7730DetailedLayout(erc7730Visualization)) return null
-
-    const descriptionRows = getErc7730DescriptionRows(erc7730Visualization)
-    if (!descriptionRows.length) return null
-
-    return {
-      ...erc7730Visualization,
-      rows: descriptionRows
-    }
-  }, [erc7730Visualization])
-
-  const [currentTxDataTab, setCurrentTxDataTab] = useState<Tab>(
-    !!erc7730DescriptionVisualization ? 'description' : 'raw'
-  )
+  const [currentTxDataTab, setCurrentTxDataTab] = useState<Tab>('raw')
 
   const shouldUseDetailedErc7730Layout = useMemo(
     () => !!erc7730Visualization && shouldUseErc7730DetailedLayout(erc7730Visualization),
@@ -655,49 +639,77 @@ const TransactionSummary = ({
   const mobileErc7730Title = useMemo(() => {
     if (!erc7730Visualization) return null
 
-    const icon = shouldUseDetailedErc7730Layout
-      ? erc7730DetailedIcon
-      : erc7730Visualization.dapp?.icon
-    const title = shouldUseDetailedErc7730Layout ? erc7730DetailedTitle : erc7730Visualization.title
+    if (shouldUseDetailedErc7730Layout) {
+      if (!erc7730DetailedIcon && !erc7730DetailedTitle) return null
 
-    if (!icon && !title) return null
+      return (
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+          {!!erc7730DetailedIcon && (
+            <ManifestImage
+              uri={erc7730DetailedIcon}
+              containerStyle={spacings.mrTy}
+              size={24 * sizeMultiplier[size]}
+              skeletonAppearance="secondaryBackground"
+              imageStyle={{
+                borderRadius: 12 * sizeMultiplier[size],
+                backgroundColor: 'transparent'
+              }}
+              hideOnError
+            />
+          )}
+          {!!erc7730DetailedTitle && (
+            <Text
+              fontSize={textSize + 2}
+              weight="semiBold"
+              color={theme.secondaryAccent400}
+              numberOfLines={1}
+              style={{ flexShrink: 1 }}
+            >
+              {erc7730DetailedTitle}
+            </Text>
+          )}
+        </View>
+      )
+    }
+
+    // Non-detailed ("transaction summary") intents can be an interpolated sentence
+    // (erc7730Visualization.titleParts, e.g. "Swap {amount} for at least {amount}" with real
+    // token icons/amounts) rather than a static string. Reading `.title` directly like the
+    // detailed branch above would silently drop that interpolated detail, so this goes through
+    // the same HumanizedVisualization/Erc7730StructuredVisualization renderer the desktop
+    // title (content row, erc7730TransactionSummarySection="title") already uses.
+    if (
+      !erc7730Visualization.dapp?.icon &&
+      !erc7730Visualization.title &&
+      !erc7730Visualization.titleParts?.length
+    )
+      return null
 
     return (
-      <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
-        {!!icon && (
-          <ManifestImage
-            uri={icon}
-            containerStyle={spacings.mrTy}
-            size={24 * sizeMultiplier[size]}
-            skeletonAppearance="secondaryBackground"
-            imageStyle={{
-              borderRadius: 12 * sizeMultiplier[size],
-              backgroundColor: 'transparent'
-            }}
-            hideOnError
-          />
-        )}
-        {!!title && (
-          <Text
-            fontSize={textSize + 2}
-            weight="semiBold"
-            color={theme.secondaryAccent400}
-            numberOfLines={1}
-            style={{ flexShrink: 1 }}
-          >
-            {title}
-          </Text>
-        )}
-      </View>
+      <HumanizedVisualization
+        data={[erc7730Visualization]}
+        sizeMultiplierSize={sizeMultiplier[size]}
+        textSize={textSize + 2}
+        imageSize={24 * sizeMultiplier[size]}
+        chainId={chainId}
+        type={type}
+        hasPadding={false}
+        disableFlex
+        isErc7730TransactionSummaryLayout
+        erc7730TransactionSummarySection="title"
+        style={{ minWidth: 0 }}
+      />
     )
   }, [
+    chainId,
     erc7730DetailedIcon,
     erc7730DetailedTitle,
     erc7730Visualization,
     shouldUseDetailedErc7730Layout,
     size,
     textSize,
-    theme
+    theme,
+    type
   ])
   const mobileFlatVisualization = useMemo(() => {
     if (!withMobileLayout || !callVisualization || erc7730Visualization) return null
@@ -735,13 +747,12 @@ const TransactionSummary = ({
 
   const tabOptions = useMemo(() => {
     let tabs: ([Tab, string] | null)[] = [
-      !!erc7730DescriptionVisualization ? ['description', t('Additional description')] : null,
       ['raw', t('Raw data')],
       decodedFunction ? ['parsed', t('Parsed data')] : null
     ]
 
     return tabs.filter((x) => !!x)
-  }, [erc7730DescriptionVisualization, decodedFunction, t])
+  }, [decodedFunction, t])
   const shouldAlignContentStart = useMemo(() => {
     if (shouldUseErc7730TransactionSummaryLayout) return true
     if (type !== 'default') return false
@@ -962,19 +973,7 @@ const TransactionSummary = ({
               })}
             </View>
           )}
-          {!!erc7730DescriptionVisualization && currentTxDataTab === 'description' ? (
-            <HumanizedVisualization
-              data={[erc7730DescriptionVisualization]}
-              sizeMultiplierSize={sizeMultiplier[size]}
-              textSize={Math.max(textSize - 1, 12)}
-              imageSize={imageSize}
-              chainId={chainId}
-              type={type}
-              hasPadding={false}
-              erc7730Mode="description"
-              editApprovalCallInfo={editApprovalCallInfo}
-            />
-          ) : currentTxDataTab === 'raw' ? (
+          {currentTxDataTab === 'raw' ? (
             <ExpandedContent
               call={call}
               size={size}

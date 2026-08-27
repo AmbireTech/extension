@@ -4,20 +4,20 @@ import {
   getAction,
   getAddressVisualization,
   getLabel,
-  getText,
   getToken
 } from '../../../../ambire-common/src/libs/humanizer/utils'
 
 import {
-  getErc7730DescriptionRows,
+  getDetailedRows,
   getVisibleErc7730Rows,
   getVisibleErc7730RowsExcludingTitleParts,
   hasErc7730NativeValueRow,
+  shouldUseErc7730DetailedLayout,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
 
-describe('getErc7730DescriptionRows', () => {
-  test('shows hidden transfer rows for Morpho Bundler3 Multicall additional description', () => {
+describe('getDetailedRows', () => {
+  test('shows all Morpho Bundler3 Multicall actions in execution order', () => {
     const baseUsdc = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
     const baseCbBtc = '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf'
     const owner = '0xd8293ad21678c6f09da139b4b62d38e514a03b78'
@@ -54,44 +54,27 @@ describe('getErc7730DescriptionRows', () => {
       ]
     }
 
-    const descriptionRows = getErc7730DescriptionRows(visualization)
+    const detailedRows = getDetailedRows(visualization)
 
     expect(
-      descriptionRows.map((row) => row.value.find((value) => value.type === 'action')?.content)
-    ).toEqual(['Transfer', 'Transfer'])
-    expect(descriptionRows.map((row) => row.value.find((value) => value.type === 'token'))).toEqual(
-      [
-        expect.objectContaining({ address: baseUsdc, value: 2n }),
-        expect.objectContaining({ address: baseCbBtc, value: 1n })
-      ]
-    )
+      detailedRows.map((row) => row.value.find((value) => value.type === 'action')?.content)
+    ).toEqual(['Transfer', 'Supply', 'Borrow', 'Transfer'])
+    expect(shouldUseErc7730DetailedLayout(visualization)).toBe(true)
   })
 
-  test('does not show additional description outside Morpho Bundler3 multicalls', () => {
-    const baseWeth = '0x4200000000000000000000000000000000000006'
-    const baseCbBtc = '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf'
+  test('keeps a simple token action in the compact summary layout', () => {
     const visualization: HumanizerErc7730Visualization = {
       type: 'erc7730',
-      title: 'Multicall',
+      title: 'Send',
       rows: [
         {
-          label: 'Amount to Send',
-          value: [getToken(baseCbBtc, 3235n)]
-        },
-        {
-          label: 'Minimum to Receive',
-          value: [getToken(baseWeth, 1161246143601818n)]
-        },
-        {
-          label: 'Additional action',
-          value: [getText('Unwrap')]
+          label: 'Amount',
+          value: [getToken('0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', 300000n)]
         }
       ]
     }
 
-    const descriptionRows = getErc7730DescriptionRows(visualization)
-
-    expect(descriptionRows).toEqual([])
+    expect(shouldUseErc7730DetailedLayout(visualization)).toBe(false)
   })
 })
 
