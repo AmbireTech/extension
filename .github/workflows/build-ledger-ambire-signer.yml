@@ -8,7 +8,7 @@
 # "ambire-signer-<sdk target>" and contain "<sdk target>/bin/app.apdu" - this is
 # recorded in the "// Source:" header of every generated artifacts/*.ts file.
 
-name: Build Ledger "Ambire Signer" app 📒
+name: Build Ledger "Ambire Signer" 📒
 
 on:
   workflow_dispatch: # Manual trigger
