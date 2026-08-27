@@ -54,9 +54,12 @@ jobs:
     # use case (EIP7702_TEST_WHITELIST=1) - pass `use_case: whitelist_keys` here if
     # the bundled load scripts are meant to have the Ambire delegator whitelisted.
     uses: LedgerHQ/ledger-app-workflows/.github/workflows/reusable_build.yml@v1
+    # Must grant everything reusable_build.yml declares at its workflow level, as
+    # GitHub validates that statically - even for its jobs that never run here.
     permissions:
       contents: read
-      actions: write # The called workflow needs this to upload the artifacts
+      actions: write # To upload the build artifacts
+      pull-requests: write # For its ELF size diff comment, which is pull_request only
     with:
       app_repository: AmbireTech/ledger-ambire-signer
       app_branch_name: ${{ inputs.signer_ref || 'feat/apa/add_contracts_in_7702_whitelist' }}
