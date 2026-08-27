@@ -731,6 +731,7 @@ const TransactionSummary = ({
         hasPadding={false}
         style={{ width: '100%', alignContent: 'flex-start' }}
         disableFlex
+        inlineDappIcon={isMobile}
         editApprovalCallInfo={editApprovalCallInfo}
         dapp={call.dapp}
       />
