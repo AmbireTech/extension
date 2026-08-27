@@ -53,7 +53,11 @@ const BenzinScreen = () => {
   const pendingRequests = useMemo(() => {
     if (!visibleUserRequests.length) return []
 
-    return visibleUserRequests.filter((r) => r.kind !== 'benzin')
+    return visibleUserRequests.filter(
+      (r) =>
+        r.kind !== 'benzin' &&
+        (r.kind !== 'calls' || (r.signAccountOp.accountOp.signed || []).length === 0)
+    )
   }, [visibleUserRequests])
 
   const primaryButton = (
