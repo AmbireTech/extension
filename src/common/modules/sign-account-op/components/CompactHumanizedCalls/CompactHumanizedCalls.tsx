@@ -4,8 +4,11 @@ import { View } from 'react-native'
 import HumanizedVisualization, {
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
+import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import spacings from '@common/styles/spacings'
+
+import getStyles from './styles'
 
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 interface Props {
@@ -16,6 +19,8 @@ interface Props {
 const visualizationStyle = { width: '100%', minWidth: 0 } as const
 
 const CompactHumanizedCalls = ({ humanization, chainId }: Props) => {
+  const { styles } = useTheme(getStyles)
+
   return humanization.map((call, index) => {
     const shouldUseDetailedErc7730Layout =
       call.fullVisualization?.some(
@@ -26,7 +31,7 @@ const CompactHumanizedCalls = ({ humanization, chainId }: Props) => {
       <View
         key={call.id}
         style={[
-          visualizationStyle,
+          styles.item,
           spacings.phTy,
           spacings.pvTy,
           index !== humanization.length - 1 && spacings.mbTy
@@ -44,7 +49,7 @@ const CompactHumanizedCalls = ({ humanization, chainId }: Props) => {
             showErc7730DescriptionTitle={shouldUseDetailedErc7730Layout}
             isErc7730TransactionSummaryLayout={!shouldUseDetailedErc7730Layout}
             disableFlex
-            style={{ width: '100%', minWidth: 0 }}
+            style={visualizationStyle}
             dapp={call.dapp}
           />
         ) : (
