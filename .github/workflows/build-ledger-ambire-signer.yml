@@ -1,0 +1,231 @@
+# Builds the "Ambire Signer" Ledger app for every supported device and syncs the
+# resulting plaintext BOLOS load scripts (app.apdu) into the extension, so the
+# sideloader in src/web/modules/hardware-wallet/controllers/LedgerController
+# always ships the load scripts of the latest app build.
+#
+# The build itself lives in a separate repo (AmbireTech/ledger-ambire-signer) and
+# is consumed here as a reusable workflow. Its per-device artifacts are named
+# "ambire-signer-<sdk target>" and contain "<sdk target>/bin/app.apdu" - this is
+# recorded in the "// Source:" header of every generated artifacts/*.ts file.
+
+name: Build Ledger "Ambire Signer" app 📒
+
+on:
+  workflow_dispatch: # Manual trigger
+  push:
+    branches: [feature/ledger-7702]
+    # A merge of the pull request this workflow opens only touches the generated
+    # artifacts, so ignoring them keeps a merge from kicking off a no-op rebuild.
+    paths-ignore:
+      - 'src/web/modules/hardware-wallet/controllers/LedgerController/artifacts/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build the Ledger app for all supported devices
+    # No inputs are passed on purpose - the reusable workflow builds every device
+    # target it supports by default. Pass inputs here if that ever changes.
+    uses: AmbireTech/ledger-ambire-signer/.github/workflows/build_ambire.yml@v1
+    secrets: inherit
+
+  sync-apdu-artifacts:
+    name: Sync the built .apdu load scripts and open a pull request
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v6
+        with:
+          ref: feature/ledger-7702
+
+      - name: Get Node version
+        id: node-version
+        run: echo "NODE_VERSION=$(cat .nvmrc)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.node-version.outputs.NODE_VERSION }}
+
+      - name: Download all Ledger app artifacts ⬇️
+        uses: actions/download-artifact@v6
+        with:
+          # Fails the job when nothing matches, which is what we want - a silent
+          # "no artifacts" would look like a successful, up-to-date sync.
+          pattern: ambire-signer-*
+          path: ledger-artifacts
+
+      - name: Write the artifact generator
+        run: |
+          cat > generate-apdu-artifacts.mjs <<'GENERATOR_EOF'
+          import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
+          import { join, relative, sep } from 'node:path'
+
+          const DOWNLOAD_DIR = 'ledger-artifacts'
+          const ARTIFACTS_DIR =
+            'src/web/modules/hardware-wallet/controllers/LedgerController/artifacts'
+
+          // Keyed by the Ledger SDK target directory found inside each downloaded
+          // artifact. Note "nanos+" is the artifact name, but "nanos2" the directory.
+          const TARGETS = {
+            nanox: {
+              fileName: 'ambireSignerNanoX.ts',
+              constName: 'AMBIRE_SIGNER_NANO_X_APDU',
+              label: 'Nano X'
+            },
+            nanos2: {
+              fileName: 'ambireSignerNanoSPlus.ts',
+              constName: 'AMBIRE_SIGNER_NANO_S_PLUS_APDU',
+              label: 'Nano S Plus'
+            },
+            stax: {
+              fileName: 'ambireSignerStax.ts',
+              constName: 'AMBIRE_SIGNER_STAX_APDU',
+              label: 'Stax'
+            },
+            flex: {
+              fileName: 'ambireSignerFlex.ts',
+              constName: 'AMBIRE_SIGNER_FLEX_APDU',
+              label: 'Flex'
+            },
+            apex_p: {
+              fileName: 'ambireSignerApex.ts',
+              constName: 'AMBIRE_SIGNER_APEX_APDU',
+              label: 'Apex'
+            }
+          }
+
+          const HEX_DIGITS = new Set('0123456789abcdef')
+
+          const isHexApdu = (line) =>
+            line.length > 0 &&
+            line.length % 2 === 0 &&
+            Array.from(line.toLowerCase()).every((char) => HEX_DIGITS.has(char))
+
+          const findApduFiles = (dir) =>
+            readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+              const entryPath = join(dir, entry.name)
+
+              if (entry.isDirectory()) return findApduFiles(entryPath)
+
+              return entry.name === 'app.apdu' ? [entryPath] : []
+            })
+
+          const apduFilePaths = findApduFiles(DOWNLOAD_DIR)
+
+          if (!apduFilePaths.length) {
+            console.error(`No app.apdu found anywhere under ${DOWNLOAD_DIR}.`)
+            process.exit(1)
+          }
+
+          const unrecognizedTargets = []
+          const syncedLabels = []
+
+          apduFilePaths.forEach((apduFilePath) => {
+            const segments = relative(DOWNLOAD_DIR, apduFilePath).split(sep)
+            const artifactName = segments[0]
+            // Path shape is "<artifact name>/<sdk target>/bin/app.apdu", so the
+            // target is always the directory holding "bin".
+            const sdkTarget = segments[segments.length - 3]
+            const target = TARGETS[sdkTarget]
+
+            if (!target) {
+              unrecognizedTargets.push(`${sdkTarget} (${apduFilePath})`)
+              return
+            }
+
+            const apduLines = readFileSync(apduFilePath, 'utf8')
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+
+            const malformedLines = apduLines.filter((line) => !isHexApdu(line))
+
+            if (malformedLines.length) {
+              console.error(
+                `${apduFilePath} is not a plaintext load script, ${malformedLines.length} line(s) are not hex-encoded.`
+              )
+              process.exit(1)
+            }
+
+            const sourcePath = relative(join(DOWNLOAD_DIR, artifactName), apduFilePath)
+            const fileContent = [
+              '// GENERATED — do not edit by hand.',
+              `// Source: ${artifactName}.zip -> ${sourcePath} (Ambire Signer, ${target.label}).`,
+              '// Plaintext BOLOS load script: one hex-encoded APDU per line. See ../ledgerAppLoader.ts.',
+              '// ponytail: bundled as a source string. Move to a fetched per-model asset if bundle size matters.',
+              '/* eslint-disable */',
+              `export const ${target.constName} = \``,
+              ...apduLines,
+              '`',
+              ''
+            ].join('\n')
+
+            writeFileSync(join(ARTIFACTS_DIR, target.fileName), fileContent)
+            syncedLabels.push(target.label)
+            console.log(`Synced ${target.label} -> ${target.fileName} (${apduLines.length} APDUs).`)
+          })
+
+          if (unrecognizedTargets.length) {
+            console.error(
+              `Unrecognized Ledger SDK target(s): ${unrecognizedTargets.join(', ')}. Add them to TARGETS and to artifacts/index.ts.`
+            )
+            process.exit(1)
+          }
+
+          const missingLabels = Object.values(TARGETS)
+            .map((target) => target.label)
+            .filter((label) => !syncedLabels.includes(label))
+
+          if (missingLabels.length)
+            console.warn(`No build was produced for: ${missingLabels.join(', ')}.`)
+
+          writeFileSync(
+            process.env.GITHUB_OUTPUT,
+            `synced-models=${syncedLabels.join(', ')}\n`,
+            { flag: 'a' }
+          )
+          GENERATOR_EOF
+        shell: bash
+
+      - name: Regenerate the .apdu artifacts
+        id: generate
+        run: node generate-apdu-artifacts.mjs
+        shell: bash
+
+      - name: Remove the artifact generator and downloads
+        run: rm -rf generate-apdu-artifacts.mjs ledger-artifacts
+        shell: bash
+
+      - name: Open a pull request 🚀
+        uses: peter-evans/create-pull-request@v7
+        with:
+          # GITHUB_TOKEN requires "Allow GitHub Actions to create and approve pull
+          # requests" to be enabled in the repository Actions settings.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: feature/ledger-7702
+          branch: automated/ledger-ambire-signer-apdu
+          # Reuse the same branch so repeated runs update one pull request instead
+          # of piling up a new one per build.
+          delete-branch: true
+          commit-message: 'chore: sync Ledger "Ambire Signer" .apdu load scripts'
+          title: 'chore: sync Ledger "Ambire Signer" .apdu load scripts'
+          body: |
+            Regenerated the per-device "Ambire Signer" load scripts from the latest
+            [ledger-ambire-signer](https://github.com/AmbireTech/ledger-ambire-signer) build.
+
+            - Synced devices: ${{ steps.generate.outputs.synced-models }}
+            - Build run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Triggered by: ${{ github.sha }}
+
+            Before merging, validate each build with `scratchpad/validate-ledger-apdu.mjs`
+            (app name "Ambire Signer" + Ambire delegator whitelisted), as noted in
+            `artifacts/index.ts`.
+          labels: automated
