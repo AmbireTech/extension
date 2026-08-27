@@ -3,15 +3,26 @@
 # sideloader in src/web/modules/hardware-wallet/controllers/LedgerController
 # always ships the load scripts of the latest app build.
 #
-# The build itself lives in a separate repo (AmbireTech/ledger-ambire-signer) and
-# is consumed here as a reusable workflow. Its per-device artifacts are named
-# "ambire-signer-<sdk target>" and contain "<sdk target>/bin/app.apdu" - this is
-# recorded in the "// Source:" header of every generated artifacts/*.ts file.
+# The build itself lives in a separate repo (AmbireTech/ledger-ambire-signer).
+# That repo's build_ambire.yml is NOT a reusable workflow - it only declares
+# `workflow_dispatch` and `push`, so it cannot be consumed with `uses:`. It is
+# therefore triggered through the REST API and waited on here.
+#
+# build_ambire.yml delegates to LedgerHQ's reusable_build.yml, which uploads one
+# artifact per device and then merges them into a single "ambire_signer_builds"
+# artifact (deleting the per-device ones). The merged artifact holds one directory
+# per Ledger SDK build target, each containing "bin/app.apdu".
 
 name: Build Ledger "Ambire Signer" 📒
 
 on:
   workflow_dispatch: # Manual trigger
+    inputs:
+      signer_ref:
+        description: 'Branch, tag or commit of ledger-ambire-signer to build'
+        required: false
+        default: feat/apa/add_contracts_in_7702_whitelist
+        type: string
   push:
     branches: [feature/ledger-7702]
     # A merge of the pull request this workflow opens only touches the generated
@@ -23,17 +34,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-jobs:
-  build:
-    name: Build the Ledger app for all supported devices
-    # No inputs are passed on purpose - the reusable workflow builds every device
-    # target it supports by default. Pass inputs here if that ever changes.
-    uses: AmbireTech/ledger-ambire-signer/.github/workflows/build_ambire.yml
-    secrets: inherit
+env:
+  SIGNER_REPOSITORY: AmbireTech/ledger-ambire-signer
+  SIGNER_WORKFLOW: build_ambire.yml
+  # ledger-ambire-signer has no tags, so a branch is the only usable ref. The
+  # default matches that repo's default branch.
+  SIGNER_REF: ${{ inputs.signer_ref || 'feat/apa/add_contracts_in_7702_whitelist' }}
+  # Set by build_ambire.yml as `upload_app_binaries_artifact`.
+  SIGNER_ARTIFACT: ambire_signer_builds
+  DOWNLOAD_DIR: ledger-artifacts
 
-  sync-apdu-artifacts:
-    name: Sync the built .apdu load scripts and open a pull request
-    needs: build
+jobs:
+  build-and-sync:
+    name: Build the Ledger app and sync its .apdu load scripts
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -54,13 +67,95 @@ jobs:
         with:
           node-version: ${{ steps.node-version.outputs.NODE_VERSION }}
 
-      - name: Download all Ledger app artifacts ⬇️
+      # GITHUB_TOKEN is scoped to this repository only, so dispatching a workflow
+      # in ledger-ambire-signer and reading its artifacts needs a separate token
+      # with `actions: write` on that repo.
+      - name: Check that the cross-repo token is configured
+        env:
+          SIGNER_TOKEN: ${{ secrets.LEDGER_SIGNER_TOKEN }}
+        run: |
+          if [ -z "${SIGNER_TOKEN}" ]; then
+            echo "::error::Secret LEDGER_SIGNER_TOKEN is missing. Add a token with 'actions: write' on ${SIGNER_REPOSITORY}."
+            exit 1
+          fi
+        shell: bash
+
+      - name: Trigger the Ledger app build and wait for it 🏗️
+        id: signer-build
+        timeout-minutes: 45
+        env:
+          SIGNER_TOKEN: ${{ secrets.LEDGER_SIGNER_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          API="https://api.github.com/repos/${SIGNER_REPOSITORY}"
+          # Retries keep a transient 5xx during the long poll below from throwing
+          # away a Ledger app build that actually succeeded.
+          api() {
+            curl --silent --show-error --fail \
+              --retry 3 --retry-delay 2 --retry-all-errors \
+              --header "Authorization: Bearer ${SIGNER_TOKEN}" \
+              --header "Accept: application/vnd.github+json" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              "$@"
+          }
+
+          # The dispatch endpoint returns no body, so remember the newest existing
+          # manual run to tell ours apart from it once it shows up.
+          PREVIOUS_RUN_ID=$(api "${API}/actions/workflows/${SIGNER_WORKFLOW}/runs?event=workflow_dispatch&per_page=1" \
+            | jq '.workflow_runs[0].id // 0')
+          echo "Newest existing manual run: ${PREVIOUS_RUN_ID}"
+
+          echo "Dispatching ${SIGNER_WORKFLOW} on ${SIGNER_REPOSITORY}@${SIGNER_REF}..."
+          api --request POST \
+            --header "Content-Type: application/json" \
+            "${API}/actions/workflows/${SIGNER_WORKFLOW}/dispatches" \
+            --data "$(jq --null-input --arg ref "${SIGNER_REF}" '{ref: $ref}')"
+
+          RUN_ID=""
+          for _ in $(seq 1 30); do
+            sleep 5
+            RUN_ID=$(api "${API}/actions/workflows/${SIGNER_WORKFLOW}/runs?event=workflow_dispatch&per_page=20" \
+              | jq --argjson previous "${PREVIOUS_RUN_ID}" \
+                  '[.workflow_runs[] | select(.id > $previous)] | sort_by(.id) | last | .id // empty')
+            if [ -n "${RUN_ID}" ]; then break; fi
+            echo "The dispatched run has not appeared yet, retrying..."
+          done
+
+          if [ -z "${RUN_ID}" ]; then
+            echo "::error::Dispatched ${SIGNER_WORKFLOW} but no new run appeared within 150s."
+            exit 1
+          fi
+
+          RUN_URL="https://github.com/${SIGNER_REPOSITORY}/actions/runs/${RUN_ID}"
+          echo "Waiting for ${RUN_URL}"
+          echo "run-id=${RUN_ID}" >> "${GITHUB_OUTPUT}"
+          echo "run-url=${RUN_URL}" >> "${GITHUB_OUTPUT}"
+
+          while true; do
+            RUN=$(api "${API}/actions/runs/${RUN_ID}")
+            STATUS=$(echo "${RUN}" | jq --raw-output '.status')
+            if [ "${STATUS}" = "completed" ]; then break; fi
+            echo "Status: ${STATUS}"
+            sleep 20
+          done
+
+          CONCLUSION=$(echo "${RUN}" | jq --raw-output '.conclusion')
+          echo "Conclusion: ${CONCLUSION}"
+          if [ "${CONCLUSION}" != "success" ]; then
+            echo "::error::The Ledger app build finished as '${CONCLUSION}'. See ${RUN_URL}"
+            exit 1
+          fi
+        shell: bash
+
+      - name: Download the built Ledger app artifact ⬇️
         uses: actions/download-artifact@v6
         with:
-          # Fails the job when nothing matches, which is what we want - a silent
-          # "no artifacts" would look like a successful, up-to-date sync.
-          pattern: ambire-signer-*
-          path: ledger-artifacts
+          name: ${{ env.SIGNER_ARTIFACT }}
+          path: ${{ env.DOWNLOAD_DIR }}
+          repository: ${{ env.SIGNER_REPOSITORY }}
+          run-id: ${{ steps.signer-build.outputs.run-id }}
+          github-token: ${{ secrets.LEDGER_SIGNER_TOKEN }}
 
       - name: Write the artifact generator
         run: |
@@ -68,12 +163,14 @@ jobs:
           import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
           import { join, relative, sep } from 'node:path'
 
-          const DOWNLOAD_DIR = 'ledger-artifacts'
+          const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR
+          const ARTIFACT_NAME = process.env.SIGNER_ARTIFACT
           const ARTIFACTS_DIR =
             'src/web/modules/hardware-wallet/controllers/LedgerController/artifacts'
 
-          // Keyed by the Ledger SDK target directory found inside each downloaded
-          // artifact. Note "nanos+" is the artifact name, but "nanos2" the directory.
+          // Keyed by the Ledger SDK build target directory inside the artifact. These
+          // differ from the device names in ledger_app.toml: the "nanos+" device is
+          // built into a "nanos2" directory.
           const TARGETS = {
             nanox: {
               fileName: 'ambireSignerNanoX.ts',
@@ -129,15 +226,15 @@ jobs:
           const syncedLabels = []
 
           apduFilePaths.forEach((apduFilePath) => {
-            const segments = relative(DOWNLOAD_DIR, apduFilePath).split(sep)
-            const artifactName = segments[0]
-            // Path shape is "<artifact name>/<sdk target>/bin/app.apdu", so the
-            // target is always the directory holding "bin".
+            const sourcePath = relative(DOWNLOAD_DIR, apduFilePath)
+            const segments = sourcePath.split(sep)
+            // Path shape is "<sdk target>/bin/app.apdu", so the target is always the
+            // directory holding "bin".
             const sdkTarget = segments[segments.length - 3]
             const target = TARGETS[sdkTarget]
 
             if (!target) {
-              unrecognizedTargets.push(`${sdkTarget} (${apduFilePath})`)
+              unrecognizedTargets.push(`${sdkTarget} (${sourcePath})`)
               return
             }
 
@@ -150,15 +247,14 @@ jobs:
 
             if (malformedLines.length) {
               console.error(
-                `${apduFilePath} is not a plaintext load script, ${malformedLines.length} line(s) are not hex-encoded.`
+                `${sourcePath} is not a plaintext load script, ${malformedLines.length} line(s) are not hex-encoded.`
               )
               process.exit(1)
             }
 
-            const sourcePath = relative(join(DOWNLOAD_DIR, artifactName), apduFilePath)
             const fileContent = [
               '// GENERATED — do not edit by hand.',
-              `// Source: ${artifactName}.zip -> ${sourcePath} (Ambire Signer, ${target.label}).`,
+              `// Source: ${ARTIFACT_NAME}.zip -> ${sourcePath} (Ambire Signer, ${target.label}).`,
               '// Plaintext BOLOS load script: one hex-encoded APDU per line. See ../ledgerAppLoader.ts.',
               '// ponytail: bundled as a source string. Move to a fetched per-model asset if bundle size matters.',
               '/* eslint-disable */',
@@ -185,7 +281,7 @@ jobs:
             .filter((label) => !syncedLabels.includes(label))
 
           if (missingLabels.length)
-            console.warn(`No build was produced for: ${missingLabels.join(', ')}.`)
+            console.warn(`::warning::No build was produced for: ${missingLabels.join(', ')}.`)
 
           writeFileSync(
             process.env.GITHUB_OUTPUT,
@@ -201,7 +297,7 @@ jobs:
         shell: bash
 
       - name: Remove the artifact generator and downloads
-        run: rm -rf generate-apdu-artifacts.mjs ledger-artifacts
+        run: rm -rf generate-apdu-artifacts.mjs "${DOWNLOAD_DIR}"
         shell: bash
 
       - name: Open a pull request 🚀
@@ -218,14 +314,14 @@ jobs:
           commit-message: 'chore: sync Ledger "Ambire Signer" .apdu load scripts'
           title: 'chore: sync Ledger "Ambire Signer" .apdu load scripts'
           body: |
-            Regenerated the per-device "Ambire Signer" load scripts from the latest
-            [ledger-ambire-signer](https://github.com/AmbireTech/ledger-ambire-signer) build.
+            Regenerated the per-device "Ambire Signer" load scripts from a fresh
+            [ledger-ambire-signer](https://github.com/${{ env.SIGNER_REPOSITORY }}) build.
 
             - Synced devices: ${{ steps.generate.outputs.synced-models }}
-            - Build run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            - Triggered by: ${{ github.sha }}
+            - Built from: `${{ env.SIGNER_REF }}`
+            - Ledger app build: ${{ steps.signer-build.outputs.run-url }}
+            - Sync run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-            Before merging, validate each build with `scratchpad/validate-ledger-apdu.mjs`
-            (app name "Ambire Signer" + Ambire delegator whitelisted), as noted in
-            `artifacts/index.ts`.
+            Before merging, validate each build against the checks described in
+            `artifacts/index.ts` (app name "Ambire Signer" + Ambire delegator whitelisted).
           labels: automated
