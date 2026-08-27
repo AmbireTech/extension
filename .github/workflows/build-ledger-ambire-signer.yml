@@ -28,7 +28,7 @@ jobs:
     name: Build the Ledger app for all supported devices
     # No inputs are passed on purpose - the reusable workflow builds every device
     # target it supports by default. Pass inputs here if that ever changes.
-    uses: AmbireTech/ledger-ambire-signer/.github/workflows/build_ambire.yml@v1
+    uses: AmbireTech/ledger-ambire-signer/.github/workflows/build_ambire.yml
     secrets: inherit
 
   sync-apdu-artifacts:
