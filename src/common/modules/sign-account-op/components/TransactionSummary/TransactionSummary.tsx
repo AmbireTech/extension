@@ -23,7 +23,7 @@ import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
   getVisibleErc7730RowsExcludingTitleParts,
-  MOBILE_ERC7730_TITLE_TEXT_SIZE,
+  MOBILE_ERC7730_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -662,7 +662,7 @@ const TransactionSummary = ({
           )}
           {!!erc7730DetailedTitle && (
             <Text
-              fontSize={MOBILE_ERC7730_TITLE_TEXT_SIZE}
+              fontSize={MOBILE_ERC7730_TEXT_SIZE}
               weight="semiBold"
               color={theme.secondaryAccent400}
               numberOfLines={1}
@@ -692,7 +692,7 @@ const TransactionSummary = ({
       <HumanizedVisualization
         data={[erc7730Visualization]}
         sizeMultiplierSize={sizeMultiplier[size]}
-        textSize={MOBILE_ERC7730_TITLE_TEXT_SIZE}
+        textSize={MOBILE_ERC7730_TEXT_SIZE}
         imageSize={24 * sizeMultiplier[size]}
         chainId={chainId}
         type={type}

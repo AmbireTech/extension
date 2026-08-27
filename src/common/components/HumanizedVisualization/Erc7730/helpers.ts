@@ -6,8 +6,8 @@ import { zeroAddress } from 'viem'
 
 type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
 
-/** Keeps ERC-7730 titles compact in layouts shared by mobile and the side panel. */
-export const MOBILE_ERC7730_TITLE_TEXT_SIZE = 14
+/** Keeps ERC-7730 text compact in layouts shared by mobile and the side panel. */
+export const MOBILE_ERC7730_TEXT_SIZE = 14
 
 /**
  * Converts the whitespace around interpolated intent parts into explicit layout spacing.

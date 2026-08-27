@@ -4,7 +4,7 @@ import { SvgUri } from 'react-native-svg'
 
 import {
   getErc7730TitlePartsForRendering,
-  MOBILE_ERC7730_TITLE_TEXT_SIZE,
+  MOBILE_ERC7730_TEXT_SIZE,
   shouldShowErc7730SummaryRowLabel
 } from '@common/components/HumanizedVisualization/Erc7730/helpers'
 import Text from '@common/components/Text'
@@ -110,9 +110,9 @@ const MobileErc7730SummaryVisualization = ({
           )}
           <View style={{ flex: 1, minWidth: 0 }}>
             {item.titleParts?.length
-              ? renderTitleParts(MOBILE_ERC7730_TITLE_TEXT_SIZE)
+              ? renderTitleParts(MOBILE_ERC7730_TEXT_SIZE)
               : !!item.title && (
-                  <Text fontSize={MOBILE_ERC7730_TITLE_TEXT_SIZE} color={theme.secondaryAccent400}>
+                  <Text fontSize={MOBILE_ERC7730_TEXT_SIZE} color={theme.secondaryAccent400}>
                     {item.title}
                   </Text>
                 )}
@@ -139,7 +139,7 @@ const MobileErc7730SummaryVisualization = ({
               {spenderRow.label}
             </Text>
           </View>
-          {renderValues(spenderRow.value, subtitleTextSize)}
+          {renderValues(spenderRow.value, MOBILE_ERC7730_TEXT_SIZE)}
         </View>
       )}
       {summaryRows.map((row) => (
@@ -165,7 +165,7 @@ const MobileErc7730SummaryVisualization = ({
               {row.label}
             </Text>
           )}
-          {renderValues(row.value)}
+          {renderValues(row.value, MOBILE_ERC7730_TEXT_SIZE)}
         </View>
       ))}
     </View>

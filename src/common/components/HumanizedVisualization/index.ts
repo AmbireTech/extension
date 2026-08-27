@@ -3,7 +3,7 @@ import Erc7730StructuredVisualization from './Erc7730/Erc7730StructuredVisualiza
 
 export {
   getVisibleErc7730RowsExcludingTitleParts,
-  MOBILE_ERC7730_TITLE_TEXT_SIZE,
+  MOBILE_ERC7730_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
 } from './Erc7730/helpers'
 

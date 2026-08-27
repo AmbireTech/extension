@@ -33,7 +33,7 @@ import {
   hasTokenValue,
   isNestedErc7730Row,
   isNestedErc7730Value,
-  MOBILE_ERC7730_TITLE_TEXT_SIZE,
+  MOBILE_ERC7730_TEXT_SIZE,
   shouldShowErc7730SpenderRowInSummary,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
@@ -203,7 +203,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       }
 
       if (valueItem.type === 'chain' && valueItem.chainId) {
-        return <ChainVisualization chainId={valueItem.chainId} key={valueItem.id} marginRight={0} />
+        return (
+          <ChainVisualization
+            chainId={valueItem.chainId}
+            key={valueItem.id}
+            marginRight={0}
+            textSize={overrideTextSize}
+          />
+        )
       }
 
       if (valueItem.type === 'erc7730') {
@@ -423,7 +430,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
   if (mode === 'summary') {
     if (isTransactionSummaryLayout) {
-      const titleTextSize = withMobileLayout ? MOBILE_ERC7730_TITLE_TEXT_SIZE : textSize + 2
+      const titleTextSize = withMobileLayout ? MOBILE_ERC7730_TEXT_SIZE : textSize + 2
+      const valueTextSize = withMobileLayout ? MOBILE_ERC7730_TEXT_SIZE : textSize
 
       return (
         <View style={{ width: '100%', minWidth: 0 }}>
@@ -518,7 +526,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                         key={value.id}
                         style={[{ flexShrink: 1, minWidth: 0 }, valueIndex > 0 && spacings.mlTy]}
                       >
-                        {renderValue(value)}
+                        {renderValue(value, valueTextSize)}
                       </View>
                     ))}
                   </View>
@@ -714,9 +722,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
         {shouldShowDescriptionTitle && (
           <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
             {item.titleParts?.length ? (
-              renderTitleParts(MOBILE_ERC7730_TITLE_TEXT_SIZE)
+              renderTitleParts(MOBILE_ERC7730_TEXT_SIZE)
             ) : (
-              <Text fontSize={MOBILE_ERC7730_TITLE_TEXT_SIZE} color={theme.secondaryAccent400}>
+              <Text fontSize={MOBILE_ERC7730_TEXT_SIZE} color={theme.secondaryAccent400}>
                 {item.title}
               </Text>
             )}
