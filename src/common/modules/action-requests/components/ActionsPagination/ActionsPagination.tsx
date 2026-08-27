@@ -1,14 +1,14 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TouchableOpacity, View } from 'react-native'
+import { View } from 'react-native'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -25,7 +25,6 @@ const ActionsPagination = () => {
   } = useController('RequestsController')
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
-  const { isWideFooterLayout, isCompactLayout } = useCompactActionRequestLayout()
   const currentRequestIndex = useMemo(() => {
     if (!currentUserRequest) return undefined
 
@@ -36,9 +35,7 @@ const ActionsPagination = () => {
     return idx
   }, [visibleUserRequests, currentUserRequest])
 
-  if (visibleUserRequests?.length <= 1) return null
-
-  const handleSmallPageStepDecrement = () => {
+  const handleSmallPageStepDecrement = useCallback(() => {
     if (typeof currentRequestIndex !== 'number') return
     requestsDispatch({
       type: 'method',
@@ -47,9 +44,9 @@ const ActionsPagination = () => {
         args: [currentRequestIndex - 1, SET_CURRENT_REQUEST_PARAMS]
       }
     })
-  }
+  }, [currentRequestIndex, requestsDispatch])
 
-  const handleSmallPageStepIncrement = () => {
+  const handleSmallPageStepIncrement = useCallback(() => {
     if (typeof currentRequestIndex !== 'number') return
     requestsDispatch({
       type: 'method',
@@ -58,9 +55,9 @@ const ActionsPagination = () => {
         args: [currentRequestIndex + 1, SET_CURRENT_REQUEST_PARAMS]
       }
     })
-  }
+  }, [currentRequestIndex, requestsDispatch])
 
-  const handleLargePageStepDecrement = () => {
+  const handleLargePageStepDecrement = useCallback(() => {
     requestsDispatch({
       type: 'method',
       params: {
@@ -68,9 +65,9 @@ const ActionsPagination = () => {
         args: [0, SET_CURRENT_REQUEST_PARAMS]
       }
     })
-  }
+  }, [requestsDispatch])
 
-  const handleLargePageStepIncrement = () => {
+  const handleLargePageStepIncrement = useCallback(() => {
     requestsDispatch({
       type: 'method',
       params: {
@@ -78,75 +75,70 @@ const ActionsPagination = () => {
         args: [visibleUserRequests.length - 1, SET_CURRENT_REQUEST_PARAMS]
       }
     })
-  }
+  }, [requestsDispatch, visibleUserRequests.length])
+
+  if (visibleUserRequests?.length <= 1) return null
 
   if (typeof currentRequestIndex !== 'number') return null
+
+  const isFirstRequest = currentRequestIndex === 0
+  const isLastRequest = currentRequestIndex === visibleUserRequests.length - 1
+  const requestLabel = t('Request {{currentRequestIndex}} of {{numberOfAllActions}}', {
+    currentRequestIndex: currentRequestIndex + 1,
+    numberOfAllActions: visibleUserRequests.length
+  })
 
   return (
     <View
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        isWeb && isWideFooterLayout && flexbox.flex1,
-        spacings.phSm,
         flexbox.justifyCenter,
-        isMobile && { columnGap: 16 },
-        isMobile && spacings.ptLg,
-        isCompactLayout && !isMobile && spacings.pbSm
+        isMobile ? spacings.ptLg : spacings.pt
       ]}
     >
-      <TouchableOpacity
-        style={currentRequestIndex === 0 && { opacity: 0.4 }}
-        disabled={currentRequestIndex === 0}
+      <HoverablePressable
+        style={isFirstRequest && { opacity: 0.4 }}
+        disabled={isFirstRequest}
         onPress={handleLargePageStepDecrement}
       >
         <View style={flexbox.directionRow}>
           <LeftArrowIcon />
           <LeftArrowIcon />
         </View>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[spacings.mlTy, currentRequestIndex === 0 && { opacity: 0.4 }]}
-        disabled={currentRequestIndex === 0}
+      </HoverablePressable>
+      <HoverablePressable
+        style={[spacings.mlTy, isFirstRequest && { opacity: 0.4 }]}
+        disabled={isFirstRequest}
         onPress={handleSmallPageStepDecrement}
       >
-        <View style={flexbox.directionRow}>
-          <LeftArrowIcon />
-        </View>
-      </TouchableOpacity>
+        <LeftArrowIcon />
+      </HoverablePressable>
       <Text
         fontSize={14}
         color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
         underline
         style={[text.center, spacings.mh]}
       >
-        {t('Request {{currentRequestIndex}} of {{numberOfAllActions}}', {
-          currentRequestIndex: currentRequestIndex + 1,
-          numberOfAllActions: visibleUserRequests.length
-        })}
+        {requestLabel}
       </Text>
-      <TouchableOpacity
-        style={[
-          spacings.mrTy,
-          currentRequestIndex === visibleUserRequests.length - 1 && { opacity: 0.4 }
-        ]}
-        disabled={currentRequestIndex === visibleUserRequests.length - 1}
+      <HoverablePressable
+        style={[spacings.mrTy, isLastRequest && { opacity: 0.4 }]}
+        disabled={isLastRequest}
         onPress={handleSmallPageStepIncrement}
       >
-        <View style={flexbox.directionRow}>
-          <RightArrowIcon />
-        </View>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={currentRequestIndex === visibleUserRequests.length - 1 && { opacity: 0.4 }}
-        disabled={currentRequestIndex === visibleUserRequests.length - 1}
+        <RightArrowIcon />
+      </HoverablePressable>
+      <HoverablePressable
+        style={isLastRequest && { opacity: 0.4 }}
+        disabled={isLastRequest}
         onPress={handleLargePageStepIncrement}
       >
         <View style={flexbox.directionRow}>
           <RightArrowIcon />
           <RightArrowIcon />
         </View>
-      </TouchableOpacity>
+      </HoverablePressable>
     </View>
   )
 }

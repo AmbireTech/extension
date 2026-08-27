@@ -1,18 +1,18 @@
 import QrScannerLib from 'qr-scanner'
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { View } from 'react-native'
 
 import { useTranslation } from '@common/config/localization'
-import { browser, engine, isExtension } from '@web/constants/browserapi'
-import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
 import {
   emptyQrScanLastRead,
   getQrCodeCoverage,
   getQrScanFeedback,
-  QR_SCAN_FEEDBACK_INTERVAL,
-  QrScanProgress
+  QR_SCAN_FEEDBACK_INTERVAL
 } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
+import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
+import { browser, engine, isExtension } from '@web/constants/browserapi'
 
+import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 // Firefox does not implement `BarcodeDetector`, so `qr-scanner` falls back to a Web Worker that it
 // spawns from a `blob:` URL (see `qr-scanner-worker.min.js`). Firefox MV3 extension pages reject
 // those workers under the default `script-src 'self'` CSP, which leaves the camera streaming but

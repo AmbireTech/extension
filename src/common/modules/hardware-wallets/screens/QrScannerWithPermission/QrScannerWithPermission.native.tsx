@@ -1,25 +1,25 @@
-import { useCameraPermissions } from 'expo-camera'
 import { Buffer } from 'buffer'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useCameraPermissions } from 'expo-camera'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppState, Linking, View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
 import {
   emptyQrScanLastRead,
   getQrScanFeedback,
-  QR_SCAN_FEEDBACK_INTERVAL,
-  QrScanProgress
+  QR_SCAN_FEEDBACK_INTERVAL
 } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
+import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import CameraScanner from '@mobile/components/CameraScanner'
 
-import { QrScannerWithPermissionProps } from './QrScannerWithPermission'
+import type { QrScannerWithPermissionProps } from './QrScannerWithPermission'
 
+import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 // Mobile counterpart of the web QrScannerWithPermission. It manages camera
 // permission and assembles animated UR (bc-ur) fragments scanned by
 // CameraScanner into a single CBOR payload, then hands it to `onComplete`.

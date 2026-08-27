@@ -2,7 +2,6 @@ import HumanizedVisualization from './HumanizedVisualization'
 import Erc7730StructuredVisualization from './Erc7730/Erc7730StructuredVisualization'
 
 export {
-  getErc7730DescriptionRows,
   getVisibleErc7730RowsExcludingTitleParts,
   shouldUseErc7730DetailedLayout
 } from './Erc7730/helpers'

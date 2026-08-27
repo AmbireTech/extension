@@ -1,9 +1,9 @@
-import React, { FC, memo } from 'react'
-import { ColorValue } from 'react-native'
+import { FC, memo } from 'react'
 import Svg, { Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
+import type { ColorValue } from 'react-native'
 interface Props extends SvgProps {
   color?: ColorValue
 }

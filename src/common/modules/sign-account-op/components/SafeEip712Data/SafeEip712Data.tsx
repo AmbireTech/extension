@@ -2,31 +2,49 @@ import React, { FC, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GestureResponderEvent, Pressable, View } from 'react-native'
 
-import type { ISignMessageController } from '@ambire-common/interfaces/signMessage'
-import type { Message } from '@ambire-common/interfaces/userRequest'
 import { stringify } from '@ambire-common/libs/richJson/richJson'
 import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import spacings from '@common/styles/spacings'
+import { getUiType } from '@common/utils/uiType'
 
 import { getSafeEip712DataValue, getSafeEip712HashRows } from './helpers'
 import getStyles from './styles'
 
+import type { ISignMessageController } from '@ambire-common/interfaces/signMessage'
+import type { Message } from '@ambire-common/interfaces/userRequest'
 interface Props {
   accountAddr?: string
   chainId?: bigint
   safeEip712Data?: unknown | null
+  withTitle?: boolean
+  /** Controls the active tab from the outside, e.g. when the tab bar is rendered elsewhere. */
+  activeTab?: ActiveTab
+  onTabChange?: (tab: ActiveTab) => void
+  /** Hides the internal tab bar, for when it is already rendered by a parent component. */
+  hideTabs?: boolean
 }
 
-type ActiveTab = 'hashes' | 'parsed' | 'raw'
+export type ActiveTab = 'hashes' | 'parsed' | 'raw'
 
-const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => {
+const { isSidePanel } = getUiType()
+
+const SafeEip712Data: FC<Props> = ({
+  accountAddr,
+  chainId,
+  safeEip712Data,
+  withTitle = true,
+  activeTab: controlledActiveTab,
+  onTabChange,
+  hideTabs = false
+}) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const [activeTab, setActiveTab] = useState<ActiveTab>('hashes')
+  const [internalActiveTab, setInternalActiveTab] = useState<ActiveTab>('hashes')
+  const activeTab = controlledActiveTab ?? internalActiveTab
   const data = useMemo(() => getSafeEip712DataValue(safeEip712Data), [safeEip712Data])
   const messageToSign = useMemo<ISignMessageController['messageToSign']>(() => {
     if (!data || !accountAddr || !chainId) return null
@@ -44,7 +62,7 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
   }, [accountAddr, chainId, data])
   const rawMessageContent = useMemo(
     () => (messageToSign?.content ? stringify(messageToSign.content, { pretty: true }) : ''),
-    [messageToSign?.content]
+    [messageToSign]
   )
   const setHasReachedBottom = useCallback(() => {}, [])
   const rows = useMemo<[string, string][]>(() => (data ? getSafeEip712HashRows(data) : []), [data])
@@ -57,9 +75,16 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
       ] as const,
     [t]
   )
-  const handleTabPress = useCallback((tab: ActiveTab) => {
-    setActiveTab(tab)
-  }, [])
+  const handleTabPress = useCallback(
+    (tab: ActiveTab) => {
+      if (onTabChange) {
+        onTabChange(tab)
+        return
+      }
+      setInternalActiveTab(tab)
+    },
+    [onTabChange]
+  )
   const handlePressTab = useCallback(
     (event: GestureResponderEvent, tab: ActiveTab) => {
       event.stopPropagation()
@@ -73,37 +98,41 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
   return (
     <View style={isWeb ? spacings.mbLg : spacings.mbSm}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text fontSize={14} weight="medium" appearance="secondaryText" numberOfLines={1}>
-            {t('Safe hashes and JSON')}
-          </Text>
-        </View>
-        <View style={styles.tabHeader}>
-          {tabs.map(([tab, label]) => {
-            const isActive = activeTab === tab
+        {withTitle && (
+          <View style={styles.header}>
+            <Text fontSize={14} weight="medium" appearance="secondaryText" numberOfLines={1}>
+              {t('Hashes and JSON')}
+            </Text>
+          </View>
+        )}
+        {!hideTabs && (
+          <View style={styles.tabHeader}>
+            {tabs.map(([tab, label]) => {
+              const isActive = activeTab === tab
 
-            return (
-              <Pressable
-                key={tab}
-                onPress={(event) => handlePressTab(event, tab)}
-                style={[
-                  styles.tabButton,
-                  {
-                    borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
-                  }
-                ]}
-              >
-                <Text
-                  fontSize={14}
-                  weight={isActive ? 'semiBold' : 'medium'}
-                  color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+              return (
+                <Pressable
+                  key={tab}
+                  onPress={(event) => handlePressTab(event, tab)}
+                  style={[
+                    styles.tabButton,
+                    {
+                      borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
+                    }
+                  ]}
                 >
-                  {label}
-                </Text>
-              </Pressable>
-            )
-          })}
-        </View>
+                  <Text
+                    fontSize={14}
+                    weight={isActive ? 'semiBold' : 'medium'}
+                    color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        )}
         {activeTab === 'hashes' && (
           <View style={styles.rows}>
             {rows.map(([label, value]) => (
@@ -146,8 +175,10 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
             setHasReachedBottom={setHasReachedBottom}
             hasReachedBottom
             scrollEnabled={false}
-            withCompactDataRow
+            withTwoColumnDataRow
             withDecimalIntegerRows
+            withRegularParsedText
+            parsedValueMaxLength={isMobile || isSidePanel ? 24 : undefined}
             hideTabs
             containerStyle={styles.fallbackVisualization}
             separatorColor={theme.secondaryBackground}
