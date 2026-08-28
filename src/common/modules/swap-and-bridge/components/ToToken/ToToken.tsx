@@ -32,9 +32,10 @@ import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
 type Props = {
   simulationFailed?: boolean
+  disabled?: boolean
 }
 
-const ToToken: FC<Props> = ({ simulationFailed }) => {
+const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
@@ -266,6 +267,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
       <SwitchTokensButton
         onPress={handleSwitchFromAndToTokens}
         disabled={
+          disabled ||
           switchTokensStatus === 'LOADING' ||
           updateQuoteStatus === 'LOADING' ||
           updateToTokenListStatus === 'LOADING'
@@ -299,6 +301,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           mode="bottomSheet"
           bottomSheetTitle={t('Receive token network')}
           testID="to-network-select"
+          disabled={disabled}
         />
       </View>
       <View
@@ -317,7 +320,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             toTokenOptions={toTokenOptions}
             toTokenValue={toTokenValue}
             handleChangeToToken={handleChangeToToken}
-            toTokenAmountSelectDisabled={toTokenAmountSelectDisabled}
+            toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
             addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
             handleAddToTokenByAddress={handleAddToTokenByAddress}
           />

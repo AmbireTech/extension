@@ -67,7 +67,8 @@ const SwapAndBridgeScreen = () => {
     shouldDisableAddToBatch,
     providerSettingsModalRef,
     openProviderSettingsModal,
-    closeProviderSettingsModal
+    closeProviderSettingsModal,
+    areAllProvidersDisabled
   } = useSwapAndBridgeForm()
   const {
     state: {
@@ -128,8 +129,10 @@ const SwapAndBridgeScreen = () => {
   ])
 
   const isNotReadyToProceed = useMemo(() => {
-    return formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit || isLoading
-  }, [formStatus, isLoading])
+    return (
+      areAllProvidersDisabled || formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit || isLoading
+    )
+  }, [areAllProvidersDisabled, formStatus, isLoading])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
     swapAndBridgeDispatch({
@@ -262,19 +265,22 @@ const SwapAndBridgeScreen = () => {
               fromTokenOptions={fromTokenOptions}
               fromTokenValue={fromTokenValue}
               fromAmountValue={fromAmountValue}
-              fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
+              fromTokenAmountSelectDisabled={
+                areAllProvidersDisabled || fromTokenAmountSelectDisabled
+              }
               onFromAmountChange={onFromAmountChange}
               simulationFailed={!!fromChainSimulationError}
               isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
             />
           </View>
-          <ToToken simulationFailed={!!toChainSimulationError} />
+          <ToToken simulationFailed={!!toChainSimulationError} disabled={areAllProvidersDisabled} />
         </View>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
           openRoutesModal={openRoutesModal}
           openProviderSettingsModal={openProviderSettingsModal}
           shouldEnableRoutesSelection={shouldEnableRoutesSelection}
+          areAllProvidersDisabled={areAllProvidersDisabled}
         />
       </Content>
       <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />

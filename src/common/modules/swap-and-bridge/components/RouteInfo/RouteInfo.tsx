@@ -26,13 +26,15 @@ type Props = {
   shouldEnableRoutesSelection: boolean
   openRoutesModal: () => void
   openProviderSettingsModal: () => void
+  areAllProvidersDisabled: boolean
 }
 
 const RouteInfo: FC<Props> = ({
   isEstimatingRoute,
   shouldEnableRoutesSelection,
   openRoutesModal,
-  openProviderSettingsModal
+  openProviderSettingsModal,
+  areAllProvidersDisabled
 }) => {
   const {
     state: { formStatus, signAccountOpController, quote, swapSignErrors, disabledSwapProviderIds },
@@ -92,6 +94,47 @@ const RouteInfo: FC<Props> = ({
       params: { method: 'updateQuote', args: [{ skipQuoteUpdateOnSameValues: false }] }
     })
   }, [swapAndBridgeDispatch])
+
+  if (areAllProvidersDisabled) {
+    return (
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.wrap,
+          { minHeight: 20, maxWidth: '100%' },
+          spacings.mtSm
+        ]}
+      >
+        {isWeb && <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />}
+        <Text
+          fontSize={isMobile ? 14 : 12}
+          weight="medium"
+          appearance="warningText"
+          style={isMobile ? {} : spacings.mlMi}
+        >
+          {t('All providers disabled.')}{' '}
+        </Text>
+        <HoverablePressable
+          accessibilityRole="button"
+          onPress={openProviderSettingsModal}
+          testID="enable-all-swap-providers-button"
+        >
+          <Text
+            fontSize={isMobile ? 14 : 12}
+            weight="medium"
+            color={theme.warningText}
+            style={{
+              textDecorationColor: theme.warningText,
+              textDecorationLine: 'underline'
+            }}
+          >
+            {t('Enable')}
+          </Text>
+        </HoverablePressable>
+      </View>
+    )
+  }
 
   return (
     <View

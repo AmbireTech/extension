@@ -43,7 +43,9 @@ const useSwapAndBridgeForm = () => {
     supportedChainIds,
     updateQuoteStatus,
     sessionIds,
-    toSelectedToken
+    toSelectedToken,
+    swapProviders,
+    disabledSwapProviderIds
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
@@ -119,6 +121,13 @@ const useSwapAndBridgeForm = () => {
     if (!fromSelectedToken || !toSelectedToken) return false
     return fromSelectedToken.chainId !== BigInt(toSelectedToken.chainId)
   }, [fromSelectedToken, toSelectedToken])
+
+  const areAllProvidersDisabled = useMemo(
+    () =>
+      swapProviders.length > 0 &&
+      swapProviders.every(({ id }) => disabledSwapProviderIds.includes(id)),
+    [disabledSwapProviderIds, swapProviders]
+  )
 
   const networkUserRequests = useMemo(() => {
     if (!fromSelectedToken || !account || !userRequests.length) return []
@@ -549,7 +558,8 @@ const useSwapAndBridgeForm = () => {
     batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch
+    shouldDisableAddToBatch,
+    areAllProvidersDisabled
   }
 }
 
