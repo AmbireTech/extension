@@ -7,6 +7,7 @@ import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Badge from '@common/components/Badge'
+import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -20,9 +21,28 @@ import getStyles from './styles'
 const DAppConnectBody: FC<{
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
-}> = ({ securityCheck, responsiveSizeMultiplier = 1 }) => {
+  isTrustedByUser?: boolean
+  canBeTrustedByUser?: boolean
+  onToggleTrust?: () => void
+}> = ({
+  securityCheck,
+  isTrustedByUser = false,
+  canBeTrustedByUser = false,
+  onToggleTrust,
+  responsiveSizeMultiplier = 1
+}) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+
+  // The user vouched for this app, so the warning about its hosting is no longer shown - the rest
+  // of the security checks are untouched by that.
+  const isSuspiciousHosting = securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+
+  // The trust action takes the severity badge's slot; the warning text below and the box's own
+  // border still carry the severity, so nothing is lost by swapping them.
+  const shouldOfferTrust = isSuspiciousHosting && canBeTrustedByUser
+  const shouldShowWarningBadge =
+    !shouldOfferTrust && (isSuspiciousHosting || securityCheck === 'FAILED_TO_GET')
 
   const spacingsStyle = useMemo(() => {
     return {
@@ -41,7 +61,7 @@ const DAppConnectBody: FC<{
             marginBottom: SPACING * responsiveSizeMultiplier
           },
           securityCheck === 'BLACKLISTED' && { borderColor: theme.errorDecorative },
-          (securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET') && {
+          (isSuspiciousHosting || securityCheck === 'FAILED_TO_GET') && {
             borderColor: theme.warningDecorative
           }
         ]}
@@ -68,7 +88,27 @@ const DAppConnectBody: FC<{
               />
             </Badge>
           )}
-          {(securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET') && (
+          {isTrustedByUser && (
+            <Badge
+              type="warning"
+              text={t('Trusted by you')}
+              tooltipText={t(
+                'Hosted on a shared platform commonly used for phishing, but you marked it as trusted, so we no longer warn you.'
+              )}
+            />
+          )}
+          {shouldOfferTrust && (
+            <Button
+              type="warning"
+              size="tiny"
+              text={t('Trust this app')}
+              onPress={() => onToggleTrust?.()}
+              hasBottomSpacing={false}
+              testID="trust-dapp-button"
+              style={styles.trustButton}
+            />
+          )}
+          {shouldShowWarningBadge && (
             <Badge type="warning" text={t('Warning')}>
               <WarningIcon
                 width={12}
@@ -80,7 +120,7 @@ const DAppConnectBody: FC<{
           )}
         </View>
         {(securityCheck === 'BLACKLISTED' ||
-          securityCheck === 'SUSPICIOUS_HOSTING' ||
+          isSuspiciousHosting ||
           securityCheck === 'FAILED_TO_GET') && (
           <View style={spacings.ptTy}>
             <Text
@@ -115,16 +155,29 @@ const DAppConnectBody: FC<{
                 </Text>
               </Trans>
             )}
-            {securityCheck === 'SUSPICIOUS_HOSTING' && (
-              <Text
-                fontSize={12 * responsiveSizeMultiplier}
-                color={theme.warningDecorative}
-                style={{ lineHeight: 18 * responsiveSizeMultiplier }}
-              >
-                {t(
-                  'This app is hosted on a shared platform commonly used for phishing. Be careful - do not connect unless you are certain you trust it.'
+            {isSuspiciousHosting && (
+              <>
+                <Text
+                  fontSize={12 * responsiveSizeMultiplier}
+                  color={theme.warningDecorative}
+                  style={{ lineHeight: 18 * responsiveSizeMultiplier }}
+                >
+                  {t(
+                    'This app is hosted on a shared platform commonly used for phishing. Be careful - do not connect unless you are certain you trust it.'
+                  )}
+                </Text>
+                {!canBeTrustedByUser && (
+                  <Text
+                    fontSize={12 * responsiveSizeMultiplier}
+                    appearance="secondaryText"
+                    style={[spacings.ptTy, { lineHeight: 18 * responsiveSizeMultiplier }]}
+                  >
+                    {t(
+                      'Anyone can publish an app at this address, so we cannot tell this app apart from the rest and you cannot mark it as trusted.'
+                    )}
+                  </Text>
                 )}
-              </Text>
+              </>
             )}
             {securityCheck === 'FAILED_TO_GET' && (
               <Text
@@ -141,7 +194,7 @@ const DAppConnectBody: FC<{
       <DAppPermissions responsiveSizeMultiplier={responsiveSizeMultiplier} />
       {!(
         securityCheck === 'BLACKLISTED' ||
-        securityCheck === 'SUSPICIOUS_HOSTING' ||
+        isSuspiciousHosting ||
         securityCheck === 'FAILED_TO_GET'
       ) && (
         <Text

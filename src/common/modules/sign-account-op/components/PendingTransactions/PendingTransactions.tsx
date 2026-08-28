@@ -43,6 +43,7 @@ const PendingTransactions: FC<Props> = ({
               title={banner.title}
               text={banner.text}
               secondaryText={banner.secondaryText}
+              trustableDappUrls={banner.trustableDappUrls}
               style={spacings.mbTy}
             />
           ))}

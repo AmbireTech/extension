@@ -11,6 +11,7 @@ interface Styles {
   iconContainer: ViewStyle
   title: TextStyle
   badge: ViewStyle
+  trustButton: ViewStyle
   secondaryContainer: ViewStyle
   secondaryText: TextStyle
 }
@@ -52,6 +53,13 @@ const getStyles = (theme: ThemeProps) =>
     },
     badge: {
       flexShrink: 0
+    },
+    // Cancels the fixed height that Button's `size` applies, so the button is only as tall as its
+    // own label, and keeps it from stretching to the row when the heading wraps to two lines.
+    trustButton: {
+      alignSelf: 'flex-start',
+      height: 'auto',
+      minHeight: 'auto'
     },
     secondaryContainer: {
       ...flexbox.directionRow,

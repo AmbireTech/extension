@@ -24,6 +24,10 @@ import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+// The same footprint the sheet's other row action ("Manage") has, with a floor on the width so
+// flipping between "Trust" and "Untrust" cannot shift the row. Both labels sit well below it.
+const TRUST_BUTTON_STYLE: ViewStyle = { ...spacings.mlSm, height: 50, minWidth: 90 }
+
 interface ManageAppProps {
   dapp: Dapp
   children: React.ReactNode
@@ -35,7 +39,8 @@ interface ManageAppProps {
 
 const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: ManageAppProps) => {
   const { theme } = useTheme()
-  const { account, accounts, networks, onDisconnect, onSelectNetwork } = useManageApp(dapp)
+  const { account, accounts, networks, onDisconnect, onSelectNetwork, onToggleTrust } =
+    useManageApp(dapp)
   const { ref: sheetRef, open, close } = useModalize()
   const {
     ref: disconnectChooserRef,
@@ -266,6 +271,41 @@ const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: Manage
                 hasBottomSpacing={false}
                 style={{ ...spacings.mlSm, height: 50 }}
               />
+            </View>
+          </View>
+        )}
+
+        {dapp.blacklisted === 'SUSPICIOUS_HOSTING' && (
+          <View style={spacings.mbSm}>
+            <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
+              {t('Suspicious app hosting')}
+            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <View
+                style={[
+                  flexbox.flex1,
+                  common.borderRadiusPrimary,
+                  spacings.ph,
+                  spacings.pvTy,
+                  { backgroundColor: theme.tertiaryBackground }
+                ]}
+              >
+                <Text fontSize={14} appearance="secondaryText">
+                  {t(
+                    'Shared hosting, commonly used for phishing. Trust this app and we stop warning you.'
+                  )}
+                </Text>
+              </View>
+              {!!dapp.canBeTrustedByUser && (
+                <Button
+                  type={dapp.isTrustedByUser ? 'tertiary' : 'warning'}
+                  text={dapp.isTrustedByUser ? t('Untrust') : t('Trust')}
+                  onPress={onToggleTrust}
+                  hasBottomSpacing={false}
+                  testID="trust-dapp-button"
+                  style={TRUST_BUTTON_STYLE}
+                />
+              )}
             </View>
           </View>
         )}

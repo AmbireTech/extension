@@ -20,7 +20,10 @@ const DappConnectScreen = () => {
     handleDenyButtonPress,
     handleAuthorizeButtonPress,
     shouldHoldToProceed,
-    resolveButtonText
+    resolveButtonText,
+    isTrustedByUser,
+    canBeTrustedByUser,
+    toggleTrust
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
 
@@ -66,8 +69,14 @@ const DappConnectScreen = () => {
             id={dappToConnect.id}
             icon={dappToConnect.icon!}
             securityCheck={dappToConnect.blacklisted}
+            isTrustedByUser={isTrustedByUser}
           />
-          <DAppConnectBody securityCheck={dappToConnect.blacklisted} />
+          <DAppConnectBody
+            securityCheck={dappToConnect.blacklisted}
+            isTrustedByUser={isTrustedByUser}
+            canBeTrustedByUser={canBeTrustedByUser}
+            onToggleTrust={toggleTrust}
+          />
         </View>
       )}
     </MobileLayoutContainer>
