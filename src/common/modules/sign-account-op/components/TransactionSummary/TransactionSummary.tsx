@@ -23,7 +23,7 @@ import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
   getErc7730IntentText,
-  getVisibleErc7730RowsExcludingTitleParts,
+  getVisibleErc7730RowsExcludingIntentFields,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -202,7 +202,7 @@ const TransactionSummary = ({
   const hasErc7730TransactionSummaryRows = useMemo(
     () =>
       !!erc7730Visualization &&
-      getVisibleErc7730RowsExcludingTitleParts(erc7730Visualization).length > 0,
+      getVisibleErc7730RowsExcludingIntentFields(erc7730Visualization).length > 0,
     [erc7730Visualization]
   )
 

@@ -6,9 +6,12 @@ import { zeroAddress } from 'viem'
 
 type Erc7730Row = HumanizerErc7730Visualization['fields'][number]
 
-// The plain-text form of the rendered intent (e.g. "Swap") - the leading part
-// is always an `action`, so it's safe to read as a string for label
-// comparisons/heuristics/non-rich surfaces.
+// The plain-text form of the rendered intent (e.g. "Swap"), for label
+// comparisons/heuristics/non-rich surfaces. The leading part is an `action` for
+// the plain form and for any interpolated intent that starts with literal text,
+// which covers the templates seen in practice - but a template that opens with a
+// placeholder ("{amount} swapped for...") leads with a token/address part
+// instead, and there is no text to read, so callers must handle `undefined`.
 export const getErc7730IntentText = (item: HumanizerErc7730Visualization) => item.intent[0]?.content
 
 const labelIncludes = (label: string, needles: string[]) => {
@@ -43,7 +46,7 @@ export const getVisibleErc7730Rows = (item: HumanizerErc7730Visualization) =>
 
 // The rows to actually render below the intent: `fields` minus whatever the
 // intent already shows inline (`excludedFieldPaths`).
-export const getVisibleErc7730RowsExcludingTitleParts = (item: HumanizerErc7730Visualization) => {
+export const getVisibleErc7730RowsExcludingIntentFields = (item: HumanizerErc7730Visualization) => {
   const excludedPaths = new Set(item.excludedFieldPaths)
   return getVisibleErc7730Rows(item).filter((row) => !excludedPaths.has(row.path ?? ''))
 }

@@ -5,7 +5,7 @@ import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { submittedAccountOpToAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import type { Erc7730CallDescriptors } from '@ambire-common/libs/humanizer/erc7730/types'
-import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import type { HumanizerVisualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
 import useController from '@common/hooks/useController'
 
@@ -60,6 +60,20 @@ export const useHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
   return erc7730Calls ?? fallbackCalls
 }
 
+// The verbs a call's intent uses for a plain outgoing transfer. Both are matched because an
+// ERC-7730 descriptor may word it either way, and an interpolated intent leads with the template's
+// own verb rather than with the descriptor's plain `intent`.
+const SEND_INTENT_WORDS = ['send', 'transfer']
+
+const isSendVisualization = (visualization?: HumanizerVisualization): boolean => {
+  if (!visualization) return false
+
+  const intentText =
+    visualization.type === 'erc7730' ? visualization.intent[0]?.content : visualization.content
+
+  return !!intentText && SEND_INTENT_WORDS.includes(intentText.trim().toLowerCase())
+}
+
 export const getDappInteractionsFromHumanizedCalls = (
   submittedAccountOp: SubmittedAccountOpLike,
   humanizedCalls: IrCall[]
@@ -82,12 +96,7 @@ export const getDappInteractionsFromHumanizedCalls = (
   const sendAddresses = Array.from(
     new Set(
       humanizedCalls.flatMap((call) => {
-        const firstVisualization = call.fullVisualization?.[0]
-        const isSend =
-          firstVisualization?.type === 'erc7730'
-            ? firstVisualization.intent[0]?.content === 'Send'
-            : firstVisualization?.content === 'Send'
-        if (!isSend) return []
+        if (!isSendVisualization(call.fullVisualization?.[0])) return []
 
         return flattenHumanizerVisualizations(call.fullVisualization).flatMap((item) =>
           item.type === 'address' && item.address ? [item.address] : []

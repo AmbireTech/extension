@@ -4,10 +4,7 @@ import { jest } from '@jest/globals'
 
 import type { SubmittedAccountOpLike } from '@ambire-common/libs/accountOp/submittedAccountOp'
 
-import {
-  getDappInteractionsFromHumanizedCalls,
-  getHumanizedCalls
-} from './humanizedHelpers'
+import { getDappInteractionsFromHumanizedCalls, getHumanizedCalls } from './humanizedHelpers'
 
 // The hooks wrap this pure helper; testing it directly keeps these cases free of React/controllers.
 const getDappInteractions = (submittedAccountOp: SubmittedAccountOpLike) =>

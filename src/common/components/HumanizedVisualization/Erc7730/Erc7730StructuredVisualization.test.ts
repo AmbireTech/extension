@@ -14,7 +14,7 @@ import {
 import {
   getDetailedRows,
   getVisibleErc7730Rows,
-  getVisibleErc7730RowsExcludingTitleParts,
+  getVisibleErc7730RowsExcludingIntentFields,
   hasErc7730NativeValueRow,
   shouldUseErc7730DetailedLayout,
   shouldShowErc7730SummaryRowLabel
@@ -106,7 +106,7 @@ describe('getVisibleErc7730Rows', () => {
   })
 })
 
-describe('getVisibleErc7730RowsExcludingTitleParts', () => {
+describe('getVisibleErc7730RowsExcludingIntentFields', () => {
   test('returns no rows when every field path is already shown in the interpolated intent', () => {
     const token = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
     const recipient = '0xd8293ad21678c6f09da139b4b62d38e514a03b78'
@@ -123,7 +123,7 @@ describe('getVisibleErc7730RowsExcludingTitleParts', () => {
       }
     )
 
-    expect(getVisibleErc7730RowsExcludingTitleParts(visualization)).toEqual([])
+    expect(getVisibleErc7730RowsExcludingIntentFields(visualization)).toEqual([])
   })
 })
 
