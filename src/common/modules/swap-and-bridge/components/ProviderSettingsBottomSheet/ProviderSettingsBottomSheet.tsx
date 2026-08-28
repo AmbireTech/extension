@@ -1,7 +1,6 @@
-import React, { useCallback, useMemo } from 'react'
+import { memo, RefObject, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { SwapProviderInfo } from '@ambire-common/interfaces/swapAndBridge'
 import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
 import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
@@ -17,6 +16,9 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+
+import type { SwapProviderInfo } from '@ambire-common/interfaces/swapAndBridge'
+import type { Modalize } from 'react-native-modalize'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -42,7 +44,7 @@ const ProviderIconComponent = ({ providerId }: { providerId: SwapProviderInfo['i
   return null
 }
 
-const ProviderIcon = React.memo(ProviderIconComponent)
+const ProviderIcon = memo(ProviderIconComponent)
 
 const ProviderRowComponent = ({
   provider,
@@ -75,7 +77,7 @@ const ProviderRowComponent = ({
   )
 }
 
-const ProviderRow = React.memo(ProviderRowComponent)
+const ProviderRow = memo(ProviderRowComponent)
 
 const ProviderSettingsButtonComponent = ({
   onPress,
@@ -104,13 +106,13 @@ const ProviderSettingsButtonComponent = ({
   )
 }
 
-export const ProviderSettingsButton = React.memo(ProviderSettingsButtonComponent)
+export const ProviderSettingsButton = memo(ProviderSettingsButtonComponent)
 
 const ProviderSettingsBottomSheet = ({
   sheetRef,
   closeBottomSheet
 }: {
-  sheetRef: React.RefObject<any>
+  sheetRef: RefObject<Modalize>
   closeBottomSheet: () => void
 }) => {
   const { t } = useTranslation()
@@ -169,4 +171,4 @@ const ProviderSettingsBottomSheet = ({
   )
 }
 
-export default React.memo(ProviderSettingsBottomSheet)
+export default memo(ProviderSettingsBottomSheet)
