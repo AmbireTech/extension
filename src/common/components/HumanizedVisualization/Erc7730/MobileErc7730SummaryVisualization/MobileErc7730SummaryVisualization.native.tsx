@@ -4,7 +4,7 @@ import { SvgUri } from 'react-native-svg'
 
 import { shouldShowErc7730SummaryRowLabel } from '@common/components/HumanizedVisualization/Erc7730/helpers'
 import Text from '@common/components/Text'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -68,7 +68,9 @@ const MobileErc7730SummaryVisualization = ({
             flexbox.directionRow,
             flexbox.alignCenter,
             flexbox.wrap,
-            { minWidth: 0, flexShrink: 1 }
+            // The parts carry no surrounding whitespace of their own, so the
+            // spacing between them is the layout's job
+            { minWidth: 0, flexShrink: 1, gap: SPACING_MI }
           ]}
         >
           {item.intent.map((part) => renderValue(part, overrideTextSize))}

@@ -17,7 +17,7 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -277,7 +277,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             flexbox.directionRow,
             flexbox.alignCenter,
             flexbox.wrap,
-            { minWidth: 0, flexShrink: 1 }
+            // The parts carry no surrounding whitespace of their own, so the
+            // spacing between them is the layout's job
+            { minWidth: 0, flexShrink: 1, gap: SPACING_MI }
           ]}
         >
           {item.intent.map((part) => renderValue(part, overrideTextSize))}
