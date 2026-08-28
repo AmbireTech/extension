@@ -28,6 +28,7 @@ interface Props {
 }
 
 const SECTION_MENU_HEADER_HEIGHT = 50
+const TO_TOKEN_LIST_ERROR_ID = 'to-token-list-fetch-failed'
 
 const getToTokenListErrorOption = ({
   t,
@@ -48,7 +49,7 @@ const getToTokenListErrorOption = ({
           {t(title)}
         </Text>
         <Button
-          type="secondary"
+          type="primary"
           size="tiny"
           text={t('Retry')}
           onPress={retryToTokenList}
@@ -57,8 +58,7 @@ const getToTokenListErrorOption = ({
         />
       </View>
     ),
-    icon: null,
-    disabled: true
+    icon: null
   }
 }
 
@@ -111,6 +111,18 @@ const ToTokenSelect: React.FC<Props> = ({
     })
   }, [swapAndBridgeDispatch])
 
+  const handleChangeToTokenOrRetry = useCallback(
+    (value: SelectValue) => {
+      if (value.value === TO_TOKEN_LIST_ERROR_ID) {
+        retryToTokenList()
+        return
+      }
+
+      handleChangeToToken(value)
+    },
+    [handleChangeToToken, retryToTokenList]
+  )
+
   const isAttemptingToAddToTokenByAddress = addToTokenByAddressStatus !== 'INITIAL'
   const notFoundPlaceholderText = didAttemptSearchingTokenByAddress
     ? t('Not found. Wrong receive network?') // TODO: Add "... or unsupported token" when UI allows longer messages
@@ -119,7 +131,7 @@ const ToTokenSelect: React.FC<Props> = ({
   const toTokenListError = useMemo(() => {
     if (isTokenListLoading) return null
 
-    return errors.find(({ id }) => id === 'to-token-list-fetch-failed')
+    return errors.find(({ id }) => id === TO_TOKEN_LIST_ERROR_ID)
   }, [errors, isTokenListLoading])
 
   const toTokenValueOrError = useMemo(() => {
@@ -217,14 +229,14 @@ const ToTokenSelect: React.FC<Props> = ({
 
   return (
     <SectionedSelect
-      setValue={handleChangeToToken}
+      setValue={handleChangeToTokenOrRetry}
       mode="bottomSheet"
       bottomSheetTitle={t('Receive token')}
       sections={selectSections}
       renderSectionHeader={renderFeeOptionSectionHeader}
       value={toTokenValueOrError}
       headerHeight={SECTION_MENU_HEADER_HEIGHT}
-      disabled={toTokenAmountSelectDisabled || (toTokenValueOrError && !toTokenOptions.length)}
+      disabled={toTokenAmountSelectDisabled}
       testID="to-token-select"
       searchPlaceholder={t('Token name or address...')}
       // menuLeftHorizontalOffset={285}
