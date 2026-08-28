@@ -1,9 +1,13 @@
+import { useEffect, useMemo, useState } from 'react'
+
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { submittedAccountOpToAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import type { Erc7730CallDescriptors } from '@ambire-common/libs/humanizer/erc7730/types'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
+import useController from '@common/hooks/useController'
 
 import { DappInteraction, SubmittedAccountOpLike } from './types'
 
@@ -16,8 +20,49 @@ export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
   }))
 }
 
-export const getDappInteractions = (
-  submittedAccountOp: SubmittedAccountOpLike
+/**
+ * Renders the plain humanization immediately, then upgrades it in place once `Erc7730Controller`
+ * resolves the "clear signing" descriptors, so a past transaction reads the same way it did while
+ * being signed. Any failure (unreachable relayer, no descriptor for these calls) simply leaves the
+ * plain humanization on screen.
+ */
+export const useHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): IrCall[] => {
+  const { dispatchAndWait } = useController('Erc7730Controller')
+  const fallbackCalls = useMemo(() => getHumanizedCalls(submittedAccountOp), [submittedAccountOp])
+  const [erc7730Calls, setErc7730Calls] = useState<IrCall[] | null>(null)
+
+  useEffect(() => {
+    let isStale = false
+    const accountOp = submittedAccountOpToAccountOp(submittedAccountOp)
+
+    dispatchAndWait<'resolveDescriptorsForAccountOp', Erc7730CallDescriptors>({
+      type: 'method',
+      params: { method: 'resolveDescriptorsForAccountOp', args: [accountOp] }
+    })
+      .then((erc7730Descriptors) => {
+        if (isStale || !erc7730Descriptors || !Object.keys(erc7730Descriptors).length) return
+
+        setErc7730Calls(
+          humanizeAccountOp(accountOp, { erc7730Descriptors }).map((call, index) => ({
+            ...call,
+            id: call.id || String(index)
+          }))
+        )
+      })
+      .catch(() => null)
+
+    return () => {
+      isStale = true
+      setErc7730Calls(null)
+    }
+  }, [submittedAccountOp, dispatchAndWait])
+
+  return erc7730Calls ?? fallbackCalls
+}
+
+export const getDappInteractionsFromHumanizedCalls = (
+  submittedAccountOp: SubmittedAccountOpLike,
+  humanizedCalls: IrCall[]
 ): DappInteraction[] => {
   if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
     const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
@@ -34,7 +79,6 @@ export const getDappInteractions = (
 
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
-  const humanizedCalls = getHumanizedCalls(submittedAccountOp)
   const sendAddresses = Array.from(
     new Set(
       humanizedCalls.flatMap((call) => {
@@ -129,4 +173,15 @@ export const getDappInteractions = (
   }
 
   return interactions
+}
+
+export const useDappInteractions = (
+  submittedAccountOp: SubmittedAccountOpLike
+): DappInteraction[] => {
+  const humanizedCalls = useHumanizedCalls(submittedAccountOp)
+
+  return useMemo(
+    () => getDappInteractionsFromHumanizedCalls(submittedAccountOp, humanizedCalls),
+    [submittedAccountOp, humanizedCalls]
+  )
 }

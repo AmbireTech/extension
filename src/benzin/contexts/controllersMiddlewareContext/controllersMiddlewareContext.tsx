@@ -3,13 +3,16 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'reac
 import { networks } from '@ambire-common/consts/networks'
 import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
 import { DomainsController } from '@ambire-common/controllers/domains/domains'
+import { Erc7730Controller } from '@ambire-common/controllers/erc7730/erc7730'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
+import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { storage } from '@common/services/storage'
+import { RELAYER_URL } from '@env'
 import { Action, MethodAction } from '@common/types/actions'
 
 import type { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
@@ -76,6 +79,18 @@ export const ControllersMiddlewareProvider: React.FC<{
         eventEmitterRegistry: eventEmitterRegistry.current,
         providers: ctrls.ProvidersController.providers,
         getNetwork: (chainId) => networks.find((n) => n.chainId === chainId)
+      })
+
+      ctrls.Erc7730Controller = new Erc7730Controller({
+        eventEmitterRegistry: eventEmitterRegistry.current,
+        storage: ctrls.StorageController,
+        callRelayer: relayerCall.bind({
+          url: RELAYER_URL,
+          fetch: window.fetch.bind(window) as any
+        }),
+        sendUiMessage: (params) => {
+          eventBus.emit('receiveOneTimeData', params)
+        }
       })
 
       ctrls.ContractNamesController = new ContractNamesController({
