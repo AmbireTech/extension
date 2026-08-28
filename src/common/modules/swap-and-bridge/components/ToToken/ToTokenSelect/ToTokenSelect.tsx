@@ -6,9 +6,8 @@ import { View } from 'react-native'
 import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import StarFilledIcon from '@common/assets/svg/StarFilledIcon'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import Button from '@common/components/Button'
 import { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
@@ -17,7 +16,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
@@ -33,34 +31,29 @@ const SECTION_MENU_HEADER_HEIGHT = 50
 
 const getToTokenListErrorOption = ({
   t,
-  theme,
-  title,
-  text,
   id,
-  isValue
+  title,
+  retryToTokenList
 }: {
   t: (key: string) => string
-  theme: ThemeProps
-  title: string
-  text?: string
   id: string
-  isValue: boolean
+  title: string
+  retryToTokenList: () => void
 }) => {
   return {
     value: id,
     label: (
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <Text fontSize={14} weight="medium" appearance="errorText" style={spacings.mrMi}>
-          {t(isValue ? 'Temporarily unavailable' : title)}
+        <Text fontSize={14} weight="medium" appearance="errorText" style={spacings.mrSm}>
+          {t(title)}
         </Text>
-        <InfoIcon
-          color={theme.secondaryText}
-          width={14}
-          height={14}
-          dataSet={createGlobalTooltipDataSet({
-            id: 'to-token-list-error-tooltip',
-            content: text
-          })}
+        <Button
+          type="secondary"
+          size="tiny"
+          text={t('Retry')}
+          onPress={retryToTokenList}
+          hasBottomSpacing={false}
+          testID="retry-to-token-list"
         />
       </View>
     ),
@@ -78,7 +71,7 @@ const ToTokenSelect: React.FC<Props> = ({
   handleAddToTokenByAddress
 }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const { errors, isTokenListLoading, toTokenSearchTerm } =
     useController('SwapAndBridgeController').state
@@ -111,6 +104,13 @@ const ToTokenSelect: React.FC<Props> = ({
     [swapAndBridgeDispatch]
   )
 
+  const retryToTokenList = useCallback(() => {
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: { method: 'updateToTokenList', args: [false] }
+    })
+  }, [swapAndBridgeDispatch])
+
   const isAttemptingToAddToTokenByAddress = addToTokenByAddressStatus !== 'INITIAL'
   const notFoundPlaceholderText = didAttemptSearchingTokenByAddress
     ? t('Not found. Wrong receive network?') // TODO: Add "... or unsupported token" when UI allows longer messages
@@ -125,15 +125,15 @@ const ToTokenSelect: React.FC<Props> = ({
   const toTokenValueOrError = useMemo(() => {
     if (toTokenListError && !toTokenOptions.length) {
       return getToTokenListErrorOption({
-        ...toTokenListError,
+        id: toTokenListError.id,
+        title: toTokenListError.title,
         t,
-        theme,
-        isValue: true
+        retryToTokenList
       })
     }
 
     return toTokenValue
-  }, [t, theme, toTokenListError, toTokenOptions.length, toTokenValue])
+  }, [t, retryToTokenList, toTokenListError, toTokenOptions.length, toTokenValue])
 
   const selectSections = useMemo(() => {
     const { toTokenOptionsInAccount, restToTokenOptions } = toTokenOptions.reduce<{
@@ -170,10 +170,10 @@ const ToTokenSelect: React.FC<Props> = ({
     if (toTokenListError) {
       restToTokenOptions.unshift(
         getToTokenListErrorOption({
-          ...toTokenListError,
+          id: toTokenListError.id,
+          title: toTokenListError.title,
           t,
-          theme,
-          isValue: false
+          retryToTokenList
         })
       )
     }
@@ -198,7 +198,7 @@ const ToTokenSelect: React.FC<Props> = ({
         key: 'swap-and-bridge-to-service-provider-tokens'
       }
     ]
-  }, [toTokenOptions, toTokenListError, t, portfolio.tokens, theme, toTokenSearchTerm])
+  }, [toTokenOptions, toTokenListError, t, portfolio.tokens, retryToTokenList, toTokenSearchTerm])
 
   const renderFeeOptionSectionHeader = useCallback(
     ({ section }: any) => {
