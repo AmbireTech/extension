@@ -263,6 +263,7 @@ const SwapAndBridgeScreen = () => {
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
           openRoutesModal={openRoutesModal}
+          openProviderSettingsModal={openProviderSettingsModal}
           shouldEnableRoutesSelection={shouldEnableRoutesSelection}
         />
 

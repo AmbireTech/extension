@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
+import { memo, Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -273,6 +273,7 @@ const SwapAndBridgeScreen = () => {
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
           openRoutesModal={openRoutesModal}
+          openProviderSettingsModal={openProviderSettingsModal}
           shouldEnableRoutesSelection={shouldEnableRoutesSelection}
         />
       </Content>
@@ -307,4 +308,4 @@ const SwapAndBridgeScreen = () => {
   )
 }
 
-export default React.memo(SwapAndBridgeScreen)
+export default memo(SwapAndBridgeScreen)
