@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { Key } from '@ambire-common/interfaces/keystore'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import Alert from '@common/components/Alert'
 import useController from '@common/hooks/useController'
@@ -17,12 +16,14 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
 import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
 import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
+import ProviderSettingsBottomSheet, {
+  ProviderSettingsButton
+} from '@common/modules/swap-and-bridge/components/ProviderSettingsBottomSheet'
 import RouteInfo from '@common/modules/swap-and-bridge/components/RouteInfo'
 import RoutesModal from '@common/modules/swap-and-bridge/components/RoutesModal'
 import ToToken from '@common/modules/swap-and-bridge/components/ToToken'
 import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -30,6 +31,7 @@ import {
 import Modals from '@mobile/modules/sign-account-op/components/Modals'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 
+import type { Key } from '@ambire-common/interfaces/keystore'
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -61,7 +63,10 @@ const SwapAndBridgeScreen = () => {
     batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch
+    shouldDisableAddToBatch,
+    providerSettingsModalRef,
+    openProviderSettingsModal,
+    closeProviderSettingsModal
   } = useSwapAndBridgeForm()
   const {
     state: {
@@ -227,6 +232,7 @@ const SwapAndBridgeScreen = () => {
         withBackButton
         onBackButtonPress={onBackButtonPress}
         title={t('Swap & Bridge')}
+        rightIcon={<ProviderSettingsButton compact onPress={openProviderSettingsModal} />}
         withScroll
         keyboardAwareScrollViewProps={{ bottomOffset: 250 }}
       >
@@ -261,6 +267,10 @@ const SwapAndBridgeScreen = () => {
         />
 
         <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
+        <ProviderSettingsBottomSheet
+          sheetRef={providerSettingsModalRef}
+          closeBottomSheet={closeProviderSettingsModal}
+        />
         <Estimation
           updateType="Swap&Bridge"
           estimationModalRef={estimationModalRef}
@@ -285,4 +295,4 @@ const SwapAndBridgeScreen = () => {
   )
 }
 
-export default React.memo(SwapAndBridgeScreen)
+export default memo(SwapAndBridgeScreen)

@@ -67,10 +67,6 @@ const useSwapAndBridgeForm = () => {
   })
 
   const isLocalStateOutOfSync = controllerAmountFieldValue !== fromAmountValue
-  /**
-   * @deprecated - the settings menu is not used anymore
-   */
-  const [settingModalVisible, setSettingsModalVisible] = useState<boolean>(false)
   const [activeRoute, setActiveRoute] = useState<SwapAndBridgeActiveRoute | undefined>(undefined)
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
@@ -97,6 +93,11 @@ const useSwapAndBridgeForm = () => {
     ref: priceImpactModalRef,
     open: openPriceImpactModal,
     close: closePriceImpactModal
+  } = useModalize()
+  const {
+    ref: providerSettingsModalRef,
+    open: openProviderSettingsModal,
+    close: closeProviderSettingsModal
   } = useModalize()
 
   const closePriceImpactModalWrapped = useCallback(() => {
@@ -450,13 +451,6 @@ const useSwapAndBridgeForm = () => {
     }
     closeEstimationModal()
   }, [closeEstimationModal, swapAndBridgeDispatch, formStatus])
-  /**
-   * @deprecated - the settings menu is not used anymore
-   */
-  const handleToggleSettingsMenu = useCallback(() => {
-    setSettingsModalVisible((p) => !p)
-  }, [])
-
   const selectedAccActiveRoutes = useMemo(() => {
     return (
       (activeRoutes || [])
@@ -538,8 +532,9 @@ const useSwapAndBridgeForm = () => {
     priceImpactModalRef,
     closePriceImpactModal: closePriceImpactModalWrapped,
     acknowledgeHighPriceImpact,
-    settingModalVisible,
-    handleToggleSettingsMenu,
+    providerSettingsModalRef,
+    openProviderSettingsModal,
+    closeProviderSettingsModal,
     selectedAccActiveRoutes,
     routesModalRef,
     displayedView,

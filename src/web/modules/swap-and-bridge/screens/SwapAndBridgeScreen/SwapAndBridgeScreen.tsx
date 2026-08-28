@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
-import { Key } from '@ambire-common/interfaces/keystore'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import Alert from '@common/components/Alert'
@@ -18,6 +17,9 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
 import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
 import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
+import ProviderSettingsBottomSheet, {
+  ProviderSettingsButton
+} from '@common/modules/swap-and-bridge/components/ProviderSettingsBottomSheet'
 import RouteInfo from '@common/modules/swap-and-bridge/components/RouteInfo'
 import RoutesModal from '@common/modules/swap-and-bridge/components/RoutesModal'
 import ToToken from '@common/modules/swap-and-bridge/components/ToToken'
@@ -29,6 +31,7 @@ import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
+import type { Key } from '@ambire-common/interfaces/keystore'
 const { isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
@@ -61,7 +64,10 @@ const SwapAndBridgeScreen = () => {
     batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch
+    shouldDisableAddToBatch,
+    providerSettingsModalRef,
+    openProviderSettingsModal,
+    closeProviderSettingsModal
   } = useSwapAndBridgeForm()
   const {
     state: {
@@ -249,7 +255,7 @@ const SwapAndBridgeScreen = () => {
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
             <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
             <PanelTitle title={t('Swap & Bridge')} />
-            <View style={{ width: 40 }} />
+            <ProviderSettingsButton onPress={openProviderSettingsModal} />
           </View>
           <View style={spacings.mbTy}>
             <FromToken
@@ -271,6 +277,10 @@ const SwapAndBridgeScreen = () => {
         />
       </Content>
       <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
+      <ProviderSettingsBottomSheet
+        sheetRef={providerSettingsModalRef}
+        closeBottomSheet={closeProviderSettingsModal}
+      />
       <Suspense fallback={null}>
         <Estimation
           updateType="Swap&Bridge"
