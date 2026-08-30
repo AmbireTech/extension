@@ -283,7 +283,11 @@ const SwapAndBridgeScreen = () => {
           areAllProvidersDisabled={areAllProvidersDisabled}
         />
       </Content>
-      <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
+      <RoutesModal
+        sheetRef={routesModalRef}
+        closeBottomSheet={closeRoutesModal}
+        openProviderSettingsBottomSheet={openProviderSettingsModal}
+      />
       <ProviderSettingsBottomSheet
         sheetRef={providerSettingsModalRef}
         closeBottomSheet={closeProviderSettingsModal}
