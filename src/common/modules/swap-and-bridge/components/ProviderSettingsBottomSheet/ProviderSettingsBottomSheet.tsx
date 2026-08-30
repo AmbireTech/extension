@@ -7,7 +7,7 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UniswapIcon from '@common/assets/svg/UniswapIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import Checkbox from '@common/components/Checkbox'
+import FatToggle from '@common/components/FatToggle'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -62,16 +62,17 @@ const ProviderRowComponent = ({
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvSm]}>
-      <View style={[PROVIDER_ICON_STYLE, flexbox.alignCenter]}>
+      <View style={[PROVIDER_ICON_STYLE]}>
         <ProviderIcon providerId={provider.id} />
       </View>
       <Text fontSize={16} weight="medium" style={flexbox.flex1}>
         {provider.name}
       </Text>
-      <Checkbox
-        testID={`swap-provider-${provider.id}-checkbox`}
-        value={isEnabled}
-        onValueChange={onValueChange}
+      <FatToggle
+        testID={`swap-provider-${provider.id}-toggle`}
+        isOn={isEnabled}
+        onToggle={onValueChange}
+        trackStyle={spacings.mr0}
       />
     </View>
   )
@@ -108,13 +109,7 @@ const ProviderSettingsButtonComponent = ({
 
 export const ProviderSettingsButton = memo(ProviderSettingsButtonComponent)
 
-const ProviderSettingsBottomSheet = ({
-  sheetRef,
-  closeBottomSheet
-}: {
-  sheetRef: RefObject<Modalize>
-  closeBottomSheet: () => void
-}) => {
+const SwapProviderSettingsComponent = () => {
   const { t } = useTranslation()
   const { state: swapProviders, dispatch: swapAndBridgeDispatch } = useController(
     'SwapAndBridgeController',
@@ -134,6 +129,34 @@ const ProviderSettingsBottomSheet = ({
     },
     [swapAndBridgeDispatch]
   )
+
+  return (
+    <>
+      <Text fontSize={14} appearance="secondaryText" style={spacings.mbTy}>
+        {t('Choose your providers for suggesting swap and bridge routes.')}
+      </Text>
+      {swapProviders.map((provider: SwapProviderInfo) => (
+        <ProviderRow
+          key={provider.id}
+          provider={provider}
+          isEnabled={!disabledSwapProviderIds.includes(provider.id)}
+          setProviderEnabled={setProviderEnabled}
+        />
+      ))}
+    </>
+  )
+}
+
+export const SwapProviderSettings = memo(SwapProviderSettingsComponent)
+
+const ProviderSettingsBottomSheet = ({
+  sheetRef,
+  closeBottomSheet
+}: {
+  sheetRef: RefObject<Modalize>
+  closeBottomSheet: () => void
+}) => {
+  const { t } = useTranslation()
 
   const headerComponent = useMemo(
     () => (
@@ -156,17 +179,7 @@ const ProviderSettingsBottomSheet = ({
       HeaderComponent={headerComponent}
       style={SHEET_STYLE}
     >
-      <Text fontSize={14} appearance="secondaryText" style={spacings.mb}>
-        {t('Choose which providers can be used to find swap and bridge routes.')}
-      </Text>
-      {swapProviders.map((provider: SwapProviderInfo) => (
-        <ProviderRow
-          key={provider.id}
-          provider={provider}
-          isEnabled={!disabledSwapProviderIds.includes(provider.id)}
-          setProviderEnabled={setProviderEnabled}
-        />
-      ))}
+      <SwapProviderSettings />
     </BottomSheet>
   )
 }

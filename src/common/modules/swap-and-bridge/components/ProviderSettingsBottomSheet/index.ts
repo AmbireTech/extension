@@ -1,2 +1,2 @@
-export { ProviderSettingsButton } from './ProviderSettingsBottomSheet'
+export { ProviderSettingsButton, SwapProviderSettings } from './ProviderSettingsBottomSheet'
 export { default } from './ProviderSettingsBottomSheet'
