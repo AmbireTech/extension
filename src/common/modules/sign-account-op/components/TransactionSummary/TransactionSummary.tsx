@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GestureResponderEvent, Pressable, View, ViewStyle } from 'react-native'
 import {
@@ -11,7 +11,6 @@ import {
   zeroAddress
 } from 'viem'
 
-import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { noStateUpdateStatuses, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import {
   getAction,
@@ -23,6 +22,7 @@ import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
   getVisibleErc7730RowsExcludingTitleParts,
+  MOBILE_ERC7730_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -44,6 +44,7 @@ import { getUiType } from '@common/utils/uiType'
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
 
+import type { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import type {
   HumanizerErc7730Visualization,
   IrCall
@@ -59,7 +60,7 @@ interface Props {
   type?: 'history' | 'benzin' | 'default'
   index?: number
   enableExpand?: boolean
-  rightIcon?: React.ReactNode
+  rightIcon?: ReactNode
   onRightIconPress?: () => void
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
@@ -204,6 +205,8 @@ const TransactionSummary = ({
       getVisibleErc7730RowsExcludingTitleParts(erc7730Visualization).length > 0,
     [erc7730Visualization]
   )
+  const shouldPadMobileErc7730TitleBottom =
+    shouldUseErc7730TransactionSummaryLayout && !hasErc7730TransactionSummaryRows && !hasCallFailed
 
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
@@ -659,7 +662,7 @@ const TransactionSummary = ({
           )}
           {!!erc7730DetailedTitle && (
             <Text
-              fontSize={textSize + 2}
+              fontSize={MOBILE_ERC7730_TEXT_SIZE}
               weight="semiBold"
               color={theme.secondaryAccent400}
               numberOfLines={1}
@@ -689,7 +692,7 @@ const TransactionSummary = ({
       <HumanizedVisualization
         data={[erc7730Visualization]}
         sizeMultiplierSize={sizeMultiplier[size]}
-        textSize={textSize + 2}
+        textSize={MOBILE_ERC7730_TEXT_SIZE}
         imageSize={24 * sizeMultiplier[size]}
         chainId={chainId}
         type={type}
@@ -707,7 +710,6 @@ const TransactionSummary = ({
     erc7730Visualization,
     shouldUseDetailedErc7730Layout,
     size,
-    textSize,
     theme,
     type
   ])
@@ -722,13 +724,14 @@ const TransactionSummary = ({
       <HumanizedVisualization
         data={visualizationData}
         sizeMultiplierSize={sizeMultiplier[size]}
-        textSize={textSize}
+        textSize={isMobile ? 14 : textSize}
         imageSize={imageSize}
         chainId={chainId}
         type={type}
         hasPadding={false}
         style={{ width: '100%', alignContent: 'flex-start' }}
         disableFlex
+        inlineDappIcon={isMobile}
         editApprovalCallInfo={editApprovalCallInfo}
         dapp={call.dapp}
       />
@@ -787,7 +790,9 @@ const TransactionSummary = ({
           ? spacings.pvTy
           : withMobileLayout && shouldUseDetailedErc7730Layout
             ? spacings.pt
-            : undefined
+            : withMobileLayout && shouldPadMobileErc7730TitleBottom
+              ? spacings.pbTy
+              : undefined
       }
       hideMobileContent={
         !!mobileFlatVisualization ||
@@ -1042,4 +1047,4 @@ const TransactionSummary = ({
   )
 }
 
-export default React.memo(TransactionSummary)
+export default memo(TransactionSummary)

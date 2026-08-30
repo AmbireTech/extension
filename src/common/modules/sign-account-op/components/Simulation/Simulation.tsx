@@ -247,6 +247,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             <View
               style={[
                 styles.simulationContainer,
+                !isCompactLayout && styles.simulationContainerWide,
                 hasAssetsIn && (isCompactLayout ? spacings.mbTy : spacings.mrTy)
               ]}
             >
@@ -257,7 +258,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                 {!hasAssetsIn && <TenderlySimulation />}
               </View>
               <ScrollableWrapper
-                type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
+                type={isMobile || isCompactLayout ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
                 style={styles.simulationScrollView}
                 contentContainerStyle={{ flexGrow: 1 }}
               >
@@ -299,7 +300,12 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             </View>
           )}
           {hasAssetsIn && (
-            <View style={styles.simulationContainer}>
+            <View
+              style={[
+                styles.simulationContainer,
+                !isCompactLayout && styles.simulationContainerWide
+              ]}
+            >
               <View style={styles.simulationContainerHeader}>
                 <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets in')}
@@ -307,7 +313,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                 <TenderlySimulation />
               </View>
               <ScrollableWrapper
-                type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
+                type={isMobile || isCompactLayout ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
                 style={styles.simulationScrollView}
                 contentContainerStyle={{ flexGrow: 1 }}
               >
