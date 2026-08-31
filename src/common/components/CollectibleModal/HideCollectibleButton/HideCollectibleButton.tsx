@@ -18,26 +18,14 @@ type Props = {
   address: string
   chainId: bigint
   tokenId: bigint
-  onCollectionPreferenceChange: () => void
   handleClose: () => void
 }
 
 /** Kept separate, as it relies on the PortfolioController, which the modal doesn't */
-const HideCollectibleButton: FC<Props> = ({
-  address,
-  chainId,
-  tokenId,
-  onCollectionPreferenceChange,
-  handleClose
-}) => {
+const HideCollectibleButton: FC<Props> = ({ address, chainId, tokenId, handleClose }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isHidden, toggleHideCollection } = useManageNft({
-    address,
-    chainId,
-    tokenId,
-    onCollectionPreferenceOrCustomCollectionChange: onCollectionPreferenceChange
-  })
+  const { isHidden, toggleHideCollection } = useManageNft({ address, chainId, tokenId })
 
   const handleHide = useCallback(() => {
     toggleHideCollection()

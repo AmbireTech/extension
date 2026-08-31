@@ -35,13 +35,11 @@ const ManageTokensSettingsScreen = () => {
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)
   const [activeTab, setActiveTab] = useState<AssetTab>('tokens')
   const search = watch('search')
-  const { customTokens, hiddenTokens, isLoading, onTokenPreferenceOrCustomTokenChange } =
-    useManageTokens({ search, networkFilter })
+  const { customTokens, hiddenTokens, isLoading } = useManageTokens({ search, networkFilter })
   const {
     customCollections,
     hiddenCollections,
-    isLoading: areNftsLoading,
-    onCollectionPreferenceOrCustomCollectionChange
+    isLoading: areNftsLoading
   } = useManageNfts({ search, networkFilter })
 
   useEffect(() => {
@@ -97,7 +95,6 @@ const ManageTokensSettingsScreen = () => {
               variant="custom"
               isLoading={isLoading}
               data={customTokens}
-              onAssetPreferenceChange={onTokenPreferenceOrCustomTokenChange}
               networkFilter={networkFilter}
               search={search}
             />
@@ -106,7 +103,6 @@ const ManageTokensSettingsScreen = () => {
               variant="hidden"
               isLoading={isLoading}
               data={hiddenTokens}
-              onAssetPreferenceChange={onTokenPreferenceOrCustomTokenChange}
               networkFilter={networkFilter}
               search={search}
             />
@@ -118,7 +114,6 @@ const ManageTokensSettingsScreen = () => {
               variant="custom"
               isLoading={areNftsLoading}
               data={customCollections}
-              onAssetPreferenceChange={onCollectionPreferenceOrCustomCollectionChange}
               networkFilter={networkFilter}
               search={search}
             />
@@ -127,7 +122,6 @@ const ManageTokensSettingsScreen = () => {
               variant="hidden"
               isLoading={areNftsLoading}
               data={hiddenCollections}
-              onAssetPreferenceChange={onCollectionPreferenceOrCustomCollectionChange}
               networkFilter={networkFilter}
               search={search}
             />

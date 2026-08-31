@@ -12,7 +12,6 @@ type Props = {
   standard: CustomToken['standard']
   /** Of a collectible, which is hidden and removed on its own */
   tokenId?: bigint
-  onAssetPreferenceChange: () => void
 }
 
 type UseManageAssetReturnType = {
@@ -26,8 +25,7 @@ const useManageAsset = ({
   address,
   chainId,
   standard,
-  tokenId,
-  onAssetPreferenceChange
+  tokenId
 }: Props): UseManageAssetReturnType => {
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -52,22 +50,12 @@ const useManageAsset = ({
       type: 'method',
       params: {
         method: 'toggleHideToken',
-        args: [{ address, chainId, standard, tokenId }, account?.addr]
+        // The last argument makes the controller update the portfolio of the
+        // affected network, so the change shows up
+        args: [{ address, chainId, standard, tokenId }, account?.addr, true]
       }
     })
-    onAssetPreferenceChange()
-  }, [
-    account?.addr,
-    addToast,
-    address,
-    chainId,
-    isHidden,
-    onAssetPreferenceChange,
-    portfolioDispatch,
-    standard,
-    copy,
-    t
-  ])
+  }, [account?.addr, addToast, address, chainId, isHidden, portfolioDispatch, standard, copy, t])
 
   const removeCustomAsset = useCallback(() => {
     addToast(t(copy.removedToast), { timeout: 2000 })
@@ -76,20 +64,10 @@ const useManageAsset = ({
       type: 'method',
       params: {
         method: 'removeCustomToken',
-        args: [{ address, chainId, tokenId }, account?.addr]
+        args: [{ address, chainId, tokenId }, account?.addr, true]
       }
     })
-    onAssetPreferenceChange()
-  }, [
-    account?.addr,
-    addToast,
-    address,
-    chainId,
-    onAssetPreferenceChange,
-    portfolioDispatch,
-    copy,
-    t
-  ])
+  }, [account?.addr, addToast, address, chainId, portfolioDispatch, copy, t])
 
   return { isHidden, toggleHideAsset, removeCustomAsset }
 }

@@ -5,7 +5,6 @@ type Props = {
   chainId: bigint
   /** Of the collectible, which is hidden and removed on its own */
   tokenId?: bigint
-  onCollectionPreferenceOrCustomCollectionChange: () => void
 }
 
 type UseManageNftReturnType = {
@@ -14,18 +13,12 @@ type UseManageNftReturnType = {
   removeCustomCollection: () => void
 }
 
-const useManageNft = ({
-  address,
-  chainId,
-  tokenId,
-  onCollectionPreferenceOrCustomCollectionChange
-}: Props): UseManageNftReturnType => {
+const useManageNft = ({ address, chainId, tokenId }: Props): UseManageNftReturnType => {
   const { isHidden, toggleHideAsset, removeCustomAsset } = useManageAsset({
     address,
     chainId,
     standard: 'ERC721',
-    tokenId,
-    onAssetPreferenceChange: onCollectionPreferenceOrCustomCollectionChange
+    tokenId
   })
 
   return {

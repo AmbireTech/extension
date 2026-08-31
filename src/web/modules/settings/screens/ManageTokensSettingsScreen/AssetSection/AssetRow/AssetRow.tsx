@@ -27,10 +27,9 @@ const ICON_SIZE = 32
 type Props = {
   asset: ManagedAsset<TokenResult | CollectionResult>
   standard: CustomToken['standard']
-  onAssetPreferenceChange: () => void
 }
 
-const AssetRow: FC<Props> = ({ asset, standard, onAssetPreferenceChange }) => {
+const AssetRow: FC<Props> = ({ asset, standard }) => {
   const { address, chainId, flags, symbol, tokenId } = asset
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -39,8 +38,7 @@ const AssetRow: FC<Props> = ({ asset, standard, onAssetPreferenceChange }) => {
     address,
     chainId,
     standard,
-    tokenId,
-    onAssetPreferenceChange
+    tokenId
   })
   const isCollection = standard === 'ERC721'
 

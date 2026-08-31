@@ -37,14 +37,14 @@ const CollectibleModal = ({
   modalRef,
   selectedCollectible,
   hideSendNft,
-  onCollectionPreferenceChange
+  canHideCollectible
 }: {
   handleClose: () => void
   modalRef: any
   selectedCollectible: SelectedCollectible
   hideSendNft?: boolean
-  /** Triggers a portfolio update after hiding. Pass it to display the hide action */
-  onCollectionPreferenceChange?: () => void
+  /** Displays the action that hides the collectible */
+  canHideCollectible?: boolean
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -53,7 +53,7 @@ const CollectibleModal = ({
     state: { networks }
   } = useController('NetworksController')
   // No actions on a collectible that is only being previewed (in a simulation)
-  const shouldDisplayHideCollectionAction = !hideSendNft && !!onCollectionPreferenceChange
+  const shouldDisplayHideCollectionAction = !hideSendNft && !!canHideCollectible
 
   const modalContent = useMemo(() => {
     if (!selectedCollectible) return null
@@ -83,12 +83,11 @@ const CollectibleModal = ({
               </View>
             )}
           />
-          {shouldDisplayHideCollectionAction && onCollectionPreferenceChange && (
+          {shouldDisplayHideCollectionAction && (
             <HideCollectibleButton
               address={address}
               chainId={chainId}
               tokenId={id}
-              onCollectionPreferenceChange={onCollectionPreferenceChange}
               handleClose={handleClose}
             />
           )}
@@ -165,7 +164,7 @@ const CollectibleModal = ({
   }, [
     handleClose,
     networks,
-    onCollectionPreferenceChange,
+    canHideCollectible,
     selectedCollectible,
     shouldDisplayHideCollectionAction,
     styles.image,

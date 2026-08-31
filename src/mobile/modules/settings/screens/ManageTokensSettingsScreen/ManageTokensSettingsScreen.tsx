@@ -54,13 +54,11 @@ const ManageTokensSettingsScreen = () => {
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)
   const [activeTab, setActiveTab] = useState<AssetTab>('tokens')
   const search = watch('search')
-  const { customTokens, hiddenTokens, isLoading, onTokenPreferenceOrCustomTokenChange } =
-    useManageTokens({ search, networkFilter })
+  const { customTokens, hiddenTokens, isLoading } = useManageTokens({ search, networkFilter })
   const {
     customCollections,
     hiddenCollections,
-    isLoading: areNftsLoading,
-    onCollectionPreferenceOrCustomCollectionChange
+    isLoading: areNftsLoading
   } = useManageNfts({ search, networkFilter })
   const isNftsTab = activeTab === 'nfts'
   const copy = ASSET_COPY[isNftsTab ? 'ERC721' : 'ERC20']
@@ -164,7 +162,6 @@ const ManageTokensSettingsScreen = () => {
               variant="custom"
               isLoading={isLoading}
               data={customTokens}
-              onAssetPreferenceChange={onTokenPreferenceOrCustomTokenChange}
             />
           )}
           {!isNftsTab && (isLoading || !!hiddenTokens.length) && (
@@ -173,7 +170,6 @@ const ManageTokensSettingsScreen = () => {
               variant="hidden"
               isLoading={isLoading}
               data={hiddenTokens}
-              onAssetPreferenceChange={onTokenPreferenceOrCustomTokenChange}
             />
           )}
           {isNftsTab && (areNftsLoading || !!customCollections.length) && (
@@ -182,7 +178,6 @@ const ManageTokensSettingsScreen = () => {
               variant="custom"
               isLoading={areNftsLoading}
               data={customCollections}
-              onAssetPreferenceChange={onCollectionPreferenceOrCustomCollectionChange}
             />
           )}
           {isNftsTab && (areNftsLoading || !!hiddenCollections.length) && (
@@ -191,7 +186,6 @@ const ManageTokensSettingsScreen = () => {
               variant="hidden"
               isLoading={areNftsLoading}
               data={hiddenCollections}
-              onAssetPreferenceChange={onCollectionPreferenceOrCustomCollectionChange}
             />
           )}
           {!isNftsTab && hasNoTokens && (

@@ -11,18 +11,19 @@ type UseManageNftsReturnType = {
   customCollections: ManagedAsset<CollectionResult>[]
   hiddenCollections: ManagedAsset<CollectionResult>[]
   isLoading: boolean
-  onCollectionPreferenceOrCustomCollectionChange: () => void
 }
 
 const useManageNfts = ({ search, networkFilter }: Props): UseManageNftsReturnType => {
-  const { customAssets, hiddenAssets, isLoading, onAssetPreferenceChange } =
-    useManageAssets<CollectionResult>({ search, networkFilter, standard: 'ERC721' })
+  const { customAssets, hiddenAssets, isLoading } = useManageAssets<CollectionResult>({
+    search,
+    networkFilter,
+    standard: 'ERC721'
+  })
 
   return {
     customCollections: customAssets,
     hiddenCollections: hiddenAssets,
-    isLoading,
-    onCollectionPreferenceOrCustomCollectionChange: onAssetPreferenceChange
+    isLoading
   }
 }
 

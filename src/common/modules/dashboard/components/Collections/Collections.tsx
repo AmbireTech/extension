@@ -15,7 +15,6 @@ import DashboardBanners from '@common/modules/dashboard/components/DashboardBann
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
-import useDebouncedPortfolioUpdate from '@common/hooks/useDebouncedPortfolioUpdate'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
@@ -59,7 +58,6 @@ const Collections: FC<Props> = ({
     state: { portfolio, dashboardNetworkFilter }
   } = useController('SelectedAccountController')
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
-  const updatePortfolio = useDebouncedPortfolioUpdate()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [selectedCollectible, setSelectedCollectible] = useState<SelectedCollectible | null>(null)
@@ -204,7 +202,7 @@ const Collections: FC<Props> = ({
         modalRef={modalRef}
         handleClose={closeCollectibleModal}
         selectedCollectible={selectedCollectible}
-        onCollectionPreferenceChange={updatePortfolio}
+        canHideCollectible
       />
       <DashboardPageScrollContainer
         tab="collectibles"

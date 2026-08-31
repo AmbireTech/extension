@@ -3,7 +3,6 @@ import useManageAsset from '@common/modules/settings/hooks/useManageAsset'
 type Props = {
   address: string
   chainId: bigint
-  onTokenPreferenceOrCustomTokenChange: () => void
 }
 
 type UseManageTokenReturnType = {
@@ -12,16 +11,11 @@ type UseManageTokenReturnType = {
   removeCustomToken: () => void
 }
 
-const useManageToken = ({
-  address,
-  chainId,
-  onTokenPreferenceOrCustomTokenChange
-}: Props): UseManageTokenReturnType => {
+const useManageToken = ({ address, chainId }: Props): UseManageTokenReturnType => {
   const { isHidden, toggleHideAsset, removeCustomAsset } = useManageAsset({
     address,
     chainId,
-    standard: 'ERC20',
-    onAssetPreferenceChange: onTokenPreferenceOrCustomTokenChange
+    standard: 'ERC20'
   })
 
   return { isHidden, toggleHideToken: toggleHideAsset, removeCustomToken: removeCustomAsset }

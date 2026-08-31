@@ -20,20 +20,11 @@ type Props = {
   variant: 'custom' | 'hidden'
   isLoading: boolean
   data: (TokenResult | CollectionResult)[]
-  onAssetPreferenceChange: () => void
   networkFilter: string
   search: string
 }
 
-const AssetSection: FC<Props> = ({
-  standard,
-  variant,
-  isLoading,
-  data,
-  onAssetPreferenceChange,
-  networkFilter,
-  search
-}) => {
+const AssetSection: FC<Props> = ({ standard, variant, isLoading, data, networkFilter, search }) => {
   const { t } = useTranslation()
   const copy = ASSET_COPY[standard]
 
@@ -68,14 +59,7 @@ const AssetSection: FC<Props> = ({
         </Text>
       )}
       {!isLoading &&
-        data.map((asset) => (
-          <AssetRow
-            key={getTokenId(asset)}
-            asset={asset}
-            standard={standard}
-            onAssetPreferenceChange={onAssetPreferenceChange}
-          />
-        ))}
+        data.map((asset) => <AssetRow key={getTokenId(asset)} asset={asset} standard={standard} />)}
       {isLoading && <Skeletons />}
     </View>
   )

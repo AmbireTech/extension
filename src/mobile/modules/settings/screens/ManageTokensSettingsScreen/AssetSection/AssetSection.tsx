@@ -19,16 +19,9 @@ type Props = {
   variant: 'custom' | 'hidden'
   isLoading: boolean
   data: (TokenResult | CollectionResult)[]
-  onAssetPreferenceChange: () => void
 }
 
-const AssetSection: FC<Props> = ({
-  standard,
-  variant,
-  isLoading,
-  data,
-  onAssetPreferenceChange
-}) => {
+const AssetSection: FC<Props> = ({ standard, variant, isLoading, data }) => {
   const { t } = useTranslation()
   const copy = ASSET_COPY[standard]
 
@@ -48,12 +41,7 @@ const AssetSection: FC<Props> = ({
             />
           ))
         : data.map((asset) => (
-            <AssetRow
-              key={getTokenId(asset)}
-              asset={asset}
-              standard={standard}
-              onAssetPreferenceChange={onAssetPreferenceChange}
-            />
+            <AssetRow key={getTokenId(asset)} asset={asset} standard={standard} />
           ))}
     </View>
   )
