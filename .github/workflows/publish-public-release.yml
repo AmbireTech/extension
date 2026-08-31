@@ -80,6 +80,14 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Checked first, because an expired or revoked token makes every call below
+          # fail with 401 - including the commit lookup, whose error message would
+          # send whoever is on release duty looking for a mirror problem instead.
+          if ! gh api "/repos/$PUBLIC_REPO" --silent 2>/dev/null; then
+            echo "::error::Cannot reach $PUBLIC_REPO with PUBLIC_REPO_RELEASE_TOKEN. The token has most likely expired or been revoked - generate a new fine-grained PAT (Contents: write on $PUBLIC_REPO only) and update the repository secret, then re-run this workflow."
+            exit 1
+          fi
+
           # The public repo is a mirror of main, updated on merge, so a release cut
           # from a branch that isn't merged yet has no commit to point at there.
           if ! gh api "/repos/$PUBLIC_REPO/commits/$RELEASE_SHA" --silent 2>/dev/null; then
