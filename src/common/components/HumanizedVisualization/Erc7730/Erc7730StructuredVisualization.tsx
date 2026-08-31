@@ -33,6 +33,7 @@ import {
   hasTokenValue,
   isNestedErc7730Row,
   isNestedErc7730Value,
+  MOBILE_ERC7730_TEXT_SIZE,
   shouldShowErc7730SpenderRowInSummary,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
@@ -199,7 +200,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       }
 
       if (valueItem.type === 'chain' && valueItem.chainId) {
-        return <ChainVisualization chainId={valueItem.chainId} key={valueItem.id} marginRight={0} />
+        return (
+          <ChainVisualization
+            chainId={valueItem.chainId}
+            key={valueItem.id}
+            marginRight={0}
+            textSize={overrideTextSize}
+          />
+        )
       }
 
       if (valueItem.type === 'erc7730') {
@@ -414,6 +422,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
   if (mode === 'summary') {
     if (isTransactionSummaryLayout) {
+      const titleTextSize = withMobileLayout ? MOBILE_ERC7730_TEXT_SIZE : textSize + 2
+      const valueTextSize = withMobileLayout ? MOBILE_ERC7730_TEXT_SIZE : textSize
+
       return (
         <View style={{ width: '100%', minWidth: 0 }}>
           {shouldShowTransactionSummaryTitle && (
@@ -440,7 +451,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   hideOnError
                 />
               )}
-              {renderTitleParts(textSize + 2)}
+              {renderTitleParts(titleTextSize)}
             </View>
           )}
           {shouldShowTransactionSummaryRows && (
@@ -495,7 +506,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                         key={value.id}
                         style={[{ flexShrink: 1, minWidth: 0 }, valueIndex > 0 && spacings.mlTy]}
                       >
-                        {renderValue(value)}
+                        {renderValue(value, valueTextSize)}
                       </View>
                     ))}
                   </View>
