@@ -9,6 +9,7 @@ import {
 } from '@ambire-common/interfaces/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
+import CowSwapIcon from '@common/assets/svg/CowSwapIcon'
 import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
 import UniswapIcon from '@common/assets/svg/UniswapIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
@@ -129,6 +130,8 @@ const RouteStepsPreview = ({
     <>
       {step.protocol.name.startsWith('Uniswap') ? (
         <UniswapIcon width={16} height={16} />
+      ) : step.protocol.name === 'CoW Swap' ? (
+        <CowSwapIcon width={16} height={16} />
       ) : (
         <TokenIcon uri={step.protocol.icon} width={16} height={16} />
       )}
@@ -275,6 +278,8 @@ const RouteStepsPreview = ({
               <BungeeIcon width={56.7} height={11.2} />
             ) : providerId === 'uniswap' ? (
               <UniswapIcon width={28} height={28} />
+            ) : providerId === 'cowswap' ? (
+              <CowSwapIcon width={28} height={28} />
             ) : (
               <LiFiIcon width={39.75} height={14} />
             )}
