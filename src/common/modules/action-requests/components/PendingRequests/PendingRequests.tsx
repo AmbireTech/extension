@@ -218,14 +218,29 @@ const PendingRequests = ({ style }: Props) => {
     },
     [closeBottomSheet, currentUserRequest?.id, requestsDispatch]
   )
-  const handleSummaryPress = useCallback(() => {
-    if (otherRequests.length === 1) {
-      openRequest(otherRequests[0]!.id)
-      return
-    }
-
-    openBottomSheet()
-  }, [openBottomSheet, openRequest, otherRequests])
+  const handleSummaryPress = useCallback(() => openBottomSheet(), [openBottomSheet])
+  const sheetHeader = useMemo(
+    () => (
+      <View style={styles.sheetHeader}>
+        <View style={[flexbox.flex1, spacings.mrSm]}>
+          <Text fontSize={20} weight="semiBold" style={spacings.mbMi}>
+            {t('Pending requests')}
+          </Text>
+          <Text appearance="secondaryText">{t('Open any request to review it.')}</Text>
+        </View>
+        <HoverablePressable
+          onPress={handleClose}
+          hitSlop={8}
+          style={styles.closeButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('Close pending requests')}
+        >
+          <CloseIcon color={theme.iconPrimary} width={14} height={14} />
+        </HoverablePressable>
+      </View>
+    ),
+    [handleClose, styles.closeButton, styles.sheetHeader, t, theme.iconPrimary]
+  )
   const previewIcons = useMemo(
     () => (
       <View style={styles.iconStack}>
@@ -248,7 +263,7 @@ const PendingRequests = ({ style }: Props) => {
     otherRequests.length === 1
       ? t('1 more pending request')
       : t('{{count}} more pending requests', { count: otherRequests.length })
-  const actionText = otherRequests.length === 1 ? t('See it') : t('See all')
+  const actionText = t('See all')
 
   return (
     <>
@@ -279,24 +294,8 @@ const PendingRequests = ({ style }: Props) => {
         onClosed={handleSheetClosed}
         type={isCompactLayout ? 'bottom-sheet' : 'modal'}
         backgroundColor="secondaryBackground"
+        HeaderComponent={sheetHeader}
       >
-        <View style={styles.sheetHeader}>
-          <View style={[flexbox.flex1, spacings.mrSm]}>
-            <Text fontSize={20} weight="semiBold" style={spacings.mbMi}>
-              {t('Pending requests')}
-            </Text>
-            <Text appearance="secondaryText">{t('Open any request to review it.')}</Text>
-          </View>
-          <HoverablePressable
-            onPress={handleClose}
-            hitSlop={8}
-            style={styles.closeButton}
-            accessibilityRole="button"
-            accessibilityLabel={t('Close pending requests')}
-          >
-            <CloseIcon color={theme.iconPrimary} width={14} height={14} />
-          </HoverablePressable>
-        </View>
         {visibleUserRequests.map((request) => (
           <RequestCard
             key={String(request.id)}
