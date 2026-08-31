@@ -7,6 +7,7 @@ import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import type { Erc7730CallDescriptors } from '@ambire-common/libs/humanizer/erc7730/types'
 import type { HumanizerVisualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import useController from '@common/hooks/useController'
 
 import { DappInteraction, SubmittedAccountOpLike } from './types'
@@ -49,7 +50,10 @@ export const useHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
           }))
         )
       })
-      .catch(() => null)
+      .catch((error) => {
+        // The plain humanization stays on screen, so this is not worth interrupting the user over
+        captureException(error)
+      })
 
     return () => {
       isStale = true
