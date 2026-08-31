@@ -12,7 +12,7 @@ let currentContext: BrowserContext | null = null
 const playwrightArgs = [
   `--disable-extensions-except=${__dirname}/../../${buildPath}/`,
   `--load-extension=${__dirname}/../${buildPath}/`,
-  '--disable-features=DialMediaRouteProvider, LocalNetworkAccessChecks, BlockInsecurePrivateNetworkRequests',
+  '--disable-features=DialMediaRouteProvider,LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests',
   '--clipboard-write=granted',
   '--clipboard-read=prompt',
   '--detectOpenHandles',
@@ -31,69 +31,18 @@ const playwrightArgs = [
   '--ip-address-space-overrides=127.0.0.1:0=public'
 ]
 
-/**
- * Closes any onboarding tab the extension opens AFTER bootstrap has finished
- * (e.g. slow service worker). Only get-started tabs are closed
- * In previous version additional get-started tab caused flakiness in tests
- */
 function closeDuplicateOnboardingTabs(context: BrowserContext, keep: Page): void {
   context.on('page', async (tab: Page) => {
     if (tab === keep || tab.isClosed()) return
 
     try {
-      await tab.waitForURL((u) => u.href.includes('get-started'), { timeout: 3000 })
+      await tab.waitForURL((u) => u.href.startsWith('chrome-extension://') && u.href.includes('tab.html'), { timeout: 5000 })
     } catch {
       return // not an onboarding tab — leave it alone
     }
 
-    await tab.close().catch(() => {})
+    await tab.close().catch(() => { })
   })
-}
-
-/**
- * adopt the extension's own tab instead of racing it, and close everything
- * else. Falls back to the launch tab if the extension never opens one.
- */
-async function acquireExtensionPage(
-  context: BrowserContext,
-  extensionURL: string,
-  timeout = 6000
-): Promise<Page> {
-  const isExtensionTab = (url: string) => url.startsWith(extensionURL)
-
-  let page = context.pages().find((p) => !p.isClosed() && isExtensionTab(p.url()))
-
-  if (!page) {
-    const deadline = Date.now() + timeout
-
-    /* eslint-disable no-await-in-loop */
-    while (!page && Date.now() < deadline) {
-      try {
-        const tab = await context.waitForEvent('page', {
-          timeout: Math.max(deadline - Date.now(), 1)
-        })
-        await tab.waitForURL((u) => isExtensionTab(u.href), { timeout: 3000 })
-        page = tab
-      } catch {
-        // not an extension tab, or nothing opened — keep waiting until deadline
-      }
-    }
-    /* eslint-enable no-await-in-loop */
-  }
-
-  page = page ?? context.pages()[0] ?? (await context.newPage())
-
-  // Exactly one tab from here on.
-  await Promise.all(
-    context
-      .pages()
-      .filter((p) => p !== page && !p.isClosed())
-      .map((p) => p.close().catch(() => { }))
-  )
-
-  closeDuplicateOnboardingTabs(context, page)
-
-  return page
 }
 
 /**
@@ -108,7 +57,7 @@ async function initBrowser(namespace: string): Promise<{
   serviceWorker: any
   context: BrowserContext
 }> {
-  // ✅ Close any previously opened context before creating a new one
+  // Close any previously opened context before creating a new one
   if (currentContext) {
     try {
       await currentContext.close()
@@ -153,8 +102,18 @@ async function initBrowser(namespace: string): Promise<{
   const extensionURL = `chrome-extension://${extensionId}`
 
   // 3. Take over the extension's own tab instead of opening another one
-  const page = await acquireExtensionPage(context, extensionURL)
+  // const page = await acquireExtensionPage(context, extensionURL)
+  const page = await context.newPage()
   page.setDefaultTimeout(120000)
+
+  closeDuplicateOnboardingTabs(context, page)
+
+  await Promise.all(
+    context
+      .pages()
+      .filter((p) => p !== page && !p.isClosed())
+      .map((p) => p.close().catch(() => { }))
+  )
 
   // 4. Attach console logging from service worker
   try {

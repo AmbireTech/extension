@@ -70,7 +70,6 @@ export class SwapAndBridgePage extends BasePage {
   // TODO: refactor this method
   async prepareSwapAndBridge(send_amount: number, fromToken: Token, toToken: Token) {
     await this.openSwapAndBridge()
-
     try {
       await this.selectSendToken(fromToken)
       // The receive network does not follow the send token, so select it explicitly.
@@ -99,12 +98,12 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async selectSendToken(sendToken: Token) {
-    await this.page.waitForTimeout(2000) // waiting for animation
+    await this.page.waitForTimeout(2500) // waiting for animation
     await this.clickOnMenuToken(sendToken, selectors.swapAndBridge.fromTokenDropdown)
   }
 
   async selectReceiveToken(receiveToken: Token) {
-    await this.page.waitForTimeout(2000) // waiting for animation
+    await this.page.waitForTimeout(2500) // waiting for animation
 
     await this.clickOnMenuToken(receiveToken, selectors.swapAndBridge.receiveTokenDropdown)
   }
