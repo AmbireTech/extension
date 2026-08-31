@@ -205,5 +205,7 @@ jobs:
       - name: Attach the assets to this repo's release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$TAG" assets/*.zip assets/SHA256SUMS sourcemaps/*.zip --clobber
+        # --repo is required: gh resolves the repository from a git remote or from
+        # --repo/GH_REPO, and this job has no checkout (it only needs the artifacts).
+        run: gh release upload "$TAG" assets/*.zip assets/SHA256SUMS sourcemaps/*.zip --repo "$GITHUB_REPOSITORY" --clobber
         shell: bash
