@@ -1,21 +1,36 @@
 import { KEYSTORE_PASS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
+import path from 'path'
 
 import { BrowserContext, chromium, Page } from '@playwright/test'
 
-const buildPath = `build/${process.env.WEBPACK_BUILD_OUTPUT_PATH || 'webkit-prod'}`
-const USER_DATA_DIR = '' // you can set a temp dir if needed
+// const buildPath = `build/${process.env.WEBPACK_BUILD_OUTPUT_PATH || 'webkit-prod'}`
+/**
+ * bootstrap file for the extension build
+ */
+
+const REPO_ROOT = path.resolve(__dirname, '..', '..')
+const BUILD_SUBDIR = process.env.WEBPACK_BUILD_OUTPUT_PATH || ''
+const EXTENSION_PATH =
+  process.env.E2E_EXTENSION_PATH || path.resolve(REPO_ROOT, 'build', BUILD_SUBDIR)
+
+/** Empty string - Playwright creates a fresh temp profile per launch. */
+const USER_DATA_DIR = ''
+
+/** How long to wait for the extension to open its own onboarding tab. */
+const EXTENSION_TAB_TIMEOUT = 6000
+
+const DEFAULT_TIMEOUT = 120000
 
 let currentContext: BrowserContext | null = null
 
 const playwrightArgs = [
-  `--disable-extensions-except=${__dirname}/../../${buildPath}/`,
-  `--load-extension=${__dirname}/../${buildPath}/`,
-  '--disable-features=DialMediaRouteProvider',
+  `--disable-extensions-except=${EXTENSION_PATH}`,
+  `--load-extension=${EXTENSION_PATH}`,
+  '--disable-features=DialMediaRouteProvider,LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests',
   '--clipboard-write=granted',
   '--clipboard-read=prompt',
-  '--detectOpenHandles',
   '--start-maximized',
   '--no-sandbox',
   '--disable-setuid-sandbox',
@@ -28,18 +43,24 @@ const playwrightArgs = [
   '--disable-accelerated-2d-canvas',
   '--disable-gl-drawing-for-tests',
   '--use-gl=swiftshader',
-  '--ip-address-space-overrides=127.0.0.1:0=public',
-  '--disable-features=LocalNetworkAccessChecks',
-  '--disable-features=BlockInsecurePrivateNetworkRequests'
+  '--ip-address-space-overrides=127.0.0.1:0=public'
 ]
 
-async function initBrowser(namespace: string): Promise<{
-  page: Page
-  extensionURL: string
-  serviceWorker: any
+// ---------------------------------------------------------------------------
+// Browser launch
+// ---------------------------------------------------------------------------
+
+/**
+ * Launches the persistent context with the extension loaded and waits for the
+ * extension's service worker to come up. Does NOT create a page
+ * the extension opens its own onboarding tab on install
+ */
+
+async function launchBrowser(): Promise<{
   context: BrowserContext
+  serviceWorker: any
+  extensionURL: string
 }> {
-  // ✅ Close any previously opened context before creating a new one
   if (currentContext) {
     try {
       await currentContext.close()
@@ -49,44 +70,37 @@ async function initBrowser(namespace: string): Promise<{
     currentContext = null
   }
 
-  // 1. Launch persistent context with extension
   const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
     channel: 'chromium',
     slowMo: 10,
     ignoreHTTPSErrors: true,
-    args: playwrightArgs, // make sure playwrightArgs is defined/imported
+    args: playwrightArgs,
     env: process.env.DISPLAY ? { DISPLAY: process.env.DISPLAY } : undefined,
-    viewport: null // explicitly set if not using default
+    viewport: null
   })
 
   currentContext = context
 
-  if (!context) {
-    throw new Error('Failed to create persistent browser context')
-  }
+  // Default timeout applies to every page in context, including tabs opened later
+  // (the block explorer tab, dapp popups, etc.)
+  context.setDefaultTimeout(DEFAULT_TIMEOUT)
 
-  // 2. Wait for service worker to load
   let serviceWorker
-  for (let i = 0; i < 50; i++) {
+
+  for (let i = 0; i < 50; i += 1) {
     serviceWorker = context
       .serviceWorkers()
       .find((sw) => sw.url().startsWith('chrome-extension://'))
     if (serviceWorker) break
-    await new Promise((res) => setTimeout(res, 100))
+    await new Promise((res) => {
+      setTimeout(res, 100)
+    })
   }
 
   if (!serviceWorker) {
-    throw new Error('Service worker not found after waiting')
+    throw new Error('❌ Extension service worker not found after waiting')
   }
 
-  const extensionId = serviceWorker.url().split('/')[2]
-  const extensionURL = `chrome-extension://${extensionId}`
-
-  // 3. Open extension page
-  const page = await context.newPage()
-  page.setDefaultTimeout(120000)
-
-  // 4. Attach console logging from service worker
   try {
     serviceWorker.on('console', (msg) => {
       console.log(`[service-worker] ${msg.text()}`)
@@ -95,60 +109,163 @@ async function initBrowser(namespace: string): Promise<{
     console.warn('Console logging for service worker not available:', err)
   }
 
-  return { page, extensionURL, serviceWorker, context }
+  const extensionId = serviceWorker.url().split('/')[2]
+  const extensionURL = `chrome-extension://${extensionId}`
+
+  return { context, serviceWorker, extensionURL }
 }
 
-// Wait until chrome.storage.local becomes available
-async function waitForStorage(serviceWorker) {
-  const maxAttempts = 50
+// ---------------------------------------------------------------------------
+// Tab management
+// ---------------------------------------------------------------------------
 
-  /* eslint-disable no-await-in-loop */
-  for (let i = 0; i < maxAttempts; i++) {
-    const isReady = await serviceWorker.evaluate(() => {
-      return typeof chrome !== 'undefined' && !!chrome.storage?.local
-    })
+/**
+ * Closes any onboarding tab the extension opens AFTER bootstrap finished
+ * for example due to slow service worker. Only get-started tabs (duplicate) that
+ * could open after initial tab will be closed
+ * The initial issue was another get-started page being opened
+ * causing flakiness in trezor test
+ *
+ * Returns a function that removes the listener.
+ */
+export function removeDuplicateOnboardingTabsIfAny(
+  context: BrowserContext,
+  keep: Page
+): () => void {
+  const handler = async (tab: Page) => {
+    if (tab === keep || tab.isClosed()) return
 
-    if (isReady) {
+    try {
+      await tab.waitForURL((u) => u.href.includes('get-started'), { timeout: 3000 })
+    } catch {
       return
     }
+
+    await tab.close().catch(() => {})
+  }
+
+  context.on('page', handler)
+
+  return () => context.off('page', handler)
+}
+
+/**
+ * Takes over the tab the extension opens on install instead of racing it.
+ *
+ * On a cold profile (which is every run, since USER_DATA_DIR is '') the
+ * extension's `onInstalled` handler calls `chrome.tabs.create` a second or two
+ * after launch. We wait for that tab, close the blank tab Chrome created at
+ * launch, and end up with exactly one page. If the tab never appears we fall
+ * back to driving a page ourselves.
+ */
+async function acquireExtensionPage(
+  context: BrowserContext,
+  extensionURL: string,
+  targetUrl: string,
+  timeout = EXTENSION_TAB_TIMEOUT
+): Promise<Page> {
+  const isExtensionTab = (url: string) => url.startsWith(extensionURL)
+
+  let page = context.pages().find((p) => !p.isClosed() && isExtensionTab(p.url()))
+
+  if (!page) {
+    const deadline = Date.now() + timeout // additional tab takes couple of seconds to open
+
+    while (!page && Date.now() < deadline) {
+      try {
+        const tab = await context.waitForEvent('page', {
+          timeout: Math.max(deadline - Date.now(), 1)
+        })
+        await tab.waitForURL((u) => isExtensionTab(u.href), { timeout: 3000 })
+        page = tab
+      } catch {
+        // not an extension tab (or nothing opened) — keep waiting until deadline
+      }
+    }
+  }
+
+  page = page ?? context.pages()[0] ?? (await context.newPage())
+
+  // Exactly one tab from here on.
+  await Promise.all(
+    context
+      .pages()
+      .filter((p) => p !== page && !p.isClosed())
+      .map((p) => p.close().catch(() => {}))
+  )
+
+  removeDuplicateOnboardingTabsIfAny(context, page)
+
+  await page.goto(targetUrl, { waitUntil: 'load' })
+
+  return page
+}
+
+// ---------------------------------------------------------------------------
+// Storage
+// ---------------------------------------------------------------------------
+
+/** Waits until chrome.storage.local is reachable from the service worker. */
+async function waitForStorage(serviceWorker: any): Promise<void> {
+  const maxAttempts = 50
+
+  for (let i = 0; i < maxAttempts; i += 1) {
+    const isReady = await serviceWorker.evaluate(
+      () => typeof chrome !== 'undefined' && !!chrome.storage?.local
+    )
+
+    if (isReady) return
 
     await new Promise((res) => {
       setTimeout(res, 100)
     })
   }
-  /* eslint-enable no-await-in-loop */
 
   throw new Error('❌ chrome.storage.local was never available in service worker')
 }
 
-//----------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Bootstraps
+// ---------------------------------------------------------------------------
+
+/**
+ * Bootstraps the extension with no pre-seeded account storage — lands on
+ * the get-started screen.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function bootstrap(namespace: string) {
-  const { page, context, extensionURL, serviceWorker } = await initBrowser(namespace)
-  await page.goto(`${extensionURL}${mainConstants.urls.getStarted}`, { waitUntil: 'load' })
+  const { context, serviceWorker, extensionURL } = await launchBrowser()
 
+  // Seed before acquiring the page: if the extension checks storage before
+  // opening its onboarding tab, it may skip opening one at all.
   await waitForStorage(serviceWorker)
-
   await serviceWorker.evaluate(() => chrome.storage.local.set({ isE2EStorageSet: true }))
-  return { page, context, extensionURL }
+
+  const page = await acquireExtensionPage(
+    context,
+    extensionURL,
+    `${extensionURL}${mainConstants.urls.getStarted}`
+  )
+
+  return { page, context, extensionURL, serviceWorker }
 }
 
-//----------------------------------------------------------------------------------------------
 /**
- * Bootstraps the application with storage settings.
+ * Bootstraps the extension with pre-seeded storage.
  *
- * @param {string} namespace - The namespace to be used.
- * @param {Object} storageParams - Parameters to configure storage.
- * @param {boolean} [shouldUnlockKeystoreManually=false] - If true, the keystore must be unlocked manually.
- *
- * @returns {Promise<void>} - A promise that resolves once the operation completes.
+ * @param namespace - kept for call-site compatibility; currently unused.
+ * @param storageParams - parsed keystore/account fixtures to write into
+ * chrome.storage.local before the UI mounts.
+ * @param shouldUnlockKeystoreManually - when true, the keystore unlock is left
+ * to the test.
  */
 export async function bootstrapWithStorage(
-  namespace,
-  storageParams,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  namespace: string,
+  storageParams: any,
   shouldUnlockKeystoreManually = false
 ) {
-  // Initialize browser and page using bootstrap
-  const { page, extensionURL, serviceWorker, context } = await initBrowser(namespace)
+  const { context, serviceWorker, extensionURL } = await launchBrowser()
 
   const {
     parsedKeystoreAccounts: accounts,
@@ -175,33 +292,21 @@ export async function bootstrapWithStorage(
     ...rest
   }
 
+  // Seed storage before the UI mounts, so the extension sees a completed setup
+  // and (ideally) never opens the onboarding tab.
   await waitForStorage(serviceWorker)
-
   await serviceWorker.evaluate((params) => chrome.storage.local.set(params), storageParamsMapped)
 
-  /**
-   * If something goes wrong with any of the functions below, e.g., `typeSeedPhrase`,
-   * this `bootstrapWithStorage` won't return the expected object (browser, recorder, etc.),
-   * and the CI will hang for a long time as the recorder won't be stopped in the `afterEach` block and will continue recording.
-   * This is the message we got in such a case in the CI:
-   *
-   * 'Jest did not exit one second after the test run has completed.
-   *  This usually means that there are asynchronous operations that weren't stopped in your tests.
-   *  Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.'
-   *
-   * To prevent such long-lasting handles, we are catching the error and stopping the Jest process.
-   */
-  if (!shouldUnlockKeystoreManually) {
-    try {
-      // Navigate to a specific URL if necessary
-      await page.goto(`${extensionURL}/tab.html#/`, { waitUntil: 'load' }) // removed '/keystore-unlock' because of wrong redirection to /keystore-setup
+  // '/keystore-unlock' omitted on purpose — it redirects to /keystore-setup.
+  const page = await acquireExtensionPage(context, extensionURL, `${extensionURL}/tab.html#/`)
 
-      await page.getByTestId(selectors.passphraseField).fill(KEYSTORE_PASS)
-      await page.getByTestId(selectors.buttonUnlock).click()
-    } catch (e) {
-      console.log(e)
-      process.exit(1)
-    }
+  if (!shouldUnlockKeystoreManually) {
+    // Let failures throw: Playwright's fixture teardown closes the context, and
+    // the trace/report is preserved. The old `process.exit(1)` here was Jest-era
+    // advice — under Playwright it kills the whole worker and takes unrelated
+    // tests down with it.
+    await page.getByTestId(selectors.passphraseField).fill(KEYSTORE_PASS)
+    await page.getByTestId(selectors.buttonUnlock).click()
   }
 
   return { page, context, serviceWorker, extensionURL }
