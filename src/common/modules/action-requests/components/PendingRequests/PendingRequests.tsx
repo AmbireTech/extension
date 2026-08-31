@@ -20,6 +20,7 @@ import CompactHumanizedCalls from '@common/modules/sign-account-op/components/Co
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import CompactMessagePreview from './lazyCompactMessagePreview'
 import {
   getIsAmbireWalletRequest,
   getIsSafeRequest,
@@ -30,7 +31,6 @@ import {
   getRequestTitle,
   getUniquePreviewRequestsByIcon
 } from './requestInfo'
-import CompactMessagePreview from './lazyCompactMessagePreview'
 import getStyles from './styles'
 
 import type { Network } from '@ambire-common/interfaces/network'
@@ -195,10 +195,11 @@ const PendingRequests = ({ style }: Props) => {
 
     return visibleUserRequests.filter(({ id }) => id !== currentUserRequest.id)
   }, [currentUserRequest, visibleUserRequests])
-  const previewRequests = useMemo(
-    () => getUniquePreviewRequestsByIcon(otherRequests),
-    [otherRequests]
-  )
+  const previewRequests = useMemo(() => {
+    if (!currentUserRequest) return []
+
+    return getUniquePreviewRequestsByIcon(visibleUserRequests)
+  }, [currentUserRequest, visibleUserRequests])
   const handleClose = useCallback(() => closeBottomSheet(), [closeBottomSheet])
   const handleSheetOpen = useCallback(() => setShouldRenderHumanization(true), [])
   const handleSheetClosed = useCallback(() => setShouldRenderHumanization(false), [])
