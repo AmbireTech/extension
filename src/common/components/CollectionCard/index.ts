@@ -1,5 +1,3 @@
-import CollectionCard, { formatCollectiblePrice } from './CollectionCard'
-
-export { formatCollectiblePrice }
+import CollectionCard from './CollectionCard'
 
 export default CollectionCard

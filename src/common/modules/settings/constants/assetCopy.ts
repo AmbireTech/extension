@@ -55,9 +55,9 @@ export const ASSET_COPY: {
       network: 'No hidden NFTs found on this network',
       searchAndNetwork: 'No hidden NFTs found for these filters'
     },
-    unhiddenToast: 'The collection is visible again.',
-    hiddenToast: 'The collection is now hidden. You can unhide it from Settings > Custom assets.',
-    removedToast: 'Collection removed'
+    unhiddenToast: 'The NFT is visible again.',
+    hiddenToast: 'The NFT is now hidden. You can unhide it from Settings > Custom assets.',
+    removedToast: 'NFT removed'
   }
 }
 

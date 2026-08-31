@@ -89,9 +89,8 @@ const Collections: FC<Props> = ({
           isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
         }
 
-        // Custom collections are displayed without collectibles too, the same
-        // way custom tokens are displayed with a zero balance
-        return isMatchingNetwork && (!!collectibles.length || !!flags.isCustom)
+        // A collection with no collectibles of the account has nothing to display
+        return isMatchingNetwork && !!collectibles.length
       }
     )
 
@@ -157,7 +156,7 @@ const Collections: FC<Props> = ({
 
       if (!initTab?.collectibles || !item || item === 'keep-this-to-avoid-key-warning') return null
 
-      const { name, address, chainId, collectibles, priceIn } = item
+      const { name, address, chainId, collectibles, priceIn, flags } = item
 
       return (
         <CollectionCard
@@ -169,6 +168,7 @@ const Collections: FC<Props> = ({
           priceIn={priceIn}
           openCollectibleModal={openCollectibleModal}
           networks={networks}
+          isCustom={flags?.isCustom}
         />
       )
     },

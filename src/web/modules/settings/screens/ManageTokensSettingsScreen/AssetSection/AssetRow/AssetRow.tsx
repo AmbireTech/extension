@@ -6,6 +6,7 @@ import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import { ManagedAsset } from '@common/modules/settings/hooks/useManageAssets/composeAssetLists'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
+import shortenCollectibleId from '@common/utils/shortenCollectibleId'
 import Badge from '@common/components/Badge'
 import Button from '@common/components/Button'
 import CollectionThumbnail from '@common/components/CollectionThumbnail'
@@ -66,7 +67,8 @@ const AssetRow: FC<Props> = ({ asset, standard, onAssetPreferenceChange }) => {
 
   // The portfolio has no name for assets it can't discover
   const name = (isCollection ? asset.name : symbol) || shortenAddress(address, 13)
-  const label = isCollection && typeof tokenId === 'bigint' ? `${name} #${tokenId}` : name
+  const label =
+    isCollection && typeof tokenId === 'bigint' ? `${name} #${shortenCollectibleId(tokenId)}` : name
 
   return (
     <View
@@ -109,11 +111,13 @@ const AssetRow: FC<Props> = ({ asset, standard, onAssetPreferenceChange }) => {
           testID={isCollection ? 'hidden-nft-name' : 'hidden-token-name'}
           weight="medium"
           selectable
-          style={spacings.mlTy}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[spacings.mlTy, flexbox.flex1]}
         >
           {label}
         </Text>
-        {flags.isCustom && <Badge text="Custom" />}
+        {flags.isCustom && <Badge text={t('Custom')} />}
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, { flex: 1.5 }]}>
         <NetworkIcon id={chainId.toString()} style={spacings.mrTy} />

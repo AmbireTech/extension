@@ -5,6 +5,7 @@ import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import { ManagedAsset } from '@common/modules/settings/hooks/useManageAssets/composeAssetLists'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
+import shortenCollectibleId from '@common/utils/shortenCollectibleId'
 import Button from '@common/components/Button'
 import CollectionThumbnail from '@common/components/CollectionThumbnail'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -44,7 +45,8 @@ const AssetRow: FC<Props> = ({ asset, standard, onAssetPreferenceChange }) => {
     networks.find(({ chainId: nChainId }) => nChainId === chainId)?.name || t('Unknown network')
   // The portfolio has no name for assets it can't discover
   const name = (isCollection ? asset.name : symbol) || shortenAddress(address, 13)
-  const label = isCollection && typeof tokenId === 'bigint' ? `${name} #${tokenId}` : name
+  const label =
+    isCollection && typeof tokenId === 'bigint' ? `${name} #${shortenCollectibleId(tokenId)}` : name
 
   return (
     <View

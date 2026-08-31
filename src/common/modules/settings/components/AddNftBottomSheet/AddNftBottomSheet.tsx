@@ -10,10 +10,9 @@ import { TokenValidationResult } from '@ambire-common/libs/portfolio/interfaces'
 import { isValidAddress } from '@ambire-common/services/address'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Alert from '@common/components/Alert/Alert'
-import Badge from '@common/components/Badge'
-import CollectionThumbnail from '@common/components/CollectionThumbnail'
+import CollectionCard from '@common/components/CollectionCard'
+import { NetworkIconIdType } from '@common/components/NetworkIcon/NetworkIcon'
 import Spinner from '@common/components/Spinner'
-import Text from '@common/components/Text'
 import Input from '@common/components/Input'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -265,12 +264,12 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
               testID="nft-token-id-field"
               onBlur={onBlur}
               onChangeText={onChange}
-              label={t('Item ID')}
+              label={t('NFT ID')}
               placeholder={t('e.g. 3142')}
               value={value}
               containerStyle={spacings.mbSm}
               error={
-                (value && !isTokenIdValid && t('The item ID is a number')) ||
+                (value && !isTokenIdValid && t('The NFT ID is a number')) ||
                 (hasOwnershipVerdict && !ownership?.isValid && ownership?.error?.message) ||
                 undefined
               }
@@ -280,26 +279,16 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         />
       }
     >
-      {validation?.isValid && !isAlreadyAdded && !isHidden ? (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.phTy, spacings.pvTy]}>
-          <CollectionThumbnail
-            address={address}
-            chainId={network?.chainId ?? 0n}
-            collectibleId={isTokenIdValid ? BigInt(tokenId) : undefined}
-            networks={networks}
-          />
-          <Text
-            testID="custom-nft-name"
-            fontSize={16}
-            style={spacings.mlTy}
-            weight="semiBold"
-            numberOfLines={1}
-          >
-            {collectionMeta?.name || shortenAddress(address, 13)}
-            {isTokenIdValid ? ` #${tokenId}` : ''}
-          </Text>
-          <Badge text={t('NFT')} />
-        </View>
+      {/* The NFT, the same way the dashboard displays it */}
+      {validation?.isValid && ownership?.isValid && network && !isAlreadyAdded && !isHidden ? (
+        <CollectionCard
+          name={collectionMeta?.name || shortenAddress(address, 13)}
+          address={address}
+          chainId={network.chainId.toString() as NetworkIconIdType}
+          collectibles={[BigInt(tokenId)]}
+          priceIn={[]}
+          networks={networks}
+        />
       ) : null}
 
       {isAlreadyAdded ? (
@@ -343,7 +332,7 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         <Alert
           type="warning"
           isTypeLabelHidden
-          title={t("Couldn't check this NFT collection. Please make sure you're online.")}
+          title={t("Couldn't check this NFT. Please make sure you're online.")}
           buttonProps={{ text: t('Try again'), onPress: retryCheck }}
           style={{ ...spacings.phSm, ...spacings.pvSm }}
         />

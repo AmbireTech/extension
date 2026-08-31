@@ -1,8 +1,10 @@
 import React, { FC, useMemo } from 'react'
 import { View } from 'react-native'
 
+import { useTranslation } from '@common/config/localization'
+
 import { Network } from '@ambire-common/interfaces/network'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import Badge from '@common/components/Badge'
 import Collectible from '@common/components/Collectible'
 import { COLLECTIBLE_SIZE } from '@common/components/Collectible/styles'
 import CollectionThumbnail from '@common/components/CollectionThumbnail'
@@ -29,21 +31,8 @@ interface Props {
   }[]
   openCollectibleModal?: (collectible: SelectedCollectible) => void
   networks: Network[]
-}
-
-export const formatCollectiblePrice = ({
-  baseCurrency,
-  price
-}: {
-  baseCurrency: string
-  price: number
-}) => {
-  if (baseCurrency === 'usd') {
-    return `$${formatDecimals(price)}`
-  }
-
-  // @TODO: handle other currencies
-  return `${formatDecimals(price)} ${baseCurrency.toUpperCase()}`
+  /** Labels a collection the user added themselves, which shows only the collectibles they added */
+  isCustom?: boolean
 }
 
 const { isTab } = getUiType()
@@ -55,8 +44,10 @@ const CollectionCard: FC<Props> = ({
   collectibles,
   priceIn,
   openCollectibleModal,
-  networks
+  networks,
+  isCustom
 }) => {
+  const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
 
   const networkData = useMemo(() => {
@@ -78,22 +69,21 @@ const CollectionCard: FC<Props> = ({
           <Text testID="collection-item" weight="medium" numberOfLines={1} lineBreakMode="tail">
             {name}
           </Text>
-          {
-            <View
-              style={{
-                minWidth: 20,
-                height: 20,
-                ...flexbox.center,
-                ...spacings.mlTy,
-                ...common.borderRadiusPrimary,
-                backgroundColor: theme.primaryBackground
-              }}
-            >
-              <Text fontSize={12} appearance="secondaryText">
-                {collectibles.length}
-              </Text>
-            </View>
-          }
+          <View
+            style={{
+              minWidth: 20,
+              height: 20,
+              ...flexbox.center,
+              ...spacings.mlTy,
+              ...common.borderRadiusPrimary,
+              backgroundColor: theme.primaryBackground
+            }}
+          >
+            <Text fontSize={12} appearance="secondaryText">
+              {collectibles.length}
+            </Text>
+          </View>
+          {isCustom && <Badge text={t('Custom')} />}
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <View
@@ -117,13 +107,15 @@ const CollectionCard: FC<Props> = ({
       </View>
       <View style={[flexbox.directionRow, flexbox.wrap]}>
         {!collectibles.length && (
-          <CollectionThumbnail
-            address={address}
-            chainId={BigInt(chainId)}
-            size={COLLECTIBLE_SIZE}
-            borderRadius={BORDER_RADIUS_PRIMARY}
-            networks={networks}
-          />
+          <View style={spacings.mbSm}>
+            <CollectionThumbnail
+              address={address}
+              chainId={BigInt(chainId)}
+              size={COLLECTIBLE_SIZE}
+              borderRadius={BORDER_RADIUS_PRIMARY}
+              networks={networks}
+            />
+          </View>
         )}
         {collectibles.map((collectible, index) => (
           <Collectible

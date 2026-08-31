@@ -2,17 +2,34 @@ import React, { FC } from 'react'
 import { Animated, Pressable, View, ViewStyle } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { SelectedCollectible } from '@common/components/CollectibleModal'
 import ManifestImage from '@common/components/ManifestImage'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import { formatCollectiblePrice } from '@common/components/CollectionCard/CollectionCard'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { NFT_CDN_URL } from '@env'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 
 import styles, { COLLECTIBLE_SIZE } from './styles'
+
+/** The last price a collectible was traded at, in the currency it was traded in */
+const formatCollectiblePrice = ({
+  baseCurrency,
+  price
+}: {
+  baseCurrency: string
+  price: number
+}) => {
+  if (baseCurrency === 'usd') {
+    return `$${formatDecimals(price)}`
+  }
+
+  // @TODO: handle other currencies
+  return `${formatDecimals(price)} ${baseCurrency.toUpperCase()}`
+}
 
 type Props = {
   style?: ViewStyle
@@ -66,15 +83,19 @@ const Collectible: FC<Props> = ({
         ...style
       }}
       onPress={() => {
-        if (!collectionData.name || !openCollectibleModal) return
+        if (!openCollectibleModal) return
+
+        // The portfolio has no name for collections it can't read it from
+        const collectionName = collectionData.name || shortenAddress(collectionData.address, 13)
+
         openCollectibleModal({
           address: collectionData.address,
-          name: `${collectionData.name} #${id}`,
+          name: `${collectionName} #${id}`,
           id,
           chainId: collectionData.chainId,
           lastPrice: collectionData.priceIn ? formatCollectiblePrice(collectionData.priceIn) : '',
           image: imageUrl,
-          collectionName: collectionData.name
+          collectionName
         })
       }}
       {...bindAnim}
@@ -94,10 +115,11 @@ const Collectible: FC<Props> = ({
           skeletonAppearance="primaryBackground"
           fallback={() => (
             <View
+              // Matches the placeholder of a collection without an image
               style={[
                 flexbox.flex1,
                 flexbox.center,
-                { backgroundColor: theme.primaryBackground, width: '100%' }
+                { backgroundColor: theme.neutral200, width: '100%' }
               ]}
             >
               <ImageIcon
