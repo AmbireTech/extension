@@ -83,7 +83,7 @@ jobs:
           # The public repo is a mirror of main, updated on merge, so a release cut
           # from a branch that isn't merged yet has no commit to point at there.
           if ! gh api "/repos/$PUBLIC_REPO/commits/$RELEASE_SHA" --silent 2>/dev/null; then
-            echo "::error::Commit $RELEASE_SHA is not in $PUBLIC_REPO yet. Merge the release branch into main, let the mirror run, then re-run this workflow."
+            echo "::error::Commit $RELEASE_SHA is not in $PUBLIC_REPO yet. The mirror (public-update.yml) pushes it on every v* tag - check that it ran for $TAG, then re-run this workflow."
             exit 1
           fi
 
