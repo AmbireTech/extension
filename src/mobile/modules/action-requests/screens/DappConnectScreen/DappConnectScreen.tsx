@@ -60,6 +60,7 @@ const DappConnectScreen = () => {
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
       }
+      style={spacings.mt}
     >
       {!!dappToConnect && (
         <View style={styles.content}>
