@@ -9,7 +9,7 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
-import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
 import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
@@ -37,6 +37,7 @@ const SwitchAccountScreen = () => {
 
   return (
     <MobileLayoutContainer
+      header={<ActionHeader />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter
@@ -56,7 +57,7 @@ const SwitchAccountScreen = () => {
               style={{
                 ...flexbox.center,
                 backgroundColor: theme.tertiaryBackground,
-                ...spacings.pvLg,
+                ...spacings.pv,
                 ...spacings.phSm
               }}
             >
@@ -74,7 +75,7 @@ const SwitchAccountScreen = () => {
                 >
                   <ManifestImage
                     uri={dAppData.icon}
-                    size={responsiveSizeMultiplier * 56}
+                    size={responsiveSizeMultiplier * 48}
                     containerStyle={{
                       backgroundColor: theme.secondaryBackground
                     }}
@@ -84,8 +85,8 @@ const SwitchAccountScreen = () => {
                     }}
                     fallback={() => (
                       <ManifestFallbackIcon
-                        width={responsiveSizeMultiplier * 56}
-                        height={responsiveSizeMultiplier * 56}
+                        width={responsiveSizeMultiplier * 48}
+                        height={responsiveSizeMultiplier * 48}
                       />
                     )}
                   />
@@ -105,7 +106,6 @@ const SwitchAccountScreen = () => {
                 </Text>
               )}
             </View>
-            <PendingRequests />
             <View
               style={{
                 backgroundColor: theme.primaryBackground,
