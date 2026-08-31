@@ -84,6 +84,7 @@ export const ControllersMiddlewareProvider: React.FC<{
       ctrls.Erc7730Controller = new Erc7730Controller({
         eventEmitterRegistry: eventEmitterRegistry.current,
         storage: ctrls.StorageController,
+        getProvider: (chainId) => ctrls.ProvidersController.providers[chainId.toString()],
         callRelayer: relayerCall.bind({
           url: RELAYER_URL,
           fetch: window.fetch.bind(window) as any
