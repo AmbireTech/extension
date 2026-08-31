@@ -41,28 +41,48 @@ const HighlightedPlainAddress: FC<Props> = ({
     }
   }, [address, prefix, suffix])
 
+  const textLineHeight = Math.ceil(fontSize * 1.5)
+
   return (
     <Text
       fontSize={fontSize}
       appearance="secondaryText"
       weight="mono_regular"
-      style={[spacings.mrMi, style]}
+      style={[
+        spacings.mrMi,
+        { lineHeight: textLineHeight },
+        style,
+        withWrap && {
+          // @ts-ignore web-only style for wrapping long hex addresses
+          wordBreak: 'break-all'
+        }
+      ]}
       numberOfLines={withWrap ? undefined : 1}
       ellipsizeMode={!withWrap && isMobile ? 'middle' : undefined}
     >
       {hideParentheses ? '' : '('}
-      <Text fontSize={fontSize} appearance="secondaryText" weight="mono_regular">
+      <Text
+        fontSize={fontSize}
+        appearance="secondaryText"
+        weight="mono_regular"
+        style={{ lineHeight: textLineHeight }}
+      >
         {prefixText}
       </Text>
       <Text
         fontSize={fontSize}
         appearance={color}
         weight="mono_regular"
-        style={{ fontWeight: '600' }} // we only have _regular font for mono, this makes it a little bolder
+        style={{ fontWeight: '600', lineHeight: textLineHeight }} // we only have _regular font for mono, this makes it a little bolder
       >
         {middleText}
       </Text>
-      <Text fontSize={fontSize} appearance="secondaryText" weight="mono_regular">
+      <Text
+        fontSize={fontSize}
+        appearance="secondaryText"
+        weight="mono_regular"
+        style={{ lineHeight: textLineHeight }}
+      >
         {suffixText}
       </Text>
       {hideParentheses ? '' : ')'}

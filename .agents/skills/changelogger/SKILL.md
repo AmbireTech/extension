@@ -57,8 +57,9 @@ Workflow
 10. Apply the exclusion rules (see "Excluded product areas" below) to drop Rewards/Legends PRs. Every other PR is included.
 11. Convert each remaining PR into a changelog entry.
 12. Categorize each remaining PR as Added, Changed, or Fixed.
-13. Order entries within each category oldest-merge first (chronological). Note that `git log` lists newest merges first, so reverse that order.
-14. Always append a Full Changelog GitHub compare link.
+13. Determine each entry's platform tag from its changed files, refined by any explicit platform note in the PR (see "Platform tags" below). Leave cross-platform entries untagged.
+14. Order entries within each category oldest-merge first (chronological). Note that `git log` lists newest merges first, so reverse that order.
+15. Always append a Full Changelog GitHub compare link.
 
 ## ambire-common submodule bump (root repo changelogs only)
 
@@ -269,6 +270,35 @@ Always use the current public product names in changelog entries, regardless of 
 
 Apply this silently — do not mention the rename in the entry.
 
+## Platform tags (mobile vs extension)
+
+The extension (Chrome, Firefox) and the mobile app (iOS, Android) ship from the **same release cycle** off a shared codebase, so most changes affect every platform. Do NOT tag those - an untagged entry means "all platforms". Tag only the exceptions.
+
+When a change is platform-specific, add a short tag in parentheses at the **start of the entry title**:
+
+* `(Mobile)` - both iOS and Android, not the extension
+* `(iOS)` / `(Android)` - one mobile OS only
+* `(Extension)` - Chrome and Firefox, not mobile
+* `(Chrome)` / `(Firefox)` - one browser only
+
+The tag is orthogonal to 📣 and goes right after it:
+
+```markdown
+* 📣 Added: (iOS) Face ID unlock https://github.com/AmbireTech/ambire-app/pull/1234
+* Fixed: (Android) Keyboard covers the amount input on the Send screen https://github.com/AmbireTech/ambire-app/pull/1235
+* Changed: (Extension) Firefox background script reconnect logic https://github.com/AmbireTech/ambire-app/pull/1236
+```
+
+### Deciding the platform
+
+Use the PR's **changed files as the primary signal** (`gh pr view <n> --json files`), and let an explicit platform statement in the PR title/body refine it. **Files win when the two disagree.**
+
+* changed files only under `src/mobile/`, `*.native.tsx` / `*.ios.tsx` / `*.android.tsx`, or the native `ios/` / `android/` folders → **Mobile** (narrow to `(iOS)` / `(Android)` when the files or the PR scope it further)
+* changed files only under `src/web/` → **Extension** (narrow to `(Chrome)` / `(Firefox)` when scoped)
+* anything touching `src/common/`, `src/ambire-common`, or a mix of environments → **no tag** (all platforms)
+
+If the PR body claims a platform (e.g. "iOS only") but the files are clearly cross-platform, trust the files and omit the tag. The PR text is only allowed to **narrow** a tag the files already justify (e.g. `(Android)` instead of a broad `(Mobile)`), never to add one the files contradict.
+
 ## Entry writing rules
 
 Each top-level bullet must:
@@ -360,6 +390,7 @@ Before returning the changelog, verify:
 * only merge commits were used
 * every top-level entry links to a GitHub PR
 * marketing-worthy entries have 📣
+* platform-specific entries carry a platform tag ((Mobile)/(iOS)/(Android)/(Extension)/(Chrome)/(Firefox)); cross-platform entries are untagged
 * public wording is clear (📣 titles state the user benefit in plain language, not internal jargon)
 * no em dashes or en dashes in any entry
 * Rewards/Legends PRs are excluded; all other PRs are present (including CI, QA, config, docs, TS fixes)

@@ -40,7 +40,6 @@ const BannerButton: FC<Props> = ({ type, colorType, onPress, children, testID, .
         typeStyle,
         {
           ...flexbox.center,
-          ...flexbox.alignSelfStart,
           ...spacings.phSm,
           height: 30,
           borderRadius: BORDER_RADIUS_PRIMARY

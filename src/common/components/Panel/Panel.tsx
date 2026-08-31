@@ -24,6 +24,8 @@ export interface PanelProps extends ViewProps {
   panelWidth?: number
   panelRef?: React.MutableRefObject<any>
   innerStyle?: ViewStyle
+  /** Overrides the spacing below the title of an onboarding panel */
+  titleContainerStyle?: ViewStyle
 }
 
 export const getPanelPaddings = (
@@ -91,6 +93,7 @@ const Panel: React.FC<PanelProps> = ({
   panelWidth = 400,
   panelRef,
   innerStyle,
+  titleContainerStyle,
   ...rest
 }) => {
   const { styles, theme } = useTheme(getStyles)
@@ -144,7 +147,14 @@ const Panel: React.FC<PanelProps> = ({
           {...rest}
         >
           {(!!title || !!withBackButton) && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                spacings.mb2Xl,
+                titleContainerStyle
+              ]}
+            >
               {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
               {!!title && <PanelTitle title={title} />}
               {!!withBackButton && <View style={{ width: 20 }} />}

@@ -1,16 +1,20 @@
-import './shim'
+// Uses require to preserve import order
+require('./shim')
 
-import './global'
-import './src/common/config/analytics/CrashAnalytics'
-import './src/common/services/layoutAnimation'
-import 'react-native-gesture-handler'
-import 'expo-asset'
+const { markBoot } = require('./src/mobile/services/bootProfiler/bootProfiler')
+const { BOOT_MARK } = require('./src/mobile/services/bootProfiler/constants')
 
-import { createElement } from 'react'
-import { createRoot } from 'react-dom/client'
+markBoot(BOOT_MARK.rnShimsEvaluated)
+
+require('./src/common/config/analytics/CrashAnalytics')
+require('./src/common/services/layoutAnimation')
+require('react-native-gesture-handler')
+require('expo-asset')
+
 import { registerRootComponent } from 'expo'
+const { LogBox, Platform } = require('react-native')
 
-import { LogBox, Platform } from 'react-native'
+markBoot(BOOT_MARK.rnNativeModulesEvaluated)
 
 LogBox.ignoreLogs([
   // Ignore the Android specific warnings for setting long timers
@@ -24,11 +28,13 @@ LogBox.ignoreLogs([
   // and ignore the warning temporarily.
   "exported from 'deprecated-react-native-prop-types'."
 ])
-
-// eslint-disable-next-line
-import App from './App'
+const App = require('./App').default
 
 if (Platform.OS === 'web') {
+  // react-dom is only reachable from this branch, so a native boot never evaluates it.
+  const { createElement } = require('react')
+  const { createRoot } = require('react-dom/client')
+
   // Fixes ReactDOM.render error
   // https://github.com/expo/expo/issues/18485
   const rootTag = createRoot(document.getElementById('root') ?? document.getElementById('main'))
@@ -37,6 +43,5 @@ if (Platform.OS === 'web') {
   // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
   // It also ensures that whether you load the app in Expo Go or in a native build,
   // the environment is set up appropriately
-  // registerRootComponent(App)
   registerRootComponent(App)
 }

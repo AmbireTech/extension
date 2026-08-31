@@ -161,7 +161,6 @@ const LedgerConnectScreen = () => {
         {!isUsbTab && bluetoothOn === false && (
           <Banner
             type="error"
-            singleRow
             style={spacings.mbLg}
             title={t('Bluetooth is turned off. Please enable it to continue.')}
           />

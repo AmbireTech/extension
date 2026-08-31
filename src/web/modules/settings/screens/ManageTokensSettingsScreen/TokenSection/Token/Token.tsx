@@ -11,7 +11,7 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
+import useManageToken from '@common/modules/settings/hooks/useManageToken'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -29,65 +29,13 @@ const Token: FC<Props> = ({
   onTokenPreferenceOrCustomTokenChange
 }) => {
   const { t } = useTranslation()
-  const { addToast } = useToast()
-  const {
-    state: { tokenPreferences },
-    dispatch: portfolioDispatch
-  } = useController('PortfolioController')
-  const { account } = useController('SelectedAccountController').state
   const { theme } = useTheme()
   const { networks } = useController('NetworksController').state
-  // flags.isHidden is updated after the portfolio is updated
-  // so we use tokenPreferences to get the value faster
-  const isHidden = !!tokenPreferences?.find(
-    ({ address: addr, chainId: nChainId }) =>
-      addr.toLowerCase() === address.toLowerCase() && nChainId === chainId
-  )?.isHidden
-
-  const toggleHideToken = useCallback(async () => {
-    addToast(t('Token is now visible. You can hide it again from the dashboard.'), {
-      timeout: 2000
-    })
-
-    portfolioDispatch({
-      type: 'method',
-      params: {
-        method: 'toggleHideToken',
-        args: [{ address, chainId }, account?.addr]
-      }
-    })
-    onTokenPreferenceOrCustomTokenChange()
-  }, [
-    addToast,
-    t,
-    portfolioDispatch,
+  const { isHidden, toggleHideToken, removeCustomToken } = useManageToken({
     address,
     chainId,
-    onTokenPreferenceOrCustomTokenChange,
-    account?.addr
-  ])
-
-  const removeCustomToken = useCallback(() => {
-    addToast(t('Token removed'), {
-      timeout: 2000
-    })
-    portfolioDispatch({
-      type: 'method',
-      params: {
-        method: 'removeCustomToken',
-        args: [{ address, chainId }, account?.addr]
-      }
-    })
-    onTokenPreferenceOrCustomTokenChange()
-  }, [
-    addToast,
-    address,
-    portfolioDispatch,
-    chainId,
-    onTokenPreferenceOrCustomTokenChange,
-    t,
-    account?.addr
-  ])
+    onTokenPreferenceOrCustomTokenChange
+  })
 
   const dropdownOptions = useMemo(() => {
     return [
@@ -108,7 +56,7 @@ const Token: FC<Props> = ({
         const network = networks.find(({ chainId: nChainId }) => nChainId === chainId)
         if (!network) return
 
-        await openInTab({ url: `${network.explorerUrl}/address/${address}` })
+        await openInTab({ url: `${network.explorerUrl}/token/${address}` })
       }
     },
     [address, chainId, networks, removeCustomToken]

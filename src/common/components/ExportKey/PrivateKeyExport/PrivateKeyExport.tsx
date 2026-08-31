@@ -1,5 +1,6 @@
-import React, { FC, useCallback } from 'react'
-import { View } from 'react-native'
+import { BlurView } from 'expo-blur'
+import React, { FC, useCallback, useMemo } from 'react'
+import { StyleSheet, View } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
@@ -12,10 +13,15 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 
 import getStyles from './styles'
+
+// Dummy value shown blurred before the real key is revealed, so the box doesn't look empty
+const PLACEHOLDER_PRIVATE_KEY = `0x${'0123456789abcdef'.repeat(4)}`
 
 interface Props {
   privateKey: string | null
@@ -27,8 +33,14 @@ interface Props {
 const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConfirmPassword }) => {
   const { t } = useTranslation()
 
-  const { theme, styles } = useTheme(getStyles)
+  const { theme, themeType, styles } = useTheme(getStyles)
   const { addToast } = useToast()
+
+  const visibilityButtonText = useMemo(() => {
+    if (!privateKey) return t('Reveal key')
+
+    return blurred ? t('Show key') : t('Hide key')
+  }, [blurred, privateKey, t])
 
   const handleCopyText = useCallback(async () => {
     if (!privateKey) return
@@ -58,13 +70,29 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
             spacings.pvMd,
             spacings.phMd,
             {
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              overflow: 'hidden',
               backgroundColor: theme.secondaryBackground
             }
           ]}
         >
           <Text testID="private-key-value" fontSize={14} color={theme.secondaryText}>
-            {privateKey}
+            {/* Before the key is revealed, render a dummy hex so the blur (CSS filter on web,
+                BlurView on native) has something to obscure instead of showing a flat solid box */}
+            {privateKey || PLACEHOLDER_PRIVATE_KEY}
           </Text>
+          {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView to hide the key */}
+          {isMobile && blurred && (
+            <BlurView
+              intensity={12}
+              // Android renders a barely visible tint instead of a blur unless this
+              // experimental method is on, leaving the phrase readable
+              experimentalBlurMethod="dimezisBlurView"
+              blurReductionFactor={1}
+              tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
         </View>
         <View
           style={[
@@ -100,7 +128,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
               hasBottomSpacing={false}
               type={isWeb ? 'ghost' : 'outline'}
               size={isWeb ? 'small' : 'regular'}
-              text={blurred ? t('Reveal key') : t('Hide key')}
+              text={visibilityButtonText}
             >
               {blurred ? (
                 <VisibilityIcon color={theme.iconPrimary} style={spacings.mlTy} width={18} />

@@ -88,7 +88,16 @@ test.describe('security: private key leak prevention', { tag: '@security' }, () 
     })
 
     await test.step('create new account', async () => {
-      generatedSeed = await pages.auth.createNewAccount()
+      await pages.auth.createNewAccount()
+    })
+
+    // New phrases are generated in the background and never shown during onboarding,
+    // so the only way to read one is the backup flow in the settings
+    await test.step('read the generated seed phrase from the settings', async () => {
+      await pages.recoveryPhrases.open()
+      const seedId = await pages.recoveryPhrases.getFirstSeedId()
+      const { phrase } = await pages.recoveryPhrases.revealSeed(seedId)
+      generatedSeed = phrase
     })
 
     await test.step('validate captured seed phrase', async () => {

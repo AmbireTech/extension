@@ -29,7 +29,7 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
+import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
 import useToast from '@common/hooks/useToast'

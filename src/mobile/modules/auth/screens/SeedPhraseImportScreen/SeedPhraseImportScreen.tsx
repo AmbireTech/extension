@@ -52,8 +52,6 @@ const SeedPhraseImportScreen = () => {
         withBackButton
         onBackButtonPress={goToPrevRoute}
         title={t('Import recovery phrase')}
-        step={1}
-        totalSteps={2}
         withScroll
       >
         <Controller

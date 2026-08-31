@@ -6,12 +6,12 @@ import { Network } from '@ambire-common/interfaces/network'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import RewardsIcon from '@common/assets/svg/RewardsIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 export type NetworkIconIdType = string | 'gasTank' | 'rewards'
 

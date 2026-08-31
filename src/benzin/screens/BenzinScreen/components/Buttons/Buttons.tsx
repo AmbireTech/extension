@@ -9,9 +9,18 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isBenzin, isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
 import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
 import { isExtension } from '@web/constants/browserapi'
+
+const useIsCompactBenzinButtonsLayout = () => {
+  const { maxWidthSize } = useWindowSize()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+
+  // Standalone Benzin website uses viewport width only; extension uses the shared side-panel rule.
+  return (isBenzin && !maxWidthSize('m')) || (isExtension && isCompactSidePanelLayout)
+}
 
 interface Props {
   handleCopyText: () => void
@@ -27,8 +36,7 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer' | 'disableOpenExpl
   disableOpenExplorerBtn
 }) => {
   const { theme } = useTheme()
-  const { maxWidthSize } = useWindowSize()
-  const isMobileInStandaloneBenzin = !maxWidthSize('s') && isBenzin
+  const isCompactLayout = useIsCompactBenzinButtonsLayout()
 
   const button = (
     <Button
@@ -37,14 +45,15 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer' | 'disableOpenExpl
       text="Open explorer"
       childrenPosition="left"
       hasBottomSpacing={isMobile}
-      size={isMobile ? 'regular' : isMobileInStandaloneBenzin ? 'smaller' : 'large'}
+      size={isMobile ? 'regular' : isCompactLayout ? 'smaller' : 'large'}
       disabled={disableOpenExplorerBtn}
       style={
         isWeb
           ? {
               ...spacings.phTy,
-              width: isMobileInStandaloneBenzin ? 240 : 170,
-              marginRight: isMobileInStandaloneBenzin ? 0 : SPACING_LG,
+              ...(isCompactLayout
+                ? { flex: 1, minWidth: 0, width: '100%' }
+                : { width: 170, marginRight: SPACING_LG }),
               borderWidth: 2
             }
           : { height: 46 }
@@ -69,17 +78,16 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer' | 'disableOpenExpl
 }
 
 const CopyButton: FC<Pick<Props, 'handleCopyText'>> = ({ handleCopyText }) => {
-  const { maxWidthSize } = useWindowSize()
-  const isMobileInStandaloneBenzin = !maxWidthSize('s') && isBenzin
+  const isCompactLayout = useIsCompactBenzinButtonsLayout()
 
   return (
     <Button
       style={
         isWeb
           ? {
-              width: isMobileInStandaloneBenzin ? 240 : 150,
+              ...(isCompactLayout ? { flex: 1, minWidth: 0, width: '100%' } : { width: 150 }),
               ...spacings.phTy,
-              marginTop: isMobileInStandaloneBenzin ? SPACING_TY : 0
+              marginTop: isCompactLayout && isBenzin ? SPACING_TY : 0
             }
           : { height: 46 }
       }
@@ -88,7 +96,7 @@ const CopyButton: FC<Pick<Props, 'handleCopyText'>> = ({ handleCopyText }) => {
       hasBottomSpacing={isMobile}
       type={isExtension || isMobile ? 'secondary' : 'primary'}
       childrenPosition="left"
-      size={isMobile ? 'regular' : isMobileInStandaloneBenzin ? 'smaller' : 'large'}
+      size={isMobile ? 'regular' : isCompactLayout ? 'smaller' : 'large'}
     >
       <CopyIcon style={spacings.mrMi} />
     </Button>
@@ -102,15 +110,16 @@ const Buttons: FC<Props> = ({
   showCopyBtn,
   showOpenExplorerBtn
 }) => {
-  const { maxWidthSize } = useWindowSize()
-  const isMobileInStandaloneBenzin = !maxWidthSize('s') && isBenzin
+  const isCompactLayout = useIsCompactBenzinButtonsLayout()
 
   return (
     <FooterGlassView
       absolute={false}
       style={spacings.mb}
       innerContainerStyle={{
-        flexDirection: isMobileInStandaloneBenzin ? 'column' : 'row'
+        ...(isCompactLayout
+          ? { width: '100%', flexDirection: 'column', alignItems: 'stretch' }
+          : { flexDirection: 'row' })
       }}
     >
       {showOpenExplorerBtn && (

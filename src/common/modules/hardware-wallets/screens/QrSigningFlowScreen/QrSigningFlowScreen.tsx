@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
@@ -11,14 +12,16 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
 import QrSignRequestScreen from '@common/modules/hardware-wallets/screens/QrSignRequestScreen'
 import QrSignResponseScanner from '@common/modules/hardware-wallets/screens/QrSignResponseScanner'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
-const { isTab } = getUiType()
+const { isTab, isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 type Props = {
   isVisible: boolean
@@ -50,6 +53,8 @@ const QrSigningFlowScreen = ({
 }: Props) => {
   const { ref, open, close } = useModalize()
   const { t } = useTranslation()
+  const { theme } = useTheme()
+  const { bottom } = useSafeAreaInsets()
 
   const request = useMemo(() => currentRequest, [currentRequest])
   const step = useMemo(() => signingStep, [signingStep])
@@ -66,21 +71,57 @@ const QrSigningFlowScreen = ({
     onReject()
   }, [close, onReject])
 
+  // Sticky footer, so the actions stay in place while a long signing request scrolls
+  const footerComponent = useMemo(() => {
+    if (!withMobileLayout || !request || step !== 'show-request') return undefined
+
+    return (
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          spacings.ptSm,
+          {
+            paddingBottom: isWeb ? 0 : bottom || SPACING_SM,
+            backgroundColor: theme.primaryBackground
+          }
+        ]}
+      >
+        <Button
+          size="regular"
+          hasBottomSpacing={false}
+          type="secondary"
+          text={t('Back')}
+          onPress={handleOnRejectPressed}
+          style={[flexbox.flex1, spacings.mrSm]}
+        />
+        <Button
+          size="regular"
+          hasBottomSpacing={false}
+          text={t('Get signature')}
+          onPress={onContinue}
+          style={flexbox.flex1}
+        />
+      </View>
+    )
+  }, [request, step, bottom, theme.primaryBackground, t, handleOnRejectPressed, onContinue])
+
   return (
     <BottomSheet
       id="qr-signing-flow-screen"
       sheetRef={ref}
       autoWidth={false}
-      adjustToContentHeight={isMobile}
-      modalHeight={isWeb ? 585 : undefined}
+      adjustToContentHeight={withMobileLayout}
+      modalHeight={isWeb && !withMobileLayout ? 585 : undefined}
       onClosed={handleClose}
       autoOpen={isVisible}
       type={!isTab ? 'bottom-sheet' : 'modal'}
       withBackdropBlur={false}
       shouldBeClosableOnDrag={false}
-      containerInnerWrapperStyles={isWeb ? flexbox.flex1 : undefined}
+      FooterComponent={footerComponent}
+      containerInnerWrapperStyles={isWeb && !withMobileLayout ? flexbox.flex1 : undefined}
       scrollViewProps={
-        isWeb
+        isWeb && !withMobileLayout
           ? {
               contentContainerStyle: flexbox.flex1
             }

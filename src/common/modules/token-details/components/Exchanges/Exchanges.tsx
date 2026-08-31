@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { Image, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { ExchangeInfo } from '@ambire-common/libs/portfolio/interfaces'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -12,6 +11,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getExchangesWithData } from '@common/utils/exchanges'
 
 import ExchangesBottomSheet from '../ExchangesBottomSheet'
 
@@ -35,24 +35,11 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
     }
   })
 
-  const exchangesWithData = useMemo(() => {
-    return (
-      exchanges
-        // Map before slice to ensure we have data for the exchanges we render
-        .map((exchange) => {
-          const exchangeInfo = exchangeData ? exchangeData[exchange] : null
-
-          if (!exchangeInfo) return null
-
-          return {
-            name: exchangeInfo.name,
-            image: exchangeInfo.image,
-            url: exchangeInfo.url
-          }
-        })
-        .filter((exchange): exchange is ExchangeInfo => exchange !== null)
-    )
-  }, [exchangeData, exchanges])
+  // Resolved before slicing, to ensure we have data for the exchanges we render
+  const exchangesWithData = useMemo(
+    () => getExchangesWithData(exchanges, exchangeData),
+    [exchangeData, exchanges]
+  )
 
   if (exchangesWithData.length === 0) return null
 
@@ -79,7 +66,7 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           {exchangesWithData.slice(0, 3).map((exchange) => (
             <View
-              key={exchange.name}
+              key={exchange.id}
               style={{
                 ...spacings.mrTy,
                 borderRadius: 20,

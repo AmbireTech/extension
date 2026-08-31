@@ -109,7 +109,15 @@ const flowContext = flow
             await mainCtrl.requests.focusRequestWindow()
           }
           const dappToAdd = await connectOrigins[connectKey]
-          await mainCtrl.dapps.addDapp({ ...dappToAdd, isConnected: true }, source)
+          // Keep this property explicit: undefined clears preferences from a previous connection.
+          await mainCtrl.dapps.addDapp(
+            {
+              ...dappToAdd,
+              isConnected: true,
+              accountPreferences: dappToAdd.accountPreferences
+            },
+            source
+          )
         } finally {
           delete connectOrigins[connectKey]
         }

@@ -16,10 +16,10 @@ const useCurrentActionSideEffects = () => {
     state: { currentUserRequest },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   useEffect(() => {
-    if (!areControllerStatesLoaded) return
+    if (!areAllControllerStatesLoaded) return
 
     if (
       (keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked) ||
@@ -40,7 +40,7 @@ const useCurrentActionSideEffects = () => {
     }
   }, [
     currentUserRequest,
-    areControllerStatesLoaded,
+    areAllControllerStatesLoaded,
     authStatus,
     requestsDispatch,
     keystoreState.isReadyToStoreKeys,
@@ -48,14 +48,14 @@ const useCurrentActionSideEffects = () => {
   ])
 
   useEffect(() => {
-    if (!areControllerStatesLoaded) return
+    if (!areAllControllerStatesLoaded) return
 
     const timeoutId = setTimeout(() => {
       if (isRequestWindow && !currentUserRequest) closeCurrentWindow()
     }, 1000)
 
     return () => clearTimeout(timeoutId)
-  }, [currentUserRequest, areControllerStatesLoaded])
+  }, [currentUserRequest, areAllControllerStatesLoaded])
 }
 
 export default useCurrentActionSideEffects

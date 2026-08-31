@@ -14,6 +14,9 @@ import ToggleDAppScopedAccounts from '@common/modules/dapp-catalog/components/To
 import useDAppAccountPreferences from '@common/modules/dapp-catalog/hooks/useDAppAccountPreferences'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 type Props = Pick<Dapp, 'id' | 'accountPreferences'>
 
@@ -75,7 +78,7 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
           allowedAccounts={localPreferences?.accounts || []}
           onToggleAccount={toggleSelectAccount}
         />
-        <FooterGlassView>
+        <FooterGlassView absolute={isSidePanel} preferGlassFooter={isSidePanel}>
           <Button
             type="secondary"
             text={t('Cancel')}

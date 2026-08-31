@@ -68,6 +68,7 @@ class TrezorController implements ExternalSignerController {
 
   async signingCleanup() {
     try {
+      this.walletSDK.cancel()
       await this.#windowManager.closePopupWithUrl('https://connect.trezor.io/9/popup.html')
     } catch (e) {
       console.error('Error while removing Trezor window', e)

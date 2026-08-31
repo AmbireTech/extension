@@ -1,21 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <script src="./lockdown"></script>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="main.css" />
-    <link rel="manifest" href="manifest.json" />
-    <meta charset="utf-8" />
-    <meta httpequiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-touch-fullscreen" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="ambire-mobile-wallet" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>Ambire Extension</title>
-  </head>
-  <body class="body-extension-popup">
-    <div id="root"></div>
-  </body>
+
+<head>
+  <meta charset="utf-8" />
+  <!-- Prevents rendering the popup as a small white square the first few ms it opens -->
+  <style>
+    html {
+      color-scheme: light dark;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    .body-extension-popup {
+      width: 480px;
+      height: 600px;
+    }
+  </style>
+  <script src="./lockdown"></script>
+  <script src="./rootTheme.js"></script>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="main.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta httpequiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-touch-fullscreen" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ambire-mobile-wallet" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Ambire Extension</title>
+</head>
+
+<body class="body-extension-popup">
+  <div id="root"></div>
+</body>
+
 </html>

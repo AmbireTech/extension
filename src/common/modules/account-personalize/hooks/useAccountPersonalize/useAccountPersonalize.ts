@@ -216,30 +216,16 @@ export default function useAccountPersonalize() {
         )
         setAccountsToPersonalize(merged)
       }
-    } else {
-      if (accountsToPersonalize.length) return
-      if (isLoading) return
-
-      const shouldAddAutomatically =
-        accountPickerState.initParams?.shouldAddNextAccountAutomatically ?? true
-
-      // If we expect the controller to automatically add an account, we
-      // shouldn't redirect simply because the account isn't in state yet.
-      // A yield to the UI might happen between selectNextAccount and addAccounts.
-      if (accountPickerState.isInitialized && shouldAddAutomatically) return
-
-      goToNextRoute()
     }
+    // Having nothing to personalize deliberately leaves the route alone: moving on from
+    // here dispatches instead of navigating, so it looped. The `Complete` button owns it.
   }, [
-    isLoading,
     accountPickerState.isInitialized,
-    accountPickerState.initParams?.shouldAddNextAccountAutomatically,
     accountPickerState.addedAccountsFromCurrentSession,
     accountsToPersonalize,
     newlyAddedAccounts,
     statuses.addAccounts,
-    setAccountsToPersonalize,
-    goToNextRoute
+    setAccountsToPersonalize
   ])
 
   // prevents showing accounts to personalize from prev sessions
@@ -301,10 +287,22 @@ export default function useAccountPersonalize() {
           args: []
         }
       })
+
+      // With accounts on screen the press confirms their names and the cards stay up as
+      // the receipt; with none there is nothing to confirm, so it moves on instead.
+      if (!accountsToPersonalize.length) goToNextRoute()
     } else {
       setCompleted(true)
     }
-  }, [isSetupComplete, accountsDispatch, accountPickerDispatch, handleSave, handleSubmit])
+  }, [
+    isSetupComplete,
+    accountsDispatch,
+    accountPickerDispatch,
+    handleSave,
+    handleSubmit,
+    accountsToPersonalize.length,
+    goToNextRoute
+  ])
 
   const handleContactSupport = useCallback(async () => {
     try {

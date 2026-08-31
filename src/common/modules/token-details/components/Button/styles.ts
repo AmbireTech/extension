@@ -6,23 +6,28 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   action: ViewStyle
+  actionCompact: ViewStyle
+}
+
+const compactActionStyle: ViewStyle = {
+  ...common.borderRadiusPrimary,
+  flex: 1,
+  flexShrink: 1,
+  minWidth: 0,
+  alignItems: 'center'
 }
 
 const getStyles = () =>
   StyleSheet.create<Style>({
     action: isMobile
-      ? {
-          ...flexbox.center,
-          ...common.borderRadiusPrimary,
-          flex: 1,
-          flexShrink: 1
-        }
+      ? compactActionStyle
       : {
           width: 104,
           ...flexbox.alignCenter,
           ...flexbox.justifyCenter,
           ...common.borderRadiusPrimary
-        }
+        },
+    actionCompact: compactActionStyle
   })
 
 export default getStyles

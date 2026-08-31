@@ -21,11 +21,23 @@ const pathToUiType = (pathname: string): UiType => {
 
 export const getUiType = (): UiTypeCheck => {
   if (!isWeb) {
-    return { isRequestWindow: false, isPopup: false, isTab: false, isMobileApp: false }
+    return {
+      isRequestWindow: false,
+      isPopup: false,
+      isSidePanel: false,
+      isTab: false,
+      isMobileApp: false
+    }
   }
 
   if (isWeb && !isExtension) {
-    return { isRequestWindow: false, isPopup: false, isTab: true, isMobileApp: false }
+    return {
+      isRequestWindow: false,
+      isPopup: false,
+      isSidePanel: false,
+      isTab: true,
+      isMobileApp: false
+    }
   }
 
   const { pathname } = window.location

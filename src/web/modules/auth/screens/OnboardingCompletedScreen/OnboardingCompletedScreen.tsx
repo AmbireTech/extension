@@ -51,8 +51,9 @@ const OnboardingCompletedScreen = () => {
     <>
       <PinExtension />
       <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
-        {/* Padding to fit the pin info */}
-        <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={{ paddingTop: 128 }}>
+        {/* No padding of its own, so the panel starts where the other onboarding ones do.
+        The pin info floats above it and needs no room reserved for it. */}
+        <TabLayoutWrapperMainContent withScroll={false}>
           <Panel
             type="onboarding"
             spacingsSize="small"

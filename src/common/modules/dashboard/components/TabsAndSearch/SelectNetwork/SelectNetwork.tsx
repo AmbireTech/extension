@@ -14,6 +14,7 @@ import useController from '@common/hooks/useController'
 import { AnimatedPressable, DURATIONS, useMultiHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -22,7 +23,7 @@ import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
-const { isPopup } = getUiType()
+const { isPopup, isSidePanel } = getUiType()
 
 const maxNetworkNameLengths = {
   popUp: 11,
@@ -37,6 +38,7 @@ const SelectNetwork = ({ currentTab }: Props) => {
   const { styles } = useTheme(getStyles)
   const { styles: tokenIconStyles } = useTheme(getTokenIconStyles)
   const { t } = useTranslation()
+  const { maxWidthSize } = useWindowSize()
   const {
     state: { dashboardNetworkFilter }
   } = useController('SelectedAccountController')
@@ -84,9 +86,14 @@ const SelectNetwork = ({ currentTab }: Props) => {
     navigate(url)
   }, [searchParams])
 
-  if (isMobile) {
+  // Mobile uses a compact icon button instead of the fixed-width dropdown.
+  // For side panel, only switch to the compact control at the smallest widths.
+  const shouldUseCompactNetworkButton = isMobile || (isSidePanel && !maxWidthSize('s'))
+
+  if (shouldUseCompactNetworkButton) {
     return (
       <Pressable
+        testID={`networks-dropdown-${currentTab}`}
         style={{
           width: 40,
           height: 40,

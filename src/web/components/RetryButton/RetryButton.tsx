@@ -7,7 +7,7 @@ import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -79,7 +79,11 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled, isLarge }) => {
       ...animStyle,
       paddingLeft: isMobile ? SPACING_SM : 6,
       paddingRight: isMobile ? SPACING_TY : 2,
-      height: isMobile ? 34 : isLarge ? 28 : 20,
+      // On mobile the label scales with the OS font size setting, so the height
+      // follows the content instead of clipping it
+      ...(isMobile
+        ? { minHeight: 34, paddingVertical: SPACING_MI }
+        : { height: isLarge ? 28 : 20 }),
       ...(disabled && { opacity: 0.5 })
     }),
     [animStyle, disabled, isLarge]

@@ -7,14 +7,14 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
-import CreateSeedPhrasePrepareScreen from '@mobile/modules/auth/screens/CreateSeedPhrasePrepareScreen'
-import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeedPhraseWriteScreen'
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
 import ImportExistingAccountSelectorScreen from '@mobile/modules/auth/screens/ImportExistingAccountSelectorScreen'
 import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSmartAccountJson'
 import MigrationOnboardingScreen from '@mobile/modules/auth/screens/MigrationOnboardingScreen'
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
 import SafeImportScreen from '@mobile/modules/auth/screens/SafeImportScreen'
+import SafeImportByOwnerScreen from '@mobile/modules/auth/screens/SafeImportByOwnerScreen'
+import SafeImportMethodScreen from '@mobile/modules/auth/screens/SafeImportMethodScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import ExploreScreen from '@mobile/modules/explore/screens/ExploreScreen'
@@ -31,12 +31,20 @@ import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@mobile/modules/router/components/NavMenu'
 import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
 import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
+import AddressBookSettingsScreen from '@mobile/modules/settings/screens/AddressBookSettingsScreen'
+import ChangeAppPasswordScreen from '@mobile/modules/settings/screens/ChangeAppPasswordScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
+import ManageTokensSettingsScreen from '@mobile/modules/settings/screens/ManageTokensSettingsScreen'
 import NetworksSettingsScreen from '@mobile/modules/settings/screens/NetworksSettingsScreen'
+import PrivacyOptOutsSettingsScreen from '@mobile/modules/settings/screens/PrivacyOptOutsSettingsScreen'
+import RecoveryPhrasesSettingsScreen from '@mobile/modules/settings/screens/RecoveryPhrasesSettingsScreen'
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
+import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
+import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
+import ImportAccountsFromExtensionScreen from '@mobile/modules/accounts-sync/screens/ImportAccountsFromExtensionScreen'
 import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
 const MainRoutes = () => {
@@ -59,14 +67,14 @@ const MainRoutes = () => {
         <Route path={ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
         <Route path={ROUTES.trezorConnect} element={<TrezorConnectScreen />} />
         <Route path={ROUTES.qrConnect} element={<QrConnectScreen />} />
+        <Route path={ROUTES.importAccountsFromExtension} element={<ImportAccountsFromExtensionScreen />} />
 
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
         <Route path={ROUTES.importSmartAccountJson} element={<ImportSmartAccountJsonScreen />} />
-        <Route path={ROUTES.safeImport} element={<SafeImportScreen />} />
-
-        <Route path={ROUTES.createSeedPhrasePrepare} element={<CreateSeedPhrasePrepareScreen />} />
-        <Route path={ROUTES.createSeedPhraseWrite} element={<CreateSeedPhraseWriteScreen />} />
+        <Route path={ROUTES.safeImport} element={<SafeImportMethodScreen />} />
+        <Route path={ROUTES.safeImportAddress} element={<SafeImportScreen />} />
+        <Route path={ROUTES.safeImportByOwner} element={<SafeImportByOwnerScreen />} />
 
         <Route path={ROUTES.accountPicker} element={<AccountPickerScreen />} />
         <Route path={ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />
@@ -77,12 +85,22 @@ const MainRoutes = () => {
           <Route path={ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
           <Route path={ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
+          <Route path={ROUTES.trendingTokens} element={<TrendingTokensScreen />} />
+          <Route path={ROUTES.trendingTokenDetails} element={<TrendingTokenDetailsScreen />} />
           <Route path={ROUTES.networks} element={<NetworksScreen />} />
           <Route path={ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
           <Route path={ROUTES.menu} element={<NavMenu />} />
           <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
           <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
+          <Route path={ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
+          <Route path={ROUTES.devicePasswordChange} element={<ChangeAppPasswordScreen />} />
           <Route path={ROUTES.networksSettings} element={<NetworksSettingsScreen />} />
+          <Route path={ROUTES.manageTokens} element={<ManageTokensSettingsScreen />} />
+          <Route
+            path={ROUTES.recoveryPhrasesSettings}
+            element={<RecoveryPhrasesSettingsScreen />}
+          />
+          <Route path={ROUTES.optOuts} element={<PrivacyOptOutsSettingsScreen />} />
           <Route path={ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
           <Route path={ROUTES.explore} element={<ExploreScreen />} />

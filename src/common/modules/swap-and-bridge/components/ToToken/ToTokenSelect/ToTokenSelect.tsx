@@ -15,6 +15,7 @@ import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -78,6 +79,7 @@ const ToTokenSelect: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const { errors, isTokenListLoading, toTokenSearchTerm } =
     useController('SwapAndBridgeController').state
   const {
@@ -231,7 +233,10 @@ const ToTokenSelect: React.FC<Props> = ({
       }
       attemptToFetchMoreOptions={handleAttemptToFetchMoreOptions}
       onSearch={handleOnSearch}
-      containerStyle={{ ...spacings.mb0, ...flexbox.flex1, ...spacings.mrMd }}
+      containerStyle={{
+        ...spacings.mb0,
+        ...(isCompactSidePanelLayout ? { width: '100%' } : { ...flexbox.flex1, ...spacings.mrMd })
+      }}
       selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
       stickySectionHeadersEnabled
     />

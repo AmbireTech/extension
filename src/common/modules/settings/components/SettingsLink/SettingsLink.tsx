@@ -103,7 +103,7 @@ const SettingsLink: FC<Props> = ({
             color={isSidebarLink && isActive ? theme.primaryAccent300 : theme.iconPrimary}
           />
         ) : null}
-        <Text style={Icon ? spacings.mlSm : {}} weight="medium">
+        <Text style={[Icon && spacings.mlSm, isMobile && { lineHeight: 24 }]} weight="medium">
           {t(label)}
         </Text>
       </View>

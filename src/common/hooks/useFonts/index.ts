@@ -1,4 +1,4 @@
 import useFonts from './useFonts'
 
-export * from './useFonts'
+export * from './constants'
 export default useFonts

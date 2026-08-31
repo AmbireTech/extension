@@ -1,5 +1,5 @@
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
+import { AccountOp, isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
@@ -52,6 +52,19 @@ export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
 export const getDappInteractions = (
   submittedAccountOp: SubmittedAccountOpLike
 ): DappInteraction[] => {
+  if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
+    const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
+
+    return [
+      {
+        id: 'fallback:cancel',
+        name: 'Cancel',
+        iconType: 'safe',
+        ...(safeNonce !== null && safeNonce !== undefined && { safeNonce: BigInt(safeNonce) })
+      }
+    ]
+  }
+
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
   const humanizedCalls = getHumanizedCalls(submittedAccountOp)
@@ -98,14 +111,19 @@ export const getDappInteractions = (
     })
   }
 
-  const fuelsGasTank = humanizedCalls.some(
+  const gasTankHumanization = humanizedCalls.find(
     (call) => call.fullVisualization?.[0]?.content === 'Fuel gas tank with'
   )
-  if (fuelsGasTank) {
+  if (gasTankHumanization) {
+    const gasTankToken = gasTankHumanization.fullVisualization?.[1]
+
     addInteraction({
       id: 'fallback:gasTank',
       name: 'Fuel gas tank',
-      iconType: 'ambire'
+      iconType: 'ambire',
+      ...(gasTankToken?.type === 'token'
+        ? { token: gasTankToken.address, amount: gasTankToken.value }
+        : {})
     })
   }
 

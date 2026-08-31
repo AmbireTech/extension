@@ -10,7 +10,9 @@ export async function runSwapFlow({
   sendToken,
   receiveToken,
   bridgeAmount,
-  message = 'Nice trade!',
+  // Success copy rotates across several titles; keep this in sync with getSwapCompletedMessage.ts
+  // if awaitConfirmation is enabled and you assert a specific message.
+  message = 'Mission accomplished.',
   assertNoInitialTx = false,
   assertPortfolioRefreshScopedToSendNetwork = true,
   ledgerSimulatorControls

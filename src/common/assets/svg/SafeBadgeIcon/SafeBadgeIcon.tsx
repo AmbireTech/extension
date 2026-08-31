@@ -3,6 +3,13 @@ import Svg, { Circle, Path, SvgProps } from 'react-native-svg'
 
 const SAFE_BRAND_GREEN = '#30FD7E'
 
+/**
+ * The Safe artwork is drawn edge to edge in a 100x100 box, while the other badge icons
+ * inset a r=10 circle in a 24x24 one. Padding the viewBox to 120 shrinks the disc to the
+ * same 20/24 of the icon box, so Safe no longer reads as bigger next to Ledger or Trezor.
+ */
+const PADDED_VIEW_BOX = '-10 -10 120 120'
+
 interface SafeBadgeIconProps extends SvgProps {
   symbolColor?: string
 }
@@ -18,7 +25,7 @@ const SafeBadgeIcon: React.FC<SafeBadgeIconProps> = ({
   const markColor = symbolColor || '#000000'
 
   return (
-    <Svg width={width} height={height} viewBox="0 0 100 100" fill="none" {...rest}>
+    <Svg width={width} height={height} viewBox={PADDED_VIEW_BOX} fill="none" {...rest}>
       <Circle cx="50" cy="50" r="50" fill={circleColor} />
       <Path
         d="M74.8947 50.8828H68.7888C66.9651 50.8828 65.4876 52.406 65.4876 54.2856V63.4209C65.4876 65.3006 64.0098 66.8238 62.1864 66.8238H37.8951C36.0715 66.8238 34.5938 68.347 34.5938 70.2268V76.5207C34.5938 78.4003 36.0715 79.9235 37.8951 79.9235H63.5923C65.416 79.9235 66.8725 78.4003 66.8725 76.5207V71.4709C66.8725 69.5913 68.3502 68.2578 70.1739 68.2578H74.8935C76.717 68.2578 78.1947 66.7346 78.1947 64.8548V54.2462C78.1947 52.3665 76.7182 50.8828 74.8947 50.8828Z"

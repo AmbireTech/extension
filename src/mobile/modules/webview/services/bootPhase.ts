@@ -1,6 +1,8 @@
-import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
+import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
 
 import { sendToReactEvent } from './webviewLogger'
+import { workerBootProfiler } from './workerBootProfiler'
 
 // Boot phase controls which controllers may stream their state to the RN side.
 // On mobile the splash hides as soon as the routing-critical controllers land;
@@ -27,49 +29,81 @@ let subscribedControllerSet: Set<string> = new Set()
 // same collapse-to-latest semantics as the deferred queue. Drained the moment
 // a controller gains a subscriber so the UI never renders stale state.
 const suppressedCtrlPayloads: Map<string, { ctrl: any; forceEmit?: boolean }> = new Map()
+// Controllers whose `isReady: true` has already reached the UI. The UI's store gates
+// its own readiness on that flag, so the emit carrying it must never be suppressed.
+const ctrlsWithDeliveredReadiness: Set<string> = new Set()
 
 export function setCriticalControllers(controllers: string[]) {
   criticalControllerSet = new Set<string>(controllers)
 }
 
-export function isCriticalController(ctrlName: string) {
+function isCriticalController(ctrlName: string) {
   return criticalControllerSet.has(ctrlName)
 }
 
-export function getBootPhase() {
-  return bootPhase
-}
-
-export function queueDeferredCtrlPayload(ctrlName: string, ctrl: any, forceEmit?: boolean) {
-  deferredCtrlPayloads.set(ctrlName, { ctrl, forceEmit })
-}
-
-// `true` once the UI has reported its subscription set at least once. While
-// `false`, the subscription gate is inactive and nothing is suppressed.
-export function isSubscriptionGateActive() {
-  return hasReceivedSubscriptionSet
-}
-
-export function isControllerSubscribed(ctrlName: string) {
+function isControllerSubscribed(ctrlName: string) {
   return subscribedControllerSet.has(ctrlName)
 }
 
-export function queueSuppressedCtrlPayload(ctrlName: string, ctrl: any, forceEmit?: boolean) {
-  suppressedCtrlPayloads.set(ctrlName, { ctrl, forceEmit })
+/**
+ * Used to prevent suppressing emitUpdates that deliver isReady
+ */
+function claimReadinessDelivery(ctrlName: string, ctrl: any) {
+  if (ctrlsWithDeliveredReadiness.has(ctrlName)) return false
+  if (ctrl?.isReady !== true) return false
+
+  ctrlsWithDeliveredReadiness.add(ctrlName)
+  return true
+}
+
+/**
+ * Holds a controller's state back if not critical
+ */
+export function queueCtrlStateIfBootPhaseDeferred(
+  ctrlName: string,
+  ctrl: any,
+  forceEmit?: boolean
+) {
+  // During the critical boot phase, hold back updates for non-critical
+  // controllers. We keep only the latest state so the eventual drain emits
+  // one update per deferred controller, not the full history.
+  if (bootPhase === 'critical' && !isCriticalController(ctrlName)) {
+    deferredCtrlPayloads.set(ctrlName, { ctrl, forceEmit })
+    return true
+  }
+
+  return false
+}
+
+export function queueCtrlStateIfGated(ctrlName: string, ctrl: any, forceEmit?: boolean) {
+  if (queueCtrlStateIfBootPhaseDeferred(ctrlName, ctrl, forceEmit)) return true
+
+  if (claimReadinessDelivery(ctrlName, ctrl)) return false
+
+  if (
+    hasReceivedSubscriptionSet &&
+    !isCriticalController(ctrlName) &&
+    !isControllerSubscribed(ctrlName)
+  ) {
+    suppressedCtrlPayloads.set(ctrlName, { ctrl, forceEmit })
+    return true
+  }
+
+  return false
 }
 
 function buildStateForFE(ctrlName: string, ctrl: any) {
-  const stateToSendToFE = ctrl.toJSON()
-
-  if (ctrlName === 'MainController') {
-    // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-    // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-    controllersNestedInMainMapping.forEach((nestedCtrlName) => {
-      delete (stateToSendToFE as any)[nestedCtrlName]
-    })
+  const build = () => {
+    return serializeControllerForUI(ctrl)
   }
 
-  return stateToSendToFE
+  // Every path that streams state to the UI funnels through here, so timing the
+  // first build per controller covers the debounced emits and the deferred drain
+  // alike. Later emits are not boot cost and would grow the mark list forever.
+  const markName = `${BOOT_MARK_PREFIX.workerCtrlSerialize}${ctrlName}`
+  if (!workerBootProfiler.reserveOnce(markName)) return build()
+
+  return workerBootProfiler.measure(markName, build)
 }
 
 // Drains queued controller payloads to the RN side one per macrotask so the
@@ -84,6 +118,10 @@ function drainCtrlPayloads(entries: [string, { ctrl: any; forceEmit?: boolean }]
     index += 1
     if (!entry) return
     const [ctrlName, { ctrl, forceEmit }] = entry
+
+    // A drained payload carries the controller's readiness just like a live emit does,
+    // so record it here too, or the gate would later let one redundant emit through.
+    claimReadinessDelivery(ctrlName, ctrl)
 
     try {
       sendToReactEvent('ctrl.update', {
@@ -112,6 +150,10 @@ function drainCtrlPayloads(entries: [string, { ctrl: any; forceEmit?: boolean }]
 export function setBootPhase(phase: 'critical' | 'full') {
   if (phase === bootPhase) return
   bootPhase = phase
+
+  if (phase === 'full') {
+    workerBootProfiler.mark(BOOT_MARK.workerBootPhaseFull, { count: deferredCtrlPayloads.size })
+  }
 
   if (phase !== 'full' || deferredCtrlPayloads.size === 0) return
 

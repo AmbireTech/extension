@@ -1,4 +1,4 @@
-name: Build production iOS simulator app ⚡
+name: 🍎 Build · iOS Simulator
 
 on:
   workflow_dispatch: # Manual trigger

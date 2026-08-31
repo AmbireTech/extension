@@ -16,11 +16,18 @@ export type SeedRevealResult = {
 }
 
 export class RecoveryPhrasesPage extends BasePage {
+  private extensionURL?: string
+
   constructor(opts: BootstrapContext) {
     super(opts)
+    this.extensionURL = opts.extensionURL
   }
 
   async open(): Promise<void> {
+    // Callers arrive from anywhere - straight out of onboarding, where "Open wallet" leaves this
+    // page on the completed screen and the dashboard hamburger never shows up. Always land on the
+    // dashboard first (the keystore stays unlocked in the background across the reload).
+    await this.navigateToURL(`${this.extensionURL}/tab.html#/dashboard`)
     await this.click(selectors.dashboard.hamburgerButton)
     await this.checkUrl('/settings/general')
     await this.click(selectors.settings.navRecoveryPhrases)
@@ -29,6 +36,16 @@ export class RecoveryPhrasesPage extends BasePage {
 
   async getSeedCount(): Promise<number> {
     return this.page.locator('[data-testid^="recovery-phrase-row-"]').count()
+  }
+
+  async getFirstSeedId(): Promise<string> {
+    const row = this.page.locator('[data-testid^="recovery-phrase-row-"]').first()
+    await row.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+    const testId = await row.getAttribute('data-testid')
+
+    if (!testId) throw new Error('No recovery phrase rows found')
+
+    return testId.replace('recovery-phrase-row-', '')
   }
 
   async revealSeed(seedId: string): Promise<SeedRevealResult> {

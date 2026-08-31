@@ -403,4 +403,13 @@ describe('scrubSentryEventSecrets', () => {
 
     expect(result.extra.mnemonic).toBe('[REDACTED]')
   })
+
+  it('redacts extraEntropy regardless of the shape of its value', () => {
+    const event = { extra: { action: JSON.stringify({ args: [{ extraEntropy: '0xdeadbeef' }] }) } }
+
+    const result = scrubSentryEventSecrets(event)
+
+    expect(result.extra.action).not.toContain('0xdeadbeef')
+    expect(result.extra.action).toContain('[REDACTED]')
+  })
 })

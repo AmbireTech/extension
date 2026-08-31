@@ -18,7 +18,9 @@ const TooltipInner = ({ tooltipRef, style, border, ...rest }: TooltipProps) => {
       delayShow={150}
       variant="light"
       style={{
-        maxWidth: 380,
+        // Never let a tooltip leave the viewport - in narrow surfaces (extension popup,
+        // narrow side panel) the window itself can be slimmer than the 380px max width
+        maxWidth: 'min(380px, calc(100vw - 48px))',
         fontSize: 14,
         fontFamily: FONT_FAMILIES.REGULAR,
         backgroundColor: theme.tertiaryBackground as any,

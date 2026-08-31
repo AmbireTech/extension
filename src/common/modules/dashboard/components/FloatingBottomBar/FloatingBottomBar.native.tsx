@@ -1,7 +1,15 @@
-import React, { useCallback } from 'react'
-import { Pressable, View } from 'react-native'
-import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller'
-import Animated, { useAnimatedStyle, useDerivedValue, withSpring } from 'react-native-reanimated'
+import React, { useCallback, useEffect } from 'react'
+import { AppState, Pressable, View } from 'react-native'
+import {
+  useKeyboardHandler,
+  useReanimatedKeyboardAnimation
+} from 'react-native-keyboard-controller'
+import Animated, {
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+  withSpring
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ScanIcon from '@common/assets/svg/ScanIcon'
@@ -27,6 +35,30 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   const { theme } = useTheme()
   const { navigate } = useNavigation()
 
+  // The keyboard is always dismissed before the app leaves the foreground, so on
+  // resume its height must be treated as 0 even if the shared value never received
+  // the final hide frame. Trusting it as-is leaves the bar floating mid-screen.
+  const isKeyboardHeightStale = useSharedValue(false)
+
+  useKeyboardHandler(
+    {
+      onStart: () => {
+        'worklet'
+
+        isKeyboardHeightStale.value = false
+      }
+    },
+    [isKeyboardHeightStale]
+  )
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') isKeyboardHeightStale.value = true
+    })
+
+    return () => subscription.remove()
+  }, [isKeyboardHeightStale])
+
   const handleQrPress = useCallback(() => {
     navigate(ROUTES.qrReader)
   }, [navigate])
@@ -41,11 +73,11 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   }, [isHidden, safeBottom])
 
   const animatedStyle = useAnimatedStyle(() => {
-    const keyboardOffset = Math.abs(height.value)
+    const keyboardOffset = isKeyboardHeightStale.value ? 0 : Math.abs(height.value)
     return {
       bottom: animatedBottom.value + keyboardOffset
     }
-  }, [height])
+  }, [height, isKeyboardHeightStale])
 
   return (
     <Animated.View

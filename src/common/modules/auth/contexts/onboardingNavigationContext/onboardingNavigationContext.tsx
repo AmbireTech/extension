@@ -11,7 +11,11 @@ import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
-import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import {
+  MOBILE_ROUTES,
+  ONBOARDING_WEB_ROUTES,
+  WEB_ROUTES
+} from '@common/modules/router/constants/common'
 import { syncSessionStorage } from '@common/services/storage'
 import { getUiType } from '@common/utils/uiType'
 
@@ -78,7 +82,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     () => ONBOARDING_WEB_ROUTES.includes((path || '').substring(1)),
     [path]
   )
-  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   // session storage is needed here to prevent state reset on account-personalize page reload
   const [accountsToPersonalize, setAccountsToPersonalize] = useState<Account[]>(() => {
@@ -147,12 +151,6 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       WEB_ROUTES.getStarted,
       [
         new RouteNode(
-          WEB_ROUTES.createSeedPhrasePrepare,
-          [new RouteNode(WEB_ROUTES.createSeedPhraseWrite, common)],
-          false,
-          false
-        ),
-        new RouteNode(
           WEB_ROUTES.importExistingAccount,
           [
             ...(common && common[0] && common[0].disabled ? common[0].children : common),
@@ -160,14 +158,24 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             new RouteNode(WEB_ROUTES.importSeedPhrase, common, false, false),
             new RouteNode(WEB_ROUTES.ledgerConnect, common, false, false),
             new RouteNode(WEB_ROUTES.trezorConnect, common, false, false),
-            new RouteNode(WEB_ROUTES.safeImport, common, false, false),
+            new RouteNode(
+              WEB_ROUTES.safeImport,
+              [
+                new RouteNode(WEB_ROUTES.safeImportAddress, common, false, false),
+                new RouteNode(WEB_ROUTES.safeImportByOwner, common, false, false)
+              ],
+              false,
+              false
+            ),
             new RouteNode(WEB_ROUTES.qrConnect, common, false, false),
             new RouteNode(WEB_ROUTES.importSmartAccountJson, common, false, false)
           ],
           false,
           false
         ),
-        new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false)
+        new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false),
+        new RouteNode(WEB_ROUTES.importAccountsFromMobile, common, false, false),
+        new RouteNode(MOBILE_ROUTES.importAccountsFromExtension, common, false, false)
       ],
       authStatus !== AUTH_STATUS.NOT_AUTHENTICATED,
       false
@@ -410,7 +418,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   useEffect(() => {
     const currentRoute = path?.substring(1)
     if (!currentRoute) return
-    if (!areControllerStatesLoaded) return
+    if (!areAllControllerStatesLoaded) return
     if (emailVaultStatuses?.recoverKeyStore !== 'INITIAL') return
 
     if (
@@ -425,7 +433,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     path,
     goToNextRoute,
     hasPasswordSecret,
-    areControllerStatesLoaded,
+    areAllControllerStatesLoaded,
     emailVaultStatuses?.recoverKeyStore
   ])
 

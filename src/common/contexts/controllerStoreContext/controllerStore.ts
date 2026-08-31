@@ -5,6 +5,7 @@ import { isMobile } from '@common/config/env'
 import { isExtension } from '@web/constants/browserapi'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const CONTROLLER_STORE_MAX_LOADING_TIME = 10000
 
 export class ControllerStore {
@@ -25,6 +26,13 @@ export class ControllerStore {
 
   #criticalControllers: (keyof AllControllersMappingType)[] = []
 
+  /**
+   * Controllers the platform deliberately loads after the initial route renders. They
+   * still gate `isReady`, but waiting on them is expected, so they are left out of the
+   * `controllersLoadingTakingTooLong` check that reports a broken boot.
+   */
+  #deferredControllers: (keyof AllControllersMappingType)[] = []
+
   #onReady: () => void
 
   #onReadyToLoadRoutes?: () => void
@@ -42,9 +50,18 @@ export class ControllerStore {
     this.#onReadyToLoadRoutes = onReadyToLoadRoutes
 
     setTimeout(() => {
-      if (!this.isReady && this.#listeners.has('events')) {
-        this.#listeners.get('events')!.forEach((cb) => cb('controllersLoadingTakingTooLong'))
-      }
+      if (this.isReady || !this.#listeners.has('events')) return
+
+      const hasNonDeferredPending =
+        !this.controllersByName.length ||
+        this.controllersByName.some(
+          (ctrlName) =>
+            !this.#deferredControllers.includes(ctrlName) && !this.#isControllerReady(ctrlName)
+        )
+
+      if (!hasNonDeferredPending) return
+
+      this.#listeners.get('events')!.forEach((cb) => cb('controllersLoadingTakingTooLong'))
     }, CONTROLLER_STORE_MAX_LOADING_TIME)
   }
 
@@ -54,12 +71,22 @@ export class ControllerStore {
   init(
     allControllersByName: (keyof AllControllersMappingType)[],
     criticalControllers: (keyof AllControllersMappingType)[] = [],
-    onInitReady?: (allControllersByName: (keyof AllControllersMappingType)[]) => void
+    onInitReady?: (allControllersByName: (keyof AllControllersMappingType)[]) => void,
+    deferredControllers: (keyof AllControllersMappingType)[] = []
   ) {
     this.controllersByName = allControllersByName
     this.#criticalControllers = criticalControllers
+    this.#deferredControllers = deferredControllers
     onInitReady?.(allControllersByName)
     this.#checkReadiness()
+    this.#checkRoutesReadiness()
+  }
+
+  // Narrows the set of controllers whose readiness gates `isReadyToLoadRoutes`.
+  // Called once the background reports the initial route, so the splash can hide
+  // as soon as only the controllers that route needs are ready.
+  setCriticalControllers(criticalControllers: (keyof AllControllersMappingType)[]) {
+    this.#criticalControllers = criticalControllers
     this.#checkRoutesReadiness()
   }
 
@@ -127,19 +154,32 @@ export class ControllerStore {
     return () => this.#listeners.get('events')?.delete(listener)
   }
 
+  // A controller counts as ready once it has sent a first state and, when that state
+  // carries an `isReady` flag, once the flag is true.
+  #isControllerReady(ctrlName: keyof AllControllersMappingType) {
+    if (!this.initializedControllers.has(ctrlName)) return false
+
+    if ('isReady' in (this.#states?.[ctrlName] || {})) {
+      return (this.#states[ctrlName] as any).isReady === true
+    }
+
+    return true
+  }
+
+  /**
+   * Whether every one of the given controllers has sent a first state and, when that
+   * state carries an `isReady` flag, has it set to true. Lets a caller wait on its own
+   * subset of controllers instead of on the whole store.
+   */
+  areControllersReady(ctrlNames: (keyof AllControllersMappingType)[]) {
+    return ctrlNames.every((ctrlName) => this.#isControllerReady(ctrlName))
+  }
+
   #checkReadiness() {
     if (this.isReady) return
     if (!this.controllersByName.length) return
     // Check if every required controller exists in the initialized set
-    const allReady = Array.from(this.controllersByName).every((ctrlName) => {
-      if (!this.initializedControllers.has(ctrlName)) return false
-
-      if ('isReady' in (this.#states?.[ctrlName] || {})) {
-        return (this.#states[ctrlName] as any).isReady === true
-      }
-
-      return true
-    })
+    const allReady = this.controllersByName.every((ctrlName) => this.#isControllerReady(ctrlName))
 
     // NOTE: used for debugging the initial loading of controllers
     // console.log(
@@ -160,15 +200,9 @@ export class ControllerStore {
     if (this.isReadyToLoadRoutes) return
     if (!this.#criticalControllers.length) return
 
-    const allReady = this.#criticalControllers.every((ctrlName) => {
-      if (!this.initializedControllers.has(ctrlName)) return false
-
-      if ('isReady' in (this.#states?.[ctrlName] || {})) {
-        return (this.#states[ctrlName] as any).isReady === true
-      }
-
-      return true
-    })
+    const allReady = this.#criticalControllers.every((ctrlName) =>
+      this.#isControllerReady(ctrlName)
+    )
 
     if (allReady) {
       this.isReadyToLoadRoutes = true

@@ -95,8 +95,35 @@ export class AccountKeysPage extends BasePage {
 
     const keyEl = this.page.getByTestId(selectors.keystoreMigration.privateKeyValue)
     await expect(keyEl).not.toBeEmpty({ timeout: 15000 })
+    const copyBtn = this.page.getByTestId(selectors.keystoreMigration.copyPrivateKeyButton)
+    await expect(copyBtn).toBeVisible()
+    await expect(revealBtn).toHaveText('Show key')
+    await expect(keyEl.locator('..')).toHaveCSS('filter', 'blur(3px)')
+
+    await this.context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    await this.page.evaluate(() => navigator.clipboard.writeText('clipboard-test-sentinel'))
+    let copiedPrivateKeyMatches = false
+    try {
+      await copyBtn.click()
+      await expect(this.page.getByText('Private key copied to clipboard!')).toBeVisible()
+      copiedPrivateKeyMatches = await keyEl.evaluate(async (element) => {
+        return (await navigator.clipboard.readText()) === element.textContent
+      })
+    } finally {
+      await this.page.evaluate(() => navigator.clipboard.writeText(''))
+    }
+    expect(copiedPrivateKeyMatches).toBe(true)
+
+    await expect(revealBtn).toHaveText('Show key')
+    await expect(keyEl.locator('..')).toHaveCSS('filter', 'blur(3px)')
+
+    await revealBtn.click()
+    await expect(revealBtn).toHaveText('Hide key')
 
     const privateKey = await keyEl.innerText()
+
+    await revealBtn.click()
+    await expect(revealBtn).toHaveText('Reveal key')
 
     // Close ExportKey then AccountKeys — each call drops visible count by 1
     await this.closeTopSheet()

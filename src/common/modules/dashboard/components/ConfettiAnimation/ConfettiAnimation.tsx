@@ -14,11 +14,19 @@ const animationMap = {
   tertiary: animationTertiary
 }
 
+const preserveAspectRatioByResizeMode = {
+  contain: 'xMidYMid meet',
+  cover: 'xMidYMid slice',
+  stretch: 'none'
+} as const
+
 type ConfettiAnimationProps = {
   width: number
   height: number
   style?: React.CSSProperties
   type?: 'primary' | 'secondary' | 'tertiary'
+  /** How the Lottie canvas fills width/height. Default keeps the original centered look. */
+  resizeMode?: keyof typeof preserveAspectRatioByResizeMode
 } & Omit<LottieViewProps, 'animationData'>
 
 const ConfettiAnimation = ({
@@ -26,18 +34,24 @@ const ConfettiAnimation = ({
   height,
   style = {},
   type = 'primary',
+  resizeMode = 'contain',
+  rendererSettings,
   ...rest
 }: ConfettiAnimationProps) => {
   return (
     <LottieView
       {...rest}
       animationData={animationMap[type]}
+      rendererSettings={{
+        preserveAspectRatio: preserveAspectRatioByResizeMode[resizeMode],
+        ...rendererSettings
+      }}
       style={{
         width,
         height,
         position: 'absolute',
         pointerEvents: 'none',
-        alignSelf: 'center',
+        ...(resizeMode === 'contain' ? { alignSelf: 'center' } : { top: 0, left: 0 }),
         ...style
       }}
       autoPlay

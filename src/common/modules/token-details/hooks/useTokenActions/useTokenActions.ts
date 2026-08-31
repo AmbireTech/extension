@@ -1,0 +1,363 @@
+import { getAddress } from 'ethers'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useModalize } from 'react-native-modalize'
+
+import { TokenResult } from '@ambire-common/libs/portfolio'
+import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
+import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
+import SendIcon from '@common/assets/svg/SendIcon'
+import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
+import TopUpIcon from '@common/assets/svg/TopUpIcon'
+import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
+import useController from '@common/hooks/useController'
+import useHasGasTank from '@common/hooks/useHasGasTank'
+import useNavigation from '@common/hooks/useNavigation'
+import useNetworks from '@common/hooks/useNetworks'
+import useToast from '@common/hooks/useToast'
+import { ROUTES } from '@common/modules/router/constants/common'
+import { storage } from '@common/services/storage'
+import { RELAYER_URL } from '@env'
+
+type UseTokenActionsOptions = {
+  /**
+   * When set, a zero-balance token keeps Send disabled but shows this tooltip explaining why
+   * (instead of a silently disabled button). Used by the trending screen where the user may not
+   * hold the token.
+   */
+  noBalanceSendTooltip?: string
+  /**
+   * Enables Swap/Bridge regardless of balance and preselects the token as the buy (to) token,
+   * so the user can swap to acquire it. Used by the trending screen.
+   */
+  enableSwapToBuy?: boolean
+  /**
+   * The token is not part of the account portfolio at all (e.g. a trending token the user doesn't
+   * hold), so hiding it would have no effect and the Hide button is disabled.
+   */
+  isNotInPortfolio?: boolean
+}
+
+/**
+ * Builds the token-details footer actions (send, swap/bridge, top up, hide) and the hide-token
+ * modal wiring for a given token. Extracted from useTokenDetails so both the portfolio token
+ * details and the trending token details screens can share the exact same footer.
+ */
+const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOptions = {}) => {
+  const { noBalanceSendTooltip, enableSwapToBuy, isNotInPortfolio } = options
+  const { navigate } = useNavigation()
+  const {
+    ref: hideTokenModalRef,
+    open: openHideTokenModal,
+    close: closeHideTokenModal
+  } = useModalize()
+  const { addToast } = useToast()
+  const { t } = useTranslation()
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+  const {
+    state: { flags }
+  } = useController('FeatureFlagsController')
+  const isErc4337Enabled = flags.erc4337
+  const { state: supportedChainIds } = useController(
+    'SwapAndBridgeController',
+    (state) => state.supportedChainIds
+  )
+  const { dispatch: portfolioDispatch } = useController('PortfolioController')
+  const {
+    state: { tokenPreferences }
+  } = useController('PortfolioController')
+  const networks = useNetworks({
+    acc: account,
+    additionalCheck: {
+      chainIds: supportedChainIds,
+      reason: 'Network is not supported by our service provider.'
+    }
+  })
+  const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
+  const [fetchedGasTankAssets, setFetchedGasTankAssets] = useState<
+    { chainId: number; address: string }[] | null
+  >(null)
+
+  const [fetchedGasTankAssetsError, setFetchedGasTankAssetsError] = useState<string | null>(null)
+  const gasTankAssets = isErc4337Enabled ? fetchedGasTankAssets : null
+  const gasTankAssetsError = isErc4337Enabled ? fetchedGasTankAssetsError : null
+  const network = useMemo(
+    () => networks.find((n) => n.chainId === token?.chainId),
+    [networks, token?.chainId]
+  )
+
+  const isHidden = tokenPreferences.find(
+    (tp) => tp.chainId === token?.chainId && tp.address === token?.address
+  )?.isHidden
+  // if the token is a gas tank token, all actions except
+  // top up and maybe token info should be disabled
+  const isGasTankToken = !!token?.flags.onGasTank
+  const isRewardsToken = !!token?.flags.rewardsType
+  const isGasTankOrRewardsToken = isGasTankToken || isRewardsToken
+  const isAmountZero = token && getTokenAmount(token) === 0n
+  const canToToppedUp = token?.flags.canTopUpGasTank
+  const shouldDisableSwapAndBridge =
+    network?.isNotSupported || isGasTankOrRewardsToken || isAmountZero
+
+  const { canUseGasTank, disabledReason } = useHasGasTank({ account })
+
+  const unavailableBecauseGasTankOrRewardsTokenTooltipText = t(
+    'Unavailable. {{tokenType}} tokens cannot be sent, swapped, or bridged.',
+    {
+      tokenType: isGasTankToken ? t('Gas Tank') : t('Reward')
+    }
+  )
+
+  useEffect(() => {
+    storage
+      .get('doNotShowAgainModalHideToken', false)
+      .then(setDoNotDisplayHideTokenModal)
+      .catch(() => console.error('Failed to load storage value for doNotShowAgainModalHideToken'))
+  }, [setDoNotDisplayHideTokenModal])
+
+  useEffect(() => {
+    if (!isErc4337Enabled) {
+      // Clearing remote data when its feature is disabled is intentional synchronization.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFetchedGasTankAssets(null)
+      setFetchedGasTankAssetsError(null)
+      return
+    }
+
+    let isActive = true
+
+    // Fetch gas tank assets
+    fetch(`${RELAYER_URL}/gas-tank/assets`)
+      .then((r) => r.json())
+      .then((assets) => {
+        if (!isActive) return
+
+        setFetchedGasTankAssets(assets)
+        setFetchedGasTankAssetsError(null)
+      })
+      .catch(() => {
+        if (!isActive) return
+
+        setFetchedGasTankAssetsError(
+          t(
+            'Unable to top up right now. This might be a temporary service issue. Please try again later.'
+          )
+        )
+        setFetchedGasTankAssets(null)
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [isErc4337Enabled, t])
+
+  const hideToken = useCallback(() => {
+    if (!token) return
+    portfolioDispatch({
+      type: 'method',
+      params: {
+        method: 'toggleHideToken',
+        args: [
+          {
+            address: token.address,
+            chainId: token.chainId
+          },
+          account?.addr,
+          true
+        ]
+      }
+    })
+  }, [portfolioDispatch, token, account?.addr])
+
+  const handleHideTokenFromButton = useCallback(async () => {
+    if (doNotDisplayHideTokenModal) hideToken()
+    else openHideTokenModal()
+  }, [hideToken, openHideTokenModal, doNotDisplayHideTokenModal])
+
+  const handleHideTokenFromModal = useCallback(
+    async (doNotShowModalAnymore: boolean) => {
+      storage
+        .set('doNotShowAgainModalHideToken', doNotShowModalAnymore)
+        .catch(() => console.error('Failed to record value for doNotShowAgainModalHideToken'))
+      setDoNotDisplayHideTokenModal(doNotShowModalAnymore)
+      hideToken()
+      closeHideTokenModal()
+    },
+    [hideToken, closeHideTokenModal]
+  )
+
+  const topUpDisabledTooltipText = useMemo(() => {
+    if (!canUseGasTank) return disabledReason
+
+    if (!isErc4337Enabled) {
+      return t(
+        'Gas Tank is turned off because ERC-4337 smart account features are disabled. Enable them to top up.'
+      )
+    }
+
+    if (isNotInPortfolio) {
+      return t("You don't hold this token, so there's nothing to top up your Gas Tank with.")
+    }
+
+    if (!canToToppedUp) {
+      return t(
+        'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
+      )
+    }
+
+    if (gasTankAssetsError) {
+      return gasTankAssetsError
+    }
+
+    return undefined
+  }, [
+    canUseGasTank,
+    canToToppedUp,
+    disabledReason,
+    gasTankAssetsError,
+    isErc4337Enabled,
+    isNotInPortfolio,
+    t
+  ])
+
+  const actions = useMemo(
+    () =>
+      [
+        {
+          id: 'send',
+          text: t('Send'),
+          icon: SendIcon,
+          onPress: ({ chainId, address }: TokenResult) =>
+            navigate(`${ROUTES.transfer}?chainId=${chainId}&address=${address}`),
+          isDisabled: isGasTankOrRewardsToken || isAmountZero,
+          tooltipText: isGasTankOrRewardsToken
+            ? unavailableBecauseGasTankOrRewardsTokenTooltipText
+            : isAmountZero && noBalanceSendTooltip
+              ? noBalanceSendTooltip
+              : '',
+          strokeWidth: 1.5,
+          testID: 'token-send'
+        },
+        {
+          id: 'swap-or-bridge',
+          text: t('Swap or Bridge'),
+          icon: SwapAndBridgeIcon,
+          iconWidth: 86,
+          onPress: ({ chainId, address }: TokenResult) =>
+            navigate(ROUTES.swapAndBridge, {
+              state: enableSwapToBuy
+                ? { preselectedToToken: { address, chainId } }
+                : { preselectedFromToken: { address, chainId } }
+            }),
+          // When buying (trending), keep Swap available regardless of balance; only a fully
+          // unsupported network can block it.
+          isDisabled: enableSwapToBuy
+            ? !network || !!network.isNotSupported
+            : shouldDisableSwapAndBridge,
+          tooltipText: isGasTankOrRewardsToken
+            ? unavailableBecauseGasTankOrRewardsTokenTooltipText
+            : network?.isNotSupported
+              ? network?.notSupportedReason
+              : '',
+          strokeWidth: 1.5
+        },
+        // TODO: Temporarily hidden as of v4.49.0, because displaying it disabled
+        // causes confusion. It's planned to be displayed again when the feature is implemented.
+        // {
+        //   id: 'deposit',
+        //   text: t('Deposit'),
+        //   icon: DepositIcon,
+        //   onPress: () => {},
+        //   isDisabled: true,
+        //   strokeWidth: 1
+        // },
+        // TODO: Temporarily moved to the "Deposit" place as of v4.49.0, due to aesthetic reasons solely.
+        // Note: Earn is not implemented yet, so it is disabled.
+        // {
+        //   id: 'earn',
+        //   text: t('Earn'),
+        //   icon: EarnIcon,
+        //   onPress: () => {},
+        //   isDisabled: true,
+        //   tooltipText: notImplementedYetTooltipText,
+        //   strokeWidth: 1
+        // },
+        {
+          id: 'top-up',
+          text: t('Top up gas tank'),
+          icon: TopUpIcon,
+          onPress: async ({ chainId, address }: TokenResult) => {
+            if (!gasTankAssets || gasTankAssetsError) return
+
+            const canTopUp = gasTankAssets.find(
+              (a) =>
+                getAddress(a.address) === getAddress(address) &&
+                a.chainId.toString() === chainId.toString()
+            )
+            if (canTopUp) navigate(`${ROUTES.topUpGasTank}?chainId=${chainId}&address=${address}`)
+            else addToast('We have disabled top ups with this token.', { type: 'error' })
+          },
+          isDisabled: !!topUpDisabledTooltipText,
+          tooltipText: topUpDisabledTooltipText,
+          strokeWidth: 1,
+          testID: 'top-up-button'
+        },
+        // Note: Withdraw is not implemented yet, so it is disabled.
+        // {
+        //   id: 'withdraw',
+        //   text: t('Withdraw'),
+        //   icon: WithdrawIcon,
+        //   onPress: () => {},
+        //   isDisabled: true,
+        //   tooltipText: isGasTankToken
+        //     ? t('Gas Tank deposits cannot be withdrawn.')
+        //     : notImplementedYetTooltipText,
+        //   strokeWidth: 1
+        // },
+        {
+          id: 'hide-unhide',
+          testID: 'hide-token-button',
+          isDisabled: isGasTankOrRewardsToken || isNotInPortfolio,
+          tooltipText: isGasTankOrRewardsToken
+            ? t('Hiding is not available for Gas Tank or Reward tokens.')
+            : isNotInPortfolio
+              ? t("You don't hold this token, so there's nothing to hide.")
+              : undefined,
+          text: isHidden ? t('Unhide') : t('Hide'),
+          icon: isHidden ? VisibilityIcon : InvisibilityIcon,
+          // @TODO: Handle unhide and make the UX good
+          onPress: handleHideTokenFromButton
+        }
+      ].filter(Boolean) as any[],
+    [
+      t,
+      isGasTankOrRewardsToken,
+      isAmountZero,
+      noBalanceSendTooltip,
+      enableSwapToBuy,
+      isNotInPortfolio,
+      network,
+      unavailableBecauseGasTankOrRewardsTokenTooltipText,
+      shouldDisableSwapAndBridge,
+      topUpDisabledTooltipText,
+      isHidden,
+      handleHideTokenFromButton,
+      navigate,
+      gasTankAssets,
+      gasTankAssetsError,
+      addToast
+    ]
+  )
+
+  return {
+    networks,
+    hideTokenModalRef,
+    closeHideTokenModal,
+    handleHideTokenFromModal,
+    actions
+  }
+}
+
+export default useTokenActions

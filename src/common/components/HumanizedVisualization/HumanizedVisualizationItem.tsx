@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import HumanizerAddress from '@common/components/HumanizerAddress'
+import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
@@ -13,7 +14,6 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import ImageIcon from '@web/assets/svg/ImageIcon'
-import ManifestImage from '@web/components/ManifestImage'
 
 import { COLLECTIBLE_SIZE } from '../Collectible/styles'
 import ChainVisualization from './ChainVisualization/ChainVisualization'
@@ -40,10 +40,11 @@ interface Props {
   type: 'history' | 'benzin' | 'default'
   imageSize: number
   erc7730Mode: 'summary' | 'description'
+  showErc7730DescriptionTitle: boolean
   hideNestedErc7730Rows: boolean
   hideMobileErc7730Title: boolean
   isErc7730TransactionSummaryLayout: boolean
-  hasErc7730TransactionSummaryHeaderLeftControl: boolean
+  erc7730TransactionSummarySection: 'all' | 'title' | 'rows'
   hasErc7730TransactionSummaryHeaderRightControl: boolean
   marginRight: number
 }
@@ -57,10 +58,11 @@ const HumanizedVisualizationItem: FC<Props> = ({
   type,
   imageSize,
   erc7730Mode,
+  showErc7730DescriptionTitle,
   hideNestedErc7730Rows,
   hideMobileErc7730Title,
   isErc7730TransactionSummaryLayout,
-  hasErc7730TransactionSummaryHeaderLeftControl,
+  erc7730TransactionSummarySection,
   hasErc7730TransactionSummaryHeaderRightControl,
   marginRight
 }) => {
@@ -74,11 +76,12 @@ const HumanizedVisualizationItem: FC<Props> = ({
         sizeMultiplierSize={sizeMultiplierSize}
         textSize={textSize}
         mode={erc7730Mode}
+        showDescriptionTitle={showErc7730DescriptionTitle}
         editApprovalCallInfo={editApprovalCallInfo}
         hideNestedRows={hideNestedErc7730Rows}
         hideMobileSummaryTitle={hideMobileErc7730Title}
         isTransactionSummaryLayout={isErc7730TransactionSummaryLayout}
-        hasTransactionSummaryHeaderLeftControl={hasErc7730TransactionSummaryHeaderLeftControl}
+        transactionSummarySection={erc7730TransactionSummarySection}
         hasTransactionSummaryHeaderRightControl={hasErc7730TransactionSummaryHeaderRightControl}
       />
     )

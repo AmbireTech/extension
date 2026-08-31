@@ -16,17 +16,21 @@ interface Props extends TextProps {
   // example of highestPriorityAlias: a name coming from the humanizer's metadata
   highestPriorityAlias?: string
   humanizerInfo?: HumanizerMetaAddress
+  hideActions?: boolean
   actionsMode?: 'tooltip' | 'inline'
   chainId: bigint
   verification?: BlacklistedStatus
+  isToken?: boolean
 }
 
 const HumanizerAddressInner: FC<Props> = ({
   humanizerInfo,
   address,
   highestPriorityAlias,
+  hideActions = false,
   actionsMode = 'tooltip',
   chainId,
+  isToken,
   ...rest
 }) => {
   const {
@@ -70,8 +74,10 @@ const HumanizerAddressInner: FC<Props> = ({
         <BenzinAddressName
           address={checksummedAddress}
           chainId={chainId}
+          hideActions={hideActions}
           actionsMode={actionsMode}
           fallbackLabel={localAddressLabel || undefined}
+          isToken={isToken}
           {...rest}
         />
       )
@@ -80,8 +86,10 @@ const HumanizerAddressInner: FC<Props> = ({
       <AddressName
         address={checksummedAddress}
         chainId={chainId}
+        hideActions={hideActions}
         actionsMode={actionsMode}
         fallbackLabel={localAddressLabel || undefined}
+        isToken={isToken}
         {...rest}
       />
     )
@@ -92,8 +100,10 @@ const HumanizerAddressInner: FC<Props> = ({
     return (
       <BaseAddress
         address={checksummedAddress}
+        hideActions={hideActions}
         actionsMode={actionsMode}
         chainId={chainId}
+        isToken={isToken}
         {...rest}
       >
         {localAddressLabel}
@@ -105,7 +115,9 @@ const HumanizerAddressInner: FC<Props> = ({
       <BenzinAddressName
         address={checksummedAddress}
         chainId={chainId}
+        hideActions={hideActions}
         actionsMode={actionsMode}
+        isToken={isToken}
         {...rest}
       />
     )
@@ -114,7 +126,9 @@ const HumanizerAddressInner: FC<Props> = ({
     <AddressName
       address={checksummedAddress}
       chainId={chainId}
+      hideActions={hideActions}
       actionsMode={actionsMode}
+      isToken={isToken}
       {...rest}
     />
   )

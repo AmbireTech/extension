@@ -1,44 +1,34 @@
 import * as SplashScreen from 'expo-splash-screen'
-import React, { useCallback, useContext, useEffect, useRef } from 'react'
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { AppState, View } from 'react-native'
 import { KeyboardController } from 'react-native-keyboard-controller'
-import { Navigate, Route, Routes } from 'react-router-native'
+import { Route, Routes } from 'react-router-native'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useFonts from '@common/hooks/useFonts'
-import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import { ROUTES } from '@common/modules/router/constants/common'
-import { getInitialRoute } from '@common/modules/router/helpers'
 import eventBus from '@common/services/event/eventBus'
 import flexbox from '@common/styles/utils/flexbox'
+import useNativeThemeSync from '@mobile/hooks/useNativeThemeSync'
 import DashboardScreen from '@mobile/modules/dashboard/screens/DashboardScreen'
 import useLedgerConnectionLifecycle from '@mobile/modules/hardware-wallet/hooks/useLedgerConnectionLifecycle'
 import KeyStoreUnlockScreen from '@mobile/modules/keystore/screens/KeyStoreUnlockScreen'
 import MainRoutes from '@mobile/modules/router/components/MainRoutes'
 import RequestsBottomSheet from '@mobile/modules/router/components/RequestsBottomSheet'
-import { shouldShowMigrationOnboarding } from '@mobile/services/legacyMigration/legacyMigration'
+import { markSplashHidden } from '@mobile/services/bootProfiler'
 
 const Router = () => {
-  const { path } = useRoute()
-  const pathname = path?.substring(1)
   const { authStatus } = useAuth()
   const keystoreState = useController('KeystoreController').state
-  const {
-    state: requestsState,
-    requestModalRef,
-    closeRequestModal,
-    onBottomSheetClosed,
-    onBottomSheetOpened
-  } = useController('RequestsController')
-  const swapAndBridgeState = useController('SwapAndBridgeController').state
-  const transferState = useController('TransferController').state
-  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { requestModalRef, closeRequestModal, onBottomSheetClosed, onBottomSheetOpened } =
+    useController('RequestsController')
+  const { canRenderRoute } = useContext(ControllersStateLoadedContext)
   const { dispatch } = useContext(ControllersMiddlewareContext)
   // Fonts load in parallel with controller boot (the tree mounts before fonts
   // are ready — see AppInit). Gate the splash hide on fonts too so the first
@@ -57,15 +47,26 @@ const Router = () => {
     eventBus.emit('requestsBottomSheet.closed')
   }, [onBottomSheetClosed])
 
-  const splashHidden = useRef(false)
+  const splashHideRequested = useRef(false)
+  const [isSplashHidden, setIsSplashHidden] = useState(false)
 
-  const isReady = authStatus !== AUTH_STATUS.LOADING && areControllerStatesLoaded && fontsLoaded
+  const isReady = authStatus !== AUTH_STATUS.LOADING && canRenderRoute && fontsLoaded
+
+  // The status bar and the native appearance must not be touched while the
+  // splash screen is still on screen, hence the gate on the fade being over
+  // instead of on `isReady`.
+  useNativeThemeSync(isSplashHidden)
 
   useEffect(() => {
-    if (isReady && !splashHidden.current) {
-      splashHidden.current = true
+    if (isReady && !splashHideRequested.current) {
+      splashHideRequested.current = true
       SplashScreen.setOptions({ duration: 200, fade: true })
-      SplashScreen.hideAsync().catch(() => {})
+      SplashScreen.hideAsync()
+        .finally(() => {
+          setIsSplashHidden(true)
+          markSplashHidden()
+        })
+        .catch(() => {})
       // Now that the splash is hidden, let the webview worker stream the
       // heavy controller states (portfolio, dapps, activity, ...) that were
       // held back during the critical boot phase. Done after the splash hide
@@ -76,9 +77,11 @@ const Router = () => {
 
   // Dismiss the keyboard the moment the app leaves the foreground so iOS never
   // snapshots a visible keyboard, which would otherwise flash on the next launch.
+  // Not animated, because the app suspends mid-animation and the keyboard
+  // position values freeze at whatever height the last delivered frame had.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
-      if (next !== 'active') KeyboardController.dismiss()
+      if (next !== 'active') KeyboardController.dismiss({ animated: false })
     })
 
     return () => sub.remove()
@@ -89,26 +92,8 @@ const Router = () => {
     return null
   }
 
-  // Determine where to navigate initially based on state
-  const initialRoute = getInitialRoute({
-    keystoreState,
-    authStatus,
-    requestsState,
-    swapAndBridgeState,
-    transferState
-  })
-
-  // Users updating from the legacy v1 app land on the migration onboarding
-  // (once) before the get-started screen, so they understand why their data
-  // is gone and can back up their v1 email accounts.
-  const startRoute =
-    initialRoute === ROUTES.getStarted && shouldShowMigrationOnboarding()
-      ? ROUTES.migrationOnboarding
-      : initialRoute
-
   return (
     <View style={flexbox.flex1}>
-      {startRoute && !pathname && <Navigate to={startRoute} replace />}
       <Routes>
         <Route element={<KeystoreUnlockedRoute />}>
           <Route element={<AuthenticatedRoute />}>

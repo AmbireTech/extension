@@ -1,7 +1,7 @@
-import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
+import { StyleSheet, ViewStyle } from 'react-native'
 
 import { isMobile } from '@common/config/env'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -10,11 +10,7 @@ interface Style {
   container: ViewStyle
   header: ViewStyle
   headerMeta: ViewStyle
-  sheetContainer: ViewStyle
   sheetHeader: ViewStyle
-  sheetHeaderBackButton: ViewStyle
-  sheetHeaderTitle: TextStyle
-  sheetScroll: ViewStyle
   sheetScrollContent: ViewStyle
   modalSection: ViewStyle
   modalConfirmedRow: ViewStyle
@@ -25,6 +21,7 @@ interface Style {
   footer: ViewStyle
   footerButtonsRow: ViewStyle
   footerRightButtonsGroup: ViewStyle
+  footerButtonWrapper: ViewStyle
   footerButton: ViewStyle
   contentContainer: ViewStyle
   dappInteractionsColumn: ViewStyle
@@ -53,32 +50,9 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter
     },
-    sheetContainer: {
-      ...flexbox.flex1
-    },
     sheetHeader: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...flexbox.justifySpaceBetween,
       ...spacings.phSm,
-      ...spacings.ptSm,
-      ...spacings.pbTy
-    },
-    sheetHeaderBackButton: {
-      width: 24,
-      height: 24,
-      ...flexbox.alignCenter,
-      ...flexbox.justifyCenter,
-      ...spacings.mlMi
-    },
-    sheetHeaderTitle: {
-      ...flexbox.flex1,
-      textAlign: 'center',
-      ...spacings.mtMd,
-      ...spacings.mbLg
-    },
-    sheetScroll: {
-      ...flexbox.flex1
+      ...spacings.ptSm
     },
     sheetScrollContent: {
       ...spacings.pbSm
@@ -160,24 +134,26 @@ const getStyles = (theme: ThemeProps) =>
       borderTopWidth: 1,
       backgroundColor: theme.primaryBackground,
       ...(isMobile ? spacings.phSm : spacings.phLg),
-      ...spacings.pvMd
+      ...(isMobile ? spacings.ptSm : spacings.pvMd)
     },
     footerButtonsRow: {
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
       ...flexbox.alignCenter,
-      ...(isMobile ? flexbox.wrap : {})
+      ...(isMobile ? { columnGap: SPACING_SM, ...spacings.mbSm } : {})
     },
     footerRightButtonsGroup: {
       ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...(isMobile ? { flexShrink: 1 } : {})
+      ...flexbox.alignCenter
+    },
+    // On mobile the two secondary buttons share the row equally, so they must be
+    // able to grow and shrink together instead of being sized by their label
+    footerButtonWrapper: {
+      ...flexbox.flex1
     },
     footerButton: {
       ...spacings.mb0,
-      ...(isMobile ? spacings.plTy : spacings.pl),
-      ...(isMobile ? spacings.prTy : spacings.prLg),
-      ...(isMobile ? { flexShrink: 1 } : {})
+      ...(isMobile ? { ...spacings.phSm, height: 46 } : { ...spacings.pl, ...spacings.prLg })
     }
   })
 

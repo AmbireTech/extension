@@ -4,14 +4,15 @@ import { View } from 'react-native'
 import ActivityReceiveIcon from '@common/assets/svg/ActivityReceiveIcon'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
+import ManifestImage from '@common/components/ManifestImage'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
-import ManifestImage from '@web/components/ManifestImage'
 
 import { DappInteraction, DisplayBalanceChange } from './types'
 
@@ -48,7 +49,7 @@ export const BalanceChangeToken = ({ change }: { change: DisplayBalanceChange })
     return (
       <View style={spacings.mlTy}>
         <View style={[stylesForIcons.balanceIconWrapper, { backgroundColor: theme.neutral200 }]}>
-          <GasTankIcon width={10} height={10} color={theme.tertiaryText} />
+          <GasTankIcon width={10} height={10} color={theme.primaryAccent} />
         </View>
       </View>
     )
@@ -107,6 +108,16 @@ export const DappInteractionIcon = ({ interaction }: { interaction: DappInteract
     return (
       <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
         <SendIcon width={20} height={20} color={theme.tertiaryText} />
+      </View>
+    )
+  }
+
+  if (interaction.iconType === 'safe') {
+    const safeIconSize = 20 * SAFE_ICON_INLINE_SCALE
+
+    return (
+      <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
+        <SafeIcon width={safeIconSize} height={safeIconSize} />
       </View>
     )
   }

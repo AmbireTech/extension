@@ -30,6 +30,8 @@ interface Props {
 */
 const INTERPOLATE_PROPERTIES = ['backgroundColor', 'color', 'borderColor']
 
+const PRESSED_OPACITY = 0.7
+
 const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
   // Deep memoize the values to prevent unnecessary re-renders
   const memoizedValues = useDeepMemo(values)
@@ -124,6 +126,19 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
     }
   }, [forceHoveredStyle, animate, prevForceHoveredStyle, isHovered])
 
+  // Set instead of animate, because a native driven animation stops reaching the
+  // view once a re-render detaches its animated node, leaving the press feedback stuck.
+  const setPressOpacity = useCallback(
+    (value: number) => {
+      const opacity = animatedValues.find(({ property }) => property === 'opacity')
+
+      if (!opacity) return
+
+      opacity.value.setValue(value)
+    },
+    [animatedValues]
+  )
+
   const onHoverIn = useCallback(() => {
     // Don't animate if forceHoveredStyle because that's handled in a useEffect
     if (forceHoveredStyle) return
@@ -142,29 +157,13 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
         animate(true)
       },
       onPressIn: () => {
-        const opacity = animatedValues.find(({ property }) => property === 'opacity')
-
-        if (!opacity) return
-
-        Animated.timing(opacity.value, {
-          toValue: 0.7,
-          duration: 0,
-          useNativeDriver: true
-        }).start()
+        setPressOpacity(PRESSED_OPACITY)
       },
       onPressOut: (_event?: GestureResponderEvent) => {
-        const opacity = animatedValues.find(({ property }) => property === 'opacity')
-
-        if (!opacity) return
-
-        Animated.timing(opacity.value, {
-          toValue: 1,
-          duration: 0,
-          useNativeDriver: true
-        }).start()
+        setPressOpacity(1)
       }
     }),
-    [animate, animatedValues, forceHoveredStyle, onHoverIn]
+    [animate, setPressOpacity, forceHoveredStyle, onHoverIn]
   )
 
   const style = useMemo(() => {

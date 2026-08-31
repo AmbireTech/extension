@@ -112,6 +112,16 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
     }
   }, [steps])
 
+  // On mobile there isn't enough horizontal room below the route card,
+  // so the link is moved inside it, next to the provider logo
+  const mobileMoreDetails = useMemo(() => {
+    const isSupportedStatus =
+      activeRoute.routeStatus === 'in-progress' || activeRoute.routeStatus === 'completed'
+    if (!isMobile || !isSupportedStatus || !activeRoute.userTxHash) return null
+
+    return <MoreDetails activeRoute={activeRoute} />
+  }, [activeRoute])
+
   return (
     <Panel spacingsSize="small" style={getPanelContainerStyle()}>
       {(activeRoute.routeStatus === 'completed' || activeRoute.routeStatus === 'refunded') && (
@@ -149,6 +159,7 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
             activeRoute.route ? activeRoute.route.providerId : activeRoute.serviceProviderId
           }
           isBridge={isBridgeRoute}
+          bottomLeftSlot={mobileMoreDetails}
         />
       </View>
 
@@ -256,7 +267,7 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
               )}
             </View>
           )}
-          {activeRoute.routeStatus === 'in-progress' && activeRoute.userTxHash && (
+          {!isMobile && activeRoute.routeStatus === 'in-progress' && activeRoute.userTxHash && (
             <MoreDetails activeRoute={activeRoute} />
           )}
         </View>
@@ -283,7 +294,7 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
           <MoreDetails activeRoute={activeRoute} style={spacings.mtSm} />
         </View>
       )}
-      {activeRoute.routeStatus === 'completed' && activeRoute.userTxHash && (
+      {!isMobile && activeRoute.routeStatus === 'completed' && activeRoute.userTxHash && (
         <MoreDetails activeRoute={activeRoute} style={spacings.mtSm} />
       )}
     </Panel>

@@ -145,7 +145,6 @@ const NetworksScreen = () => {
         <FooterGlassView size="sm">
           <Button
             text={t('Add new network')}
-            size="smaller"
             hasBottomSpacing={false}
             style={spacings.mtSm}
             childrenPosition="left"

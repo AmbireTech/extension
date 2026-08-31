@@ -35,8 +35,14 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const [isSafeGasTankBannerDismissed, setIsSafeGasTankBannerDismissed] = useState(true)
   const [isSafeGasTankBannerDismissalLoaded, setIsSafeGasTankBannerDismissalLoaded] =
     useState(false)
-  const { canUseGasTank } = useHasGasTank({ account })
+  const { canUseGasTank, requiresEip7702 } = useHasGasTank({ account })
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
+  const {
+    state: { flags }
+  } = useController('FeatureFlagsController')
+  const isErc4337Enabled = flags.erc4337
+  const isEip7702Enabled = flags.eip7702
+  const isGasTankEnabled = isErc4337Enabled && (!requiresEip7702 || isEip7702Enabled)
 
   const {
     state: { networks }
@@ -56,12 +62,15 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   }, [account?.addr, isSafeAccount])
 
   const buttonState = useMemo(() => {
+    if (!canUseGasTank) return 'generic'
+    if (!isGasTankEnabled) return 'disabled'
     if (totalBalanceGasTankDetails.token === null) return 'error'
-    if (canUseGasTank && totalBalanceGasTankDetails.balanceUSDFormatted) return 'balance'
+    if (totalBalanceGasTankDetails.balanceUSDFormatted) return 'balance'
 
     return 'generic'
   }, [
     canUseGasTank,
+    isGasTankEnabled,
     totalBalanceGasTankDetails.balanceUSDFormatted,
     totalBalanceGasTankDetails.token
   ])
@@ -101,6 +110,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   }, [safeGasTankBannerDismissedStorageKey])
 
   const shouldDisplaySafeGasTankBanner =
+    isGasTankEnabled &&
     isSafeAccount &&
     hasGasTankBalance &&
     isSafeGasTankBannerDismissalLoaded &&
@@ -133,6 +143,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
       return t('Gas Tank')
     }
 
+    if (buttonState === 'disabled') return t('Gas Tank Disabled')
     if (['generic', 'error'].includes(buttonState)) return t('Gas Tank')
 
     return totalBalanceGasTankDetails.balanceUSD === 0
@@ -154,7 +165,8 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   const shouldDisplayOnGasTank = buttonState === 'balance' && !shouldDisplaySafeGasTankBanner
   const shouldDisplayValue = buttonState === 'balance'
-  const shouldDisplayPrimaryText = shouldDisplayValue || shouldDisplaySafeGasTankBanner
+  const shouldDisplayPrimaryText =
+    shouldDisplayValue || shouldDisplaySafeGasTankBanner || buttonState === 'disabled'
   const isRegularHovered = isHovered && !shouldDisplaySafeGasTankBanner
   const isSafeGasTankBannerHovered = isHovered && shouldDisplaySafeGasTankBanner
   const primaryButtonTextColor = useMemo(() => {

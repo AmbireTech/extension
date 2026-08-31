@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useMemo } from 'react'
+import React, { Suspense, useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -11,21 +11,14 @@ import { sizeMultiplier } from '@common/modules/sign-account-op/components/Trans
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
+// Lazy on web/extension, static on mobile - see `lazySummaryPreview.native.ts`
+import SummaryPreview, { preloadSummaryPreview } from './lazySummaryPreview'
 import getStyles from './styles'
 import SummaryDetailsSheet from './SummaryDetailsSheet'
 import SummaryHeader from './SummaryHeader'
 import { Props } from './types'
 
-// Single import closure reused for both the lazy component and the preloader, so warming
-// the chunk (see preloadSummaryPreview) hits the exact same webpack chunk instead of
-// producing a duplicate.
-const importSummaryPreview = () => import('./SummaryPreview')
-const SummaryPreview = lazy(importSummaryPreview)
-
-// Kicks off the humanizer-carrying chunk before the rows mount (e.g. while the activity
-// list is still fetching its data), so the full-row skeleton below is skipped in the
-// common case.
-export const preloadSummaryPreview = importSummaryPreview
+export { preloadSummaryPreview }
 
 // Matches ActivityPositionsSkeleton's row height so the loading state is visually seamless
 // and the whole row swaps to its final content in one step (no intra-row layout shift).

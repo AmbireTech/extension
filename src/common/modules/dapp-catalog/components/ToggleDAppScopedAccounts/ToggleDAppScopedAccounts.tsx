@@ -20,7 +20,7 @@ type Props = {
   label?: string
 }
 
-const { isRequestWindow } = getUiType()
+const { isSidePanel } = getUiType()
 
 const ToggleDAppScopedAccounts: FC<Props> = ({
   enabled,
@@ -31,20 +31,59 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  // Side panel is too narrow for toggle + account badge on one row.
+  const stackToggleAndBadge = isSidePanel
 
   const PillContainer = onOpenAccountSelector ? HoverablePressable : View
+
+  const accountBadge = enabled ? (
+    <PillContainer
+      style={{
+        ...flexbox.directionRow,
+        ...flexbox.alignCenter,
+        ...spacings.pvMi,
+        ...spacings.plSm,
+        ...spacings.prTy,
+        backgroundColor: theme.primaryAccent100,
+        borderRadius: 50,
+        ...(stackToggleAndBadge ? { alignSelf: 'flex-start', ...spacings.mtTy } : {})
+      }}
+      {...(onOpenAccountSelector && {
+        onPress: onOpenAccountSelector
+      })}
+    >
+      <Text fontSize={12} weight="medium" appearance="primary">
+        {t('{{count}} account{{s}} selected', {
+          count: selectedCount,
+          s: selectedCount === 1 ? '' : 's'
+        })}
+      </Text>
+      <LeftArrowIcon
+        color={theme.primaryAccent}
+        width={6}
+        height={13}
+        style={{ ...spacings.mlMi, transform: [{ rotate: '180deg' }] }}
+      />
+    </PillContainer>
+  ) : stackToggleAndBadge ? null : (
+    <View />
+  )
 
   return (
     <View
       style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        flexbox.justifySpaceBetween,
         common.fullWidth,
-        {
-          // Prevents layout shifts
-          height: 30
-        }
+        stackToggleAndBadge
+          ? undefined
+          : [
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
+              {
+                // Prevents layout shifts
+                height: 30
+              }
+            ]
       ]}
     >
       <FatToggle
@@ -56,37 +95,7 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
         onToggle={onToggle}
         trackStyle={spacings.mrTy}
       />
-      {enabled ? (
-        <PillContainer
-          style={{
-            ...flexbox.directionRow,
-            ...flexbox.alignCenter,
-            ...spacings.pvMi,
-            ...spacings.plSm,
-            ...spacings.prTy,
-            backgroundColor: theme.primaryAccent100,
-            borderRadius: 50
-          }}
-          {...(onOpenAccountSelector && {
-            onPress: onOpenAccountSelector
-          })}
-        >
-          <Text fontSize={12} weight="medium" appearance="primary">
-            {t('{{count}} account{{s}} selected', {
-              count: selectedCount,
-              s: selectedCount === 1 ? '' : 's'
-            })}
-          </Text>
-          <LeftArrowIcon
-            color={theme.primaryAccent}
-            width={6}
-            height={13}
-            style={{ ...spacings.mlMi, transform: [{ rotate: '180deg' }] }}
-          />
-        </PillContainer>
-      ) : (
-        <View />
-      )}
+      {accountBadge}
     </View>
   )
 }

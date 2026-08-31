@@ -89,7 +89,7 @@ const AddressScanButton = ({ onScanned }: AddressScanButtonProps) => {
 
   return (
     <>
-      <Pressable onPress={handleOpen} hitSlop={12} style={[spacings.mlTy, spacings.mrSm]}>
+      <Pressable onPress={handleOpen} hitSlop={12} style={spacings.mlTy}>
         <ScanIcon width={22} height={22} color={theme.secondaryText} />
       </Pressable>
       <BottomSheet

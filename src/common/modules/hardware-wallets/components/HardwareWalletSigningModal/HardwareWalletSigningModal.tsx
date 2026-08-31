@@ -130,15 +130,16 @@ const HardwareWalletSigningModal = ({
         {!!signingRequest && (
           <SigningRequestDetails signingRequest={signingRequest} style={spacings.mtLg} />
         )}
+        {isTrezor && !!cancelReq && (
+          <Button
+            type="danger"
+            text={t('Cancel request')}
+            onPress={cancelReq}
+            hasBottomSpacing={false}
+            style={spacings.mtLg}
+          />
+        )}
       </View>
-      {isTrezor && !!cancelReq && (
-        <Button
-          type="danger"
-          text={t('Cancel request')}
-          onPress={cancelReq}
-          hasBottomSpacing={false}
-        />
-      )}
     </BottomSheet>
   )
 }

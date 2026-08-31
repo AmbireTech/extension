@@ -2,6 +2,7 @@ import React, { useCallback } from 'react'
 import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -13,7 +14,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInTab } from '@common/utils/links/links'
-import ManifestImage from '@web/components/ManifestImage'
 
 export const HORIZONTAL_ITEM_ICON_SIZE = 50
 export const HORIZONTAL_ITEM_WIDTH = 50

@@ -12,6 +12,7 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
 type Props = {
   onSignatureScanned: (payload: Uint8Array) => void
@@ -19,6 +20,9 @@ type Props = {
 }
 
 const SCANNER_SIZE = 280
+
+const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
   const { t } = useTranslation()
@@ -44,7 +48,7 @@ const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
       </Text>
       <View
         style={
-          isMobile
+          withMobileLayout
             ? {
                 width: SCANNER_SIZE + 4,
                 height: SCANNER_SIZE + 4,
@@ -68,12 +72,12 @@ const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
         mobileStyle={spacings.ptLg}
       >
         <Button
-          size={isMobile ? 'regular' : 'smaller'}
+          size={withMobileLayout ? 'regular' : 'smaller'}
           hasBottomSpacing={false}
           type="secondary"
           text={t('Back')}
           onPress={handleBack}
-          style={isWeb ? { width: 98 } : undefined}
+          style={isWeb && !withMobileLayout ? { width: 98 } : undefined}
         />
       </FooterGlassView>
     </View>

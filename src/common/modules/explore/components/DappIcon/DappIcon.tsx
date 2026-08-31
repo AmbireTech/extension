@@ -5,11 +5,11 @@ import { View } from 'react-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import ManifestImage from '@common/components/ManifestImage'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 import NotConnected from './NotConnected'
 

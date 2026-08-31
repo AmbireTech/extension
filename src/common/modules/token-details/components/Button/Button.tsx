@@ -3,15 +3,19 @@ import { Animated, Pressable } from 'react-native'
 
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
+
+/** Matches the original mobile token-details footer icon hit area. */
+const ICON_AREA_HEIGHT = 52
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 interface Props {
@@ -40,6 +44,8 @@ const TokenDetailsButton: FC<Props> = ({
   testID
 }) => {
   const { styles, theme } = useTheme(getStyles)
+  // Compact = mobile or narrow side panel — both use the original mobile button styles.
+  const { isCompactLayout } = useCompactActionRequestLayout()
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -56,10 +62,9 @@ const TokenDetailsButton: FC<Props> = ({
         key={id}
         dataSet={tooltipText ? { tooltipId } : undefined}
         style={[
-          styles.action,
+          isCompactLayout ? styles.actionCompact : styles.action,
           isDisabled && { opacity: 0.4 },
-          isWeb && id !== 'hide-unhide' && { marginRight: 6 },
-          isMobile && { minWidth: 0 }
+          !isCompactLayout && isWeb && id !== 'hide-unhide' && { marginRight: 6 }
         ]}
         // Purposely don't disable the button (but block the onPress action) in
         // case of a tooltip, because it should be clickable to show the tooltip.
@@ -75,7 +80,12 @@ const TokenDetailsButton: FC<Props> = ({
           style={[
             spacings.mbTy,
             animStyle,
-            { borderRadius: BORDER_RADIUS_PRIMARY, width: '100%', height: 52, ...flexbox.center }
+            {
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              width: '100%',
+              height: ICON_AREA_HEIGHT,
+              ...flexbox.center
+            }
           ]}
         >
           <Icon
@@ -84,7 +94,12 @@ const TokenDetailsButton: FC<Props> = ({
             strokeWidth={strokeWidth}
           />
         </Animated.View>
-        <Text fontSize={isMobile ? 10 : 12} weight="medium" style={text.center}>
+        <Text
+          fontSize={isCompactLayout ? 10 : 12}
+          weight="medium"
+          numberOfLines={isCompactLayout ? 2 : 1}
+          style={[text.center, isCompactLayout && { minWidth: 0, width: '100%' }]}
+        >
           {btnText}
         </Text>
       </Pressable>

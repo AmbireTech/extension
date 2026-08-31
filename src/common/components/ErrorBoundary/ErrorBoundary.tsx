@@ -5,7 +5,9 @@ import { useModalize } from 'react-native-modalize'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import FullScreenMessage from '@common/components/FullScreenMessage'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import SupportLink from '@common/components/SupportLink'
 import { useTranslation } from '@common/config/localization'
 import { LeanThemeProvider } from '@common/contexts/themeContext/context'
 import useTheme from '@common/hooks/useTheme'
@@ -14,16 +16,14 @@ import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHand
 import spacings from '@common/styles/spacings'
 import { DEFAULT_THEME } from '@common/styles/theme/types'
 import { THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
-import common, { hexToRgba } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
-import { getUiType } from '@common/utils/uiType'
 import { PortalHost } from '@gorhom/portal'
 import { isExtension } from '@web/constants/browserapi'
 
-import AmbireLogoHorizontal from '../AmbireLogoHorizontal'
 import Button from '../Button'
 import Text from '../Text'
 
@@ -139,71 +139,16 @@ const ErrorBoundaryInner = ({ error }: Props) => {
         </View>
       </BottomSheet>
 
-      <View
-        style={[
-          flexbox.flex1,
-          flexbox.center,
-          {
-            backgroundColor: theme.secondaryBackground
-          }
-        ]}
-      >
-        <View
-          style={[
-            spacings.pvXl,
-            spacings.ph2Xl,
-            flexbox.alignCenter,
-            common.borderRadiusPrimary,
-            {
-              backgroundColor: hexToRgba(theme.primaryBackground, 0.6),
-              borderColor: theme.secondaryBorder,
-              borderWidth: 1
-            }
-          ]}
-        >
-          <AmbireLogoHorizontal width={124} height={43} style={spacings.mbXl} />
-          <Text
-            fontSize={20}
-            weight="medium"
-            style={[text.center, spacings.mbSm, { maxWidth: 360 }]}
-          >
-            {t('Something went wrong, but your funds are safe!')}
+      <FullScreenMessage
+        title={t('Something went wrong, but your funds are safe!')}
+        description={
+          <Text fontSize={14} style={text.center}>
+            {t('Try reloading the page. If the issue persists, restart your browser or ')}
+            <SupportLink />
+            {t(' for assistance.')}
           </Text>
-          <View
-            style={{
-              maxWidth: 360,
-              ...spacings.mb,
-              marginHorizontal: 'auto'
-            }}
-          >
-            <Text fontSize={14} style={text.center}>
-              {t('Try reloading the page. If the issue persists, restart your browser or ')}
-              <TouchableOpacity
-                onPress={() =>
-                  openInTab({ url: 'https://help.ambire.com/en', shouldCloseCurrentWindow: true })
-                }
-              >
-                <Text
-                  fontSize={14}
-                  weight="medium"
-                  color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
-                >
-                  {t('contact Support')}
-                </Text>
-              </TouchableOpacity>
-              {t(' for assistance.')}
-            </Text>
-          </View>
-          <TouchableOpacity style={{ ...spacings.mbXl }} onPress={() => openBottomSheet()}>
-            <Text
-              fontSize={12}
-              underline
-              color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
-            >
-              {t('Show Details')}
-            </Text>
-          </TouchableOpacity>
-
+        }
+        actions={
           <Button
             style={{
               width: 200
@@ -212,8 +157,18 @@ const ErrorBoundaryInner = ({ error }: Props) => {
             onPress={() => window.location.reload()}
             hasBottomSpacing={false}
           />
-        </View>
-      </View>
+        }
+      >
+        <TouchableOpacity style={{ ...spacings.mbXl }} onPress={() => openBottomSheet()}>
+          <Text
+            fontSize={12}
+            underline
+            color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+          >
+            {t('Show Details')}
+          </Text>
+        </TouchableOpacity>
+      </FullScreenMessage>
     </GestureHandler>
   )
 }

@@ -1,42 +1,40 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable } from 'react-native'
 import { useModalize } from 'react-native-modalize'
-import { TooltipRefProps } from 'react-tooltip'
 
-import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import Dialog from '@common/components/Dialog'
 import DialogButton from '@common/components/Dialog/DialogButton'
 import DialogFooter from '@common/components/Dialog/DialogFooter'
-import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
+import Dropdown from '@common/components/Dropdown'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
 
 interface Props {
-  tooltipRef: React.RefObject<TooltipRefProps | null>
   address: string
   name: string
 }
 
-const ManageContact: FC<Props> = ({ address, name, tooltipRef }) => {
+const ManageContact: FC<Props> = ({ address, name }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch: addressBookDispatch } = useController('AddressBookController')
   const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
-  const [bindRemoveBtnAnim, removeBtnAnimStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: theme.primaryBackground,
-      to: theme.secondaryBackground
-    }
-  })
+
+  const menu = useMemo(
+    () => [
+      { label: t('Delete Contact'), value: 'delete', style: { color: theme.errorDecorative } }
+    ],
+    [t, theme.errorDecorative]
+  )
+
+  const onSelect = (item: { label: string; value: string }) => {
+    if (item.value === 'delete') openDialog()
+  }
 
   const removeContact = () => {
     addressBookDispatch({
@@ -52,49 +50,7 @@ const ManageContact: FC<Props> = ({ address, name, tooltipRef }) => {
 
   return (
     <>
-      <Pressable
-        style={[
-          spacings.mlSm,
-          flexbox.center,
-          {
-            width: 20,
-            height: 20
-          }
-        ]}
-        dataSet={{
-          tooltipId: `${address}`
-        }}
-      >
-        {({ hovered }: any) => (
-          <KebabMenuIcon
-            color={hovered ? theme.primaryText : theme.secondaryText}
-            height={28}
-            width={28}
-          />
-        )}
-      </Pressable>
-      <Tooltip
-        tooltipRef={tooltipRef}
-        id={address}
-        style={{
-          padding: 0,
-          overflow: 'hidden'
-        }}
-        clickable
-        openOnClick
-        closeEvents={{ click: true, blur: true }}
-        noArrow
-        place="left"
-        withPortal={false}
-      >
-        <AnimatedPressable
-          style={[text.center, spacings.pvTy, spacings.ph, removeBtnAnimStyle]}
-          onPress={() => openDialog()}
-          {...bindRemoveBtnAnim}
-        >
-          <Text fontSize={12}>{t('Delete Contact')}</Text>
-        </AnimatedPressable>
-      </Tooltip>
+      <Dropdown data={menu} onSelect={onSelect} kebabIconProps={{ width: 28, height: 28 }} />
       <Dialog
         dialogRef={dialogRef}
         id="delete-contact"
@@ -103,9 +59,11 @@ const ManageContact: FC<Props> = ({ address, name, tooltipRef }) => {
         closeDialog={closeDialog}
       >
         <DialogFooter horizontalAlignment="justifyEnd">
-          <DialogButton text={t('Close')} type="secondary" onPress={() => closeDialog()} />
+          {isWeb && (
+            <DialogButton text={t('Close')} type="secondary" onPress={() => closeDialog()} />
+          )}
           <DialogButton
-            style={spacings.ml}
+            style={isWeb ? spacings.ml : flexbox.flex1}
             text={t('Delete')}
             type="danger"
             onPress={removeContact}

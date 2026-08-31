@@ -48,6 +48,7 @@ export interface Props extends PressableProps {
   children?: React.ReactNode
   childrenPosition?: 'left' | 'right'
   childrenContainerStyle?: ViewStyle
+  shouldScaleChildrenOnHover?: boolean
   innerContainerStyle?: (hovered: boolean) => ViewStyle
   testID?: string
   submitOnEnter?: boolean
@@ -161,6 +162,7 @@ const Button = ({
   forceHoveredStyle = false,
   childrenPosition = 'right',
   childrenContainerStyle,
+  shouldScaleChildrenOnHover = true,
   testID,
   submitOnEnter: _submitOnEnter,
   tooltipDataSet,
@@ -529,7 +531,13 @@ const Button = ({
           <Animated.View
             style={[
               childrenContainerStyle || {
-                transform: [{ scale: childrenScaleAnimationStyle.scaleX as number }]
+                transform: [
+                  {
+                    scale: shouldScaleChildrenOnHover
+                      ? (childrenScaleAnimationStyle.scaleX as number)
+                      : 1
+                  }
+                ]
               }
             ]}
           >
@@ -568,7 +576,13 @@ const Button = ({
           <Animated.View
             style={[
               childrenContainerStyle || {
-                transform: [{ scale: childrenScaleAnimationStyle.scaleX as number }]
+                transform: [
+                  {
+                    scale: shouldScaleChildrenOnHover
+                      ? (childrenScaleAnimationStyle.scaleX as number)
+                      : 1
+                  }
+                ]
               }
             ]}
           >

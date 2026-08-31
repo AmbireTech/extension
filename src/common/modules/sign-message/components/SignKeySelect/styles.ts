@@ -1,10 +1,8 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
-import { isMobile } from '@common/config/env'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY, getDropdownBorderStyle } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -27,11 +25,12 @@ const getStyles = (theme: ThemeProps) =>
       ],
       ...common.borderRadiusPrimary,
       ...common.shadowPrimary,
+      ...getDropdownBorderStyle(theme),
       backgroundColor: theme.primaryBackground,
       // On mobile the whole sign flow lives in a BottomSheet that portals into
-      // the same "global" host at BOTTOM_SHEET_Z_INDEX, so the key selector must
-      // sit above it or it renders hidden behind the sheet. Web isn't in a sheet.
-      zIndex: isMobile ? BOTTOM_SHEET_Z_INDEX + 2 : 8,
+      // the same "global" host, so the zIndex has to be derived from the open
+      // sheets and is applied by the component. Web isn't in a sheet.
+      zIndex: 8,
       overflow: 'hidden'
     },
     overlay: {
@@ -41,7 +40,7 @@ const getStyles = (theme: ThemeProps) =>
       top: 0,
       left: 0,
       backgroundColor: theme.backdrop,
-      zIndex: isMobile ? BOTTOM_SHEET_Z_INDEX + 1 : 7
+      zIndex: 7
     },
     title: {
       ...spacings.pvTy,

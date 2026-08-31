@@ -1,4 +1,4 @@
-import React, { Fragment, memo, useCallback, useMemo } from 'react'
+import React, { memo, useCallback, useMemo, useState } from 'react'
 import { Image, Linking, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -10,6 +10,7 @@ import gradient780 from '@benzin/assets/images/gradient-780.png'
 import Buttons from '@benzin/screens/BenzinScreen/components/Buttons'
 import Header from '@benzin/screens/BenzinScreen/components/Header'
 import Steps from '@benzin/screens/BenzinScreen/components/Steps'
+import { shouldShowTxnProgress } from '@benzin/screens/BenzinScreen/components/Steps/utils/rows'
 import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Spinner from '@common/components/Spinner'
@@ -18,18 +19,17 @@ import { isMobile, isWeb } from '@common/config/env'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
 import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { DEVICE_HEIGHT, DEVICE_WIDTH, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
 import getStyles from './styles'
 
-const Container = ({ children }: { children: React.ReactNode }) => {
-  if (isMobile) return <Fragment>{children}</Fragment>
-  return <View style={flexbox.flex1}>{children}</View>
-}
+const { isSidePanel } = getUiType()
 
 const Benzin = ({
   state,
@@ -42,6 +42,38 @@ const Benzin = ({
   const { maxWidthSize } = useWindowSize()
   const { isStoreReady } = useControllerStore()
   const insets = useSafeAreaInsets()
+  // Side panel keeps the footer in the layout under the scroll view, so it stays at the bottom of
+  // the screen. An absolute footer would need a spacer inside the scroll view, which creates a
+  // phantom scrollbar when the steps are short.
+  const needsFooterSpacer = !!children && !isMobile && !isSidePanel
+  const [scrollViewportHeight, setScrollViewportHeight] = useState(0)
+  const [scrollContentHeight, setScrollContentHeight] = useState(0)
+  const [viewSize, setViewSize] = useState({ width: 0, height: 0 })
+  // Layers like confetti can inflate scroll height past the visible steps. Only allow scrolling in
+  // the side panel when the measured content is actually taller than the viewport.
+  const isSidePanelScrollEnabled =
+    scrollViewportHeight > 0 && scrollContentHeight > scrollViewportHeight + 1
+
+  const handleScrollViewLayout = useCallback(
+    (event: { nativeEvent: { layout: { height: number } } }) => {
+      setScrollViewportHeight(event.nativeEvent.layout.height)
+    },
+    []
+  )
+
+  const handleScrollContentSizeChange = useCallback((_width: number, height: number) => {
+    setScrollContentHeight(height)
+  }, [])
+
+  const handleViewLayout = useCallback(
+    (event: { nativeEvent: { layout: { width: number; height: number } } }) => {
+      const { width, height } = event.nativeEvent.layout
+      setViewSize((prev) =>
+        prev.width === width && prev.height === height ? prev : { width, height }
+      )
+    },
+    []
+  )
 
   const sizeStr = useMemo(() => {
     if (isMobile) return 'lg'
@@ -173,8 +205,23 @@ const Benzin = ({
     showOpenExplorerBtn
   } = state
 
+  const finalizedStatus = stepsState.finalizedStatus
+  const hasBalanceChangesLoaded =
+    typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined' ||
+    typeof stepsState.balanceChanges !== 'undefined'
+  const displayActiveStep =
+    activeStep === 'finalized' && shouldShowTxnProgress(finalizedStatus) && !hasBalanceChangesLoaded
+      ? 'balance-changes'
+      : activeStep
+  // Keep the celebration overlay on the whole Benzin view (outside the scroll content) so it can
+  // fill the screen without creating a phantom scrollbar
+  const showConfetti =
+    displayActiveStep === 'finalized' &&
+    finalizedStatus !== null &&
+    finalizedStatus.status === 'confirmed'
+
   return (
-    <Container>
+    <View style={flexbox.flex1} onLayout={handleViewLayout}>
       <View
         pointerEvents="none"
         style={
@@ -197,7 +244,35 @@ const Benzin = ({
           resizeMode="cover"
         />
       </View>
-      <ScrollView style={flexbox.flex1} contentContainerStyle={styles.container}>
+      {!!showConfetti && viewSize.width > 0 && viewSize.height > 0 && (
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, { zIndex: 2, overflow: 'hidden' }]}
+        >
+          <ConfettiAnimation
+            type="tertiary"
+            width={viewSize.width}
+            height={viewSize.height}
+            // Only the side panel needs a full-bleed stretch; popup/mobile keep the original
+            // centered containment so the celebration looks the same there
+            resizeMode={isSidePanel ? 'stretch' : 'contain'}
+            autoPlay
+            loop={false}
+          />
+        </View>
+      )}
+      <ScrollView
+        style={flexbox.flex1}
+        scrollEnabled={!isSidePanel || isSidePanelScrollEnabled}
+        onLayout={isSidePanel ? handleScrollViewLayout : undefined}
+        onContentSizeChange={isSidePanel ? handleScrollContentSizeChange : undefined}
+        contentContainerStyle={[
+          styles.container,
+          // Less top padding in the side panel so short progress views stay within the scroll area
+          // above the pinned footer
+          isSidePanel && { ...spacings.ptSm, ...spacings.pbSm }
+        ]}
+      >
         <View style={styles.content}>
           <Header activeStep={activeStep} network={network} />
           <Steps
@@ -217,13 +292,15 @@ const Benzin = ({
               showOpenExplorerBtn={showOpenExplorerBtn}
             />
           ) : (
-            // Leave enough space for the absolutely positioned buttons
-            <View style={{ marginBottom: isMobile ? 0 : 80 }} />
+            needsFooterSpacer && (
+              // Leave enough space for the absolutely positioned buttons
+              <View style={{ marginBottom: 80 }} />
+            )
           )}
         </View>
       </ScrollView>
       {children}
-    </Container>
+    </View>
   )
 }
 
