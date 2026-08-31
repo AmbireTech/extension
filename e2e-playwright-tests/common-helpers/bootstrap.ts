@@ -31,18 +31,23 @@ const playwrightArgs = [
   '--ip-address-space-overrides=127.0.0.1:0=public'
 ]
 
-function closeDuplicateOnboardingTabs(context: BrowserContext, keep: Page): void {
-  context.on('page', async (tab: Page) => {
+function closeDuplicateOnboardingTab(context: BrowserContext, keep: Page): void {
+  const handler = async (tab: Page) => {
     if (tab === keep || tab.isClosed()) return
 
+    // Detach immediately: only the extension's install-time tab is ever targeted.
+    context.off('page', handler)
+
     try {
-      await tab.waitForURL((u) => u.href.startsWith('chrome-extension://') && u.href.includes('tab.html'), { timeout: 5000 })
+      await tab.waitForURL((u) => u.href.startsWith('chrome-extension://'), { timeout: 5000 })
     } catch {
-      return // not an onboarding tab — leave it alone
+      return
     }
 
     await tab.close().catch(() => { })
-  })
+  }
+
+  context.on('page', handler)
 }
 
 /**
@@ -106,7 +111,7 @@ async function initBrowser(namespace: string): Promise<{
   const page = await context.newPage()
   page.setDefaultTimeout(120000)
 
-  closeDuplicateOnboardingTabs(context, page)
+  closeDuplicateOnboardingTab(context, page)
 
   await Promise.all(
     context
@@ -115,7 +120,7 @@ async function initBrowser(namespace: string): Promise<{
       .map((p) => p.close().catch(() => { }))
   )
 
-  // 4. Attach console logging from service worker
+  // 4. Attach console logging from service worker; could make debugging easier
   try {
     serviceWorker.on('console', (msg) => {
       console.log(`[service-worker] ${msg.text()}`)
