@@ -75,7 +75,6 @@ async function launchBrowser(): Promise<{
     slowMo: 10,
     ignoreHTTPSErrors: true,
     args: playwrightArgs,
-    env: process.env.DISPLAY ? { DISPLAY: process.env.DISPLAY } : undefined,
     viewport: null
   })
 
