@@ -2,7 +2,10 @@ import React, { memo, useCallback, useMemo } from 'react'
 import { Image, View } from 'react-native'
 import { SvgUri } from 'react-native-svg'
 
-import { shouldShowErc7730SummaryRowLabel } from '@common/components/HumanizedVisualization/Erc7730/helpers'
+import {
+  MOBILE_ERC7730_TEXT_SIZE,
+  shouldShowErc7730SummaryRowLabel
+} from '@common/components/HumanizedVisualization/Erc7730/helpers'
 import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -90,7 +93,7 @@ const MobileErc7730SummaryVisualization = ({
               )}
             </View>
           )}
-          <View style={{ flex: 1, minWidth: 0 }}>{renderTitleParts(textSize + 2)}</View>
+          <View style={{ flex: 1, minWidth: 0 }}>{renderTitleParts(MOBILE_ERC7730_TEXT_SIZE)}</View>
         </View>
       )}
       {spenderRow && (
@@ -113,7 +116,7 @@ const MobileErc7730SummaryVisualization = ({
               {spenderRow.label}
             </Text>
           </View>
-          {renderValues(spenderRow.value, subtitleTextSize)}
+          {renderValues(spenderRow.value, MOBILE_ERC7730_TEXT_SIZE)}
         </View>
       )}
       {summaryRows.map((row) => (
@@ -139,7 +142,7 @@ const MobileErc7730SummaryVisualization = ({
               {row.label}
             </Text>
           )}
-          {renderValues(row.value)}
+          {renderValues(row.value, MOBILE_ERC7730_TEXT_SIZE)}
         </View>
       ))}
     </View>

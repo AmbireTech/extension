@@ -4,6 +4,7 @@ import Erc7730StructuredVisualization from './Erc7730/Erc7730StructuredVisualiza
 export {
   getErc7730IntentText,
   getVisibleErc7730RowsExcludingTitleParts,
+  MOBILE_ERC7730_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
 } from './Erc7730/helpers'
 

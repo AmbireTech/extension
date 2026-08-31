@@ -11,6 +11,9 @@ type Erc7730Row = HumanizerErc7730Visualization['fields'][number]
 // comparisons/heuristics/non-rich surfaces.
 export const getErc7730IntentText = (item: HumanizerErc7730Visualization) => item.intent[0]?.content
 
+/** Keeps ERC-7730 text compact in layouts shared by mobile and the side panel. */
+export const MOBILE_ERC7730_TEXT_SIZE = 14
+
 const labelIncludes = (label: string, needles: string[]) => {
   const normalizedLabel = label.trim().toLowerCase()
 
