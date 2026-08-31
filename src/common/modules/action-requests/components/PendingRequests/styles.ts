@@ -12,12 +12,13 @@ interface Styles {
   iconStack: ViewStyle
   summaryIcon: ViewStyle
   card: ViewStyle
+  cardHeader: ViewStyle
+  cardHeaderLeft: ViewStyle
   cardIcon: ViewStyle
-  cardContent: ViewStyle
+  cardTitle: TextStyle
+  cardDescription: TextStyle
   cardHumanization: ViewStyle
-  cardMetadata: ViewStyle
-  metadataItem: ViewStyle
-  metadataText: TextStyle
+  cardNetwork: ViewStyle
   sheetHeader: ViewStyle
   closeButton: ViewStyle
   openButton: ViewStyle
@@ -62,23 +63,36 @@ const getStyles = (theme: ThemeProps) =>
       overflow: 'hidden'
     },
     card: {
-      ...flexbox.directionRow,
-      ...flexbox.alignStart,
       ...spacings.phSm,
-      ...spacings.pvSm,
+      ...spacings.pvTy,
       ...spacings.mbSm,
       borderWidth: 1,
       borderColor: theme.primaryBorder,
       borderRadius: BORDER_RADIUS_PRIMARY,
       backgroundColor: theme.primaryBackground
     },
+    cardHeader: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifySpaceBetween,
+      ...spacings.mbMi,
+      width: '100%'
+    },
+    cardHeaderLeft: {
+      ...flexbox.flex1,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      minWidth: 0
+    },
     cardIcon: {
-      ...spacings.mrSm,
+      ...spacings.mrTy,
       flexShrink: 0
     },
-    cardContent: {
-      ...flexbox.flex1,
-      minWidth: 0
+    cardTitle: {
+      flexShrink: 1
+    },
+    cardDescription: {
+      width: '100%'
     },
     cardHumanization: {
       ...spacings.mtSm,
@@ -88,25 +102,15 @@ const getStyles = (theme: ThemeProps) =>
       borderColor: theme.primaryBorder,
       borderRadius: BORDER_RADIUS_PRIMARY,
       backgroundColor: theme.secondaryBackground,
-      overflow: 'hidden'
+      overflow: 'hidden',
+      width: '100%'
     },
-    cardMetadata: {
+    cardNetwork: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      ...flexbox.wrap,
-      ...spacings.mtSm
-    },
-    metadataItem: {
-      ...spacings.phTy,
-      ...spacings.pvMi,
-      ...spacings.mrTy,
-      ...spacings.mbMi,
-      borderRadius: BORDER_RADIUS_PRIMARY,
-      backgroundColor: theme.secondaryBackground,
-      maxWidth: '100%'
-    },
-    metadataText: {
-      maxWidth: '100%'
+      ...spacings.mtSm,
+      minWidth: 0,
+      width: '100%'
     },
     sheetHeader: {
       ...flexbox.directionRow,

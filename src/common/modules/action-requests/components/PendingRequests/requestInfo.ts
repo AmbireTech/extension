@@ -157,7 +157,7 @@ export const getRequestDescription = (request: UserRequest, t: TFunction) => {
   }
 }
 
-const getRequestChainId = (request: UserRequest) => {
+export const getRequestChainId = (request: UserRequest) => {
   if (request.meta.chainId !== undefined && request.meta.chainId !== null) {
     return String(request.meta.chainId)
   }

@@ -9,7 +9,9 @@ import SafeIcon from '@common/assets/svg/SafeIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import HoverablePressable from '@common/components/HoverablePressable'
 import ManifestImage from '@common/components/ManifestImage'
+import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -21,6 +23,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import {
   getIsAmbireWalletRequest,
   getIsSafeRequest,
+  getRequestChainId,
   getRequestDappInfo,
   getRequestDescription,
   getRequestNetworkLabel,
@@ -83,72 +86,68 @@ const RequestCard = React.memo(function RequestCard({
 }) {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-  const { title, description, networkLabel, dappUrl } = useMemo(() => {
-    const dappInfo = getRequestDappInfo(request, t)
-
+  const { title, description, networkLabel, requestChainId } = useMemo(() => {
     return {
       title: getRequestTitle(request, t),
       description: getRequestDescription(request, t),
       networkLabel: getRequestNetworkLabel(request, networks, t),
-      dappUrl: dappInfo.url
+      requestChainId: getRequestChainId(request)
     }
   }, [networks, request, t])
   const handleOpen = useCallback(() => onOpen(request.id), [onOpen, request.id])
 
   return (
     <View style={styles.card}>
-      <View style={styles.cardIcon}>
-        <RequestIcon request={request} size={32} />
-      </View>
-      <View style={styles.cardContent}>
-        <Text weight="semiBold" fontSize={16} style={spacings.mbMi}>
-          {title}
-        </Text>
-        <Text appearance="secondaryText" fontSize={14}>
-          {description}
-        </Text>
-        {shouldRenderHumanization &&
-        request.kind === 'calls' &&
-        request.signAccountOp.humanization?.length ? (
-          <Suspense fallback={null}>
-            <View style={styles.cardHumanization}>
-              <CompactHumanizedCalls
-                humanization={request.signAccountOp.humanization}
-                chainId={request.signAccountOp.accountOp.chainId}
-              />
-            </View>
-          </Suspense>
-        ) : null}
-        <View style={styles.cardMetadata}>
-          <View style={styles.metadataItem}>
-            <Text fontSize={12} weight="medium" appearance="secondaryText" numberOfLines={1}>
-              {networkLabel}
-            </Text>
+      <View style={styles.cardHeader}>
+        <View style={styles.cardHeaderLeft}>
+          <View style={styles.cardIcon}>
+            <RequestIcon request={request} size={24} />
           </View>
-          <View style={styles.metadataItem}>
-            <Text
-              fontSize={12}
-              weight="medium"
-              appearance="secondaryText"
-              numberOfLines={1}
-              ellipsizeMode="middle"
-              style={styles.metadataText}
-            >
-              {dappUrl}
-            </Text>
-          </View>
+          <Text weight="semiBold" fontSize={16} style={styles.cardTitle}>
+            {title}
+          </Text>
         </View>
+        <HoverablePressable
+          onPress={handleOpen}
+          style={styles.openButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('Open {{requestTitle}}', { requestTitle: title })}
+        >
+          <Text appearance="linkText" weight="medium">
+            {t('Open')}
+          </Text>
+        </HoverablePressable>
       </View>
-      <HoverablePressable
-        onPress={handleOpen}
-        style={styles.openButton}
-        accessibilityRole="button"
-        accessibilityLabel={t('Open {{requestTitle}}', { requestTitle: title })}
-      >
-        <Text appearance="linkText" weight="medium">
-          {t('Open')}
+      <Text appearance="secondaryText" fontSize={14} style={styles.cardDescription}>
+        {description}
+      </Text>
+      {shouldRenderHumanization &&
+      request.kind === 'calls' &&
+      request.signAccountOp.humanization?.length ? (
+        <Suspense fallback={null}>
+          <View style={styles.cardHumanization}>
+            <CompactHumanizedCalls
+              humanization={request.signAccountOp.humanization}
+              chainId={request.signAccountOp.accountOp.chainId}
+            />
+          </View>
+        </Suspense>
+      ) : null}
+      <View style={styles.cardNetwork}>
+        <Text fontSize={isMobile ? 12 : 14} appearance="secondaryText">
+          {t('On')}
         </Text>
-      </HoverablePressable>
+        {!!requestChainId && (
+          <NetworkIcon id={requestChainId} name={networkLabel} size={18} style={spacings.mhMi} />
+        )}
+        <Text
+          fontSize={isMobile ? 12 : 14}
+          appearance="secondaryText"
+          style={!requestChainId ? spacings.mlMi : undefined}
+        >
+          {networkLabel}
+        </Text>
+      </View>
     </View>
   )
 })
