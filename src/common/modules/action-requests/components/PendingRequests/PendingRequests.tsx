@@ -30,10 +30,12 @@ import {
   getRequestTitle,
   getUniquePreviewRequestsByIcon
 } from './requestInfo'
+import CompactMessagePreview from './lazyCompactMessagePreview'
 import getStyles from './styles'
 
 import type { Network } from '@ambire-common/interfaces/network'
 import type { UserRequest } from '@ambire-common/interfaces/userRequest'
+import type { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 const SET_CURRENT_REQUEST_PARAMS = {
   skipFocus: true
@@ -46,6 +48,9 @@ const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsCon
   state.visibleUserRequests
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
+const selectHumanizedMessage = (state: AllControllersMappingType['SignMessageController']) =>
+  state.humanizedMessage
 
 const RequestIcon = React.memo(function RequestIcon({
   request,
@@ -77,12 +82,14 @@ const RequestCard = React.memo(function RequestCard({
   request,
   networks,
   onOpen,
-  shouldRenderHumanization
+  shouldRenderHumanization,
+  humanizedMessage
 }: {
   request: UserRequest
   networks: Network[]
   onOpen: (requestId: UserRequest['id']) => void
   shouldRenderHumanization: boolean
+  humanizedMessage?: IrMessage
 }) {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -133,6 +140,16 @@ const RequestCard = React.memo(function RequestCard({
           </View>
         </Suspense>
       ) : null}
+      {shouldRenderHumanization &&
+      (request.kind === 'message' || request.kind === 'typedMessage') ? (
+        <Suspense fallback={null}>
+          <CompactMessagePreview
+            request={request}
+            humanizedMessage={humanizedMessage}
+            style={styles.cardHumanization}
+          />
+        </Suspense>
+      ) : null}
       <View style={styles.cardNetwork}>
         <Text fontSize={isMobile ? 12 : 14} appearance="secondaryText">
           {t('On')}
@@ -171,6 +188,7 @@ const PendingRequests = ({ style }: Props) => {
     selectVisibleUserRequests
   )
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: humanizedMessage } = useController('SignMessageController', selectHumanizedMessage)
   const otherRequests = useMemo(() => {
     if (!currentUserRequest) return []
     if (!visibleUserRequests.some(({ id }) => id === currentUserRequest.id)) return []
@@ -285,6 +303,7 @@ const PendingRequests = ({ style }: Props) => {
             networks={networks}
             onOpen={openRequest}
             shouldRenderHumanization={shouldRenderHumanization}
+            humanizedMessage={humanizedMessage}
           />
         ))}
       </BottomSheet>
