@@ -107,6 +107,20 @@ jobs:
           GH_TOKEN="$PRIVATE_REPO_TOKEN" gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
             --json name,body --jq '.body' > release-notes.md
 
+          # Rewritten for a public audience: the compare link has to point at the
+          # public repo, and PR links point at this private one, so they would 404
+          # for everyone reading the public release. Links to ambire-common are left
+          # alone - that repo is public.
+          sed -i \
+            -e 's|https://github.com/AmbireTech/ambire-app/compare/|https://github.com/AmbireTech/extension/compare/|g' \
+            -e 's| https://github.com/AmbireTech/ambire-app/pull/[0-9]*||g' \
+            release-notes.md
+
+          if grep -q 'AmbireTech/ambire-app' release-notes.md; then
+            echo "::warning::The release notes still link to this private repo, these will 404 publicly:"
+            grep -n 'AmbireTech/ambire-app' release-notes.md
+          fi
+
           # Immutable releases lock their assets on publish, so a human reviews the
           # draft and publishes it - that publish is what gets signed by GitHub.
           gh release create "$TAG" assets/*.zip assets/SHA256SUMS \
