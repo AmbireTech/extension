@@ -2,7 +2,10 @@ import React, { memo, useCallback, useMemo } from 'react'
 import { Image, View } from 'react-native'
 import { SvgUri } from 'react-native-svg'
 
+import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
+import { getErc7730RowLabel, getErc7730RowValues } from '@ambire-common/libs/humanizer/utils'
 import {
+  getErc7730RowInlineValues,
   MOBILE_ERC7730_TEXT_SIZE,
   shouldShowErc7730SummaryRowLabel
 } from '@common/components/HumanizedVisualization/Erc7730/helpers'
@@ -40,7 +43,7 @@ const MobileErc7730SummaryVisualization = ({
     return icon?.endsWith('.svg') || icon?.includes('.svg?')
   }, [dappIconUri])
   const renderValues = useCallback(
-    (values: Props['summaryRows'][number]['value'], overrideTextSize?: number) => (
+    (values: HumanizerVisualization[], overrideTextSize?: number) => (
       <View
         style={[
           flexbox.directionRow,
@@ -115,15 +118,15 @@ const MobileErc7730SummaryVisualization = ({
               numberOfLines={1}
               style={[spacings.mrTy, { flexShrink: 0 }]}
             >
-              {spenderRow.label}
+              {getErc7730RowLabel(spenderRow)}
             </Text>
           </View>
-          {renderValues(spenderRow.value, MOBILE_ERC7730_TEXT_SIZE)}
+          {renderValues(getErc7730RowInlineValues(spenderRow), MOBILE_ERC7730_TEXT_SIZE)}
         </View>
       )}
       {summaryRows.map((row) => (
         <View
-          key={`${item.id}-mobile-summary-${row.label}-${row.value
+          key={`${item.id}-mobile-summary-${getErc7730RowLabel(row)}-${getErc7730RowValues(row)
             .map((value) => value.id)
             .join('-')}`}
           style={[
@@ -141,10 +144,10 @@ const MobileErc7730SummaryVisualization = ({
               numberOfLines={1}
               style={[spacings.mrTy, { flexShrink: 0 }]}
             >
-              {row.label}
+              {getErc7730RowLabel(row)}
             </Text>
           )}
-          {renderValues(row.value, MOBILE_ERC7730_TEXT_SIZE)}
+          {renderValues(getErc7730RowInlineValues(row), MOBILE_ERC7730_TEXT_SIZE)}
         </View>
       ))}
     </View>
