@@ -1,10 +1,2 @@
-# Transaction pages are not meant to be indexed, but social crawlers must be able to read
-# their meta tags, otherwise shared links render without a preview.
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
-Disallow: /
+Allow: /
