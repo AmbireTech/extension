@@ -10,6 +10,10 @@ import usePrevious from '@common/hooks/usePrevious'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
+// Creating the smart account identities on the Relayer and updating their state afterwards
+// can take a while on a slow connection, so the import gets more room than the default.
+const ADD_ACCOUNTS_TIMEOUT_MS = 60_000
+
 export interface Account {
   type: string
   address: string
@@ -35,12 +39,12 @@ const useAccountPicker = () => {
       selectedAccounts,
       type
     },
-    dispatch: accountPickerDispatch
+    dispatch: accountPickerDispatch,
+    dispatchAndWait: accountPickerDispatchAndWait
   } = useController('AccountPickerController')
   const { state: accounts } = useController('AccountsController', 'accounts')
 
   const prevIsInitialized = usePrevious(isInitialized)
-  const prevAddAccountsStatus = usePrevious(addAccountsStatus)
   const shouldResetAccountsSelectionOnUnmount = useRef(true)
   const [isReady, setIsReady] = useState(false)
   const [onImportPressed, setOnImportPressed] = useState(false)
@@ -104,33 +108,37 @@ const useAccountPicker = () => {
     }
   }, [pageSize, isReady, ACCOUNT_PICKER_PAGE_SIZE])
 
-  // Controller actions are fire-and-forget, so the personalization screen waits for the
-  // accounts to be added. Keyed on the import having *left* 'LOADING' rather than on
-  // 'SUCCESS', which the controller resets a tick later: both updates can land in one
-  // render batch (mobile batches them across the webview bridge), so 'SUCCESS' is not
-  // reliably rendered, while leaving 'LOADING' is.
-  useEffect(() => {
-    if (!onImportPressed) return
-    if (prevAddAccountsStatus !== 'LOADING' || addAccountsStatus === 'LOADING') return
-
-    goToNextRoute(WEB_ROUTES.accountPersonalize)
-  }, [addAccountsStatus, prevAddAccountsStatus, goToNextRoute, onImportPressed])
-
-  const onImportReady = useCallback(() => {
-    // The button disables only once the controller reports it is importing, so a second
-    // press before that would import a selection the first one has already cleared.
+  const onImportReady = useCallback(async () => {
+    // The button disables on re-render, so a second press landing in the same frame would
+    // import a selection the first one has already cleared.
     if (onImportPressed) return
 
     shouldResetAccountsSelectionOnUnmount.current = false
     setOnImportPressed(true)
-    accountPickerDispatch({
-      type: 'method',
-      params: {
-        method: 'addAccounts',
-        args: []
-      }
-    })
-  }, [accountPickerDispatch, onImportPressed])
+
+    try {
+      // Controller actions are fire-and-forget, so the import replies to this call once the
+      // accounts are actually added, instead of the screen watching a transient status.
+      await accountPickerDispatchAndWait(
+        {
+          type: 'method',
+          params: {
+            // `dispatchAndWait` appends the request id as the last argument, so the accounts
+            // param before it has to be passed explicitly (the controller reads the selection).
+            method: 'addAccounts',
+            args: [undefined]
+          }
+        },
+        ADD_ACCOUNTS_TIMEOUT_MS
+      )
+
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
+    } catch {
+      // The error itself is reported by the controller, here the screen only becomes usable again
+      shouldResetAccountsSelectionOnUnmount.current = true
+      setOnImportPressed(false)
+    }
+  }, [accountPickerDispatchAndWait, goToNextRoute, onImportPressed])
 
   useEffect(() => {
     return () => {
@@ -146,9 +154,16 @@ const useAccountPicker = () => {
     }
   }, [accountPickerDispatch])
 
+  // `onImportPressed` is what keeps the screen in its importing state until it navigates away.
+  // The controller resets `addAccountsStatus` to 'INITIAL' right after the import completes,
+  // which would otherwise flash the screen back to its idle state for a frame.
   const isLoading = useMemo(
-    () => addAccountsStatus !== 'INITIAL' || !isReady || (!isInitialized && !!initParams),
-    [addAccountsStatus, isReady, initParams, isInitialized]
+    () =>
+      onImportPressed ||
+      addAccountsStatus !== 'INITIAL' ||
+      !isReady ||
+      (!isInitialized && !!initParams),
+    [onImportPressed, addAccountsStatus, isReady, initParams, isInitialized]
   )
 
   const isImportDisabled = useMemo(
