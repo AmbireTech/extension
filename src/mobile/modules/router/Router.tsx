@@ -15,9 +15,11 @@ import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnl
 import { ROUTES } from '@common/modules/router/constants/common'
 import eventBus from '@common/services/event/eventBus'
 import flexbox from '@common/styles/utils/flexbox'
+import useMobileInviteGate from '@mobile/hooks/useMobileInviteGate'
 import useNativeThemeSync from '@mobile/hooks/useNativeThemeSync'
 import DashboardScreen from '@mobile/modules/dashboard/screens/DashboardScreen'
 import useLedgerConnectionLifecycle from '@mobile/modules/hardware-wallet/hooks/useLedgerConnectionLifecycle'
+import InviteVerifyScreen from '@mobile/modules/invite/screens/InviteVerifyScreen'
 import KeyStoreUnlockScreen from '@mobile/modules/keystore/screens/KeyStoreUnlockScreen'
 import MainRoutes from '@mobile/modules/router/components/MainRoutes'
 import RequestsBottomSheet from '@mobile/modules/router/components/RequestsBottomSheet'
@@ -29,6 +31,9 @@ const Router = () => {
   const { requestModalRef, closeRequestModal, onBottomSheetClosed, onBottomSheetOpened } =
     useController('RequestsController')
   const { canRenderRoute } = useContext(ControllersStateLoadedContext)
+  // The mobile app is invite-only for fresh installs. Lives here rather than in a route guard,
+  // because this is the one component that is mounted no matter where the app has navigated to.
+  const { isGateEnforced } = useMobileInviteGate()
   const { dispatch } = useContext(ControllersMiddlewareContext)
   // Fonts load in parallel with controller boot (the tree mounts before fonts
   // are ready — see AppInit). Gate the splash hide on fonts too so the first
@@ -91,6 +96,10 @@ const Router = () => {
   if (!isReady) {
     return null
   }
+
+  // Nothing else may render until the invite code is verified. The app keeps navigating
+  // underneath, so the route the controllers picked is already there once the gate opens.
+  if (isGateEnforced) return <InviteVerifyScreen />
 
   return (
     <View style={flexbox.flex1}>
