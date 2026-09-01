@@ -320,7 +320,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           flexbox.wrap,
           {
             minWidth: 0,
-            maxWidth: '100%'
+            maxWidth: '100%',
+            gap: SPACING_TY
           }
         ]}
       >
@@ -328,10 +329,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           const renderedValue = renderValue(value)
           if (!renderedValue) return null
 
-          const isLastElement = value.id === values[values.length - 1]?.id
-
           return (
-            <View key={value.id} style={!isLastElement && spacings.mrTy}>
+            <View key={value.id} style={{ flexShrink: 1, minWidth: 0 }}>
               {renderedValue}
             </View>
           )
