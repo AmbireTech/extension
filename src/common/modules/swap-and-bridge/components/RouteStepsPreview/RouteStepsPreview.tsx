@@ -1,6 +1,5 @@
 import { formatUnits } from 'ethers'
-import React, { Fragment, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { Fragment, useId, useMemo } from 'react'
 import { View } from 'react-native'
 
 import {
@@ -11,10 +10,13 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
 import CowSwapIcon from '@common/assets/svg/CowSwapIcon'
 import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
+import SecurityIcon from '@common/assets/svg/SecurityIcon'
 import UniswapIcon from '@common/assets/svg/UniswapIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -56,6 +58,12 @@ const RouteStepsPreview = ({
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
+  const mevProtectedTooltipId = useId()
+  const isMevProtected = providerId === 'cowswap'
+  const hasBottomLeftContent = !!bottomLeftSlot || (isBridge && !!estimationInSeconds)
+  const mevProtectedTooltipText = t(
+    'CoW Swap is designed to protect your swap from bots that manipulate the price before it executes.'
+  )
 
   const shouldWarnForLongEstimation = useMemo(() => {
     if (!estimationInSeconds) return false
@@ -241,7 +249,7 @@ const RouteStepsPreview = ({
       <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
         {!isDisabled ? (
           <>
-            <View>
+            <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
               {bottomLeftSlot || (
                 <>
                   {!!shouldWarnForLongEstimation && (
@@ -265,6 +273,41 @@ const RouteStepsPreview = ({
                       : ''}
                   </Text>
                 </>
+              )}
+              {isMevProtected && (
+                <View
+                  accessible
+                  accessibilityLabel={t('MEV protected')}
+                  accessibilityHint={mevProtectedTooltipText}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: mevProtectedTooltipId,
+                    content: mevProtectedTooltipText
+                  })}
+                  testID="mev-protected-badge"
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.phTy,
+                    spacings.pvMi,
+                    hasBottomLeftContent && spacings.mlSm,
+                    common.borderRadiusSecondary,
+                    {
+                      backgroundColor: theme.primaryAccent100,
+                      borderColor: theme.primaryAccent200,
+                      borderWidth: 1
+                    }
+                  ]}
+                >
+                  <SecurityIcon width={12} height={15} color={theme.primaryAccent} />
+                  <Text
+                    fontSize={12}
+                    weight="medium"
+                    color={theme.primaryAccent}
+                    style={spacings.mlMi}
+                  >
+                    {t('MEV protected')}
+                  </Text>
+                </View>
               )}
             </View>
 
