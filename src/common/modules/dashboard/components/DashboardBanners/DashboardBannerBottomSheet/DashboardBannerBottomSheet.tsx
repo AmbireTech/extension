@@ -1,12 +1,13 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
-import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
+import { getIsIntentRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useController from '@common/hooks/useController'
 import ActiveRouteCard from '@common/modules/swap-and-bridge/components/ActiveRouteCard'
 import spacings from '@common/styles/spacings'
@@ -22,6 +23,9 @@ type Props = {
 const WITH_BOTTOM_SHEET = ['update-available', 'bridge-in-progress']
 const RENDER_AS_MODAL = ['update-available']
 
+const selectActiveRoutes = (state: AllControllersMappingType['SwapAndBridgeController']) =>
+  state.activeRoutes
+
 const style: {
   [key: string]: ViewStyle
 } = {
@@ -36,7 +40,20 @@ const style: {
 const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet }) => {
   const { t } = useTranslation()
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
-  const { activeRoutes } = useController('SwapAndBridgeController').state
+  const { state: activeRoutes } = useController('SwapAndBridgeController', selectActiveRoutes)
+  const intentRoutes = useMemo(
+    () =>
+      activeRoutes.filter(
+        (activeRoute) =>
+          activeRoute.route &&
+          getIsIntentRoute(activeRoute.route) &&
+          (activeRoute.routeStatus === 'in-progress' ||
+            activeRoute.routeStatus === 'completed' ||
+            activeRoute.routeStatus === 'refunded' ||
+            activeRoute.routeStatus === 'failed')
+      ),
+    [activeRoutes]
+  )
 
   if (!WITH_BOTTOM_SHEET.includes(id)) return null
 
@@ -77,28 +94,17 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
             weight="medium"
             style={[spacings.mbLg, isMobile && text.center]}
           >
-            {t('Pending bridge transactions')}
+            {t('Pending transactions')}
           </Text>
-          {activeRoutes
-            .filter(
-              (route) =>
-                route.route &&
-                getIsBridgeRoute(route.route) &&
-                (route.routeStatus === 'in-progress' ||
-                  route.routeStatus === 'completed' ||
-                  route.routeStatus === 'refunded' ||
-                  route.routeStatus === 'failed')
-            )
-
-            .map((route) => (
-              <View key={route.activeRouteId} style={spacings.mbTy}>
-                <ActiveRouteCard activeRoute={route} />
-              </View>
-            ))}
+          {intentRoutes.map((activeRoute) => (
+            <View key={activeRoute.activeRouteId} style={spacings.mbTy}>
+              <ActiveRouteCard activeRoute={activeRoute} />
+            </View>
+          ))}
         </View>
       )}
     </BottomSheet>
   )
 }
 
-export default DashboardBannerBottomSheet
+export default React.memo(DashboardBannerBottomSheet)

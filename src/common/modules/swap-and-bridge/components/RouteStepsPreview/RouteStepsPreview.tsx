@@ -23,6 +23,7 @@ import formatTime from '@common/utils/formatTime'
 
 import RouteStepsArrow from '../RouteStepsArrow'
 import { RouteStepsTokenAmount, RouteStepsTokenIcon } from '../RouteStepsToken'
+import { getLastRouteStepType } from './helpers'
 import styles from './styles'
 
 const RouteStepsPreview = ({
@@ -109,18 +110,6 @@ const RouteStepsPreview = ({
 
   const resolvedCurrentStep = currentStep ?? 0
 
-  const getLastStepType = (step: SwapAndBridgeStep) => {
-    if (routeStatus === 'completed') return 'success'
-
-    const userTxIndex = step.userTxIndex ?? 0
-
-    if (userTxIndex < resolvedCurrentStep) {
-      return routeStatus === 'refunded' ? 'warning' : 'success'
-    }
-
-    return 'default'
-  }
-
   const getIntermediateStepType = (userTxIndex: number) => {
     if (routeStatus === 'completed') return 'success'
     return userTxIndex < resolvedCurrentStep ? 'success' : 'default'
@@ -167,7 +156,12 @@ const RouteStepsPreview = ({
                     />
                     <RouteStepsArrow
                       containerStyle={flexbox.flex1}
-                      type={getLastStepType(step)}
+                      type={getLastRouteStepType({
+                        routeStatus,
+                        userTxIndex,
+                        currentStep: resolvedCurrentStep,
+                        isOnlyOneStep
+                      })}
                       badge={renderStepBadge(step)}
                       isLoading={loadingEnabled && (userTxIndex === currentStep || isOnlyOneStep)}
                       badgePosition="top"

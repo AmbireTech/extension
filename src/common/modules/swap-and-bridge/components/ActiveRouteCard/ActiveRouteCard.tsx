@@ -186,7 +186,7 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
                   </View>
                 </>
               )}
-              {activeRoute.routeStatus === 'in-progress' && activeTransaction && !isBridgeRoute && (
+              {activeRoute.routeStatus === 'in-progress' && !isBridgeRoute && (
                 <>
                   <Text
                     fontSize={12}
