@@ -150,7 +150,11 @@ const useAccountPicker = () => {
   )
 
   const shouldDisplayChangeHdPath = useMemo(
-    () => !!(subType === 'seed' || (type && ['ledger', 'lattice', 'trezor'].includes(type))),
+    () =>
+      !!(
+        subType === 'seed' ||
+        (type && ['ledger', 'lattice', 'trezor', 'qr', 'nfc'].includes(type))
+      ),
     [type, subType]
   )
 
