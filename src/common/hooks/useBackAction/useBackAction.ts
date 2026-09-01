@@ -19,13 +19,16 @@ const useBackAction = () => {
   const { path } = useRoute()
 
   return useCallback(() => {
-    if (MOBILE_ROOT_ROUTE_PATHS.includes(path) || !canGoBack) return
-
+    // Ahead of the root route check, because a sheet is dismissed even on a screen there
+    // is no going back from. Modalize registers its own handler when a sheet opens and
+    // usually gets the press first, so this only catches the orderings where it does not.
     if (openBottomSheetsCount.value > 0) {
       bottomSheetCloseEventStream.next()
 
       return
     }
+
+    if (MOBILE_ROOT_ROUTE_PATHS.includes(path) || !canGoBack) return
 
     if (goBackInWebViewHistory()) return
 
