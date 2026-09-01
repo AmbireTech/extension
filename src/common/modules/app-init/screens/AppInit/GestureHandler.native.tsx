@@ -38,18 +38,24 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
     if (!isAndroid) return
 
     const backAction = () => {
+      if (openBottomSheetsCount.value > 0) {
+        bottomSheetCloseEventStream.next()
+        return true
+      }
+
+      if (goBackInWebViewHistory()) return true
+
       const isRootPath =
         path === '/' || [ROUTES.dashboard, ROUTES.getStarted, ROUTES.keyStoreUnlock].includes(path)
 
       if (!isRootPath && canGoBack) {
-        if (openBottomSheetsCount.value > 0) {
-          bottomSheetCloseEventStream.next()
-        } else if (!goBackInWebViewHistory()) {
-          goBack()
-        }
+        goBack()
+        return true
       }
 
-      return true
+      // Nothing left to go back to in the app, so let Android handle the press
+      // as it normally would and send the app to the background
+      return false
     }
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
