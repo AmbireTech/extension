@@ -7,9 +7,13 @@ import {
 } from '@ambire-common/consts/derivation'
 import { KeyIterator as KeyIteratorInterface } from '@ambire-common/interfaces/keyIterator'
 import { ParsedQrAccount } from '@ambire-common/interfaces/keystore'
+import {
+  getDerivableHdPathTemplates,
+  getHdPathTemplateRelativeToOrigin
+} from '@ambire-common/utils/hdPath'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 
-import { getRelativePathTemplateFromOrigin, normalizeOriginHdPath } from '../../qr/utils'
+import { normalizeOriginHdPath } from '../../qr/utils'
 
 interface KeyIteratorProps {
   controller: QrHardwareController
@@ -18,6 +22,8 @@ interface KeyIteratorProps {
 const MISSING_CONTROLLER_MSG =
   'Unable to interact with the QR hardware wallet. The QR controller is missing.'
 const INVALID_PARAMS_MSG = 'Unable to retrieve keys because of invalid parameters received.'
+/** Assumed when the scanned payload does not say which path its key came from. */
+const DEFAULT_ORIGIN_HD_PATH = "m/44'/60'/0'"
 
 class QrKeyIterator implements KeyIteratorInterface {
   type = 'qr' as const
@@ -28,6 +34,8 @@ class QrKeyIterator implements KeyIteratorInterface {
 
   #parsedAccount?: ParsedQrAccount
   #xpub?: string
+  /** The path the scanned wallet exported its extended public key from. */
+  #originHdPath: string = DEFAULT_ORIGIN_HD_PATH
   #hdPathTemplate: HD_PATH_TEMPLATE_TYPE = BIP44_STANDARD_DERIVATION_TEMPLATE
 
   get parsedAccount() {
@@ -36,6 +44,10 @@ class QrKeyIterator implements KeyIteratorInterface {
 
   get hdPathTemplate() {
     return this.#hdPathTemplate
+  }
+
+  get derivableHdPathTemplates() {
+    return getDerivableHdPathTemplates(this.#originHdPath)
   }
 
   constructor({ controller }: KeyIteratorProps) {
@@ -62,11 +74,8 @@ class QrKeyIterator implements KeyIteratorInterface {
     }
 
     const originPath = parsed.hdPath || parsed.accounts[0]?.hdPath
-    const normalizedOriginPath = normalizeOriginHdPath(originPath)
-    const relativePathTemplate = getRelativePathTemplateFromOrigin(originPath)
-    this.#hdPathTemplate = normalizedOriginPath
-      ? (`${normalizedOriginPath}/${relativePathTemplate}` as HD_PATH_TEMPLATE_TYPE)
-      : (BIP44_STANDARD_DERIVATION_TEMPLATE as HD_PATH_TEMPLATE_TYPE)
+    this.#originHdPath = normalizeOriginHdPath(originPath) || DEFAULT_ORIGIN_HD_PATH
+    this.#hdPathTemplate = this.#resolveExportedHdPathTemplate(parsed.childrenPath)
 
     const firstAccount = parsed.accounts[0]
 
@@ -78,6 +87,29 @@ class QrKeyIterator implements KeyIteratorInterface {
 
     this.#parsedAccount = parsed
     this.#xpub = firstAccount.xpub
+  }
+
+  /**
+   * Which of the derivation paths the scanned wallet actually exported. The wallet says
+   * so in the children path, and it has to: the Ledger Legacy path and the standard one
+   * are exported from the same account-level key, so the key alone cannot tell them
+   * apart. Wallets that leave it out are taken to have exported the standard path.
+   */
+  #resolveExportedHdPathTemplate(childrenPath?: string): HD_PATH_TEMPLATE_TYPE {
+    const exportedTemplate =
+      childrenPath && childrenPath.split('*').length === 2
+        ? (`${this.#originHdPath}/${childrenPath.split('*').join('<account>')}` as HD_PATH_TEMPLATE_TYPE)
+        : null
+
+    if (exportedTemplate && getHdPathTemplateRelativeToOrigin(this.#originHdPath, exportedTemplate))
+      return exportedTemplate
+
+    // Wallets export their key either at the account level or one level deeper, at the
+    // standard chain - both of which the standard path branches off. Anything else is
+    // a path of its own, which only the wallet that reported it can be browsed on.
+    return getHdPathTemplateRelativeToOrigin(this.#originHdPath, BIP44_STANDARD_DERIVATION_TEMPLATE)
+      ? BIP44_STANDARD_DERIVATION_TEMPLATE
+      : (`${this.#originHdPath}/0/<account>` as HD_PATH_TEMPLATE_TYPE)
   }
 
   #deriveAddressFromRelativePath(relativePath: string): string {
@@ -102,28 +134,20 @@ class QrKeyIterator implements KeyIteratorInterface {
     }
   }
 
-  #resolveRelativePathTemplate(hdPathTemplate?: HD_PATH_TEMPLATE_TYPE): string {
-    let relativePathTemplate: string | undefined = hdPathTemplate
+  // Addresses are derived from the extended public key rather than from the wallet
+  // itself, so the wanted path has to be expressed relative to the path that key
+  // was exported from.
+  #resolveRelativePathTemplate(
+    hdPathTemplate: HD_PATH_TEMPLATE_TYPE = this.#hdPathTemplate
+  ): string {
+    const relativePathTemplate = getHdPathTemplateRelativeToOrigin(
+      this.#originHdPath,
+      hdPathTemplate
+    )
 
     if (!relativePathTemplate) {
-      const originPath = this.#parsedAccount?.accounts?.[0]?.hdPath || this.#parsedAccount?.hdPath
-      relativePathTemplate = getRelativePathTemplateFromOrigin(originPath)
-    }
-
-    if (!relativePathTemplate) {
-      throw new ExternalSignerError('QR relative path template is missing.')
-    }
-
-    // Some flows pass a full HD template (e.g. m/44'/60'/0'/0/<account>).
-    // QR xpub derivation expects a relative template, so convert it based on origin.
-    if (relativePathTemplate.startsWith('m/')) {
-      const originPath = this.#parsedAccount?.accounts?.[0]?.hdPath || this.#parsedAccount?.hdPath
-      relativePathTemplate = getRelativePathTemplateFromOrigin(originPath)
-    }
-
-    if (!relativePathTemplate.includes('<account>')) {
       throw new ExternalSignerError(
-        'Invalid QR relative path template. Expected a template containing "<account>".'
+        'This derivation path cannot be browsed with the account that was scanned from your QR wallet. Please pick another one.'
       )
     }
 
