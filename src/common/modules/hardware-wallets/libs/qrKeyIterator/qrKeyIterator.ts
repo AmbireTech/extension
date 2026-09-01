@@ -24,6 +24,11 @@ const MISSING_CONTROLLER_MSG =
 const INVALID_PARAMS_MSG = 'Unable to retrieve keys because of invalid parameters received.'
 /** Assumed when the scanned payload does not say which path its key came from. */
 const DEFAULT_ORIGIN_HD_PATH = "m/44'/60'/0'"
+const getDerivationErrorMsg = (error: any) =>
+  `Could not generate Ethereum address from the extended public key received from the QR wallet. Technical details: <${error?.message}>.`
+
+/** What `HDNodeWallet.fromExtendedKey` gives back for a public (neutered) key. */
+type AccountNode = ReturnType<typeof HDNodeWallet.fromExtendedKey>
 
 class QrKeyIterator implements KeyIteratorInterface {
   type = 'qr' as const
@@ -112,25 +117,11 @@ class QrKeyIterator implements KeyIteratorInterface {
       : (`${this.#originHdPath}/0/<account>` as HD_PATH_TEMPLATE_TYPE)
   }
 
-  #deriveAddressFromRelativePath(relativePath: string): string {
-    if (!this.#xpub) {
-      throw new ExternalSignerError(
-        'Could not generate an Ethereum address because the extended public key is missing.'
-      )
-    }
-
+  #deriveAddressFromRelativePath(accountNode: AccountNode, relativePath: string): string {
     try {
-      const hdNode = HDNodeWallet.fromExtendedKey(this.#xpub)
-      const childNode = hdNode.derivePath(relativePath)
-
-      return childNode.address
+      return accountNode.derivePath(relativePath).address
     } catch (error: any) {
-      throw new ExternalSignerError(
-        `Could not generate Ethereum address from the extended public key received from the QR wallet. Technical details: <${error?.message}>.`,
-        {
-          sendCrashReport: true
-        }
-      )
+      throw new ExternalSignerError(getDerivationErrorMsg(error), { sendCrashReport: true })
     }
   }
 
@@ -168,6 +159,16 @@ class QrKeyIterator implements KeyIteratorInterface {
     }
 
     const relativePathTemplate = this.#resolveRelativePathTemplate(hdPathTemplate)
+
+    // Parsed once per retrieval rather than for every address, which is a base58
+    // decode each time
+    let accountNode: AccountNode
+    try {
+      accountNode = HDNodeWallet.fromExtendedKey(this.#xpub)
+    } catch (error: any) {
+      throw new ExternalSignerError(getDerivationErrorMsg(error), { sendCrashReport: true })
+    }
+
     const keys: string[] = []
 
     for (const { from, to } of fromToArr) {
@@ -177,7 +178,7 @@ class QrKeyIterator implements KeyIteratorInterface {
 
       for (let i = from; i <= to; i++) {
         const relativePath = this.#buildRelativePath(i, relativePathTemplate)
-        const derivedAddr = this.#deriveAddressFromRelativePath(relativePath)
+        const derivedAddr = this.#deriveAddressFromRelativePath(accountNode, relativePath)
         keys.push(derivedAddr)
       }
     }

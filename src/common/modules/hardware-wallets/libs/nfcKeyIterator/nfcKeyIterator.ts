@@ -23,6 +23,11 @@ const MISSING_CONTROLLER_MSG =
 const INVALID_PARAMS_MSG = 'Unable to retrieve keys because of invalid parameters received.'
 const MISSING_ACCOUNT_KEY_MSG =
   'Could not generate an address because the card account key is missing. Please re-import the card account.'
+const getDerivationErrorMsg = (error: any) =>
+  `Could not generate an Ethereum address from the account key received from the card. Technical details: <${error?.message}>.`
+
+/** What `HDNodeWallet.fromExtendedKey` gives back for a public (neutered) key. */
+type AccountNode = ReturnType<typeof HDNodeWallet.fromExtendedKey>
 
 /**
  * Serves for retrieving a range of addresses/keys from an NFC card.
@@ -85,18 +90,12 @@ class NfcKeyIterator implements KeyIteratorInterface {
     this.controller.deviceModel = NfcWalletRegistry[nfcWalletType].label
   }
 
-  #deriveAddress(index: number, relativePathTemplate: string): string {
-    if (!this.#extendedPublicKey) throw new ExternalSignerError(MISSING_ACCOUNT_KEY_MSG)
-
+  #deriveAddress(accountNode: AccountNode, index: number, relativePathTemplate: string): string {
     try {
-      const hdNode = HDNodeWallet.fromExtendedKey(this.#extendedPublicKey)
-
-      return hdNode.derivePath(relativePathTemplate.replace('<account>', String(index))).address
+      return accountNode.derivePath(relativePathTemplate.replace('<account>', String(index)))
+        .address
     } catch (error: any) {
-      throw new ExternalSignerError(
-        `Could not generate an Ethereum address from the account key received from the card. Technical details: <${error?.message}>.`,
-        { sendCrashReport: true }
-      )
+      throw new ExternalSignerError(getDerivationErrorMsg(error), { sendCrashReport: true })
     }
   }
 
@@ -104,7 +103,9 @@ class NfcKeyIterator implements KeyIteratorInterface {
     fromToArr: { from: number; to: number }[],
     hdPathTemplate: HD_PATH_TEMPLATE_TYPE = this.#hdPathTemplate
   ): Promise<string[]> {
-    if (!this.#originHdPath) throw new ExternalSignerError(MISSING_ACCOUNT_KEY_MSG)
+    if (!this.#extendedPublicKey || !this.#originHdPath) {
+      throw new ExternalSignerError(MISSING_ACCOUNT_KEY_MSG)
+    }
 
     const relativePathTemplate = getHdPathTemplateRelativeToOrigin(
       this.#originHdPath,
@@ -117,12 +118,22 @@ class NfcKeyIterator implements KeyIteratorInterface {
       )
     }
 
+    // Parsed once per retrieval rather than for every address, which is a base58
+    // decode each time
+    let accountNode: AccountNode
+    try {
+      accountNode = HDNodeWallet.fromExtendedKey(this.#extendedPublicKey)
+    } catch (error: any) {
+      throw new ExternalSignerError(getDerivationErrorMsg(error), { sendCrashReport: true })
+    }
+
     const keys: string[] = []
 
     for (const { from, to } of fromToArr) {
       if ((!from && from !== 0) || (!to && to !== 0)) throw new Error(INVALID_PARAMS_MSG)
 
-      for (let i = from; i <= to; i++) keys.push(this.#deriveAddress(i, relativePathTemplate))
+      for (let i = from; i <= to; i++)
+        keys.push(this.#deriveAddress(accountNode, i, relativePathTemplate))
     }
 
     return keys
