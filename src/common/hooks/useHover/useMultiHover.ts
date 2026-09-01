@@ -40,26 +40,16 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
   const prevForceHoveredStyle = usePrevious(forceHoveredStyle)
   const [isHovered, setIsHovered] = useState(false)
 
-  // Nothing hovers on the mobile app: `animate` returns early there, so the press
-  // opacity is the only channel that ever moves. One Animated.Value instead of one
-  // per property - plus an interpolation node per color - is what every
-  // interactive element in the app would otherwise pay at mount, for nothing.
+  // Nothing hovers on the mobile app: `animate` returns early there, so the press opacity
+  // is the only channel that ever moves. A value is still created for every property the
+  // caller asked for, so that what it reads back lines up with what it passed in - what
+  // mobile skips is animating them, and the interpolation node per color that the style
+  // would otherwise build.
   const isMobileApp = getUiType().isMobileApp
 
   // Initialize the values that will be animated
   const animatedValues = useMemo(() => {
     const opacity = memoizedValues.find(({ property }) => property === 'opacity')
-
-    if (isMobileApp)
-      return [
-        {
-          value: new Animated.Value((opacity?.from as number) ?? 1),
-          property: 'opacity',
-          from: opacity?.from ?? 1,
-          to: opacity?.to ?? 1,
-          duration: DURATIONS.FAST
-        }
-      ]
 
     const newValues = memoizedValues.map(({ property, from, to, duration: valueDuration }) => {
       const shouldInterpolate = INTERPOLATE_PROPERTIES.includes(property)
@@ -89,7 +79,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
     })
 
     return newValues
-  }, [isMobileApp, memoizedValues])
+  }, [memoizedValues])
 
   const animate = useCallback(
     (reversed?: boolean, customDuration?: number, skipStateUpdate?: boolean) => {
@@ -191,8 +181,9 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
         (acc, { property, from }) => ({ ...acc, [property]: from }),
         {}
       )
+      const opacity = animatedValues.find(({ property }) => property === 'opacity')
 
-      return { ...staticStyle, opacity: animatedValues[0]?.value }
+      return { ...staticStyle, opacity: opacity?.value }
     }
 
     if (animatedValues)
