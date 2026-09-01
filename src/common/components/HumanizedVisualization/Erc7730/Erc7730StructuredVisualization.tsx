@@ -108,7 +108,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     showDescriptionTitle &&
     !!intentText?.trim() &&
     (detailedRows[0] ? getErc7730RowLabel(detailedRows[0]).trim() : '') !== intentText.trim()
-  console.log(showDescriptionTitle, detailedRows[0], intentText)
   // Rows shown directly under the transaction-summary title/intent should not repeat
   // values already rendered as part of the interpolated intent (item.intent).
   const visibleRows = useMemo(() => getVisibleErc7730RowsExcludingIntentFields(item), [item])
