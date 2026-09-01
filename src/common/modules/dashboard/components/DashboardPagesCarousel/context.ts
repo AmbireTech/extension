@@ -38,6 +38,12 @@ export interface DashboardCarouselContextValue {
    */
   registerPage: (tab: TabType, handle: DashboardPageHandle | null) => void
   /**
+   * Where a page has got to. Only the page being dragged knows whether there is
+   * anything above it to scroll back to, and the pull has to know that before it can
+   * tell a drag from the page being scrolled.
+   */
+  reportScrollOffset: (offset: number) => void
+  /**
    * The bar belongs to the dashboard rather than to a page, so it is rendered above
    * the pager and stays put through a swipe. A page registers what it wants in it,
    * and the tab that is open decides whose registration is shown.

@@ -1,5 +1,13 @@
 import React, { FC, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import { Animated, FlatList, FlatListProps, RefreshControl, ViewStyle } from 'react-native'
+import {
+  Animated,
+  FlatList,
+  FlatListProps,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  RefreshControl,
+  ViewStyle
+} from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -113,19 +121,33 @@ const DashboardPageScrollContainer: FC<Props> = ({
     }
   }, [carousel])
 
+  const reportScrollOffset = carousel?.reportScrollOffset
+
+  // Where this page has got to, told to the carousel rather than asked for by it: the
+  // shared value it keeps is what the header is collapsed by, which a page too short to
+  // take the offset it was given never reaches - and the pull would then read the page
+  // as scrolled while it sits at its top.
+  const handleScrollListener = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      reportScrollOffset?.(event.nativeEvent.contentOffset.y)
+      onScroll?.(event)
+    },
+    [onScroll, reportScrollOffset]
+  )
+
   // Bound to the value rather than the whole context, so measuring the header does not
-  // detach the native scroll listener; with no onScroll on mobile the offset is mapped
-  // natively. Only the open page reports into it: the value is shared, and a page too
-  // short to scroll as far would report the offset it stopped at and win by coming last.
+  // detach the native scroll listener. Only the open page reports into it: the value is
+  // shared, and a page too short to scroll as far would report the offset it stopped at
+  // and win by coming last.
   const carouselScrollY = carousel?.scrollY
   const handleScroll = useMemo(() => {
     if (!carouselScrollY || openTab !== tab) return onScroll
 
-    return Animated.event(
-      [{ nativeEvent: { contentOffset: { y: carouselScrollY } } }],
-      onScroll ? { useNativeDriver: true, listener: onScroll } : { useNativeDriver: true }
-    )
-  }, [carouselScrollY, onScroll, openTab, tab])
+    return Animated.event([{ nativeEvent: { contentOffset: { y: carouselScrollY } } }], {
+      useNativeDriver: true,
+      listener: handleScrollListener
+    })
+  }, [carouselScrollY, handleScrollListener, onScroll, openTab, tab])
 
   // Resets the scroll position on a tab switch. The carousel does this itself for every
   // page, carrying over how far the banners are collapsed.

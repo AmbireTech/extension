@@ -54,12 +54,6 @@ const PULL_TO_REFRESH_DISTANCE = 140
 // How far a touch has to travel before it is taken to be a pull rather than a tap
 const PULL_ACTIVATION_THRESHOLD = 12
 
-// How far a drag is held for while the open page's offset is still being asked for.
-// Given up on past this, so a lost answer cannot leave a page unable to scroll.
-const PULL_ELIGIBILITY_PATIENCE = 80
-
-type PullEligibility = 'UNKNOWN' | 'YES' | 'NO'
-
 // The pages follow the finger at half its pace, so the pull reads as something being
 // resisted rather than dragged, and the distance stays a deliberate one.
 const PULL_RESISTANCE = 0.5
@@ -110,6 +104,21 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     })
   }, [])
 
+  // Whether the open page has anything above it. Reported by the page as it scrolls
+  // rather than asked for when a touch lands: asking is a round trip to the native side
+  // that answers after the drag has already been judged, and it answers with the header
+  // collapse the carousel keeps, which a page too short to take it never matches.
+  // Pages start at their top, which is what makes this the value to start from.
+  const canPull = useSharedValue(true)
+
+  // Kept stable by hand, because the pages read it off the context and a new one every
+  // render would re-render all four. A shared value is stable for the life of the
+  // component, so leaving it out of the dependencies is what keeps it correct here.
+  const reportScrollOffset = useCallback((offset: number) => {
+    canPull.value = offset <= 0
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // How far the banners are collapsed, which every page shares. A page whose items
   // start right below the tabs row sits at this offset, not at zero.
   const collapsedBy = useRef(0)
@@ -155,9 +164,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
       collapsedBy.current = carried
       scrollY.setValue(carried)
+      reportScrollOffset(carried)
       TABS.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
     })
-  }, [bannersHeight, scrollY])
+  }, [bannersHeight, reportScrollOffset, scrollY])
 
   const renderTabs = useCallback((tabs: (TabType | undefined)[]) => {
     setRenderedTabs((prev) => {
@@ -312,16 +322,20 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       collapsibleHeight: bannersHeight,
       pageHeight: pageSize.height,
       registerPage,
+      reportScrollOffset,
       registerFloatingBar
     }),
-    [bannersHeight, pageSize.height, registerFloatingBar, registerPage, scrollY, tabsHeight]
+    [
+      bannersHeight,
+      pageSize.height,
+      registerFloatingBar,
+      registerPage,
+      reportScrollOffset,
+      scrollY,
+      tabsHeight
+    ]
   )
 
-  // Where the open page is cannot be read without a JS listener on every scroll frame,
-  // which the native mapping exists to avoid. Asked for once per touch instead, and the
-  // answer awaited rather than assumed: it arrives a round trip late, and taking the
-  // previous touch's answer for this one is how a pull back at the top gets refused.
-  const canPull = useSharedValue<PullEligibility>('UNKNOWN')
   const pullStartX = useSharedValue(0)
   const pullStartY = useSharedValue(0)
   const pulled = useSharedValue(0)
@@ -405,12 +419,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     }
   }
 
-  const measurePullEligibility = () => {
-    scrollY.stopAnimation((offset) => {
-      canPull.value = offset <= 0 ? 'YES' : 'NO'
-    })
-  }
-
   const requestRefresh = useCallback(() => {
     if (!onRefresh) return
 
@@ -442,8 +450,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
       pullStartX.value = touch.absoluteX
       pullStartY.value = touch.absoluteY
-      canPull.value = 'UNKNOWN'
-      runOnJS(measurePullEligibility)()
     })
     .onTouchesMove((event, manager) => {
       const touch = event.allTouches[0]
@@ -454,16 +460,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       const draggedY = touch.absoluteY - pullStartY.value
 
       // A swipe between tabs, or the page being scrolled - neither of them is a pull
-      if (Math.abs(draggedX) > Math.abs(draggedY) || draggedY < 0 || canPull.value === 'NO') {
+      if (Math.abs(draggedX) > Math.abs(draggedY) || draggedY < 0 || !canPull.value) {
         manager.fail()
-
-        return
-      }
-
-      // Neither taken nor given up on while the answer is on its way. The pages are
-      // waiting on this gesture, so the drag is only held, never lost.
-      if (canPull.value === 'UNKNOWN') {
-        if (draggedY > PULL_ELIGIBILITY_PATIENCE) manager.fail()
 
         return
       }
