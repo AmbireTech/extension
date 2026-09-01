@@ -5,6 +5,7 @@ import { NativeScrollEvent, ScrollView, View } from 'react-native'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import Alert from '@common/components/Alert'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -142,8 +143,41 @@ const SignAccountOpScreen = () => {
     return currentUserRequest as CallsUserRequest
   }, [currentUserRequest])
 
+  const shouldRejectOnchain = useMemo(() => {
+    if (!signAccountOpState?.account.safeCreation) return false
+    const { signature, signed } = signAccountOpState.accountOp
+    const signedCount = signed?.length || 0
+
+    return !!signature && signature !== '0x' && signedCount > 0
+  }, [signAccountOpState])
+
+  const isCancelDisabled = useMemo(() => {
+    if (!shouldRejectOnchain || !signAccountOpState) return false
+
+    const { calls, accountAddr } = signAccountOpState.accountOp
+    return isSafeRejectionCall(calls, accountAddr)
+  }, [shouldRejectOnchain, signAccountOpState])
+
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
+
+    if (shouldRejectOnchain) {
+      if (isCancelDisabled) return
+
+      requestsDispatch({
+        type: 'method',
+        params: {
+          method: 'build',
+          args: [
+            {
+              type: 'onchainSafeRejection',
+              params: { requestId: accountOpRequest.id }
+            }
+          ]
+        }
+      })
+      return
+    }
 
     requestsDispatch({
       type: 'method',
@@ -156,7 +190,13 @@ const SignAccountOpScreen = () => {
         ]
       }
     })
-  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
+  }, [
+    requestsDispatch,
+    accountOpRequest,
+    shouldRejectOnchain,
+    isCancelDisabled,
+    visibleUserRequests.length
+  ])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -268,6 +308,7 @@ const SignAccountOpScreen = () => {
               )}
 
             <Footer
+              key={accountOpRequest?.id}
               onReject={handleRejectAccountOp}
               onAddToCart={handleAddToCart}
               isAddToCartDisplayed={
@@ -285,6 +326,8 @@ const SignAccountOpScreen = () => {
               inProgressButtonText={primaryButtonText}
               buttonText={signButtonText}
               shouldHoldToProceed={shouldHoldToProceed}
+              shouldRejectOnchain={shouldRejectOnchain}
+              isRejectDisabled={isCancelDisabled}
               signButtonType={extremeGasFeeSignButtonType}
             />
           </View>
@@ -326,6 +369,10 @@ const SignAccountOpScreen = () => {
           scrollEventThrottle={16}
           contentContainerStyle={spacings.pbSm}
           showsVerticalScrollIndicator={false}
+          // Without this, a tap on a child (e.g. the SafeNonce conflict bubble) while the
+          // keyboard is open gets swallowed to dismiss the keyboard instead of reaching the
+          // child's own press handler.
+          keyboardShouldPersistTaps="handled"
         >
           {signAccountOpState?.account.safeCreation ? (
             <SafeNonce />

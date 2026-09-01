@@ -1,13 +1,15 @@
-import React from 'react'
-import { ViewStyle } from 'react-native'
-import { Modalize } from 'react-native-modalize'
+import type { ViewStyle } from 'react-native'
+import type { Modalize } from 'react-native-modalize'
+
+import type { FC, ReactNode, RefObject } from 'react'
+import { memo } from 'react'
 
 import BottomSheet from '@common/components/BottomSheet'
-import spacings from '@common/styles/spacings'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
+import spacings from '@common/styles/spacings'
 
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: RefObject<Modalize>
   closeBottomSheet: () => void
   onPasswordConfirmed: (password: string) => void
   text: string
@@ -15,14 +17,14 @@ interface Props {
   onCustomSubmit?: (password: string) => void
   id?: string
   /** Rendered between the password field and the submit button */
-  children?: React.ReactNode
+  children?: ReactNode
   submitText?: string
   isSubmitting?: boolean
   /** Merged over the sheet's own sizing, e.g. to match the width of the panel behind it */
   style?: ViewStyle
 }
 
-const BottomSheetPasswordConfirmationComponent: React.FC<Props> = ({
+const BottomSheetPasswordConfirmationComponent: FC<Props> = ({
   sheetRef,
   closeBottomSheet,
   onPasswordConfirmed,
@@ -60,4 +62,4 @@ const BottomSheetPasswordConfirmationComponent: React.FC<Props> = ({
   )
 }
 
-export default React.memo(BottomSheetPasswordConfirmationComponent)
+export default memo(BottomSheetPasswordConfirmationComponent)

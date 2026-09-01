@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo } from 'react'
+import React, { FC, Suspense, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, FlatListProps, View } from 'react-native'
 
@@ -16,6 +16,7 @@ import useController from '@common/hooks/useController'
 import useControllerSession from '@common/hooks/useControllerSession'
 import useTheme from '@common/hooks/useTheme'
 import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
+import PendingTransactions from '@common/modules/dashboard/components/Activity/PendingTransactions/lazyPendingTransactions'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
@@ -57,6 +58,7 @@ const blockExplorerName = (explorerUrl: string) => {
 type Item =
   | SubmittedAccountOp
   | 'header'
+  | 'pending'
   | 'empty'
   | 'keep-this-to-avoid-key-warning'
   | 'skeleton'
@@ -225,6 +227,16 @@ const ActivityPositions: FC<Props> = ({
 
       if (!initTab?.activity || !item || item === 'keep-this-to-avoid-key-warning') return null
 
+      if (item === 'pending') {
+        if (!account?.safeCreation) return null
+
+        return (
+          <Suspense fallback={null}>
+            <PendingTransactions />
+          </Suspense>
+        )
+      }
+
       if (item === 'skeleton') {
         return <ActivityPositionsSkeleton amount={4} />
       }
@@ -312,6 +324,7 @@ const ActivityPositions: FC<Props> = ({
       ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
       data={[
         ...(isMobile ? [] : ['header']),
+        'pending',
         !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
         ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
           ? accountsOps[sessionId].result.items

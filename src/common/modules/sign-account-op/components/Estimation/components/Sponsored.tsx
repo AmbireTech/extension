@@ -28,12 +28,19 @@ const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: bo
         size={64}
         isRound
         containerStyle={[
-          { backgroundColor: theme.secondaryBackground },
+          { backgroundColor: theme.secondaryBackground, flexShrink: 0 },
           isOneClick && spacings.mbTy
         ]}
         fallback={() => <ManifestFallbackIcon width={48} height={48} />}
       />
-      <View style={isOneClick ? flexbox.alignCenter : spacings.ml}>
+      <View
+        style={[
+          isOneClick ? flexbox.alignCenter : spacings.ml,
+          // Without these the row won't let this text wrap - a long dapp name (or the
+          // fallback text) runs past the edge of the screen instead
+          !isOneClick && { flexShrink: 1, minWidth: 0 }
+        ]}
+      >
         <Text fontSize={20} weight="semiBold" style={spacings.mbTy}>
           {sponsor?.name ||
             currentUserRequest?.dappPromises?.[0]?.session.name ||

@@ -9,6 +9,8 @@ import {
   getCurrentAccountBanners
 } from '@ambire-common/libs/banners/banners'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
+import Banner from '@common/components/Banner'
+import HourglassIconAnimated from '@common/components/HourglassIconAnimated'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -30,7 +32,10 @@ import { getUiType } from '@common/utils/uiType'
 import FloatingBottomBar from '../FloatingBottomBar'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
+import { getHasPendingDefiUpdate } from './helpers'
 import styles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   openTab: TabType
@@ -46,6 +51,9 @@ interface Props {
 }
 
 const { isPopup } = getUiType()
+
+const selectScheduledUpdateChainIds = (state: AllControllersMappingType['PortfolioController']) =>
+  state.scheduledUpdateChainIds
 
 const DeFiPositions: FC<Props> = ({
   openTab,
@@ -65,11 +73,24 @@ const DeFiPositions: FC<Props> = ({
   const { theme } = useTheme()
   const searchValue = watch('search')
   const { state: networks } = useController('NetworksController', 'networks')
-  const { dispatch: portfolioDispatch } = useController('PortfolioController')
+  const { state: scheduledUpdateChainIds, dispatch: portfolioDispatch } = useController(
+    'PortfolioController',
+    selectScheduledUpdateChainIds
+  )
   const {
     state: { account, portfolio, dashboardNetworkFilter, banners }
   } = useController('SelectedAccountController')
   const { setSearchParams, navigate } = useNavigation()
+
+  const hasPendingUpdate = useMemo(
+    () =>
+      getHasPendingDefiUpdate({
+        scheduledUpdateChainIds,
+        accountAddr: account?.addr,
+        dashboardNetworkFilter
+      }),
+    [scheduledUpdateChainIds, account?.addr, dashboardNetworkFilter]
+  )
 
   const currentAccountBanners = useMemo(
     () =>
@@ -163,6 +184,17 @@ const DeFiPositions: FC<Props> = ({
               />
             ))}
           </View>
+        )
+      }
+
+      if (item === 'pending-update') {
+        return (
+          <Banner
+            type="info"
+            CustomIcon={HourglassIconAnimated}
+            title={t('Updating after your recent transaction.')}
+            text={t('This may take a minute...')}
+          />
         )
       }
 
@@ -265,6 +297,10 @@ const DeFiPositions: FC<Props> = ({
       items.push('banners')
     }
     if (flags.tokenAndDefiAutoDiscovery) {
+      // Only worth saying when positions actually refresh; with discovery off they never do
+      if (hasPendingUpdate) {
+        items.push('pending-update')
+      }
       items.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
       if (initTab?.defi && portfolio.isAllReady) {
         filteredPositions.forEach((p: any) => items.push(p))
@@ -279,6 +315,7 @@ const DeFiPositions: FC<Props> = ({
     currentAccountBanners.length,
     filteredPositions,
     flags.tokenAndDefiAutoDiscovery,
+    hasPendingUpdate,
     initTab?.defi,
     portfolio.isAllReady
   ])

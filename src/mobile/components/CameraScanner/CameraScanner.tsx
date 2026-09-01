@@ -1,6 +1,6 @@
 import { BlurView } from 'expo-blur'
-import { BarcodeScanningResult, CameraView } from 'expo-camera'
-import React, { useCallback, useState } from 'react'
+import { CameraView } from 'expo-camera'
+import { memo, useCallback, useState } from 'react'
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
@@ -12,6 +12,7 @@ import MaskedView from '@react-native-masked-view/masked-view'
 
 import getStyles, { CORNER_RADIUS, SCAN_FRAME_SIZE } from './styles'
 
+import type { BarcodeScanningResult } from 'expo-camera'
 interface Props {
   // Raw decoded value of a scanned QR code. Fires on every camera frame that
   // decodes (so multi-part / animated QR flows keep receiving fragments); the
@@ -130,4 +131,4 @@ const CameraScanner = ({ onScan, isProcessing = false, frameSize = SCAN_FRAME_SI
   )
 }
 
-export default React.memo(CameraScanner)
+export default memo(CameraScanner)

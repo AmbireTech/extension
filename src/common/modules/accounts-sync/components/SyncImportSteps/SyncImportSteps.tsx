@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { memo, ReactNode, useCallback } from 'react'
+import { View } from 'react-native'
 
 import Button from '@common/components/Button'
 import { useTranslation } from '@common/config/localization'
@@ -8,14 +8,15 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { ViewStyle } from 'react-native'
 const DOT_SIZE = 10
 const DOT_ACTIVE_WIDTH = 24
 
 export interface SyncImportStep {
   id: string
   /** The design's illustration (image or animation) of what to do on the other device */
-  illustration: React.ReactNode
-  content: React.ReactNode
+  illustration: ReactNode
+  content: ReactNode
 }
 
 interface Props {
@@ -128,8 +129,8 @@ const SyncImportStepsFooter = ({
   )
 }
 
-const MemoizedSyncImportStepsFooter = React.memo(SyncImportStepsFooter)
+const MemoizedSyncImportStepsFooter = memo(SyncImportStepsFooter)
 
 export { MemoizedSyncImportStepsFooter as SyncImportStepsFooter }
 
-export default React.memo(SyncImportSteps)
+export default memo(SyncImportSteps)

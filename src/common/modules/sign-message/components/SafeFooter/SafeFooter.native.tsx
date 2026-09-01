@@ -79,29 +79,26 @@ const SafeFooter = ({
         </View>
       )}
       {threshold > 0 && isSingle && (
-        <>
-          <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
-            <View style={flexbox.flex1}>
-              <Button
-                text={t('Reject')}
-                type="danger"
-                hasBottomSpacing={false}
-                size="large"
-                onPress={onReject}
-              />
-            </View>
-            <View style={flexbox.flex1}>
-              <Button
-                size="large"
-                type="primary"
-                hasBottomSpacing={false}
-                onPress={onSingleSignerSign}
-                text="Sign"
-              />
-            </View>
+        <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
+          <View style={flexbox.flex1}>
+            <Button
+              text={t('Reject')}
+              type="danger"
+              hasBottomSpacing={false}
+              size="large"
+              onPress={onReject}
+            />
           </View>
-          <ActionsPagination />
-        </>
+          <View style={flexbox.flex1}>
+            <Button
+              size="large"
+              type="primary"
+              hasBottomSpacing={false}
+              onPress={onSingleSignerSign}
+              text="Sign"
+            />
+          </View>
+        </View>
       )}
       {threshold > 0 &&
         !isSingle &&
@@ -138,7 +135,6 @@ const SafeFooter = ({
                 />
               </View>
             </View>
-            <ActionsPagination />
           </>
         ) : (
           <View style={flexbox.center}>
@@ -152,6 +148,7 @@ const SafeFooter = ({
             />
           </View>
         ))}
+      <ActionsPagination />
     </View>
   )
 }
