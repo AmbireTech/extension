@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import { ManagedAsset } from '@common/modules/settings/hooks/useManageAssets/useManageAssets'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -18,7 +19,7 @@ type Props = {
   standard: CustomToken['standard']
   variant: 'custom' | 'hidden'
   isLoading: boolean
-  data: (TokenResult | CollectionResult)[]
+  data: ManagedAsset<TokenResult | CollectionResult>[]
 }
 
 const AssetSection: FC<Props> = ({ standard, variant, isLoading, data }) => {

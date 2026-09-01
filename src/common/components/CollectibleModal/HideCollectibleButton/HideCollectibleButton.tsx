@@ -6,7 +6,7 @@ import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import useTheme from '@common/hooks/useTheme'
-import useManageNft from '@common/modules/settings/hooks/useManageNft'
+import useManageAsset from '@common/modules/settings/hooks/useManageAsset'
 import { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -25,12 +25,17 @@ type Props = {
 const HideCollectibleButton: FC<Props> = ({ address, chainId, tokenId, handleClose }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isHidden, toggleHideCollection } = useManageNft({ address, chainId, tokenId })
+  const { isHidden, toggleHideAsset } = useManageAsset({
+    address,
+    chainId,
+    standard: 'ERC721',
+    tokenId
+  })
 
   const handleHide = useCallback(() => {
-    toggleHideCollection()
+    toggleHideAsset()
     handleClose()
-  }, [handleClose, toggleHideCollection])
+  }, [handleClose, toggleHideAsset])
 
   if (isHidden) return null
 

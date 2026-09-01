@@ -5,8 +5,11 @@ import { View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
 import { getAssetPreferenceId } from '@ambire-common/libs/portfolio/customToken'
-import { getAssetCacheKey } from '@ambire-common/libs/portfolio/helpers'
-import { TokenValidationResult } from '@ambire-common/libs/portfolio/interfaces'
+import { getAssetCacheKey, getCollectibleCacheKey } from '@ambire-common/libs/portfolio/helpers'
+import {
+  AssetValidationReason,
+  TokenValidationResult
+} from '@ambire-common/libs/portfolio/interfaces'
 import { isValidAddress } from '@ambire-common/services/address'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Alert from '@common/components/Alert/Alert'
@@ -28,6 +31,29 @@ type Props = {
 }
 
 const CHECK_TIMEOUT_MS = 15000
+
+/** The library reports why an asset was rejected, the wording belongs here */
+const getRejectionMessage = (
+  reason: AssetValidationReason | null | undefined,
+  t: (message: string) => string
+) => {
+  switch (reason) {
+    case 'erc1155-unsupported':
+      return t('This type of NFT (ERC-1155) is not supported yet')
+    case 'is-a-token':
+      return t('This is a token, not an NFT collection')
+    case 'collectible-not-found':
+      return t("This NFT doesn't exist in this collection")
+    case 'collectible-not-owned':
+      return t("You don't own this NFT")
+    case 'network-problem':
+      return t('There was a network problem while checking this NFT. Please try again.')
+    // A rejection always comes with a reason, but never leave the user without
+    // an explanation
+    default:
+      return t("This address doesn't look like an NFT collection")
+  }
+}
 
 const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { t } = useTranslation()
@@ -167,19 +193,54 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     tokenId
   ])
 
+  const ownership = useMemo(() => {
+    if (!isTokenIdValid || !isAddressValid || !network) return undefined
+
+    return validTokens?.erc721?.[getCollectibleCacheKey(address, network.chainId, BigInt(tokenId))]
+  }, [address, isAddressValid, isTokenIdValid, network, tokenId, validTokens])
+  const hasOwnershipVerdict = typeof ownership?.isValid === 'boolean'
+
+  // A network problem says nothing about the NFT, so it is worth asking again
+  const isCollectionCheckRetryable = validation?.error?.type === 'network'
+  const isOwnershipCheckRetryable = ownership?.error?.type === 'network'
+
+  // Both checks share one lifecycle, so a single timeout and a single retry
+  // cover them
   useEffect(() => {
     setHasCheckTimedOut(false)
 
     if (!isAddressValid || !network || !account || isAlreadyAdded) return
-    if (hasVerdict) return
 
-    portfolioDispatch({
-      type: 'method',
-      params: {
-        method: 'updateCollectionValidation',
-        args: [{ address, chainId: network.chainId }, account.addr]
-      }
-    })
+    const shouldCheckCollection = !hasVerdict || isCollectionCheckRetryable
+    const shouldCheckOwnership =
+      isTokenIdValid && (!hasOwnershipVerdict || isOwnershipCheckRetryable)
+
+    if (!shouldCheckCollection && !shouldCheckOwnership) return
+
+    if (shouldCheckCollection) {
+      portfolioDispatch({
+        type: 'method',
+        params: {
+          method: 'updateCollectionValidation',
+          // The last argument asks the controller to look past a stored verdict
+          args: [{ address, chainId: network.chainId }, account.addr, isCollectionCheckRetryable]
+        }
+      })
+    }
+
+    if (shouldCheckOwnership) {
+      portfolioDispatch({
+        type: 'method',
+        params: {
+          method: 'updateCollectibleValidation',
+          args: [
+            { address, chainId: network.chainId, tokenId: BigInt(tokenId) },
+            account.addr,
+            isOwnershipCheckRetryable
+          ]
+        }
+      })
+    }
 
     // The dispatch is fire-and-forget, so the spinner needs a way out
     const timeout = setTimeout(() => setHasCheckTimedOut(true), CHECK_TIMEOUT_MS)
@@ -189,46 +250,26 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     account,
     address,
     checkAttempt,
+    hasOwnershipVerdict,
     hasVerdict,
     isAddressValid,
     isAlreadyAdded,
-    network,
-    portfolioDispatch
-  ])
-
-  const retryCheck = useCallback(() => setCheckAttempt((attempt) => attempt + 1), [])
-
-  const ownership = useMemo(() => {
-    if (!isTokenIdValid || !isAddressValid || !network) return undefined
-
-    return validTokens?.erc721?.[`${getAssetCacheKey(address, network.chainId)}-${tokenId}`]
-  }, [address, isAddressValid, isTokenIdValid, network, tokenId, validTokens])
-  const hasOwnershipVerdict = typeof ownership?.isValid === 'boolean'
-
-  useEffect(() => {
-    if (!isTokenIdValid || !isAddressValid || !network || !account) return
-    if (hasOwnershipVerdict) return
-
-    portfolioDispatch({
-      type: 'method',
-      params: {
-        method: 'updateCollectibleValidation',
-        args: [{ address, chainId: network.chainId, tokenId: BigInt(tokenId) }, account.addr]
-      }
-    })
-  }, [
-    account,
-    address,
-    hasOwnershipVerdict,
-    isAddressValid,
+    isCollectionCheckRetryable,
+    isOwnershipCheckRetryable,
     isTokenIdValid,
     network,
     portfolioDispatch,
     tokenId
   ])
 
-  // No verdict yet means the check is still running
-  const isValidating = isAddressValid && !isAlreadyAdded && !hasVerdict && !hasCheckTimedOut
+  const retryCheck = useCallback(() => setCheckAttempt((attempt) => attempt + 1), [])
+
+  // A check with no verdict yet is still running
+  const isValidating =
+    isAddressValid &&
+    !isAlreadyAdded &&
+    !hasCheckTimedOut &&
+    (!hasVerdict || (isTokenIdValid && !hasOwnershipVerdict))
 
   return (
     <AddAssetBottomSheet
@@ -270,7 +311,9 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
               containerStyle={spacings.mbSm}
               error={
                 (value && !isTokenIdValid && t('The NFT ID is a number')) ||
-                (hasOwnershipVerdict && !ownership?.isValid && ownership?.error?.message) ||
+                (hasOwnershipVerdict && !ownership?.isValid && !isOwnershipCheckRetryable
+                  ? getRejectionMessage(ownership?.error?.reason, t)
+                  : undefined) ||
                 undefined
               }
               backgroundColor={theme.secondaryBackground}
@@ -311,13 +354,22 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
 
       {!isAlreadyAdded && hasVerdict && !validation?.isValid ? (
         <Alert
-          type={validation?.error?.type === 'network' ? 'warning' : 'error'}
+          type={isCollectionCheckRetryable ? 'warning' : 'error'}
           isTypeLabelHidden
-          // A rejection always comes with a reason, but never leave the user
-          // without an explanation
-          title={
-            validation?.error?.message || t("This address doesn't look like an NFT collection")
+          title={getRejectionMessage(validation?.error?.reason, t)}
+          buttonProps={
+            isCollectionCheckRetryable ? { text: t('Try again'), onPress: retryCheck } : undefined
           }
+          style={{ ...spacings.phSm, ...spacings.pvSm }}
+        />
+      ) : null}
+
+      {!isAlreadyAdded && validation?.isValid && isOwnershipCheckRetryable ? (
+        <Alert
+          type="warning"
+          isTypeLabelHidden
+          title={getRejectionMessage('network-problem', t)}
+          buttonProps={{ text: t('Try again'), onPress: retryCheck }}
           style={{ ...spacings.phSm, ...spacings.pvSm }}
         />
       ) : null}

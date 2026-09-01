@@ -2,6 +2,7 @@ import { getAddress } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { getNetworksWithFailedRPC } from '@ambire-common/libs/networks/networks'
+import { getAssetCacheKey, normalizeAssetAddress } from '@ambire-common/libs/portfolio/helpers'
 import useController from '@common/hooks/useController'
 import {
   getTokenEligibility,
@@ -54,21 +55,26 @@ const useWatchToken = () => {
     [validTokens, tokenData, tokenNetwork]
   )
 
+  const tokenAddress = tokenData?.address
+  const tokenChainId = tokenNetwork?.chainId
+
   const tokenValidation = useMemo(() => {
-    if (!tokenData?.address || !tokenNetwork) return null
-    return validTokens.erc20[`${tokenData.address}-${tokenNetwork.chainId}`]
-  }, [validTokens, tokenData?.address, tokenNetwork])
+    if (!tokenAddress || typeof tokenChainId === 'undefined') return null
+
+    return validTokens.erc20[getAssetCacheKey(tokenAddress, tokenChainId)]
+  }, [validTokens, tokenAddress, tokenChainId])
 
   const tokenValidationError = useMemo(() => {
     if (!tokenData?.address) return null
 
     if (tokenNetwork?.chainId) {
-      return validTokens.erc20[`${tokenData.address}-${tokenNetwork.chainId}`]?.error
+      return validTokens.erc20[getAssetCacheKey(tokenData.address, tokenNetwork.chainId)]?.error
     }
 
     // When we don't have tokenNetwork.chainId, find any validation error for this address across all networks
+    // The keys hold a normalized address, see `getAssetCacheKey`
     const validationEntry = Object.entries(validTokens.erc20 || {}).find(([key]) =>
-      key.startsWith(`${tokenData.address}-`)
+      key.startsWith(`${normalizeAssetAddress(tokenData.address)}-`)
     )
 
     return (validationEntry?.[1] as any)?.error

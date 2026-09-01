@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
+import { getAssetCacheKey } from '@ambire-common/libs/portfolio/helpers'
 import { isValidAddress } from '@ambire-common/services/address'
 import Alert from '@common/components/Alert/Alert'
 import CoingeckoConfirmedBadge from '@common/components/CoingeckoConfirmedBadge'
@@ -64,7 +65,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const tokenValidation = useMemo(() => {
     if (!address || !network) return null
 
-    return validTokens.erc20[`${address}-${network.chainId}`]
+    return validTokens.erc20[getAssetCacheKey(address, network.chainId)]
   }, [validTokens, address, network])
 
   const isCustomToken = useMemo(
@@ -84,6 +85,8 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     () => getTokenFromPortfolio({ address }, network, selectedAccountPortfolio),
     [selectedAccountPortfolio, network, address]
   )
+
+  const hasValidationError = !!tokenValidation?.error
 
   const handleCloseAndReset = useCallback(() => {
     handleClose()
@@ -230,7 +233,9 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     tokenTypeEligibility,
     temporaryToken,
     isAdditionalHintRequested,
-    tokenValidation
+    // Only whether there is an error matters here, and depending on the object
+    // re-ran this effect on every portfolio state write
+    hasValidationError
   ])
 
   useEffect(() => {

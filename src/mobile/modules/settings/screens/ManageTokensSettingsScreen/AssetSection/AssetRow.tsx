@@ -3,7 +3,7 @@ import { View } from 'react-native'
 
 import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
-import { ManagedAsset } from '@common/modules/settings/hooks/useManageAssets/composeAssetLists'
+import { ManagedAsset } from '@common/modules/settings/hooks/useManageAssets/useManageAssets'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import shortenCollectibleId from '@common/utils/shortenCollectibleId'
 import Button from '@common/components/Button'

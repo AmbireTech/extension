@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import { ManagedAsset } from '@common/modules/settings/hooks/useManageAssets/useManageAssets'
 import Text from '@common/components/Text'
 import { ASSET_COPY } from '@common/modules/settings/constants/assetCopy'
 import { ALL_NETWORKS_FILTER } from '@common/modules/settings/hooks/useManageAssets'
@@ -19,7 +20,7 @@ type Props = {
   standard: CustomToken['standard']
   variant: 'custom' | 'hidden'
   isLoading: boolean
-  data: (TokenResult | CollectionResult)[]
+  data: ManagedAsset<TokenResult | CollectionResult>[]
   networkFilter: string
   search: string
 }

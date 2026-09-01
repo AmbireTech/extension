@@ -55,7 +55,18 @@ const useManageAsset = ({
         args: [{ address, chainId, standard, tokenId }, account?.addr, true]
       }
     })
-  }, [account?.addr, addToast, address, chainId, isHidden, portfolioDispatch, standard, copy, t])
+  }, [
+    account?.addr,
+    addToast,
+    address,
+    chainId,
+    isHidden,
+    portfolioDispatch,
+    standard,
+    tokenId,
+    copy,
+    t
+  ])
 
   const removeCustomAsset = useCallback(() => {
     addToast(t(copy.removedToast), { timeout: 2000 })
@@ -67,7 +78,7 @@ const useManageAsset = ({
         args: [{ address, chainId, tokenId }, account?.addr, true]
       }
     })
-  }, [account?.addr, addToast, address, chainId, portfolioDispatch, copy, t])
+  }, [account?.addr, addToast, address, chainId, portfolioDispatch, tokenId, copy, t])
 
   return { isHidden, toggleHideAsset, removeCustomAsset }
 }

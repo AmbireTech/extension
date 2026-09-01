@@ -8,10 +8,10 @@ import { SelectValue } from '@common/components/Select/types'
 import AddNftBottomSheet from '@common/modules/settings/components/AddNftBottomSheet'
 import AssetTabs, { AssetTab } from '@common/modules/settings/components/AssetTabs'
 import AddTokenBottomSheet from '@common/modules/settings/components/AddTokenBottomSheet'
-import useManageNfts from '@common/modules/settings/hooks/useManageNfts'
-import useManageTokens, {
+import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import useManageAssets, {
   ALL_NETWORKS_FILTER
-} from '@common/modules/settings/hooks/useManageTokens'
+} from '@common/modules/settings/hooks/useManageAssets'
 import flexbox from '@common/styles/utils/flexbox'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
@@ -35,12 +35,16 @@ const ManageTokensSettingsScreen = () => {
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)
   const [activeTab, setActiveTab] = useState<AssetTab>('tokens')
   const search = watch('search')
-  const { customTokens, hiddenTokens, isLoading } = useManageTokens({ search, networkFilter })
   const {
-    customCollections,
-    hiddenCollections,
+    customAssets: customTokens,
+    hiddenAssets: hiddenTokens,
+    isLoading
+  } = useManageAssets<TokenResult>({ search, networkFilter, standard: 'ERC20' })
+  const {
+    customAssets: customCollections,
+    hiddenAssets: hiddenCollections,
     isLoading: areNftsLoading
-  } = useManageNfts({ search, networkFilter })
+  } = useManageAssets<CollectionResult>({ search, networkFilter, standard: 'ERC721' })
 
   useEffect(() => {
     setCurrentSettingsPage('manage-tokens')
