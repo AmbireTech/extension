@@ -5,7 +5,6 @@ import { MAX_DISPLAYED_NESTED_CALLDATA_DEPTH } from '@ambire-common/libs/humaniz
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import { getErc7730RowLabel, getErc7730RowValues } from '@ambire-common/libs/humanizer/utils'
 import useNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import ChainVisualization from '@common/components/HumanizedVisualization/ChainVisualization'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import { Erc7730StructuredVisualizationProps } from '@common/components/HumanizedVisualization/Erc7730/interfaces'
@@ -405,9 +404,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 }}
               />
             )}
-            <View style={{ marginTop: SPACING_TY + 3 }}>
-              <RightArrowIcon width={7} height={12} color={theme.secondaryText} />
-            </View>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Erc7730StructuredVisualization
