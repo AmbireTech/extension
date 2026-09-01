@@ -13,6 +13,8 @@ export interface DashboardPagesCarouselProps {
   initAllTabs: () => void
   /** Pulling the header down past the top refreshes, as pulling a page down does. */
   onRefresh?: () => void
+  /** Holds the pages open on the spinner for as long as the refresh runs. */
+  refreshing?: boolean
   children: ReactNode
 }
 

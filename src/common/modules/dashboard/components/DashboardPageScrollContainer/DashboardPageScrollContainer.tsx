@@ -1,5 +1,6 @@
 import React, { FC, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { Animated, FlatList, FlatListProps, RefreshControl, ViewStyle } from 'react-native'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isMobile } from '@common/config/env'
@@ -67,6 +68,9 @@ const DashboardPageScrollContainer: FC<Props> = ({
 }) => {
   const topSpacing = useListTopSpacing()
   const flatlistRef = useRef<FlatList | null>(null)
+  // Names this list's own scrolling, so the carousel's pull can be declared as the
+  // gesture that decides before it. Inert on its own.
+  const listGesture = useMemo(() => Gesture.Native(), [])
   const { bottom } = useSafeAreaInsets()
   const style = useMemo(() => getFlatListStyle(tab, openTab), [openTab, tab])
   const { theme } = useTheme()
@@ -154,10 +158,10 @@ const DashboardPageScrollContainer: FC<Props> = ({
   useEffect(() => {
     if (!registerPage) return undefined
 
-    registerPage(tab, { scrollToOffset })
+    registerPage(tab, { scrollToOffset, listGesture })
 
     return () => registerPage(tab, null)
-  }, [registerPage, scrollToOffset, tab])
+  }, [listGesture, registerPage, scrollToOffset, tab])
 
   const registerFloatingBar = carousel?.registerFloatingBar
 
@@ -171,7 +175,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
 
   const ListComponent = carousel ? AnimatedFlatList : FlatList
 
-  return (
+  const list = (
     <ListComponent
       ref={flatlistRef}
       style={[style, carouselListStyle]}
@@ -179,12 +183,15 @@ const DashboardPageScrollContainer: FC<Props> = ({
       // Makes the header sticky. The carousel lays its own header over the pages instead
       stickyHeaderIndices={carousel ? undefined : [1]}
       removeClippedSubviews
-      bounces
-      alwaysBounceVertical
+      // The carousel owns pulling past the top, so the page must not give at the top too
+      bounces={!carousel}
+      alwaysBounceVertical={!carousel}
       scrollEventThrottle={16}
       onScroll={handleScroll}
+      // The carousel replaces it with a pull of its own, which unlike this one can be
+      // asked to take a deliberate distance rather than the platform's short default.
       refreshControl={
-        isMobile ? (
+        isMobile && !carousel ? (
           <RefreshControl
             refreshing={!!refreshing}
             onRefresh={onRefresh}
@@ -198,6 +205,10 @@ const DashboardPageScrollContainer: FC<Props> = ({
       {...carouselIndicatorProps}
     />
   )
+
+  if (!carousel) return list
+
+  return <GestureDetector gesture={listGesture}>{list}</GestureDetector>
 }
 
 export default React.memo(DashboardPageScrollContainer)

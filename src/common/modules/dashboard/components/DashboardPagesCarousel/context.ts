@@ -1,5 +1,6 @@
 import { createContext } from 'react'
 import { Animated } from 'react-native'
+import { NativeGesture } from 'react-native-gesture-handler'
 
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 
@@ -10,6 +11,12 @@ export type DashboardFloatingBarProps = Omit<FloatingBottomBarProps, 'isHidden'>
 
 export interface DashboardPageHandle {
   scrollToOffset: (offset: number) => void
+  /**
+   * The page's own scrolling, as something the carousel's pull can be declared against.
+   * A scrollable page claims a drag before the pull can judge it, and a relation can
+   * only be built between gestures - a plain list ref is silently dropped.
+   */
+  listGesture: NativeGesture
 }
 
 export interface DashboardCarouselContextValue {

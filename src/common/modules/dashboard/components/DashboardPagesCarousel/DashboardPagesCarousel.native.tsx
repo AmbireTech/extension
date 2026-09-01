@@ -10,7 +10,15 @@ import {
   ScrollView,
   View
 } from 'react-native'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import Reanimated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming
+} from 'react-native-reanimated'
 
+import Spinner from '@common/components/Spinner'
 import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
@@ -38,9 +46,26 @@ const PAGE_RENDER_STEP = 200
 // not a tap on a banner or a tab.
 const HEADER_PAN_THRESHOLD = 5
 
-// How far past the top the header has to be pulled to refresh. The pages are already
-// back at the top by then, so this is the distance on top of undoing the collapse.
-const HEADER_PULL_TO_REFRESH_DISTANCE = 80
+// How far the finger has to travel past the top to refresh, whether it pulls the header
+// or a page. Deliberately long: refreshing everything is not something to walk into by
+// brushing the screen, and the platform controls trigger at less than half of this.
+const PULL_TO_REFRESH_DISTANCE = 140
+
+// How far a touch has to travel before it is taken to be a pull rather than a tap
+const PULL_ACTIVATION_THRESHOLD = 12
+
+// How far a drag is held for while the open page's offset is still being asked for.
+// Given up on past this, so a lost answer cannot leave a page unable to scroll.
+const PULL_ELIGIBILITY_PATIENCE = 80
+
+type PullEligibility = 'UNKNOWN' | 'YES' | 'NO'
+
+// The pages follow the finger at half its pace, so the pull reads as something being
+// resisted rather than dragged, and the distance stays a deliberate one.
+const PULL_RESISTANCE = 0.5
+
+// The gap the pages are held open by while the refresh runs, sized to the spinner
+const PULL_SPINNER_HEIGHT = 56
 
 const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   openTab,
@@ -48,6 +73,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   sessionId,
   initAllTabs,
   onRefresh,
+  refreshing,
   children
 }) => {
   const { styles } = useTheme(getStyles)
@@ -88,7 +114,27 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // start right below the tabs row sits at this offset, not at zero.
   const collapsedBy = useRef(0)
 
+  // Held in state rather than alongside the handles, because the pull gesture is built
+  // during render and has to be given the lists it takes a drag away from.
+  const [pageListGestures, setPageListGestures] = useState<
+    Partial<Record<TabType, DashboardPageHandle['listGesture']>>
+  >({})
+
   const registerPage = useCallback((tab: TabType, handle: DashboardPageHandle | null) => {
+    setPageListGestures((prev) => {
+      if (prev[tab] === handle?.listGesture) return prev
+
+      const next = { ...prev }
+
+      if (handle) {
+        next[tab] = handle.listGesture
+      } else {
+        delete next[tab]
+      }
+
+      return next
+    })
+
     if (!handle) {
       delete pageHandles.current[tab]
       return
@@ -271,6 +317,39 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     [bannersHeight, pageSize.height, registerFloatingBar, registerPage, scrollY, tabsHeight]
   )
 
+  // Where the open page is cannot be read without a JS listener on every scroll frame,
+  // which the native mapping exists to avoid. Asked for once per touch instead, and the
+  // answer awaited rather than assumed: it arrives a round trip late, and taking the
+  // previous touch's answer for this one is how a pull back at the top gets refused.
+  const canPull = useSharedValue<PullEligibility>('UNKNOWN')
+  const pullStartX = useSharedValue(0)
+  const pullStartY = useSharedValue(0)
+  const pulled = useSharedValue(0)
+  const spinnerGap = useSharedValue(0)
+  const [isPulling, setIsPulling] = useState(false)
+
+  // A drag on the header past the top opens the pages the same way a pull on one of
+  // them does, so the two report themselves identically. Tracked in a ref as well, so
+  // that following the finger costs no render.
+  const isHeaderPullingRef = useRef(false)
+
+  // Plain functions: a shared value may not be listed as a dependency of a hook and
+  // then written to, and following the finger is exactly writing to one.
+  const startHeaderPull = () => {
+    if (isHeaderPullingRef.current) return
+
+    isHeaderPullingRef.current = true
+    setIsPulling(true)
+  }
+
+  const endHeaderPull = () => {
+    if (!isHeaderPullingRef.current) return
+
+    isHeaderPullingRef.current = false
+    setIsPulling(false)
+    pulled.value = withTiming(0, { duration: 200 })
+  }
+
   // Enough banners cover a page whole, and the header is laid over it, so without
   // dragging the open page by the header there would be nothing left to drag it by.
   const touchStartY = useRef(0)
@@ -300,28 +379,123 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     []
   )
 
-  const onHeaderDrag = useCallback(
-    ({ nativeEvent }: GestureResponderEvent) => {
-      const dragged = nativeEvent.pageY - touchStartY.current
-      const offset = touchStartOffset.current - dragged
+  const onHeaderDrag = ({ nativeEvent }: GestureResponderEvent) => {
+    const dragged = nativeEvent.pageY - touchStartY.current
+    const offset = touchStartOffset.current - dragged
 
-      // Pulled past the top, which the open page cannot be scrolled to. Refreshing is
-      // requested here instead, and the page's refresh control shows it as its own.
-      if (offset <= -HEADER_PULL_TO_REFRESH_DISTANCE) {
-        if (hasPulledToRefresh.current || !onRefresh) return
+    pageHandles.current[openTab]?.scrollToOffset(Math.max(offset, 0))
 
-        hasPulledToRefresh.current = true
-        // The page is at the top, and its refresh control reveals itself by scrolling up
-        // by its own height - where a pulled page would have left the spinner too.
-        onRefresh()
+    // Past the top, which the open page cannot be scrolled to. The pages are pulled
+    // open instead, exactly as a pull on one of them does it, so a drag on a banner is
+    // answered the same way as a drag on the list under it.
+    if (offset >= 0) {
+      endHeaderPull()
+
+      return
+    }
+
+    startHeaderPull()
+    pulled.value = -offset
+
+    if (offset <= -PULL_TO_REFRESH_DISTANCE) {
+      if (hasPulledToRefresh.current || !onRefresh) return
+
+      hasPulledToRefresh.current = true
+      onRefresh()
+    }
+  }
+
+  const measurePullEligibility = () => {
+    scrollY.stopAnimation((offset) => {
+      canPull.value = offset <= 0 ? 'YES' : 'NO'
+    })
+  }
+
+  const requestRefresh = useCallback(() => {
+    if (!onRefresh) return
+
+    onRefresh()
+  }, [onRefresh])
+
+  // Held open for as long as the refresh runs, however it was asked for, so a pull on
+  // the header and a pull on a page report themselves the same way.
+  useEffect(() => {
+    spinnerGap.value = withTiming(refreshing ? PULL_SPINNER_HEIGHT : 0, { duration: 200 })
+  }, [refreshing, spinnerGap])
+
+  // A page that can be scrolled claims the drag before the pull can judge it, so the
+  // pages' scrolling is told to wait for the pull to fail. Without it the pull only ever
+  // worked on a page short enough not to scroll - which, with banners above it, none is.
+  const pageLists = useMemo(() => Object.values(pageListGestures), [pageListGestures])
+
+  // Activated by hand, because whether a downward drag is a pull or the page being
+  // scrolled back up is only answerable once the open page's offset is known. Failing
+  // rather than activating leaves the touch to the pager and the list, untouched.
+  const pullGesture = Gesture.Pan()
+    .enabled(!!onRefresh)
+    .manualActivation(true)
+    .blocksExternalGesture(...pageLists)
+    .onTouchesDown((event) => {
+      const touch = event.allTouches[0]
+
+      if (!touch) return
+
+      pullStartX.value = touch.absoluteX
+      pullStartY.value = touch.absoluteY
+      canPull.value = 'UNKNOWN'
+      runOnJS(measurePullEligibility)()
+    })
+    .onTouchesMove((event, manager) => {
+      const touch = event.allTouches[0]
+
+      if (!touch) return
+
+      const draggedX = touch.absoluteX - pullStartX.value
+      const draggedY = touch.absoluteY - pullStartY.value
+
+      // A swipe between tabs, or the page being scrolled - neither of them is a pull
+      if (Math.abs(draggedX) > Math.abs(draggedY) || draggedY < 0 || canPull.value === 'NO') {
+        manager.fail()
 
         return
       }
 
-      pageHandles.current[openTab]?.scrollToOffset(Math.max(offset, 0))
-    },
-    [onRefresh, openTab]
-  )
+      // Neither taken nor given up on while the answer is on its way. The pages are
+      // waiting on this gesture, so the drag is only held, never lost.
+      if (canPull.value === 'UNKNOWN') {
+        if (draggedY > PULL_ELIGIBILITY_PATIENCE) manager.fail()
+
+        return
+      }
+
+      if (draggedY > PULL_ACTIVATION_THRESHOLD) manager.activate()
+    })
+    .onStart(() => {
+      runOnJS(setIsPulling)(true)
+    })
+    .onUpdate(({ translationY }) => {
+      pulled.value = Math.max(translationY, 0)
+    })
+    .onEnd(({ translationY }) => {
+      if (translationY >= PULL_TO_REFRESH_DISTANCE) runOnJS(requestRefresh)()
+    })
+    .onFinalize(() => {
+      pulled.value = withTiming(0, { duration: 200 })
+      runOnJS(setIsPulling)(false)
+    })
+
+  // Transformed rather than laid out again, so a pull costs the pages no re-render
+  const pagerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: Math.max(pulled.value * PULL_RESISTANCE, spinnerGap.value) }]
+  }))
+
+  // Clipped to the gap the pages have opened, so the spinner is revealed by the pull
+  // instead of being drawn over the page under it
+  const spinnerStyle = useAnimatedStyle(() => {
+    const gap = Math.max(pulled.value * PULL_RESISTANCE, spinnerGap.value)
+
+    return { height: gap, opacity: Math.min(gap / PULL_SPINNER_HEIGHT, 1) }
+  })
 
   const openTabFloatingBar = floatingBars[openTab]
 
@@ -346,20 +520,32 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     <View style={styles.container}>
       <View style={flexbox.flex1} onLayout={onLayout}>
         <DashboardCarouselContext.Provider value={carousel}>
-          <ScrollView
-            ref={scrollRef}
-            horizontal
-            pagingEnabled
-            directionalLockEnabled
-            showsHorizontalScrollIndicator={false}
-            decelerationRate="fast"
-            scrollEventThrottle={16}
-            onScroll={onPagerScroll}
-            onScrollBeginDrag={onScrollBeginDrag}
-            onMomentumScrollEnd={onMomentumScrollEnd}
-          >
-            {pages}
-          </ScrollView>
+          {(isPulling || !!refreshing) && (
+            <Reanimated.View
+              pointerEvents="none"
+              style={[styles.pullSpinner, { top: bannersHeight + tabsHeight }, spinnerStyle]}
+            >
+              <Spinner style={styles.pullSpinnerIcon} />
+            </Reanimated.View>
+          )}
+          <GestureDetector gesture={pullGesture}>
+            <Reanimated.View style={[flexbox.flex1, pagerStyle]}>
+              <ScrollView
+                ref={scrollRef}
+                horizontal
+                pagingEnabled
+                directionalLockEnabled
+                showsHorizontalScrollIndicator={false}
+                decelerationRate="fast"
+                scrollEventThrottle={16}
+                onScroll={onPagerScroll}
+                onScrollBeginDrag={onScrollBeginDrag}
+                onMomentumScrollEnd={onMomentumScrollEnd}
+              >
+                {pages}
+              </ScrollView>
+            </Reanimated.View>
+          </GestureDetector>
         </DashboardCarouselContext.Provider>
       </View>
       {/* The banners and the tabs row are account wide, so they are laid over the
@@ -370,6 +556,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
         onStartShouldSetResponderCapture={onHeaderTouchStart}
         onMoveShouldSetResponderCapture={onHeaderTouchMove}
         onResponderMove={onHeaderDrag}
+        onResponderRelease={endHeaderPull}
+        onResponderTerminate={endHeaderPull}
         style={[styles.header, spacings.phSm, { transform: [{ translateY: headerTranslateY }] }]}
       >
         <View onLayout={onBannersLayout}>

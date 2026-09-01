@@ -122,6 +122,7 @@ const DashboardPages = ({
       sessionId={sessionId}
       initAllTabs={initAllTabs}
       onRefresh={onRefresh}
+      refreshing={refreshing}
     >
       <Tokens
         openTab={pagesOpenTab}

@@ -6,6 +6,8 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   container: ViewStyle
   header: ViewStyle
+  pullSpinner: ViewStyle
+  pullSpinnerIcon: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -21,6 +23,20 @@ const getStyles = (theme: ThemeProps) =>
       left: 0,
       right: 0,
       backgroundColor: theme.primaryBackground
+    },
+    pullSpinner: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      // Only ever as tall as the gap the pages have opened, so it is revealed rather
+      // than drawn over them
+      overflow: 'hidden',
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter
+    },
+    pullSpinnerIcon: {
+      width: 28,
+      height: 28
     }
   })
 
