@@ -237,9 +237,8 @@ export class SettingsPage extends BasePage {
     await this.click(selectors.getStarted.saveAndContinueBtn)
 
     // assert info text
-    await this.compareText(
-      selectors.getStarted.confirmationMessageAmbireWallet,
-      'Ambire Wallet is ready to use'
+    await expect(this.page.locator(selectors.settings.accessAccFromDashboardInfoText)).toHaveText(
+      'You can access your accounts from the dashboard via the extension icon.'
     )
   }
 
