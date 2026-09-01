@@ -31,29 +31,9 @@ const playwrightArgs = [
   '--ip-address-space-overrides=127.0.0.1:0=public'
 ]
 
-function closeDuplicateOnboardingTab(context: BrowserContext, keep: Page): void {
-  const handler = async (tab: Page) => {
-    if (tab === keep || tab.isClosed()) return
-
-    // Detach immediately: only the extension's install-time tab is ever targeted.
-    context.off('page', handler)
-
-    try {
-      await tab.waitForURL((u) => u.href.startsWith('chrome-extension://'), { timeout: 5000 })
-    } catch {
-      return
-    }
-
-    await tab.close().catch(() => { })
-  }
-
-  context.on('page', handler)
-}
-
 /**
  * Launches the persistent context with the extension loaded and waits for the
- * extension's service worker to come up. Does NOT create a page
- * the extension opens its own onboarding tab on install
+ * extension's service worker to come up and returns a fresh page.
  */
 
 async function initBrowser(namespace: string): Promise<{
@@ -110,8 +90,6 @@ async function initBrowser(namespace: string): Promise<{
   // const page = await acquireExtensionPage(context, extensionURL)
   const page = await context.newPage()
   page.setDefaultTimeout(120000)
-
-  closeDuplicateOnboardingTab(context, page)
 
   await Promise.all(
     context

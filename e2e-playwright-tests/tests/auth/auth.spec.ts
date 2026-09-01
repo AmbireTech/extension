@@ -87,6 +87,7 @@ test.describe('trezor', { tag: '@trezorTests' }, () => {
     await setup(controller, emulatorOptions)
     await initTrezorConnect(controller)
     await pages.initWithoutStorage()
+    await pages.basePage.closeDuplicateExtensionTabs()
   })
 
   test.afterEach(async ({ context }) => {
