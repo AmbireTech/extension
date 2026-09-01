@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -13,12 +13,20 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import useController from '@common/hooks/useController'
 import useWindowSize from '@common/hooks/useWindowSize'
+import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
+import { isExtension } from '@web/constants/browserapi'
 
 const { isSidePanel } = getUiType()
+const pendingRequestsTopContent = isExtension ? (
+  <PendingRequests
+    style={[common.borderRadiusPrimary, spacings.mbSm, { borderTopWidth: 1, marginTop: -12 }]}
+  />
+) : undefined
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
@@ -81,7 +89,7 @@ const BenzinScreen = () => {
   )
 
   return (
-    <Benzin state={state}>
+    <Benzin state={state} topContent={pendingRequestsTopContent}>
       <FooterGlassView
         // In the side panel the footer is a flex sibling under the scroll view, so it stays pinned
         // to the bottom of the screen without an absolute spacer that would force a scrollbar
@@ -137,4 +145,4 @@ const BenzinScreen = () => {
   )
 }
 
-export default React.memo(BenzinScreen)
+export default memo(BenzinScreen)
