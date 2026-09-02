@@ -12,10 +12,10 @@ import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { AssetTab } from '@common/modules/settings/components/AssetTabs'
 import { ASSET_COPY } from '@common/modules/settings/constants/assetCopy'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
   control: any
@@ -43,7 +43,7 @@ const Filters: FC<Props> = ({
   openAddAssetBottomSheet
 }) => {
   const { t } = useTranslation()
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { theme } = useTheme()
   const isNftsTab = activeTab === 'nfts'
   const copy = ASSET_COPY[isNftsTab ? 'ERC721' : 'ERC20']

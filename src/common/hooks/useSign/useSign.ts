@@ -63,9 +63,7 @@ const useSign = ({
   onSafeSignComplete
 }: Props) => {
   const { t } = useTranslation()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const { dispatch: mainControllerDispatch } = useController('MainController')
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')

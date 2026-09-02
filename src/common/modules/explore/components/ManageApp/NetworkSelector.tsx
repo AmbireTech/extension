@@ -78,7 +78,7 @@ const NetworkSelector = ({
 }) => {
   const { dispatch } = useControllersMiddleware()
 
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { theme } = useTheme()
   const { t } = useTranslation()
 

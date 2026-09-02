@@ -44,8 +44,10 @@ import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetai
 import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
 import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
+import ImportAccountsFromExtensionScreen from '@mobile/modules/accounts-sync/screens/ImportAccountsFromExtensionScreen'
 import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
+// The location these routes match is the one `AppRoutes` scopes the context to.
 const MainRoutes = () => {
   return (
     <Routes>
@@ -66,6 +68,10 @@ const MainRoutes = () => {
         <Route path={ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
         <Route path={ROUTES.trezorConnect} element={<TrezorConnectScreen />} />
         <Route path={ROUTES.qrConnect} element={<QrConnectScreen />} />
+        <Route
+          path={ROUTES.importAccountsFromExtension}
+          element={<ImportAccountsFromExtensionScreen />}
+        />
 
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />

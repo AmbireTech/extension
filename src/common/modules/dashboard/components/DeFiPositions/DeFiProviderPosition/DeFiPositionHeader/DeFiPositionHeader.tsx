@@ -57,9 +57,7 @@ const DeFiPositionHeader: FC<Props> = ({
   iconUrl,
   siteUrl
 }) => {
-  const {
-    state: { dapps }
-  } = useController('DappsController')
+  const { state: dapps } = useController('DappsController', 'dapps')
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
   const { isCompactLayout } = useCompactActionRequestLayout()
@@ -150,10 +148,7 @@ const DeFiPositionHeader: FC<Props> = ({
               weight="semiBold"
               numberOfLines={shouldStackHealthRateBadge ? 1 : undefined}
               ellipsizeMode={shouldStackHealthRateBadge ? 'tail' : undefined}
-              style={[
-                spacings.mrMi,
-                shouldStackHealthRateBadge && { flexShrink: 1, minWidth: 0 }
-              ]}
+              style={[spacings.mrMi, shouldStackHealthRateBadge && { flexShrink: 1, minWidth: 0 }]}
             >
               {providerName}
             </Text>
@@ -168,11 +163,7 @@ const DeFiPositionHeader: FC<Props> = ({
             )}
           </View>
           {shouldStackHealthRateBadge && !!healthRate && (
-            <Badge
-              text={healthRateBadgeText}
-              type={healthRateBadgeType}
-              style={spacings.mtMi}
-            />
+            <Badge text={healthRateBadgeText} type={healthRateBadgeType} style={spacings.mtMi} />
           )}
         </View>
         {isWeb && !isCompactLayout && !!healthRate && (

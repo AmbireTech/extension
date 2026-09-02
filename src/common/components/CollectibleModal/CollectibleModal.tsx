@@ -49,9 +49,7 @@ const CollectibleModal = ({
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   // No actions on a collectible that is only being previewed (in a simulation)
   const shouldDisplayHideCollectionAction = !hideSendNft && !!canHideCollectible
 

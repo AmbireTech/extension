@@ -40,7 +40,7 @@ const ExploreSectionScreen = () => {
   const { params } = useRoute()
   const { theme } = useTheme()
   const { state } = useController('DappsController')
-  const { networks: allNetworks } = useController('NetworksController').state
+  const { state: allNetworks } = useController('NetworksController', 'networks')
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const [network, setNetwork] = useState<Network | null>(null)
   const [category, setCategory] = useState<string | null>(null)

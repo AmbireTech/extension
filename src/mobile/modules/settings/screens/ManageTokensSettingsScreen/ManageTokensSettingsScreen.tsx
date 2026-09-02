@@ -49,7 +49,7 @@ const ManageTokensSettingsScreen = () => {
     open: openAddNftBottomSheet,
     close: closeAddNftBottomSheet
   } = useModalize()
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)
   const [activeTab, setActiveTab] = useState<AssetTab>('tokens')

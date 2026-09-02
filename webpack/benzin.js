@@ -44,6 +44,14 @@ module.exports = function buildBenzin({ config, defaultExpoConfigPlugins }) {
         {
           from: './src/benzin/public/favicon.ico',
           to: 'favicon.ico'
+        },
+        {
+          from: './src/benzin/public/robots.txt',
+          to: 'robots.txt'
+        },
+        {
+          from: './src/benzin/public/og',
+          to: 'og'
         }
       ]
     })

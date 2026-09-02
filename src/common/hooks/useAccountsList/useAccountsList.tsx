@@ -30,11 +30,9 @@ const useAccountsList = ({
   const {
     state: { domains }
   } = useController('DomainsController')
-  const { accounts } = useController('AccountsController').state
-  const { keys } = useController('KeystoreController').state
-  const {
-    state: { account: selectedAccount }
-  } = useController('SelectedAccountController')
+  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: keys } = useController('KeystoreController', 'keys')
+  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const searchableAccounts = useMemo(

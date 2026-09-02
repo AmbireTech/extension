@@ -3,7 +3,7 @@ import { View } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import { SPACING, SPACING_2XL, SPACING_4XL, SPACING_LG } from '@common/styles/spacings'
+import { SPACING, SPACING_2XL, SPACING_MD } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -28,13 +28,12 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children, backgroundStyle = {},
     }
     if (fillsWindow) return 0
 
-    if (minHeightSize(700)) return SPACING_LG
+    // The offset a tab gets through `TabLayoutWrapperMainContent`, so every card of a tab
+    // starts at one height: the margin of its content container (dropped on short windows)
+    // plus the padding it gives the onboarding panels
+    const contentMarginTop = minHeightSize('m') ? 0 : SPACING_MD
 
-    if (minHeightSize(800)) return SPACING_2XL
-
-    if (minHeightSize(900)) return SPACING_4XL
-
-    return 124
+    return contentMarginTop + (minHeightSize('xl') ? SPACING : SPACING_2XL)
   }, [minHeightSize])
 
   return (

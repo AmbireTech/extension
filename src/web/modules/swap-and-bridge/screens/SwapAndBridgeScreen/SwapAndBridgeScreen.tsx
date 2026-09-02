@@ -1,9 +1,8 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
+import { memo, Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
-import { Key } from '@ambire-common/interfaces/keystore'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import Alert from '@common/components/Alert'
@@ -18,6 +17,9 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
 import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
 import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
+import ProviderSettingsBottomSheet, {
+  ProviderSettingsButton
+} from '@common/modules/swap-and-bridge/components/ProviderSettingsBottomSheet'
 import RouteInfo from '@common/modules/swap-and-bridge/components/RouteInfo'
 import RoutesModal from '@common/modules/swap-and-bridge/components/RoutesModal'
 import ToToken from '@common/modules/swap-and-bridge/components/ToToken'
@@ -29,6 +31,7 @@ import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
+import type { Key } from '@ambire-common/interfaces/keystore'
 const { isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
@@ -61,7 +64,11 @@ const SwapAndBridgeScreen = () => {
     batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch
+    shouldDisableAddToBatch,
+    providerSettingsModalRef,
+    openProviderSettingsModal,
+    closeProviderSettingsModal,
+    areAllProvidersDisabled
   } = useSwapAndBridgeForm()
   const {
     state: {
@@ -122,8 +129,10 @@ const SwapAndBridgeScreen = () => {
   ])
 
   const isNotReadyToProceed = useMemo(() => {
-    return formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit || isLoading
-  }, [formStatus, isLoading])
+    return (
+      areAllProvidersDisabled || formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit || isLoading
+    )
+  }, [areAllProvidersDisabled, formStatus, isLoading])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
     swapAndBridgeDispatch({
@@ -249,28 +258,40 @@ const SwapAndBridgeScreen = () => {
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
             <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
             <PanelTitle title={t('Swap & Bridge')} />
-            <View style={{ width: 40 }} />
+            <ProviderSettingsButton onPress={openProviderSettingsModal} />
           </View>
           <View style={spacings.mbTy}>
             <FromToken
               fromTokenOptions={fromTokenOptions}
               fromTokenValue={fromTokenValue}
               fromAmountValue={fromAmountValue}
-              fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
+              fromTokenAmountSelectDisabled={
+                areAllProvidersDisabled || fromTokenAmountSelectDisabled
+              }
               onFromAmountChange={onFromAmountChange}
               simulationFailed={!!fromChainSimulationError}
               isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
             />
           </View>
-          <ToToken simulationFailed={!!toChainSimulationError} />
+          <ToToken simulationFailed={!!toChainSimulationError} disabled={areAllProvidersDisabled} />
         </View>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
           openRoutesModal={openRoutesModal}
+          openProviderSettingsModal={openProviderSettingsModal}
           shouldEnableRoutesSelection={shouldEnableRoutesSelection}
+          areAllProvidersDisabled={areAllProvidersDisabled}
         />
       </Content>
-      <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
+      <RoutesModal
+        sheetRef={routesModalRef}
+        closeBottomSheet={closeRoutesModal}
+        openProviderSettingsBottomSheet={openProviderSettingsModal}
+      />
+      <ProviderSettingsBottomSheet
+        sheetRef={providerSettingsModalRef}
+        closeBottomSheet={closeProviderSettingsModal}
+      />
       <Suspense fallback={null}>
         <Estimation
           updateType="Swap&Bridge"
@@ -297,4 +318,4 @@ const SwapAndBridgeScreen = () => {
   )
 }
 
-export default React.memo(SwapAndBridgeScreen)
+export default memo(SwapAndBridgeScreen)
