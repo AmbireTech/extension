@@ -13,13 +13,11 @@ type Props = {
   /** Images are per collectible, so without an id there is nothing to display */
   collectibleId?: bigint
   size?: number
-  /** Defaults to the radius used by the asset lists in the settings */
-  borderRadius?: number
   networks: Network[]
 }
 
 const DEFAULT_SIZE = 32
-const DEFAULT_BORDER_RADIUS = 8
+const BORDER_RADIUS = 20
 
 /** Displays a collection by one of its collectibles, or a placeholder when none is known */
 const CollectionThumbnail: FC<Props> = ({
@@ -27,7 +25,6 @@ const CollectionThumbnail: FC<Props> = ({
   chainId,
   collectibleId,
   size = DEFAULT_SIZE,
-  borderRadius = DEFAULT_BORDER_RADIUS,
   networks
 }) => {
   const { theme } = useTheme()
@@ -37,7 +34,7 @@ const CollectionThumbnail: FC<Props> = ({
       <Collectible
         id={collectibleId}
         size={size}
-        borderRadius={borderRadius}
+        borderRadius={BORDER_RADIUS}
         collectionData={{ address, chainId }}
         networks={networks}
       />
@@ -51,7 +48,7 @@ const CollectionThumbnail: FC<Props> = ({
         {
           width: size,
           height: size,
-          borderRadius,
+          borderRadius: BORDER_RADIUS,
           backgroundColor: theme.neutral200
         }
       ]}

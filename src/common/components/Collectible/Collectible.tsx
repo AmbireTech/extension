@@ -85,7 +85,7 @@ const Collectible: FC<Props> = ({
       onPress={() => {
         if (!openCollectibleModal) return
 
-        // The portfolio has no name for collections it can't read it from
+        // The portfolio has no name for collections it can't read one from
         const collectionName = collectionData.name || shortenAddress(collectionData.address, 13)
 
         openCollectibleModal({

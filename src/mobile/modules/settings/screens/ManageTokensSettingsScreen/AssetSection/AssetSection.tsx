@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { View } from 'react-native'
 
 import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
+import { getAssetPreferenceId } from '@ambire-common/libs/portfolio/customToken'
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import { ManagedAsset } from '@common/modules/settings/hooks/useManageAssets/useManageAssets'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -9,7 +10,6 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { ASSET_COPY } from '@common/modules/settings/constants/assetCopy'
 import spacings from '@common/styles/spacings'
-import { getTokenId } from '@common/utils/token'
 
 import AssetRow from './AssetRow'
 
@@ -42,7 +42,7 @@ const AssetSection: FC<Props> = ({ standard, variant, isLoading, data }) => {
             />
           ))
         : data.map((asset) => (
-            <AssetRow key={getTokenId(asset)} asset={asset} standard={standard} />
+            <AssetRow key={getAssetPreferenceId(asset)} asset={asset} standard={standard} />
           ))}
     </View>
   )

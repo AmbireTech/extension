@@ -1,6 +1,6 @@
 import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
 
-/** The copy of the custom and hidden assets, per standard, extractable for translation */
+/** Kept together so the wording of both flows stays consistent */
 export const ASSET_COPY: {
   [standard in CustomToken['standard']]: {
     listColumn: string

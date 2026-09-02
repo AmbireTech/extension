@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
+import { getAssetPreferenceId } from '@ambire-common/libs/portfolio/customToken'
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import { ManagedAsset } from '@common/modules/settings/hooks/useManageAssets/useManageAssets'
 import Text from '@common/components/Text'
@@ -10,7 +11,6 @@ import { ASSET_COPY } from '@common/modules/settings/constants/assetCopy'
 import { ALL_NETWORKS_FILTER } from '@common/modules/settings/hooks/useManageAssets'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
-import { getTokenId } from '@common/utils/token'
 
 import AssetListHeader from './AssetListHeader'
 import AssetRow from './AssetRow'
@@ -60,7 +60,9 @@ const AssetSection: FC<Props> = ({ standard, variant, isLoading, data, networkFi
         </Text>
       )}
       {!isLoading &&
-        data.map((asset) => <AssetRow key={getTokenId(asset)} asset={asset} standard={standard} />)}
+        data.map((asset) => (
+          <AssetRow key={getAssetPreferenceId(asset)} asset={asset} standard={standard} />
+        ))}
       {isLoading && <Skeletons />}
     </View>
   )

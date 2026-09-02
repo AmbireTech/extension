@@ -108,8 +108,7 @@ const AssetRow: FC<Props> = ({ asset, standard }) => {
         testID={isHidden ? 'unhide-button' : 'remove-button'}
         type="secondary"
         size="small"
-        // The button sits on the row's secondaryBackground, so it needs the
-        // background the web button gets on hover to stand out
+        // Stands out against the row's own background
         style={{ width: 88, backgroundColor: theme.tertiaryBackground }}
         text={isHidden ? t('Unhide') : t('Remove')}
         onPress={isHidden ? toggleHideAsset : removeCustomAsset}

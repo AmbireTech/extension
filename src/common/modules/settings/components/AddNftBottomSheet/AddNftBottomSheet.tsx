@@ -264,7 +264,6 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
 
   const retryCheck = useCallback(() => setCheckAttempt((attempt) => attempt + 1), [])
 
-  // A check with no verdict yet is still running
   const isValidating =
     isAddressValid &&
     !isAlreadyAdded &&
@@ -311,7 +310,13 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
               containerStyle={spacings.mbSm}
               error={
                 (value && !isTokenIdValid && t('The NFT ID is a number')) ||
-                (hasOwnershipVerdict && !ownership?.isValid && !isOwnershipCheckRetryable
+                // An NFT that is already added or hidden has its own alert, and
+                // a stored ownership verdict would contradict it
+                (hasOwnershipVerdict &&
+                !ownership?.isValid &&
+                !isOwnershipCheckRetryable &&
+                !isAlreadyAdded &&
+                !isHidden
                   ? getRejectionMessage(ownership?.error?.reason, t)
                   : undefined) ||
                 undefined

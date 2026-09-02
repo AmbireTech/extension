@@ -166,7 +166,7 @@ const Collections: FC<Props> = ({
           priceIn={priceIn}
           openCollectibleModal={openCollectibleModal}
           networks={networks}
-          isCustom={flags?.isCustom}
+          isCustom={flags.isCustom}
         />
       )
     },

@@ -14,7 +14,7 @@ import { NetworkIconIdType } from '@common/components/NetworkIcon/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -112,7 +112,6 @@ const CollectionCard: FC<Props> = ({
               address={address}
               chainId={BigInt(chainId)}
               size={COLLECTIBLE_SIZE}
-              borderRadius={BORDER_RADIUS_PRIMARY}
               networks={networks}
             />
           </View>
