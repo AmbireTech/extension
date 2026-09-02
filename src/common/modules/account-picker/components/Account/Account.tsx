@@ -384,18 +384,20 @@ const Account = ({
             isMobile ? { alignSelf: 'stretch' } : flexbox.alignSelfStart
           ]}
         >
-          {importStatus === ImportStatus.ImportedWithSomeOfTheKeys && !!associatedKeysStats && (
-            <Label
-              isTypeLabelHidden
-              customTextStyle={styles.label}
-              hasBottomSpacing={false}
-              text={t(
-                'This account has {{total}} keys, {{imported}} of them already imported. Import again to add the ones found on this page.',
-                associatedKeysStats
-              )}
-              type="success"
-            />
-          )}
+          {importStatus === ImportStatus.ImportedWithSomeOfTheKeys &&
+            !!associatedKeysStats &&
+            associatedKeysStats.imported < associatedKeysStats.total && (
+              <Label
+                isTypeLabelHidden
+                customTextStyle={styles.label}
+                hasBottomSpacing={false}
+                text={t(
+                  'This account has {{total}} keys, {{imported}} of them already imported. Import again to add the ones found on this page.',
+                  associatedKeysStats
+                )}
+                type="success"
+              />
+            )}
           {importStatus === ImportStatus.ImportedWithDifferentKeys && (
             <Label
               isTypeLabelHidden

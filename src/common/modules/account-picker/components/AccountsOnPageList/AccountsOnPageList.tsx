@@ -9,7 +9,6 @@ import {
   ImportStatus
 } from '@ambire-common/interfaces/account'
 import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
-import { Key } from '@ambire-common/interfaces/keystore'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
@@ -31,12 +30,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
-
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys || []
-const selectAccounts = (state: AllControllersMappingType['AccountsController']) =>
-  state.accounts || []
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -64,62 +57,10 @@ const AccountsOnPageList = ({
   const { networks: allNetworks } = useController('NetworksController').state
   const { state: accountPickerState, dispatch: accountPickerDispatch } =
     useController('AccountPickerController')
-  const { state: keys } = useController('KeystoreController', selectKeys)
-  const { state: importedAccounts } = useController('AccountsController', selectAccounts)
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const { styles, theme } = useTheme(getStyles)
-
-  // An account can be imported with more than one key type (e.g. added with a
-  // recovery phrase first, then re-imported with a hardware wallet).
-  const importedKeyTypesByAccountAddr = useMemo(() => {
-    const byAddr: { [addr: string]: Key['type'][] } = {}
-
-    importedAccounts.forEach(({ addr, associatedKeys }) => {
-      const types = [
-        ...new Set(keys.filter((key) => associatedKeys.includes(key.addr)).map((key) => key.type))
-      ]
-
-      if (types.length) byAddr[addr] = types
-    })
-
-    return byAddr
-  }, [importedAccounts, keys])
-
-  // Mirrors how the import status counts keys: the stored `associatedKeys` can
-  // be stale or incomplete, so they get merged with the ones found on the page
-  // to know the total. A key counts as imported only when the stored record
-  // already lists it and it is of the key type being imported right now.
-  const associatedKeysStatsByAccountAddr = useMemo(() => {
-    const byAddr: { [addr: string]: { total: number; imported: number } } = {}
-
-    state.accountsOnPage.forEach(({ account }) => {
-      if (byAddr[account.addr]) return
-
-      const storedAssociatedKeys =
-        importedAccounts.find(({ addr }) => addr === account.addr)?.associatedKeys || []
-      const mergedAssociatedKeys = [
-        ...new Set([
-          ...state.accountsOnPage
-            .filter((x) => x.account.addr === account.addr)
-            .flatMap((x) => x.account.associatedKeys),
-          ...storedAssociatedKeys
-        ])
-      ]
-
-      byAddr[account.addr] = {
-        total: mergedAssociatedKeys.length,
-        imported: mergedAssociatedKeys.filter(
-          (keyAddr) =>
-            storedAssociatedKeys.includes(keyAddr) &&
-            keys.some((key) => key.addr === keyAddr && (!state.type || key.type === state.type))
-        ).length
-      }
-    })
-
-    return byAddr
-  }, [state.accountsOnPage, state.type, importedAccounts, keys])
 
   const slots = useMemo(() => {
     return groupBy(
@@ -212,8 +153,8 @@ const AccountsOnPageList = ({
             unused={isUnused}
             isSelected={isSelected}
             importStatus={acc.importStatus}
-            importedKeyTypes={importedKeyTypesByAccountAddr[acc.account.addr]}
-            associatedKeysStats={associatedKeysStatsByAccountAddr[acc.account.addr]}
+            importedKeyTypes={acc.importedKeyTypes}
+            associatedKeysStats={acc.associatedKeysStats}
             currentKeyType={state.type}
             onSelect={handleSelectAccount}
             onDeselect={handleDeselectAccount}
@@ -232,15 +173,7 @@ const AccountsOnPageList = ({
         )
       })
     },
-    [
-      getType,
-      state.selectedAccounts,
-      state.type,
-      importedKeyTypesByAccountAddr,
-      associatedKeysStatsByAccountAddr,
-      handleSelectAccount,
-      handleDeselectAccount
-    ]
+    [getType, state.selectedAccounts, state.type, handleSelectAccount, handleDeselectAccount]
   )
 
   const networkNamesWithAccountStateError = useMemo(() => {
