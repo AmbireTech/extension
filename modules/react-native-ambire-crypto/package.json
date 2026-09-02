@@ -2,6 +2,7 @@
   "name": "react-native-ambire-crypto",
   "version": "0.1.0",
   "description": "Rust-accelerated keccak256 and ABI decode for Ambire (POC)",
+  "homepage": "https://www.ambire.com",
   "source": "./src/index.ts",
   "main": "./src/index.ts",
   "react-native": "./src/index.ts",
