@@ -57,9 +57,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const networks = useNetworks({
     acc: account,
     additionalCheck: {
