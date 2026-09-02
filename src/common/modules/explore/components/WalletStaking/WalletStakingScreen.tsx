@@ -5,7 +5,11 @@ import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
-import { getTokenBalanceInUSD, getTokenUsdPrice } from '@ambire-common/libs/portfolio/helpers'
+import {
+  getTokenAmount,
+  getTokenBalanceInUSD,
+  getTokenUsdPrice
+} from '@ambire-common/libs/portfolio/helpers'
 import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
@@ -181,12 +185,20 @@ const WalletStakingScreen = () => {
       ),
     [portfolioTokens]
   )
-  const walletBalance = useMemo(() => BigInt(walletToken?.amount || 0n), [walletToken?.amount])
-  const stkWalletBalance = useMemo(
-    () => BigInt(stkWalletToken?.amount || 0n),
-    [stkWalletToken?.amount]
+  // Uses the pending simulated balance (post account-op) when available, falling back to the
+  // on-chain balance otherwise.
+  const walletBalance = useMemo(
+    () => (walletToken ? getTokenAmount(walletToken) : 0n),
+    [walletToken]
   )
-  const xWalletBalance = useMemo(() => BigInt(xWalletToken?.amount || 0n), [xWalletToken?.amount])
+  const stkWalletBalance = useMemo(
+    () => (stkWalletToken ? getTokenAmount(stkWalletToken) : 0n),
+    [stkWalletToken]
+  )
+  const xWalletBalance = useMemo(
+    () => (xWalletToken ? getTokenAmount(xWalletToken) : 0n),
+    [xWalletToken]
+  )
   const isPendingWithdrawalMode =
     mode === 'unstake' &&
     shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, xWalletBalance, totalPendingShares)
