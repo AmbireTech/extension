@@ -249,9 +249,7 @@ const Recipient: React.FC<Props> = ({
   disabled,
   addressPoisoningMatch
 }) => {
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const actualAddress = getAddressFromAddressState({
     resolvedAddress,
     fieldValue: address
@@ -261,7 +259,7 @@ const Recipient: React.FC<Props> = ({
   const { theme } = useTheme()
   const contactAddressMaxLength = isSidePanel ? 16 : undefined
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { contacts } = useController('AddressBookController').state
+  const { state: contacts } = useController('AddressBookController', 'contacts')
   const {
     state: { domains }
   } = useController('DomainsController')

@@ -12,7 +12,7 @@ let currentContext: BrowserContext | null = null
 const playwrightArgs = [
   `--disable-extensions-except=${__dirname}/../../${buildPath}/`,
   `--load-extension=${__dirname}/../${buildPath}/`,
-  '--disable-features=DialMediaRouteProvider',
+  '--disable-features=DialMediaRouteProvider,LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests',
   '--clipboard-write=granted',
   '--clipboard-read=prompt',
   '--detectOpenHandles',
@@ -28,10 +28,13 @@ const playwrightArgs = [
   '--disable-accelerated-2d-canvas',
   '--disable-gl-drawing-for-tests',
   '--use-gl=swiftshader',
-  '--ip-address-space-overrides=127.0.0.1:0=public',
-  '--disable-features=LocalNetworkAccessChecks',
-  '--disable-features=BlockInsecurePrivateNetworkRequests'
+  '--ip-address-space-overrides=127.0.0.1:0=public'
 ]
+
+/**
+ * Launches the persistent context with the extension loaded and waits for the
+ * extension's service worker to come up and returns a fresh page.
+ */
 
 async function initBrowser(namespace: string): Promise<{
   page: Page
@@ -39,7 +42,7 @@ async function initBrowser(namespace: string): Promise<{
   serviceWorker: any
   context: BrowserContext
 }> {
-  // ✅ Close any previously opened context before creating a new one
+  // Close any previously opened context before creating a new one
   if (currentContext) {
     try {
       await currentContext.close()
@@ -54,9 +57,9 @@ async function initBrowser(namespace: string): Promise<{
     channel: 'chromium',
     slowMo: 10,
     ignoreHTTPSErrors: true,
-    args: playwrightArgs, // make sure playwrightArgs is defined/imported
+    args: playwrightArgs,
     env: process.env.DISPLAY ? { DISPLAY: process.env.DISPLAY } : undefined,
-    viewport: null // explicitly set if not using default
+    viewport: null
   })
 
   currentContext = context
@@ -72,21 +75,30 @@ async function initBrowser(namespace: string): Promise<{
       .serviceWorkers()
       .find((sw) => sw.url().startsWith('chrome-extension://'))
     if (serviceWorker) break
+    // eslint-disable-next-line no-await-in-loop
     await new Promise((res) => setTimeout(res, 100))
   }
 
   if (!serviceWorker) {
-    throw new Error('Service worker not found after waiting')
+    throw new Error('❌ Extension service worker not found after waiting')
   }
 
   const extensionId = serviceWorker.url().split('/')[2]
   const extensionURL = `chrome-extension://${extensionId}`
 
-  // 3. Open extension page
+  // 3. Take over the extension's own tab instead of opening another one
+  // const page = await acquireExtensionPage(context, extensionURL)
   const page = await context.newPage()
   page.setDefaultTimeout(120000)
 
-  // 4. Attach console logging from service worker
+  await Promise.all(
+    context
+      .pages()
+      .filter((p) => p !== page && !p.isClosed())
+      .map((p) => p.close().catch(() => { }))
+  )
+
+  // 4. Attach console logging from service worker; could make debugging easier
   try {
     serviceWorker.on('console', (msg) => {
       console.log(`[service-worker] ${msg.text()}`)
@@ -183,13 +195,6 @@ export async function bootstrapWithStorage(
    * If something goes wrong with any of the functions below, e.g., `typeSeedPhrase`,
    * this `bootstrapWithStorage` won't return the expected object (browser, recorder, etc.),
    * and the CI will hang for a long time as the recorder won't be stopped in the `afterEach` block and will continue recording.
-   * This is the message we got in such a case in the CI:
-   *
-   * 'Jest did not exit one second after the test run has completed.
-   *  This usually means that there are asynchronous operations that weren't stopped in your tests.
-   *  Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.'
-   *
-   * To prevent such long-lasting handles, we are catching the error and stopping the Jest process.
    */
   if (!shouldUnlockKeystoreManually) {
     try {

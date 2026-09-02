@@ -6,7 +6,6 @@ import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
-import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -148,7 +147,6 @@ const SafeFooter = ({
             />
           </View>
         ))}
-      <ActionsPagination />
     </View>
   )
 }
