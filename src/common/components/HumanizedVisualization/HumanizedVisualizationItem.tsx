@@ -2,7 +2,6 @@ import React, { FC, Fragment, memo } from 'react'
 import { View } from 'react-native'
 
 import type { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import ManifestImage from '@common/components/ManifestImage'
@@ -181,73 +180,6 @@ const HumanizedVisualizationItem: FC<Props> = ({
       <a onClick={stopPropagation} style={{ maxWidth: '100%', marginRight }} href={item.url!}>
         {content}
       </a>
-    )
-  }
-
-  if (item.type === 'info' && item.content) {
-    const connectorWidth = 28 * sizeMultiplierSize
-    const connectorHeight = 24 * sizeMultiplierSize
-
-    return (
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignStart,
-          {
-            flexBasis: '100%',
-            width: '100%',
-            marginTop: 8 * sizeMultiplierSize,
-            minWidth: 0
-          }
-        ]}
-      >
-        <View style={{ width: connectorWidth, height: connectorHeight }}>
-          <View
-            style={{
-              position: 'absolute',
-              left: connectorWidth / 2,
-              top: -8 * sizeMultiplierSize,
-              width: connectorWidth / 2,
-              height: connectorHeight,
-              borderLeftWidth: 1,
-              borderBottomWidth: 1,
-              borderColor: theme.secondaryBorder,
-              borderBottomLeftRadius: 8 * sizeMultiplierSize
-            }}
-          />
-        </View>
-        <View
-          style={[
-            flexbox.flex1,
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            {
-              minWidth: 0,
-              paddingHorizontal: 12 * sizeMultiplierSize,
-              paddingVertical: 10 * sizeMultiplierSize,
-              backgroundColor: theme.primaryBackground,
-              borderColor: theme.secondaryBorder,
-              borderWidth: 1,
-              borderRadius: BORDER_RADIUS_PRIMARY
-            }
-          ]}
-        >
-          <View style={{ marginRight: 8 * sizeMultiplierSize }}>
-            <InfoIcon
-              width={16 * sizeMultiplierSize}
-              height={16 * sizeMultiplierSize}
-              color={theme.infoDecorative}
-            />
-          </View>
-          <Text
-            fontSize={textSize}
-            weight="medium"
-            style={{ flex: 1, flexShrink: 1, minWidth: 0, lineHeight: textSize * 1.4 }}
-          >
-            {item.content}
-          </Text>
-        </View>
-      </View>
     )
   }
 

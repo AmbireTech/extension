@@ -1,4 +1,4 @@
-import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import {
   flattenHumanizerVisualizations,
@@ -17,15 +17,6 @@ const WALLET_STAKING_ACTIVITY_MATCHES = [
     interaction: {
       id: 'fallback:migrateXWallet',
       name: 'Migrate xWALLET',
-      iconType: 'walletStaking'
-    }
-  },
-  {
-    action: 'Unwrap',
-    tokenAddress: STK_WALLET,
-    interaction: {
-      id: 'fallback:unstakeWallet',
-      name: 'Unstake WALLET',
       iconType: 'walletStaking'
     }
   },
