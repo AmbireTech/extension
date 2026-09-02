@@ -35,7 +35,7 @@ import getStyles from './styles'
 
 // The order must match the order the pages are rendered in, because the page
 // index is what maps a swipe to a tab.
-const TABS: TabType[] = ['tokens', 'collectibles', 'defi', 'activity']
+const TABS: TabType[] = ['tokens', 'defi', 'collectibles', 'activity']
 
 // Every page is rendered, but one at a time and only once the open one is done
 // filling its own render window, so none of it lands during a gesture.

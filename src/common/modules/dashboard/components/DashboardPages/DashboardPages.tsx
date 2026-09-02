@@ -136,14 +136,13 @@ const DashboardPages = ({
         onRefresh={onRefresh}
         refreshing={refreshing}
       />
-      {shouldRenderPage('collectibles') && (
-        <Collections
+      {shouldRenderPage('defi') && (
+        <DeFiPositions
           openTab={pagesOpenTab}
           sessionId={sessionId}
           setOpenTab={setOpenTab}
-          initTab={initTab}
           onScroll={onScroll}
-          networks={networks}
+          initTab={initTab}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
           animatedOverviewHeight={animatedOverviewHeight}
           isSearchHidden={isSearchHidden}
@@ -152,13 +151,14 @@ const DashboardPages = ({
         />
       )}
 
-      {shouldRenderPage('defi') && (
-        <DeFiPositions
+      {shouldRenderPage('collectibles') && (
+        <Collections
           openTab={pagesOpenTab}
           sessionId={sessionId}
           setOpenTab={setOpenTab}
-          onScroll={onScroll}
           initTab={initTab}
+          onScroll={onScroll}
+          networks={networks}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
           animatedOverviewHeight={animatedOverviewHeight}
           isSearchHidden={isSearchHidden}
