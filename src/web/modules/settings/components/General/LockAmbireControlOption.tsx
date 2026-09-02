@@ -12,7 +12,7 @@ import spacings from '@common/styles/spacings'
 const LockAmbireControlOption = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { hasPasswordSecret } = useController('KeystoreController').state
+  const { state: hasPasswordSecret } = useController('KeystoreController', 'hasPasswordSecret')
   const { dispatch: mainDispatch } = useController('MainController')
 
   const handleLockAmbire = useCallback(() => {

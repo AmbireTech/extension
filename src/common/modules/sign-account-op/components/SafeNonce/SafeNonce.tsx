@@ -26,9 +26,9 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state: signAccountOpState, dispatch } = useController('SignAccountOpController')
-  const { accountStates } = useController('AccountsController').state
-  const { networks } = useController('NetworksController').state
-  const { userRequests } = useController('RequestsController').state
+  const { state: accountStates } = useController('AccountsController', 'accountStates')
+  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: userRequests } = useController('RequestsController', 'userRequests')
   const fromRequestId = signAccountOpState?.fromRequestId
 
   // Nonces already used by every OTHER queued Safe request for this account/chain. Computed

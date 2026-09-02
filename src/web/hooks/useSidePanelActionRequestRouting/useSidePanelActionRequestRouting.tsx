@@ -37,9 +37,7 @@ const useSidePanelActionRequestRouting = () => {
   const { dispatch } = useContext(ControllersMiddlewareContext)
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const keystoreState = useController('KeystoreController').state
-  const {
-    state: { currentUserRequest }
-  } = useController('RequestsController')
+  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
   const transferState = useController('TransferController').state
   // Gated on every controller, because `getRouteForUserRequest` reads the transfer state,
   // which isn't part of any route's critical subset (`canRenderRoute`).

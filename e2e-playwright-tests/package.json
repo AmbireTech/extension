@@ -25,6 +25,7 @@
     "auto:login": "npx playwright test -g @autoLogin",
     "relayer": "npx playwright test -g @relayer",
     "keystore:migration": "npx playwright test -g @keystoreMigration",
+    "performance": "npx playwright test -g @performance",
     "postinstall": "patch-package"
   },
   "author": "Filip",

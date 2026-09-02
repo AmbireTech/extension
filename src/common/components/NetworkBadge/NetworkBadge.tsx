@@ -39,9 +39,7 @@ const NetworkBadge: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
 
   const network = useMemo(() => {
     return networks.find((n) => n.chainId === chainId)

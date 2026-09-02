@@ -40,7 +40,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { isPopup, isSidePanel } = getUiType()
   const { isStoreReady } = useControllerStore()
 
-  const { account } = useController('SelectedAccountController').state
+  const { state: account } = useController('SelectedAccountController', 'account')
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
     duration: 50

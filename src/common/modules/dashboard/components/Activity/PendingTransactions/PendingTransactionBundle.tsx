@@ -5,12 +5,11 @@ import { View } from 'react-native'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import Button from '@common/components/Button'
-import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
+import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -86,39 +85,7 @@ const PendingTransactionBundle: FC<Props> = ({
       ]}
     >
       {humanization?.length ? (
-        humanization.map((call, index) => (
-          <View
-            key={call.id}
-            style={[
-              styles.humanizationItem,
-              spacings.phTy,
-              spacings.pvTy,
-              index !== humanization.length - 1 && spacings.mbTy
-            ]}
-          >
-            {call.fullVisualization?.length ? (
-              <HumanizedVisualization
-                data={call.fullVisualization}
-                chainId={accountOp.chainId}
-                sizeMultiplierSize={0.5}
-                textSize={12}
-                imageSize={12}
-                hasPadding={false}
-                isErc7730TransactionSummaryLayout
-                disableFlex
-                style={{ width: '100%', minWidth: 0 }}
-                dapp={call.dapp}
-              />
-            ) : (
-              <FallbackVisualization
-                call={call}
-                sizeMultiplierSize={0.5}
-                textSize={12}
-                hasPadding={false}
-              />
-            )}
-          </View>
-        ))
+        <CompactHumanizedCalls humanization={humanization} chainId={accountOp.chainId} />
       ) : (
         <Text fontSize={12} appearance="secondaryText">
           {t('Preparing transaction details...')}

@@ -15,9 +15,7 @@ import { getUiType } from '@common/utils/uiType'
 const { isSidePanel } = getUiType()
 
 const AccountDataDetailed = () => {
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const reverseLookup = useReverseLookup({
     address: account?.addr || ''
   })

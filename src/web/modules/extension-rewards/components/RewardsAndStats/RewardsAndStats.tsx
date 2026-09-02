@@ -31,9 +31,7 @@ const getInitialScore = (scoreChange: number, score: number) => {
 const { isPopup } = getUiType()
 
 const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { projectedRewardsStats } = portfolio
   const { t } = useTranslation()
 
