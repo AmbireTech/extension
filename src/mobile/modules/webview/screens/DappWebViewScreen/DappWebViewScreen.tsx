@@ -2,8 +2,17 @@ import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Linking, Platform, RefreshControl, ScrollView, View } from 'react-native'
+import {
+  Linking,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  useWindowDimensions,
+  View
+} from 'react-native'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useModalize } from 'react-native-modalize'
+import { runOnJS } from 'react-native-reanimated'
 import { WebView, WebViewNavigation } from 'react-native-webview'
 import { useLocation } from 'react-router-native'
 
@@ -17,7 +26,7 @@ import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isAndroid } from '@common/config/env'
+import { isAndroid, isiOS } from '@common/config/env'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
@@ -229,6 +238,18 @@ const getDevServerUrl = () => {
   return `http://localhost:${WEBVIEW_DEV_SERVER_PORT}`
 }
 
+/**
+ * UIKit's own figures for its screen edge back gesture, reused so the browser's
+ * page-history swipe feels like the platform one it stands in for: it starts
+ * within this many points of the left edge, is claimed after this much sideways
+ * travel, gives way to scrolling beyond this much vertical drift, and commits
+ * past the half way point - or short of it when flicked hard enough.
+ */
+const EDGE_SWIPE_RESPONSE_DISTANCE = 50
+const EDGE_SWIPE_ACTIVATION_OFFSET_X = 5
+const EDGE_SWIPE_FAIL_OFFSET_Y = 20
+const EDGE_SWIPE_VELOCITY_IMPACT = 0.3
+
 const DappWebViewScreen = () => {
   const [devAmbireCode, setDevAmbireCode] = useState<string | null>(null)
   const [devEthereumCode, setDevEthereumCode] = useState<string | null>(null)
@@ -303,6 +324,7 @@ const DappWebViewScreen = () => {
   const [progress, setProgress] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [canGoBack, setCanGoBack] = useState(false)
+  const { width: windowWidth } = useWindowDimensions()
   const [isPullToRefreshing, setIsPullToRefreshing] = useState(false)
   // Android has no native WebView pull-to-refresh, so the WebView is wrapped in a
   // ScrollView with a RefreshControl. That control must only engage while the page
@@ -355,7 +377,7 @@ const DappWebViewScreen = () => {
     [searchControl, t]
   )
 
-  const { account } = useController('SelectedAccountController').state
+  const { state: account } = useController('SelectedAccountController', 'account')
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
@@ -384,6 +406,28 @@ const DappWebViewScreen = () => {
 
     return () => setWebViewGoBackHandler(null)
   }, [canGoBack, handleGoBack])
+
+  // The native stack hands its edge swipe over to this screen while the page has
+  // somewhere to go back to (see `NavigationStack`), because the platform gesture
+  // can only ever pop the route. Nothing follows the finger here: the page behind
+  // is not rendered until it is loaded, so there is nothing to drag into view.
+  const pageBackGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(isiOS && canGoBack)
+        .activeOffsetX(EDGE_SWIPE_ACTIVATION_OFFSET_X)
+        .failOffsetY([-EDGE_SWIPE_FAIL_OFFSET_Y, EDGE_SWIPE_FAIL_OFFSET_Y])
+        .hitSlop({ left: 0, width: EDGE_SWIPE_RESPONSE_DISTANCE })
+        .onEnd((e) => {
+          'worklet'
+
+          const shouldGoBack =
+            e.translationX + e.velocityX * EDGE_SWIPE_VELOCITY_IMPACT > windowWidth / 2
+
+          if (shouldGoBack) runOnJS(handleGoBack)()
+        }),
+    [canGoBack, handleGoBack, windowWidth]
+  )
 
   const handlePullToRefresh = useCallback(() => {
     setIsPullToRefreshing(true)
@@ -1202,80 +1246,82 @@ const DappWebViewScreen = () => {
   )
 
   return (
-    <MobileLayoutContainer
-      keyboardAwareFooter={false}
-      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
-      footer={
-        <>
-          {isLoading && <DappProgressBar progress={progress} />}
-          <DappWebViewFooter
-            headerControl={headerControl}
-            handleOpenSearchModal={handleOpenSearchModal}
-            handleGoBack={handleGoBack}
-            canGoBack={canGoBack}
-            handleRefresh={handleRefresh}
-            account={account}
-            currentDapp={currentDapp}
-            smartAccountType={smartAccountType}
-            onManageAppClosed={dispatchWebViewFocus}
-            showBackButton={showBackButton}
-          />
-        </>
-      }
-    >
-      {!!visibleUserRequests.length && !currentUserRequest && (
-        <View style={spacings.phSm}>
-          <Banner
-            type="info"
-            singleRow
-            title={`You have ${visibleUserRequests.length} pending ${
-              visibleUserRequests.length === 1 ? 'request' : 'requests'
-            }.`}
-            CustomIcon={() => (
-              <AmbireLogoWithBackgroundAndLogotype
-                withText={false}
-                style={spacings.mrTy}
-                width={30}
-                height={30}
-              />
-            )}
-            buttonText="Open"
-            onPress={handleOpenPendingRequests}
-          />
-        </View>
-      )}
-      <View style={flexbox.flex1}>
-        {isAndroid ? (
-          <ScrollView
-            style={flexbox.flex1}
-            contentContainerStyle={flexbox.flex1}
-            refreshControl={
-              <RefreshControl
-                refreshing={isPullToRefreshing}
-                onRefresh={handlePullToRefresh}
-                enabled={isPageScrolledToTop}
-                tintColor={theme.iconPrimary}
-                progressBackgroundColor={theme.secondaryBackground}
-              />
-            }
-          >
-            {webViewComponent}
-          </ScrollView>
-        ) : (
-          webViewComponent
+    <GestureDetector gesture={pageBackGesture}>
+      <MobileLayoutContainer
+        keyboardAwareFooter={false}
+        footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+        footer={
+          <>
+            {isLoading && <DappProgressBar progress={progress} />}
+            <DappWebViewFooter
+              headerControl={headerControl}
+              handleOpenSearchModal={handleOpenSearchModal}
+              handleGoBack={handleGoBack}
+              canGoBack={canGoBack}
+              handleRefresh={handleRefresh}
+              account={account}
+              currentDapp={currentDapp}
+              smartAccountType={smartAccountType}
+              onManageAppClosed={dispatchWebViewFocus}
+              showBackButton={showBackButton}
+            />
+          </>
+        }
+      >
+        {!!visibleUserRequests.length && !currentUserRequest && (
+          <View style={spacings.phSm}>
+            <Banner
+              type="info"
+              singleRow
+              title={`You have ${visibleUserRequests.length} pending ${
+                visibleUserRequests.length === 1 ? 'request' : 'requests'
+              }.`}
+              CustomIcon={() => (
+                <AmbireLogoWithBackgroundAndLogotype
+                  withText={false}
+                  style={spacings.mrTy}
+                  width={30}
+                  height={30}
+                />
+              )}
+              buttonText="Open"
+              onPress={handleOpenPendingRequests}
+            />
+          </View>
         )}
-      </View>
+        <View style={flexbox.flex1}>
+          {isAndroid ? (
+            <ScrollView
+              style={flexbox.flex1}
+              contentContainerStyle={flexbox.flex1}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isPullToRefreshing}
+                  onRefresh={handlePullToRefresh}
+                  enabled={isPageScrolledToTop}
+                  tintColor={theme.iconPrimary}
+                  progressBackgroundColor={theme.secondaryBackground}
+                />
+              }
+            >
+              {webViewComponent}
+            </ScrollView>
+          ) : (
+            webViewComponent
+          )}
+        </View>
 
-      <BottomSheet
-        id="dapp-webview-search"
-        sheetRef={searchModalRef}
-        adjustToContentHeight={false}
-        closeBottomSheet={closeSearchModal}
-        onClosed={dispatchWebViewFocus}
-        HeaderComponent={searchHeaderComponent}
-        flatListProps={searchFlatListProps}
-      />
-    </MobileLayoutContainer>
+        <BottomSheet
+          id="dapp-webview-search"
+          sheetRef={searchModalRef}
+          adjustToContentHeight={false}
+          closeBottomSheet={closeSearchModal}
+          onClosed={dispatchWebViewFocus}
+          HeaderComponent={searchHeaderComponent}
+          flatListProps={searchFlatListProps}
+        />
+      </MobileLayoutContainer>
+    </GestureDetector>
   )
 }
 

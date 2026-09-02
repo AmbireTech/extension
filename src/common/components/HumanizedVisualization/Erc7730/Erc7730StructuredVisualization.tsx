@@ -59,9 +59,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const {
-    state: { networks: controllerNetworks }
-  } = useController('NetworksController')
+  const { state: controllerNetworks } = useController('NetworksController', 'networks')
   const { benzinNetworks } = useNetworksContext()
   const networks = controllerNetworks ?? benzinNetworks
   const shouldHideTransactionSummaryTitle = withMobileLayout && hideMobileSummaryTitle

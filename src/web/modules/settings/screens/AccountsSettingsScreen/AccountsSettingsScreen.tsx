@@ -7,6 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
+import SyncIcon from '@common/assets/svg/SyncIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -17,10 +18,13 @@ import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
+import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -36,6 +40,7 @@ const AccountsSettingsScreen = () => {
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
+  const { navigate } = useNavigation()
   const { dispatch: accountsDispatch } = useController('AccountsController')
   const { dispatch: mainDispatch } = useController('MainController')
   const { theme } = useTheme()
@@ -48,6 +53,11 @@ const AccountsSettingsScreen = () => {
     ref: sheetRefRemoveAccount,
     open: openRemoveAccount,
     close: closeRemoveAccount
+  } = useModalize()
+  const {
+    ref: syncSheetRef,
+    open: openSyncBottomSheet,
+    close: closeSyncBottomSheet
   } = useModalize()
   const {
     ref: sheetRefAccountSmartSettings,
@@ -196,26 +206,61 @@ const AccountsSettingsScreen = () => {
   )
   const { maxWidthSize } = useWindowSize()
   const isWidthS = maxWidthSize('s')
+  // The title, the search and the two actions only fit on one row above this width.
+  // Below it the header stacks: the search takes a row of its own and the actions share the next one
+  const isHeaderRow = maxWidthSize(1100)
 
   return (
     <>
-      <SettingsPageHeader title="Accounts">
+      <SettingsPageHeader
+        title="Accounts"
+        // The shared header switches to a row earlier than this content fits in one
+        style={isHeaderRow ? undefined : { flexDirection: 'column' }}
+      >
         <>
-          <Search autoFocus control={control} containerStyle={{ width: isWidthS ? 320 : 200 }} />
-          <Button
-            testID="add-account-modal"
-            text={t('Add account')}
-            type="primary"
-            size="smaller"
-            textStyle={{ fontSize: 12 }}
-            style={[spacings.phSm, { height: 40 }]}
-            hasBottomSpacing={false}
-            onPress={openBottomSheet as any}
-            submitOnEnter={false}
-            childrenPosition="left"
+          <Search
+            autoFocus
+            control={control}
+            containerStyle={
+              isHeaderRow
+                ? { width: isWidthS ? 320 : 200, ...spacings.mlSm, ...spacings.mrSm }
+                : { width: '100%', ...spacings.mbTy }
+            }
+          />
+          {/* Kept in their own row, so the two actions stay side by side even when the
+              header itself wraps into a column on narrow widths */}
+          <View
+            style={[flexbox.directionRow, flexbox.alignCenter, !isHeaderRow && { width: '100%' }]}
           >
-            <AddCircularIcon color="#fff" width={20} height={20} style={spacings.mrMi} />
-          </Button>
+            <Button
+              testID="button-sync-with-mobile"
+              text={t('Sync with mobile')}
+              type="tertiary"
+              size="smaller"
+              textStyle={{ fontSize: 12 }}
+              style={[spacings.phSm, spacings.mrSm, { height: 40 }, !isHeaderRow && flexbox.flex1]}
+              hasBottomSpacing={false}
+              onPress={openSyncBottomSheet as any}
+              submitOnEnter={false}
+              childrenPosition="left"
+            >
+              <SyncIcon color={theme.primaryText} width={20} height={20} style={spacings.mrMi} />
+            </Button>
+            <Button
+              testID="add-account-modal"
+              text={t('Add account')}
+              type="primary"
+              size="smaller"
+              textStyle={{ fontSize: 12 }}
+              style={[spacings.phSm, { height: 40 }, !isHeaderRow && flexbox.flex1]}
+              hasBottomSpacing={false}
+              onPress={openBottomSheet as any}
+              submitOnEnter={false}
+              childrenPosition="left"
+            >
+              <AddCircularIcon color="#fff" width={20} height={20} style={spacings.mrMi} />
+            </Button>
+          </View>
         </>
       </SettingsPageHeader>
       <View style={[flexbox.flex1]} ref={accountsContainerRef}>
@@ -294,6 +339,18 @@ const AccountsSettingsScreen = () => {
         </View>
       </BottomSheet>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      <SyncBottomSheet
+        sheetRef={syncSheetRef}
+        closeBottomSheet={closeSyncBottomSheet}
+        onExportPress={() => {
+          closeSyncBottomSheet()
+          navigate(WEB_ROUTES.exportAccountsToMobile)
+        }}
+        onImportPress={() => {
+          closeSyncBottomSheet()
+          navigate(WEB_ROUTES.importAccountsFromMobile)
+        }}
+      />
     </>
   )
 }
