@@ -151,13 +151,17 @@ const Account = ({
         : t('{{deviceName}} key', { deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType] }),
     [t]
   )
-  const importedKeyTypesLabel = useMemo(
-    () =>
-      importedKeyTypes?.length
-        ? importedKeyTypes.map(getKeyTypeLabel).join(', ')
-        : t('existing key'),
-    [getKeyTypeLabel, importedKeyTypes, t]
-  )
+  const importedKeyTypesLabel = useMemo(() => {
+    if (!importedKeyTypes?.length) return t('existing key')
+
+    const labels = importedKeyTypes.map(getKeyTypeLabel)
+    if (labels.length === 1) return labels[0]
+
+    return t('{{allButLast}} and {{last}}', {
+      allButLast: labels.slice(0, -1).join(', '),
+      last: labels[labels.length - 1]
+    })
+  }, [getKeyTypeLabel, importedKeyTypes, t])
   const currentKeyTypeLabel = useMemo(
     () => (currentKeyType ? getKeyTypeLabel(currentKeyType) : t('key')),
     [currentKeyType, getKeyTypeLabel, t]
@@ -386,7 +390,7 @@ const Account = ({
               customTextStyle={styles.label}
               hasBottomSpacing={false}
               text={t(
-                'This account has {{total}} keys, {{imported}} of them already imported. Import again to add the rest.',
+                'This account has {{total}} keys, {{imported}} of them already imported. Import again to add the ones found on this page.',
                 associatedKeysStats
               )}
               type="success"
