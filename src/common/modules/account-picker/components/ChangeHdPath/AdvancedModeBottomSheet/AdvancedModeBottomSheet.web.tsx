@@ -10,7 +10,7 @@ import NumberInput from '@common/components/NumberInput'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -120,8 +120,10 @@ const CustomHDPathBottomSheet: FC<Props> = ({
             flexbox.directionRow,
             flexbox.wrap,
             flexbox.flex1,
-            flexbox.justifySpaceBetween,
-            spacings.mb
+            spacings.mb,
+            // A fixed gap rather than space-between, which would push two options
+            // apart to the opposite edges of the sheet
+            { columnGap: SPACING_SM, rowGap: SPACING_SM }
           ]}
         >
           {options.map((option) => {
