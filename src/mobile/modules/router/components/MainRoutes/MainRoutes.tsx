@@ -3,7 +3,6 @@ import { Route, Routes } from 'react-router-native'
 
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
-import WalletMigrationScreen from '@common/modules/explore/components/WalletMigration'
 import WalletStakingScreen from '@common/modules/explore/components/WalletStaking/WalletStakingScreen'
 import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
@@ -108,7 +107,6 @@ const MainRoutes = () => {
           <Route path={ROUTES.explore} element={<ExploreScreen />} />
           <Route path={ROUTES.exploreSection} element={<ExploreSectionScreen />} />
           <Route path={ROUTES.walletStaking} element={<WalletStakingScreen />} />
-          <Route path={ROUTES.walletMigration} element={<WalletMigrationScreen />} />
           <Route path={ROUTES.dappWebView} element={<DappWebViewScreen />} />
           <Route path={ROUTES.qrReader} element={<QrReaderScreen />} />
         </Route>

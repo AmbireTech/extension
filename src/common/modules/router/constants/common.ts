@@ -43,7 +43,6 @@ const COMMON_ROUTES = {
   explore: 'explore',
   exploreSection: 'explore/section',
   walletStaking: 'explore/wallet-staking',
-  walletMigration: 'explore/wallet-migration',
   signMessage: 'sign-message',
   addChain: 'add-chain',
   watchAsset: 'watch-asset',

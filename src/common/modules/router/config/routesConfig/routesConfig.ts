@@ -240,14 +240,6 @@ const routesConfig: RouteConfig = {
     name: Platform.select({ default: i18n.t('$WALLET Staking') }),
     withTitlePrefix: false
   },
-  [ROUTES.walletMigration]: {
-    route: ROUTES.walletMigration,
-    title: Platform.select({
-      default: i18n.t('$WALLET Migration')
-    }),
-    name: Platform.select({ default: i18n.t('$WALLET Migration') }),
-    withTitlePrefix: false
-  },
   [ROUTES.watchAsset]: {
     route: ROUTES.watchAsset,
     title: Platform.select({
