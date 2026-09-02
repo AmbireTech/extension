@@ -2,10 +2,9 @@ import { IEventEmitterRegistryController } from '@ambire-common/interfaces/event
 import { View } from '@ambire-common/interfaces/ui'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { getInitialRoute } from '@common/modules/router/helpers'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
-
-import { serializeControllerForUI } from './serializeControllerForUI'
 
 import type { MainController } from '@ambire-common/controllers/main/main'
 type SendInitialRouteParams = {
@@ -29,8 +28,10 @@ const awaitInitialLoad = (ctrl: object): Promise<void> | undefined =>
  */
 export const resolveInitialRoute = async (
   mainCtrl: MainController,
-  isRequestWindow: boolean
+  options: { isRequestWindow: boolean; isSidePanel?: boolean }
 ): Promise<string | null> => {
+  const { isRequestWindow, isSidePanel = false } = options
+
   // Await only the controllers we need for getInitialRoute
   const routeControllers = {
     keystoreState: mainCtrl.keystore,
@@ -46,7 +47,7 @@ export const resolveInitialRoute = async (
     ? AUTH_STATUS.AUTHENTICATED
     : AUTH_STATUS.NOT_AUTHENTICATED
 
-  return getInitialRoute({ ...routeControllers, authStatus, isRequestWindow })
+  return getInitialRoute({ ...routeControllers, authStatus, isRequestWindow, isSidePanel })
 }
 
 /** A route can carry search params (benzin), while a view reports its path alone. */
@@ -59,7 +60,10 @@ export const sendInitialRoute = async ({
   eventEmitterRegistry,
   withCriticalControllerStates = false
 }: SendInitialRouteParams) => {
-  const route = await resolveInitialRoute(mainCtrl, port.name === 'request-window')
+  const route = await resolveInitialRoute(mainCtrl, {
+    isRequestWindow: port.name === 'request-window',
+    isSidePanel: port.name === 'side-panel'
+  })
 
   pm.sendToPort(port, '> ui', { method: 'initialRoute', params: { route } })
 
@@ -92,7 +96,7 @@ export const syncRequestWindowRoute = async ({
   const requestWindowPorts = pm.ports.filter((port) => port.name === 'request-window')
   if (!requestWindowPorts.length) return
 
-  const route = await resolveInitialRoute(mainCtrl, true)
+  const route = await resolveInitialRoute(mainCtrl, { isRequestWindow: true })
 
   // Nowhere to send it. The request window is closed by the requests controller in this
   // case, and until it is, its current screen beats an empty one.

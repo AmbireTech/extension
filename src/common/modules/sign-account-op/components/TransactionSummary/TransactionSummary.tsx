@@ -40,6 +40,7 @@ import ExpandedContent from '@common/modules/sign-account-op/components/Transact
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
@@ -48,6 +49,9 @@ import type {
   HumanizerErc7730Visualization,
   IrCall
 } from '@ambire-common/libs/humanizer/interfaces'
+
+const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 interface Props {
   style: ViewStyle
   call: IrCall
@@ -594,7 +598,7 @@ const TransactionSummary = ({
   const shouldShowDeleteControl = !!call.id && type === 'default' && !rightIcon && !hideDeleteIcon
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
   const shouldOverlayErc7730TransactionSummaryControls =
-    !isMobile && shouldUseErc7730TransactionSummaryLayout
+    !withMobileLayout && shouldUseErc7730TransactionSummaryLayout
   const rightControl = useMemo(() => {
     if (!shouldShowDeleteControl && !shouldShowRightControl) return null
 
@@ -613,7 +617,7 @@ const TransactionSummary = ({
             {...bindDeleteIconAnim}
             testID={`delete-txn-call-${index}`}
           >
-            <DeleteIcon width={isMobile ? 26 : 28} height={isMobile ? 26 : 28} />
+            <DeleteIcon width={withMobileLayout ? 26 : 28} height={withMobileLayout ? 26 : 28} />
           </AnimatedPressable>
         )}
         {shouldShowRightControl && (
@@ -647,56 +651,84 @@ const TransactionSummary = ({
     shouldUseErc7730TransactionSummaryLayout
   ])
   const shouldRenderRightControlInDetailedErc7730Header =
-    !isMobile && shouldUseDetailedErc7730Layout && !!rightControl
+    !withMobileLayout && shouldUseDetailedErc7730Layout && !!rightControl
   const mobileErc7730Title = useMemo(() => {
     if (!erc7730Visualization) return null
 
-    const icon = shouldUseDetailedErc7730Layout
-      ? erc7730DetailedIcon
-      : erc7730Visualization.dapp?.icon
-    const title = shouldUseDetailedErc7730Layout ? erc7730DetailedTitle : erc7730Visualization.title
+    if (shouldUseDetailedErc7730Layout) {
+      if (!erc7730DetailedIcon && !erc7730DetailedTitle) return null
 
-    if (!icon && !title) return null
+      return (
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+          {!!erc7730DetailedIcon && (
+            <ManifestImage
+              uri={erc7730DetailedIcon}
+              containerStyle={spacings.mrTy}
+              size={24 * sizeMultiplier[size]}
+              skeletonAppearance="secondaryBackground"
+              imageStyle={{
+                borderRadius: 12 * sizeMultiplier[size],
+                backgroundColor: 'transparent'
+              }}
+              hideOnError
+            />
+          )}
+          {!!erc7730DetailedTitle && (
+            <Text
+              fontSize={textSize + 2}
+              weight="semiBold"
+              color={theme.secondaryAccent400}
+              numberOfLines={1}
+              style={{ flexShrink: 1 }}
+            >
+              {erc7730DetailedTitle}
+            </Text>
+          )}
+        </View>
+      )
+    }
+
+    // Non-detailed ("transaction summary") intents can be an interpolated sentence
+    // (erc7730Visualization.titleParts, e.g. "Swap {amount} for at least {amount}" with real
+    // token icons/amounts) rather than a static string. Reading `.title` directly like the
+    // detailed branch above would silently drop that interpolated detail, so this goes through
+    // the same HumanizedVisualization/Erc7730StructuredVisualization renderer the desktop
+    // title (content row, erc7730TransactionSummarySection="title") already uses.
+    if (
+      !erc7730Visualization.dapp?.icon &&
+      !erc7730Visualization.title &&
+      !erc7730Visualization.titleParts?.length
+    )
+      return null
 
     return (
-      <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
-        {!!icon && (
-          <ManifestImage
-            uri={icon}
-            containerStyle={spacings.mrTy}
-            size={24 * sizeMultiplier[size]}
-            skeletonAppearance="secondaryBackground"
-            imageStyle={{
-              borderRadius: 12 * sizeMultiplier[size],
-              backgroundColor: 'transparent'
-            }}
-            hideOnError
-          />
-        )}
-        {!!title && (
-          <Text
-            fontSize={textSize + 2}
-            weight="semiBold"
-            color={theme.secondaryAccent400}
-            numberOfLines={1}
-            style={{ flexShrink: 1 }}
-          >
-            {title}
-          </Text>
-        )}
-      </View>
+      <HumanizedVisualization
+        data={[erc7730Visualization]}
+        sizeMultiplierSize={sizeMultiplier[size]}
+        textSize={textSize + 2}
+        imageSize={24 * sizeMultiplier[size]}
+        chainId={chainId}
+        type={type}
+        hasPadding={false}
+        disableFlex
+        isErc7730TransactionSummaryLayout
+        erc7730TransactionSummarySection="title"
+        style={{ minWidth: 0 }}
+      />
     )
   }, [
+    chainId,
     erc7730DetailedIcon,
     erc7730DetailedTitle,
     erc7730Visualization,
     shouldUseDetailedErc7730Layout,
     size,
     textSize,
-    theme
+    theme,
+    type
   ])
   const mobileFlatVisualization = useMemo(() => {
-    if (!isMobile || !callVisualization || erc7730Visualization) return null
+    if (!withMobileLayout || !callVisualization || erc7730Visualization) return null
 
     const firstContentIndex = callVisualization.findIndex((item) => item && item.type !== 'break')
     const visualizationData =
@@ -710,7 +742,6 @@ const TransactionSummary = ({
         imageSize={imageSize}
         chainId={chainId}
         type={type}
-        testID={`recipient-address-${index}`}
         hasPadding={false}
         style={{ width: '100%', alignContent: 'flex-start' }}
         disableFlex
@@ -725,7 +756,6 @@ const TransactionSummary = ({
     editApprovalCallInfo,
     erc7730Visualization,
     imageSize,
-    index,
     size,
     textSize,
     type
@@ -760,14 +790,19 @@ const TransactionSummary = ({
 
   return (
     <ExpandableCard
+      // Set on the whole card rather than on the humanized visualization alone, because
+      // the ERC-7730 summary layout splits the intent and its rows into separate slots
+      testID={`recipient-address-${index}`}
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
-      mobileHeaderContent={isMobile ? rightControl : undefined}
-      mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFlatVisualization : undefined}
+      mobileHeaderContent={withMobileLayout ? rightControl : undefined}
+      mobileHeaderTitle={
+        withMobileLayout ? mobileErc7730Title || mobileFlatVisualization : undefined
+      }
       mobileHeaderStyle={
-        isMobile && mobileFlatVisualization
+        withMobileLayout && mobileFlatVisualization
           ? spacings.pvTy
-          : isMobile && shouldUseDetailedErc7730Layout
+          : withMobileLayout && shouldUseDetailedErc7730Layout
             ? spacings.pt
             : undefined
       }
@@ -784,7 +819,7 @@ const TransactionSummary = ({
           : { ...style })
       }}
       contentStyle={
-        isWeb
+        isWeb && !withMobileLayout
           ? {
               paddingHorizontal: SPACING_SM,
               paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0,
@@ -799,7 +834,7 @@ const TransactionSummary = ({
           {callVisualization ? (
             shouldUseDetailedErc7730Layout && erc7730Visualization ? (
               <View style={{ flex: 1, minWidth: 0 }}>
-                {!isMobile && (
+                {!withMobileLayout && (
                   <>
                     <View
                       style={[
@@ -855,7 +890,6 @@ const TransactionSummary = ({
                   imageSize={imageSize}
                   chainId={chainId}
                   type={type}
-                  testID={`recipient-address-${index}`}
                   hasPadding={false}
                   erc7730Mode="description"
                   editApprovalCallInfo={editApprovalCallInfo}
@@ -869,7 +903,6 @@ const TransactionSummary = ({
                 imageSize={imageSize}
                 chainId={chainId}
                 type={type}
-                testID={`recipient-address-${index}`}
                 hasPadding={enableExpand && !shouldUseErc7730TransactionSummaryLayout}
                 editApprovalCallInfo={editApprovalCallInfo}
                 hideMobileErc7730Title={!!mobileErc7730Title}
@@ -904,7 +937,7 @@ const TransactionSummary = ({
               {t('Failed')}
             </Text>
           )}
-          {!isMobile &&
+          {!withMobileLayout &&
             !shouldRenderRightControlInDetailedErc7730Header &&
             (shouldOverlayErc7730TransactionSummaryControls && rightControl ? (
               <View style={{ position: 'absolute', top: 0, right: 0 }}>{rightControl}</View>
@@ -1021,7 +1054,9 @@ const TransactionSummary = ({
       <View
         style={{
           paddingHorizontal:
-            (shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout) && isWeb
+            (shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout) &&
+            isWeb &&
+            !withMobileLayout
               ? SPACING_SM
               : 42 * sizeMultiplier[size] // magic number
         }}

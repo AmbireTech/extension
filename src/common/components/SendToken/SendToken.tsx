@@ -12,6 +12,7 @@ import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
@@ -21,6 +22,7 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 import getStyles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
 const SECTION_MENU_HEADER_HEIGHT = 50
 
 type Props = {
@@ -79,6 +81,7 @@ const SendToken: FC<Props> = ({
   } = useController('SelectedAccountController')
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const isError = validateFromAmount?.severity === 'error' && !!validateFromAmount?.message
   const isWarning = validateFromAmount?.severity === 'warning' && !!validateFromAmount?.message
 
@@ -114,12 +117,16 @@ const SendToken: FC<Props> = ({
           <View
             style={[
               flexbox.flex1,
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              { columnGap: isMobile ? SPACING_SM : SPACING }
+              isCompactSidePanelLayout
+                ? { gap: SPACING_SM }
+                : [
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    { columnGap: isMobile ? SPACING_SM : SPACING }
+                  ]
             ]}
           >
-            <View style={flexbox.flex1}>
+            <View style={isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1}>
               {nonEmptySections?.length ? (
                 <SectionedSelect
                   setValue={handleChangeFromToken}
@@ -129,7 +136,10 @@ const SendToken: FC<Props> = ({
                   bottomSheetTitle={t('Send token')}
                   searchPlaceholder={t('Token name or address...')}
                   emptyListPlaceholderText={t('No tokens found.')}
-                  containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+                  containerStyle={{
+                    ...spacings.mb0,
+                    ...(isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1)
+                  }}
                   selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
                   mode="bottomSheet"
                   headerHeight={SECTION_MENU_HEADER_HEIGHT}
@@ -145,19 +155,34 @@ const SendToken: FC<Props> = ({
                   bottomSheetTitle={t('Send token')}
                   searchPlaceholder={t('Token name or address...')}
                   emptyListPlaceholderText={t('No tokens found.')}
-                  containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+                  containerStyle={{
+                    ...spacings.mb0,
+                    ...(isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1)
+                  }}
                   selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
                   mode="bottomSheet"
                 />
               )}
             </View>
-            <AmountInput
-              type={fromAmountFieldMode}
-              value={fromAmountValue}
-              onChangeText={handleOnChangeTextAndFormat}
-              disabled={fromTokenAmountSelectDisabled}
-              inputTestId={inputTestId}
-            />
+            {isCompactSidePanelLayout ? (
+              <View style={{ width: '100%', alignItems: 'flex-end' }}>
+                <AmountInput
+                  type={fromAmountFieldMode}
+                  value={fromAmountValue}
+                  onChangeText={handleOnChangeTextAndFormat}
+                  disabled={fromTokenAmountSelectDisabled}
+                  inputTestId={inputTestId}
+                />
+              </View>
+            ) : (
+              <AmountInput
+                type={fromAmountFieldMode}
+                value={fromAmountValue}
+                onChangeText={handleOnChangeTextAndFormat}
+                disabled={fromTokenAmountSelectDisabled}
+                inputTestId={inputTestId}
+              />
+            )}
           </View>
           <View
             style={[

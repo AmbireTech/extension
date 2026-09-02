@@ -10,10 +10,11 @@ import Alert from '@common/components/Alert'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Nft from '@common/components/TokenOrNft/components/Nft'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import TenderlySimulation from '@common/modules/sign-account-op/components/TenderlySimulation'
 import spacings from '@common/styles/spacings'
@@ -33,6 +34,9 @@ interface Props {
 const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  // Side by side, the two cards are too narrow for an amount, a symbol and a fiat value to fit on
+  // one line, so a compact layout stacks them the way mobile does
+  const { isCompactLayout } = useCompactActionRequestLayout()
   const signAccountOpState = useController('SignAccountOpController').state
   const {
     state: {
@@ -219,12 +223,12 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   return (
     <View style={styles.simulationSection}>
       {simulationView === 'changes' && (
-        <View style={[isWeb && flexbox.directionRow, flexbox.flex1]}>
+        <View style={[!isCompactLayout && flexbox.directionRow, flexbox.flex1]}>
           {hasAssetsOut && (
             <View
               style={[
                 styles.simulationContainer,
-                hasAssetsIn && (isWeb ? spacings.mrTy : spacings.mbTy)
+                hasAssetsIn && (isCompactLayout ? spacings.mbTy : spacings.mrTy)
               ]}
             >
               <View style={styles.simulationContainerHeader}>
@@ -360,10 +364,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             <SuccessIcon color={theme.successDecorative} />
             <Text
               color={theme.successDecorative}
-              style={spacings.mlSm}
-              fontSize={16}
+              style={[spacings.mlSm, flexbox.flex1]}
+              fontSize={isMobile ? 14 : 16}
               appearance="secondaryText"
-              numberOfLines={1}
             >
               {t('No token balance changes detected')}
             </Text>

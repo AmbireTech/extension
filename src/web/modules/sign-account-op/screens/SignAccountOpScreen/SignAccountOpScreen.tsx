@@ -13,6 +13,7 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
@@ -31,7 +32,7 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
+import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
@@ -49,14 +50,15 @@ const SignAccountOpScreen = () => {
     useController('SignAccountOpController')
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const closeActionWindow = useCloseActionWindow()
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
 
   const handleAddToCart = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    closeCurrentWindow()
-  }, [])
+    closeActionWindow()
+  }, [closeActionWindow])
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
@@ -324,7 +326,13 @@ const SignAccountOpScreen = () => {
             ]}
           >
             <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-            <View style={[flexbox.directionRow, flexbox.alignStart]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                isCompactSidePanelLayout && [spacings.mtTy, flexbox.justifySpaceBetween]
+              ]}
+            >
               <SafeNonce />
               <NetworkBadge
                 chainId={network?.chainId}

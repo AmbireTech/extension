@@ -26,6 +26,7 @@ import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
@@ -126,6 +127,7 @@ const Estimation = ({
   const { networks } = useController('NetworksController').state
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     ref: customGasPriceSheetRef,
     open: openCustomGasPriceSheet,
@@ -507,6 +509,10 @@ const Estimation = ({
   const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
+  const isNarrowLayout = isCompactSidePanelLayout
+  // The narrow side panel reuses the mobile fee header: a short label with the settings icon
+  // instead of the wider "Advanced" button, which leaves room for the fee speed on the same row
+  const withCompactFeeHeader = isMobile || isNarrowLayout
 
   const advancedOptionsTooltip = useMemo(() => {
     if (canSetCustomGasPrices) return undefined
@@ -543,8 +549,7 @@ const Estimation = ({
       </View>
     )
 
-    // On mobile only the icon is displayed, because the fee speed select shares the title row
-    if (isMobile) {
+    if (withCompactFeeHeader) {
       return (
         <Pressable
           disabled={!canSetCustomGasPrices}
@@ -575,7 +580,7 @@ const Estimation = ({
         {advancedButtonContent}
       </Button>
     )
-  }, [canSetCustomGasPrices, openAdvancedOptions, t, theme.secondaryText])
+  }, [canSetCustomGasPrices, openAdvancedOptions, t, theme.secondaryText, withCompactFeeHeader])
 
   const renderFeeSpeedSelectedOption = useCallback(
     ({ toggleMenu, isMenuOpen, selectRef }: RenderSelectedOptionParams) => {

@@ -1759,6 +1759,7 @@
       "packages": {
         "react-native>@react-native/assets-registry": true,
         "expo>expo-modules-core": true,
+        "react": true,
         "react-native-web": true
       }
     },
@@ -2271,6 +2272,12 @@
         "viem>@noble/curves": true,
         "@noble/hashes": true,
         "ox>abitype": true
+      }
+    },
+    "pako": {
+      "globals": {
+        "TextDecoder": true,
+        "TextEncoder": true
       }
     },
     "crypto-browserify>public-encrypt>parse-asn1": {

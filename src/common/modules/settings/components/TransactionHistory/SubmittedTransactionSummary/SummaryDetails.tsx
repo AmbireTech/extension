@@ -11,10 +11,10 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import TransactionSummary, {
   sizeMultiplier
@@ -49,6 +49,7 @@ const SummaryDetails = ({
   size: 'sm' | 'md' | 'lg'
   defaultType: Props['defaultType']
 }) => {
+  const { isCompactSidePanelLayout, isCompactLayout } = useCompactActionRequestLayout()
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -197,20 +198,22 @@ const SummaryDetails = ({
           {t('Balance changes')}
         </Text>
         <View style={flexbox.flex1}>
+          {/* Side by side, the two cards are too narrow for an amount, a symbol and a fiat value
+          to fit on one line, so a compact layout stacks them */}
           {hasAssetBalanceChanges && (
-            <View style={isWeb ? [flexbox.directionRow, flexbox.flex1] : undefined}>
+            <View style={!isCompactLayout ? [flexbox.directionRow, flexbox.flex1] : undefined}>
               {!!assetsOut.length && (
                 <View
                   style={[
-                    isWeb && flexbox.flex1,
-                    assetsIn.length ? (isWeb ? spacings.mrTy : spacings.mbTy) : undefined
+                    !isCompactLayout && flexbox.flex1,
+                    assetsIn.length ? (isCompactLayout ? spacings.mbTy : spacings.mrTy) : undefined
                   ]}
                 >
                   {renderBalanceChangesCard('Assets out', assetsOut)}
                 </View>
               )}
               {!!assetsIn.length && (
-                <View style={isWeb ? flexbox.flex1 : undefined}>
+                <View style={!isCompactLayout ? flexbox.flex1 : undefined}>
                   {renderBalanceChangesCard('Assets in', assetsIn)}
                 </View>
               )}
@@ -274,13 +277,34 @@ const SummaryDetails = ({
       )}
       {!!modalFinalStatus && (
         <View style={[styles.modalConfirmedRow, spacings.mbSm]} testID="activity-confirmed-step">
-          <View style={[styles.modalStepRow, spacings.mbSm]}>
-            <Text appearance={modalFinalStatus.appearance} fontSize={16} weight="medium">
+          <View
+            style={[
+              styles.modalStepRow,
+              spacings.mbSm,
+              isCompactSidePanelLayout && { gap: SPACING_SM, flexWrap: 'wrap' }
+            ]}
+          >
+            <Text
+              appearance={modalFinalStatus.appearance}
+              fontSize={16}
+              weight="medium"
+              style={isCompactSidePanelLayout ? spacings.mrTy : undefined}
+            >
               {modalFinalStatus.label}
             </Text>
             {submittedAccountOp.status === AccountOpStatus.Success && (
-              <View style={styles.modalStepRowRight}>
-                <Text fontSize={14} appearance="secondaryText">
+              <View
+                style={[
+                  styles.modalStepRowRight,
+                  isCompactSidePanelLayout && { flexShrink: 1, minWidth: 0 }
+                ]}
+              >
+                <Text
+                  fontSize={14}
+                  appearance="secondaryText"
+                  numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
+                  style={isCompactSidePanelLayout ? { flexShrink: 1 } : undefined}
+                >
                   {submittedDate} on {getTruncatedNetworkName(network.name)}
                 </Text>
                 <NetworkIcon

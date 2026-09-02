@@ -3,7 +3,6 @@ import { Controller, useForm } from 'react-hook-form'
 import { TextInput, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
-import wait from '@ambire-common/utils/wait'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -23,14 +22,31 @@ interface Props {
   text: string
   title?: string
   onCustomSubmit?: (password: string) => void
+  /** Rendered between the password field and the submit button */
+  children?: React.ReactNode
+  submitText?: string
+  isSubmitting?: boolean
+  /**
+   * Focuses the field shortly after mount. Turn it off when the component sits in a
+   * bottom sheet that opens later, where the field is tapped to be focused instead.
+   */
+  withAutoFocus?: boolean
 }
+
+// Long enough for the panel the field sits in to finish animating in, otherwise
+// focusing it does nothing and the keyboard stays down
+const FOCUS_DELAY = 600
 
 const PasswordConfirmation: React.FC<Props> = ({
   onPasswordConfirmed,
   onBackButtonPress,
   text,
   title = isMobile ? 'Confirm app password' : 'Confirm extension password',
-  onCustomSubmit
+  onCustomSubmit,
+  children,
+  submitText,
+  isSubmitting: isSubmittingCustom,
+  withAutoFocus = true
 }) => {
   const { t } = useTranslation()
   const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
@@ -42,13 +58,12 @@ const PasswordConfirmation: React.FC<Props> = ({
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    ;(async () => {
-      await wait(600)
+    if (!withAutoFocus) return undefined
 
-      inputRef.current?.focus()
-    })()
-  }, [])
+    const focusTimeout = setTimeout(() => inputRef.current?.focus(), FOCUS_DELAY)
+
+    return () => clearTimeout(focusTimeout)
+  }, [withAutoFocus])
 
   // if using the onCustomSubmit method, it means we're using the
   // password confirmation for something different than unlocks
@@ -153,9 +168,10 @@ const PasswordConfirmation: React.FC<Props> = ({
         )}
         name="password"
       />
+      {children}
       <View
         style={[
-          isMobile && spacings.pt,
+          isMobile && spacings.pt2Xl,
           isWeb && flexbox.alignCenter,
           flexbox.flex1,
           flexbox.justifyEnd
@@ -163,9 +179,15 @@ const PasswordConfirmation: React.FC<Props> = ({
       >
         <Button
           testID="button-submit"
-          disabled={keystoreState.statuses.unlockWithSecret !== 'INITIAL' || !isValid}
+          disabled={
+            keystoreState.statuses.unlockWithSecret !== 'INITIAL' ||
+            !isValid ||
+            !!isSubmittingCustom
+          }
           text={
-            keystoreState.statuses.unlockWithSecret === 'LOADING' ? t('Submitting...') : t('Submit')
+            keystoreState.statuses.unlockWithSecret === 'LOADING' || isSubmittingCustom
+              ? t('Submitting...')
+              : submitText || t('Submit')
           }
           size="large"
           hasBottomSpacing={false}

@@ -8,8 +8,12 @@ import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 type ContentRenderProps = {
   isExpanded: boolean
@@ -30,6 +34,7 @@ type Props = {
   mobileHeaderStyle?: ViewStyle
   hideMobileContent?: boolean
   overlayMobileHeaderControls?: boolean
+  testID?: string
 }
 
 const ExpandableCard = ({
@@ -46,11 +51,12 @@ const ExpandableCard = ({
   mobileHeaderTitle,
   mobileHeaderStyle,
   hideMobileContent = false,
-  overlayMobileHeaderControls = false
+  overlayMobileHeaderControls = false,
+  testID
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
-  const hasMobileHeader = isMobile && (!!mobileHeaderContent || !!mobileHeaderTitle)
+  const hasMobileHeader = withMobileLayout && (!!mobileHeaderContent || !!mobileHeaderTitle)
 
   const Element = enableToggleExpand ? AnimatedPressable : View
   const renderedContent = typeof content === 'function' ? content({ isExpanded }) : content
@@ -75,7 +81,10 @@ const ExpandableCard = ({
   )
 
   return (
-    <View style={[styles.container, isMobile && isExpanded && { flexGrow: 1 }, style]}>
+    <View
+      testID={testID}
+      style={[styles.container, withMobileLayout && isExpanded && { flexGrow: 1 }, style]}
+    >
       <Element onPress={() => !!enableToggleExpand && setIsExpanded((prevState) => !prevState)}>
         {hasMobileHeader && (
           <View
@@ -110,14 +119,13 @@ const ExpandableCard = ({
             )}
           </View>
         )}
-        {(!isMobile || !hideMobileContent) && (
+        {(!withMobileLayout || !hideMobileContent) && (
           <View
             style={[
               flexbox.directionRow,
               flexbox.alignCenter,
               spacings.phSm,
-              isWeb && spacings.pvSm,
-              isMobile && spacings.pvTy,
+              withMobileLayout ? spacings.pvTy : isWeb && spacings.pvSm,
               contentStyle
             ]}
           >

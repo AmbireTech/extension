@@ -26,13 +26,17 @@ import { privateValue } from '@common/utils/ui'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
 
+import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
 import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+import type { WalletStateController } from '@common/controllers/wallet-state'
+
+const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
+
 type Props = {
   token: TokenResult
   extraActions?: React.ReactNode
   rewardsStyle?: boolean
-  label?: string | React.ReactNode
   borderRadius?: number
   decimalRulesType?: FormatType
   hasBottomSpacing?: boolean
@@ -50,12 +54,26 @@ const BaseTokenItem = ({
   onPress,
   wrapperTestID
 }: Props) => {
-  const { state: portfolio } = useController(
-    'SelectedAccountController',
-    (state) => state.portfolio
+  const {
+    symbol,
+    address,
+    chainId,
+    flags: { onGasTank }
+  } = token
+
+  const selectSimulatedAccountOp = useCallback(
+    (state: SelectedAccountController) =>
+      state.portfolio?.networkSimulatedAccountOp?.[chainId.toString()],
+    [chainId]
   )
-  const { isPrivacyModeEnabled } = useController('WalletStateController').state
-  const { state: networks } = useController('NetworksController', (state) => state.networks)
+  const { state: simulatedAccountOp } = useController(
+    'SelectedAccountController',
+    selectSimulatedAccountOp
+  )
+  const { state: isPrivacyModeEnabled } = useController(
+    'WalletStateController',
+    selectIsPrivacyModeEnabled
+  )
   const { state: visibleUserRequests, dispatch: requestsDispatch } = useController(
     'RequestsController',
     (state) => state.visibleUserRequests
@@ -71,14 +89,6 @@ const BaseTokenItem = ({
   })
 
   const tokenId = getTokenId(token)
-  const simulatedAccountOp = portfolio.networkSimulatedAccountOp[token.chainId.toString()]
-
-  const {
-    symbol,
-    address,
-    chainId,
-    flags: { onGasTank }
-  } = token
 
   const {
     balanceFormatted,
@@ -95,7 +105,10 @@ const BaseTokenItem = ({
     pendingToBeSignedFormatted,
     pendingToBeConfirmed,
     pendingToBeConfirmedFormatted
-  } = getAndFormatTokenDetails(token, networks, simulatedAccountOp, { decimalRulesType })
+  } = useMemo(
+    () => getAndFormatTokenDetails(token, undefined, simulatedAccountOp, { decimalRulesType }),
+    [token, simulatedAccountOp, decimalRulesType]
+  )
 
   const isPending = !!hasPendingBadges
 
@@ -133,29 +146,52 @@ const BaseTokenItem = ({
 
   const shouldDisplayChange24h = typeof change24h === 'number' && Math.abs(change24h) >= 0.01
 
+  const handlePress = useCallback(() => {
+    if (rewardsStyle && onPress) {
+      onPress()
+      return
+    }
+
+    navigate(ROUTES.tokenDetails, { state: { tokenId } })
+  }, [rewardsStyle, onPress, navigate, tokenId])
+
+  const containerStyle = useMemo(
+    () => [
+      styles.container,
+      {
+        borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
+        marginBottom: hasBottomSpacing ? SPACING_TY : 0,
+        ...(rewardsStyle && {
+          boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`
+        })
+      },
+      animStyle
+    ],
+    [
+      styles.container,
+      borderRadius,
+      hasBottomSpacing,
+      rewardsStyle,
+      isHovered,
+      theme.primaryAccent,
+      animStyle
+    ]
+  )
+
+  const balanceTooltipDataSet = useMemo(() => {
+    if (isPrivacyModeEnabled) return undefined
+
+    return createGlobalTooltipDataSet({
+      id: `${tokenId}-balance`,
+      content: String(isPending ? pendingBalance : balance)
+    })
+  }, [isPrivacyModeEnabled, tokenId, isPending, pendingBalance, balance])
+
   return (
     <AnimatedPressable
       testID={wrapperTestID || undefined}
-      onPress={() =>
-        rewardsStyle && onPress
-          ? onPress()
-          : navigate(ROUTES.tokenDetails, {
-              state: {
-                tokenId
-              }
-            })
-      }
-      style={[
-        styles.container,
-        {
-          borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
-          marginBottom: hasBottomSpacing ? SPACING_TY : 0,
-          ...(rewardsStyle && {
-            boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`
-          })
-        },
-        animStyle
-      ]}
+      onPress={handlePress}
+      style={containerStyle}
       {...bindAnim}
     >
       <View style={flexboxStyles.flex1}>
@@ -203,14 +239,7 @@ const BaseTokenItem = ({
                   fontSize={12}
                   weight="number_medium"
                   numberOfLines={1}
-                  dataSet={
-                    !isPrivacyModeEnabled
-                      ? createGlobalTooltipDataSet({
-                          id: `${tokenId}-balance`,
-                          content: String(isPending ? pendingBalance : balance)
-                        })
-                      : undefined
-                  }
+                  dataSet={balanceTooltipDataSet}
                   appearance="secondaryText"
                   testID={`token-balance-${tokenId}`}
                 >

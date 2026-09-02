@@ -8,6 +8,12 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
+import {
+  emptyQrScanLastRead,
+  getQrScanFeedback,
+  QR_SCAN_FEEDBACK_INTERVAL,
+  QrScanProgress
+} from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import CameraScanner from '@mobile/components/CameraScanner'
@@ -22,7 +28,8 @@ const QrScannerWithPermission = ({
   onComplete,
   disabled,
   externalError,
-  onExternalRetry
+  onExternalRetry,
+  onProgress
 }: QrScannerWithPermissionProps) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -30,6 +37,8 @@ const QrScannerWithPermission = ({
   const decoderRef = useRef(new UrFragmentDecoder())
   const isCompletedRef = useRef(false)
   const [decodeError, setDecodeError] = useState<string | null>(null)
+  const lastReadRef = useRef(emptyQrScanLastRead())
+  const lastProgressRef = useRef<QrScanProgress | null>(null)
 
   const permissionGranted = !!permission?.granted
 
@@ -46,9 +55,39 @@ const QrScannerWithPermission = ({
     return () => subscription.remove()
   }, [permission, requestPermission])
 
+  useEffect(() => {
+    if (!onProgress || !permissionGranted || disabled) return
+
+    const id = setInterval(() => {
+      if (isCompletedRef.current) return
+
+      const progress = {
+        feedback: getQrScanFeedback(lastReadRef.current),
+        expectedParts: decoderRef.current.expectedPartCount(),
+        progress: decoderRef.current.progress()
+      }
+
+      // Only on change, so that the message the user is reading is not re-rendered while
+      // nothing about the scan moved
+      if (
+        progress.feedback === lastProgressRef.current?.feedback &&
+        progress.expectedParts === lastProgressRef.current?.expectedParts &&
+        progress.progress === lastProgressRef.current?.progress
+      )
+        return
+
+      lastProgressRef.current = progress
+      onProgress(progress)
+    }, QR_SCAN_FEEDBACK_INTERVAL)
+
+    return () => clearInterval(id)
+  }, [disabled, onProgress, permissionGranted])
+
   const handleScan = useCallback(
-    (value: string) => {
+    (value: string, coverage: number) => {
       if (disabled || isCompletedRef.current) return
+
+      lastReadRef.current = { count: lastReadRef.current.count + 1, at: Date.now(), coverage }
 
       try {
         const fragment = value.trim()
@@ -77,6 +116,8 @@ const QrScannerWithPermission = ({
   const handleRetry = useCallback(() => {
     isCompletedRef.current = false
     decoderRef.current.reset()
+    lastReadRef.current = emptyQrScanLastRead()
+    lastProgressRef.current = null
     setDecodeError(null)
     onExternalRetry?.()
   }, [onExternalRetry])
