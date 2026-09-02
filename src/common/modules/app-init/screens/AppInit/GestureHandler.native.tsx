@@ -35,11 +35,9 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isAndroid) return
 
-    const backAction = () => {
-      goBackAction()
-
-      return true
-    }
+    // When nothing in the app can consume the press, Android handles it as it normally
+    // would and sends the app to the background
+    const backAction = () => goBackAction()
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
 
