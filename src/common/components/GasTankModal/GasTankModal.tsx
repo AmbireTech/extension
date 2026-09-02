@@ -41,9 +41,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const { addToast } = useToast()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const {
     dispatch: featureFlagsDispatch,
     state: { flags }

@@ -23,7 +23,7 @@ const Token: FC<Props> = ({ token, onTokenPreferenceOrCustomTokenChange }) => {
   const { address, chainId, flags, symbol } = token
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { isHidden, toggleHideToken, removeCustomToken } = useManageToken({
     address,
     chainId,

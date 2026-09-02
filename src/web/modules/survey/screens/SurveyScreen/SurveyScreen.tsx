@@ -26,13 +26,9 @@ const SurveyScreen = () => {
     state: { status, questions, answers, currentQuestion, errorMessage, surveyId, bannerId }
   } = useController('SurveyController')
 
-  const {
-    state: { keyStoreUid }
-  } = useController('KeystoreController')
+  const { state: keyStoreUid } = useController('KeystoreController', 'keyStoreUid')
 
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
 
   const { navigate } = useNavigation()
 

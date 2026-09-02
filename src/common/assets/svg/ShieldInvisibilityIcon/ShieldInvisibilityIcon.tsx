@@ -1,14 +1,9 @@
-import React from 'react'
+import { FC, memo } from 'react'
 import Svg, { Circle, Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const ShieldInvisibilityIcon: React.FC<SvgProps> = ({
-  width = 44,
-  height = 50,
-  color,
-  ...rest
-}) => {
+const ShieldInvisibilityIcon: FC<SvgProps> = ({ width = 44, height = 50, color, ...rest }) => {
   const { theme } = useTheme()
   const strokeColor = color || theme.iconPrimary
 
@@ -39,4 +34,4 @@ const ShieldInvisibilityIcon: React.FC<SvgProps> = ({
   )
 }
 
-export default React.memo(ShieldInvisibilityIcon)
+export default memo(ShieldInvisibilityIcon)

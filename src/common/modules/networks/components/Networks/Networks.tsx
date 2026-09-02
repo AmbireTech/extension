@@ -19,7 +19,7 @@ const Networks = ({
   search: string
   onPress: (chainId: bigint | string) => void
 }) => {
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')

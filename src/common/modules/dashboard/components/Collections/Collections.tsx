@@ -8,6 +8,7 @@ import { useModalize } from 'react-native-modalize'
 import { Network } from '@ambire-common/interfaces/network'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
@@ -30,11 +31,11 @@ interface Props {
     [key: string]: boolean
   }
   sessionId: string
-  onScroll: FlatListProps<any>['onScroll']
+  onScroll?: FlatListProps<any>['onScroll']
   networks: Network[]
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
-  isSearchHidden: boolean
+  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
@@ -189,6 +190,9 @@ const Collections: FC<Props> = ({
     setValue('search', '')
   }, [openTab, setValue])
 
+  // Rendered above the carousel on mobile, so it stays put through a swipe
+  const floatingBar = useMemo(() => ({ control, searchPlaceholder: t('Search NFT') }), [control, t])
+
   return (
     <>
       <CollectibleModal
@@ -197,11 +201,12 @@ const Collections: FC<Props> = ({
         selectedCollectible={selectedCollectible}
       />
       <DashboardPageScrollContainer
+        floatingBar={floatingBar}
         tab="collectibles"
         openTab={openTab}
-        ListHeaderComponent={<DashboardBanners />}
+        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         data={[
-          'header',
+          ...(isMobile ? [] : ['header']),
           ...(initTab?.collectibles ? filteredPortfolioCollections : []),
           !filteredPortfolioCollections.length && portfolio?.isAllReady ? 'empty' : '',
           !isReadyToVisualizeCollections ? 'skeleton' : 'keep-this-to-avoid-key-warning'
@@ -216,12 +221,9 @@ const Collections: FC<Props> = ({
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-      {openTab === 'collectibles' && (
-        <FloatingBottomBar
-          control={control}
-          isHidden={isSearchHidden}
-          searchPlaceholder={t('Search NFT')}
-        />
+      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
+      {!isMobile && openTab === 'collectibles' && (
+        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
       )}
     </>
   )

@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Image, ImageSourcePropType, LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
-import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
+import Carousel from 'react-native-reanimated-carousel'
 
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheExtension from '@common/assets/images/sync-steps-on-the-extension.gif'
@@ -25,7 +25,6 @@ import SyncScanFeedbackAlert from '@common/modules/accounts-sync/components/Sync
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
 import useSyncedPasswordSetup from '@common/modules/accounts-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
 import { ROUTES } from '@common/modules/router/constants/common'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
@@ -38,7 +37,9 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
+import type { ICarouselInstance } from 'react-native-reanimated-carousel'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 
 const SCANNER_SIZE = 280
 // The asset is delivered at twice this size, so it stays sharp on dense screens
@@ -393,4 +394,4 @@ const ImportAccountsFromExtensionScreen = () => {
   )
 }
 
-export default React.memo(ImportAccountsFromExtensionScreen)
+export default memo(ImportAccountsFromExtensionScreen)

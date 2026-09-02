@@ -36,7 +36,7 @@ const style: {
 const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet }) => {
   const { t } = useTranslation()
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
-  const { activeRoutes } = useController('SwapAndBridgeController').state
+  const { state: activeRoutes } = useController('SwapAndBridgeController', 'activeRoutes')
 
   if (!WITH_BOTTOM_SHEET.includes(id)) return null
 

@@ -40,6 +40,13 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
   const prevForceHoveredStyle = usePrevious(forceHoveredStyle)
   const [isHovered, setIsHovered] = useState(false)
 
+  // Nothing hovers on the mobile app: `animate` returns early there, so the press opacity
+  // is the only channel that ever moves. A value is still created for every property the
+  // caller asked for, so that what it reads back lines up with what it passed in - what
+  // mobile skips is animating them, and the interpolation node per color that the style
+  // would otherwise build.
+  const isMobileApp = getUiType().isMobileApp
+
   // Initialize the values that will be animated
   const animatedValues = useMemo(() => {
     const opacity = memoizedValues.find(({ property }) => property === 'opacity')
@@ -167,6 +174,18 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
   )
 
   const style = useMemo(() => {
+    // The hovered style is never reached on the mobile app, so the properties
+    // stay at the value they start from - only the opacity has to stay animated.
+    if (isMobileApp) {
+      const staticStyle = memoizedValues.reduce(
+        (acc, { property, from }) => ({ ...acc, [property]: from }),
+        {}
+      )
+      const opacity = animatedValues.find(({ property }) => property === 'opacity')
+
+      return { ...staticStyle, opacity: opacity?.value }
+    }
+
     if (animatedValues)
       return animatedValues?.reduce((acc, { property, value, from, to }) => {
         const shouldInterpolate = INTERPOLATE_PROPERTIES.includes(property)
@@ -181,7 +200,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
 
     // Prevents the hook from returning an empty style object on the first render
     return memoizedValues.reduce((acc, { property, from }) => ({ ...acc, [property]: from }), {})
-  }, [animatedValues, memoizedValues])
+  }, [animatedValues, isMobileApp, memoizedValues])
 
   return [bind, style, isHovered || forceHoveredStyle, onHoverIn, animatedValues] as [
     {

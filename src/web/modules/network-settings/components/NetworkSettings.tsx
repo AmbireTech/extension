@@ -32,7 +32,7 @@ const NetworksSettings = () => {
   const { search: searchParams, pathname } = useRoute()
   const { control, watch } = useForm({ defaultValues: { search: '' } })
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { allNetworks } = useController('NetworksController').state
+  const { state: allNetworks } = useController('NetworksController', 'allNetworks')
   const {
     state: { providers }
   } = useController('ProvidersController')

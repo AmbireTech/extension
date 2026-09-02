@@ -1,12 +1,12 @@
 import { hexlify } from 'ethers'
 import { useCallback, useState } from 'react'
 
-import { Account } from '@ambire-common/interfaces/account'
 import { parseAccountsSyncPayload } from '@ambire-common/libs/accountsSync/accountsSync'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { ACCOUNTS_SYNC_IMPORT_TIMEOUT } from '@common/modules/accounts-sync/consts'
 
+import type { Account } from '@ambire-common/interfaces/account'
 /**
  * Owns the import side of the accounts sync: validating what the camera scanned and
  * handing it to the background together with the password of the exporting device.

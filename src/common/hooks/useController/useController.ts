@@ -88,8 +88,16 @@ export default function useController<K extends keyof AllControllersMappingType,
 
 export default function useController<
   K extends keyof AllControllersMappingType,
+  S extends keyof AllControllersMappingType[K]
+>(id: K, selector: S): UseControllerReturn<K, AllControllersMappingType[K][S]>
+
+export default function useController<
+  K extends keyof AllControllersMappingType,
   S = AllControllersMappingType[K]
->(id: K, selector?: (state: AllControllersMappingType[K]) => S): UseControllerReturn<K, S> {
+>(
+  id: K,
+  selector?: ((state: AllControllersMappingType[K]) => S) | keyof AllControllersMappingType[K]
+): UseControllerReturn<K, S> {
   const controllersMiddleware = useContext(ControllersMiddlewareContext)
 
   if (!controllersMiddleware) {
@@ -97,7 +105,11 @@ export default function useController<
   }
 
   const [isSubscribed, setIsSubscribed] = useState(false)
-  const { state, helpers } = useControllerState({ id, selector, subscriptionEnabled: isSubscribed })
+  const { state, helpers } = useControllerState({
+    id,
+    selector: selector as any,
+    subscriptionEnabled: isSubscribed
+  })
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
   const dispatch = useCallback(

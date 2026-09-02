@@ -38,7 +38,6 @@ export type ControllerHostConfig = {
   VELCRO_URL: string
   LIFI_EXPLORER_URL: string
   BUNGEE_API_KEY: string
-  SQUID_INTEGRATOR_ID: string
   UNISWAP_API_KEY: string
   criticalControllers: string[]
 }
@@ -207,7 +206,6 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
       velcroUrl: config.VELCRO_URL,
       liFiApiKey: config.LIFI_EXPLORER_URL,
       bungeeApiKey: config.BUNGEE_API_KEY,
-      squidIntegratorId: config.SQUID_INTEGRATOR_ID,
       uniswapApiKey: config.UNISWAP_API_KEY,
       featureFlags: {},
       keystoreSigners: {

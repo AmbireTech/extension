@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useState } from 'react'
+import { memo, ReactNode, useCallback, useMemo, useState } from 'react'
 import { Image, Linking, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -33,10 +33,12 @@ const { isSidePanel } = getUiType()
 
 const Benzin = ({
   state,
-  children
+  children,
+  topContent
 }: {
   state: ReturnType<typeof useBenzin>
-  children?: React.ReactNode
+  children?: ReactNode
+  topContent?: ReactNode
 }) => {
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
@@ -274,7 +276,7 @@ const Benzin = ({
         ]}
       >
         <View style={styles.content}>
-          <Header activeStep={activeStep} network={network} />
+          <Header activeStep={activeStep} network={network} topContent={topContent} />
           <Steps
             activeStep={activeStep}
             txnId={txnId}

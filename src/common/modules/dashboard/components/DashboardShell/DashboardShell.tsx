@@ -30,9 +30,8 @@ interface Props {
 
 // Instant placeholder shown while the data-heavy controllers load
 const DashboardShell = ({ contentContainerStyle }: Props) => {
-  const {
-    state: { account, portfolio }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
 
   // Read synchronously so the shell paints the last-known balance on its first render.

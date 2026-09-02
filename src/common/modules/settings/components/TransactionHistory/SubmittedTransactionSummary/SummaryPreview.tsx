@@ -75,8 +75,15 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                     weight="semiBold"
                     numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
                   >
-                    {interaction.name}
+                    {interaction.id === 'fallback:cancel' ? t('Cancel') : interaction.name}
                   </Text>
+                  {interaction.safeNonce !== undefined && (
+                    <Text fontSize={12} appearance="secondaryText">
+                      {t('transaction with nonce {{safeNonce}}', {
+                        safeNonce: interaction.safeNonce.toString()
+                      })}
+                    </Text>
+                  )}
                   {(!!interaction.address || !!interaction.description) && (
                     <View
                       style={[

@@ -185,7 +185,9 @@ const Account = ({
               style={[
                 flexbox.directionRow,
                 flexbox.alignCenter,
-                isMobile ? spacings.mrTy : spacings.mrMd
+                isMobile ? spacings.mrTy : spacings.mrMd,
+                // Lets the row shrink below its content's natural width so the name can truncate
+                { flexShrink: 1, minWidth: 0 }
               ]}
             >
               {isAccountImported ? (
@@ -203,7 +205,9 @@ const Account = ({
                     fontSize={identityFontSize}
                     weight="medium"
                     appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
-                    style={spacings.mrTy}
+                    style={[spacings.mrTy, { flexShrink: 1, minWidth: 0 }]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
                     dataSet={compactIdentityTooltipDataSet}
                   >
                     {account.preferences.label}
@@ -230,7 +234,9 @@ const Account = ({
                       fontSize={identityFontSize}
                       weight="medium"
                       appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
-                      style={spacings.mrTy}
+                      style={[spacings.mrTy, { flexShrink: 1, minWidth: 0 }]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
                       dataSet={compactIdentityTooltipDataSet}
                     >
                       {reverseLookupName}

@@ -1,6 +1,6 @@
 import { FC } from 'react'
 
-import { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
+import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 
 export interface QrScannerWithPermissionProps {
   onComplete: (payload: Uint8Array) => void

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, ImageSourcePropType, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -15,16 +15,12 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import SyncImportSteps, {
-  SyncImportStep,
-  SyncImportStepsFooter
-} from '@common/modules/accounts-sync/components/SyncImportSteps'
+import SyncImportSteps, { SyncImportStepsFooter } from '@common/modules/accounts-sync/components/SyncImportSteps'
 import SyncPasswordOptions from '@common/modules/accounts-sync/components/SyncPasswordOptions'
 import SyncScanFeedbackAlert from '@common/modules/accounts-sync/components/SyncScanFeedbackAlert'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
 import useSyncedPasswordSetup from '@common/modules/accounts-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
@@ -35,6 +31,8 @@ import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScan
 import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { SyncImportStep } from '@common/modules/accounts-sync/components/SyncImportSteps'
+import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 
 const SCANNER_SIZE = 290
 // The asset is delivered at twice this size, so it stays sharp on dense screens
@@ -365,4 +363,4 @@ const ImportAccountsFromMobileScreen = () => {
   )
 }
 
-export default React.memo(ImportAccountsFromMobileScreen)
+export default memo(ImportAccountsFromMobileScreen)
