@@ -40,7 +40,7 @@ const ManageTokensSettingsScreen = () => {
     open: openAddTokenBottomSheet,
     close: closeAddTokenBottomSheet
   } = useModalize()
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)
   const search = watch('search')

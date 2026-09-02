@@ -45,10 +45,8 @@ const Footer = ({
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactActionRequestLayout()
-  const { userRequests } = useController('RequestsController').state
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 

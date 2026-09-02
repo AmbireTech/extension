@@ -27,12 +27,8 @@ interface Props {
  */
 const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { theme } = useTheme()
 
   const sortedNetworks = useMemo(() => {

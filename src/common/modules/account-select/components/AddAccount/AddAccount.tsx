@@ -59,7 +59,7 @@ const AddAccount = ({
     open: openSeedPhraseBottomSheet,
     close: closeSeedPhraseBottomSheet
   } = useModalize()
-  const { seeds } = useController('KeystoreController').state
+  const { state: seeds } = useController('KeystoreController', 'seeds')
 
   const optionsHW = useMemo(() => {
     if (isMobile)
