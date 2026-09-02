@@ -21,6 +21,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import SimulationSkeleton from './SimulationSkeleton'
+import { getIsSimulationOutdated, isAccountOpSimulationCurrent } from './helpers'
 import getStyles from './styles'
 
 interface Props {
@@ -47,8 +48,16 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
   const { networks } = useController('NetworksController').state
 
+  const currentNetworkSimulatedAccountOp = network?.chainId
+    ? networkSimulatedAccountOp[network.chainId.toString()]
+    : undefined
+  const isCurrentAccountOpSimulated = isAccountOpSimulationCurrent(
+    signAccountOpState?.accountOp.id,
+    currentNetworkSimulatedAccountOp?.id
+  )
+
   const pendingTokens = useMemo(() => {
-    if (signAccountOpState?.accountOp && network) {
+    if (signAccountOpState?.accountOp && network && isCurrentAccountOpSimulated) {
       const pendingData = portfolioState[network.chainId.toString()]
 
       if (!pendingData || !pendingData.isReady || !pendingData.result) return []
@@ -56,37 +65,55 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
       return tokens.filter((token) => token.chainId === network.chainId && !!token.simulationAmount)
     }
     return []
-  }, [network, portfolioState, signAccountOpState?.accountOp, tokens])
+  }, [isCurrentAccountOpSimulated, network, portfolioState, signAccountOpState?.accountOp, tokens])
 
   const portfolioNetworkState = useMemo(() => {
     if (!signAccountOpState?.accountOp || !network?.chainId) return null
 
     return portfolioState[network.chainId.toString()]
-  }, [network?.chainId, portfolioState, signAccountOpState?.accountOp])
+  }, [network, portfolioState, signAccountOpState?.accountOp])
 
   const pendingSendTokens = useMemo(
     () => pendingTokens.filter((token) => token.simulationAmount! < 0),
     [pendingTokens]
   )
   const pendingSendCollection = useMemo(() => {
-    if (signAccountOpState?.accountOp?.accountAddr && network?.chainId)
+    if (
+      isCurrentAccountOpSimulated &&
+      signAccountOpState?.accountOp?.accountAddr &&
+      network?.chainId
+    )
       return (
         collections?.filter(
           (i) => i.postSimulation?.sending && i.postSimulation.sending.length > 0
         ) || []
       )
     return []
-  }, [collections, network?.chainId, signAccountOpState?.accountOp?.accountAddr])
+  }, [
+    collections,
+    isCurrentAccountOpSimulated,
+    network?.chainId,
+    signAccountOpState?.accountOp?.accountAddr
+  ])
 
   const pendingReceiveCollection = useMemo(() => {
-    if (signAccountOpState?.accountOp?.accountAddr && network?.chainId)
+    if (
+      isCurrentAccountOpSimulated &&
+      signAccountOpState?.accountOp?.accountAddr &&
+      network?.chainId
+    )
       return (
         collections?.filter(
           (i) => i.postSimulation?.receiving && i.postSimulation.receiving.length > 0
         ) || []
       )
     return []
-  }, [signAccountOpState?.accountOp?.accountAddr, network?.chainId, collections])
+  }, [
+    collections,
+    isCurrentAccountOpSimulated,
+    network?.chainId,
+    signAccountOpState?.accountOp?.accountAddr
+  ])
 
   const pendingReceiveTokens = useMemo(
     () => pendingTokens.filter((token) => token.simulationAmount! > 0),
@@ -122,32 +149,22 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     initialSimulationLoaded
   ])
 
-  const haveCallsChanged = useMemo(() => {
-    if (!network?.chainId || !initialSimulationLoaded) return false
+  const isSimulationOutdated = useMemo(() => {
+    if (!network?.chainId) return false
 
-    const portfolioAccountOpCalls = networkSimulatedAccountOp[String(network.chainId)]?.calls
-    const signAccountOpCalls = signAccountOpState?.accountOp.calls
-
-    // If the portfolio state has no calls and there is a simulation error,
-    // it means that the simulation is not reloading
-    if (!portfolioAccountOpCalls && simulationErrorMsg) return false
-
-    // New calls are reflected immediately in the signAccountOpState,
-    // while the portfolio update takes some time to reflect the changes.
-    // The interval between the two updates is the time it takes for the
-    // simulation to reload.
-    return portfolioAccountOpCalls?.length !== signAccountOpCalls?.length
+    return getIsSimulationOutdated({
+      currentAccountOpId: signAccountOpState?.accountOp.id,
+      simulatedAccountOpId: currentNetworkSimulatedAccountOp?.id,
+      hasInitialSimulationLoaded: initialSimulationLoaded,
+      hasSimulationError: !!simulationErrorMsg
+    })
   }, [
+    currentNetworkSimulatedAccountOp?.id,
     initialSimulationLoaded,
     network?.chainId,
-    networkSimulatedAccountOp,
-    signAccountOpState?.accountOp.calls,
+    signAccountOpState?.accountOp.id,
     simulationErrorMsg
   ])
-
-  useEffect(() => {
-    if (haveCallsChanged) setShouldRespectIsLoading(true)
-  }, [haveCallsChanged])
 
   useEffect(() => {
     if (!portfolioNetworkState) return
@@ -164,11 +181,13 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     () =>
       (!!portfolioNetworkState?.isLoading && shouldRespectIsLoading) ||
       isReloading ||
+      isSimulationOutdated ||
       !signAccountOpState?.isInitialized,
     [
       portfolioNetworkState?.isLoading,
       shouldRespectIsLoading,
       isReloading,
+      isSimulationOutdated,
       signAccountOpState?.isInitialized
     ]
   )
@@ -228,6 +247,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             <View
               style={[
                 styles.simulationContainer,
+                !isCompactLayout && styles.simulationContainerWide,
                 hasAssetsIn && (isCompactLayout ? spacings.mbTy : spacings.mrTy)
               ]}
             >
@@ -238,7 +258,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                 {!hasAssetsIn && <TenderlySimulation />}
               </View>
               <ScrollableWrapper
-                type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
+                type={isMobile || isCompactLayout ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
                 style={styles.simulationScrollView}
                 contentContainerStyle={{ flexGrow: 1 }}
               >
@@ -280,7 +300,12 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             </View>
           )}
           {hasAssetsIn && (
-            <View style={styles.simulationContainer}>
+            <View
+              style={[
+                styles.simulationContainer,
+                !isCompactLayout && styles.simulationContainerWide
+              ]}
+            >
               <View style={styles.simulationContainerHeader}>
                 <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets in')}
@@ -288,7 +313,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                 <TenderlySimulation />
               </View>
               <ScrollableWrapper
-                type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
+                type={isMobile || isCompactLayout ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
                 style={styles.simulationScrollView}
                 contentContainerStyle={{ flexGrow: 1 }}
               >

@@ -10,6 +10,8 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import usePendingSafeTransactions from '@common/modules/dashboard/hooks/usePendingSafeTransactions'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -34,14 +36,14 @@ const TABS: {
     tabLabel: 'Tokens'
   },
   {
-    testID: 'tab-nft',
-    type: 'collectibles',
-    tabLabel: 'NFT'
-  },
-  {
     testID: 'tab-defi',
     type: 'defi',
     tabLabel: 'DeFi'
+  },
+  {
+    testID: 'tab-nft',
+    type: 'collectibles',
+    tabLabel: 'NFT'
   },
   {
     testID: 'tab-activity',
@@ -57,6 +59,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
   const {
     state: { account, banners: defiBanners }
   } = useController('SelectedAccountController')
+  const { totalPendingCount } = usePendingSafeTransactions()
 
   const currentDefiBanners = useMemo(
     () =>
@@ -162,6 +165,20 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                     style={{ marginTop: 2, lineHeight: 12 }}
                   >
                     {badgeText}
+                  </Text>
+                </View>
+              )}
+              {type === 'activity' && !!totalPendingCount && (
+                <View
+                  style={[
+                    flexbox.alignCenter,
+                    flexbox.justifyCenter,
+                    styles.pendingBadge,
+                    spacings.phMi
+                  ]}
+                >
+                  <Text fontSize={10} color={theme.primaryAccent} style={{ lineHeight: 12 }}>
+                    {totalPendingCount}
                   </Text>
                 </View>
               )}
