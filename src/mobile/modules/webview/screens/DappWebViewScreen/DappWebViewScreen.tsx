@@ -184,21 +184,38 @@ const devOnlyHelpers = `
   });
 `
 
-// Comma-locale keypads type "," as the decimal separator. Rewrite it to "."
-// in numeric dapp inputs (React-safe: native setter + bubbled input event).
+// Comma-locale keypads type "," as the decimal separator. Rewrite that keystroke
+// to "." only, so commas the dapp itself renders (e.g. "10,000") stay untouched.
 const decimalSeparatorFix = `
   (function() {
-    document.addEventListener('input', function(e) {
-      var el = e.target;
-      if (!el || el.tagName !== 'INPUT') return;
+    function isNumericInput(el) {
+      if (!el || el.tagName !== 'INPUT') return false;
       var inputMode = (el.getAttribute('inputmode') || '').toLowerCase();
       var type = (el.type || '').toLowerCase();
-      var isNumeric = inputMode === 'decimal' || inputMode === 'numeric' || type === 'number';
-      if (!isNumeric) return;
-      if (el.value.indexOf(',') === -1) return;
-      var normalized = el.value.split(',').join('.');
+      return inputMode === 'decimal' || inputMode === 'numeric' || type === 'number';
+    }
+
+    document.addEventListener('beforeinput', function(e) {
+      if (e.inputType !== 'insertText' || e.data !== ',') return;
+      var el = e.target;
+      if (!isNumericInput(el)) return;
+
+      e.preventDefault();
+
+      var value = el.value;
+      var start = value.length;
+      var end = value.length;
+      // selectionStart/End are unsupported (null or throwing) on type="number"
+      try {
+        if (el.selectionStart !== null && el.selectionEnd !== null) {
+          start = el.selectionStart;
+          end = el.selectionEnd;
+        }
+      } catch (err) {}
+
       var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-      setter.call(el, normalized);
+      setter.call(el, value.slice(0, start) + '.' + value.slice(end));
+      try { el.setSelectionRange(start + 1, start + 1); } catch (err) {}
       el.dispatchEvent(new Event('input', { bubbles: true }));
     }, true);
   })();
