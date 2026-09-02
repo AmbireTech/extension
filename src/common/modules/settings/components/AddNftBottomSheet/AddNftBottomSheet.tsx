@@ -67,9 +67,17 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const {
     state: { portfolio: selectedAccountPortfolio, account }
   } = useController('SelectedAccountController')
-  const [network, setNetwork] = useState<Network | undefined>(
-    isInitialized ? (networks.find((n) => n.chainId === 1n) ?? networks[0]) : undefined
-  )
+  // Derived, so the sheet recovers if it opens before the networks are loaded
+  const [selectedChainId, setSelectedChainId] = useState<bigint | undefined>()
+  const network = useMemo(() => {
+    if (!isInitialized) return undefined
+
+    return (
+      networks.find(({ chainId }) => chainId === selectedChainId) ??
+      networks.find(({ chainId }) => chainId === 1n) ??
+      networks[0]
+    )
+  }, [isInitialized, networks, selectedChainId])
   const [hasCheckTimedOut, setHasCheckTimedOut] = useState(false)
   // Bumped to re-run the check after it timed out, as the address hasn't changed
   const [checkAttempt, setCheckAttempt] = useState(0)
@@ -132,6 +140,11 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     tokenId,
     tokenPreferences
   ])
+
+  const handleNetworkChange = useCallback(
+    (selectedNetwork: Network) => setSelectedChainId(selectedNetwork.chainId),
+    []
+  )
 
   const handleCloseAndReset = useCallback(() => {
     handleClose()
@@ -264,11 +277,11 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
 
   const retryCheck = useCallback(() => setCheckAttempt((attempt) => attempt + 1), [])
 
-  const isValidating =
-    isAddressValid &&
-    !isAlreadyAdded &&
-    !hasCheckTimedOut &&
-    (!hasVerdict || (isTokenIdValid && !hasOwnershipVerdict))
+  // Either check can be the one still missing, so the spinner and the timeout
+  // that replaces it both wait on the same condition
+  const isMissingVerdict =
+    isAddressValid && !isAlreadyAdded && (!hasVerdict || (isTokenIdValid && !hasOwnershipVerdict))
+  const isValidating = isMissingVerdict && !hasCheckTimedOut
 
   return (
     <AddAssetBottomSheet
@@ -281,7 +294,7 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       addressFieldTestID="nft-address-field"
       addressError={address && !isAddressValid ? t('Invalid address') : undefined}
       network={network}
-      onNetworkChange={setNetwork}
+      onNetworkChange={handleNetworkChange}
       submitText={t('Add NFT')}
       submitTestID="add-nft-button"
       isSubmitDisabled={
@@ -385,7 +398,7 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         </View>
       ) : null}
 
-      {isAddressValid && !isAlreadyAdded && !hasVerdict && hasCheckTimedOut ? (
+      {isMissingVerdict && hasCheckTimedOut ? (
         <Alert
           type="warning"
           isTypeLabelHidden
