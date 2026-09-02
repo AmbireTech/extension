@@ -1,11 +1,12 @@
-import { ReactNode, useEffect } from 'react'
-import { BackHandler } from 'react-native'
+import { ReactNode, useEffect, useMemo } from 'react'
+import { BackHandler, GestureResponderEvent } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import {
   bottomSheetCloseEventStream,
   openBottomSheetsCount
 } from '@common/components/BottomSheet/bottomSheetEventStream'
+import { checkDropdownDismiss } from '@common/components/Dropdown/dropdownDismissManager'
 import { isAndroid } from '@common/config/env'
 import useBackAction from '@common/hooks/useBackAction'
 import { entropyTouchHandlers } from '@common/hooks/useExtraEntropy/useExtraEntropy.native'
@@ -35,24 +36,34 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isAndroid) return
 
-    const backAction = () => {
-      goBackAction()
-
-      return true
-    }
+    // When nothing in the app can consume the press, Android handles it as it normally
+    // would and sends the app to the background
+    const backAction = () => goBackAction()
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
 
     return () => backHandler.remove()
   }, [goBackAction])
 
+  // Both of these only read touches bubbling up from the tree: the entropy pool takes their
+  // coordinates (it feeds seed and Keystore secret generation), and an open dropdown closes when the
+  // touch did not start inside it. Neither takes part in responder negotiation, so the touch still
+  // reaches the element underneath - a button outside an open dropdown fires on the first tap.
+  const rootTouchHandlers = useMemo(
+    () => ({
+      ...entropyTouchHandlers,
+      onTouchStart: (e: GestureResponderEvent) => {
+        entropyTouchHandlers.onTouchStart(e)
+        checkDropdownDismiss()
+      }
+    }),
+    []
+  )
+
   return (
-    // The touch handlers only read the coordinates of touches bubbling up from the tree, to
-    // feed the extra entropy pool used when generating seeds and Keystore secrets. They do not
-    // participate in responder negotiation, so they cannot interfere with the gestures below.
     <GestureHandlerRootView
       style={[flexbox.flex1, { backgroundColor: theme.primaryBackground }]}
-      {...entropyTouchHandlers}
+      {...rootTouchHandlers}
     >
       {children}
     </GestureHandlerRootView>

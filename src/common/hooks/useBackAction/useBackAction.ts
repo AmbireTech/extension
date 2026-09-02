@@ -13,6 +13,8 @@ import { goBackInWebViewHistory } from '@common/services/webview/webViewBackNavi
  * What "back" means on mobile, in order: dismiss any open bottom sheet, walk the in-app
  * browser's page history, then pop the route. Used by the Android hardware back button;
  * the swipe is the platform's own, and the stack reconciles the router with it.
+ * Returns whether the press was consumed, so the caller can let Android send the app to
+ * the background when there is nothing left to go back to.
  */
 const useBackAction = () => {
   const { goBack, canGoBack } = useNavigation()
@@ -25,14 +27,16 @@ const useBackAction = () => {
     if (openBottomSheetsCount.value > 0) {
       bottomSheetCloseEventStream.next()
 
-      return
+      return true
     }
 
-    if (MOBILE_ROOT_ROUTE_PATHS.includes(path) || !canGoBack) return
+    if (MOBILE_ROOT_ROUTE_PATHS.includes(path) || !canGoBack) return false
 
-    if (goBackInWebViewHistory()) return
+    if (goBackInWebViewHistory()) return true
 
     goBack()
+
+    return true
   }, [path, canGoBack, goBack])
 }
 
