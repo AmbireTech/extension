@@ -7,7 +7,6 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import Spinner from '@common/components/Spinner'
-import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
@@ -148,7 +147,6 @@ const SafeFooter = ({
               />
             </View>
           ))}
-        <ActionsPagination />
       </View>
     )
   }
@@ -246,7 +244,6 @@ const SafeFooter = ({
             )}
           </View>
         ) : null}
-        <ActionsPagination />
       </GlassView>
     </View>
   )

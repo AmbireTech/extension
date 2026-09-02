@@ -45,14 +45,14 @@ const TABS: {
     tabLabel: 'Tokens'
   },
   {
-    testID: 'tab-nft',
-    type: 'collectibles',
-    tabLabel: 'NFT'
-  },
-  {
     testID: 'tab-defi',
     type: 'defi',
     tabLabel: 'DeFi'
+  },
+  {
+    testID: 'tab-nft',
+    type: 'collectibles',
+    tabLabel: 'NFT'
   },
   {
     testID: 'tab-activity',
