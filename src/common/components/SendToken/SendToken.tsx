@@ -144,6 +144,7 @@ const SendToken: FC<Props> = ({
                   mode="bottomSheet"
                   headerHeight={SECTION_MENU_HEADER_HEIGHT}
                   renderSectionHeader={renderSectionHeader}
+                  disabled={fromTokenAmountSelectDisabled}
                   stickySectionHeadersEnabled
                 />
               ) : (
@@ -161,6 +162,7 @@ const SendToken: FC<Props> = ({
                   }}
                   selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
                   mode="bottomSheet"
+                  disabled={fromTokenAmountSelectDisabled}
                 />
               )}
             </View>
