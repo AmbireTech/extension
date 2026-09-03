@@ -1,10 +1,11 @@
+import { formatUnits } from 'ethers'
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
-import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
+import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
@@ -54,7 +55,12 @@ const SwapAndBridgeFeeCardContent = () => {
     [portfolioTokens]
   )
   const feePercent = useMemo(
-    () => getFeePercent(stkWalletToken ? getTokenBalanceInUSD(stkWalletToken) : 0),
+    () =>
+      getFeePercent(
+        stkWalletToken
+          ? Number(formatUnits(getTokenAmount(stkWalletToken), stkWalletToken.decimals))
+          : 0
+      ),
     [stkWalletToken]
   )
   const handleViewFeeTiers = useCallback(() => openFeeInfoBottomSheet(), [openFeeInfoBottomSheet])

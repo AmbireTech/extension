@@ -1,7 +1,8 @@
-import { Interface, WeiPerEther } from 'ethers'
+import { Interface } from 'ethers'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { Call } from '@ambire-common/libs/accountOp/types'
+import { getXWalletAmountFromWallet } from '@ambire-common/libs/walletStaking/shareValue'
 import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
 
 const walletInterface = new Interface(['function approve(address spender, uint256 amount)'])
@@ -58,7 +59,7 @@ export const getUnstakeWalletCalls = (
 ): Call[] => {
   if (shareValue <= 0n) throw new Error('The staking share value must be greater than zero.')
 
-  const shares = (amount * WeiPerEther) / shareValue
+  const shares = getXWalletAmountFromWallet(amount, shareValue)
   const sharesToLeave = shares > sharesToRestore ? shares - sharesToRestore : 0n
 
   const calls: Call[] = [

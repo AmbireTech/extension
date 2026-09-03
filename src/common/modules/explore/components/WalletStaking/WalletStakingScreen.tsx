@@ -5,12 +5,9 @@ import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
-import {
-  getTokenAmount,
-  getTokenBalanceInUSD,
-  getTokenUsdPrice
-} from '@ambire-common/libs/portfolio/helpers'
+import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
+import { getXWalletAmountFromWallet } from '@ambire-common/libs/walletStaking/shareValue'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
@@ -86,6 +83,8 @@ const selectIsPortfolioReady = (state: AllControllersMappingType['SelectedAccoun
   state.portfolio.isReadyToVisualize
 const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
   state.currentUserRequest
+const selectXWalletShareValue = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.walletStaking?.shareValue
 
 interface TabProps {
   mode: WalletStakingMode
@@ -133,6 +132,10 @@ const WalletStakingScreen = () => {
   const { state: isPortfolioReady } = useController(
     'SelectedAccountController',
     selectIsPortfolioReady
+  )
+  const { state: xWalletShareValue } = useController(
+    'SelectedAccountController',
+    selectXWalletShareValue
   )
   const { state: currentUserRequest, dispatch: requestsDispatch } = useController(
     'RequestsController',
@@ -232,21 +235,26 @@ const WalletStakingScreen = () => {
     () => formatDecimals(Number(amount || 0) * price, 'value'),
     [amount, price]
   )
-  const walletPrice = useMemo(
-    () => (walletToken ? getTokenUsdPrice(walletToken) : 0),
-    [walletToken]
+  // Fee tiers are based on the amount of stkWALLET held, not its USD value.
+  const currentStkWalletAmount = useMemo(
+    () => Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS)),
+    [stkWalletBalance]
   )
-  const currentStkWalletValueInUsd = useMemo(
-    () => (stkWalletToken ? getTokenBalanceInUSD(stkWalletToken) : 0),
-    [stkWalletToken]
-  )
+  // Staking converts WALLET into stkWALLET shares at the current conversion rate, so the
+  // projected balance (used to preview the fee tier the user would move into) accounts for that.
+  const projectedStkWalletAmount = useMemo(() => {
+    if (!xWalletShareValue) return currentStkWalletAmount
+
+    const projectedNewShares = getXWalletAmountFromWallet(amountInWei, xWalletShareValue)
+    return currentStkWalletAmount + Number(formatUnits(projectedNewShares, TOKEN_DECIMALS))
+  }, [amountInWei, currentStkWalletAmount, xWalletShareValue])
   const currentFeePercent = useMemo(
-    () => getFeePercent(currentStkWalletValueInUsd),
-    [currentStkWalletValueInUsd]
+    () => getFeePercent(currentStkWalletAmount),
+    [currentStkWalletAmount]
   )
   const projectedFeePercent = useMemo(
-    () => getFeePercent(currentStkWalletValueInUsd + Number(amount || 0) * walletPrice),
-    [amount, currentStkWalletValueInUsd, walletPrice]
+    () => getFeePercent(projectedStkWalletAmount),
+    [projectedStkWalletAmount]
   )
   const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const isSubmitDisabled = useMemo(() => {

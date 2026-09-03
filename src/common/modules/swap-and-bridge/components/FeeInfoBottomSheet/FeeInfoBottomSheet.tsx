@@ -39,10 +39,10 @@ const FeeInfoBottomSheet = ({
   const { styles } = useTheme(getStyles)
   const feeTiers = useMemo(
     () => [
-      { id: 'up-to-500', heldLabel: t('Up to $500'), feePercent: 0.5, feeLabel: '0.50%' },
-      { id: 'over-500', heldLabel: t('$500+'), feePercent: 0.4, feeLabel: '0.40%' },
-      { id: 'over-1500', heldLabel: t('$1,500+'), feePercent: 0.25, feeLabel: '0.25%' },
-      { id: 'over-10000', heldLabel: t('$10,000+'), feePercent: 0, feeLabel: '0%' }
+      { id: 'over-700k', heldLabel: t('700,000+'), feePercent: 0, feeLabel: '0%' },
+      { id: 'over-100k', heldLabel: t('100,000+'), feePercent: 0.25, feeLabel: '0.25%' },
+      { id: 'over-33k', heldLabel: t('33,000+'), feePercent: 0.4, feeLabel: '0.40%' },
+      { id: 'up-to-33k', heldLabel: t('Up to 33,000'), feePercent: 0.5, feeLabel: '0.50%' }
     ],
     [t]
   )

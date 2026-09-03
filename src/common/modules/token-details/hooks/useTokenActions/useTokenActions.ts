@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
-import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { STK_WALLET, WALLET_STAKING_ADDR } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
@@ -47,9 +47,8 @@ type UseTokenActionsOptions = {
 
 const WALLET_STAKING_ACTIONS: Record<
   string,
-  { text: 'Stake' | 'Withdraw' | 'Unstake'; icon: typeof EarnIcon; mode: WalletStakingMode }
+  { text: 'Withdraw' | 'Unstake'; icon: typeof EarnIcon; mode: WalletStakingMode }
 > = {
-  [WALLET_TOKEN.toLowerCase()]: { text: 'Stake', icon: EarnIcon, mode: 'stake' },
   [WALLET_STAKING_ADDR.toLowerCase()]: {
     text: 'Withdraw',
     icon: WithdrawIcon,
