@@ -7,8 +7,8 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { useTranslation } from '@common/config/localization'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -17,9 +17,7 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import InviteCodeInput, {
-  INVITE_CODE_LENGTH
-} from '@mobile/modules/invite/components/InviteCodeInput'
+import InviteCodeInput, { INVITE_CODE_LENGTH } from '@mobile/modules/invite/components/InviteCodeInput'
 
 const selectIsVerifying = (state: AllControllersMappingType['InviteController']) =>
   state.statuses.verify === 'LOADING'
@@ -52,10 +50,12 @@ const InviteVerifyScreen = () => {
             text={isVerifying ? t('Unlocking...') : t('Unlock access')}
             disabled={!isCodeComplete || isVerifying}
             onPress={handleSubmit}
+            style={spacings.mbLg}
           />
-          <Text fontSize={14} appearance="secondaryText" style={text.center}>
-            {t('Already an Ambire user?')}{' '}
-            <Text fontSize={14} appearance="secondaryText" underline onPress={handleOpenHelpSheet}>
+          <Text fontSize={16} appearance="secondaryText" style={[text.center, spacings.mbSm]}>
+            {t('Already an Ambire user?')}
+            {'\n'}
+            <Text fontSize={16} appearance="secondaryText" underline onPress={handleOpenHelpSheet}>
               {t('Get mobile access.')}
             </Text>
           </Text>
