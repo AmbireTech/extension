@@ -1,10 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
 
+import { NetworkFeature } from '@ambire-common/interfaces/network'
 import { isColibriProviderAvailable } from '@ambire-common/libs/networks/colibri'
-import { getFeatures } from '@ambire-common/libs/networks/networks'
+import {
+  getFeatures,
+  getLoadingFeatures,
+  isNetworkInfoPending
+} from '@ambire-common/libs/networks/networks'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { isValidURL } from '@ambire-common/services/validations'
 import colibriLogo from '@common/assets/images/colibri-logo.png'
@@ -171,6 +176,26 @@ RpcSelectorItem.displayName = 'RpcSelector'
 // On mobile the RPC URLs list expands/collapses instead of scrolling
 const COLLAPSED_RPC_URLS_COUNT = 4
 
+// While the form is checking an RPC URL itself there is no controller info to render yet,
+// and `initial` would show the "?" rows instead of spinners.
+const RPC_CHECK_IN_PROGRESS_FEATURES: NetworkFeature[] = getLoadingFeatures()
+
+/**
+ * Reads the chain id the RPC endpoint reports. Throws when the endpoint is unreachable
+ * or is not a JSON-RPC node.
+ */
+const getRpcChainId = async (rpcUrl: string, expectedChainId?: string | number) => {
+  // no need to call the global provider from ambire-common
+  const rpc = getRpcProvider([rpcUrl], expectedChainId ? Number(expectedChainId) : undefined)
+
+  try {
+    const network = await rpc.getNetwork()
+    return network.chainId
+  } finally {
+    rpc.destroy()
+  }
+}
+
 const NetworkForm = ({
   selectedChainId = 'add-custom-network',
   onCancel,
@@ -186,7 +211,21 @@ const NetworkForm = ({
     state: { allNetworks, networkToAddOrUpdate, statuses },
     dispatch: networksDispatch
   } = useController('NetworksController')
-  const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
+  // Which kind of RPC check is running, if any. A 'change' run is about to replace the
+  // rendered network info, an 'add' run only validates a URL and leaves it alone.
+  const [pendingRpcCheckType, setPendingRpcCheckType] = useState<'add' | 'change' | null>(null)
+  // The RPC URL/chain id the controller was last asked about, so the form can tell whether
+  // the info it reports belongs to that request or still to the previous one.
+  const [requestedNetworkInfo, setRequestedNetworkInfo] = useState<{
+    rpcUrl: string
+    chainId: string
+  } | null>(null)
+  // Identifies the newest RPC check. An older one finishing later must not clear the
+  // loading state the newest one is still waiting on.
+  const rpcCheckRunIdRef = useRef(0)
+  // The chain id the form filled in itself, so the `watch` subscription can tell it apart
+  // from one the user typed and skip a redundant second check.
+  const autoFilledChainIdRef = useRef<string | undefined>(undefined)
   const { styles, theme } = useTheme(getStyles)
 
   const selectedNetwork = useMemo(
@@ -240,15 +279,33 @@ const NetworkForm = ({
     return getAreDefaultsChanged({ ...networkFormValues, rpcUrls }, selectedNetwork)
   }, [networkFormValues, rpcUrls, selectedNetwork, selectedRpcUrl])
 
-  const features = useMemo(
-    () =>
-      networkToAddOrUpdate?.info
-        ? getFeatures(networkToAddOrUpdate?.info, selectedNetwork)
-        : errors.chainId
-          ? getFeatures(undefined, selectedNetwork)
-          : selectedNetwork?.features || getFeatures(undefined, selectedNetwork),
-    [errors.chainId, networkToAddOrUpdate?.info, selectedNetwork]
-  )
+  // True until the controller echoes back the request we made. Until then the info it
+  // reports still belongs to the previous RPC URL.
+  const isAwaitingNetworkInfo = useMemo(() => {
+    if (!requestedNetworkInfo) return false
+
+    return (
+      networkToAddOrUpdate?.rpcUrl !== requestedNetworkInfo.rpcUrl ||
+      networkToAddOrUpdate?.chainId.toString() !== requestedNetworkInfo.chainId
+    )
+  }, [networkToAddOrUpdate?.chainId, networkToAddOrUpdate?.rpcUrl, requestedNetworkInfo])
+
+  const features = useMemo(() => {
+    if (pendingRpcCheckType === 'change' || isAwaitingNetworkInfo)
+      return RPC_CHECK_IN_PROGRESS_FEATURES
+
+    return networkToAddOrUpdate?.info
+      ? getFeatures(networkToAddOrUpdate?.info, selectedNetwork)
+      : errors.chainId
+        ? getFeatures(undefined, selectedNetwork)
+        : selectedNetwork?.features || getFeatures(undefined, selectedNetwork)
+  }, [
+    errors.chainId,
+    isAwaitingNetworkInfo,
+    pendingRpcCheckType,
+    networkToAddOrUpdate?.info,
+    selectedNetwork
+  ])
   const isColibriAvailable = useMemo(() => {
     try {
       return (
@@ -260,7 +317,22 @@ const NetworkForm = ({
   }, [networkFormValues.chainId])
   const shouldShowColibriSettings = isColibriAvailable
 
-  useEffect(() => {
+  const requestNetworkInfo = useCallback(
+    (rpcUrl: string, chainId: bigint) => {
+      setRequestedNetworkInfo({ rpcUrl, chainId: chainId.toString() })
+      networksDispatch({
+        type: 'method',
+        params: {
+          method: 'setNetworkToAddOrUpdate',
+          args: [{ rpcUrl, chainId }]
+        }
+      })
+    },
+    [networksDispatch]
+  )
+
+  const resetNetworkInfo = useCallback(() => {
+    setRequestedNetworkInfo(null)
     networksDispatch({
       type: 'method',
       params: {
@@ -270,111 +342,115 @@ const NetworkForm = ({
     })
   }, [networksDispatch])
 
+  useEffect(() => {
+    resetNetworkInfo()
+  }, [resetNetworkInfo])
+
   const validateRpcUrlAndRecalculateFeatures = useCallback(
-    async (rpcUrl?: string, chainId?: string | number, type: 'add' | 'change' = 'change') => {
-      setValidatingRPC(true)
-      if (type === 'change') {
-        networksDispatch({
-          type: 'method',
-          params: {
-            method: 'setNetworkToAddOrUpdate',
-            args: [null]
-          }
-        })
-      }
-      if (!rpcUrl && !selectedRpcUrl) {
-        setValidatingRPC(false)
-        return
-      }
-      if (!rpcUrl && !chainId) {
-        setValidatingRPC(false)
-        return
+    async (
+      rpcUrl?: string,
+      chainId?: string | number,
+      type: 'add' | 'change' = 'change'
+    ): Promise<boolean> => {
+      rpcCheckRunIdRef.current += 1
+      const runId = rpcCheckRunIdRef.current
+      const isLatestRun = () => runId === rpcCheckRunIdRef.current
+
+      const fail = () => {
+        if (isLatestRun()) {
+          setPendingRpcCheckType(null)
+          // Only on failure, so a successful run replaces the previous info instead of
+          // clearing it - clearing it would render as "nothing requested" for a frame.
+          if (type === 'change') resetNetworkInfo()
+        }
+
+        return false
       }
 
+      const succeed = () => {
+        if (isLatestRun()) setPendingRpcCheckType(null)
+
+        return true
+      }
+
+      setPendingRpcCheckType(type)
+
+      // On the chain id path no RPC URL is passed, so the already selected one is checked
+      const rpcUrlToValidate = rpcUrl || selectedRpcUrl
+      if (!rpcUrlToValidate) return fail()
+      if (!rpcUrl && !chainId) return fail()
+
       if (rpcUrl && !rpcUrl.startsWith('http')) {
-        setValidatingRPC(false)
         setError('rpcUrl', {
           type: 'custom-error',
           message: 'RPC URLs must include the correct HTTP/HTTPS prefix'
         })
-        return
+        return fail()
       }
 
       if (rpcUrl && !isValidURL(rpcUrl)) {
-        setValidatingRPC(false)
         setError('rpcUrl', { type: 'custom-error', message: 'Invalid RPC URL' })
-        return
+        return fail()
       }
 
       if (rpcUrl && rpcUrls.includes(rpcUrl)) {
-        setValidatingRPC(false)
         setError('rpcUrl', { type: 'custom-error', message: 'RPC URL already added' })
-        return
+        return fail()
       }
 
+      let rpcChainId: bigint
       try {
-        if (!rpcUrl) throw new Error('No RPC URL provided')
-        // no need to call the global provider from ambire-common
-        const rpc = getRpcProvider([rpcUrl], chainId ? Number(chainId) : undefined)
-        const network = await rpc.getNetwork()
-        rpc.destroy()
-
-        if (!chainId) {
-          chainId = Number(network.chainId).toString()
-          setValue('chainId', chainId)
-        }
-
-        if (Number(network.chainId) !== Number(chainId) && rpcUrl) {
-          setValidatingRPC(false)
-          setError('rpcUrl', {
-            type: 'custom-error',
-            message: `RPC chain id ${network.chainId} does not match ${selectedNetwork?.name} chain id ${chainId}`
-          })
-          return
-        }
-
-        if (
-          allNetworks.find((n) => n.chainId === network.chainId) &&
-          selectedChainId === 'add-custom-network'
-        ) {
-          setValidatingRPC(false)
-          setError('rpcUrl', {
-            type: 'custom-error',
-            message: `You already have a network with RPC chain id ${network.chainId}`
-          })
-          return
-        }
-
-        if (
-          type === 'change' &&
-          (rpcUrl !== selectedNetwork?.selectedRpcUrl ||
-            Number(chainId) !== Number(selectedNetwork?.chainId))
-        ) {
-          if (!rpcUrl) {
-            addToast('Invalid RPC url', { type: 'error' })
-            return
-          }
-
-          networksDispatch({
-            type: 'method',
-            params: {
-              method: 'setNetworkToAddOrUpdate',
-              args: [{ rpcUrl: rpcUrl as string, chainId: BigInt(chainId) }]
-            }
-          })
-        }
-        setValidatingRPC(false)
-        clearErrors('rpcUrl')
-      } catch (error) {
-        console.error(error)
-        setValidatingRPC(false)
+        rpcChainId = await getRpcChainId(rpcUrlToValidate, chainId)
+      } catch {
+        // An unreachable endpoint is the expected outcome here, not a defect
         setError('rpcUrl', { type: 'custom-error', message: 'Invalid RPC URL' })
+        return fail()
       }
+
+      let validatedChainId = chainId
+      if (!validatedChainId) {
+        validatedChainId = Number(rpcChainId).toString()
+        // The `watch` subscription reacts to this write, so mark the value as the form's
+        // own to keep it from starting a second check for a chain id nobody typed.
+        autoFilledChainIdRef.current = validatedChainId
+        setValue('chainId', validatedChainId)
+      }
+
+      if (Number(rpcChainId) !== Number(validatedChainId)) {
+        setError('rpcUrl', {
+          type: 'custom-error',
+          message: `RPC chain id ${rpcChainId} does not match ${selectedNetwork?.name} chain id ${validatedChainId}`
+        })
+        return fail()
+      }
+
+      if (
+        allNetworks.find((n) => n.chainId === rpcChainId) &&
+        selectedChainId === 'add-custom-network'
+      ) {
+        setError('rpcUrl', {
+          type: 'custom-error',
+          message: `You already have a network with RPC chain id ${rpcChainId}`
+        })
+        return fail()
+      }
+
+      if (
+        type === 'change' &&
+        (rpcUrlToValidate !== selectedNetwork?.selectedRpcUrl ||
+          Number(validatedChainId) !== Number(selectedNetwork?.chainId))
+      ) {
+        requestNetworkInfo(rpcUrlToValidate, rpcChainId)
+      }
+
+      clearErrors('rpcUrl')
+      return succeed()
     },
     [
       selectedRpcUrl,
       rpcUrls,
-      networksDispatch,
+      requestNetworkInfo,
+      resetNetworkInfo,
       setError,
       allNetworks,
       selectedChainId,
@@ -382,8 +458,7 @@ const NetworkForm = ({
       selectedNetwork?.chainId,
       selectedNetwork?.name,
       clearErrors,
-      setValue,
-      addToast
+      setValue
     ]
   )
 
@@ -436,7 +511,11 @@ const NetworkForm = ({
       }
 
       if (name === 'chainId') {
-        await validateRpcUrlAndRecalculateFeatures(undefined, value.chainId)
+        if (String(value.chainId) === autoFilledChainIdRef.current) {
+          autoFilledChainIdRef.current = undefined
+        } else {
+          await validateRpcUrlAndRecalculateFeatures(undefined, value.chainId)
+        }
       }
 
       if (name === 'explorerUrl') {
@@ -579,18 +658,10 @@ const NetworkForm = ({
         setSelectedRpcUrl(url)
 
         const chainId = watch('chainId')
-        if (chainId) {
-          networksDispatch({
-            type: 'method',
-            params: {
-              method: 'setNetworkToAddOrUpdate',
-              args: [{ rpcUrl: url, chainId: BigInt(chainId) }]
-            }
-          })
-        }
+        if (chainId) requestNetworkInfo(url, BigInt(chainId))
       }
     },
-    [selectedRpcUrl, networksDispatch, watch]
+    [selectedRpcUrl, requestNetworkInfo, watch]
   )
 
   const handleRemoveRpcUrl = useCallback(
@@ -613,26 +684,43 @@ const NetworkForm = ({
   const handleAddRpcUrl = useCallback(
     async (value: string) => {
       const trimmedVal = value.trim()
-      await validateRpcUrlAndRecalculateFeatures(trimmedVal, watch('chainId'), 'add')
-      if (!errors.rpcUrl) {
-        setRpcUrls((p) => [trimmedVal, ...p])
-        if (!rpcUrls.length) {
-          handleSelectRpcUrl(trimmedVal)
-        }
+      const isValid = await validateRpcUrlAndRecalculateFeatures(
+        trimmedVal,
+        watch('chainId'),
+        'add'
+      )
+      if (!isValid) return
+
+      setRpcUrls((p) => [trimmedVal, ...p])
+      if (!rpcUrls.length) {
+        handleSelectRpcUrl(trimmedVal)
       }
     },
-    [rpcUrls.length, watch, errors, handleSelectRpcUrl, validateRpcUrlAndRecalculateFeatures]
+    [rpcUrls.length, watch, handleSelectRpcUrl, validateRpcUrlAndRecalculateFeatures]
   )
 
   const isSaveOrAddButtonDisabled = useMemo(
     () =>
       !!errorCount ||
-      isValidatingRPC ||
+      !!pendingRpcCheckType ||
+      // Nothing to submit until an RPC URL is selected, which is also what
+      // `handleSubmitButtonPress` requires
+      !selectedRpcUrl ||
       features.some((f) => f.level === 'loading') ||
+      // The features stream in one by one and are all resolved before `flagged` is known,
+      // so they cannot answer whether the check is over
+      (!!requestedNetworkInfo && isNetworkInfoPending(networkToAddOrUpdate?.info)) ||
       !!features.filter((f) => f.id === 'flagged')[0],
     // errorCount must be a dependency in order to re-calculate the value when
     // errors change. Using errors as a dependency doesn't work
-    [errorCount, features, isValidatingRPC]
+    [
+      errorCount,
+      features,
+      pendingRpcCheckType,
+      networkToAddOrUpdate?.info,
+      requestedNetworkInfo,
+      selectedRpcUrl
+    ]
   )
 
   const displayedRpcUrls = useMemo(
@@ -834,7 +922,7 @@ const NetworkForm = ({
                     <View style={{ paddingTop: 27 }}>
                       <Button
                         text={
-                          value.length && !errors.rpcUrl && isValidatingRPC
+                          value.length && !errors.rpcUrl && !!pendingRpcCheckType
                             ? t('Adding...')
                             : t('Add')
                         }
@@ -843,7 +931,7 @@ const NetworkForm = ({
                           !value.length ||
                           (!!errors.rpcUrl &&
                             errors.rpcUrl.message !== 'At least one RPC URL should be added') ||
-                          isValidatingRPC
+                          !!pendingRpcCheckType
                         }
                         containerStyle={{ height: 40 }}
                         style={{ height: 40 }}
