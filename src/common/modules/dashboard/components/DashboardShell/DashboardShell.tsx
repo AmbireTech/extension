@@ -31,7 +31,6 @@ interface Props {
 // Instant placeholder shown while the data-heavy controllers load
 const DashboardShell = ({ contentContainerStyle }: Props) => {
   const { state: account } = useController('SelectedAccountController', 'account')
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
 
   // Read synchronously so the shell paints the last-known balance on its first render.
@@ -42,12 +41,10 @@ const DashboardShell = ({ contentContainerStyle }: Props) => {
   // Show a skeleton when there's no fresh cache, or the last stored balance had
   // balance-affecting errors/warnings (it may be inaccurate).
   const showBalanceSkeleton = !cachedBalance || cachedBalance.hasBalanceAffectingErrors
-  const isCachedBalanceStale = useMemo(() => {
-    const isFirstLoad = Object.keys(portfolio.totalBalance).length === 0
-    if (!cachedBalance || isFirstLoad) return false
-
-    return isCachedDashboardBalanceStale(cachedBalance)
-  }, [cachedBalance, portfolio.totalBalance])
+  const isCachedBalanceStale = useMemo(
+    () => !!cachedBalance && isCachedDashboardBalanceStale(cachedBalance),
+    [cachedBalance]
+  )
 
   return (
     <>
