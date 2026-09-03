@@ -15,7 +15,8 @@ interface Style {
 
 const CELL_HEIGHT = 44
 const CELL_BORDER_RADIUS = 6
-const SEPARATOR_WIDTH = 8
+const SEPARATOR_WIDTH = 10
+const SEPARATOR_HEIGHT = 2
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
@@ -42,11 +43,13 @@ const getStyles = (theme: ThemeProps) =>
       borderRadius: CELL_BORDER_RADIUS,
       backgroundColor: theme.secondaryBackground
     },
+    // The dash separating the two groups of six.
     separator: {
       width: SEPARATOR_WIDTH,
-      height: 1,
+      height: SEPARATOR_HEIGHT,
+      borderRadius: SEPARATOR_HEIGHT / 2,
       marginHorizontal: SPACING_MI,
-      backgroundColor: theme.secondaryBorder
+      backgroundColor: theme.tertiaryText
     },
     // The real input sits invisible on top of the cells, so the OS keyboard,
     // selection and paste all keep working while the cells do the rendering.

@@ -17,7 +17,9 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import InviteCodeInput, { INVITE_CODE_LENGTH } from '@mobile/modules/invite/components/InviteCodeInput'
+import InviteCodeInput, {
+  INVITE_CODE_LENGTH
+} from '@mobile/modules/invite/components/InviteCodeInput'
 
 const selectIsVerifying = (state: AllControllersMappingType['InviteController']) =>
   state.statuses.verify === 'LOADING'

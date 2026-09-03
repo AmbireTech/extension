@@ -105,7 +105,7 @@ const InviteCodeInput = ({ value, onChange, onSubmitEditing, editable = true }: 
               <View
                 style={[
                   styles.cell,
-                  { borderColor: isActive ? theme.primary : theme.secondaryBorder }
+                  { borderColor: isActive ? theme.primary : theme.tertiaryBackground }
                 ]}
               >
                 <Text fontSize={18} weight="medium" numberOfLines={1}>
