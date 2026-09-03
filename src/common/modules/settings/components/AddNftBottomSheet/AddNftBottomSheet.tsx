@@ -14,9 +14,10 @@ import { isValidAddress } from '@ambire-common/services/address'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Alert from '@common/components/Alert/Alert'
 import CollectionCard from '@common/components/CollectionCard'
+import Input from '@common/components/Input'
 import { NetworkIconIdType } from '@common/components/NetworkIcon/NetworkIcon'
 import Spinner from '@common/components/Spinner'
-import Input from '@common/components/Input'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -159,6 +160,8 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     try {
       checksummedAddress = getAddress(address)
     } catch (e) {
+      // The address passed `isValidAddress`, so a failure here is a disagreement
+      // between the two checks rather than bad input
       console.error('Error while normalizing the NFT collection address', e)
       addToast(t('This address is not valid. Please check it and try again.'), { type: 'error' })
 

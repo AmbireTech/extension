@@ -2,8 +2,8 @@ const MAX_LENGTH = 10
 const VISIBLE_DIGITS = 4
 
 /**
- * Ids of collectibles are sometimes hashes, which are too long to be displayed
- * in full and carry no meaning to the user beyond identifying the collectible.
+ * Collectible IDs (ERC-721 token IDs) can be very large numbers, which are too long to
+ * display in full and carry no meaning to the user beyond identifying the collectible.
  */
 const shortenCollectibleId = (tokenId: bigint) => {
   const id = tokenId.toString()
