@@ -789,6 +789,19 @@ export const handleWcSessionBroadcast = async (payload: {
 }
 
 /**
+ * Tears down one WalletConnect session, keeping a relay failure local. Callers tear down
+ * several sessions and then revoke auto-login policies, and neither may be skipped because
+ * one socket was down - `handleWcSessionBroadcast` rethrows in that case.
+ */
+export const terminateWcSession = async (wcSessionTopic: string) => {
+  try {
+    await handleWcSessionBroadcast({ wcSessionTopic, chainId: 1, event: 'disconnect', data: {} })
+  } catch (error) {
+    console.error('[WalletConnect] Failed to disconnect session', wcSessionTopic, error)
+  }
+}
+
+/**
  * Gets any pending sessions that need to be restored.
  * Call this once the store is ready, then dispatch RESTORE_WC_SESSIONS.
  */

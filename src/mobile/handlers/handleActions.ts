@@ -12,11 +12,11 @@ import { Action, MethodAction } from '@common/types/actions'
 import {
   approveWalletConnectSession,
   approveWcAuthenticate,
-  handleWcSessionBroadcast,
   prepareWcAuthenticate,
   rejectWalletConnectSession,
   rejectWcAuthenticate,
-  respondToWalletConnectRequest
+  respondToWalletConnectRequest,
+  terminateWcSession
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import { createWcBridgeMessenger } from '@mobile/modules/wallet-connect/services/wcBridgeMessenger'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
@@ -165,12 +165,7 @@ export const handleActions = async (
       }
 
       for (const topic of wcTopicsToTerminate) {
-        await handleWcSessionBroadcast({
-          wcSessionTopic: topic,
-          chainId: 1,
-          event: 'disconnect',
-          data: {}
-        })
+        await terminateWcSession(topic)
       }
 
       // Auto-login policies are domain-wide (not per-source), so only revoke when
@@ -196,12 +191,7 @@ export const handleActions = async (
       const disconnectedDapps = await mainCtrl.dapps.disconnectAllDapps(params.source)
 
       for (const topic of wcTopicsToTerminate) {
-        await handleWcSessionBroadcast({
-          wcSessionTopic: topic,
-          chainId: 1,
-          event: 'disconnect',
-          data: {}
-        })
+        await terminateWcSession(topic)
       }
 
       // Process sequentially: each disconnect may call `revokeAllPoliciesForDomain`, which
@@ -382,6 +372,9 @@ export const handleActions = async (
     }
 
     case 'SETUP_WC_SESSION_MESSENGER': {
+      // Dapps is deferred on mobile, so a pairing can land before it has loaded - and
+      // `addDappFromIdentity` below no-ops until it is ready. Idempotent.
+      await mainCtrl.dapps.init()
       // Remove temp session if it exists (the one that was created during handshake)
       if (params.tempSessionTopic) {
         mainCtrl.dapps.deleteDappSessionByWcTopic(params.tempSessionTopic)
@@ -415,6 +408,9 @@ export const handleActions = async (
     }
 
     case 'RESTORE_WC_SESSIONS': {
+      // Dapps is deferred on mobile and the store reports ready without it, so a WC restore
+      // can land first - and `addDappFromIdentity` below no-ops until it is. Idempotent.
+      await mainCtrl.dapps.init()
       for (const wcSession of params.sessions) {
         const { topic, name, icon, url, chainId, candidateChainIds } = wcSession
         try {
