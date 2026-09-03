@@ -11,6 +11,7 @@ import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import NfcHardwareSigner from '@common/modules/hardware-wallets/signers/NfcHardwareSigner'
 import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
@@ -214,7 +215,7 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
         ledger: LedgerSigner,
         trezor: TrezorSigner,
         qr: QrHardwareSigner,
-        nfc: nfcCtrl
+        nfc: NfcHardwareSigner
       } as any,
       externalSignerControllers: {
         ledger: ledgerCtrl,
