@@ -17,7 +17,6 @@ import CollectionCard from '@common/components/CollectionCard'
 import Input from '@common/components/Input'
 import { NetworkIconIdType } from '@common/components/NetworkIcon/NetworkIcon'
 import Spinner from '@common/components/Spinner'
-import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -368,7 +367,7 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         <Alert
           type="warning"
           isTypeLabelHidden
-          title={t('This NFT is hidden. Unhide it from the NFTs tab to see it again.')}
+          title={t('This NFT is hidden. Unhide it from the Hidden NFTs list to see it again.')}
           style={{ ...spacings.phSm, ...spacings.pvSm }}
         />
       ) : null}
