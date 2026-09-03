@@ -17,9 +17,7 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import InviteCodeInput, {
-  INVITE_CODE_LENGTH
-} from '@mobile/modules/invite/components/InviteCodeInput'
+import InviteCodeInput, { INVITE_CODE_LENGTH } from '@mobile/modules/invite/components/InviteCodeInput'
 
 const selectIsVerifying = (state: AllControllersMappingType['InviteController']) =>
   state.statuses.verify === 'LOADING'
@@ -32,6 +30,8 @@ const InviteVerifyScreen = () => {
   const { ref: helpSheetRef, open: openHelpSheet, close: closeHelpSheet } = useModalize()
 
   const handleOpenHelpSheet = useCallback(() => openHelpSheet(), [openHelpSheet])
+
+  const handleCloseHelpSheet = useCallback(() => closeHelpSheet(), [closeHelpSheet])
 
   const isCodeComplete = code.length === INVITE_CODE_LENGTH
 
@@ -83,11 +83,26 @@ const InviteVerifyScreen = () => {
 
       <BottomSheet id="invite-code-help" sheetRef={helpSheetRef} closeBottomSheet={closeHelpSheet}>
         <ModalHeader handleClose={closeHelpSheet} title={t('How to get mobile access?')} />
-        <Text fontSize={16} appearance="secondaryText">
+        <Text fontSize={16} appearance="secondaryText" style={spacings.mbLg}>
           {t(
-            'You can find your invite code by clicking on the "Ambire Mobile" banner in the browser extension dashboard.'
+            'Everyone using the Ambire extension on their computer has an invite code waiting for them.'
           )}
         </Text>
+        <Text fontSize={16} weight="medium" style={spacings.mb}>
+          {t('1. Open the Ambire extension on your computer.')}
+        </Text>
+        <Text fontSize={16} weight="medium" style={spacings.mb}>
+          {t('2. Tap the "Ambire Mobile" banner on the dashboard.')}
+        </Text>
+        <Text fontSize={16} weight="medium" style={spacings.mbLg}>
+          {t('3. Copy the code it shows you and enter it here.')}
+        </Text>
+        <Button
+          type="secondary"
+          text={t('Got it')}
+          onPress={handleCloseHelpSheet}
+          hasBottomSpacing={false}
+        />
       </BottomSheet>
     </MobileLayoutContainer>
   )
