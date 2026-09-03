@@ -238,7 +238,7 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
 
     bootProfiler.startSpan(BOOT_MARK.rnAutoLockCtrlConstructed)
 
-    new AutoLockController(eventEmitterRegistry, () => mainCtrl!.keystore.lock(), storage)
+    new AutoLockController(eventEmitterRegistry, () => mainCtrl!.lock(), storage)
     bootProfiler.endSpan(BOOT_MARK.rnAutoLockCtrlConstructed)
 
     mainCtrl.ui.addView({ id: 'default-mobile-app-view', type: 'mobile' })
