@@ -41,7 +41,6 @@ const InviteVerifyScreen = () => {
 
   return (
     <MobileLayoutContainer
-      withHorizontalPadding
       footer={
         <>
           <Button
@@ -50,9 +49,9 @@ const InviteVerifyScreen = () => {
             text={isVerifying ? t('Unlocking...') : t('Unlock access')}
             disabled={!isCodeComplete || isVerifying}
             onPress={handleSubmit}
-            style={spacings.mbLg}
+            style={[spacings.mbLg, spacings.mtLg]}
           />
-          <Text fontSize={16} appearance="secondaryText" style={[text.center, spacings.mbSm]}>
+          <Text fontSize={16} appearance="secondaryText" style={text.center}>
             {t('Already an Ambire user?')}
             {'\n'}
             <Text fontSize={16} appearance="secondaryText" underline onPress={handleOpenHelpSheet}>
@@ -62,7 +61,7 @@ const InviteVerifyScreen = () => {
         </>
       }
     >
-      <MobileLayoutWrapperMainContent>
+      <MobileLayoutWrapperMainContent withScroll>
         <View style={[flexbox.alignCenter, spacings.mtXl, spacings.mbXl]}>
           <AmbireLogoWithBackgroundAndLogotype />
         </View>
