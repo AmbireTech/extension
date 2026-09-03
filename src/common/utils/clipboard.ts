@@ -1,1 +1,1 @@
-export { setStringAsync } from 'expo-clipboard'
+export { getStringAsync, setStringAsync } from 'expo-clipboard'

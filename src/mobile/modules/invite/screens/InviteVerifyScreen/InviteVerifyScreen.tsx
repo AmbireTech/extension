@@ -72,9 +72,6 @@ const InviteVerifyScreen = () => {
         <Text fontSize={16} appearance="secondaryText" style={[text.center, spacings.mb2Xl]}>
           {t('Ambire Mobile is currently invite-only. Enter your code to get started.')}
         </Text>
-        <Text fontSize={14} appearance="secondaryText" style={spacings.mbTy}>
-          {t('Invite code')}
-        </Text>
         <InviteCodeInput
           value={code}
           onChange={setCode}

@@ -1,44 +1,51 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   container: ViewStyle
+  header: ViewStyle
   cells: ViewStyle
   cell: ViewStyle
   separator: ViewStyle
   hiddenInput: TextStyle
 }
 
-const CELL_HEIGHT = 36
-const SEPARATOR_WIDTH = 10
+const CELL_HEIGHT = 44
+const CELL_BORDER_RADIUS = 6
+const SEPARATOR_WIDTH = 8
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     container: {
       width: '100%'
     },
+    header: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifySpaceBetween,
+      ...spacings.mbTy
+    },
     cells: {
       ...flexbox.directionRow,
-      ...flexbox.alignEnd,
+      ...flexbox.alignCenter,
       width: '100%'
     },
     cell: {
       ...flexbox.flex1,
-      ...flexbox.alignCenter,
-      ...flexbox.justifyEnd,
+      ...flexbox.center,
       height: CELL_HEIGHT,
       marginHorizontal: SPACING_MI / 2,
-      borderBottomWidth: 1,
-      ...spacings.pbMi
+      borderWidth: 1,
+      borderRadius: CELL_BORDER_RADIUS,
+      backgroundColor: theme.secondaryBackground
     },
     separator: {
       width: SEPARATOR_WIDTH,
       height: 1,
       marginHorizontal: SPACING_MI,
-      marginBottom: SPACING_TY,
       backgroundColor: theme.secondaryBorder
     },
     // The real input sits invisible on top of the cells, so the OS keyboard,
