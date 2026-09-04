@@ -26,9 +26,10 @@ type Props = {
   onChange: (value: string) => void
   onSubmitEditing: () => void
   editable?: boolean
+  error?: string
 }
 
-const InviteCodeInput = ({ value, onChange, onSubmitEditing, editable = true }: Props) => {
+const InviteCodeInput = ({ value, onChange, onSubmitEditing, editable = true, error }: Props) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { theme } = useTheme()
@@ -67,6 +68,7 @@ const InviteCodeInput = ({ value, onChange, onSubmitEditing, editable = true }: 
       buttonProps={{ testID: 'paste-invite-code-btn', style: spacings.mrMd }}
       onButtonPress={handlePaste}
       maxLength={INVITE_CODE_LENGTH}
+      error={error}
       nativeInputStyle={{ fontSize: 18, letterSpacing: 2 }}
       containerStyle={spacings.mbLg}
       backgroundColor={theme.secondaryBackground}

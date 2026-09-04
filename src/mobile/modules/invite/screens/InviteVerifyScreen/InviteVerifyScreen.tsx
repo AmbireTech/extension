@@ -24,10 +24,24 @@ import InviteCodeInput, {
 const selectIsVerifying = (state: AllControllersMappingType['InviteController']) =>
   state.statuses.verify === 'LOADING'
 
+const selectErrorMessage = (state: AllControllersMappingType['InviteController']) =>
+  state.errorMessage
+
 const InviteVerifyScreen = () => {
   const { t } = useTranslation()
   const { state: isVerifying, dispatch } = useController('InviteController', selectIsVerifying)
+  const { state: errorMessage } = useController('InviteController', selectErrorMessage)
   const [code, setCode] = useState('')
+
+  const handleCodeChange = useCallback(
+    (nextCode: string) => {
+      setCode(nextCode)
+
+      if (errorMessage)
+        dispatch({ type: 'method', params: { method: 'resetErrorState', args: [] } })
+    },
+    [dispatch, errorMessage]
+  )
 
   const { ref: helpSheetRef, open: openHelpSheet, close: closeHelpSheet } = useModalize()
 
@@ -77,9 +91,10 @@ const InviteVerifyScreen = () => {
         </Text>
         <InviteCodeInput
           value={code}
-          onChange={setCode}
+          onChange={handleCodeChange}
           onSubmitEditing={handleSubmit}
           editable={!isVerifying}
+          error={errorMessage}
         />
       </MobileLayoutWrapperMainContent>
 
