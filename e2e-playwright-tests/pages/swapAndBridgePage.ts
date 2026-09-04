@@ -135,22 +135,38 @@ export class SwapAndBridgePage extends BasePage {
   async verifySendMaxTokenAmount(fromToken: Token) {
     await this.openSwapAndBridge()
     await this.selectSendToken(fromToken)
-
     await this.click(selectors.maxAmountButton)
-    const maxBalance = parseFloat(await this.getText(selectors.maxAvailableAmount))
 
-    await this.page.waitForTimeout(500) // number has small delay before appearing
+    const maxLable = this.page.getByTestId(selectors.maxAvailableAmount)
+    const amountInput = this.page.getByTestId(selectors.fromAmountInputSab)
 
-    const sendAmount = parseFloat(await this.getValue(selectors.fromAmountInputSab))
-    const roundSendAmount = this.roundAmount(sendAmount, 2)
+    let rawMaxLable = ''
+    let maxBalance = NaN
+    let sendAmount = NaN
 
-    // There is an intermittent difference in balances when running on CI; I have added an Alert to monitor it and using toBeCloseTo
-    if (maxBalance !== roundSendAmount) {
-      console.log(
-        `⚠️ Token: ${fromToken} | maxBalance: ${maxBalance}, sendAmount: ${sendAmount} | roundSendAmount: ${roundSendAmount}`
+    await expect
+      .poll(
+        async () => {
+          rawMaxLable = ((await maxLable.textContent()) ?? '').trim()
+          maxBalance = parseFloat(rawMaxLable)
+          sendAmount = parseFloat(await amountInput.inputValue())
+
+          if (!Number.isFinite(maxBalance) || !Number.isFinite(sendAmount)) return false
+
+          const decimals = (rawMaxLable.split('.')[1] ?? '').replace(/\D.*/, '').length // will break on Tokens that start with numbers which we don't use in tests ATM
+          return Math.abs(maxBalance - sendAmount) <= Math.pow(10, -decimals)
+        },
+        {
+          timeout: 15000,
+          message: `max label never matched with input for token ${fromToken.symbol}`
+        }
       )
-    }
-    expect(maxBalance).toBeCloseTo(roundSendAmount, 1)
+      .toBe(true)
+
+    console.log(
+      `Token: ${fromToken.symbol} | label: "${rawMaxLable}" | ` +
+        `maxBalance: ${maxBalance} | sendAmount: ${sendAmount}`
+    )
   }
 
   async verifyDefaultReceiveToken(sendToken: Token, receiveToken: Token): Promise<void> {
@@ -315,7 +331,7 @@ export class SwapAndBridgePage extends BasePage {
   async getUSDTextContent(): Promise<[number, string]> {
     const content = await this.page
       .getByTestId(selectors.switchCurrencySab)
-      .innerText({ timeout: 5000 })
+      .innerText({ timeout: 10000 })
 
     let currency: string | null = null
     let amount: string | null = null

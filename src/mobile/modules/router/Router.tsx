@@ -2,7 +2,6 @@ import * as SplashScreen from 'expo-splash-screen'
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { AppState, View } from 'react-native'
 import { KeyboardController } from 'react-native-keyboard-controller'
-import { Route, Routes } from 'react-router-native'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
@@ -10,19 +9,14 @@ import useController from '@common/hooks/useController'
 import useFonts from '@common/hooks/useFonts'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
-import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
-import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
-import { ROUTES } from '@common/modules/router/constants/common'
 import eventBus from '@common/services/event/eventBus'
 import flexbox from '@common/styles/utils/flexbox'
 import useMobileInviteGate from '@mobile/hooks/useMobileInviteGate'
 import useNativeThemeSync from '@mobile/hooks/useNativeThemeSync'
-import DashboardScreen from '@mobile/modules/dashboard/screens/DashboardScreen'
 import useLedgerConnectionLifecycle from '@mobile/modules/hardware-wallet/hooks/useLedgerConnectionLifecycle'
 import InviteVerifyScreen from '@mobile/modules/invite/screens/InviteVerifyScreen'
-import KeyStoreUnlockScreen from '@mobile/modules/keystore/screens/KeyStoreUnlockScreen'
-import MainRoutes from '@mobile/modules/router/components/MainRoutes'
 import RequestsBottomSheet from '@mobile/modules/router/components/RequestsBottomSheet'
+import NavigationStack from '@mobile/modules/router/stack'
 import { markSplashHidden } from '@mobile/services/bootProfiler'
 
 const Router = () => {
@@ -103,17 +97,7 @@ const Router = () => {
 
   return (
     <View style={flexbox.flex1}>
-      <Routes>
-        <Route element={<KeystoreUnlockedRoute />}>
-          <Route element={<AuthenticatedRoute />}>
-            <Route path={ROUTES.dashboard} element={<DashboardScreen />} />
-          </Route>
-        </Route>
-        <Route path={ROUTES.keyStoreUnlock} element={<KeyStoreUnlockScreen />} />
-        {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
-        <Route path="*" element={null} />
-      </Routes>
-      <MainRoutes />
+      <NavigationStack />
 
       <RequestsBottomSheet
         sheetRef={requestModalRef as any}

@@ -39,8 +39,8 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     state: { accountStates },
     dispatch: accountsDispatch
   } = useController('AccountsController')
-  const { keys } = useController('KeystoreController').state
-  const { networks } = useController('NetworksController').state
+  const { state: keys } = useController('KeystoreController', 'keys')
+  const { state: networks } = useController('NetworksController', 'networks')
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const {
     dispatch: featureFlagsDispatch,
