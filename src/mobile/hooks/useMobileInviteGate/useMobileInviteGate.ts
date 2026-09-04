@@ -7,7 +7,8 @@ import { hasLegacyAccounts } from '@mobile/services/legacyMigration/legacyMigrat
 
 // Real invite codes, recorded for the users who were already on the app before the gate got
 // introduced, so that their verified code is never blank. Two of them, to keep the two groups
-// apart in the invite stats.
+// apart in the invite stats. Fine to be public - the invite gate was never meant to be strongly
+// protective, so it's no problem if someone finds these.
 const V1_MIGRATED_USER_CODE = '0dd2c698578f'
 const EXISTING_V2_USER_CODE = 'b1d2c702fb5d'
 
