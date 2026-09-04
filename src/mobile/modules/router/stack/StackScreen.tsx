@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native'
 import { ScreenStackItem } from 'react-native-screens'
 
 import { ScreenFocusProvider } from '@common/contexts/screenFocusContext'
+import { ScreenLocationProvider } from '@common/contexts/screenLocationContext'
 import useTheme from '@common/hooks/useTheme'
 import AppRoutes from '@mobile/modules/router/components/AppRoutes'
 
@@ -14,11 +15,20 @@ type Props = {
   isFocused: boolean
   /** Whether the platform has finished transitioning to this screen. */
   isSettled: boolean
+  /** Whether there is a screen underneath this one to pop to. */
+  canGoBack: boolean
   gestureEnabled: boolean
   onDismissed: (dismissCount: number) => void
 }
 
-const StackScreen = ({ entry, isFocused, isSettled, gestureEnabled, onDismissed }: Props) => {
+const StackScreen = ({
+  entry,
+  isFocused,
+  isSettled,
+  canGoBack,
+  gestureEnabled,
+  onDismissed
+}: Props) => {
   const { theme } = useTheme()
 
   const handleDismissed = useCallback(
@@ -44,7 +54,9 @@ const StackScreen = ({ entry, isFocused, isSettled, gestureEnabled, onDismissed 
       onDismissed={handleDismissed}
     >
       <ScreenFocusProvider isFocused={isFocused} isSettled={isSettled}>
-        <AppRoutes location={entry.location} />
+        <ScreenLocationProvider location={entry.location} canGoBack={canGoBack}>
+          <AppRoutes location={entry.location} />
+        </ScreenLocationProvider>
       </ScreenFocusProvider>
     </ScreenStackItem>
   )

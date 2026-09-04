@@ -87,6 +87,7 @@ const NavigationStack = () => {
           entry={entry}
           isFocused={entry.cardKey === topCardKey}
           isSettled={entry.cardKey === settledCardKey}
+          canGoBack={index > 0}
           gestureEnabled={index > 0 && !isSheetOpen && !isBrowserWalkingItsOwnHistory}
           onDismissed={handleDismissed}
         />
