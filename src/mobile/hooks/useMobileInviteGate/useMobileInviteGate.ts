@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { INVITE_STATUS } from '@ambire-common/controllers/invite/invite'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -32,7 +32,9 @@ const useMobileInviteGate = () => {
 
   // Users updating from the legacy v1 app have an empty keystore (their v1 data lives in a
   // separate storage), hence the check on the legacy storage rather than on the keystore.
-  const isV1MigratedUser = hasLegacyAccounts()
+  // Reading the legacy storage is a sync (blocking) op and its result can't change at runtime,
+  // so it must not re-run on every re-render of the component tree that uses this hook.
+  const isV1MigratedUser = useMemo(() => hasLegacyAccounts(), [])
   const isExistingUser = isV1MigratedUser || isReadyToStoreKeys
   const isVerified = inviteStatus === INVITE_STATUS.VERIFIED
 
