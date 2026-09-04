@@ -7,7 +7,7 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { getStringAsync } from '@common/utils/clipboard'
 
-/** The mobile invite codes are 12 characters long. */
+/** The invite codes thought the history of the project (during extension launch, etc) were always 12 chars long. */
 export const INVITE_CODE_LENGTH = 12
 
 // Codes could be copied around with separators in them, so make pasting forgiving,
