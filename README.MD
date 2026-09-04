@@ -68,6 +68,10 @@ git submodule update
 
 Create ".env" file in the root directory and fill in all variables, see ".env-sample" for a reference.
 
+## Crash Analytics
+
+Anonymous crash reports go to a self-hosted Sentry. What we do to keep private keys, seed phrases and passwords out of them is documented in [`CRASH-ANALYTICS.md`](./src/common/config/analytics/CRASH-ANALYTICS.md).
+
 ## Editor Config
 
 Make sure your code editor has plugins that support the following configuration files: `.editorconfig`, `.prettierrc`, `tsconfig.json`, `eslintrc.js`, [`import-sorter.json`](https://github.com/SoominHan/import-sorter).
@@ -469,13 +473,11 @@ $LEDGER_EMULATOR_SEED='<LEDGER-SEED-PHRASE>' ./start-emulator.sh
 lsof -i :5000
 ```
 
-If nothing is returned, the port is free.
-If you see a process listed, the port is occupied.
+If nothing is returned, the port is free. If you see a process listed, the port is occupied.
 
 2. **macOS specific context**
 
-On macOS, port 5000 is commonly taken by AirPlay Receiver (enabled by default on newer macOS versions).
-To check:
+On macOS, port 5000 is commonly taken by AirPlay Receiver (enabled by default on newer macOS versions). To check:
 
 System Settings → General → AirDrop & Handoff → AirPlay Receiver
 
