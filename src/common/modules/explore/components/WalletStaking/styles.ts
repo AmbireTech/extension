@@ -17,6 +17,7 @@ interface Styles {
   walletStakingIcon: ImageStyle
   screenContent: ViewStyle
   mainContent: ViewStyle
+  mainContentContent: ViewStyle
   learnMore: ViewStyle
   tabs: ViewStyle
   tab: ViewStyle
@@ -41,12 +42,18 @@ interface Styles {
   amountNativeInput: TextStyle
   amountSlider: ViewStyle
   amountSliderTrack: ViewStyle
-  amountSliderProgress: ViewStyle
+  amountSliderStaked: ViewStyle
+  amountSliderProgressContainer: ViewStyle
+  amountSliderThreshold: ViewStyle
   amountSliderThumb: ViewStyle
   amountSliderLabels: ViewStyle
+  summaryRow: ViewStyle
   feePreviewRow: ViewStyle
   feePreviewLabel: ViewStyle
   feeDetailsButton: ViewStyle
+  feePreviewValues: ViewStyle
+  feePreviewOldFee: TextStyle
+  feePreviewNewFee: TextStyle
   details: ViewStyle
   detailRow: ViewStyle
   footerRow: ViewStyle
@@ -109,12 +116,19 @@ const getStyles = (theme: ThemeProps) =>
     },
     screenContent: {
       ...flexbox.flex1,
-      ...flexbox.justifySpaceBetween,
       ...spacings.ph2Xl,
       ...spacings.pbSm
     },
+    // A ScrollView (not a plain View): on a fixed-height, non-scrolling screen, content taller
+    // than the space left for it used to overflow visually into footerRow below (flex children
+    // don't push siblings down when they overflow their own box), overlapping the footer buttons.
+    // Scrolling internally means mainContent's own box never grows past what layout gives it, so
+    // footerRow (pinned to the bottom via its own `marginTop: 'auto'`) is never overlapped.
     mainContent: {
       ...flexbox.flex1
+    },
+    mainContentContent: {
+      flexGrow: 1
     },
     learnMore: {
       ...flexbox.directionRow,
@@ -244,20 +258,41 @@ const getStyles = (theme: ThemeProps) =>
     },
     amountSliderTrack: {
       position: 'absolute',
-      top: 12,
+      top: 10,
       right: SLIDER_THUMB_SIZE / 2,
       left: SLIDER_THUMB_SIZE / 2,
-      height: 4,
-      borderRadius: 2,
+      height: 8,
+      borderRadius: 4,
       backgroundColor: theme.tertiaryText
     },
-    amountSliderProgress: {
+    amountSliderStaked: {
       position: 'absolute',
-      top: 12,
+      top: 10,
       left: SLIDER_THUMB_SIZE / 2,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: theme.primaryAccent300
+      height: 8,
+      borderTopLeftRadius: 4,
+      borderBottomLeftRadius: 4,
+      overflow: 'hidden',
+      // Deliberately a different token than amountSliderTrack's, so the disabled/staked segment
+      // never blends into the plain, unfilled track next to it.
+      backgroundColor: theme.secondaryText
+    },
+    amountSliderProgressContainer: {
+      position: 'absolute',
+      top: 10,
+      left: SLIDER_THUMB_SIZE / 2,
+      height: 8,
+      borderRadius: 4,
+      overflow: 'hidden',
+      flexDirection: 'row'
+    },
+    amountSliderThreshold: {
+      position: 'absolute',
+      top: 6,
+      width: 1,
+      height: 16,
+      marginLeft: -0.5,
+      backgroundColor: theme.secondaryBackground
     },
     amountSliderThumb: {
       position: 'absolute',
@@ -272,6 +307,10 @@ const getStyles = (theme: ThemeProps) =>
     amountSliderLabels: {
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
+      ...spacings.phTy
+    },
+    summaryRow: {
+      ...spacings.mbSm,
       ...spacings.phTy
     },
     feePreviewRow: {
@@ -294,6 +333,15 @@ const getStyles = (theme: ThemeProps) =>
       height: 24,
       borderColor: theme.primaryAccent300
     },
+    feePreviewValues: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      columnGap: SPACING / 2
+    },
+    feePreviewOldFee: {
+      textDecorationLine: 'line-through'
+    },
+    feePreviewNewFee: {},
     details: {
       ...spacings.phSm
     },
@@ -306,7 +354,8 @@ const getStyles = (theme: ThemeProps) =>
     },
     footerRow: {
       ...flexbox.directionRow,
-      ...flexbox.justifyCenter
+      ...flexbox.justifyCenter,
+      marginTop: 'auto'
     },
     footer: {
       ...flexbox.directionRow,

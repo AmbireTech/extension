@@ -1,12 +1,15 @@
 import { formatUnits, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
-import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
+import {
+  getFeePercent,
+  SWAP_AND_BRIDGE_FEE_THRESHOLDS
+} from '@ambire-common/libs/swapAndBridge/fee'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
@@ -251,6 +254,40 @@ const WalletStakingScreen = () => {
   const projectedFeePercent = useMemo(
     () => getFeePercent(projectedStkWalletAmount),
     [projectedStkWalletAmount]
+  )
+  const stkWalletBalanceLabel = useMemo(
+    () => formatDecimals(Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS)), 'amount'),
+    [stkWalletBalance]
+  )
+  // Truncated (not rounded) to whole tokens, to match the amount input and slider precision in
+  // the "staked + inputted = total" summary below the input.
+  const stkWalletBalanceWholeLabel = useMemo(
+    () => formatDecimals(Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS)), 'noDecimal'),
+    [stkWalletBalance]
+  )
+  const amountWholeLabel = useMemo(() => formatDecimals(Number(amount || 0), 'noDecimal'), [amount])
+  const stakedTooltipContent = useMemo(
+    () => t('{{amount}} already staked', { amount: stkWalletBalanceLabel }),
+    [stkWalletBalanceLabel, t]
+  )
+  // The Swap & Bridge fee thresholds, positioned as tick marks along the slider - the slider's
+  // whole axis is stkWALLET already staked + $WALLET available to stake, since that's the total
+  // stkWALLET balance staking the full amount would result in.
+  const sliderThresholds = useMemo(
+    () =>
+      SWAP_AND_BRIDGE_FEE_THRESHOLDS.map((thresholdAmount) => ({
+        value: parseUnits(String(thresholdAmount), TOKEN_DECIMALS),
+        tooltipId: `wallet-staking-slider-threshold-${thresholdAmount}`,
+        tooltipContent: t('{{amount}} stkWALLET for a lower Swap & Bridge fee', {
+          amount: formatDecimals(thresholdAmount, 'amount')
+        })
+      })),
+    [t]
+  )
+  const stakingTotal = stkWalletBalance + amountInWei
+  const stakingTotalLabel = useMemo(
+    () => formatDecimals(Number(formatUnits(stakingTotal, TOKEN_DECIMALS)), 'noDecimal'),
+    [stakingTotal]
   )
   const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const isSubmitDisabled = useMemo(() => {
@@ -725,7 +762,11 @@ const WalletStakingScreen = () => {
         <Header.Container side="right" />
       </Header.Wrapper>
       <View style={styles.screenContent}>
-        <View style={styles.mainContent}>
+        <ScrollView
+          style={styles.mainContent}
+          contentContainerStyle={styles.mainContentContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.learnMore}>
             <Text fontSize={12} appearance="secondaryText">
               {t('Learn more about')}{' '}
@@ -864,11 +905,26 @@ const WalletStakingScreen = () => {
                       }
                     />
 
+                    {mode === 'stake' && (
+                      <View style={styles.summaryRow}>
+                        <Text fontSize={12} appearance="secondaryText">
+                          {t('{{staked}} staked + {{amount}} = {{total}} stkWALLET total', {
+                            staked: stkWalletBalanceWholeLabel,
+                            amount: amountWholeLabel,
+                            total: stakingTotalLabel
+                          })}
+                        </Text>
+                      </View>
+                    )}
+
                     <AmountSlider
                       value={amountInWei}
                       maximumValue={balance}
                       maximumLabel={balanceLabel}
                       onValueChange={handleSliderValueChange}
+                      stakedValue={mode === 'stake' ? stkWalletBalance : 0n}
+                      stakedLabel={mode === 'stake' ? stakedTooltipContent : undefined}
+                      thresholds={mode === 'stake' ? sliderThresholds : undefined}
                     />
 
                     {mode === 'stake' && (
@@ -889,14 +945,22 @@ const WalletStakingScreen = () => {
                             testID="wallet-staking-fee-details-button"
                           />
                         </View>
-                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                          <Text fontSize={12} appearance="secondaryText">
-                            {currentFeePercent.toFixed(2)}%
-                          </Text>
-                          <Text fontSize={12} appearance="secondaryText" style={spacings.phTy}>
-                            →
-                          </Text>
-                          <Text fontSize={12} weight="semiBold" color={theme.primaryAccent200}>
+                        <View style={styles.feePreviewValues}>
+                          {projectedFeePercent !== currentFeePercent && (
+                            <Text
+                              fontSize={12}
+                              appearance="tertiaryText"
+                              style={styles.feePreviewOldFee}
+                            >
+                              {currentFeePercent.toFixed(2)}%
+                            </Text>
+                          )}
+                          <Text
+                            fontSize={22}
+                            weight="semiBold"
+                            color={theme.primaryAccent200}
+                            style={styles.feePreviewNewFee}
+                          >
                             {projectedFeePercent.toFixed(2)}%
                           </Text>
                         </View>
@@ -924,7 +988,7 @@ const WalletStakingScreen = () => {
               )}
             </View>
           )}
-        </View>
+        </ScrollView>
 
         {!shouldShowPendingWithdrawalLoader && !shouldShowEmptyState && (
           <View style={styles.footerRow}>
