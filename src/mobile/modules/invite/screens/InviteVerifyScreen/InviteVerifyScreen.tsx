@@ -17,7 +17,9 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import InviteCodeInput, { INVITE_CODE_LENGTH } from '@mobile/modules/invite/components/InviteCodeInput'
+import InviteCodeInput, {
+  INVITE_CODE_LENGTH
+} from '@mobile/modules/invite/components/InviteCodeInput'
 
 const selectIsVerifying = (state: AllControllersMappingType['InviteController']) =>
   state.statuses.verify === 'LOADING'
@@ -51,7 +53,7 @@ const InviteVerifyScreen = () => {
             text={isVerifying ? t('Unlocking...') : t('Unlock access')}
             disabled={!isCodeComplete || isVerifying}
             onPress={handleSubmit}
-            style={[spacings.mbLg, spacings.mtLg]}
+            style={spacings.mbLg}
           />
           <Text fontSize={16} appearance="secondaryText" style={text.center}>
             {t('Already an Ambire user?')}
