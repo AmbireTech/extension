@@ -12,7 +12,7 @@ export const INVITE_CODE_LENGTH = 12
 
 // Codes could be copied around with separators in them, so make pasting forgiving,
 // depending on how we visually ship them to the users in the diff invite code distr channels.
-const SEPARATORS = [' ', '-', '_']
+const SEPARATORS = [' ', '-']
 
 const sanitize = (raw: string) =>
   raw
