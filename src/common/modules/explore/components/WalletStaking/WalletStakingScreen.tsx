@@ -246,11 +246,15 @@ const WalletStakingScreen = () => {
   // Staking mints stkWALLET 1:1 for the WALLET deposited (no share-value conversion - that only
   // applies to xWALLET, which is priced at shareValue WALLET/stkWALLET per share), so the
   // projected tier badge previews what staking the entered amount would move the user into by
-  // just adding it on top of the current on-chain balance above.
-  const projectedStkWalletAmount = useMemo(
-    () => currentOnChainStkWalletAmount + Number(formatUnits(amountInWei, TOKEN_DECIMALS)),
-    [amountInWei, currentOnChainStkWalletAmount]
-  )
+  // just adding it on top of the current on-chain balance above. Unstaking removes stkWALLET
+  // instead, so it subtracts - and can only worsen (or keep) the fee tier, never improve it.
+  const projectedStkWalletAmount = useMemo(() => {
+    const enteredAmount = Number(formatUnits(amountInWei, TOKEN_DECIMALS))
+
+    return mode === 'stake'
+      ? currentOnChainStkWalletAmount + enteredAmount
+      : Math.max(0, currentOnChainStkWalletAmount - enteredAmount)
+  }, [amountInWei, currentOnChainStkWalletAmount, mode])
   const projectedFeePercent = useMemo(
     () => getFeePercent(projectedStkWalletAmount),
     [projectedStkWalletAmount]
@@ -270,21 +274,55 @@ const WalletStakingScreen = () => {
     () => t('{{amount}} already staked', { amount: stkWalletBalanceLabel }),
     [stkWalletBalanceLabel, t]
   )
-  // The Swap & Bridge fee thresholds, positioned as tick marks along the slider - the slider's
-  // whole axis is stkWALLET already staked + $WALLET available to stake, since that's the total
-  // stkWALLET balance staking the full amount would result in.
-  const sliderThresholds = useMemo(
-    () =>
-      SWAP_AND_BRIDGE_FEE_THRESHOLDS.map((thresholdAmount) => ({
-        value: parseUnits(String(thresholdAmount), TOKEN_DECIMALS),
+  const walletBalanceLabel = useMemo(
+    () => formatDecimals(Number(formatUnits(walletBalance, TOKEN_DECIMALS)), 'amount'),
+    [walletBalance]
+  )
+  const walletBalanceTooltipContent = useMemo(
+    () => t('{{amount}} $WALLET available to stake', { amount: walletBalanceLabel }),
+    [t, walletBalanceLabel]
+  )
+  // The Swap & Bridge fee thresholds, positioned as tick marks along the slider's active
+  // (draggable) range and used to color it by tier. In stake mode that range is the $WALLET
+  // available to stake, offset by the stkWALLET already staked (the inactive segment at the
+  // start), so each division sits at the threshold amount itself - staking up to it is what
+  // reaches that tier. In unstake mode it's the current stkWALLET balance itself, starting at 0;
+  // what matters there is the *remaining* balance after unstaking, not the amount removed, so
+  // each division instead sits at (current balance - threshold) - the drag amount that leaves
+  // exactly `threshold` stkWALLET behind - skipped when that's not reachable (the balance is
+  // already below the threshold, putting it off the chart).
+  const sliderThresholds = useMemo(() => {
+    const feeThresholds = SWAP_AND_BRIDGE_FEE_THRESHOLDS.map((thresholdAmount) => ({
+      thresholdAmount,
+      thresholdWei: parseUnits(String(thresholdAmount), TOKEN_DECIMALS)
+    }))
+
+    if (mode === 'stake') {
+      return feeThresholds.map(({ thresholdAmount, thresholdWei }) => ({
+        value: thresholdWei,
         tooltipId: `wallet-staking-slider-threshold-${thresholdAmount}`,
         tooltipContent: t('{{amount}} stkWALLET for a lower Swap & Bridge fee', {
           amount: formatDecimals(thresholdAmount, 'amount')
         })
-      })),
-    [t]
-  )
-  const stakingTotal = stkWalletBalance + amountInWei
+      }))
+    }
+
+    return feeThresholds
+      .filter(({ thresholdWei }) => stkWalletBalance - thresholdWei > 0n)
+      .map(({ thresholdAmount, thresholdWei }) => ({
+        value: stkWalletBalance - thresholdWei,
+        tooltipId: `wallet-staking-slider-threshold-${thresholdAmount}`,
+        tooltipContent: t('{{amount}} stkWALLET left for a lower Swap & Bridge fee', {
+          amount: formatDecimals(thresholdAmount, 'amount')
+        })
+      }))
+  }, [mode, stkWalletBalance, t])
+  const stakingTotal =
+    mode === 'stake'
+      ? stkWalletBalance + amountInWei
+      : stkWalletBalance > amountInWei
+        ? stkWalletBalance - amountInWei
+        : 0n
   const stakingTotalLabel = useMemo(
     () => formatDecimals(Number(formatUnits(stakingTotal, TOKEN_DECIMALS)), 'noDecimal'),
     [stakingTotal]
@@ -905,67 +943,72 @@ const WalletStakingScreen = () => {
                       }
                     />
 
-                    {mode === 'stake' && (
-                      <View style={styles.summaryRow}>
-                        <Text fontSize={12} appearance="secondaryText">
-                          {t('{{staked}} staked + {{amount}} = {{total}} stkWALLET total', {
-                            staked: stkWalletBalanceWholeLabel,
-                            amount: amountWholeLabel,
-                            total: stakingTotalLabel
-                          })}
-                        </Text>
-                      </View>
-                    )}
+                    <View style={styles.summaryRow}>
+                      <Text fontSize={12} appearance="secondaryText">
+                        {mode === 'stake'
+                          ? t('{{staked}} staked + {{amount}} = {{total}} stkWALLET total', {
+                              staked: stkWalletBalanceWholeLabel,
+                              amount: amountWholeLabel,
+                              total: stakingTotalLabel
+                            })
+                          : t('{{staked}} staked - {{amount}} = {{total}} stkWALLET total', {
+                              staked: stkWalletBalanceWholeLabel,
+                              amount: amountWholeLabel,
+                              total: stakingTotalLabel
+                            })}
+                      </Text>
+                    </View>
 
                     <AmountSlider
                       value={amountInWei}
                       maximumValue={balance}
                       maximumLabel={balanceLabel}
                       onValueChange={handleSliderValueChange}
-                      stakedValue={mode === 'stake' ? stkWalletBalance : 0n}
-                      stakedLabel={mode === 'stake' ? stakedTooltipContent : undefined}
-                      thresholds={mode === 'stake' ? sliderThresholds : undefined}
+                      inactiveValue={mode === 'stake' ? stkWalletBalance : walletBalance}
+                      inactivePosition={mode === 'stake' ? 'start' : 'end'}
+                      inactiveLabel={
+                        mode === 'stake' ? stakedTooltipContent : walletBalanceTooltipContent
+                      }
+                      thresholds={sliderThresholds}
                     />
 
-                    {mode === 'stake' && (
-                      <View style={styles.feePreviewRow}>
-                        <View style={styles.feePreviewLabel}>
-                          <Text fontSize={12} appearance="secondaryText">
-                            {t('Swap & Bridge fee')}
-                          </Text>
-                          <Button
-                            text={t('Details')}
-                            type="outline"
-                            size="tiny"
-                            accentColor={theme.primaryAccent300}
-                            onPress={handleOpenFeeInfoBottomSheet}
-                            hasBottomSpacing={false}
-                            submitOnEnter={false}
-                            style={styles.feeDetailsButton}
-                            testID="wallet-staking-fee-details-button"
-                          />
-                        </View>
-                        <View style={styles.feePreviewValues}>
-                          {projectedFeePercent !== currentFeePercent && (
-                            <Text
-                              fontSize={12}
-                              appearance="tertiaryText"
-                              style={styles.feePreviewOldFee}
-                            >
-                              {currentFeePercent.toFixed(2)}%
-                            </Text>
-                          )}
-                          <Text
-                            fontSize={22}
-                            weight="semiBold"
-                            color={theme.primaryAccent200}
-                            style={styles.feePreviewNewFee}
-                          >
-                            {projectedFeePercent.toFixed(2)}%
-                          </Text>
-                        </View>
+                    <View style={styles.feePreviewRow}>
+                      <View style={styles.feePreviewLabel}>
+                        <Text fontSize={12} appearance="secondaryText">
+                          {t('Swap & Bridge fee')}
+                        </Text>
+                        <Button
+                          text={t('Details')}
+                          type="outline"
+                          size="tiny"
+                          accentColor={theme.primaryAccent300}
+                          onPress={handleOpenFeeInfoBottomSheet}
+                          hasBottomSpacing={false}
+                          submitOnEnter={false}
+                          style={styles.feeDetailsButton}
+                          testID="wallet-staking-fee-details-button"
+                        />
                       </View>
-                    )}
+                      <View style={styles.feePreviewValues}>
+                        {projectedFeePercent !== currentFeePercent && (
+                          <Text
+                            fontSize={12}
+                            appearance="tertiaryText"
+                            style={styles.feePreviewOldFee}
+                          >
+                            {currentFeePercent.toFixed(2)}%
+                          </Text>
+                        )}
+                        <Text
+                          fontSize={22}
+                          weight="semiBold"
+                          color={theme.primaryAccent200}
+                          style={styles.feePreviewNewFee}
+                        >
+                          {projectedFeePercent.toFixed(2)}%
+                        </Text>
+                      </View>
+                    </View>
                   </View>
 
                   <View style={styles.details}>
