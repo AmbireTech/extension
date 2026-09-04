@@ -1,17 +1,13 @@
-import { formatUnits } from 'ethers'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
-import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
-import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
-import useController from '@common/hooks/useController'
+import useStkWalletFeePercent from '@common/hooks/useStkWalletFeePercent'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -22,9 +18,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import getStyles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
-
-const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.portfolio.tokens
 
 export const isWalletStakingToken = ({
   chainId,
@@ -41,28 +34,7 @@ const SwapAndBridgeFeeCardContent = () => {
     open: openFeeInfoBottomSheet,
     close: closeFeeInfoBottomSheet
   } = useModalize()
-  const { state: portfolioTokens } = useController(
-    'SelectedAccountController',
-    selectPortfolioTokens
-  )
-  const stkWalletToken = useMemo(
-    () =>
-      portfolioTokens.find(
-        (token) =>
-          token.chainId === ETHEREUM_CHAIN_ID &&
-          token.address.toLowerCase() === STK_WALLET.toLowerCase()
-      ),
-    [portfolioTokens]
-  )
-  const feePercent = useMemo(
-    () =>
-      getFeePercent(
-        stkWalletToken
-          ? Number(formatUnits(getTokenAmount(stkWalletToken), stkWalletToken.decimals))
-          : 0
-      ),
-    [stkWalletToken]
-  )
+  const feePercent = useStkWalletFeePercent()
   const handleViewFeeTiers = useCallback(() => openFeeInfoBottomSheet(), [openFeeInfoBottomSheet])
   const handleStakeNow = useCallback(
     () => navigate(ROUTES.walletStaking, { state: { mode: 'stake' } }),

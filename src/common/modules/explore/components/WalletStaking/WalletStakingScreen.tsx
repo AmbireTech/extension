@@ -7,7 +7,6 @@ import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/co
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
-import { getXWalletAmountFromWallet } from '@ambire-common/libs/walletStaking/shareValue'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
@@ -26,6 +25,7 @@ import useController from '@common/hooks/useController'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
+import useStkWalletFeePercent from '@common/hooks/useStkWalletFeePercent'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WALLET_STAKING_ROUTE_STORAGE_KEY } from '@common/modules/explore/constants/walletStaking'
@@ -83,8 +83,6 @@ const selectIsPortfolioReady = (state: AllControllersMappingType['SelectedAccoun
   state.portfolio.isReadyToVisualize
 const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
   state.currentUserRequest
-const selectXWalletShareValue = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.portfolio.walletStaking?.shareValue
 
 interface TabProps {
   mode: WalletStakingMode
@@ -132,10 +130,6 @@ const WalletStakingScreen = () => {
   const { state: isPortfolioReady } = useController(
     'SelectedAccountController',
     selectIsPortfolioReady
-  )
-  const { state: xWalletShareValue } = useController(
-    'SelectedAccountController',
-    selectXWalletShareValue
   )
   const { state: currentUserRequest, dispatch: requestsDispatch } = useController(
     'RequestsController',
@@ -235,22 +229,25 @@ const WalletStakingScreen = () => {
     () => formatDecimals(Number(amount || 0) * price, 'value'),
     [amount, price]
   )
-  // Fee tiers are based on the amount of stkWALLET held, not its USD value.
-  const currentStkWalletAmount = useMemo(
+  // The current tier badge is based on the confirmed on-chain stkWALLET balance (shared with
+  // SwapAndBridgeController, so this always matches the fee a real swap would apply right now).
+  const currentFeePercent = useStkWalletFeePercent()
+  // The projected tier badge previews what staking the entered amount would move the user into,
+  // starting from the same pending/simulated stkWALLET balance the staking form itself uses
+  // (falls back to the on-chain amount if there's nothing pending), rather than the confirmed
+  // on-chain balance used for the current tier above, since it's a forward-looking estimate
+  // anyway. Named distinctly from the pending-withdrawal balance tracked elsewhere in this file -
+  // "simulated" here refers to TokenResult.amountPostSimulation, not an in-progress unstake.
+  const simulatedStkWalletAmount = useMemo(
     () => Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS)),
     [stkWalletBalance]
   )
-  // Staking converts WALLET into stkWALLET shares at the current conversion rate, so the
-  // projected balance (used to preview the fee tier the user would move into) accounts for that.
-  const projectedStkWalletAmount = useMemo(() => {
-    if (!xWalletShareValue) return currentStkWalletAmount
-
-    const projectedNewShares = getXWalletAmountFromWallet(amountInWei, xWalletShareValue)
-    return currentStkWalletAmount + Number(formatUnits(projectedNewShares, TOKEN_DECIMALS))
-  }, [amountInWei, currentStkWalletAmount, xWalletShareValue])
-  const currentFeePercent = useMemo(
-    () => getFeePercent(currentStkWalletAmount),
-    [currentStkWalletAmount]
+  // Staking mints stkWALLET 1:1 for the WALLET deposited (no share-value conversion - that only
+  // applies to xWALLET, which is priced at shareValue WALLET/stkWALLET per share), so the
+  // projected balance is just the entered amount added on top of the current one.
+  const projectedStkWalletAmount = useMemo(
+    () => simulatedStkWalletAmount + Number(formatUnits(amountInWei, TOKEN_DECIMALS)),
+    [amountInWei, simulatedStkWalletAmount]
   )
   const projectedFeePercent = useMemo(
     () => getFeePercent(projectedStkWalletAmount),
