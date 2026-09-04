@@ -49,6 +49,8 @@ const NO_VALUE_SELECTED = [
   }
 ]
 
+const EMPTY_PORTFOLIO_TOKENS: TokenResult[] = []
+
 const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio.tokens
 
@@ -83,6 +85,11 @@ const useGetTokenSelectProps = ({
     'SelectedAccountController',
     selectNetworkSimulatedAccountOp
   )
+
+  // Only the "to" list looks tokens up in the portfolio, so the "from" list - which
+  // holds every token of the account - must not rebuild all of its options whenever a
+  // portfolio refresh lands.
+  const portfolioTokensToIndex = _isToToken ? portfolioTokens : EMPTY_PORTFOLIO_TOKENS
 
   return useMemo(() => {
     if (isLoading)
@@ -119,7 +126,7 @@ const useGetTokenSelectProps = ({
     // once per comparison.
     const eligiblePortfolioTokenByKey = new Map<string, TokenResult>()
     if (_isToToken)
-      portfolioTokens.forEach((portfolioToken) => {
+      portfolioTokensToIndex.forEach((portfolioToken) => {
         if (!getIsTokenEligibleForSwapAndBridge(portfolioToken)) return
 
         const key = portfolioTokenKey(portfolioToken.address, portfolioToken.chainId)
@@ -165,6 +172,18 @@ const useGetTokenSelectProps = ({
         simulatedAccountOp
       )
 
+      // Only the closed select's value is read for these, and they are formatted eagerly
+      // rather than behind a getter: the list is handed to an `Animated` component, and
+      // its deep prop walk reads every property of every option - which turned a lazy
+      // getter into formatting the balances of the whole token list.
+      const selectedBalances = isSelected
+        ? {
+            isPending: getFormattedDetails().isPending ?? false,
+            pendingBalanceFormatted: getFormattedDetails().pendingBalanceFormatted || '0',
+            balanceFormatted: getFormattedDetails().balanceFormatted || '0'
+          }
+        : undefined
+
       return {
         value: getTokenId(currentToken),
         address: currentToken.address,
@@ -176,17 +195,7 @@ const useGetTokenSelectProps = ({
           address: currentToken.address,
           networkName: network?.name
         },
-        // Read off the closed select's value only, so they are formatted on access
-        // rather than for every option in the menu.
-        get isPending() {
-          return getFormattedDetails().isPending ?? false
-        },
-        get pendingBalanceFormatted() {
-          return getFormattedDetails().pendingBalanceFormatted || '0'
-        },
-        get balanceFormatted() {
-          return getFormattedDetails().balanceFormatted || '0'
-        },
+        ...selectedBalances,
         symbol,
         label: (
           <TokenSelectOptionLabel
@@ -227,7 +236,15 @@ const useGetTokenSelectProps = ({
       value: selectedToken ? buildOption(selectedToken, true) : NO_VALUE_SELECTED[0],
       amountSelectDisabled: false
     }
-  }, [tokens, token, networks, isLoading, _isToToken, portfolioTokens, networkSimulatedAccountOp])
+  }, [
+    tokens,
+    token,
+    networks,
+    isLoading,
+    _isToToken,
+    portfolioTokensToIndex,
+    networkSimulatedAccountOp
+  ])
 }
 
 export default useGetTokenSelectProps
