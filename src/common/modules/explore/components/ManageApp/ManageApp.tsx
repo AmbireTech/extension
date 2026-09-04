@@ -19,9 +19,10 @@ import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
 import AccountPreferencesBottomSheet from '@common/modules/explore/components/ManageApp/AccountPreferencesBottomSheet'
+import DisguiseAsMetaMask from '@common/modules/explore/components/ManageApp/DisguiseAsMetaMask'
 import useManageApp from '@common/modules/explore/hooks/useManageApp'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface ManageAppProps {
@@ -31,9 +32,17 @@ interface ManageAppProps {
   buttonProps?: Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'ref'>
   style?: ViewStyle
   onClosed?: () => void
+  onReloadDapp?: () => void
 }
 
-const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: ManageAppProps) => {
+const ManageApp = ({
+  dapp,
+  children,
+  buttonProps,
+  style = {},
+  onClosed,
+  onReloadDapp
+}: ManageAppProps) => {
   const { theme } = useTheme()
   const { account, accounts, networks, onDisconnect, onSelectNetwork } = useManageApp(dapp)
   const { ref: sheetRef, open, close } = useModalize()
@@ -265,6 +274,30 @@ const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: Manage
                 style={{ ...spacings.mlSm, height: 50 }}
               />
             </View>
+          </View>
+        )}
+
+        {dapp.blacklisted !== 'BLACKLISTED' && !dapp.isConnected && (
+          <View
+            style={
+              isWeb
+                ? [
+                    spacings.mtSm,
+                    {
+                      backgroundColor: theme.tertiaryBackground,
+                      borderRadius: BORDER_RADIUS_PRIMARY
+                    }
+                  ]
+                : undefined
+            }
+          >
+            <DisguiseAsMetaMask
+              dapp={dapp}
+              onToggled={() => {
+                close()
+                onReloadDapp?.()
+              }}
+            />
           </View>
         )}
 
