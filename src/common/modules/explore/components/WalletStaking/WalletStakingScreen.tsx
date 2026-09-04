@@ -229,25 +229,24 @@ const WalletStakingScreen = () => {
     () => formatDecimals(Number(amount || 0) * price, 'value'),
     [amount, price]
   )
-  // The current tier badge is based on the confirmed on-chain stkWALLET balance (shared with
-  // SwapAndBridgeController, so this always matches the fee a real swap would apply right now).
+  // Both tier badges are based on the confirmed on-chain stkWALLET balance (shared with
+  // SwapAndBridgeController, so the "current" badge always matches the fee a real swap would
+  // apply right now).
   const currentFeePercent = useStkWalletFeePercent()
-  // The projected tier badge previews what staking the entered amount would move the user into,
-  // starting from the same pending/simulated stkWALLET balance the staking form itself uses
-  // (falls back to the on-chain amount if there's nothing pending), rather than the confirmed
-  // on-chain balance used for the current tier above, since it's a forward-looking estimate
-  // anyway. Named distinctly from the pending-withdrawal balance tracked elsewhere in this file -
-  // "simulated" here refers to TokenResult.amountPostSimulation, not an in-progress unstake.
-  const simulatedStkWalletAmount = useMemo(
-    () => Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS)),
-    [stkWalletBalance]
+  const currentOnChainStkWalletAmount = useMemo(
+    () =>
+      stkWalletToken
+        ? Number(formatUnits(getTokenAmount(stkWalletToken, true), TOKEN_DECIMALS))
+        : 0,
+    [stkWalletToken]
   )
   // Staking mints stkWALLET 1:1 for the WALLET deposited (no share-value conversion - that only
   // applies to xWALLET, which is priced at shareValue WALLET/stkWALLET per share), so the
-  // projected balance is just the entered amount added on top of the current one.
+  // projected tier badge previews what staking the entered amount would move the user into by
+  // just adding it on top of the current on-chain balance above.
   const projectedStkWalletAmount = useMemo(
-    () => simulatedStkWalletAmount + Number(formatUnits(amountInWei, TOKEN_DECIMALS)),
-    [amountInWei, simulatedStkWalletAmount]
+    () => currentOnChainStkWalletAmount + Number(formatUnits(amountInWei, TOKEN_DECIMALS)),
+    [amountInWei, currentOnChainStkWalletAmount]
   )
   const projectedFeePercent = useMemo(
     () => getFeePercent(projectedStkWalletAmount),
