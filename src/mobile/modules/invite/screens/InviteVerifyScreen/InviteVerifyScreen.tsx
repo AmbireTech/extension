@@ -9,10 +9,12 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@common/constants/social'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -48,6 +50,10 @@ const InviteVerifyScreen = () => {
   const handleOpenHelpSheet = useCallback(() => openHelpSheet(), [openHelpSheet])
 
   const handleCloseHelpSheet = useCallback(() => closeHelpSheet(), [closeHelpSheet])
+
+  const handleOpenTwitter = useCallback(() => openInTab({ url: TWITTER_URL }), [])
+  const handleOpenTelegram = useCallback(() => openInTab({ url: TELEGRAM_URL }), [])
+  const handleOpenDiscord = useCallback(() => openInTab({ url: DISCORD_URL }), [])
 
   const isCodeComplete = code.length === INVITE_CODE_LENGTH
 
@@ -102,17 +108,32 @@ const InviteVerifyScreen = () => {
         <ModalHeader handleClose={closeHelpSheet} title={t('How to get mobile access?')} />
         <Text fontSize={16} appearance="secondaryText" style={spacings.mbLg}>
           {t(
-            'Everyone using the Ambire extension on their computer has an invite code waiting for them.'
+            "We’re rolling out our mobile app in waves, starting with longtime extension users. If you're in, your code is ready."
           )}
         </Text>
         <Text fontSize={16} weight="medium" style={spacings.mb}>
           {t('1. Open the Ambire extension on your computer.')}
         </Text>
         <Text fontSize={16} weight="medium" style={spacings.mb}>
-          {t('2. Tap the "Ambire Mobile" banner on the dashboard.')}
+          {t('2. Click the "Ambire Mobile" banner on the dashboard.')}
         </Text>
         <Text fontSize={16} weight="medium" style={spacings.mbLg}>
           {t('3. Copy the code it shows you and enter it here.')}
+        </Text>
+        <Text fontSize={16} appearance="secondaryText" style={spacings.mbLg}>
+          {t('No banner there yet? Your turn is coming. Want in sooner? Ping us on')}{' '}
+          <Text fontSize={16} appearance="secondaryText" underline onPress={handleOpenTwitter}>
+            {t('X')}
+          </Text>
+          {', '}
+          <Text fontSize={16} appearance="secondaryText" underline onPress={handleOpenTelegram}>
+            {t('Telegram')}
+          </Text>{' '}
+          {t('or')}{' '}
+          <Text fontSize={16} appearance="secondaryText" underline onPress={handleOpenDiscord}>
+            {t('Discord')}
+          </Text>
+          {'.'}
         </Text>
         <Button
           type="secondary"

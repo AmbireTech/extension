@@ -69,7 +69,7 @@ const InviteCodeInput = ({ value, onChange, onSubmitEditing, editable = true, er
       onButtonPress={handlePaste}
       maxLength={INVITE_CODE_LENGTH}
       error={error}
-      nativeInputStyle={{ fontSize: 18, letterSpacing: 2 }}
+      nativeInputStyle={{ fontSize: 16, letterSpacing: 2 }}
       containerStyle={spacings.mbLg}
       backgroundColor={theme.secondaryBackground}
       autoFocus
