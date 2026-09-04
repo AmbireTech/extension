@@ -62,6 +62,19 @@ jobs:
           # Proves the .zips being published match the checksum list published
           # next to them - the very check users are told to run.
           sha256sum -c SHA256SUMS
+
+          # The Android APK is not in SHA256SUMS: that file is written by the extension build,
+          # which finishes independently of the Android one, so appending to it would be a race.
+          # The APK does not need it either - its signature is the stronger proof, and the
+          # signing certificate fingerprint is published once instead of per release.
+          # A warning rather than an error, so a failed Android build cannot hold back the
+          # extension release; whoever is on release duty re-runs the APK build and this workflow.
+          if compgen -G '*.apk' > /dev/null; then
+            APK_NAME=$(ls -1 ./*.apk | head -n1)
+            echo "APK_ASSET=assets/$(basename "$APK_NAME")" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No .apk on release $TAG - it will be published without the sideload build"
+          fi
         shell: bash
 
       - name: Resolve the release commit
@@ -103,7 +116,7 @@ jobs:
           fi
 
           if [ "$EXISTING_STATE" = "true" ]; then
-            gh release upload "$TAG" assets/*.zip assets/SHA256SUMS --repo "$PUBLIC_REPO" --clobber
+            gh release upload "$TAG" assets/*.zip assets/SHA256SUMS ${APK_ASSET:-} --repo "$PUBLIC_REPO" --clobber
             exit 0
           fi
 
@@ -131,7 +144,7 @@ jobs:
 
           # Immutable releases lock their assets on publish, so a human reviews the
           # draft and publishes it - that publish is what gets signed by GitHub.
-          gh release create "$TAG" assets/*.zip assets/SHA256SUMS \
+          gh release create "$TAG" assets/*.zip assets/SHA256SUMS ${APK_ASSET:-} \
             --repo "$PUBLIC_REPO" \
             --draft \
             --target "$RELEASE_SHA" \

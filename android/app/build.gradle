@@ -142,6 +142,14 @@ android {
                 releaseKeyPassword = MYAPP_UPLOAD_KEY_PASSWORD
             }
 
+            // The debug keystore is the one shipped with the Android SDK - its key is public
+            // knowledge. A release artifact signed with it can be re-signed by anyone, so a CI
+            // release build must fail loudly instead of quietly falling back to it.
+            def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+            if (isCi && isReleaseTask && !project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+                throw new GradleException('Release build in CI without a signing keystore. The workflow writes MYAPP_UPLOAD_* only when enable_signing is true.')
+            }
+
             storeFile releaseStoreFile
             storePassword releaseStorePassword
             keyAlias releaseKeyAlias
