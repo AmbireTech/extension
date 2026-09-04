@@ -236,6 +236,14 @@ type SetSubscribedControllersAction = {
   params: { controllers: string[] }
 }
 
+// Mobile-only. The UI reports when the stack starts and finishes animating a screen,
+// so the host can keep controller updates out of that window - the animation needs the
+// JS thread, and so does the next touch.
+type SetTransitionStateAction = {
+  type: 'SET_TRANSITION_STATE'
+  params: { isInFlight: boolean }
+}
+
 // Mobile-only, boot profiling. Asks the WebView worker to post its boot marks so
 // the RN side can assemble one timeline across both JS realms.
 type FlushBootProfileAction = {
@@ -281,5 +289,6 @@ export type Action =
   | DispatchDappTabFocusAction
   | SetBootPhaseAction
   | SetSubscribedControllersAction
+  | SetTransitionStateAction
   | FlushBootProfileAction
   | InitDeferredControllersAction

@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
+import { isMobile } from '@common/config/env'
+
 /**
  * Writes the dashboard's session id to the url. The sessions this screen's pages open
  * are tied to the extension's port through the id in the url, so the background can
@@ -11,11 +13,17 @@ import { useSearchParams } from 'react-router-dom'
  * A component of its own because `useSearchParams` subscribes to the router's
  * location: held here, a navigation re-renders this one node instead of the whole
  * dashboard - which on mobile stays mounted behind every screen the user opens.
+ *
+ * Nothing reads the id on mobile - there is no port there - and writing it navigates
+ * the dashboard to a location that only differs in its search, which is enough for the
+ * stack to hand the card a new location and re-render the whole screen.
  */
 const SessionIdInUrl = ({ sessionId }: { sessionId: string }) => {
   const [, setSearchParams] = useSearchParams()
 
   useEffect(() => {
+    if (isMobile) return
+
     setSearchParams((prev) => {
       prev.set('sessionId', sessionId)
       return prev

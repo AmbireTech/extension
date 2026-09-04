@@ -25,7 +25,8 @@ import {
   buildStateForFE,
   queueCtrlStateIfBootPhaseDeferred,
   setBootPhase,
-  setSubscribedControllers
+  setSubscribedControllers,
+  setTransitionInFlight
 } from '@mobile/services/controllerHost/bootPhase'
 import { emitCtrlUpdate, emitToDappWebView } from '@mobile/services/controllerHost/uiEvents'
 
@@ -110,6 +111,11 @@ export const handleActions = async (
 
     case 'SET_BOOT_PHASE': {
       setBootPhase(params.phase)
+      break
+    }
+
+    case 'SET_TRANSITION_STATE': {
+      setTransitionInFlight(!!params.isInFlight)
       break
     }
 

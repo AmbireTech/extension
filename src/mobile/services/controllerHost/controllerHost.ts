@@ -45,6 +45,17 @@ export type ControllerHostConfig = {
 
 const ctrlOnUpdateIsDirtyFlags: Record<string, boolean> = {}
 
+/**
+ * Controllers that emit in bursts while the app is idle, with a state too large to
+ * serialize and reconcile on every one of them. Their updates are collapsed into one
+ * per window rather than one per tick, which is what keeps a portfolio refresh from
+ * taking the JS thread away from the screen. A `forceEmit` still goes through at once.
+ */
+const CTRL_COALESCE_WINDOW_MS: Record<string, number> = {
+  SelectedAccountController: 300,
+  PortfolioController: 300
+}
+
 function debounceFrontEndEventUpdatesOnSameTick(
   ctrlName: string,
   ctrl: any,
@@ -91,7 +102,7 @@ function debounceFrontEndEventUpdatesOnSameTick(
       }
     }
     ctrlOnUpdateIsDirtyFlags[ctrlName] = false
-  }, 0)
+  }, CTRL_COALESCE_WINDOW_MS[ctrlName] ?? 0)
 
   return 'EMITTED'
 }
