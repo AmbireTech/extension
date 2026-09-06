@@ -279,7 +279,7 @@ const WalletStakingScreen = () => {
     [walletBalance]
   )
   const walletBalanceTooltipContent = useMemo(
-    () => t('{{amount}} $WALLET available to stake', { amount: walletBalanceLabel }),
+    () => t('{{amount}} $WALLET - you cannot unstake $WALLET', { amount: walletBalanceLabel }),
     [t, walletBalanceLabel]
   )
   // The Swap & Bridge fee thresholds, positioned as tick marks along the slider's active
