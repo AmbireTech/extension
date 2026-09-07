@@ -32,8 +32,8 @@ const ALL_NETWORKS_OPTION = {
 
 const Filters: FC<Props> = ({ control, networkFilter, setNetworkFilterValue }) => {
   const { t } = useTranslation()
-  const { networks } = useController('NetworksController').state
-  const { themeType, theme } = useTheme()
+  const { state: networks } = useController('NetworksController', 'networks')
+  const { theme } = useTheme()
   const networksOptions: SelectValue[] = useMemo(
     () => [
       ALL_NETWORKS_OPTION,

@@ -1,13 +1,17 @@
-import React, { FC, memo } from 'react'
-import { StyleProp, View, ViewStyle } from 'react-native'
+import { memo, useMemo } from 'react'
+import { StyleProp, View } from 'react-native'
 
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import ManifestImage from '@common/components/ManifestImage'
 import { isMobile } from '@common/config/env'
 import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import HumanizedVisualizationItem from './HumanizedVisualizationItem'
+
+import type { FC } from 'react'
+import type { ViewStyle } from 'react-native'
+
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 
 interface Props {
   data: IrCall['fullVisualization']
@@ -20,12 +24,14 @@ interface Props {
   imageSize?: number
   style?: StyleProp<ViewStyle>
   erc7730Mode?: 'summary' | 'description'
+  showErc7730DescriptionTitle?: boolean
   hideNestedErc7730Rows?: boolean
   hideMobileErc7730Title?: boolean
   isErc7730TransactionSummaryLayout?: boolean
   erc7730TransactionSummarySection?: 'all' | 'title' | 'rows'
   hasErc7730TransactionSummaryHeaderRightControl?: boolean
   disableFlex?: boolean
+  inlineDappIcon?: boolean
   dapp?: IrCall['dapp']
   editApprovalCallInfo?: {
     setter: (arg: string, token: string, tokenChainId: bigint, closeModal: () => void) => void
@@ -47,12 +53,14 @@ const HumanizedVisualization: FC<Props> = ({
   imageSize = 36,
   style,
   erc7730Mode = 'summary',
+  showErc7730DescriptionTitle = false,
   hideNestedErc7730Rows = false,
   hideMobileErc7730Title = false,
   isErc7730TransactionSummaryLayout = false,
   erc7730TransactionSummarySection = 'all',
   hasErc7730TransactionSummaryHeaderRightControl = false,
   disableFlex = false,
+  inlineDappIcon = false,
   dapp
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
@@ -61,14 +69,13 @@ const HumanizedVisualization: FC<Props> = ({
     : 0
   const dappIcon = dapp?.icon || undefined
   const shouldShowDappIcon = !!dappIcon && !data.some((item) => item?.type === 'erc7730')
-
-  return (
-    <>
-      {shouldShowDappIcon && (
+  const dappIconVisualization = useMemo(
+    () =>
+      shouldShowDappIcon ? (
         <ManifestImage
           uri={dappIcon}
           containerStyle={{
-            marginLeft: SPACING_TY * sizeMultiplierSize,
+            marginLeft: inlineDappIcon ? 0 : SPACING_TY * sizeMultiplierSize,
             // When the content has padding its own left margin already separates it
             // from the icon, so adding a right margin here would double the gap
             marginRight: horizontalPadding ? 0 : SPACING_TY * sizeMultiplierSize
@@ -78,7 +85,13 @@ const HumanizedVisualization: FC<Props> = ({
           imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
           hideOnError
         />
-      )}
+      ) : null,
+    [dappIcon, horizontalPadding, inlineDappIcon, shouldShowDappIcon, sizeMultiplierSize]
+  )
+
+  return (
+    <>
+      {!inlineDappIcon && dappIconVisualization}
       <View
         testID={testID}
         style={[
@@ -90,6 +103,7 @@ const HumanizedVisualization: FC<Props> = ({
           style
         ]}
       >
+        {inlineDappIcon && dappIconVisualization}
         {data.map((item) =>
           item ? (
             <HumanizedVisualizationItem
@@ -102,6 +116,7 @@ const HumanizedVisualization: FC<Props> = ({
               type={type}
               imageSize={imageSize}
               erc7730Mode={erc7730Mode}
+              showErc7730DescriptionTitle={showErc7730DescriptionTitle}
               hideNestedErc7730Rows={hideNestedErc7730Rows}
               hideMobileErc7730Title={hideMobileErc7730Title}
               isErc7730TransactionSummaryLayout={isErc7730TransactionSummaryLayout}

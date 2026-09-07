@@ -76,7 +76,7 @@ const NavMenu = () => {
   const { navigate } = useNavigation()
   const { theme } = useTheme(getStyles)
   const { dispatch: mainDispatch } = useController('MainController')
-  const { hasPasswordSecret } = useController('KeystoreController').state
+  const { state: hasPasswordSecret } = useController('KeystoreController', 'hasPasswordSecret')
 
   const handleLockAmbire = useCallback(() => {
     syncSessionStorage.set(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE, 'true')

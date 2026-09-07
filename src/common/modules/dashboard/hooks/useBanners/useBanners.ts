@@ -22,7 +22,7 @@ const OFFLINE_BANNER: BannerInterface = {
 }
 
 export default function useBanners(): [BannerInterface[], BannerInterface[]] {
-  const { isOffline } = useController('MainController').state
+  const { state: isOffline } = useController('MainController', 'isOffline')
   const { bannersData: marketingBannersData } = useController('BannerController').state
   const {
     state: {
@@ -37,7 +37,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { banners: requestBanners = [] } = useController('RequestsController').state
   const { banners: swapAndBridgeBanners = [] } = useController('SwapAndBridgeController').state
   const { extensionUpdateBanner } = useController('ExtensionUpdateController').state
-  const { hasFundedHotAccount } = useController('PortfolioController').state
+  const { state: hasFundedHotAccount } = useController('PortfolioController', 'hasFundedHotAccount')
   const otaUpdateBanner = useOtaUpdateBanner()
 
   const marketingBanners = useMemo(() => {

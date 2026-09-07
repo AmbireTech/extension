@@ -18,7 +18,7 @@ import {
 import { toAbsoluteRoute } from '@common/modules/router/helpers/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
-import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
+import { BUNGEE_API_KEY, RELAYER_URL, UNISWAP_API_KEY, VELCRO_URL } from '@env'
 import {
   MOBILE_CRITICAL_CONTROLLERS,
   MOBILE_DEFERRED_CONTROLLERS
@@ -122,7 +122,6 @@ export const ControllersMiddlewareProvider: React.FC<{
         VELCRO_URL,
         LIFI_EXPLORER_URL,
         BUNGEE_API_KEY,
-        SQUID_INTEGRATOR_ID,
         criticalControllers: MOBILE_CRITICAL_CONTROLLERS,
         UNISWAP_API_KEY
       })

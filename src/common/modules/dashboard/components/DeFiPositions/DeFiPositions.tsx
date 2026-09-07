@@ -9,10 +9,13 @@ import {
   getCurrentAccountBanners
 } from '@ambire-common/libs/banners/banners'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
+import Banner from '@common/components/Banner'
+import HourglassIconAnimated from '@common/components/HourglassIconAnimated'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useNavigation from '@common/hooks/useNavigation'
-import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner'
@@ -29,22 +32,28 @@ import { getUiType } from '@common/utils/uiType'
 import FloatingBottomBar from '../FloatingBottomBar'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
+import { getHasPendingDefiUpdate } from './helpers'
 import styles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll: FlatListProps<any>['onScroll']
+  onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
-  isSearchHidden: boolean
+  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
+
+const selectScheduledUpdateChainIds = (state: AllControllersMappingType['PortfolioController']) =>
+  state.scheduledUpdateChainIds
 
 const DeFiPositions: FC<Props> = ({
   openTab,
@@ -63,16 +72,25 @@ const DeFiPositions: FC<Props> = ({
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme } = useTheme()
   const searchValue = watch('search')
-  const {
-    state: { networks }
-  } = useController('NetworksController')
-  const { dispatch: portfolioDispatch } = useController('PortfolioController')
+  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: scheduledUpdateChainIds, dispatch: portfolioDispatch } = useController(
+    'PortfolioController',
+    selectScheduledUpdateChainIds
+  )
   const {
     state: { account, portfolio, dashboardNetworkFilter, banners }
   } = useController('SelectedAccountController')
   const { setSearchParams, navigate } = useNavigation()
 
-  const prevInitTab: any = usePrevious(initTab)
+  const hasPendingUpdate = useMemo(
+    () =>
+      getHasPendingDefiUpdate({
+        scheduledUpdateChainIds,
+        accountAddr: account?.addr,
+        dashboardNetworkFilter
+      }),
+    [scheduledUpdateChainIds, account?.addr, dashboardNetworkFilter]
+  )
 
   const currentAccountBanners = useMemo(
     () =>
@@ -86,8 +104,11 @@ const DeFiPositions: FC<Props> = ({
     setValue('search', '')
   }, [openTab, setValue])
 
-  useEffect(() => {
-    if (!prevInitTab?.defi && initTab?.defi) {
+  // The session is what keeps the portfolio fetching defi positions, so it lasts for
+  // as long as the tab is open and this is the screen the user is on.
+  useControllerSession({
+    isEnabled: !!initTab?.defi,
+    open: () => {
       portfolioDispatch({
         type: 'method',
         params: {
@@ -95,13 +116,14 @@ const DeFiPositions: FC<Props> = ({
           args: [sessionId]
         }
       })
+      // Initialize the port session, so the background can terminate it when the tab
+      // is closed - there is no reliable window event for that.
       setSearchParams((prev: any) => {
         prev.set('sessionId', sessionId)
         return prev
       })
-    }
-
-    if (prevInitTab?.defi && !initTab?.defi) {
+    },
+    close: () =>
       portfolioDispatch({
         type: 'method',
         params: {
@@ -109,20 +131,7 @@ const DeFiPositions: FC<Props> = ({
           args: [sessionId]
         }
       })
-    }
-  }, [portfolioDispatch, setSearchParams, prevInitTab?.defi, initTab?.defi, sessionId])
-
-  useEffect(() => {
-    return () => {
-      portfolioDispatch({
-        type: 'method',
-        params: {
-          method: 'removeDefiSession',
-          args: [sessionId]
-        }
-      })
-    }
-  }, [sessionId, portfolioDispatch])
+  })
 
   const filteredPositions = useMemo(() => {
     const defiToSearch = portfolio.defiPositions
@@ -175,6 +184,17 @@ const DeFiPositions: FC<Props> = ({
               />
             ))}
           </View>
+        )
+      }
+
+      if (item === 'pending-update') {
+        return (
+          <Banner
+            type="info"
+            CustomIcon={HourglassIconAnimated}
+            title={t('Updating after your recent transaction.')}
+            text={t('This may take a minute...')}
+          />
         )
       }
 
@@ -271,12 +291,16 @@ const DeFiPositions: FC<Props> = ({
   }, [])
 
   const dataItems = useMemo(() => {
-    const items = ['header']
+    const items: string[] = isMobile ? [] : ['header']
 
     if (currentAccountBanners.length > 0) {
       items.push('banners')
     }
     if (flags.tokenAndDefiAutoDiscovery) {
+      // Only worth saying when positions actually refresh; with discovery off they never do
+      if (hasPendingUpdate) {
+        items.push('pending-update')
+      }
       items.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
       if (initTab?.defi && portfolio.isAllReady) {
         filteredPositions.forEach((p: any) => items.push(p))
@@ -291,16 +315,24 @@ const DeFiPositions: FC<Props> = ({
     currentAccountBanners.length,
     filteredPositions,
     flags.tokenAndDefiAutoDiscovery,
+    hasPendingUpdate,
     initTab?.defi,
     portfolio.isAllReady
   ])
 
+  // Rendered above the carousel on mobile, so it stays put through a swipe
+  const floatingBar = useMemo(
+    () => ({ control, searchPlaceholder: t('Search DeFi') }),
+    [control, t]
+  )
+
   return (
     <>
       <DashboardPageScrollContainer
+        floatingBar={floatingBar}
         tab="defi"
         openTab={openTab}
-        ListHeaderComponent={<DashboardBanners />}
+        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         data={dataItems}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
@@ -313,12 +345,9 @@ const DeFiPositions: FC<Props> = ({
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-      {openTab === 'defi' && (
-        <FloatingBottomBar
-          control={control}
-          isHidden={isSearchHidden}
-          searchPlaceholder={t('Search DeFi')}
-        />
+      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
+      {!isMobile && openTab === 'defi' && (
+        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
       )}
     </>
   )

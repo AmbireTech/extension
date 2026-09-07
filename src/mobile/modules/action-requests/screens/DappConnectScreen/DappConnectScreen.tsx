@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
@@ -26,6 +27,7 @@ const DappConnectScreen = () => {
 
   return (
     <MobileLayoutContainer
+      header={<ActionHeader />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter
@@ -58,6 +60,7 @@ const DappConnectScreen = () => {
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
       }
+      style={spacings.mt}
     >
       {!!dappToConnect && (
         <View style={styles.content}>

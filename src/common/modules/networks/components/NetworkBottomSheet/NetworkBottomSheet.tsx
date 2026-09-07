@@ -35,7 +35,7 @@ const NetworkBottomSheet = ({ sheetRef, chainId, closeBottomSheet, openBlockExpl
   const { navigate } = useNavigation()
   const { addToast } = useToast()
   const { theme, styles } = useTheme(getStyles)
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const networkData = networks.find((network) => String(network.chainId) === String(chainId))
 
   const handleOpenBlockExplorer = useCallback(

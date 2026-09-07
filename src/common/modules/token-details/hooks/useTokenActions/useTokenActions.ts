@@ -53,9 +53,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   } = useModalize()
   const { addToast } = useToast()
   const { t } = useTranslation()
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const {
     state: { flags }
   } = useController('FeatureFlagsController')
@@ -65,9 +63,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
     (state) => state.supportedChainIds
   )
   const { dispatch: portfolioDispatch } = useController('PortfolioController')
-  const {
-    state: { tokenPreferences }
-  } = useController('PortfolioController')
+  const { state: tokenPreferences } = useController('PortfolioController', 'tokenPreferences')
   const networks = useNetworks({
     acc: account,
     additionalCheck: {

@@ -10,8 +10,12 @@ import {
 } from 'fixtures/keystoreMigration'
 
 import { expect } from '@playwright/test'
+import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '../../../../src/web/modules/keystore/constants'
 
 import { test } from '../../../fixtures/pageObjects'
+
+const PASSWORD_UNLOCK_REQUIRED_NOTICE =
+  'Enter your password to finish a security update. Biometric unlock will be available right after.'
 
 // Reads the (possibly stringified) keystore blobs from the service worker.
 const readKeystore = (pages: any) =>
@@ -66,18 +70,10 @@ test.describe(
 
       // Stub the WebAuthn boundary (real biometrics can't run headless). Registered before the
       // upcoming navigation so it is in place when the unlock screen mounts. The stub:
-      //  - disables the auto-prompt once, so we trigger biometrics explicitly (deterministic);
       //  - reports a platform authenticator is available (drives hasBiometricsHardware = true);
       //  - returns a fixed PRF output so getBiometricsSecret() === BIOMETRICS_SECRET_HEX, which
-      //    decrypts the baked biometrics secret. Gated on a sessionStorage flag so we can disable
-      //    it for the password-unlock phase.
+      //    decrypts the baked biometrics secret.
       await pages.basePage.page.addInitScript((bytes: number[]) => {
-        try {
-          sessionStorage.setItem('skipAutoBiometricsPromptOnce', 'true')
-        } catch {
-          // sessionStorage may be unavailable on some early pages; safe to ignore
-        }
-
         const w = window as any
         if (typeof w.PublicKeyCredential === 'undefined') w.PublicKeyCredential = function () {}
         w.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable = async () => true
@@ -85,16 +81,13 @@ test.describe(
         if (!navigator.credentials) {
           Object.defineProperty(navigator, 'credentials', { value: {}, configurable: true })
         }
-        ;(navigator.credentials as any).get = async () => {
-          if (sessionStorage.getItem('e2eBiometricsDisabled') === 'true') return null
-          return {
-            type: 'public-key',
-            rawId: new Uint8Array(bytes),
-            getClientExtensionResults: () => ({
-              prf: { results: { first: new Uint8Array(bytes) } }
-            })
-          }
-        }
+        ;(navigator.credentials as any).get = async () => ({
+          type: 'public-key',
+          rawId: new Uint8Array(bytes),
+          getClientExtensionResults: () => ({
+            prf: { results: { first: new Uint8Array(bytes) } }
+          })
+        })
       }, BIOMETRICS_SECRET_BYTES)
 
       await pages.basePage.navigateToURL(`${pages.extensionURL}/tab.html#/`)
@@ -104,44 +97,51 @@ test.describe(
       await context.close()
     })
 
-    test('biometrics-first unlock migrates, then password unlock leaves everything GCM', async ({
+    test('password unlock migrates first, biometrics unlock migrates its own secret after', async ({
       pages
     }) => {
-      // --- 1. Unlock with biometrics ---
-      await pages.basePage.expectElementVisible(selectors.buttonUnlockBiometricsIcon)
-      await pages.basePage.click(selectors.buttonUnlockBiometricsIcon)
+      // --- 1. Biometrics is not offered while the password secret is still on AES-CTR: a secret
+      // migrates only when it is used to unlock, so the password one must go first. ---
+      await expect(pages.basePage.page.getByText(PASSWORD_UNLOCK_REQUIRED_NOTICE)).toBeVisible()
+      await pages.basePage.expectElementNotVisible(selectors.buttonUnlockBiometricsIcon)
+
+      // --- 2. Unlock with the password ---
+      await pages.basePage.entertext(selectors.passphraseField, KEYSTORE_PASS)
+      await pages.basePage.click(selectors.buttonUnlock)
       await pages.basePage.expectElementVisible(selectors.fullBalance)
       await expect(pages.basePage.page).toHaveURL(/\/dashboard/)
       await expect(pages.basePage.page.getByText('Error').first()).not.toBeVisible()
 
-      // --- 2. Assert lazy per-secret migration: biometrics secret + keys + seeds are now GCM,
-      // but the password secret is still AES-CTR (it migrates only when used to unlock). ---
+      // --- 3. Assert lazy per-secret migration: password secret + keys + seeds are now GCM,
+      // but the biometrics secret is still AES-CTR (it migrates only when used to unlock). ---
       await expect(async () => {
         const data: any = await readKeystore(pages)
 
         const secrets = JSON.parse(data.keystoreSecrets)
-        const biometricsSecret = secrets.find((s: any) => s.id === 'biometrics')
         const passwordSecret = secrets.find((s: any) => s.id === 'password')
-        expect(biometricsSecret?.aesEncrypted?.cipherType).toBe('AES-GCM')
-        expect(passwordSecret?.aesEncrypted?.cipherType).toBe('aes-128-ctr')
+        const biometricsSecret = secrets.find((s: any) => s.id === 'biometrics')
+        expect(passwordSecret?.aesEncrypted?.cipherType).toBe('AES-GCM')
+        expect(biometricsSecret?.aesEncrypted?.cipherType).toBe('aes-128-ctr')
 
         expectKeysAndSeedsGcm(data)
       }).toPass({ timeout: 30000 })
 
-      // Disable the biometrics stub so the post-lock auto-prompt no-ops and we can unlock with
-      // the password instead (exercising the GCM-migration path for the password secret).
-      await pages.basePage.page.evaluate(() =>
-        sessionStorage.setItem('e2eBiometricsDisabled', 'true')
+      // Skip the auto-prompt on the next unlock screen mount, so the biometrics ceremony is
+      // triggered by an explicit click (deterministic). Locking from settings doesn't set the
+      // flag itself, unlike locking from the nav menu.
+      await pages.basePage.page.evaluate(
+        (key: string) => sessionStorage.setItem(key, 'true'),
+        SKIP_AUTO_BIOMETRICS_PROMPT_ONCE
       )
 
-      // --- 3. Lock, then unlock with password ---
+      // --- 4. Lock, then unlock with biometrics, which is offered again now that the password
+      // secret is migrated (exercising the GCM-migration path for the biometrics secret). ---
       await pages.settings.lockKeystore()
-      await pages.basePage.page.getByText('Unlock with password', { exact: true }).click()
-      await pages.basePage.entertext(selectors.passphraseField, KEYSTORE_PASS)
-      await pages.basePage.click(selectors.buttonUnlock)
+      await pages.basePage.expectElementVisible(selectors.buttonUnlockBiometricsIcon)
+      await pages.basePage.click(selectors.buttonUnlockBiometricsIcon)
       await pages.basePage.expectElementVisible(selectors.fullBalance)
 
-      // --- 4. Data is still valid after the password unlock: all seeds reveal correctly and the
+      // --- 5. Data is still valid after the biometrics unlock: all seeds reveal correctly and the
       // internal private keys export and re-derive to their addresses. ---
       await pages.recoveryPhrases.open()
       const expectedIds = Object.keys(EXPECTED_SEEDS)
@@ -158,7 +158,7 @@ test.describe(
         expect(ethers.computeAddress(privateKey).toLowerCase()).toBe(key.addr.toLowerCase())
       }
 
-      // --- 5. Read storage: the password secret is now GCM too → everything is GCM. ---
+      // --- 6. Read storage: the biometrics secret is now GCM too → everything is GCM. ---
       await expect(async () => {
         const data: any = await readKeystore(pages)
         const secrets = JSON.parse(data.keystoreSecrets)
