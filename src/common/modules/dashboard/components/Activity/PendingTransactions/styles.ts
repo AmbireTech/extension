@@ -20,7 +20,6 @@ interface Styles {
   bundle: ViewStyle
   bundleWithDividerAbove: ViewStyle
   bundleWithDividerBelow: ViewStyle
-  humanizationItem: ViewStyle
   divider: ViewStyle
   orDividerAnchor: ViewStyle
   orDividerRow: ViewStyle
@@ -87,11 +86,6 @@ const getStyles = (theme: ThemeProps) =>
     },
     bundleWithDividerBelow: {
       paddingBottom: SPACING_SM + OR_DIVIDER_HEIGHT / 2
-    },
-    humanizationItem: {
-      minHeight: 28,
-      borderRadius: 8,
-      backgroundColor: hexToRgba(theme.primaryBackground, 0.75)
     },
     divider: {
       height: 1,

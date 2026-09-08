@@ -13,7 +13,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: boolean }) => {
   const { t } = useTranslation()
-  const { currentUserRequest } = useController('RequestsController').state
+  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
   const { theme } = useTheme()
 
   return (

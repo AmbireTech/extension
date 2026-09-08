@@ -15,7 +15,7 @@ type Props = {
 const TenderlySimulation = ({ style }: Props) => {
   const { t } = useTranslation()
   const signAccountOpState = useController('SignAccountOpController').state
-  const { accountStates } = useController('AccountsController').state
+  const { state: accountStates } = useController('AccountsController', 'accountStates')
 
   const state = useMemo(() => {
     if (!signAccountOpState) return undefined

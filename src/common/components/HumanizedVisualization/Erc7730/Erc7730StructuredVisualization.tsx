@@ -53,15 +53,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   hideMobileSummaryTitle = false,
   isTransactionSummaryLayout = false,
   hasTransactionSummaryHeaderRightControl = false,
+  dappIconSize = 24 * sizeMultiplierSize,
   transactionSummarySection = 'all',
   showDescriptionTitle = false,
   nestingDepth = 0
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const {
-    state: { networks: controllerNetworks }
-  } = useController('NetworksController')
+  const { state: controllerNetworks } = useController('NetworksController', 'networks')
   const { benzinNetworks } = useNetworksContext()
   const networks = controllerNetworks ?? benzinNetworks
   const shouldHideTransactionSummaryTitle = withMobileLayout && hideMobileSummaryTitle
@@ -236,6 +235,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             sizeMultiplierSize={sizeMultiplierSize}
             textSize={overrideTextSize}
             mode="description"
+            dappIconSize={dappIconSize}
             nestingDepth={nestingDepth + 1}
           />
         )
@@ -268,7 +268,17 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
       return null
     },
-    [chainId, editApprovalCallInfo, mode, nestingDepth, sizeMultiplierSize, t, textSize, theme]
+    [
+      chainId,
+      dappIconSize,
+      editApprovalCallInfo,
+      mode,
+      nestingDepth,
+      sizeMultiplierSize,
+      t,
+      textSize,
+      theme
+    ]
   )
 
   // Renders `item.intent` (e.g. "Swap {amount} for at least {amount}")
@@ -400,6 +410,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               sizeMultiplierSize={sizeMultiplierSize}
               textSize={textSize}
               mode="description"
+              dappIconSize={dappIconSize}
               showDescriptionTitle
               nestingDepth={nestingDepth + 1}
             />
@@ -409,6 +420,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     },
     [
       chainId,
+      dappIconSize,
       nestingDepth,
       sizeMultiplierSize,
       t,
@@ -440,10 +452,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 <ManifestImage
                   uri={item.dapp.icon}
                   containerStyle={spacings.mrTy}
-                  size={24 * sizeMultiplierSize}
+                  size={dappIconSize}
                   skeletonAppearance="secondaryBackground"
                   imageStyle={{
-                    borderRadius: 12 * sizeMultiplierSize,
+                    borderRadius: dappIconSize / 2,
                     backgroundColor: 'transparent'
                   }}
                   hideOnError
@@ -533,6 +545,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           textSize={textSize}
           renderValue={renderValue}
           hideTitle={hideMobileSummaryTitle}
+          dappIconSize={dappIconSize}
         />
       )
     }
@@ -566,9 +579,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             <ManifestImage
               uri={item.dapp.icon}
               containerStyle={{ marginRight: SPACING_TY }}
-              size={24 * sizeMultiplierSize}
+              size={dappIconSize}
               skeletonAppearance="secondaryBackground"
-              imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
+              imageStyle={{ borderRadius: dappIconSize / 2, backgroundColor: 'transparent' }}
               hideOnError
             />
           )}

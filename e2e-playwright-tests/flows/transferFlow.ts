@@ -132,7 +132,7 @@ export async function runBatchTransferFlow({
     await actionWindow.getByTestId(selectors.signTransactionButton).click()
 
     if (ledgerSimulatorControls) {
-      await page.waitForTimeout(1000) // wait for the transaction details to be displayed on the Ledger simulator
+      await page.waitForTimeout(2000) // wait for the transaction details to be displayed on the Ledger simulator
       await ledgerSimulatorControls.signSmartAccountTransaction()
     }
 

@@ -16,9 +16,7 @@ const useReceive = () => {
   const { state } = useRoute()
   const { address } = state || {}
 
-  const {
-    state: { account: stateAccount }
-  } = useController('SelectedAccountController')
+  const { state: stateAccount } = useController('SelectedAccountController', 'account')
 
   const {
     state: { accounts }
@@ -40,7 +38,7 @@ const useReceive = () => {
   } = useReverseLookup({
     address: account?.addr || ''
   })
-  const { keys } = useController('KeystoreController').state
+  const { state: keys } = useController('KeystoreController', 'keys')
   const { theme } = useTheme()
   const qrCodeRef: any = useRef(null)
   const [qrCodeError, setQrCodeError] = useState<string | boolean | null>(null)

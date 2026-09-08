@@ -297,12 +297,17 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
 
       const deviceModel = hdKey.getName?.() || 'QR Hardware'
       const deviceId = `${masterFingerprint || 'unknown'}`
+      // Says where the wallet puts its addresses below the exported key, which is the
+      // only thing telling a standard export apart from a Ledger Legacy one when both
+      // are exported from the same account-level path.
+      const childrenPath = hdKey.getChildren?.()?.getPath?.()
 
       return {
         deviceModel,
         deviceId,
         masterFingerprint,
         hdPath: normalizedOriginPath,
+        childrenPath,
         accounts: [
           {
             xpub,

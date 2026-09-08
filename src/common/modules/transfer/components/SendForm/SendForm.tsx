@@ -69,13 +69,11 @@ const SendForm = ({
     },
     dispatch: transferDispatch
   } = useController('TransferController')
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
 
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { verifiedDomainsStatus } = useController('DomainsController').state
   const domainVerificationMessage =
     verifiedDomainsStatus[addressStateFieldValue.trim()] === 'VERIFIED' ? 'Verified by Colibri' : ''

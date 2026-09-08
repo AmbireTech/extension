@@ -10,6 +10,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import CrashAnalyticsControlOption from '@common/modules/settings/components/General/CrashAnalyticsControlOption'
 import OptOutControlOption from '@common/modules/settings/components/PrivacyOptOuts/OptOutControlOption'
+import SwapProviderControlOption from '@common/modules/settings/components/PrivacyOptOuts/SwapProviderControlOption'
 import spacings from '@common/styles/spacings'
 
 const PrivacyOptOutsList = () => {
@@ -40,14 +41,7 @@ const PrivacyOptOutsList = () => {
         icon={<EnsIcon width={20} height={20} color={theme.iconPrimary} />}
         flag="keepEnsProfilesUpToDate"
       />
-      <OptOutControlOption
-        title={t('Enrich swap and bridge token info')}
-        description={t(
-          'Show the exchanges a token is traded on when picking a token to receive. This sends the addresses of the listed tokens to Ambire’s price API.'
-        )}
-        icon={<SwapAndBridgeIcon width={24} height={24} color={theme.iconPrimary} />}
-        flag="swapAndBridgeTokenInfo"
-      />
+
       <OptOutControlOption
         title={t('ERC-4337 smart account features')}
         description={t(
@@ -63,6 +57,15 @@ const PrivacyOptOutsList = () => {
         )}
         icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
         flag="eip7702"
+      />
+      <SwapProviderControlOption />
+      <OptOutControlOption
+        title={t('Enrich swap and bridge token info')}
+        description={t(
+          'Show the exchanges a token is traded on when picking a token to receive. This sends the addresses of the listed tokens to Ambire’s price API.'
+        )}
+        icon={<SwapAndBridgeIcon width={24} height={24} color={theme.iconPrimary} />}
+        flag="swapAndBridgeTokenInfo"
       />
       <CrashAnalyticsControlOption />
     </View>
