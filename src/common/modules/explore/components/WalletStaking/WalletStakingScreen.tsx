@@ -250,29 +250,26 @@ const WalletStakingScreen = () => {
     () => formatDecimals(Number(amount || 0) * price, 'value'),
     [amount, price]
   )
-  // Both tier badges are based on the confirmed on-chain stkWALLET balance (shared with
-  // SwapAndBridgeController, so the "current" badge always matches the fee a real swap would
-  // apply right now).
+  // The "current" badge is based on the confirmed on-chain stkWALLET balance (shared with
+  // SwapAndBridgeController, so it always matches the fee a real swap would apply right now) -
+  // deliberately NOT the pending balance below, since it's meant to show the fee as it stands
+  // today, before this (still unsubmitted) stake/unstake is accounted for.
   const currentFeePercent = useStkWalletFeePercent()
-  const currentOnChainStkWalletAmount = useMemo(
-    () =>
-      stkWalletToken
-        ? Number(formatUnits(getTokenAmount(stkWalletToken, true), TOKEN_DECIMALS))
-        : 0,
-    [stkWalletToken]
-  )
   // Staking mints stkWALLET 1:1 for the WALLET deposited (no share-value conversion - that only
   // applies to xWALLET, which is priced at shareValue WALLET/stkWALLET per share), so the
   // projected tier badge previews what staking the entered amount would move the user into by
-  // just adding it on top of the current on-chain balance above. Unstaking removes stkWALLET
-  // instead, so it subtracts - and can only worsen (or keep) the fee tier, never improve it.
+  // just adding it on top of the pending stkWALLET balance - the same balance the slider itself
+  // is drawn against (see `tierOffset` on AmountSlider below), so the two always agree. Unstaking
+  // removes stkWALLET instead, so it subtracts - and can only worsen (or keep) the fee tier,
+  // never improve it.
   const projectedStkWalletAmount = useMemo(() => {
+    const pendingStkWalletAmount = Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS))
     const enteredAmount = Number(formatUnits(amountInWei, TOKEN_DECIMALS))
 
     return mode === 'stake'
-      ? currentOnChainStkWalletAmount + enteredAmount
-      : Math.max(0, currentOnChainStkWalletAmount - enteredAmount)
-  }, [amountInWei, currentOnChainStkWalletAmount, mode])
+      ? pendingStkWalletAmount + enteredAmount
+      : Math.max(0, pendingStkWalletAmount - enteredAmount)
+  }, [amountInWei, mode, stkWalletBalance])
   const projectedFeePercent = useMemo(
     () => getFeePercent(projectedStkWalletAmount),
     [projectedStkWalletAmount]
