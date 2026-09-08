@@ -12,12 +12,17 @@ export const INVITE_CODE_LENGTH = 12
 
 // Codes could be copied around with separators in them, so make pasting forgiving,
 // depending on how we visually ship them to the users in the diff invite code distr channels.
-const SEPARATORS = [' ', '-']
+const SEPARATORS = ['-']
+
+// Copying from a web page or a chat drags along whitespace (leading newlines, tabs,
+// non-breaking spaces). Dropping it before the length cap matters, otherwise a single
+// stray char shifts a valid code out of the 12 char window and it reads as a typo.
+const isNoise = (char: string) => SEPARATORS.includes(char) || char.trim() === ''
 
 const sanitize = (raw: string) =>
   raw
     .split('')
-    .filter((char) => !SEPARATORS.includes(char))
+    .filter((char) => !isNoise(char))
     .slice(0, INVITE_CODE_LENGTH)
     .join('')
 
