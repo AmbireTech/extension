@@ -21,9 +21,11 @@ const THUMB_SIZE = 20
 const SLIDER_STEPS = 10000n
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
-// How close (in px, from either side) the pointer needs to be to a threshold tick for the value
-// to magnetically snap onto it instead of the raw pointer position.
-const THRESHOLD_SNAP_RADIUS = 8
+// How close (in px, from either side) the pointer needs to be to a threshold tick, or to either
+// end of the track, for the value to magnetically snap onto it instead of the raw pointer
+// position. The track ends are checked first (see updateValue), so a threshold that happens to
+// sit within the radius of an end loses to that end.
+const SNAP_RADIUS = 8
 const parseHexChannels = (hex: string) => {
   const cleanHex = hex.replace('#', '')
   return [
@@ -187,10 +189,21 @@ const AmountSlider = ({
 
       const position = Math.min(Math.max(locationX - THUMB_SIZE / 2, 0), availableWidth)
 
+      // Magnetic snap to the track's own ends takes priority over snapping to a threshold -
+      // checked first so an end wins whenever a threshold happens to sit within the radius of it.
+      if (position <= SNAP_RADIUS) {
+        onValueChange(0n)
+        return
+      }
+      if (position >= availableWidth - SNAP_RADIUS) {
+        onValueChange(maximumValue)
+        return
+      }
+
       // Magnetic snap: land exactly on a threshold's own value (not just its nearest slider
       // step) whenever the pointer is close to its tick mark, from either side.
       const nearestThreshold = thresholdMarkers.find(
-        (threshold) => Math.abs(threshold.position - position) <= THRESHOLD_SNAP_RADIUS
+        (threshold) => Math.abs(threshold.position - position) <= SNAP_RADIUS
       )
       if (nearestThreshold) {
         onValueChange(nearestThreshold.value - tierOffset)
