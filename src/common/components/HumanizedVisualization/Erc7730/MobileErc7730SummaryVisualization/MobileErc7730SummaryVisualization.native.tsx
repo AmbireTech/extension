@@ -19,15 +19,14 @@ const MobileErc7730SummaryVisualization = ({
   item,
   summaryRows,
   spenderRow,
-  sizeMultiplierSize,
   textSize,
   renderValue,
-  hideTitle
+  hideTitle,
+  dappIconSize
 }: Props) => {
   const { theme } = useTheme()
   const subtitleTextSize = Math.max(textSize - 3, 11)
   const dappIconUri = item.dapp?.icon
-  const dappIconSize = 24 * sizeMultiplierSize
   const dappIconStyle = useMemo(
     () => ({
       width: dappIconSize,
