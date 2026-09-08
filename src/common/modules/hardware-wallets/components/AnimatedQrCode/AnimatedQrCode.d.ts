@@ -13,7 +13,8 @@ export interface AnimatedQrCodeProps {
   /**
    * White margin around the code, included in `size` (so a smaller quiet zone means
    * bigger, easier to scan modules). Pass 0 when the surrounding background is white
-   * already and can serve as the quiet zone itself.
+   * already and can serve as the quiet zone itself. Web defaults to a margin of four
+   * modules for the least dense animated QR code used by the app.
    */
   quietZone?: number
 }

@@ -2,7 +2,6 @@ import React from 'react'
 import { View } from 'react-native'
 
 import { AnimatedQRCode } from '@keystonehq/animated-qr'
-import { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { AnimatedQrCodeProps } from './AnimatedQrCode'
@@ -11,6 +10,16 @@ const DEFAULT_SIZE = 300
 const DEFAULT_INTERVAL = 300
 const DEFAULT_CAPACITY = 200
 const QR_BACKGROUND_COLOR = '#fff'
+/**
+ * Accounts sync uses version 8 (49x49 modules), while the default-capacity signing QR
+ * codes are denser. Reserving four modules at version 8 therefore gives every web QR
+ * using the default margin enough white space to stand apart from a dark surface.
+ */
+const SMALLEST_EXPECTED_QR_MODULE_COUNT = 49
+const REQUIRED_QUIET_ZONE_MODULES = 4
+const DEFAULT_QUIET_ZONE_RATIO =
+  REQUIRED_QUIET_ZONE_MODULES /
+  (SMALLEST_EXPECTED_QR_MODULE_COUNT + REQUIRED_QUIET_ZONE_MODULES * 2)
 // AnimatedQRCode already paints this much white on every side of the code
 const BUILT_IN_QUIET_ZONE = 5
 
@@ -23,11 +32,11 @@ const AnimatedQrCode = ({
   size = DEFAULT_SIZE,
   interval = DEFAULT_INTERVAL,
   capacity = DEFAULT_CAPACITY,
-  quietZone = SPACING_SM
+  quietZone
 }: AnimatedQrCodeProps) => {
-  // Tops the built-in white space up to `quietZone`, so the frame around the code is as
-  // thick as the one `react-native-qrcode-svg` draws on native
-  const padding = Math.max(0, quietZone - BUILT_IN_QUIET_ZONE)
+  const resolvedQuietZone = quietZone ?? Math.ceil(size * DEFAULT_QUIET_ZONE_RATIO)
+  // Tops the library's built-in white space up to the requested quiet zone.
+  const padding = Math.max(0, resolvedQuietZone - BUILT_IN_QUIET_ZONE)
 
   return (
     <View
