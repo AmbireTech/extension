@@ -309,6 +309,16 @@ const WalletStakingScreen = () => {
         })
       }))
   }, [mode, stkWalletBalance, t])
+  // Once the account already holds more stkWALLET than the top fee threshold, it's already at
+  // the best (0%) tier and staking more can't change that, so the fee preview has nothing useful
+  // left to say - stake mode only, since unstaking always risks dropping back out of that tier.
+  const shouldShowFeePreview =
+    mode !== 'stake' ||
+    stkWalletBalance <=
+      parseUnits(
+        String(SWAP_AND_BRIDGE_FEE_THRESHOLDS[SWAP_AND_BRIDGE_FEE_THRESHOLDS.length - 1]),
+        TOKEN_DECIMALS
+      )
   // What the entered amount would leave WALLET/stkWALLET at. In stake mode it's moved between
   // those two tokens directly. In unstake mode it does NOT land back in WALLET here - unstaked
   // stkWALLET is locked for the unbonding period rather than
@@ -1014,43 +1024,45 @@ const WalletStakingScreen = () => {
                       thresholds={sliderThresholds}
                     />
 
-                    <View style={styles.feePreviewRow}>
-                      <View style={styles.feePreviewLabel}>
-                        <Text fontSize={12} appearance="secondaryText">
-                          {t('Swap & Bridge fee')}
-                        </Text>
-                        <Button
-                          text={t('Details')}
-                          type="outline"
-                          size="tiny"
-                          accentColor={theme.primaryAccent300}
-                          onPress={handleOpenFeeInfoBottomSheet}
-                          hasBottomSpacing={false}
-                          submitOnEnter={false}
-                          style={styles.feeDetailsButton}
-                          testID="wallet-staking-fee-details-button"
-                        />
-                      </View>
-                      <View style={styles.feePreviewValues}>
-                        {projectedFeePercent !== currentFeePercent && (
-                          <Text
-                            fontSize={12}
-                            appearance="tertiaryText"
-                            style={styles.feePreviewOldFee}
-                          >
-                            {currentFeePercent.toFixed(2)}%
+                    {shouldShowFeePreview && (
+                      <View style={styles.feePreviewRow}>
+                        <View style={styles.feePreviewLabel}>
+                          <Text fontSize={12} appearance="secondaryText">
+                            {t('Swap & Bridge fee')}
                           </Text>
-                        )}
-                        <Text
-                          fontSize={22}
-                          weight="semiBold"
-                          color={theme.primaryAccent200}
-                          style={styles.feePreviewNewFee}
-                        >
-                          {projectedFeePercent.toFixed(2)}%
-                        </Text>
+                          <Button
+                            text={t('Details')}
+                            type="outline"
+                            size="tiny"
+                            accentColor={theme.primaryAccent300}
+                            onPress={handleOpenFeeInfoBottomSheet}
+                            hasBottomSpacing={false}
+                            submitOnEnter={false}
+                            style={styles.feeDetailsButton}
+                            testID="wallet-staking-fee-details-button"
+                          />
+                        </View>
+                        <View style={styles.feePreviewValues}>
+                          {projectedFeePercent !== currentFeePercent && (
+                            <Text
+                              fontSize={12}
+                              appearance="tertiaryText"
+                              style={styles.feePreviewOldFee}
+                            >
+                              {currentFeePercent.toFixed(2)}%
+                            </Text>
+                          )}
+                          <Text
+                            fontSize={22}
+                            weight="semiBold"
+                            color={theme.primaryAccent200}
+                            style={styles.feePreviewNewFee}
+                          >
+                            {projectedFeePercent.toFixed(2)}%
+                          </Text>
+                        </View>
                       </View>
-                    </View>
+                    )}
                   </View>
 
                   <View style={styles.details}>
