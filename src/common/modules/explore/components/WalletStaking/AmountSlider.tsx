@@ -1,10 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import {
-  AccessibilityActionEvent,
-  GestureResponderEvent,
-  LayoutChangeEvent,
-  View
-} from 'react-native'
+import { AccessibilityActionEvent, LayoutChangeEvent, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -213,10 +208,6 @@ const AmountSlider = ({
     [availableWidth, maximumValue, onValueChange, thresholdMarkers, tierOffset]
   )
 
-  const handlePress = useCallback(
-    (event: GestureResponderEvent) => updateValue(event.nativeEvent.locationX),
-    [updateValue]
-  )
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -261,7 +252,6 @@ const AmountSlider = ({
           accessibilityValue={accessibilityValue}
           onAccessibilityAction={handleAccessibilityAction}
           onLayout={handleLayout}
-          onPress={handlePress}
           style={styles.amountSlider}
         >
           <View style={styles.amountSliderTrack} />
