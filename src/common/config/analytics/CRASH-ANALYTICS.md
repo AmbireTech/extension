@@ -2,7 +2,7 @@
 
 Ambire sends anonymous crash reports to a self-hosted Sentry, so we can find and fix bugs without asking anyone to reproduce them.
 
-Crash reports can accidentally pick up things a wallet must never send out: a private key, a seed phrase, a password. This document lists everything we do to stop that, in the code and in our Sentry settings.
+It's our goal to only send data that may be useful for debugging, and such that does not harm the user's security or privacy. To not rely on one single mechanism, we have multiple layers of protection in the code and in Sentry (which will be discussed below).
 
 ## Where it runs
 
@@ -27,7 +27,7 @@ Crash reports can accidentally pick up things a wallet must never send out: a pr
 
 **By field name**
 
-A password has no recognizable shape, so its field name is the only signal. Any value under a field name containing one of these is replaced with `[REDACTED]`, whatever it holds:
+Any value under a field name containing one of these is replaced with `[REDACTED]`, whatever it holds (`SENSITIVE_KEY_SUBSTRINGS`):
 
 ```
 pass  pwd  secret  mnemonic  seed  privatekey  privkey  entropy
@@ -52,8 +52,6 @@ Set at organization level, so they cover every project. A second pass, in case a
 | Mask | `\b0x[a-fA-F0-9]{64}\b\|\b[a-fA-F0-9]{64}\b` | All fields |
 | Mask | `\b(?:[a-z]{3,12}\s+){11,23}[a-z]{3,12}\b` | All fields |
 | Remove | Anything | `extra.action` |
-
-The two patterns are the same private key and seed phrase shapes as above. 
 
 ## Tests
 
