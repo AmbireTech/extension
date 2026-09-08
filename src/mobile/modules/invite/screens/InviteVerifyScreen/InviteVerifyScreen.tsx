@@ -7,6 +7,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import { isDev, isTesting } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@common/constants/social'
@@ -15,12 +16,14 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInTab } from '@common/utils/links'
+import { DEFAULT_INVITE_CODE_DEV } from '@env'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import InviteCodeInput, {
-  INVITE_CODE_LENGTH
+  INVITE_CODE_LENGTH,
+  sanitizeInviteCode
 } from '@mobile/modules/invite/components/InviteCodeInput'
 
 const selectIsVerifying = (state: AllControllersMappingType['InviteController']) =>
@@ -33,7 +36,10 @@ const InviteVerifyScreen = () => {
   const { t } = useTranslation()
   const { state: isVerifying, dispatch } = useController('InviteController', selectIsVerifying)
   const { state: errorMessage } = useController('InviteController', selectErrorMessage)
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(
+    // Typing the invite code on every dev build gets tedious fast, so let devs pin theirs in .env
+    isDev && !isTesting ? sanitizeInviteCode(DEFAULT_INVITE_CODE_DEV ?? '') : ''
+  )
 
   const handleCodeChange = useCallback(
     (nextCode: string) => {

@@ -19,7 +19,8 @@ const SEPARATORS = ['-']
 // stray char shifts a valid code out of the 12 char window and it reads as a typo.
 const isNoise = (char: string) => SEPARATORS.includes(char) || char.trim() === ''
 
-const sanitize = (raw: string) =>
+/** Strips separators and whitespace noise, then caps the code to {@link INVITE_CODE_LENGTH}. */
+export const sanitizeInviteCode = (raw: string) =>
   raw
     .split('')
     .filter((char) => !isNoise(char))
@@ -40,7 +41,7 @@ const InviteCodeInput = ({ value, onChange, onSubmitEditing, editable = true, er
   const { theme } = useTheme()
 
   const handleChangeText = useCallback(
-    (nextValue: string) => onChange(sanitize(nextValue)),
+    (nextValue: string) => onChange(sanitizeInviteCode(nextValue)),
     [onChange]
   )
 
@@ -48,7 +49,7 @@ const InviteCodeInput = ({ value, onChange, onSubmitEditing, editable = true, er
   // paste button instead of relying on the fiddly long-press OS paste menu.
   const handlePaste = useCallback(async () => {
     try {
-      const sanitized = sanitize(await getStringAsync())
+      const sanitized = sanitizeInviteCode(await getStringAsync())
 
       if (!sanitized) {
         addToast(t('There is no invite code copied on your device.'), { type: 'error' })
