@@ -121,6 +121,14 @@ if (isExtension) {
         eventBus.emit('navigate', lastReceivedNavigate)
         return
       }
+      // The background didn't recognize an action this view sent - almost certainly because the
+      // extension auto-updated the background while this view kept running its already-loaded,
+      // now-outdated JS bundle. No amount of retrying fixes that; recover the same way a dead
+      // port does.
+      if (method === 'staleViewBundle') {
+        handleBackgroundDisconnected()
+        return
+      }
       if (messageType === '> ui') {
         if (method === 'closePopup' && getUiType().isPopup) {
           closeCurrentWindow()
