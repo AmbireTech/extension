@@ -42,8 +42,6 @@ interface Styles {
   amountNativeInput: TextStyle
   amountSlider: ViewStyle
   amountSliderTrack: ViewStyle
-  amountSliderInactiveStart: ViewStyle
-  amountSliderInactiveEnd: ViewStyle
   amountSliderProgressContainer: ViewStyle
   amountSliderThreshold: ViewStyle
   amountSliderThumb: ViewStyle
@@ -265,27 +263,6 @@ const getStyles = (theme: ThemeProps) =>
       height: 8,
       borderRadius: 4,
       backgroundColor: theme.tertiaryText
-    },
-    amountSliderInactiveStart: {
-      position: 'absolute',
-      top: 10,
-      left: SLIDER_THUMB_SIZE / 2,
-      height: 8,
-      borderTopLeftRadius: 4,
-      borderBottomLeftRadius: 4,
-      overflow: 'hidden',
-      // Deliberately a different token than amountSliderTrack's, so the inactive segment never
-      // blends into the plain, unfilled track next to it.
-      backgroundColor: theme.secondaryText
-    },
-    amountSliderInactiveEnd: {
-      position: 'absolute',
-      top: 10,
-      height: 8,
-      borderTopRightRadius: 4,
-      borderBottomRightRadius: 4,
-      overflow: 'hidden',
-      backgroundColor: theme.secondaryText
     },
     amountSliderProgressContainer: {
       position: 'absolute',

@@ -3,20 +3,17 @@ import {
   AccessibilityActionEvent,
   GestureResponderEvent,
   LayoutChangeEvent,
-  View,
-  ViewStyle
+  View
 } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
 import { THEME_TYPES } from '@common/styles/theme/types'
-import { hexToRgba } from '@common/styles/utils/common'
 
 import getStyles from './styles'
 
@@ -72,8 +69,6 @@ const buildGradient = (fromHex: string, toHex: string, steps: number) =>
 // SWAP_AND_BRIDGE_FEE_TIERS), from light purple to Ambire's primary brand purple.
 const PROGRESS_TIER_COLORS = buildGradient(GRADIENT_START_HEX, GRADIENT_END_HEX, 5)
 
-type InactivePosition = 'start' | 'end'
-
 interface Threshold {
   /** The absolute stkWALLET amount, on the same axis as the active (draggable) range, at which
    * the marker sits. */
@@ -89,15 +84,12 @@ interface Props {
   maximumLabel: string
   onValueChange: (value: bigint) => void
   accessibilityLabel?: string
-  /** An extra, non-draggable amount added to the track - e.g. WALLET already staked (stake mode)
-   * or still-unstaked WALLET sitting outside the stkWALLET being unstaked (unstake mode). The
-   * whole track represents `inactiveValue + maximumValue`. */
-  inactiveValue?: bigint
-  /** Which end of the track the inactive segment sits on - 'start' (default, stake mode: the
-   * draggable range sits after it) or 'end' (unstake mode: the draggable range sits before it,
-   * starting at 0). */
-  inactivePosition?: InactivePosition
-  inactiveLabel?: string
+  /** The stkWALLET amount already held before this slider's draggable range even starts - e.g.
+   * stkWALLET already staked (stake mode). Not shown on the track itself; it only shifts the fee
+   * tier thresholds so they still land at the correct absolute stkWALLET amount rather than at
+   * `threshold - alreadyStakedAmount`. Irrelevant (and left at 0) in unstake mode, since the
+   * WALLET balance not being unstaked is a different token with no bearing on the fee tier. */
+  tierOffset?: bigint
   /** Tick marks (e.g. Swap & Bridge fee thresholds) for the active (draggable) range - also used
    * to color it by tier. Values outside that range are ignored. */
   thresholds?: Threshold[]
@@ -109,13 +101,11 @@ const AmountSlider = ({
   maximumLabel,
   onValueChange,
   accessibilityLabel,
-  inactiveValue = 0n,
-  inactivePosition = 'start',
-  inactiveLabel,
+  tierOffset = 0n,
   thresholds
 }: Props) => {
   const { t } = useTranslation()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, themeType } = useTheme(getStyles)
   // On a dark background a lighter fill reads as more prominent, so in dark mode the gradient
   // runs the other way - most staked ends up light purple instead of Ambire purple.
   const progressTierColors = useMemo(
@@ -125,43 +115,9 @@ const AmountSlider = ({
   )
   const [width, setWidth] = useState(0)
   const availableWidth = Math.max(width - THUMB_SIZE, 0)
-  const totalValue = inactiveValue + maximumValue
-  const inactiveSteps = totalValue > 0n ? (inactiveValue * SLIDER_STEPS) / totalValue : 0n
-  const inactiveWidth = Number(inactiveSteps) * (availableWidth / Number(SLIDER_STEPS))
-  const draggableWidth = Math.max(availableWidth - inactiveWidth, 0)
-  // Where the draggable (active) range starts, in px - right after the inactive segment when
-  // it's pinned to the start, or right at the beginning when the inactive segment trails at the
-  // end instead.
-  const activeOffset = inactivePosition === 'start' ? inactiveWidth : 0
-  // The stkWALLET amount already "used up" before the draggable range begins, for fee-tier
-  // purposes - only the 'start' position represents real stkWALLET (already staked), so only it
-  // contributes an offset; an 'end' inactive segment is a different token (WALLET) entirely and
-  // has no bearing on the fee tier.
-  const tierOffset = inactivePosition === 'start' ? inactiveValue : 0n
   const clampedValue = value < 0n ? 0n : value > maximumValue ? maximumValue : value
   const sliderStep = maximumValue > 0n ? (clampedValue * SLIDER_STEPS) / maximumValue : 0n
-  const thumbPosition = activeOffset + Number(sliderStep) * (draggableWidth / Number(SLIDER_STEPS))
-  const tooltipDataSet = useMemo(
-    () =>
-      inactiveLabel
-        ? createGlobalTooltipDataSet({
-            id: 'wallet-staking-slider-inactive',
-            content: inactiveLabel
-          })
-        : undefined,
-    [inactiveLabel]
-  )
-  // A repeating diagonal-stripe pattern that, together with a muted color (distinct from the
-  // plain, unfilled track), makes the inactive segment obviously not part of the picked amount.
-  // Web only - React Native has no cross-platform equivalent of a CSS background image.
-  const hatchWebStyle = useMemo(() => {
-    if (!isWeb) return undefined
-
-    const stripeColor = hexToRgba(String(theme.secondaryBackground), 0.6)
-    return {
-      backgroundImage: `repeating-linear-gradient(-45deg, ${stripeColor}, ${stripeColor} 3px, transparent 3px, transparent 7px)`
-    } as unknown as ViewStyle
-  }, [theme.secondaryBackground])
+  const thumbPosition = Number(sliderStep) * (availableWidth / Number(SLIDER_STEPS))
   // Thresholds within the active (draggable) range only - a threshold beyond `maximumValue` away
   // from `tierOffset` isn't reachable by dragging, and one already covered by tierOffset alone
   // doesn't need a tick (see startTierIndex below, which colors the segment as if already past
@@ -208,17 +164,17 @@ const AmountSlider = ({
 
     return segments
   }, [clampedValue, maximumValue, tierBoundaries, tierOffset])
-  const progressWidth = Math.max(thumbPosition - activeOffset, 0)
+  const progressWidth = Math.max(thumbPosition, 0)
   const thresholdMarkers = useMemo(
     () =>
       tierBoundaries.map((thresholdValue) => {
         const steps =
           maximumValue > 0n ? ((thresholdValue - tierOffset) * SLIDER_STEPS) / maximumValue : 0n
-        const position = activeOffset + Number(steps) * (draggableWidth / Number(SLIDER_STEPS))
+        const position = Number(steps) * (availableWidth / Number(SLIDER_STEPS))
         const matchingThreshold = (thresholds || []).find(({ value: v }) => v === thresholdValue)
         return { ...matchingThreshold, value: thresholdValue, position }
       }),
-    [activeOffset, draggableWidth, maximumValue, thresholds, tierBoundaries, tierOffset]
+    [availableWidth, maximumValue, thresholds, tierBoundaries, tierOffset]
   )
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
@@ -227,12 +183,9 @@ const AmountSlider = ({
 
   const updateValue = useCallback(
     (locationX: number) => {
-      if (!draggableWidth || maximumValue <= 0n) return
+      if (!availableWidth || maximumValue <= 0n) return
 
-      const position = Math.min(
-        Math.max(locationX - THUMB_SIZE / 2, activeOffset),
-        activeOffset + draggableWidth
-      )
+      const position = Math.min(Math.max(locationX - THUMB_SIZE / 2, 0), availableWidth)
 
       // Magnetic snap: land exactly on a threshold's own value (not just its nearest slider
       // step) whenever the pointer is close to its tick mark, from either side.
@@ -244,13 +197,10 @@ const AmountSlider = ({
         return
       }
 
-      const relativePosition = position - activeOffset
-      const nextStep = BigInt(
-        Math.round((relativePosition / draggableWidth) * Number(SLIDER_STEPS))
-      )
+      const nextStep = BigInt(Math.round((position / availableWidth) * Number(SLIDER_STEPS)))
       onValueChange((maximumValue * nextStep) / SLIDER_STEPS)
     },
-    [activeOffset, draggableWidth, maximumValue, onValueChange, thresholdMarkers, tierOffset]
+    [availableWidth, maximumValue, onValueChange, thresholdMarkers, tierOffset]
   )
 
   const handlePress = useCallback(
@@ -305,24 +255,10 @@ const AmountSlider = ({
           style={styles.amountSlider}
         >
           <View style={styles.amountSliderTrack} />
-          {inactiveWidth > 0 && (
-            <View
-              dataSet={tooltipDataSet}
-              style={[
-                inactivePosition === 'start'
-                  ? styles.amountSliderInactiveStart
-                  : styles.amountSliderInactiveEnd,
-                inactivePosition === 'start'
-                  ? { width: inactiveWidth }
-                  : { left: THUMB_SIZE / 2 + draggableWidth, width: inactiveWidth },
-                hatchWebStyle
-              ]}
-            />
-          )}
           <View
             style={[
               styles.amountSliderProgressContainer,
-              { left: THUMB_SIZE / 2 + activeOffset, width: progressWidth }
+              { left: THUMB_SIZE / 2, width: progressWidth }
             ]}
           >
             {progressSegments.map((segment, index) => (

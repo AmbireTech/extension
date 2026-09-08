@@ -259,10 +259,6 @@ const WalletStakingScreen = () => {
     () => getFeePercent(projectedStkWalletAmount),
     [projectedStkWalletAmount]
   )
-  const stkWalletBalanceLabel = useMemo(
-    () => formatDecimals(Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS)), 'amount'),
-    [stkWalletBalance]
-  )
   // Truncated (not rounded) to whole tokens, to match the amount input and slider precision in
   // the "staked + inputted = total" summary below the input.
   const stkWalletBalanceWholeLabel = useMemo(
@@ -270,18 +266,6 @@ const WalletStakingScreen = () => {
     [stkWalletBalance]
   )
   const amountWholeLabel = useMemo(() => formatDecimals(Number(amount || 0), 'noDecimal'), [amount])
-  const stakedTooltipContent = useMemo(
-    () => t('{{amount}} already staked', { amount: stkWalletBalanceLabel }),
-    [stkWalletBalanceLabel, t]
-  )
-  const walletBalanceLabel = useMemo(
-    () => formatDecimals(Number(formatUnits(walletBalance, TOKEN_DECIMALS)), 'amount'),
-    [walletBalance]
-  )
-  const walletBalanceTooltipContent = useMemo(
-    () => t('{{amount}} $WALLET - you cannot unstake $WALLET', { amount: walletBalanceLabel }),
-    [t, walletBalanceLabel]
-  )
   // The Swap & Bridge fee thresholds, positioned as tick marks along the slider's active
   // (draggable) range and used to color it by tier. In stake mode that range is the $WALLET
   // available to stake, offset by the stkWALLET already staked (the inactive segment at the
@@ -964,11 +948,7 @@ const WalletStakingScreen = () => {
                       maximumValue={balance}
                       maximumLabel={balanceLabel}
                       onValueChange={handleSliderValueChange}
-                      inactiveValue={mode === 'stake' ? stkWalletBalance : walletBalance}
-                      inactivePosition={mode === 'stake' ? 'start' : 'end'}
-                      inactiveLabel={
-                        mode === 'stake' ? stakedTooltipContent : walletBalanceTooltipContent
-                      }
+                      tierOffset={mode === 'stake' ? stkWalletBalance : 0n}
                       thresholds={sliderThresholds}
                     />
 
