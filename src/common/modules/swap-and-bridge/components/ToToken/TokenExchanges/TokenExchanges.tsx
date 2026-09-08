@@ -2,7 +2,7 @@ import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import HelpIcon from '@common/assets/svg/HelpIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
@@ -43,7 +43,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
 
   // Shown in place of a logo that failed to load, instead of leaving an empty circle
   const renderFallbackIcon = useCallback(
-    () => <HelpIcon width={LOGO_SIZE - 6} height={LOGO_SIZE - 6} color={theme.secondaryText} />,
+    () => <WarningIcon width={LOGO_SIZE - 6} height={LOGO_SIZE - 6} color={theme.secondaryText} />,
     [theme.secondaryText]
   )
 
@@ -62,7 +62,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
         })}
         style={spacings.mlTy}
       >
-        <HelpIcon width={LOGO_SIZE} height={LOGO_SIZE} color={theme.secondaryText} />
+        <WarningIcon width={LOGO_SIZE} height={LOGO_SIZE} color={theme.secondaryText} />
       </View>
     )
 
