@@ -9,7 +9,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
@@ -83,7 +82,6 @@ interface Threshold {
 interface Props {
   value: bigint
   maximumValue: bigint
-  maximumLabel: string
   onValueChange: (value: bigint) => void
   accessibilityLabel?: string
   /** The stkWALLET amount already held before this slider's draggable range even starts - e.g.
@@ -100,7 +98,6 @@ interface Props {
 const AmountSlider = ({
   value,
   maximumValue,
-  maximumLabel,
   onValueChange,
   accessibilityLabel,
   tierOffset = 0n,
@@ -305,14 +302,6 @@ const AmountSlider = ({
           <View style={[styles.amountSliderThumb, { left: thumbPosition }]} />
         </HoverablePressable>
       </GestureDetector>
-      <View style={styles.amountSliderLabels}>
-        <Text fontSize={11} appearance="secondaryText">
-          0
-        </Text>
-        <Text fontSize={11} appearance="secondaryText">
-          {maximumLabel}
-        </Text>
-      </View>
     </View>
   )
 }

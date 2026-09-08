@@ -277,13 +277,6 @@ const WalletStakingScreen = () => {
     () => getFeePercent(projectedStkWalletAmount),
     [projectedStkWalletAmount]
   )
-  // Truncated (not rounded) to whole tokens, to match the amount input and slider precision in
-  // the "staked + inputted = total" summary below the input.
-  const stkWalletBalanceWholeLabel = useMemo(
-    () => formatDecimals(Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS)), 'noDecimal'),
-    [stkWalletBalance]
-  )
-  const amountWholeLabel = useMemo(() => formatDecimals(Number(amount || 0), 'noDecimal'), [amount])
   // The Swap & Bridge fee thresholds, positioned as tick marks along the slider's active
   // (draggable) range and used to color it by tier. In stake mode that range is the $WALLET
   // available to stake, offset by the stkWALLET already staked (the inactive segment at the
@@ -319,19 +312,9 @@ const WalletStakingScreen = () => {
         })
       }))
   }, [mode, stkWalletBalance, t])
-  const stakingTotal =
-    mode === 'stake'
-      ? stkWalletBalance + amountInWei
-      : stkWalletBalance > amountInWei
-        ? stkWalletBalance - amountInWei
-        : 0n
-  const stakingTotalLabel = useMemo(
-    () => formatDecimals(Number(formatUnits(stakingTotal, TOKEN_DECIMALS)), 'noDecimal'),
-    [stakingTotal]
-  )
   // What the entered amount would leave WALLET/stkWALLET at. In stake mode it's moved between
-  // those two tokens directly (mirrors `stakingTotal` above). In unstake mode it does NOT land
-  // back in WALLET here - unstaked stkWALLET is locked for the unbonding period rather than
+  // those two tokens directly. In unstake mode it does NOT land back in WALLET here - unstaked
+  // stkWALLET is locked for the unbonding period rather than
   // immediately spendable WALLET, so showing it as WALLET would overstate what's actually
   // available; its USD value is folded into the xWALLET segment below instead (see
   // `unstakedAmountUsd`), as a stand-in for "no longer stkWALLET, not yet WALLET".
@@ -1026,26 +1009,9 @@ const WalletStakingScreen = () => {
                       }
                     />
 
-                    <View style={styles.summaryRow}>
-                      <Text fontSize={12} appearance="secondaryText">
-                        {mode === 'stake'
-                          ? t('{{staked}} staked + {{amount}} = {{total}} stkWALLET total', {
-                              staked: stkWalletBalanceWholeLabel,
-                              amount: amountWholeLabel,
-                              total: stakingTotalLabel
-                            })
-                          : t('{{staked}} staked - {{amount}} = {{total}} stkWALLET total', {
-                              staked: stkWalletBalanceWholeLabel,
-                              amount: amountWholeLabel,
-                              total: stakingTotalLabel
-                            })}
-                      </Text>
-                    </View>
-
                     <AmountSlider
                       value={amountInWei}
                       maximumValue={balance}
-                      maximumLabel={balanceLabel}
                       onValueChange={handleSliderValueChange}
                       tierOffset={mode === 'stake' ? stkWalletBalance : 0n}
                       thresholds={sliderThresholds}

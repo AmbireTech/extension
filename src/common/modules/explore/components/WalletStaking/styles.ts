@@ -45,8 +45,6 @@ interface Styles {
   amountSliderProgressContainer: ViewStyle
   amountSliderThreshold: ViewStyle
   amountSliderThumb: ViewStyle
-  amountSliderLabels: ViewStyle
-  summaryRow: ViewStyle
   feePreviewRow: ViewStyle
   feePreviewLabel: ViewStyle
   feeDetailsButton: ViewStyle
@@ -290,15 +288,6 @@ const getStyles = (theme: ThemeProps) =>
       borderWidth: 3,
       borderColor: theme.primaryAccent200,
       backgroundColor: theme.primaryAccent300
-    },
-    amountSliderLabels: {
-      ...flexbox.directionRow,
-      ...flexbox.justifySpaceBetween,
-      ...spacings.phTy
-    },
-    summaryRow: {
-      ...spacings.mbSm,
-      ...spacings.phTy
     },
     feePreviewRow: {
       ...flexbox.directionRow,
