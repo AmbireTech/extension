@@ -42,12 +42,7 @@ import { openInTab } from '@common/utils/links'
 
 import AmountSlider from './AmountSlider'
 import BalanceWithMax from './BalanceWithMax'
-import {
-  getStakeWalletCalls,
-  getUnstakeWalletCalls,
-  getWalletStakingMaxAmount,
-  getWithdrawWalletCalls
-} from './calls'
+import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
 import {
   decodePendingWalletWithdrawals,
   formatPendingWalletWithdrawalDuration,
@@ -541,9 +536,8 @@ const WalletStakingScreen = () => {
     []
   )
   const handleMaxPress = useCallback(() => {
-    const maxAmount = getWalletStakingMaxAmount(balance, mode)
-    setAmount(formatUnits(maxAmount, TOKEN_DECIMALS))
-  }, [balance, mode])
+    setAmount(formatUnits(balance, TOKEN_DECIMALS))
+  }, [balance])
   const handleOpenFeeInfoBottomSheet = useCallback(
     () => openFeeInfoBottomSheet(),
     [openFeeInfoBottomSheet]
