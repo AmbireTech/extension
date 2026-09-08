@@ -34,6 +34,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import {
   getAreDefaultsChanged,
+  getEmptyRequiredNetworkFields,
   handleErrors
 } from '@common/modules/settings/components/Networks/NetworkForm/helpers'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
@@ -575,25 +576,10 @@ const NetworkForm = ({
   const handleSubmitButtonPress = () => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     handleSubmit(async (formFields: any) => {
-      let emptyFields: string[] = []
-
-      if (selectedChainId === 'add-custom-network') {
-        emptyFields = Object.keys(formFields).filter(
-          (key) =>
-            ![
-              'rpcUrl',
-              'rpcUrls',
-              'coingeckoPlatformId',
-              'coingeckoNativeAssetId',
-              'customBundlerUrl',
-              'isColibriEnabled'
-            ].includes(key) && !formFields[key].length
-        )
-      } else {
-        emptyFields = Object.keys(formFields).filter(
-          (key) => ['explorerUrl'].includes(key) && !formFields[key].length
-        )
-      }
+      const emptyFields = getEmptyRequiredNetworkFields(
+        formFields,
+        selectedChainId === 'add-custom-network'
+      )
 
       if (!rpcUrls.length)
         setError('rpcUrl', {
@@ -702,6 +688,11 @@ const NetworkForm = ({
   const isSaveOrAddButtonDisabled = useMemo(
     () =>
       !!errorCount ||
+      // `errorCount` stays 0 until the first submit attempt (the form validates on
+      // submit), so check the required fields directly to keep the button from
+      // going clickable while one is still empty
+      getEmptyRequiredNetworkFields(networkFormValues, selectedChainId === 'add-custom-network')
+        .length > 0 ||
       !!pendingRpcCheckType ||
       // Nothing to submit until an RPC URL is selected, which is also what
       // `handleSubmitButtonPress` requires
@@ -715,6 +706,8 @@ const NetworkForm = ({
     // errors change. Using errors as a dependency doesn't work
     [
       errorCount,
+      networkFormValues,
+      selectedChainId,
       features,
       pendingRpcCheckType,
       networkToAddOrUpdate?.info,
