@@ -39,10 +39,17 @@ const CENA_URL = 'https://cena.ambire.com/'
 const attachBalanceHint = (url: string, accountAddr: string, balance: number): string => {
   if (!url.startsWith(CENA_URL)) return url
 
-  const urlObj = new URL(url)
-  urlObj.searchParams.append('panVal', JSON.stringify({ a: accountAddr, b: balance }))
+  // Appended by plain concatenation (instead of URLSearchParams), so that the rest of
+  // the url is left exactly as it came in. Decoding the whole url after appending would
+  // alter any other param that carries an encoded `&`, `=` or `#`. The hint itself is
+  // left unencoded on purpose, because that is the shape the analytics backend expects.
+  const panVal = JSON.stringify({ a: accountAddr, b: balance })
+  const hashIndex = url.indexOf('#')
+  const beforeHash = hashIndex === -1 ? url : url.slice(0, hashIndex)
+  const hash = hashIndex === -1 ? '' : url.slice(hashIndex)
+  const separator = beforeHash.includes('?') ? '&' : '?'
 
-  return decodeURIComponent(urlObj.toString())
+  return `${beforeHash}${separator}panVal=${panVal}${hash}`
 }
 
 export { attachBalanceHint, getAppInstanceId, isAmbireApiUrl }
