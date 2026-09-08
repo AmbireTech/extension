@@ -6,6 +6,7 @@ import HumanizedVisualization, {
 } from '@common/components/HumanizedVisualization'
 import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
+import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary/sizeMultiplier'
 import spacings from '@common/styles/spacings'
 
 import getStyles from './styles'
@@ -17,6 +18,7 @@ interface Props {
 }
 
 const visualizationStyle = { width: '100%', minWidth: 0 } as const
+const dappIconSize = 24 * sizeMultiplier.md
 
 const CompactHumanizedCalls = ({ humanization, chainId }: Props) => {
   const { styles } = useTheme(getStyles)
@@ -49,6 +51,8 @@ const CompactHumanizedCalls = ({ humanization, chainId }: Props) => {
             showErc7730DescriptionTitle={shouldUseDetailedErc7730Layout}
             isErc7730TransactionSummaryLayout={!shouldUseDetailedErc7730Layout}
             disableFlex
+            inlineDappIcon
+            dappIconSize={dappIconSize}
             style={visualizationStyle}
             dapp={call.dapp}
           />

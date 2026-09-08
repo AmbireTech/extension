@@ -32,6 +32,7 @@ interface Props {
   hasErc7730TransactionSummaryHeaderRightControl?: boolean
   disableFlex?: boolean
   inlineDappIcon?: boolean
+  dappIconSize?: number
   dapp?: IrCall['dapp']
   editApprovalCallInfo?: {
     setter: (arg: string, token: string, tokenChainId: bigint, closeModal: () => void) => void
@@ -61,6 +62,7 @@ const HumanizedVisualization: FC<Props> = ({
   hasErc7730TransactionSummaryHeaderRightControl = false,
   disableFlex = false,
   inlineDappIcon = false,
+  dappIconSize = 24 * sizeMultiplierSize,
   dapp
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
@@ -80,13 +82,20 @@ const HumanizedVisualization: FC<Props> = ({
             // from the icon, so adding a right margin here would double the gap
             marginRight: horizontalPadding ? 0 : SPACING_TY * sizeMultiplierSize
           }}
-          size={24 * sizeMultiplierSize}
+          size={dappIconSize}
           skeletonAppearance="secondaryBackground"
-          imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
+          imageStyle={{ borderRadius: dappIconSize / 2, backgroundColor: 'transparent' }}
           hideOnError
         />
       ) : null,
-    [dappIcon, horizontalPadding, inlineDappIcon, shouldShowDappIcon, sizeMultiplierSize]
+    [
+      dappIcon,
+      dappIconSize,
+      horizontalPadding,
+      inlineDappIcon,
+      shouldShowDappIcon,
+      sizeMultiplierSize
+    ]
   )
 
   return (
@@ -124,6 +133,7 @@ const HumanizedVisualization: FC<Props> = ({
               hasErc7730TransactionSummaryHeaderRightControl={
                 hasErc7730TransactionSummaryHeaderRightControl
               }
+              dappIconSize={dappIconSize}
               marginRight={marginRight}
             />
           ) : null

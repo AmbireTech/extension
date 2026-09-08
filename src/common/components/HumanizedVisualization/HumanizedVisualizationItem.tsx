@@ -46,6 +46,7 @@ interface Props {
   isErc7730TransactionSummaryLayout: boolean
   erc7730TransactionSummarySection: 'all' | 'title' | 'rows'
   hasErc7730TransactionSummaryHeaderRightControl: boolean
+  dappIconSize: number
   marginRight: number
 }
 
@@ -64,6 +65,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
   isErc7730TransactionSummaryLayout,
   erc7730TransactionSummarySection,
   hasErc7730TransactionSummaryHeaderRightControl,
+  dappIconSize,
   marginRight
 }) => {
   const { theme } = useTheme()
@@ -83,6 +85,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
         isTransactionSummaryLayout={isErc7730TransactionSummaryLayout}
         transactionSummarySection={erc7730TransactionSummarySection}
         hasTransactionSummaryHeaderRightControl={hasErc7730TransactionSummaryHeaderRightControl}
+        dappIconSize={dappIconSize}
       />
     )
   }
