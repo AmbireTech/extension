@@ -37,10 +37,13 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import FeeInfoBottomSheet from '@common/modules/swap-and-bridge/components/FeeInfoBottomSheet'
 import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
+import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
+import { THEME_TYPES } from '@common/styles/theme/types'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import AmountSlider from './AmountSlider'
+import BalanceRatioProgress from './BalanceRatioProgress'
 import BalanceWithMax from './BalanceWithMax'
 import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
 import {
@@ -217,6 +220,26 @@ const WalletStakingScreen = () => {
       0,
     [activeToken?.priceIn, walletToken?.priceIn]
   )
+  // Per-token USD prices (unlike `price` above, not mode-dependent), used to value the
+  // WALLET / stkWALLET / xWALLET balances for the balance ratio ring next to the amount input.
+  const walletPrice = useMemo(
+    () =>
+      walletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
+        ?.price ?? 0,
+    [walletToken?.priceIn]
+  )
+  const stkWalletPrice = useMemo(
+    () =>
+      stkWalletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
+        ?.price ?? 0,
+    [stkWalletToken?.priceIn]
+  )
+  const xWalletPrice = useMemo(
+    () =>
+      xWalletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
+        ?.price ?? 0,
+    [xWalletToken?.priceIn]
+  )
   const amountInWei = getAmountInWei(amount)
   const hasInsufficientBalance = amountInWei > balance
   const balanceLabel = useMemo(
@@ -306,6 +329,76 @@ const WalletStakingScreen = () => {
     () => formatDecimals(Number(formatUnits(stakingTotal, TOKEN_DECIMALS)), 'noDecimal'),
     [stakingTotal]
   )
+  // What the entered amount would leave WALLET/stkWALLET at. In stake mode it's moved between
+  // those two tokens directly (mirrors `stakingTotal` above). In unstake mode it does NOT land
+  // back in WALLET here - unstaked stkWALLET is locked for the unbonding period rather than
+  // immediately spendable WALLET, so showing it as WALLET would overstate what's actually
+  // available; its USD value is folded into the xWALLET segment below instead (see
+  // `unstakedAmountUsd`), as a stand-in for "no longer stkWALLET, not yet WALLET".
+  const projectedWalletBalance =
+    mode === 'stake'
+      ? walletBalance > amountInWei
+        ? walletBalance - amountInWei
+        : 0n
+      : walletBalance
+  const projectedStkWalletBalance =
+    mode === 'stake'
+      ? stkWalletBalance + amountInWei
+      : stkWalletBalance > amountInWei
+        ? stkWalletBalance - amountInWei
+        : 0n
+  // The USD value of stkWALLET being unstaked, redirected into the xWALLET segment (see comment
+  // above) instead of into WALLET.
+  const unstakedAmountUsd =
+    mode === 'unstake' ? Number(formatUnits(amountInWei, TOKEN_DECIMALS)) * stkWalletPrice : 0
+  const balanceRatioSegments = useMemo(
+    () => [
+      {
+        key: 'wallet',
+        label: '$WALLET',
+        valueUsd: Number(formatUnits(projectedWalletBalance, TOKEN_DECIMALS)) * walletPrice,
+        // Fixed (not mode-toggled) Ambire brand purples, chosen for contrast against the ring's
+        // track and against each other - the semantic theme tokens (e.g. secondaryAccent400) turn
+        // into a muted dark teal in light theme and don't read well at this small a size. WALLET
+        // and stkWALLET share the primary-purple family (stkWALLET a shade lighter, since it's
+        // WALLET once staked); xWALLET is deliberately muted gray instead (see below) since it's
+        // not part of the stake/unstake flow.
+        color: ACCENT_PRIMITIVES.primaryAccent300[THEME_TYPES.LIGHT]
+      },
+      {
+        key: 'stkWallet',
+        label: 'stkWALLET',
+        valueUsd: Number(formatUnits(projectedStkWalletBalance, TOKEN_DECIMALS)) * stkWalletPrice,
+        color: ACCENT_PRIMITIVES.primaryAccent200[THEME_TYPES.LIGHT]
+      },
+      {
+        key: 'xWallet',
+        label: 'xWALLET',
+        valueUsd:
+          Number(formatUnits(xWalletBalance, TOKEN_DECIMALS)) * xWalletPrice + unstakedAmountUsd,
+        // Muted gray rather than a brand hue - xWALLET isn't part of the WALLET <-> stkWALLET
+        // split this screen moves between, so it reads as a neutral "rest of your balance".
+        color: theme.secondaryText
+      }
+    ],
+    [
+      projectedWalletBalance,
+      walletPrice,
+      projectedStkWalletBalance,
+      stkWalletPrice,
+      xWalletBalance,
+      xWalletPrice,
+      unstakedAmountUsd,
+      theme
+    ]
+  )
+  // A ratio only means something once it's a ratio of at least two things - based on the
+  // account's actual holdings (not the projected/shifted values above, which would otherwise
+  // flicker the ring in and out as the user types) so a token with no price data available still
+  // counts as "held" instead of silently reading as zero.
+  const shouldShowBalanceRatioProgress =
+    [walletBalance, stkWalletBalance, xWalletBalance].filter((tokenBalance) => tokenBalance > 0n)
+      .length > 1
   const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const isSubmitDisabled = useMemo(() => {
     if (!account || isSubmitting || (mode === 'unstake' && isLoadingPendingWithdrawal)) return true
@@ -915,9 +1008,21 @@ const WalletStakingScreen = () => {
                       inputWrapperStyle={styles.amountInputWrapper}
                       nativeInputStyle={styles.amountNativeInput}
                       childrenBeforeButtons={
-                        <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
-                          {tokenSymbol}
-                        </Text>
+                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                          <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
+                            {tokenSymbol}
+                          </Text>
+                          {shouldShowBalanceRatioProgress && (
+                            <View style={spacings.mlSm}>
+                              <BalanceRatioProgress
+                                segments={balanceRatioSegments}
+                                testID="wallet-staking-balance-ratio"
+                                size={28}
+                                strokeWidth={4}
+                              />
+                            </View>
+                          )}
+                        </View>
                       }
                     />
 
