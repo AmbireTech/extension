@@ -1,9 +1,11 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import { AnimatedQRCode } from '@keystonehq/animated-qr'
+import useTheme from '@common/hooks/useTheme'
 import { SPACING_XL } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+import { AnimatedQRCode } from '@keystonehq/animated-qr'
 
 import { AnimatedQrCodeProps } from './AnimatedQrCode'
 
@@ -15,7 +17,7 @@ const QR_BACKGROUND_COLOR = '#fff'
  * A larger-than-required white margin keeps the QR boundary distinct from dark surfaces.
  * This intentionally favors boundary detection over maximizing the module size.
  */
-const DEFAULT_QUIET_ZONE = SPACING_XL
+const DEFAULT_QUIET_ZONE_DARK = SPACING_XL
 // AnimatedQRCode already paints this much white on every side of the code
 const BUILT_IN_QUIET_ZONE = 5
 
@@ -30,7 +32,10 @@ const AnimatedQrCode = ({
   capacity = DEFAULT_CAPACITY,
   quietZone
 }: AnimatedQrCodeProps) => {
-  const resolvedQuietZone = quietZone ?? DEFAULT_QUIET_ZONE
+  const { themeType } = useTheme()
+  // the surrounding area is white on light screens, so no need for a quiet zone
+  const defaultQuietZone = themeType === THEME_TYPES.LIGHT ? 0 : DEFAULT_QUIET_ZONE_DARK
+  const resolvedQuietZone = quietZone ?? defaultQuietZone
   // Tops the library's built-in white space up to the requested quiet zone.
   const padding = Math.max(0, resolvedQuietZone - BUILT_IN_QUIET_ZONE)
 

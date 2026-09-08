@@ -5,8 +5,6 @@ import { Path, Svg } from 'react-native-svg'
 
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import { browser, engine, isExtension } from '@web/constants/browserapi'
-import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
 import {
   emptyQrScanLastRead,
   getQrCodeCoverage,
@@ -14,6 +12,8 @@ import {
   QR_SCAN_FEEDBACK_INTERVAL,
   QrScanProgress
 } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
+import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
+import { browser, engine, isExtension } from '@web/constants/browserapi'
 
 // Firefox does not implement `BarcodeDetector`, so `qr-scanner` falls back to a Web Worker that it
 // spawns from a `blob:` URL (see `qr-scanner-worker.min.js`). Firefox MV3 extension pages reject
@@ -104,8 +104,8 @@ const calculateScanRegion = (video: HTMLVideoElement): QrScannerLib.ScanRegion =
     y: Math.round((video.videoHeight - size) / 2),
     width: size,
     height: size,
-    downScaledWidth: SCAN_REGION_RESOLUTION,
-    downScaledHeight: SCAN_REGION_RESOLUTION
+    downScaledWidth: Math.min(SCAN_REGION_RESOLUTION, size),
+    downScaledHeight: Math.min(SCAN_REGION_RESOLUTION, size)
   }
 }
 
@@ -258,7 +258,9 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
     <View
       style={{
         width: '100%',
-        height: 290,
+        // The markers are laid out in % of this box while the scan region is a share of the
+        // video's smaller side under objectFit: cover - the two only line up while it is square
+        aspectRatio: 1,
         borderRadius: 12,
         overflow: 'hidden'
       }}
