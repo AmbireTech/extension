@@ -21,11 +21,9 @@ const useSignMessage = () => {
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
-  const { networks } = useController('NetworksController').state
-  const { accountStates } = useController('AccountsController').state
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: accountStates } = useController('AccountsController', 'accountStates')
   const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)

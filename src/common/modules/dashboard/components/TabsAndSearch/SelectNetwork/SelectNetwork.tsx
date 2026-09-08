@@ -39,13 +39,12 @@ const SelectNetwork = ({ currentTab }: Props) => {
   const { styles: tokenIconStyles } = useTheme(getTokenIconStyles)
   const { t } = useTranslation()
   const { maxWidthSize } = useWindowSize()
-  const {
-    state: { dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    'dashboardNetworkFilter'
+  )
   const { navigate } = useNavigation()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const { theme } = useTheme()
   const [searchParams] = useSearchParams()
 
