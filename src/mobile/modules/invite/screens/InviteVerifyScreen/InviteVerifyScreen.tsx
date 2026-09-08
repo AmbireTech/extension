@@ -129,7 +129,7 @@ const InviteVerifyScreen = () => {
         <Text fontSize={16} appearance="secondaryText" style={spacings.mbLg}>
           {t('No banner there yet? Your turn is coming. Want in sooner? Ping us on')}{' '}
           <Text fontSize={16} appearance="secondaryText" underline onPress={handleOpenTwitter}>
-            {t('X')}
+            {t('X (formerly Twitter)')}
           </Text>
           {', '}
           <Text fontSize={16} appearance="secondaryText" underline onPress={handleOpenTelegram}>
