@@ -10,6 +10,7 @@ import CollectibleModal, { SelectedCollectible } from '@common/components/Collec
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
@@ -40,6 +41,8 @@ interface Props {
   onRefresh?: () => void
 }
 
+const SEARCH_DEBOUNCE_MS = 200
+
 const { isPopup } = getUiType()
 
 const Collections: FC<Props> = ({
@@ -63,7 +66,9 @@ const Collections: FC<Props> = ({
   const { theme } = useTheme()
   const [selectedCollectible, setSelectedCollectible] = useState<SelectedCollectible | null>(null)
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
-  const searchValue = watch('search')
+  const inputSearchValue = watch('search')
+  // Debounced so a keystroke doesn't re-index every collection the account holds
+  const searchValue = useDebounce({ value: inputSearchValue, delay: SEARCH_DEBOUNCE_MS })
 
   const closeCollectibleModal = useCallback(() => {
     closeModal()
@@ -78,13 +83,12 @@ const Collections: FC<Props> = ({
   )
 
   const filteredPortfolioCollections = useMemo(() => {
+    // Built once instead of per collection, since every one of them is compared to it
+    const filteredChainId = dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : null
+
     const searchableCollections = (portfolio?.collections || []).filter(
       ({ chainId, collectibles }) => {
-        let isMatchingNetwork = true
-
-        if (dashboardNetworkFilter) {
-          isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
-        }
+        const isMatchingNetwork = filteredChainId === null || chainId === filteredChainId
 
         return isMatchingNetwork && collectibles.length
       }

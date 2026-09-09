@@ -4,6 +4,10 @@ import { Account } from '@ambire-common/interfaces/account'
 import { getSupportedNetworks } from '@ambire-common/libs/networks/networks'
 import useController from '@common/hooks/useController'
 
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+const selectNetworks = (state: NetworksController) => state.networks
+
 /**
  * This returns all enabled networks in the extension with
  * a disabled flag & reason for those that are not supported
@@ -19,7 +23,7 @@ const useNetworks = ({
     reason: string
   }
 }) => {
-  const { state: networks } = useController('NetworksController', (state) => state.networks)
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const {
     state: { accountStates },
     dispatch: accountsDispatch

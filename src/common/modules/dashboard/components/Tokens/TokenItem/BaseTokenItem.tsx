@@ -27,11 +27,13 @@ import PendingBadge from './PendingBadge'
 import getStyles from './styles'
 
 import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
+import type { RequestsController } from '@ambire-common/controllers/requests/requests'
 import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 import type { WalletStateController } from '@common/controllers/wallet-state'
 
 const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
+const selectVisibleUserRequests = (state: RequestsController) => state.visibleUserRequests
 
 type Props = {
   token: TokenResult
@@ -76,7 +78,7 @@ const BaseTokenItem = ({
   )
   const { state: visibleUserRequests, dispatch: requestsDispatch } = useController(
     'RequestsController',
-    (state) => state.visibleUserRequests
+    selectVisibleUserRequests
   )
   const { t } = useTranslation()
   const { addToast } = useToast()

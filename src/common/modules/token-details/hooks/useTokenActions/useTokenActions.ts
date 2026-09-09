@@ -19,6 +19,9 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 
+import type { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+
+const selectSupportedChainIds = (state: SwapAndBridgeController) => state.supportedChainIds
 type UseTokenActionsOptions = {
   /**
    * When set, a zero-balance token keeps Send disabled but shows this tooltip explaining why
@@ -60,7 +63,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const isErc4337Enabled = flags.erc4337
   const { state: supportedChainIds } = useController(
     'SwapAndBridgeController',
-    (state) => state.supportedChainIds
+    selectSupportedChainIds
   )
   const { dispatch: portfolioDispatch } = useController('PortfolioController')
   const { state: tokenPreferences } = useController('PortfolioController', 'tokenPreferences')

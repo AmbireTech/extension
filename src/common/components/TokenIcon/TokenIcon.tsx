@@ -16,6 +16,10 @@ import SkeletonLoader from '../SkeletonLoader'
 import { SkeletonLoaderProps } from '../SkeletonLoader/types'
 import getStyles from './styles'
 
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+const selectNetworks = (state: NetworksController) => state.networks
+
 interface Props extends Partial<ImageProps> {
   /* supports network id or chain id */
   chainId?: bigint
@@ -60,7 +64,7 @@ const TokenIcon: React.FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const [uriStatus, setUriStatus] = useState<UriStatus>(UriStatus.UNKNOWN)
   const [imageUrl, setImageUrl] = useState<string | undefined>()
-  const { state: ctrlNetworks } = useController('NetworksController', (state) => state.networks)
+  const { state: ctrlNetworks } = useController('NetworksController', selectNetworks)
   const { benzinNetworks } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = ctrlNetworks ?? benzinNetworks
