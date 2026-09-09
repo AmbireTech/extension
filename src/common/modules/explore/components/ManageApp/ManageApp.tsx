@@ -54,9 +54,7 @@ const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: Manage
   } = useModalize()
   const { t } = useTranslation()
   const { dispatch: mainDispatch } = useController('MainController')
-  const {
-    state: { account: selectedAccount }
-  } = useController('SelectedAccountController')
+  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
 
   const connectedSources = dapp.connectedSources ?? []
   const hasMultipleSources = connectedSources.length > 1

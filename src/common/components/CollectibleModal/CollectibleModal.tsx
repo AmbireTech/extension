@@ -45,9 +45,7 @@ const CollectibleModal = ({
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const modalContent = useMemo(() => {
     if (!selectedCollectible) return null
 

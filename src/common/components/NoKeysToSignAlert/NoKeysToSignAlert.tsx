@@ -23,9 +23,7 @@ interface Props {
 }
 
 const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'long', chainId }) => {
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { ref: addAccountsRef, open: openAddAccounts, close: closeAddAccounts } = useModalize()
   const { t } = useTranslation()

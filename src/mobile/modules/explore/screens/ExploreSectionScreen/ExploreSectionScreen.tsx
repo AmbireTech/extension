@@ -26,6 +26,8 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import DisconnectAllBottomSheet, {
   DisconnectAllBottomSheetHandle
 } from '@common/modules/explore/components/DisconnectAllBottomSheet'
+import WalletStaking from '@common/modules/explore/components/WalletStaking'
+import { shouldShowWalletStaking } from '@common/modules/explore/helpers/shouldShowWalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -53,7 +55,7 @@ const ExploreSectionScreen = () => {
   const { navigate } = useNavigation()
   const { theme } = useTheme()
   const { state } = useController('DappsController')
-  const { networks: allNetworks } = useController('NetworksController').state
+  const { state: allNetworks } = useController('NetworksController', 'networks')
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const [network, setNetwork] = useState<Network | null>(null)
   const [category, setCategory] = useState<string | null>(null)
@@ -74,6 +76,7 @@ const ExploreSectionScreen = () => {
     network,
     category
   })
+  const isWalletStakingVisible = shouldShowWalletStaking(network?.chainId ?? null, category)
 
   // Drive header-button visibility from the section's underlying items (not the search/filter
   // result) so the button hides only when the section is truly empty (e.g. after deletion).
@@ -266,12 +269,17 @@ const ExploreSectionScreen = () => {
             data={dapps}
             renderItem={renderItem}
             keyExtractor={(item: Dapp) => item.id}
+            ListHeaderComponent={
+              sectionType === 'apps' && isWalletStakingVisible ? WalletStaking : undefined
+            }
             ListEmptyComponent={
-              <View style={[flexbox.center, spacings.pv]}>
-                <Text appearance="secondaryText" style={text.center}>
-                  {t('No apps found')}
-                </Text>
-              </View>
+              sectionType === 'apps' ? null : (
+                <View style={[flexbox.center, spacings.pv]}>
+                  <Text appearance="secondaryText" style={text.center}>
+                    {t('No apps found')}
+                  </Text>
+                </View>
+              )
             }
           />
         </View>

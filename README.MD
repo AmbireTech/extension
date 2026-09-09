@@ -236,6 +236,34 @@ yarn build:extensions
 
 And find the resulting zips in the "build" folder as `ambire-extension-<VERSION>-<TYPE>.zip`
 
+### Verifying a Downloaded Release
+
+Releases live at [AmbireTech/extension/releases](https://github.com/AmbireTech/extension/releases). Installing from the [official download page](https://www.ambire.com/get-extension) is the recommended way, because the stores handle signing and updates for you. If you install a `.zip` by hand instead, verify it first.
+
+Applies to **v6.19.2 and later**.
+
+#### Check the signature (recommended)
+
+GitHub signs every release and everything attached to it, so this proves the file is exactly what we published and that nobody changed it afterwards. Needs [GitHub CLI](https://cli.github.com/) 2.81 or newer:
+
+```bash
+gh release verify-asset v6.19.2 ./ambire-extension-v6.19.2-webkit.zip -R AmbireTech/extension
+```
+
+Success looks like `✓ Verification succeeded!`. Anything else means the file does not match the release - do not install it.
+
+#### Or check the hash
+
+If you would rather not install anything, download the `SHA256SUMS` file from the same release, put it next to the `.zip` files, and run:
+
+```bash
+sha256sum -c SHA256SUMS --ignore-missing   # macOS: shasum -a 256 -c SHA256SUMS --ignore-missing
+```
+
+Every file must print `OK`. This catches a corrupted or swapped download, but only the signature check above proves the file came from us.
+
+Releases before v6.19.2 have neither a signature nor a `SHA256SUMS` file.
+
 ## Mobile Apps
 
 The mobile apps share the same codebase, but the business logic (the `background`) runs inside a WebView worker (`src/mobile/modules/webview/services/`) instead of a service worker. That's why every mobile build needs the webview bundle built (or the webview dev server running).

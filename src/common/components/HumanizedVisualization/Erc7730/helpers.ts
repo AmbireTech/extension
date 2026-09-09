@@ -6,6 +6,48 @@ import { zeroAddress } from 'viem'
 
 type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
 
+/** Keeps ERC-7730 text compact in layouts shared by mobile and the side panel. */
+export const MOBILE_ERC7730_TEXT_SIZE = 14
+
+/**
+ * Converts the whitespace around interpolated intent parts into explicit layout spacing.
+ * React Native drops leading and trailing spaces when text and rich values are separate views.
+ */
+export const getErc7730TitlePartsForRendering = (titleParts: HumanizerVisualization[]) => {
+  let shouldSpaceNextPart = false
+
+  return titleParts.reduce<{ part: HumanizerVisualization; shouldSpaceBefore: boolean }[]>(
+    (renderableParts, part) => {
+      const content = 'content' in part ? part.content : undefined
+
+      if (typeof content !== 'string') {
+        renderableParts.push({
+          part,
+          shouldSpaceBefore: renderableParts.length > 0 && shouldSpaceNextPart
+        })
+        shouldSpaceNextPart = false
+        return renderableParts
+      }
+
+      const trimmedContent = content.trim()
+      if (!trimmedContent) {
+        shouldSpaceNextPart = renderableParts.length > 0
+        return renderableParts
+      }
+
+      renderableParts.push({
+        part: trimmedContent === content ? part : { ...part, content: trimmedContent },
+        shouldSpaceBefore:
+          renderableParts.length > 0 && (shouldSpaceNextPart || content.trimStart() !== content)
+      })
+      shouldSpaceNextPart = content.trimEnd() !== content
+
+      return renderableParts
+    },
+    []
+  )
+}
+
 const labelIncludes = (label: string, needles: string[]) => {
   const normalizedLabel = label.trim().toLowerCase()
 

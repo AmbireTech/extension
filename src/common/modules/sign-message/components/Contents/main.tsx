@@ -89,7 +89,7 @@ const Main = ({
   const { styles, theme } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const network = useMemo(
     () =>
       networks.find((n) => {

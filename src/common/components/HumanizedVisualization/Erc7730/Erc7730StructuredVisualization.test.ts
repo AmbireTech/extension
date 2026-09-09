@@ -4,17 +4,52 @@ import {
   getAction,
   getAddressVisualization,
   getLabel,
+  getText,
   getToken
 } from '../../../../ambire-common/src/libs/humanizer/utils'
 
 import {
   getDetailedRows,
+  getErc7730TitlePartsForRendering,
   getVisibleErc7730Rows,
   getVisibleErc7730RowsExcludingTitleParts,
   hasErc7730NativeValueRow,
   shouldUseErc7730DetailedLayout,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
+
+describe('getErc7730TitlePartsForRendering', () => {
+  test('preserves intended spaces around rich values without spacing punctuation', () => {
+    const firstToken = getToken('0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', 300000n)
+    const secondToken = getToken('0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf', 1n)
+    const recipient = getAddressVisualization('0xd8293ad21678c6f09da139b4b62d38e514a03b78')
+
+    const renderableParts = getErc7730TitlePartsForRendering([
+      getAction('Swap '),
+      firstToken,
+      getText(' for at least '),
+      secondToken,
+      getText(' to '),
+      recipient,
+      getText('.')
+    ])
+
+    expect(
+      renderableParts.map(({ part, shouldSpaceBefore }) => ({
+        content: 'content' in part ? part.content : part.type,
+        shouldSpaceBefore
+      }))
+    ).toEqual([
+      { content: 'Swap', shouldSpaceBefore: false },
+      { content: 'token', shouldSpaceBefore: true },
+      { content: 'for at least', shouldSpaceBefore: true },
+      { content: 'token', shouldSpaceBefore: true },
+      { content: 'to', shouldSpaceBefore: true },
+      { content: 'address', shouldSpaceBefore: true },
+      { content: '.', shouldSpaceBefore: false }
+    ])
+  })
+})
 
 describe('getDetailedRows', () => {
   test('shows all Morpho Bundler3 Multicall actions in execution order', () => {

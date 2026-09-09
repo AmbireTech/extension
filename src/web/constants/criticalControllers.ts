@@ -26,7 +26,8 @@ export const DASHBOARD_CRITICAL_CONTROLLERS: CriticalController[] = [
 
 export const ROUTE_CRITICAL_CONTROLLERS: Record<string, CriticalController[]> = {
   [ROUTES.keyStoreUnlock]: KEYSTORE_UNLOCK_CRITICAL_CONTROLLERS,
-  [ROUTES.dashboard]: DASHBOARD_CRITICAL_CONTROLLERS
+  [ROUTES.dashboard]: DASHBOARD_CRITICAL_CONTROLLERS,
+  [ROUTES.walletStaking]: ['SelectedAccountController', 'WalletStateController']
 }
 
 /**

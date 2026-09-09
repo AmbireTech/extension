@@ -4,7 +4,7 @@ import { Platform as RNPlatform } from 'react-native'
 
 import { NavigateOptions } from '@ambire-common/interfaces/ui'
 import { LIFI_EXPLORER_URL } from '@ambire-common/services/lifi/consts'
-import { APP_VERSION } from '@common/config/env'
+import { APP_VERSION, isDev } from '@common/config/env'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useIsAppFocused from '@common/hooks/useIsAppFocused'
@@ -18,7 +18,7 @@ import {
 import { toAbsoluteRoute } from '@common/modules/router/helpers/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
-import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
+import { BUNGEE_API_KEY, RELAYER_URL, UNISWAP_API_KEY, VELCRO_URL } from '@env'
 import {
   MOBILE_CRITICAL_CONTROLLERS,
   MOBILE_DEFERRED_CONTROLLERS
@@ -118,11 +118,17 @@ export const ControllersMiddlewareProvider: React.FC<{
       ?.init({
         APP_VERSION,
         platform: `mobile-${RNPlatform.OS}`,
+        // Sent as the x-app-version header on the requests to Ambire APIs. Same shape as
+        // the extension's `extension-<version>-<engine>`, so the analytics can tell the
+        // apps and their platforms apart.
+        appVersionHeader: `mobile-${APP_VERSION}-${RNPlatform.OS}`,
+        // Sent as the x-app-env header. No staging builds on mobile, so the value set is
+        // the extension's minus 'next'.
+        appEnv: isDev ? 'dev' : 'prod',
         RELAYER_URL,
         VELCRO_URL,
         LIFI_EXPLORER_URL,
         BUNGEE_API_KEY,
-        SQUID_INTEGRATOR_ID,
         criticalControllers: MOBILE_CRITICAL_CONTROLLERS,
         UNISWAP_API_KEY
       })

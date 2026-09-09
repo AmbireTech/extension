@@ -18,9 +18,7 @@ const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
     state: { avatarType },
     dispatch: walletStateDispatch
   } = useController('WalletStateController')
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { theme } = useTheme()
   const { t } = useTranslation()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
