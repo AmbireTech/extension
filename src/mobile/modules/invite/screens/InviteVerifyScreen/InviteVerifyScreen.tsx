@@ -127,7 +127,7 @@ const InviteVerifyScreen = () => {
           {t('3. Copy the code it shows you and enter it here.')}
         </Text>
         <Text fontSize={16} appearance="secondaryText" style={spacings.mbLg}>
-          {t('No banner there yet? Your turn is coming. Want in sooner? Ping us on')}{' '}
+          {t("If you're new to Ambire and want in sooner, ping us on")}{' '}
           <Text fontSize={16} appearance="secondaryText" underline onPress={handleOpenTwitter}>
             {t('X (formerly Twitter)')}
           </Text>
