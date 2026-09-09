@@ -2,25 +2,25 @@ import React from 'react'
 import { View } from 'react-native'
 
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
-import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import Header from '@common/modules/header/components/Header/Header'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
 import Exchanges from '@common/modules/token-details/components/Exchanges'
 import HideTokenModal from '@common/modules/token-details/components/HideTokenModal'
+import SwapAndBridgeFeeCard, {
+  isWalletStakingToken
+} from '@common/modules/token-details/components/SwapAndBridgeFeeCard'
 import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import TokenDetailsTransactionHistory from '@common/modules/token-details/components/TransactionHistory'
+import XWalletMigrationCard from '@common/modules/token-details/components/XWalletMigrationCard'
 import useTokenDetails from '@common/modules/token-details/hooks/useTokenDetails'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
-import getStyles from './styles'
-
 const TokenDetailsScreen = () => {
-  const { styles } = useTheme(getStyles)
   const {
     token,
     networks,
@@ -97,7 +97,11 @@ const TokenDetailsScreen = () => {
           change24hFormatted={change24hFormatted}
           isRewards={isRewards}
           isVesting={isVesting}
+          xWalletAmount={token.amount}
+          containerStyle={isWalletStakingToken(token) ? spacings.mbTy : undefined}
         />
+        <XWalletMigrationCard token={token} />
+        <SwapAndBridgeFeeCard token={token} />
         <TokenData token={token} />
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />

@@ -220,7 +220,7 @@ export class SwapAndBridgePage extends BasePage {
     await expect(this.page.getByText('Transaction waiting to be').first()).not.toBeVisible()
   }
 
-  async proceedTransaction(ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
+  async proceedTransaction(ledgerSimulatorControls?: SpeculosDevice): Promise<boolean> {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
@@ -237,56 +237,62 @@ export class SwapAndBridgePage extends BasePage {
     await openTransactionButton.waitFor({ state: 'visible' })
 
     const newPage = await this.handleNewPage(openTransactionButton)
-    await this.signTransactionPage(newPage, ledgerSimulatorControls)
+    return this.signTransactionPage(newPage, ledgerSimulatorControls)
   }
 
-  async signTransactionPage(page, ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
+  // Returns `false` (without signing) when the fee is above the $0.10 test limit, so callers
+  async signTransactionPage(page, ledgerSimulatorControls?: SpeculosDevice): Promise<boolean> {
     const signButton = await page.getByTestId(selectors.signTransactionButton)
 
-    try {
-      // Select slow speed
-      await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
-      await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
+    // Select slow speed
+    await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
+    await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
+    await page.waitForTimeout(1000)
 
-      const feeSelector = await page
-        .getByTestId(selectors.transaction.feeTokensSelectDropdown)
-        .locator(selectors.transaction.feeTokenInDollars)
-        .innerText()
-      const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
+    const feeSelector = await page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+      .locator(selectors.transaction.feeTokenInDollars)
+      .first()
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
-      if (feeDollarsAmount > 0.1) {
-        console.warn(
-          `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
-        )
-      } else {
-        await expect(signButton).toBeVisible({ timeout: 5000 })
-        await expect(signButton).toBeEnabled({ timeout: 5000 })
-
-        await signButton.click()
-
-        // TODO: check why this is needed
-        // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
-        await page.waitForTimeout(350)
-        const shouldRetryClick = await signButton.isVisible().catch(() => false)
-        if (shouldRetryClick) {
-          const stillEnabled = await signButton.isEnabled().catch(() => false)
-          if (stillEnabled) {
-            await signButton.click()
-          }
-        }
-
-        if (ledgerSimulatorControls) {
-          await ledgerSimulatorControls.signSmartAccountTransaction()
-        }
-
-        await page.waitForTimeout(5000)
-
-        // close transaction progress pop up
-        await page.locator(selectors.closeTransactionProgressPopUpButton).click()
-      }
-    } catch (error) {
-      console.warn("⚠️ We couldn't sign the transaction.", { error })
+    if (!Number.isFinite(feeDollarsAmount)) {
+      throw new Error(`Could not read the transaction fee (got "${feeSelector}")`)
     }
+
+    if (feeDollarsAmount > 0.1) {
+      console.warn(
+        `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
+      )
+      return false
+    }
+
+    await expect(signButton).toBeVisible({ timeout: 5000 })
+    await expect(signButton).toBeEnabled({ timeout: 5000 })
+
+    await signButton.click()
+
+    // TODO: check why this is needed
+    // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
+    await page.waitForTimeout(350)
+    const shouldRetryClick = await signButton.isVisible().catch(() => false)
+    if (shouldRetryClick) {
+      const stillEnabled = await signButton.isEnabled().catch(() => false)
+      if (stillEnabled) {
+        await signButton.click()
+      }
+    }
+
+    if (ledgerSimulatorControls) {
+      await ledgerSimulatorControls.signSmartAccountTransaction()
+    }
+
+    await page.waitForTimeout(5000)
+
+    // close transaction progress pop up
+    await page.locator(selectors.closeTransactionProgressPopUpButton).click()
+
+    return true
   }
 
   async switchUSDValueOnSwapAndBridge(

@@ -232,6 +232,14 @@ const routesConfig: RouteConfig = {
       default: i18n.t('Explore')
     })
   },
+  [ROUTES.walletStaking]: {
+    route: ROUTES.walletStaking,
+    title: Platform.select({
+      default: i18n.t('$WALLET Staking')
+    }),
+    name: Platform.select({ default: i18n.t('$WALLET Staking') }),
+    withTitlePrefix: false
+  },
   [ROUTES.watchAsset]: {
     route: ROUTES.watchAsset,
     title: Platform.select({
