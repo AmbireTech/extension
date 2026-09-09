@@ -6,8 +6,8 @@ import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Badge from '@common/components/Badge'
-import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import TrustAppButton from '@common/components/TrustAppButton'
 import useTheme from '@common/hooks/useTheme'
 import useTrustDapp from '@common/hooks/useTrustDapp'
 
@@ -88,17 +88,7 @@ const SafetyCheckBanner = ({
           <Text selectable fontSize={16} weight="semiBold" style={styles.title}>
             {translatedTitle}
           </Text>
-          {!!trustableDappUrls?.length && (
-            <Button
-              type="warning"
-              size="tiny"
-              text={t('Trust this app')}
-              onPress={onTrust}
-              hasBottomSpacing={false}
-              testID="trust-dapp-button"
-              style={[styles.badge, styles.trustButton]}
-            />
-          )}
+          {!!trustableDappUrls?.length && <TrustAppButton onPress={onTrust} style={styles.badge} />}
           {!trustableDappUrls?.length && (
             <Badge type={type} text={BADGE_TEXT_MAP[type]} size="sm" style={styles.badge} />
           )}

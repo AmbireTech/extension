@@ -7,9 +7,9 @@ import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Badge from '@common/components/Badge'
-import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import TrustAppButton from '@common/components/TrustAppButton'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_LG, SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -98,14 +98,9 @@ const DAppConnectBody: FC<{
             />
           )}
           {shouldOfferTrust && (
-            <Button
-              type="warning"
-              size="tiny"
-              text={t('Trust this app')}
+            <TrustAppButton
               onPress={() => onToggleTrust?.()}
-              hasBottomSpacing={false}
-              testID="trust-dapp-button"
-              style={styles.trustButton}
+              fontSize={12 * responsiveSizeMultiplier}
             />
           )}
           {shouldShowWarningBadge && (

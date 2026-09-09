@@ -11,7 +11,6 @@ interface Styles {
   iconContainer: ViewStyle
   title: TextStyle
   badge: ViewStyle
-  trustButton: ViewStyle
   secondaryContainer: ViewStyle
   secondaryText: TextStyle
 }
@@ -35,7 +34,10 @@ const getStyles = (theme: ThemeProps) =>
     },
     header: {
       ...flexbox.directionRow,
-      ...flexbox.alignStart,
+      // Centered so the title lines up with whatever sits in the slot opposite it - the severity
+      // badge and the taller "Trust this app" action have different heights, and top-aligning the
+      // boxes would leave each of their labels at a different offset from the title.
+      ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
       ...spacings.mbTy
     },
@@ -53,13 +55,6 @@ const getStyles = (theme: ThemeProps) =>
     },
     badge: {
       flexShrink: 0
-    },
-    // Cancels the fixed height that Button's `size` applies, so the button is only as tall as its
-    // own label, and keeps it from stretching to the row when the heading wraps to two lines.
-    trustButton: {
-      alignSelf: 'flex-start',
-      height: 'auto',
-      minHeight: 'auto'
     },
     secondaryContainer: {
       ...flexbox.directionRow,

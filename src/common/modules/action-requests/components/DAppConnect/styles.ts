@@ -12,7 +12,6 @@ interface Styles {
   contentHeader: ViewStyle
   contentBody: ViewStyle
   securityChecksContainer: ViewStyle
-  trustButton: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -57,13 +56,6 @@ const getStyles = (theme: ThemeProps) =>
       ...common.borderRadiusPrimary,
       ...spacings.phSm,
       ...spacings.pvTy
-    },
-    // Cancels the fixed height that Button's `size` applies, so the button is only as tall as its
-    // own label, and keeps it from stretching to the row when the heading wraps to two lines.
-    trustButton: {
-      alignSelf: 'flex-start',
-      height: 'auto',
-      minHeight: 'auto'
     }
   })
 
