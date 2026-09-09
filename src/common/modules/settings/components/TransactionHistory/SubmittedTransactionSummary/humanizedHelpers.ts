@@ -1,4 +1,5 @@
 import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import {
   flattenHumanizerVisualizations,
@@ -95,6 +96,19 @@ export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
 export const getDappInteractions = (
   submittedAccountOp: SubmittedAccountOpLike
 ): DappInteraction[] => {
+  if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
+    const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
+
+    return [
+      {
+        id: 'fallback:cancel',
+        name: 'Cancel',
+        iconType: 'safe',
+        ...(safeNonce !== null && safeNonce !== undefined && { safeNonce: BigInt(safeNonce) })
+      }
+    ]
+  }
+
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
   const humanizedCalls = getHumanizedCalls(submittedAccountOp)

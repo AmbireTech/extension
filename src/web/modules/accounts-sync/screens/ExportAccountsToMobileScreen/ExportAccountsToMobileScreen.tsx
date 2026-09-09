@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import { Image, ImageSourcePropType, LayoutChangeEvent, StyleSheet, View } from 'react-native'
+import { memo, useCallback, useMemo, useState } from 'react'
+import { Image, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import QRCode from 'react-native-qrcode-svg'
 
@@ -34,6 +34,7 @@ import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components
 
 import getStyles from './styles'
 
+import type { ImageSourcePropType, LayoutChangeEvent } from 'react-native'
 const PANEL_WIDTH = 400
 const PHONE_MOCKUP_HEIGHT = 300
 // The panels shrink below `PANEL_WIDTH` on narrower screens, so the QR code is sized from
@@ -312,4 +313,4 @@ const ExportAccountsToMobileScreen = () => {
   )
 }
 
-export default React.memo(ExportAccountsToMobileScreen)
+export default memo(ExportAccountsToMobileScreen)

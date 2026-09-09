@@ -5,6 +5,7 @@ import walletStakingIcon from '@common/assets/images/WalletStakingIcon.png'
 import ActivityReceiveIcon from '@common/assets/svg/ActivityReceiveIcon'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
 import ManifestImage from '@common/components/ManifestImage'
@@ -108,6 +109,16 @@ export const DappInteractionIcon = ({ interaction }: { interaction: DappInteract
     return (
       <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
         <SendIcon width={20} height={20} color={theme.tertiaryText} />
+      </View>
+    )
+  }
+
+  if (interaction.iconType === 'safe') {
+    const safeIconSize = 20 * SAFE_ICON_INLINE_SCALE
+
+    return (
+      <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
+        <SafeIcon width={safeIconSize} height={safeIconSize} />
       </View>
     )
   }

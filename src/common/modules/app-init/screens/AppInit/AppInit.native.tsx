@@ -10,6 +10,7 @@ import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
 import AppRouter from '@common/modules/app-init/components/AppRouter'
+import AndroidBottomInset from '@common/modules/app-init/screens/AppInit/AndroidBottomInset'
 import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHandler'
 import { AuthProvider } from '@common/modules/auth/contexts/authContext'
 import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onboardingNavigationContext'
@@ -29,34 +30,36 @@ const AppInit = () => {
     <NativeRouter>
       <PortalProvider>
         <SafeAreaProvider>
-          <ToastProvider>
-            <ControllerStoreProvider withErrorToasts>
-              <ControllersMiddlewareProvider>
-                <WalletConnectProvider>
-                  <ThemeProvider>
-                    <GestureHandler>
-                      <ControllersStateLoadedProvider>
-                        <GlobalTooltip />
-                        <KeyboardProvider>
-                          <NetInfoProvider>
-                            <AuthProvider>
-                              <BiometricsProvider>
-                                <OnboardingNavigationProvider>
-                                  <AppRouter />
-                                  <NfcCardSessionModal />
-                                  <PortalHost name="global" />
-                                </OnboardingNavigationProvider>
-                              </BiometricsProvider>
-                            </AuthProvider>
-                          </NetInfoProvider>
-                        </KeyboardProvider>
-                      </ControllersStateLoadedProvider>
-                    </GestureHandler>
-                  </ThemeProvider>
-                </WalletConnectProvider>
-              </ControllersMiddlewareProvider>
-            </ControllerStoreProvider>
-          </ToastProvider>
+          <AndroidBottomInset>
+            <ToastProvider>
+              <ControllerStoreProvider withErrorToasts>
+                <ControllersMiddlewareProvider>
+                  <WalletConnectProvider>
+                    <ThemeProvider>
+                      <GestureHandler>
+                        <ControllersStateLoadedProvider>
+                          <GlobalTooltip />
+                          <KeyboardProvider>
+                            <NetInfoProvider>
+                              <AuthProvider>
+                                <BiometricsProvider>
+                                  <OnboardingNavigationProvider>
+                                    <AppRouter />
+                                    <NfcCardSessionModal />
+                                    <PortalHost name="global" />
+                                  </OnboardingNavigationProvider>
+                                </BiometricsProvider>
+                              </AuthProvider>
+                            </NetInfoProvider>
+                          </KeyboardProvider>
+                        </ControllersStateLoadedProvider>
+                      </GestureHandler>
+                    </ThemeProvider>
+                  </WalletConnectProvider>
+                </ControllersMiddlewareProvider>
+              </ControllerStoreProvider>
+            </ToastProvider>
+          </AndroidBottomInset>
         </SafeAreaProvider>
       </PortalProvider>
     </NativeRouter>
