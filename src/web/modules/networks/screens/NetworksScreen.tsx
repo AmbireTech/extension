@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSearchParams } from 'react-router-dom'
 
@@ -14,6 +14,7 @@ import Search from '@common/components/Search'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import AddNetworkBottomSheet from '@common/modules/networks/components/AddNetworkBottomSheet'
 import AllNetworksOption from '@common/modules/networks/components/AllNetworksOption/AllNetworksOption'
@@ -22,13 +23,20 @@ import NetworkBottomSheet, {
 } from '@common/modules/networks/components/NetworkBottomSheet'
 import Networks from '@common/modules/networks/components/Networks'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 const NetworksScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  // Reserves exactly as much scroll space as the floating footer occupies, so the last
+  // network in the list is never covered by it (the footer grows taller on narrow side panels).
+  const [footerHeight, setFooterHeight] = useState(0)
+  const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
+    setFooterHeight(event.nativeEvent.layout.height)
+  }, [])
 
   const { navigate } = useNavigation()
   const {
@@ -131,7 +139,7 @@ const NetworksScreen = () => {
           sheetRef={addNetworkBottomSheetRef}
           closeBottomSheet={closeAddNetworkBottomSheet}
         />
-        <ScrollableWrapper style={{ paddingBottom: 72 }}>
+        <ScrollableWrapper style={{ paddingBottom: footerHeight ? footerHeight + SPACING_SM : 72 }}>
           <AllNetworksOption onPress={handleChangeNetwork} />
           <Networks
             search={search}
@@ -140,12 +148,16 @@ const NetworksScreen = () => {
             onPress={handleChangeNetwork}
           />
         </ScrollableWrapper>
-        <FooterGlassView size="sm">
+        <FooterGlassView
+          size="sm"
+          fullWidth={isCompactSidePanelLayout}
+          onLayout={handleFooterLayout}
+        >
           <Button
             text={t('Add new network')}
-            size="smaller"
+            size={isCompactSidePanelLayout ? 'regular' : 'smaller'}
             hasBottomSpacing={false}
-            style={{ minWidth: 174 }}
+            style={isCompactSidePanelLayout ? { width: '100%' } : { minWidth: 174 }}
             childrenPosition="left"
             onPress={handleOpenAddNetworkBottomSheet}
           >
