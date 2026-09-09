@@ -3,6 +3,7 @@ import { Interface } from 'ethers'
 import {
   decodePendingWalletWithdrawals,
   formatPendingWalletWithdrawalDuration,
+  getActivePendingWalletWithdrawals,
   getPendingWalletWithdrawalCommitmentId,
   getPendingWalletWithdrawalStorageKey,
   getPendingWalletWithdrawalSummary,
@@ -34,6 +35,25 @@ describe('pending WALLET withdrawal helpers', () => {
     expect(getPendingWalletWithdrawalSummary([pendingWithdrawal, latestWithdrawal])).toEqual({
       latestWithdrawal,
       totalShares: 30n
+    })
+  })
+
+  test('keeps successful active withdrawals when another commitment check fails', async () => {
+    const failedWithdrawal = { ...pendingWithdrawal, shares: 20n, unlocksAt: 3_000_000n }
+    const inactiveWithdrawal = { ...pendingWithdrawal, shares: 30n, unlocksAt: 4_000_000n }
+    const failure = new Error('Unable to check commitment')
+
+    const result = await getActivePendingWalletWithdrawals(
+      [pendingWithdrawal, failedWithdrawal, inactiveWithdrawal],
+      async (withdrawal) => {
+        if (withdrawal === failedWithdrawal) throw failure
+        return withdrawal === inactiveWithdrawal ? 0n : 15n
+      }
+    )
+
+    expect(result).toEqual({
+      activeWithdrawals: [{ ...pendingWithdrawal, maxTokens: 15n }],
+      errors: [failure]
     })
   })
 

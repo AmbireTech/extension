@@ -55,6 +55,38 @@ export const getPendingWalletWithdrawalSummary = (pendingWithdrawals: PendingWal
     { latestWithdrawal: null, totalShares: 0n }
   )
 
+/** Keeps active withdrawals whose commitment checks succeed and returns failures separately. */
+export const getActivePendingWalletWithdrawals = async (
+  pendingWithdrawals: PendingWalletWithdrawal[],
+  getCommitmentMaxTokens: (withdrawal: PendingWalletWithdrawal) => Promise<bigint>
+) => {
+  const results = await Promise.allSettled(
+    pendingWithdrawals.map(async (withdrawal) => ({
+      withdrawal,
+      maxTokens: await getCommitmentMaxTokens(withdrawal)
+    }))
+  )
+
+  return results.reduce<{
+    activeWithdrawals: PendingWalletWithdrawal[]
+    errors: unknown[]
+  }>(
+    (summary, result) => {
+      if (result.status === 'rejected') {
+        summary.errors.push(result.reason)
+      } else if (result.value.maxTokens > 0n) {
+        summary.activeWithdrawals.push({
+          ...result.value.withdrawal,
+          maxTokens: result.value.maxTokens
+        })
+      }
+
+      return summary
+    },
+    { activeWithdrawals: [], errors: [] }
+  )
+}
+
 /** Validates and extracts raw WALLET staking logs returned by the relayer. */
 export const parseWalletStakingRelayerLogsResponse = (
   value: unknown
