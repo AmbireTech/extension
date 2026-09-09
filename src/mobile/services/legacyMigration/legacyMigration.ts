@@ -51,4 +51,9 @@ const markMigrationOnboardingPassed = (): void => {
 const shouldShowMigrationOnboarding = (): boolean =>
   hasLegacyAccounts() && !hasPassedMigrationOnboarding()
 
-export { getLegacyEmailAccounts, shouldShowMigrationOnboarding, markMigrationOnboardingPassed }
+export {
+  getLegacyEmailAccounts,
+  hasLegacyAccounts,
+  shouldShowMigrationOnboarding,
+  markMigrationOnboardingPassed
+}
