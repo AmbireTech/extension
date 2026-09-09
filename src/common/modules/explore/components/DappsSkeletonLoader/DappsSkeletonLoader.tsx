@@ -14,14 +14,15 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
 const DappsSkeletonLoader = () => {
-  const { state, dispatch: dappsDispatch } = useController('DappsController')
+  const { state: isReady, dispatch: dappsDispatch } = useController('DappsController', 'isReady')
+  const { state: isReadyToDisplayDapps } = useController('DappsController', 'isReadyToDisplayDapps')
   const { theme } = useTheme()
   const { t } = useTranslation()
 
   // `isReadyToDisplayDapps` starts out true and only drops while a fetch is in flight,
   // so on its own it would report an uninitialized controller as a failed fetch. The
   // catalog is initialized after the portfolio on mobile, which makes that window real.
-  const isLoading = !state.isReady || !state.isReadyToDisplayDapps
+  const isLoading = !isReady || !isReadyToDisplayDapps
 
   return (
     <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>

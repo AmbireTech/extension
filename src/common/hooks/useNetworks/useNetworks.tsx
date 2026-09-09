@@ -24,10 +24,11 @@ const useNetworks = ({
   }
 }) => {
   const { state: networks } = useController('NetworksController', selectNetworks)
-  const {
-    state: { accountStates },
-    dispatch: accountsDispatch
-  } = useController('AccountsController')
+
+  const { state: accountStates, dispatch: accountsDispatch } = useController(
+    'AccountsController',
+    'accountStates'
+  )
 
   // Safe accounts are dependant on the account state so be sure to fetch it
   // if it's not already fetched

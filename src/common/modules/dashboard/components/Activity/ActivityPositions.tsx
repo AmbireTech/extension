@@ -78,13 +78,18 @@ const ActivityPositions: FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const {
-    state: { accountsOps, banners },
-    dispatch: activityDispatch
-  } = useController('ActivityController')
-  const {
-    state: { account, dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
+  const { state: accountsOps, dispatch: activityDispatch } = useController(
+    'ActivityController',
+    'accountsOps'
+  )
+  const { state: banners } = useController('ActivityController', 'banners')
+  // Read as slices rather than off the whole state, so the page does not re-render on
+  // every portfolio tick - it holds no portfolio data of its own.
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    'dashboardNetworkFilter'
+  )
 
   const currentAccountBanners = useMemo(() => {
     return getCurrentAccountBanners(banners, account?.addr)

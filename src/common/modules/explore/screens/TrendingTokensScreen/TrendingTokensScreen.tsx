@@ -15,7 +15,8 @@ import text from '@common/styles/utils/text'
 
 const TrendingTokensScreen = () => {
   const { t } = useTranslation()
-  const { state } = useController('DappsController')
+  // A slice rather than the whole state, which carries the entire dapp catalog
+  const { state: trendingTokens } = useController('DappsController', 'trendingTokens')
 
   const renderItem = useCallback(
     ({ item }: { item: TrendingToken }) => <TrendingTokenItem token={item} />,
@@ -27,7 +28,7 @@ const TrendingTokensScreen = () => {
       <HeaderWithTitle title={t('Trending')} />
       <ScrollableWrapper
         type={WRAPPER_TYPES.FLAT_LIST}
-        data={(state.trendingTokens || []) as TrendingToken[]}
+        data={(trendingTokens || []) as TrendingToken[]}
         renderItem={renderItem as any}
         keyExtractor={(item: TrendingToken) => item.id}
         style={spacings.phSm}
