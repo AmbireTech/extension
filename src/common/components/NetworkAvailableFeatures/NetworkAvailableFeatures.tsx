@@ -63,9 +63,7 @@ const NetworkAvailableFeatures = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { pathname } = useRoute()
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
 
   const {
     state: { networks },

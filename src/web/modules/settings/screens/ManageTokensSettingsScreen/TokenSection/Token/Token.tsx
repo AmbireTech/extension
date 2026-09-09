@@ -30,7 +30,7 @@ const Token: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { isHidden, toggleHideToken, removeCustomToken } = useManageToken({
     address,
     chainId,

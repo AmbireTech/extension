@@ -10,11 +10,22 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import usePendingSafeTransactions from '@common/modules/dashboard/hooks/usePendingSafeTransactions'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 import Tab from './Tab'
 import { TabType } from './Tab/Tab'
+
+import type { ActivityController } from '@ambire-common/controllers/activity/activity'
+import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
+
+// The tabs row is rendered above the dashboard pages on mobile, so it must not
+// re-render on every controller update it isn't reading anything from.
+const selectActivityBanners = (state: ActivityController) => state.banners
+const selectAccountAddr = (state: SelectedAccountController) => state.account?.addr
+const selectSelectedAccountBanners = (state: SelectedAccountController) => state.banners
 
 interface Props {
   openTab: TabType
@@ -53,22 +64,25 @@ const TABS: {
 const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
   const { styles, theme } = useTheme(getStyles)
   const { minWidthSize } = useWindowSize()
-  const { banners } = useController('ActivityController').state
-  const {
-    state: { account, banners: defiBanners }
-  } = useController('SelectedAccountController')
+  const { state: banners } = useController('ActivityController', selectActivityBanners)
+  const { state: accountAddr } = useController('SelectedAccountController', selectAccountAddr)
+  const { state: defiBanners } = useController(
+    'SelectedAccountController',
+    selectSelectedAccountBanners
+  )
+  const { totalPendingCount } = usePendingSafeTransactions()
 
   const currentDefiBanners = useMemo(
     () =>
-      getCurrentAccountBanners(defiBanners, account?.addr).filter(
+      getCurrentAccountBanners(defiBanners, accountAddr).filter(
         ({ id }) => id === defiPositionsOnDisabledNetworksBannerId
       ),
-    [defiBanners, account]
+    [defiBanners, accountAddr]
   )
 
   const currentAccountBanners = useMemo(() => {
-    return getCurrentAccountBanners(banners, account?.addr)
-  }, [banners, account])
+    return getCurrentAccountBanners(banners, accountAddr)
+  }, [banners, accountAddr])
 
   const pendingBanner = useMemo(() => {
     return currentAccountBanners.find((b) => b.category === 'pending-to-be-confirmed-acc-ops')
@@ -162,6 +176,20 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                     style={{ marginTop: 2, lineHeight: 12 }}
                   >
                     {badgeText}
+                  </Text>
+                </View>
+              )}
+              {type === 'activity' && !!totalPendingCount && (
+                <View
+                  style={[
+                    flexbox.alignCenter,
+                    flexbox.justifyCenter,
+                    styles.pendingBadge,
+                    spacings.phMi
+                  ]}
+                >
+                  <Text fontSize={10} color={theme.primaryAccent} style={{ lineHeight: 12 }}>
+                    {totalPendingCount}
                   </Text>
                 </View>
               )}

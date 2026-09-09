@@ -21,12 +21,9 @@ import DashboardBannerBottomSheet from '@common/modules/dashboard/components/Das
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import spacings from '@common/styles/spacings'
-import { getUiType } from '@common/utils/uiType'
 import flexbox from '@common/styles/utils/flexbox'
 
 import applyOtaUpdate from './applyOtaUpdate'
-
-const { isSidePanel } = getUiType()
 
 const DashboardBanner = ({
   banner
@@ -54,6 +51,7 @@ const DashboardBanner = ({
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
   const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
+  const isPendingSignatureRequest = banner.id === 'safe-message-request-banner'
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
@@ -303,7 +301,7 @@ const DashboardBanner = ({
         subtitle={subtitle}
         type={type}
         text={text}
-        singleRow={isPendingAccountOp}
+        singleRow={isPendingAccountOp || isPendingSignatureRequest}
         style={isPendingAccountOp ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={

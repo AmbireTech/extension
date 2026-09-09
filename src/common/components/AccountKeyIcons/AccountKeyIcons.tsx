@@ -39,7 +39,7 @@ const AccountKeyIcons = ({
   isExtended: boolean
   withContainerSpacing?: boolean
 }) => {
-  const { keys } = useController('KeystoreController').state
+  const { state: keys } = useController('KeystoreController', 'keys')
   const { theme } = useTheme()
   const associatedKeys = account?.associatedKeys || []
   const importedKeyTypes = Array.from(

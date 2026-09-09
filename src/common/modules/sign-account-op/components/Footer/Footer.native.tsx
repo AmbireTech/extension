@@ -3,20 +3,17 @@ import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
-import useRejectConfirmation from './useRejectConfirmation'
+import RejectButton from './RejectButton'
 
 const Footer = ({
   onReject,
@@ -30,13 +27,13 @@ const Footer = ({
   inProgressButtonText,
   buttonText,
   shouldHoldToProceed,
+  shouldRejectOnchain,
+  isRejectDisabled,
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
-  const { userRequests } = useController('RequestsController').state
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 
@@ -60,11 +57,7 @@ const Footer = ({
 
   const signature = accountOp?.signature
   const isMultisigSigned = useMemo(() => {
-    // '0x' is the placeholder signature for self-broadcast EOA account ops (they
-    // carry no smart-account signature). It is NOT a real signature, so it must
-    // not trigger the "already signed" reject warning. Otherwise, rejecting on a
-    // hardware wallet — which leaves the '0x' placeholder set on accountOp —
-    // wrongly warns the user about discarding an already-signed transaction.
+    // '0x' is a placeholder used by self-broadcast account ops, not a real signature.
     return !!signature && signature !== '0x'
   }, [signature])
 
@@ -76,11 +69,6 @@ const Footer = ({
         })
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
-
-  const { sheetRef, closeModal, handleReject, handleConfirmedReject } = useRejectConfirmation({
-    isMultisigSigned,
-    onReject
-  })
 
   return (
     <View style={spacings.ptSm}>
@@ -119,37 +107,16 @@ const Footer = ({
             size="large"
           />
         )}
-        <BottomSheet
-          id="confirm-hide"
-          type="modal"
-          sheetRef={sheetRef}
-          closeBottomSheet={closeModal}
-          onBackdropPress={closeModal}
-        >
-          <DualChoiceWarningModal
-            title={t('Are you sure?')}
-            description={t(
-              'You are about to reject an already signed transaction. It will no longer be visible in Ambire.'
-            )}
-            primaryButtonText={t('Proceed')}
-            secondaryButtonText={t('Return')}
-            onPrimaryButtonPress={handleConfirmedReject}
-            onSecondaryButtonPress={closeModal}
-            type="error"
-          />
-        </BottomSheet>
       </View>
 
       <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
         <View style={flexbox.flex1}>
-          <Button
-            testID="transaction-button-reject"
-            type="danger"
-            text={t('Reject')}
-            onPress={handleReject}
+          <RejectButton
+            onReject={onReject}
+            isSignLoading={isSignLoading}
+            shouldRejectOnchain={shouldRejectOnchain}
+            isRejectDisabled={isRejectDisabled}
             style={{ height: 50 }}
-            hasBottomSpacing={false}
-            disabled={isSignLoading}
           />
         </View>
         {isAddToCartDisplayed && (
@@ -175,8 +142,6 @@ const Footer = ({
           </View>
         )}
       </View>
-
-      <ActionsPagination />
     </View>
   )
 }

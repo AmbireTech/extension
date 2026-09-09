@@ -6,13 +6,13 @@ import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import DAppConnectAccountSettings from '@common/modules/action-requests/components/DAppConnect/DAppConnectAccountSettings'
 import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
 import useDappConnect from '@common/modules/action-requests/hooks/useDappConnect'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
-import spacings, { SPACING_LG, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
@@ -36,7 +36,7 @@ const DappConnectScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      header={<HeaderWithLogoOnly />}
+      header={<ActionHeader />}
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
@@ -68,7 +68,7 @@ const DappConnectScreen = () => {
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
       )}
-      style={{ marginTop: minHeightSize(650) ? 0 : SPACING_XL * responsiveSizeMultiplier }}
+      style={{ marginTop: minHeightSize(650) ? 0 : SPACING * responsiveSizeMultiplier }}
     >
       {!!dappToConnect && (
         <TabLayoutWrapperMainContent
@@ -79,9 +79,7 @@ const DappConnectScreen = () => {
               style={[
                 styles.content,
                 {
-                  marginBottom: minHeightSize(650)
-                    ? SPACING_SM
-                    : SPACING_LG * responsiveSizeMultiplier
+                  marginBottom: minHeightSize(650) ? SPACING_SM : SPACING * responsiveSizeMultiplier
                 }
               ]}
             >

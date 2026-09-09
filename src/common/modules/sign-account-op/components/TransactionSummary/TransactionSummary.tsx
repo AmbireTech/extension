@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GestureResponderEvent, Pressable, View, ViewStyle } from 'react-native'
 import {
@@ -11,7 +11,6 @@ import {
   zeroAddress
 } from 'viem'
 
-import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { noStateUpdateStatuses, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import {
   getAction,
@@ -22,8 +21,8 @@ import {
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
-  getErc7730DescriptionRows,
   getVisibleErc7730RowsExcludingTitleParts,
+  MOBILE_ERC7730_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -45,6 +44,7 @@ import { getUiType } from '@common/utils/uiType'
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
 
+import type { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import type {
   HumanizerErc7730Visualization,
   IrCall
@@ -60,7 +60,7 @@ interface Props {
   type?: 'history' | 'benzin' | 'default'
   index?: number
   enableExpand?: boolean
-  rightIcon?: React.ReactNode
+  rightIcon?: ReactNode
   onRightIconPress?: () => void
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
@@ -69,7 +69,7 @@ interface Props {
 
 export { sizeMultiplier }
 
-type Tab = 'description' | 'raw' | 'parsed'
+type Tab = 'raw' | 'parsed'
 
 const approveAbi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)'])
 const permitAbi = parseAbi([
@@ -166,9 +166,7 @@ const TransactionSummary = ({
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()
@@ -191,22 +189,7 @@ const TransactionSummary = ({
     [call.fullVisualization]
   )
 
-  const erc7730DescriptionVisualization = useMemo(() => {
-    if (!erc7730Visualization) return null
-    if (!shouldUseErc7730DetailedLayout(erc7730Visualization)) return null
-
-    const descriptionRows = getErc7730DescriptionRows(erc7730Visualization)
-    if (!descriptionRows.length) return null
-
-    return {
-      ...erc7730Visualization,
-      rows: descriptionRows
-    }
-  }, [erc7730Visualization])
-
-  const [currentTxDataTab, setCurrentTxDataTab] = useState<Tab>(
-    !!erc7730DescriptionVisualization ? 'description' : 'raw'
-  )
+  const [currentTxDataTab, setCurrentTxDataTab] = useState<Tab>('raw')
 
   const shouldUseDetailedErc7730Layout = useMemo(
     () => !!erc7730Visualization && shouldUseErc7730DetailedLayout(erc7730Visualization),
@@ -220,6 +203,8 @@ const TransactionSummary = ({
       getVisibleErc7730RowsExcludingTitleParts(erc7730Visualization).length > 0,
     [erc7730Visualization]
   )
+  const shouldPadMobileErc7730TitleBottom =
+    shouldUseErc7730TransactionSummaryLayout && !hasErc7730TransactionSummaryRows && !hasCallFailed
 
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
@@ -675,7 +660,7 @@ const TransactionSummary = ({
           )}
           {!!erc7730DetailedTitle && (
             <Text
-              fontSize={textSize + 2}
+              fontSize={MOBILE_ERC7730_TEXT_SIZE}
               weight="semiBold"
               color={theme.secondaryAccent400}
               numberOfLines={1}
@@ -705,7 +690,7 @@ const TransactionSummary = ({
       <HumanizedVisualization
         data={[erc7730Visualization]}
         sizeMultiplierSize={sizeMultiplier[size]}
-        textSize={textSize + 2}
+        textSize={MOBILE_ERC7730_TEXT_SIZE}
         imageSize={24 * sizeMultiplier[size]}
         chainId={chainId}
         type={type}
@@ -723,7 +708,6 @@ const TransactionSummary = ({
     erc7730Visualization,
     shouldUseDetailedErc7730Layout,
     size,
-    textSize,
     theme,
     type
   ])
@@ -738,13 +722,14 @@ const TransactionSummary = ({
       <HumanizedVisualization
         data={visualizationData}
         sizeMultiplierSize={sizeMultiplier[size]}
-        textSize={textSize}
+        textSize={isMobile ? 14 : textSize}
         imageSize={imageSize}
         chainId={chainId}
         type={type}
         hasPadding={false}
         style={{ width: '100%', alignContent: 'flex-start' }}
         disableFlex
+        inlineDappIcon={isMobile}
         editApprovalCallInfo={editApprovalCallInfo}
         dapp={call.dapp}
       />
@@ -763,13 +748,12 @@ const TransactionSummary = ({
 
   const tabOptions = useMemo(() => {
     let tabs: ([Tab, string] | null)[] = [
-      !!erc7730DescriptionVisualization ? ['description', t('Additional description')] : null,
       ['raw', t('Raw data')],
       decodedFunction ? ['parsed', t('Parsed data')] : null
     ]
 
     return tabs.filter((x) => !!x)
-  }, [erc7730DescriptionVisualization, decodedFunction, t])
+  }, [decodedFunction, t])
   const shouldAlignContentStart = useMemo(() => {
     if (shouldUseErc7730TransactionSummaryLayout) return true
     if (type !== 'default') return false
@@ -804,7 +788,9 @@ const TransactionSummary = ({
           ? spacings.pvTy
           : withMobileLayout && shouldUseDetailedErc7730Layout
             ? spacings.pt
-            : undefined
+            : withMobileLayout && shouldPadMobileErc7730TitleBottom
+              ? spacings.pbTy
+              : undefined
       }
       hideMobileContent={
         !!mobileFlatVisualization ||
@@ -990,19 +976,7 @@ const TransactionSummary = ({
               })}
             </View>
           )}
-          {!!erc7730DescriptionVisualization && currentTxDataTab === 'description' ? (
-            <HumanizedVisualization
-              data={[erc7730DescriptionVisualization]}
-              sizeMultiplierSize={sizeMultiplier[size]}
-              textSize={Math.max(textSize - 1, 12)}
-              imageSize={imageSize}
-              chainId={chainId}
-              type={type}
-              hasPadding={false}
-              erc7730Mode="description"
-              editApprovalCallInfo={editApprovalCallInfo}
-            />
-          ) : currentTxDataTab === 'raw' ? (
+          {currentTxDataTab === 'raw' ? (
             <ExpandedContent
               call={call}
               size={size}
@@ -1071,4 +1045,4 @@ const TransactionSummary = ({
   )
 }
 
-export default React.memo(TransactionSummary)
+export default memo(TransactionSummary)

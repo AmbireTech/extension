@@ -64,9 +64,7 @@ const TrendingTokenDetailsScreen = () => {
   const { state } = useRoute()
   const { state: dappsState } = useController('DappsController')
   const { state: networks } = useController('NetworksController', (s) => s.networks)
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
 
   const token: TrendingToken | undefined = useMemo(

@@ -38,7 +38,7 @@ const SigningKeySelect = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const { keys } = useController('KeystoreController').state
+  const { state: keys } = useController('KeystoreController', 'keys')
 
   // On mobile the sign flow lives in a BottomSheet portalled into the same
   // "global" host, so sit one step above the topmost sheet that was open when

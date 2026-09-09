@@ -14,7 +14,6 @@ import { openPanel } from '@web/extension-services/background/webapi/panel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 
-import { sendInitialRoute } from '../initialRoute'
 import sessionStorage from '../webapi/sessionStorage'
 import {
   dispatchDappTabFocusFromMainCtrl,
@@ -60,9 +59,8 @@ export const handleActions = async (
     case 'HANDSHAKE': {
       if (!pm || !port) return
       pm.sendToPort(port, '> ui', { method: 'portReady', params: {} })
-
-      // Send the route proactively
-      await sendInitialRoute({ pm, port, mainCtrl, eventEmitterRegistry })
+      // Nothing to do about the route here. The view registers when its port connects, and
+      // registering is what sends it to the screen it should open on.
       break
     }
     case 'UPDATE_PORT_URL': {
@@ -92,19 +90,12 @@ export const handleActions = async (
       })
       break
     }
-    case 'GET_INITIAL_ROUTE': {
-      if (!pm || !port) return
+    case 'SYNC_VIEW_ROUTE': {
+      if (!port) return
 
-      // The view is asking because it has nothing on screen, so the route's critical
-      // controller states go with the answer to save it another round-trip.
-      // Side-panel awareness lives in sendInitialRoute → resolveInitialRoute.
-      await sendInitialRoute({
-        pm,
-        port,
-        mainCtrl,
-        eventEmitterRegistry,
-        withCriticalControllerStates: true
-      })
+      // The view is asking because it still has nothing on screen, which means the navigation
+      // sent when it registered never arrived.
+      await mainCtrl.ui.syncViewRoute(port.id, { isInitialNavigation: true })
       break
     }
     case 'INIT_CONTROLLER_STATE': {
@@ -318,7 +309,7 @@ export const handleActions = async (
           await focusOverlay()
           await waitForOverlayOpen()
         } catch {
-          pm.send('> ui', { method: 'navigate', params: { route: '/' } })
+          pm.send('> ui', { method: 'navigate', params: { route: '/', options: {} } })
         }
       }
       await sessionStorage.set('isOpenExtensionPopupLoading', false)

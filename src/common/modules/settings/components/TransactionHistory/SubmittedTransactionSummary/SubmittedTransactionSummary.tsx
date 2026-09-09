@@ -34,7 +34,7 @@ const SubmittedTransactionSummaryInner = ({
   modalType
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
   const network: Network | undefined = useMemo(
