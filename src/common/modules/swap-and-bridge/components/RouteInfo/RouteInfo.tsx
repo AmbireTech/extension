@@ -1,4 +1,5 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef } from 'react'
+import type { FC } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -10,6 +11,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
+import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
@@ -27,12 +29,16 @@ type Props = {
   isEstimatingRoute: boolean
   shouldEnableRoutesSelection: boolean
   openRoutesModal: () => void
+  openProviderSettingsModal: () => void
+  areAllProvidersDisabled: boolean
 }
 
 const RouteInfo: FC<Props> = ({
   isEstimatingRoute,
   shouldEnableRoutesSelection,
-  openRoutesModal
+  openRoutesModal,
+  openProviderSettingsModal,
+  areAllProvidersDisabled
 }) => {
   const {
     state: {
@@ -41,7 +47,8 @@ const RouteInfo: FC<Props> = ({
       formStatus,
       signAccountOpController,
       quote,
-      swapSignErrors
+      swapSignErrors,
+      disabledSwapProviderIds
     },
     dispatch: swapAndBridgeDispatch
   } = useController('SwapAndBridgeController')
@@ -118,6 +125,47 @@ const RouteInfo: FC<Props> = ({
     openFeeInfoBottomSheet()
   }, [openFeeInfoBottomSheet])
 
+  if (areAllProvidersDisabled) {
+    return (
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.wrap,
+          { minHeight: 20, maxWidth: '100%' },
+          spacings.mtSm
+        ]}
+      >
+        {isWeb && <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />}
+        <Text
+          fontSize={isMobile ? 14 : 12}
+          weight="medium"
+          appearance="warningText"
+          style={isMobile ? {} : spacings.mlMi}
+        >
+          {t('All providers disabled.')}{' '}
+        </Text>
+        <HoverablePressable
+          accessibilityRole="button"
+          onPress={openProviderSettingsModal}
+          testID="enable-all-swap-providers-button"
+        >
+          <Text
+            fontSize={isMobile ? 14 : 12}
+            weight="medium"
+            color={theme.warningText}
+            style={{
+              textDecorationColor: theme.warningText,
+              textDecorationLine: 'underline'
+            }}
+          >
+            {t('Enable')}
+          </Text>
+        </HoverablePressable>
+      </View>
+    )
+  }
+
   return (
     <View style={[{ minHeight: 20 }, spacings.mtSm]}>
       <View
@@ -154,12 +202,7 @@ const RouteInfo: FC<Props> = ({
             ]}
             childrenPosition="right"
           >
-            <RightArrowIcon
-              width={10}
-              height={10}
-              color={theme.primaryText}
-              style={spacings.mlMi}
-            />
+            <RightArrowIcon width={10} height={10} color="#fff" style={spacings.mlMi} />
           </Button>
 
           {shouldShowSelectRoute && quote?.selectedRoute?.serviceTime ? (
@@ -209,18 +252,51 @@ const RouteInfo: FC<Props> = ({
             spacings.mtSm
           ]}
         >
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, spacings.mrTy]}>
             {isWeb && (
               <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
             )}
-            <Text
-              fontSize={isMobile ? 14 : 12}
-              weight="medium"
-              appearance="warningText"
-              style={{ ...(isMobile ? {} : spacings.mlMi), flexShrink: 1 }}
-            >
-              {t('No routes now, but note some markets may change often.')}
-            </Text>
+            {disabledSwapProviderIds.length ? (
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.wrap,
+                  flexbox.flex1,
+                  isMobile ? {} : spacings.mlMi
+                ]}
+              >
+                <Text fontSize={isMobile ? 14 : 12} weight="medium" appearance="warningText">
+                  {t('No routes found.')}{' '}
+                </Text>
+                <HoverablePressable
+                  accessibilityRole="button"
+                  onPress={openProviderSettingsModal}
+                  testID="enable-swap-providers-button"
+                >
+                  <Text
+                    fontSize={isMobile ? 14 : 12}
+                    weight="medium"
+                    color={theme.warningText}
+                    style={{
+                      textDecorationColor: theme.warningText,
+                      textDecorationLine: 'underline'
+                    }}
+                  >
+                    {t('Enable other providers for better results')}
+                  </Text>
+                </HoverablePressable>
+              </View>
+            ) : (
+              <Text
+                fontSize={isMobile ? 14 : 12}
+                weight="medium"
+                appearance="warningText"
+                style={{ ...(isMobile ? {} : spacings.mlMi), flexShrink: 1 }}
+              >
+                {t('No routes now, but note some markets may change often.')}
+              </Text>
+            )}
           </View>
           <RetryButton onPress={updateQuote} />
         </View>

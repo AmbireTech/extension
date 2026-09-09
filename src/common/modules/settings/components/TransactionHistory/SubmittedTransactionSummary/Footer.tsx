@@ -67,9 +67,7 @@ const Footer: FC<Props> = ({
   const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const {
-    state: { account: selectedAccount }
-  } = useController('SelectedAccountController')
+  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
 

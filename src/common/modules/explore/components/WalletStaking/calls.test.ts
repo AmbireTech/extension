@@ -6,6 +6,8 @@ import {
   getMigrateXWalletCalls,
   getStakeWalletCalls,
   getUnstakeWalletCalls,
+  getWalletStakingAmountInWei,
+  getWalletStakingMaxAmount,
   getWithdrawWalletCalls
 } from './calls'
 
@@ -21,6 +23,20 @@ const walletStakingInterface = new Interface([
 ])
 
 describe('WALLET staking calls', () => {
+  test('parses valid amounts and safely rejects invalid input', () => {
+    expect(getWalletStakingAmountInWei('1.25')).toBe(parseUnits('1.25', 18))
+    expect(getWalletStakingAmountInWei('1.')).toBe(parseUnits('1', 18))
+    expect(getWalletStakingAmountInWei('invalid')).toBe(0n)
+  })
+
+  test('uses the full WALLET balance for the stake max amount', () => {
+    expect(getWalletStakingMaxAmount(parseUnits('1', 18), 'stake')).toBe(parseUnits('1', 18))
+  })
+
+  test('leaves a small stkWALLET remainder for the unstake max amount', () => {
+    expect(getWalletStakingMaxAmount(parseUnits('1', 18), 'unstake')).toBe(parseUnits('0.9999', 18))
+  })
+
   test('approves WALLET and enters stkWALLET', () => {
     const amount = parseUnits('12.5', 18)
     const calls = getStakeWalletCalls(amount)

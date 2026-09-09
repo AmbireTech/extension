@@ -1,18 +1,20 @@
 import QrScannerLib from 'qr-scanner'
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { View } from 'react-native'
+import { Path, Svg } from 'react-native-svg'
 
 import { useTranslation } from '@common/config/localization'
-import { browser, engine, isExtension } from '@web/constants/browserapi'
-import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
+import useTheme from '@common/hooks/useTheme'
 import {
   emptyQrScanLastRead,
   getQrCodeCoverage,
   getQrScanFeedback,
-  QR_SCAN_FEEDBACK_INTERVAL,
-  QrScanProgress
+  QR_SCAN_FEEDBACK_INTERVAL
 } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
+import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
+import { browser, engine, isExtension } from '@web/constants/browserapi'
 
+import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 // Firefox does not implement `BarcodeDetector`, so `qr-scanner` falls back to a Web Worker that it
 // spawns from a `blob:` URL (see `qr-scanner-worker.min.js`). Firefox MV3 extension pages reject
 // those workers under the default `script-src 'self'` CSP, which leaves the camera streaming but
@@ -30,6 +32,9 @@ type Props = {
   onProgress?: (progress: QrScanProgress) => void
   disabled?: boolean
 }
+
+const SCAN_REGION_RATIO = 0.9
+const SCAN_REGION_RESOLUTION = 512
 
 const getCameraErrorMessage = (error: any, t: (message: string) => string) => {
   const rawMessage = typeof error === 'string' ? error : error?.message
@@ -82,15 +87,31 @@ const getFragmentFromResult = (result: string | { data?: unknown }) => {
   throw new Error('Invalid QR scan result.')
 }
 
-/**
- * `qr-scanner` looks for codes in a centered square of two thirds of the smaller video side
- * and hands the corner points back in video pixels, so both are in the same units.
- */
+/** The side of the centered square in which QR codes are decoded, in video pixels. */
 const getScannedSpan = (video: HTMLVideoElement) =>
-  (2 / 3) * Math.min(video.videoWidth, video.videoHeight)
+  Math.round(SCAN_REGION_RATIO * Math.min(video.videoWidth, video.videoHeight))
+
+/**
+ * Covers most of the visible camera square while leaving a small margin for the QR code's
+ * white border. The larger decode image keeps module detail close to the library's smaller
+ * default crop.
+ */
+const calculateScanRegion = (video: HTMLVideoElement): QrScannerLib.ScanRegion => {
+  const size = getScannedSpan(video)
+
+  return {
+    x: Math.round((video.videoWidth - size) / 2),
+    y: Math.round((video.videoHeight - size) / 2),
+    width: size,
+    height: size,
+    downScaledWidth: Math.min(SCAN_REGION_RESOLUTION, size),
+    downScaledHeight: Math.min(SCAN_REGION_RESOLUTION, size)
+  }
+}
 
 const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const scannerRef = useRef<QrScannerLib | null>(null)
   const decoderRef = useRef(new UrFragmentDecoder())
@@ -170,6 +191,7 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
       },
       {
         preferredCamera: 'environment',
+        calculateScanRegion,
         returnDetailedScanResult: true,
         highlightScanRegion: false,
         highlightCodeOutline: false,
@@ -236,7 +258,9 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
     <View
       style={{
         width: '100%',
-        height: 290,
+        // The markers are laid out in % of this box while the scan region is a share of the
+        // video's smaller side under objectFit: cover - the two only line up while it is square
+        aspectRatio: 1,
         borderRadius: 12,
         overflow: 'hidden'
       }}
@@ -253,6 +277,26 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
           display: 'block'
         }}
       />
+      <Svg
+        pointerEvents="none"
+        viewBox="0 0 238 238"
+        style={{
+          position: 'absolute',
+          top: `${((1 - SCAN_REGION_RATIO) / 2) * 100}%`,
+          left: `${((1 - SCAN_REGION_RATIO) / 2) * 100}%`,
+          width: `${SCAN_REGION_RATIO * 100}%`,
+          height: `${SCAN_REGION_RATIO * 100}%`
+        }}
+      >
+        <Path
+          d="M31 2H10a8 8 0 0 0-8 8v21M207 2h21a8 8 0 0 1 8 8v21m0 176v21a8 8 0 0 1-8 8h-21m-176 0H10a8 8 0 0 1-8-8v-21"
+          fill="none"
+          stroke={String(theme.primary)}
+          strokeWidth={4}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
     </View>
   )
 }

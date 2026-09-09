@@ -3,6 +3,7 @@ import { Interface } from 'ethers'
 import {
   decodePendingWalletWithdrawals,
   formatPendingWalletWithdrawalDuration,
+  getActivePendingWalletWithdrawals,
   getPendingWalletWithdrawalCommitmentId,
   getPendingWalletWithdrawalStorageKey,
   getPendingWalletWithdrawalSummary,
@@ -37,17 +38,38 @@ describe('pending WALLET withdrawal helpers', () => {
     })
   })
 
-  test('uses the lock-time flow only when xWALLET can back all pending shares', () => {
-    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n - 1n, 10n)).toBe(
-      false
+  test('keeps successful active withdrawals when another commitment check fails', async () => {
+    const failedWithdrawal = { ...pendingWithdrawal, shares: 20n, unlocksAt: 3_000_000n }
+    const inactiveWithdrawal = { ...pendingWithdrawal, shares: 30n, unlocksAt: 4_000_000n }
+    const failure = new Error('Unable to check commitment')
+
+    const result = await getActivePendingWalletWithdrawals(
+      [pendingWithdrawal, failedWithdrawal, inactiveWithdrawal],
+      async (withdrawal) => {
+        if (withdrawal === failedWithdrawal) throw failure
+        return withdrawal === inactiveWithdrawal ? 0n : 15n
+      }
     )
-    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n, 10n ** 16n)).toBe(
-      true
-    )
+
+    expect(result).toEqual({
+      activeWithdrawals: [{ ...pendingWithdrawal, maxTokens: 15n }],
+      errors: [failure]
+    })
+  })
+
+  test('uses the lock-time flow for every fully backed pending withdrawal, including small ones', () => {
+    const smallPendingShares = 470_878_895_989_112n
+
     expect(
-      shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n, 10n ** 16n + 1n)
-    ).toBe(false)
-    expect(shouldUsePendingWalletWithdrawalMode(null, 10n ** 16n, 10n)).toBe(false)
+      shouldUsePendingWalletWithdrawalMode(
+        { ...pendingWithdrawal, shares: smallPendingShares },
+        smallPendingShares,
+        smallPendingShares
+      )
+    ).toBe(true)
+    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 11n, 10n)).toBe(true)
+    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 9n, 10n)).toBe(false)
+    expect(shouldUsePendingWalletWithdrawalMode(null, 10n, 10n)).toBe(false)
   })
 
   test('serializes and parses an account-specific cache entry', () => {

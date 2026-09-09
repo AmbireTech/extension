@@ -1,4 +1,4 @@
-import { AbiCoder, Interface, keccak256, parseUnits } from 'ethers'
+import { AbiCoder, Interface, keccak256 } from 'ethers'
 
 export interface PendingWalletWithdrawal {
   shares: bigint
@@ -31,17 +31,13 @@ export const walletStakingInterface = new Interface([
 ])
 
 export const LOG_LEAVE_TOPIC = walletStakingInterface.getEvent('LogLeave')!.topicHash
-export const X_WALLET_PENDING_WITHDRAWAL_THRESHOLD = parseUnits('0.01', 18)
 
 /** Uses the lock-time flow only when xWALLET can back every active commitment. */
 export const shouldUsePendingWalletWithdrawalMode = (
   pendingWithdrawal: PendingWalletWithdrawal | null,
   xWalletBalance: bigint,
   totalPendingShares: bigint
-) =>
-  !!pendingWithdrawal &&
-  xWalletBalance >= X_WALLET_PENDING_WITHDRAWAL_THRESHOLD &&
-  xWalletBalance >= totalPendingShares
+) => !!pendingWithdrawal && xWalletBalance >= totalPendingShares
 
 /** Selects the latest active withdrawal and totals all shares needed to back active commitments. */
 export const getPendingWalletWithdrawalSummary = (pendingWithdrawals: PendingWalletWithdrawal[]) =>
@@ -58,6 +54,38 @@ export const getPendingWalletWithdrawalSummary = (pendingWithdrawals: PendingWal
     }),
     { latestWithdrawal: null, totalShares: 0n }
   )
+
+/** Keeps active withdrawals whose commitment checks succeed and returns failures separately. */
+export const getActivePendingWalletWithdrawals = async (
+  pendingWithdrawals: PendingWalletWithdrawal[],
+  getCommitmentMaxTokens: (withdrawal: PendingWalletWithdrawal) => Promise<bigint>
+) => {
+  const results = await Promise.allSettled(
+    pendingWithdrawals.map(async (withdrawal) => ({
+      withdrawal,
+      maxTokens: await getCommitmentMaxTokens(withdrawal)
+    }))
+  )
+
+  return results.reduce<{
+    activeWithdrawals: PendingWalletWithdrawal[]
+    errors: unknown[]
+  }>(
+    (summary, result) => {
+      if (result.status === 'rejected') {
+        summary.errors.push(result.reason)
+      } else if (result.value.maxTokens > 0n) {
+        summary.activeWithdrawals.push({
+          ...result.value.withdrawal,
+          maxTokens: result.value.maxTokens
+        })
+      }
+
+      return summary
+    },
+    { activeWithdrawals: [], errors: [] }
+  )
+}
 
 /** Validates and extracts raw WALLET staking logs returned by the relayer. */
 export const parseWalletStakingRelayerLogsResponse = (

@@ -1,12 +1,13 @@
-import React, { FC } from 'react'
-import { View, ViewStyle } from 'react-native'
+import React, { FC, useState } from 'react'
+import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
-import spacings, { SPACING } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -68,14 +69,29 @@ const Wrapper: FC<WrapperProps> = ({ children }) => {
 
 const Content: FC<ContentProps> = ({ children, buttons }) => {
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  // Reserves exactly as much scroll space as the floating footer occupies, so content only
+  // becomes scrollable once it would otherwise be covered by the footer, not before
+  const [footerHeight, setFooterHeight] = useState(0)
+  const handleFooterLayout = (event: LayoutChangeEvent) => {
+    setFooterHeight(event.nativeEvent.layout.height)
+  }
 
   return (
-    <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
-      {children}
+    <View style={[flexbox.flex1, spacings.pvSm]}>
+      <ScrollableWrapper
+        contentContainerStyle={[
+          flexbox.flex1,
+          spacings.phSm,
+          { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 0 }
+        ]}
+      >
+        {children}
+      </ScrollableWrapper>
       <FooterGlassView
         size="sm"
         fullWidth={isCompactSidePanelLayout}
         style={isRequestWindow ? { bottom: SPACING } : {}}
+        onLayout={handleFooterLayout}
       >
         {isCompactSidePanelLayout ? (
           buttons

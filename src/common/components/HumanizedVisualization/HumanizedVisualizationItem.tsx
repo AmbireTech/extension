@@ -40,11 +40,13 @@ interface Props {
   type: 'history' | 'benzin' | 'default'
   imageSize: number
   erc7730Mode: 'summary' | 'description'
+  showErc7730DescriptionTitle: boolean
   hideNestedErc7730Rows: boolean
   hideMobileErc7730Title: boolean
   isErc7730TransactionSummaryLayout: boolean
   erc7730TransactionSummarySection: 'all' | 'title' | 'rows'
   hasErc7730TransactionSummaryHeaderRightControl: boolean
+  dappIconSize: number
   marginRight: number
 }
 
@@ -57,11 +59,13 @@ const HumanizedVisualizationItem: FC<Props> = ({
   type,
   imageSize,
   erc7730Mode,
+  showErc7730DescriptionTitle,
   hideNestedErc7730Rows,
   hideMobileErc7730Title,
   isErc7730TransactionSummaryLayout,
   erc7730TransactionSummarySection,
   hasErc7730TransactionSummaryHeaderRightControl,
+  dappIconSize,
   marginRight
 }) => {
   const { theme } = useTheme()
@@ -74,12 +78,14 @@ const HumanizedVisualizationItem: FC<Props> = ({
         sizeMultiplierSize={sizeMultiplierSize}
         textSize={textSize}
         mode={erc7730Mode}
+        showDescriptionTitle={showErc7730DescriptionTitle}
         editApprovalCallInfo={editApprovalCallInfo}
         hideNestedRows={hideNestedErc7730Rows}
         hideMobileSummaryTitle={hideMobileErc7730Title}
         isTransactionSummaryLayout={isErc7730TransactionSummaryLayout}
         transactionSummarySection={erc7730TransactionSummarySection}
         hasTransactionSummaryHeaderRightControl={hasErc7730TransactionSummaryHeaderRightControl}
+        dappIconSize={dappIconSize}
       />
     )
   }

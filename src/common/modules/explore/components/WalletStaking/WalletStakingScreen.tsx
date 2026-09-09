@@ -1,5 +1,5 @@
 import { formatUnits, parseUnits } from 'ethers'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -45,10 +45,16 @@ import { openInTab } from '@common/utils/links'
 import AmountSlider from './AmountSlider'
 import BalanceRatioProgress from './BalanceRatioProgress'
 import BalanceWithMax from './BalanceWithMax'
-import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
+import {
+  getStakeWalletCalls,
+  getUnstakeWalletCalls,
+  getWalletStakingAmountInWei,
+  getWithdrawWalletCalls
+} from './calls'
 import {
   decodePendingWalletWithdrawals,
   formatPendingWalletWithdrawalDuration,
+  getActivePendingWalletWithdrawals,
   getPendingWalletWithdrawalCommitmentId,
   getPendingWalletWithdrawalStorageKey,
   getPendingWalletWithdrawalSummary,
@@ -63,18 +69,12 @@ import {
 import getStyles from './styles'
 import WalletStakingApy from './WalletStakingApy'
 
+import type { Call } from '@ambire-common/libs/accountOp/types'
 import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
 const TOKEN_DECIMALS = 18
 const EMPTY_STATE_BALANCE_THRESHOLD = parseUnits('0.001', TOKEN_DECIMALS)
 const STAKING_HELP_URL = 'https://help.ambire.com/en/collections/18211458-wallet-token-governance'
 const WALLET_STAKING_COMMITMENT_ABI = 'function commitments(bytes32) view returns (uint256)'
-
-const getAmountInWei = (amount: string) => {
-  const normalizedAmount = amount.endsWith('.') ? amount.slice(0, -1) : amount
-  if (!normalizedAmount) return 0n
-
-  return parseUnits(normalizedAmount, TOKEN_DECIMALS)
-}
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
@@ -110,7 +110,7 @@ const StakingTab = ({ mode, activeMode, label, onSelect }: TabProps) => {
   )
 }
 
-const MemoizedStakingTab = React.memo(StakingTab)
+const MemoizedStakingTab = memo(StakingTab)
 
 const WalletStakingScreen = () => {
   const { t } = useTranslation()
@@ -151,9 +151,11 @@ const WalletStakingScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasMadeRequest, setHasMadeRequest] = useState(false)
   const shareValueRequestIdRef = useRef(0)
+  const shareValueRef = useRef<bigint | null>(null)
   const isLoadingShareValueRef = useRef(false)
   const hasActiveSubmissionRef = useRef(false)
   const pendingWithdrawalRequestIdRef = useRef(0)
+  const pendingWithdrawalAbortControllerRef = useRef<AbortController | null>(null)
   const shouldPersistStakingRouteRef = useRef(false)
 
   const walletToken = useMemo(
@@ -240,7 +242,7 @@ const WalletStakingScreen = () => {
         ?.price ?? 0,
     [xWalletToken?.priceIn]
   )
-  const amountInWei = getAmountInWei(amount)
+  const amountInWei = getWalletStakingAmountInWei(amount)
   const hasInsufficientBalance = amountInWei > balance
   const balanceLabel = useMemo(
     () => formatDecimals(Number(formatUnits(balance, TOKEN_DECIMALS)), 'amount'),
@@ -526,23 +528,37 @@ const WalletStakingScreen = () => {
         decodedWithdrawals.forEach((withdrawal) => {
           withdrawalsById.set(`${withdrawal.shares}:${withdrawal.unlocksAt}`, withdrawal)
         })
-        const activeWithdrawals = (
-          await Promise.all(
-            Array.from(withdrawalsById.values()).map(async (withdrawal) => {
-              const maxTokens = await getCommitmentMaxTokens(withdrawal)
-              return maxTokens > 0n ? { ...withdrawal, maxTokens } : null
-            })
+        const { activeWithdrawals, errors: commitmentErrors } =
+          await getActivePendingWalletWithdrawals(
+            Array.from(withdrawalsById.values()),
+            getCommitmentMaxTokens
           )
-        ).filter((withdrawal): withdrawal is PendingWalletWithdrawal => !!withdrawal)
+        const hasCommitmentErrors = commitmentErrors.length > 0
+        commitmentErrors.forEach((error) => {
+          console.error('Failed to check a pending WALLET withdrawal', error)
+          captureException(error)
+        })
+        const withdrawalsToDisplay =
+          activeWithdrawals.length || !cachedPendingWithdrawal
+            ? activeWithdrawals
+            : [cachedPendingWithdrawal]
         const { latestWithdrawal, totalShares } =
-          getPendingWalletWithdrawalSummary(activeWithdrawals)
+          getPendingWalletWithdrawalSummary(withdrawalsToDisplay)
 
-        if (latestWithdrawal) await persistPendingWithdrawal(latestWithdrawal)
-        else await removeCachedPendingWithdrawal()
+        if (!hasCommitmentErrors) {
+          if (latestWithdrawal) await persistPendingWithdrawal(latestWithdrawal)
+          else await removeCachedPendingWithdrawal()
+        }
 
         if (requestId === pendingWithdrawalRequestIdRef.current && !signal?.aborted) {
           setPendingWithdrawal(latestWithdrawal)
           setTotalPendingShares(totalShares)
+          if (hasCommitmentErrors) {
+            setHasPendingWithdrawalLoadFailed(true)
+            addToast(t("We couldn't check every pending withdrawal. Please try again."), {
+              type: 'error'
+            })
+          }
         }
       } catch (error) {
         if (signal?.aborted || (error instanceof Error && error.name === 'AbortError')) return
@@ -566,8 +582,15 @@ const WalletStakingScreen = () => {
     [account?.addr, addToast, providersDispatchAndWait, t]
   )
 
+  const startPendingWithdrawalLoad = useCallback(() => {
+    pendingWithdrawalAbortControllerRef.current?.abort()
+    const abortController = new AbortController()
+    pendingWithdrawalAbortControllerRef.current = abortController
+    void loadPendingWithdrawal(abortController.signal)
+  }, [loadPendingWithdrawal])
+
   const loadShareValue = useCallback(async () => {
-    if (shareValue !== null || isLoadingShareValueRef.current) return
+    if (shareValueRef.current !== null || isLoadingShareValueRef.current) return
 
     const requestId = ++shareValueRequestIdRef.current
     isLoadingShareValueRef.current = true
@@ -588,7 +611,10 @@ const WalletStakingScreen = () => {
         throw new Error('The WALLET staking conversion rate is unavailable.')
       }
 
-      if (requestId === shareValueRequestIdRef.current) setShareValue(normalizedShareValue)
+      if (requestId === shareValueRequestIdRef.current) {
+        shareValueRef.current = normalizedShareValue
+        setShareValue(normalizedShareValue)
+      }
     } catch (error) {
       if (requestId !== shareValueRequestIdRef.current) return
 
@@ -599,7 +625,7 @@ const WalletStakingScreen = () => {
       isLoadingShareValueRef.current = false
       if (requestId === shareValueRequestIdRef.current) setIsLoadingShareValue(false)
     }
-  }, [addToast, providersDispatchAndWait, shareValue, t])
+  }, [addToast, providersDispatchAndWait, t])
 
   const handleSelectMode = useCallback(
     (nextMode: WalletStakingMode) => {
@@ -608,10 +634,10 @@ const WalletStakingScreen = () => {
       setIsSubmitting(false)
       shouldPersistStakingRouteRef.current = false
       if (nextMode === 'unstake' && hasPendingWithdrawalLoadFailed) {
-        void loadPendingWithdrawal()
+        startPendingWithdrawalLoad()
       }
     },
-    [hasPendingWithdrawalLoadFailed, loadPendingWithdrawal]
+    [hasPendingWithdrawalLoadFailed, startPendingWithdrawalLoad]
   )
 
   const handleSliderValueChange = useCallback(
@@ -672,39 +698,57 @@ const WalletStakingScreen = () => {
     void handleBack()
   }, [handleBack])
 
+  const dispatchStakingRequest = useCallback(
+    (calls: Call[]) => {
+      if (!account) return
+
+      try {
+        requestsDispatch({
+          type: 'method',
+          params: {
+            method: 'build',
+            args: [
+              {
+                type: 'calls',
+                params: {
+                  executionType: 'open-request-window',
+                  userRequestParams: {
+                    calls,
+                    meta: {
+                      accountAddr: account.addr,
+                      chainId: ETHEREUM_CHAIN_ID
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        })
+      } catch (error) {
+        setHasMadeRequest(false)
+        setIsSubmitting(false)
+        console.error('Failed to start the WALLET staking request', error)
+        captureException(error)
+        addToast(t("We couldn't start this request. Please try again."), { type: 'error' })
+        return
+      }
+
+      shouldPersistStakingRouteRef.current = false
+      setHasMadeRequest(true)
+      setIsSubmitting(true)
+    },
+    [account, addToast, requestsDispatch, t]
+  )
+
   const handleSubmit = useCallback(() => {
     if (isSubmitting || !account) return
 
     if (isPendingWithdrawalMode) {
       if (!pendingWithdrawal || !isWithdrawalReady || hasPendingWithdrawalLoadFailed) return
 
-      shouldPersistStakingRouteRef.current = false
-      setHasMadeRequest(true)
-      setIsSubmitting(true)
-      requestsDispatch({
-        type: 'method',
-        params: {
-          method: 'build',
-          args: [
-            {
-              type: 'calls',
-              params: {
-                executionType: 'open-request-window',
-                userRequestParams: {
-                  calls: getWithdrawWalletCalls(
-                    pendingWithdrawal.shares,
-                    pendingWithdrawal.unlocksAt
-                  ),
-                  meta: {
-                    accountAddr: account.addr,
-                    chainId: ETHEREUM_CHAIN_ID
-                  }
-                }
-              }
-            }
-          ]
-        }
-      })
+      dispatchStakingRequest(
+        getWithdrawWalletCalls(pendingWithdrawal.shares, pendingWithdrawal.unlocksAt)
+      )
       return
     }
 
@@ -723,34 +767,12 @@ const WalletStakingScreen = () => {
         ? getStakeWalletCalls(amountInWei)
         : getUnstakeWalletCalls(amountInWei, shareValue!, missingPendingShares)
 
-    shouldPersistStakingRouteRef.current = false
-    setHasMadeRequest(true)
-    setIsSubmitting(true)
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'build',
-        args: [
-          {
-            type: 'calls',
-            params: {
-              executionType: 'open-request-window',
-              userRequestParams: {
-                calls,
-                meta: {
-                  accountAddr: account.addr,
-                  chainId: ETHEREUM_CHAIN_ID
-                }
-              }
-            }
-          }
-        ]
-      }
-    })
+    dispatchStakingRequest(calls)
   }, [
     account,
     addToast,
     amountInWei,
+    dispatchStakingRequest,
     hasPendingWithdrawalLoadFailed,
     hasInsufficientBalance,
     isPendingWithdrawalMode,
@@ -759,7 +781,6 @@ const WalletStakingScreen = () => {
     loadShareValue,
     mode,
     pendingWithdrawal,
-    requestsDispatch,
     shareValue,
     t,
     totalPendingShares,
@@ -794,17 +815,15 @@ const WalletStakingScreen = () => {
   }, [account?.addr, currentUserRequest, isSubmitting])
 
   useEffect(() => {
-    const abortController = new AbortController()
-    const loadTimeout = setTimeout(() => {
-      void loadPendingWithdrawal(abortController.signal)
-    }, 0)
+    const loadTimeout = setTimeout(startPendingWithdrawalLoad, 0)
 
     return () => {
       clearTimeout(loadTimeout)
-      abortController.abort()
+      pendingWithdrawalAbortControllerRef.current?.abort()
+      pendingWithdrawalAbortControllerRef.current = null
       pendingWithdrawalRequestIdRef.current += 1
     }
-  }, [loadPendingWithdrawal])
+  }, [startPendingWithdrawalLoad])
 
   useEffect(() => {
     if (!pendingWithdrawal) return undefined
@@ -1125,4 +1144,4 @@ const WalletStakingScreen = () => {
   )
 }
 
-export default React.memo(WalletStakingScreen)
+export default memo(WalletStakingScreen)

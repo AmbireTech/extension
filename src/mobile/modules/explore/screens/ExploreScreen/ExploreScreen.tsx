@@ -80,15 +80,20 @@ const ExploreScreen = () => {
 
   // Search mode: collapse sections into the flat list with Google/open-URL suggestions,
   // matching the prior screen's behavior.
+  // Built only once there is something to search for. Lower-casing three fields of
+  // every dapp in the catalogue is not cheap, and doing it while the screen mounts
+  // stalls the transition onto it for a result nothing reads until the user types.
   const searchableDapps = useMemo(
     () =>
-      (state.dapps || []).map((dapp: Dapp) => ({
-        dapp,
-        name: dapp.name.toLowerCase(),
-        url: dapp.url.toLowerCase(),
-        description: dapp.description?.toLowerCase() || ''
-      })),
-    [state.dapps]
+      debouncedSearch
+        ? (state.dapps || []).map((dapp: Dapp) => ({
+            dapp,
+            name: dapp.name.toLowerCase(),
+            url: dapp.url.toLowerCase(),
+            description: dapp.description?.toLowerCase() || ''
+          }))
+        : [],
+    [state.dapps, debouncedSearch]
   )
 
   const searchResults: SearchItem[] = useMemo(() => {

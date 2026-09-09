@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 
-import { Account } from '@ambire-common/interfaces/account'
+import type { Account } from '@ambire-common/interfaces/account'
 import useController from '@common/hooks/useController'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'

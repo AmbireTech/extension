@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { Account } from '@ambire-common/interfaces/account'
+import type { Account } from '@ambire-common/interfaces/account'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'

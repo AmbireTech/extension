@@ -66,8 +66,12 @@ emulator that runs in Docker. It exposes the APDU port on `9999` and the HTTP AP
     ```
 - **A built extension.** The tests load `build/webkit-prod`. From the **repo root**:
   ```bash
-  yarn build:web:webkit
+  IS_TESTING=true yarn build:web:webkit
   ```
+  `IS_TESTING=true` is required (CI sets it too): it makes the background wait for the
+  `isE2EStorageSet` flag before initializing the controllers, so the storage the tests write
+  is actually picked up, and it stops the get-started tab from opening on install. Without it
+  tests land on "Set extension password".
 - **A populated repo-root `.env`** containing `LEDGER_EMULATOR_SEED`, `LEDGER_EMULATOR_HTTP_URL`
   and the `LEDGER_*` account vars. The seed is a mnemonic (contains spaces), so it must be
   **quoted** in `.env` for the shell to export it correctly.

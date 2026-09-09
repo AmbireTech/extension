@@ -10,8 +10,6 @@ import {
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
 import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
-import SquidIcon from '@common/assets/svg/SquidIcon'
-import SquidLongIcon from '@common/assets/svg/SquidLongIcon'
 import UniswapIcon from '@common/assets/svg/UniswapIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
@@ -129,9 +127,7 @@ const RouteStepsPreview = ({
 
   const renderStepBadge = (step: SwapAndBridgeStep) => (
     <>
-      {step.protocol.name === 'Squid' ? (
-        <SquidIcon width={16} height={16} />
-      ) : step.protocol.name.startsWith('Uniswap') ? (
+      {step.protocol.name.startsWith('Uniswap') ? (
         <UniswapIcon width={16} height={16} />
       ) : (
         <TokenIcon uri={step.protocol.icon} width={16} height={16} />
@@ -277,8 +273,6 @@ const RouteStepsPreview = ({
 
             {providerId === 'socket' || providerId === 'socketv3' ? (
               <BungeeIcon width={56.7} height={11.2} />
-            ) : providerId === 'squid' ? (
-              <SquidLongIcon width={180} height={50} />
             ) : providerId === 'uniswap' ? (
               <UniswapIcon width={28} height={28} />
             ) : (
