@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { StyleSheet } from 'react-native'
 import { ScreenStackItem } from 'react-native-screens'
 
@@ -21,6 +21,23 @@ type Props = {
   onDismissed: (dismissCount: number) => void
 }
 
+/**
+ * Whether the card's screens are rendered yet. Putting the platform screen up and
+ * building the tree of the screen coming in is otherwise one commit, so the animation
+ * cannot start until that tree is done. Split in two, the screen goes up a frame first.
+ */
+const useIsContentReady = () => {
+  const [isContentReady, setIsContentReady] = useState(false)
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setIsContentReady(true))
+
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  return isContentReady
+}
+
 const StackScreen = ({
   entry,
   isFocused,
@@ -30,17 +47,23 @@ const StackScreen = ({
   onDismissed
 }: Props) => {
   const { theme } = useTheme()
+  const isContentReady = useIsContentReady()
 
   const handleDismissed = useCallback(
     (e: { nativeEvent: { dismissCount: number } }) => onDismissed(e.nativeEvent.dismissCount),
     [onDismissed]
   )
 
+  const contentStyle = useMemo(
+    () => ({ backgroundColor: theme.primaryBackground }),
+    [theme.primaryBackground]
+  )
+
   return (
     <ScreenStackItem
       screenId={entry.cardKey}
       style={StyleSheet.absoluteFill}
-      contentStyle={{ backgroundColor: theme.primaryBackground }}
+      contentStyle={contentStyle}
       // The app draws its own headers inside the screens.
       headerConfig={{ hidden: true }}
       stackPresentation="push"
@@ -53,13 +76,15 @@ const StackScreen = ({
       hideKeyboardOnSwipe
       onDismissed={handleDismissed}
     >
+      {/* Above the content gate, so the screen's focus and its route are its own from */}
+      {/* the frame it goes up - what handlers on the screen being left read. */}
       <ScreenFocusProvider isFocused={isFocused} isSettled={isSettled}>
         <ScreenLocationProvider location={entry.location} canGoBack={canGoBack}>
-          <AppRoutes location={entry.location} />
+          {!!isContentReady && <AppRoutes location={entry.location} />}
         </ScreenLocationProvider>
       </ScreenFocusProvider>
     </ScreenStackItem>
   )
 }
 
-export default StackScreen
+export default React.memo(StackScreen)

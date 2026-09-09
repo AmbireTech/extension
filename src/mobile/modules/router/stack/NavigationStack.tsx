@@ -4,7 +4,7 @@ import { ScreenStack } from 'react-native-screens'
 
 import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
-import useNavigation from '@common/hooks/useNavigation'
+import useRouterHistory from '@common/hooks/useRouterHistory'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { useCanGoBackInWebViewHistory } from '@common/services/webview/webViewBackNavigation'
 import flexbox from '@common/styles/utils/flexbox'
@@ -40,7 +40,7 @@ const TRANSITION_FALLBACK_MS = 400
  */
 const NavigationStack = () => {
   const entries = useStackEntries()
-  const { navigate } = useNavigation()
+  const history = useRouterHistory()
   const isSheetOpen = useOpenBottomSheetsCount() > 0
   const canGoBackInWebViewHistory = useCanGoBackInWebViewHistory()
 
@@ -101,13 +101,15 @@ const NavigationStack = () => {
     void KeyboardController.dismiss()
   }, [topCardKey])
 
+  // Goes through the history rather than `navigate`, whose identity changes with the
+  // location - which would re-render every card on every navigation.
   const handleDismissed = useCallback(
     (dismissCount: number) => {
       // The platform has already taken the screen off and the router only catches up:
       // the entries this drops are gone, so nothing is animated a second time.
-      navigate(-Math.max(dismissCount, 1))
+      history.go(-Math.max(dismissCount, 1))
     },
-    [navigate]
+    [history]
   )
 
   return (
@@ -127,4 +129,7 @@ const NavigationStack = () => {
   )
 }
 
-export default NavigationStack
+// Memoized because it hangs off the component that holds the app's bottom sheets and
+// reads the keystore and the dapp requests whole: an update of either re-renders it,
+// and re-rendering the stack reaches every screen the user came through.
+export default React.memo(NavigationStack)
