@@ -40,6 +40,9 @@ const DappConnectScreen = () => {
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
+          withRejectOptions
+          rejectOptionsTitle={t('Cancel connection')}
+          rejectOptionText={t('Cancel this connection')}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
           resolveNode={
             shouldHoldToProceed ? (
