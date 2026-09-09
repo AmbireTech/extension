@@ -1,12 +1,15 @@
 import { formatUnits, parseUnits } from 'ethers'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
-import { getFeePercent } from '@ambire-common/libs/swapAndBridge/fee'
+import {
+  getFeePercent,
+  SWAP_AND_BRIDGE_FEE_THRESHOLDS
+} from '@ambire-common/libs/swapAndBridge/fee'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
@@ -34,16 +37,18 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import FeeInfoBottomSheet from '@common/modules/swap-and-bridge/components/FeeInfoBottomSheet'
 import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
+import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
+import { THEME_TYPES } from '@common/styles/theme/types'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import AmountSlider from './AmountSlider'
+import BalanceRatioProgress from './BalanceRatioProgress'
 import BalanceWithMax from './BalanceWithMax'
 import {
   getStakeWalletCalls,
   getUnstakeWalletCalls,
   getWalletStakingAmountInWei,
-  getWalletStakingMaxAmount,
   getWithdrawWalletCalls
 } from './calls'
 import {
@@ -217,6 +222,26 @@ const WalletStakingScreen = () => {
       0,
     [activeToken?.priceIn, walletToken?.priceIn]
   )
+  // Per-token USD prices (unlike `price` above, not mode-dependent), used to value the
+  // WALLET / stkWALLET / xWALLET balances for the balance ratio ring next to the amount input.
+  const walletPrice = useMemo(
+    () =>
+      walletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
+        ?.price ?? 0,
+    [walletToken?.priceIn]
+  )
+  const stkWalletPrice = useMemo(
+    () =>
+      stkWalletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
+        ?.price ?? 0,
+    [stkWalletToken?.priceIn]
+  )
+  const xWalletPrice = useMemo(
+    () =>
+      xWalletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
+        ?.price ?? 0,
+    [xWalletToken?.priceIn]
+  )
   const amountInWei = getWalletStakingAmountInWei(amount)
   const hasInsufficientBalance = amountInWei > balance
   const balanceLabel = useMemo(
@@ -227,30 +252,145 @@ const WalletStakingScreen = () => {
     () => formatDecimals(Number(amount || 0) * price, 'value'),
     [amount, price]
   )
-  // The current tier badge is based on the confirmed on-chain stkWALLET balance (shared with
-  // SwapAndBridgeController, so this always matches the fee a real swap would apply right now).
+  // The "current" badge is based on the confirmed on-chain stkWALLET balance (shared with
+  // SwapAndBridgeController, so it always matches the fee a real swap would apply right now) -
+  // deliberately NOT the pending balance below, since it's meant to show the fee as it stands
+  // today, before this (still unsubmitted) stake/unstake is accounted for.
   const currentFeePercent = useStkWalletFeePercent()
-  // The projected tier badge previews what staking the entered amount would move the user into,
-  // starting from the same pending/simulated stkWALLET balance the staking form itself uses
-  // (falls back to the on-chain amount if there's nothing pending), rather than the confirmed
-  // on-chain balance used for the current tier above, since it's a forward-looking estimate
-  // anyway. Named distinctly from the pending-withdrawal balance tracked elsewhere in this file -
-  // "simulated" here refers to TokenResult.amountPostSimulation, not an in-progress unstake.
-  const simulatedStkWalletAmount = useMemo(
-    () => Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS)),
-    [stkWalletBalance]
-  )
   // Staking mints stkWALLET 1:1 for the WALLET deposited (no share-value conversion - that only
   // applies to xWALLET, which is priced at shareValue WALLET/stkWALLET per share), so the
-  // projected balance is just the entered amount added on top of the current one.
-  const projectedStkWalletAmount = useMemo(
-    () => simulatedStkWalletAmount + Number(formatUnits(amountInWei, TOKEN_DECIMALS)),
-    [amountInWei, simulatedStkWalletAmount]
-  )
+  // projected tier badge previews what staking the entered amount would move the user into by
+  // just adding it on top of the pending stkWALLET balance - the same balance the slider itself
+  // is drawn against (see `tierOffset` on AmountSlider below), so the two always agree. Unstaking
+  // removes stkWALLET instead, so it subtracts - and can only worsen (or keep) the fee tier,
+  // never improve it.
+  const projectedStkWalletAmount = useMemo(() => {
+    const pendingStkWalletAmount = Number(formatUnits(stkWalletBalance, TOKEN_DECIMALS))
+    const enteredAmount = Number(formatUnits(amountInWei, TOKEN_DECIMALS))
+
+    return mode === 'stake'
+      ? pendingStkWalletAmount + enteredAmount
+      : Math.max(0, pendingStkWalletAmount - enteredAmount)
+  }, [amountInWei, mode, stkWalletBalance])
   const projectedFeePercent = useMemo(
     () => getFeePercent(projectedStkWalletAmount),
     [projectedStkWalletAmount]
   )
+  // The Swap & Bridge fee thresholds, positioned as tick marks along the slider's active
+  // (draggable) range and used to color it by tier. In stake mode that range is the $WALLET
+  // available to stake, offset by the stkWALLET already staked (the inactive segment at the
+  // start), so each division sits at the threshold amount itself - staking up to it is what
+  // reaches that tier. In unstake mode it's the current stkWALLET balance itself, starting at 0;
+  // what matters there is the *remaining* balance after unstaking, not the amount removed, so
+  // each division instead sits at (current balance - threshold) - the drag amount that leaves
+  // exactly `threshold` stkWALLET behind - skipped when that's not reachable (the balance is
+  // already below the threshold, putting it off the chart).
+  const sliderThresholds = useMemo(() => {
+    const feeThresholds = SWAP_AND_BRIDGE_FEE_THRESHOLDS.map((thresholdAmount) => ({
+      thresholdAmount,
+      thresholdWei: parseUnits(String(thresholdAmount), TOKEN_DECIMALS)
+    }))
+
+    if (mode === 'stake') {
+      return feeThresholds.map(({ thresholdAmount, thresholdWei }) => ({
+        value: thresholdWei,
+        tooltipId: `wallet-staking-slider-threshold-${thresholdAmount}`,
+        tooltipContent: t('{{amount}} stkWALLET for a lower Swap & Bridge fee', {
+          amount: formatDecimals(thresholdAmount, 'amount')
+        })
+      }))
+    }
+
+    return feeThresholds
+      .filter(({ thresholdWei }) => stkWalletBalance - thresholdWei > 0n)
+      .map(({ thresholdAmount, thresholdWei }) => ({
+        value: stkWalletBalance - thresholdWei,
+        tooltipId: `wallet-staking-slider-threshold-${thresholdAmount}`,
+        tooltipContent: t('{{amount}} stkWALLET left for a lower Swap & Bridge fee', {
+          amount: formatDecimals(thresholdAmount, 'amount')
+        })
+      }))
+  }, [mode, stkWalletBalance, t])
+  // Once the account already holds more stkWALLET than the top fee threshold, it's already at
+  // the best (0%) tier and staking more can't change that, so the fee preview has nothing useful
+  // left to say - stake mode only, since unstaking always risks dropping back out of that tier.
+  const shouldShowFeePreview =
+    mode !== 'stake' ||
+    stkWalletBalance <=
+      parseUnits(
+        String(SWAP_AND_BRIDGE_FEE_THRESHOLDS[SWAP_AND_BRIDGE_FEE_THRESHOLDS.length - 1]),
+        TOKEN_DECIMALS
+      )
+  // What the entered amount would leave WALLET/stkWALLET at. In stake mode it's moved between
+  // those two tokens directly. In unstake mode it does NOT land back in WALLET here - unstaked
+  // stkWALLET is locked for the unbonding period rather than
+  // immediately spendable WALLET, so showing it as WALLET would overstate what's actually
+  // available; its USD value is folded into the xWALLET segment below instead (see
+  // `unstakedAmountUsd`), as a stand-in for "no longer stkWALLET, not yet WALLET".
+  const projectedWalletBalance =
+    mode === 'stake'
+      ? walletBalance > amountInWei
+        ? walletBalance - amountInWei
+        : 0n
+      : walletBalance
+  const projectedStkWalletBalance =
+    mode === 'stake'
+      ? stkWalletBalance + amountInWei
+      : stkWalletBalance > amountInWei
+        ? stkWalletBalance - amountInWei
+        : 0n
+  // The USD value of stkWALLET being unstaked, redirected into the xWALLET segment (see comment
+  // above) instead of into WALLET.
+  const unstakedAmountUsd =
+    mode === 'unstake' ? Number(formatUnits(amountInWei, TOKEN_DECIMALS)) * stkWalletPrice : 0
+  const balanceRatioSegments = useMemo(
+    () => [
+      {
+        key: 'wallet',
+        label: '$WALLET',
+        valueUsd: Number(formatUnits(projectedWalletBalance, TOKEN_DECIMALS)) * walletPrice,
+        // Fixed (not mode-toggled) Ambire brand purples, chosen for contrast against the ring's
+        // track and against each other - the semantic theme tokens (e.g. secondaryAccent400) turn
+        // into a muted dark teal in light theme and don't read well at this small a size. WALLET
+        // and stkWALLET share the primary-purple family (stkWALLET a shade lighter, since it's
+        // WALLET once staked); xWALLET is deliberately muted gray instead (see below) since it's
+        // not part of the stake/unstake flow.
+        color: ACCENT_PRIMITIVES.primaryAccent300[THEME_TYPES.LIGHT]
+      },
+      {
+        key: 'stkWallet',
+        label: 'stkWALLET',
+        valueUsd: Number(formatUnits(projectedStkWalletBalance, TOKEN_DECIMALS)) * stkWalletPrice,
+        color: ACCENT_PRIMITIVES.primaryAccent200[THEME_TYPES.LIGHT]
+      },
+      {
+        key: 'xWallet',
+        label: 'xWALLET',
+        valueUsd:
+          Number(formatUnits(xWalletBalance, TOKEN_DECIMALS)) * xWalletPrice + unstakedAmountUsd,
+        // Muted gray rather than a brand hue - xWALLET isn't part of the WALLET <-> stkWALLET
+        // split this screen moves between, so it reads as a neutral "rest of your balance".
+        color: theme.secondaryText
+      }
+    ],
+    [
+      projectedWalletBalance,
+      walletPrice,
+      projectedStkWalletBalance,
+      stkWalletPrice,
+      xWalletBalance,
+      xWalletPrice,
+      unstakedAmountUsd,
+      theme
+    ]
+  )
+  // A ratio only means something once it's a ratio of at least two things - based on the
+  // account's actual holdings (not the projected/shifted values above, which would otherwise
+  // flicker the ring in and out as the user types) so a token with no price data available still
+  // counts as "held" instead of silently reading as zero.
+  const shouldShowBalanceRatioProgress =
+    [walletBalance, stkWalletBalance, xWalletBalance].filter((tokenBalance) => tokenBalance > 0n)
+      .length > 1
   const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const isSubmitDisabled = useMemo(() => {
     if (!account || isSubmitting || (mode === 'unstake' && isLoadingPendingWithdrawal)) return true
@@ -505,9 +645,8 @@ const WalletStakingScreen = () => {
     []
   )
   const handleMaxPress = useCallback(() => {
-    const maxAmount = getWalletStakingMaxAmount(balance, mode)
-    setAmount(formatUnits(maxAmount, TOKEN_DECIMALS))
-  }, [balance, mode])
+    setAmount(formatUnits(balance, TOKEN_DECIMALS))
+  }, [balance])
   const handleOpenFeeInfoBottomSheet = useCallback(
     () => openFeeInfoBottomSheet(),
     [openFeeInfoBottomSheet]
@@ -741,7 +880,11 @@ const WalletStakingScreen = () => {
         <Header.Container side="right" />
       </Header.Wrapper>
       <View style={styles.screenContent}>
-        <View style={styles.mainContent}>
+        <ScrollView
+          style={styles.mainContent}
+          contentContainerStyle={styles.mainContentContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.learnMore}>
             <Text fontSize={12} appearance="secondaryText">
               {t('Learn more about')}{' '}
@@ -874,20 +1017,33 @@ const WalletStakingScreen = () => {
                       inputWrapperStyle={styles.amountInputWrapper}
                       nativeInputStyle={styles.amountNativeInput}
                       childrenBeforeButtons={
-                        <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
-                          {tokenSymbol}
-                        </Text>
+                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                          <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
+                            {tokenSymbol}
+                          </Text>
+                          {shouldShowBalanceRatioProgress && (
+                            <View style={spacings.mlSm}>
+                              <BalanceRatioProgress
+                                segments={balanceRatioSegments}
+                                testID="wallet-staking-balance-ratio"
+                                size={28}
+                                strokeWidth={4}
+                              />
+                            </View>
+                          )}
+                        </View>
                       }
                     />
 
                     <AmountSlider
                       value={amountInWei}
                       maximumValue={balance}
-                      maximumLabel={balanceLabel}
                       onValueChange={handleSliderValueChange}
+                      tierOffset={mode === 'stake' ? stkWalletBalance : 0n}
+                      thresholds={sliderThresholds}
                     />
 
-                    {mode === 'stake' && (
+                    {shouldShowFeePreview && (
                       <View style={styles.feePreviewRow}>
                         <View style={styles.feePreviewLabel}>
                           <Text fontSize={12} appearance="secondaryText">
@@ -905,14 +1061,22 @@ const WalletStakingScreen = () => {
                             testID="wallet-staking-fee-details-button"
                           />
                         </View>
-                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                          <Text fontSize={12} appearance="secondaryText">
-                            {currentFeePercent.toFixed(2)}%
-                          </Text>
-                          <Text fontSize={12} appearance="secondaryText" style={spacings.phTy}>
-                            →
-                          </Text>
-                          <Text fontSize={12} weight="semiBold" color={theme.primaryAccent200}>
+                        <View style={styles.feePreviewValues}>
+                          {projectedFeePercent !== currentFeePercent && (
+                            <Text
+                              fontSize={12}
+                              appearance="tertiaryText"
+                              style={styles.feePreviewOldFee}
+                            >
+                              {currentFeePercent.toFixed(2)}%
+                            </Text>
+                          )}
+                          <Text
+                            fontSize={22}
+                            weight="semiBold"
+                            color={theme.primaryAccent200}
+                            style={styles.feePreviewNewFee}
+                          >
                             {projectedFeePercent.toFixed(2)}%
                           </Text>
                         </View>
@@ -940,7 +1104,7 @@ const WalletStakingScreen = () => {
               )}
             </View>
           )}
-        </View>
+        </ScrollView>
 
         {!shouldShowPendingWithdrawalLoader && !shouldShowEmptyState && (
           <View style={styles.footerRow}>
