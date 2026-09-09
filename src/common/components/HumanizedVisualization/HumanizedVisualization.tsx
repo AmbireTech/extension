@@ -1,17 +1,17 @@
-import React, { FC, memo } from 'react'
-import { StyleProp, View, ViewStyle } from 'react-native'
+import { memo, useMemo } from 'react'
+import { StyleProp, View } from 'react-native'
 
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import ManifestImage from '@common/components/ManifestImage'
 import { isMobile } from '@common/config/env'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import HumanizedVisualizationItem from './HumanizedVisualizationItem'
 
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
+import type { FC } from 'react'
+import type { ViewStyle } from 'react-native'
+
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 
 interface Props {
   data: IrCall['fullVisualization']
@@ -24,12 +24,15 @@ interface Props {
   imageSize?: number
   style?: StyleProp<ViewStyle>
   erc7730Mode?: 'summary' | 'description'
+  showErc7730DescriptionTitle?: boolean
   hideNestedErc7730Rows?: boolean
   hideMobileErc7730Title?: boolean
   isErc7730TransactionSummaryLayout?: boolean
-  hasErc7730TransactionSummaryHeaderLeftControl?: boolean
+  erc7730TransactionSummarySection?: 'all' | 'title' | 'rows'
   hasErc7730TransactionSummaryHeaderRightControl?: boolean
   disableFlex?: boolean
+  inlineDappIcon?: boolean
+  dappIconSize?: number
   dapp?: IrCall['dapp']
   editApprovalCallInfo?: {
     setter: (arg: string, token: string, tokenChainId: bigint, closeModal: () => void) => void
@@ -51,70 +54,92 @@ const HumanizedVisualization: FC<Props> = ({
   imageSize = 36,
   style,
   erc7730Mode = 'summary',
+  showErc7730DescriptionTitle = false,
   hideNestedErc7730Rows = false,
   hideMobileErc7730Title = false,
   isErc7730TransactionSummaryLayout = false,
-  hasErc7730TransactionSummaryHeaderLeftControl = false,
+  erc7730TransactionSummarySection = 'all',
   hasErc7730TransactionSummaryHeaderRightControl = false,
   disableFlex = false,
+  inlineDappIcon = false,
+  dappIconSize = 24 * sizeMultiplierSize,
   dapp
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
+  const horizontalPadding = hasPadding
+    ? (isMobile ? SPACING_TY : SPACING_SM) * sizeMultiplierSize
+    : 0
   const dappIcon = dapp?.icon || undefined
   const shouldShowDappIcon = !!dappIcon && !data.some((item) => item?.type === 'erc7730')
-
-  return (
-    <View
-      testID={testID}
-      style={[
-        !disableFlex && flexbox.flex1,
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        flexbox.wrap,
-        {
-          marginHorizontal: hasPadding
-            ? (withMobileLayout ? SPACING_TY : SPACING_SM) * sizeMultiplierSize
-            : 0
-        },
-        style
-      ]}
-    >
-      {shouldShowDappIcon && (
+  const dappIconVisualization = useMemo(
+    () =>
+      shouldShowDappIcon ? (
         <ManifestImage
           uri={dappIcon}
-          containerStyle={spacings.mrSm}
-          size={24 * sizeMultiplierSize}
+          containerStyle={{
+            marginLeft: inlineDappIcon ? 0 : SPACING_TY * sizeMultiplierSize,
+            // When the content has padding its own left margin already separates it
+            // from the icon, so adding a right margin here would double the gap
+            marginRight: horizontalPadding ? 0 : SPACING_TY * sizeMultiplierSize
+          }}
+          size={dappIconSize}
           skeletonAppearance="secondaryBackground"
-          imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
+          imageStyle={{ borderRadius: dappIconSize / 2, backgroundColor: 'transparent' }}
           hideOnError
         />
-      )}
-      {data.map((item) =>
-        item ? (
-          <HumanizedVisualizationItem
-            key={item.id}
-            item={item}
-            editApprovalCallInfo={editApprovalCallInfo}
-            sizeMultiplierSize={sizeMultiplierSize}
-            textSize={textSize}
-            chainId={chainId}
-            type={type}
-            imageSize={imageSize}
-            erc7730Mode={erc7730Mode}
-            hideNestedErc7730Rows={hideNestedErc7730Rows}
-            hideMobileErc7730Title={hideMobileErc7730Title}
-            isErc7730TransactionSummaryLayout={isErc7730TransactionSummaryLayout}
-            hasErc7730TransactionSummaryHeaderLeftControl={
-              hasErc7730TransactionSummaryHeaderLeftControl
-            }
-            hasErc7730TransactionSummaryHeaderRightControl={
-              hasErc7730TransactionSummaryHeaderRightControl
-            }
-            marginRight={marginRight}
-          />
-        ) : null
-      )}
-    </View>
+      ) : null,
+    [
+      dappIcon,
+      dappIconSize,
+      horizontalPadding,
+      inlineDappIcon,
+      shouldShowDappIcon,
+      sizeMultiplierSize
+    ]
+  )
+
+  return (
+    <>
+      {!inlineDappIcon && dappIconVisualization}
+      <View
+        testID={testID}
+        style={[
+          !disableFlex && flexbox.flex1,
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.wrap,
+          { marginHorizontal: horizontalPadding },
+          style
+        ]}
+      >
+        {inlineDappIcon && dappIconVisualization}
+        {data.map((item) =>
+          item ? (
+            <HumanizedVisualizationItem
+              key={item.id}
+              item={item}
+              editApprovalCallInfo={editApprovalCallInfo}
+              sizeMultiplierSize={sizeMultiplierSize}
+              textSize={textSize}
+              chainId={chainId}
+              type={type}
+              imageSize={imageSize}
+              erc7730Mode={erc7730Mode}
+              showErc7730DescriptionTitle={showErc7730DescriptionTitle}
+              hideNestedErc7730Rows={hideNestedErc7730Rows}
+              hideMobileErc7730Title={hideMobileErc7730Title}
+              isErc7730TransactionSummaryLayout={isErc7730TransactionSummaryLayout}
+              erc7730TransactionSummarySection={erc7730TransactionSummarySection}
+              hasErc7730TransactionSummaryHeaderRightControl={
+                hasErc7730TransactionSummaryHeaderRightControl
+              }
+              dappIconSize={dappIconSize}
+              marginRight={marginRight}
+            />
+          ) : null
+        )}
+      </View>
+    </>
   )
 }
 

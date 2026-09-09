@@ -23,7 +23,7 @@ const useManageTokens = ({ search, networkFilter }: Props): UseManageTokensRetur
   const debouncedPortfolioUpdateInterval = useRef<NodeJS.Timeout | null>(null)
   const { tokenPreferences, customTokens: portfolioCustomTokens } =
     useController('PortfolioController').state
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { dispatch: mainDispatch } = useController('MainController')
   const {
     state: {

@@ -24,9 +24,7 @@ const { isPopup, isSidePanel } = getUiType()
 const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
 const DashboardHeader = () => {
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted', duration: 50 })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
     preset: 'opacityInverted',

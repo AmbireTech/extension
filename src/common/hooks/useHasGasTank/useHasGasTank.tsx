@@ -14,8 +14,8 @@ import useController from '@common/hooks/useController'
 
 const useHasGasTank = ({ account }: { account: Account | null }) => {
   const { t } = useTranslation()
-  const { keys } = useController('KeystoreController').state
-  const { accountStates } = useController('AccountsController').state
+  const { state: keys } = useController('KeystoreController', 'keys')
+  const { state: accountStates } = useController('AccountsController', 'accountStates')
 
   const isViewOnly = useMemo(
     () => account && getIsViewOnly(keys, account.associatedKeys),

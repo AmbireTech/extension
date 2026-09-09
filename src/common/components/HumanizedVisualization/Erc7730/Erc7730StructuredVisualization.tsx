@@ -1,6 +1,7 @@
 import React, { FC, memo, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
+import { MAX_DISPLAYED_NESTED_CALLDATA_DEPTH } from '@ambire-common/libs/humanizer/erc7730/consts'
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import useNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -26,17 +27,20 @@ import {
   getDetailedValueLines,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
-  getVisibleErc7730Rows,
+  getErc7730TitlePartsForRendering,
+  getVisibleErc7730RowsExcludingTitleParts,
   hasErc7730NativeValueRow,
   hasTokenValue,
   isNestedErc7730Row,
   isNestedErc7730Value,
+  MOBILE_ERC7730_TEXT_SIZE,
   shouldShowErc7730SpenderRowInSummary,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
 
 const { isSidePanel } = getUiType()
 const withMobileLayout = isMobile || isSidePanel
+const withMobileSummaryLayout = isMobile
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
   item,
@@ -48,18 +52,21 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   hideNestedRows = false,
   hideMobileSummaryTitle = false,
   isTransactionSummaryLayout = false,
-  hasTransactionSummaryHeaderLeftControl = false,
   hasTransactionSummaryHeaderRightControl = false,
-  showDescriptionTitle = false
+  dappIconSize = 24 * sizeMultiplierSize,
+  transactionSummarySection = 'all',
+  showDescriptionTitle = false,
+  nestingDepth = 0
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const {
-    state: { networks: controllerNetworks }
-  } = useController('NetworksController')
+  const { state: controllerNetworks } = useController('NetworksController', 'networks')
   const { benzinNetworks } = useNetworksContext()
   const networks = controllerNetworks ?? benzinNetworks
   const shouldHideTransactionSummaryTitle = withMobileLayout && hideMobileSummaryTitle
+  const shouldShowTransactionSummaryTitle =
+    !shouldHideTransactionSummaryTitle && transactionSummarySection !== 'rows'
+  const shouldShowTransactionSummaryRows = transactionSummarySection !== 'title'
   const nativeAssetSymbol = useMemo(
     () => networks.find((network) => network.chainId === chainId)?.nativeAssetSymbol,
     [chainId, networks]
@@ -87,7 +94,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     showDescriptionTitle &&
     !!item.title?.trim() &&
     detailedRows[0]?.label.trim() !== item.title.trim()
-  const visibleRows = useMemo(() => getVisibleErc7730Rows(item), [item])
+  // Rows shown directly under the transaction-summary title/intent should not repeat
+  // values already rendered as part of the interpolated intent (item.titleParts).
+  const visibleRows = useMemo(() => getVisibleErc7730RowsExcludingTitleParts(item), [item])
+  const renderableTitleParts = useMemo(
+    () => getErc7730TitlePartsForRendering(item.titleParts || []),
+    [item.titleParts]
+  )
   const renderValue = useCallback(
     (valueItem: HumanizerVisualization, overrideTextSize = textSize): React.ReactNode => {
       if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
@@ -189,10 +202,34 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       }
 
       if (valueItem.type === 'chain' && valueItem.chainId) {
-        return <ChainVisualization chainId={valueItem.chainId} key={valueItem.id} marginRight={0} />
+        return (
+          <ChainVisualization
+            chainId={valueItem.chainId}
+            key={valueItem.id}
+            marginRight={0}
+            textSize={overrideTextSize}
+          />
+        )
       }
 
       if (valueItem.type === 'erc7730') {
+        // The humanizer decodes all the levels of calls hidden in other calls, but showing
+        // all of them makes the transaction unreadable, so the deepest ones are replaced
+        // with a short note.
+        if (nestingDepth >= MAX_DISPLAYED_NESTED_CALLDATA_DEPTH) {
+          return (
+            <Text
+              key={valueItem.id}
+              fontSize={overrideTextSize}
+              weight="medium"
+              color={theme.secondaryText}
+              style={{ textAlign: 'right', flexShrink: 1 }}
+            >
+              {t('More transactions are hidden inside this one')}
+            </Text>
+          )
+        }
+
         return (
           <Erc7730StructuredVisualization
             key={valueItem.id}
@@ -201,6 +238,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             sizeMultiplierSize={sizeMultiplierSize}
             textSize={overrideTextSize}
             mode="description"
+            dappIconSize={dappIconSize}
+            nestingDepth={nestingDepth + 1}
           />
         )
       }
@@ -220,7 +259,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     ? theme.secondaryAccent400
                     : theme.primaryText
             }
-            style={[{ textAlign: 'right', flexShrink: 1 }, valueItem.mlMi && spacings.mlMi]}
+            style={[
+              { textAlign: 'right', flexShrink: 1, minWidth: 0 },
+              valueItem.mlMi && spacings.mlMi
+            ]}
           >
             {valueItem.content}
           </Text>
@@ -229,7 +271,47 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
       return null
     },
-    [chainId, editApprovalCallInfo, mode, sizeMultiplierSize, textSize, theme]
+    [
+      chainId,
+      dappIconSize,
+      editApprovalCallInfo,
+      mode,
+      nestingDepth,
+      sizeMultiplierSize,
+      t,
+      textSize,
+      theme
+    ]
+  )
+
+  // Renders an interpolated title (e.g. "Swap {amount} for at least {amount}")
+  // as inline parts instead of a single string, reusing `renderValue` so a
+  // `type: 'token'` part gets the same live decimals/symbol/price lookup as a
+  // row value - this doesn't depend on a static token registry being
+  // exhaustive, unlike the plain-text `title` fallback used when there's no
+  // `titleParts` (e.g. non-interpolated intents).
+  const renderTitleParts = useCallback(
+    (overrideTextSize: number) =>
+      item.titleParts?.length ? (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.wrap,
+            { minWidth: 0, flexShrink: 1 }
+          ]}
+        >
+          {renderableTitleParts.map(({ part, shouldSpaceBefore }) => (
+            <View
+              key={part.id}
+              style={[{ minWidth: 0, flexShrink: 1 }, shouldSpaceBefore && spacings.mlMi]}
+            >
+              {renderValue(part, overrideTextSize)}
+            </View>
+          ))}
+        </View>
+      ) : null,
+    [item.titleParts, renderValue, renderableTitleParts]
   )
 
   const renderDetailedValueLine = useCallback(
@@ -266,6 +348,22 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   const renderNestedVisualization = useCallback(
     (nestedVisualization: HumanizerVisualization, nestedIndex: number) => {
       if (!isNestedErc7730Value(nestedVisualization)) return null
+      // The humanizer decodes all the levels of calls hidden in other calls, but showing
+      // all of them makes the transaction unreadable, so the deepest ones are replaced
+      // with a short note.
+      if (nestingDepth >= MAX_DISPLAYED_NESTED_CALLDATA_DEPTH) {
+        return (
+          <Text
+            key={nestedVisualization.id}
+            fontSize={textSize}
+            weight="medium"
+            color={theme.secondaryText}
+            style={[spacings.plSm, nestedIndex > 0 && spacings.mtTy]}
+          >
+            {t('More transactions are hidden inside this one')}
+          </Text>
+        )
+      }
 
       const nestedTitle = nestedVisualization.title?.trim()
       const shouldShowNestedConnector = getDetailedRows(nestedVisualization).some(
@@ -322,27 +420,40 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               sizeMultiplierSize={sizeMultiplierSize}
               textSize={textSize}
               mode="description"
+              dappIconSize={dappIconSize}
               showDescriptionTitle
+              nestingDepth={nestingDepth + 1}
             />
           </View>
         </View>
       )
     },
-    [chainId, sizeMultiplierSize, textSize, theme.secondaryBorder, theme.secondaryText]
+    [
+      chainId,
+      dappIconSize,
+      nestingDepth,
+      sizeMultiplierSize,
+      t,
+      textSize,
+      theme.secondaryBorder,
+      theme.secondaryText
+    ]
   )
 
   if (mode === 'summary') {
     if (isTransactionSummaryLayout) {
+      const titleTextSize = withMobileLayout ? MOBILE_ERC7730_TEXT_SIZE : textSize + 2
+      const valueTextSize = withMobileLayout ? MOBILE_ERC7730_TEXT_SIZE : textSize
+
       return (
         <View style={{ width: '100%', minWidth: 0 }}>
-          {!shouldHideTransactionSummaryTitle && (
+          {shouldShowTransactionSummaryTitle && (
             <View
               style={[
                 flexbox.directionRow,
                 flexbox.alignCenter,
                 {
                   minWidth: 0,
-                  paddingLeft: hasTransactionSummaryHeaderLeftControl ? 28 + SPACING_TY : 0,
                   paddingRight: hasTransactionSummaryHeaderRightControl ? 28 + SPACING_TY : 0
                 }
               ]}
@@ -351,77 +462,90 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 <ManifestImage
                   uri={item.dapp.icon}
                   containerStyle={spacings.mrTy}
-                  size={24 * sizeMultiplierSize}
+                  size={dappIconSize}
                   skeletonAppearance="secondaryBackground"
                   imageStyle={{
-                    borderRadius: 12 * sizeMultiplierSize,
+                    borderRadius: dappIconSize / 2,
                     backgroundColor: 'transparent'
                   }}
                   hideOnError
                 />
               )}
-              {!!item.title && (
-                <Text
-                  fontSize={textSize + 2}
-                  weight="semiBold"
-                  color={theme.secondaryAccent400}
-                  numberOfLines={1}
-                  style={{ flexShrink: 1 }}
-                >
-                  {item.title}
-                </Text>
-              )}
+              {item.titleParts?.length
+                ? renderTitleParts(titleTextSize)
+                : !!item.title && (
+                    <Text
+                      fontSize={titleTextSize}
+                      weight="semiBold"
+                      color={theme.secondaryAccent400}
+                      numberOfLines={1}
+                      style={{ flexShrink: 1 }}
+                    >
+                      {item.title}
+                    </Text>
+                  )}
             </View>
           )}
-          <View
-            style={[
-              !shouldHideTransactionSummaryTitle && {
-                marginTop: SPACING_TY * sizeMultiplierSize
-              },
-              { width: '100%', minWidth: 0 }
-            ]}
-          >
-            {visibleRows.map((row) => (
-              <View
-                key={`${item.id}-transaction-summary-${row.label}-${row.value
-                  .map((value) => value.id)
-                  .join('-')}`}
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  flexbox.justifySpaceBetween,
-                  { marginTop: SPACING_SM * sizeMultiplierSize },
-                  { width: '100%', minWidth: 0 }
-                ]}
-              >
-                {!!row.label.trim() && (
-                  <Text
-                    fontSize={12}
-                    weight="regular"
-                    appearance="secondaryText"
-                    style={[spacings.mrSm, { flexShrink: 1 }]}
-                  >
-                    {getTransactionSummaryRowLabel(row.label)}
-                  </Text>
-                )}
+          {shouldShowTransactionSummaryRows && (
+            <View
+              style={[
+                // Only needed when the title sits directly above the rows. When the rows are
+                // rendered into their own slot the gap comes from the slot itself.
+                shouldShowTransactionSummaryTitle && {
+                  marginTop: SPACING_TY * sizeMultiplierSize
+                },
+                { width: '100%', minWidth: 0 }
+              ]}
+            >
+              {visibleRows.map((row) => (
                 <View
+                  key={`${item.id}-transaction-summary-${row.label}-${row.value
+                    .map((value) => value.id)
+                    .join('-')}`}
                   style={[
                     flexbox.directionRow,
                     flexbox.alignCenter,
-                    flexbox.justifyEnd,
-                    flexbox.wrap,
-                    { minWidth: 0, flexShrink: 1 }
+                    flexbox.justifySpaceBetween,
+                    { marginTop: SPACING_SM * sizeMultiplierSize },
+                    { width: '100%', minWidth: 0 }
                   ]}
                 >
-                  {row.value.map((value, valueIndex) => (
-                    <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
-                      {renderValue(value)}
-                    </View>
-                  ))}
+                  {!!row.label.trim() && (
+                    <Text
+                      fontSize={12}
+                      weight="regular"
+                      appearance="secondaryText"
+                      style={[spacings.mrSm, { flexShrink: 1 }]}
+                    >
+                      {getTransactionSummaryRowLabel(row.label)}
+                    </Text>
+                  )}
+                  <View
+                    style={[
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      flexbox.justifyEnd,
+                      flexbox.wrap,
+                      { minWidth: 0, flexShrink: 1 }
+                    ]}
+                  >
+                    {row.value.map((value, valueIndex) => (
+                      // `flexShrink`/`minWidth` let the wrapper shrink below the value's
+                      // content width. Without them a long unbreakable value (e.g. a
+                      // non-EVM recipient hash) keeps its full width and, because the
+                      // container is right-aligned, overflows to the left over the label.
+                      <View
+                        key={value.id}
+                        style={[{ flexShrink: 1, minWidth: 0 }, valueIndex > 0 && spacings.mlTy]}
+                      >
+                        {renderValue(value, valueTextSize)}
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
       )
     }
@@ -433,7 +557,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       : undefined
     const subtitleTextSize = Math.max(textSize - 3, 11)
 
-    if (withMobileLayout) {
+    if (withMobileSummaryLayout) {
       return (
         <MobileErc7730SummaryVisualization
           item={item}
@@ -443,6 +567,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           textSize={textSize}
           renderValue={renderValue}
           hideTitle={hideMobileSummaryTitle}
+          dappIconSize={dappIconSize}
         />
       )
     }
@@ -476,9 +601,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             <ManifestImage
               uri={item.dapp.icon}
               containerStyle={{ marginRight: SPACING_TY }}
-              size={24 * sizeMultiplierSize}
+              size={dappIconSize}
               skeletonAppearance="secondaryBackground"
-              imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
+              imageStyle={{ borderRadius: dappIconSize / 2, backgroundColor: 'transparent' }}
               hideOnError
             />
           )}
@@ -490,16 +615,18 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               }
             ]}
           >
-            {!!item.title && (
-              <Text
-                fontSize={textSize + 2}
-                color={theme.secondaryAccent400}
-                numberOfLines={1}
-                style={spacings.mrSm}
-              >
-                {item.title}
-              </Text>
-            )}
+            {item.titleParts?.length
+              ? renderTitleParts(textSize + 2)
+              : !!item.title && (
+                  <Text
+                    fontSize={textSize + 2}
+                    color={theme.secondaryAccent400}
+                    numberOfLines={1}
+                    style={spacings.mrSm}
+                  >
+                    {item.title}
+                  </Text>
+                )}
             {spenderRow && (
               <View
                 style={[
@@ -607,9 +734,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       <View style={{ width: '100%' }}>
         {shouldShowDescriptionTitle && (
           <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
-            <Text fontSize={textSize} color={theme.secondaryAccent400}>
-              {item.title}
-            </Text>
+            {item.titleParts?.length ? (
+              renderTitleParts(MOBILE_ERC7730_TEXT_SIZE)
+            ) : (
+              <Text fontSize={MOBILE_ERC7730_TEXT_SIZE} color={theme.secondaryAccent400}>
+                {item.title}
+              </Text>
+            )}
           </View>
         )}
         {detailedRows.map((row) => {
@@ -674,9 +805,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     <View style={{ width: '100%' }}>
       {shouldShowDescriptionTitle && (
         <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
-          <Text fontSize={textSize} color={theme.secondaryAccent400}>
-            {item.title}
-          </Text>
+          {item.titleParts?.length ? (
+            renderTitleParts(textSize)
+          ) : (
+            <Text fontSize={textSize} color={theme.secondaryAccent400}>
+              {item.title}
+            </Text>
+          )}
         </View>
       )}
       {detailedRows.map((row) => {

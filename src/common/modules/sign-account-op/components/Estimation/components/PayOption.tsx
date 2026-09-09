@@ -1,11 +1,11 @@
 import { formatUnits } from 'ethers'
 import React, { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Avatar from '@common/components/Avatar'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -38,12 +38,9 @@ const PayOption = ({
   shouldHighlightExtremeGasFee?: boolean
   // showAccountBalanceBadge?: boolean // Note: Under discussion
 }) => {
-  const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { accounts } = useController('AccountsController').state
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const signAccountOpState = useController('SignAccountOpController').state
 
   const paidByAccountData = useMemo(
@@ -64,10 +61,10 @@ const PayOption = ({
   }, [signAccountOpState])
 
   const isPaidByAnotherAccount = feeOption.paidBy !== account?.addr
-  const showGasTankBadge = !!feeOption.token.flags.onGasTank
+  const isGasTank = !!feeOption.token.flags.onGasTank
   // Note: Under discussion
   // const showWalletBalanceBadge =
-  //   showAccountBalanceBadge && !showGasTankBadge && !isPaidByAnotherAccount
+  //   showAccountBalanceBadge && !isGasTank && !isPaidByAnotherAccount
 
   if (!paidByAccountData) return null
 
@@ -81,20 +78,25 @@ const PayOption = ({
         }
       ]}
     >
-      <TokenIcon
-        containerStyle={{
-          width: 32,
-          height: 32
-        }}
-        withContainer
-        width={28}
-        height={28}
-        networkSize={14}
-        address={feeOption.token.address}
-        chainId={feeOption.token.chainId}
-        onGasTank={feeOption.token.flags.onGasTank}
-        skeletonAppearance="secondaryBackground"
-      />
+      {isGasTank ? (
+        <View style={styles.gasTankIconContainer}>
+          <GasTankIcon width={24} height={24} color={theme.primaryAccent} />
+        </View>
+      ) : (
+        <TokenIcon
+          containerStyle={{
+            width: 32,
+            height: 32
+          }}
+          withContainer
+          width={28}
+          height={28}
+          networkSize={14}
+          address={feeOption.token.address}
+          chainId={feeOption.token.chainId}
+          skeletonAppearance="secondaryBackground"
+        />
+      )}
 
       <View style={[flexbox.flex1, spacings.mlTy, spacings.mrTy]}>
         {disabledReason ? (
@@ -103,11 +105,10 @@ const PayOption = ({
               {formatDecimals(Number(amountUsd), 'value')}
             </Text>
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text weight="semiBold" fontSize={14} numberOfLines={1} style={spacings.mrTy}>
+              <Text fontSize={12} numberOfLines={1} style={spacings.mrTy}>
                 {formattedAmount} {feeOption.token.symbol}
               </Text>
               <Text
-                weight="medium"
                 fontSize={isMobile ? 10 : 12}
                 numberOfLines={1}
                 appearance={disabledTextAppearance}
@@ -127,13 +128,6 @@ const PayOption = ({
               >
                 {formatDecimals(Number(amountUsd), 'value')}
               </Text>
-              {showGasTankBadge && (
-                <View style={styles.gasTankBadge}>
-                  <Text fontSize={10} color="white" weight="medium">
-                    {t('Gas Tank')}
-                  </Text>
-                </View>
-              )}
               {/* Note: Under discussion */}
               {/* {showWalletBalanceBadge && (
                 <View style={styles.walletBalanceBadge}>

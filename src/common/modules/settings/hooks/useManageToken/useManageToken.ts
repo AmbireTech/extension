@@ -27,7 +27,7 @@ const useManageToken = ({
     state: { tokenPreferences },
     dispatch: portfolioDispatch
   } = useController('PortfolioController')
-  const { account } = useController('SelectedAccountController').state
+  const { state: account } = useController('SelectedAccountController', 'account')
 
   // flags.isHidden is updated after the portfolio is updated
   // so we use tokenPreferences to get the value faster

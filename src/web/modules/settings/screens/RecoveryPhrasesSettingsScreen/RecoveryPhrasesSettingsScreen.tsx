@@ -4,7 +4,7 @@ import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
-import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel/Panel'
@@ -24,8 +24,8 @@ import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRo
 const RecoveryPhraseSettingsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { statuses } = useController('StorageController').state
-  const { accounts } = useController('AccountsController').state
+  const { state: statuses } = useController('StorageController', 'statuses')
+  const { state: accounts } = useController('AccountsController', 'accounts')
   const { seeds, keys } = useController('KeystoreController').state
   const { notBackedUpSeedIds, seedsSortedByBackupStatus } = useRecoveryPhraseBackupStatus()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -88,12 +88,7 @@ const RecoveryPhraseSettingsScreen = () => {
             hasBottomSpacing={false}
             onPress={() => setRecoveryPhraseToManage(item)}
           >
-            <SettingsWheelIcon
-              width={20}
-              height={20}
-              style={spacings.mrMi}
-              color={theme.primaryText}
-            />
+            <SettingsIcon width={20} height={20} style={spacings.mrMi} color={theme.primaryText} />
           </Button>
         </View>
         {associatedAccounts.map((a, accIdx) => {

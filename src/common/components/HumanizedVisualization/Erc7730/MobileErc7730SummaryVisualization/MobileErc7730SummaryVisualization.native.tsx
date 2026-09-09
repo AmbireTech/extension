@@ -2,7 +2,11 @@ import React, { memo, useCallback, useMemo } from 'react'
 import { Image, View } from 'react-native'
 import { SvgUri } from 'react-native-svg'
 
-import { shouldShowErc7730SummaryRowLabel } from '@common/components/HumanizedVisualization/Erc7730/helpers'
+import {
+  getErc7730TitlePartsForRendering,
+  MOBILE_ERC7730_TEXT_SIZE,
+  shouldShowErc7730SummaryRowLabel
+} from '@common/components/HumanizedVisualization/Erc7730/helpers'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -15,15 +19,14 @@ const MobileErc7730SummaryVisualization = ({
   item,
   summaryRows,
   spenderRow,
-  sizeMultiplierSize,
   textSize,
   renderValue,
-  hideTitle
+  hideTitle,
+  dappIconSize
 }: Props) => {
   const { theme } = useTheme()
   const subtitleTextSize = Math.max(textSize - 3, 11)
   const dappIconUri = item.dapp?.icon
-  const dappIconSize = 24 * sizeMultiplierSize
   const dappIconStyle = useMemo(
     () => ({
       width: dappIconSize,
@@ -38,6 +41,10 @@ const MobileErc7730SummaryVisualization = ({
 
     return icon?.endsWith('.svg') || icon?.includes('.svg?')
   }, [dappIconUri])
+  const renderableTitleParts = useMemo(
+    () => getErc7730TitlePartsForRendering(item.titleParts || []),
+    [item.titleParts]
+  )
   const renderValues = useCallback(
     (values: Props['summaryRows'][number]['value'], overrideTextSize?: number) => (
       <View
@@ -58,6 +65,34 @@ const MobileErc7730SummaryVisualization = ({
     ),
     [renderValue]
   )
+  // Same reasoning as the desktop Erc7730StructuredVisualization: prefer the
+  // structured `titleParts` (rendered via the shared `renderValue`, so a
+  // `type: 'token'` part gets a live decimals/symbol lookup) over the plain
+  // `title` string, which is only a best-effort fallback for tokens that
+  // aren't statically known.
+  const renderTitleParts = useCallback(
+    (overrideTextSize?: number) =>
+      item.titleParts?.length ? (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.wrap,
+            { minWidth: 0, flexShrink: 1 }
+          ]}
+        >
+          {renderableTitleParts.map(({ part, shouldSpaceBefore }) => (
+            <View
+              key={part.id}
+              style={[{ minWidth: 0, flexShrink: 1 }, shouldSpaceBefore && spacings.mlMi]}
+            >
+              {renderValue(part, overrideTextSize)}
+            </View>
+          ))}
+        </View>
+      ) : null,
+    [item.titleParts, renderValue, renderableTitleParts]
+  )
 
   return (
     <View style={{ width: '100%', minWidth: 0 }}>
@@ -73,11 +108,13 @@ const MobileErc7730SummaryVisualization = ({
             </View>
           )}
           <View style={{ flex: 1, minWidth: 0 }}>
-            {!!item.title && (
-              <Text fontSize={textSize + 2} color={theme.secondaryAccent400}>
-                {item.title}
-              </Text>
-            )}
+            {item.titleParts?.length
+              ? renderTitleParts(MOBILE_ERC7730_TEXT_SIZE)
+              : !!item.title && (
+                  <Text fontSize={MOBILE_ERC7730_TEXT_SIZE} color={theme.secondaryAccent400}>
+                    {item.title}
+                  </Text>
+                )}
           </View>
         </View>
       )}
@@ -101,7 +138,7 @@ const MobileErc7730SummaryVisualization = ({
               {spenderRow.label}
             </Text>
           </View>
-          {renderValues(spenderRow.value, subtitleTextSize)}
+          {renderValues(spenderRow.value, MOBILE_ERC7730_TEXT_SIZE)}
         </View>
       )}
       {summaryRows.map((row) => (
@@ -127,7 +164,7 @@ const MobileErc7730SummaryVisualization = ({
               {row.label}
             </Text>
           )}
-          {renderValues(row.value)}
+          {renderValues(row.value, MOBILE_ERC7730_TEXT_SIZE)}
         </View>
       ))}
     </View>

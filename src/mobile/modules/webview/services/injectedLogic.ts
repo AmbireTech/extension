@@ -2,6 +2,7 @@ import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { NavigateOptions, View } from '@ambire-common/interfaces/ui'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 // Import the `.native` implementations explicitly. The worker bundle is built
@@ -19,6 +20,8 @@ import QrHardwareController from '@common/modules/hardware-wallets/controllers/Q
 import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
 import NfcHardwareSigner from '@common/modules/hardware-wallets/signers/NfcHardwareSigner'
 import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
+import { resolveViewRoute } from '@common/modules/router/helpers'
+import { MOBILE_VIEW_ID } from '@mobile/constants/ui'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
 import NfcController from '@mobile/modules/hardware-wallet/controllers/NfcController'
@@ -265,7 +268,6 @@ const initControllers = (config: any) => {
       velcroUrl: config.VELCRO_URL,
       liFiApiKey: config.LIFI_EXPLORER_URL,
       bungeeApiKey: config.BUNGEE_API_KEY,
-      squidIntegratorId: config.SQUID_INTEGRATOR_ID,
       uniswapApiKey: config.UNISWAP_API_KEY,
       featureFlags: {},
       keystoreSigners: {
@@ -329,9 +331,12 @@ const initControllers = (config: any) => {
           sendToastMessage: (text: string, options: any) =>
             sendToReactEvent('action.addToast', { text, options }),
           sendUiMessage: (params: any) => sendToReactEvent('action.receiveOneTimeData', params),
-          sendNavigateMessage: (viewId: string, route: string, params: any) =>
-            sendToReactEvent('action.navigate', { route, params })
-        }
+          // The app has a single view, so there is no port to pick - whatever is navigated is
+          // this one.
+          sendNavigateMessage: (viewId: string, route: string, options?: NavigateOptions) =>
+            sendToReactEvent('action.navigate', { route, options })
+        },
+        resolveViewRoute: (view: View) => resolveViewRoute(mainCtrl, view)
       }
     })
 
@@ -346,15 +351,12 @@ const initControllers = (config: any) => {
     workerBootProfiler.endSpan(BOOT_MARK.workerWalletStateCtrlConstructed)
 
     workerBootProfiler.startSpan(BOOT_MARK.workerAutoLockCtrlConstructed)
-    autoLockCtrl = new AutoLockController(
-      eventEmitterRegistry,
-      () => mainCtrl.keystore.lock(),
-      storageAPI
-    )
+    autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => mainCtrl.lock(), storageAPI)
     workerBootProfiler.endSpan(BOOT_MARK.workerAutoLockCtrlConstructed)
 
-    // Initialize UI view inside the WebView worker context natively
-    mainCtrl.ui.addView({ id: 'default-mobile-app-view', type: 'mobile' })
+    // Initialize UI view inside the WebView worker context natively. Registering it is what
+    // sends the app to the screen it should open on.
+    mainCtrl.ui.addView({ id: MOBILE_VIEW_ID, type: 'mobile' })
 
     // Notify RN that we are ready with ALL controller names
     const allControllerNames = eventEmitterRegistry.values().map((c) => c.name)
@@ -371,8 +373,21 @@ const initControllers = (config: any) => {
 
 // Proxy Listener
 window.addEventListener('message', (event) => {
+  let data: any
   try {
-    const data = typeof event.data === 'string' ? decode(event.data) : event.data
+    data = typeof event.data === 'string' ? decode(event.data) : event.data
+  } catch (e) {
+    // NEVER log the raw message nor the parse error itself in production.
+    // Dispatched actions could carry secrets (keystore password, extra entropy) and V8
+    // quotes a slice of the offending input inside its JSON.parse error message,
+    // so both would leak them into logcat. DefinePlugin inlines __DEV__ (see
+    // webpack.webview.config.js), so this branch is stripped from prod bundles.
+    if (__DEV__) console.error('WebView failed to decode message', e, event.data)
+    else console.error('WebView failed to decode an incoming message')
+    return
+  }
+
+  try {
     if (data.type === 'response') {
       const { id, result, error } = data
       if (error) pendingPromises[id]?.reject(new Error(error))
@@ -392,7 +407,7 @@ window.addEventListener('message', (event) => {
       handleActions(data.action, { eventEmitterRegistry, mainCtrl, sendToReactEvent })
     }
   } catch (e) {
-    console.error('WebView failed to parse message', e, event.data)
+    console.error('WebView failed to handle message', data?.type, e)
   }
 })
 

@@ -3,24 +3,27 @@ import { TextStyle, View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
+import RejectButton from './RejectButton'
 import getStyles from './styles'
-import useRejectConfirmation from './useRejectConfirmation'
+
+// An exception to the `size="large"` height (56). The sign screen is dense and the
+// footer is always visible, so all of its buttons are slightly shorter in order to
+// free up vertical space for the transaction details above. Keep every button in
+// the footer on this height, otherwise they won't line up.
+const FOOTER_BUTTON_HEIGHT = 52
 
 const Footer = ({
   onReject,
@@ -34,16 +37,16 @@ const Footer = ({
   inProgressButtonText,
   buttonText,
   shouldHoldToProceed,
+  shouldRejectOnchain,
+  isRejectDisabled,
   holdToProceedButtonType = 'primary',
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactActionRequestLayout()
-  const { userRequests } = useController('RequestsController').state
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 
@@ -87,33 +90,6 @@ const Footer = ({
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
 
-  const { sheetRef, closeModal, handleReject, handleConfirmedReject } = useRejectConfirmation({
-    isMultisigSigned,
-    onReject
-  })
-
-  const confirmRejectModal = (
-    <BottomSheet
-      id="confirm-hide"
-      type="modal"
-      sheetRef={sheetRef}
-      closeBottomSheet={closeModal}
-      onBackdropPress={closeModal}
-    >
-      <DualChoiceWarningModal
-        title={t('Are you sure?')}
-        description={t(
-          'You are about to reject an already signed transaction. It will no longer be visible in Ambire.'
-        )}
-        primaryButtonText={t('Proceed')}
-        secondaryButtonText={t('Return')}
-        onPrimaryButtonPress={handleConfirmedReject}
-        onSecondaryButtonPress={closeModal}
-        type="error"
-      />
-    </BottomSheet>
-  )
-
   const rejectButton = ({
     fullWidth,
     compact = false
@@ -121,15 +97,16 @@ const Footer = ({
     fullWidth: boolean
     compact?: boolean
   }) => (
-    <Button
-      testID="transaction-button-reject"
-      type="danger"
-      text={t('Reject')}
-      onPress={handleReject}
-      hasBottomSpacing={false}
+    <RejectButton
+      onReject={onReject}
+      isSignLoading={isSignLoading}
+      shouldRejectOnchain={shouldRejectOnchain}
+      isRejectDisabled={isRejectDisabled}
       size={compact ? 'smaller' : 'large'}
-      disabled={isSignLoading}
-      style={fullWidth ? { width: '100%', minWidth: 0 } : { width: 98 }}
+      containerStyle={fullWidth ? { width: '100%' } : undefined}
+      style={
+        fullWidth ? { width: '100%', minWidth: 0 } : { width: 98, height: FOOTER_BUTTON_HEIGHT }
+      }
     />
   )
 
@@ -148,7 +125,11 @@ const Footer = ({
       onPress={onAddToCart}
       disabled={isAddToCartDisabled}
       hasBottomSpacing={false}
-      style={fullWidth ? { width: '100%', minWidth: 0 } : { minWidth: 160, ...spacings.ph }}
+      style={
+        fullWidth
+          ? { width: '100%', minWidth: 0 }
+          : { minWidth: 160, height: FOOTER_BUTTON_HEIGHT, ...spacings.ph }
+      }
       size={compact ? 'smaller' : 'large'}
       textStyle={
         compact && isWeb
@@ -193,7 +174,7 @@ const Footer = ({
           disabled={isSignDisabled}
           onHoldComplete={onSign}
           testID="proceed-btn"
-          style={fullWidth ? { width: '100%' } : spacings.mlLg}
+          style={fullWidth ? { width: '100%' } : [spacings.ml, { height: FOOTER_BUTTON_HEIGHT }]}
           size="large"
         />
       )}
@@ -206,7 +187,11 @@ const Footer = ({
           text={isSignLoading ? inProgressButtonText : buttonText}
           onPress={onSign}
           size="large"
-          style={fullWidth ? { width: '100%' } : [{ minWidth: 128 }, spacings.mlLg]}
+          style={
+            fullWidth
+              ? { width: '100%' }
+              : [{ minWidth: 128, height: FOOTER_BUTTON_HEIGHT }, spacings.ml]
+          }
         />
       )}
     </View>
@@ -227,11 +212,7 @@ const Footer = ({
           }
         ]}
       >
-        <ActionsPagination />
-        <View style={{ width: '100%' }}>
-          {signButton(true)}
-          {confirmRejectModal}
-        </View>
+        <View style={{ width: '100%' }}>{signButton(true)}</View>
         {isAddToCartDisplayed ? (
           <View
             style={[
@@ -256,19 +237,19 @@ const Footer = ({
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
-        {rejectButton({ fullWidth: false })}
-        {confirmRejectModal}
+    <>
+      <View style={styles.container}>
+        <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
+          {rejectButton({ fullWidth: false })}
+        </View>
+        <View
+          style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
+        >
+          {isAddToCartDisplayed && batchButton({ fullWidth: false })}
+          {signButton(false)}
+        </View>
       </View>
-      <ActionsPagination />
-      <View
-        style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
-      >
-        {isAddToCartDisplayed && batchButton({ fullWidth: false })}
-        {signButton(false)}
-      </View>
-    </View>
+    </>
   )
 }
 

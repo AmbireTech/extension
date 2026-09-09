@@ -9,14 +9,50 @@ import {
 } from '../../../../ambire-common/src/libs/humanizer/utils'
 
 import {
-  getErc7730DescriptionRows,
+  getDetailedRows,
+  getErc7730TitlePartsForRendering,
   getVisibleErc7730Rows,
+  getVisibleErc7730RowsExcludingTitleParts,
   hasErc7730NativeValueRow,
+  shouldUseErc7730DetailedLayout,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
 
-describe('getErc7730DescriptionRows', () => {
-  test('shows hidden transfer rows for Morpho Bundler3 Multicall additional description', () => {
+describe('getErc7730TitlePartsForRendering', () => {
+  test('preserves intended spaces around rich values without spacing punctuation', () => {
+    const firstToken = getToken('0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', 300000n)
+    const secondToken = getToken('0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf', 1n)
+    const recipient = getAddressVisualization('0xd8293ad21678c6f09da139b4b62d38e514a03b78')
+
+    const renderableParts = getErc7730TitlePartsForRendering([
+      getAction('Swap '),
+      firstToken,
+      getText(' for at least '),
+      secondToken,
+      getText(' to '),
+      recipient,
+      getText('.')
+    ])
+
+    expect(
+      renderableParts.map(({ part, shouldSpaceBefore }) => ({
+        content: 'content' in part ? part.content : part.type,
+        shouldSpaceBefore
+      }))
+    ).toEqual([
+      { content: 'Swap', shouldSpaceBefore: false },
+      { content: 'token', shouldSpaceBefore: true },
+      { content: 'for at least', shouldSpaceBefore: true },
+      { content: 'token', shouldSpaceBefore: true },
+      { content: 'to', shouldSpaceBefore: true },
+      { content: 'address', shouldSpaceBefore: true },
+      { content: '.', shouldSpaceBefore: false }
+    ])
+  })
+})
+
+describe('getDetailedRows', () => {
+  test('shows all Morpho Bundler3 Multicall actions in execution order', () => {
     const baseUsdc = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
     const baseCbBtc = '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf'
     const owner = '0xd8293ad21678c6f09da139b4b62d38e514a03b78'
@@ -53,44 +89,27 @@ describe('getErc7730DescriptionRows', () => {
       ]
     }
 
-    const descriptionRows = getErc7730DescriptionRows(visualization)
+    const detailedRows = getDetailedRows(visualization)
 
     expect(
-      descriptionRows.map((row) => row.value.find((value) => value.type === 'action')?.content)
-    ).toEqual(['Transfer', 'Transfer'])
-    expect(descriptionRows.map((row) => row.value.find((value) => value.type === 'token'))).toEqual(
-      [
-        expect.objectContaining({ address: baseUsdc, value: 2n }),
-        expect.objectContaining({ address: baseCbBtc, value: 1n })
-      ]
-    )
+      detailedRows.map((row) => row.value.find((value) => value.type === 'action')?.content)
+    ).toEqual(['Transfer', 'Supply', 'Borrow', 'Transfer'])
+    expect(shouldUseErc7730DetailedLayout(visualization)).toBe(true)
   })
 
-  test('does not show additional description outside Morpho Bundler3 multicalls', () => {
-    const baseWeth = '0x4200000000000000000000000000000000000006'
-    const baseCbBtc = '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf'
+  test('keeps a simple token action in the compact summary layout', () => {
     const visualization: HumanizerErc7730Visualization = {
       type: 'erc7730',
-      title: 'Multicall',
+      title: 'Send',
       rows: [
         {
-          label: 'Amount to Send',
-          value: [getToken(baseCbBtc, 3235n)]
-        },
-        {
-          label: 'Minimum to Receive',
-          value: [getToken(baseWeth, 1161246143601818n)]
-        },
-        {
-          label: 'Additional action',
-          value: [getText('Unwrap')]
+          label: 'Amount',
+          value: [getToken('0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', 300000n)]
         }
       ]
     }
 
-    const descriptionRows = getErc7730DescriptionRows(visualization)
-
-    expect(descriptionRows).toEqual([])
+    expect(shouldUseErc7730DetailedLayout(visualization)).toBe(false)
   })
 })
 
@@ -128,6 +147,26 @@ describe('getVisibleErc7730Rows', () => {
     }
 
     expect(getVisibleErc7730Rows(visualization).map((row) => row.label)).toEqual(['Beneficiary'])
+  })
+})
+
+describe('getVisibleErc7730RowsExcludingTitleParts', () => {
+  test('returns no rows when every row value is already shown in the interpolated intent', () => {
+    const token = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+    const recipient = '0xd8293ad21678c6f09da139b4b62d38e514a03b78'
+    const amount = getToken(token, 300000n)
+    const recipientAddress = getAddressVisualization(recipient)
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Send',
+      titleParts: [getAction('Send'), amount, getLabel('to'), recipientAddress],
+      rows: [
+        { label: 'Amount', value: [amount] },
+        { label: 'Recipient', value: [recipientAddress] }
+      ]
+    }
+
+    expect(getVisibleErc7730RowsExcludingTitleParts(visualization)).toEqual([])
   })
 })
 

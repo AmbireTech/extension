@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NativeScrollEvent, ScrollView, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
-import { Key } from '@ambire-common/interfaces/keystore'
-import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -13,7 +12,6 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
@@ -27,6 +25,7 @@ import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
   TabLayoutContainer,
@@ -35,6 +34,14 @@ import {
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
+import SafeAccountTabs from '@web/modules/sign-account-op/components/SafeAccountTabs'
+
+import type { Key } from '@ambire-common/interfaces/keystore'
+import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
+import type { SafeAccountTab } from '@web/modules/sign-account-op/components/SafeAccountTabs'
+import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+const { isSidePanel } = getUiType()
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -50,7 +57,6 @@ const SignAccountOpScreen = () => {
     useController('SignAccountOpController')
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const closeActionWindow = useCloseActionWindow()
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
@@ -141,8 +147,59 @@ const SignAccountOpScreen = () => {
     return currentUserRequest as CallsUserRequest
   }, [currentUserRequest])
 
+  const [safeAccountTabState, setSafeAccountTabState] = useState({
+    requestId: accountOpRequest?.id,
+    activeTab: 'overview' as SafeAccountTab
+  })
+  const activeSafeAccountTab =
+    safeAccountTabState.requestId === accountOpRequest?.id
+      ? safeAccountTabState.activeTab
+      : 'overview'
+  const shouldUseSafeAccountTabs = !!signAccountOpState?.account.safeCreation && !isSidePanel
+  const isOverviewTabActive = !shouldUseSafeAccountTabs || activeSafeAccountTab === 'overview'
+
+  const handleSafeAccountTabChange = useCallback(
+    (activeTab: SafeAccountTab) => {
+      setSafeAccountTabState({ requestId: accountOpRequest?.id, activeTab })
+    },
+    [accountOpRequest?.id]
+  )
+
+  const shouldRejectOnchain = useMemo(() => {
+    if (!signAccountOpState?.account.safeCreation) return false
+    const { signature, signed } = signAccountOpState.accountOp
+    const signedCount = signed?.length || 0
+
+    return !!signature && signature !== '0x' && signedCount > 0
+  }, [signAccountOpState])
+
+  const isCancelDisabled = useMemo(() => {
+    if (!shouldRejectOnchain || !signAccountOpState) return false
+
+    const { calls, accountAddr } = signAccountOpState.accountOp
+    return isSafeRejectionCall(calls, accountAddr)
+  }, [shouldRejectOnchain, signAccountOpState])
+
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
+
+    if (shouldRejectOnchain) {
+      if (isCancelDisabled) return
+
+      requestsDispatch({
+        type: 'method',
+        params: {
+          method: 'build',
+          args: [
+            {
+              type: 'onchainSafeRejection',
+              params: { requestId: accountOpRequest.id }
+            }
+          ]
+        }
+      })
+      return
+    }
 
     requestsDispatch({
       type: 'method',
@@ -155,21 +212,50 @@ const SignAccountOpScreen = () => {
         ]
       }
     })
-  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
+  }, [
+    requestsDispatch,
+    accountOpRequest,
+    shouldRejectOnchain,
+    isCancelDisabled,
+    visibleUserRequests.length
+  ])
 
   useEffect(() => {
-    if (isSignDisabled || !containerHeight || !contentHeight) return
+    if (!isOverviewTabActive || isSignDisabled || !containerHeight || !contentHeight) return
     const isScrollNotVisible = contentHeight <= containerHeight
 
-    if (setHasReachedBottom && !hasReachedBottom) setHasReachedBottom(isScrollNotVisible)
+    const updateHasReachedBottomTimeout = setTimeout(() => {
+      if (!hasReachedBottom) setHasReachedBottom(isScrollNotVisible)
+    }, 0)
+
+    return () => clearTimeout(updateHasReachedBottomTimeout)
   }, [
     contentHeight,
     containerHeight,
-    setHasReachedBottom,
     hasReachedBottom,
     hasEstimation,
-    isSignDisabled
+    isSignDisabled,
+    isOverviewTabActive
   ])
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (!isOverviewTabActive || hasReachedBottom) return
+      if (isCloseToBottom(event.nativeEvent)) setHasReachedBottom(true)
+    },
+    [hasReachedBottom, isOverviewTabActive]
+  )
+
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    setContainerHeight(event.nativeEvent.layout.height)
+  }, [])
+
+  const handleContentSizeChange = useCallback(
+    (_: number, height: number) => {
+      if (isOverviewTabActive) setContentHeight(height)
+    },
+    [isOverviewTabActive]
+  )
 
   const isAddToCartDisabled = useMemo(() => {
     if (signAccountOpState?.account.safeCreation) return false
@@ -231,7 +317,7 @@ const SignAccountOpScreen = () => {
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
             <GlassView>
-              <View style={[spacings.ph, spacings.pv, flexbox.flex1]}>
+              <View style={[spacings.ph, spacings.pvSm, flexbox.flex1]}>
                 {!estimationFailed &&
                 signAccountOpState?.canBroadcast &&
                 signAccountOpState?.status?.type !== SigningStatus.Queued ? (
@@ -271,6 +357,7 @@ const SignAccountOpScreen = () => {
                   )}
 
                 <Footer
+                  key={accountOpRequest?.id}
                   onReject={handleRejectAccountOp}
                   onAddToCart={handleAddToCart}
                   isAddToCartDisplayed={
@@ -288,6 +375,8 @@ const SignAccountOpScreen = () => {
                   inProgressButtonText={primaryButtonText}
                   buttonText={signButtonText}
                   shouldHoldToProceed={shouldHoldToProceed}
+                  shouldRejectOnchain={shouldRejectOnchain}
+                  isRejectDisabled={isCancelDisabled}
                   holdToProceedButtonType={holdToProceedButtonType}
                   signButtonType={extremeGasFeeSignButtonType}
                 />
@@ -317,83 +406,102 @@ const SignAccountOpScreen = () => {
           />
         )}
         <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={spacings.mtSm}>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignStart,
-              flexbox.justifySpaceBetween,
-              spacings.mb
-            ]}
-          >
-            <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+          {shouldUseSafeAccountTabs ? (
+            <SafeAccountTabs
+              activeTab={activeSafeAccountTab}
+              networkChainId={network?.chainId}
+              onTabChange={handleSafeAccountTabChange}
+            />
+          ) : isSidePanel && signAccountOpState?.account.safeCreation ? (
+            <SafeNonce withNetwork />
+          ) : (
             <View
               style={[
                 flexbox.directionRow,
-                flexbox.alignCenter,
-                isCompactSidePanelLayout && [spacings.mtTy, flexbox.justifySpaceBetween]
+                flexbox.alignStart,
+                flexbox.justifySpaceBetween,
+                spacings.mb
               ]}
             >
-              <SafeNonce />
-              <NetworkBadge
-                chainId={network?.chainId}
-                withOnPrefix
-                style={signAccountOpState?.account.safeCreation ? spacings.mlSm : undefined}
-              />
+              <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <SafeNonce />
+                <NetworkBadge
+                  chainId={network?.chainId}
+                  withOnPrefix
+                  style={signAccountOpState?.account.safeCreation ? spacings.mlSm : undefined}
+                />
+              </View>
             </View>
-          </View>
+          )}
           {/* TabLayoutWrapperMainContent supports scroll but the logic that determines the height
           of the content doesn't work with it, so we use a ScrollView here */}
           <ScrollView
-            onScroll={(e) => {
-              if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
-            }}
-            onLayout={(e) => {
-              setContainerHeight(e.nativeEvent.layout.height)
-            }}
-            onContentSizeChange={(_, height) => {
-              setContentHeight(height)
-            }}
+            onScroll={handleScroll}
+            onLayout={handleLayout}
+            onContentSizeChange={handleContentSizeChange}
             scrollEventThrottle={16}
-            style={contentHeight > containerHeight ? spacings.prMi : {}}
+            // A ScrollView needs a bounded height on itself to know where its own scroll
+            // boundary is (https://reactnative.dev/docs/scrollview) - without it, content
+            // that doesn't fit can get clipped by an ancestor instead of being scrollable
+            style={[flexbox.flex1, contentHeight > containerHeight ? spacings.prMi : {}]}
           >
-            <PendingTransactions
-              network={network}
-              setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
-              delegatedContract={signAccountOpState?.delegatedContract}
-              hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
-              size="md"
-            />
-
-            {/* Display errors only if the user is not in view-only mode */}
-            {signAccountOpState?.errors?.length && !isViewOnly ? (
-              <ErrorInformation />
-            ) : (
+            {isOverviewTabActive ? (
               <>
-                <Simulation
+                <PendingTransactions
                   network={network}
-                  isViewOnly={isViewOnly}
-                  isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
+                  setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
+                  delegatedContract={signAccountOpState?.delegatedContract}
+                  hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
+                  size="md"
                 />
-                <SafeEip712Data
-                  accountAddr={signAccountOpState?.accountOp.accountAddr}
-                  chainId={signAccountOpState?.accountOp.chainId}
-                  safeEip712Data={signAccountOpState?.safeEip712Data}
-                />
+
+                {/* Display errors only if the user is not in view-only mode */}
+                {signAccountOpState?.errors?.length && !isViewOnly ? (
+                  <ErrorInformation />
+                ) : (
+                  <>
+                    <Simulation
+                      network={network}
+                      isViewOnly={isViewOnly}
+                      isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
+                    />
+                    {!shouldUseSafeAccountTabs && (
+                      <SafeEip712Data
+                        accountAddr={signAccountOpState?.accountOp.accountAddr}
+                        chainId={signAccountOpState?.accountOp.chainId}
+                        safeEip712Data={signAccountOpState?.safeEip712Data}
+                      />
+                    )}
+                  </>
+                )}
+                {signAccountOpState?.hasSafeApiFailed && (
+                  <Alert
+                    size="sm"
+                    type="warning"
+                    title={t('Safe API failure')}
+                    text={t('Transaction was not sent to Safe Global due to a Safe API failure')}
+                    style={spacings.mt}
+                  />
+                )}
+                {isViewOnly && (
+                  <NoKeysToSignAlert
+                    style={spacings.mt}
+                    chainId={signAccountOpState?.accountOp?.chainId}
+                  />
+                )}
               </>
-            )}
-            {signAccountOpState?.hasSafeApiFailed && (
-              <Alert
-                size="sm"
-                type="warning"
-                title={t('Safe API failure')}
-                text={t('Transaction was not sent to Safe Global due to a Safe API failure')}
-                style={spacings.mt}
-              />
-            )}
-            {isViewOnly && (
-              <NoKeysToSignAlert
-                style={spacings.mt}
-                chainId={signAccountOpState?.accountOp?.chainId}
+            ) : (
+              // The Hashes/Parsed/Raw sub-tabs are flattened into SafeAccountTabs above, so the
+              // active one drives this instance instead of it rendering its own tab bar.
+              <SafeEip712Data
+                accountAddr={signAccountOpState?.accountOp.accountAddr}
+                chainId={signAccountOpState?.accountOp.chainId}
+                safeEip712Data={signAccountOpState?.safeEip712Data}
+                withTitle={false}
+                hideTabs
+                activeTab={activeSafeAccountTab as SafeEip712ActiveTab}
+                onTabChange={handleSafeAccountTabChange}
               />
             )}
           </ScrollView>
@@ -403,4 +511,4 @@ const SignAccountOpScreen = () => {
   )
 }
 
-export default React.memo(SignAccountOpScreen)
+export default memo(SignAccountOpScreen)
