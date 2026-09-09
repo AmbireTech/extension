@@ -18,7 +18,7 @@ const { isPopup, isSidePanel } = getUiType()
 const CONTAINER_INNER_WRAPPER_STYLES = { flex: 1 } as const
 const BOTTOM_SHEET_WIDTH = isPopup || isSidePanel || isMobile ? ('100%' as const) : 450
 
-type Props = Pick<RenderSelectedOptionParams, 'isMenuOpen' | 'toggleMenu'> & {
+type Props = Pick<RenderSelectedOptionParams, 'isMenuOpen'> & {
   id?: string
   setIsMenuOpen: (isOpen: boolean) => void
   children?: React.ReactNode
@@ -32,7 +32,6 @@ const BottomSheetContainer: FC<Props> = ({
   id,
   isMenuOpen,
   setIsMenuOpen,
-  toggleMenu,
   children,
   contentRef,
   sectionListProps,
@@ -50,10 +49,9 @@ const BottomSheetContainer: FC<Props> = ({
     }
   }, [isMenuOpen, openSheet, closeSheet])
 
-  // Always set isMenuOpen to false when the BottomSheet is closed.
-  // Fixes the issue where the state is not updated when the BottomSheet is
-  // closed by dragging it down.
-  const handleClosed = useCallback(() => {
+  // Closes, never toggles: keeps the menu state in sync when the sheet is dragged
+  // down, and stops a backdrop press mid-close from flipping it back open.
+  const closeMenu = useCallback(() => {
     setIsMenuOpen(false)
   }, [setIsMenuOpen])
 
@@ -73,8 +71,8 @@ const BottomSheetContainer: FC<Props> = ({
       sectionListProps={sectionListProps}
       flatListProps={flatListProps}
       HeaderComponent={HeaderComponent}
-      closeBottomSheet={toggleMenu as () => void}
-      onClosed={handleClosed}
+      closeBottomSheet={closeMenu}
+      onClosed={closeMenu}
       containerInnerWrapperStyles={CONTAINER_INNER_WRAPPER_STYLES}
       style={bottomSheetStyle}
       isScrollEnabled={false}
