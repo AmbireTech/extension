@@ -22,9 +22,20 @@ type Props = {
   hideOnError?: boolean
 }
 
+// Stable, so a caller that passes a single `uri` does not hand the fallback chain a new
+// list on every render.
+const NO_URIS: string[] = []
+
+/**
+ * How long a load may go unreported before it counts as failed. React Native cancels an
+ * in-flight load when its view is detached - which a clipped list row is - and reports
+ * neither success nor failure, so nothing else would ever take the skeleton off.
+ */
+const LOAD_TIMEOUT = 8000
+
 const ManifestImage = ({
   uri,
-  uris = [],
+  uris = NO_URIS,
   fallback,
   size = 64,
   isRound,
@@ -36,12 +47,35 @@ const ManifestImage = ({
 }: Props) => {
   const { theme } = useTheme()
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
-  const [currentUri, setCurrentUri] = useState({
+  const targetUri = uri || uris[0]
+
+  /**
+   * `settledUri` is which uri finished loading, rather than whether one did. React Native
+   * starts no load - and so fires no event - for a source it was not asked to change, so a
+   * plain loading flag can be put back to true with nothing left to ever clear it.
+   */
+  const [load, setLoad] = useState(() => ({
+    target: targetUri,
     index: 0,
-    uri: uri || uris[0]
-  })
+    uri: targetUri,
+    settledUri: undefined as string | undefined,
+    hasError: !targetUri
+  }))
+
+  // Adjusted while rendering rather than from an effect, so a changed uri restarts the
+  // load in this render instead of one commit behind it.
+  if (load.target !== targetUri) {
+    setLoad({
+      target: targetUri,
+      index: 0,
+      uri: targetUri,
+      settledUri: undefined,
+      hasError: !targetUri
+    })
+  }
+
+  const { uri: currentUri, hasError } = load
+  const isLoading = !hasError && !!currentUri && currentUri !== load.settledUri
   const scaledSize = typeof size === 'number' ? size * iconScale : size
   const roundBorderRadius = typeof scaledSize === 'number' ? scaledSize / 2 : 50
   const svgSize = typeof scaledSize === 'number' ? scaledSize : '100%'
@@ -50,43 +84,40 @@ const ManifestImage = ({
   const shouldRenderAsSvg = useMemo(() => {
     if (!isMobile) return false
 
-    const lowercasedUri = currentUri.uri?.toLowerCase()
+    const lowercasedUri = currentUri?.toLowerCase()
 
     return !!lowercasedUri && (lowercasedUri.endsWith('.svg') || lowercasedUri.includes('.svg?'))
-  }, [currentUri.uri])
+  }, [currentUri])
 
   const onError = useCallback(() => {
-    setHasError(true)
-    // Unlike Image's onLoadEnd, SvgUri's onLoad doesn't fire on failure,
-    // so without this the skeleton would hide the fallback forever
-    setIsLoading(false)
+    setLoad((prev) => {
+      const nextIndex = prev.index + 1
+      // A single `uri` has nothing to fall back to. A list of them is a chain of fallbacks,
+      // so only running out of it is a failure - and saying so any earlier is what kept the
+      // chain from ever being tried, since the image is unmounted as soon as `hasError` is.
+      const nextUri = uri ? undefined : uris[nextIndex]
 
-    if (uris.length && uris.length > 1 && currentUri.index < uris.length - 1) {
-      setCurrentUri({
-        index: currentUri.index + 1,
-        uri: uris[currentUri.index + 1]
-      })
-    }
-  }, [currentUri.index, uris])
+      if (!nextUri) return { ...prev, hasError: true }
 
+      return { ...prev, index: nextIndex, uri: nextUri }
+    })
+  }, [uri, uris])
+
+  // Settles the uri it was rendered for, not whichever is current: React Native fires this
+  // on a failure too, and by then `onError` may have moved on to one that has not loaded.
   const onLoadEnd = useCallback(() => {
-    setIsLoading(false)
-  }, [])
+    setLoad((prev) => (prev.uri === currentUri ? { ...prev, settledUri: currentUri } : prev))
+  }, [currentUri])
 
   useEffect(() => {
-    if (!uris.length && !uri) {
-      setIsLoading(false)
-      setHasError(true)
-      return
-    }
+    if (!isLoading) return undefined
 
-    setCurrentUri({ index: 0, uri: uri || uris[0] })
-    setHasError(false)
-    setIsLoading(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uri, uris?.length])
+    const timer = setTimeout(onError, LOAD_TIMEOUT)
 
-  if (hideOnError && !isLoading && hasError && !fallback) return null
+    return () => clearTimeout(timer)
+  }, [isLoading, onError])
+
+  if (hideOnError && hasError && !fallback) return null
 
   return (
     <View
@@ -111,10 +142,10 @@ const ManifestImage = ({
           appearance={skeletonAppearance}
         />
       )}
-      {!isLoading && hasError && !!fallback && fallback()}
-      {!!currentUri.uri && !hasError && shouldRenderAsSvg && (
+      {hasError && !!fallback && fallback()}
+      {!!currentUri && !hasError && shouldRenderAsSvg && (
         <SvgUri
-          uri={currentUri.uri}
+          uri={currentUri}
           width={svgSize}
           height={svgSize}
           onError={onError}
@@ -122,9 +153,9 @@ const ManifestImage = ({
           style={{ opacity: isLoading ? 0 : 1 }}
         />
       )}
-      {!!currentUri.uri && !hasError && !shouldRenderAsSvg && (
+      {!!currentUri && !hasError && !shouldRenderAsSvg && (
         <Image
-          source={{ uri: currentUri.uri }}
+          source={{ uri: currentUri }}
           onError={onError}
           onLoadEnd={onLoadEnd}
           resizeMode="contain"
