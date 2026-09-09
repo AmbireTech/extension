@@ -70,7 +70,11 @@ Create ".env" file in the root directory and fill in all variables, see ".env-sa
 
 ## Crash Analytics
 
-Anonymous crash reports go to a self-hosted Sentry. What we do to keep private keys, seed phrases and passwords out of them is documented in [`CRASH-ANALYTICS.md`](./src/common/config/analytics/CRASH-ANALYTICS.md).
+Ambire sends anonymous crash reports to a self-hosted Sentry, so we can find and fix bugs without asking anyone to reproduce them.
+
+The safeguards we use to keep private keys, seed phrases, passwords and other sensitive data out of these reports are documented in [`CRASH-ANALYTICS.md`](./src/common/config/analytics/CRASH-ANALYTICS.md).
+
+Users can opt out of sending crash analytics at any time from Settings - Privacy opt-outs.
 
 ## Editor Config
 

@@ -2,7 +2,9 @@
 
 Ambire sends anonymous crash reports to a self-hosted Sentry, so we can find and fix bugs without asking anyone to reproduce them.
 
-It's our goal to only send data that may be useful for debugging, and such that does not harm the user's security or privacy. To not rely on one single mechanism, we have multiple layers of protection in the code and in Sentry (which will be discussed below).
+Our goal is to send only the data that's useful for debugging, and nothing that could compromise the user's security or privacy.
+
+Debug data is stripped at multiple points before it's sent, and we don't rely on a single safeguard: there are several independent layers of protection, both in our code and in our Sentry config (both shared in details below), preventing secrets from ever reaching our database.
 
 ## Where it runs
 
