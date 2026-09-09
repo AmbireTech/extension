@@ -202,12 +202,7 @@ const RouteInfo: FC<Props> = ({
             ]}
             childrenPosition="right"
           >
-            <RightArrowIcon
-              width={10}
-              height={10}
-              color={theme.primaryText}
-              style={spacings.mlMi}
-            />
+            <RightArrowIcon width={10} height={10} color="#fff" style={spacings.mlMi} />
           </Button>
 
           {shouldShowSelectRoute && quote?.selectedRoute?.serviceTime ? (
