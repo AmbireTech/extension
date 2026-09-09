@@ -185,13 +185,14 @@ const KeyStoreUnlockScreen = () => {
           width: '100%',
           ...spacings.phSm,
           // The update banner takes over the gap below the card, so the rest of the screen stays in place
-          marginBottom: isExtensionUpdateAvailable
-            ? SPACING_TY
-            : canUseBiometrics
-              ? 42
-              : isPasswordUnlockRequired
-                ? 24
-                : 56
+          marginBottom:
+            isExtensionUpdateAvailable && !isPasswordUnlockRequired
+              ? SPACING_TY
+              : canUseBiometrics
+                ? 42
+                : isPasswordUnlockRequired
+                  ? 24
+                  : 56
         }}
       >
         <View
@@ -267,7 +268,7 @@ const KeyStoreUnlockScreen = () => {
           </Text>
         </View>
       </View>
-      {isExtensionUpdateAvailable && (
+      {isExtensionUpdateAvailable && !isPasswordUnlockRequired && (
         <View style={[spacings.phSm, spacings.mbTy, { width: '100%' }]}>
           <UpdateAvailableBanner />
         </View>
