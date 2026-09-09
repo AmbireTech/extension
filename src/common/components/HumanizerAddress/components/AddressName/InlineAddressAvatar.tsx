@@ -11,14 +11,12 @@ interface Props {
 
 const InlineAddressAvatar: FC<Props> = ({ address, shouldShow }) => {
   const checksummedAddress = useMemo(() => getAddressCaught(address), [address])
-  const accountsState = useController('AccountsController').state
-  const {
-    state: { domains }
-  } = useController('DomainsController')
+  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: domains } = useController('DomainsController', 'domains')
 
   const account = useMemo(
-    () => accountsState?.accounts?.find((a) => a.addr === checksummedAddress),
-    [accountsState?.accounts, checksummedAddress]
+    () => accounts?.find((a) => a.addr === checksummedAddress),
+    [accounts, checksummedAddress]
   )
   const isEnsAddress = !!domains?.[checksummedAddress]?.names?.ens
 

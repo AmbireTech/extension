@@ -67,7 +67,7 @@ const AddressInput: React.FC<Props> = ({
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
   const { state: contacts } = useController('AddressBookController', 'contacts')
-  const { domains } = useController('DomainsController').state
+  const { state: domains } = useController('DomainsController', 'domains')
   const { message, severity } = validation
   const isError = severity === 'error'
 

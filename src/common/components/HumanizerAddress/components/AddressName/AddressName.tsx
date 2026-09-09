@@ -29,10 +29,10 @@ const AddressName: FC<Props> = ({
   ...rest
 }) => {
   const { name, isLoading } = useReverseLookup({ address })
-  const {
-    state: { contractNames },
-    dispatch: contractNamesDispatch
-  } = useController('ContractNamesController')
+  const { state: contractNames, dispatch: contractNamesDispatch } = useController(
+    'ContractNamesController',
+    'contractNames'
+  )
 
   const contract = useMemo(() => {
     return contractNames[address]

@@ -32,10 +32,11 @@ const useReverseLookup = ({
 }: Props): ReverseLookupResult => {
   const checksummedAddress = getAddressCaught(address)
 
-  const {
-    state: { domains, loadingAddresses },
-    dispatch
-  } = useController('DomainsController')
+  const { state: domains } = useController('DomainsController', 'domains')
+  const { state: loadingAddresses, dispatch } = useController(
+    'DomainsController',
+    'loadingAddresses'
+  )
   const isLoading = loadingAddresses.includes(checksummedAddress)
   const addressInDomains = domains[checksummedAddress]
 

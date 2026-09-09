@@ -18,7 +18,7 @@ interface Props {
 }
 
 const AccountBadges: FC<Props> = ({ accountData, withSpacing = true }) => {
-  const keystoreCtrl = useController('KeystoreController').state
+  const { state: keys } = useController('KeystoreController', 'keys')
   const { theme } = useTheme()
 
   const isSmartAccount = useMemo(
@@ -35,17 +35,16 @@ const AccountBadges: FC<Props> = ({ accountData, withSpacing = true }) => {
 
   return (
     <>
-      {keystoreCtrl.keys.every((k) => !accountData?.associatedKeys.includes(k.addr)) &&
-        !isSafeAccount && (
-          <BadgeWithPreset
-            preset="view-only"
-            style={{
-              ...(withSpacing ? spacings.mlTy : {}),
-              borderWidth: 1,
-              borderColor: theme.neutral600
-            }}
-          />
-        )}
+      {keys.every((k) => !accountData?.associatedKeys.includes(k.addr)) && !isSafeAccount && (
+        <BadgeWithPreset
+          preset="view-only"
+          style={{
+            ...(withSpacing ? spacings.mlTy : {}),
+            borderWidth: 1,
+            borderColor: theme.neutral600
+          }}
+        />
+      )}
 
       {isSmartAccount && isAmbireV1LinkedAccount && (
         <BadgeWithPreset preset="ambire-v1" style={withSpacing ? spacings.mlTy : undefined} />

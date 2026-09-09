@@ -36,7 +36,10 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { dispatch } = useControllersMiddleware()
   const { state: contacts } = useController('AddressBookController', 'contacts')
   const { state: accounts } = useController('AccountsController', 'accounts')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { state: verifiedDomainsStatus } = useController(
+    'DomainsController',
+    'verifiedDomainsStatus'
+  )
 
   const {
     control,

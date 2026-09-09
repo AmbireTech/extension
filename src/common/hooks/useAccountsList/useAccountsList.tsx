@@ -27,9 +27,7 @@ const useAccountsList = ({
   })
   const search = watch('search')
   const [shouldDisplayAccounts, setShouldDisplayAccounts] = useState(false)
-  const {
-    state: { domains }
-  } = useController('DomainsController')
+  const { state: domains } = useController('DomainsController', 'domains')
   const { state: accounts } = useController('AccountsController', 'accounts')
   const { state: keys } = useController('KeystoreController', 'keys')
   const { state: selectedAccount } = useController('SelectedAccountController', 'account')

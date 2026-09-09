@@ -34,15 +34,14 @@ const HumanizerAddressInner: FC<Props> = ({
   ...rest
 }) => {
   const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
-  const accountsState = useController('AccountsController').state
+  const { state: accounts } = useController('AccountsController', 'accounts')
   const { contacts = [] } = useController('AddressBookController').state
   const checksummedAddress = getAddressCaught(address)
 
   const localAddressLabel = useMemo(() => {
     const zeroAddressLabel = address === ZeroAddress && 'Zero Address'
     const contact = contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())
-    const account =
-      accountsState?.accounts && accountsState.accounts.find((a) => a.addr === checksummedAddress)
+    const account = accounts?.find((a) => a.addr === checksummedAddress)
     const hardcodedName = humanizerInfo?.name
     const tokenSymbol =
       portfolio?.tokens?.find((token) => token.address.toLowerCase() === address.toLowerCase())
@@ -63,7 +62,7 @@ const HumanizerAddressInner: FC<Props> = ({
     portfolio?.tokens,
     address,
     checksummedAddress,
-    accountsState?.accounts
+    accounts
   ])
 
   if (actionsMode === 'inline') {

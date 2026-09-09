@@ -40,25 +40,21 @@ const ICON_SIZE = 20
  */
 const useExploreSections = (): ExploreSection[] => {
   const { t } = useTranslation()
-  const { state } = useController('DappsController')
+  const { state: dapps } = useController('DappsController', 'dapps')
+  const { state: recentDapps } = useController('DappsController', 'recentDapps')
+  const { state: dappsTrendingTokens } = useController('DappsController', 'trendingTokens')
 
   const trendingTokens: TrendingToken[] = useMemo(
-    () => state.trendingTokens || [],
-    [state.trendingTokens]
+    () => dappsTrendingTokens || [],
+    [dappsTrendingTokens]
   )
-  const recent: Dapp[] = useMemo(() => state.recentDapps || [], [state.recentDapps])
+  const recent: Dapp[] = useMemo(() => recentDapps || [], [recentDapps])
   const connected: Dapp[] = useMemo(
-    () => (state.dapps || []).filter((d: Dapp) => !!d.isConnected),
-    [state.dapps]
+    () => (dapps || []).filter((d: Dapp) => !!d.isConnected),
+    [dapps]
   )
-  const favorites: Dapp[] = useMemo(
-    () => (state.dapps || []).filter((d: Dapp) => !!d.favorite),
-    [state.dapps]
-  )
-  const featured: Dapp[] = useMemo(
-    () => (state.dapps || []).filter((d: Dapp) => !!d.isFeatured),
-    [state.dapps]
-  )
+  const favorites: Dapp[] = useMemo(() => (dapps || []).filter((d: Dapp) => !!d.favorite), [dapps])
+  const featured: Dapp[] = useMemo(() => (dapps || []).filter((d: Dapp) => !!d.isFeatured), [dapps])
 
   return useMemo(() => {
     const all: ExploreSection[] = [

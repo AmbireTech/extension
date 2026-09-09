@@ -14,7 +14,7 @@ const InteractionAddress = ({ address }: { address: string }) => {
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const reverseLookup = useReverseLookup({ address })
   const { contacts = [] } = useController('AddressBookController').state
-  const { accounts = [] } = useController('AccountsController').state
+  const { state: accounts = [] } = useController('AccountsController', 'accounts')
   const addressBookContact = contacts.find(
     (contact) => contact.address.toLowerCase() === address.toLowerCase()
   )

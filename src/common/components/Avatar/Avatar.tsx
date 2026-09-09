@@ -79,9 +79,8 @@ const Avatar: FC<Props> = ({
   )
   const ensAvatarImageFetchFailed = ensAvatarImageState === 'failed'
   // ENS Avatar
-  const {
-    state: { domains, loadingAddresses }
-  } = useController('DomainsController')
+  const { state: domains } = useController('DomainsController', 'domains')
+  const { state: loadingAddresses } = useController('DomainsController', 'loadingAddresses')
   // There is no wallet controller state in benzin/rewards so we need to be careful
 
   let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = propAvatarType || 'jazzicons'

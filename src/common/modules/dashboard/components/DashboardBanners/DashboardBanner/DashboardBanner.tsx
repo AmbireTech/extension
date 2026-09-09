@@ -35,15 +35,15 @@ const DashboardBanner = ({
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
-  const {
-    state: { visibleUserRequests },
-    dispatch: requestsDispatch
-  } = useController('RequestsController')
+  const { state: visibleUserRequests, dispatch: requestsDispatch } = useController(
+    'RequestsController',
+    'visibleUserRequests'
+  )
   const transferState = useController('TransferController').state
-  const {
-    state: { networks },
-    dispatch: networksDispatch
-  } = useController('NetworksController')
+  const { state: networks, dispatch: networksDispatch } = useController(
+    'NetworksController',
+    'networks'
+  )
   const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch: emailVaultDispatch } = useController('EmailVaultController')

@@ -14,10 +14,11 @@ const isPopup = getUiType().isPopup
 const PendingActionWindowModal = () => {
   const { ref: sheetRef, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
-  const {
-    state: { requestWindow, currentUserRequest },
-    dispatch: requestsDispatch
-  } = useController('RequestsController')
+  const { state: requestWindow, dispatch: requestsDispatch } = useController(
+    'RequestsController',
+    'requestWindow'
+  )
+  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
   const onPrimaryButtonPress = useCallback(() => {
     requestsDispatch({
       type: 'method',

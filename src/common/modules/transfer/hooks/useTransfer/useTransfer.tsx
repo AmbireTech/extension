@@ -30,7 +30,11 @@ const useTransfer = (isTopUpScreen: boolean) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { verifiedDomainsStatus, domains } = useController('DomainsController').state
+  const { state: verifiedDomainsStatus } = useController(
+    'DomainsController',
+    'verifiedDomainsStatus'
+  )
+  const { state: domains } = useController('DomainsController', 'domains')
   const {
     isTopUp,
     validationFormMsgs,

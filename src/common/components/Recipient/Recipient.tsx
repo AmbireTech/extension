@@ -260,9 +260,7 @@ const Recipient: React.FC<Props> = ({
   const contactAddressMaxLength = isSidePanel ? 16 : undefined
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { state: contacts } = useController('AddressBookController', 'contacts')
-  const {
-    state: { domains }
-  } = useController('DomainsController')
+  const { state: domains } = useController('DomainsController', 'domains')
   const [bindManageBtnAnim, manageBtnAnimStyle] = useHover({
     preset: 'opacityInverted'
   })

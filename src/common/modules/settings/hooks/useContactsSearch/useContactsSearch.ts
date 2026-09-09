@@ -8,9 +8,7 @@ import useDebounce from '@common/hooks/useDebounce'
 
 const useContactsSearch = (search: string) => {
   const { state: contacts } = useController('AddressBookController', 'contacts')
-  const {
-    state: { domains }
-  } = useController('DomainsController')
+  const { state: domains } = useController('DomainsController', 'domains')
 
   const debouncedSearch = useDebounce({ value: search, delay: 350 })
 

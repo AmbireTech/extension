@@ -33,10 +33,13 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     }
   } = useController('SelectedAccountController')
 
-  const { banners: emailVaultBanners = [] } = useController('EmailVaultController').state
-  const { banners: requestBanners = [] } = useController('RequestsController').state
-  const { banners: swapAndBridgeBanners = [] } = useController('SwapAndBridgeController').state
-  const { extensionUpdateBanner } = useController('ExtensionUpdateController').state
+  const { state: emailVaultBanners = [] } = useController('EmailVaultController', 'banners')
+  const { state: requestBanners = [] } = useController('RequestsController', 'banners')
+  const { state: swapAndBridgeBanners = [] } = useController('SwapAndBridgeController', 'banners')
+  const { state: extensionUpdateBanner } = useController(
+    'ExtensionUpdateController',
+    'extensionUpdateBanner'
+  )
   const { state: hasFundedHotAccount } = useController('PortfolioController', 'hasFundedHotAccount')
   const otaUpdateBanner = useOtaUpdateBanner()
 

@@ -30,10 +30,10 @@ const BenzinAddressName: FC<Props> = ({
 }) => {
   const { isLoading: isLoadingEns, name } = useReverseLookup({ address })
 
-  const {
-    state: { contractNames },
-    dispatch
-  } = useController('ContractNamesController')
+  const { state: contractNames, dispatch } = useController(
+    'ContractNamesController',
+    'contractNames'
+  )
 
   useEffect(() => {
     if (!contractNames[address]) {

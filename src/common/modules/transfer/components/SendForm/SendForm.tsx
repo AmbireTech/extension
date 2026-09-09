@@ -74,7 +74,10 @@ const SendForm = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state: networks } = useController('NetworksController', 'networks')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { state: verifiedDomainsStatus } = useController(
+    'DomainsController',
+    'verifiedDomainsStatus'
+  )
   const domainVerificationMessage =
     verifiedDomainsStatus[addressStateFieldValue.trim()] === 'VERIFIED' ? 'Verified by Colibri' : ''
 
