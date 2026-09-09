@@ -43,8 +43,9 @@ export async function runSimpleTransferFlow({
     await pages.transfer.fillRecipient(recipientAddress)
   })
 
+  let signed = false
   await test.step('send transaction', async () => {
-    await pages.transfer.signSlowSpeedTransaction({
+    signed = await pages.transfer.signSlowSpeedTransaction({
       feeToken,
       payWithGasTank,
       sendToken,
@@ -52,6 +53,10 @@ export async function runSimpleTransferFlow({
       ledgerSimulatorControls
     })
   })
+
+  // When the fee is above the $0.10 test limit, `signSlowSpeedTransaction` skips signing on purpose.
+  // Nothing was broadcasted, so skip the test instead of failing the assertions below.
+  test.skip(!signed, 'Transaction fee exceeded the $0.10 limit; signing was skipped.')
 
   await test.step('assert new transaction on Activity tab', async () => {
     await pages.transfer.checkSendTransactionOnActivityTab()
