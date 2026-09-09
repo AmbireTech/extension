@@ -174,11 +174,12 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
   )
 
   const style = useMemo(() => {
-    // The hovered style is never reached on the mobile app, so the properties
-    // stay at the value they start from - only the opacity has to stay animated.
+    // Pointer hovering never happens on the mobile app, so the properties snap between
+    // the value they start from and the one `forceHoveredStyle` asks for, instead of
+    // being animated - only the opacity has to stay animated.
     if (isMobileApp) {
       const staticStyle = memoizedValues.reduce(
-        (acc, { property, from }) => ({ ...acc, [property]: from }),
+        (acc, { property, from, to }) => ({ ...acc, [property]: forceHoveredStyle ? to : from }),
         {}
       )
       const opacity = animatedValues.find(({ property }) => property === 'opacity')
@@ -200,7 +201,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
 
     // Prevents the hook from returning an empty style object on the first render
     return memoizedValues.reduce((acc, { property, from }) => ({ ...acc, [property]: from }), {})
-  }, [animatedValues, isMobileApp, memoizedValues])
+  }, [animatedValues, isMobileApp, memoizedValues, forceHoveredStyle])
 
   return [bind, style, isHovered || forceHoveredStyle, onHoverIn, animatedValues] as [
     {
