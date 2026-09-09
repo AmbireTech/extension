@@ -37,17 +37,19 @@ describe('pending WALLET withdrawal helpers', () => {
     })
   })
 
-  test('uses the lock-time flow only when xWALLET can back all pending shares', () => {
-    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n - 1n, 10n)).toBe(
-      false
-    )
-    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n, 10n ** 16n)).toBe(
-      true
-    )
+  test('uses the lock-time flow for every fully backed pending withdrawal, including small ones', () => {
+    const smallPendingShares = 470_878_895_989_112n
+
     expect(
-      shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 10n ** 16n, 10n ** 16n + 1n)
-    ).toBe(false)
-    expect(shouldUsePendingWalletWithdrawalMode(null, 10n ** 16n, 10n)).toBe(false)
+      shouldUsePendingWalletWithdrawalMode(
+        { ...pendingWithdrawal, shares: smallPendingShares },
+        smallPendingShares,
+        smallPendingShares
+      )
+    ).toBe(true)
+    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 11n, 10n)).toBe(true)
+    expect(shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, 9n, 10n)).toBe(false)
+    expect(shouldUsePendingWalletWithdrawalMode(null, 10n, 10n)).toBe(false)
   })
 
   test('serializes and parses an account-specific cache entry', () => {
