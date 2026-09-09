@@ -42,6 +42,7 @@ const COMMON_ROUTES = {
   settingsTerms: 'settings/terms',
   explore: 'explore',
   exploreSection: 'explore/section',
+  walletStaking: 'explore/wallet-staking',
   signMessage: 'sign-message',
   addChain: 'add-chain',
   watchAsset: 'watch-asset',

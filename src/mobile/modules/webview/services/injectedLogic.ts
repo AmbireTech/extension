@@ -3,6 +3,7 @@ import { EventEmitter as Emitter } from 'events'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { NavigateOptions, View } from '@ambire-common/interfaces/ui'
+import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 // Import the `.native` implementations explicitly. The worker bundle is built
@@ -21,6 +22,7 @@ import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/Ur
 import NfcHardwareSigner from '@common/modules/hardware-wallets/signers/NfcHardwareSigner'
 import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { resolveViewRoute } from '@common/modules/router/helpers'
+import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
 import { MOBILE_VIEW_ID } from '@mobile/constants/ui'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
@@ -121,12 +123,54 @@ const sendToRNAsync = (type: string, payload: any): Promise<any> => {
 // @ts-ignore
 window.sendToRNAsync = sendToRNAsync
 
+// The highest balance seen per account, because a request firing while the portfolio
+// is still loading would otherwise under-report it in the balance hint.
+const userBalances: Record<string, number> = {}
+
+// Resolved per request, because the keystore uid, the invite code and the balance are
+// not available at boot. Requests fired before the keystore is constructed go out with
+// an empty source, same as in the extension.
+const decorateAmbireApiRequest = (
+  url: string
+): { url: string; headers: Record<string, string> } => {
+  if (!isAmbireApiUrl(url)) return { url, headers: {} }
+
+  const currentAccount = mainCtrl?.selectedAccount?.account
+  const currentBalance = mainCtrl?.selectedAccount?.portfolio?.totalBalance || 0
+  if (currentAccount && (userBalances[currentAccount.addr] || 0) < currentBalance)
+    userBalances[currentAccount.addr] = currentBalance
+
+  // The balance hint is worth attaching only if the user has keys for the account
+  const hasCurrentAccountKeys =
+    currentAccount &&
+    getAccountKeysCount({
+      accountAddr: currentAccount.addr,
+      keys: mainCtrl.keystore.keys,
+      accounts: mainCtrl.accounts.accounts
+    })
+
+  return {
+    url:
+      currentAccount && hasCurrentAccountKeys
+        ? attachBalanceHint(url, currentAccount.addr, userBalances[currentAccount.addr] || 0)
+        : url,
+    headers: {
+      'x-app-source': getAppInstanceId(
+        mainCtrl?.keystore?.keyStoreUid,
+        mainCtrl?.invite?.verifiedCode || ''
+      ),
+      'x-app-version': appVersionHeader,
+      'x-app-env': appEnv
+    }
+  }
+}
+
 // Create the bridged fetch and override window.fetch globally.
 // This ensures ALL network requests in the WebView (including ethers.js
 // JSON-RPC providers and any other library using fetch directly) are
 // routed through the RN bridge — not just the explicit fetch param
 // passed to MainController.
-const bridgedFetch = createBridgedFetch(sendToRNAsync)
+const bridgedFetch = createBridgedFetch(sendToRNAsync, decorateAmbireApiRequest)
 // @ts-ignore — override the global fetch with our bridge
 window.fetch = bridgedFetch
 
@@ -217,6 +261,10 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
 
 // We temporarily pause handling actions until config is fully loaded
 let isConfigured = false
+// The x-app-version and x-app-env header values, built on the RN side (where the app
+// version, the OS and the app env live) and handed over with the init config.
+let appVersionHeader = ''
+let appEnv = ''
 let mainCtrl: any = null
 let walletStateCtrl: any = null
 let autoLockCtrl: any = null
@@ -225,6 +273,9 @@ let currentWindowId = 1
 
 const initControllers = (config: any) => {
   try {
+    appVersionHeader = config.appVersionHeader
+    appEnv = config.appEnv
+
     // Logged here (not in structuredCloneShim) because that module loads before
     // console forwarding is wired up, so its logs never reach Metro.
     console.log((globalThis as any).__structuredCloneShimStatus)

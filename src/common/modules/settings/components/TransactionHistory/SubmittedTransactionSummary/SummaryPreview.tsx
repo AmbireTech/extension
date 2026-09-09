@@ -164,7 +164,6 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 fontSize={12}
                 weight="medium"
                 appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                // @ts-ignore
                 style={{
                   cursor: 'pointer',
                   ...(isCompactSidePanelLayout ? { lineHeight: 16 } : {})
