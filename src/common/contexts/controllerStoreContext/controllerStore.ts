@@ -3,7 +3,6 @@ import { flushSync } from 'react-dom'
 import { isDev } from '@common/config/env'
 import eventBus from '@common/services/event/eventBus'
 import { reconcileState } from '@common/utils/reconcileState'
-import { isExtension } from '@web/constants/browserapi'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -113,22 +112,20 @@ export class ControllerStore {
     forceEmit?: boolean
   ) {
     if (ctrl === undefined) return
+    const prevState = this.#states[id]
     try {
-      // A shallow copy is only safe when the state already arrived as a fresh deep
-      // object, which is true on the extension because it crossed the port. Mobile
-      // runs the controllers in this same realm, so `ctrl` still holds the live
-      // nested objects and the snapshot has to be detached here instead. Reconciling
-      // on top of the detached copy keeps the emit path cheap: an emit that changed
-      // nothing returns the previous snapshot untouched, so every subscriber exits on
-      // a reference check instead of a full deep comparison.
-      if (isExtension) {
-        this.#states[id] = { ...ctrl }
-      } else {
-        this.#states[id] = reconcileState(this.#states[id], ctrl, {
-          label: id as string,
-          detectCycles: isDev
-        })
-      }
+      // Reconciling keeps the emit path cheap: the snapshot is detached from the
+      // controller's own objects, which is mandatory where the controllers run in this
+      // same realm, and every object the update did not touch keeps the identity it
+      // already had. So an emit that changed nothing returns the previous snapshot
+      // untouched and every subscriber exits on a reference check. The extension's
+      // state already arrives detached over the port, but it arrives as a fresh tree on
+      // every emit, which is what used to make each of its subscribers deep compare its
+      // own slice - and hand every memoized child new props for unchanged content.
+      this.#states[id] = reconcileState(prevState, ctrl, {
+        label: id as string,
+        detectCycles: isDev
+      })
     } catch (error) {
       // Leaving the snapshot unset means every consumer reads the empty state and
       // the store never reports ready, so the controller has to be named or the
@@ -148,6 +145,11 @@ export class ControllerStore {
 
     const idListeners = this.#listeners.get(id as string)
     if (!idListeners) return
+
+    // An emit the reconcile found no change in leaves every subscriber's value at the
+    // very reference it already holds, so notifying them could only end in a no-op.
+    // `forceEmit` is let through: it is the path a user action is waiting on.
+    if (this.#states[id] === prevState && !forceEmit) return
 
     if (forceEmit) {
       /**

@@ -46,7 +46,21 @@ export class ControllerHelpersStore {
   ) {
     if (data === undefined) return
 
-    this.#states[id] = { ...(this.#states[id] ?? {}), ...data } as ControllerHelpersMapping[K]
+    const prevState = this.#states[id]
+    // Helpers hold refs, callbacks and flags, never nested state, so a key holding the
+    // same reference holds the same helper. An update where every key already holds
+    // what it is being given changes nothing, and re-rendering on it is the no-op the
+    // subscribers have no way of catching: they read the whole object, which a rebuild
+    // would hand them with a new identity either way.
+    const hasChange =
+      !prevState ||
+      (Object.keys(data) as (keyof ControllerHelpersMapping[K])[]).some(
+        (key) => (prevState as ControllerHelpersMapping[K])[key] !== data[key]
+      )
+
+    if (!hasChange) return
+
+    this.#states[id] = { ...(prevState ?? {}), ...data } as ControllerHelpersMapping[K]
 
     const idListeners = this.#listeners.get(id as string)
     if (!idListeners) return
