@@ -28,6 +28,10 @@
   </p>
 </div>
 
+## Third-party integrations
+
+The Swap & Bridge feature is a user interface on top of independent third-party aggregators - Ambire never takes custody of user funds and is not a counterparty to any trade. The providers, the exact API endpoints used, their public documentation and terms, and the interface fee are documented in [Swap & Bridge](./src/common/modules/swap-and-bridge/README.md).
+
 ## Environment Setup
 
 Built in a hybrid approach (with React Native and React Native Web) so that in a single codebase we can support building cross-browser extensions, mobile apps and web apps.
