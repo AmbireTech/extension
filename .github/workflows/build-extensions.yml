@@ -159,6 +159,7 @@ jobs:
         if: matrix.build_variant == 'next:webkit' && (github.event_name == 'release' || inputs.submit_next_to_chrome_web_store)
         env:
           BROWSER_EXTENSION_PUBLIC_KEY: ${{ vars.BROWSER_EXTENSION_PUBLIC_KEY }}
+          PUBLISHER_ID: ${{ vars.CHROME_WEB_STORE_PUBLISHER_ID }}
           CLIENT_ID: ${{ secrets.CHROME_WEB_STORE_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CHROME_WEB_STORE_CLIENT_SECRET }}
           REFRESH_TOKEN: ${{ secrets.CHROME_WEB_STORE_REFRESH_TOKEN }}
@@ -179,6 +180,9 @@ jobs:
           ITEM_ID=$(printf '%s' "$BROWSER_EXTENSION_PUBLIC_KEY" | base64 -d | sha256sum | head -c 32 | tr '0-9a-f' 'a-p')
           echo "Derived Chrome Web Store item ID: $ITEM_ID"
 
+          test -n "$PUBLISHER_ID" || { echo "::error::CHROME_WEB_STORE_PUBLISHER_ID is empty. Copy it from Publisher > Settings in the Chrome Web Store Developer Dashboard into the environment's variables."; exit 1; }
+          ITEM="publishers/$PUBLISHER_ID/items/$ITEM_ID"
+
           ACCESS_TOKEN=$(curl -s --fail-with-body -X POST https://oauth2.googleapis.com/token \
             -d "client_id=$CLIENT_ID" \
             -d "client_secret=$CLIENT_SECRET" \
@@ -186,17 +190,23 @@ jobs:
             -d "grant_type=refresh_token" | jq -er '.access_token') \
             || { echo "::error::Could not refresh the Chrome Web Store access token. Note that the refresh token silently expires after 7 days while the Google OAuth consent screen is in Testing mode. Publish the consent screen (or set it to Internal) and generate a new refresh token."; exit 1; }
 
+          fetch_status() {
+            curl -s --fail-with-body \
+              -H "Authorization: Bearer $ACCESS_TOKEN" \
+              "https://chromewebstore.googleapis.com/v2/$ITEM:fetchStatus"
+          }
+
           # A production hotfix (say v6.20.4) can be tagged while Ambire Next is
           # already on v6.21.0. The store keeps a single draft slot, so uploading
           # the older build would overwrite the newer one - possibly one that is
-          # still in review. Manual runs skip this guard on purpose, so that a
-          # submission that failed halfway can be retried.
+          # still in review, which is why the submitted revision counts here just
+          # as much as the published one. Manual runs skip this guard on purpose,
+          # so that a submission that failed halfway can be retried.
           if [ "$GITHUB_EVENT_NAME" = "release" ]; then
-            STORE_VERSION=$(curl -s --fail-with-body \
-              -H "Authorization: Bearer $ACCESS_TOKEN" \
-              -H "x-goog-api-version: 2" \
-              "https://www.googleapis.com/chromewebstore/v1.1/items/$ITEM_ID?projection=DRAFT" | jq -r '.crxVersion // empty')
-            echo "Version currently in the store: ${STORE_VERSION:-unknown}"
+            STORE_VERSION=$(fetch_status \
+              | jq -r '[.publishedItemRevisionStatus, .submittedItemRevisionStatus] | map(.distributionChannels[]?.crxVersion) | .[]' \
+              | sort -V | tail -n1)
+            echo "Highest version currently in the store: ${STORE_VERSION:-none}"
 
             # sort -V puts the higher version last, so the store wins on ties too
             if [ -n "$STORE_VERSION" ] && [ "$(printf '%s\n%s\n' "$VERSION" "$STORE_VERSION" | sort -V | tail -n1)" = "$STORE_VERSION" ]; then
@@ -206,31 +216,47 @@ jobs:
           fi
 
           echo "Uploading $ZIP as a new version of item $ITEM_ID"
-          # This endpoint responds with HTTP 200 even for a rejected upload, so
-          # the uploadState in the body is what actually tells us if it worked.
-          UPLOAD=$(curl -s --fail-with-body -X PUT -T "$ZIP" \
+          UPLOAD=$(curl -s --fail-with-body -X POST -T "$ZIP" \
             -H "Authorization: Bearer $ACCESS_TOKEN" \
-            -H "x-goog-api-version: 2" \
-            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/$ITEM_ID")
+            "https://chromewebstore.googleapis.com/upload/v2/$ITEM:upload") \
+            || { echo "::error::Uploading the package failed: $UPLOAD"; exit 1; }
           echo "$UPLOAD"
-          [ "$(jq -r '.uploadState' <<< "$UPLOAD")" = "SUCCESS" ] \
-            || { echo "::error::Upload failed: $(jq -r '[.itemError[]?.error_detail] | join("; ")' <<< "$UPLOAD")"; exit 1; }
+          UPLOAD_STATE=$(jq -r '.uploadState // empty' <<< "$UPLOAD")
+
+          # The store may process the package asynchronously and answer with
+          # IN_PROGRESS, in which case publishing right away would submit the
+          # previous package.
+          ATTEMPT=0
+          while [ "$UPLOAD_STATE" != "SUCCEEDED" ] && [ "$UPLOAD_STATE" != "FAILED" ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            [ "$ATTEMPT" -le 20 ] || { echo "::error::The package upload was still not processed after 5 minutes (last state: ${UPLOAD_STATE:-unknown})."; exit 1; }
+            sleep 15
+            UPLOAD_STATE=$(fetch_status | jq -r '.lastAsyncUploadState // empty')
+            echo "Upload state: ${UPLOAD_STATE:-unknown}"
+          done
+          [ "$UPLOAD_STATE" = "SUCCEEDED" ] || { echo "::error::The Chrome Web Store rejected the uploaded package. Check the item in the Developer Dashboard for the reason."; exit 1; }
 
           echo "Submitting version $VERSION for review"
-          # Once the review passes, the version goes live automatically. To keep
-          # control over the go-live moment, switch the item to "Publish manually
-          # after review" in the Developer Dashboard - the API has no
-          # submit-without-publishing call.
+          # STAGED_PUBLISH holds the approved version instead of pushing it live,
+          # so we pick the go-live moment ourselves with the Publish button in the
+          # Developer Dashboard. Mind the deadline: an approved submission that is
+          # not published within 30 days falls back to a draft and has to go
+          # through review again. Swap in DEFAULT_PUBLISH to go live on approval.
           PUBLISH=$(curl -s --fail-with-body -X POST \
             -H "Authorization: Bearer $ACCESS_TOKEN" \
-            -H "x-goog-api-version: 2" \
-            -H "Content-Length: 0" \
-            "https://www.googleapis.com/chromewebstore/v1.1/items/$ITEM_ID/publish")
+            -H "Content-Type: application/json" \
+            -d '{"publishType": "STAGED_PUBLISH"}' \
+            "https://chromewebstore.googleapis.com/v2/$ITEM:publish") \
+            || { echo "::error::Submitting for review failed: $PUBLISH"; exit 1; }
           echo "$PUBLISH"
-          jq -e '.status | index("OK")' <<< "$PUBLISH" > /dev/null \
-            || { echo "::error::Submitting for review failed: $(jq -r '.statusDetail | join("; ")' <<< "$PUBLISH")"; exit 1; }
 
-          echo "✅ Ambire Next v${VERSION} submitted for review"
+          # A submission that skipped review comes back STAGED instead of PENDING_REVIEW
+          case "$(jq -r '.state // empty' <<< "$PUBLISH")" in
+            PENDING_REVIEW|STAGED) ;;
+            *) echo "::error::Unexpected state after submitting: $(jq -r '.state // "none"' <<< "$PUBLISH")"; exit 1 ;;
+          esac
+
+          echo "✅ Ambire Next v${VERSION} submitted for review. Once it is approved, press Publish in the Developer Dashboard to take it live."
         shell: bash
 
   publish-release-assets:
