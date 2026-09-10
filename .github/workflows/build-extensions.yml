@@ -3,8 +3,12 @@ name: 🌐 Build · Browser Extensions
 on:
   workflow_dispatch: # Manual trigger
     inputs:
+      # Releases submit Ambire Next on their own, so this is only the escape
+      # hatch for a submission that failed after the build had already passed
+      # (e.g. an expired Chrome Web Store refresh token). It also bypasses the
+      # "the store already has a newer version" guard.
       submit_next_to_chrome_web_store:
-        description: 'Submit the Ambire Next build to the Chrome Web Store for review'
+        description: 'Force submitting the Ambire Next build to the Chrome Web Store for review'
         type: boolean
         default: false
   release:
@@ -147,9 +151,12 @@ jobs:
       # that gets released most often. The production webkit and gecko builds are
       # still submitted by hand, as their reviews need extra care (e.g. the
       # separate source code .zip that Firefox requires).
+      # Runs on every published release, so the .zip that goes to the store is
+      # the very same one this run attaches to the release and covers with
+      # SHA256SUMS. Submitting from a separate manual run would break that.
       # Kept last, so that a failed submission still leaves the artifacts behind.
       - name: Submit Ambire Next to the Chrome Web Store for review 🚀
-        if: matrix.build_variant == 'next:webkit' && inputs.submit_next_to_chrome_web_store
+        if: matrix.build_variant == 'next:webkit' && (github.event_name == 'release' || inputs.submit_next_to_chrome_web_store)
         env:
           BROWSER_EXTENSION_PUBLIC_KEY: ${{ vars.BROWSER_EXTENSION_PUBLIC_KEY }}
           CLIENT_ID: ${{ secrets.CHROME_WEB_STORE_CLIENT_ID }}
@@ -178,6 +185,25 @@ jobs:
             -d "refresh_token=$REFRESH_TOKEN" \
             -d "grant_type=refresh_token" | jq -er '.access_token') \
             || { echo "::error::Could not refresh the Chrome Web Store access token. Note that the refresh token silently expires after 7 days while the Google OAuth consent screen is in Testing mode. Publish the consent screen (or set it to Internal) and generate a new refresh token."; exit 1; }
+
+          # A production hotfix (say v6.20.4) can be tagged while Ambire Next is
+          # already on v6.21.0. The store keeps a single draft slot, so uploading
+          # the older build would overwrite the newer one - possibly one that is
+          # still in review. Manual runs skip this guard on purpose, so that a
+          # submission that failed halfway can be retried.
+          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
+            STORE_VERSION=$(curl -s --fail-with-body \
+              -H "Authorization: Bearer $ACCESS_TOKEN" \
+              -H "x-goog-api-version: 2" \
+              "https://www.googleapis.com/chromewebstore/v1.1/items/$ITEM_ID?projection=DRAFT" | jq -r '.crxVersion // empty')
+            echo "Version currently in the store: ${STORE_VERSION:-unknown}"
+
+            # sort -V puts the higher version last, so the store wins on ties too
+            if [ -n "$STORE_VERSION" ] && [ "$(printf '%s\n%s\n' "$VERSION" "$STORE_VERSION" | sort -V | tail -n1)" = "$STORE_VERSION" ]; then
+              echo "::notice::Skipped the Chrome Web Store submission: the store already holds v$STORE_VERSION, which is not older than this build's v$VERSION."
+              exit 0
+            fi
+          fi
 
           echo "Uploading $ZIP as a new version of item $ITEM_ID"
           # This endpoint responds with HTTP 200 even for a rejected upload, so
