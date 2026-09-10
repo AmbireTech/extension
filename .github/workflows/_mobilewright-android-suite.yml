@@ -1,0 +1,139 @@
+# Reusable Mobilewright Android suite — runs ONE shard against the prebuilt Android APK
+# (the `ambire-android-v*-apk` artifact produced by the caller's `build-android` job, via
+# ./.github/workflows/_build-android.yml, in the same run). Parameterized so every shard
+# shares a single step definition, mirroring ./_e2e-suite.yml for Playwright.
+name: The reusable Mobilewright Android suite
+
+on:
+  workflow_call:
+    inputs:
+      suite:
+        description: 'Suite name — used for the uploaded blob-report artifact name'
+        required: true
+        type: string
+      command:
+        description: 'The mobilewright test command to run (e.g. "npx mobilewright test --project=android --shard=1/2 --reporter=blob")'
+        required: true
+        type: string
+      api_level:
+        # Android OS version of the emulator system image (API 34 = Android 14).
+        # The app supports API 24..36, so anything in that range should work
+        description: 'Android API level for the emulator system image'
+        required: false
+        default: 34
+        type: number
+
+# Non-secret config (vars). Reusable workflows do NOT inherit the caller's env, so the
+# shared vars block is repeated here, same as _e2e-suite.yml. Secrets live in the job's
+# env instead, since the `secrets` context is not allowed at workflow level.
+env:
+  IS_TESTING: 'true'
+  RELAYER_URL: ${{ vars.RELAYER_URL }}
+  VELCRO_URL: ${{ vars.VELCRO_URL }}
+  BA_ACCOUNTS: ${{ vars.BA_ACCOUNTS }}
+  BA_KEYSTORE_UID: ${{ vars.BA_KEYSTORE_UID }}
+  BA_KEYS: ${{ vars.BA_KEYS }}
+  BA_SEEDS: ${{ vars.BA_SEEDS }}
+  BA_LEARNED_ASSETS: ${{ vars.BA_LEARNED_ASSETS }}
+  BA_SELECTED_ACCOUNT: ${{ vars.BA_SELECTED_ACCOUNT }}
+  SA_ACCOUNTS: ${{ vars.SA_ACCOUNTS }}
+  SA_KEYSTORE_UID: ${{ vars.SA_KEYSTORE_UID }}
+  SA_KEYS: ${{ vars.SA_KEYS }}
+  SA_SEEDS: ${{ vars.SA_SEEDS }}
+  SA_LEARNED_ASSETS: ${{ vars.SA_LEARNED_ASSETS }}
+  SA_SELECTED_ACCOUNT: ${{ vars.SA_SELECTED_ACCOUNT }}
+  DEFAULT_INVITATION_CODE_DEV: ${{ vars.DEFAULT_INVITATION_CODE_DEV }}
+
+jobs:
+  run:
+    name: Android · ${{ inputs.suite }}
+    runs-on: ubuntu-latest
+    environment: testing
+    env:
+      # Unique blob-report filename per shard so the report job's merge-multiple download
+      # doesn't collide two shards both emitting the default report name.
+      PWTEST_BLOB_REPORT_NAME: ${{ inputs.suite }}
+      KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+      SEED: ${{ secrets.SEED }}
+      SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      BA_SECRETS: ${{ secrets.BA_SECRETS }}
+      SA_SECRETS: ${{ secrets.SA_SECRETS }}
+      SA_ACCOUNT_JSON: ${{ secrets.SA_ACCOUNT_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+          cache-dependency-path: e2e-playwright-tests/yarn.lock
+
+      # The mobile specs import shared helpers from the parent e2e-playwright-tests
+      # package (constants/*, @helpers/*, utils/env/*), so its deps must be installed too.
+      - name: Install shared e2e dependencies
+        working-directory: ./e2e-playwright-tests
+        run: yarn install --frozen-lockfile && yarn postinstall
+
+      - name: Install Mobilewright test dependencies
+        working-directory: ./e2e-playwright-tests/e2e-mobile-tests
+        run: npm ci
+
+      - name: Download Android build artifact
+        uses: actions/download-artifact@v6
+        with:
+          pattern: 'ambire-android-v*-apk'
+          path: ./android-build
+          merge-multiple: true
+
+      - name: Unpack Android build
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP_PATH=$(find ./android-build -maxdepth 1 -type f -name '*.zip' | head -n1)
+          if [ -z "$ZIP_PATH" ]; then
+            echo "No Android build zip found in ./android-build"
+            ls -la ./android-build || true
+            exit 1
+          fi
+          # Inner zip holds Ambire.apk at its root — matches installApps: './Ambire.apk'
+          # in mobilewright.config.ts.
+          unzip -o "$ZIP_PATH" -d ./e2e-playwright-tests/e2e-mobile-tests
+
+      # Standard workaround so the Android emulator gets hardware acceleration (KVM)
+      # on GitHub-hosted Linux runners. See reactivecircus/android-emulator-runner docs.
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Mobilewright tests (${{ inputs.suite }})
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ inputs.api_level }}
+          target: google_apis
+          arch: x86_64
+          # `profile` is an avdmanager device id (lowercase). mobilecli reports the AVD
+          # name back with underscores turned into spaces, so `avd-name: Pixel_6` shows
+          # up as "Pixel 6" and matches the `deviceName: /Pixel/` regex in
+          # mobilewright.config.ts's android project.
+          profile: pixel_6
+          avd-name: Pixel_6
+          disable-animations: true
+          disable-spellchecker: true
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: cd e2e-playwright-tests/e2e-mobile-tests && ${{ inputs.command }}
+
+      - name: Upload ${{ inputs.suite }} blob report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: mobilewright-blob-report-${{ inputs.suite }}
+          path: ./e2e-playwright-tests/e2e-mobile-tests/blob-report/
+          retention-days: 14
