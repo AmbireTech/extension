@@ -2,6 +2,7 @@ import { memo, RefObject, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
+import CowSwapIcon from '@common/assets/svg/CowSwapIcon'
 import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UniswapIcon from '@common/assets/svg/UniswapIcon'
@@ -40,6 +41,7 @@ const ProviderIconComponent = ({ providerId }: { providerId: SwapProviderInfo['i
   }
   if (providerId === 'uniswap') return <UniswapIcon width={24} height={24} />
   if (providerId === 'lifi') return <LiFiIcon width={45} height={16} />
+  if (providerId === 'cowswap') return <CowSwapIcon width={24} height={24} />
 
   return null
 }
