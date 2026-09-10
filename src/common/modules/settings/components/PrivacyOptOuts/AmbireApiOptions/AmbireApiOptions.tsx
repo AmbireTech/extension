@@ -68,7 +68,9 @@ const AmbireApiOptions = () => {
           />
           <OptOutControlOption
             title={t('Ambire Smart accounts')}
-            description={t('Find and manage related Ambire smart accounts.')}
+            description={t(
+              'Find and manage Ambire V1 smart accounts. Newly created V2 accounts are unaffected'
+            )}
             icon={<AccountsIcon width={24} height={24} color={theme.iconPrimary} />}
             flag="ambireSmartAccounts"
           />
