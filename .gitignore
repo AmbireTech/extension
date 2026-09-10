@@ -505,6 +505,10 @@ e2e-playwright-tests/e2e-mobile-tests/playwright-report
 e2e-playwright-tests/e2e-mobile-tests/Ambire 2.app
 e2e-playwright-tests/e2e-mobile-tests/Ambire.app
 e2e-playwright-tests/e2e-mobile-tests/Ambire.apk
+e2e-playwright-tests/e2e-mobile-tests/Ambire-sim.zip
+e2e-playwright-tests/e2e-mobile-tests/blob-report
+e2e-playwright-tests/e2e-mobile-tests/all-blob-reports
+e2e-playwright-tests/e2e-mobile-tests/mobilewright-report
 
 # Cursor editor
 /.cursor

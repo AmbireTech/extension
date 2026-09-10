@@ -24,7 +24,10 @@ export default defineConfig({
       use: {
         platform: 'ios',
         deviceName: /iPhone/,
-        installApps: ''
+        // mobilecli installs onto a simulator from a .zip of the .app bundle.
+        // CI stages the prebuilt zip here (see .github/workflows/_mobilewright-ios-suite.yml);
+        // locally, drop a zip of your Debug-iphonesimulator Ambire.app at this path.
+        installApps: './Ambire-sim.zip'
       }
     },
     {

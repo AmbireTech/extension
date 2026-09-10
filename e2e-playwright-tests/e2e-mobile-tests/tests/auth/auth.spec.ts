@@ -5,20 +5,29 @@ import selectors from 'constants/selectors'
 
 import { expect, test } from '@mobilewright/test'
 
-test.describe('auth', { tag: '@auth-mobile' }, () => {
-  test.beforeAll('Clear device state', async ({ screen }) => {
-    console.log('Clear app state...')
-    // reset app state for andoid
-    execSync('adb shell pm clear com.ambire.wallet')
-    // reset app state for ios
-    // execSync(`xcrun simctl uninstall <device-udid> <bundleId>`)
-    // execSync(`xcrun simctl install <device-udid> <path-to-.app>`)
+const BUNDLE_ID = 'com.ambire.wallet'
 
-    // close android pop-up
-    await screen.getByTestId('android:id/button1').tap()
+test.describe('auth', { tag: '@auth-mobile' }, () => {
+  test.beforeEach('Reset app to a clean state', async ({ screen, device }, testInfo) => {
+    if (testInfo.project.name === 'android') {
+      // `pm clear` wipes all app data and force-stops it; relaunch for a clean start.
+      execSync(`adb shell pm clear ${BUNDLE_ID}`)
+      await device.launchApp(BUNDLE_ID)
+
+      // A system dialog can appear right after clearing data — dismiss it if present.
+      const systemDialogOkButton = screen.getByTestId('android:id/button1')
+      if (await systemDialogOkButton.count()) await systemDialogOkButton.tap()
+    }
+
+    if (testInfo.project.name === 'ios') {
+      // The simulator has no `pm clear` equivalent, so reinstall to reset state.
+      await device.uninstallApp(BUNDLE_ID)
+      await device.installApp('./Ambire-sim.zip')
+      await device.launchApp(BUNDLE_ID)
+    }
   })
 
-  test.only('should import view-only Basic account', async ({ screen }) => {
+  test('should import view-only Basic account', async ({ screen }) => {
     await test.step('select import view-only option', async () => {
       await screen.getByTestId(selectors.settings.watchAnAddressButton).tap()
     })

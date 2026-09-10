@@ -12,21 +12,155 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: mobilewright-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
-    runs-on: macos-latest
+  # ============================================================
+  # 1. Build the Android APK and iOS simulator .app the suites below install.
+  #    Reuses the same reusable build workflows as build-android-apk.yml /
+  #    build-ios-simulator.yml — do not duplicate the build steps here.
+  # ============================================================
+  build-android:
+    name: build-android-apk
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/_build-android.yml
+    with:
+      build_command: yarn build:android:production:apk
+      artifact_suffix: apk
+      package_mode: apk
+      architectures: arm64-v8a
+    secrets: inherit
+
+  build-ios:
+    name: build-ios-simulator
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/_build-ios.yml
+    with:
+      build_command: yarn build:ios:simulator
+      artifact_suffix: simulator
+      package_mode: simulator
+      enable_signing: false
+    secrets: inherit
+
+  # ============================================================
+  # 2. Test suites (parallel shards per platform) — share the reusable
+  #    _mobilewright-*-suite.yml definitions, one matrix per platform so an
+  #    Android failure/slowdown never blocks or cancels the iOS run and vice versa.
+  # ============================================================
+  android-tests:
+    needs: build-android
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
+    strategy:
+      # A failing or slow shard must not cancel the others — each uploads its own blob report.
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    uses: ./.github/workflows/_mobilewright-android-suite.yml
+    with:
+      # `suite` is unique per shard so the uploaded blob-report artifact names never collide.
+      suite: android-${{ matrix.shard }}
+      command: npx mobilewright test --project=android --shard=${{ matrix.shard }}/2 --reporter=blob
+    secrets: inherit
+
+  ios-tests:
+    needs: build-ios
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    uses: ./.github/workflows/_mobilewright-ios-suite.yml
+    with:
+      suite: ios-${{ matrix.shard }}
+      command: npx mobilewright test --project=ios --shard=${{ matrix.shard }}/2 --reporter=blob
+    secrets: inherit
+
+  # ============================================================
+  # 3. Merge each platform's per-shard blob reports into its own HTML report.
+  #    Kept separate (not merged together) since Android and iOS run on different
+  #    infra and a reader almost always wants "how did Android do" / "how did iOS do"
+  #    as two distinct reports, not one report mixing both platforms.
+  # ============================================================
+  report-android:
+    name: report (android)
+    runs-on: ubuntu-latest
+    needs: android-tests
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch') }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
-          node-version: 24
+          fetch-depth: 1
 
-      - run: npm ci
-      - run: npx mobilewright test --reporter html
-
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
         with:
-          name: mobilewright-report
-          path: mobilewright-report/
-          retention-days: 30
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: e2e-playwright-tests/e2e-mobile-tests/package-lock.json
+
+      - name: Install Mobilewright test dependencies
+        working-directory: ./e2e-playwright-tests/e2e-mobile-tests
+        run: npm ci
+
+      - name: Download all Android blob reports
+        uses: actions/download-artifact@v6
+        with:
+          pattern: mobilewright-blob-report-android-*
+          path: ./e2e-playwright-tests/e2e-mobile-tests/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge blob reports into one HTML report
+        working-directory: ./e2e-playwright-tests/e2e-mobile-tests
+        run: npx mobilewright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload merged Android report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: mobilewright-report-android
+          path: ./e2e-playwright-tests/e2e-mobile-tests/mobilewright-report/
+          retention-days: 14
+
+  report-ios:
+    name: report (ios)
+    runs-on: ubuntu-latest
+    needs: ios-tests
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: e2e-playwright-tests/e2e-mobile-tests/package-lock.json
+
+      - name: Install Mobilewright test dependencies
+        working-directory: ./e2e-playwright-tests/e2e-mobile-tests
+        run: npm ci
+
+      - name: Download all iOS blob reports
+        uses: actions/download-artifact@v6
+        with:
+          pattern: mobilewright-blob-report-ios-*
+          path: ./e2e-playwright-tests/e2e-mobile-tests/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge blob reports into one HTML report
+        working-directory: ./e2e-playwright-tests/e2e-mobile-tests
+        run: npx mobilewright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload merged iOS report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: mobilewright-report-ios
+          path: ./e2e-playwright-tests/e2e-mobile-tests/mobilewright-report/
+          retention-days: 14
