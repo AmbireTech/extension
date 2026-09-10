@@ -178,22 +178,22 @@ const KeyStoreUnlockScreen = () => {
   }, [isUnlocked, statuses.unlockWithSecret])
 
   return (
-    <LayoutWrapper style={styles.panel}>
+    <LayoutWrapper style={styles.panel} backgroundStyle={styles.background}>
       <View
-        style={{
-          height: 324,
-          width: '100%',
-          ...spacings.phSm,
-          // The update banner takes over the gap below the card, so the rest of the screen stays in place
-          marginBottom:
-            isExtensionUpdateAvailable && !isPasswordUnlockRequired
-              ? SPACING_TY
-              : canUseBiometrics
-                ? 42
-                : isPasswordUnlockRequired
-                  ? 24
-                  : 56
-        }}
+        style={[
+          styles.hero,
+          {
+            // The update banner takes over the gap below the card, so the rest of the screen stays in place
+            marginBottom:
+              isExtensionUpdateAvailable && !isPasswordUnlockRequired
+                ? SPACING_TY
+                : canUseBiometrics
+                  ? 42
+                  : isPasswordUnlockRequired
+                    ? 24
+                    : 56
+          }
+        ]}
       >
         <View
           style={{

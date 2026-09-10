@@ -34,6 +34,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -56,6 +57,10 @@ const ExploreSectionScreen = () => {
   const { theme } = useTheme()
   const { state } = useController('DappsController')
   const { state: allNetworks } = useController('NetworksController', 'networks')
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const [network, setNetwork] = useState<Network | null>(null)
   const [category, setCategory] = useState<string | null>(null)
@@ -114,7 +119,7 @@ const ExploreSectionScreen = () => {
   const networksOptions: SelectValue[] = useMemo(
     () => [
       ALL_NETWORKS_OPTION,
-      ...allNetworks.map((n: Network) => ({
+      ...sortNetworksByBalance(allNetworks, balancePerNetwork).map((n: Network) => ({
         value: n.name,
         label: (
           <Text weight="medium" fontSize={12} numberOfLines={1}>
@@ -124,7 +129,7 @@ const ExploreSectionScreen = () => {
         icon: <NetworkIcon size={24} key={n.chainId.toString()} id={n.chainId.toString()} />
       }))
     ],
-    [allNetworks, ALL_NETWORKS_OPTION]
+    [allNetworks, balancePerNetwork, ALL_NETWORKS_OPTION]
   )
 
   const ALL_CATEGORIES_OPTION = useMemo(
