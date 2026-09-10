@@ -19,10 +19,15 @@ import flexbox from '@common/styles/utils/flexbox'
 import BalanceAffectingErrorActions from './BalanceAffectingErrorActions'
 import Header from './Header'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   networksWithErrors: string[]
   reloadAccount: () => void
 } & Omit<ReturnType<typeof useBalanceAffectingErrors>, 'networksWithErrors'>
+
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
 
 const BalanceAffectingErrors: FC<Props> = ({
   reloadAccount,
@@ -39,15 +44,18 @@ const BalanceAffectingErrors: FC<Props> = ({
     'SelectedAccountController',
     'balanceAffectingErrors'
   )
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
 
   const areErrorsOutdatedAndPortfolioIsReady = useMemo(() => {
     return (
       balanceAffectingErrorsSnapshot.length > 0 &&
-      portfolio.isAllReady &&
+      isPortfolioAllReady &&
       !balanceAffectingErrors.length
     )
-  }, [balanceAffectingErrors.length, balanceAffectingErrorsSnapshot.length, portfolio.isAllReady])
+  }, [balanceAffectingErrors.length, balanceAffectingErrorsSnapshot.length, isPortfolioAllReady])
 
   const onButtonPress = useCallback(() => {
     if (!areErrorsOutdatedAndPortfolioIsReady) {

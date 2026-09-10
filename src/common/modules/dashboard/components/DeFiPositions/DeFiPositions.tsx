@@ -55,6 +55,12 @@ const { isPopup } = getUiType()
 const selectScheduledUpdateChainIds = (state: AllControllersMappingType['PortfolioController']) =>
   state.scheduledUpdateChainIds
 
+const selectPortfolioDefiPositions = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.defiPositions
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
+
 const DeFiPositions: FC<Props> = ({
   openTab,
   setOpenTab,
@@ -78,7 +84,14 @@ const DeFiPositions: FC<Props> = ({
     selectScheduledUpdateChainIds
   )
   const { state: account } = useController('SelectedAccountController', 'account')
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: defiPositions } = useController(
+    'SelectedAccountController',
+    selectPortfolioDefiPositions
+  )
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
     'dashboardNetworkFilter'
@@ -138,7 +151,7 @@ const DeFiPositions: FC<Props> = ({
   })
 
   const filteredPositions = useMemo(() => {
-    const defiToSearch = portfolio.defiPositions
+    const defiToSearch = defiPositions
       .filter(({ chainId, positions }) => {
         let isMatchingNetwork = true
 
@@ -161,7 +174,7 @@ const DeFiPositions: FC<Props> = ({
       search: searchValue,
       keys: ['providerName', 'assetNames']
     })
-  }, [portfolio.defiPositions, dashboardNetworkFilter, searchValue, networks])
+  }, [defiPositions, dashboardNetworkFilter, searchValue, networks])
 
   const renderItem = useCallback(
     ({ item }: any) => {
@@ -305,11 +318,11 @@ const DeFiPositions: FC<Props> = ({
       if (hasPendingUpdate) {
         items.push('pending-update')
       }
-      items.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
-      if (initTab?.defi && portfolio.isAllReady) {
+      items.push(!isPortfolioAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
+      if (initTab?.defi && isPortfolioAllReady) {
         filteredPositions.forEach((p: any) => items.push(p))
       }
-      items.push(portfolio.isAllReady && !filteredPositions.length ? 'empty' : '')
+      items.push(isPortfolioAllReady && !filteredPositions.length ? 'empty' : '')
     } else {
       items.push('disabled')
     }
@@ -321,7 +334,7 @@ const DeFiPositions: FC<Props> = ({
     flags.tokenAndDefiAutoDiscovery,
     hasPendingUpdate,
     initTab?.defi,
-    portfolio.isAllReady
+    isPortfolioAllReady
   ])
 
   // Rendered above the carousel on mobile, so it stays put through a swipe

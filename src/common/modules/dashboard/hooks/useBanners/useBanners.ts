@@ -8,6 +8,8 @@ import useController from '@common/hooks/useController'
 import useOtaUpdateBanner from '@common/modules/dashboard/hooks/useOtaUpdateBanner'
 
 import type { Banner as BannerInterface } from '@ambire-common/interfaces/banner'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 const OFFLINE_BANNER: BannerInterface = {
   id: 'offline-banner',
   type: 'error',
@@ -21,11 +23,17 @@ const OFFLINE_BANNER: BannerInterface = {
   ]
 }
 
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
+
 export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { state: isOffline } = useController('MainController', 'isOffline')
   const { bannersData: marketingBannersData } = useController('BannerController').state
   const { state: account } = useController('SelectedAccountController', 'account')
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
   const { state: deprecatedSmartAccountBanner } = useController(
     'SelectedAccountController',
     'deprecatedSmartAccountBanner'
@@ -62,7 +70,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
       [
         ...(deprecatedSmartAccountBanner || []),
         ...(requestBanners || []),
-        ...(isOffline && portfolio.isAllReady ? [OFFLINE_BANNER] : []),
+        ...(isOffline && isPortfolioAllReady ? [OFFLINE_BANNER] : []),
         ...(isOffline ? [] : swapAndBridgeBanners || []),
         ...(hasFundedHotAccount ? emailVaultBanners || [] : []),
         // The defi-positions banner renders inside the DeFi tab, not the general dashboard.
@@ -78,7 +86,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     deprecatedSmartAccountBanner,
     requestBanners,
     isOffline,
-    portfolio.isAllReady,
+    isPortfolioAllReady,
     swapAndBridgeBanners,
     hasFundedHotAccount,
     emailVaultBanners,

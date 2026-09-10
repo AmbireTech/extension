@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -24,11 +23,13 @@ const SAFE_GAS_TANK_BANNER_DISMISSED_STORAGE_KEY_PREFIX = 'safeGasTankDashboardB
 
 interface Props {
   onPress: () => void
-  portfolio: SelectedAccountPortfolio
   account: Account | null
 }
 
-const GasTankButton = ({ onPress, portfolio, account }: Props) => {
+const GasTankButton = ({ onPress, account }: Props) => {
+  // Subscribed to here rather than handed down, so a chain finishing its portfolio
+  // update re-renders this button alone and not the whole dashboard overview above it.
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const [isHovered, setIsHovered] = useState(false)

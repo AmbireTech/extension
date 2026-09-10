@@ -2,17 +2,32 @@ import { useCallback, useEffect, useState } from 'react'
 
 import useController from '@common/hooks/useController'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
+const selectPortfolioIsReloading = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.isReloading
+
 const useDashboardReload = () => {
   const { dispatch: mainDispatch } = useController('MainController')
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
     'dashboardNetworkFilter'
   )
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
+  const { state: isPortfolioReloading } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsReloading
+  )
   const [isManuallyRefreshing, setIsManuallyRefreshing] = useState(false)
 
   const reloadAccount = useCallback(() => {
-    if (!portfolio.isAllReady || portfolio.isReloading) return
+    if (!isPortfolioAllReady || isPortfolioReloading) return
 
     setIsManuallyRefreshing(true)
 
@@ -28,9 +43,9 @@ const useDashboardReload = () => {
         ]
       }
     })
-  }, [dashboardNetworkFilter, mainDispatch, portfolio.isAllReady, portfolio.isReloading])
+  }, [dashboardNetworkFilter, mainDispatch, isPortfolioAllReady, isPortfolioReloading])
 
-  const refreshing = !portfolio.isAllReady || portfolio.isReloading
+  const refreshing = !isPortfolioAllReady || isPortfolioReloading
 
   useEffect(() => {
     if (!refreshing) {

@@ -25,6 +25,9 @@ import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
@@ -45,6 +48,15 @@ const SEARCH_DEBOUNCE_MS = 200
 
 const { isPopup } = getUiType()
 
+const selectPortfolioCollections = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.collections
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
+const selectPortfolioIsReadyToVisualize = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.isReadyToVisualize
+
 const Collections: FC<Props> = ({
   openTab,
   setOpenTab,
@@ -58,7 +70,18 @@ const Collections: FC<Props> = ({
   refreshing,
   onRefresh
 }) => {
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: collections } = useController(
+    'SelectedAccountController',
+    selectPortfolioCollections
+  )
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
+  const { state: isPortfolioReadyToVisualize } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsReadyToVisualize
+  )
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
     'dashboardNetworkFilter'
@@ -88,13 +111,11 @@ const Collections: FC<Props> = ({
     // Built once instead of per collection, since every one of them is compared to it
     const filteredChainId = dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : null
 
-    const searchableCollections = (portfolio?.collections || []).filter(
-      ({ chainId, collectibles }) => {
-        const isMatchingNetwork = filteredChainId === null || chainId === filteredChainId
+    const searchableCollections = (collections || []).filter(({ chainId, collectibles }) => {
+      const isMatchingNetwork = filteredChainId === null || chainId === filteredChainId
 
-        return isMatchingNetwork && collectibles.length
-      }
-    )
+      return isMatchingNetwork && collectibles.length
+    })
 
     return tokenOrCollectionSearch({
       networks,
@@ -102,13 +123,13 @@ const Collections: FC<Props> = ({
       search: searchValue,
       searchType: 'collection'
     })
-  }, [portfolio?.collections, networks, searchValue, dashboardNetworkFilter])
+  }, [collections, networks, searchValue, dashboardNetworkFilter])
 
   const isReadyToVisualizeCollections = useMemo(() => {
-    if (portfolio.isAllReady) return true
+    if (isPortfolioAllReady) return true
 
-    return portfolio?.isReadyToVisualize && filteredPortfolioCollections.length
-  }, [filteredPortfolioCollections.length, portfolio.isAllReady, portfolio?.isReadyToVisualize])
+    return isPortfolioReadyToVisualize && filteredPortfolioCollections.length
+  }, [filteredPortfolioCollections.length, isPortfolioAllReady, isPortfolioReadyToVisualize])
 
   const renderItem = useCallback(
     ({ item }: any) => {
@@ -214,7 +235,7 @@ const Collections: FC<Props> = ({
         data={[
           ...(isMobile ? [] : ['header']),
           ...(initTab?.collectibles ? filteredPortfolioCollections : []),
-          !filteredPortfolioCollections.length && portfolio?.isAllReady ? 'empty' : '',
+          !filteredPortfolioCollections.length && isPortfolioAllReady ? 'empty' : '',
           !isReadyToVisualizeCollections ? 'skeleton' : 'keep-this-to-avoid-key-warning'
         ]}
         renderItem={renderItem}

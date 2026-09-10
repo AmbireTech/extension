@@ -33,7 +33,8 @@ import type { PortfolioController } from '@ambire-common/controllers/portfolio/p
 import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
 const selectNetworks = (state: NetworksController) => state.networks
 const selectCustomTokens = (state: PortfolioController) => state.customTokens
-const selectPortfolio = (state: SelectedAccountController) => state.portfolio
+const selectPortfolioTokens = (state: SelectedAccountController) => state.portfolio?.tokens
+const selectPortfolioIsAllReady = (state: SelectedAccountController) => state.portfolio?.isAllReady
 const selectBalanceAffectingErrors = (state: SelectedAccountController) =>
   state.balanceAffectingErrors
 const selectDashboardNetworkFilter = (state: SelectedAccountController) =>
@@ -136,7 +137,14 @@ const Tokens = ({
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: customTokens } = useController('PortfolioController', selectCustomTokens)
-  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
+  const { state: portfolioTokens } = useController(
+    'SelectedAccountController',
+    selectPortfolioTokens
+  )
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
   const { state: balanceAffectingErrors } = useController(
     'SelectedAccountController',
     selectBalanceAffectingErrors
@@ -175,7 +183,7 @@ const Tokens = ({
   }, [balanceAffectingErrors, networks])
 
   const tokens = useMemo(() => {
-    const tokenList = (portfolio?.tokens || []).filter((token) => {
+    const tokenList = (portfolioTokens || []).filter((token) => {
       // Hide gas tank and borrowed defi tokens from the list
       if (token.flags.onGasTank || token.flags.defiTokenType === AssetType.Borrow) return false
 
@@ -187,7 +195,7 @@ const Tokens = ({
     })
 
     return tokenOrCollectionSearch({ networks, assets: tokenList, search: searchValue })
-  }, [portfolio?.tokens, networks, searchValue, dashboardNetworkFilter])
+  }, [portfolioTokens, networks, searchValue, dashboardNetworkFilter])
 
   const userHasNoBalance = useMemo(
     // Exclude gas tank tokens from the check
@@ -225,7 +233,7 @@ const Tokens = ({
         hasAmount(token) ||
         isCustom ||
         // Don't display pinned tokens until we are sure the user has no balance
-        (isPinned && userHasNoBalance && portfolio?.isAllReady)
+        (isPinned && userHasNoBalance && isPortfolioAllReady)
       )
     })
 
@@ -259,7 +267,7 @@ const Tokens = ({
     })
 
     return decorated.map(({ token }) => token)
-  }, [tokens, networks, customTokenKeys, userHasNoBalance, portfolio?.isAllReady, balancesInUSD])
+  }, [tokens, networks, customTokenKeys, userHasNoBalance, isPortfolioAllReady, balancesInUSD])
 
   const { visibleTokens, dustTokens } = useMemo(() => {
     if (userHasNoBalance || searchValue.length > 0) {
@@ -307,7 +315,7 @@ const Tokens = ({
     const data: any[] = isMobile ? [] : ['header']
 
     // Skeleton 1, order matters
-    if (!hasAnyTokens && !portfolio?.isAllReady) {
+    if (!hasAnyTokens && !isPortfolioAllReady) {
       data.push('skeleton')
     }
 
@@ -325,20 +333,20 @@ const Tokens = ({
 
     // Skeleton 2, order matters, needs to be after the tokens to show the user partial results
     // but also indicate that we are still loading
-    if (hasAnyTokens && !portfolio?.isAllReady) {
+    if (hasAnyTokens && !isPortfolioAllReady) {
       data.push('skeleton')
     }
 
-    if (portfolio?.isAllReady && !hasAnyTokens) {
+    if (isPortfolioAllReady && !hasAnyTokens) {
       data.push('empty')
     }
 
-    if (portfolio?.isAllReady) {
+    if (isPortfolioAllReady) {
       data.push('footer')
     }
 
     return data
-  }, [hasAnyTokens, portfolio?.isAllReady, showTokens, visibleTokens, dustTokens, isDustExpanded])
+  }, [hasAnyTokens, isPortfolioAllReady, showTokens, visibleTokens, dustTokens, isDustExpanded])
 
   const expandDust = useCallback(() => setIsDustExpanded(true), [])
   const collapseDust = useCallback(() => setIsDustExpanded(false), [])

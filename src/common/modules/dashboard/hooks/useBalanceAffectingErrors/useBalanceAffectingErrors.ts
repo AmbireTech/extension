@@ -9,21 +9,41 @@ import {
   getColibriWarningNetworkNames
 } from '@common/modules/dashboard/helpers/balanceWarnings'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectPortfolioVerification = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.verification
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
+const selectPortfolioShouldShowPartialResult = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.shouldShowPartialResult
+
 const useBalanceAffectingErrors = () => {
   const { t } = useTranslation()
   const { state: balanceAffectingErrors } = useController(
     'SelectedAccountController',
     'balanceAffectingErrors'
   )
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolioVerification } = useController(
+    'SelectedAccountController',
+    selectPortfolioVerification
+  )
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
+  const { state: shouldShowPartialResult } = useController(
+    'SelectedAccountController',
+    selectPortfolioShouldShowPartialResult
+  )
   const { allNetworks, areNetworksFetchingFromRelayer } = useController('NetworksController').state
   // While the networks config is being refreshed from the relayer, the balance is
   // held in a loading (skeleton) state and any updated RPC will trigger a portfolio
   // reload. Suppress balance-affecting warnings during this window so the user
   // never sees errors from a old/stale RPC that is about to be replaced.
-  const isLoadingTakingTooLong = areNetworksFetchingFromRelayer
-    ? false
-    : portfolio.shouldShowPartialResult
+  const isLoadingTakingTooLong = areNetworksFetchingFromRelayer ? false : shouldShowPartialResult
   const { state: isOffline } = useController('MainController', 'isOffline')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   /** Because errors change frequently due to background updates we have to store a snapshot
@@ -35,19 +55,19 @@ const useBalanceAffectingErrors = () => {
   >([])
 
   const colibriWarningNetworkNames = useMemo(
-    () => getColibriWarningNetworkNames(portfolio.verification, allNetworks),
-    [allNetworks, portfolio.verification]
+    () => getColibriWarningNetworkNames(portfolioVerification, allNetworks),
+    [allNetworks, portfolioVerification]
   )
 
   const networksWithErrors = useMemo(
     () =>
       getBalanceAffectedNetworkNames({
         balanceAffectingErrors,
-        verification: portfolio.verification,
+        verification: portfolioVerification,
         allNetworks,
         areNetworksFetchingFromRelayer
       }),
-    [allNetworks, areNetworksFetchingFromRelayer, balanceAffectingErrors, portfolio.verification]
+    [allNetworks, areNetworksFetchingFromRelayer, balanceAffectingErrors, portfolioVerification]
   )
 
   const warningMessage = useMemo(() => {
@@ -67,14 +87,11 @@ const useBalanceAffectingErrors = () => {
       })
     }
 
-    if (isOffline && portfolio.isAllReady) return t('Please check your internet connection.')
+    if (isOffline && isPortfolioAllReady) return t('Please check your internet connection.')
 
-    if (
-      portfolio.verification?.provider === 'colibri' &&
-      portfolio.verification.status === 'stale'
-    ) {
+    if (portfolioVerification?.provider === 'colibri' && portfolioVerification.status === 'stale') {
       return t("Stale RPC, {{blockDiff}} blocks behind Colibri's latest block", {
-        blockDiff: portfolio.verification.blockDiff
+        blockDiff: portfolioVerification.blockDiff
       })
     }
 
@@ -105,8 +122,8 @@ const useBalanceAffectingErrors = () => {
     isLoadingTakingTooLong,
     isOffline,
     networksWithErrors,
-    portfolio.isAllReady,
-    portfolio.verification,
+    isPortfolioAllReady,
+    portfolioVerification,
     t
   ])
 
