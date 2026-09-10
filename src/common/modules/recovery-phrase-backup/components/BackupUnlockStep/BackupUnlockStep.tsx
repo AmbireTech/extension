@@ -36,7 +36,7 @@ const BackupUnlockStep = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { hasBiometricsSecret } = useController('KeystoreController').state
+  const { state: hasBiometricsSecret } = useController('KeystoreController', 'hasBiometricsSecret')
   const { hasBiometricsHardware, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
   const [password, setPassword] = useState(
     isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''

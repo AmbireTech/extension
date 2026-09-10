@@ -7,7 +7,7 @@ import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 
 const useContactsSearch = (search: string) => {
-  const { contacts } = useController('AddressBookController').state
+  const { state: contacts } = useController('AddressBookController', 'contacts')
   const {
     state: { domains }
   } = useController('DomainsController')

@@ -25,6 +25,7 @@ import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/To
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 import { getTokenId } from '@common/utils/token'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
@@ -32,9 +33,10 @@ import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
 type Props = {
   simulationFailed?: boolean
+  disabled?: boolean
 }
 
-const ToToken: FC<Props> = ({ simulationFailed }) => {
+const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
@@ -56,9 +58,11 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
   const networks = useNetworks({
     acc: account,
     additionalCheck: {
@@ -142,20 +146,12 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
 
   const toNetworksOptions: SelectValue[] = useMemo(
     () =>
-      networks
-        .sort((a, b) => {
-          const aIsSupported = !a.isNotSupported
-          const bIsSupported = !b.isNotSupported
-          if (aIsSupported && !bIsSupported) return -1
-          if (!aIsSupported && bIsSupported) return 1
-          return 0
-        })
-        .map((n) => {
+      sortNetworksByBalance(networks, balancePerNetwork).map((n) => {
           const tooltipId = `network-${n.chainId}-not-supported-tooltip`
 
           return {
             value: String(n.chainId),
-            extraSearchProps: [n.name],
+            extraSearchProps: { name: n.name },
             disabled: n.isNotSupported,
             label: (
               <>
@@ -180,7 +176,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
           }
         }),
-    [networks, t]
+    [networks, balancePerNetwork, t]
   )
 
   const getToNetworkSelectValue = useMemo(() => {
@@ -258,7 +254,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   return (
     <ItemPanel
       style={{
-        ...spacings.pv,
+        ...spacings.pvSm,
         ...spacings.pl,
         ...(isMobile ? {} : spacings.prMd)
       }}
@@ -266,6 +262,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
       <SwitchTokensButton
         onPress={handleSwitchFromAndToTokens}
         disabled={
+          disabled ||
           switchTokensStatus === 'LOADING' ||
           updateQuoteStatus === 'LOADING' ||
           updateToTokenListStatus === 'LOADING'
@@ -299,6 +296,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           mode="bottomSheet"
           bottomSheetTitle={t('Receive token network')}
           testID="to-network-select"
+          disabled={disabled}
         />
       </View>
       <View
@@ -317,7 +315,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             toTokenOptions={toTokenOptions}
             toTokenValue={toTokenValue}
             handleChangeToToken={handleChangeToToken}
-            toTokenAmountSelectDisabled={toTokenAmountSelectDisabled}
+            toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
             addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
             handleAddToTokenByAddress={handleAddToTokenByAddress}
           />

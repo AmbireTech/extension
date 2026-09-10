@@ -26,8 +26,8 @@ import {
 const RecoveryPhrasesSettingsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { statuses } = useController('StorageController').state
-  const { accounts } = useController('AccountsController').state
+  const { state: statuses } = useController('StorageController', 'statuses')
+  const { state: accounts } = useController('AccountsController', 'accounts')
   const { seeds, keys } = useController('KeystoreController').state
   const { notBackedUpSeedIds, seedsSortedByBackupStatus } = useRecoveryPhraseBackupStatus()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()

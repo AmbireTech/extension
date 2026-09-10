@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
+import { compareChainIdsByBalance } from '@common/utils/sorting'
 
 import NetworkComponent from './Network'
 
@@ -19,7 +20,7 @@ const Networks = ({
   search: string
   onPress: (chainId: bigint | string) => void
 }) => {
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
@@ -41,12 +42,7 @@ const Networks = ({
         // Done to filter out internal networks
         return !!name
       })
-      .sort((a, b) => {
-        const aBalance = portfolio.balancePerNetwork[a]
-        const bBalance = portfolio.balancePerNetwork[b]
-
-        return Number(bBalance) - Number(aBalance)
-      })
+      .sort((a, b) => compareChainIdsByBalance(a, b, portfolio.balancePerNetwork))
 
     if (!search) {
       return nonInternalNetworks
