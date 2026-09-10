@@ -4,10 +4,12 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
-const { isSidePanel } = getUiType()
+const { isSidePanel, isRequestWindow } = getUiType()
 
 interface Style {
+  background: ViewStyle
   panel: ViewStyle
+  hero: ViewStyle
   container: ViewStyle
   biometricsContainer: ViewStyle
   biometricsIconButton: ViewStyle
@@ -16,9 +18,26 @@ interface Style {
 
 const getStyles = () =>
   StyleSheet.create<Style>({
+    background: isRequestWindow ? { paddingTop: 0 } : {},
     panel: {
-      ...spacings.ptSm,
-      ...spacings.pbLg
+      ...spacings.pbLg,
+      // The request window is already a small standalone window, so the unlock screen fills
+      // it instead of rendering another card inside it.
+      ...(isRequestWindow
+        ? {
+            maxWidth: '100%',
+            height: '100%',
+            borderRadius: 0,
+            shadowOpacity: 0,
+            elevation: 0,
+            ...spacings.pt
+          }
+        : spacings.ptSm)
+    },
+    hero: {
+      height: isRequestWindow ? 360 : 324,
+      width: '100%',
+      ...spacings.phSm
     },
     container: {
       maxWidth: 352,
