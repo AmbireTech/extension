@@ -7,6 +7,7 @@ import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
+import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import ValueIcon from '@common/assets/svg/ValueIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
@@ -88,6 +89,14 @@ const AmbireApiOptions = () => {
             )}
             icon={<ValueIcon width={24} height={24} color={theme.iconPrimary} />}
             flag="tokenPrices"
+          />
+          <OptOutControlOption
+            title={t('Enrich swap and bridge token info & trending tokens')}
+            description={t(
+              'Show the exchanges a token is traded on when picking a token to receive. Show trending tokens. This sends the addresses of the listed tokens to Ambire’s price API.'
+            )}
+            icon={<SwapAndBridgeIcon width={24} height={24} color={theme.iconPrimary} />}
+            flag="swapAndBridgeTokenInfo"
           />
         </View>
       }
