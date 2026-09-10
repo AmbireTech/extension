@@ -1,5 +1,4 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import AccountsIcon from '@common/assets/svg/AccountsIcon'
@@ -7,9 +6,11 @@ import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
+import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import ValueIcon from '@common/assets/svg/ValueIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
+import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import OptOutControlOption from '@common/modules/settings/components/PrivacyOptOuts/OptOutControlOption'
 import spacings from '@common/styles/spacings'
@@ -73,6 +74,12 @@ const AmbireApiOptions = () => {
             )}
             icon={<AccountsIcon width={24} height={24} color={theme.iconPrimary} />}
             flag="ambireSmartAccounts"
+          />
+          <OptOutControlOption
+            title={t('Scam & phishing checker')}
+            description={t(`Check websites against Ambire's scam and phishing blocklist`)}
+            icon={<SidebarSecurityIcon width={24} height={24} color={theme.iconPrimary} />}
+            flag="scamAndPhishingChecker"
           />
           <OptOutControlOption
             title={t('Token prices')}
