@@ -37,17 +37,13 @@ export default function useGetStarted() {
   }, [authStatus, navigate, resetIsSetupCompleteIfNeeded])
 
   const handleAuthButtonPress = useCallback(
-    async (flow: 'create-new-account' | 'import-existing-account' | 'view-only') => {
+    async (flow: 'create-new-account' | 'import-existing-account') => {
       if (flow === 'create-new-account') {
         createNewSeedAccount()
         return
       }
       if (flow === 'import-existing-account') {
         goToNextRoute(ROUTES.importExistingAccount)
-        return
-      }
-      if (flow === 'view-only') {
-        goToNextRoute(ROUTES.viewOnlyAccountAdder)
       }
     },
     [createNewSeedAccount, goToNextRoute]

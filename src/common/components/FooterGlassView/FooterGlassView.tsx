@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
 
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import GlassView from '@common/components/GlassView'
@@ -42,6 +42,9 @@ const FooterGlassView: FC<{
    */
   fullWidth?: boolean
   glassViewProps?: Partial<React.ComponentProps<typeof GlassView>>
+  // Reports the footer's rendered height, e.g. so a scroll container can reserve
+  // exactly enough space to not be covered by this absolutely positioned footer
+  onLayout?: (event: LayoutChangeEvent) => void
 }> = ({
   children,
   style = {},
@@ -52,7 +55,8 @@ const FooterGlassView: FC<{
   absolute = true,
   isSimpleBlur,
   preferGlassFooter = false,
-  fullWidth
+  fullWidth,
+  onLayout
 }) => {
   const isInsideBottomSheet = useIsInsideBottomSheet()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
@@ -83,7 +87,10 @@ const FooterGlassView: FC<{
 
   if (isMobile) {
     return (
-      <View style={[{ flexDirection: 'column-reverse', width: '100%' }, mobileStyle]}>
+      <View
+        style={[{ flexDirection: 'column-reverse', width: '100%' }, mobileStyle]}
+        onLayout={onLayout}
+      >
         {children}
       </View>
     )
@@ -108,6 +115,7 @@ const FooterGlassView: FC<{
           },
           style
         ]}
+        onLayout={onLayout}
       >
         <View
           style={[
@@ -147,6 +155,7 @@ const FooterGlassView: FC<{
         },
         style
       ]}
+      onLayout={onLayout}
     >
       <GlassView
         {...glassViewProps}

@@ -100,7 +100,11 @@ const SENSITIVE_KEY_SUBSTRINGS = [
   'mnemonic',
   'seed',
   'privatekey',
-  'privkey'
+  'privkey',
+  // Covers extraEntropy, which feeds secret generation - its current keccak256
+  // output happens to have the same shape as a private key, but that is not
+  // something the shape-based rules should rely on.
+  'entropy'
 ]
 
 const isSensitiveKey = (key: string): boolean => {
@@ -132,8 +136,7 @@ const NON_SECRET_KEY_SUBSTRINGS = [
   'calldata',
   'blocknumber',
   'address',
-  'addr',
-  'entropy'
+  'addr'
 ]
 
 const isNonSecretKey = (key: string): boolean => {

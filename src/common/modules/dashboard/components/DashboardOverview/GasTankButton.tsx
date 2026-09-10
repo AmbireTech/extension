@@ -45,9 +45,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const isGasTankEnabled =
     isErc4337Enabled && flags.gasTank && flags.tokenPrices && (!requiresEip7702 || isEip7702Enabled)
 
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
 
   const totalBalanceGasTankDetails = useMemo(
     () => getGasTankTokenDetails(portfolio, account, networks),

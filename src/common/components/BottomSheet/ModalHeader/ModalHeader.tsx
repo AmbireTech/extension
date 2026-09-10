@@ -122,7 +122,16 @@ const ModalHeader: FC<Props> = ({
       >
         <Header.Title testID={headerTestID}>{title}</Header.Title>
       </View>
-      {withSideContainers && <Header.Container side="right">{children}</Header.Container>}
+      {withSideContainers && (
+        <Header.Container
+          side="right"
+          // Sizing the container to its content prevents wide children (like buttons with
+          // long labels) from wrapping in the narrow mobile viewport
+          style={isMobile ? { flex: 0 } : undefined}
+        >
+          {children}
+        </Header.Container>
+      )}
     </Header.Wrapper>
   )
 }

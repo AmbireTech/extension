@@ -1,23 +1,49 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
+import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
+import { browser, engine, isSafari } from '@web/constants/browserapi'
 import QrScanner from '@web/modules/hardware-wallet/screens/QrScannerWithPermission/QrScanner'
 
+import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 type Props = {
   onComplete: (payload: Uint8Array) => void
   onOpenFullScreenScanner?: () => void
   disabled?: boolean
   externalError?: string | null
   onExternalRetry?: () => void
+  /** Reports how the scan is going, so the caller can tell the user what to do */
+  onProgress?: (progress: QrScanProgress) => void
+}
+
+// Chromium is the only engine that lets an extension open the browser's own settings,
+// and only there the camera permission of this page has a page of its own
+const canOpenBrowserCameraSettings = engine === 'webkit' && !isSafari() && !!browser?.runtime?.id
+
+/**
+ * Opens the browser settings on the permissions of the extension itself, because once
+ * the camera is blocked for a page, browsers never ask the user about it again.
+ */
+const openBrowserCameraSettings = async () => {
+  try {
+    const { origin } = new URL(browser.runtime.getURL('/'))
+
+    await browser.tabs.create({
+      active: true,
+      url: `chrome://settings/content/siteDetails?site=${encodeURIComponent(origin)}`
+    })
+  } catch (error) {
+    captureException(error)
+  }
 }
 
 const shouldUseFullScreenFallback = (message: string, rawError?: any) => {
@@ -38,7 +64,8 @@ const QrScannerWithPermission = ({
   onOpenFullScreenScanner,
   disabled,
   externalError,
-  onExternalRetry
+  onExternalRetry,
+  onProgress
 }: Props) => {
   const { isPopup, isSidePanel } = getUiType()
   const needsFullScreenCameraFallback = isPopup || isSidePanel
@@ -79,11 +106,16 @@ const QrScannerWithPermission = ({
         message: normalizedMessage,
         rawError: e
       })
+      const isBlocked = shouldUseFullScreenFallback(normalizedMessage, e)
+
       setShowFullScreenFallback(
-        needsFullScreenCameraFallback &&
-          !!onOpenFullScreenScanner &&
-          shouldUseFullScreenFallback(normalizedMessage, e)
+        needsFullScreenCameraFallback && !!onOpenFullScreenScanner && isBlocked
       )
+
+      // The browser refused without asking the user anything, so the block can be
+      // lifted from its settings only
+      if (isBlocked && canOpenBrowserCameraSettings) void openBrowserCameraSettings()
+
       return
     }
 
@@ -161,6 +193,31 @@ const QrScannerWithPermission = ({
     return shouldUseFullScreenFallback(cameraError.message, cameraError.rawError)
   }, [cameraError])
 
+  const shouldOpenFullScreenScanner =
+    !!cameraError && isPermissionBlocked && !!onOpenFullScreenScanner
+
+  const retryText = useMemo(() => {
+    if (shouldOpenFullScreenScanner) return t('Open full-screen')
+    // Asking again either brings the browser prompt back or sends the user to the
+    // settings where the camera can be unblocked
+    if (cameraError && isPermissionBlocked) return t('Allow camera access')
+
+    return t('Retry')
+  }, [cameraError, isPermissionBlocked, shouldOpenFullScreenScanner, t])
+
+  const handleRetryPress = useCallback(() => {
+    if (shouldOpenFullScreenScanner) return onOpenFullScreenScanner?.()
+    if (cameraError) return handleRetry()
+
+    return onExternalRetry?.()
+  }, [
+    cameraError,
+    handleRetry,
+    onExternalRetry,
+    onOpenFullScreenScanner,
+    shouldOpenFullScreenScanner
+  ])
+
   if (showFullScreenFallback) {
     return (
       <View
@@ -236,6 +293,7 @@ const QrScannerWithPermission = ({
         disabled={disabled || !!cameraError || !!externalError || showFullScreenFallback}
         onComplete={handleComplete}
         onError={handleError}
+        onProgress={onProgress}
       />
 
       {cameraError || externalError ? (
@@ -265,26 +323,14 @@ const QrScannerWithPermission = ({
             {cameraError ? message : externalError}
           </Text>
 
-          {!(cameraError && isPermissionBlocked && !onOpenFullScreenScanner) && (
-            <FooterGlassView size="sm" absolute={false}>
-              <Button
-                size="small"
-                hasBottomSpacing={false}
-                text={
-                  cameraError && isPermissionBlocked && !!onOpenFullScreenScanner
-                    ? t('Open full-screen')
-                    : t('Retry')
-                }
-                onPress={
-                  cameraError && isPermissionBlocked && !!onOpenFullScreenScanner
-                    ? onOpenFullScreenScanner
-                    : externalError
-                      ? onExternalRetry
-                      : handleRetry
-                }
-              />
-            </FooterGlassView>
-          )}
+          <FooterGlassView size="sm" absolute={false}>
+            <Button
+              size="small"
+              hasBottomSpacing={false}
+              text={retryText}
+              onPress={handleRetryPress}
+            />
+          </FooterGlassView>
         </View>
       ) : null}
     </View>

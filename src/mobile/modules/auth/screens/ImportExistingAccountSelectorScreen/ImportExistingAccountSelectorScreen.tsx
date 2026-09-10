@@ -9,6 +9,7 @@ import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import ScanIcon from '@common/assets/svg/ScanIcon'
+import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
@@ -225,6 +226,11 @@ const ImportExistingAccountSelectorScreen = () => {
     [goToNextRoute]
   )
 
+  const goToViewOnlyAccountAdder = useCallback(
+    () => goToNextRoute(ROUTES.viewOnlyAccountAdder),
+    [goToNextRoute]
+  )
+
   const nfcCards: ImportMethod[] = useMemo(
     () =>
       NfcWalletConfigs.map(({ type, label }) => ({
@@ -253,6 +259,11 @@ const ImportExistingAccountSelectorScreen = () => {
               cards={nfcCards}
               isExpanded={areNfcCardsExpanded}
               onToggle={toggleNfcCards}
+            />
+            <ImportMethodButton
+              title="Watch an address"
+              onPress={goToViewOnlyAccountAdder}
+              icon={ViewOnlyIcon}
             />
           </ScrollView>
         </View>

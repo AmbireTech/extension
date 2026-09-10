@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import Button from '@common/components/Button'
@@ -9,7 +9,9 @@ import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
-import spacings from '@common/styles/spacings'
+import useTheme from '@common/hooks/useTheme'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -25,10 +27,13 @@ type Props = {
   signingRequest?: HardwareWalletSigningRequest | null
 }
 
-const ANIMATION_INTERVAL = 300
+// Matches what the QR wallets themselves animate at (the Keycard Shell firmware uses
+// 200ms), so the pace is one their cameras are known to keep up with
+const ANIMATION_INTERVAL = 200
 const BASE_QR_SIZE = 300
 const BASE_QR_SIZE_WITH_PROGRESS = 280
-const MOBILE_QR_SIZE = 284
+const SIDE_PANEL_QR_SIZE = 284
+const MAX_MOBILE_QR_SIZE = 400
 
 const { isSidePanel } = getUiType()
 const withMobileLayout = isMobile || isSidePanel
@@ -42,19 +47,34 @@ const QrSignRequestScreen = ({
   signingRequest = null
 }: Props) => {
   const { t } = useTranslation()
-  // A smaller code leaves room for the details + footer inside the mobile
-  // bottom sheet; the desktop panel has space for the larger code.
-  const qrSize = withMobileLayout
-    ? MOBILE_QR_SIZE
-    : transactionProgress
-      ? BASE_QR_SIZE_WITH_PROGRESS
-      : BASE_QR_SIZE
+  const { themeType } = useTheme()
+  const { width: windowWidth } = useWindowDimensions()
+  // Same sizing as the accounts sync export sheet: stretch the code to the full width
+  // available inside the sheet (padded by SPACING_SM on both sides), but cap it on
+  // larger devices so it stays centered. The desktop panel has a fixed larger code.
+  const qrSize = isMobile
+    ? Math.min(windowWidth - SPACING_SM * 2, MAX_MOBILE_QR_SIZE)
+    : isSidePanel
+      ? SIDE_PANEL_QR_SIZE
+      : transactionProgress
+        ? BASE_QR_SIZE_WITH_PROGRESS
+        : BASE_QR_SIZE
+
+  // The sheet background is already white on the light theme, so the QR's own white
+  // quiet zone is invisible there - drop it and let the code fill that space instead.
+  const qrQuietZone = isMobile && themeType === THEME_TYPES.LIGHT ? 0 : undefined
 
   const qrCode = useMemo(
     () => (
-      <AnimatedQrCode size={qrSize} interval={ANIMATION_INTERVAL} type={urType} cbor={urCborHex} />
+      <AnimatedQrCode
+        size={qrSize}
+        interval={ANIMATION_INTERVAL}
+        type={urType}
+        cbor={urCborHex}
+        quietZone={qrQuietZone}
+      />
     ),
-    [qrSize, urType, urCborHex]
+    [qrSize, urType, urCborHex, qrQuietZone]
   )
 
   return (
@@ -82,28 +102,9 @@ const QrSignRequestScreen = ({
             }
           />
         )}
-        {withMobileLayout ? (
-          <View
-            style={[
-              { flexDirection: 'column-reverse', width: '100%', marginTop: 'auto' },
-              spacings.ptLg
-            ]}
-          >
-            <Button
-              size="regular"
-              hasBottomSpacing={false}
-              type="secondary"
-              text={t('Back')}
-              onPress={onReject}
-            />
-            <Button
-              size="regular"
-              hasBottomSpacing
-              text={t('Get signature')}
-              onPress={onContinue}
-            />
-          </View>
-        ) : (
+        {/* Inside a bottom sheet the buttons are rendered as its sticky footer, so they
+        stay reachable no matter how tall the signing request details get */}
+        {!withMobileLayout && (
           <FooterGlassView
             size="sm"
             absolute={false}

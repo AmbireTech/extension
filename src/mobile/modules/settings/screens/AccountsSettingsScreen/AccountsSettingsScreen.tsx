@@ -7,6 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
+import SyncIcon from '@common/assets/svg/SyncIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -18,6 +19,7 @@ import { isMobile, isWeb } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import {
@@ -25,6 +27,8 @@ import {
   ACCOUNT_SELECT_ACCOUNT_MB
 } from '@common/modules/account-select/components/Account/styles'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
+import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -33,6 +37,7 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
+import ExportAccountsToExtensionSheet from '@mobile/modules/accounts-sync/components/ExportAccountsToExtensionSheet'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 
 const AccountsSettingsScreen = () => {
@@ -41,6 +46,7 @@ const AccountsSettingsScreen = () => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
+  const { navigate } = useNavigation()
   const { dispatch: accountsDispatch } = useController('AccountsController')
   const { dispatch: mainDispatch } = useController('MainController')
   const { theme } = useTheme()
@@ -54,6 +60,12 @@ const AccountsSettingsScreen = () => {
     open: openRemoveAccount,
     close: closeRemoveAccount
   } = useModalize()
+  const {
+    ref: syncSheetRef,
+    open: openSyncBottomSheet,
+    close: closeSyncBottomSheet
+  } = useModalize()
+  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useModalize()
   const {
     ref: sheetRefAccountSmartSettings,
     open: openAccountSmartSettings,
@@ -208,17 +220,30 @@ const AccountsSettingsScreen = () => {
   return (
     <MobileLayoutContainer
       footer={
-        <Button
-          testID="button-add-account"
-          text={t('Add account')}
-          size="regular"
-          onPress={openBottomSheet as any}
-          childrenPosition="left"
-          hasBottomSpacing={false}
-          style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-        >
-          <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-        </Button>
+        <>
+          <Button
+            testID="button-add-account"
+            text={t('Add account')}
+            size="regular"
+            onPress={openBottomSheet as any}
+            childrenPosition="left"
+            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+          >
+            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+          </Button>
+          <Button
+            testID="button-sync-with-extension"
+            type="secondary"
+            text={t('Sync with extension')}
+            size="regular"
+            onPress={openSyncBottomSheet as any}
+            hasBottomSpacing={false}
+            childrenPosition="left"
+            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+          >
+            <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
+          </Button>
+        </>
       }
     >
       <MobileLayoutWrapperMainContent withBackButton title="Accounts">
@@ -304,6 +329,22 @@ const AccountsSettingsScreen = () => {
           </View>
         </BottomSheet>
         <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+        <SyncBottomSheet
+          sheetRef={syncSheetRef}
+          closeBottomSheet={closeSyncBottomSheet}
+          onExportPress={() => {
+            closeSyncBottomSheet()
+            openExportSheet()
+          }}
+          onImportPress={() => {
+            closeSyncBottomSheet()
+            navigate(ROUTES.importAccountsFromExtension)
+          }}
+        />
+        <ExportAccountsToExtensionSheet
+          sheetRef={exportSheetRef}
+          closeBottomSheet={closeExportSheet}
+        />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

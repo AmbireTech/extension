@@ -2274,6 +2274,12 @@
         "ox>abitype": true
       }
     },
+    "pako": {
+      "globals": {
+        "TextDecoder": true,
+        "TextEncoder": true
+      }
+    },
     "crypto-browserify>public-encrypt>parse-asn1": {
       "packages": {
         "crypto-browserify>public-encrypt>parse-asn1>asn1.js": true,
@@ -2406,6 +2412,7 @@
     },
     "@ledgerhq/device-management-kit>url>qs": {
       "packages": {
+        "patch-package>json-stable-stringify>call-bind>es-define-property": true,
         "eslint-plugin-react>string.prototype.matchall>side-channel": true
       }
     },

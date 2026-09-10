@@ -75,12 +75,16 @@ const Value = ({
   children,
   tooltipId = '',
   responsiveSizeMultiplier,
-  withWrap = false
+  withWrap = false,
+  breakWords = true
 }: {
   children: React.ReactNode
   tooltipId?: string
   responsiveSizeMultiplier: number
   withWrap?: boolean
+  // Forces breaks mid-word (e.g. a hex address), unwanted for plain text that already
+  // has spaces to wrap on
+  breakWords?: boolean
 }) => {
   const fontSize = isMobile ? 12 : 14 * responsiveSizeMultiplier
 
@@ -96,8 +100,8 @@ const Value = ({
           // Custom fontSize clears Text's default lineHeight; without an explicit value the
           // wrapped lines overlap
           lineHeight: Math.ceil(fontSize * 1.5),
-          // @ts-expect-error web-only style, needed because a hex address has no word boundaries
-          wordBreak: 'break-all'
+          // web-only style, needed because a hex address has no word boundaries
+          ...(breakWords && { wordBreak: 'break-all' as const })
         }
       ]}
     >
@@ -154,7 +158,7 @@ const SignInWithEthereum = ({
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
   const siweMessageToSign = useMemo(() => {
@@ -305,7 +309,7 @@ const SignInWithEthereum = ({
               backgroundColor: theme.secondaryBackground,
               paddingHorizontal: SPACING_SM * responsiveSizeMultiplier,
               paddingVertical: SPACING * responsiveSizeMultiplier,
-              marginBottom: SPACING * responsiveSizeMultiplier,
+              marginBottom: isMobile ? SPACING_SM : SPACING * responsiveSizeMultiplier,
               borderRadius: BORDER_RADIUS_PRIMARY,
               minHeight: 200
             }}
@@ -316,7 +320,13 @@ const SignInWithEthereum = ({
               }}
             >
               <Label responsiveSizeMultiplier={responsiveSizeMultiplier}>{t('Message')}</Label>
-              <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>
+              <Value
+                responsiveSizeMultiplier={responsiveSizeMultiplier}
+                // The full statement must stay readable, so it wraps onto multiple lines
+                // instead of being cut off at the end
+                withWrap
+                breakWords={false}
+              >
                 {siweMessageToSign.parsedMessage.statement}
               </Value>
             </View>
@@ -401,9 +411,9 @@ const SignInWithEthereum = ({
                 setValue={({ value }) => {
                   updateAutoLoginExpirationTime(Number(value))
                 }}
-                containerStyle={
-                  isMobile ? { width: '100%', marginBottom: 0 } : { width: 120, marginBottom: 0 }
-                }
+                // On mobile the select is the last element above the footer, so it keeps
+                // its default bottom spacing
+                containerStyle={isMobile ? { width: '100%' } : { width: 120, marginBottom: 0 }}
                 size={isMobile ? 'md' : 'sm'}
                 value={AUTO_LOGIN_DURATION_OPTIONS.find(
                   (option) =>

@@ -54,7 +54,7 @@ const AccountsOnPageList = ({
   children
 }: Props) => {
   const { t } = useTranslation()
-  const { networks: allNetworks } = useController('NetworksController').state
+  const { state: allNetworks } = useController('NetworksController', 'networks')
   const { state: accountPickerState, dispatch: accountPickerDispatch } =
     useController('AccountPickerController')
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)
@@ -153,6 +153,9 @@ const AccountsOnPageList = ({
             unused={isUnused}
             isSelected={isSelected}
             importStatus={acc.importStatus}
+            importedKeyTypes={acc.importedKeyTypes}
+            associatedKeysStats={acc.associatedKeysStats}
+            currentKeyType={state.type}
             onSelect={handleSelectAccount}
             onDeselect={handleDeselectAccount}
             displayTypeBadge={false}
@@ -170,7 +173,7 @@ const AccountsOnPageList = ({
         )
       })
     },
-    [getType, state.selectedAccounts, handleSelectAccount, handleDeselectAccount]
+    [getType, state.selectedAccounts, state.type, handleSelectAccount, handleDeselectAccount]
   )
 
   const networkNamesWithAccountStateError = useMemo(() => {

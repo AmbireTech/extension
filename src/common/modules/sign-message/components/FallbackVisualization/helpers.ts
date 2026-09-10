@@ -15,17 +15,19 @@ export const getEip712IntegerFieldNames = (
 export const isParsedMessageValueShortened = (
   label: string,
   value: string | number,
-  integerFieldNames = new Set<string>()
+  integerFieldNames = new Set<string>(),
+  maxLength = EIP712_VALUE_PREVIEW_MAX_LENGTH
 ): value is string =>
   !integerFieldNames.has(label) &&
   typeof value === 'string' &&
   isHexString(value) &&
-  value.length > EIP712_VALUE_PREVIEW_MAX_LENGTH
+  value.length > maxLength
 
 export const getParsedMessageValue = (
   label: string,
   value: string | number,
-  integerFieldNames = new Set<string>()
+  integerFieldNames = new Set<string>(),
+  maxLength = EIP712_VALUE_PREVIEW_MAX_LENGTH
 ) => {
   if (integerFieldNames.has(label)) {
     try {
@@ -35,10 +37,10 @@ export const getParsedMessageValue = (
     }
   }
 
-  if (!isParsedMessageValueShortened(label, value, integerFieldNames)) return value
+  if (!isParsedMessageValueShortened(label, value, integerFieldNames, maxLength)) return value
 
-  const prefixLength = Math.floor((EIP712_VALUE_PREVIEW_MAX_LENGTH - 3) / 2)
-  const suffixLength = EIP712_VALUE_PREVIEW_MAX_LENGTH - 3 - prefixLength
+  const prefixLength = Math.floor((maxLength - 3) / 2)
+  const suffixLength = maxLength - 3 - prefixLength
 
   return `${value.slice(0, prefixLength)}...${value.slice(-suffixLength)}`
 }

@@ -28,7 +28,7 @@ import useKeyStoreUnlock from '@common/modules/keystore/hooks/useKeyStoreUnlock'
 import backgroundImage from '@common/modules/keystore/images/background.png'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { syncSessionStorage } from '@common/services/storage'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -38,6 +38,7 @@ import { IS_FIREFOX } from '@web/constants/common'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
 
 import getStyles from './styles'
+import UpdateAvailableBanner, { selectIsExtensionUpdateAvailable } from './UpdateAvailableBanner'
 
 const FOOTER_BUTTON_HIT_SLOP = { top: 10, bottom: 15 }
 
@@ -53,10 +54,14 @@ const KeyStoreUnlockScreen = () => {
   } = useController('WalletStateController')
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
-    state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked },
+    state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
-  const { requestWindow } = useController('RequestsController').state
+  const { state: requestWindow } = useController('RequestsController', 'requestWindow')
+  const { state: isExtensionUpdateAvailable } = useController(
+    'ExtensionUpdateController',
+    selectIsExtensionUpdateAvailable
+  )
   const { theme } = useTheme()
   const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
   const { isPopup, isTab, isSidePanel } = getUiType()
@@ -70,7 +75,8 @@ const KeyStoreUnlockScreen = () => {
     return shouldSkip
   })
 
-  const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
+  const canUseBiometrics =
+    !!hasBiometricsSecret && !!hasBiometricsHardware && !isPasswordUnlockRequired
 
   // WebAuthn (Touch ID / passkey) cannot prompt inside the Chrome side panel or the
   // Firefox popup: the browser tries to show a modal that these surfaces can't host, so
@@ -178,7 +184,15 @@ const KeyStoreUnlockScreen = () => {
           height: 324,
           width: '100%',
           ...spacings.phSm,
-          marginBottom: canUseBiometrics ? 42 : 56
+          // The update banner takes over the gap below the card, so the rest of the screen stays in place
+          marginBottom:
+            isExtensionUpdateAvailable && !isPasswordUnlockRequired
+              ? SPACING_TY
+              : canUseBiometrics
+                ? 42
+                : isPasswordUnlockRequired
+                  ? 24
+                  : 56
         }}
       >
         <View
@@ -254,6 +268,11 @@ const KeyStoreUnlockScreen = () => {
           </Text>
         </View>
       </View>
+      {isExtensionUpdateAvailable && !isPasswordUnlockRequired && (
+        <View style={[spacings.phSm, spacings.mbTy, { width: '100%' }]}>
+          <UpdateAvailableBanner />
+        </View>
+      )}
       <View style={styles.container}>
         {unlockMethod === 'biometrics' && canUseBiometrics && (
           <View style={styles.biometricsContainer}>
@@ -288,6 +307,18 @@ const KeyStoreUnlockScreen = () => {
 
         {unlockMethod === 'password' && (
           <>
+            {!!isPasswordUnlockRequired && (
+              <Text
+                fontSize={12}
+                weight="medium"
+                appearance="secondaryText"
+                style={[text.center, spacings.mbSm]}
+              >
+                {t(
+                  'Enter your password to finish a security update. Biometric unlock will be available right after.'
+                )}
+              </Text>
+            )}
             <Controller
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
@@ -359,7 +390,7 @@ const KeyStoreUnlockScreen = () => {
                     windowId: requestWindow?.windowProps?.createdFromWindowId
                   })
                 }
-                style={spacings.mtXl}
+                style={isPasswordUnlockRequired ? spacings.mtLg : spacings.mtXl}
                 hitSlop={FOOTER_BUTTON_HIT_SLOP}
               >
                 <Text weight="medium" appearance="secondaryText" fontSize={14} underline>

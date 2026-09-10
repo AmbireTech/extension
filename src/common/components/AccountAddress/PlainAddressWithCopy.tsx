@@ -133,7 +133,13 @@ const PlainAddressWithCopy: FC<Props> = ({
         style={[animStyle, isSidePanel && [spacings.mlMi, { flexShrink: 0 }]]}
         {...bindAnim}
       >
-        <CopyIcon width={iconSize} height={iconSize} color={theme.secondaryText} />
+        {/* The icon is as small as the address next to it, so the default stroke reads as too thick */}
+        <CopyIcon
+          width={iconSize}
+          height={iconSize}
+          color={theme.secondaryText}
+          strokeWidth="1.2"
+        />
       </AnimatedPressable>
       {children}
     </View>

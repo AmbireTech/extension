@@ -38,6 +38,12 @@ const shimRedirects = {
 
 // Redirect node built-ins to browserified/native versions
 const nodeCoreRedirects = {
+  // Note that ethers v6 is NOT one of the consumers of the `crypto` entry: Metro applies ethers' own
+  // browser field mapping, so it resolves to `crypto/crypto-browser.js`, which reads
+  // `global.crypto.getRandomValues` instead of ever requiring node's crypto. That global is owned by
+  // react-native-quick-crypto's `install()` - see the assert in `shim.js` for why that matters. The
+  // entry below is still load-bearing for everything else that does require it, ethers v5
+  // (`@ethersproject/providers`), Sentry and the crypto-browserify family among them.
   crypto: 'react-native-quick-crypto',
   stream: 'readable-stream',
   buffer: 'buffer',

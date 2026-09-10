@@ -6,6 +6,48 @@ import { zeroAddress } from 'viem'
 
 type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
 
+/** Keeps ERC-7730 text compact in layouts shared by mobile and the side panel. */
+export const MOBILE_ERC7730_TEXT_SIZE = 14
+
+/**
+ * Converts the whitespace around interpolated intent parts into explicit layout spacing.
+ * React Native drops leading and trailing spaces when text and rich values are separate views.
+ */
+export const getErc7730TitlePartsForRendering = (titleParts: HumanizerVisualization[]) => {
+  let shouldSpaceNextPart = false
+
+  return titleParts.reduce<{ part: HumanizerVisualization; shouldSpaceBefore: boolean }[]>(
+    (renderableParts, part) => {
+      const content = 'content' in part ? part.content : undefined
+
+      if (typeof content !== 'string') {
+        renderableParts.push({
+          part,
+          shouldSpaceBefore: renderableParts.length > 0 && shouldSpaceNextPart
+        })
+        shouldSpaceNextPart = false
+        return renderableParts
+      }
+
+      const trimmedContent = content.trim()
+      if (!trimmedContent) {
+        shouldSpaceNextPart = renderableParts.length > 0
+        return renderableParts
+      }
+
+      renderableParts.push({
+        part: trimmedContent === content ? part : { ...part, content: trimmedContent },
+        shouldSpaceBefore:
+          renderableParts.length > 0 && (shouldSpaceNextPart || content.trimStart() !== content)
+      })
+      shouldSpaceNextPart = content.trimEnd() !== content
+
+      return renderableParts
+    },
+    []
+  )
+}
+
 const labelIncludes = (label: string, needles: string[]) => {
   const normalizedLabel = label.trim().toLowerCase()
 
@@ -32,6 +74,53 @@ const isZeroAddressBeneficiaryRow = (row: Erc7730Row) =>
 
 export const getVisibleErc7730Rows = (item: HumanizerErc7730Visualization) =>
   item.rows.filter((row) => !isZeroAddressBeneficiaryRow(row))
+
+const isSameTitlePartValue = (
+  rowValue: HumanizerVisualization,
+  titlePart: HumanizerVisualization
+) => {
+  if (rowValue.type === 'token' && titlePart.type === 'token') {
+    return (
+      rowValue.address.toLowerCase() === titlePart.address.toLowerCase() &&
+      rowValue.value === titlePart.value &&
+      (rowValue.chainId ?? undefined) === (titlePart.chainId ?? undefined)
+    )
+  }
+
+  if (rowValue.type === 'address' && titlePart.type === 'address') {
+    return (
+      !!rowValue.address &&
+      rowValue.address.toLowerCase() === titlePart.address?.toLowerCase() &&
+      (rowValue.chainId ?? undefined) === (titlePart.chainId ?? undefined)
+    )
+  }
+
+  return false
+}
+
+// A row is redundant with the interpolated intent (titleParts) only if every one of
+// its values (token amounts, addresses) is already rendered as part of the intent
+// title - a partial match keeps the row, since it still carries info the title
+// doesn't show. Plain text/label/action title parts are intentionally not matched:
+// they carry no stable identity to compare against, so treating them as duplicates
+// risks hiding unrelated rows that happen to share the same text.
+const isRowRedundantWithTitleParts = (row: Erc7730Row, titleParts: HumanizerVisualization[]) =>
+  row.value.length > 0 &&
+  row.value.every((rowValue) =>
+    titleParts.some((titlePart) => isSameTitlePartValue(rowValue, titlePart))
+  )
+
+// Same as getVisibleErc7730Rows, but additionally drops rows whose values are
+// already shown in the interpolated intent title (item.titleParts), per the
+// ERC-7730 spec: wallets MAY show both the interpolated intent and the field
+// rows, but shouldn't repeat the same data twice.
+export const getVisibleErc7730RowsExcludingTitleParts = (item: HumanizerErc7730Visualization) => {
+  const visibleRows = getVisibleErc7730Rows(item)
+  if (!item.titleParts?.length) return visibleRows
+
+  const { titleParts } = item
+  return visibleRows.filter((row) => !isRowRedundantWithTitleParts(row, titleParts))
+}
 
 export const hasTokenValue = (row: Erc7730Row) => row.value.some((value) => value.type === 'token')
 
@@ -67,8 +156,6 @@ const isComplexActionRow = (row: Erc7730Row) =>
 
 const isActionValue = (value: HumanizerVisualization) => value.type === 'action' && !!value.content
 
-const getActionContent = (row: Erc7730Row) => row.value.find(isActionValue)?.content
-
 export const isNestedErc7730Value = (
   value: HumanizerVisualization
 ): value is HumanizerVisualization & HumanizerErc7730Visualization => value.type === 'erc7730'
@@ -76,21 +163,7 @@ export const isNestedErc7730Value = (
 export const isNestedErc7730Row = (row: Erc7730Row) =>
   row.value.length > 0 && row.value.every(isNestedErc7730Value)
 
-const isMorphoBundlerMulticall = (item: HumanizerErc7730Visualization) =>
-  (item.title || '').trim().toLowerCase() === 'bundler3 multicall'
-
-const isTransferActionRow = (row: Erc7730Row) =>
-  getActionContent(row)?.trim().toLowerCase() === 'transfer'
-
-export const getDetailedRows = (item: HumanizerErc7730Visualization) => {
-  const visibleRows = getVisibleErc7730Rows(item)
-
-  if (!isMorphoBundlerMulticall(item)) return visibleRows
-
-  const nonTransferRows = visibleRows.filter((row) => !isTransferActionRow(row))
-
-  return nonTransferRows.length ? nonTransferRows : visibleRows
-}
+export const getDetailedRows = (item: HumanizerErc7730Visualization) => getVisibleErc7730Rows(item)
 
 const isToLabelValue = (value: HumanizerVisualization) =>
   value.type === 'label' && value.content?.trim().toLowerCase() === 'to'
@@ -179,12 +252,6 @@ export const shouldShowErc7730SummaryRowLabel = (
   if (!rowLabel) return false
 
   return rowLabel !== item.title?.trim()
-}
-
-export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) => {
-  if (!isMorphoBundlerMulticall(item)) return []
-
-  return item.rows.filter(isTransferActionRow)
 }
 
 export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualization) => {
