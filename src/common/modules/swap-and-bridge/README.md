@@ -70,7 +70,7 @@ From v6.20.0 the user can turn each provider on or off individually, from the se
 
 Ambire charges an interface fee on swaps, disclosed in the app before the user confirms the transaction. The fee is a parameter passed to the provider's quote request; the provider's own smart contract routes it on-chain to an Ambire fee-collector address as part of the user's transaction. Ambire never receives, holds, or forwards the swapped funds themselves.
 
-The fee is tiered by the amount of stkWALLET the account holds:
+Up to v6.20.x the fee is a flat 0.5%. From v6.21.0 it is tiered by the amount of stkWALLET the account holds:
 
 | stkWALLET held | Fee   |
 | -------------- | ----- |
