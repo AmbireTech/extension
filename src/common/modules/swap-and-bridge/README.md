@@ -79,7 +79,13 @@ Up to v6.20.x the fee is a flat 0.5%. From v6.21.0 it is tiered by the amount of
 | 100,000+       | 0.25% |
 | 700,000+       | 0%    |
 
-Defined in [`fee.ts`](https://github.com/AmbireTech/ambire-common/blob/v2/src/libs/swapAndBridge/fee.ts). Some routes are fee exempt; the applicable fee is always shown before signing.
+Defined in [`fee.ts`](https://github.com/AmbireTech/ambire-common/blob/v2/src/libs/swapAndBridge/fee.ts). The applicable fee is always shown before signing.
+
+Some routes are fee exempt, with no fee charged at all, when:
+
+- the swap wraps or unwraps a network's native token on the same chain - ETH to WETH and back, and the equivalent on other networks;
+- the source token is on a fee-exempt list, currently stETH on Ethereum;
+- the route runs on a chain where fee collection is not set up.
 
 ## What Ambire does not do
 
