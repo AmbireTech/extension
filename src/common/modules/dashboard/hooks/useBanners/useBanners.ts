@@ -24,14 +24,16 @@ const OFFLINE_BANNER: BannerInterface = {
 export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { state: isOffline } = useController('MainController', 'isOffline')
   const { bannersData: marketingBannersData } = useController('BannerController').state
-  const {
-    state: {
-      account,
-      portfolio,
-      deprecatedSmartAccountBanner,
-      banners: selectedAccountBanners = []
-    }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: deprecatedSmartAccountBanner } = useController(
+    'SelectedAccountController',
+    'deprecatedSmartAccountBanner'
+  )
+  const { state: selectedAccountBanners = [] } = useController(
+    'SelectedAccountController',
+    'banners'
+  )
 
   const { state: emailVaultBanners = [] } = useController('EmailVaultController', 'banners')
   const { state: requestBanners = [] } = useController('RequestsController', 'banners')

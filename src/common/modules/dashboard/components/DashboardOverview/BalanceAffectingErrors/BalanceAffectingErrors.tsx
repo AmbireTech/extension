@@ -35,9 +35,11 @@ const BalanceAffectingErrors: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const {
-    state: { balanceAffectingErrors, portfolio }
-  } = useController('SelectedAccountController')
+  const { state: balanceAffectingErrors } = useController(
+    'SelectedAccountController',
+    'balanceAffectingErrors'
+  )
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
 
   const areErrorsOutdatedAndPortfolioIsReady = useMemo(() => {
     return (

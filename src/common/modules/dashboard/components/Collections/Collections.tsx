@@ -58,9 +58,11 @@ const Collections: FC<Props> = ({
   refreshing,
   onRefresh
 }) => {
-  const {
-    state: { portfolio, dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    'dashboardNetworkFilter'
+  )
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { t } = useTranslation()
   const { theme } = useTheme()

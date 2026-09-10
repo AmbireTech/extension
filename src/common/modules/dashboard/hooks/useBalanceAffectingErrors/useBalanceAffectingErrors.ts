@@ -11,9 +11,11 @@ import {
 
 const useBalanceAffectingErrors = () => {
   const { t } = useTranslation()
-  const {
-    state: { balanceAffectingErrors, portfolio }
-  } = useController('SelectedAccountController')
+  const { state: balanceAffectingErrors } = useController(
+    'SelectedAccountController',
+    'balanceAffectingErrors'
+  )
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { allNetworks, areNetworksFetchingFromRelayer } = useController('NetworksController').state
   // While the networks config is being refreshed from the relayer, the balance is
   // held in a loading (skeleton) state and any updated RPC will trigger a portfolio

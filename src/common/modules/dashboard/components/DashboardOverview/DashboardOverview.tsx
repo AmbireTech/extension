@@ -42,7 +42,8 @@ const DashboardOverview: FC<Props> = ({
 }) => {
   const { theme } = useTheme(getStyles)
   const { state: isOffline } = useController('MainController', 'isOffline')
-  const { account, portfolio } = useController('SelectedAccountController').state
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { state: areNetworksFetchingFromRelayer } = useController(
     'NetworksController',
     'areNetworksFetchingFromRelayer'

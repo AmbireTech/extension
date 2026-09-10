@@ -4,7 +4,11 @@ import useController from '@common/hooks/useController'
 
 const useDashboardReload = () => {
   const { dispatch: mainDispatch } = useController('MainController')
-  const { dashboardNetworkFilter, portfolio } = useController('SelectedAccountController').state
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    'dashboardNetworkFilter'
+  )
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const [isManuallyRefreshing, setIsManuallyRefreshing] = useState(false)
 
   const reloadAccount = useCallback(() => {

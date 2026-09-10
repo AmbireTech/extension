@@ -77,9 +77,13 @@ const DeFiPositions: FC<Props> = ({
     'PortfolioController',
     selectScheduledUpdateChainIds
   )
-  const {
-    state: { account, portfolio, dashboardNetworkFilter, banners }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    'dashboardNetworkFilter'
+  )
+  const { state: banners } = useController('SelectedAccountController', 'banners')
   const { setSearchParams, navigate } = useNavigation()
 
   const hasPendingUpdate = useMemo(
