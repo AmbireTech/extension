@@ -1,14 +1,16 @@
 import React, { useCallback, useMemo } from 'react'
 import { Image, View } from 'react-native'
 
+import { WALLET_STAKING_ADDR } from '@ambire-common/consts/addresses'
+import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
-// @ts-ignore
 import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import XWalletConversionTooltip from '@common/components/XWalletConversionTooltip'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -89,6 +91,8 @@ const BaseTokenItem = ({
   })
 
   const tokenId = getTokenId(token)
+  const isLegacyXWallet =
+    chainId === ETHEREUM_CHAIN_ID && address.toLowerCase() === WALLET_STAKING_ADDR.toLowerCase()
 
   const {
     balanceFormatted,
@@ -224,16 +228,32 @@ const BaseTokenItem = ({
               ]}
             >
               <View style={spacings.mbMi}>
-                <Text
-                  selectable
-                  color={textColor}
-                  fontSize={16}
-                  weight="semiBold"
-                  numberOfLines={1}
-                  style={{ lineHeight: 22 }}
-                >
-                  {symbol}
-                </Text>
+                <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
+                  <Text
+                    selectable
+                    color={textColor}
+                    fontSize={16}
+                    weight="semiBold"
+                    numberOfLines={1}
+                    style={{ lineHeight: 22 }}
+                  >
+                    {symbol}
+                  </Text>
+                  <XWalletConversionTooltip
+                    address={address}
+                    chainId={chainId}
+                    xWalletAmount={token.amount}
+                    tooltipId={`dashboard-x-wallet-conversion-${tokenId}`}
+                  />
+                  {isLegacyXWallet && (
+                    <View style={styles.legacyBadge}>
+                      <View style={styles.legacyBadgeDot} />
+                      <Text fontSize={8} weight="medium" appearance="warningText">
+                        {t('LEGACY')}
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text
                   selectable
                   fontSize={12}

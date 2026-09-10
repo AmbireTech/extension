@@ -68,6 +68,14 @@ git submodule update
 
 Create ".env" file in the root directory and fill in all variables, see ".env-sample" for a reference.
 
+## Crash Analytics
+
+Ambire sends anonymous crash reports to a self-hosted Sentry, so we can find and fix bugs without asking anyone to reproduce them.
+
+The safeguards we use to keep private keys, seed phrases, passwords and other sensitive data out of these reports are documented in [`CRASH-ANALYTICS.md`](./src/common/config/analytics/CRASH-ANALYTICS.md).
+
+Users can opt out of sending crash analytics at any time from Settings - Privacy opt-outs.
+
 ## Editor Config
 
 Make sure your code editor has plugins that support the following configuration files: `.editorconfig`, `.prettierrc`, `tsconfig.json`, `eslintrc.js`, [`import-sorter.json`](https://github.com/SoominHan/import-sorter).
@@ -469,13 +477,11 @@ $LEDGER_EMULATOR_SEED='<LEDGER-SEED-PHRASE>' ./start-emulator.sh
 lsof -i :5000
 ```
 
-If nothing is returned, the port is free.
-If you see a process listed, the port is occupied.
+If nothing is returned, the port is free. If you see a process listed, the port is occupied.
 
 2. **macOS specific context**
 
-On macOS, port 5000 is commonly taken by AirPlay Receiver (enabled by default on newer macOS versions).
-To check:
+On macOS, port 5000 is commonly taken by AirPlay Receiver (enabled by default on newer macOS versions). To check:
 
 System Settings → General → AirDrop & Handoff → AirPlay Receiver
 

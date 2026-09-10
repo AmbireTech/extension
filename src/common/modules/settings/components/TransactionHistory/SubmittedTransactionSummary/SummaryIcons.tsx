@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { Image, ImageSourcePropType, View } from 'react-native'
 
+import walletStakingIcon from '@common/assets/images/WalletStakingIcon.png'
 import ActivityReceiveIcon from '@common/assets/svg/ActivityReceiveIcon'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
@@ -14,7 +15,7 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
 
-import { DappInteraction, DisplayBalanceChange } from './types'
+import type { DappInteraction, DisplayBalanceChange } from './types'
 
 const dappIconAvailabilityCache = new Map<string, boolean>()
 
@@ -126,6 +127,18 @@ export const DappInteractionIcon = ({ interaction }: { interaction: DappInteract
     return (
       <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
         <AmbireLogo width={16} height={16} color={theme.tertiaryText} />
+      </View>
+    )
+  }
+
+  if (interaction.iconType === 'walletStaking') {
+    return (
+      <View style={[stylesForIcons.dappIconWrapper, { overflow: 'hidden' }]}>
+        <Image
+          source={walletStakingIcon as ImageSourcePropType}
+          resizeMode="contain"
+          style={{ position: 'static' }}
+        />
       </View>
     )
   }

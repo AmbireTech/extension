@@ -227,6 +227,9 @@ const HoldToProceedButton: FC<Props> = ({
         disabled={disabled}
         type={buttonType}
         {...rest}
+        // Nothing hovers on mobile, so without this the button keeps its resting
+        // background and the progress fill has nothing to stand out against.
+        forceHoveredStyle={isHolding}
       />
 
       <Animated.View

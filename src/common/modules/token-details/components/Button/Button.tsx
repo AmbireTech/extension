@@ -29,6 +29,8 @@ interface Props {
   tooltipText?: string
   testID?: string
   iconWidth?: number
+  /** Uses the narrow action layout even when the surrounding screen is not compact. */
+  forceCompact?: boolean
 }
 
 const TokenDetailsButton: FC<Props> = ({
@@ -41,11 +43,13 @@ const TokenDetailsButton: FC<Props> = ({
   onPress,
   icon: Icon,
   token,
-  testID
+  testID,
+  forceCompact
 }) => {
   const { styles, theme } = useTheme(getStyles)
   // Compact = mobile or narrow side panel — both use the original mobile button styles.
   const { isCompactLayout } = useCompactActionRequestLayout()
+  const shouldUseCompactLayout = isCompactLayout || forceCompact
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -62,9 +66,9 @@ const TokenDetailsButton: FC<Props> = ({
         key={id}
         dataSet={tooltipText ? { tooltipId } : undefined}
         style={[
-          isCompactLayout ? styles.actionCompact : styles.action,
+          shouldUseCompactLayout ? styles.actionCompact : styles.action,
           isDisabled && { opacity: 0.4 },
-          !isCompactLayout && isWeb && id !== 'hide-unhide' && { marginRight: 6 }
+          !shouldUseCompactLayout && isWeb && id !== 'hide-unhide' && { marginRight: 6 }
         ]}
         // Purposely don't disable the button (but block the onPress action) in
         // case of a tooltip, because it should be clickable to show the tooltip.
@@ -95,10 +99,10 @@ const TokenDetailsButton: FC<Props> = ({
           />
         </Animated.View>
         <Text
-          fontSize={isCompactLayout ? 10 : 12}
+          fontSize={shouldUseCompactLayout ? 10 : 12}
           weight="medium"
-          numberOfLines={isCompactLayout ? 2 : 1}
-          style={[text.center, isCompactLayout && { minWidth: 0, width: '100%' }]}
+          numberOfLines={shouldUseCompactLayout ? 2 : 1}
+          style={[text.center, shouldUseCompactLayout && { minWidth: 0, width: '100%' }]}
         >
           {btnText}
         </Text>
