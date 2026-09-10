@@ -11,7 +11,6 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -46,10 +45,8 @@ const Footer = ({
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactActionRequestLayout()
-  const { userRequests } = useController('RequestsController').state
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 
@@ -235,7 +232,6 @@ const Footer = ({
             {rejectButton({ fullWidth: true })}
           </View>
         )}
-        <ActionsPagination />
       </View>
     )
   }
@@ -253,7 +249,6 @@ const Footer = ({
           {signButton(false)}
         </View>
       </View>
-      <ActionsPagination />
     </>
   )
 }

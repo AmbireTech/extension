@@ -22,9 +22,7 @@ interface Props {
 
 const ChainVisualization: FC<Props> = ({ chainId, marginRight, textSize }) => {
   const { benzinNetworks, loadingBenzinNetworks = [] } = useNetworksContext()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const actualNetworks = networks ?? benzinNetworks
   const isNetworkLoading = loadingBenzinNetworks.includes(chainId)
   const destinationNetwork = actualNetworks.find((n) => n.chainId === chainId)

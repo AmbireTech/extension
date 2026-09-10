@@ -4,7 +4,6 @@ import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
-import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -79,7 +78,6 @@ const ActionFooter = ({
           {rejectButton}
           {resolveButton}
         </View>
-        <ActionsPagination />
       </View>
     )
   }
@@ -127,7 +125,6 @@ const ActionFooter = ({
             </View>
           )}
         </View>
-        <ActionsPagination />
       </GlassView>
     </View>
   )

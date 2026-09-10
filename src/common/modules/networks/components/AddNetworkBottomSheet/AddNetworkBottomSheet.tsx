@@ -1,18 +1,20 @@
-import React, { memo } from 'react'
+import React, { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
-import Text from '@common/components/Text'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import { isWeb } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import { openInTab } from '@common/utils/links'
 
 import Option from '../Option'
+
+const CHAINLIST_URL = 'https://chainlist.org/'
 
 interface Props {
   sheetRef: ReturnType<typeof useModalize>['ref']
@@ -24,27 +26,40 @@ const AddNetworkBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { navigate } = useNavigation()
   const { theme } = useTheme()
 
+  const handleGoToChainlist = useCallback(async () => {
+    if (isWeb) {
+      await openInTab({ url: CHAINLIST_URL, shouldCloseCurrentWindow: true })
+      return
+    }
+
+    // Mobile has no tabs, so Chainlist opens in the in-app dapp WebView instead
+    closeBottomSheet()
+    navigate(ROUTES.dappWebView, { state: { url: CHAINLIST_URL, showBackButton: true } })
+  }, [closeBottomSheet, navigate])
+
+  const handleGoToSettings = useCallback(() => {
+    closeBottomSheet()
+    navigate(WEB_ROUTES.networksSettings)
+  }, [closeBottomSheet, navigate])
+
   return (
     <BottomSheet
       id="dashboard-add-networks"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
     >
-      <Text fontSize={20} weight="semiBold" style={spacings.mbLg}>
-        {t('Add Network')}
-      </Text>
+      <ModalHeader handleClose={closeBottomSheet} title={t('Add network')} />
       <Option
         renderIcon={<ChainlistIcon width={24} height={24} color={theme.secondaryText} />}
         title={t('Go to Chainlist')}
         text={t('Add any EVM network')}
-        onPress={() => openInTab({ url: 'https://chainlist.org/', shouldCloseCurrentWindow: true })}
+        onPress={handleGoToChainlist}
       />
       <Option
         renderIcon={<SettingsIcon width={24} height={24} color={theme.secondaryText} />}
         title={t('Go to Settings')}
-        onPress={() => {
-          navigate(WEB_ROUTES.networksSettings)
-        }}
+        text={t('Add network manually')}
+        onPress={handleGoToSettings}
       />
     </BottomSheet>
   )

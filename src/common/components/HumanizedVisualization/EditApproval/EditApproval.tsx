@@ -129,9 +129,7 @@ const EditApproval = ({
     open: openEditApprovals,
     close: closeEditApprovals
   } = useModalize()
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const amountRef = useRef<string>('0')
   const [initialAmount, setInitialAmount] = useState<string>('0')
   const [initialValueSet, setInitialValueSet] = useState<boolean>(false)

@@ -65,10 +65,8 @@ const AddressBookContact: FC<Props> = ({
   const { theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { accounts } = useController('AccountsController').state
-  const {
-    state: { account: selectedAccount }
-  } = useController('SelectedAccountController')
+  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
   const reverseLookup = useReverseLookup({
     address,
     // This is needed because the component is rendered in AddressInput when a valid address

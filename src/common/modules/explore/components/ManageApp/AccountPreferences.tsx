@@ -28,9 +28,7 @@ const AccountPreferences = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { theme } = useTheme()
-  const {
-    state: { account: selectedAccount }
-  } = useController('SelectedAccountController')
+  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
   const { dispatch: dappDispatch } = useController('DappsController')
 
   const [manageAccountsBindAnim, manageAccountsAnimStyle] = useCustomHover({

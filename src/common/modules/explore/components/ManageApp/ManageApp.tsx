@@ -23,6 +23,7 @@ import useManageApp from '@common/modules/explore/hooks/useManageApp'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 
 interface ManageAppProps {
   dapp: Dapp
@@ -49,9 +50,11 @@ const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: Manage
   } = useModalize()
   const { t } = useTranslation()
   const { dispatch: mainDispatch } = useController('MainController')
-  const {
-    state: { account: selectedAccount }
-  } = useController('SelectedAccountController')
+  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
 
   const connectedSources = dapp.connectedSources ?? []
   const hasMultipleSources = connectedSources.length > 1
@@ -76,8 +79,9 @@ const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: Manage
 
   const networksOptions: SelectValue[] = useMemo(
     () =>
-      networks.map((n) => ({
+      sortNetworksByBalance(networks, balancePerNetwork).map((n) => ({
         value: n.chainId.toString(),
+        extraSearchProps: { name: n.name },
         label: (
           <Text weight="medium" fontSize={14} numberOfLines={1}>
             {n.name}
@@ -85,7 +89,7 @@ const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: Manage
         ),
         icon: <NetworkIcon size={24} id={n.chainId.toString()} />
       })),
-    [networks]
+    [networks, balancePerNetwork]
   )
 
   const selectedNetwork = useMemo(
