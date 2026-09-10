@@ -62,6 +62,10 @@ Uniswap settles some cross-chain routes through Across Protocol (operated by Ris
 
 Ambire holds an integrator API key with each of the three quote providers. The keys identify the integration for rate limiting and fee attribution; they grant Ambire no control over user funds or over the underlying protocols.
 
+### Provider selection
+
+From v6.20.0 the user can turn each provider on or off individually, from the settings on the Swap & Bridge screen. A disabled provider is no longer queried for quotes or for its supported chains. The preference is stored locally on the device and persists across sessions.
+
 ## Interface fee
 
 Ambire charges an interface fee on swaps, disclosed in the app before the user confirms the transaction. The fee is a parameter passed to the provider's quote request; the provider's own smart contract routes it on-chain to an Ambire fee-collector address as part of the user's transaction. Ambire never receives, holds, or forwards the swapped funds themselves.

@@ -30,7 +30,7 @@
 
 ## Third-party integrations
 
-The Swap & Bridge feature is a user interface on top of independent third-party aggregators - Ambire never takes custody of user funds and is not a counterparty to any trade. The providers, the exact API endpoints used, their public documentation and terms, and the interface fee are documented in [Swap & Bridge](./src/common/modules/swap-and-bridge/README.md).
+The Swap & Bridge feature is a user interface on top of independent third-party aggregators - Ambire never takes custody of user funds and is not a counterparty to any trade. The providers, their public documentation and terms, how a swap is executed, and the interface fee are documented in [Swap & Bridge](./src/common/modules/swap-and-bridge/README.md).
 
 ## Environment Setup
 
