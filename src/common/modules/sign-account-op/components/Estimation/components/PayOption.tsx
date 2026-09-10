@@ -39,10 +39,8 @@ const PayOption = ({
   // showAccountBalanceBadge?: boolean // Note: Under discussion
 }) => {
   const { styles, theme } = useTheme(getStyles)
-  const { accounts } = useController('AccountsController').state
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const signAccountOpState = useController('SignAccountOpController').state
 
   const paidByAccountData = useMemo(

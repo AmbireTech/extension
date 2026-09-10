@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo } from 'react'
+import React, { FC, Suspense, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, FlatListProps, View } from 'react-native'
 
@@ -11,11 +11,12 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import usePrevious from '@common/hooks/usePrevious'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useTheme from '@common/hooks/useTheme'
 import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
+import PendingTransactions from '@common/modules/dashboard/components/Activity/PendingTransactions/lazyPendingTransactions'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
@@ -35,7 +36,7 @@ interface Props {
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll: FlatListProps<any>['onScroll']
+  onScroll?: FlatListProps<any>['onScroll']
   animatedOverviewHeight: Animated.Value
   network: Network | null
   refreshing?: boolean
@@ -57,6 +58,7 @@ const blockExplorerName = (explorerUrl: string) => {
 type Item =
   | SubmittedAccountOp
   | 'header'
+  | 'pending'
   | 'empty'
   | 'keep-this-to-avoid-key-warning'
   | 'skeleton'
@@ -83,7 +85,6 @@ const ActivityPositions: FC<Props> = ({
   const {
     state: { account, dashboardNetworkFilter }
   } = useController('SelectedAccountController')
-  const prevOpenTab = usePrevious(openTab)
 
   const currentAccountBanners = useMemo(() => {
     return getCurrentAccountBanners(banners, account?.addr)
@@ -95,39 +96,41 @@ const ActivityPositions: FC<Props> = ({
     void preloadSummaryPreview()
   }, [])
 
-  useEffect(() => {
-    if (prevOpenTab === 'activity' && openTab !== 'activity') {
+  // The filtered set of account ops is the session: it is what the list renders,
+  // and what tells an account with no transactions apart from one whose
+  // transactions have not been asked for yet. Tied to the screen being the one the
+  // user is on rather than to an effect, because the session is closed while the
+  // user is elsewhere - and it is this that asks for it again on the way back.
+  useControllerSession({
+    // Optimization: Don't apply filtration if we are not on Activity tab
+    isEnabled: openTab === 'activity' && !!account?.addr,
+    reopenOn: `${account?.addr}-${dashboardNetworkFilter ?? ''}`,
+    open: () =>
+      activityDispatch({
+        type: 'method',
+        params: {
+          method: 'filterAccountsOps',
+          args: [
+            sessionId,
+            {
+              account: account!.addr,
+              ...(dashboardNetworkFilter && {
+                chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
+              })
+            },
+            {
+              itemsPerPage: ITEMS_PER_PAGE,
+              fromPage: 0
+            }
+          ]
+        }
+      }),
+    close: () =>
       activityDispatch({
         type: 'method',
         params: { method: 'resetAccountsOpsFilters', args: [sessionId] }
       })
-    }
-  }, [prevOpenTab, openTab, activityDispatch, sessionId])
-
-  useEffect(() => {
-    // Optimization: Don't apply filtration if we are not on Activity tab
-    if (!account?.addr || openTab !== 'activity') return
-
-    activityDispatch({
-      type: 'method',
-      params: {
-        method: 'filterAccountsOps',
-        args: [
-          sessionId,
-          {
-            account: account.addr,
-            ...(dashboardNetworkFilter && {
-              chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
-            })
-          },
-          {
-            itemsPerPage: ITEMS_PER_PAGE,
-            fromPage: 0
-          }
-        ]
-      }
-    })
-  }, [openTab, account?.addr, activityDispatch, dashboardNetworkFilter, sessionId])
+  })
 
   const renderItem = useCallback(
     ({ item }: { item: Item }) => {
@@ -224,6 +227,16 @@ const ActivityPositions: FC<Props> = ({
 
       if (!initTab?.activity || !item || item === 'keep-this-to-avoid-key-warning') return null
 
+      if (item === 'pending') {
+        if (!account?.safeCreation) return null
+
+        return (
+          <Suspense fallback={null}>
+            <PendingTransactions />
+          </Suspense>
+        )
+      }
+
       if (item === 'skeleton') {
         return <ActivityPositionsSkeleton amount={4} />
       }
@@ -308,9 +321,10 @@ const ActivityPositions: FC<Props> = ({
     <DashboardPageScrollContainer
       tab="activity"
       openTab={openTab}
-      ListHeaderComponent={<DashboardBanners />}
+      ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
       data={[
-        'header',
+        ...(isMobile ? [] : ['header']),
+        'pending',
         !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
         ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
           ? accountsOps[sessionId].result.items

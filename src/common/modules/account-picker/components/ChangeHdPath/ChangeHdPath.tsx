@@ -27,7 +27,7 @@ const ChangeHdPath: React.FC<Props> = ({ disabled, type }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
   const {
-    state: { hdPathTemplate, pageError, page },
+    state: { hdPathTemplate, pageError, page, derivableHdPathTemplates },
     dispatch: accountPickerDispatch
   } = useController('AccountPickerController')
 
@@ -43,9 +43,13 @@ const ChangeHdPath: React.FC<Props> = ({ disabled, type }) => {
         if (type !== 'trezor' && d.value === BIP44_STANDARD_TESTNET_DERIVATION_TEMPLATE)
           return false
 
+        // Wallets that hand over a single account key (QR, NFC) can only browse the
+        // paths that branch off it, so the rest would just fail to derive
+        if (derivableHdPathTemplates && !derivableHdPathTemplates.includes(d.value)) return false
+
         return true
       }),
-    [type]
+    [type, derivableHdPathTemplates]
   )
 
   const handleChangeHdPathAndPage = useCallback(

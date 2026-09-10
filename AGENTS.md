@@ -14,6 +14,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - Unlike typical manifest version 3 extensions where the service worker is allowed to sleep, this extension is designed to stay alive: the UI periodically sends `ambire-extension-ping` messages, the background responds with `ambire-extension-pong` to prevent the service worker from being suspended, and the background's `init()` function (which bootstraps all controllers) is called on every incoming message - a no-op if already initialized, but essential after a service worker suspension because the JS context is destroyed on sleep and `isInitialized` resets
 - The business logic and persistent state is handled primarily using `controllers` (JS classes), which usually run in the `background`
 - The websites run some controllers separately without a `background`
+- The extension's scripts (background, content script, inpage, UI) and the messaging between them are documented in `src/web/extension-services/README.md` and `src/web/extension-services/messengers/README.md`
 - `src/ambire-common` is a **git submodule** that contains the business logic of the application. Changes inside it are in a separate repo and require a separate commit flow
 - `src/common` can be imported by all environments, but environments shouldn't import from other environments (e.g., `web/` SHOULD NOT import from `mobile/`)
 - There are environment specific files. Be VERY careful when creating files and debugging as they exist in two ways:

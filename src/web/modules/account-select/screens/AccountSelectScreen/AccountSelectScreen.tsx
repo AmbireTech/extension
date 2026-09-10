@@ -55,19 +55,12 @@ const ACCOUNT_OPTIONS = { markSelected: true }
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
   const flatlistRef = useRef(null)
-  const {
-    accounts,
-    control,
-    keyExtractor,
-    getItemLayout,
-    selectedAccountIndex,
-    shouldDisplayAccounts
-  } = useAccountsList({ flatlistRef })
+  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
+    { flatlistRef }
+  )
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const {
     ref: syncSheetRef,

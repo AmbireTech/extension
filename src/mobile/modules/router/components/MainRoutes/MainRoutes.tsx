@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-native'
 
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
+import WalletStakingScreen from '@common/modules/explore/components/WalletStaking/WalletStakingScreen'
 import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountPickerScreen'
@@ -47,6 +48,7 @@ import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
 import ImportAccountsFromExtensionScreen from '@mobile/modules/accounts-sync/screens/ImportAccountsFromExtensionScreen'
 import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
+// The location these routes match is the one `AppRoutes` scopes the context to.
 const MainRoutes = () => {
   return (
     <Routes>
@@ -67,7 +69,10 @@ const MainRoutes = () => {
         <Route path={ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
         <Route path={ROUTES.trezorConnect} element={<TrezorConnectScreen />} />
         <Route path={ROUTES.qrConnect} element={<QrConnectScreen />} />
-        <Route path={ROUTES.importAccountsFromExtension} element={<ImportAccountsFromExtensionScreen />} />
+        <Route
+          path={ROUTES.importAccountsFromExtension}
+          element={<ImportAccountsFromExtensionScreen />}
+        />
 
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
@@ -105,6 +110,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
           <Route path={ROUTES.explore} element={<ExploreScreen />} />
           <Route path={ROUTES.exploreSection} element={<ExploreSectionScreen />} />
+          <Route path={ROUTES.walletStaking} element={<WalletStakingScreen />} />
           <Route path={ROUTES.dappWebView} element={<DappWebViewScreen />} />
           <Route path={ROUTES.qrReader} element={<QrReaderScreen />} />
         </Route>

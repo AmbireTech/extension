@@ -8,16 +8,14 @@ import useWindowSize from '@common/hooks/useWindowSize'
 const useSwitchAccount = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { dispatch: mainDispatch } = useController('MainController')
 
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const { accounts } = useController('AccountsController').state
+  const { state: accounts } = useController('AccountsController', 'accounts')
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { minHeightSize } = useWindowSize()
 

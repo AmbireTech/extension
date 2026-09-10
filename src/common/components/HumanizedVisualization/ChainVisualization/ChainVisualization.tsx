@@ -17,13 +17,12 @@ const CHAIN_ICON_SIZE = isMobile ? 26 : 32
 interface Props {
   chainId: bigint
   marginRight?: number
+  textSize?: number
 }
 
-const ChainVisualization: FC<Props> = ({ chainId, marginRight }) => {
+const ChainVisualization: FC<Props> = ({ chainId, marginRight, textSize }) => {
   const { benzinNetworks, loadingBenzinNetworks = [] } = useNetworksContext()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const actualNetworks = networks ?? benzinNetworks
   const isNetworkLoading = loadingBenzinNetworks.includes(chainId)
   const destinationNetwork = actualNetworks.find((n) => n.chainId === chainId)
@@ -42,13 +41,13 @@ const ChainVisualization: FC<Props> = ({ chainId, marginRight }) => {
             benzinNetwork={destinationNetwork}
             size={CHAIN_ICON_SIZE}
           />
-          <Text onPress={handleLink} weight="semiBold" style={spacings.mlMi}>
+          <Text onPress={handleLink} weight="semiBold" fontSize={textSize} style={spacings.mlMi}>
             {destinationNetwork.name}
           </Text>
         </>
       )}
       {!destinationNetwork && !isNetworkLoading && (
-        <Text onPress={handleLink} weight="semiBold">
+        <Text onPress={handleLink} weight="semiBold" fontSize={textSize}>
           {`Chain with id ${chainId}`}
         </Text>
       )}

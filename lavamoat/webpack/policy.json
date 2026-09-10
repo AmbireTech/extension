@@ -2412,6 +2412,7 @@
     },
     "@ledgerhq/device-management-kit>url>qs": {
       "packages": {
+        "patch-package>json-stable-stringify>call-bind>es-define-property": true,
         "eslint-plugin-react>string.prototype.matchall>side-channel": true
       }
     },

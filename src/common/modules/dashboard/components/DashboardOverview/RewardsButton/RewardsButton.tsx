@@ -19,9 +19,7 @@ import { privateValue } from '@common/utils/ui'
 import RewardsButtonWrapper from './RewardsButtonWrapper'
 
 const RewardsButton = () => {
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const { navigate } = useNavigation()
   const { t } = useTranslation()

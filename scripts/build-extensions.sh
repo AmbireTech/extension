@@ -17,6 +17,9 @@ fi
 # Read the build target
 TARGET="$1"
 
+# The folder that holds the build outputs, honouring the optional BUILD_DIR env
+BUILD_DIR="$(node -p "require('./webpack/env').buildDir")"
+
 # sentry-cli should be available in node_modules/.bin after installing @sentry/cli
 # According to Sentry docs: https://docs.sentry.io/cli/installation/#installation-via-npm
 # The binary is located at ./node_modules/.bin/sentry-cli
@@ -40,12 +43,12 @@ upload_source_maps_for_build() {
   # Always inject debug IDs (doesn't require auth token), so that the build is
   # deterministic enough to pass the Firefox review process.
   echo "Injecting debug IDs for $ENGINE build"
-  $SENTRY_CLI_CMD sourcemaps inject build/$ENGINE-prod/ --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+  $SENTRY_CLI_CMD sourcemaps inject "$BUILD_DIR/$ENGINE-prod/" --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
 
   # Only upload to Sentry if auth token is available
   if [ -n "$SENTRY_AUTH_TOKEN" ]; then
     echo "Uploading source maps for $ENGINE build to Sentry"
-    $SENTRY_CLI_CMD sourcemaps upload --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT build/$ENGINE-prod/
+    $SENTRY_CLI_CMD sourcemaps upload --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT "$BUILD_DIR/$ENGINE-prod/"
     $SENTRY_CLI_CMD releases finalize extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
   else
     echo "SENTRY_AUTH_TOKEN not available, skipping source map upload to Sentry"
@@ -130,7 +133,7 @@ esac
 
 
 echo "Step 4: Creating .zip files"
-cd build
+cd "$BUILD_DIR"
 for dir in */; do
   if [ -d "$dir" ]; then
     # Remove -prod suffix and add prefix with version

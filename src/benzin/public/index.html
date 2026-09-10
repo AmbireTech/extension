@@ -6,8 +6,41 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" />
-    <title>Ambire Explorer</title>
+
+    <!--
+      The social preview tags below are the fallback shown when the page is opened without
+      transaction params. The Cloudflare worker in front of explorer.ambire.com rewrites their
+      content per transaction, so the selectors it uses (the title element and the
+      property/name attributes) must stay in sync with cloudflare/explorer-og/src/rewrite.ts.
+    -->
+    <title>Transaction details | Ambire Explorer</title>
+    <meta
+      name="description"
+      content="Track this transaction on Ambire Explorer: status, transfers, and the exact gas fee, including non-native tokens paid via Gas Tank."
+    />
+
+    <meta property="og:title" content="Transaction details" />
+    <meta
+      property="og:description"
+      content="Track this transaction on Ambire Explorer: status, transfers, and the exact gas fee."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://explorer.ambire.com/" />
+    <meta property="og:site_name" content="Ambire Explorer" />
+    <meta property="og:image" content="https://explorer.ambire.com/og/transaction.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Transaction on Ambire Explorer" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@ambire" />
+    <meta name="twitter:title" content="Transaction details" />
+    <meta
+      name="twitter:description"
+      content="Track this transaction on Ambire Explorer: status, transfers, and the exact gas fee."
+    />
+    <meta name="twitter:image" content="https://explorer.ambire.com/og/transaction.png" />
   </head>
   <body>
     <div id="root"></div>

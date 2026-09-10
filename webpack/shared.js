@@ -7,7 +7,7 @@ require('dotenv').config()
 const createExpoWebpackConfigAsync = require('@expo/webpack-config')
 const path = require('path')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const { isWebkit, isGecko } = require('./env')
+const { isWebkit, isGecko, buildOutputDir } = require('./env')
 
 // Inside webpack/, __dirname points at the webpack/ folder, so resolve repo-root
 // relative paths against ROOT_DIR (one level up).
@@ -168,7 +168,7 @@ async function createBaseConfig(env, argv) {
 
   config.output = {
     // possible output paths: /webkit-dev, /gecko-dev, /webkit-prod, gecko-prod, /benzin-dev, /benzin-prod, /legends-dev, /legends-prod
-    path: path.resolve(ROOT_DIR, `build/${process.env.WEBPACK_BUILD_OUTPUT_PATH}`),
+    path: buildOutputDir,
     // Defaults to using 'auto', but this is causing problems in some environments
     // like in certain browsers, when building (and running) in extension context.
     publicPath: '',

@@ -1,13 +1,57 @@
-import { Dapp } from '@ambire-common/interfaces/dapp'
-import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
+import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
   flattenHumanizerVisualizations,
   hasErc7730Humanization
 } from '@ambire-common/libs/humanizer/utils'
 
 import { DappInteraction, SubmittedAccountOpLike } from './types'
+
+import type { Dapp } from '@ambire-common/interfaces/dapp'
+import type { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+const WALLET_STAKING_ACTIVITY_MATCHES = [
+  {
+    action: 'Wrap',
+    tokenAddress: WALLET_STAKING_ADDR,
+    interaction: {
+      id: 'fallback:migrateXWallet',
+      name: 'Migrate xWALLET',
+      iconType: 'walletStaking'
+    }
+  },
+  {
+    action: 'Stake and wrap',
+    tokenAddress: WALLET_TOKEN,
+    interaction: {
+      id: 'fallback:stakeWallet',
+      name: 'Stake WALLET',
+      iconType: 'walletStaking'
+    }
+  }
+] as const
+
+const getWalletStakingInteraction = (humanizedCalls: IrCall[]): DappInteraction | null => {
+  for (const match of WALLET_STAKING_ACTIVITY_MATCHES) {
+    const hasMatch = humanizedCalls.some((call) => {
+      const visualizations = flattenHumanizerVisualizations(call.fullVisualization)
+      const hasAction = visualizations.some(
+        ({ type, content }) => type === 'action' && content === match.action
+      )
+      const hasToken = visualizations.some(
+        ({ type, address }) =>
+          type === 'token' && address.toLowerCase() === match.tokenAddress.toLowerCase()
+      )
+
+      return hasAction && hasToken
+    })
+
+    if (hasMatch) return match.interaction
+  }
+
+  return null
+}
 
 export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): IrCall[] => {
   const clearSigningHum = submittedAccountOp.meta?.clearSigningHumanization
@@ -52,9 +96,25 @@ export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
 export const getDappInteractions = (
   submittedAccountOp: SubmittedAccountOpLike
 ): DappInteraction[] => {
+  if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
+    const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
+
+    return [
+      {
+        id: 'fallback:cancel',
+        name: 'Cancel',
+        iconType: 'safe',
+        ...(safeNonce !== null && safeNonce !== undefined && { safeNonce: BigInt(safeNonce) })
+      }
+    ]
+  }
+
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
   const humanizedCalls = getHumanizedCalls(submittedAccountOp)
+  const walletStakingInteraction = getWalletStakingInteraction(humanizedCalls)
+  if (walletStakingInteraction) return [walletStakingInteraction]
+
   const sendAddresses = Array.from(
     new Set(
       humanizedCalls.flatMap((call) => {

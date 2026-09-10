@@ -76,9 +76,7 @@ const SendToken: FC<Props> = ({
   sections,
   renderSectionHeader
 }) => {
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
@@ -106,7 +104,7 @@ const SendToken: FC<Props> = ({
             // magic number to match the curve of the outer container
             // which is with borderRadius: 16
             borderRadius: 13,
-            ...spacings.pv,
+            ...spacings.pvSm,
             ...(isWeb ? spacings.prMd : spacings.prSm),
             ...(isError ? styles.containerError : {})
           }}
@@ -144,6 +142,7 @@ const SendToken: FC<Props> = ({
                   mode="bottomSheet"
                   headerHeight={SECTION_MENU_HEADER_HEIGHT}
                   renderSectionHeader={renderSectionHeader}
+                  disabled={fromTokenAmountSelectDisabled}
                   stickySectionHeadersEnabled
                 />
               ) : (
@@ -161,6 +160,7 @@ const SendToken: FC<Props> = ({
                   }}
                   selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
                   mode="bottomSheet"
+                  disabled={fromTokenAmountSelectDisabled}
                 />
               )}
             </View>

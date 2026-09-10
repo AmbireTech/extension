@@ -9,11 +9,11 @@ declare module '@env' {
     VELCRO_URL: string
     BUNGEE_API_KEY: string
     LI_FI_API_KEY: string
-    SQUID_INTEGRATOR_ID: string
     UNISWAP_API_KEY: string
     SENTRY_DSN?: string
     ENVIRONMENT: string
     DEFAULT_KEYSTORE_PASSWORD_DEV: string
+    DEFAULT_INVITE_CODE_DEV: string
     NFT_CDN_URL: string
     LEGENDS_NFT_ADDRESS: string
     SENTRY_DSN_LEGENDS?: string
@@ -77,6 +77,11 @@ declare module '@env' {
   export const DEFAULT_KEYSTORE_PASSWORD_DEV: EnvTypes['DEFAULT_KEYSTORE_PASSWORD_DEV']
 
   /**
+   * Auto-Fill the mobile invite code during development
+   */
+  export const DEFAULT_INVITE_CODE_DEV: EnvTypes['DEFAULT_INVITE_CODE_DEV']
+
+  /**
    * Are we running the E2E tests?
    * The accepted value is 'true'.
    * Note that we don't have a dedicated testing environment (APP_ENV).
@@ -99,11 +104,6 @@ declare module '@env' {
    * across multiple blockchains. Access is restricted and requires an API key.
    */
   export const LI_FI_API_KEY: EnvTypes['LI_FI_API_KEY']
-
-  /**
-   * Squid integrator ID. Required by the Squid API.
-   */
-  export const SQUID_INTEGRATOR_ID: EnvTypes['SQUID_INTEGRATOR_ID']
 
   /**
    * Uniswap Trading API key. Required by the Uniswap router.
