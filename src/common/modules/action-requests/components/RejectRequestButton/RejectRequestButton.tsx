@@ -165,7 +165,6 @@ const RejectRequestButton = ({
           id="reject-request-options"
           sheetRef={sheetRef}
           closeBottomSheet={handleClose}
-          type="modal"
           backgroundColor="secondaryBackground"
           HeaderComponent={sheetHeader}
         >
