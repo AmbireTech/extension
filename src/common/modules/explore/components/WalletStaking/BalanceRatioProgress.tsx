@@ -48,14 +48,28 @@ const BalanceRatioProgress = ({ segments, size = 28, strokeWidth = 4, testID }: 
     () => segments.reduce((sum, segment) => sum + Math.max(0, segment.valueUsd), 0),
     [segments]
   )
+  const visibleSegments = useMemo(
+    () =>
+      segments
+        .filter((segment) => segment.valueUsd > 0)
+        .sort((a, b) => getSegmentOrder(a.key) - getSegmentOrder(b.key)),
+    [segments]
+  )
+  // One combined tooltip for the whole ring, listing every non-zero segment's share -
+  // segments at 0% are omitted since they have no arc to explain.
+  const tooltipContent = useMemo(
+    () =>
+      totalUsd > 0
+        ? visibleSegments
+            .map(
+              (segment) => `${segment.label}: ${Math.round((segment.valueUsd / totalUsd) * 100)}%`
+            )
+            .join('\n')
+        : '',
+    [totalUsd, visibleSegments]
+  )
   const arcs = useMemo(() => {
     if (totalUsd <= 0) return []
-
-    const visibleSegments = segments
-      .filter((segment) => segment.valueUsd > 0)
-      .sort((a, b) => getSegmentOrder(a.key) - getSegmentOrder(b.key))
-    const tooltipContent = (segment: BalanceRatioSegment) =>
-      `${segment.label}: ${Math.round((segment.valueUsd / totalUsd) * 100)}%`
 
     // A single filled segment has nothing to be separated from, so it draws as a full,
     // gap-free ring instead of leaving an orphaned gap next to its own start.
@@ -64,8 +78,7 @@ const BalanceRatioProgress = ({ segments, size = 28, strokeWidth = 4, testID }: 
         key: segment.key,
         color: segment.color,
         segmentLength: circumference,
-        dashoffset: 0,
-        tooltipContent: tooltipContent(segment)
+        dashoffset: 0
       }))
     }
 
@@ -80,14 +93,26 @@ const BalanceRatioProgress = ({ segments, size = 28, strokeWidth = 4, testID }: 
         key: segment.key,
         color: segment.color,
         segmentLength,
-        dashoffset,
-        tooltipContent: tooltipContent(segment)
+        dashoffset
       }
     })
-  }, [circumference, segmentGap, segments, totalUsd])
+  }, [circumference, segmentGap, totalUsd, visibleSegments])
 
   return (
-    <View testID={testID}>
+    <View
+      testID={testID}
+      // One combined tooltip for the whole ring rather than one per arc, listing every
+      // non-zero segment's share.
+      dataSet={
+        tooltipContent
+          ? createGlobalTooltipDataSet({
+              id: TOOLTIP_ID,
+              content: tooltipContent,
+              style: { whiteSpace: 'pre-line' }
+            })
+          : undefined
+      }
+    >
       {/* Rotated so the first arc starts at 12 o'clock instead of the SVG default of 3 o'clock */}
       <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
         <Circle
@@ -98,19 +123,9 @@ const BalanceRatioProgress = ({ segments, size = 28, strokeWidth = 4, testID }: 
           strokeWidth={strokeWidth}
           fill="none"
         />
-        {arcs.map(({ key, color, segmentLength, dashoffset, tooltipContent }) => (
+        {arcs.map(({ key, color, segmentLength, dashoffset }) => (
           <Circle
             key={key}
-            // Each arc gets its own hover tooltip (rather than one combined tooltip for the whole
-            // ring) - dataSet flows straight through react-native-svg's web shape to a real
-            // `data-tooltip` DOM attribute, same as it does on a plain View, but react-native-svg
-            // doesn't type it on CircleProps - cast at this one trusted, runtime-verified spot.
-            {...({
-              dataSet: createGlobalTooltipDataSet({
-                id: `${TOOLTIP_ID}-${key}`,
-                content: tooltipContent
-              })
-            } as any)}
             cx={size / 2}
             cy={size / 2}
             r={radius}

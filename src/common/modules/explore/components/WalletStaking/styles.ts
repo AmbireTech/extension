@@ -227,11 +227,13 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
       ...spacings.mbTy,
-      minHeight: 20
+      minHeight: 24
     },
     maxButton: {
       ...spacings.mlTy,
-      ...spacings.phTy
+      ...spacings.phTy,
+      ...spacings.pv0,
+      height: 24
     },
     amountInput: {
       ...spacings.mbSm
