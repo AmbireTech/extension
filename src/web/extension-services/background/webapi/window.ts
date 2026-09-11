@@ -143,11 +143,10 @@ const getWebContentsInset = (
 }
 
 /**
- * Sizes and places the request window over the surface the user picked for the extension, so a
- * request shows up where the wallet already does instead of covering the page: the toolbar popup,
- * or the full-height side panel. Chrome exposes neither the popup's anchor nor the width the user
- * gave the panel, so both are derived from the browser window - flush with its right edge, right
- * below the tab strip and toolbar.
+ * Sizes and places the request window so a request shows up beside the page instead of covering
+ * it: spanning the page area along its right edge, at the width of the surface the user picked
+ * for the extension - the popup or the side panel. Chrome exposes neither the popup's anchor nor
+ * the width the user gave the panel, so everything is derived from the browser window.
  */
 const calculateWindowSizeAndPosition = async (
   baseWindow: chrome.windows.Window
@@ -185,8 +184,8 @@ const calculateWindowSizeAndPosition = async (
   const browserChromeHeight =
     baseHeight && activeTab?.height ? baseHeight - activeTab.height - webContentsInset : 0
 
-  // The panel spans the whole page area, while the popup keeps its own height
-  let height = isSidePanelMode ? activeTab?.height || baseHeight || POPUP_HEIGHT : POPUP_HEIGHT
+  // Both modes span the whole page area; only the width tells them apart
+  let height = activeTab?.height || baseHeight || POPUP_HEIGHT
 
   if (workArea) height = Math.min(height, workArea.height)
 
