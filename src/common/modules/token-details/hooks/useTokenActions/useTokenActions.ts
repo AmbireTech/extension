@@ -1,6 +1,5 @@
 import { getAddress } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR } from '@ambire-common/consts/addresses'
@@ -14,6 +13,7 @@ import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
@@ -82,13 +82,21 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
     'SwapAndBridgeController',
     (state) => state.supportedChainIds
   )
+  const { state: disabledSwapProviderIds } = useController(
+    'SwapAndBridgeController',
+    (state) => state.disabledSwapProviderIds
+  )
   const { dispatch: portfolioDispatch } = useController('PortfolioController')
   const { state: tokenPreferences } = useController('PortfolioController', 'tokenPreferences')
   const networks = useNetworks({
     acc: account,
     additionalCheck: {
       chainIds: supportedChainIds,
-      reason: 'Network is not supported by our service provider.'
+      reason: t(
+        disabledSwapProviderIds.length
+          ? 'Network is not supported by the enabled service providers. Enable more providers for wider support'
+          : 'Network is not supported by our service provider.'
+      )
     }
   })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
