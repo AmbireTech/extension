@@ -201,10 +201,15 @@ jobs:
               "https://chromewebstore.googleapis.com/v2/$ITEM:fetchStatus"
           }
 
-          STORE_VERSION=$(fetch_status \
-            | jq -r '[.publishedItemRevisionStatus, .submittedItemRevisionStatus] | map(.distributionChannels[]?.crxVersion // empty) | .[]' \
+          STATUS=$(fetch_status)
+          STORE_VERSION=$(jq -r '[.publishedItemRevisionStatus, .submittedItemRevisionStatus] | map(.distributionChannels[]?.crxVersion // empty) | .[]' <<< "$STATUS" \
             | sort -V | tail -n1)
           echo "Highest version currently in the store: ${STORE_VERSION:-none}"
+
+          # STAGED means the store is holding a revision that already passed
+          # review and is only waiting for the Publish button.
+          STAGED_VERSION=$(jq -r 'select(.submittedItemRevisionStatus.state == "STAGED") | .submittedItemRevisionStatus.distributionChannels[]?.crxVersion // empty' <<< "$STATUS" \
+            | sort -V | tail -n1)
 
           if [ -n "$STORE_VERSION" ]; then
             # sort -V puts the higher version last
@@ -217,18 +222,32 @@ jobs:
             # instead of leaving an opaque API error on a run that never had a
             # chance. A pending review counts here as much as a published version,
             # which is why both revisions are read above.
-            if [ "$STORE_VERSION" != "$VERSION" ] && [ "$HIGHEST" = "$STORE_VERSION" ]; then
+            #
+            # An approved revision waiting for Publish is the exception: there the
+            # upload goes ahead and the store gets to answer for itself, rather than
+            # this guard quietly deciding on the release manager's behalf.
+            if [ "$STORE_VERSION" != "$VERSION" ] && [ "$HIGHEST" = "$STORE_VERSION" ] && [ "$STAGED_VERSION" != "$STORE_VERSION" ]; then
               echo "::notice::Skipped the Chrome Web Store submission: the store already holds v$STORE_VERSION, which is newer than this build's v$VERSION."
               exit 0
             fi
 
             # A submission that failed between the upload and the publish call
             # leaves the store on this exact version, so retrying it is the one
-            # case where the manual force checkbox has to get past a tie.
+            # case where the manual force checkbox has to get past a tie. Left
+            # alone even when that version is STAGED: re-uploading the very same
+            # version over an approval only ever loses the approval.
             if [ "$STORE_VERSION" = "$VERSION" ] && [ "$GITHUB_EVENT_NAME" = "release" ]; then
               echo "::notice::Skipped the Chrome Web Store submission: v$VERSION is already in the store. Re-run this workflow manually with the force checkbox to submit it again."
               exit 0
             fi
+          fi
+
+          # Uploading over a staged revision throws its approval away. That is what
+          # we want when a newer build supersedes it, and what the store will most
+          # likely refuse when it does not, but either way it should not happen
+          # quietly - the upload response below records which of the two it was.
+          if [ -n "$STAGED_VERSION" ]; then
+            echo "::warning::v$STAGED_VERSION has already passed review and is waiting to be published in the Developer Dashboard. Uploading v$VERSION drops that approval. Publish v$STAGED_VERSION first if it was meant to go live."
           fi
 
           echo "Uploading $ZIP as a new version of item $ITEM_ID"
