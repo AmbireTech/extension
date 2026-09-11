@@ -21,6 +21,7 @@ import HoverablePressable from '@common/components/HoverablePressable'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NumberInput from '@common/components/NumberInput'
 import Spinner from '@common/components/Spinner'
+import SupportLink from '@common/components/SupportLink'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import CONFIG, { isWeb } from '@common/config/env'
@@ -110,6 +111,8 @@ const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsCont
   state.currentUserRequest
 const selectXWalletShareValue = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio.walletStaking?.shareValue
+const selectXWalletLockedShares = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.walletStaking?.lockedShares
 
 interface TabProps {
   mode: WalletStakingMode
@@ -161,6 +164,10 @@ const WalletStakingScreen = () => {
   const { state: xWalletShareValue } = useController(
     'SelectedAccountController',
     selectXWalletShareValue
+  )
+  const { state: xWalletLockedShares } = useController(
+    'SelectedAccountController',
+    selectXWalletLockedShares
   )
   const { state: currentUserRequest, dispatch: requestsDispatch } = useController(
     'RequestsController',
@@ -238,6 +245,17 @@ const WalletStakingScreen = () => {
     mode === 'unstake' &&
     shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, xWalletBalance, totalPendingShares)
   const shouldShowPendingWithdrawalLoader = mode === 'unstake' && isLoadingPendingWithdrawal
+  // The staking contract holds shares for a withdrawal we can't describe: the leave event reaches
+  // us through the relayer's logs, which lag the transaction, and the cached copy is gone
+  // (another device, or cleared storage). The unstake form stays locked either way - those shares
+  // are committed - so the screen says the details are missing instead of showing an amount and a
+  // timer it doesn't have.
+  const isMissingWithdrawalDetails =
+    mode === 'unstake' &&
+    !isLoadingPendingWithdrawal &&
+    !pendingWithdrawal &&
+    (xWalletLockedShares || 0n) > 0n
+  const shouldDisableStakingForm = isPendingWithdrawalMode || isMissingWithdrawalDetails
   const isWithdrawalReady = pendingWithdrawal
     ? isPendingWalletWithdrawalReady(pendingWithdrawal.unlocksAt, nowMs)
     : false
@@ -245,7 +263,10 @@ const WalletStakingScreen = () => {
     isPortfolioReady &&
     walletBalance < EMPTY_STATE_BALANCE_THRESHOLD &&
     stkWalletBalance < EMPTY_STATE_BALANCE_THRESHOLD &&
-    !isPendingWithdrawalMode
+    !isPendingWithdrawalMode &&
+    // Unstaking the whole balance empties both, so the locked shares are the whole story here -
+    // "buy some $WALLET" would be the wrong thing to say while a withdrawal is still pending.
+    !isMissingWithdrawalDetails
   const balance = mode === 'stake' ? walletBalance : stkWalletBalance
   // One price for both WALLET and stkWALLET: staking mints stkWALLET 1:1 for the WALLET
   // deposited, so a share is worth exactly the token it was minted for. Read from whichever of
@@ -426,6 +447,7 @@ const WalletStakingScreen = () => {
       .length > 1
   const isSubmitDisabled = useMemo(() => {
     if (!account || isSubmitting || (mode === 'unstake' && isLoadingPendingWithdrawal)) return true
+    if (isMissingWithdrawalDetails) return true
     if (isPendingWithdrawalMode) return !isWithdrawalReady || hasPendingWithdrawalLoadFailed
 
     return (
@@ -440,6 +462,7 @@ const WalletStakingScreen = () => {
     hasPendingWithdrawalLoadFailed,
     isLoadingPendingWithdrawal,
     isLoadingShareValue,
+    isMissingWithdrawalDetails,
     isPendingWithdrawalMode,
     isSubmitting,
     isWithdrawalReady,
@@ -978,6 +1001,28 @@ const WalletStakingScreen = () => {
             </View>
           ) : (
             <View style={styles.stakingFormContainer}>
+              {isMissingWithdrawalDetails && (
+                <View style={styles.pendingWithdrawalCard}>
+                  <View style={styles.pendingWithdrawalIcon}>
+                    <LockWithTimerIcon width={54} height={54} color={theme.errorText} />
+                  </View>
+                  <Text fontSize={18} weight="semiBold" style={styles.pendingWithdrawalText}>
+                    {t('We couldn’t find your withdrawal details')}
+                  </Text>
+                  <Text
+                    fontSize={13}
+                    appearance="secondaryText"
+                    style={styles.pendingWithdrawalDescription}
+                  >
+                    {t(
+                      'Your $WALLET is locked for a withdrawal, but we can’t load the details of it. If this doesn’t resolve on its own, please '
+                    )}
+                    <SupportLink fontSize={13} />
+                    {t(' and we will help.')}
+                  </Text>
+                </View>
+              )}
+
               {isPendingWithdrawalMode && (
                 <View style={styles.pendingWithdrawalCard}>
                   <View style={styles.pendingWithdrawalIcon}>
@@ -1043,8 +1088,8 @@ const WalletStakingScreen = () => {
                 </View>
               ) : (
                 <View
-                  pointerEvents={isPendingWithdrawalMode ? 'none' : 'auto'}
-                  style={isPendingWithdrawalMode ? styles.disabledStakingForm : undefined}
+                  pointerEvents={shouldDisableStakingForm ? 'none' : 'auto'}
+                  style={shouldDisableStakingForm ? styles.disabledStakingForm : undefined}
                 >
                   <View style={styles.amountCard}>
                     <View style={styles.balanceRow}>
