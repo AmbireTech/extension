@@ -1,8 +1,8 @@
-import { flushSync } from 'react-dom'
-
 import { isDev } from '@common/config/env'
 import eventBus from '@common/services/event/eventBus'
 import { reconcileState } from '@common/utils/reconcileState'
+
+import { createCtrlStateCommitter } from './ctrlStateCommitter'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -21,6 +21,13 @@ export class ControllerStore {
   #states: Partial<AllControllersMappingType> = {}
 
   #listeners: Map<string, Set<(eventData?: any) => void>> = new Map()
+
+  /**
+   * What puts a controller's state in front of React. Platform specific, because making
+   * sure the UI sees every forced update takes a `flushSync` on the DOM and a paced
+   * hand-over on React Native, which has none.
+   */
+  #committer = createCtrlStateCommitter((id, state) => this.#deliverState(id, state))
 
   controllersByName: (keyof AllControllersMappingType)[] = []
 
@@ -79,6 +86,7 @@ export class ControllerStore {
   /** Stops the store from taking any further controller state. */
   destroy() {
     eventBus.removeEventListener('ctrlUpdate', this.#onCtrlUpdate)
+    this.#committer.destroy()
   }
 
   // Track which controllers have received their first update
@@ -112,7 +120,11 @@ export class ControllerStore {
     forceEmit?: boolean
   ) {
     if (ctrl === undefined) return
-    const prevState = this.#states[id]
+    // The newest snapshot, which while a burst is being paced out is the last one the
+    // committer holds - reconciling against the delivered one would drop what it still
+    // has queued.
+    const prevState = this.#newestStateOf(id)
+    let nextState = prevState
     try {
       // Reconciling keeps the emit path cheap: the snapshot is detached from the
       // controller's own objects, which is mandatory where the controllers run in this
@@ -122,7 +134,7 @@ export class ControllerStore {
       // state already arrives detached over the port, but it arrives as a fresh tree on
       // every emit, which is what used to make each of its subscribers deep compare its
       // own slice - and hand every memoized child new props for unchanged content.
-      this.#states[id] = reconcileState(prevState, ctrl, {
+      nextState = reconcileState(prevState, ctrl, {
         label: id as string,
         detectCycles: isDev
       })
@@ -143,31 +155,30 @@ export class ControllerStore {
     this.#checkReadiness()
     this.#checkRoutesReadiness()
 
-    const idListeners = this.#listeners.get(id as string)
-    if (!idListeners) return
-
     // An emit the reconcile found no change in leaves every subscriber's value at the
-    // very reference it already holds, so notifying them could only end in a no-op.
-    // `forceEmit` is let through: it is the path a user action is waiting on.
-    if (this.#states[id] === prevState && !forceEmit) return
+    // very reference it already holds, so notifying them could only end in a no-op - and
+    // the newest snapshot is either the delivered one or one queued ahead of this emit,
+    // which keeps its place. `forceEmit` is let through: it is the path a user action is
+    // waiting on.
+    if (nextState === prevState && !forceEmit) return
 
-    if (forceEmit) {
-      /**
-       * For certain updates, we need to override React's default behavior of batching state updates and render the update immediately.
-       * This is particularly handy when multiple status flags are being updated rapidly.
-       * Without the forceEmit option, React will only render the very first and last status updates, batching the ones in between.
-       *
-       * Here's more info about `flushSync`:
-       * Introduced in React 18, flushSync is a function that forces React to re-render synchronously within its callback,
-       * before continuing with the rest of the JavaScript event loop.
-       * This goes against React's default behavior of batching state updates for optimized performance.
-       */
-      flushSync(() => {
-        idListeners.forEach((callback) => callback())
-      })
-    } else {
-      idListeners.forEach((callback) => callback())
-    }
+    this.#committer.commit(id as string, nextState, forceEmit)
+  }
+
+  /** Exposes a snapshot and notifies the controller's subscribers of it. */
+  #deliverState(id: string, state: any) {
+    this.#states[id as keyof AllControllersMappingType] = state
+
+    const idListeners = this.#listeners.get(id)
+    if (!idListeners) return false
+
+    idListeners.forEach((callback) => callback())
+
+    return true
+  }
+
+  #newestStateOf<K extends keyof AllControllersMappingType>(id: K) {
+    return this.#committer.pendingStateOf(id as string) ?? this.#states[id]
   }
 
   subscribe(id: string, listener: () => void) {
@@ -195,8 +206,10 @@ export class ControllerStore {
   #isControllerReady(ctrlName: keyof AllControllersMappingType) {
     if (!this.initializedControllers.has(ctrlName)) return false
 
-    if ('isReady' in (this.#states?.[ctrlName] || {})) {
-      return (this.#states[ctrlName] as any).isReady === true
+    const newestState = this.#newestStateOf(ctrlName)
+
+    if ('isReady' in (newestState || {})) {
+      return (newestState as any).isReady === true
     }
 
     return true
