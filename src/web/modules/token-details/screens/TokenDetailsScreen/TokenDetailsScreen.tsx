@@ -111,11 +111,12 @@ const TokenDetailsScreen = () => {
             : undefined
         }
       >
-        {actions.map((action) => (
+        {actions.map((action, index) => (
           <TokenDetailsButton
             key={action.id}
             {...action}
             isDisabled={!!action.isDisabled}
+            isLast={index === actions.length - 1}
             token={token}
             iconWidth={action.iconWidth}
             forceCompact={shouldUseCompactFooter}

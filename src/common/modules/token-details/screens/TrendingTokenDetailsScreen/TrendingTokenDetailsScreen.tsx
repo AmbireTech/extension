@@ -245,11 +245,12 @@ const TrendingTokenDetailsScreen = () => {
                 spacings.phSm
               ]}
             >
-              {actions.map((action) => (
+              {actions.map((action, index) => (
                 <TokenDetailsButton
                   key={action.id}
                   {...action}
                   isDisabled={!!action.isDisabled}
+                  isLast={index === actions.length - 1}
                   token={displayToken}
                   iconWidth={action.iconWidth}
                 />
@@ -271,11 +272,12 @@ const TrendingTokenDetailsScreen = () => {
                 : undefined
             }
           >
-            {actions.map((action) => (
+            {actions.map((action, index) => (
               <TokenDetailsButton
                 key={action.id}
                 {...action}
                 isDisabled={!!action.isDisabled}
+                isLast={index === actions.length - 1}
                 token={displayToken}
                 iconWidth={action.iconWidth}
               />
