@@ -33,9 +33,20 @@ SENTRY_CLI_CMD="$SENTRY_CLI_PATH"
 upload_source_maps_for_build() {
   local ENGINE="$1"
 
+  # The stable webkit and the Ambire Next jobs run at the same time, build the
+  # same engine and read the same version out of app.json, so without this they
+  # would create, upload to and finalize one shared release. Must stay in sync
+  # with the `release` in CRASH_ANALYTICS_WEB_CONFIG, which is what the events
+  # coming from the built extension are tagged with.
+  local RELEASE="extension-$ENGINE@$VERSION"
+  if [ "$AMBIRE_NEXT" = "true" ]; then
+    RELEASE="extension-next-$ENGINE@$VERSION"
+  fi
+  echo "Sentry release: $RELEASE"
+
   # Only create a new release if auth token is available
   if [ -n "$SENTRY_AUTH_TOKEN" ]; then
-    $SENTRY_CLI_CMD releases new extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+    $SENTRY_CLI_CMD releases new "$RELEASE" --project=$SENTRY_PROJECT
   else
     echo "SENTRY_AUTH_TOKEN not available, skipping creating new Sentry release"
   fi
@@ -43,13 +54,13 @@ upload_source_maps_for_build() {
   # Always inject debug IDs (doesn't require auth token), so that the build is
   # deterministic enough to pass the Firefox review process.
   echo "Injecting debug IDs for $ENGINE build"
-  $SENTRY_CLI_CMD sourcemaps inject "$BUILD_DIR/$ENGINE-prod/" --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+  $SENTRY_CLI_CMD sourcemaps inject "$BUILD_DIR/$ENGINE-prod/" --release="$RELEASE" --project=$SENTRY_PROJECT
 
   # Only upload to Sentry if auth token is available
   if [ -n "$SENTRY_AUTH_TOKEN" ]; then
     echo "Uploading source maps for $ENGINE build to Sentry"
-    $SENTRY_CLI_CMD sourcemaps upload --release=extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT "$BUILD_DIR/$ENGINE-prod/"
-    $SENTRY_CLI_CMD releases finalize extension-$ENGINE@$VERSION --project=$SENTRY_PROJECT
+    $SENTRY_CLI_CMD sourcemaps upload --release="$RELEASE" --project=$SENTRY_PROJECT "$BUILD_DIR/$ENGINE-prod/"
+    $SENTRY_CLI_CMD releases finalize "$RELEASE" --project=$SENTRY_PROJECT
   else
     echo "SENTRY_AUTH_TOKEN not available, skipping source map upload to Sentry"
   fi
