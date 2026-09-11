@@ -152,17 +152,16 @@ export class ControllerStore {
     if (!this.initializedControllers.has(id)) {
       this.initializedControllers.add(id)
     }
-    this.#checkReadiness()
-    this.#checkRoutesReadiness()
-
     // An emit the reconcile found no change in leaves every subscriber's value at the
     // very reference it already holds, so notifying them could only end in a no-op - and
     // the newest snapshot is either the delivered one or one queued ahead of this emit,
     // which keeps its place. `forceEmit` is let through: it is the path a user action is
     // waiting on.
-    if (nextState === prevState && !forceEmit) return
+    if (nextState !== prevState || forceEmit)
+      this.#committer.commit(id as string, nextState, forceEmit)
 
-    this.#committer.commit(id as string, nextState, forceEmit)
+    this.#checkReadiness()
+    this.#checkRoutesReadiness()
   }
 
   /** Exposes a snapshot and notifies the controller's subscribers of it. */
