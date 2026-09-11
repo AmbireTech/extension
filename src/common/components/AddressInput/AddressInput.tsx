@@ -66,7 +66,7 @@ const AddressInput: React.FC<Props> = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
-  const { contacts } = useController('AddressBookController').state
+  const { state: contacts } = useController('AddressBookController', 'contacts')
   const { domains } = useController('DomainsController').state
   const { message, severity } = validation
   const isError = severity === 'error'
@@ -115,7 +115,7 @@ const AddressInput: React.FC<Props> = ({
         value={value}
         setInputRef={setInputRef}
         onChangeText={onChangeText}
-        testID="address-ens-field"
+        testID={rest.testID || 'address-ens-field'}
         containerStyle={containerStyle}
         validLabel={
           !isError && severity !== 'info' && !isValidationInDomainResolvingState ? message : ''

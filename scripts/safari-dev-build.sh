@@ -2,10 +2,12 @@
 
 SCRIPTS_DIR="$(dirname "$(realpath "$0")")"
 PROJECT_ROOT="$(cd "$SCRIPTS_DIR"; while [ ! -f "README.md" ] && [ "$PWD" != "/" ]; do cd ..; done; pwd)"
-SAFARI_DEV_DIR="$PROJECT_ROOT/build/safari-dev"
+# The folder that holds the build outputs, honouring the optional BUILD_DIR env
+BUILD_DIR="$(cd "$PROJECT_ROOT" && node -p "require('./webpack/env').buildDir")"
+SAFARI_DEV_DIR="$BUILD_DIR/safari-dev"
 SAFARI_XCODE_PROJECT="$PROJECT_ROOT/safari-extension/wallet-dev"
-INDEX="$PROJECT_ROOT/build/safari-dev/index.html"
-BACKGROUND="$PROJECT_ROOT/build/safari-dev/background.js"
+INDEX="$SAFARI_DEV_DIR/index.html"
+BACKGROUND="$SAFARI_DEV_DIR/background.js"
 EXPO_DEV_PORT=19000
 
 
@@ -16,7 +18,7 @@ cleanup() {
 
 trap cleanup SIGINT
 
-rm -rf ./build/safari-dev
+rm -rf "$SAFARI_DEV_DIR"
 rm -rf ./safari-extension/wallet-dev
 mkdir ./safari-extension/wallet-dev
 chmod 777 ./safari-extension/wallet-dev
@@ -31,7 +33,7 @@ done
 if [ -d "$SAFARI_DEV_DIR" ] && [ -f "$INDEX" ] && [ -f "$BACKGROUND" ]; then
   sleep 5
 
-  yes | xcrun -v "/Applications/Xcode.app/Contents/Developer/usr/bin/safari-web-extension-converter" "$PROJECT_ROOT/build/safari-dev" --app-name wallet-dev --project-location $PROJECT_ROOT/safari-extension --swift --force --no-prompt --no-open --macos-only --bundle-identifier com.ambire.app.wallet.extension
+  yes | xcrun -v "/Applications/Xcode.app/Contents/Developer/usr/bin/safari-web-extension-converter" "$SAFARI_DEV_DIR" --app-name wallet-dev --project-location $PROJECT_ROOT/safari-extension --swift --force --no-prompt --no-open --macos-only --bundle-identifier com.ambire.app.wallet.extension
 
   while [ ! -d "$SAFARI_XCODE_PROJECT/wallet-dev.xcodeproj" ]; do
     echo "Waiting for Xcode project creation to complete..."
@@ -39,7 +41,7 @@ if [ -d "$SAFARI_DEV_DIR" ] && [ -f "$INDEX" ] && [ -f "$BACKGROUND" ]; then
   done
 
   xcodebuild -project "$PROJECT_ROOT/safari-extension/wallet-dev/wallet-dev.xcodeproj" -configuration Debug build
-  fswatch -o $PROJECT_ROOT/build/safari-dev | while read; do
+  fswatch -o "$SAFARI_DEV_DIR" | while read; do
     echo "Changes detected. Rebuilding Xcode project..."
     xcodebuild -project "$PROJECT_ROOT/safari-extension/wallet-dev/wallet-dev.xcodeproj" -configuration Debug build
   done

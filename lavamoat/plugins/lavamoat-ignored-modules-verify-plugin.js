@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Post-build verification for LavaMoat "ignored module ids" warning.
  *
@@ -14,6 +15,7 @@
  */
 const fs = require('fs')
 const path = require('path')
+const { buildOutputDir } = require('../../webpack/env')
 
 function getAllJsFiles(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true })
@@ -50,9 +52,7 @@ function isIdEmptyInCode(code, id) {
 
 class LavamoatIgnoredModulesVerifyPlugin {
   constructor(options = {}) {
-    this.outputDir =
-      options.outputDir ||
-      path.join(process.cwd(), 'build', process.env.WEBPACK_BUILD_OUTPUT_PATH || 'webkit-prod')
+    this.outputDir = options.outputDir || buildOutputDir
   }
 
   apply(compiler) {

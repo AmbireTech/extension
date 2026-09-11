@@ -1,5 +1,6 @@
 import '@walletconnect/react-native-compat'
 
+import { getNormalizedHostnameFromUrl } from '@ambire-common/libs/dapps/helpers'
 import CONFIG from '@common/config/env'
 import { Action, MethodAction } from '@common/types/actions'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
@@ -33,8 +34,51 @@ const pendingAuthenticates = new Map<
   { authPayload: any; requesterUrl: string; iss?: string }
 >()
 
+// WalletKit drops the session before emitting `session_delete`, so keep what we need from it.
+const sessionInfoByTopic = new Map<string, { name: string; pairingTopic: string }>()
+
 export const getWalletKit = () => walletKit
 export const isWalletConnectInitialized = () => initialized
+
+/**
+ * Drops the pairing of a terminated session. Pairings stay active long after their session
+ * and WalletKit refuses to pair on an active topic, blocking reconnects with the same code.
+ */
+const forgetPairing = async (pairingTopic?: string) => {
+  if (!walletKit || !pairingTopic) return
+
+  try {
+    await walletKit.core.pairing.disconnect({ topic: pairingTopic })
+  } catch (e) {
+    console.warn('[WalletConnect] Failed to drop the pairing of a terminated session:', e)
+  }
+}
+
+let reconnectPromise: Promise<void> | null = null
+
+/**
+ * Reopens the relay socket when it is down. The SDK retries only once and its
+ * `restartTransport` is a no-op while a stuck attempt is in flight; closing rejects it.
+ */
+export const reconnectWalletConnectIfNeeded = async () => {
+  if (!walletKit) return
+  const { relayer } = walletKit.core
+  if (relayer.connected) return
+  if (reconnectPromise) return reconnectPromise
+
+  reconnectPromise = (async () => {
+    try {
+      await relayer.transportClose()
+      await relayer.transportOpen()
+    } catch (e) {
+      console.error('[WalletConnect] Failed to reopen the relay connection:', e)
+    } finally {
+      reconnectPromise = null
+    }
+  })()
+
+  return reconnectPromise
+}
 
 /**
  * Parses a WalletConnect eip155 namespace `chains` array (CAIP-2 ids like 'eip155:5115')
@@ -137,11 +181,7 @@ const getDappMetadata = async (url: string, name?: string, icon?: string) => {
   if (fetchedName) {
     finalName = fetchedName
   } else if (!finalName || finalName === 'Signature Validator') {
-    try {
-      finalName = new URL(url).hostname
-    } catch (e) {
-      // ignore
-    }
+    finalName = getNormalizedHostnameFromUrl(url) ?? finalName
   }
 
   if (finalIcon) {
@@ -338,11 +378,21 @@ export const initWalletConnect = async (
         dispatch({
           type: 'method',
           params: {
-            method: 'deleteDappSessionByWcTopic',
+            method: 'disconnectWcSessionByTopic',
             ctrlName: 'DappsController',
             args: [event.topic]
           }
         })
+
+        const sessionInfo = sessionInfoByTopic.get(event.topic)
+        sessionInfoByTopic.delete(event.topic)
+        void forgetPairing(sessionInfo?.pairingTopic)
+        addToast(
+          sessionInfo?.name
+            ? `${sessionInfo.name} disconnected from your wallet.`
+            : 'An app disconnected from your wallet.',
+          { type: 'info' }
+        )
       })
 
       walletKit.on('session_authenticate', async (event: WalletKitTypes.SessionAuthenticate) => {
@@ -436,6 +486,11 @@ export const initWalletConnect = async (
               session.peer.metadata.name,
               session.peer.metadata.icons[0]
             )
+            sessionInfoByTopic.set(session.topic, {
+              name,
+              pairingTopic: session.pairingTopic
+            })
+
             return {
               topic: session.topic,
               url,
@@ -597,6 +652,8 @@ export const approveWalletConnectSession = async (
 
   const candidateChainIds = parseEip155ChainIds(session.namespaces?.eip155?.chains)
 
+  sessionInfoByTopic.set(session.topic, { name, pairingTopic: session.pairingTopic })
+
   dispatch(
     {
       type: 'SETUP_WC_SESSION_MESSENGER',
@@ -642,6 +699,10 @@ export const handleWcSessionBroadcast = async (payload: {
   if (!walletKit) return
 
   if (payload.event === 'disconnect') {
+    const sessionInfo = sessionInfoByTopic.get(payload.wcSessionTopic)
+    sessionInfoByTopic.delete(payload.wcSessionTopic)
+    // Drop the pairing too, so the dapp can be reconnected with the code it already shows.
+    void forgetPairing(sessionInfo?.pairingTopic)
     try {
       await walletKit.disconnectSession({
         topic: payload.wcSessionTopic,
@@ -838,6 +899,7 @@ export const approveWcAuthenticate = async (
       session.peer.metadata.icons[0]
     )
     const candidateChainIds = parseEip155ChainIds(session.namespaces?.eip155?.chains)
+    sessionInfoByTopic.set(session.topic, { name, pairingTopic: session.pairingTopic })
     dispatch(
       {
         type: 'SETUP_WC_SESSION_MESSENGER',

@@ -32,9 +32,7 @@ const RequestsBottomSheet: React.FC<Props> = ({
   onClosed,
   onOpened
 }) => {
-  const {
-    state: { currentUserRequest }
-  } = useController('RequestsController')
+  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
 
   const requestContent = useMemo(() => {
     if (!currentUserRequest) return null

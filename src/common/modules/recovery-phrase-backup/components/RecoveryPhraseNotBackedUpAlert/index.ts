@@ -1,0 +1,3 @@
+import RecoveryPhraseNotBackedUpAlert from './RecoveryPhraseNotBackedUpAlert'
+
+export default RecoveryPhraseNotBackedUpAlert

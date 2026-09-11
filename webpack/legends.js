@@ -5,6 +5,7 @@ const CopyPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const { CJS_RULE, hardenTerser, ROOT_DIR } = require('./shared')
+const { buildOutputDir } = require('./env')
 
 module.exports = function buildLegends({ config, defaultExpoConfigPlugins }) {
   config.output.clean = true
@@ -78,7 +79,7 @@ module.exports = function buildLegends({ config, defaultExpoConfigPlugins }) {
       patterns: [
         {
           from: 'src/legends/public', // Source directory
-          to: path.resolve(ROOT_DIR, `build/${process.env.WEBPACK_BUILD_OUTPUT_PATH}`), // Destination directory
+          to: buildOutputDir, // Destination directory
           globOptions: {
             ignore: ['**/*.html'] // Ignore HTML files as they are handled by HtmlWebpackPlugin
           }

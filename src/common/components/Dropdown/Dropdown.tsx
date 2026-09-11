@@ -34,7 +34,7 @@ const Dropdown: FC<Props> = ({
   const { styles, theme } = useTheme(getStyles)
   const { width: windowWidth, height: windowHeight } = useWindowSize()
   const modalRef: any = useRef(null)
-  const dropdownBoundsRef = useRef({ x: 0, y: 0, width: 0, height: 0 })
+  const touchStartedInsideRef = useRef(false)
   const [internalPosition, setInternalPosition] = useState({ x: 0, y: 0 })
 
   const position = useMemo(
@@ -90,18 +90,27 @@ const Dropdown: FC<Props> = ({
   useEffect(() => {
     if (isWeb || !isOpen) return
 
-    registerDropdownDismiss((touchX, touchY) => {
-      const { x, y, width, height } = dropdownBoundsRef.current
-      const isInsideDropdown =
-        touchX >= x && touchX <= x + width && touchY >= y && touchY <= y + height
+    // The tap that opened the dropdown raised the flag while there was nothing registered to
+    // consume it, so clear it here or the first tap outside would be spent on it
+    touchStartedInsideRef.current = false
 
-      if (!isInsideDropdown) {
-        setPosition({ x: 0, y: 0 })
-      }
-    })
+    // The touch is observed on the app root, which cannot tell where it landed, so the dropdown and
+    // its button flag their own touches on the way up and this only closes when no flag was raised
+    const dismissCheck = () => {
+      const startedInside = touchStartedInsideRef.current
+      touchStartedInsideRef.current = false
 
-    return () => unregisterDropdownDismiss()
+      if (!startedInside) setPosition({ x: 0, y: 0 })
+    }
+
+    registerDropdownDismiss(dismissCheck)
+
+    return () => unregisterDropdownDismiss(dismissCheck)
   }, [isOpen, setPosition])
+
+  const flagTouchStartedInside = useCallback((): void => {
+    touchStartedInsideRef.current = true
+  }, [])
 
   const toggleDropdown = useCallback((): void => {
     if (position.x === 0 && position.y === 0) {
@@ -143,7 +152,7 @@ const Dropdown: FC<Props> = ({
 
   return (
     <>
-      <View>
+      <View onTouchStart={flagTouchStartedInside}>
         <Pressable onPress={toggleDropdown} ref={DropdownButton}>
           <View style={styles.button}>
             <KebabMenuIcon {...kebabIconProps} />
@@ -153,6 +162,7 @@ const Dropdown: FC<Props> = ({
       {isOpen && (
         <Portal hostName="global">
           <View
+            onTouchStart={flagTouchStartedInside}
             style={[
               styles.dropdown,
               {
@@ -162,13 +172,6 @@ const Dropdown: FC<Props> = ({
               }
             ]}
             ref={modalRef}
-            onLayout={() => {
-              modalRef.current?.measureInWindow(
-                (x: number, y: number, width: number, height: number) => {
-                  dropdownBoundsRef.current = { x, y, width, height }
-                }
-              )
-            }}
           >
             <FlatList
               data={data}

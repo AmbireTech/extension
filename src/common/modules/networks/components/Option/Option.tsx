@@ -4,6 +4,7 @@ import { Animated, View } from 'react-native'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/networks/components/NetworkBottomSheet/styles'
@@ -80,14 +81,21 @@ const Option = ({
         >
           {renderIcon}
         </View>
-        <Text fontSize={16} weight="medium">
-          {title}
-        </Text>
-        {!!text && (
-          <Text style={spacings.mlTy} fontSize={14} appearance="secondaryText">
-            {text}
+        {/* Mobile has less width, so the description goes on a second row */}
+        <View style={isWeb && [flexbox.directionRow, flexbox.alignCenter]}>
+          <Text fontSize={16} weight="medium">
+            {title}
           </Text>
-        )}
+          {!!text && (
+            <Text
+              style={isWeb && spacings.mlTy}
+              fontSize={isWeb ? 14 : 12}
+              appearance="secondaryText"
+            >
+              {text}
+            </Text>
+          )}
+        </View>
       </View>
       <Animated.View
         style={{

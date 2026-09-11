@@ -13,6 +13,7 @@ export interface Props {
   sizeMultiplierSize: number
   textSize: number
   hideTitle?: boolean
+  dappIconSize: number
   renderValue: (valueItem: HumanizerVisualization, overrideTextSize?: number) => React.ReactNode
 }
 

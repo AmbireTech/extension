@@ -13,15 +13,19 @@ import InlineAddressAvatar from './InlineAddressAvatar'
 interface Props extends TextProps {
   address: string
   chainId: bigint
+  hideActions?: boolean
   actionsMode?: 'tooltip' | 'inline'
   fallbackLabel?: string
+  isToken?: boolean
 }
 
 const AddressName: FC<Props> = ({
   address,
   chainId,
+  hideActions = false,
   actionsMode = 'tooltip',
   fallbackLabel,
+  isToken,
   ...rest
 }) => {
   const { name, isLoading } = useReverseLookup({ address })
@@ -60,8 +64,10 @@ const AddressName: FC<Props> = ({
       <BaseAddress
         address={address}
         isDisplayingPlainAddress={!name && !fallbackLabel && !contractName}
+        hideActions={hideActions}
         actionsMode={actionsMode}
         chainId={chainId}
+        isToken={isToken}
         {...rest}
       >
         {name || fallbackLabel || contractName || address}

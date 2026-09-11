@@ -36,7 +36,7 @@ const GasTankInfoModal = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const isSA = useMemo(() => isSmartAccount(account), [account])
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
 
   const token = useMemo(() => {
     const result = portfolio?.portfolioState?.gasTank?.result as PortfolioGasTankResult

@@ -1,3 +1,0 @@
-import CreateSeedPhrasePrepareScreen from './CreateSeedPhrasePrepareScreen'
-
-export default CreateSeedPhrasePrepareScreen

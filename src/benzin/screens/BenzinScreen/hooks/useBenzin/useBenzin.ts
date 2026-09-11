@@ -65,9 +65,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Pro
       }
     : routeParams
 
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const {
     benzinNetworks,
     loadingBenzinNetworks = [],

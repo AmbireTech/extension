@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-modalize/lib/index.js b/node_modules/react-native-modalize/lib/index.js
-index 5d5edac..cf58e3d 100644
+index 5d5edac..3400e74 100644
 --- a/node_modules/react-native-modalize/lib/index.js
 +++ b/node_modules/react-native-modalize/lib/index.js
 @@ -47,7 +47,11 @@ const AnimatedKeyboardAvoidingView = react_native_1.Animated.createAnimatedCompo
@@ -132,7 +132,22 @@ index 5d5edac..cf58e3d 100644
                  const modalPositionValue = destSnapPoint <= 0 ? 'top' : 'initial';
                  if (panGestureAnimatedValue) {
                      react_native_1.Animated.timing(panGestureAnimatedValue, {
-@@ -536,6 +558,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -520,7 +542,13 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+     };
+     const renderContent = () => {
+         var _a;
+-        const keyboardDismissMode = devices_1.isIos ? 'interactive' : 'on-drag';
++        // React Native Web dismisses the keyboard on every scroll event when this is
++        // set to `on-drag`, including content-driven scrolls after list filtering.
++        const keyboardDismissMode = react_native_1.Platform.select({
++            ios: 'interactive',
++            web: 'none',
++            default: 'on-drag',
++        });
+         const passedOnProps = (_a = flatListProps !== null && flatListProps !== void 0 ? flatListProps : sectionListProps) !== null && _a !== void 0 ? _a : scrollViewProps;
+         // We allow overwrites when the props (bounces, scrollEnabled) are set to false, when true we use Modalize's core behavior
+         const bounces = (passedOnProps === null || passedOnProps === void 0 ? void 0 : passedOnProps.bounces) !== undefined && !(passedOnProps === null || passedOnProps === void 0 ? void 0 : passedOnProps.bounces)
+@@ -536,6 +564,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
                  useNativeDriver: USE_NATIVE_DRIVER,
                  listener: onScrollBeginDrag,
              }),
@@ -143,7 +158,7 @@ index 5d5edac..cf58e3d 100644
              scrollEventThrottle,
              onLayout: handleContentLayout,
              scrollEnabled,
-@@ -553,9 +579,38 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -553,9 +585,38 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
          }
          return (React.createElement(react_native_1.Animated.ScrollView, Object.assign({}, scrollViewProps, opts), children));
      };
@@ -182,7 +197,7 @@ index 5d5edac..cf58e3d 100644
          return (React.createElement(react_native_gesture_handler_1.PanGestureHandler, { ref: panGestureChildrenRef, enabled: panGestureEnabled, simultaneousHandlers: [nativeViewChildrenRef, tapGestureModalizeRef], shouldCancelWhenOutside: false, onGestureEvent: handleGestureEvent, minDist: minDist, activeOffsetY: ACTIVATED, activeOffsetX: ACTIVATED, onHandlerStateChange: handleChildren },
              React.createElement(react_native_1.Animated.View, { style: [style, childrenStyle] },
                  React.createElement(react_native_gesture_handler_1.NativeViewGestureHandler, { ref: nativeViewChildrenRef, waitFor: tapGestureModalizeRef, simultaneousHandlers: panGestureChildrenRef }, renderContent()))));
-@@ -658,14 +713,20 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -658,14 +719,20 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
          keyboardAvoidingViewProps.onLayout = handleModalizeContentLayout;
      }
      const renderModalize = (React.createElement(react_native_1.View, { style: [styles_1.default.modalize, rootStyle], pointerEvents: alwaysOpen || !withOverlay ? 'box-none' : 'auto' },

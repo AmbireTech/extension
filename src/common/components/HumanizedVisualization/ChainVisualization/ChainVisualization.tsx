@@ -6,20 +6,23 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+// The default NetworkIcon size (32) is too large next to the humanized text on mobile
+const CHAIN_ICON_SIZE = isMobile ? 26 : 32
+
 interface Props {
   chainId: bigint
   marginRight?: number
+  textSize?: number
 }
 
-const ChainVisualization: FC<Props> = ({ chainId, marginRight }) => {
+const ChainVisualization: FC<Props> = ({ chainId, marginRight, textSize }) => {
   const { benzinNetworks, loadingBenzinNetworks = [] } = useNetworksContext()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const actualNetworks = networks ?? benzinNetworks
   const isNetworkLoading = loadingBenzinNetworks.includes(chainId)
   const destinationNetwork = actualNetworks.find((n) => n.chainId === chainId)
@@ -36,14 +39,15 @@ const ChainVisualization: FC<Props> = ({ chainId, marginRight }) => {
           <NetworkIcon
             id={destinationNetwork.chainId.toString()}
             benzinNetwork={destinationNetwork}
+            size={CHAIN_ICON_SIZE}
           />
-          <Text onPress={handleLink} weight="semiBold" style={spacings.mlMi}>
+          <Text onPress={handleLink} weight="semiBold" fontSize={textSize} style={spacings.mlMi}>
             {destinationNetwork.name}
           </Text>
         </>
       )}
       {!destinationNetwork && !isNetworkLoading && (
-        <Text onPress={handleLink} weight="semiBold">
+        <Text onPress={handleLink} weight="semiBold" fontSize={textSize}>
           {`Chain with id ${chainId}`}
         </Text>
       )}

@@ -18,7 +18,8 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
@@ -65,9 +66,8 @@ const Footer: FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
-  const {
-    state: { account: selectedAccount }
-  } = useController('SelectedAccountController')
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
 
@@ -239,7 +239,15 @@ const Footer: FC<Props> = ({
         size={buttonSize}
         disabled={areExplorerButtonsDisabled}
         hasBottomSpacing={false}
-        style={styles.footerButton}
+        style={[
+          styles.footerButton,
+          isCompactSidePanelLayout && {
+            width: '100%',
+            ...spacings.plTy,
+            ...spacings.prTy,
+            flexShrink: 1
+          }
+        ]}
         childrenPosition="left"
         testID="view-transaction-link"
       >
@@ -266,7 +274,16 @@ const Footer: FC<Props> = ({
         size={buttonSize}
         hasBottomSpacing={false}
         disabled={!canRepeatTransaction}
-        style={isMobile ? styles.footerButton : [styles.footerButton, spacings.mrTy]}
+        style={[
+          styles.footerButton,
+          !isMobile && !isCompactSidePanelLayout && spacings.mrTy,
+          isCompactSidePanelLayout && {
+            width: '100%',
+            ...spacings.plTy,
+            ...spacings.prTy,
+            flexShrink: 1
+          }
+        ]}
         childrenPosition="left"
       >
         {shouldShowSpeedUp ? (
@@ -293,7 +310,15 @@ const Footer: FC<Props> = ({
         size={buttonSize}
         disabled={areExplorerButtonsDisabled}
         hasBottomSpacing={false}
-        style={styles.footerButton}
+        style={[
+          styles.footerButton,
+          isCompactSidePanelLayout && {
+            width: '100%',
+            ...spacings.plTy,
+            ...spacings.prTy,
+            flexShrink: 1
+          }
+        ]}
         childrenPosition="left"
       >
         <CopyIcon style={spacings.mrMi} width={16} height={16} />
@@ -313,10 +338,29 @@ const Footer: FC<Props> = ({
     )
 
   return (
-    <View style={styles.footer}>
-      <View style={styles.footerButtonsRow}>
+    <View style={[styles.footer, isCompactSidePanelLayout && spacings.phSm]}>
+      <View
+        style={[
+          styles.footerButtonsRow,
+          isCompactSidePanelLayout && {
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            gap: SPACING_TY
+          }
+        ]}
+      >
         {openExplorerButton}
-        <View style={styles.footerRightButtonsGroup}>
+        <View
+          style={[
+            styles.footerRightButtonsGroup,
+            isCompactSidePanelLayout && {
+              flexDirection: 'column',
+              alignItems: 'stretch',
+              width: '100%',
+              gap: SPACING_TY
+            }
+          ]}
+        >
           {repeatButton}
           {copyLinkButton}
         </View>

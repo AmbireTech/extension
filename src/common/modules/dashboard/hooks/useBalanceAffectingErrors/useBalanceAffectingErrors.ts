@@ -22,7 +22,7 @@ const useBalanceAffectingErrors = () => {
   const isLoadingTakingTooLong = areNetworksFetchingFromRelayer
     ? false
     : portfolio.shouldShowPartialResult
-  const { isOffline } = useController('MainController').state
+  const { state: isOffline } = useController('MainController', 'isOffline')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   /** Because errors change frequently due to background updates we have to store a snapshot
    * of the errors when the user clicks on the warning icon to display the errors in the bottom sheet.

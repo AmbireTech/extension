@@ -6,10 +6,8 @@ interface Props {
   chainId?: bigint | number | null
 }
 const useSimulationError = ({ chainId }: Props) => {
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
-  const { networks } = useController('NetworksController').state
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: networks } = useController('NetworksController', 'networks')
 
   const network = useMemo(() => {
     if (!chainId) return

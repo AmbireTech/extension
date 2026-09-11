@@ -5,6 +5,7 @@ import { NativeScrollEvent, ScrollView, View } from 'react-native'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import Alert from '@common/components/Alert'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -25,7 +26,6 @@ import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
-import TenderlySimulation from '@common/modules/sign-account-op/components/TenderlySimulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -54,6 +54,14 @@ const SignAccountOpScreen = () => {
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const { navigate } = useNavigation()
   const isInsideBottomSheet = useIsInsideBottomSheet()
+  const handleAddToCart = useCallback(() => {
+    if (isInsideBottomSheet && closeRequestModal) {
+      closeRequestModal()
+    } else {
+      navigate(ROUTES.dashboard)
+    }
+  }, [isInsideBottomSheet, closeRequestModal, navigate])
+
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       signAccountOpDispatch({
@@ -88,6 +96,7 @@ const SignAccountOpScreen = () => {
     setIsChooseSignerShown,
     onSignButtonClick,
     handleChangeSigningKey,
+    handleChangeSigningKeyAndClose,
     warningToPromptBeforeSign,
     handleDismissLedgerConnectModal,
     slowPaymasterRequest,
@@ -125,7 +134,8 @@ const SignAccountOpScreen = () => {
     handleUpdateStatus,
     signAccountOpState,
     handleUpdate: updateController,
-    hasReachedBottom
+    hasReachedBottom,
+    onSafeSignComplete: handleAddToCart
   })
 
   const accountOpRequest = useMemo(() => {
@@ -133,8 +143,41 @@ const SignAccountOpScreen = () => {
     return currentUserRequest as CallsUserRequest
   }, [currentUserRequest])
 
+  const shouldRejectOnchain = useMemo(() => {
+    if (!signAccountOpState?.account.safeCreation) return false
+    const { signature, signed } = signAccountOpState.accountOp
+    const signedCount = signed?.length || 0
+
+    return !!signature && signature !== '0x' && signedCount > 0
+  }, [signAccountOpState])
+
+  const isCancelDisabled = useMemo(() => {
+    if (!shouldRejectOnchain || !signAccountOpState) return false
+
+    const { calls, accountAddr } = signAccountOpState.accountOp
+    return isSafeRejectionCall(calls, accountAddr)
+  }, [shouldRejectOnchain, signAccountOpState])
+
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
+
+    if (shouldRejectOnchain) {
+      if (isCancelDisabled) return
+
+      requestsDispatch({
+        type: 'method',
+        params: {
+          method: 'build',
+          args: [
+            {
+              type: 'onchainSafeRejection',
+              params: { requestId: accountOpRequest.id }
+            }
+          ]
+        }
+      })
+      return
+    }
 
     requestsDispatch({
       type: 'method',
@@ -147,15 +190,13 @@ const SignAccountOpScreen = () => {
         ]
       }
     })
-  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
-
-  const handleAddToCart = useCallback(() => {
-    if (isInsideBottomSheet && closeRequestModal) {
-      closeRequestModal()
-    } else {
-      navigate(ROUTES.dashboard)
-    }
-  }, [isInsideBottomSheet, closeRequestModal, navigate])
+  }, [
+    requestsDispatch,
+    accountOpRequest,
+    shouldRejectOnchain,
+    isCancelDisabled,
+    visibleUserRequests.length
+  ])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -230,7 +271,7 @@ const SignAccountOpScreen = () => {
             {!estimationFailed &&
             signAccountOpState?.canBroadcast &&
             signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-              <View style={spacings.mbMd}>
+              <View style={spacings.mbTy}>
                 <Estimation
                   signAccountOpState={signAccountOpState}
                   disabled={isSignLoading}
@@ -255,6 +296,7 @@ const SignAccountOpScreen = () => {
                   <SafeOwners
                     account={signAccountOpState.account}
                     onSign={handleChangeSigningKey}
+                    onSignAndClose={handleChangeSigningKeyAndClose}
                     isSignLoading={isSignLoading}
                     signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
                     chainId={signAccountOpState.accountOp.chainId.toString()}
@@ -266,6 +308,7 @@ const SignAccountOpScreen = () => {
               )}
 
             <Footer
+              key={accountOpRequest?.id}
               onReject={handleRejectAccountOp}
               onAddToCart={handleAddToCart}
               isAddToCartDisplayed={
@@ -283,6 +326,8 @@ const SignAccountOpScreen = () => {
               inProgressButtonText={primaryButtonText}
               buttonText={signButtonText}
               shouldHoldToProceed={shouldHoldToProceed}
+              shouldRejectOnchain={shouldRejectOnchain}
+              isRejectDisabled={isCancelDisabled}
               signButtonType={extremeGasFeeSignButtonType}
             />
           </View>
@@ -324,14 +369,13 @@ const SignAccountOpScreen = () => {
           scrollEventThrottle={16}
           contentContainerStyle={spacings.pbSm}
           showsVerticalScrollIndicator={false}
+          // Without this, a tap on a child (e.g. the SafeNonce conflict bubble) while the
+          // keyboard is open gets swallowed to dismiss the keyboard instead of reaching the
+          // child's own press handler.
+          keyboardShouldPersistTaps="handled"
         >
           {signAccountOpState?.account.safeCreation ? (
-            <>
-              <View style={spacings.mbSm}>
-                <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-              </View>
-              <SafeNonce />
-            </>
+            <SafeNonce />
           ) : (
             <View
               style={[
@@ -366,7 +410,6 @@ const SignAccountOpScreen = () => {
               isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
             />
           )}
-          <TenderlySimulation />
           {signAccountOpState?.hasSafeApiFailed && (
             <Alert
               size="sm"

@@ -96,7 +96,7 @@ const BatchAdded: FC<Props> = ({
           {t('You can add more transactions or\nmanage this batch in the dashboard.')}
         </Text>
         {isMobile && <View style={flexbox.flex1} />}
-        <FooterGlassView size="sm">
+        <FooterGlassView size="sm" fullWidth={false}>
           <ButtonWrapper
             style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}
           >

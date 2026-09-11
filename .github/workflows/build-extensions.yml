@@ -72,7 +72,6 @@ jobs:
           echo "LEGENDS_NFT_ADDRESS=\"${{ vars.LEGENDS_NFT_ADDRESS }}\"" >> .env
           echo "LI_FI_API_KEY=\"${{ vars.LI_FI_API_KEY }}\"" >> .env
           echo "BUNGEE_API_KEY=\"${{ vars.BUNGEE_API_KEY }}\"" >> .env
-          echo "SQUID_INTEGRATOR_ID=\"${{ vars.SQUID_INTEGRATOR_ID }}\"" >> .env
           echo "UNISWAP_API_KEY=\"${{ vars.UNISWAP_API_KEY }}\"" >> .env
           echo "SAFE_API_KEY=\"${{ vars.SAFE_API_KEY }}\"" >> .env
           echo "WALLETCONNECT_PROJECT_ID=\"${{ vars.WALLETCONNECT_PROJECT_ID }}\"" >> .env
@@ -97,7 +96,6 @@ jobs:
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
-          SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
           UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
           SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
           WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
@@ -113,15 +111,99 @@ jobs:
           zip -r extension-source-code.zip . -x "node_modules/*" -x ".git/*" -x "build/*" -x "*.zip" -x "src/legends/*"
         shell: bash
 
+      # Named so that it can never be mistaken for a release asset - it must stay
+      # a CI-only artifact, downloaded by hand for the Firefox review.
       - name: Upload source code 📦
         if: matrix.build_variant == 'gecko'
         uses: actions/upload-artifact@v6
         with:
-          name: ambire-extension-v${{ steps.version.outputs.VERSION }}-${{ matrix.artifact_suffix }}-SOURCE-CODE
+          name: firefox-review-source-code-v${{ steps.version.outputs.VERSION }}
           path: ./extension-source-code.zip
 
-      - name: Upload extension builds 📦
+      # Everything matching ambire-extension-* is published as a release asset,
+      # so this artifact holds the extension .zip and nothing else.
+      - name: Upload extension build 📦
         uses: actions/upload-artifact@v6
         with:
-          name: ambire-extension-v${{ steps.version.outputs.VERSION }}-${{ matrix.artifact_suffix }}-with-sourcemaps
-          path: ./build/*.zip
+          name: ambire-extension-v${{ steps.version.outputs.VERSION }}-${{ matrix.artifact_suffix }}
+          path: |
+            ./build/*.zip
+            !./build/*-source-maps.zip
+
+      # Source maps are uploaded to Sentry during the build; this artifact is just
+      # a CI-only copy, kept out of the releases.
+      - name: Upload source maps 📦
+        uses: actions/upload-artifact@v6
+        with:
+          name: sourcemaps-v${{ steps.version.outputs.VERSION }}-${{ matrix.artifact_suffix }}
+          path: ./build/*-source-maps.zip
+
+  publish-release-assets:
+    name: Attach the built .zips to the GitHub releases
+    needs: build
+    # Manual runs are used for store submissions, where there is no release to attach to.
+    if: github.event_name == 'release'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # Needed to upload assets to this repo's release
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - name: Download the built extension .zips 📥
+        uses: actions/download-artifact@v6
+        with:
+          path: assets
+          merge-multiple: true
+          # Only the extension builds. NEVER the source code artifact - it bundles
+          # the .env file with our API keys and exists solely for the Firefox reviewers.
+          pattern: 'ambire-extension-*'
+
+      # Kept out of the public release, but attached to this repo's one, because
+      # CI artifacts expire after 90 days while release assets don't.
+      - name: Download the source maps 📥
+        uses: actions/download-artifact@v6
+        with:
+          path: sourcemaps
+          merge-multiple: true
+          pattern: 'sourcemaps-*'
+
+      - name: Verify what is about to be published
+        run: |
+          set -euo pipefail
+          cd assets
+
+          if compgen -G '*source-code*' > /dev/null; then
+            echo "::error::A source code archive slipped into the release assets - it contains .env secrets"
+            exit 1
+          fi
+
+          if compgen -G '*-source-maps.zip' > /dev/null; then
+            echo "::error::Source maps are not published as release assets"
+            exit 1
+          fi
+
+          # One .zip per build variant. Publishing an incomplete set is
+          # unrecoverable once the release is immutable.
+          ZIP_COUNT=$(ls -1 *.zip | wc -l | tr -d ' ')
+          if [ "$ZIP_COUNT" -ne 3 ]; then
+            echo "::error::Expected 3 .zip assets, got $ZIP_COUNT"
+            ls -la
+            exit 1
+          fi
+        shell: bash
+
+      - name: Generate SHA256SUMS
+        run: |
+          set -euo pipefail
+          cd assets
+          sha256sum *.zip | LC_ALL=C sort -k 2 > SHA256SUMS
+          cat SHA256SUMS
+        shell: bash
+
+      - name: Attach the assets to this repo's release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # --repo is required: gh resolves the repository from a git remote or from
+        # --repo/GH_REPO, and this job has no checkout (it only needs the artifacts).
+        run: gh release upload "$TAG" assets/*.zip assets/SHA256SUMS sourcemaps/*.zip --repo "$GITHUB_REPOSITORY" --clobber
+        shell: bash

@@ -12,15 +12,17 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import Step from './components/Step'
 import { getFee, getFinalizedRows, getTimestamp, shouldShowTxnProgress } from './utils/rows'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   activeStep: ActiveStepType
@@ -32,7 +34,7 @@ interface Props {
 }
 
 const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, delegation }) => {
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions()
+  const { width: windowWidth } = useWindowDimensions()
   const { theme } = useTheme()
   const { blockData, finalizedStatus, feePaidWith, from, originatedFrom } = stepsState
   const finalStepRows: any = getFinalizedRows(blockData, finalizedStatus)
@@ -138,8 +140,6 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   }
 
   const isFinalized = displayActiveStep === 'finalized'
-  const showConfetti =
-    isFinalized && finalizedStatus !== null && finalizedStatus.status === 'confirmed'
 
   const renderBalanceChangesCard = (title: string, changes: typeof balanceChanges) => (
     <View
@@ -192,153 +192,145 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   )
 
   return (
-    <>
-      {!!showConfetti && (
-        <View
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
-          pointerEvents="none"
+    <View
+      style={
+        isMobile || isSidePanel
+          ? undefined
+          : IS_MOBILE_UP_BENZIN_BREAKPOINT
+            ? spacings.mb2Xl
+            : spacings.mbXl
+      }
+    >
+      <Step
+        title="Signed"
+        stepName="signed"
+        activeStep={displayActiveStep}
+        finalizedStatus={finalizedStatus}
+        rows={stepRows}
+        testID="signed-step"
+      />
+      {shouldShowTxnProgress(finalizedStatus) && (
+        <Step
+          title={isFinalized ? 'Transaction details' : 'Your transaction is in progress'}
+          stepName="in-progress"
+          activeStep={displayActiveStep}
+          finalizedStatus={finalizedStatus}
+          testID="txn-progress-step"
         >
-          <ConfettiAnimation
-            type="tertiary"
-            width={windowWidth}
-            height={windowHeight}
-            autoPlay
-            loop={false}
-          />
-        </View>
+          {!delegation && !!summary && summary}
+          {delegation && (
+            <DelegationHumanization
+              setDelegation={delegation.address !== ZERO_ADDRESS}
+              delegatedContract={delegation.address}
+            />
+          )}
+          {
+            // if there's an userOpHash & txnId but no callData decoded,
+            // it means handleOps has not been called directly and we cannot decode
+            // the data correctly
+            txnId &&
+              userOpHash &&
+              stepsState.userOp &&
+              stepsState.userOp.callData === '' &&
+              !stepsState.extensionAccOp &&
+              stepsState.finalizedStatus?.status !== 'fetching' && (
+                <Text appearance="errorText" fontSize={14}>
+                  Could not decode calldata. Open the explorer for a better summarization
+                </Text>
+              )
+          }
+        </Step>
       )}
-      <View style={isMobile ? {} : IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb2Xl : spacings.mbXl}>
+      {shouldShowBalanceChanges && (
         <Step
-          title="Signed"
-          stepName="signed"
+          title="Balance changes"
+          stepName="balance-changes"
           activeStep={displayActiveStep}
           finalizedStatus={finalizedStatus}
-          rows={stepRows}
-          testID="signed-step"
-        />
-        {shouldShowTxnProgress(finalizedStatus) && (
-          <Step
-            title={isFinalized ? 'Transaction details' : 'Your transaction is in progress'}
-            stepName="in-progress"
-            activeStep={displayActiveStep}
-            finalizedStatus={finalizedStatus}
-            testID="txn-progress-step"
-          >
-            {!delegation && !!summary && summary}
-            {delegation && (
-              <DelegationHumanization
-                setDelegation={delegation.address !== ZERO_ADDRESS}
-                delegatedContract={delegation.address}
-              />
-            )}
-            {
-              // if there's an userOpHash & txnId but no callData decoded,
-              // it means handleOps has not been called directly and we cannot decode
-              // the data correctly
-              txnId &&
-                userOpHash &&
-                stepsState.userOp &&
-                stepsState.userOp.callData === '' &&
-                !stepsState.extensionAccOp &&
-                stepsState.finalizedStatus?.status !== 'fetching' && (
-                  <Text appearance="errorText" fontSize={14}>
-                    Could not decode calldata. Open the explorer for a better summarization
-                  </Text>
-                )
-            }
-          </Step>
-        )}
-        {shouldShowBalanceChanges && (
-          <Step
-            title="Balance changes"
-            stepName="balance-changes"
-            activeStep={displayActiveStep}
-            finalizedStatus={finalizedStatus}
-            testID="balance-changes-step"
-          >
-            <View style={flexbox.flex1}>
-              {!hasBalanceChangesLoaded && (
-                <View
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    spacings.phSm,
-                    spacings.pvSm,
-                    {
-                      backgroundColor: theme.secondaryBackground,
-                      borderWidth: 1,
-                      borderColor: theme.secondaryBorder,
-                      ...common.borderRadiusPrimary
-                    }
-                  ]}
-                >
-                  <Spinner style={{ width: 18, height: 18 }} />
-                  <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
-                    Loading balance changes
-                  </Text>
-                </View>
-              )}
-              {hasBalanceChangesLoaded && !!(assetsOut.length || assetsIn.length) && (
-                <View
-                  style={
-                    shouldRenderBalanceChangesInColumns
-                      ? [flexbox.directionRow, flexbox.flex1]
-                      : undefined
+          testID="balance-changes-step"
+        >
+          <View style={flexbox.flex1}>
+            {!hasBalanceChangesLoaded && (
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  spacings.phSm,
+                  spacings.pvSm,
+                  {
+                    backgroundColor: theme.secondaryBackground,
+                    borderWidth: 1,
+                    borderColor: theme.secondaryBorder,
+                    ...common.borderRadiusPrimary
                   }
-                >
-                  {!!assetsOut.length && (
-                    <View
-                      style={
-                        shouldRenderBalanceChangesInColumns
-                          ? [flexbox.flex1, spacings.mrTy]
-                          : spacings.mbTy
-                      }
-                    >
-                      {renderBalanceChangesCard('Asset out', assetsOut)}
-                    </View>
-                  )}
-                  {!!assetsIn.length && (
-                    <View style={flexbox.flex1}>
-                      {renderBalanceChangesCard('Asset in', assetsIn)}
-                    </View>
-                  )}
-                </View>
-              )}
-              {hasBalanceChangesLoaded && !assetsOut.length && !assetsIn.length && (
-                <View
-                  style={[
-                    spacings.phSm,
-                    spacings.pvSm,
-                    {
-                      backgroundColor: theme.secondaryBackground,
-                      borderWidth: 1,
-                      borderColor: theme.secondaryBorder,
-                      ...common.borderRadiusPrimary
+                ]}
+              >
+                <Spinner style={{ width: 18, height: 18 }} />
+                <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
+                  Loading balance changes
+                </Text>
+              </View>
+            )}
+            {hasBalanceChangesLoaded && !!(assetsOut.length || assetsIn.length) && (
+              <View
+                style={
+                  shouldRenderBalanceChangesInColumns
+                    ? [flexbox.directionRow, flexbox.flex1]
+                    : undefined
+                }
+              >
+                {!!assetsOut.length && (
+                  <View
+                    style={
+                      shouldRenderBalanceChangesInColumns
+                        ? [flexbox.flex1, spacings.mrTy]
+                        : spacings.mbTy
                     }
-                  ]}
-                >
-                  <Text fontSize={14} appearance="secondaryText">
-                    No balance changes detected
-                  </Text>
-                </View>
-              )}
-            </View>
-          </Step>
-        )}
-        <Step
-          // We want to show the user the positive outcome of the transaction while it is still in progress
-          title={finalizedStatus && finalizedStatus.status ? finalizedStatus.status : 'Confirmed'}
-          testID="finalized-rows"
-          stepName="finalized"
-          finalizedStatus={finalizedStatus}
-          activeStep={displayActiveStep}
-          style={spacings.pb0}
-          rows={isFinalized ? finalStepRows : []}
-          collapsibleRows={isFinalized}
-          titleStyle={!isFinalized ? spacings.mb0 : undefined}
-        />
-      </View>
-    </>
+                  >
+                    {renderBalanceChangesCard('Asset out', assetsOut)}
+                  </View>
+                )}
+                {!!assetsIn.length && (
+                  <View style={flexbox.flex1}>
+                    {renderBalanceChangesCard('Asset in', assetsIn)}
+                  </View>
+                )}
+              </View>
+            )}
+            {hasBalanceChangesLoaded && !assetsOut.length && !assetsIn.length && (
+              <View
+                style={[
+                  spacings.phSm,
+                  spacings.pvSm,
+                  {
+                    backgroundColor: theme.secondaryBackground,
+                    borderWidth: 1,
+                    borderColor: theme.secondaryBorder,
+                    ...common.borderRadiusPrimary
+                  }
+                ]}
+              >
+                <Text fontSize={14} appearance="secondaryText">
+                  No balance changes detected
+                </Text>
+              </View>
+            )}
+          </View>
+        </Step>
+      )}
+      <Step
+        // We want to show the user the positive outcome of the transaction while it is still in progress
+        title={finalizedStatus && finalizedStatus.status ? finalizedStatus.status : 'Confirmed'}
+        testID="finalized-rows"
+        stepName="finalized"
+        finalizedStatus={finalizedStatus}
+        activeStep={displayActiveStep}
+        style={spacings.pb0}
+        rows={isFinalized ? finalStepRows : []}
+        collapsibleRows={isFinalized}
+        titleStyle={!isFinalized ? spacings.mb0 : undefined}
+      />
+    </View>
   )
 }
 

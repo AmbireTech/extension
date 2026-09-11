@@ -41,11 +41,12 @@ const DashboardOverview: FC<Props> = ({
   setDashboardOverviewSize
 }) => {
   const { theme } = useTheme(getStyles)
-  const {
-    state: { isOffline }
-  } = useController('MainController')
+  const { state: isOffline } = useController('MainController', 'isOffline')
   const { account, portfolio } = useController('SelectedAccountController').state
-  const { areNetworksFetchingFromRelayer } = useController('NetworksController').state
+  const { state: areNetworksFetchingFromRelayer } = useController(
+    'NetworksController',
+    'areNetworksFetchingFromRelayer'
+  )
   const {
     state: { isPrivacyModeEnabled },
     dispatch: walletStateDispatch

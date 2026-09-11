@@ -196,7 +196,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
 
     await test.step('sing on SIWE page', async () => {
       const signMessageWindow = await pages.basePage.handleNewPage(signButton)
-      await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+      await expect(signMessageWindow.locator(selectors.sigtool.signRequestForEVMText)).toBeVisible()
 
       await signMessageWindow.locator(selectors.sigtool.signInSiweButton).click()
     })
@@ -218,7 +218,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       // wait for new window
       await appConnectWindow.waitForLoadState()
       // confirm connect request
-      await appConnectWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+      await expect(appConnectWindow.locator(selectors.sigtool.signRequestForEVMText)).toBeVisible()
       await appConnectWindow.getByTestId(selectors.dappConnectButton).click()
     })
 
@@ -292,7 +292,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
 
     await test.step('sing action opens SIWE page', async () => {
       const signMessageWindow = await pages.basePage.handleNewPage(signButton)
-      await signMessageWindow.locator(selectors.sigtool.signRequestForEVMText).isVisible()
+      await expect(signMessageWindow.locator(selectors.sigtool.signRequestForEVMText)).toBeVisible()
     })
   })
 

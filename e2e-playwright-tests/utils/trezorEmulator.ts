@@ -91,7 +91,7 @@ export const setup = async (trezorUserEnvLink, options) => {
 
   if (!options.mnemonic) return true
 
-  await trezorUserEnvLink.api.startEmu(options)
+  await trezorUserEnvLink.api.startEmu({ ...options, wipe: true })
 
   const mnemonic =
     typeof options.mnemonic === 'string' && options.mnemonic.indexOf(' ') > 0

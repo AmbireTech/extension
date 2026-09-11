@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
 
 import Button, { Props } from '@common/components/Button'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 
@@ -40,13 +39,11 @@ const ClaimButton = ({ textStyle, ...rest }: ClaimButtonProps) => {
 const RewardsTokenItem = ({
   token,
   onPress,
-  actionButtonText,
-  description
+  actionButtonText
 }: {
   token: TokenResult
   onPress?: () => void
   actionButtonText?: string
-  description: string | React.ReactNode
 }) => {
   const { t } = useTranslation()
 
@@ -67,11 +64,6 @@ const RewardsTokenItem = ({
             text={t('{{actionButtonText}}', { actionButtonText })}
           />
         )
-      }
-      label={
-        <Text fontSize={12} weight="regular">
-          {typeof description === 'string' ? t('{{description}}', { description }) : description}
-        </Text>
       }
       borderRadius={16}
       wrapperTestID="projected-rewards-asset-button"

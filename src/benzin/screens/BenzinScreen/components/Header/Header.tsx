@@ -17,9 +17,10 @@ import getStyles from './styles'
 interface Props {
   activeStep: ActiveStepType
   network: Network
+  topContent?: React.ReactNode
 }
 
-const Header: FC<Props> = ({ activeStep, network }) => {
+const Header: FC<Props> = ({ activeStep, network, topContent }) => {
   const { styles } = useTheme(getStyles)
 
   return (
@@ -39,6 +40,7 @@ const Header: FC<Props> = ({ activeStep, network }) => {
             height={isWeb ? 32 : undefined}
           />
         </View>
+        {topContent}
         <Text
           fontSize={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 20 : 18}
           weight="medium"

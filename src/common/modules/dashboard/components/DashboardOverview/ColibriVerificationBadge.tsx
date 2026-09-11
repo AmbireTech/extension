@@ -20,8 +20,8 @@ type ChainStatus = 'loading' | 'success' | 'warning' | 'stale'
 
 const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
   const { t } = useTranslation()
-  const { portfolio } = useController('SelectedAccountController').state
-  const { allNetworks } = useController('NetworksController').state
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: allNetworks } = useController('NetworksController', 'allNetworks')
 
   const configuredChainIds = useMemo(
     () =>

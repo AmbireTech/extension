@@ -43,11 +43,11 @@ export const getTruncatedTxnHash = (txnId?: string) => {
   return `${txnId.slice(0, 6)}...${txnId.slice(-4)}`
 }
 
-export const getTruncatedNetworkName = (name?: string) => {
+export const getTruncatedNetworkName = (name?: string, maxLength = 15) => {
   if (!name) return ''
-  if (name.length <= 15) return name
+  if (name.length <= maxLength) return name
 
-  return `${name.slice(0, 15)}...`
+  return `${name.slice(0, maxLength)}...`
 }
 
 export const getModalFinalStatus = (status?: AccountOpStatus) => {

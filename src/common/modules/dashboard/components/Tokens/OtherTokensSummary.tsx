@@ -12,6 +12,10 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { privateValue } from '@common/utils/ui'
 
+import type { WalletStateController } from '@common/controllers/wallet-state'
+
+const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
+
 type Props = {
   count: number
   onPress: () => void
@@ -22,7 +26,10 @@ type Props = {
 const OtherTokensSummary = ({ count, onPress, variant, totalUSD }: Props) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { isPrivacyModeEnabled } = useController('WalletStateController').state
+  const { state: isPrivacyModeEnabled } = useController(
+    'WalletStateController',
+    selectIsPrivacyModeEnabled
+  )
 
   const isSummary = variant === 'summary'
   const totalUSDFormatted =

@@ -70,7 +70,6 @@ export class SwapAndBridgePage extends BasePage {
   // TODO: refactor this method
   async prepareSwapAndBridge(send_amount: number, fromToken: Token, toToken: Token) {
     await this.openSwapAndBridge()
-
     try {
       await this.selectSendToken(fromToken)
       // The receive network does not follow the send token, so select it explicitly.
@@ -99,12 +98,12 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async selectSendToken(sendToken: Token) {
-    await this.page.waitForTimeout(2000) // waiting for animation
+    await this.page.waitForTimeout(2500) // waiting for animation
     await this.clickOnMenuToken(sendToken, selectors.swapAndBridge.fromTokenDropdown)
   }
 
   async selectReceiveToken(receiveToken: Token) {
-    await this.page.waitForTimeout(2000) // waiting for animation
+    await this.page.waitForTimeout(2500) // waiting for animation
 
     await this.clickOnMenuToken(receiveToken, selectors.swapAndBridge.receiveTokenDropdown)
   }
@@ -136,22 +135,38 @@ export class SwapAndBridgePage extends BasePage {
   async verifySendMaxTokenAmount(fromToken: Token) {
     await this.openSwapAndBridge()
     await this.selectSendToken(fromToken)
-
     await this.click(selectors.maxAmountButton)
-    const maxBalance = parseFloat(await this.getText(selectors.maxAvailableAmount))
 
-    await this.page.waitForTimeout(500) // number has small delay before appearing
+    const maxLable = this.page.getByTestId(selectors.maxAvailableAmount)
+    const amountInput = this.page.getByTestId(selectors.fromAmountInputSab)
 
-    const sendAmount = parseFloat(await this.getValue(selectors.fromAmountInputSab))
-    const roundSendAmount = this.roundAmount(sendAmount, 2)
+    let rawMaxLable = ''
+    let maxBalance = NaN
+    let sendAmount = NaN
 
-    // There is an intermittent difference in balances when running on CI; I have added an Alert to monitor it and using toBeCloseTo
-    if (maxBalance !== roundSendAmount) {
-      console.log(
-        `⚠️ Token: ${fromToken} | maxBalance: ${maxBalance}, sendAmount: ${sendAmount} | roundSendAmount: ${roundSendAmount}`
+    await expect
+      .poll(
+        async () => {
+          rawMaxLable = ((await maxLable.textContent()) ?? '').trim()
+          maxBalance = parseFloat(rawMaxLable)
+          sendAmount = parseFloat(await amountInput.inputValue())
+
+          if (!Number.isFinite(maxBalance) || !Number.isFinite(sendAmount)) return false
+
+          const decimals = (rawMaxLable.split('.')[1] ?? '').replace(/\D.*/, '').length // will break on Tokens that start with numbers which we don't use in tests ATM
+          return Math.abs(maxBalance - sendAmount) <= Math.pow(10, -decimals)
+        },
+        {
+          timeout: 15000,
+          message: `max label never matched with input for token ${fromToken.symbol}`
+        }
       )
-    }
-    expect(maxBalance).toBeCloseTo(roundSendAmount, 1)
+      .toBe(true)
+
+    console.log(
+      `Token: ${fromToken.symbol} | label: "${rawMaxLable}" | ` +
+        `maxBalance: ${maxBalance} | sendAmount: ${sendAmount}`
+    )
   }
 
   async verifyDefaultReceiveToken(sendToken: Token, receiveToken: Token): Promise<void> {
@@ -205,7 +220,7 @@ export class SwapAndBridgePage extends BasePage {
     await expect(this.page.getByText('Transaction waiting to be').first()).not.toBeVisible()
   }
 
-  async proceedTransaction(ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
+  async proceedTransaction(ledgerSimulatorControls?: SpeculosDevice): Promise<boolean> {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
@@ -222,56 +237,62 @@ export class SwapAndBridgePage extends BasePage {
     await openTransactionButton.waitFor({ state: 'visible' })
 
     const newPage = await this.handleNewPage(openTransactionButton)
-    await this.signTransactionPage(newPage, ledgerSimulatorControls)
+    return this.signTransactionPage(newPage, ledgerSimulatorControls)
   }
 
-  async signTransactionPage(page, ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
+  // Returns `false` (without signing) when the fee is above the $0.10 test limit, so callers
+  async signTransactionPage(page, ledgerSimulatorControls?: SpeculosDevice): Promise<boolean> {
     const signButton = await page.getByTestId(selectors.signTransactionButton)
 
-    try {
-      // Select slow speed
-      await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
-      await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
+    // Select slow speed
+    await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
+    await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
+    await page.waitForTimeout(1000)
 
-      const feeSelector = await page
-        .getByTestId(selectors.transaction.feeTokensSelectDropdown)
-        .locator(selectors.transaction.feeTokenInDollars)
-        .innerText()
-      const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
+    const feeSelector = await page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+      .locator(selectors.transaction.feeTokenInDollars)
+      .first()
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
-      if (feeDollarsAmount > 0.1) {
-        console.warn(
-          `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
-        )
-      } else {
-        await expect(signButton).toBeVisible({ timeout: 5000 })
-        await expect(signButton).toBeEnabled({ timeout: 5000 })
-
-        await signButton.click()
-
-        // TODO: check why this is needed
-        // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
-        await page.waitForTimeout(350)
-        const shouldRetryClick = await signButton.isVisible().catch(() => false)
-        if (shouldRetryClick) {
-          const stillEnabled = await signButton.isEnabled().catch(() => false)
-          if (stillEnabled) {
-            await signButton.click()
-          }
-        }
-
-        if (ledgerSimulatorControls) {
-          await ledgerSimulatorControls.signSmartAccountTransaction()
-        }
-
-        await page.waitForTimeout(5000)
-
-        // close transaction progress pop up
-        await page.locator(selectors.closeTransactionProgressPopUpButton).click()
-      }
-    } catch (error) {
-      console.warn("⚠️ We couldn't sign the transaction.", { error })
+    if (!Number.isFinite(feeDollarsAmount)) {
+      throw new Error(`Could not read the transaction fee (got "${feeSelector}")`)
     }
+
+    if (feeDollarsAmount > 0.1) {
+      console.warn(
+        `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
+      )
+      return false
+    }
+
+    await expect(signButton).toBeVisible({ timeout: 5000 })
+    await expect(signButton).toBeEnabled({ timeout: 5000 })
+
+    await signButton.click()
+
+    // TODO: check why this is needed
+    // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
+    await page.waitForTimeout(350)
+    const shouldRetryClick = await signButton.isVisible().catch(() => false)
+    if (shouldRetryClick) {
+      const stillEnabled = await signButton.isEnabled().catch(() => false)
+      if (stillEnabled) {
+        await signButton.click()
+      }
+    }
+
+    if (ledgerSimulatorControls) {
+      await ledgerSimulatorControls.signSmartAccountTransaction()
+    }
+
+    await page.waitForTimeout(5000)
+
+    // close transaction progress pop up
+    await page.locator(selectors.closeTransactionProgressPopUpButton).click()
+
+    return true
   }
 
   async switchUSDValueOnSwapAndBridge(
@@ -316,7 +337,7 @@ export class SwapAndBridgePage extends BasePage {
   async getUSDTextContent(): Promise<[number, string]> {
     const content = await this.page
       .getByTestId(selectors.switchCurrencySab)
-      .innerText({ timeout: 5000 })
+      .innerText({ timeout: 10000 })
 
     let currency: string | null = null
     let amount: string | null = null

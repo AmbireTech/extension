@@ -24,7 +24,7 @@ const useWatchToken = () => {
   const {
     state: { portfolio: selectedAccountPortfolio, account }
   } = useController('SelectedAccountController')
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { state } = useController('ProvidersController')
 
   const userRequest = useMemo(

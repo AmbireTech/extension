@@ -22,6 +22,7 @@ import DappsSkeletonLoader from '@common/modules/explore/components/DappsSkeleto
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
 import SectionHeader from '@common/modules/explore/components/SectionHeader'
 import TrendingTokenItem from '@common/modules/explore/components/TrendingTokenItem'
+import WalletStaking from '@common/modules/explore/components/WalletStaking'
 import { filterTrendingTokensBySearch } from '@common/modules/explore/helpers/filterTrendingTokens'
 import useExploreSections, {
   ExploreSection
@@ -40,6 +41,12 @@ type SearchItem =
   | { type: 'openPage'; query: string }
   | { type: 'trendingToken'; token: TrendingToken }
   | { type: 'dapp'; dapp: Dapp }
+
+type SectionItem =
+  | { kind: 'dapp'; dapp: Dapp }
+  | { kind: 'row'; dapps: Dapp[] }
+  | { kind: 'trendingToken'; token: TrendingToken }
+  | { kind: 'walletStaking' }
 
 const ExploreScreen = () => {
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
@@ -73,15 +80,20 @@ const ExploreScreen = () => {
 
   // Search mode: collapse sections into the flat list with Google/open-URL suggestions,
   // matching the prior screen's behavior.
+  // Built only once there is something to search for. Lower-casing three fields of
+  // every dapp in the catalogue is not cheap, and doing it while the screen mounts
+  // stalls the transition onto it for a result nothing reads until the user types.
   const searchableDapps = useMemo(
     () =>
-      (state.dapps || []).map((dapp: Dapp) => ({
-        dapp,
-        name: dapp.name.toLowerCase(),
-        url: dapp.url.toLowerCase(),
-        description: dapp.description?.toLowerCase() || ''
-      })),
-    [state.dapps]
+      debouncedSearch
+        ? (state.dapps || []).map((dapp: Dapp) => ({
+            dapp,
+            name: dapp.name.toLowerCase(),
+            url: dapp.url.toLowerCase(),
+            description: dapp.description?.toLowerCase() || ''
+          }))
+        : [],
+    [state.dapps, debouncedSearch]
   )
 
   const searchResults: SearchItem[] = useMemo(() => {
@@ -190,19 +202,18 @@ const ExploreScreen = () => {
           // For horizontal sections we pass a single sentinel item; the carousel renders all dapps internally.
           data:
             s.type === 'apps'
-              ? s.data.map((d) => ({ kind: 'dapp' as const, dapp: d }))
+              ? [
+                  { kind: 'walletStaking' as const },
+                  ...s.data.map((d) => ({ kind: 'dapp' as const, dapp: d }))
+                ]
               : [{ kind: 'row' as const, dapps: s.data }]
         }
       }),
     [sections]
   )
 
-  type SectionItem =
-    | { kind: 'dapp'; dapp: Dapp }
-    | { kind: 'row'; dapps: Dapp[] }
-    | { kind: 'trendingToken'; token: TrendingToken }
-
   const renderSectionItem = useCallback(({ item }: { item: SectionItem }) => {
+    if (item.kind === 'walletStaking') return <WalletStaking />
     if (item.kind === 'row') return <HorizontalDappsRow data={item.dapps} />
     if (item.kind === 'trendingToken') return <TrendingTokenItem token={item.token} />
     return <DappItem {...item.dapp} />
@@ -232,6 +243,7 @@ const ExploreScreen = () => {
   )
 
   const sectionKeyExtractor = useCallback((item: SectionItem, index: number) => {
+    if (item.kind === 'walletStaking') return 'wallet-staking'
     if (item.kind === 'dapp') return item.dapp.id
     if (item.kind === 'trendingToken') return `trending-${item.token.id}`
     return `row-${index}`

@@ -23,9 +23,7 @@ import commonWebStyles from '@web/styles/utils/common'
 
 // Instant placeholder shown while the data-heavy controllers load
 const DashboardShell = () => {
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
 
   // Read synchronously so the shell paints the last-known balance on its first render.

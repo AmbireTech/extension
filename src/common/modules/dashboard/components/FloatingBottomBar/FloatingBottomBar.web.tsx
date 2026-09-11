@@ -7,14 +7,15 @@ import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import CurrentApp from './CurrentApp'
+import SelectNetwork from './SelectNetwork'
 import DashboardSearch from './DashboardSearch'
-
 import { FloatingBottomBarProps } from './FloatingBottomBar'
 
 const VISIBLE_BOTTOM_OFFSET = 0
 
 const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
+  networkFilterTab,
   displayCurrentApp = false,
   isHidden,
   searchPlaceholder
@@ -48,7 +49,12 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     >
       <GlassView borderRadius={28} cssStyle={{ pointerEvents: 'all' }} isSimpleBlur={false}>
         <View style={[spacings.phTy, spacings.pvTy, flexbox.directionRow, flexbox.alignCenter]}>
-          <DashboardSearch control={control} placeholder={searchPlaceholder} />
+          {!!control && <DashboardSearch control={control} placeholder={searchPlaceholder} />}
+          {!!networkFilterTab && (
+            <View style={control ? { marginLeft: SPACING } : undefined}>
+              <SelectNetwork currentTab={networkFilterTab} />
+            </View>
+          )}
           {displayCurrentApp && <CurrentApp />}
         </View>
       </GlassView>

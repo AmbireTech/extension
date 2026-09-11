@@ -60,6 +60,9 @@ const ContactsList = () => {
 
   const { maxWidthSize } = useWindowSize()
   const isWidthS = maxWidthSize('s')
+  // The title, the search and the action only fit on one row above this width.
+  // Below it the header stacks and both take the full width of their own row
+  const isHeaderRow = maxWidthSize('l')
 
   return (
     <>
@@ -70,7 +73,11 @@ const ContactsList = () => {
             placeholder={t('Search contacts')}
             autoFocus
             control={control}
-            containerStyle={{ width: isWidthS ? 320 : 200 }}
+            containerStyle={
+              isHeaderRow
+                ? { width: isWidthS ? 320 : 200, ...spacings.mlSm, ...spacings.mrSm }
+                : { width: '100%', ...spacings.mbTy }
+            }
           />
           <Button
             testID="add-contact-form-modal"
@@ -78,7 +85,7 @@ const ContactsList = () => {
             type="primary"
             size="smaller"
             textStyle={{ fontSize: 12 }}
-            style={[spacings.phSm, { height: 40 }]}
+            style={[spacings.phSm, { height: 40 }, !isHeaderRow && { width: '100%' }]}
             hasBottomSpacing={false}
             onPress={openAddContactForm as any}
             submitOnEnter={false}

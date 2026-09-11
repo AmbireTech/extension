@@ -43,12 +43,18 @@ const KeyStoreSetupForm = ({
   } = useKeyStoreSetup()
   const { goToNextRoute } = useOnboardingNavigation()
   const confirmPasswordRef = useRef<TextInput>(null)
+  // The keystore is set up once, so this may only move the flow on once.
+  // `goToNextRoute` is rebuilt whenever the route changes, which re-runs this
+  // effect right after its own navigation - and `goToNextRoute` with no argument
+  // advances from wherever the flow is now, so a second run would skip a step.
+  const hasLeftOnSuccess = useRef(false)
   useEffect(() => {
     const handleSuccess = async () => {
-      if (isKeystoreReady) {
-        if (onConfirmSuccess) await onConfirmSuccess(password)
-        goToNextRoute()
-      }
+      if (!isKeystoreReady || hasLeftOnSuccess.current) return
+
+      hasLeftOnSuccess.current = true
+      if (onConfirmSuccess) await onConfirmSuccess(password)
+      goToNextRoute()
     }
     handleSuccess().catch(() => {})
   }, [isKeystoreReady, goToNextRoute, onConfirmSuccess, password])

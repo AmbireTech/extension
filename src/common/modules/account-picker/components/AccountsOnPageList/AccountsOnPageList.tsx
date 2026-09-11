@@ -54,7 +54,7 @@ const AccountsOnPageList = ({
   children
 }: Props) => {
   const { t } = useTranslation()
-  const { networks: allNetworks } = useController('NetworksController').state
+  const { state: allNetworks } = useController('NetworksController', 'networks')
   const { state: accountPickerState, dispatch: accountPickerDispatch } =
     useController('AccountPickerController')
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)
@@ -153,6 +153,9 @@ const AccountsOnPageList = ({
             unused={isUnused}
             isSelected={isSelected}
             importStatus={acc.importStatus}
+            importedKeyTypes={acc.importedKeyTypes}
+            associatedKeysStats={acc.associatedKeysStats}
+            currentKeyType={state.type}
             onSelect={handleSelectAccount}
             onDeselect={handleDeselectAccount}
             displayTypeBadge={false}
@@ -170,7 +173,7 @@ const AccountsOnPageList = ({
         )
       })
     },
-    [getType, state.selectedAccounts, handleSelectAccount, handleDeselectAccount]
+    [getType, state.selectedAccounts, state.type, handleSelectAccount, handleDeselectAccount]
   )
 
   const networkNamesWithAccountStateError = useMemo(() => {
@@ -223,6 +226,8 @@ const AccountsOnPageList = ({
   const hasSmartAccounts = useMemo(() => {
     return state.accountsOnPage.some((p) => isSmartAccount(p.account))
   }, [state.accountsOnPage])
+
+  const shouldDisplaySmartAccountsSection = state.smartAccountsLoading || hasSmartAccounts
 
   // Prevents the user from temporarily seeing (flashing) empty (error) states
   // while being navigated back (resetting the Account Picker state).
@@ -281,7 +286,7 @@ const AccountsOnPageList = ({
                   )
                 })}
               </View>
-              {hasSmartAccounts && (
+              {shouldDisplaySmartAccountsSection && (
                 <View style={[styles.smartAccountWrapper, isMobile && spacings.ptSm]}>
                   <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
                     <Text fontSize={16} weight="medium" style={[text.center, spacings.mrTy]}>
@@ -295,6 +300,16 @@ const AccountsOnPageList = ({
                         flexbox.alignCenter
                       ]}
                     >
+                      {state.smartAccountsLoading && (
+                        <View style={[flexbox.alignCenter, flexbox.directionRow]}>
+                          <Spinner
+                            style={{ width: isMobile ? 14 : 16, height: isMobile ? 14 : 16 }}
+                          />
+                          <Text appearance="primary" style={[spacings.mlTy]} fontSize={12}>
+                            {t('Loading smart accounts')}
+                          </Text>
+                        </View>
+                      )}
                       {lookingForLinkedAccounts && (
                         <View style={[flexbox.alignCenter, flexbox.directionRow]}>
                           <Spinner
@@ -384,13 +399,7 @@ const AccountsOnPageList = ({
                   ]}
                 >
                   {!isImportingFromPrivateKey && (
-                    <Pagination
-                      page={state.page}
-                      maxPages={1000}
-                      setPage={setPage}
-                      isDisabled={state.accountsLoading}
-                      hideLastPage
-                    />
+                    <Pagination page={state.page} maxPages={1000} setPage={setPage} hideLastPage />
                   )}
                 </View>
               )}
@@ -402,13 +411,7 @@ const AccountsOnPageList = ({
       {!isMobile && (
         <View style={[flexbox.alignEnd, spacings.mbMd]}>
           {!isImportingFromPrivateKey && (
-            <Pagination
-              page={state.page}
-              maxPages={1000}
-              setPage={setPage}
-              isDisabled={state.accountsLoading}
-              hideLastPage
-            />
+            <Pagination page={state.page} maxPages={1000} setPage={setPage} hideLastPage />
           )}
         </View>
       )}

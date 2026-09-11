@@ -80,7 +80,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     mdMenuOption: {
       height: SELECT_SIZE_TO_HEIGHT.md,
-      ...spacings.ph
+      ...(isMobile ? spacings.phSm : spacings.ph)
     },
     optionIcon: {
       width: 30,

@@ -1,0 +1,3 @@
+import useRecoveryPhraseBackupStatus from './useRecoveryPhraseBackupStatus'
+
+export default useRecoveryPhraseBackupStatus

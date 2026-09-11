@@ -33,7 +33,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
       to: theme.secondaryBackground
     }
   })
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const {
     state: { portfolio, dashboardNetworkFilter }
   } = useController('SelectedAccountController')

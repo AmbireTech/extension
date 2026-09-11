@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
+import WalletStakingScreen from '@common/modules/explore/components/WalletStaking/WalletStakingScreen'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
@@ -11,6 +12,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
+import SidePanelNoAccountsScreen from '@web/modules/auth/screens/SidePanelNoAccountsScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
@@ -48,6 +50,8 @@ const MainRoutes = () => {
     <Suspense fallback={null}>
       <Routes>
         <Route path={WEB_ROUTES.noConnection} element={<NoConnectionScreen />} />
+        {/* Side-panel empty state: must stay outside TabOnlyRoute so it can render in-panel. */}
+        <Route path={WEB_ROUTES.sidePanelNoAccounts} element={<SidePanelNoAccountsScreen />} />
 
         <Route element={<TabOnlyRoute />}>
           <Route
@@ -107,7 +111,15 @@ const MainRoutes = () => {
             />
             <Route
               path={WEB_ROUTES.safeImport}
+              element={<AuthGroupScreen pick={(m) => m.SafeImportMethodScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.safeImportAddress}
               element={<AuthGroupScreen pick={(m) => m.SafeImportScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.safeImportByOwner}
+              element={<AuthGroupScreen pick={(m) => m.SafeImportByOwnerScreen} />}
             />
             <Route
               path={WEB_ROUTES.qrConnect}
@@ -127,15 +139,6 @@ const MainRoutes = () => {
             />
 
             <Route
-              path={WEB_ROUTES.createSeedPhrasePrepare}
-              element={<AuthGroupScreen pick={(m) => m.CreateSeedPhrasePrepareScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.createSeedPhraseWrite}
-              element={<AuthGroupScreen pick={(m) => m.CreateSeedPhraseWriteScreen} />}
-            />
-
-            <Route
               path={WEB_ROUTES.accountPicker}
               element={<AuthGroupScreen pick={(m) => m.AccountPickerScreen} />}
             />
@@ -151,8 +154,16 @@ const MainRoutes = () => {
               path={WEB_ROUTES.qrPermission}
               element={<AuthGroupScreen pick={(m) => m.QrCameraPermissionPage} />}
             />
+            <Route
+              path={WEB_ROUTES.importAccountsFromMobile}
+              element={<AuthGroupScreen pick={(m) => m.ImportAccountsFromMobileScreen} />}
+            />
 
             <Route element={<AuthenticatedRoute />}>
+              <Route
+                path={WEB_ROUTES.exportAccountsToMobile}
+                element={<AuthGroupScreen pick={(m) => m.ExportAccountsToMobileScreen} />}
+              />
               <Route element={<SettingsRoutesProvider />}>
                 <Route
                   path={WEB_ROUTES.generalSettings}
@@ -271,6 +282,7 @@ const MainRoutes = () => {
             <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
             <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
             <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
+            <Route path={WEB_ROUTES.walletStaking} element={<WalletStakingScreen />} />
             <Route path={WEB_ROUTES.trendingTokens} element={<TrendingTokensScreen />} />
             <Route
               path={WEB_ROUTES.trendingTokenDetails}

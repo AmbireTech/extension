@@ -5,6 +5,7 @@ import { View, ViewStyle } from 'react-native'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import XWalletConversionTooltip from '@common/components/XWalletConversionTooltip'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import TokenDetailsTitle from '@common/modules/token-details/components/Title'
@@ -23,6 +24,7 @@ type TokenBalanceCardProps = Pick<
     isRewards?: boolean
     isVesting?: boolean
     containerStyle?: ViewStyle
+    xWalletAmount?: bigint
     /**
      * Fallback icon uri (e.g. the trending token icon) used when the token can't be
      * resolved by address/chainId, so the balance icon matches the price display above.
@@ -43,6 +45,7 @@ const TokenBalanceCard = ({
   isRewards,
   isVesting,
   containerStyle,
+  xWalletAmount,
   uri
 }: TokenBalanceCardProps) => {
   const { t } = useTranslation()
@@ -74,6 +77,14 @@ const TokenBalanceCard = ({
             >
               {symbol}
             </Text>
+            {xWalletAmount !== undefined && (
+              <XWalletConversionTooltip
+                address={address}
+                chainId={chainId}
+                xWalletAmount={xWalletAmount}
+                tooltipId="token-details-x-wallet-conversion"
+              />
+            )}
             {isRewards && (
               <Text fontSize={12} weight="medium">
                 {t('Claimable rewards')}

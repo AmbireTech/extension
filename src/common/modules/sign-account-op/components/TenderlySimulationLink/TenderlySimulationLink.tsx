@@ -2,9 +2,11 @@ import React, { FC, useCallback } from 'react'
 import { Linking, View, ViewStyle } from 'react-native'
 
 import Button from '@common/components/Button'
-import { isMobile } from '@common/config/env'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { useTranslation } from '@common/config/localization'
 import useToast from '@common/hooks/useToast'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
   tenderlyLink?: string | null
@@ -14,6 +16,19 @@ type Props = {
 }
 
 const iconContainerStyle: ViewStyle = {}
+const buttonStyle: ViewStyle = {
+  width: 21,
+  height: 21,
+  ...spacings.ph0,
+  ...spacings.pv0
+}
+const innerContainerStyle = (): ViewStyle => ({
+  width: 21,
+  height: 21,
+  ...spacings.ph0,
+  ...spacings.pv0,
+  ...flexbox.justifyCenter
+})
 
 const TenderlySimulationLink: FC<Props> = ({ tenderlyLink, text, renderIcon, style }) => {
   const { addToast } = useToast()
@@ -28,15 +43,21 @@ const TenderlySimulationLink: FC<Props> = ({ tenderlyLink, text, renderIcon, sty
   if (!tenderlyLink) return null
 
   return (
-    <View style={style}>
+    <View
+      style={style}
+      dataSet={createGlobalTooltipDataSet({
+        id: 'tenderly-simulation-tooltip',
+        content: text
+      })}
+    >
       <Button
-        type="outline"
-        size={isMobile ? 'regular' : 'small'}
-        text={text}
+        type="ghost"
+        size="small"
         onPress={handleOpenTenderly}
         hasBottomSpacing={false}
-        childrenPosition="right"
-        style={isMobile ? { height: 44 } : {}}
+        accessibilityLabel={text}
+        style={buttonStyle}
+        innerContainerStyle={innerContainerStyle}
         childrenContainerStyle={iconContainerStyle}
       >
         {renderIcon}

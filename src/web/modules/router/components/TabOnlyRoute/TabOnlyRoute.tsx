@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
+import { ROUTES } from '@common/modules/router/constants/common'
 import { openInternalPageInTab } from '@common/utils/links/links'
 import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
 
-const { isTab } = getUiType()
+const { isTab, isSidePanel } = getUiType()
 
 const TabOnlyRoute = () => {
   const isRequestWindow = getUiType().isRequestWindow
@@ -23,7 +24,7 @@ const TabOnlyRoute = () => {
       openInternalPageInTab({
         route: `${path?.substring(1)}${search}`,
         searchParams: params,
-        shouldCloseCurrentWindow: true,
+        shouldCloseCurrentWindow: !isSidePanel,
         windowId: requestWindow.windowProps?.createdFromWindowId
       })
     }
@@ -34,6 +35,10 @@ const TabOnlyRoute = () => {
   }
 
   if (!isTab && isExtension) {
+    if (isSidePanel) {
+      return <Navigate to={ROUTES.dashboard} replace />
+    }
+
     return <></>
   }
 

@@ -96,15 +96,6 @@ export class BasePage {
   async handleNewPage(locator: Locator, page: Page = this.page): Promise<Page> {
     const context = page.context()
 
-    // const [actionWindowPagePromise] = await Promise.all([
-    //   context.waitForEvent('page', { timeout: 10000 }),
-    //   locator.first().click({ timeout: 5000 }) // trigger opening
-    // ])
-
-    // await actionWindowPagePromise.waitForLoadState('domcontentloaded')
-
-    // return actionWindowPagePromise
-
     // wait for locator before click
     await locator.waitFor({ state: 'visible', timeout: 100000 })
     await expect(locator).toBeEnabled()
@@ -121,6 +112,31 @@ export class BasePage {
     // wait for new page to load
     await actionWindowPage.waitForLoadState('domcontentloaded')
     return actionWindowPage
+  }
+
+  /**
+   * Closes the extension's own onboarding tab, which it opens from
+   * chrome.runtime.onInstalled couple of seconds after browser launch. Only touches
+   * tab.html pages, so action/sign windows are never affected.
+   *
+   * Note: call it in tests that break on the duplicate UI instance e.g. Trezor test
+   */
+  async closeDuplicateExtensionTabs(timeout = 5000): Promise<void> {
+    const context = this.page.context()
+    const deadline = Date.now() + timeout
+
+    while (Date.now() < deadline) {
+      const strays = context
+        .pages()
+        .filter((p) => p !== this.page && !p.isClosed() && p.url().includes('tab.html'))
+
+      if (strays.length) {
+        await Promise.all(strays.map((p) => p.close().catch(() => {})))
+        return
+      }
+
+      await new Promise((res) => setTimeout(res, 200))
+    }
   }
 
   async pause() {

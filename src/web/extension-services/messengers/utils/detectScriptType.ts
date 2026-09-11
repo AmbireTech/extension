@@ -21,7 +21,7 @@ export function detectScriptType(): 'background' | 'contentScript' | 'popup' | '
 
     if (isExtensionDocument) {
       if (pathname.includes('background')) return 'background'
-      if (pathname.includes('popup')) return 'popup'
+      if (pathname.includes('popup') || pathname.includes('side-panel')) return 'popup'
       if (pathname.includes('contentscript')) return 'contentScript'
     }
 

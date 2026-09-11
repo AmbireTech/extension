@@ -317,7 +317,10 @@ const ManageApp = ({
             )}
             <AccountPreferences
               dapp={dapp}
-              onManageAccountsPress={openAccountPreferences}
+              onManageAccountsPress={() => {
+                setIsOpen(false)
+                openAccountPreferences()
+              }}
               closeMenu={() => setIsOpen(false)}
             />
             {!!dapp.isConnected && <DisconnectButton dapp={dapp} setIsOpen={setIsOpen} />}

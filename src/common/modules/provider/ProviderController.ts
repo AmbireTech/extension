@@ -149,6 +149,8 @@ export class ProviderController {
 
     await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts)
 
+    this.mainCtrl.ui.dispatchDappTabFocus?.([{ tabId: session.tabId, windowId: session.windowId }])
+
     return accounts
   }
 
@@ -447,6 +449,15 @@ export class ProviderController {
     }
 
     const accountAddr = data.params[0]
+
+    if (
+      !this._internalGetAccounts(data.session.id).some(
+        (acc: string) => acc.toLowerCase() === accountAddr.toLowerCase()
+      )
+    ) {
+      throw ethErrors.provider.unauthorized()
+    }
+
     const state = this.mainCtrl.accounts.accountStates[accountAddr]
     if (!state) {
       throw ethErrors.rpc.invalidParams(`account with address ${accountAddr} does not exist`)
@@ -485,7 +496,8 @@ export class ProviderController {
         accout,
         accountState,
         network,
-        this.mainCtrl.featureFlags.isFeatureEnabled('erc4337')
+        this.mainCtrl.featureFlags.isFeatureEnabled('erc4337'),
+        this.mainCtrl.featureFlags.isFeatureEnabled('eip7702')
       )
       const isSmart = baseAccount.getAtomicStatus() !== 'unsupported'
 

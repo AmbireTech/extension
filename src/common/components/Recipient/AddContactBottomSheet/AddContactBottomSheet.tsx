@@ -12,6 +12,7 @@ import { isMobile, isWeb } from '@common/config/env'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 
 interface Props {
@@ -25,6 +26,7 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const [name, setName] = useState('')
 
   const handleAddContact = () => {
@@ -64,7 +66,15 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
         style={spacings.mb2Xl}
       />
 
-      <FooterGlassView size="sm" absolute={false}>
+      <FooterGlassView
+        size="sm"
+        absolute={false}
+        // Keep Cancel → primary child order for row layouts; reverse only when stacked
+        // so the primary action sits on top (same pattern as CustomGasPrice).
+        innerContainerStyle={
+          isCompactSidePanelLayout ? { flexDirection: 'column-reverse' } : undefined
+        }
+      >
         <Button
           hasBottomSpacing={false}
           type="secondary"

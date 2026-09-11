@@ -1,128 +1,42 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
-import useController from '@common/hooks/useController'
+import AddTokenBottomSheet from '@common/modules/settings/components/AddTokenBottomSheet'
+import useManageTokens, {
+  ALL_NETWORKS_FILTER
+} from '@common/modules/settings/hooks/useManageTokens'
 import flexbox from '@common/styles/utils/flexbox'
-import { tokenOrCollectionSearch } from '@common/utils/search'
-import { networkSort } from '@common/utils/sorting'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
-import AddTokenBottomSheet from './AddTokenBottomSheet'
 import Filters from './Filters'
 import Header from './Header'
 import TokenSection from './TokenSection'
 
 const ManageTokensSettingsScreen = () => {
-  const debouncedPortfolioUpdateInterval = useRef<NodeJS.Timeout | null>(null)
   const {
     ref: addTokenBottomSheetRef,
     open: openAddTokenBottomSheet,
     close: closeAddTokenBottomSheet
   } = useModalize()
-  const { tokenPreferences, customTokens: portfolioCustomTokens } =
-    useController('PortfolioController').state
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
-  const { networks } = useController('NetworksController').state
-  const { dispatch: mainDispatch } = useController('MainController')
-  const {
-    state: {
-      portfolio: { isAllReady, tokens }
-    }
-  } = useController('SelectedAccountController')
-  const [networkFilter, setNetworkFilter] = useState('all')
+  const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)
   const search = watch('search')
+  const { customTokens, hiddenTokens, isLoading, onTokenPreferenceOrCustomTokenChange } =
+    useManageTokens({ search, networkFilter })
 
   useEffect(() => {
     setCurrentSettingsPage('manage-tokens')
   }, [setCurrentSettingsPage])
 
-  const filteredTokens = useMemo(() => {
-    const filtered = tokens.filter((token) => {
-      const { flags, chainId } = token
-      if (flags.onGasTank || !!flags.rewardsType) return false
-      const network = networks.find((n) => n.chainId === chainId)
-
-      return networkFilter === 'all' || network?.name === networkFilter
-    })
-
-    return tokenOrCollectionSearch({ networks, assets: filtered, search })
-  }, [networkFilter, networks, search, tokens])
-
-  const customTokens = useMemo(() => {
-    return filteredTokens
-      .filter(({ flags, address, chainId }) => {
-        const isTokenHidden =
-          tokenPreferences.some(
-            ({ address: addr, chainId: nId, isHidden }) =>
-              addr === address && nId === chainId && isHidden
-          ) && flags.isHidden
-
-        const isCustom = flags.isCustom && !isTokenHidden
-
-        if (!isCustom) return false
-
-        const isRemovedOptimistically = !portfolioCustomTokens.some(
-          ({ address: addr, chainId: nId }) => addr === address && nId === chainId
-        )
-
-        return !isRemovedOptimistically
-      })
-      .sort((a, b) => {
-        const aNetwork = networks.find(({ chainId }) => chainId === a.chainId)
-        const bNetwork = networks.find(({ chainId }) => chainId === b.chainId)
-
-        if (!aNetwork || !bNetwork) return 0
-
-        return networkSort(aNetwork, bNetwork, networks)
-      })
-  }, [filteredTokens, networks, portfolioCustomTokens, tokenPreferences])
-
-  const hiddenTokens = useMemo(() => {
-    return filteredTokens
-      .filter(({ flags, address, chainId }) => {
-        return (
-          tokenPreferences.some(
-            ({ address: addr, chainId: nId, isHidden }) =>
-              addr === address && nId === chainId && isHidden
-          ) && flags.isHidden
-        )
-      })
-      .sort((a, b) => {
-        const aNetwork = networks.find(({ chainId }) => chainId === a.chainId)
-        const bNetwork = networks.find(({ chainId }) => chainId === b.chainId)
-
-        if (!aNetwork || !bNetwork) return 0
-
-        return networkSort(aNetwork, bNetwork, networks)
-      })
-  }, [filteredTokens, networks, tokenPreferences])
-
   const setNetworkFilterValue = useCallback(({ value }: SelectValue) => {
     if (typeof value !== 'string') return
     setNetworkFilter(value)
   }, [])
-
-  const onTokenPreferenceOrCustomTokenChange = useCallback(() => {
-    if (debouncedPortfolioUpdateInterval.current) {
-      clearTimeout(debouncedPortfolioUpdateInterval.current)
-    }
-
-    debouncedPortfolioUpdateInterval.current = setTimeout(() => {
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'updateSelectedAccountPortfolio',
-          args: []
-        }
-      })
-      debouncedPortfolioUpdateInterval.current = null
-    }, 1000)
-  }, [mainDispatch])
 
   const handleCloseAddTokenBottomSheet = useCallback(() => {
     closeAddTokenBottomSheet()
@@ -143,7 +57,7 @@ const ManageTokensSettingsScreen = () => {
       <ScrollableWrapper>
         <TokenSection
           variant="custom"
-          isLoading={!isAllReady}
+          isLoading={isLoading}
           data={customTokens}
           onTokenPreferenceOrCustomTokenChange={onTokenPreferenceOrCustomTokenChange}
           networkFilter={networkFilter}
@@ -151,7 +65,7 @@ const ManageTokensSettingsScreen = () => {
         />
         <TokenSection
           variant="hidden"
-          isLoading={!isAllReady}
+          isLoading={isLoading}
           data={hiddenTokens}
           onTokenPreferenceOrCustomTokenChange={onTokenPreferenceOrCustomTokenChange}
           networkFilter={networkFilter}

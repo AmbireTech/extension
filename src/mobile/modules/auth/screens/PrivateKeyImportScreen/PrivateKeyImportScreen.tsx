@@ -50,8 +50,6 @@ const PrivateKeyImportScreen = () => {
         withBackButton
         onBackButtonPress={goToPrevRoute}
         title={t('Import private key')}
-        step={1}
-        totalSteps={2}
         withScroll
       >
         <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>

@@ -27,8 +27,8 @@ const DAppConnectBody: FC<{
   const spacingsStyle = useMemo(() => {
     return {
       paddingHorizontal: SPACING_LG * responsiveSizeMultiplier,
-      paddingTop: SPACING_LG * responsiveSizeMultiplier,
-      paddingBottom: SPACING_LG * responsiveSizeMultiplier
+      paddingTop: SPACING * responsiveSizeMultiplier,
+      paddingBottom: SPACING * responsiveSizeMultiplier
     }
   }, [responsiveSizeMultiplier])
 

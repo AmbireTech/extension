@@ -1,24 +1,15 @@
 import React, { useCallback } from 'react'
 
 import useController from '@common/hooks/useController'
-import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import { getUiType } from '@common/utils/uiType'
 
 import BaseTokenItem from './BaseTokenItem'
 import RewardsTokenItem from './RewardsTokenItem'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
-const { isPopup } = getUiType()
 
 const TokenItem = ({ token }: { token: TokenResult }) => {
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { state: portfolio } = useController(
-    'SelectedAccountController',
-    (state) => state.portfolio
-  )
-  const { state: networks } = useController('NetworksController', (state) => state.networks)
-  const simulatedAccountOp = portfolio.networkSimulatedAccountOp[token.chainId.toString()]
-  const { isVesting, isRewards } = getAndFormatTokenDetails(token, networks, simulatedAccountOp)
+  const { rewardsType } = token.flags
 
   const sendTransaction = useCallback(
     (type: 'claimWalletRequest' | 'mintVestingRequest') => {
@@ -33,24 +24,13 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
     [requestsDispatch, token]
   )
 
-  if (isRewards)
-    return (
-      <RewardsTokenItem
-        token={token}
-        onPress={() => sendTransaction('claimWalletRequest')}
-        actionButtonText="Claim"
-        description="Claimable rewards"
-      />
-    )
-  if (isVesting)
-    return (
-      <RewardsTokenItem
-        token={token}
-        actionButtonText="Claim"
-        onPress={() => sendTransaction('mintVestingRequest')}
-        description={!isPopup ? 'Claimable early supporters vestings' : 'Claimable vestings'}
-      />
-    )
+  const claimRewards = useCallback(() => sendTransaction('claimWalletRequest'), [sendTransaction])
+  const mintVesting = useCallback(() => sendTransaction('mintVestingRequest'), [sendTransaction])
+
+  if (rewardsType === 'wallet-rewards')
+    return <RewardsTokenItem token={token} onPress={claimRewards} actionButtonText="Claim" />
+  if (rewardsType === 'wallet-vesting')
+    return <RewardsTokenItem token={token} actionButtonText="Claim" onPress={mintVesting} />
 
   return <BaseTokenItem token={token} />
 }

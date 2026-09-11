@@ -1,4 +1,5 @@
 import { KEYSTORE_PASS } from 'constants/env'
+import locators from 'constants/locators'
 import { networks } from 'constants/networks'
 import selectors from 'constants/selectors'
 
@@ -212,7 +213,7 @@ export class SettingsPage extends BasePage {
     await this.click(selectors.settings.watchAnAddressButton)
 
     // enter address/ens
-    await this.entertext(selectors.settings.viewOnlyAddressField, account)
+    await this.page.locator(locators.viewOnlyInputAddressField).fill(account)
 
     // assert validation
     await expect(this.page.locator(selectors.settings.validENSDomainText)).toHaveText(
@@ -264,7 +265,7 @@ export class SettingsPage extends BasePage {
     await this.click(selectors.settings.customTokens.addCustomTokenButton)
 
     // assert at token modal
-    await this.compareText(selectors.settings.customTokens.addTokenModalTitle, 'Add Token')
+    await this.compareText(selectors.settings.customTokens.addTokenModalTitle, 'Add token')
 
     // choose network; ETH is selected by default; clicking it opens dropdown
     await this.click(selectors.settings.customTokens.ethNetworkOption)

@@ -1,6 +1,9 @@
 import { ColorValue, StyleSheet, ViewStyle } from 'react-native'
 
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
+// Type-only import, so this doesn't create a runtime cycle with `themeConfig`,
+// which imports `hexToRgba` from here.
+import type { ThemeProps } from '@common/styles/themeConfig'
 
 interface Styles {
   shadowPrimary: ViewStyle
@@ -69,6 +72,11 @@ const commonStyles: Styles & StyleSheet.NamedStyles<any> = {
 // supported by react-native-web (styles are missing in the final object)
 // {@link https://github.com/necolas/react-native-web/issues/1377}
 export default isWeb ? commonStyles : StyleSheet.create<Styles>(commonStyles)
+
+// On mobile a drop shadow doesn't separate a floating menu from the dark
+// background behind it, so outline dropdowns with the accent border instead.
+export const getDropdownBorderStyle = (theme: ThemeProps): ViewStyle =>
+  isMobile ? { borderWidth: 1, borderColor: theme.primaryAccent400 } : {}
 
 export function hexToRgba(hex: string | ColorValue, opacity = 1) {
   let formattedHex = String(hex)

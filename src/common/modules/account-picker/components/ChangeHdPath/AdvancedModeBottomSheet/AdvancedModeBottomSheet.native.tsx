@@ -3,7 +3,6 @@ import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import NumberInput from '@common/components/NumberInput'

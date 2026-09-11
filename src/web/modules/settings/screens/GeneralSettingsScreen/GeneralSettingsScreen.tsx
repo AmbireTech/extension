@@ -9,6 +9,7 @@ import spacings from '@common/styles/spacings'
 import AutoLockDeviceControlOption from '@web/modules/settings/components/General/AutoLockDeviceControlOption'
 import BiometricsOption from '@web/modules/settings/components/General/BiometricsOption'
 import LockAmbireControlOption from '@web/modules/settings/components/General/LockAmbireControlOption'
+import SidePanelControlOption from '@web/modules/settings/components/General/SidePanelControlOption'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
@@ -26,6 +27,7 @@ const GeneralSettingsScreen = () => {
         <LockAmbireControlOption />
         <BiometricsOption />
         <AutoLockDeviceControlOption />
+        <SidePanelControlOption />
         <ThemeControlOption />
         <AvatarTypeControlOption />
       </View>

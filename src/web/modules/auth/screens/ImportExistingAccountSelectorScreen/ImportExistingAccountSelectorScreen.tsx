@@ -11,6 +11,7 @@ import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -36,11 +37,17 @@ import getStyles from './styles'
 
 export const CARD_WIDTH = 400
 const VISIBLE_BUTTONS_COUNT = 5
+const ICON_SLOT_SIZE = 24
 
 type ButtonType = {
   title: string
   onPress: () => void
   icon: React.FC<SvgProps>
+  /**
+   * Icons that fill their whole box (like SafeIcon) must be drawn smaller than the slot
+   * to match the ones that draw a circle inset in it. The slot keeps the labels aligned.
+   */
+  iconSize?: number
 }
 
 const ImportExistingAccountSelectorScreen = () => {
@@ -96,7 +103,8 @@ const ImportExistingAccountSelectorScreen = () => {
         onPress: () => {
           goToNextRoute(WEB_ROUTES.safeImport)
         },
-        icon: SafeIcon
+        icon: SafeIcon,
+        iconSize: 20
       },
       {
         title: 'Trezor',
@@ -143,6 +151,13 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(WEB_ROUTES.importSmartAccountJson)
         },
         icon: ImportJsonIcon
+      },
+      {
+        title: 'Watch an address',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.viewOnlyAccountAdder)
+        },
+        icon: ViewOnlyIcon
       }
     ],
     [goToNextRoute, addToast, dispatch, t, setTriggeredHwWalletFlow]
@@ -176,7 +191,7 @@ const ImportExistingAccountSelectorScreen = () => {
             <ScrollView contentContainerStyle={[flexbox.justifySpaceBetween]}>
               {buttons
                 .slice(0, VISIBLE_BUTTONS_COUNT)
-                .map(({ title, onPress, icon: IconComponent }) => (
+                .map(({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE }) => (
                   <Button
                     key={title}
                     type="tertiary"
@@ -190,7 +205,15 @@ const ImportExistingAccountSelectorScreen = () => {
                     }}
                   >
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <IconComponent width={24} height={24} color={theme.iconPrimary} />
+                      <View
+                        style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}
+                      >
+                        <IconComponent
+                          width={iconSize}
+                          height={iconSize}
+                          color={theme.iconPrimary}
+                        />
+                      </View>
                       <Text style={spacings.mlSm} fontSize={16} weight="medium">
                         {t(title)}
                       </Text>
@@ -203,7 +226,7 @@ const ImportExistingAccountSelectorScreen = () => {
               >
                 {buttons
                   .slice(VISIBLE_BUTTONS_COUNT)
-                  .map(({ title, onPress, icon: IconComponent }) => (
+                  .map(({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE }) => (
                     <Button
                       key={title}
                       type="tertiary"
@@ -217,7 +240,18 @@ const ImportExistingAccountSelectorScreen = () => {
                       }}
                     >
                       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <IconComponent width={24} height={24} color={theme.iconPrimary} />
+                        <View
+                          style={[
+                            flexbox.center,
+                            { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }
+                          ]}
+                        >
+                          <IconComponent
+                            width={iconSize}
+                            height={iconSize}
+                            color={theme.iconPrimary}
+                          />
+                        </View>
                         <Text style={spacings.mlSm} fontSize={14} weight="medium">
                           {t(title)}
                         </Text>

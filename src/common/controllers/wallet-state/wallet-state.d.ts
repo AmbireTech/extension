@@ -13,6 +13,8 @@ export declare class WalletStateController extends EventEmitter {
 
   isPrivacyModeEnabled: boolean
 
+  isSidePanelModeEnabled: boolean
+
   themeType: ThemeType
 
   avatarType: AvatarType
@@ -48,6 +50,8 @@ export declare class WalletStateController extends EventEmitter {
   setCrashAnalytics(enabled: boolean): Promise<void>
 
   togglePrivacyMode(): Promise<void>
+
+  setSidePanelModeEnabled(enabled: boolean): Promise<void>
 
   toJSON(): any
 }

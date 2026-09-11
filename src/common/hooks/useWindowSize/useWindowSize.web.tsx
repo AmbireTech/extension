@@ -1,15 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { getUiType } from '@common/utils/uiType'
+
 import { breakpointsByWindowHeight, breakpointsByWindowWidth } from './breakpoints'
 import { WindowSizeProps } from './types'
 
+const { isSidePanel } = getUiType()
+
+const getViewportWidth = () =>
+  isSidePanel ? document.documentElement.clientWidth : window.innerWidth
+
+const getViewportHeight = () =>
+  isSidePanel ? document.documentElement.clientHeight : window.innerHeight
+
 const useWindowSize = (): WindowSizeProps => {
-  const [width, setWidth] = useState(window.innerWidth)
-  const [height, setHeight] = useState(window.innerHeight)
+  const [width, setWidth] = useState(getViewportWidth)
+  const [height, setHeight] = useState(getViewportHeight)
 
   const updateWindowSize = useCallback(() => {
-    setWidth(window.innerWidth)
-    setHeight(window.innerHeight)
+    setWidth(getViewportWidth())
+    setHeight(getViewportHeight())
   }, [])
 
   useEffect(() => {
@@ -17,8 +27,14 @@ const useWindowSize = (): WindowSizeProps => {
 
     window.addEventListener('resize', updateWindowSize)
 
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateWindowSize) : undefined
+
+    resizeObserver?.observe(document.documentElement)
+
     return () => {
       window.removeEventListener('resize', updateWindowSize)
+      resizeObserver?.disconnect()
     }
   }, [updateWindowSize])
 

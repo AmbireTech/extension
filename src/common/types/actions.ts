@@ -2,6 +2,7 @@ import { Account } from '@ambire-common/interfaces/account'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
 import { Key, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
+import { NfcExportedKey } from '@common/modules/hardware-wallets/nfc/types'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -29,8 +30,11 @@ type GetAllControllerNamesAction = {
   type: 'GET_ALL_CONTROLLER_NAMES'
 }
 
-type GetInitialRouteAction = {
-  type: 'GET_INITIAL_ROUTE'
+type SyncViewRouteAction = {
+  type: 'SYNC_VIEW_ROUTE'
+  // Only mobile fills in the id. On the extension the port the action came through identifies the
+  // view, the same way it works for SET_VIEW_FOCUS.
+  params: { id?: string }
 }
 
 type InitControllerStateAction = {
@@ -78,6 +82,10 @@ type MainControllerAccountPickerInitLatticeAction = {
 type MainControllerAccountPickerInitQrWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET'
   params: { payload: string | Uint8Array }
+}
+type MainControllerAccountPickerInitNfcWalletAction = {
+  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET'
+  params: { payload: NfcExportedKey }
 }
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
@@ -207,6 +215,14 @@ type DisconnectWcSessionAction = {
   }
 }
 
+type DispatchDappTabFocusAction = {
+  type: 'DISPATCH_DAPP_TAB_FOCUS'
+  params: {
+    targets: { tabId: number; windowId?: number }[]
+    delayMs?: number
+  }
+}
+
 type SetBootPhaseAction = {
   type: 'SET_BOOT_PHASE'
   params: { phase: 'critical' | 'full' }
@@ -220,11 +236,24 @@ type SetSubscribedControllersAction = {
   params: { controllers: string[] }
 }
 
+// Mobile-only, boot profiling. Asks the WebView worker to post its boot marks so
+// the RN side can assemble one timeline across both JS realms.
+type FlushBootProfileAction = {
+  type: 'FLUSH_BOOT_PROFILE'
+}
+
+// Mobile-only. Loads the dapp catalog and phishing lists in the WebView worker after
+// the dashboard has rendered, keeping them off the boot path. Idempotent in the worker.
+type InitDeferredControllersAction = {
+  type: 'INIT_DEFERRED_CONTROLLERS'
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
   | SetViewFocusAction
   | MainControllerAccountPickerInitQrWalletAction
+  | MainControllerAccountPickerInitNfcWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
@@ -242,12 +271,15 @@ export type Action =
   | InitAllControllersAction
   | WindowRemovedAction
   | GetAllControllerNamesAction
-  | GetInitialRouteAction
+  | SyncViewRouteAction
   | InitControllerStateAction
   | HandleProviderRequestAction
   | WebviewOriginChangedAction
   | SetupWcSessionMessengerAction
   | RestoreWcSessionsAction
   | DisconnectWcSessionAction
+  | DispatchDappTabFocusAction
   | SetBootPhaseAction
   | SetSubscribedControllersAction
+  | FlushBootProfileAction
+  | InitDeferredControllersAction

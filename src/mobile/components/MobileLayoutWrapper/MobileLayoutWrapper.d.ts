@@ -30,8 +30,6 @@ export interface MobileLayoutWrapperMainContentProps extends WrapperProps {
   withHorizontalPadding?: boolean
   rightIcon?: ReactNode
   title?: string
-  step?: number
-  totalSteps?: number
 }
 
 declare const MobileLayoutContainer: React.FC<MobileLayoutContainerProps>

@@ -1,4 +1,5 @@
 import { MainController } from '@ambire-common/controllers/main/main'
+import { isSidePanelView } from '@ambire-common/interfaces/ui'
 import { ONBOARDING_WEB_ROUTES } from '@common/modules/router/constants/common'
 import { IS_FIREFOX } from '@web/constants/common'
 import { Port } from '@web/extension-services/messengers'
@@ -10,6 +11,16 @@ export const handleCleanUpOnPortDisconnect = async ({
   port: Port
   mainCtrl: MainController
 }) => {
+  if (port.name === 'side-panel') {
+    // The panel renders action requests inline, so closing it discards their UI. Handle the
+    // pending requests like a request window close: transactions stay queued, the rest get
+    // rejected. Skipped while another panel or a request window still shows the request.
+    const isAnotherPanelOpen = mainCtrl.ui.views.some(isSidePanelView)
+    const isRequestInOwnWindow = !!mainCtrl.requests.requestWindow.windowProps
+
+    if (!isAnotherPanelOpen && !isRequestInOwnWindow) await mainCtrl.requests.closeRequestWindow()
+  }
+
   if (!port.sender || !port.sender?.url) return
 
   const url = new URL(port.sender.url)

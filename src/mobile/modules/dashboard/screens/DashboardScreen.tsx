@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
+import { Animated, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GasTankModal from '@common/components/GasTankModal'
 import useController from '@common/hooks/useController'
@@ -15,30 +16,33 @@ import TabsAndSearchSkeleton from '@common/modules/dashboard/components/TabsAndS
 import TokensSkeleton from '@common/modules/dashboard/components/Tokens/TokensSkeleton'
 import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
 import getStyles from '@common/modules/dashboard/screens/styles' // Keeping styles in common
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
   const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useModalize()
-  const lastOffsetY = useRef(0)
-  const scrollUpStartedAt = useRef(0)
   const [dashboardOverviewSize, setDashboardOverviewSize] = useState({
     width: 0,
     height: 0
   })
   const debouncedDashboardOverviewSize = useDebounce({ value: dashboardOverviewSize, delay: 100 })
+  // The overview doesn't collapse on scroll on mobile, so this stays at its max.
+  // It is still needed, as the pages animate it back open when a tab is opened.
   const animatedOverviewHeight = useRef(new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT)).current
-  const [isSearchHidden, setIsSearchHidden] = useState(false)
 
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
 
   const { reloadAccount, isManuallyRefreshing } = useDashboardReload()
-
-  const isOverviewExpandedRef = useRef(true)
+  const { top: safeTop } = useSafeAreaInsets()
+  // Devices with a notch/dynamic island already reserve a gap below it within the
+  // top inset, so the full top padding would make the space above the overview
+  // visibly larger than the horizontal one. Devices without a notch get no such
+  // gap, so there the padding is kept in full.
+  const overviewPaddingTop = safeTop > SPACING_XL ? SPACING_MI : SPACING_SM
 
   // Defer rendering of heavy components to prevent blocking route transition
   const [isReady, setIsReady] = useState(false)
@@ -49,46 +53,6 @@ const DashboardScreen = () => {
     })
     return () => cancelAnimationFrame(rafId)
   }, [])
-
-  const onScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      return // TODO: fix behavior on mobile
-      // Mobile does not have isPopup, so we handle it similarly.
-      const {
-        contentOffset: { y },
-        contentSize: { height: contentHeight }
-      } = event.nativeEvent
-
-      if (scrollUpStartedAt.current === 0 && lastOffsetY.current > y) {
-        scrollUpStartedAt.current = y
-      } else if (scrollUpStartedAt.current > 0 && y > lastOffsetY.current) {
-        scrollUpStartedAt.current = 0
-      }
-      lastOffsetY.current = y
-
-      const scrollDownThreshold = dashboardOverviewSize.height / 2
-      const scrollUpThreshold = 200
-      const isOverviewExpanded =
-        y < scrollDownThreshold ||
-        y < scrollUpStartedAt.current - scrollUpThreshold ||
-        contentHeight < OVERVIEW_CONTENT_MAX_HEIGHT * 2
-      const isSearchHiddenVal = y > 50 && y > scrollUpStartedAt.current - scrollUpThreshold
-
-      setIsSearchHidden(isSearchHiddenVal)
-
-      if (isOverviewExpandedRef.current !== isOverviewExpanded) {
-        isOverviewExpandedRef.current = isOverviewExpanded
-        Animated.spring(animatedOverviewHeight, {
-          toValue: isOverviewExpanded ? OVERVIEW_CONTENT_MAX_HEIGHT : 0,
-          bounciness: 0,
-          speed: 2.8,
-          overshootClamping: true,
-          useNativeDriver: false // maxHeight/padding do not support native driver
-        }).start()
-      }
-    },
-    [animatedOverviewHeight, dashboardOverviewSize.height, lastOffsetY, scrollUpStartedAt]
-  )
 
   if (!account) return null
 
@@ -106,7 +70,7 @@ const DashboardScreen = () => {
           account={account}
         />
         <PendingActionWindowModal />
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingTop: overviewPaddingTop }]}>
           {!isReady ? (
             <View style={flexbox.flex1}>
               <DashboardOverviewSkeleton />
@@ -124,9 +88,7 @@ const DashboardScreen = () => {
                 setDashboardOverviewSize={setDashboardOverviewSize}
               />
               <DashboardPages
-                onScroll={onScroll}
                 animatedOverviewHeight={animatedOverviewHeight}
-                isSearchHidden={isSearchHidden}
                 onRefresh={reloadAccount}
                 refreshing={isManuallyRefreshing}
               />

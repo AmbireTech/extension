@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
@@ -8,6 +8,7 @@ import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import useControllerState from '@common/hooks/useControllerState'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
+import { browser, isExtension } from '@web/constants/browserapi'
 import { getCurrentTab } from '@web/extension-services/background/webapi/tab'
 import { getCurrentWindow } from '@web/extension-services/background/webapi/window'
 
@@ -20,6 +21,9 @@ export default function useDappsControllerHelpers(
   })
 
   const dappSessions = useMemo(() => state.dappSessions ?? {}, [state.dappSessions])
+  const trackedWindowIdRef = useRef<number | undefined>(undefined)
+  const refreshRequestIdRef = useRef(0)
+  const lastFetchedTabKeyRef = useRef('')
 
   const getCurrentDapp = useCallback(async () => {
     const requestId = nanoid()
@@ -101,6 +105,48 @@ export default function useDappsControllerHelpers(
     })
   }, [dispatch, dappSessions])
 
+  const refreshCurrentDapp = useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      const tab = await getCurrentTab()
+      const tabId = tab?.id
+      const tabUrl = tab?.url
+
+      if (!tabId || !tabUrl) {
+        lastFetchedTabKeyRef.current = ''
+        ++refreshRequestIdRef.current
+        updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
+        return
+      }
+
+      let tabKey = `${tabId}`
+      try {
+        tabKey = `${tabId}-${new URL(tabUrl).origin}`
+      } catch {
+        // keep tabId-only key
+      }
+
+      if (!force && tabKey === lastFetchedTabKeyRef.current) return
+
+      lastFetchedTabKeyRef.current = tabKey
+      const requestId = ++refreshRequestIdRef.current
+
+      updateHelpers({ isLoadingCurrentDapp: true })
+
+      try {
+        const dapp = await getCurrentDapp()
+        if (requestId !== refreshRequestIdRef.current) return
+
+        updateHelpers({ currentDapp: dapp, isLoadingCurrentDapp: false })
+      } catch (error) {
+        if (requestId !== refreshRequestIdRef.current) return
+
+        captureException(error)
+        updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
+      }
+    },
+    [getCurrentDapp, updateHelpers]
+  )
+
   const hasUnverifiedDapps = useCallback(
     async (dapps: string[]) => {
       if (!dapps.length) return false
@@ -161,24 +207,53 @@ export default function useDappsControllerHelpers(
   }, [getCurrentDapp, hasUnverifiedDapps, updateHelpers])
 
   useEffect(() => {
+    if (!isExtension || !browser?.tabs) return undefined
+
     let isCancelled = false
 
-    updateHelpers({ isLoadingCurrentDapp: true })
-    getCurrentDapp()
-      .then((dapp) => {
-        if (!isCancelled) {
-          updateHelpers({ currentDapp: dapp, isLoadingCurrentDapp: false })
-        }
-      })
-      .catch((error) => {
-        if (!isCancelled) {
-          captureException(error)
-          updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
-        }
-      })
+    const syncTrackedWindowId = async () => {
+      const window = await getCurrentWindow()
+      trackedWindowIdRef.current = window.id
+    }
+
+    const isTrackedWindowTab = (windowId?: number) =>
+      trackedWindowIdRef.current !== undefined && windowId === trackedWindowIdRef.current
+
+    const onTabActivated = async ({ windowId }: chrome.tabs.TabActiveInfo) => {
+      if (!isTrackedWindowTab(windowId)) return
+
+      lastFetchedTabKeyRef.current = ''
+      if (!isCancelled) await refreshCurrentDapp({ force: true })
+    }
+
+    const onTabUpdated = async (
+      _tabId: number,
+      changeInfo: chrome.tabs.TabChangeInfo,
+      tab: chrome.tabs.Tab
+    ) => {
+      if (!changeInfo.url || !tab.active || !isTrackedWindowTab(tab.windowId)) return
+
+      if (!isCancelled) await refreshCurrentDapp()
+    }
+
+    const init = async () => {
+      await syncTrackedWindowId()
+      if (!isCancelled) await refreshCurrentDapp({ force: true })
+    }
+
+    init()
+
+    browser.tabs.onActivated.addListener(onTabActivated)
+    browser.tabs.onUpdated.addListener(onTabUpdated)
 
     return () => {
       isCancelled = true
+      browser.tabs.onActivated.removeListener(onTabActivated)
+      browser.tabs.onUpdated.removeListener(onTabUpdated)
     }
-  }, [getCurrentDapp, updateHelpers])
+  }, [refreshCurrentDapp])
+
+  useEffect(() => {
+    refreshCurrentDapp({ force: true })
+  }, [dappSessions, refreshCurrentDapp])
 }

@@ -38,8 +38,11 @@ const useKeyStoreUnlock = () => {
     if (errorMessage) setError('password', { message: errorMessage })
   }, [errorMessage, setError])
 
+  // Replaces rather than pushes: the router resolves the route to continue on
+  // from `/`, and the unlock screen must not stay behind it as an entry the user
+  // can go back to.
   useEffect(() => {
-    if (isUnlocked) navigate('/')
+    if (isUnlocked) navigate('/', { replace: true })
   }, [navigate, isUnlocked])
 
   const disableSubmit = useMemo(

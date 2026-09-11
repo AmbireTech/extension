@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useMemo } from 'react'
+import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
 import { FlatList, GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 import { DropProvider, useSortableList } from 'react-native-reanimated-dnd'
@@ -49,7 +49,8 @@ const DraggableFlatList = forwardRef(
       handleScroll,
       handleScrollEnd,
       contentHeight,
-      getItemProps
+      getItemProps,
+      positions
     } = useSortableList({
       data: sortableData as any,
       itemKeyExtractor: (item: any) => item.id,
@@ -57,6 +58,23 @@ const DraggableFlatList = forwardRef(
       enableDynamicHeights: !hasFixedItemHeight,
       estimatedItemHeight: 72
     })
+
+    const dataOrderKey = useMemo(
+      () => sortableData.map((item: any) => item.id).join('|'),
+      [sortableData]
+    )
+
+    // react-native-reanimated-dnd seeds its positions map once, so a removed item leaves
+    // the ones after it at their old offsets - a hole in the list. Re-seeding the map from
+    // the current data order keeps the rows packed (the library's own Sortable component
+    // achieves the same by remounting itself on every data change).
+    useEffect(() => {
+      positions.value = Object.fromEntries(
+        sortableData.map((item: any, index: number) => [item.id, index])
+      )
+      // sortableData is intentionally left out - dataOrderKey already describes its changes
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dataOrderKey, positions])
 
     const handleDrop = useCallback(
       (id: string, position: number) => {

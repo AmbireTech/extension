@@ -58,7 +58,7 @@ test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
 
     await page.goto(`${extensionURL}${mainConstants.urls.dashboard}`, { waitUntil: 'load' })
     // Let any deferred/entry scripts finish loading before measuring.
-    await page.waitForTimeout(3000)
+    await page.waitForTimeout(5000)
 
     const entries = [...jsBytesByUrl.entries()].sort((a, b) => b[1] - a[1])
     const totalBytes = entries.reduce((sum, [, bytes]) => sum + bytes, 0)

@@ -2,8 +2,8 @@ import type { TFunction } from 'i18next'
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { EXTREME_SWAP_CONFIRMATION_PHRASE } from '@ambire-common/consts/safeguards/extremeSwapLoss'
 import { SwapAmountWarning } from '@ambire-common/consts/safeguards/swapAmountWarnings'
+import { getRandomExtremeSwapConfirmationPhrase } from '@ambire-common/libs/safeguards/extremeSwapLoss'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BottomSheet from '@common/components/BottomSheet'
 import Checkbox from '@common/components/Checkbox'
@@ -15,7 +15,7 @@ import { getUiType } from '@common/utils/uiType'
 
 import ExtremeSwapConfirmationField from './ExtremeSwapConfirmationField'
 
-const { isTab } = getUiType()
+const { isTab, isSidePanel } = getUiType()
 
 type Props = {
   sheetRef: React.RefObject<any>
@@ -80,11 +80,12 @@ const PriceImpactWarningModal: FC<Props> = ({
   const { t } = useTranslation()
   const [isConfirmed, setIsConfirmed] = useState(false)
   const [isExtremePhraseValid, setIsExtremePhraseValid] = useState(false)
+  const [expectedConfirmationPhrase, setExpectedConfirmationPhrase] = useState(
+    getRandomExtremeSwapConfirmationPhrase
+  )
 
   const warning = highPriceImpactOrSlippageWarning
   const isExtreme = warning?.severity === 'extreme'
-
-  const expectedConfirmationPhrase = isExtreme ? EXTREME_SWAP_CONFIRMATION_PHRASE : ''
 
   const { title, description } = useMemo(() => {
     if (!warning) return { title: '', description: '' }
@@ -101,6 +102,7 @@ const PriceImpactWarningModal: FC<Props> = ({
   const resetModalState = useCallback(() => {
     setIsConfirmed(false)
     setIsExtremePhraseValid(false)
+    setExpectedConfirmationPhrase(getRandomExtremeSwapConfirmationPhrase())
   }, [])
 
   const closeBottomSheetWrapped = useCallback(() => {
@@ -128,7 +130,7 @@ const PriceImpactWarningModal: FC<Props> = ({
       id="warning-modal"
       closeBottomSheet={closeBottomSheetWrapped}
       sheetRef={sheetRef}
-      type={isTab ? 'modal' : 'bottom-sheet'}
+      type={isTab && !isSidePanel ? 'modal' : 'bottom-sheet'}
       withBackdropBlur={false}
       shouldBeClosableOnDrag={false}
     >
