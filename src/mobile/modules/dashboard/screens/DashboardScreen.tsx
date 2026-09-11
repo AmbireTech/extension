@@ -1,6 +1,7 @@
 import React, { useContext, useRef, useState } from 'react'
 import { Animated, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GasTankModal from '@common/components/GasTankModal'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
@@ -14,6 +15,7 @@ import DashboardShell from '@common/modules/dashboard/components/DashboardShell'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
 import getStyles from '@common/modules/dashboard/screens/styles' // Keeping styles in common
+import { SPACING_MI, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
@@ -34,6 +36,12 @@ const DashboardScreen = () => {
   } = useController('SelectedAccountController')
 
   const { reloadAccount, isManuallyRefreshing } = useDashboardReload()
+  const { top: safeTop } = useSafeAreaInsets()
+  // Devices with a notch/dynamic island already reserve a gap below it within the
+  // top inset, so the full top padding would make the space above the overview
+  // visibly larger than the horizontal one. Devices without a notch get no such
+  // gap, so there the padding is kept in full.
+  const overviewPaddingTop = safeTop > SPACING_XL ? SPACING_MI : SPACING_SM
 
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
@@ -46,7 +54,7 @@ const DashboardScreen = () => {
       keyboardAwareFooter={false}
     >
       <View style={flexbox.flex1}>
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingTop: overviewPaddingTop }]}>
           {!areAllControllerStatesLoaded ? (
             <DashboardShell />
           ) : (

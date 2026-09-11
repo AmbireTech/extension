@@ -136,12 +136,7 @@ const Collections: FC<Props> = ({
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              currentTab="collectibles"
-              sessionId={sessionId}
-            />
+            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
           </View>
         )
       }
@@ -218,7 +213,14 @@ const Collections: FC<Props> = ({
   }, [openTab, setValue])
 
   // Rendered above the carousel on mobile, so it stays put through a swipe
-  const floatingBar = useMemo(() => ({ control, searchPlaceholder: t('Search NFT') }), [control, t])
+  const floatingBar = useMemo(
+    () => ({
+      control,
+      networkFilterTab: 'collectibles' as const,
+      searchPlaceholder: t('Search NFT')
+    }),
+    [control, t]
+  )
 
   return (
     <>

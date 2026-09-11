@@ -439,7 +439,7 @@ const Tokens = ({
     () => ({
       control,
       displayCurrentApp: true,
-      displayNetworkFilter: true,
+      networkFilterTab: 'tokens' as const,
       searchPlaceholder: t('Search token')
     }),
     [control, t]

@@ -1,13 +1,16 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef } from 'react'
+import type { FC } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
-import { FEE_PERCENT } from '@ambire-common/services/socketv3/constants'
 import InfoIcon from '@common/assets/svg/InfoIcon'
+import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import Button from '@common/components/Button'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
@@ -19,6 +22,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
 import RetryButton from '@web/components/RetryButton'
 
+import FeeInfoBottomSheet from '../FeeInfoBottomSheet'
 import SelectRoute from './SelectRoute'
 
 type Props = {
@@ -37,13 +41,31 @@ const RouteInfo: FC<Props> = ({
   areAllProvidersDisabled
 }) => {
   const {
-    state: { formStatus, signAccountOpController, quote, swapSignErrors, disabledSwapProviderIds },
+    state: {
+      feeExemptionReason,
+      feePercent,
+      formStatus,
+      signAccountOpController,
+      quote,
+      swapSignErrors,
+      disabledSwapProviderIds
+    },
     dispatch: swapAndBridgeDispatch
   } = useController('SwapAndBridgeController')
   const { theme } = useTheme()
   const { t } = useTranslation()
+  const {
+    ref: feeInfoSheetRef,
+    open: openFeeInfoBottomSheet,
+    close: closeFeeInfoBottomSheet
+  } = useModalize()
   const proceededRouteIdRef = useRef<string | null>(null)
   const selectedRouteId = quote?.selectedRoute?.routeId
+  const displayedFeePercent =
+    feeExemptionReason || (quote?.selectedRoute && !quote.selectedRoute.withConvenienceFee)
+      ? 0
+      : feePercent
+  const isFeeSuccess = displayedFeePercent === 0
 
   useEffect(() => {
     if (formStatus === SwapAndBridgeFormStatus.Proceeded && selectedRouteId != null) {
@@ -88,12 +110,20 @@ const RouteInfo: FC<Props> = ({
       allRoutesFailed) &&
     !isEstimatingRoute
 
+  const shouldShowSelectRoute =
+    shouldShowRouteInfo &&
+    signAccountOpController?.estimation.status === EstimationStatus.Success &&
+    formStatus !== SwapAndBridgeFormStatus.InvalidRouteSelected
+
   const updateQuote = useCallback(() => {
     swapAndBridgeDispatch({
       type: 'method',
       params: { method: 'updateQuote', args: [{ skipQuoteUpdateOnSameValues: false }] }
     })
   }, [swapAndBridgeDispatch])
+  const handleOpenFeeInfoBottomSheet = useCallback(() => {
+    openFeeInfoBottomSheet()
+  }, [openFeeInfoBottomSheet])
 
   if (areAllProvidersDisabled) {
     return (
@@ -137,17 +167,68 @@ const RouteInfo: FC<Props> = ({
   }
 
   return (
-    <View
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        flexbox.justifySpaceBetween,
-        { minHeight: 20 }, // Prevents layout shifts,
-        spacings.mtSm
-      ]}
-    >
+    <View style={[{ minHeight: 20 }, spacings.mtSm]}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
+          { width: '100%' }
+        ]}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text appearance="secondaryText" fontSize={12} weight="medium">
+              {t('Ambire fee')}
+            </Text>
+            <Text appearance="primary" fontSize={12} weight="semiBold" style={spacings.mlMi}>
+              {`${displayedFeePercent}%`}
+            </Text>
+          </View>
+
+          <Button
+            text={isFeeSuccess ? t('Details') : t('Reduce fee')}
+            type={isFeeSuccess ? 'success' : 'primary'}
+            size="tiny"
+            onPress={handleOpenFeeInfoBottomSheet}
+            accessibilityLabel={isFeeSuccess ? t('Details') : t('Reduce fee')}
+            testID="swap-and-bridge-fee-info-button"
+            hasBottomSpacing={false}
+            submitOnEnter={false}
+            style={[
+              spacings.phTy,
+              spacings.mlTy,
+              { height: 'auto', paddingTop: 2, paddingBottom: 2 }
+            ]}
+            childrenPosition="right"
+          >
+            <RightArrowIcon width={10} height={10} color="#fff" style={spacings.mlMi} />
+          </Button>
+
+          {shouldShowSelectRoute && quote?.selectedRoute?.serviceTime ? (
+            <Text appearance="tertiaryText" fontSize={12} weight="medium" style={spacings.mlLg}>
+              {t('Time: {{time}}', {
+                time:
+                  quote?.selectedRoute && getIsBridgeRoute(quote.selectedRoute)
+                    ? `~ ${formatTime(quote.selectedRoute.serviceTime)}`
+                    : t('instant')
+              })}
+            </Text>
+          ) : null}
+        </View>
+
+        {shouldShowSelectRoute && (
+          <SelectRoute
+            shouldEnableRoutesSelection={shouldEnableRoutesSelection}
+            openRoutesModal={openRoutesModal}
+          />
+        )}
+      </View>
+
       {swapSignErrors.length > 0 && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
+        <View
+          style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }, spacings.mtSm]}
+        >
           {isWeb && (
             <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
           )}
@@ -167,7 +248,8 @@ const RouteInfo: FC<Props> = ({
             flexbox.directionRow,
             flexbox.alignCenter,
             flexbox.justifySpaceBetween,
-            { width: '100%' }
+            { width: '100%' },
+            spacings.mtSm
           ]}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, spacings.mrTy]}>
@@ -221,78 +303,14 @@ const RouteInfo: FC<Props> = ({
       )}
       {shouldShowRouteInfo && (
         <>
-          {signAccountOpController?.estimation.status === EstimationStatus.Success &&
-            formStatus !== SwapAndBridgeFormStatus.InvalidRouteSelected && (
-              <View
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  flexbox.justifySpaceBetween,
-                  { width: '100%' }
-                ]}
-              >
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <Text
-                      appearance={
-                        quote?.selectedRoute?.withConvenienceFee ? 'tertiaryText' : 'primary'
-                      }
-                      fontSize={12}
-                      weight="medium"
-                    >
-                      {t('Ambire fee: {{fee}}', {
-                        fee: `${quote?.selectedRoute?.withConvenienceFee ? FEE_PERCENT : 0}%`
-                      })}
-                    </Text>
-                    {!quote?.selectedRoute?.withConvenienceFee && (
-                      <>
-                        <InfoIcon
-                          width={14}
-                          height={14}
-                          data-tooltip-id="no-convenience-fee"
-                          style={spacings.mlTy}
-                          color={theme.primary}
-                        />
-
-                        <Tooltip
-                          content={t(
-                            'All collected fees are allocated to $WALLET buybacks. This transaction is exempt from that fee.'
-                          )}
-                          id="no-convenience-fee"
-                        />
-                      </>
-                    )}
-                  </View>
-                  {quote?.selectedRoute?.serviceTime ? (
-                    <Text
-                      appearance="tertiaryText"
-                      fontSize={12}
-                      weight="medium"
-                      style={spacings.mlLg}
-                    >
-                      {t('Time: {{time}}', {
-                        time:
-                          quote?.selectedRoute && getIsBridgeRoute(quote.selectedRoute)
-                            ? `~ ${formatTime(quote?.selectedRoute?.serviceTime)}`
-                            : 'instant'
-                      })}
-                    </Text>
-                  ) : null}
-                </View>
-
-                <SelectRoute
-                  shouldEnableRoutesSelection={shouldEnableRoutesSelection}
-                  openRoutesModal={openRoutesModal}
-                />
-              </View>
-            )}
           {allRoutesFailed && (
             <View
               style={[
                 flexbox.directionRow,
                 flexbox.justifySpaceBetween,
                 { width: '100%' },
-                flexbox.flex1
+                flexbox.flex1,
+                spacings.mtSm
               ]}
             >
               <View style={[flexbox.directionRow, { flexShrink: 1 }, spacings.mrTy]}>
@@ -335,7 +353,8 @@ const RouteInfo: FC<Props> = ({
                 flexbox.directionRow,
                 flexbox.alignCenter,
                 flexbox.justifySpaceBetween,
-                { width: '100%' }
+                { width: '100%' },
+                spacings.mtSm
               ]}
             >
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -371,6 +390,12 @@ const RouteInfo: FC<Props> = ({
           )}
         </>
       )}
+      <FeeInfoBottomSheet
+        sheetRef={feeInfoSheetRef}
+        closeBottomSheet={closeFeeInfoBottomSheet}
+        feePercent={feePercent}
+        feeExemptionReason={feeExemptionReason}
+      />
     </View>
   )
 }

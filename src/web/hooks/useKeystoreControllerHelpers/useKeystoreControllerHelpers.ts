@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 
 import { setUserContext } from '@common/config/analytics/CrashAnalytics'
 import useControllerState from '@common/hooks/useControllerState'
-import { getExtensionInstanceId } from '@web/utils/analytics'
+import { getAppInstanceId } from '@common/utils/analytics'
 
 export default function useKeystoreControllerHelpers() {
   const { state: mainState } = useControllerState({ id: 'MainController' })
@@ -18,6 +18,6 @@ export default function useKeystoreControllerHelpers() {
   useEffect(() => {
     if (!keyStoreUid) return
 
-    setUserContext({ id: getExtensionInstanceId(keyStoreUid, verifiedCode) })
+    setUserContext({ id: getAppInstanceId(keyStoreUid, verifiedCode) })
   }, [keyStoreUid, verifiedCode])
 }

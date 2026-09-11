@@ -2,9 +2,11 @@ import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { Fetch } from '@ambire-common/interfaces/fetch'
 import { UiManager, View } from '@ambire-common/interfaces/ui'
+import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
-import { isAndroid } from '@common/config/env'
+import { APP_VERSION, isAndroid, isDev } from '@common/config/env'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
@@ -16,6 +18,7 @@ import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwar
 import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
 import NfcController from '@mobile/modules/hardware-wallet/controllers/NfcController'
@@ -41,6 +44,66 @@ export type ControllerHostConfig = {
   BUNGEE_API_KEY: string
   UNISWAP_API_KEY: string
   criticalControllers: string[]
+}
+
+// Sent as the x-app-version header on the requests to Ambire APIs. Same shape as the
+// extension's `extension-<version>-<engine>`, so the analytics can tell the apps and
+// their platforms apart.
+const APP_VERSION_HEADER = `mobile-${APP_VERSION}-${isAndroid ? 'android' : 'ios'}`
+// Sent as the x-app-env header. No staging builds on mobile, so the value set is the
+// extension's minus 'next'.
+const APP_ENV_HEADER = isDev ? 'dev' : 'prod'
+
+// The highest balance seen per account, because a request firing while the portfolio is
+// still loading would otherwise under-report it in the balance hint.
+const userBalances: Record<string, number> = {}
+
+/**
+ * The fetch handed to the controllers. Only the internal Ambire APIs get the analytics
+ * headers and params - requests to 3rd parties must never carry anything that identifies
+ * the app instance. Resolved per request, because the keystore uid, the invite code and
+ * the balance are not available at boot; a request fired before the keystore is
+ * constructed goes out with an empty source, same as in the extension.
+ */
+const fetchWithAnalytics: Fetch = (input, init) => {
+  const url = input.toString()
+  if (!isAmbireApiUrl(url)) return fetch(input as any, init as any) as any
+
+  // Optional all the way down, because a request can fire while the controllers are
+  // still being constructed
+  const currentAccount = mainCtrl?.selectedAccount?.account
+  const currentBalance = mainCtrl?.selectedAccount?.portfolio?.totalBalance || 0
+  if (currentAccount && (userBalances[currentAccount.addr] || 0) < currentBalance)
+    userBalances[currentAccount.addr] = currentBalance
+
+  // The balance hint is worth attaching only if the user has keys for the account
+  const hasCurrentAccountKeys =
+    !!mainCtrl &&
+    !!currentAccount &&
+    !!getAccountKeysCount({
+      accountAddr: currentAccount.addr,
+      keys: mainCtrl.keystore.keys,
+      accounts: mainCtrl.accounts.accounts
+    })
+
+  const urlWithHint =
+    currentAccount && hasCurrentAccountKeys
+      ? attachBalanceHint(url, currentAccount.addr, userBalances[currentAccount.addr] || 0)
+      : url
+
+  return fetch(urlWithHint, {
+    ...(init as any),
+    // Applied last, so that the caller can never overwrite the analytics data
+    headers: {
+      ...(init?.headers as Record<string, string>),
+      'x-app-source': getAppInstanceId(
+        mainCtrl?.keystore?.keyStoreUid || null,
+        mainCtrl?.invite?.verifiedCode || ''
+      ),
+      'x-app-version': APP_VERSION_HEADER,
+      'x-app-env': APP_ENV_HEADER
+    }
+  }) as any
 }
 
 const ctrlOnUpdateIsDirtyFlags: Record<string, boolean> = {}
@@ -213,7 +276,7 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
       storageAPI: storage,
       appVersion: config.APP_VERSION,
       platform: isAndroid ? 'mobile-android' : 'mobile-ios',
-      fetch: fetch as any,
+      fetch: fetchWithAnalytics as any,
       relayerUrl: config.RELAYER_URL,
       velcroUrl: config.VELCRO_URL,
       liFiApiKey: config.LIFI_EXPLORER_URL,

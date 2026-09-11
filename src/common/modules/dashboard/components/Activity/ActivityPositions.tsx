@@ -19,6 +19,7 @@ import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Acti
 import PendingTransactions from '@common/modules/dashboard/components/Activity/PendingTransactions/lazyPendingTransactions'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
+import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import SubmittedTransactionSummary, {
@@ -39,6 +40,7 @@ interface Props {
   onScroll?: FlatListProps<any>['onScroll']
   animatedOverviewHeight: Animated.Value
   network: Network | null
+  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
@@ -72,6 +74,7 @@ const ActivityPositions: FC<Props> = ({
   onScroll,
   animatedOverviewHeight,
   network,
+  isSearchHidden,
   refreshing,
   onRefresh
 }) => {
@@ -142,12 +145,7 @@ const ActivityPositions: FC<Props> = ({
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              currentTab="activity"
-              sessionId={sessionId}
-            />
+            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
 
             {!!accountsOps[sessionId] && (
               <View style={spacings.mbMi}>
@@ -322,32 +320,41 @@ const ActivityPositions: FC<Props> = ({
     return `${positionOrElement.id}-${positionOrElement.txnId}-${positionOrElement.timestamp}`
   }, [])
 
+  // The transactions are not searchable, so the bar carries the network picker alone.
+  // Rendered above the carousel on mobile, so it stays put through a swipe
+  const floatingBar = useMemo(() => ({ networkFilterTab: 'activity' as const }), [])
+
   return (
-    <DashboardPageScrollContainer
-      tab="activity"
-      openTab={openTab}
-      ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
-      data={[
-        ...(isMobile ? [] : ['header']),
-        'pending',
-        !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
-        ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
-          ? accountsOps[sessionId].result.items
-          : []),
-        accountsOps?.[sessionId] && !accountsOps[sessionId].result.items.length ? 'empty' : '',
-        'load-more'
-      ]}
-      renderItem={renderItem}
-      keyExtractor={keyExtractor}
-      onEndReachedThreshold={isPopup ? 5 : 2.5}
-      initialNumToRender={isPopup ? 10 : 20}
-      windowSize={9} // Larger values can cause performance issues.
-      onScroll={onScroll}
-      scrollEventThrottle={16}
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      animatedOverviewHeight={animatedOverviewHeight}
-    />
+    <>
+      <DashboardPageScrollContainer
+        floatingBar={floatingBar}
+        tab="activity"
+        openTab={openTab}
+        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
+        data={[
+          ...(isMobile ? [] : ['header']),
+          'pending',
+          !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
+          ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
+            ? accountsOps[sessionId].result.items
+            : []),
+          accountsOps?.[sessionId] && !accountsOps[sessionId].result.items.length ? 'empty' : '',
+          'load-more'
+        ]}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        onEndReachedThreshold={isPopup ? 5 : 2.5}
+        initialNumToRender={isPopup ? 10 : 20}
+        windowSize={9} // Larger values can cause performance issues.
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        animatedOverviewHeight={animatedOverviewHeight}
+      />
+      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
+      {openTab === 'activity' && <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />}
+    </>
   )
 }
 

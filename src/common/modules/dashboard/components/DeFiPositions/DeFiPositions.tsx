@@ -181,12 +181,7 @@ const DeFiPositions: FC<Props> = ({
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              currentTab="defi"
-              sessionId={sessionId}
-            />
+            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
           </View>
         )
       }
@@ -339,7 +334,7 @@ const DeFiPositions: FC<Props> = ({
 
   // Rendered above the carousel on mobile, so it stays put through a swipe
   const floatingBar = useMemo(
-    () => ({ control, searchPlaceholder: t('Search DeFi') }),
+    () => ({ control, networkFilterTab: 'defi' as const, searchPlaceholder: t('Search DeFi') }),
     [control, t]
   )
 

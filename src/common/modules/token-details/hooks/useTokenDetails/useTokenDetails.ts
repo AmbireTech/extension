@@ -15,7 +15,7 @@ const useTokenDetails = () => {
   }, [portfolio, tokenId])
 
   const { networks, hideTokenModalRef, closeHideTokenModal, handleHideTokenFromModal, actions } =
-    useTokenActions(token)
+    useTokenActions(token, { enableWalletStakingAction: true })
 
   return {
     token,

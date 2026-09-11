@@ -32,6 +32,7 @@ const useAccountsList = ({
   const { state: keys } = useController('KeystoreController', 'keys')
   const { state: selectedAccount } = useController('SelectedAccountController', 'account')
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const prevSearchRef = useRef(search)
 
   const searchableAccounts = useMemo(
     () =>
@@ -144,6 +145,14 @@ const useAccountsList = ({
   useEffect(() => {
     scrollToSelectedAccount()
   }, [scrollToSelectedAccount])
+
+  // Scrolls to top on search
+  useEffect(() => {
+    if (prevSearchRef.current === search) return
+
+    prevSearchRef.current = search
+    flatlistRef?.current?.scrollToOffset({ animated: false, offset: 0 })
+  }, [flatlistRef, search])
 
   return {
     accounts: filteredAccounts,
