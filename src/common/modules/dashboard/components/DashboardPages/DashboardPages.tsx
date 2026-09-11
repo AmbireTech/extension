@@ -1,7 +1,6 @@
 import { nanoid } from 'nanoid'
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
 import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
@@ -136,14 +135,13 @@ const DashboardPages = ({
         onRefresh={onRefresh}
         refreshing={refreshing}
       />
-      {shouldRenderPage('collectibles') && (
-        <Collections
+      {shouldRenderPage('defi') && (
+        <DeFiPositions
           openTab={pagesOpenTab}
           sessionId={sessionId}
           setOpenTab={setOpenTab}
-          initTab={initTab}
           onScroll={onScroll}
-          networks={networks}
+          initTab={initTab}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
           animatedOverviewHeight={animatedOverviewHeight}
           isSearchHidden={isSearchHidden}
@@ -152,13 +150,14 @@ const DashboardPages = ({
         />
       )}
 
-      {shouldRenderPage('defi') && (
-        <DeFiPositions
+      {shouldRenderPage('collectibles') && (
+        <Collections
           openTab={pagesOpenTab}
           sessionId={sessionId}
           setOpenTab={setOpenTab}
-          onScroll={onScroll}
           initTab={initTab}
+          onScroll={onScroll}
+          networks={networks}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
           animatedOverviewHeight={animatedOverviewHeight}
           isSearchHidden={isSearchHidden}
@@ -176,6 +175,7 @@ const DashboardPages = ({
           initTab={initTab}
           animatedOverviewHeight={animatedOverviewHeight}
           network={network}
+          isSearchHidden={isSearchHidden}
           onRefresh={onRefresh}
           refreshing={refreshing}
         />

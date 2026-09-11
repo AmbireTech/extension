@@ -25,6 +25,7 @@ import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/To
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 import { getTokenId } from '@common/utils/token'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
@@ -58,6 +59,10 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
   const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
   const networks = useNetworks({
     acc: account,
     additionalCheck: {
@@ -141,20 +146,12 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
 
   const toNetworksOptions: SelectValue[] = useMemo(
     () =>
-      networks
-        .sort((a, b) => {
-          const aIsSupported = !a.isNotSupported
-          const bIsSupported = !b.isNotSupported
-          if (aIsSupported && !bIsSupported) return -1
-          if (!aIsSupported && bIsSupported) return 1
-          return 0
-        })
-        .map((n) => {
+      sortNetworksByBalance(networks, balancePerNetwork).map((n) => {
           const tooltipId = `network-${n.chainId}-not-supported-tooltip`
 
           return {
             value: String(n.chainId),
-            extraSearchProps: [n.name],
+            extraSearchProps: { name: n.name },
             disabled: n.isNotSupported,
             label: (
               <>
@@ -179,7 +176,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
             icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
           }
         }),
-    [networks, t]
+    [networks, balancePerNetwork, t]
   )
 
   const getToNetworkSelectValue = useMemo(() => {
@@ -257,7 +254,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   return (
     <ItemPanel
       style={{
-        ...spacings.pv,
+        ...spacings.pvSm,
         ...spacings.pl,
         ...(isMobile ? {} : spacings.prMd)
       }}

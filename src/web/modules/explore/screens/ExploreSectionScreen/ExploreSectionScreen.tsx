@@ -18,12 +18,15 @@ import useDebounce from '@common/hooks/useDebounce'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
+import WalletStaking from '@common/modules/explore/components/WalletStaking'
+import { shouldShowWalletStaking } from '@common/modules/explore/helpers/shouldShowWalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 
 const TYPE_TITLES: Record<ExploreSectionType, string> = {
   // 'trending' is listed for type completeness; trending has its own dedicated screen (it never
@@ -41,6 +44,10 @@ const ExploreSectionScreen = () => {
   const { theme } = useTheme()
   const { state } = useController('DappsController')
   const { state: allNetworks } = useController('NetworksController', 'networks')
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const [network, setNetwork] = useState<Network | null>(null)
   const [category, setCategory] = useState<string | null>(null)
@@ -58,6 +65,7 @@ const ExploreSectionScreen = () => {
     network,
     category
   })
+  const isWalletStakingVisible = shouldShowWalletStaking(network?.chainId ?? null, category)
 
   const ALL_NETWORKS_OPTION = useMemo(
     () => ({
@@ -87,7 +95,7 @@ const ExploreSectionScreen = () => {
   const networksOptions: SelectValue[] = useMemo(
     () => [
       ALL_NETWORKS_OPTION,
-      ...allNetworks.map((n: Network) => ({
+      ...sortNetworksByBalance(allNetworks, balancePerNetwork).map((n: Network) => ({
         value: n.name,
         label: (
           <Text weight="medium" fontSize={12} numberOfLines={1}>
@@ -97,7 +105,7 @@ const ExploreSectionScreen = () => {
         icon: <NetworkIcon size={24} key={n.chainId.toString()} id={n.chainId.toString()} />
       }))
     ],
-    [allNetworks, ALL_NETWORKS_OPTION]
+    [allNetworks, balancePerNetwork, ALL_NETWORKS_OPTION]
   )
 
   const ALL_CATEGORIES_OPTION = useMemo(
@@ -213,14 +221,19 @@ const ExploreSectionScreen = () => {
           data={dapps}
           renderItem={renderItem}
           keyExtractor={(item: Dapp) => item.id}
+          ListHeaderComponent={
+            sectionType === 'apps' && isWalletStakingVisible ? WalletStaking : undefined
+          }
           style={spacings.phSm}
           contentContainerStyle={spacings.pr0}
           ListEmptyComponent={
-            <View style={[flexbox.center, spacings.pv]}>
-              <Text appearance="secondaryText" style={text.center}>
-                {t('No apps found')}
-              </Text>
-            </View>
+            sectionType === 'apps' ? null : (
+              <View style={[flexbox.center, spacings.pv]}>
+                <Text appearance="secondaryText" style={text.center}>
+                  {t('No apps found')}
+                </Text>
+              </View>
+            )
           }
         />
       </View>
