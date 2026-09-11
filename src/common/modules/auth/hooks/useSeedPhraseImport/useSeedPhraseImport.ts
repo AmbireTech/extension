@@ -7,6 +7,7 @@ import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/deriva
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import normalizeSeedPhrase from './normalizeSeedPhrase'
 
 export default function useSeedPhraseImport() {
   const { goToNextRoute } = useOnboardingNavigation()
@@ -41,7 +42,7 @@ export default function useSeedPhraseImport() {
         return
       }
 
-      const formattedSeed = value.seed.trim().split(/\s+/).join(' ')
+      const formattedSeed = normalizeSeedPhrase(value.seed)
 
       if (!Mnemonic.isValidMnemonic(formattedSeed)) {
         setSeedPhraseStatus('invalid')
@@ -55,7 +56,12 @@ export default function useSeedPhraseImport() {
 
   const handleFormSubmit = useCallback(async () => {
     await handleSubmit(({ seed, passphrase }) => {
-      const formattedSeed = seed.trim().toLowerCase().replace(/\s+/g, ' ')
+      const formattedSeed = normalizeSeedPhrase(seed)
+      if (!Mnemonic.isValidMnemonic(formattedSeed)) {
+        setSeedPhraseStatus('invalid')
+        return
+      }
+
       setImportButtonPressed(true)
       keystoreDispatch({
         type: 'method',
@@ -97,14 +103,14 @@ export default function useSeedPhraseImport() {
 
   const validateSeedPhraseWord = useCallback(
     (value: string) => {
-      const formattedSeed = value.trim().toLowerCase().replace(/\s+/g, ' ')
+      const formattedSeed = normalizeSeedPhrase(value)
 
-      const couldValueBeAPastedSeed = formattedSeed.length > 1
+      const couldValueBeAPastedSeed = formattedSeed.includes(' ')
 
       // If the value contains multiple words, it could be a pasted seed phrase
       // Don't display errors in this case, otherwise an error flashes when pasting
       if (!formattedSeed || couldValueBeAPastedSeed) return undefined
-      if (!wordlists.english?.includes(value)) return t('invalid-bip39-word')
+      if (!wordlists.english?.includes(formattedSeed)) return t('invalid-bip39-word')
       return undefined
     },
     [t]
