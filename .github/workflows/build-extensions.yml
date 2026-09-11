@@ -208,7 +208,7 @@ jobs:
           # so that a submission that failed halfway can be retried.
           if [ "$GITHUB_EVENT_NAME" = "release" ]; then
             STORE_VERSION=$(fetch_status \
-              | jq -r '[.publishedItemRevisionStatus, .submittedItemRevisionStatus] | map(.distributionChannels[]?.crxVersion) | .[]' \
+              | jq -r '[.publishedItemRevisionStatus, .submittedItemRevisionStatus] | map(.distributionChannels[]?.crxVersion // empty) | .[]' \
               | sort -V | tail -n1)
             echo "Highest version currently in the store: ${STORE_VERSION:-none}"
 
