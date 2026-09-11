@@ -27,6 +27,7 @@ import { MOBILE_VIEW_ID } from '@mobile/constants/ui'
 import useBootProfileReport from '@mobile/hooks/useBootProfileReport'
 import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
+import useSelectedAccountControllerHelpers from '@mobile/hooks/useSelectedAccountControllerHelpers'
 import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/services/WebViewWorker'
 import { dispatchToControllers, initControllerHost } from '@mobile/services/controllerHost'
 import { shouldShowMigrationOnboarding } from '@mobile/services/legacyMigration/legacyMigration'
@@ -222,6 +223,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   useRequestsControllerHelpers(dispatch)
   useDappsControllerHelpers(dispatch)
   useCacheDashboardBalance()
+  useSelectedAccountControllerHelpers()
   useBootProfileReport(flushWorkerBootProfile)
 
   return (

@@ -3,6 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useSyncExternalStore } fro
 import { isDev } from '@common/config/env'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
+import { subscribeToScreenCatchUp } from '@common/contexts/controllerStoreContext/screenCatchUp'
 import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -212,9 +213,19 @@ export default function useControllerState<
         onChange()
       })
 
+      const unsubscribeFromCatchUp = subscribeToScreenCatchUp(() => {
+        // A subscribed hook has just been notified by the store itself, and there are
+        // hundreds of those on the screen the user is on - re-reading them all is work
+        // for nothing in the window the switch is waiting on.
+        if (unsubscribeFromStore) return
+
+        onChange()
+      })
+
       return () => {
         unsubscribeFromStore?.()
         unsubscribeFromFocus()
+        unsubscribeFromCatchUp()
       }
     },
     [screenFocus]
