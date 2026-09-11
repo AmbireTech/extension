@@ -43,6 +43,95 @@ const MIN_VISIBLE_SEGMENT_GAP = 1
 // render site for why an unconstrained absolute-positioned width doesn't work here.
 const BUBBLE_WIDTH = 140
 
+// There's no hover on touch devices, so mobile toggles the same content in a small bubble on
+// tap instead of relying on the (web-only) dataSet/pointer-based GlobalTooltip - styled like
+// the real Tooltip (Tooltip.web.tsx) rather than the shared GlobalTooltip's bottom sheet,
+// which reads as a heavier "info modal" than this ring warrants. It's a separate component so
+// that an open bubble goes away with it when the ring drops back to its plain, non-pressable
+// form (every segment at 0), instead of popping back up on its own once a segment is non-zero
+// again.
+const RingWithTapBubble = ({
+  children,
+  segmentShares,
+  size
+}: {
+  children: React.ReactNode
+  segmentShares: { key: string; text: string }[]
+  size: number
+}) => {
+  const { theme } = useTheme()
+  const [isBubbleOpen, setIsBubbleOpen] = useState(false)
+  const handlePress = useCallback(() => setIsBubbleOpen((prev) => !prev), [])
+  const handleCloseBubble = useCallback(() => setIsBubbleOpen(false), [])
+
+  return (
+    <Pressable onPress={handlePress}>
+      <View style={{ position: 'relative' }}>
+        {children}
+        {isBubbleOpen && (
+          <>
+            {/* A tap anywhere else dismisses the bubble. The catcher lives in the root portal
+            so it covers the whole screen no matter how deeply nested the ring is - it paints
+            above the bubble, so any tap (the bubble included) closes it. */}
+            <Portal hostName="global">
+              <Pressable onPress={handleCloseBubble} style={StyleSheet.absoluteFill} />
+            </Portal>
+            {/* Small diamond acting as the tooltip's pointer arrow, pointing up at the ring.
+            A fixed size (rather than shrink-to-fit) sidesteps a Yoga quirk where an
+            absolutely positioned box with unresolved width collapses its stretched
+            children down to a sliver instead of sizing to content. */}
+            <View
+              style={{
+                position: 'absolute',
+                top: size + 3,
+                right: size / 2 - 5,
+                width: 10,
+                height: 10,
+                backgroundColor: theme.tertiaryBackground,
+                borderColor: theme.secondaryBorder,
+                borderTopWidth: 1,
+                borderLeftWidth: 1,
+                transform: [{ rotate: '45deg' }],
+                zIndex: 1
+              }}
+            />
+            <View
+              style={[
+                spacings.phSm,
+                spacings.pvTy,
+                {
+                  position: 'absolute',
+                  top: size + 8,
+                  // Anchored to the ring's right edge so the bubble grows leftwards - it's
+                  // wider than the ring and would otherwise run off the right of the screen.
+                  right: 0,
+                  width: BUBBLE_WIDTH,
+                  borderRadius: BORDER_RADIUS_PRIMARY,
+                  borderWidth: 1,
+                  borderColor: theme.secondaryBorder,
+                  backgroundColor: theme.tertiaryBackground,
+                  shadowColor: theme.shadowPrimary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 1,
+                  shadowRadius: 8,
+                  elevation: 8,
+                  zIndex: 1
+                }
+              ]}
+            >
+              {segmentShares.map(({ key, text }) => (
+                <Text key={key} fontSize={12} appearance="secondaryText">
+                  {text}
+                </Text>
+              ))}
+            </View>
+          </>
+        )}
+      </View>
+    </Pressable>
+  )
+}
+
 // A small multi-segment donut ring next to the amount input, showing how the WALLET, stkWALLET
 // and xWALLET balances split by USD value. `segments` are expected to already reflect the
 // entered amount (moved from the source token to the destination token for the active mode), so
@@ -63,18 +152,22 @@ const BalanceRatioProgress = ({ segments, size = 28, strokeWidth = 4, testID }: 
         .sort((a, b) => getSegmentOrder(a.key) - getSegmentOrder(b.key)),
     [segments]
   )
-  // One combined tooltip for the whole ring, listing every non-zero segment's share -
-  // segments at 0% are omitted since they have no arc to explain.
-  const tooltipContent = useMemo(
+  // Every non-zero segment's share, formatted once and shared by the web tooltip and the mobile
+  // tap bubble - segments at 0% are omitted since they have no arc to explain.
+  const segmentShares = useMemo(
     () =>
       totalUsd > 0
-        ? visibleSegments
-            .map(
-              (segment) => `${segment.label}: ${Math.round((segment.valueUsd / totalUsd) * 100)}%`
-            )
-            .join('\n')
-        : '',
+        ? visibleSegments.map((segment) => ({
+            key: segment.key,
+            text: `${segment.label}: ${Math.round((segment.valueUsd / totalUsd) * 100)}%`
+          }))
+        : [],
     [totalUsd, visibleSegments]
+  )
+  // One combined tooltip for the whole ring, listing every non-zero segment's share.
+  const tooltipContent = useMemo(
+    () => segmentShares.map(({ text }) => text).join('\n'),
+    [segmentShares]
   )
   const arcs = useMemo(() => {
     if (totalUsd <= 0) return []
@@ -105,17 +198,6 @@ const BalanceRatioProgress = ({ segments, size = 28, strokeWidth = 4, testID }: 
       }
     })
   }, [circumference, segmentGap, totalUsd, visibleSegments])
-  // There's no hover on touch devices, so mobile toggles the same content in a small bubble on
-  // tap instead of relying on the (web-only) dataSet/pointer-based GlobalTooltip - styled like
-  // the real Tooltip (Tooltip.web.tsx) rather than the shared GlobalTooltip's bottom sheet,
-  // which reads as a heavier "info modal" than this ring warrants.
-  const [isBubbleOpen, setIsBubbleOpen] = useState(false)
-  const handlePress = useCallback(() => {
-    if (!tooltipContent) return
-
-    setIsBubbleOpen((prev) => !prev)
-  }, [tooltipContent])
-  const handleCloseBubble = useCallback(() => setIsBubbleOpen(false), [])
 
   const ring = (
     <View
@@ -162,70 +244,9 @@ const BalanceRatioProgress = ({ segments, size = 28, strokeWidth = 4, testID }: 
 
   if (isMobile && tooltipContent) {
     return (
-      <Pressable onPress={handlePress}>
-        <View style={{ position: 'relative' }}>
-          {ring}
-          {isBubbleOpen && (
-            <>
-              {/* A tap anywhere else dismisses the bubble. The catcher lives in the root portal
-              so it covers the whole screen no matter how deeply nested the ring is - it paints
-              above the bubble, so any tap (the bubble included) closes it. */}
-              <Portal hostName="global">
-                <Pressable onPress={handleCloseBubble} style={StyleSheet.absoluteFill} />
-              </Portal>
-              {/* Small diamond acting as the tooltip's pointer arrow, pointing up at the ring.
-              A fixed size (rather than shrink-to-fit) sidesteps a Yoga quirk where an
-              absolutely positioned box with unresolved width collapses its stretched
-              children down to a sliver instead of sizing to content. */}
-              <View
-                style={{
-                  position: 'absolute',
-                  top: size + 3,
-                  right: size / 2 - 5,
-                  width: 10,
-                  height: 10,
-                  backgroundColor: theme.tertiaryBackground,
-                  borderColor: theme.secondaryBorder,
-                  borderTopWidth: 1,
-                  borderLeftWidth: 1,
-                  transform: [{ rotate: '45deg' }],
-                  zIndex: 1
-                }}
-              />
-              <View
-                style={[
-                  spacings.phSm,
-                  spacings.pvTy,
-                  {
-                    position: 'absolute',
-                    top: size + 8,
-                    // Anchored to the ring's right edge so the bubble grows leftwards - it's
-                    // wider than the ring and would otherwise run off the right of the screen.
-                    right: 0,
-                    width: BUBBLE_WIDTH,
-                    borderRadius: BORDER_RADIUS_PRIMARY,
-                    borderWidth: 1,
-                    borderColor: theme.secondaryBorder,
-                    backgroundColor: theme.tertiaryBackground,
-                    shadowColor: theme.shadowPrimary,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 1,
-                    shadowRadius: 8,
-                    elevation: 8,
-                    zIndex: 1
-                  }
-                ]}
-              >
-                {visibleSegments.map((segment) => (
-                  <Text key={segment.key} fontSize={12} appearance="secondaryText">
-                    {segment.label}: {Math.round((segment.valueUsd / totalUsd) * 100)}%
-                  </Text>
-                ))}
-              </View>
-            </>
-          )}
-        </View>
-      </Pressable>
+      <RingWithTapBubble segmentShares={segmentShares} size={size}>
+        {ring}
+      </RingWithTapBubble>
     )
   }
 
