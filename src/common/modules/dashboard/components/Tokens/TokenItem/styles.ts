@@ -28,7 +28,14 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phTy,
       height: 16,
       borderRadius: 10,
-      backgroundColor: theme.warningBackground
+      backgroundColor: theme.warningBackground,
+      // Same color as the background at rest, so the hover outline can appear without the
+      // border changing the badge's size
+      borderWidth: 1,
+      borderColor: theme.warningBackground,
+      // Ignored on native; on web it marks the badge as clickable - it opens the
+      // xWALLET migration request
+      cursor: 'pointer'
     },
     legacyBadgeDot: {
       ...spacings.mrMi,
