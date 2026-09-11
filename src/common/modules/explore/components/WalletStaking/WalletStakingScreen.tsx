@@ -359,13 +359,13 @@ const WalletStakingScreen = () => {
       },
       {
         key: 'stkWallet',
-        label: 'stkWALLET',
+        label: '$stkWALLET',
         valueUsd: Number(formatUnits(projectedStkWalletBalance, TOKEN_DECIMALS)) * stkWalletPrice,
         color: ACCENT_PRIMITIVES.primaryAccent200[THEME_TYPES.LIGHT]
       },
       {
         key: 'xWallet',
-        label: 'xWALLET',
+        label: '$xWALLET',
         valueUsd:
           Number(formatUnits(xWalletBalance, TOKEN_DECIMALS)) * xWalletPrice + unstakedAmountUsd,
         // Muted gray rather than a brand hue - xWALLET isn't part of the WALLET <-> stkWALLET
