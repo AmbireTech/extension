@@ -122,8 +122,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const isGasTankOrRewardsToken = isGasTankToken || isRewardsToken
   const isAmountZero = token && getTokenAmount(token) === 0n
   const canToToppedUp = token?.flags.canTopUpGasTank
-  const shouldDisableSwapAndBridge =
-    network?.isNotSupported || isGasTankOrRewardsToken || isAmountZero
+  const shouldDisableSwapAndBridge = isGasTankOrRewardsToken || isAmountZero
   const walletStakingAction =
     enableWalletStakingAction && token?.chainId === ETHEREUM_CHAIN_ID
       ? WALLET_STAKING_ACTIONS[token.address.toLowerCase()]
