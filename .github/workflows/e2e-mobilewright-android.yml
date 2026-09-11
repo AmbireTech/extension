@@ -1,31 +1,21 @@
-# Reusable Mobilewright Android suite — runs ONE shard against the prebuilt Android APK
-# (the `ambire-android-v*-apk` artifact produced by the caller's `build-android` job, via
-# ./.github/workflows/_build-android.yml, in the same run). Parameterized so every shard
-# shares a single step definition, mirroring ./_e2e-suite.yml for Playwright.
-name: The reusable Mobilewright Android suite
+name: 🤖 Mobilewright · Android
 
+# Manual trigger. Installs an already-built Android APK — the artifact from a
+# "🤖 Build · Android APK" (build-android-apk.yml) run — on an emulator and runs the
+# Mobilewright Android suite against it. Build that workflow first, or leave the input
+# blank to use its most recent successful run.
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
-      suite:
-        description: 'Suite name — used for the uploaded blob-report artifact name'
-        required: true
-        type: string
-      command:
-        description: 'The mobilewright test command to run (e.g. "npx mobilewright test --project=android --shard=1/2 --reporter=blob")'
-        required: true
-        type: string
-      api_level:
-        # Android OS version of the emulator system image (API 34 = Android 14).
-        # The app supports API 24..36, so anything in that range should work
-        description: 'Android API level for the emulator system image'
+      build_run_id:
+        description: 'Run ID of a "🤖 Build · Android APK" run to test (blank = latest successful)'
         required: false
-        default: 34
-        type: number
+        type: string
 
-# Non-secret config (vars). Reusable workflows do NOT inherit the caller's env, so the
-# shared vars block is repeated here, same as _e2e-suite.yml. Secrets live in the job's
-# env instead, since the `secrets` context is not allowed at workflow level.
+permissions:
+  contents: read
+  actions: read
+
 env:
   IS_TESTING: 'true'
   RELAYER_URL: ${{ vars.RELAYER_URL }}
@@ -45,14 +35,10 @@ env:
   DEFAULT_INVITATION_CODE_DEV: ${{ vars.DEFAULT_INVITATION_CODE_DEV }}
 
 jobs:
-  run:
-    name: Android · ${{ inputs.suite }}
+  android-tests:
     runs-on: ubuntu-latest
     environment: testing
     env:
-      # Unique blob-report filename per shard so the report job's merge-multiple download
-      # doesn't collide two shards both emitting the default report name.
-      PWTEST_BLOB_REPORT_NAME: ${{ inputs.suite }}
       KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
       SEED: ${{ secrets.SEED }}
       SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
@@ -84,21 +70,34 @@ jobs:
         working-directory: ./e2e-playwright-tests/e2e-mobile-tests
         run: npm ci
 
-      - name: Download Android build artifact
-        uses: actions/download-artifact@v6
-        with:
-          pattern: 'ambire-android-v*-apk'
-          path: ./android-build
-          merge-multiple: true
+      - name: Download Android build (APK)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID="$BUILD_RUN_ID"
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh run list --workflow build-android-apk.yml --status success \
+              --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo "::error::No successful '🤖 Build · Android APK' run found. Run that workflow first."
+            exit 1
+          fi
+          echo "Using Android build from run $RUN_ID"
+          mkdir -p android-build
+          gh run download "$RUN_ID" --pattern 'ambire-android-v*-apk' --dir android-build
 
       - name: Unpack Android build
         shell: bash
         run: |
           set -euo pipefail
-          ZIP_PATH=$(find ./android-build -maxdepth 1 -type f -name '*.zip' | head -n1)
+          ZIP_PATH=$(find ./android-build -type f -name '*.zip' | head -n1)
           if [ -z "$ZIP_PATH" ]; then
             echo "No Android build zip found in ./android-build"
-            ls -la ./android-build || true
+            find ./android-build || true
             exit 1
           fi
           # Inner zip holds Ambire.apk at its root — matches installApps: './Ambire.apk'
@@ -113,13 +112,15 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run Mobilewright tests (${{ inputs.suite }})
+      - name: Run Mobilewright Android tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ inputs.api_level }}
+          # API 34 = Android 14. The app supports API 24..36 — bump this to match your
+          # local Android Studio AVD if you want CI to run on the same OS version.
+          api-level: 34
           target: google_apis
           arch: x86_64
-          # `profile` is an avdmanager device id (lowercase). mobilecli reports the AVD
+          # profile` is an avdmanager device id (lowercase). mobilecli reports the AVD
           # name back with underscores turned into spaces, so `avd-name: Pixel_6` shows
           # up as "Pixel 6" and matches the `deviceName: /Pixel/` regex in
           # mobilewright.config.ts's android project.
@@ -128,12 +129,12 @@ jobs:
           disable-animations: true
           disable-spellchecker: true
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: cd e2e-playwright-tests/e2e-mobile-tests && ${{ inputs.command }}
+          script: cd e2e-playwright-tests/e2e-mobile-tests && npx mobilewright test --project=android --reporter html
 
-      - name: Upload ${{ inputs.suite }} blob report
+      - name: Upload Android report
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: mobilewright-blob-report-${{ inputs.suite }}
-          path: ./e2e-playwright-tests/e2e-mobile-tests/blob-report/
+          name: mobilewright-report-android
+          path: ./e2e-playwright-tests/e2e-mobile-tests/mobilewright-report/
           retention-days: 14
