@@ -53,6 +53,7 @@ const DashboardBanner = ({
   const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
   const isPendingSignatureRequest = banner.id === 'safe-message-request-banner'
   const isSwapAndBridgeStatus = category === 'bridge-in-progress'
+  const isSingleRow = isPendingAccountOp || isPendingSignatureRequest || isSwapAndBridgeStatus
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
@@ -302,8 +303,8 @@ const DashboardBanner = ({
         subtitle={subtitle}
         type={type}
         text={text}
-        singleRow={isPendingAccountOp || isPendingSignatureRequest || isSwapAndBridgeStatus}
-        style={isPendingAccountOp ? spacings.pbTy : undefined}
+        singleRow={isSingleRow}
+        style={isSingleRow ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined
