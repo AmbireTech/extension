@@ -154,9 +154,13 @@ jobs:
       # Runs on every published release, so the .zip that goes to the store is
       # the very same one this run attaches to the release and covers with
       # SHA256SUMS. Submitting from a separate manual run would break that.
-      # Kept last, so that a failed submission still leaves the artifacts behind.
+      # Kept last, and non-blocking: a store submission can always be redone by
+      # hand, while a failed job would take publish-release-assets down with it
+      # and leave the release without its .zips and SHA256SUMS. The step still
+      # reports ::error:: annotations, so a failure stays visible in the run.
       - name: Submit Ambire Next to the Chrome Web Store for review 🚀
         if: matrix.build_variant == 'next:webkit' && (github.event_name == 'release' || inputs.submit_next_to_chrome_web_store)
+        continue-on-error: true
         env:
           BROWSER_EXTENSION_PUBLIC_KEY: ${{ vars.BROWSER_EXTENSION_PUBLIC_KEY }}
           PUBLISHER_ID: ${{ vars.CHROME_WEB_STORE_PUBLISHER_ID }}
