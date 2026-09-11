@@ -2,7 +2,7 @@ import React from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
-import AddressInput from '@common/components/AddressInput'
+import AddressSelect from '@common/components/AddressSelect'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -57,21 +57,17 @@ const SafeImportByOwnerScreen = () => {
                 control={control}
                 rules={{ validate: validateOwnerAddress, required: true }}
                 name="ownerAddress.fieldValue"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <AddressInput
-                    testID="add-safe-owner-field"
-                    onBlur={onBlur}
-                    autoFocus
-                    placeholder={t('Add Safe owner address')}
-                    onChangeText={onChange}
-                    onScanAddress={onChange}
-                    value={value}
+                render={({ field: { onChange, value } }) => (
+                  <AddressSelect
+                    address={value}
+                    setAddress={onChange}
                     validation={ownerAddressValidation}
                     resolvedAddress={ownerAddressState.resolvedAddress}
                     resolvedAddressType={ownerAddressState.resolvedAddressType}
                     isRecipientDomainResolving={ownerAddressState.isDomainResolving}
-                    inputWrapperStyle={{ borderColor: theme.primaryBorder }}
-                    autoCorrect={false}
+                    bottomSheetTitle={t('Add Safe owner')}
+                    // The onboarding panel is too narrow to fit a full address
+                    withShortenedAddresses
                   />
                 )}
               />

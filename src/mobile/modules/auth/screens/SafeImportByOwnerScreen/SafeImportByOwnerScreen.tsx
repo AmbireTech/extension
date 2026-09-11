@@ -2,13 +2,12 @@ import React, { useEffect } from 'react'
 import { Controller } from 'react-hook-form'
 import { Keyboard, Pressable, View } from 'react-native'
 
-import AddressInput from '@common/components/AddressInput'
+import AddressSelect from '@common/components/AddressSelect'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
 import SafeAccountList from '@common/modules/auth/components/SafeAccountList'
 import useSafeImportByOwner from '@common/modules/auth/hooks/useSafeImportByOwner'
 import spacings from '@common/styles/spacings'
@@ -37,7 +36,6 @@ const SafeImportByOwnerScreen = () => {
     validateOwnerAddress
   } = useSafeImportByOwner()
   const { t } = useTranslation()
-  const { theme } = useTheme()
 
   // Free up the screen for the search results as soon as the owner address is valid
   useEffect(() => {
@@ -81,22 +79,15 @@ const SafeImportByOwnerScreen = () => {
             control={control}
             rules={{ validate: validateOwnerAddress, required: true }}
             name="ownerAddress.fieldValue"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <AddressInput
-                testID="add-safe-owner-field"
-                onBlur={onBlur}
-                autoFocus
-                placeholder={t('Add Safe owner address')}
-                onChangeText={onChange}
-                onScanAddress={onChange}
-                value={value}
-                withDetails
+            render={({ field: { onChange, value } }) => (
+              <AddressSelect
+                address={value}
+                setAddress={onChange}
                 validation={ownerAddressValidation}
                 resolvedAddress={ownerAddressState.resolvedAddress}
                 resolvedAddressType={ownerAddressState.resolvedAddressType}
                 isRecipientDomainResolving={ownerAddressState.isDomainResolving}
-                backgroundColor={theme.tertiaryBackground}
-                autoCorrect={false}
+                bottomSheetTitle={t('Add Safe owner')}
               />
             )}
           />
