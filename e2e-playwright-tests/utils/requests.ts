@@ -16,6 +16,7 @@ function categorizeRequests(requests: string[]) {
     'li.quest',
     'dedicated-backend.socket.tech',
     'trade-api.gateway.uniswap.org',
+    'api.cow.fi',
     // RPCs
     '480.rpc.thirdweb.com',
     'unichain-rpc.publicnode.com',
