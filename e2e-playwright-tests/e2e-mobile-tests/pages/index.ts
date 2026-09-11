@@ -1,6 +1,10 @@
 import type { Device } from 'mobilewright'
 import { AuthPage } from './authPage'
 
+/**
+ * @description centralized file for initiating pages instances
+ */
+
 export class PageManager {
   private _auth?: AuthPage
 

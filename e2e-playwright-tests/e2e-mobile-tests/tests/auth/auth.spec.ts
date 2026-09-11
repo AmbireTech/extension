@@ -3,7 +3,7 @@ import { KEYSTORE_PASS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 
-import { expect, test } from '@mobilewright/test'
+import { expect, test } from '../../fixtures/pageObjects'
 
 const BUNDLE_ID = 'com.ambire.wallet'
 
@@ -27,7 +27,7 @@ test.describe('auth', { tag: '@auth-mobile' }, () => {
     }
   })
 
-  test('should import view-only Basic account', async ({ screen }) => {
+  test('should import view-only Basic account', async ({ screen, pages }) => {
     await test.step('select import view-only option', async () => {
       await screen.getByTestId(selectors.settings.watchAnAddressButton).tap()
     })
@@ -38,9 +38,7 @@ test.describe('auth', { tag: '@auth-mobile' }, () => {
       await screen.getByTestId(selectors.getStarted.viewOnlyBtnImport).tap()
     })
     await test.step('set extension password', async () => {
-      await screen.getByTestId(selectors.getStarted.enterPassField).fill(KEYSTORE_PASS)
-      await screen.getByTestId(selectors.getStarted.repeatPassField).fill(KEYSTORE_PASS)
-      await screen.getByTestId(selectors.getStarted.createKeystorePassBtn).tap()
+      await pages.auth.setExtensionPassword(KEYSTORE_PASS)
     })
     await test.step('assert message and click complete', async () => {
       await expect(screen.getByRole('text', { name: 'Added successfully' })).toBeVisible()
