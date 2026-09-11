@@ -5,8 +5,9 @@ on:
     inputs:
       # Releases submit Ambire Next on their own, so this is only the escape
       # hatch for a submission that failed after the build had already passed
-      # (e.g. an expired Chrome Web Store refresh token). It also bypasses the
-      # "the store already has a newer version" guard.
+      # (e.g. an expired Chrome Web Store refresh token). It only gets past the
+      # store already holding this exact version, which is what such a failure
+      # leaves behind - a newer version in the store still blocks the run.
       submit_next_to_chrome_web_store:
         description: 'Force submitting the Ambire Next build to the Chrome Web Store for review'
         type: boolean
@@ -200,21 +201,32 @@ jobs:
               "https://chromewebstore.googleapis.com/v2/$ITEM:fetchStatus"
           }
 
-          # A production hotfix (say v6.20.4) can be tagged while Ambire Next is
-          # already on v6.21.0. The store keeps a single draft slot, so uploading
-          # the older build would overwrite the newer one - possibly one that is
-          # still in review, which is why the submitted revision counts here just
-          # as much as the published one. Manual runs skip this guard on purpose,
-          # so that a submission that failed halfway can be retried.
-          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
-            STORE_VERSION=$(fetch_status \
-              | jq -r '[.publishedItemRevisionStatus, .submittedItemRevisionStatus] | map(.distributionChannels[]?.crxVersion // empty) | .[]' \
-              | sort -V | tail -n1)
-            echo "Highest version currently in the store: ${STORE_VERSION:-none}"
+          STORE_VERSION=$(fetch_status \
+            | jq -r '[.publishedItemRevisionStatus, .submittedItemRevisionStatus] | map(.distributionChannels[]?.crxVersion // empty) | .[]' \
+            | sort -V | tail -n1)
+          echo "Highest version currently in the store: ${STORE_VERSION:-none}"
 
-            # sort -V puts the higher version last, so the store wins on ties too
-            if [ -n "$STORE_VERSION" ] && [ "$(printf '%s\n%s\n' "$VERSION" "$STORE_VERSION" | sort -V | tail -n1)" = "$STORE_VERSION" ]; then
-              echo "::notice::Skipped the Chrome Web Store submission: the store already holds v$STORE_VERSION, which is not older than this build's v$VERSION."
+          if [ -n "$STORE_VERSION" ]; then
+            # sort -V puts the higher version last
+            HIGHEST=$(printf '%s\n%s\n' "$VERSION" "$STORE_VERSION" | sort -V | tail -n1)
+
+            # A production hotfix (say v6.20.4) can be tagged while Ambire Next is
+            # already on v6.21.0. The store never accepts a version that is not
+            # higher than the one it already holds, so such a run can only end in a
+            # rejected upload. Skipping it keeps hotfix releases clean and says why,
+            # instead of leaving an opaque API error on a run that never had a
+            # chance. A pending review counts here as much as a published version,
+            # which is why both revisions are read above.
+            if [ "$STORE_VERSION" != "$VERSION" ] && [ "$HIGHEST" = "$STORE_VERSION" ]; then
+              echo "::notice::Skipped the Chrome Web Store submission: the store already holds v$STORE_VERSION, which is newer than this build's v$VERSION."
+              exit 0
+            fi
+
+            # A submission that failed between the upload and the publish call
+            # leaves the store on this exact version, so retrying it is the one
+            # case where the manual force checkbox has to get past a tie.
+            if [ "$STORE_VERSION" = "$VERSION" ] && [ "$GITHUB_EVENT_NAME" = "release" ]; then
+              echo "::notice::Skipped the Chrome Web Store submission: v$VERSION is already in the store. Re-run this workflow manually with the force checkbox to submit it again."
               exit 0
             fi
           fi
