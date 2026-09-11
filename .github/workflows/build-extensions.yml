@@ -188,15 +188,18 @@ jobs:
           test -n "$PUBLISHER_ID" || { echo "::error::CHROME_WEB_STORE_PUBLISHER_ID is empty. Copy it from Publisher > Settings in the Chrome Web Store Developer Dashboard into the environment's variables."; exit 1; }
           ITEM="publishers/$PUBLISHER_ID/items/$ITEM_ID"
 
-          ACCESS_TOKEN=$(curl -s --fail-with-body -X POST https://oauth2.googleapis.com/token \
+          ACCESS_TOKEN=$(curl -s --fail-with-body --max-time 30 --retry 3 --retry-all-errors -X POST https://oauth2.googleapis.com/token \
             -d "client_id=$CLIENT_ID" \
             -d "client_secret=$CLIENT_SECRET" \
             -d "refresh_token=$REFRESH_TOKEN" \
             -d "grant_type=refresh_token" | jq -er '.access_token') \
             || { echo "::error::Could not refresh the Chrome Web Store access token. Note that the refresh token silently expires after 7 days while the Google OAuth consent screen is in Testing mode. Publish the consent screen (or set it to Internal) and generate a new refresh token."; exit 1; }
 
+          # Retried and time-boxed because this is polled after the package is
+          # already uploaded: one transient error from the store would otherwise
+          # abort the step with the upload left unsubmitted.
           fetch_status() {
-            curl -s --fail-with-body \
+            curl -s --fail-with-body --max-time 30 --retry 3 --retry-all-errors \
               -H "Authorization: Bearer $ACCESS_TOKEN" \
               "https://chromewebstore.googleapis.com/v2/$ITEM:fetchStatus"
           }
@@ -251,7 +254,7 @@ jobs:
           fi
 
           echo "Uploading $ZIP as a new version of item $ITEM_ID"
-          UPLOAD=$(curl -s --fail-with-body -X POST -T "$ZIP" \
+          UPLOAD=$(curl -s --fail-with-body --max-time 600 --retry 3 --retry-all-errors -X POST -T "$ZIP" \
             -H "Authorization: Bearer $ACCESS_TOKEN" \
             "https://chromewebstore.googleapis.com/upload/v2/$ITEM:upload") \
             || { echo "::error::Uploading the package failed: $UPLOAD"; exit 1; }
@@ -277,7 +280,10 @@ jobs:
           # Developer Dashboard. Mind the deadline: an approved submission that is
           # not published within 30 days falls back to a draft and has to go
           # through review again. Swap in DEFAULT_PUBLISH to go live on approval.
-          PUBLISH=$(curl -s --fail-with-body -X POST \
+          # Unlike the calls above this one retries transient store errors only
+          # (no --retry-all-errors), so a dropped connection on a publish that did
+          # go through can never turn into a second submission.
+          PUBLISH=$(curl -s --fail-with-body --max-time 60 --retry 3 -X POST \
             -H "Authorization: Bearer $ACCESS_TOKEN" \
             -H "Content-Type: application/json" \
             -d '{"publishType": "STAGED_PUBLISH"}' \
