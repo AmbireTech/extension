@@ -157,10 +157,16 @@ const BalanceRatioProgress = ({ segments, size = 28, strokeWidth = 4, testID }: 
   const segmentShares = useMemo(
     () =>
       totalUsd > 0
-        ? visibleSegments.map((segment) => ({
-            key: segment.key,
-            text: `${segment.label}: ${Math.round((segment.valueUsd / totalUsd) * 100)}%`
-          }))
+        ? visibleSegments.map((segment) => {
+            const sharePercent = Math.round((segment.valueUsd / totalUsd) * 100)
+
+            // A segment only makes the list when it holds something, so dust reads as "<1%"
+            // rather than the "0%" it rounds down to, which would contradict its own arc.
+            return {
+              key: segment.key,
+              text: `${segment.label}: ${sharePercent < 1 ? '<1' : sharePercent}%`
+            }
+          })
         : [],
     [totalUsd, visibleSegments]
   )

@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
+import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import {
   getFeePercent,
@@ -76,6 +77,9 @@ const EMPTY_STATE_BALANCE_THRESHOLD = parseUnits('0.001', TOKEN_DECIMALS)
 const STAKING_HELP_URL = 'https://help.ambire.com/en/collections/18211458-wallet-token-governance'
 const WALLET_STAKING_COMMITMENT_ABI = 'function commitments(bytes32) view returns (uint256)'
 
+const getUsdPrice = (token?: TokenResult) =>
+  token?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')?.price
+
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
 const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -84,6 +88,8 @@ const selectIsPortfolioReady = (state: AllControllersMappingType['SelectedAccoun
   state.portfolio.isReadyToVisualize
 const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
   state.currentUserRequest
+const selectXWalletShareValue = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.walletStaking?.shareValue
 
 interface TabProps {
   mode: WalletStakingMode
@@ -131,6 +137,10 @@ const WalletStakingScreen = () => {
   const { state: isPortfolioReady } = useController(
     'SelectedAccountController',
     selectIsPortfolioReady
+  )
+  const { state: xWalletShareValue } = useController(
+    'SelectedAccountController',
+    selectXWalletShareValue
   )
   const { state: currentUserRequest, dispatch: requestsDispatch } = useController(
     'RequestsController',
@@ -211,37 +221,30 @@ const WalletStakingScreen = () => {
     walletBalance < EMPTY_STATE_BALANCE_THRESHOLD &&
     stkWalletBalance < EMPTY_STATE_BALANCE_THRESHOLD &&
     !isPendingWithdrawalMode
-  const activeToken = mode === 'stake' ? walletToken : stkWalletToken
   const balance = mode === 'stake' ? walletBalance : stkWalletBalance
-  const price = useMemo(
-    () =>
-      activeToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ??
-      walletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ??
-      0,
-    [activeToken?.priceIn, walletToken?.priceIn]
-  )
-  // Per-token USD prices (unlike `price` above, not mode-dependent), used to value the
-  // WALLET / stkWALLET / xWALLET balances for the balance ratio ring next to the amount input.
+  // One price for both WALLET and stkWALLET: staking mints stkWALLET 1:1 for the WALLET
+  // deposited, so a share is worth exactly the token it was minted for. Read from whichever of
+  // the two the portfolio prices, because it only carries the tokens the account actually holds
+  // - an account with no stkWALLET yet has no stkWALLET token to read a price off, and one that
+  // has staked everything has no WALLET token. Falling back to 0 there would value the whole
+  // stake/unstake flow at $0, and would drop the priced-at-nothing segment out of the balance
+  // ratio ring as the user drags the slider.
   const walletPrice = useMemo(
-    () =>
-      walletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ?? 0,
-    [walletToken?.priceIn]
+    () => getUsdPrice(walletToken) ?? getUsdPrice(stkWalletToken) ?? 0,
+    [stkWalletToken, walletToken]
   )
-  const stkWalletPrice = useMemo(
-    () =>
-      stkWalletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ?? 0,
-    [stkWalletToken?.priceIn]
-  )
-  const xWalletPrice = useMemo(
-    () =>
-      xWalletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ?? 0,
-    [xWalletToken?.priceIn]
-  )
+  // xWALLET is priced separately - a share is worth `shareValue` WALLET, not 1:1 - so when the
+  // portfolio has no price for it, WALLET's price is converted at that rate rather than reused
+  // as-is. The rate comes from the portfolio's shared copy (the same one the conversion tooltips
+  // read), so no extra RPC call is needed; it's undefined until that first read lands, which
+  // just leaves the price at 0 for as long as the portfolio itself can't value the balance.
+  const xWalletPrice = useMemo(() => {
+    const portfolioPrice = getUsdPrice(xWalletToken)
+    if (portfolioPrice !== undefined) return portfolioPrice
+    if (!xWalletShareValue) return 0
+
+    return walletPrice * Number(formatUnits(xWalletShareValue, TOKEN_DECIMALS))
+  }, [walletPrice, xWalletShareValue, xWalletToken])
   const amountInWei = getWalletStakingAmountInWei(amount)
   const hasInsufficientBalance = amountInWei > balance
   const balanceLabel = useMemo(
@@ -249,8 +252,8 @@ const WalletStakingScreen = () => {
     [balance]
   )
   const amountInUsd = useMemo(
-    () => formatDecimals(Number(amount || 0) * price, 'value'),
-    [amount, price]
+    () => formatDecimals(Number(amount || 0) * walletPrice, 'value'),
+    [amount, walletPrice]
   )
   // The "current" badge is based on the confirmed on-chain stkWALLET balance (shared with
   // SwapAndBridgeController, so it always matches the fee a real swap would apply right now) -
@@ -342,7 +345,7 @@ const WalletStakingScreen = () => {
   // The USD value of stkWALLET being unstaked, redirected into the xWALLET segment (see comment
   // above) instead of into WALLET.
   const unstakedAmountUsd =
-    mode === 'unstake' ? Number(formatUnits(amountInWei, TOKEN_DECIMALS)) * stkWalletPrice : 0
+    mode === 'unstake' ? Number(formatUnits(amountInWei, TOKEN_DECIMALS)) * walletPrice : 0
   const balanceRatioSegments = useMemo(
     () => [
       {
@@ -360,7 +363,7 @@ const WalletStakingScreen = () => {
       {
         key: 'stkWallet',
         label: '$stkWALLET',
-        valueUsd: Number(formatUnits(projectedStkWalletBalance, TOKEN_DECIMALS)) * stkWalletPrice,
+        valueUsd: Number(formatUnits(projectedStkWalletBalance, TOKEN_DECIMALS)) * walletPrice,
         color: ACCENT_PRIMITIVES.primaryAccent200[THEME_TYPES.LIGHT]
       },
       {
@@ -377,7 +380,6 @@ const WalletStakingScreen = () => {
       projectedWalletBalance,
       walletPrice,
       projectedStkWalletBalance,
-      stkWalletPrice,
       xWalletBalance,
       xWalletPrice,
       unstakedAmountUsd,
