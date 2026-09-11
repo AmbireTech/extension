@@ -39,7 +39,7 @@ import ExpandedContent from '@common/modules/sign-account-op/components/Transact
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
@@ -50,8 +50,6 @@ import type {
   IrCall
 } from '@ambire-common/libs/humanizer/interfaces'
 
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
 interface Props {
   style: ViewStyle
   call: IrCall
@@ -169,6 +167,7 @@ const TransactionSummary = ({
   const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
+  const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(
     call,
@@ -626,6 +625,7 @@ const TransactionSummary = ({
   }, [
     bindDeleteIconAnim,
     deleteIconAnimStyle,
+    withMobileLayout,
     handleRemoveCall,
     index,
     isCallRemovedOptimistic,
@@ -738,6 +738,7 @@ const TransactionSummary = ({
     call.dapp,
     callVisualization,
     chainId,
+    withMobileLayout,
     editApprovalCallInfo,
     erc7730Visualization,
     imageSize,

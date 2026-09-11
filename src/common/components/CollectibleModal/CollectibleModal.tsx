@@ -44,7 +44,7 @@ const CollectibleModal = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { state: networks } = useController('NetworksController', 'networks')
   const modalContent = useMemo(() => {
     if (!selectedCollectible) return null
@@ -162,11 +162,11 @@ const CollectibleModal = ({
       type="modal"
       sheetRef={modalRef}
       closeBottomSheet={handleClose}
-      style={isCompactSidePanelLayout ? styles.sidePanelSheet : styles.modal}
-      autoWidth={!isCompactSidePanelLayout}
-      containerInnerWrapperStyles={isCompactSidePanelLayout ? flexbox.alignCenter : undefined}
+      style={isNarrowWebLayout ? styles.sidePanelSheet : styles.modal}
+      autoWidth={!isNarrowWebLayout}
+      containerInnerWrapperStyles={isNarrowWebLayout ? flexbox.alignCenter : undefined}
     >
-      {isCompactSidePanelLayout ? (
+      {isNarrowWebLayout ? (
         <View style={styles.sidePanelContent}>{modalContent}</View>
       ) : (
         modalContent

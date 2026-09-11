@@ -29,7 +29,7 @@ import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import {
   getEip712IntegerFieldNames,
@@ -37,8 +37,6 @@ import {
   isParsedMessageValueShortened
 } from './helpers'
 import getStyles from './styles'
-
-const { isSidePanel } = getUiType()
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -165,6 +163,7 @@ const FallbackVisualization: FC<{
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const scrollViewRef = useRef<ScrollView>(null)
   const scrollOffsetRef = useRef(0)
   const [containerHeight, setContainerHeight] = useState(0)
@@ -174,11 +173,11 @@ const FallbackVisualization: FC<{
   const chainId = messageToSign?.chainId || 1n
   const isTypedMessage = content?.kind === 'typedMessage'
   // Stack label above value so long hashes don't collide with labels in narrow UIs
-  // (side panel / Safe EIP-712 compact embedding / mobile).
+  // (narrow view / Safe EIP-712 compact embedding / mobile).
   // In some web fullscreen layouts the container ends up narrow too; stack in
   // that case as well to avoid overlapping text.
   const withStackedParsedRows =
-    !withTwoColumnDataRow && (withCompactDataRow || isSidePanel || maxWidthSize('m'))
+    !withTwoColumnDataRow && (withCompactDataRow || isNarrowWebLayout || maxWidthSize('m'))
   const erc7730Visualizations = useMemo(
     () => humanizedMessage?.fullVisualization?.filter(isErc7730Visualization) || [],
     [humanizedMessage?.fullVisualization]

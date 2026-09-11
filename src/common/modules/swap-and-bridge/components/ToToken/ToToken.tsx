@@ -39,7 +39,7 @@ type Props = {
 const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     statuses: swapAndBridgeCtrlStatuses,
     toSelectedToken,
@@ -147,35 +147,35 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   const toNetworksOptions: SelectValue[] = useMemo(
     () =>
       sortNetworksByBalance(networks, balancePerNetwork).map((n) => {
-          const tooltipId = `network-${n.chainId}-not-supported-tooltip`
+        const tooltipId = `network-${n.chainId}-not-supported-tooltip`
 
-          return {
-            value: String(n.chainId),
-            extraSearchProps: { name: n.name },
-            disabled: n.isNotSupported,
-            label: (
-              <>
-                <Text
-                  fontSize={isMobile ? 14 : 16}
-                  appearance="secondaryText"
-                  weight="medium"
-                  dataSet={{ tooltipId }}
-                  style={flexbox.flex1}
-                  numberOfLines={1}
-                >
-                  {n.name}
-                </Text>
-                {n.isNotSupported && (
-                  <NotSupportedNetworkTooltip
-                    tooltipId={tooltipId}
-                    message={n.notSupportedReason || t('Network unavailable')}
-                  />
-                )}
-              </>
-            ),
-            icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
-          }
-        }),
+        return {
+          value: String(n.chainId),
+          extraSearchProps: { name: n.name },
+          disabled: n.isNotSupported,
+          label: (
+            <>
+              <Text
+                fontSize={isMobile ? 14 : 16}
+                appearance="secondaryText"
+                weight="medium"
+                dataSet={{ tooltipId }}
+                style={flexbox.flex1}
+                numberOfLines={1}
+              >
+                {n.name}
+              </Text>
+              {n.isNotSupported && (
+                <NotSupportedNetworkTooltip
+                  tooltipId={tooltipId}
+                  message={n.notSupportedReason || t('Network unavailable')}
+                />
+              )}
+            </>
+          ),
+          icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
+        }
+      }),
     [networks, balancePerNetwork, t]
   )
 
@@ -270,7 +270,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
       />
       <View
         style={[
-          isCompactSidePanelLayout
+          isNarrowWebLayout
             ? [{ width: '100%' }, spacings.mbSm]
             : [flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]
         ]}
@@ -279,7 +279,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
           appearance="secondaryText"
           fontSize={14}
           weight="medium"
-          style={isCompactSidePanelLayout ? spacings.mbTy : spacings.mbSm}
+          style={isNarrowWebLayout ? spacings.mbTy : spacings.mbSm}
         >
           {t('You receive')}
         </Text>
@@ -287,7 +287,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
           setValue={handleSetToNetworkValue}
           containerStyle={{
             ...spacings.mb0,
-            width: isCompactSidePanelLayout ? '100%' : isMobile ? 150 : 168
+            width: isNarrowWebLayout ? '100%' : isMobile ? 150 : 168
           }}
           options={toNetworksOptions}
           selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
@@ -301,7 +301,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
       </View>
       <View
         style={[
-          isCompactSidePanelLayout
+          isNarrowWebLayout
             ? { width: '100%', gap: SPACING_SM }
             : [
                 flexbox.directionRow,
@@ -310,7 +310,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
               ]
         ]}
       >
-        <View style={isCompactSidePanelLayout ? { width: '100%' } : [flexbox.flex1]}>
+        <View style={isNarrowWebLayout ? { width: '100%' } : [flexbox.flex1]}>
           <ToTokenSelect
             toTokenOptions={toTokenOptions}
             toTokenValue={toTokenValue}
@@ -322,7 +322,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
         </View>
         <View
           style={
-            isCompactSidePanelLayout
+            isNarrowWebLayout
               ? { width: '100%', alignItems: 'flex-end' }
               : [flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]
           }

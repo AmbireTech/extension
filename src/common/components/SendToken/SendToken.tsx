@@ -79,7 +79,7 @@ const SendToken: FC<Props> = ({
   const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const isError = validateFromAmount?.severity === 'error' && !!validateFromAmount?.message
   const isWarning = validateFromAmount?.severity === 'warning' && !!validateFromAmount?.message
 
@@ -115,7 +115,7 @@ const SendToken: FC<Props> = ({
           <View
             style={[
               flexbox.flex1,
-              isCompactSidePanelLayout
+              isNarrowWebLayout
                 ? { gap: SPACING_SM }
                 : [
                     flexbox.directionRow,
@@ -124,7 +124,7 @@ const SendToken: FC<Props> = ({
                   ]
             ]}
           >
-            <View style={isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1}>
+            <View style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}>
               {nonEmptySections?.length ? (
                 <SectionedSelect
                   setValue={handleChangeFromToken}
@@ -136,7 +136,7 @@ const SendToken: FC<Props> = ({
                   emptyListPlaceholderText={t('No tokens found.')}
                   containerStyle={{
                     ...spacings.mb0,
-                    ...(isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1)
+                    ...(isNarrowWebLayout ? { width: '100%' } : flexbox.flex1)
                   }}
                   selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
                   mode="bottomSheet"
@@ -156,7 +156,7 @@ const SendToken: FC<Props> = ({
                   emptyListPlaceholderText={t('No tokens found.')}
                   containerStyle={{
                     ...spacings.mb0,
-                    ...(isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1)
+                    ...(isNarrowWebLayout ? { width: '100%' } : flexbox.flex1)
                   }}
                   selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
                   mode="bottomSheet"
@@ -164,7 +164,7 @@ const SendToken: FC<Props> = ({
                 />
               )}
             </View>
-            {isCompactSidePanelLayout ? (
+            {isNarrowWebLayout ? (
               <View style={{ width: '100%', alignItems: 'flex-end' }}>
                 <AmountInput
                   type={fromAmountFieldMode}

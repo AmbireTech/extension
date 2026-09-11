@@ -134,7 +134,7 @@ const CustomGasPrice = ({
   sheetRef
 }: Props) => {
   const { t } = useTranslation()
-  const { isNarrowSidePanel, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
   const { theme } = useTheme()
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
   const gasRef = useRef('')
@@ -259,7 +259,7 @@ const CustomGasPrice = ({
       onOpen={resetState}
       shouldBeClosableOnDrag={isMobile}
       backgroundColor="primaryBackground"
-      style={{ ...spacings.pbLg, ...(isNarrowSidePanel ? { width: '100%' } : null) }}
+      style={{ ...spacings.pbLg, ...(isNarrowWebLayout ? { width: '100%' } : null) }}
     >
       {isMobile ? (
         <>
@@ -315,12 +315,12 @@ const CustomGasPrice = ({
       </View>
       <FooterGlassView
         absolute={false}
-        isSimpleBlur={isNarrowSidePanel}
+        isSimpleBlur={isNarrowWebLayout}
         size="sm"
         style={spacings.mt}
         mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
         innerContainerStyle={
-          isNarrowSidePanel
+          isNarrowWebLayout
             ? // The buttons stack here, and the primary one goes on top. Reversing the direction
               // keeps the same child order as the row layouts, where the primary one goes last
               { width: '100%', flexDirection: 'column-reverse' }
@@ -335,7 +335,7 @@ const CustomGasPrice = ({
           style={[
             // Stacked buttons are spaced by the footer's gap, and a right margin would make this
             // one narrower than the primary button
-            !isNarrowSidePanel && spacings.mrTy,
+            !isNarrowWebLayout && spacings.mrTy,
             isCompactLayout ? flexbox.flex1 : { width: 100 }
           ]}
           size="smaller"

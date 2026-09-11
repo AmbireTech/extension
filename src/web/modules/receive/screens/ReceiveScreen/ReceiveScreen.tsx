@@ -18,13 +18,12 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import useReceive from '@common/modules/receive/hooks/useReceive'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import getStyles from './styles'
 
-const { isSidePanel } = getUiType()
-
 const ReceiveScreen: FC = () => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
@@ -86,11 +85,18 @@ const ReceiveScreen: FC = () => {
           )}
         </View>
         <View style={spacings.phSm}>
-          <View style={[styles.accountAddressWrapper]}>
+          <View
+            style={[
+              styles.accountAddressWrapper,
+              isNarrowWebLayout
+                ? styles.accountAddressWrapperNarrow
+                : styles.accountAddressWrapperWide
+            ]}
+          >
             <View
               style={[
                 flexbox.directionRow,
-                isSidePanel
+                isNarrowWebLayout
                   ? [flexbox.alignCenter, { width: '100%' }]
                   : [flexbox.center, { flexShrink: 1, minWidth: 0, maxWidth: '100%' }]
               ]}

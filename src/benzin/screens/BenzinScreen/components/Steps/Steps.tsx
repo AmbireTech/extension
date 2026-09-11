@@ -16,13 +16,11 @@ import PendingTokenSummary from '@common/modules/sign-account-op/components/Pend
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import Step from './components/Step'
 import { getFee, getFinalizedRows, getTimestamp, shouldShowTxnProgress } from './utils/rows'
-
-const { isSidePanel } = getUiType()
 
 interface Props {
   activeStep: ActiveStepType
@@ -34,6 +32,7 @@ interface Props {
 }
 
 const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, delegation }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { width: windowWidth } = useWindowDimensions()
   const { theme } = useTheme()
   const { blockData, finalizedStatus, feePaidWith, from, originatedFrom } = stepsState
@@ -194,7 +193,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   return (
     <View
       style={
-        isMobile || isSidePanel
+        isMobile || isNarrowWebLayout
           ? undefined
           : IS_MOBILE_UP_BENZIN_BREAKPOINT
             ? spacings.mb2Xl

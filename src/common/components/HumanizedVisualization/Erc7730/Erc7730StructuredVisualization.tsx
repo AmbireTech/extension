@@ -19,7 +19,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import {
   getDetailedActionParts,
@@ -38,8 +38,6 @@ import {
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
 
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
 const withMobileSummaryLayout = isMobile
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
@@ -58,6 +56,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   showDescriptionTitle = false,
   nestingDepth = 0
 }) => {
+  const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { state: controllerNetworks } = useController('NetworksController', 'networks')
@@ -379,7 +378,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             {
               width: '100%',
               minWidth: 0,
-              paddingLeft: isSidePanel ? 0 : SPACING_SM
+              paddingLeft: isNarrowWebLayout ? 0 : SPACING_SM
             },
             nestedIndex > 0 && {
               marginTop: SPACING_TY,
@@ -430,6 +429,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     },
     [
       chainId,
+      isNarrowWebLayout,
       dappIconSize,
       nestingDepth,
       sizeMultiplierSize,

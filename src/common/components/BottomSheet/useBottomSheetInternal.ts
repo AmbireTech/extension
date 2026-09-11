@@ -15,18 +15,17 @@ import { BOTTOM_SHEET_Z_INDEX } from './styles'
 
 const ANIMATION_DURATION: number = 250
 
-const { isPopup, isMobileApp, isSidePanel } = getUiType()
+const { isPopup, isMobileApp } = getUiType()
 
 const useBottomSheetInternal = (props: BottomSheetProps) => {
   const { id: _id, type: _type, sheetRef, autoOpen = false, customZIndex } = props
   const { closeBottomSheet: _closeBottomSheet = () => {} } = props
   const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
-  const { isNarrowSidePanel, isCompactLayout } = useCompactActionRequestLayout()
-  const defaultType = isPopup || isMobileApp || isNarrowSidePanel ? 'bottom-sheet' : 'modal'
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const defaultType = isPopup || isMobileApp || isNarrowWebLayout ? 'bottom-sheet' : 'modal'
   const resolvedType = _type || defaultType
   const type = (() => {
-    if (isNarrowSidePanel && resolvedType === 'modal') return 'bottom-sheet'
-    if (isSidePanel && !isCompactLayout && resolvedType === 'bottom-sheet') return 'modal'
+    if (isNarrowWebLayout && resolvedType === 'modal') return 'bottom-sheet'
 
     return resolvedType
   })()
@@ -102,13 +101,13 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
 
   const modalTopOffset = useMemo(() => {
     if (isPopup && isModal) return 0
-    if (isNarrowSidePanel) return 0
+    if (isNarrowWebLayout) return 0
     if (isWeb) return HEADER_HEIGHT - 20
 
     const topOffset = top - SPACING_SM
 
     return topOffset
-  }, [isModal, isNarrowSidePanel, top])
+  }, [isModal, isNarrowWebLayout, top])
 
   // Compute dynamic zIndex based on nesting level when the sheet opened
   // Each nested sheet gets a higher zIndex so its backdrop renders on top of parent sheets

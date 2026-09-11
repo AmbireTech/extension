@@ -8,9 +8,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 interface Props {
   chainId?: bigint
@@ -37,6 +35,7 @@ const NetworkBadge: FC<Props> = ({
   responsiveSizeMultiplier = 1,
   iconStyle = {}
 }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state: networks } = useController('NetworksController', 'networks')
@@ -48,10 +47,10 @@ const NetworkBadge: FC<Props> = ({
   const networkName = useMemo(() => network?.name || t('Unknown network'), [network?.name, t])
 
   const iconSizeScaled = useMemo(() => {
-    if (isSidePanel) return iconSize || 16
+    if (isNarrowWebLayout) return iconSize || 16
 
     return (iconSize || 24) * responsiveSizeMultiplier
-  }, [iconSize, responsiveSizeMultiplier])
+  }, [iconSize, responsiveSizeMultiplier, isNarrowWebLayout])
 
   if (!chainId) return null
 
@@ -60,23 +59,23 @@ const NetworkBadge: FC<Props> = ({
       style={{
         ...flexbox.directionRow,
         ...flexbox.alignCenter,
-        paddingLeft: isSidePanel ? SPACING_TY : SPACING_SM * responsiveSizeMultiplier,
-        paddingRight: isSidePanel ? SPACING_TY : SPACING_TY * responsiveSizeMultiplier,
+        paddingLeft: isNarrowWebLayout ? SPACING_TY : SPACING_SM * responsiveSizeMultiplier,
+        paddingRight: isNarrowWebLayout ? SPACING_TY : SPACING_TY * responsiveSizeMultiplier,
         paddingVertical: 2,
-        borderRadius: isSidePanel ? 20 : 50 * responsiveSizeMultiplier,
+        borderRadius: isNarrowWebLayout ? 20 : 50 * responsiveSizeMultiplier,
         borderWidth: 1,
-        height: isSidePanel ? 32 : 40,
+        height: isNarrowWebLayout ? 32 : 40,
         borderColor: theme.primaryBorder,
-        ...(isSidePanel ? { flexShrink: 1, minWidth: 0 } : {}),
+        ...(isNarrowWebLayout ? { flexShrink: 1, minWidth: 0 } : {}),
         ...style
       }}
     >
       <Text
-        fontSize={isSidePanel ? 12 : fontSize || 16 * responsiveSizeMultiplier}
+        fontSize={isNarrowWebLayout ? 12 : fontSize || 16 * responsiveSizeMultiplier}
         weight={weight || 'medium'}
         appearance="secondaryText"
-        numberOfLines={isSidePanel ? 1 : undefined}
-        style={isSidePanel ? { flexShrink: 1, minWidth: 0 } : undefined}
+        numberOfLines={isNarrowWebLayout ? 1 : undefined}
+        style={isNarrowWebLayout ? { flexShrink: 1, minWidth: 0 } : undefined}
       >
         {withOnPrefix ? t('on ') : null}
         {!renderNetworkName ? networkName : renderNetworkName(networkName)}
@@ -85,7 +84,7 @@ const NetworkBadge: FC<Props> = ({
         <NetworkIcon
           key={network?.chainId.toString() || networkName}
           style={{
-            marginLeft: isSidePanel ? SPACING_MI : SPACING_TY * responsiveSizeMultiplier,
+            marginLeft: isNarrowWebLayout ? SPACING_MI : SPACING_TY * responsiveSizeMultiplier,
             flexShrink: 0,
             ...iconStyle
           }}

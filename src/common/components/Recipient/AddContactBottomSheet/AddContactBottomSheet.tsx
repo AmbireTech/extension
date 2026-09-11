@@ -26,7 +26,7 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const [name, setName] = useState('')
 
   const handleAddContact = () => {
@@ -71,9 +71,7 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
         absolute={false}
         // Keep Cancel → primary child order for row layouts; reverse only when stacked
         // so the primary action sits on top (same pattern as CustomGasPrice).
-        innerContainerStyle={
-          isCompactSidePanelLayout ? { flexDirection: 'column-reverse' } : undefined
-        }
+        innerContainerStyle={isNarrowWebLayout ? { flexDirection: 'column-reverse' } : undefined}
       >
         <Button
           hasBottomSpacing={false}

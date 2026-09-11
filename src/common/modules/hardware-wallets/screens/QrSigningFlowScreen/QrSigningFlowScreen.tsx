@@ -10,7 +10,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
@@ -18,10 +18,10 @@ import QrSignRequestScreen from '@common/modules/hardware-wallets/screens/QrSign
 import QrSignResponseScanner from '@common/modules/hardware-wallets/screens/QrSignResponseScanner'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 
-const { isTab, isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
+const { isTab } = getUiType()
 
 type Props = {
   isVisible: boolean
@@ -52,6 +52,7 @@ const QrSigningFlowScreen = ({
   handleQrSigningFlowOnBackPressed
 }: Props) => {
   const { ref, open, close } = useModalize()
+  const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { bottom } = useSafeAreaInsets()
@@ -104,7 +105,16 @@ const QrSigningFlowScreen = ({
         />
       </View>
     )
-  }, [request, step, bottom, theme.primaryBackground, t, handleOnRejectPressed, onContinue])
+  }, [
+    request,
+    step,
+    bottom,
+    theme.primaryBackground,
+    t,
+    handleOnRejectPressed,
+    onContinue,
+    withMobileLayout
+  ])
 
   return (
     <BottomSheet

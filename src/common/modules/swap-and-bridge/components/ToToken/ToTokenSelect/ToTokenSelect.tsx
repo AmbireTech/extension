@@ -72,7 +72,7 @@ const ToTokenSelect: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { errors, isTokenListLoading, toTokenSearchTerm } =
     useController('SwapAndBridgeController').state
   const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
@@ -245,7 +245,7 @@ const ToTokenSelect: React.FC<Props> = ({
       onSearch={handleOnSearch}
       containerStyle={{
         ...spacings.mb0,
-        ...(isCompactSidePanelLayout ? { width: '100%' } : { ...flexbox.flex1, ...spacings.mrMd })
+        ...(isNarrowWebLayout ? { width: '100%' } : { ...flexbox.flex1, ...spacings.mrMd })
       }}
       selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
       stickySectionHeadersEnabled

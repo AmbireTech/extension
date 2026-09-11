@@ -65,7 +65,7 @@ const TrendingTokenDetailsScreen = () => {
   const { state: dappsState } = useController('DappsController')
   const { state: networks } = useController('NetworksController', (s) => s.networks)
   const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
 
   const token: TrendingToken | undefined = useMemo(
     () =>
@@ -259,14 +259,12 @@ const TrendingTokenDetailsScreen = () => {
         ) : (
           <FooterGlassView
             size="sm"
-            style={isCompactSidePanelLayout ? spacings.phSm : undefined}
+            style={isNarrowWebLayout ? spacings.phSm : undefined}
             glassViewProps={
-              isCompactSidePanelLayout
-                ? { cssStyle: { width: '100%', alignSelf: 'stretch' } }
-                : undefined
+              isNarrowWebLayout ? { cssStyle: { width: '100%', alignSelf: 'stretch' } } : undefined
             }
             innerContainerStyle={
-              isCompactSidePanelLayout
+              isNarrowWebLayout
                 ? { gap: SPACING_MI, width: '100%', alignItems: 'stretch' }
                 : undefined
             }

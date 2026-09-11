@@ -25,7 +25,7 @@ import { getUiType } from '@common/utils/uiType'
 const { isPopup } = getUiType()
 
 const TokenDetailsScreen = () => {
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     token,
     networks,
@@ -34,7 +34,7 @@ const TokenDetailsScreen = () => {
     handleHideTokenFromModal,
     actions
   } = useTokenDetails()
-  const shouldUseCompactFooter = isCompactSidePanelLayout || (isPopup && actions.length > 4)
+  const shouldUseCompactFooter = isNarrowWebLayout || (isPopup && actions.length > 4)
 
   if (!token) return null
 
