@@ -17,6 +17,7 @@ import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
+import HoverablePressable from '@common/components/HoverablePressable'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NumberInput from '@common/components/NumberInput'
 import Spinner from '@common/components/Spinner'
@@ -76,6 +77,25 @@ const TOKEN_DECIMALS = 18
 const EMPTY_STATE_BALANCE_THRESHOLD = parseUnits('0.001', TOKEN_DECIMALS)
 const STAKING_HELP_URL = 'https://help.ambire.com/en/collections/18211458-wallet-token-governance'
 const WALLET_STAKING_COMMITMENT_ABI = 'function commitments(bytes32) view returns (uint256)'
+const FIAT_DECIMALS = 2
+
+/**
+ * Renders a converted amount as plain field text - fixed to the field's own precision, without
+ * the exponent notation `String()` falls into for very small numbers, and without the trailing
+ * zeros that would fight the user's next keystroke.
+ */
+const toAmountFieldValue = (value: number, precision: number) => {
+  if (!Number.isFinite(value) || value <= 0) return ''
+
+  const fixed = value.toFixed(precision)
+  if (!fixed.includes('.')) return fixed
+
+  let end = fixed.length
+  while (end > 0 && fixed[end - 1] === '0') end -= 1
+  if (fixed[end - 1] === '.') end -= 1
+
+  return fixed.slice(0, end)
+}
 
 const getUsdPrice = (token?: TokenResult) =>
   token?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')?.price
@@ -151,6 +171,11 @@ const WalletStakingScreen = () => {
     params?.mode === 'unstake' ? 'unstake' : 'stake'
   )
   const [amount, setAmount] = useState('')
+  // The amount field can be typed in either the token or its USD value. `amount` stays the token
+  // amount throughout (everything downstream - the slider, the calls, the fee preview - works in
+  // tokens), and `fiatAmount` is only what the field shows while in fiat mode.
+  const [amountFieldMode, setAmountFieldMode] = useState<'token' | 'fiat'>('token')
+  const [fiatAmount, setFiatAmount] = useState('')
   const [shareValue, setShareValue] = useState<bigint | null>(null)
   const [isLoadingShareValue, setIsLoadingShareValue] = useState(false)
   const [pendingWithdrawal, setPendingWithdrawal] = useState<PendingWalletWithdrawal | null>(null)
@@ -251,9 +276,15 @@ const WalletStakingScreen = () => {
     () => formatDecimals(Number(formatUnits(balance, TOKEN_DECIMALS)), 'amount'),
     [balance]
   )
+  const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const amountInUsd = useMemo(
     () => formatDecimals(Number(amount || 0) * walletPrice, 'value'),
     [amount, walletPrice]
+  )
+  // What the field shows next to the flip icon while it's taking a USD amount
+  const amountInToken = useMemo(
+    () => `${formatDecimals(Number(amount || 0), 'amount')} ${tokenSymbol}`,
+    [amount, tokenSymbol]
   )
   // The "current" badge is based on the confirmed on-chain stkWALLET balance (shared with
   // SwapAndBridgeController, so it always matches the fee a real swap would apply right now) -
@@ -393,7 +424,6 @@ const WalletStakingScreen = () => {
   const shouldShowBalanceRatioProgress =
     [walletBalance, stkWalletBalance, xWalletBalance].filter((tokenBalance) => tokenBalance > 0n)
       .length > 1
-  const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const isSubmitDisabled = useMemo(() => {
     if (!account || isSubmitting || (mode === 'unstake' && isLoadingPendingWithdrawal)) return true
     if (isPendingWithdrawalMode) return !isWithdrawalReady || hasPendingWithdrawalLoadFailed
@@ -629,26 +659,54 @@ const WalletStakingScreen = () => {
     }
   }, [addToast, providersDispatchAndWait, t])
 
+  // Only one of the two fields is ever typed into; the other follows from the price, so flipping
+  // the field mode never changes the amount that will actually be staked.
+  const setTokenAmount = useCallback(
+    (nextAmount: string) => {
+      setAmount(nextAmount)
+      setFiatAmount(toAmountFieldValue(Number(nextAmount || 0) * walletPrice, FIAT_DECIMALS))
+    },
+    [walletPrice]
+  )
+  const handleFiatAmountChange = useCallback(
+    (nextFiatAmount: string) => {
+      setFiatAmount(nextFiatAmount)
+      setAmount(
+        walletPrice > 0
+          ? toAmountFieldValue(Number(nextFiatAmount || 0) / walletPrice, TOKEN_DECIMALS)
+          : ''
+      )
+    },
+    [walletPrice]
+  )
+  // Without a price there's nothing to convert to, so the field stays on the token it stakes.
+  const isAmountFieldModeSwitchDisabled = walletPrice <= 0
+  const switchAmountFieldMode = useCallback(() => {
+    setAmountFieldMode((prevMode) => (prevMode === 'token' ? 'fiat' : 'token'))
+    // Converted here rather than only on every keystroke, so an amount typed before the price
+    // had loaded still carries over into the USD field.
+    setFiatAmount(toAmountFieldValue(Number(amount || 0) * walletPrice, FIAT_DECIMALS))
+  }, [amount, walletPrice])
   const handleSelectMode = useCallback(
     (nextMode: WalletStakingMode) => {
       setMode(nextMode)
-      setAmount('')
+      setTokenAmount('')
       setIsSubmitting(false)
       shouldPersistStakingRouteRef.current = false
       if (nextMode === 'unstake' && hasPendingWithdrawalLoadFailed) {
         startPendingWithdrawalLoad()
       }
     },
-    [hasPendingWithdrawalLoadFailed, startPendingWithdrawalLoad]
+    [hasPendingWithdrawalLoadFailed, setTokenAmount, startPendingWithdrawalLoad]
   )
 
   const handleSliderValueChange = useCallback(
-    (nextAmount: bigint) => setAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
-    []
+    (nextAmount: bigint) => setTokenAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
+    [setTokenAmount]
   )
   const handleMaxPress = useCallback(() => {
-    setAmount(formatUnits(balance, TOKEN_DECIMALS))
-  }, [balance])
+    setTokenAmount(formatUnits(balance, TOKEN_DECIMALS))
+  }, [balance, setTokenAmount])
   const handleOpenFeeInfoBottomSheet = useCallback(
     () => openFeeInfoBottomSheet(),
     [openFeeInfoBottomSheet]
@@ -990,17 +1048,27 @@ const WalletStakingScreen = () => {
                 >
                   <View style={styles.amountCard}>
                     <View style={styles.balanceRow}>
-                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <SwapAndBridgeIcon
-                          width={14}
-                          height={14}
-                          color={theme.primaryAccent200}
-                          strokeWidth={1.8}
-                        />
-                        <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
-                          {amountInUsd}
-                        </Text>
-                      </View>
+                      {/* Flips the field between the token and its USD value, showing whichever
+                      of the two the field isn't currently taking - the same way the send form's
+                      amount field works. */}
+                      <HoverablePressable
+                        onPress={switchAmountFieldMode}
+                        disabled={isAmountFieldModeSwitchDisabled}
+                        accessibilityLabel={t('Switch between token and USD amount')}
+                        testID="wallet-staking-switch-amount-field-mode"
+                      >
+                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                          <SwapAndBridgeIcon
+                            width={14}
+                            height={14}
+                            color={theme.primaryAccent200}
+                            strokeWidth={1.8}
+                          />
+                          <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
+                            {amountFieldMode === 'token' ? amountInUsd : amountInToken}
+                          </Text>
+                        </View>
+                      </HoverablePressable>
                       <BalanceWithMax
                         balanceLabel={balanceLabel}
                         disabled={balance <= 0n}
@@ -1010,9 +1078,11 @@ const WalletStakingScreen = () => {
                     </View>
 
                     <NumberInput
-                      value={amount}
-                      onChangeText={setAmount}
-                      precision={TOKEN_DECIMALS}
+                      value={amountFieldMode === 'fiat' ? fiatAmount : amount}
+                      onChangeText={
+                        amountFieldMode === 'fiat' ? handleFiatAmountChange : setTokenAmount
+                      }
+                      precision={amountFieldMode === 'fiat' ? FIAT_DECIMALS : TOKEN_DECIMALS}
                       placeholder="0.00"
                       borderless
                       containerStyle={styles.amountInput}
@@ -1021,7 +1091,7 @@ const WalletStakingScreen = () => {
                       childrenBeforeButtons={
                         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                           <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
-                            {tokenSymbol}
+                            {amountFieldMode === 'fiat' ? t('USD') : tokenSymbol}
                           </Text>
                           {shouldShowBalanceRatioProgress && (
                             <View style={spacings.mlSm}>
