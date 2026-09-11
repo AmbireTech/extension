@@ -23,6 +23,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 
+import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
 import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
 type UseTokenActionsOptions = {
   /**
@@ -44,6 +45,9 @@ type UseTokenActionsOptions = {
   /** Adds the Wallet Staking shortcut for the supported WALLET token contracts. */
   enableWalletStakingAction?: boolean
 }
+
+const selectXWalletLockedShares = (state: SelectedAccountController) =>
+  state.portfolio.walletStaking?.lockedShares
 
 const WALLET_STAKING_ACTIONS: Record<
   string,
@@ -74,6 +78,10 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const { addToast } = useToast()
   const { t } = useTranslation()
   const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: lockedShares } = useController(
+    'SelectedAccountController',
+    selectXWalletLockedShares
+  )
   const {
     state: { flags }
   } = useController('FeatureFlagsController')
@@ -116,10 +124,17 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const canToToppedUp = token?.flags.canTopUpGasTank
   const shouldDisableSwapAndBridge =
     network?.isNotSupported || isGasTankOrRewardsToken || isAmountZero
-  const walletStakingAction =
+  const stakingAction =
     enableWalletStakingAction && token?.chainId === ETHEREUM_CHAIN_ID
       ? WALLET_STAKING_ACTIONS[token.address.toLowerCase()]
       : undefined
+  // Withdrawing is only possible for shares already committed to a pending unstake, which are the
+  // ones the staking contract keeps locked. With none locked there's nothing to withdraw, so the
+  // button is left out rather than shown leading to an empty screen. It also stays out until the
+  // locked shares are known, the same as the legacy badge on the dashboard and token details.
+  const hasNothingToWithdraw =
+    stakingAction?.text === 'Withdraw' && (lockedShares === undefined || lockedShares <= 0n)
+  const walletStakingAction = hasNothingToWithdraw ? undefined : stakingAction
 
   const { canUseGasTank, disabledReason } = useHasGasTank({ account })
 
