@@ -6,27 +6,21 @@ import GlassView from '@common/components/GlassView'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import useWindowSize from '@common/hooks/useWindowSize'
-import { getUiType } from '@common/utils/uiType'
-
-import SelectNetwork from '@common/modules/dashboard/components/TabsAndSearch/SelectNetwork'
 import CurrentApp from './CurrentApp'
+import SelectNetwork from './SelectNetwork'
 import DashboardSearch from './DashboardSearch'
-
 import { FloatingBottomBarProps } from './FloatingBottomBar'
 
 const VISIBLE_BOTTOM_OFFSET = 0
-const { isSidePanel } = getUiType()
 
 const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
-  displayNetworkFilter = false,
+  networkFilterTab,
   displayCurrentApp = false,
   isHidden,
   searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
-  const { maxWidthSize } = useWindowSize()
 
   const baseBottom = useMemo(() => SPACING + safeBottom, [safeBottom])
 
@@ -55,10 +49,10 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     >
       <GlassView borderRadius={28} cssStyle={{ pointerEvents: 'all' }} isSimpleBlur={false}>
         <View style={[spacings.phTy, spacings.pvTy, flexbox.directionRow, flexbox.alignCenter]}>
-          <DashboardSearch control={control} placeholder={searchPlaceholder} />
-          {displayNetworkFilter && isSidePanel && !maxWidthSize('s') && (
-            <View style={{ marginLeft: SPACING }}>
-              <SelectNetwork />
+          {!!control && <DashboardSearch control={control} placeholder={searchPlaceholder} />}
+          {!!networkFilterTab && (
+            <View style={control ? { marginLeft: SPACING } : undefined}>
+              <SelectNetwork currentTab={networkFilterTab} />
             </View>
           )}
           {displayCurrentApp && <CurrentApp />}

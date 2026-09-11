@@ -3,19 +3,15 @@ import { StyleSheet, ViewStyle } from 'react-native'
 import { ThemeProps } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
-interface Style {
-  container: ViewStyle
+interface Styles {
+  card: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
-  StyleSheet.create<Style>({
-    container: {
-      height: 32,
-      width: '100%',
+  StyleSheet.create<Styles>({
+    card: {
       backgroundColor: theme.secondaryBackground,
-      borderRadius: BORDER_RADIUS_PRIMARY,
-      borderWidth: 1,
-      borderColor: theme.secondaryBorder
+      borderRadius: BORDER_RADIUS_PRIMARY
     }
   })
 
