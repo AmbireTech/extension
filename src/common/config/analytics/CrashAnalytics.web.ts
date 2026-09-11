@@ -1,12 +1,16 @@
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
-import CONFIG, { APP_VERSION, isDev } from '@common/config/env'
+import CONFIG, { APP_VERSION, isAmbireNext, isDev } from '@common/config/env'
 import * as Sentry from '@sentry/react'
 import { IS_FIREFOX } from '@web/constants/common'
 
 export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   dsn: CONFIG.SENTRY_DSN_BROWSER_EXTENSION,
   environment: CONFIG.APP_ENV as string,
-  release: `extension-${process.env.WEB_ENGINE}@${APP_VERSION}`,
+  // Ambire Next is a second production webkit build carrying the very same
+  // version, so it needs a release of its own - otherwise its events and source
+  // maps land in the stable build's release. Must stay in sync with the release
+  // name that scripts/build-extensions.sh uploads the source maps under.
+  release: `extension-${isAmbireNext ? 'next-' : ''}${process.env.WEB_ENGINE}@${APP_VERSION}`,
   // Disables sending personally identifiable information
   sendDefaultPii: false,
   integrations: [],
