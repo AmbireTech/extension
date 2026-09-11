@@ -34,6 +34,8 @@ import type { TokenResult } from '@ambire-common/libs/portfolio'
 import type { WalletStateController } from '@common/controllers/wallet-state'
 
 const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
+const selectXWalletLockedShares = (state: SelectedAccountController) =>
+  state.portfolio.walletStaking?.lockedShares
 
 type Props = {
   token: TokenResult
@@ -80,6 +82,10 @@ const BaseTokenItem = ({
     'RequestsController',
     (state) => state.visibleUserRequests
   )
+  const { state: lockedShares } = useController(
+    'SelectedAccountController',
+    selectXWalletLockedShares
+  )
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles, theme } = useTheme(getStyles)
@@ -91,8 +97,13 @@ const BaseTokenItem = ({
   })
 
   const tokenId = getTokenId(token)
-  const isLegacyXWallet =
+  const isXWallet =
     chainId === ETHEREUM_CHAIN_ID && address.toLowerCase() === WALLET_STAKING_ADDR.toLowerCase()
+  // The badge marks a balance the user can still act on (migrate to stkWALLET), so it stays
+  // hidden until the locked shares are known and leave a free remainder behind. Shares already
+  // committed to a pending unstake are locked in the staking contract and can't be migrated.
+  const isLegacyXWallet =
+    isXWallet && lockedShares !== undefined && BigInt(token.amount || 0n) > lockedShares
 
   const {
     balanceFormatted,
