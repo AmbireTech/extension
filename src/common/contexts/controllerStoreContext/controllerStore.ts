@@ -169,11 +169,19 @@ export class ControllerStore {
     this.#states[id as keyof AllControllersMappingType] = state
 
     const idListeners = this.#listeners.get(id)
-    if (!idListeners) return false
 
-    idListeners.forEach((callback) => callback())
+    idListeners?.forEach((callback) => callback())
 
-    return true
+    // The snapshot that carries a controller's `isReady` can be one the committer held
+    // back, and the readiness checks read what was delivered, so the hand-over is the
+    // moment they have to run again.
+    this.#checkReadiness()
+    this.#checkRoutesReadiness()
+
+    // Whether anything is listening, not whether anything ever did: `subscribe` leaves
+    // the set behind when its last subscriber goes, and pacing a state no screen renders
+    // only holds the next one back for a frame nothing needs.
+    return !!idListeners?.size
   }
 
   #newestStateOf<K extends keyof AllControllersMappingType>(id: K) {
@@ -205,10 +213,18 @@ export class ControllerStore {
   #isControllerReady(ctrlName: keyof AllControllersMappingType) {
     if (!this.initializedControllers.has(ctrlName)) return false
 
-    const newestState = this.#newestStateOf(ctrlName)
+    // The delivered state, not the newest: the routes render on readiness and read what
+    // the store has handed over, so graduating on a snapshot the committer still holds
+    // would render them off the older one.
+    const deliveredState = this.#states[ctrlName]
 
-    if ('isReady' in (newestState || {})) {
-      return (newestState as any).isReady === true
+    // An update whose state could not be snapshotted still counts as a first emit, and
+    // leaves the UI on the empty state. Graduating on it would render the routes off a
+    // controller they can read nothing from.
+    if (!deliveredState) return false
+
+    if ('isReady' in deliveredState) {
+      return (deliveredState as any).isReady === true
     }
 
     return true
