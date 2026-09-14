@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { Image, ImageStyle, StyleProp, View, ViewStyle } from 'react-native'
 import { SvgUri } from 'react-native-svg'
 
@@ -25,13 +25,6 @@ type Props = {
 // Stable, so a caller that passes a single `uri` does not hand the fallback chain a new
 // list on every render.
 const NO_URIS: string[] = []
-
-/**
- * How long a load may go unreported before it counts as failed. React Native cancels an
- * in-flight load when its view is detached - which a clipped list row is - and reports
- * neither success nor failure, so nothing else would ever take the skeleton off.
- */
-const LOAD_TIMEOUT = 8000
 
 const ManifestImage = ({
   uri,
@@ -108,14 +101,6 @@ const ManifestImage = ({
   const onLoadEnd = useCallback(() => {
     setLoad((prev) => (prev.uri === currentUri ? { ...prev, settledUri: currentUri } : prev))
   }, [currentUri])
-
-  useEffect(() => {
-    if (!isLoading) return undefined
-
-    const timer = setTimeout(onError, LOAD_TIMEOUT)
-
-    return () => clearTimeout(timer)
-  }, [isLoading, onError])
 
   if (hideOnError && hasError && !fallback) return null
 
