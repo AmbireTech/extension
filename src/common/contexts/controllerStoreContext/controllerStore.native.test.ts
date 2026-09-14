@@ -1,7 +1,8 @@
 import eventBus from '@common/services/event/eventBus'
 
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from './controllerStore'
-import { createStoreHarness, installFrameStub } from './controllerStore.testHarness'
+import { createStoreHarness } from './controllerStore.testHarness'
+import { installFrameStub } from './frameStub.testHarness'
 
 // `@common/config/env` reaches into expo to decide `isDev`, which is untransformed ESM
 // under jest and irrelevant here - the store only reads it to toggle the cycle check.

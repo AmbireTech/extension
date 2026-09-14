@@ -1,3 +1,5 @@
+import { installFrameStub } from '../frameStub.testHarness'
+
 import { createCtrlStateCommitter } from './ctrlStateCommitter.native'
 
 /**
@@ -6,20 +8,12 @@ import { createCtrlStateCommitter } from './ctrlStateCommitter.native'
  * render each one with. So every one of them has to be handed over on a frame of its own.
  */
 describe('createCtrlStateCommitter (native)', () => {
-  let frameCallbacks: (() => void)[] = []
+  let frames: ReturnType<typeof installFrameStub>
 
-  const runFrame = () => {
-    const callbacks = frameCallbacks
-    frameCallbacks = []
-    callbacks.forEach((callback) => callback())
-  }
+  const runFrame = () => frames.runFrame()
 
   beforeEach(() => {
-    frameCallbacks = []
-    ;(global as any).requestAnimationFrame = (callback: () => void) => {
-      frameCallbacks.push(callback)
-      return 0
-    }
+    frames = installFrameStub()
   })
 
   const createHarness = ({ isSubscribed = true }: { isSubscribed?: boolean } = {}) => {
@@ -95,7 +89,7 @@ describe('createCtrlStateCommitter (native)', () => {
     commitStatus('LOADING', false)
 
     expect(delivered).toEqual(['INITIAL', 'LOADING'])
-    expect(frameCallbacks).toHaveLength(0)
+    expect(frames.pendingFrames()).toBe(0)
   })
 
   it('paces nothing for a controller nothing is subscribed to', () => {
@@ -105,16 +99,20 @@ describe('createCtrlStateCommitter (native)', () => {
     commitStatus('SUCCESS')
 
     expect(delivered).toEqual(['LOADING', 'SUCCESS'])
-    expect(frameCallbacks).toHaveLength(0)
+    expect(frames.pendingFrames()).toBe(0)
   })
 
-  it('drops what it holds back on destroy', () => {
+  it('drops what it holds back on destroy, and the frame it would run on', () => {
     const { committer, delivered, commitStatus } = createHarness()
 
     commitStatus('SUCCESS')
     commitStatus('INITIAL')
+    expect(frames.pendingFrames()).toBe(1)
+
     committer.destroy()
 
+    // Left armed, it would fire after the store is gone.
+    expect(frames.pendingFrames()).toBe(0)
     runFrame()
     expect(delivered).toEqual(['SUCCESS'])
   })

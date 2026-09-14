@@ -20,7 +20,8 @@ export const createCtrlStateCommitter = (deliver: DeliverCtrlState): CtrlStateCo
   const queuedStates: Map<string, { state: any; forceEmit?: boolean }[]> = new Map()
   /** Controllers whose delivered snapshot is forced and may not be rendered yet. */
   const ctrlsWithUnrenderedForcedState = new Set<string>()
-  let isFrameScheduled = false
+  /** Cancels the frame that is scheduled, and stands for whether one is. */
+  let cancelScheduledFrame: (() => void) | null = null
 
   function deliverNow(id: string, state: any, forceEmit?: boolean) {
     const isSubscribed = deliver(id, state)
@@ -46,11 +47,10 @@ export const createCtrlStateCommitter = (deliver: DeliverCtrlState): CtrlStateCo
   }
 
   function scheduleFrame() {
-    if (isFrameScheduled) return
-    isFrameScheduled = true
+    if (cancelScheduledFrame) return
 
     const onFrame = () => {
-      isFrameScheduled = false
+      cancelScheduledFrame = null
       // A frame has passed since those snapshots were delivered, so React has rendered
       // them and the next one may take their place.
       ctrlsWithUnrenderedForcedState.clear()
@@ -58,11 +58,13 @@ export const createCtrlStateCommitter = (deliver: DeliverCtrlState): CtrlStateCo
     }
 
     if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(onFrame)
+      const frame = requestAnimationFrame(onFrame)
+      cancelScheduledFrame = () => cancelAnimationFrame(frame)
       return
     }
 
-    setTimeout(onFrame, FRAME_MS)
+    const timeout = setTimeout(onFrame, FRAME_MS)
+    cancelScheduledFrame = () => clearTimeout(timeout)
   }
 
   return {
@@ -83,6 +85,10 @@ export const createCtrlStateCommitter = (deliver: DeliverCtrlState): CtrlStateCo
       return queue?.length ? queue[queue.length - 1]!.state : undefined
     },
     destroy: () => {
+      // Left armed, it would run a frame after the store is gone - and leave the
+      // committer believing one is still scheduled.
+      cancelScheduledFrame?.()
+      cancelScheduledFrame = null
       queuedStates.clear()
       ctrlsWithUnrenderedForcedState.clear()
     }
