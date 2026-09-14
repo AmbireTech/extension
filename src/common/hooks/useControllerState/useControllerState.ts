@@ -60,7 +60,7 @@ interface BaseControllerReturn<K extends keyof AllControllersMappingType, S> {
    */
   state: S
   helpers: ControllerHelpersMapping[K]
-  updateHelpers: (data: Partial<ControllerHelpersMapping[K]>, forceEmit?: boolean) => void
+  updateHelpers: (data: Partial<ControllerHelpersMapping[K]>) => void
 }
 
 type UseControllerReturn<K extends keyof AllControllersMappingType, S> = BaseControllerReturn<
@@ -289,8 +289,8 @@ export default function useControllerState<
   )
 
   const updateHelpers = useCallback(
-    (data: Partial<ControllerHelpersMapping[K]>, forceEmit?: boolean) => {
-      controllerHelpersStore.update(id, data, forceEmit)
+    (data: Partial<ControllerHelpersMapping[K]>) => {
+      controllerHelpersStore.update(id, data)
     },
     [controllerHelpersStore, id]
   )

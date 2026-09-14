@@ -1,5 +1,3 @@
-import { flushSync } from 'react-dom'
-
 import { Dapp } from '@ambire-common/interfaces/dapp'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -41,8 +39,7 @@ export class ControllerHelpersStore {
 
   update<K extends keyof ControllerHelpersMapping>(
     id: K,
-    data: Partial<ControllerHelpersMapping[K]>,
-    forceEmit?: boolean
+    data: Partial<ControllerHelpersMapping[K]>
   ) {
     if (data === undefined) return
 
@@ -62,26 +59,7 @@ export class ControllerHelpersStore {
 
     this.#states[id] = { ...(prevState ?? {}), ...data } as ControllerHelpersMapping[K]
 
-    const idListeners = this.#listeners.get(id as string)
-    if (!idListeners) return
-
-    if (forceEmit) {
-      /**
-       * For certain updates, we need to override React's default behavior of batching state updates and render the update immediately.
-       * This is particularly handy when multiple status flags are being updated rapidly.
-       * Without the forceEmit option, React will only render the very first and last status updates, batching the ones in between.
-       *
-       * Here's more info about `flushSync`:
-       * Introduced in React 18, flushSync is a function that forces React to re-render synchronously within its callback,
-       * before continuing with the rest of the JavaScript event loop.
-       * This goes against React's default behavior of batching state updates for optimized performance.
-       */
-      flushSync(() => {
-        idListeners.forEach((callback) => callback())
-      })
-    } else {
-      idListeners.forEach((callback) => callback())
-    }
+    this.#listeners.get(id as string)?.forEach((callback) => callback())
   }
 
   subscribe(id: string, listener: () => void) {
