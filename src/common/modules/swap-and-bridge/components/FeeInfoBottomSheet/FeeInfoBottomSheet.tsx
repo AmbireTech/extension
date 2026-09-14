@@ -103,11 +103,6 @@ const FeeInfoBottomSheet = ({
     ],
     [t]
   )
-  const visibleFeeTiers = useMemo(() => {
-    const currentTierIndex = feeTiers.findIndex((tier) => tier.feePercent === feePercent)
-
-    return currentTierIndex === -1 ? feeTiers : feeTiers.slice(currentTierIndex)
-  }, [feePercent, feeTiers])
   const feeExemptionExplanation = useMemo(() => {
     if (feeExemptionReason === 'wrap-or-unwrap') {
       return t('Wrapping or unwrapping this token has no Ambire fee.')
@@ -160,9 +155,10 @@ const FeeInfoBottomSheet = ({
           </Text>
 
           <View style={spacings.mtSm}>
-            {visibleFeeTiers.map((tier, index) => {
+            {feeTiers.map((tier, index) => {
               const isCurrent = feePercent === tier.feePercent
               const isMaximum = tier.feePercent === 0
+              const isBelowCurrent = tier.feePercent > feePercent
               const savingsPercent = feePercent
                 ? Math.round(((feePercent - tier.feePercent) / feePercent) * 100)
                 : 0
@@ -246,7 +242,7 @@ const FeeInfoBottomSheet = ({
                           {t('fee')}
                         </Text>
                       )}
-                      {!isCurrent && !isMaximum && (
+                      {!isCurrent && !isMaximum && !isBelowCurrent && (
                         <Text appearance="primary" fontSize={12} style={spacings.mtMi}>
                           {t('{{percent}}% lower', { percent: savingsPercent })}
                         </Text>
@@ -264,7 +260,7 @@ const FeeInfoBottomSheet = ({
                     </View>
                   </View>
 
-                  {index === 0 && visibleFeeTiers.length > 1 && (
+                  {index === 0 && feeTiers.length > 1 && (
                     <View
                       style={[
                         flexbox.directionRow,
@@ -284,9 +280,7 @@ const FeeInfoBottomSheet = ({
                       </Text>
                     </View>
                   )}
-                  {index > 0 && index < visibleFeeTiers.length - 1 && (
-                    <View style={spacings.mtMi} />
-                  )}
+                  {index > 0 && index < feeTiers.length - 1 && <View style={spacings.mtMi} />}
                 </React.Fragment>
               )
             })}
