@@ -10,8 +10,12 @@ interface Styles {
   maximumTierCard: ViewStyle
   tierDetails: ViewStyle
   feeDetails: ViewStyle
-  tierBadge: ViewStyle
-  tierBadgeText: TextStyle
+  currentTierBadge: ViewStyle
+  maximumTierBadge: ViewStyle
+  featuredTierBadgeText: TextStyle
+  cancelButton: ViewStyle
+  stakeButton: ViewStyle
+  actionButtonText: TextStyle
   feeExemption: ViewStyle
 }
 
@@ -25,10 +29,14 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.secondaryBackground
     },
     currentTierCard: {
-      backgroundColor: theme.primaryAccent100
+      backgroundColor: theme.primaryAccent100,
+      borderColor: theme.primaryAccent,
+      borderWidth: 1
     },
     maximumTierCard: {
-      backgroundColor: theme.successBackground
+      backgroundColor: theme.successBackground,
+      borderColor: theme.successText,
+      borderWidth: 1
     },
     tierDetails: {
       minWidth: 0
@@ -36,11 +44,29 @@ const getStyles = (theme: ThemeProps) =>
     feeDetails: {
       flexShrink: 0
     },
-    tierBadge: {
+    currentTierBadge: {
       backgroundColor: theme.primaryAccent200
     },
-    tierBadgeText: {
-      color: '#fff'
+    maximumTierBadge: {
+      backgroundColor: theme.success200
+    },
+    featuredTierBadgeText: {
+      color: theme.primaryAccent500,
+      fontSize: 11
+    },
+    cancelButton: {
+      width: 'auto',
+      paddingLeft: 16,
+      paddingRight: 16
+    },
+    stakeButton: {
+      width: 'auto',
+      marginLeft: 24,
+      paddingLeft: 24,
+      paddingRight: 24
+    },
+    actionButtonText: {
+      fontSize: 16
     },
     feeExemption: {
       ...common.borderRadiusSecondary,
