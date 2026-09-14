@@ -8,6 +8,7 @@ import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import SafeAccountList from '@common/modules/auth/components/SafeAccountList'
 import useSafeImportByOwner from '@common/modules/auth/hooks/useSafeImportByOwner'
 import spacings from '@common/styles/spacings'
@@ -36,6 +37,7 @@ const SafeImportByOwnerScreen = () => {
     validateOwnerAddress
   } = useSafeImportByOwner()
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   // Free up the screen for the search results as soon as the owner address is valid
   useEffect(() => {
@@ -88,6 +90,8 @@ const SafeImportByOwnerScreen = () => {
                 resolvedAddressType={ownerAddressState.resolvedAddressType}
                 isRecipientDomainResolving={ownerAddressState.isDomainResolving}
                 bottomSheetTitle={t('Add Safe owner')}
+                // The screen has the same color as the default input background
+                inputBackgroundColor={theme.secondaryBackground}
               />
             )}
           />

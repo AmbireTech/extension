@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable } from 'react-native'
+import { ColorValue, Pressable } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/interfaces/addressBook'
@@ -56,6 +56,11 @@ export interface AddressSelectProps extends InputProps {
   bottomSheetTitle?: string
   // Shortens the addresses in the list, for a container too narrow to fit a full one.
   withShortenedAddresses?: boolean
+  /**
+   * Background color of the idle input. Set it when the parent has the same color as the
+   * default input background, so the input stays visible.
+   */
+  inputBackgroundColor?: ColorValue
   // The props below drive the "Add to address book" prompt, which only applies when the
   // address is a transfer recipient. Other flows can leave them out.
   addressValidationMsg?: string
@@ -90,6 +95,7 @@ const SelectedMenuOption: React.FC<{
     suffix: number
     color: 'errorText'
   }
+  inputBackgroundColor?: ColorValue
 }> = ({
   selectRef,
   filteredContacts,
@@ -105,7 +111,8 @@ const SelectedMenuOption: React.FC<{
   renderConfirmAddress,
   type = 'selected-menu-option',
   autoFocus = false,
-  addressHighlight
+  addressHighlight,
+  inputBackgroundColor
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -158,6 +165,7 @@ const SelectedMenuOption: React.FC<{
         // Address entry never benefits from the keyboard's autocorrect
         autoCorrect={false}
         containerStyle={styles.inputContainer}
+        backgroundColor={inputBackgroundColor}
         resolvedAddress={resolvedAddress}
         resolvedAddressType={resolvedAddressType}
         addressHighlight={addressHighlight}
@@ -227,6 +235,7 @@ const SelectedMenuOption: React.FC<{
       setIsMenuOpen,
       theme.neutral400,
       addressHighlight,
+      inputBackgroundColor,
       type,
       validation
     ]
@@ -255,7 +264,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   disabled,
   addressPoisoningMatch,
   bottomSheetTitle,
-  withShortenedAddresses
+  withShortenedAddresses,
+  inputBackgroundColor
 }) => {
   const { state: account } = useController('SelectedAccountController', 'account')
   const actualAddress = getAddressFromAddressState({
@@ -471,6 +481,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           disabled={disabled}
           renderConfirmAddress={renderConfirmAddress}
           addressHighlight={selectedAddressHighlight}
+          inputBackgroundColor={inputBackgroundColor}
         />
       )
     },
@@ -484,7 +495,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       setAddress,
       disabled,
       renderConfirmAddress,
-      selectedAddressHighlight
+      selectedAddressHighlight,
+      inputBackgroundColor
     ]
   )
 

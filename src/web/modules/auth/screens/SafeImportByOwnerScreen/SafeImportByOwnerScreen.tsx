@@ -68,6 +68,8 @@ const SafeImportByOwnerScreen = () => {
                     bottomSheetTitle={t('Add Safe owner')}
                     // The onboarding panel is too narrow to fit a full address
                     withShortenedAddresses
+                    // The panel has the same color as the default input background
+                    inputBackgroundColor={theme.secondaryBackground}
                   />
                 )}
               />
