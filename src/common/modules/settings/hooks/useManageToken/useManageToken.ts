@@ -4,6 +4,8 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   address: string
   chainId: bigint
@@ -16,6 +18,9 @@ type UseManageTokenReturnType = {
   removeCustomToken: () => void
 }
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const useManageToken = ({
   address,
   chainId,
@@ -27,7 +32,7 @@ const useManageToken = ({
     state: { tokenPreferences },
     dispatch: portfolioDispatch
   } = useController('PortfolioController')
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
 
   // flags.isHidden is updated after the portfolio is updated
   // so we use tokenPreferences to get the value faster

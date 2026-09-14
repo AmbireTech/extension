@@ -23,22 +23,29 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   id: string
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
 }
 
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectVerifiedDomainsStatus = (state: AllControllersMappingType['DomainsController']) =>
+  state.verifiedDomainsStatus
+
 const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { state: contacts } = useController('AddressBookController', 'contacts')
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: contacts } = useController('AddressBookController', selectContacts)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: verifiedDomainsStatus } = useController(
     'DomainsController',
-    'verifiedDomainsStatus'
+    selectVerifiedDomainsStatus
   )
 
   const {

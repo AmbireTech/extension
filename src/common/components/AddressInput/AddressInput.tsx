@@ -26,6 +26,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props extends InputProps {
   withDetails?: boolean
   resolvedAddress: AddressState['resolvedAddress']
@@ -44,6 +46,9 @@ interface Props extends InputProps {
   // (mobile only) and passes the scanned address back. No-op on web.
   onScanAddress?: (address: string) => void
 }
+
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
 
 const AddressInput: React.FC<Props> = ({
   withDetails,
@@ -66,8 +71,8 @@ const AddressInput: React.FC<Props> = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
-  const { state: contacts } = useController('AddressBookController', 'contacts')
-  const { state: domains } = useController('DomainsController', 'domains')
+  const { state: contacts } = useController('AddressBookController', selectContacts)
+  const { state: domains } = useController('DomainsController', selectDomains)
   const { message, severity } = validation
   const isError = severity === 'error'
 

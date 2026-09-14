@@ -19,6 +19,8 @@ import useToast from '@common/hooks/useToast'
 import { setStringAsync } from '@common/utils/clipboard'
 import { RELAYER_URL } from '@env'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const fetch = (typeof window !== 'undefined' ? window.fetch.bind(window) : global.fetch) as any
 const standardOptions = {
   fetch,
@@ -51,6 +53,8 @@ const getParams = (search?: string) => {
   }
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Props = {}) => {
   const { addToast } = useToast()
   const route = useRoute()
@@ -65,7 +69,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Pro
       }
     : routeParams
 
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const {
     benzinNetworks,
     loadingBenzinNetworks = [],

@@ -16,6 +16,8 @@ import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getToken
 import spacings from '@common/styles/spacings'
 import { openInTab } from '@common/utils/links'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   id: string
   sheetRef: React.RefObject<Modalize>
@@ -24,6 +26,8 @@ type Props = {
   portfolio: SelectedAccountPortfolio
   account: Account | null
 }
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const GasTankInfoModal = ({
   id,
@@ -36,7 +40,7 @@ const GasTankInfoModal = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const isSA = useMemo(() => isSmartAccount(account), [account])
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const token = useMemo(() => {
     const result = portfolio?.portfolioState?.gasTank?.result as PortfolioGasTankResult

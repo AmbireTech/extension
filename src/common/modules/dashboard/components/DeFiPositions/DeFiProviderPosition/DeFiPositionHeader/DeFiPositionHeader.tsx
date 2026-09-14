@@ -22,6 +22,8 @@ import { openInTab } from '@common/utils/links'
 import Badge from './Badge'
 import ProtocolIcon from './ProtocolIcon'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions' | 'source'> & {
   toggleExpanded: () => void
   isExpanded: boolean
@@ -47,6 +49,8 @@ const HEALTH_RATE_LEVELS: {
   }
 ]
 
+const selectDapps = (state: AllControllersMappingType['DappsController']) => state.dapps
+
 const DeFiPositionHeader: FC<Props> = ({
   providerName,
   toggleExpanded,
@@ -57,7 +61,7 @@ const DeFiPositionHeader: FC<Props> = ({
   iconUrl,
   siteUrl
 }) => {
-  const { state: dapps } = useController('DappsController', 'dapps')
+  const { state: dapps } = useController('DappsController', selectDapps)
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
   const { isCompactLayout } = useCompactActionRequestLayout()

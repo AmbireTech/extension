@@ -10,11 +10,15 @@ const selectPortfolioIsReloading = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.portfolio?.isReloading
 
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+
 const useDashboardReload = () => {
   const { dispatch: mainDispatch } = useController('MainController')
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
-    'dashboardNetworkFilter'
+    selectDashboardNetworkFilter
   )
   const { state: isPortfolioAllReady } = useController(
     'SelectedAccountController',

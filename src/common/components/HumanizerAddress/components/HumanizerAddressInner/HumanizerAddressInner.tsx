@@ -11,6 +11,8 @@ import { isExtension } from '@web/constants/browserapi'
 import { AddressName, BenzinAddressName } from '../AddressName'
 import BaseAddress from '../BaseAddress'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props extends TextProps {
   address: string
   // example of highestPriorityAlias: a name coming from the humanizer's metadata
@@ -23,6 +25,10 @@ interface Props extends TextProps {
   isToken?: boolean
 }
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
 const HumanizerAddressInner: FC<Props> = ({
   humanizerInfo,
   address,
@@ -33,8 +39,8 @@ const HumanizerAddressInner: FC<Props> = ({
   isToken,
   ...rest
 }) => {
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const { contacts = [] } = useController('AddressBookController').state
   const checksummedAddress = getAddressCaught(address)
 

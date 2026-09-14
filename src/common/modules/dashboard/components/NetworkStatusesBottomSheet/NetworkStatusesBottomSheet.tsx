@@ -30,9 +30,11 @@ interface Props {
 const selectPortfolioState = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio?.portfolioState
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: portfolioState } = useController('SelectedAccountController', selectPortfolioState)
   const { theme } = useTheme()
 

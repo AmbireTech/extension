@@ -20,11 +20,16 @@ const selectPortfolioShouldShowPartialResult = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.portfolio?.shouldShowPartialResult
 
+const selectBalanceAffectingErrors = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.balanceAffectingErrors
+const selectIsOffline = (state: AllControllersMappingType['MainController']) => state.isOffline
+
 const useBalanceAffectingErrors = () => {
   const { t } = useTranslation()
   const { state: balanceAffectingErrors } = useController(
     'SelectedAccountController',
-    'balanceAffectingErrors'
+    selectBalanceAffectingErrors
   )
   const { state: portfolioVerification } = useController(
     'SelectedAccountController',
@@ -44,7 +49,7 @@ const useBalanceAffectingErrors = () => {
   // reload. Suppress balance-affecting warnings during this window so the user
   // never sees errors from a old/stale RPC that is about to be replaced.
   const isLoadingTakingTooLong = areNetworksFetchingFromRelayer ? false : shouldShowPartialResult
-  const { state: isOffline } = useController('MainController', 'isOffline')
+  const { state: isOffline } = useController('MainController', selectIsOffline)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   /** Because errors change frequently due to background updates we have to store a snapshot
    * of the errors when the user clicks on the warning icon to display the errors in the bottom sheet.

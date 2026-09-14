@@ -30,6 +30,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean | null => {
   if (!search) return null
 
@@ -52,6 +54,9 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 
 const ACCOUNT_OPTIONS = { markSelected: true }
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
   const flatlistRef = useRef(null)
@@ -60,7 +65,7 @@ const AccountSelectScreen = () => {
   )
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const {
     ref: syncSheetRef,

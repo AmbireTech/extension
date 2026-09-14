@@ -49,14 +49,21 @@ const selectPortfolioIsReloading = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.portfolio?.isReloading
 
+const selectIsOffline = (state: AllControllersMappingType['MainController']) => state.isOffline
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectAreNetworksFetchingFromRelayer = (
+  state: AllControllersMappingType['NetworksController']
+) => state.areNetworksFetchingFromRelayer
+
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
   animatedOverviewHeight,
   setDashboardOverviewSize
 }) => {
   const { theme } = useTheme(getStyles)
-  const { state: isOffline } = useController('MainController', 'isOffline')
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: isOffline } = useController('MainController', selectIsOffline)
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: totalBalance } = useController(
     'SelectedAccountController',
     selectPortfolioTotalBalance
@@ -75,7 +82,7 @@ const DashboardOverview: FC<Props> = ({
   )
   const { state: areNetworksFetchingFromRelayer } = useController(
     'NetworksController',
-    'areNetworksFetchingFromRelayer'
+    selectAreNetworksFetchingFromRelayer
   )
   const {
     state: { isPrivacyModeEnabled },

@@ -19,6 +19,8 @@ import spacings from '@common/styles/spacings'
 import Option from '../Option'
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP = i18n.t(
   'No block explorer available for this network.'
 )
@@ -30,12 +32,14 @@ interface Props {
   openBlockExplorer: (url?: string) => void
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const NetworkBottomSheet = ({ sheetRef, chainId, closeBottomSheet, openBlockExplorer }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { addToast } = useToast()
   const { theme, styles } = useTheme(getStyles)
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const networkData = networks.find((network) => String(network.chainId) === String(chainId))
 
   const handleOpenBlockExplorer = useCallback(

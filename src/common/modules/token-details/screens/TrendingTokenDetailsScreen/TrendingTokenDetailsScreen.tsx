@@ -33,6 +33,8 @@ import { openInTab } from '@common/utils/links'
 
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const selectNetworks = (state: NetworksController) => state.networks
 
 /**
@@ -62,13 +64,16 @@ const buildTokenResult = (token: TrendingToken, chainId: bigint, address: string
   flags: { onGasTank: false, rewardsType: null, canTopUpGasTank: false, isFeeToken: false }
 })
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const TrendingTokenDetailsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state } = useRoute()
   const { state: dappsState } = useController('DappsController')
   const { state: networks } = useController('NetworksController', selectNetworks)
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
 
   const token: TrendingToken | undefined = useMemo(

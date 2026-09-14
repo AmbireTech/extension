@@ -23,10 +23,13 @@ type ChainStatus = 'loading' | 'success' | 'warning' | 'stale'
 const selectPortfolioState = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio?.portfolioState
 
+const selectAllNetworks = (state: AllControllersMappingType['NetworksController']) =>
+  state.allNetworks
+
 const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
   const { t } = useTranslation()
   const { state: portfolioState } = useController('SelectedAccountController', selectPortfolioState)
-  const { state: allNetworks } = useController('NetworksController', 'allNetworks')
+  const { state: allNetworks } = useController('NetworksController', selectAllNetworks)
 
   const configuredChainIds = useMemo(
     () =>

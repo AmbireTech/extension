@@ -6,9 +6,14 @@ import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
+
 const useContactsSearch = (search: string) => {
-  const { state: contacts } = useController('AddressBookController', 'contacts')
-  const { state: domains } = useController('DomainsController', 'domains')
+  const { state: contacts } = useController('AddressBookController', selectContacts)
+  const { state: domains } = useController('DomainsController', selectDomains)
 
   const debouncedSearch = useDebounce({ value: search, delay: 350 })
 

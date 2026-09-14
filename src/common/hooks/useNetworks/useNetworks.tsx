@@ -6,6 +6,8 @@ import useController from '@common/hooks/useController'
 
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const selectNetworks = (state: NetworksController) => state.networks
 
 /**
@@ -13,6 +15,9 @@ const selectNetworks = (state: NetworksController) => state.networks
  * a disabled flag & reason for those that are not supported
  * by the account OR the swap and bridge provider
  */
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+
 const useNetworks = ({
   acc,
   additionalCheck
@@ -27,7 +32,7 @@ const useNetworks = ({
 
   const { state: accountStates, dispatch: accountsDispatch } = useController(
     'AccountsController',
-    'accountStates'
+    selectAccountStates
   )
 
   // Safe accounts are dependant on the account state so be sure to fetch it

@@ -13,9 +13,21 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectIsReady = (state: AllControllersMappingType['DappsController']) => state.isReady
+const selectIsReadyToDisplayDapps = (state: AllControllersMappingType['DappsController']) =>
+  state.isReadyToDisplayDapps
+
 const DappsSkeletonLoader = () => {
-  const { state: isReady, dispatch: dappsDispatch } = useController('DappsController', 'isReady')
-  const { state: isReadyToDisplayDapps } = useController('DappsController', 'isReadyToDisplayDapps')
+  const { state: isReady, dispatch: dappsDispatch } = useController(
+    'DappsController',
+    selectIsReady
+  )
+  const { state: isReadyToDisplayDapps } = useController(
+    'DappsController',
+    selectIsReadyToDisplayDapps
+  )
   const { theme } = useTheme()
   const { t } = useTranslation()
 

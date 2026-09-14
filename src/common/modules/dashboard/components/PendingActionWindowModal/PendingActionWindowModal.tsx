@@ -9,16 +9,26 @@ import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const isPopup = getUiType().isPopup
+
+const selectRequestWindow = (state: AllControllersMappingType['RequestsController']) =>
+  state.requestWindow
+const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
+  state.currentUserRequest
 
 const PendingActionWindowModal = () => {
   const { ref: sheetRef, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
   const { state: requestWindow, dispatch: requestsDispatch } = useController(
     'RequestsController',
-    'requestWindow'
+    selectRequestWindow
   )
-  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
+  const { state: currentUserRequest } = useController(
+    'RequestsController',
+    selectCurrentUserRequest
+  )
   const onPrimaryButtonPress = useCallback(() => {
     requestsDispatch({
       type: 'method',

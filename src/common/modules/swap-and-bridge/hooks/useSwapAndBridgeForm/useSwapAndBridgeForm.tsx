@@ -36,6 +36,9 @@ const selectIsPortfolioReadyToVisualize = (
 const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio.tokens
 
+const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.visibleUserRequests
+
 const useSwapAndBridgeForm = () => {
   const {
     fromAmount,
@@ -123,7 +126,10 @@ const useSwapAndBridgeForm = () => {
     closePriceImpactModal()
   }, [closePriceImpactModal])
 
-  const { state: visibleUserRequests } = useController('RequestsController', 'visibleUserRequests')
+  const { state: visibleUserRequests } = useController(
+    'RequestsController',
+    selectVisibleUserRequests
+  )
   const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
   const sessionId = useMemo(() => {
     if (isPopup) return 'popup'

@@ -45,6 +45,8 @@ import styles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isSidePanel } = getUiType()
 
 interface Props extends InputProps {
@@ -235,6 +237,11 @@ const SelectedMenuOption: React.FC<{
   )
 }
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
+
 const Recipient: React.FC<Props> = ({
   setAddress,
   address,
@@ -249,7 +256,7 @@ const Recipient: React.FC<Props> = ({
   disabled,
   addressPoisoningMatch
 }) => {
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const actualAddress = getAddressFromAddressState({
     resolvedAddress,
     fieldValue: address
@@ -259,8 +266,8 @@ const Recipient: React.FC<Props> = ({
   const { theme } = useTheme()
   const contactAddressMaxLength = isSidePanel ? 16 : undefined
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { state: contacts } = useController('AddressBookController', 'contacts')
-  const { state: domains } = useController('DomainsController', 'domains')
+  const { state: contacts } = useController('AddressBookController', selectContacts)
+  const { state: domains } = useController('DomainsController', selectDomains)
   const [bindManageBtnAnim, manageBtnAnimStyle] = useHover({
     preset: 'opacityInverted'
   })

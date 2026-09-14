@@ -17,6 +17,8 @@ import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import Tokens from '../Tokens'
 import SessionIdInUrl from './SessionIdInUrl'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   /** Only web collapses the overview and hides the search on scroll. */
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
@@ -25,6 +27,11 @@ interface Props {
   refreshing?: boolean
   onRefresh?: () => void
 }
+
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const DashboardPages = ({
   onScroll,
@@ -38,10 +45,10 @@ const DashboardPages = ({
   const [sessionId] = useState(`dashboard-${nanoid()}`)
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
-    'dashboardNetworkFilter'
+    selectDashboardNetworkFilter
   )
 
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const [openTab, setOpenTab] = useState(() => {
     const params = new URLSearchParams(route?.search)

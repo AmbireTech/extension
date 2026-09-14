@@ -25,6 +25,12 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import applyOtaUpdate from './applyOtaUpdate'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.visibleUserRequests
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const DashboardBanner = ({
   banner
 }: {
@@ -37,12 +43,12 @@ const DashboardBanner = ({
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const { state: visibleUserRequests, dispatch: requestsDispatch } = useController(
     'RequestsController',
-    'visibleUserRequests'
+    selectVisibleUserRequests
   )
   const transferState = useController('TransferController').state
   const { state: networks, dispatch: networksDispatch } = useController(
     'NetworksController',
-    'networks'
+    selectNetworks
   )
   const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')

@@ -10,6 +10,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import BaseAddress from '../BaseAddress'
 import InlineAddressAvatar from './InlineAddressAvatar'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props extends TextProps {
   address: string
   chainId: bigint
@@ -18,6 +20,9 @@ interface Props extends TextProps {
   fallbackLabel?: string
   isToken?: boolean
 }
+
+const selectContractNames = (state: AllControllersMappingType['ContractNamesController']) =>
+  state.contractNames
 
 const BenzinAddressName: FC<Props> = ({
   address,
@@ -32,7 +37,7 @@ const BenzinAddressName: FC<Props> = ({
 
   const { state: contractNames, dispatch } = useController(
     'ContractNamesController',
-    'contractNames'
+    selectContractNames
   )
 
   useEffect(() => {

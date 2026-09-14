@@ -25,6 +25,8 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { sortNetworksByBalance } from '@common/utils/sorting'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface ManageAppProps {
   dapp: Dapp
   children: React.ReactNode
@@ -33,6 +35,9 @@ interface ManageAppProps {
   style?: ViewStyle
   onClosed?: () => void
 }
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: ManageAppProps) => {
   const { theme } = useTheme()
@@ -50,7 +55,7 @@ const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: Manage
   } = useModalize()
   const { t } = useTranslation()
   const { dispatch: mainDispatch } = useController('MainController')
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { state: balancePerNetwork } = useController(
     'SelectedAccountController',
     (state) => state.portfolio.balancePerNetwork

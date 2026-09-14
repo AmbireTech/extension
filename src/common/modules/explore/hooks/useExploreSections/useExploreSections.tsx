@@ -9,6 +9,8 @@ import StarIcon from '@common/assets/svg/StarIcon'
 import TrendingIcon from '@common/assets/svg/TrendingIcon'
 import useController from '@common/hooks/useController'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export type ExploreSectionType = 'trending' | 'recent' | 'connected' | 'favorites' | 'apps'
 
 type ExploreSectionBase = {
@@ -38,11 +40,16 @@ const ICON_SIZE = 20
  * Trending/Recent/Connected/Favorites sections are hidden when empty; "Explore apps" is always present.
  * "apps" surfaces only featured dapps on the main screen — the sub-screen shows the full catalog.
  */
+const selectDapps = (state: AllControllersMappingType['DappsController']) => state.dapps
+const selectRecentDapps = (state: AllControllersMappingType['DappsController']) => state.recentDapps
+const selectTrendingTokens = (state: AllControllersMappingType['DappsController']) =>
+  state.trendingTokens
+
 const useExploreSections = (): ExploreSection[] => {
   const { t } = useTranslation()
-  const { state: dapps } = useController('DappsController', 'dapps')
-  const { state: recentDapps } = useController('DappsController', 'recentDapps')
-  const { state: dappsTrendingTokens } = useController('DappsController', 'trendingTokens')
+  const { state: dapps } = useController('DappsController', selectDapps)
+  const { state: recentDapps } = useController('DappsController', selectRecentDapps)
+  const { state: dappsTrendingTokens } = useController('DappsController', selectTrendingTokens)
 
   const trendingTokens: TrendingToken[] = useMemo(
     () => dappsTrendingTokens || [],

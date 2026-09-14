@@ -26,31 +26,61 @@ const OFFLINE_BANNER: BannerInterface = {
 const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio?.isAllReady
 
+const selectIsOffline = (state: AllControllersMappingType['MainController']) => state.isOffline
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectDeprecatedSmartAccountBanner = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.deprecatedSmartAccountBanner
+const selectSelectedAccountBanners = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.banners
+const selectEmailVaultBanners = (state: AllControllersMappingType['EmailVaultController']) =>
+  state.banners
+const selectRequestsBanners = (state: AllControllersMappingType['RequestsController']) =>
+  state.banners
+const selectSwapAndBridgeBanners = (state: AllControllersMappingType['SwapAndBridgeController']) =>
+  state.banners
+const selectExtensionUpdateBanner = (
+  state: AllControllersMappingType['ExtensionUpdateController']
+) => state.extensionUpdateBanner
+const selectHasFundedHotAccount = (state: AllControllersMappingType['PortfolioController']) =>
+  state.hasFundedHotAccount
+
 export default function useBanners(): [BannerInterface[], BannerInterface[]] {
-  const { state: isOffline } = useController('MainController', 'isOffline')
+  const { state: isOffline } = useController('MainController', selectIsOffline)
   const { bannersData: marketingBannersData } = useController('BannerController').state
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: isPortfolioAllReady } = useController(
     'SelectedAccountController',
     selectPortfolioIsAllReady
   )
   const { state: deprecatedSmartAccountBanner } = useController(
     'SelectedAccountController',
-    'deprecatedSmartAccountBanner'
+    selectDeprecatedSmartAccountBanner
   )
   const { state: selectedAccountBanners = [] } = useController(
     'SelectedAccountController',
-    'banners'
+    selectSelectedAccountBanners
   )
 
-  const { state: emailVaultBanners = [] } = useController('EmailVaultController', 'banners')
-  const { state: requestBanners = [] } = useController('RequestsController', 'banners')
-  const { state: swapAndBridgeBanners = [] } = useController('SwapAndBridgeController', 'banners')
+  const { state: emailVaultBanners = [] } = useController(
+    'EmailVaultController',
+    selectEmailVaultBanners
+  )
+  const { state: requestBanners = [] } = useController('RequestsController', selectRequestsBanners)
+  const { state: swapAndBridgeBanners = [] } = useController(
+    'SwapAndBridgeController',
+    selectSwapAndBridgeBanners
+  )
   const { state: extensionUpdateBanner } = useController(
     'ExtensionUpdateController',
-    'extensionUpdateBanner'
+    selectExtensionUpdateBanner
   )
-  const { state: hasFundedHotAccount } = useController('PortfolioController', 'hasFundedHotAccount')
+  const { state: hasFundedHotAccount } = useController(
+    'PortfolioController',
+    selectHasFundedHotAccount
+  )
   const otaUpdateBanner = useOtaUpdateBanner()
 
   const marketingBanners = useMemo(() => {

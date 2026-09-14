@@ -57,6 +57,10 @@ const selectPortfolioIsReadyToVisualize = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.portfolio?.isReadyToVisualize
 
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+
 const Collections: FC<Props> = ({
   openTab,
   setOpenTab,
@@ -84,7 +88,7 @@ const Collections: FC<Props> = ({
   )
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
-    'dashboardNetworkFilter'
+    selectDashboardNetworkFilter
   )
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { t } = useTranslation()

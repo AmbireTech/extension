@@ -29,6 +29,10 @@ type Props = {
 const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio?.isAllReady
 
+const selectBalanceAffectingErrors = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.balanceAffectingErrors
+
 const BalanceAffectingErrors: FC<Props> = ({
   reloadAccount,
   sheetRef,
@@ -42,7 +46,7 @@ const BalanceAffectingErrors: FC<Props> = ({
   const { theme } = useTheme()
   const { state: balanceAffectingErrors } = useController(
     'SelectedAccountController',
-    'balanceAffectingErrors'
+    selectBalanceAffectingErrors
   )
   const { state: isPortfolioAllReady } = useController(
     'SelectedAccountController',

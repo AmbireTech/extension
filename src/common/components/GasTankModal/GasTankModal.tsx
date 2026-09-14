@@ -26,6 +26,8 @@ import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const GAS_TANK_HELP_URL = 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
 
 type Props = {
@@ -35,13 +37,15 @@ type Props = {
   account: Account | null
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const { isPopup } = getUiType()
   const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const {
     dispatch: featureFlagsDispatch,
     state: { flags }

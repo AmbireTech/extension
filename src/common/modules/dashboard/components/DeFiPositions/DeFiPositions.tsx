@@ -61,6 +61,15 @@ const selectPortfolioDefiPositions = (
 const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio?.isAllReady
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+const selectBanners = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.banners
+
 const DeFiPositions: FC<Props> = ({
   openTab,
   setOpenTab,
@@ -78,12 +87,12 @@ const DeFiPositions: FC<Props> = ({
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme } = useTheme()
   const searchValue = watch('search')
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: scheduledUpdateChainIds, dispatch: portfolioDispatch } = useController(
     'PortfolioController',
     selectScheduledUpdateChainIds
   )
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: defiPositions } = useController(
     'SelectedAccountController',
     selectPortfolioDefiPositions
@@ -94,9 +103,9 @@ const DeFiPositions: FC<Props> = ({
   )
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
-    'dashboardNetworkFilter'
+    selectDashboardNetworkFilter
   )
-  const { state: banners } = useController('SelectedAccountController', 'banners')
+  const { state: banners } = useController('SelectedAccountController', selectBanners)
   const { setSearchParams, navigate } = useNavigation()
 
   const hasPendingUpdate = useMemo(

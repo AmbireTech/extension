@@ -31,10 +31,15 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   simulationFailed?: boolean
   disabled?: boolean
 }
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   const { theme, themeType } = useTheme(getStyles)
@@ -58,7 +63,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: balancePerNetwork } = useController(
     'SelectedAccountController',
     (state) => state.portfolio.balancePerNetwork
@@ -147,35 +152,35 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   const toNetworksOptions: SelectValue[] = useMemo(
     () =>
       sortNetworksByBalance(networks, balancePerNetwork).map((n) => {
-          const tooltipId = `network-${n.chainId}-not-supported-tooltip`
+        const tooltipId = `network-${n.chainId}-not-supported-tooltip`
 
-          return {
-            value: String(n.chainId),
-            extraSearchProps: { name: n.name },
-            disabled: n.isNotSupported,
-            label: (
-              <>
-                <Text
-                  fontSize={isMobile ? 14 : 16}
-                  appearance="secondaryText"
-                  weight="medium"
-                  dataSet={{ tooltipId }}
-                  style={flexbox.flex1}
-                  numberOfLines={1}
-                >
-                  {n.name}
-                </Text>
-                {n.isNotSupported && (
-                  <NotSupportedNetworkTooltip
-                    tooltipId={tooltipId}
-                    message={n.notSupportedReason || t('Network unavailable')}
-                  />
-                )}
-              </>
-            ),
-            icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
-          }
-        }),
+        return {
+          value: String(n.chainId),
+          extraSearchProps: { name: n.name },
+          disabled: n.isNotSupported,
+          label: (
+            <>
+              <Text
+                fontSize={isMobile ? 14 : 16}
+                appearance="secondaryText"
+                weight="medium"
+                dataSet={{ tooltipId }}
+                style={flexbox.flex1}
+                numberOfLines={1}
+              >
+                {n.name}
+              </Text>
+              {n.isNotSupported && (
+                <NotSupportedNetworkTooltip
+                  tooltipId={tooltipId}
+                  message={n.notSupportedReason || t('Network unavailable')}
+                />
+              )}
+            </>
+          ),
+          icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
+        }
+      }),
     [networks, balancePerNetwork, t]
   )
 

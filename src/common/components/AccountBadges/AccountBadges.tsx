@@ -11,14 +11,18 @@ import spacings from '@common/styles/spacings'
 
 import BadgeWithPreset from '../BadgeWithPreset'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   accountData: Account
   // When false, badges drop their fixed left margin so a parent columnGap can space them
   withSpacing?: boolean
 }
 
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+
 const AccountBadges: FC<Props> = ({ accountData, withSpacing = true }) => {
-  const { state: keys } = useController('KeystoreController', 'keys')
+  const { state: keys } = useController('KeystoreController', selectKeys)
   const { theme } = useTheme()
 
   const isSmartAccount = useMemo(

@@ -38,9 +38,13 @@ import {
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isSidePanel } = getUiType()
 const withMobileLayout = isMobile || isSidePanel
 const withMobileSummaryLayout = isMobile
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
   item,
@@ -60,7 +64,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { state: controllerNetworks } = useController('NetworksController', 'networks')
+  const { state: controllerNetworks } = useController('NetworksController', selectNetworks)
   const { benzinNetworks } = useNetworksContext()
   const networks = controllerNetworks ?? benzinNetworks
   const shouldHideTransactionSummaryTitle = withMobileLayout && hideMobileSummaryTitle

@@ -9,12 +9,16 @@ import useCompactActionRequestLayout from '@common/modules/action-requests/hooks
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 // TODO: Refactor to use the <AccountAddress /> component instead
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
 const InteractionAddress = ({ address }: { address: string }) => {
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const reverseLookup = useReverseLookup({ address })
   const { contacts = [] } = useController('AddressBookController').state
-  const { state: accounts = [] } = useController('AccountsController', 'accounts')
+  const { state: accounts = [] } = useController('AccountsController', selectAccounts)
   const addressBookContact = contacts.find(
     (contact) => contact.address.toLowerCase() === address.toLowerCase()
   )
