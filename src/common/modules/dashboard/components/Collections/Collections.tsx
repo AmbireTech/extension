@@ -80,7 +80,9 @@ const Collections: FC<Props> = ({
   const filteredPortfolioCollections = useMemo(() => {
     const searchableCollections = (portfolio?.collections || []).filter(
       ({ chainId, collectibles, flags }) => {
-        if (flags.isHidden) return false
+        // Collections carried no flags before they could be hidden, so a result
+        // from an older background has none
+        if (flags?.isHidden) return false
 
         let isMatchingNetwork = true
 
@@ -167,7 +169,7 @@ const Collections: FC<Props> = ({
           priceIn={priceIn}
           openCollectibleModal={openCollectibleModal}
           networks={networks}
-          isCustom={flags.isCustom}
+          isCustom={flags?.isCustom}
         />
       )
     },

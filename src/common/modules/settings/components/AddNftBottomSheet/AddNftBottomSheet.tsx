@@ -238,7 +238,7 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
         params: {
           method: 'updateCollectionValidation',
           // The last argument asks the controller to look past a stored verdict
-          args: [{ address, chainId: network.chainId }, account.addr, isCollectionCheckRetryable]
+          args: [{ address, chainId: network.chainId }, isCollectionCheckRetryable]
         }
       })
     }

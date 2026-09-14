@@ -75,7 +75,7 @@ const AssetRow: FC<Props> = ({ asset, standard }) => {
             withNetworkIcon={false}
             address={address}
             chainId={chainId}
-            onGasTank={flags.onGasTank}
+            onGasTank={!!flags && 'onGasTank' in flags && flags.onGasTank}
             containerHeight={ICON_SIZE}
             containerWidth={ICON_SIZE}
             width={28}

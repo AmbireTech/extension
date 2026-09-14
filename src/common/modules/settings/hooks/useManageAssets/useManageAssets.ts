@@ -7,7 +7,11 @@ import {
   TokenPreference
 } from '@ambire-common/libs/portfolio/customToken'
 import { getAssetCacheKey } from '@ambire-common/libs/portfolio/helpers'
-import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import {
+  CollectionResult,
+  PortfolioAsset,
+  TokenResult
+} from '@ambire-common/libs/portfolio/interfaces'
 import useController from '@common/hooks/useController'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { networkSort } from '@common/utils/sorting'
@@ -20,7 +24,7 @@ const PLACEHOLDER_DECIMALS = { ERC20: 0, ERC721: 1 }
 type StoredAsset = { address: string; chainId: bigint; tokenId?: bigint }
 
 /** A collectible is listed on its own, so it carries the id it was stored with */
-export type ManagedAsset<T extends TokenResult = TokenResult> = T & { tokenId?: bigint }
+export type ManagedAsset<T extends PortfolioAsset = TokenResult> = T & { tokenId?: bigint }
 
 type Params = {
   standard: CustomToken['standard']
@@ -66,7 +70,7 @@ const getPlaceholderAsset = (
  * The custom and the hidden assets of a standard, built from the stored records
  * and enriched with the portfolio's data when it has any.
  */
-const composeAssetLists = <T extends TokenResult>({
+const composeAssetLists = <T extends PortfolioAsset>({
   standard,
   customTokens,
   tokenPreferences,
@@ -77,11 +81,13 @@ const composeAssetLists = <T extends TokenResult>({
   search
 }: Params): { customAssets: ManagedAsset<T>[]; hiddenAssets: ManagedAsset<T>[] } => {
   const isCollection = standard === 'ERC721'
-  const portfolioAssetsByKey: { [key: string]: TokenResult } = {}
+  const portfolioAssetsByKey: { [key: string]: PortfolioAsset } = {}
 
   ;(isCollection ? portfolioCollections : portfolioTokens).forEach((asset) => {
     // Rewards and gas tank entries duplicate an address that is already listed
-    if (!isCollection && (asset.flags.onGasTank || !!asset.flags.rewardsType)) return
+    const isToken = !('collectibles' in asset)
+
+    if (isToken && (asset.flags.onGasTank || !!asset.flags.rewardsType)) return
 
     portfolioAssetsByKey[getAssetCacheKey(asset.address, asset.chainId)] = asset
   })
@@ -100,7 +106,7 @@ const composeAssetLists = <T extends TokenResult>({
     return isCollection ? isKnownCollection : !isKnownCollection
   }
 
-  const sortByNetwork = (a: TokenResult, b: TokenResult) => {
+  const sortByNetwork = (a: PortfolioAsset, b: PortfolioAsset) => {
     const aNetwork = networks.find(({ chainId }) => chainId === a.chainId)
     const bNetwork = networks.find(({ chainId }) => chainId === b.chainId)
 
@@ -128,7 +134,7 @@ const composeAssetLists = <T extends TokenResult>({
         assets,
         search,
         searchType: isCollection ? 'collection' : 'token'
-      }) as ManagedAsset<T>[]
+      }) as unknown as ManagedAsset<T>[]
     ).sort(sortByNetwork)
   }
 
@@ -154,14 +160,14 @@ type Props = {
   standard: CustomToken['standard']
 }
 
-type UseManageAssetsReturnType<T extends TokenResult> = {
+type UseManageAssetsReturnType<T extends PortfolioAsset> = {
   customAssets: ManagedAsset<T>[]
   hiddenAssets: ManagedAsset<T>[]
   isLoading: boolean
 }
 
 /** The custom and the hidden assets of a standard */
-const useManageAssets = <T extends TokenResult>({
+const useManageAssets = <T extends PortfolioAsset>({
   search,
   networkFilter,
   standard
