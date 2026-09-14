@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -36,16 +37,21 @@ const FeeInfoBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const feeTiers = useMemo(
     () => [
-      { id: 'over-700k', heldLabel: t('700,000+'), feePercent: 0, feeLabel: '0%' },
-      { id: 'over-100k', heldLabel: t('100,000+'), feePercent: 0.25, feeLabel: '0.25%' },
+      { id: 'under-33k', heldLabel: t('Under 33,000'), feePercent: 0.5, feeLabel: '0.50%' },
       { id: 'over-33k', heldLabel: t('33,000+'), feePercent: 0.4, feeLabel: '0.40%' },
-      { id: 'up-to-33k', heldLabel: t('Up to 33,000'), feePercent: 0.5, feeLabel: '0.50%' }
+      { id: 'over-100k', heldLabel: t('100,000+'), feePercent: 0.25, feeLabel: '0.25%' },
+      { id: 'over-700k', heldLabel: t('700,000+'), feePercent: 0, feeLabel: '0%' }
     ],
     [t]
   )
+  const visibleFeeTiers = useMemo(() => {
+    const currentTierIndex = feeTiers.findIndex((tier) => tier.feePercent === feePercent)
+
+    return currentTierIndex === -1 ? feeTiers : feeTiers.slice(currentTierIndex)
+  }, [feePercent, feeTiers])
   const feeExemptionExplanation = useMemo(() => {
     if (feeExemptionReason === 'wrap-or-unwrap') {
       return t('Wrapping or unwrapping this token has no Ambire fee.')
@@ -74,7 +80,7 @@ const FeeInfoBottomSheet = ({
       withBackdropBlur
     >
       {feeExemptionExplanation ? (
-        <View style={[styles.feeExemption, spacings.ph, spacings.pvSm, spacings.mtSm]}>
+        <View style={[styles.feeExemption, spacings.phSm, spacings.pvSm, spacings.mtSm]}>
           <Text appearance="successText" fontSize={14} weight="semiBold">
             {t('No fee for this operation')}
           </Text>
@@ -84,68 +90,113 @@ const FeeInfoBottomSheet = ({
         </View>
       ) : (
         <>
-          <Text fontSize={20} weight="semiBold" style={[styles.centeredText, spacings.mtSm]}>
-            {t('Stake $WALLET and pay less in trading fees')}
+          <Text fontSize={24} weight="semiBold" style={spacings.mtSm}>
+            {t('Stake $WALLET. Pay less.')}
           </Text>
-          <Text
-            appearance="secondaryText"
-            fontSize={12}
-            style={[styles.centeredText, spacings.mtTy]}
-          >
-            {t('(100% of accrued fees are used for $WALLET buybacks)')}
+          <Text appearance="secondaryText" fontSize={14} style={spacings.mtTy}>
+            {t('Move up through the tiers to reduce swap and bridge fees.')}
           </Text>
 
-          <View style={[styles.table, spacings.mtLg]}>
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifySpaceBetween,
-                spacings.ph,
-                spacings.pvTy
-              ]}
-            >
-              <Text appearance="secondaryText" fontSize={13} weight="medium">
-                {t('$stkWALLET held')}
-              </Text>
-              <Text appearance="secondaryText" fontSize={13} weight="medium">
-                {t('Fee')}
-              </Text>
-            </View>
-
-            {feeTiers.map((tier) => {
+          <View style={spacings.mtLg}>
+            {visibleFeeTiers.map((tier, index) => {
               const isCurrent = feePercent === tier.feePercent
+              const isMaximum = tier.feePercent === 0
+              const savingsPercent = feePercent
+                ? Math.round(((feePercent - tier.feePercent) / feePercent) * 100)
+                : 0
 
               return (
-                <View
-                  key={tier.id}
-                  style={[
-                    styles.tierRow,
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.justifySpaceBetween,
-                    spacings.ph,
-                    spacings.pvSm,
-                    isCurrent && styles.currentTierRow
-                  ]}
-                >
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <Text fontSize={14} weight={isCurrent ? 'semiBold' : 'medium'}>
-                      {tier.heldLabel}
-                    </Text>
-                    {isCurrent && (
-                      <Badge
-                        text={t('Current')}
-                        type="primaryAccent"
-                        style={spacings.mlTy}
-                        testId="current-swap-and-bridge-fee-tier"
-                      />
-                    )}
+                <React.Fragment key={tier.id}>
+                  <View
+                    style={[
+                      styles.tierCard,
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      flexbox.justifySpaceBetween,
+                      spacings.ph,
+                      isMaximum ? spacings.pvMd : spacings.pvSm,
+                      isCurrent && styles.currentTierCard,
+                      isMaximum && styles.maximumTierCard
+                    ]}
+                    testID={`swap-and-bridge-fee-tier-${tier.id}`}
+                  >
+                    <View style={[flexbox.flex1, styles.tierDetails]}>
+                      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+                        <Text fontSize={isMaximum ? 24 : 20} weight="medium">
+                          {tier.heldLabel}
+                        </Text>
+                        {isCurrent && (
+                          <View style={spacings.mlTy}>
+                            <Badge
+                              text={t('YOUR TIER')}
+                              type="primaryAccent"
+                              style={styles.tierBadge}
+                              textStyle={styles.tierBadgeText}
+                              testId="current-swap-and-bridge-fee-tier"
+                            />
+                          </View>
+                        )}
+                      </View>
+                      <Text appearance="secondaryText" fontSize={13} style={spacings.mtMi}>
+                        {t('$stkWALLET held')}
+                      </Text>
+                      {isMaximum && (
+                        <View style={[spacings.mtTy, flexbox.alignSelfStart]}>
+                          <Badge
+                            text={t('MAXIMUM BENEFIT')}
+                            type="primaryAccent"
+                            style={styles.tierBadge}
+                            textStyle={styles.tierBadgeText}
+                          />
+                        </View>
+                      )}
+                    </View>
+                    <View style={[flexbox.alignEnd, styles.feeDetails, spacings.mlSm]}>
+                      <Text
+                        fontSize={isMaximum ? 32 : 20}
+                        weight="medium"
+                        appearance={isMaximum ? 'successText' : 'primaryText'}
+                      >
+                        {tier.feeLabel}
+                      </Text>
+
+                      {!isCurrent && !isMaximum && (
+                        <Text appearance="successText" fontSize={13} style={spacings.mtMi}>
+                          {t('{{percent}}% lower', { percent: savingsPercent })}
+                        </Text>
+                      )}
+                      {isMaximum && (
+                        <Text appearance="successText" fontSize={14} style={spacings.mtTy}>
+                          {t('Fee-free')}
+                        </Text>
+                      )}
+                    </View>
                   </View>
-                  <Text fontSize={14} weight={isCurrent ? 'semiBold' : 'medium'}>
-                    {tier.feeLabel}
-                  </Text>
-                </View>
+
+                  {index === 0 && visibleFeeTiers.length > 1 && (
+                    <View
+                      style={[
+                        flexbox.directionRow,
+                        flexbox.alignCenter,
+                        flexbox.justifyCenter,
+                        spacings.pvSm
+                      ]}
+                    >
+                      <DownArrowIcon
+                        width={12}
+                        height={7}
+                        color={theme.secondaryText}
+                        strokeWidth="2"
+                      />
+                      <Text appearance="secondaryText" fontSize={13} style={spacings.mlTy}>
+                        {t('Stake more, pay less')}
+                      </Text>
+                    </View>
+                  )}
+                  {index > 0 && index < visibleFeeTiers.length - 1 && (
+                    <View style={spacings.mtSm} />
+                  )}
+                </React.Fragment>
               )
             })}
           </View>
@@ -159,8 +210,17 @@ const FeeInfoBottomSheet = ({
               testID="swap-and-bridge-stake-wallet-button"
             />
           )}
+
+          <Text
+            appearance="secondaryText"
+            fontSize={12}
+            style={[styles.centeredText, withActions ? spacings.mtSm : spacings.mtLg]}
+          >
+            {t('100% of accrued fees are used for $WALLET buybacks.')}
+          </Text>
+
           {(withActions || withCloseAction) && (
-            <View style={[flexbox.alignCenter, withActions ? spacings.mtSm : spacings.mtLg]}>
+            <View style={[flexbox.alignCenter, spacings.mtSm]}>
               <HoverablePressable
                 onPress={closeBottomSheet}
                 hitSlop={8}

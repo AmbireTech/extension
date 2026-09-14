@@ -1,13 +1,17 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { ThemeProps } from '@common/styles/themeConfig'
-import common, { hexToRgba } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 
 interface Styles {
   centeredText: TextStyle
-  table: ViewStyle
-  tierRow: ViewStyle
-  currentTierRow: ViewStyle
+  tierCard: ViewStyle
+  currentTierCard: ViewStyle
+  maximumTierCard: ViewStyle
+  tierDetails: ViewStyle
+  feeDetails: ViewStyle
+  tierBadge: ViewStyle
+  tierBadgeText: TextStyle
   feeExemption: ViewStyle
 }
 
@@ -16,18 +20,27 @@ const getStyles = (theme: ThemeProps) =>
     centeredText: {
       textAlign: 'center'
     },
-    table: {
+    tierCard: {
       ...common.borderRadiusSecondary,
-      borderWidth: 1,
-      borderColor: theme.primaryBorder,
-      overflow: 'hidden'
+      backgroundColor: theme.secondaryBackground
     },
-    tierRow: {
-      borderTopWidth: 1,
-      borderTopColor: theme.primaryBorder
+    currentTierCard: {
+      backgroundColor: theme.primaryAccent100
     },
-    currentTierRow: {
-      backgroundColor: hexToRgba(theme.primaryAccent, 0.12)
+    maximumTierCard: {
+      backgroundColor: theme.successBackground
+    },
+    tierDetails: {
+      minWidth: 0
+    },
+    feeDetails: {
+      flexShrink: 0
+    },
+    tierBadge: {
+      backgroundColor: theme.primaryAccent200
+    },
+    tierBadgeText: {
+      color: '#fff'
     },
     feeExemption: {
       ...common.borderRadiusSecondary,
