@@ -12,6 +12,7 @@ import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
+import UnstakeIcon from '@common/assets/svg/UnstakeIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
 import useController from '@common/hooks/useController'
@@ -51,14 +52,20 @@ const selectXWalletLockedShares = (state: SelectedAccountController) =>
 
 const WALLET_STAKING_ACTIONS: Record<
   string,
-  { text: 'Withdraw' | 'Unstake'; icon: typeof EarnIcon; mode: WalletStakingMode }
+  {
+    text: 'Withdraw' | 'Unstake'
+    icon: typeof EarnIcon
+    strokeWidth?: number
+    mode: WalletStakingMode
+  }
 > = {
   [WALLET_STAKING_ADDR.toLowerCase()]: {
     text: 'Withdraw',
     icon: WithdrawIcon,
+    strokeWidth: 1,
     mode: 'unstake'
   },
-  [STK_WALLET.toLowerCase()]: { text: 'Unstake', icon: WithdrawIcon, mode: 'unstake' }
+  [STK_WALLET.toLowerCase()]: { text: 'Unstake', icon: UnstakeIcon, mode: 'unstake' }
 }
 
 /**
@@ -370,7 +377,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
           testID: 'wallet-staking-button',
           text: t(walletStakingAction.text),
           icon: walletStakingAction.icon,
-          strokeWidth: 1,
+          strokeWidth: walletStakingAction.strokeWidth,
           onPress: () =>
             navigate(ROUTES.walletStaking, { state: { mode: walletStakingAction.mode } })
         }
