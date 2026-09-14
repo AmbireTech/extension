@@ -67,6 +67,27 @@ describe('createCtrlStateCommitter (native)', () => {
     expect(committer.pendingStateOf('MainController')).toBeUndefined()
   })
 
+  it('keeps a plain update behind the ones already queued ahead of it', () => {
+    const { delivered, commitStatus } = createHarness()
+
+    commitStatus('SUCCESS')
+    commitStatus('LOADING', false)
+    commitStatus('INITIAL', false)
+
+    expect(delivered).toEqual(['SUCCESS'])
+
+    // Drains the first of the two held updates, which leaves the second still queued
+    // while nothing forced is in front of the UI any more.
+    runFrame()
+    expect(delivered).toEqual(['SUCCESS', 'LOADING'])
+
+    commitStatus('SIGNING', false)
+
+    runFrame()
+    runFrame()
+    expect(delivered).toEqual(['SUCCESS', 'LOADING', 'INITIAL', 'SIGNING'])
+  })
+
   it('paces nothing while a plain update is the last one delivered', () => {
     const { delivered, commitStatus } = createHarness()
 

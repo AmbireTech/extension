@@ -67,7 +67,7 @@ export const createCtrlStateCommitter = (deliver: DeliverCtrlState): CtrlStateCo
 
   return {
     commit: (id, state, forceEmit) => {
-      if (!ctrlsWithUnrenderedForcedState.has(id)) {
+      if (!ctrlsWithUnrenderedForcedState.has(id) && !queuedStates.has(id)) {
         deliverNow(id, state, forceEmit)
         return
       }
