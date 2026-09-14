@@ -112,13 +112,11 @@ export const createSubscriptionIntent = (): SubscriptionIntent => {
 export default function useControllerState<K extends keyof AllControllersMappingType>({
   id,
   selector,
-  subscriptionEnabled,
   subscriptionIntent,
   resubscribeSignal
 }: {
   id: K
   selector?: undefined
-  subscriptionEnabled?: boolean
   subscriptionIntent?: SubscriptionIntent
   resubscribeSignal?: number
 }): UseControllerReturn<K, DefaultState<K>>
@@ -129,13 +127,11 @@ export default function useControllerState<
 >({
   id,
   selector,
-  subscriptionEnabled,
   subscriptionIntent,
   resubscribeSignal
 }: {
   id: K
   selector: S
-  subscriptionEnabled?: boolean
   subscriptionIntent?: SubscriptionIntent
   resubscribeSignal?: number
 }): UseControllerReturn<K, AllControllersMappingType[K][S]>
@@ -143,13 +139,11 @@ export default function useControllerState<
 export default function useControllerState<K extends keyof AllControllersMappingType, S>({
   id,
   selector,
-  subscriptionEnabled,
   subscriptionIntent,
   resubscribeSignal
 }: {
   id: K
   selector?: (state: AllControllersMappingType[K]) => S
-  subscriptionEnabled?: boolean
   subscriptionIntent?: SubscriptionIntent
   resubscribeSignal?: number
 }): UseControllerReturn<K, S>
@@ -160,13 +154,11 @@ export default function useControllerState<
 >({
   id,
   selector,
-  subscriptionEnabled = true,
   subscriptionIntent,
   resubscribeSignal
 }: {
   id: K
   selector?: ((state: AllControllersMappingType[K]) => S) | keyof AllControllersMappingType[K]
-  subscriptionEnabled?: boolean
   subscriptionIntent?: SubscriptionIntent
   resubscribeSignal?: number
 }): UseControllerReturn<K, S> {
@@ -237,15 +229,11 @@ export default function useControllerState<
    * `resubscribeSignal` is what a caller changes to have this asked again.
    */
   const shouldSubscribe = useCallback(
-    () => {
-      const readsState = !subscriptionIntent || subscriptionIntent.decide()
-
-      return subscriptionEnabled && readsState
-    },
+    () => !subscriptionIntent || subscriptionIntent.decide(),
     // `resubscribeSignal` is not read here, only changed by the caller to have the
     // question asked again.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [subscriptionEnabled, subscriptionIntent, resubscribeSignal]
+    [subscriptionIntent, resubscribeSignal]
   )
 
   const derivedSelector = useMemo(() => {
