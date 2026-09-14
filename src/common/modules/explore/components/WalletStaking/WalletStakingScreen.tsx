@@ -15,6 +15,7 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
+import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import HoverablePressable from '@common/components/HoverablePressable'
@@ -1026,7 +1027,7 @@ const WalletStakingScreen = () => {
               {isPendingWithdrawalMode && (
                 <View style={styles.pendingWithdrawalCard}>
                   <View style={styles.pendingWithdrawalIcon}>
-                    <LockWithTimerIcon width={54} height={54} color={theme.errorText} />
+                    <WithdrawIcon width={54} height={54} color={theme.errorText} />
                   </View>
                   {isWithdrawalReady ? (
                     <>

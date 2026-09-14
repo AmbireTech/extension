@@ -8,31 +8,27 @@ interface Props extends SvgProps {
   height?: number
 }
 
-const WithdrawIcon: React.FC<Props> = ({ width = 30, height = 30, color, strokeWidth = '1' }) => {
+const UnstakeIcon: React.FC<Props> = ({ width = 28, height = 28, color, strokeWidth = '1.5' }) => {
   const { theme } = useTheme()
   const strokeColor = color || theme.iconSecondary
 
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M14 14.75L12 17C10.6983 15.5355 11.3017 16.2145 10 14.75M12 17L12 11"
+        d="M17 9L12 14C10.0474 12.0474 8.95262 10.9526 7 9M12 14L12 5"
         stroke={strokeColor}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <Path
-        d="M17.5 8.5V17C17.5 18.3807 16.3807 19.5 15 19.5H9C7.61929 19.5 6.5 18.3807 6.5 17V8.5H17.5Z"
+        d="M5 16L5 17C5 18.1046 5.89543 19 7 19L17 19C18.1046 19 19 18.1046 19 17V16"
         stroke={strokeColor}
         strokeWidth={strokeWidth}
-      />
-      <Path
-        d="M6 12C3.79086 12 2 10.2091 2 8C2 5.79086 3.79086 4 6 4H18C20.2091 4 22 5.79086 22 8C22 10.2091 20.2091 12 18 12"
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
+        strokeLinecap="round"
       />
     </Svg>
   )
 }
 
-export default React.memo(WithdrawIcon)
+export default React.memo(UnstakeIcon)
