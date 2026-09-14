@@ -234,10 +234,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
               spacings.phSm,
               spacings.pvTy,
               {
-                // A little wider than the text strictly needs, so the wrap point between
-                // the plain and underlined nested Text fragments lands with slack instead
-                // of right at the card's edge - too tight and the last glyph gets clipped.
-                width: 300,
+                width: nonceConflict.kind === 'taken' ? 280 : 270,
                 borderRadius: BORDER_RADIUS_PRIMARY,
                 borderWidth: 1,
                 borderColor: theme.secondaryBorder,
@@ -252,8 +249,8 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
           >
             <Text fontSize={14} appearance="secondaryText">
               {nonceConflict.kind === 'taken'
-                ? t('A pending transaction already uses this nonce. ')
-                : t('Latest free pending nonce is lower. ')}
+                ? t('A pending transaction already uses this nonce.')
+                : t('Latest free pending nonce is lower.')}{' '}
               <Text fontSize={14} appearance="linkText" underline>
                 {t('You can use nonce {{nextNonce}}', {
                   nextNonce: nonceConflict.nextNonce.toString()
@@ -416,7 +413,9 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
         {!!nonceConflictBubble && (
           <View
             style={[
-              { position: 'absolute', right: -40, zIndex: 10 },
+              // Aligned with this container's right edge (rather than overhanging it) so the
+              // bubble stays within the screen bounds instead of running off the right side.
+              { position: 'absolute', right: 0, zIndex: 10 },
               // On mobile the bubble renders below the input instead of above it, because
               // this component sits at the top of the screen's ScrollView, leaving no
               // scroll room above it for an upward-opening bubble to be visible in.
