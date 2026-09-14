@@ -17,6 +17,7 @@ import type { MainController } from '@ambire-common/controllers/main/main'
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
 import type { PhishingController } from '@ambire-common/controllers/phishing/phishing'
 import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
+import type { PrivacyPoolsController } from '@ambire-common/controllers/privacyPools/privacyPools'
 import type { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import type { RequestsController } from '@ambire-common/controllers/requests/requests'
 import type { SafeController } from '@ambire-common/controllers/safe/safe'
@@ -46,6 +47,7 @@ export type ControllersNestedInMainMappingType = {
   KeystoreController: KeystoreController
   SignMessageController: SignMessageController
   PortfolioController: PortfolioController
+  PrivacyPoolsController: PrivacyPoolsController
   ActivityController: ActivityController
   EmailVaultController: EmailVaultController
   SignAccountOpController: SignAccountOpController
@@ -85,6 +87,7 @@ export const controllersNestedInMainMapping =
     'KeystoreController',
     'SignMessageController',
     'PortfolioController',
+    'PrivacyPoolsController',
     'ActivityController',
     'EmailVaultController',
     'SignAccountOpController',

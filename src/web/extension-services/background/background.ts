@@ -5,6 +5,9 @@
 // It is imported in background for development builds, and injected via Webpack
 // plugin for production where LavaMoat + SES isolate modules and harden intrinsics.
 import 'setimmediate'
+// Must stay above every other import: it patches a global that `@kohaku-eth/privacy-pools` needs
+// at module-evaluation time, and ES modules evaluate imports in order. See the file for why.
+import './kohakuShims'
 
 import { nanoid } from 'nanoid'
 
@@ -506,6 +509,9 @@ const init = async () => {
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,
+    // Copied next to the bundle at build time (see webpack/extension.js) and served same-origin,
+    // so proving needs no network and no CSP entry for a third-party host.
+    privacyPoolsCircuitsBaseUrl: browser.runtime.getURL('privacy-pools-circuits/'),
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,

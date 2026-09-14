@@ -212,6 +212,10 @@ const MainRoutes = () => {
                   element={<SettingsGroupScreen pick={(m) => m.OptOutsScreen} />}
                 />
                 <Route
+                  path={WEB_ROUTES.privacyPools}
+                  element={<SettingsGroupScreen pick={(m) => m.PrivacyPoolsScreen} />}
+                />
+                <Route
                   path={WEB_ROUTES.manageTokens}
                   element={<SettingsGroupScreen pick={(m) => m.ManageTokensSettingsScreen} />}
                 />

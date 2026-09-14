@@ -309,6 +309,16 @@ module.exports = async function buildExtension(
       from: './node_modules/webextension-polyfill/dist/browser-polyfill.min.js',
       to: 'browser-polyfill.min.js'
     },
+    // Privacy Pools proving keys and witness generators (~23 MB). Copied as build assets and
+    // served same-origin via `browser.runtime.getURL`, because the SDK's default base URL points
+    // at a pinned commit on raw.githubusercontent.com - a third-party host in the path of a
+    // withdrawal, needing a CSP entry and re-downloaded per prover instance. Bundling them also
+    // means proving works offline. See PRIVACY_POOLS_CIRCUIT_PATHS for the filenames the SDK asks
+    // for; they must match what lands here.
+    {
+      from: './node_modules/@fatsolutions/privacy-pools-core-circuits/artifacts',
+      to: 'privacy-pools-circuits'
+    },
     // qr-scanner ships its decoder worker inlined inside a `new Worker(URL.createObjectURL(new Blob([...])))`
     // call. Firefox MV3 extension pages reject blob: workers under the default `script-src 'self'` CSP,
     // so we extract the worker source once at build time and serve it as a real same-origin file.

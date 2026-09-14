@@ -441,6 +441,11 @@ const routesConfig: RouteConfig = {
     title: Platform.select({ default: i18n.t('Connect QR wallet') }),
     name: Platform.select({ default: i18n.t('Connect QR wallet') })
   },
+  [ROUTES.privacyPools]: {
+    route: ROUTES.privacyPools,
+    title: Platform.select({ default: i18n.t('Privacy Pools') }),
+    name: Platform.select({ default: i18n.t('Privacy Pools') })
+  },
   [ROUTES.qrPermission]: {
     route: ROUTES.qrPermission,
     title: Platform.select({ default: i18n.t('Camera permission') }),

@@ -84,6 +84,7 @@ const WEB_ROUTES = {
   optOuts: 'settings/opt-outs',
   survey: 'survey',
   qrPermission: 'qr-permission',
+  privacyPools: 'privacy-pools',
   exportAccountsToMobile: 'export-accounts-to-mobile',
   importAccountsFromMobile: 'import-accounts-from-mobile',
   // INTERNAL ROUTES

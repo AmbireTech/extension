@@ -315,6 +315,10 @@ const initControllers = (config: any) => {
       appVersion: config.APP_VERSION,
       platform: config.platform,
       fetch: bridgedFetch,
+      // Privacy Pools proving is not wired on mobile yet - the ~23 MB circuit artifacts are not
+      // bundled here. Empty on purpose: the prover refuses to start rather than failing later with
+      // an unexplained fetch error.
+      privacyPoolsCircuitsBaseUrl: '',
       relayerUrl: config.RELAYER_URL,
       velcroUrl: config.VELCRO_URL,
       liFiApiKey: config.LIFI_EXPLORER_URL,

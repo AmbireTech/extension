@@ -13,6 +13,7 @@ export { default as NetworksConfiguration } from '@web/modules/network-settings/
 export { default as NetworksSettingsScreen } from '@web/modules/settings/screens/NetworksSettingsScreen'
 export { default as OptOutsScreen } from '@web/modules/settings/screens/OptOutsScreen'
 export { default as PrivacyOptOutsConfiguration } from '@web/modules/network-settings/screens/PrivacyOptOutsConfiguration'
+export { default as PrivacyPoolsScreen } from '@web/modules/privacy-pools/screens/PrivacyPoolsScreen'
 export { default as RecoveryPhrasesSettingsScreen } from '@web/modules/settings/screens/RecoveryPhrasesSettingsScreen'
 export { default as SignedMessageHistorySettingsScreen } from '@web/modules/settings/screens/SignedMessageHistorySettingsScreen'
 export { default as TermsSettingsScreen } from '@web/modules/settings/screens/TermsSettingsScreen'

@@ -1,0 +1,109 @@
+import React, { FC } from 'react'
+import { View } from 'react-native'
+
+import {
+  PrivacyPoolsActivityStatus,
+  PrivacyPoolsActivityType
+} from '@ambire-common/interfaces/privacyPools'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import shortenAddress from '@ambire-common/utils/shortenAddress'
+import Text from '@common/components/Text'
+import TokenIcon from '@common/components/TokenIcon'
+import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import { PrivacyPoolsActivityDisplay } from '@web/modules/privacy-pools/hooks/usePrivacyPools/usePrivacyPools'
+
+import getStyles from './styles'
+
+interface Props {
+  activity: PrivacyPoolsActivityDisplay[]
+}
+
+const TYPE_LABEL: { [type in PrivacyPoolsActivityType]: string } = {
+  deposit: 'Deposit',
+  withdraw: 'Withdraw',
+  reclaim: 'Taken back'
+}
+
+const STATUS_LABEL: { [status in PrivacyPoolsActivityStatus]: string } = {
+  pending: 'In progress',
+  success: 'Done',
+  failed: 'Failed'
+}
+
+/**
+ * What this wallet has done with the pools.
+ *
+ * Kept locally rather than read back from the chain, because the pool exposes no history a wallet
+ * could reconstruct: notes carry no timestamp and no transaction id, and a change note left by a
+ * withdrawal is indistinguishable from a fresh deposit.
+ */
+const PrivacyPoolsActivity: FC<Props> = ({ activity }) => {
+  const { t } = useTranslation()
+  const { styles, theme } = useTheme(getStyles)
+
+  const getStatusColor = (status: PrivacyPoolsActivityStatus) => {
+    if (status === 'pending') return theme.warningText
+    if (status === 'failed') return theme.errorText
+
+    return theme.successText
+  }
+
+  if (!activity.length) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Text fontSize={14} weight="medium" style={spacings.mbMi}>
+            {t('No activity yet')}
+          </Text>
+          <Text fontSize={12} color={theme.secondaryText} style={styles.centeredText}>
+            {t('Deposits and withdrawals you make here show up in this list.')}
+          </Text>
+        </View>
+      </View>
+    )
+  }
+
+  return (
+    <View style={styles.container}>
+      {activity.map((entry, index) => (
+        <View
+          key={entry.id}
+          style={[styles.row, index === activity.length - 1 && { borderBottomWidth: 0 }]}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+            <TokenIcon
+              chainId={BigInt(entry.chainId)}
+              address={entry.tokenAddress}
+              withNetworkIcon
+              width={32}
+              height={32}
+            />
+            <View style={[flexbox.flex1, spacings.mlSm]}>
+              <Text fontSize={14} weight="medium" numberOfLines={1}>
+                {`${t(TYPE_LABEL[entry.type])} · ${entry.networkName}`}
+              </Text>
+              <Text fontSize={12} color={theme.secondaryText} numberOfLines={1}>
+                {new Date(entry.createdAt).toLocaleDateString()}
+                {` (${new Date(entry.createdAt).toLocaleTimeString()})`}
+                {!!entry.recipient && ` · ${t('to')} ${shortenAddress(entry.recipient, 16)}`}
+              </Text>
+            </View>
+          </View>
+          <View style={[flexbox.alignEnd, spacings.mlSm]}>
+            <Text fontSize={14} weight="number_regular" numberOfLines={1}>
+              {`${formatDecimals(Number(entry.amount), 'amount')} ${entry.symbol}`}
+            </Text>
+            <Text fontSize={12} color={getStatusColor(entry.status)} numberOfLines={1}>
+              {t(STATUS_LABEL[entry.status])}
+            </Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+export default React.memo(PrivacyPoolsActivity)
