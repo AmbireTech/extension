@@ -346,18 +346,6 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
           strokeWidth: 1,
           testID: 'top-up-button'
         },
-        // Note: Withdraw is not implemented yet, so it is disabled.
-        // {
-        //   id: 'withdraw',
-        //   text: t('Withdraw'),
-        //   icon: WithdrawIcon,
-        //   onPress: () => {},
-        //   isDisabled: true,
-        //   tooltipText: isGasTankToken
-        //     ? t('Gas Tank deposits cannot be withdrawn.')
-        //     : notImplementedYetTooltipText,
-        //   strokeWidth: 1
-        // },
         {
           id: 'hide-unhide',
           testID: 'hide-token-button',
