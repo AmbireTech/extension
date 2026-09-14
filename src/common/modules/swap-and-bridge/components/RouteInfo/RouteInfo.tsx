@@ -117,6 +117,11 @@ const RouteInfo: FC<Props> = ({
     signAccountOpController?.estimation.status === EstimationStatus.Success &&
     formStatus !== SwapAndBridgeFormStatus.InvalidRouteSelected
 
+  const shouldShowServiceTime = shouldShowSelectRoute && !!quote?.selectedRoute?.serviceTime
+  // On mobile and in a narrow side panel there isn't enough width for the fee, the button,
+  // the time and the route selection in one row, so the button goes under the fee
+  const shouldPlaceFeeButtonUnderFee = isCompactLayout && shouldShowServiceTime
+
   const updateQuote = useCallback(() => {
     swapAndBridgeDispatch({
       type: 'method',
@@ -173,17 +178,19 @@ const RouteInfo: FC<Props> = ({
       <View
         style={[
           flexbox.directionRow,
-          // In the compact layout the left side has two rows, so keep the time and the route
-          // selection on the first row instead of centering them vertically
-          isCompactLayout ? flexbox.alignStart : flexbox.alignCenter,
+          // When the button is under the fee the left side has two rows, so keep the time and
+          // the route selection on the first row instead of centering them vertically
+          shouldPlaceFeeButtonUnderFee ? flexbox.alignStart : flexbox.alignCenter,
           flexbox.justifySpaceBetween,
           { width: '100%' }
         ]}
       >
-        {/* On mobile and in a narrow side panel there isn't enough width for the fee, the button,
-        the time and the route selection in one row, so the button goes under the fee */}
         <View
-          style={isCompactLayout ? flexbox.alignStart : [flexbox.directionRow, flexbox.alignCenter]}
+          style={
+            shouldPlaceFeeButtonUnderFee
+              ? flexbox.alignStart
+              : [flexbox.directionRow, flexbox.alignCenter]
+          }
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <Text appearance="secondaryText" fontSize={12} weight="medium">
@@ -205,7 +212,7 @@ const RouteInfo: FC<Props> = ({
             submitOnEnter={false}
             style={[
               spacings.phTy,
-              isCompactLayout ? spacings.mtMi : spacings.mlTy,
+              shouldPlaceFeeButtonUnderFee ? spacings.mtMi : spacings.mlTy,
               { height: 'auto', paddingTop: 2, paddingBottom: 2 }
             ]}
             childrenPosition="right"
