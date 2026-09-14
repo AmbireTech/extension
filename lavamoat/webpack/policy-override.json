@@ -383,6 +383,16 @@
       "meta": {
         "note": "Auto policy could not be generated for this module; access is explicitly disabled here to silence the build warning."
       }
+    },
+    "@sentry/react>@sentry/core": {
+      "globals": {
+        "fetch": true,
+        "onerror": "write",
+        "onunhandledrejection": "write"
+      },
+      "meta": {
+        "note": "GLOBAL_OBJ lives in this package and is every Sentry package's view of globalThis. getNativeImplementation (in @sentry-internal/browser-utils) reads GLOBAL_OBJ[name] with a runtime key and globalError/globalUnhandledRejection assign onto GLOBAL_OBJ, neither of which the policy generator can see. Without fetch the default transport resolves undefined and no crash report ever leaves the extension; the handlers must be \"write\" so the assignment reaches the real global instead of the compartment copy."
+      }
     }
   }
 }
