@@ -308,6 +308,9 @@ const getStyles = (theme: ThemeProps) =>
     feeDetailsButton: {
       ...spacings.mtTy,
       ...spacings.mb0,
+      // The tiny button vertical padding leaves less space than the text line height,
+      // which pushes the text off the vertical center
+      ...spacings.pv0,
       height: 24,
       borderColor: theme.primaryAccent300
     },
