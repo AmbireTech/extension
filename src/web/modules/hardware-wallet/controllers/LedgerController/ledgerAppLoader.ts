@@ -54,9 +54,10 @@ export const getInstallErrorMessage = (statusCode: Uint8Array): string => {
   if (sw === '6a84' || sw === '6a85' || sw === '5102' || sw === '5103')
     return 'Not enough space on the Ledger device. Please uninstall an app and try again.'
 
-  // Device is locked / another app is open (must be at the dashboard).
-  if (sw === '5515' || sw === '6982' || sw === '5303')
-    return 'Please unlock your Ledger and return to the dashboard before installing.'
+  // Device is locked / another app is open (must be at the dashboard). An open
+  // app answers 6d00/6e00, because these commands only exist on the dashboard.
+  if (sw === '5515' || sw === '6982' || sw === '5303' || sw === '6d00' || sw === '6e00')
+    return 'Please unlock your Ledger, quit any open app and return to its home screen, then try again.'
 
   return `App installation failed on the Ledger device (status ${sw}).`
 }

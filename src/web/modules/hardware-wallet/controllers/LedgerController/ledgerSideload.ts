@@ -6,7 +6,9 @@ import { isLedgerEmulator, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
 import {
   DeviceManagementKitBuilder,
   DeviceModelId,
-  DiscoveredDevice
+  DiscoveredDevice,
+  isSuccessCommandResult,
+  ListAppsCommand
 } from '@ledgerhq/device-management-kit'
 import { speculosTransportFactory } from '@ledgerhq/device-transport-kit-speculos'
 import { webHidTransportFactory } from '@ledgerhq/device-transport-kit-web-hid'
@@ -36,6 +38,17 @@ const CERT_ROLE_SIGNER_EPHEMERAL = 0x11
 // Long enough for the user to approve the on-device "allow unknown manager" prompt.
 const APDU_TIMEOUT = 90_000
 
+/**
+ * What the install is waiting on, so the UI can tell the user what to do. Most
+ * of the wall time is spent on the two on-device approvals, not on the transfer,
+ * and the device gives no hint on screen about which one belongs to us.
+ */
+export type LedgerAppInstallStep =
+  | 'connecting'
+  | 'confirmingAppList'
+  | 'confirmingInstall'
+  | 'loading'
+
 const concatBytes = (...arrays: Uint8Array[]) => {
   const out = new Uint8Array(arrays.reduce((n, a) => n + a.length, 0))
   let offset = 0
@@ -64,11 +77,16 @@ const unserialize = (buffer: Uint8Array): [Uint8Array, Uint8Array] => {
  * No custom CA is used: a fresh signer key makes the device show the "allow
  * unknown manager" prompt the user must approve. Requires the WebHID permission
  * to already be granted and the device to be on the dashboard.
+ *
+ * Resolves with `true` when the app was already on the device and nothing was
+ * installed, `false` when it was actually installed. `onProgress` reports which
+ * step is in flight, plus a percentage that only moves during 'loading'.
  */
 export const installLedgerApp = async (
+  appName: string,
   apdusByModel: Partial<Record<DeviceModelId, string>>,
-  onProgress?: (sent: number, total: number) => void
-): Promise<void> => {
+  onProgress: (step: LedgerAppInstallStep, percent: number) => void
+): Promise<boolean> => {
   const dmk = new DeviceManagementKitBuilder()
     .addTransport(
       isLedgerEmulator ? speculosTransportFactory(LEDGER_EMULATOR_HTTP_URL) : webHidTransportFactory
@@ -76,6 +94,7 @@ export const installLedgerApp = async (
     .build()
 
   try {
+    onProgress('connecting', 0)
     const device = await new Promise<DiscoveredDevice>((resolve, reject) => {
       let subscription: Subscription | undefined
       subscription = dmk.listenToAvailableDevices({}).subscribe({
@@ -93,6 +112,27 @@ export const installLedgerApp = async (
 
     const sessionId = await dmk.connect({ device })
     const connectedModel = dmk.getConnectedDevice({ sessionId }).modelId
+
+    // Bail out before touching the secure channel when the app is already on the
+    // device. Reaching CREATE_APP with a name the device already holds makes it
+    // offer to UNINSTALL the app, which is the last thing we want to put in front
+    // of someone who just wanted to check. Listing costs one on-device approval
+    // ("share list of installed apps"), which the firmware always asks for - it
+    // is read-only and destroys nothing, unlike the alternative.
+    // ponytail: if listing fails (device not on its home screen), fall through -
+    // the very next command hits the same condition and maps it to a clear error.
+    onProgress('confirmingAppList', 0)
+    const installedApps: string[] = []
+    for (let isContinue = false; ; isContinue = true) {
+      const listResult = await dmk.sendCommand({
+        sessionId,
+        command: new ListAppsCommand({ isContinue }),
+        abortTimeout: APDU_TIMEOUT
+      })
+      if (!isSuccessCommandResult(listResult) || !listResult.data.length) break
+      installedApps.push(...listResult.data.map((app) => app.appName))
+    }
+    if (installedApps.includes(appName)) return true
 
     // Nano X firmware forbids sideloading custom apps (returns 0x5120); Nano S
     // Plus, Stax and Flex allow it. Fail early with a clear message on real Nano
@@ -129,6 +169,7 @@ export const installLedgerApp = async (
     }
 
     // 1) Read + validate the target id (required to open the secure channel).
+    onProgress('confirmingInstall', 0)
     const versionInfo = await exchange(INS_GET_VERSION)
     const targetId = new Uint8Array(versionInfo.slice(0, 4))
     await exchange(INS_VALIDATE_TARGET_ID, targetId)
@@ -190,8 +231,10 @@ export const installLedgerApp = async (
       const payload = commands[i]!.slice(5)
       const response = await exchange(INS_SECURE, scp.wrap(payload))
       scp.unwrap(response)
-      onProgress?.(i + 1, commands.length)
+      onProgress('loading', Math.round(((i + 1) / commands.length) * 100))
     }
+
+    return false
   } catch (e: any) {
     if (e instanceof ExternalSignerError) throw e
     throw new ExternalSignerError(normalizeLedgerMessage(e?.message))

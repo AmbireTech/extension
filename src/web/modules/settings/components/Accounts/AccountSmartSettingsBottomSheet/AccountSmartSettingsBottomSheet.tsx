@@ -28,8 +28,14 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
-import { AMBIRE_SIGNER_APDUS } from '@web/modules/hardware-wallet/controllers/LedgerController/artifacts'
-import { installLedgerApp } from '@web/modules/hardware-wallet/controllers/LedgerController/ledgerSideload'
+import {
+  AMBIRE_SIGNER_APDUS,
+  AMBIRE_SIGNER_APP_NAME
+} from '@web/modules/hardware-wallet/controllers/LedgerController/artifacts'
+import {
+  installLedgerApp,
+  LedgerAppInstallStep
+} from '@web/modules/hardware-wallet/controllers/LedgerController/ledgerSideload'
 
 import Step from './components/Step'
 import { getIsDelegationEnableDisabled } from './helpers'
@@ -56,8 +62,11 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   const { t } = useTranslation()
   const { addToast } = useToast()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
-  const [isInstalling, setIsInstalling] = useState(false)
+  const [installStep, setInstallStep] = useState<LedgerAppInstallStep | null>(null)
   const [installProgress, setInstallProgress] = useState(0)
+  // Deliberately not persisted - the only source of truth is the device itself,
+  // which `installLedgerApp` checks before installing anything.
+  const [isAmbireSignerInstalled, setIsAmbireSignerInstalled] = useState(false)
 
   const accountState = useMemo(() => {
     if (!account) return null
@@ -103,21 +112,44 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   // It coexists with the official Ethereum app and is used only for this one-off.
   const installAmbireSigner = useCallback(async () => {
     try {
-      setIsInstalling(true)
+      setInstallStep('connecting')
       setInstallProgress(0)
       await LedgerController.grantDevicePermissionIfNeeded()
-      await installLedgerApp(AMBIRE_SIGNER_APDUS, (sent, total) =>
-        setInstallProgress(Math.round((sent / total) * 100))
+      const wasAlreadyInstalled = await installLedgerApp(
+        AMBIRE_SIGNER_APP_NAME,
+        AMBIRE_SIGNER_APDUS,
+        (step, percent) => {
+          setInstallStep(step)
+          setInstallProgress(percent)
+        }
       )
-      addToast(t('Ambire Signer installed. You can now turn on the networks below.'))
+      setIsAmbireSignerInstalled(true)
+      addToast(
+        wasAlreadyInstalled
+          ? t('Ambire Signer is already on your Ledger. You can now turn on the networks below.')
+          : t('Ambire Signer installed. You can now turn on the networks below.')
+      )
     } catch (error: any) {
       addToast(error?.message || t('Failed to install Ambire Signer on your Ledger.'), {
         type: 'error'
       })
     } finally {
-      setIsInstalling(false)
+      setInstallStep(null)
     }
   }, [addToast, t])
+
+  // The device asks for two separate approvals and names neither of them after
+  // Ambire, so spell out what is being asked instead of showing a bare spinner.
+  const installStepText = useMemo(() => {
+    if (installStep === 'connecting') return t('Unlock your Ledger and keep it on its home screen.')
+    if (installStep === 'confirmingAppList')
+      return t('On your Ledger: allow Ambire to check which apps you already have.')
+    if (installStep === 'confirmingInstall')
+      return t('On your Ledger: approve the install request.')
+    if (installStep === 'loading') return t('Installing. Keep your Ledger connected.')
+
+    return null
+  }, [installStep, t])
   const isEip7702Enabled = flags.eip7702
 
   const enableEip7702 = useCallback(() => {
@@ -201,24 +233,39 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   )}
                 >
                   <View style={spacings.mtSm}>
-                    <Step
-                      number={1}
-                      title={t('Install Ambire Signer on your Ledger')}
-                      description={t('Needed before you can turn on any of the networks below.')}
-                    >
-                      <Button
-                        type="info"
-                        size="small"
-                        disabled={isInstalling}
-                        style={spacings.mb0}
-                        onPress={installAmbireSigner}
-                        text={
-                          isInstalling
-                            ? t('Installing... {{progress}}%', { progress: installProgress })
-                            : t('Install')
-                        }
+                    {isAmbireSignerInstalled ? (
+                      <Step
+                        number={1}
+                        isCompleted
+                        title={t('Ambire Signer is installed on your Ledger')}
                       />
-                    </Step>
+                    ) : (
+                      <Step
+                        number={1}
+                        title={t('Install Ambire Signer on your Ledger')}
+                        description={
+                          installStepText ??
+                          t(
+                            'Needed before you can turn on any of the networks below. Unlock your Ledger and stay on its home screen.'
+                          )
+                        }
+                      >
+                        <Button
+                          type="info"
+                          size="small"
+                          disabled={!!installStep}
+                          style={spacings.mb0}
+                          onPress={installAmbireSigner}
+                          text={
+                            installStep === 'loading'
+                              ? t('Installing... {{progress}}%', { progress: installProgress })
+                              : installStep
+                                ? t('Check your Ledger')
+                                : t('Install')
+                          }
+                        />
+                      </Step>
+                    )}
                     <Step number={2} title={t('Turn on the networks you want, below')} />
                     <Text fontSize={14} appearance="secondaryText">
                       {t(
