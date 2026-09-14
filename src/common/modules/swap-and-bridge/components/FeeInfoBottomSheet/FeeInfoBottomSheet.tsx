@@ -12,6 +12,7 @@ import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useController from '@common/hooks/useController'
@@ -131,6 +132,7 @@ const FeeInfoBottomSheet = ({
       withBackdropBlur
       isScrollEnabled={false}
       adjustToContentHeight
+      modalTopOffset={isWeb ? 0 : undefined}
     >
       {feeExemptionExplanation ? (
         <View style={[styles.feeExemption, spacings.phSm, spacings.pvSm, spacings.mtSm]}>
@@ -289,7 +291,7 @@ const FeeInfoBottomSheet = ({
           <Text
             appearance="secondaryText"
             fontSize={11}
-            style={[styles.centeredText, spacings.mtTy]}
+            style={[styles.centeredText, spacings.mtSm, spacings.mbSm]}
           >
             {t('100% of accrued fees are used for $WALLET buybacks.')}
           </Text>
