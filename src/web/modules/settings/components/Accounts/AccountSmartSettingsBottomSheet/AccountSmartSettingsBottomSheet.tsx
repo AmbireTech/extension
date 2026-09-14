@@ -8,6 +8,7 @@ import { has7702 } from '@ambire-common/libs/7702/7702'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
@@ -30,6 +31,7 @@ import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerCon
 import { AMBIRE_SIGNER_APDUS } from '@web/modules/hardware-wallet/controllers/LedgerController/artifacts'
 import { installLedgerApp } from '@web/modules/hardware-wallet/controllers/LedgerController/ledgerSideload'
 
+import Step from './components/Step'
 import { getIsDelegationEnableDisabled } from './helpers'
 
 interface Props {
@@ -107,11 +109,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
       await installLedgerApp(AMBIRE_SIGNER_APDUS, (sent, total) =>
         setInstallProgress(Math.round((sent / total) * 100))
       )
-      addToast(
-        t(
-          'Ambire Signer installed. On your Ledger, open the app and approve, then enable EIP-7702.'
-        )
-      )
+      addToast(t('Ambire Signer installed. You can now turn on the networks below.'))
     } catch (error: any) {
       addToast(error?.message || t('Failed to install Ambire Signer on your Ledger.'), {
         type: 'error'
@@ -184,74 +182,73 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
         <Authorization7702>
           {is7702 && delegationNetworks?.length ? (
             <>
+              {hasLedgerKey && (
+                <Alert
+                  type="info"
+                  size="md"
+                  style={spacings.mbMd}
+                  customIcon={LedgerLetterIcon}
+                  title={
+                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                      <Text fontSize={14} weight="semiBold">
+                        {t('Extra step for Ledger devices')}
+                      </Text>
+                      <Badge type="warning" text={t('Experimental')} style={spacings.mlTy} />
+                    </View>
+                  }
+                  text={t(
+                    'Ledger’s official Ethereum app blocks every other wallet’s upgrade, Ambire included. Ambire Signer is a custom companion app for your Ledger that unlocks the Ambire upgrade.\nInstall it once and use it only to approve the upgrade - everything else is still signed with the official Ethereum app.'
+                  )}
+                >
+                  <View style={spacings.mtSm}>
+                    <Step
+                      number={1}
+                      title={t('Install Ambire Signer on your Ledger')}
+                      description={t('Needed before you can turn on any of the networks below.')}
+                    >
+                      <Button
+                        type="info"
+                        size="small"
+                        disabled={isInstalling}
+                        style={spacings.mb0}
+                        onPress={installAmbireSigner}
+                        text={
+                          isInstalling
+                            ? t('Installing... {{progress}}%', { progress: installProgress })
+                            : t('Install')
+                        }
+                      />
+                    </Step>
+                    <Step number={2} title={t('Turn on the networks you want, below')} />
+                    <Text fontSize={14} appearance="secondaryText">
+                      {t(
+                        'Ambire Signer is not available in Ledger Wallet. Install and manage it only from these smart settings. Requires a Ledger device that supports custom apps: Nano S Plus, Stax, Flex, Nano Gen5, or newer.'
+                      )}
+                    </Text>
+                  </View>
+                </Alert>
+              )}
+
               <Text fontSize={14} style={[spacings.mbMd]} appearance="secondaryText">
                 {t(
                   'While we support multiple networks, only those that have implemented EIP-7702 are listed here. As more networks adopt this upgrade, we will update the list to reflect broader availability.'
                 )}
               </Text>
 
-              {/* TODO: UI and wording are BOTH not polished yet */}
-              {hasLedgerKey && isEip7702Enabled && (
-                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMd]}>
-                  <View style={[flexbox.flex1, spacings.mrTy]}>
-                    <Text fontSize={14} weight="medium">
-                      {t('Ledger EIP-7702 setup')}
-                    </Text>
-                    <Text fontSize={12} appearance="secondaryText">
-                      {t(
-                        'Install the Ambire Signer app on your Ledger to authorize EIP-7702 delegation. It is used once - keep using the official Ethereum app for everything else.'
-                      )}
-                    </Text>
-                    <Text fontSize={12} appearance="warningText" style={spacings.mtMi}>
-                      {t(
-                        'Not available on the Ledger Nano X - use a Nano S Plus, Stax, Flex, or Nano Gen5.'
-                      )}
-                    </Text>
-                  </View>
-                  <Button
-                    type="secondary"
-                    size="small"
-                    disabled={isInstalling}
-                    style={spacings.mb0}
-                    onPress={installAmbireSigner}
-                    text={
-                      isInstalling
-                        ? t('Installing... {{progress}}%', { progress: installProgress })
-                        : t('Install Ambire Signer')
-                    }
-                  />
-                </View>
+              {!isEip7702Enabled && (
+                <Alert
+                  type="warning"
+                  size="sm"
+                  style={spacings.mbMd}
+                  title={t('This is an experimental feature')}
+                  text={t(
+                    'Smart features for your existing account are new and still being tested. Turn them on only if you are comfortable trying them out - you can turn them off at any time.'
+                  )}
+                  buttonProps={{ text: t('Turn on'), onPress: enableEip7702 }}
+                  isButtonTopRight
+                />
               )}
 
-              {!isEip7702Enabled && (
-                <View
-                  style={[
-                    {
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.secondaryBorder
-                    },
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    spacings.pbTy,
-                    spacings.mbTy
-                  ]}
-                >
-                  <View style={flexbox.flex1}>
-                    <Text fontSize={14} weight="medium">
-                      {t('Enable EIP-7702')}
-                    </Text>
-                  </View>
-                  <View style={[flexbox.flex1, flexbox.alignEnd]}>
-                    <Button
-                      type="primary"
-                      size="tiny"
-                      style={[spacings.mb0, { minWidth: 78, height: 32 }]}
-                      onPress={enableEip7702}
-                      text={t('Enable')}
-                    />
-                  </View>
-                </View>
-              )}
               <View
                 style={[
                   {
