@@ -3,7 +3,9 @@ import { Animated, Pressable, View } from 'react-native'
 
 import { useModalize } from 'react-native-modalize'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { DURATIONS, useMultiHover } from '@common/hooks/useHover'
+import useController from '@common/hooks/useController'
 
 import AnimatedGradientBorder from './AnimatedGradientBorder'
 import { COLLAPSED_WIDTH, PEEK_WIDTH } from './constants'
@@ -16,12 +18,23 @@ import styles from './styles'
 // never moves or resizes, so the slide can't chase/lose the cursor mid-transition.
 const HIDDEN_OFFSET = COLLAPSED_WIDTH - PEEK_WIDTH
 
+const selectMobileInviteKey = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.mobileInviteKey
+
 const MobileAppPromoBanner = () => {
+  const { state: mobileInviteKey } = useController(
+    'SelectedAccountController',
+    selectMobileInviteKey
+  )
   const { ref: sheetRef, open: openInfoSheet, close: closeInfoSheet } = useModalize()
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [{ property: 'marginLeft', from: HIDDEN_OFFSET, to: 0, duration: DURATIONS.REGULAR }]
   })
+
+  // The relayer only returns a mobile invite key for accounts it has generated one for -
+  // hide the whole promo when there isn't one to activate the mobile app with.
+  if (!mobileInviteKey) return null
 
   return (
     <>
@@ -37,7 +50,11 @@ const MobileAppPromoBanner = () => {
           </Animated.View>
         </View>
       </Pressable>
-      <MobileAppInfoBottomSheet sheetRef={sheetRef} closeBottomSheet={closeInfoSheet} />
+      <MobileAppInfoBottomSheet
+        sheetRef={sheetRef}
+        closeBottomSheet={closeInfoSheet}
+        inviteCode={mobileInviteKey}
+      />
     </>
   )
 }

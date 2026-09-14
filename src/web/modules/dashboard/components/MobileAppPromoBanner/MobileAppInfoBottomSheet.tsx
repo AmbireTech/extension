@@ -16,10 +16,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 
-// TODO: no per-account invite code exists yet (no controller/relayer endpoint generates
-// one for an already-existing account) - swap this for the real value once that lands.
-const PLACEHOLDER_INVITE_CODE = '123456789012'
-
 // The "Invite code" label sits on the border line itself (fieldset/legend style) - an
 // absolutely-positioned Text whose background matches the sheet's own, so it masks the
 // segment of border behind it instead of actually cutting the line. Only `backgroundColor`
@@ -34,15 +30,16 @@ const legendLabelStyle: TextStyle = {
 type Props = {
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
+  inviteCode: string
 }
 
-const MobileAppInfoBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet }) => {
+const MobileAppInfoBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, inviteCode }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
 
   const handleCopyInviteCode = () => {
-    setStringAsync(PLACEHOLDER_INVITE_CODE).catch((error) => {
+    setStringAsync(inviteCode).catch((error) => {
       console.error('Failed to copy invite code to clipboard', error)
       captureException(error)
     })
@@ -87,7 +84,7 @@ const MobileAppInfoBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet }) => 
           ]}
         >
           <Text weight="medium" fontSize={18} style={{ letterSpacing: 1 }}>
-            {PLACEHOLDER_INVITE_CODE}
+            {inviteCode}
           </Text>
           <Button
             text={t('Copy') as string}
