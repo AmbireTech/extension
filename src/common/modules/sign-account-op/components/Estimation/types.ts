@@ -1,10 +1,11 @@
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { FeeSpeed, ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
+import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { Sponsor } from '@ambire-common/libs/erc7677/types'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import { SelectValue } from '@common/components/Select/types'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 type FeeOption = Pick<SelectValue, 'value' | 'label' | 'disabled'> &
   Pick<FeePaymentOption, 'paidBy'> & {
     token: TokenResult | null
@@ -30,4 +31,14 @@ type Props = {
   shouldShowTxnDetails?: boolean
 }
 
-export type { FeeOption, Props }
+type DispatchUpdate = (update: {
+  feeToken?: SelectValue['token']
+  paidBy?: string
+  speed?: FeeSpeed
+  shouldPersistSpeed?: boolean
+  pendingFeeTokenPreference?: SelectValue['token'] | null
+  customGasPrices?: GasSpeeds
+  customGasLimit?: bigint
+}) => void
+
+export type { DispatchUpdate, FeeOption, Props }

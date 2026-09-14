@@ -4,6 +4,10 @@ import { useModalize } from 'react-native-modalize'
 
 import { SelectedAccountBalanceError } from '@ambire-common/libs/selectedAccount/errors'
 import useController from '@common/hooks/useController'
+import {
+  getBalanceAffectedNetworkNames,
+  getColibriWarningNetworkNames
+} from '@common/modules/dashboard/helpers/balanceWarnings'
 
 const useBalanceAffectingErrors = () => {
   const { t } = useTranslation()
@@ -18,7 +22,7 @@ const useBalanceAffectingErrors = () => {
   const isLoadingTakingTooLong = areNetworksFetchingFromRelayer
     ? false
     : portfolio.shouldShowPartialResult
-  const { isOffline } = useController('MainController').state
+  const { state: isOffline } = useController('MainController', 'isOffline')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   /** Because errors change frequently due to background updates we have to store a snapshot
    * of the errors when the user clicks on the warning icon to display the errors in the bottom sheet.
@@ -28,26 +32,21 @@ const useBalanceAffectingErrors = () => {
     SelectedAccountBalanceError[]
   >([])
 
-  const colibriWarningNetworkNames = useMemo(() => {
-    if (portfolio.verification?.provider !== 'colibri') return []
-    if (portfolio.verification.status !== 'warning') return []
+  const colibriWarningNetworkNames = useMemo(
+    () => getColibriWarningNetworkNames(portfolio.verification, allNetworks),
+    [allNetworks, portfolio.verification]
+  )
 
-    return portfolio.verification.failedChains.map((chainId) => {
-      const network = allNetworks.find((n) => n.chainId.toString() === chainId)
-
-      return network?.name || chainId
-    })
-  }, [allNetworks, portfolio.verification])
-
-  const networksWithErrors = useMemo(() => {
-    if (areNetworksFetchingFromRelayer) return []
-
-    const allNetworkNames = balanceAffectingErrors.flatMap((banner) => banner.networkNames)
-
-    const uniqueNetworkNames = [...new Set([...allNetworkNames, ...colibriWarningNetworkNames])]
-
-    return uniqueNetworkNames
-  }, [areNetworksFetchingFromRelayer, balanceAffectingErrors, colibriWarningNetworkNames])
+  const networksWithErrors = useMemo(
+    () =>
+      getBalanceAffectedNetworkNames({
+        balanceAffectingErrors,
+        verification: portfolio.verification,
+        allNetworks,
+        areNetworksFetchingFromRelayer
+      }),
+    [allNetworks, areNetworksFetchingFromRelayer, balanceAffectingErrors, portfolio.verification]
+  )
 
   const warningMessage = useMemo(() => {
     if (areNetworksFetchingFromRelayer) return undefined

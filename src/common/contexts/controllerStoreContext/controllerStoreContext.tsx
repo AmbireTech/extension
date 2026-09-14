@@ -1,9 +1,7 @@
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { ToastOptions } from '@common/contexts/toastContext'
-import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import eventBus from '@common/services/event/eventBus'
 
@@ -12,6 +10,7 @@ import { ControllerStore } from './controllerStore'
 import { SubscriptionManager } from './subscriptionManager'
 import { controllerStoreContextDefaults, ControllerStoreContextReturnType } from './types'
 
+import type EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 export const ControllerStoreContext = createContext<ControllerStoreContextReturnType>(
   controllerStoreContextDefaults
 )
@@ -21,7 +20,6 @@ export const ControllerStoreProvider: React.FC<{
   withErrorToasts?: boolean
 }> = ({ children, withErrorToasts = false }) => {
   const { addToast } = useToast()
-  const { navigate } = useNavigation()
   const ctrlOnUpdateIsDirtyFlags = useRef<Record<string, boolean>>({})
   const [isStoreReady, setIsStoreReady] = useState(false)
   const [isReadyToLoadRoutes, setIsReadyToLoadRoutes] = useState(false)
@@ -122,15 +120,6 @@ export const ControllerStoreProvider: React.FC<{
 
     return () => eventBus.removeEventListener('addToast', onAddToast)
   }, [addToast])
-
-  useEffect(() => {
-    const onNavigate = ({ route, params }: { route: string; params?: any }) =>
-      navigate(route, params)
-
-    eventBus.addEventListener('navigate', onNavigate)
-
-    return () => eventBus.removeEventListener('navigate', onNavigate)
-  }, [navigate])
 
   return (
     <ControllerStoreContext.Provider

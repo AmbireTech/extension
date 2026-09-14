@@ -18,10 +18,12 @@ interface Props extends TextProps {
   highestPriorityAlias?: string
   marginRight?: number
   hideLogo?: boolean
+  hideActions?: boolean
   actionsMode?: 'tooltip' | 'inline'
   shouldWrapInlineActions?: boolean
   chainId: bigint
   verification?: BlacklistedStatus
+  isToken?: boolean
 }
 const HUMANIZER_META = humanizerInfo as HumanizerMeta
 
@@ -30,8 +32,10 @@ const HumanizerAddress: FC<Props> = ({
   highestPriorityAlias,
   marginRight,
   hideLogo = false,
+  hideActions = false,
   actionsMode = 'tooltip',
   chainId,
+  isToken,
   ...rest
 }) => {
   const addressInfo: HumanizerMetaAddress | undefined = useMemo(() => {
@@ -65,8 +69,10 @@ const HumanizerAddress: FC<Props> = ({
         address={address}
         humanizerInfo={addressInfo}
         highestPriorityAlias={highestPriorityAlias}
+        hideActions={hideActions}
         actionsMode={actionsMode}
         chainId={chainId}
+        isToken={isToken}
         {...rest}
       />
     </View>

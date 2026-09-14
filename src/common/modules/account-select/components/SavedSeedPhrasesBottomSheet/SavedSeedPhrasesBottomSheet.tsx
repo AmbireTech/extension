@@ -4,20 +4,18 @@ import { ListRenderItemInfo, Pressable, View } from 'react-native'
 import { IHandles } from 'react-native-modalize/lib/options'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import alert from '@common/services/alert'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -36,8 +34,8 @@ const SavedSeedPhrasesBottomSheet = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { statuses } = useController('StorageController').state
-  const { accounts } = useController('AccountsController').state
+  const { state: statuses } = useController('StorageController', 'statuses')
+  const { state: accounts } = useController('AccountsController', 'accounts')
   const { seeds, keys } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
   const { subType, initParams } = useController('AccountPickerController').state
@@ -137,7 +135,7 @@ const SavedSeedPhrasesBottomSheet = ({
             fontSize={14}
             weight="medium"
             appearance="secondaryText"
-            style={[spacings.mvM, text.center]}
+            style={[spacings.mvMd, text.center]}
           >
             {item.id === 'legacy-saved-seed' &&
             statuses.associateAccountKeysWithLegacySavedSeedMigration !== 'INITIAL'
@@ -158,15 +156,11 @@ const SavedSeedPhrasesBottomSheet = ({
         <ModalHeader handleClose={handleClose} title={t('Add from recovery phrase')}>
           <Pressable
             onPress={() => {
-              if (isMobile) {
-                alert('Coming soon!')
-                return
-              }
-              navigate(WEB_ROUTES.recoveryPhrasesSettings)
+              navigate(ROUTES.recoveryPhrasesSettings)
             }}
           >
             {({ hovered }: any) => (
-              <SettingsWheelIcon
+              <SettingsIcon
                 width={28}
                 height={28}
                 color={hovered ? theme.primaryText : theme.iconPrimary}

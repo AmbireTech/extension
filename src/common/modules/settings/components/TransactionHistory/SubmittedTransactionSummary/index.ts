@@ -1,3 +1,5 @@
-import SubmittedTransactionSummary from './SubmittedTransactionSummary'
+import SubmittedTransactionSummary, { preloadSummaryPreview } from './SubmittedTransactionSummary'
+
+export { preloadSummaryPreview }
 
 export default SubmittedTransactionSummary

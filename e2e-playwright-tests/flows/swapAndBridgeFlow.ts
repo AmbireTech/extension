@@ -10,7 +10,9 @@ export async function runSwapFlow({
   sendToken,
   receiveToken,
   bridgeAmount,
-  message = 'Nice trade!',
+  // Success copy rotates across several titles; keep this in sync with getSwapCompletedMessage.ts
+  // if awaitConfirmation is enabled and you assert a specific message.
+  message = 'Mission accomplished.',
   assertNoInitialTx = false,
   assertPortfolioRefreshScopedToSendNetwork = true,
   ledgerSimulatorControls
@@ -36,8 +38,9 @@ export async function runSwapFlow({
     await pages.swapAndBridge.prepareBridgeTransaction(bridgeAmount, sendToken, receiveToken)
   })
 
+  let signed = false
   await test.step('sign transaction', async () => {
-    await pages.transfer.signSlowSpeedTransaction({
+    signed = await pages.transfer.signSlowSpeedTransaction({
       sendToken,
       message,
       ledgerSimulatorControls,
@@ -45,6 +48,10 @@ export async function runSwapFlow({
       assertPortfolioRefreshScopedToSendNetwork
     })
   })
+
+  // When the fee is above the $0.10 test limit, `signSlowSpeedTransaction` skips signing on purpose.
+  // Nothing was broadcasted, so skip the test instead of failing the Activity tab assertion below.
+  test.skip(!signed, 'Transaction fee exceeded the $0.10 limit; signing was skipped.')
 
   await test.step('assert new transaction on Activity tab', async () => {
     // TODO: fix
@@ -80,6 +87,9 @@ export async function runSwapBatchFlow({
   await test.step('stop monitoring requests and expect no uncategorized requests', async () => {
     const { uncategorized } = pages.swapAndBridge.getCategorizedRequests()
     pages.swapAndBridge.stopMonitorRequests()
+
+    // log for easier debuggin
+    console.log(`Uncategorized requests: ${uncategorized.length}`)
     expect(uncategorized.length).toBeLessThanOrEqual(0)
   })
 }
@@ -110,9 +120,14 @@ export async function runSwapProceedFlow({
     await pages.swapAndBridge.prepareSwapAndBridge(sendAmount, fromToken, toToken)
   })
 
+  let signed = false
   await test.step('proceed and sign transaction', async () => {
-    await pages.swapAndBridge.proceedTransaction(ledgerSimulatorControls)
+    signed = await pages.swapAndBridge.proceedTransaction(ledgerSimulatorControls)
   })
+
+  // When the fee is above the $0.10 test limit, `proceedTransaction` skips signing on purpose.
+  // Nothing was broadcasted, so skip the test instead of failing the Activity tab assertion below.
+  test.skip(!signed, 'Transaction fee exceeded the $0.10 limit; signing was skipped.')
 
   await test.step('assert new transaction on Activity tab', async () => {
     // TODO: fix

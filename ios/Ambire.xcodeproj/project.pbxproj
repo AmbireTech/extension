@@ -11,6 +11,7 @@
 		37C488E9F3E114504C19AC53 /* libPods-Ambire.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6178A36205D787BA8F8E4117 /* libPods-Ambire.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		A328211D115CC5FB81C5AC91 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9FA7FE7BC544FD203004EEA1 /* PrivacyInfo.xcprivacy */; };
+		AABBCCDD000000000000FNT2 /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = AABBCCDD000000000000FNT1 /* fonts */; };
 		AABBCCDD000000000000WEB2 /* webview in Resources */ = {isa = PBXBuildFile; fileRef = AABBCCDD000000000000WEB1 /* webview */; };
 		ACEAEBB64D3BA750E29FEC67 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C222C73D9BF16DB83931A1 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
@@ -26,6 +27,7 @@
 		7B508C2289FB4155B0100B5C /* Pods-Ambire.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Ambire.debug.xcconfig"; path = "Target Support Files/Pods-Ambire/Pods-Ambire.debug.xcconfig"; sourceTree = "<group>"; };
 		9FA7FE7BC544FD203004EEA1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Ambire/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Ambire/SplashScreen.storyboard; sourceTree = "<group>"; };
+		AABBCCDD000000000000FNT1 /* fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = fonts; path = Ambire/Resources/fonts; sourceTree = "<group>"; };
 		AABBCCDD000000000000WEB1 /* webview */ = {isa = PBXFileReference; lastKnownFileType = folder; name = webview; path = Ambire/Resources/webview; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		D1C222C73D9BF16DB83931A1 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Ambire/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
@@ -57,6 +59,7 @@
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				9FA7FE7BC544FD203004EEA1 /* PrivacyInfo.xcprivacy */,
 				AABBCCDD000000000000WEB1 /* webview */,
+				AABBCCDD000000000000FNT1 /* fonts */,
 			);
 			name = Ambire;
 			sourceTree = "<group>";
@@ -200,6 +203,7 @@
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				A328211D115CC5FB81C5AC91 /* PrivacyInfo.xcprivacy in Resources */,
 				AABBCCDD000000000000WEB2 /* webview in Resources */,
+				AABBCCDD000000000000FNT2 /* fonts in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,14 +260,13 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXUpdates/EXUpdates.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoLocalization/ExpoLocalization_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ReachabilitySwift/ReachabilitySwift.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ZIPFoundation/ZIPFoundation_Privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/lottie-ios/LottiePrivacyInfo.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/lottie-react-native/Lottie_React_Native_Privacy.bundle",
 			);
@@ -273,14 +276,13 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXUpdates.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoLocalization_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ReachabilitySwift.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ZIPFoundation_Privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/LottiePrivacyInfo.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Lottie_React_Native_Privacy.bundle",
 			);

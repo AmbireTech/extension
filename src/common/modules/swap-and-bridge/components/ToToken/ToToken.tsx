@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
-import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -19,11 +19,13 @@ import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SwitchTokensButton from '@common/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 import { getTokenId } from '@common/utils/token'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
@@ -31,11 +33,13 @@ import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
 type Props = {
   simulationFailed?: boolean
+  disabled?: boolean
 }
 
-const ToToken: FC<Props> = ({ simulationFailed }) => {
+const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     statuses: swapAndBridgeCtrlStatuses,
     toSelectedToken,
@@ -54,9 +58,11 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
   const networks = useNetworks({
     acc: account,
     additionalCheck: {
@@ -85,7 +91,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
               toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0]
                 ?.chainId
             },
-            undefined
+            { isToSelectionByUser: true }
           ]
         }
       })
@@ -140,20 +146,12 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
 
   const toNetworksOptions: SelectValue[] = useMemo(
     () =>
-      networks
-        .sort((a, b) => {
-          const aIsSupported = !a.isNotSupported
-          const bIsSupported = !b.isNotSupported
-          if (aIsSupported && !bIsSupported) return -1
-          if (!aIsSupported && bIsSupported) return 1
-          return 0
-        })
-        .map((n) => {
+      sortNetworksByBalance(networks, balancePerNetwork).map((n) => {
           const tooltipId = `network-${n.chainId}-not-supported-tooltip`
 
           return {
             value: String(n.chainId),
-            extraSearchProps: [n.name],
+            extraSearchProps: { name: n.name },
             disabled: n.isNotSupported,
             label: (
               <>
@@ -178,7 +176,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
           }
         }),
-    [networks, t]
+    [networks, balancePerNetwork, t]
   )
 
   const getToNetworkSelectValue = useMemo(() => {
@@ -206,7 +204,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
               // Reset the from token if it's the same. undefined acts as "do nothing", null as reset
               fromSelectedToken: isSameAsFromToken ? null : undefined
             },
-            undefined
+            { isToSelectionByUser: true }
           ]
         }
       })
@@ -256,7 +254,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   return (
     <ItemPanel
       style={{
-        ...spacings.pv,
+        ...spacings.pvSm,
         ...spacings.pl,
         ...(isMobile ? {} : spacings.prMd)
       }}
@@ -264,20 +262,33 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
       <SwitchTokensButton
         onPress={handleSwitchFromAndToTokens}
         disabled={
+          disabled ||
           switchTokensStatus === 'LOADING' ||
           updateQuoteStatus === 'LOADING' ||
           updateToTokenListStatus === 'LOADING'
         }
       />
       <View
-        style={[flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]}
+        style={[
+          isCompactSidePanelLayout
+            ? [{ width: '100%' }, spacings.mbSm]
+            : [flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]
+        ]}
       >
-        <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
+        <Text
+          appearance="secondaryText"
+          fontSize={14}
+          weight="medium"
+          style={isCompactSidePanelLayout ? spacings.mbTy : spacings.mbSm}
+        >
           {t('You receive')}
         </Text>
         <Select
           setValue={handleSetToNetworkValue}
-          containerStyle={{ ...spacings.mb0, width: isMobile ? 150 : 168 }}
+          containerStyle={{
+            ...spacings.mb0,
+            width: isCompactSidePanelLayout ? '100%' : isMobile ? 150 : 168
+          }}
           options={toNetworksOptions}
           selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
           size="sm"
@@ -285,26 +296,37 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           mode="bottomSheet"
           bottomSheetTitle={t('Receive token network')}
           testID="to-network-select"
+          disabled={disabled}
         />
       </View>
       <View
         style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          { columnGap: isMobile ? SPACING_SM : SPACING }
+          isCompactSidePanelLayout
+            ? { width: '100%', gap: SPACING_SM }
+            : [
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                { columnGap: isMobile ? SPACING_SM : SPACING }
+              ]
         ]}
       >
-        <View style={[flexbox.flex1]}>
+        <View style={isCompactSidePanelLayout ? { width: '100%' } : [flexbox.flex1]}>
           <ToTokenSelect
             toTokenOptions={toTokenOptions}
             toTokenValue={toTokenValue}
             handleChangeToToken={handleChangeToToken}
-            toTokenAmountSelectDisabled={toTokenAmountSelectDisabled}
+            toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
             addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
             handleAddToTokenByAddress={handleAddToTokenByAddress}
           />
         </View>
-        <View style={[flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]}>
+        <View
+          style={
+            isCompactSidePanelLayout
+              ? { width: '100%', alignItems: 'flex-end' }
+              : [flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]
+          }
+        >
           {isReadyToDisplayAmounts ? (
             <Text
               fontSize={20}
@@ -354,8 +376,8 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             })}
           >
             <WalletIcon
-              width={18}
-              height={18}
+              width={20}
+              height={20}
               color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
             />
             <Text

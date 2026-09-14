@@ -2,7 +2,7 @@ import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY, getDropdownBorderStyle } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -25,7 +25,11 @@ const getStyles = (theme: ThemeProps) =>
       ],
       ...common.borderRadiusPrimary,
       ...common.shadowPrimary,
+      ...getDropdownBorderStyle(theme),
       backgroundColor: theme.primaryBackground,
+      // On mobile the whole sign flow lives in a BottomSheet that portals into
+      // the same "global" host, so the zIndex has to be derived from the open
+      // sheets and is applied by the component. Web isn't in a sheet.
       zIndex: 8,
       overflow: 'hidden'
     },

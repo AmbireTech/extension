@@ -2,6 +2,7 @@ package com.ambire.wallet
 
 import android.app.Application
 import android.content.res.Configuration
+import android.os.Process
 
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
@@ -9,9 +10,12 @@ import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
 import com.facebook.react.ReactHost
+import com.facebook.react.bridge.ReactMarker
+import com.facebook.react.bridge.ReactMarkerConstants
 import com.facebook.react.common.ReleaseLevel
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import com.facebook.react.defaults.DefaultReactNativeHost
+import com.stallion.Stallion
 
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
@@ -27,11 +31,18 @@ class MainApplication : Application(), ReactApplication {
               // add(MyReactNativePackage())
             }
 
-          override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
+        override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
 
-          override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
+        override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
 
-          override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
+        override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
+
+        // NOTE: When upgrading to React Native 0.82+ with the new ReactHost API,
+        // Stallion recommends passing jsBundleFilePath to getDefaultReactHost instead
+        // of overriding getJSBundleFile() here. See Stallion RN 0.82+ docs.
+        override fun getJSBundleFile(): String? {
+          return Stallion.getJSBundleFile(applicationContext)
+        }
       }
   )
 
@@ -46,6 +57,10 @@ class MainApplication : Application(), ReactApplication {
       ReleaseLevel.STABLE
     }
     loadReactNative(this)
+
+    // Marks the start of the launch for `performance.rnStartupTiming`, which the boot
+    // profiler reads.
+    ReactMarker.logMarker(ReactMarkerConstants.APP_STARTUP_START, Process.getStartUptimeMillis())
     ApplicationLifecycleDispatcher.onApplicationCreate(this)
   }
 

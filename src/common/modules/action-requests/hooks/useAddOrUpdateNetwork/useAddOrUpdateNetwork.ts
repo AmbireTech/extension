@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
-import { getFeatures } from '@ambire-common/libs/networks/networks'
+import {
+  getFeatures,
+  getLoadingFeatures,
+  isNetworkInfoPending
+} from '@ambire-common/libs/networks/networks'
 import useController from '@common/hooks/useController'
 import validateRequestParams from '@common/modules/action-requests/utils/validateRequestParams'
+
+// Initial state
+const NETWORK_INFO_PENDING_FEATURES: NetworkFeature[] = getLoadingFeatures()
 
 const useAddOrUpdateNetwork = () => {
   const { t } = useTranslation()
@@ -17,10 +24,11 @@ const useAddOrUpdateNetwork = () => {
     dispatch: networksDispatch
   } = useController('NetworksController')
 
-  const [features, setFeatures] = useState<NetworkFeature[]>(getFeatures(undefined, undefined))
   const [rpcUrlIndex, setRpcUrlIndex] = useState<number>(0)
   const [existingNetwork, setExistingNetwork] = useState<Network | null | undefined>(undefined)
-  const actionButtonPressedRef = useRef(false)
+  // The screens render from this flag (button label, disabled state, invalid params alert), so it
+  // has to be state - a ref wouldn't re-render them
+  const [isActionButtonPressed, setIsActionButtonPressed] = useState(false)
   const [successStateText, setSuccessStateText] = useState<string>(
     t('already added to your wallet.')
   )
@@ -126,24 +134,28 @@ const useAddOrUpdateNetwork = () => {
     networkToAddOrUpdate?.chainId
   ])
 
-  useEffect(() => {
-    if (existingNetwork) {
-      setFeatures(
-        getFeatures(
-          {
-            ...existingNetwork,
-            isOptimistic: !!existingNetwork.isOptimistic,
-            flagged: !!existingNetwork.flagged
-          },
-          existingNetwork
-        )
+  const networkInfo = networkToAddOrUpdate?.info
+
+  const features = useMemo(() => {
+    if (existingNetwork)
+      return getFeatures(
+        {
+          ...existingNetwork,
+          isOptimistic: !!existingNetwork.isOptimistic,
+          flagged: !!existingNetwork.flagged
+        },
+        existingNetwork
       )
 
-      return
-    }
+    if (!networkInfo) return NETWORK_INFO_PENDING_FEATURES
 
-    setFeatures(getFeatures(networkToAddOrUpdate?.info, undefined))
-  }, [networkToAddOrUpdate?.info, networkDetails, existingNetwork])
+    return getFeatures(networkInfo, undefined)
+  }, [existingNetwork, networkInfo])
+
+  const isCheckingNetwork = useMemo(
+    () => !existingNetwork && isNetworkInfoPending(networkInfo),
+    [existingNetwork, networkInfo]
+  )
 
   useEffect(() => {
     if (!userRequest) return
@@ -152,14 +164,14 @@ const useAddOrUpdateNetwork = () => {
     } else if (statuses.updateNetwork === 'SUCCESS') {
       setSuccessStateText(t('successfully enabled.'))
     } else if (statuses.addNetwork === 'ERROR' || statuses.updateNetwork === 'ERROR') {
-      actionButtonPressedRef.current = false
+      setIsActionButtonPressed(false)
     }
   }, [t, statuses.addNetwork, userRequest, statuses.updateNetwork])
 
   const handleDenyButtonPress = useCallback(() => {
     if (!userRequest) return
 
-    actionButtonPressedRef.current = true
+    setIsActionButtonPressed(true)
     requestsDispatch({
       type: 'method',
       params: {
@@ -179,7 +191,7 @@ const useAddOrUpdateNetwork = () => {
   const handleCloseOnAlreadyAdded = useCallback(() => {
     if (!userRequest) return
 
-    actionButtonPressedRef.current = true
+    setIsActionButtonPressed(true)
     requestsDispatch({
       type: 'method',
       params: {
@@ -199,7 +211,7 @@ const useAddOrUpdateNetwork = () => {
   const handleUpdateNetwork = useCallback(() => {
     if (!networkDetails || !userRequest) return
 
-    actionButtonPressedRef.current = true
+    setIsActionButtonPressed(true)
 
     const matchedNetwork = networks.find((n) => n.chainId === networkDetails.chainId)
     if (!matchedNetwork?.rpcUrls) return
@@ -233,7 +245,7 @@ const useAddOrUpdateNetwork = () => {
 
   const handlePrimaryButtonPress = useCallback(() => {
     if (!networkDetails) return
-    actionButtonPressedRef.current = true
+    setIsActionButtonPressed(true)
     if (existingNetwork) {
       networksDispatch({
         type: 'method',
@@ -263,18 +275,15 @@ const useAddOrUpdateNetwork = () => {
   }, [])
 
   const resolveButtonText = useMemo(() => {
-    if (
-      existingNetwork &&
-      (statuses.updateNetwork === 'LOADING' || actionButtonPressedRef.current)
-    ) {
+    if (existingNetwork && (statuses.updateNetwork === 'LOADING' || isActionButtonPressed)) {
       return t('Enabling network...')
     }
-    if (!existingNetwork && (statuses.addNetwork === 'LOADING' || actionButtonPressedRef.current)) {
+    if (!existingNetwork && (statuses.addNetwork === 'LOADING' || isActionButtonPressed)) {
       return t('Adding network...')
     }
 
     return existingNetwork ? t('Enable network') : t('Add network')
-  }, [existingNetwork, statuses.addNetwork, statuses.updateNetwork, t])
+  }, [existingNetwork, isActionButtonPressed, statuses.addNetwork, statuses.updateNetwork, t])
 
   const view: 'loading' | 'add' | 'update' | 'alreadyAdded' = useMemo(() => {
     if (!userRequest) return 'loading'
@@ -291,8 +300,9 @@ const useAddOrUpdateNetwork = () => {
     userRequest,
     statuses,
     features,
+    isCheckingNetwork,
     existingNetwork,
-    actionButtonPressedRef,
+    isActionButtonPressed,
     successStateText,
     requestData,
     areParamsValid,

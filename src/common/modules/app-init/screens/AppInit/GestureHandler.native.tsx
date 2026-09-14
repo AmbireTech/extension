@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useMemo } from 'react'
-import { BackHandler, Dimensions, Platform } from 'react-native'
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
+import { BackHandler, GestureResponderEvent } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import {
   bottomSheetCloseEventStream,
@@ -8,17 +8,16 @@ import {
 } from '@common/components/BottomSheet/bottomSheetEventStream'
 import { checkDropdownDismiss } from '@common/components/Dropdown/dropdownDismissManager'
 import { isAndroid } from '@common/config/env'
-import useNavigation from '@common/hooks/useNavigation'
+import useBackAction from '@common/hooks/useBackAction'
+import { entropyTouchHandlers } from '@common/hooks/useExtraEntropy/useExtraEntropy.native'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 const GestureHandler = ({ children }: { children: ReactNode }) => {
   const { theme } = useTheme()
-  const { width } = Dimensions.get('window')
-  const { goBack, canGoBack } = useNavigation()
+  const goBackAction = useBackAction()
   const { path } = useRoute()
   const prevPath = usePrevious(path)
 
@@ -37,80 +36,36 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isAndroid) return
 
-    const backAction = () => {
-      const isRootPath =
-        path === '/' || [ROUTES.dashboard, ROUTES.getStarted, ROUTES.keyStoreUnlock].includes(path)
-
-      if (!isRootPath && canGoBack) {
-        if (openBottomSheetsCount.value > 0) {
-          bottomSheetCloseEventStream.next()
-        } else {
-          goBack()
-        }
-      }
-
-      return true
-    }
+    // When nothing in the app can consume the press, Android handles it as it normally
+    // would and sends the app to the background
+    const backAction = () => goBackAction()
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
 
     return () => backHandler.remove()
-  }, [path, canGoBack, goBack])
+  }, [goBackAction])
 
-  const panGesture = Gesture.Pan()
-    .activeOffsetX(10) // Sensitivity
-    .runOnJS(true)
-    .onEnd((e) => {
-      if (isAndroid) return
-
-      // 1. Path Guard
-      if (
-        path === '/' ||
-        [ROUTES.dashboard, ROUTES.getStarted, ROUTES.keyStoreUnlock].includes(path)
-      ) {
-        return
+  // Both of these only read touches bubbling up from the tree: the entropy pool takes their
+  // coordinates (it feeds seed and Keystore secret generation), and an open dropdown closes when the
+  // touch did not start inside it. Neither takes part in responder negotiation, so the touch still
+  // reaches the element underneath - a button outside an open dropdown fires on the first tap.
+  const rootTouchHandlers = useMemo(
+    () => ({
+      ...entropyTouchHandlers,
+      onTouchStart: (e: GestureResponderEvent) => {
+        entropyTouchHandlers.onTouchStart(e)
+        checkDropdownDismiss()
       }
-
-      // 2. Logic: Calculate starting point (20% threshold)
-      const startX = e.absoluteX - e.translationX
-      const isFromLeftEdge = startX < width * 0.2
-
-      // 3. Logic: Trigger if moved 20% OR flicked fast (velocity > 500)
-      const isSwipedRight = e.translationX > width * 0.2 || e.velocityX > 500
-
-      if (isFromLeftEdge && isSwipedRight) {
-        if (openBottomSheetsCount.value > 0) {
-          bottomSheetCloseEventStream.next()
-          return
-        }
-
-        if (canGoBack) {
-          goBack()
-        }
-      }
-    })
-
-  const touchObserver = useMemo(
-    () =>
-      Gesture.Manual()
-        .runOnJS(true)
-        .onTouchesDown((event) => {
-          const touch = event.allTouches[0]
-          if (touch) {
-            checkDropdownDismiss(touch.absoluteX, touch.absoluteY)
-          }
-        }),
+    }),
     []
   )
 
-  const composedGesture = useMemo(
-    () => Gesture.Simultaneous(panGesture, touchObserver),
-    [panGesture, touchObserver]
-  )
-
   return (
-    <GestureHandlerRootView style={[flexbox.flex1, { backgroundColor: theme.primaryBackground }]}>
-      <GestureDetector gesture={composedGesture}>{children}</GestureDetector>
+    <GestureHandlerRootView
+      style={[flexbox.flex1, { backgroundColor: theme.primaryBackground }]}
+      {...rootTouchHandlers}
+    >
+      {children}
     </GestureHandlerRootView>
   )
 }

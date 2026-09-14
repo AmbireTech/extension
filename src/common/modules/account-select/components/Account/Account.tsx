@@ -21,10 +21,19 @@ import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHo
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const ACTION_ICON_SIZE = isMobile ? 32 : 24
+
+const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
+const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 
 const Account = ({
   account,
@@ -33,6 +42,7 @@ const Account = ({
   withSettings = true,
   isSelectable = true,
   withKeyType = true,
+  renderLeftChildren,
   renderRightChildren,
   inverseInteractionColors = false,
   options = {
@@ -40,7 +50,9 @@ const Account = ({
   },
   containerStyle,
   withReceive = false,
-  withCopy = true
+  withCopy = true,
+  switchAccountOnPress = true,
+  withBalance = true
 }: {
   account: AccountInterface
   onSelect?: (addr: string) => void
@@ -49,6 +61,8 @@ const Account = ({
   isSelectable?: boolean
   inverseInteractionColors?: boolean
   withKeyType?: boolean
+  /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
+  renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
   options?: {
     withOptionsButton?: boolean
@@ -60,21 +74,31 @@ const Account = ({
   containerStyle?: ViewStyle
   withReceive?: boolean
   withCopy?: boolean
+  /** Set to false when pressing the row means something else than switching to it */
+  switchAccountOnPress?: boolean
+  withBalance?: boolean
 }) => {
   const { addr, preferences } = account
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const {
-    state: { statuses: mainStatuses },
-    dispatch: mainDispatch
-  } = useController('MainController')
-  const {
-    state: { account: selectedAccount, balanceByAccounts }
-  } = useController('SelectedAccountController')
+  const { state: mainStatuses, dispatch: mainDispatch } = useController(
+    'MainController',
+    selectMainStatuses
+  )
+  const { state: selectedAccount } = useController(
+    'SelectedAccountController',
+    selectSelectedAccount
+  )
+  const selectBalance = useCallback(
+    (state: AllControllersMappingType['SelectedAccountController']) =>
+      state.balanceByAccounts[addr] ?? null,
+    [addr]
+  )
+  const { state: balance } = useController('SelectedAccountController', selectBalance)
   const { dispatch: accountsDispatch } = useController('AccountsController')
   const reverseLookup = useReverseLookup({ address: addr, privacyUpdateMode: 'never' })
-  const { keys } = useController('KeystoreController').state
+  const { state: keys } = useController('KeystoreController', selectKeys)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -82,7 +106,6 @@ const Account = ({
       to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
     }
   })
-  const balance = balanceByAccounts[account.addr] ?? null
 
   const [bindOpacityAnim, opacityAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -95,7 +118,7 @@ const Account = ({
       return
     }
 
-    if (selectedAccount?.addr !== addr) {
+    if (switchAccountOnPress && selectedAccount?.addr !== addr) {
       mainDispatch({
         type: 'method',
         params: { method: 'selectAccount', args: [addr] }
@@ -103,7 +126,14 @@ const Account = ({
     }
 
     onSelect && onSelect(addr)
-  }, [addr, mainDispatch, onSelect, selectedAccount, options.setAccountToImportOrExport])
+  }, [
+    addr,
+    mainDispatch,
+    onSelect,
+    selectedAccount,
+    switchAccountOnPress,
+    options.setAccountToImportOrExport
+  ])
 
   const onSave = useCallback(
     (value: string) => {
@@ -186,53 +216,37 @@ const Account = ({
           }
       ]}
     >
-      <View style={[flexbox.flex1, flexbox.directionRow]}>
+      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+        {renderLeftChildren && renderLeftChildren()}
         <Avatar
           address={account.addr}
           pfp={account.preferences.pfp}
           smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
           showTooltip
         />
-        <View style={flexbox.flex1}>
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
+        <View style={[flexbox.flex1, flexbox.justifyCenter]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
             {!withSettings ? (
-              <>
-                <Text
-                  fontSize={withSettings ? 16 : 14}
-                  weight="medium"
-                  numberOfLines={1}
-                  style={{ flexShrink: 1 }}
-                >
-                  {account.preferences.label}
-                </Text>
-                {!!withKeyType && (
-                  <View style={[isWeb && spacings.mlMi]}>
-                    <AccountKeyIcons isExtended account={account} />
-                  </View>
-                )}
-
-                <AccountBadges accountData={account} />
-              </>
+              <Text
+                fontSize={withSettings ? 16 : 14}
+                weight="medium"
+                numberOfLines={1}
+                style={{ flexShrink: 1 }}
+              >
+                {account.preferences.label}
+              </Text>
             ) : (
               <Editable
                 initialValue={account.preferences.label}
                 onSave={onSave}
                 fontSize={withSettings ? 16 : 14}
-                height={20}
+                height={isMobile ? 24 : 20}
                 textProps={{
                   weight: 'medium'
                 }}
                 minWidth={120}
                 maxLength={40}
-              >
-                {!!withKeyType && (
-                  <View style={[spacings.mlMi]}>
-                    <AccountKeyIcons isExtended account={account} />
-                  </View>
-                )}
-
-                <AccountBadges accountData={account} />
-              </Editable>
+              />
             )}
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -241,39 +255,42 @@ const Account = ({
               containerStyle={spacings.pb0}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
+              // On web the copy button fits next to the address, unlike on mobile, where it
+              // sits next to the account to keep the touch targets apart
               withCopy={isWeb && withCopy}
-              withReceive={isWeb && withReceive}
+              withReceive={false}
               withUpdateEnsInTooltip={isSelectable}
             />
+          </View>
+          {/* The balance, the key icons and the badges share the row below the address */}
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              spacings.mtMi,
+              { columnGap: SPACING_TY }
+            ]}
+          >
+            {balance !== null && withBalance && (
+              <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
+                {formatDecimals(balance, 'value')}
+              </Text>
+            )}
+            {!!withKeyType && (
+              <AccountKeyIcons isExtended account={account} withContainerSpacing={false} />
+            )}
+            <AccountBadges accountData={account} withSpacing={false} />
           </View>
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-        {balance !== null && !withSettings && !isMobile && (
-          <Text
-            fontSize={14}
-            weight="semiBold"
-            color={theme.secondaryText}
-            style={[
-              isMobile || renderRightChildren ? spacings.mrTy : {},
-              isMobile || renderRightChildren ? flexbox.alignSelfCenter : flexbox.alignSelfStart,
-              { textAlign: 'right' }
-            ]}
-          >
-            {formatDecimals(balance, 'value')}
-          </Text>
-        )}
         {renderRightChildren && renderRightChildren()}
-        {isMobile && (
-          <>
-            {withCopy && (
-              <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
-                <CopyIcon width={32} height={32} strokeWidth="1" />
-              </AnimatedPressable>
-            )}
-            {withReceive && <ReceiveButton address={addr} fontSize={24} />}
-          </>
+        {!isWeb && withCopy && (
+          <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
+            <CopyIcon width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} strokeWidth="1" />
+          </AnimatedPressable>
         )}
+        {withReceive && <ReceiveButton address={addr} fontSize={ACTION_ICON_SIZE - 8} />}
         {!!options.withOptionsButton && (
           <Dropdown
             data={submenu}

@@ -7,7 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
-import { TokenResult } from '@ambire-common/libs/portfolio'
+import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
@@ -17,6 +17,7 @@ import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
+import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import { InputProps } from '@common/components/Input'
 import AddContactBottomSheet from '@common/components/Recipient/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/Recipient/AddToAddressBook'
@@ -37,9 +38,14 @@ import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import styles from './styles'
+
+import type { TokenResult } from '@ambire-common/libs/portfolio'
+
+const { isSidePanel } = getUiType()
 
 interface Props extends InputProps {
   setAddress: (text: string) => void
@@ -157,6 +163,12 @@ const SelectedMenuOption: React.FC<{
         // because highlight rendering lives in the detailed address row.
         withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
         onChangeText={setAddress}
+        onScanAddress={type === 'input' ? setAddress : undefined}
+        // The collapsed row is a button that opens the contacts menu, so the scan
+        // icon is rendered next to the dropdown arrow to stay reachable without it.
+        childrenBeforeButtons={
+          isButtonMode && !address ? <AddressScanButton onScanned={setAddress} /> : undefined
+        }
         disabled={disabled}
         editable={!isButtonMode}
         pointerEvents={isButtonMode ? 'none' : 'auto'}
@@ -186,7 +198,13 @@ const SelectedMenuOption: React.FC<{
           }
         }}
         inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
-        buttonStyle={{ ...spacings.pv0, ...spacings.ph, ...spacings.mr0, ...spacings.ml0 }}
+        buttonStyle={{
+          ...spacings.pv0,
+          ...spacings.pl,
+          ...spacings.prTy,
+          ...spacings.mr0,
+          ...spacings.ml0
+        }}
       />
     ),
     [
@@ -231,9 +249,7 @@ const Recipient: React.FC<Props> = ({
   disabled,
   addressPoisoningMatch
 }) => {
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const actualAddress = getAddressFromAddressState({
     resolvedAddress,
     fieldValue: address
@@ -241,8 +257,9 @@ const Recipient: React.FC<Props> = ({
   const { navigate } = useNavigation()
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const contactAddressMaxLength = isSidePanel ? 16 : undefined
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { contacts } = useController('AddressBookController').state
+  const { state: contacts } = useController('AddressBookController', 'contacts')
   const {
     state: { domains }
   } = useController('DomainsController')
@@ -260,7 +277,7 @@ const Recipient: React.FC<Props> = ({
         contact,
         name: contact.name.toLowerCase(),
         address: contact.address.toLowerCase(),
-        domain: domains[contact.address]?.ens?.toLowerCase().trim() || ''
+        domain: getSearchableNames(domains[contact.address]?.names)
       })),
     [contacts, domains]
   )
@@ -310,10 +327,13 @@ const Recipient: React.FC<Props> = ({
               }}
               address={contact.address}
               name={contact.name}
+              plainAddressMaxLength={contactAddressMaxLength}
+              // Tapping a row selects the recipient, so a copy icon is not needed on mobile
+              withCopy={isWeb}
             />
           )
         })),
-    [contacts, filteredContacts]
+    [contacts, filteredContacts, contactAddressMaxLength]
   )
 
   const manuallyAddedContactOptions = useMemo(
@@ -333,10 +353,12 @@ const Recipient: React.FC<Props> = ({
               }}
               address={contact.address}
               name={contact.name}
+              plainAddressMaxLength={contactAddressMaxLength}
+              withCopy={isWeb}
             />
           )
         })),
-    [contacts, filteredContacts]
+    [contacts, filteredContacts, contactAddressMaxLength]
   )
 
   const selectedOption = useMemo(
@@ -473,6 +495,7 @@ const Recipient: React.FC<Props> = ({
       <SectionedSelect
         value={selectedOption}
         setValue={setAddressWrapped}
+        mode={isSidePanel ? 'bottomSheet' : undefined}
         sections={sections}
         headerHeight={32}
         menuOptionHeight={54}

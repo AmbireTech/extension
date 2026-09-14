@@ -45,8 +45,8 @@ const MaxAmount = ({
         })}
       >
         <WalletIcon
-          width={18}
-          height={18}
+          width={20}
+          height={20}
           color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
         />
         <Text

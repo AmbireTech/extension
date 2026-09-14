@@ -2,19 +2,21 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 type TokenPriceDisplayProps = Pick<TokenResult, 'symbol' | 'address' | 'chainId'> &
   Pick<
     ReturnType<typeof getAndFormatTokenDetails>,
     'priceUSDFormatted' | 'change24h' | 'change24hFormatted'
   > & {
     onGasTank?: boolean
+    /** Fallback image and network badge for tokens not resolvable from the portfolio (e.g. trending). */
+    uri?: string
   }
 
 const TokenPriceDisplay = ({
@@ -22,6 +24,7 @@ const TokenPriceDisplay = ({
   address,
   chainId,
   onGasTank,
+  uri,
   priceUSDFormatted,
   change24h,
   change24hFormatted
@@ -39,6 +42,7 @@ const TokenPriceDisplay = ({
           height={12}
           withContainer
           withNetworkIcon={false}
+          uri={uri}
           address={address}
           onGasTank={onGasTank}
           chainId={chainId as any}

@@ -15,30 +15,37 @@ import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
-import { Fetch } from '@ambire-common/interfaces/fetch'
+import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
-import { UiManager } from '@ambire-common/interfaces/ui'
+import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
+import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController/QrHardwareController'
+import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
+import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
   BUNGEE_API_KEY,
   LI_FI_API_KEY,
   RELAYER_URL,
-  SQUID_INTEGRATOR_ID,
   UNISWAP_API_KEY,
   VELCRO_URL
 } from '@env'
@@ -54,6 +61,10 @@ import {
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
+import {
+  getDappTabFocusDispatcher,
+  getPanelManager
+} from '@web/extension-services/background/webapi/panel'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
   initializeMessenger,
@@ -63,21 +74,20 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
-import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
-import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
-import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrProtocolAdapter'
-import QrHardwareSigner from '@web/modules/hardware-wallet/signers/QrHardwareSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
-import { getExtensionInstanceId } from '@web/utils/analytics'
+import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
+import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import {
   captureBackgroundException,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
   setBackgroundExtraContext,
   setBackgroundUserContext
 } from './CrashAnalytics'
+import { sendCriticalControllerStates } from './criticalControllerStates'
+import { getReportableAction } from './getReportableAction'
 
 const debugLogs: {
   key: string
@@ -246,15 +256,29 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         }
       }
 
-      // We don't want to miss errors that occur before the controllers are initialized
-      if (!walletStateCtrl) return event
+      // No explicit type annotation here: `event`'s type is inferred contextually
+      // as the narrower ErrorEvent (from Sentry.init's expected beforeSend
+      // signature), and both scrubSentryEventSecrets and
+      // buildScrubFailureFallbackEvent are generic in that same type, so
+      // scrubbedEvent stays ErrorEvent instead of widening to Sentry.Event.
+      let scrubbedEvent
+      try {
+        scrubbedEvent = scrubSentryEventSecrets(event)
+      } catch (scrubError) {
+        scrubbedEvent = buildScrubFailureFallbackEvent(event, scrubError)
+      }
+
+      // We don't want to miss errors that occur before the controllers are initialized.
+      // Scrubbing above still applies -- only the crashAnalyticsEnabled gate below,
+      // which depends on walletStateCtrl, can't run yet.
+      if (!walletStateCtrl) return scrubbedEvent
 
       if (isDev) {
-        console.log(`Sentry event captured in background: ${event.event_id}`, event)
+        console.log(`Sentry event captured in background: ${event.event_id}`, scrubbedEvent)
       }
 
       // If the Sentry is disabled, we don't send any events
-      return walletStateCtrl?.crashAnalyticsEnabled ? event : null
+      return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
     }
   })
 }
@@ -268,16 +292,24 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   // wait for mainCtrl to be initialized before handling dapp requests
   while (!mainCtrl || !walletStateCtrl) await wait(200)
 
-  const tabId = meta.sender?.tab?.id
-  const windowId = meta.sender?.tab?.windowId
-  if (tabId === undefined || windowId === undefined || !meta.sender?.url) {
+  const senderTab = meta.sender?.tab
+  const tabId = senderTab?.id
+  const windowId = senderTab?.windowId
+  if (!senderTab || tabId === undefined || windowId === undefined || !meta.sender?.url) {
     return
   }
 
   const session = await mainCtrl.dapps.getOrCreateDappSession({
     tabId,
     windowId,
-    url: meta.sender.url
+    url: meta.sender.url,
+    // SECURITY: `frameId` and `tab.url` come from the browser, not from the page, so an embedded
+    // dApp cannot lie about sitting inside a phishing top-level document. `sender.url` is the
+    // requesting frame's URL, while `sender.tab.url` is the tab's top-level document URL.
+    // Default to the top frame when the browser omits `frameId`, so the frame context is always
+    // refreshed on the extension - leaving it undefined would preserve a previous visit's value.
+    frameId: meta.sender.frameId ?? 0,
+    topFrameUrl: senderTab.url
   })
 
   await mainCtrl.dapps.initialLoadPromise
@@ -294,7 +326,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
       notificationManager
     })
 
-    return { id, result: res }
+    return { id, providerId, result: res }
   } catch (error: any) {
     let errorRes
     try {
@@ -302,7 +334,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
     } catch (e) {
       errorRes = error
     }
-    return { id, error: errorRes }
+    return { id, providerId, error: errorRes }
   }
 })
 
@@ -349,34 +381,23 @@ const init = async () => {
   // (only internal Ambire APIs need the x-app-* headers and tracking params)
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
-    const urlString = url.toString()
-    try {
-      const urlObj = new URL(urlString)
-      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
-        // @ts-ignore
-        return fetch(url, init)
-      }
-    } catch (error) {
-      console.error(error)
-      // If URL parsing fails, skip analytics for safety
+    if (!isAmbireApiUrl(url.toString())) {
       // @ts-ignore
       return fetch(url, init)
     }
 
-    // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || {
-      headers: {
-        'x-app-source': '',
-        'x-app-version': '',
-        'x-app-env': isAmbireNext ? 'next' : isDev ? 'dev' : 'prod'
-      }
-    }
+    // As of v4.26.0, custom internal headers. The mobile app sends the same ones from
+    // its worker (see decorateAmbireApiRequest there).
+    const initWithCustomHeaders: RequestInitWithCustomHeaders = init || { headers: {} }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
+    // Set here rather than as a default for a missing init, so that it is sent no matter
+    // whether the caller passed an init of its own (most of them do)
+    initWithCustomHeaders.headers['x-app-env'] = isAmbireNext ? 'next' : isDev ? 'dev' : 'prod'
 
     // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
     // in that case we can still fetch but without our custom header
     if (mainCtrl?.keystore?.keyStoreUid) {
-      const instanceId = getExtensionInstanceId(
+      const instanceId = getAppInstanceId(
         mainCtrl.keystore.keyStoreUid,
         mainCtrl.invite?.verifiedCode || ''
       )
@@ -386,13 +407,9 @@ const init = async () => {
       initWithCustomHeaders.headers['x-app-version'] = versionHeader
     }
 
-    // we want to calculate the TVL of our users
-    // we can achieve this by making a relayer (server-side trusted environment) script that gets the balances of all our users
-    // but doing this with all our users would be 'expensive'.
-    // we already calculate the user balance in the extension, but is not 100% trusted as any user can modify it
-    // that why we will use the user balance from the extension as a 'hint' so we can determine
-    // on which accounts we should execute the 'expensive' script on the backend
-    // those addresses should be 1) loaded with key in the extension 2) have more than $0 balance
+    // The balance hint (see attachBalanceHint) is worth attaching only if the user has
+    // keys for the account. The highest balance seen is kept, because a request firing
+    // while the portfolio is still loading would otherwise under-report it.
     const currentAccount = mainCtrl.selectedAccount.account
     const hasCurrentAccountKeys =
       currentAccount &&
@@ -401,9 +418,6 @@ const init = async () => {
         keys: mainCtrl.keystore.keys,
         accounts: mainCtrl.accounts.accounts
       })
-    // we use any cena request, because if we narrow it down to one route we might not have the full balance loaded
-    // on the relayer side we will simply use middleware that captures all routes and looks for the specific params with balance
-    // we want to attach the data only if the user has keys for the account
     const currentBalance = mainCtrl.selectedAccount.portfolio.totalBalance
     if (
       currentAccount &&
@@ -411,16 +425,12 @@ const init = async () => {
     )
       backgroundState.userBalances[currentAccount?.addr] = currentBalance
 
-    const shouldAttachBalance =
-      url.toString().startsWith('https://cena.ambire.com/') && hasCurrentAccountKeys
-    if (shouldAttachBalance) {
-      const urlObj = new URL(url.toString())
-      const balance = backgroundState.userBalances[currentAccount?.addr] || 0
-
-      urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
-
-      url = decodeURIComponent(urlObj.toString())
-    }
+    if (currentAccount && hasCurrentAccountKeys)
+      url = attachBalanceHint(
+        url.toString(),
+        currentAccount.addr,
+        backgroundState.userBalances[currentAccount.addr] || 0
+      )
 
     // Use the native fetch (instead of node-fetch or whatever else) since
     // browser extensions are designed to run within the web environment,
@@ -441,7 +451,7 @@ const init = async () => {
             const keystoreCtrl = ctrl as IKeystoreController
             if (keystoreCtrl.isReadyToStoreKeys) {
               setBackgroundUserContext({
-                id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
+                id: getAppInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
               })
               if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
@@ -500,7 +510,6 @@ const init = async () => {
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
     bungeeApiKey: BUNGEE_API_KEY,
-    squidIntegratorId: SQUID_INTEGRATOR_ID,
     uniswapApiKey: UNISWAP_API_KEY,
     featureFlags: {},
     keystoreSigners: {
@@ -522,6 +531,8 @@ const init = async () => {
         ...windowManager,
         remove: async (winId: number | 'popup') => {
           if (winId === 'popup') {
+            // Only the popup is closed here. The side panel can't be closed programmatically,
+            // and it doesn't need to be - requests are rendered in it while it is open.
             return new Promise((resolve) => {
               const popupPort = pm.ports.find((p) => p.name === 'popup')
               if (!popupPort) {
@@ -543,6 +554,8 @@ const init = async () => {
           await windowManager.remove(winId, pm)
         }
       },
+      panel: getPanelManager(pm),
+      dispatchDappTabFocus: getDappTabFocusDispatcher(pm),
       notification: notificationManager,
       message: {
         sendToastMessage: (text, options) => {
@@ -551,13 +564,22 @@ const init = async () => {
         sendUiMessage: (params) => {
           pm.send('> ui', { method: 'receiveOneTimeData', params })
         },
-        sendNavigateMessage: () => {
-          // TODO:
-          // pm.send('> ui-navigate', ...)
+        sendNavigateMessage: (viewId: string, route: string, options?: NavigateOptions) => {
+          // Views are keyed by the id of the port they connected with, so only the one being
+          // navigated hears about it.
+          const port = pm.ports.find((p) => p.id === viewId)
+          if (!port) return
+
+          pm.sendToPort(port, '> ui', { method: 'navigate', params: { route, options } })
         }
-      }
+      },
+      resolveViewRoute: (view: View) => resolveViewRoute(mainCtrl, view)
     }
   })
+
+  // Load them immediately (the optimization is for mobile only)
+  void mainCtrl.phishing.init()
+  void mainCtrl.dapps.init()
 
   walletStateCtrl = new WalletStateController({
     eventEmitterRegistry,
@@ -598,17 +620,9 @@ const init = async () => {
       const registeredCtrl = eventEmitterRegistry.values().find((ctrl) => ctrl.name === ctrlName)
       if (!registeredCtrl) return
 
-      // Controller updates
-      const stateToSendToFE = registeredCtrl.toJSON()
-
-      if (ctrlName === 'MainController') {
-        // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-        // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-        // Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
-        Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
-          delete (stateToSendToFE as any)[nestedCtrlName]
-        })
-      }
+      // Controller updates. We should access the state of the nested controllers
+      // directly from their context instead of through the main ctrl state on the FE.
+      const stateToSendToFE = serializeControllerForUI(registeredCtrl)
 
       pm.send('> ui', { method: ctrlName, params: stateToSendToFE, forceEmit })
 
@@ -667,12 +681,34 @@ const init = async () => {
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
-    if (['popup', 'tab', 'request-window'].includes(name)) {
+    if (['popup', 'tab', 'request-window', 'side-panel'].includes(name)) {
+      // These port names grant access to every controller method (exporting keys and
+      // the seed phrase included), so only our own extension pages may claim them.
+      const senderUrl = port.sender?.url
+      const isFromOurExtension = port.sender?.id === browser.runtime.id
+      const isFromExtensionPage = !senderUrl || senderUrl.startsWith(browser.runtime.getURL(''))
+
+      if (!isFromOurExtension || !isFromExtensionPage) {
+        port.disconnect()
+        return
+      }
+
       port.id = id || nanoid()
 
       port.name = name
       pm.addOrUpdatePort(port, () => {
         mainCtrl.ui.addView({ id: port.id, type: port.name })
+
+        // Registering the view is what sends it to a screen, so give it the states that screen
+        // needs at the same time instead of making it ask.
+        sendCriticalControllerStates({ pm, port, eventEmitterRegistry }).catch(
+          captureBackgroundException
+        )
+        if (isExtensionOverlayPort(port.name)) {
+          mainCtrl.onPopupOpen(port.id).catch((error) => {
+            console.error('Failed to initialize overlay view', error)
+          })
+        }
 
         pm.addConnectListener(
           port.id,
@@ -683,13 +719,13 @@ const init = async () => {
 
             try {
               if (messageType === '> background' && type) {
-                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl })
+                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl, meta })
               }
             } catch (err: any) {
               console.error(`${type} action failed:`, err)
               captureBackgroundException(err, {
                 extra: {
-                  action: stringify(action),
+                  action: stringify(getReportableAction(action)),
                   portId: port.id,
                   windowId
                 }
@@ -729,7 +765,7 @@ const init = async () => {
           // state will remain reset until an automatic update is triggered.
           // Example: the user has the dashboard opened in tab, opens the popup
           // and closes it immediately.
-          if (disconnectedPort.name === 'popup') mainCtrl.portfolio.forceEmitUpdate()
+          if (isExtensionOverlayPort(disconnectedPort.name)) mainCtrl.portfolio.forceEmitUpdate()
           if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
@@ -759,6 +795,13 @@ const setupStorageForTesting = async () => {
 
   await checkE2EStorage()
 }
+
+// Ensures controllers are initialized as soon as the service worker starts,
+// so UI ports (popup, side panel, tab) can connect without waiting for a ping.
+init().catch((err) => {
+  captureBackgroundException(err)
+  console.error(err)
+})
 
 // Ensures controllers are initialized when the browser starts.
 browser.runtime.onStartup.addListener(() => {
@@ -811,11 +854,9 @@ try {
     // wait for mainCtrl to be initialized before handling dapp requests
     while (!mainCtrl) await wait(200)
 
-    const sessionKeys = Object.keys(mainCtrl.dapps.dappSessions || {})
-
-    for (const key of sessionKeys.filter((k) => k.startsWith(`${tabId}-`))) {
-      mainCtrl.dapps.deleteDappSession(key)
-    }
+    // Sessions are matched by their own tabId: keys are `windowId-tabId-dappId`, so the
+    // old `${tabId}-` prefix never matched and leaked sessions past tab close.
+    mainCtrl.dapps.deleteDappSessionsForTab(tabId)
   })
 } catch (error) {
   console.error('Failed to register browser.tabs.onRemoved.addListener', error)

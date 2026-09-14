@@ -1,25 +1,31 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 
 import FooterGlassView from '@common/components/FooterGlassView'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import Header from '@common/modules/header/components/Header/Header'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
 import Exchanges from '@common/modules/token-details/components/Exchanges'
 import HideTokenModal from '@common/modules/token-details/components/HideTokenModal'
+import SwapAndBridgeFeeCard, {
+  isWalletStakingToken
+} from '@common/modules/token-details/components/SwapAndBridgeFeeCard'
 import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import TokenDetailsTransactionHistory from '@common/modules/token-details/components/TransactionHistory'
+import XWalletMigrationCard from '@common/modules/token-details/components/XWalletMigrationCard'
 import useTokenDetails from '@common/modules/token-details/hooks/useTokenDetails'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isPopup } = getUiType()
 
 const TokenDetailsScreen = () => {
-  const { t } = useTranslation()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     token,
     networks,
@@ -28,6 +34,7 @@ const TokenDetailsScreen = () => {
     handleHideTokenFromModal,
     actions
   } = useTokenDetails()
+  const shouldUseCompactFooter = isCompactSidePanelLayout || (isPopup && actions.length > 4)
 
   if (!token) return null
 
@@ -85,12 +92,27 @@ const TokenDetailsScreen = () => {
           change24hFormatted={change24hFormatted}
           isRewards={isRewards}
           isVesting={isVesting}
+          xWalletAmount={token.amount}
+          containerStyle={isWalletStakingToken(token) ? spacings.mbTy : undefined}
         />
+        <XWalletMigrationCard token={token} />
+        <SwapAndBridgeFeeCard token={token} />
         <TokenData token={token} />
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />
       </ScrollableWrapper>
-      <FooterGlassView size="sm">
+      <FooterGlassView
+        size="sm"
+        style={shouldUseCompactFooter ? spacings.phSm : undefined}
+        glassViewProps={
+          shouldUseCompactFooter ? { cssStyle: { width: '100%', alignSelf: 'stretch' } } : undefined
+        }
+        innerContainerStyle={
+          shouldUseCompactFooter
+            ? { gap: SPACING_MI, width: '100%', alignItems: 'stretch' }
+            : undefined
+        }
+      >
         {actions.map((action) => (
           <TokenDetailsButton
             key={action.id}
@@ -98,6 +120,7 @@ const TokenDetailsScreen = () => {
             isDisabled={!!action.isDisabled}
             token={token}
             iconWidth={action.iconWidth}
+            forceCompact={shouldUseCompactFooter}
           />
         ))}
       </FooterGlassView>

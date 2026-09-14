@@ -7,6 +7,7 @@ import { ExchangeInfo } from '@ambire-common/libs/portfolio/interfaces'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import ManifestImage from '@common/components/ManifestImage'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -15,7 +16,6 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
-import ManifestImage from '@web/components/ManifestImage'
 
 type Props = {
   handleClose: ReturnType<typeof useModalize>['close']

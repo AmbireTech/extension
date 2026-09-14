@@ -4,6 +4,7 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
+import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
 
@@ -12,6 +13,7 @@ export default function useGetStarted() {
   const { navigate } = useNavigation()
 
   const { goToNextRoute } = useOnboardingNavigation()
+  const { createNewSeedAccount, isCreating } = useCreateNewSeedAccount()
   const { state, dispatch: walletStateDispatch } = useController('WalletStateController')
   const resetIsSetupCompleteIfNeeded = useCallback(() => {
     if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED && !state.isPinned && state.isSetupComplete) {
@@ -35,23 +37,20 @@ export default function useGetStarted() {
   }, [authStatus, navigate, resetIsSetupCompleteIfNeeded])
 
   const handleAuthButtonPress = useCallback(
-    async (flow: 'create-new-account' | 'import-existing-account' | 'view-only') => {
+    async (flow: 'create-new-account' | 'import-existing-account') => {
       if (flow === 'create-new-account') {
-        goToNextRoute(ROUTES.createSeedPhrasePrepare)
+        createNewSeedAccount()
         return
       }
       if (flow === 'import-existing-account') {
         goToNextRoute(ROUTES.importExistingAccount)
-        return
-      }
-      if (flow === 'view-only') {
-        goToNextRoute(ROUTES.viewOnlyAccountAdder)
       }
     },
-    [goToNextRoute]
+    [createNewSeedAccount, goToNextRoute]
   )
 
   return {
-    handleAuthButtonPress
+    handleAuthButtonPress,
+    isCreatingNewAccount: isCreating
   }
 }

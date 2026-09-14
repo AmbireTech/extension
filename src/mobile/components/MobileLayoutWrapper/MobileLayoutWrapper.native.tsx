@@ -124,14 +124,12 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   withScroll = false,
   keyboardAwareScrollViewProps = {},
   withBackButton = false,
+  withHorizontalPadding = true,
   onBackButtonPress,
   rightIcon,
   title,
-  step = 0,
-  totalSteps = 2,
   ...rest
 }) => {
-  const { styles, theme } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
   const { goBack } = useNavigation()
   const insets = useSafeAreaInsets()
@@ -145,27 +143,9 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
     }
   }
 
-  const renderProgress = () => (
-    <View style={[styles.progressContainer]}>
-      {[...Array(totalSteps)].map((_, index) => (
-        <View
-          key={`step-${index.toString()}`}
-          style={[
-            styles.progress,
-            index > 0 ? spacings.mlMi : undefined,
-            {
-              backgroundColor: index < step ? theme.successDecorative : theme.tertiaryBackground
-            }
-          ]}
-        />
-      ))}
-    </View>
-  )
-
   if (withScroll) {
     return (
-      <View style={[flexbox.flex1, spacings.phSm]}>
-        {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
+      <View style={[flexbox.flex1, withHorizontalPadding && spacings.phSm]}>
         {(!!title || !!withBackButton) && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
             {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
@@ -197,8 +177,10 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   }
 
   return (
-    <View ref={wrapperRef} style={[flexbox.flex1, spacings.phSm, contentContainerStyle]}>
-      {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
+    <View
+      ref={wrapperRef}
+      style={[flexbox.flex1, withHorizontalPadding && spacings.phSm, contentContainerStyle]}
+    >
       {(!!title || !!withBackButton) && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
           {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}

@@ -27,20 +27,24 @@ import Option from './BaseAddressOption'
 interface Props extends TextProps {
   address: string
   chainId?: bigint
+  hideActions?: boolean
   actionsMode?: 'tooltip' | 'inline'
   shouldWrapInlineActions?: boolean
   verification?: BlacklistedStatus
   isDisplayingPlainAddress?: boolean
+  isToken?: boolean
 }
 
 const BaseAddress: FC<Props> = ({
   children,
   address,
   chainId,
+  hideActions = false,
   actionsMode = 'tooltip',
   shouldWrapInlineActions = true,
   verification,
   isDisplayingPlainAddress,
+  isToken,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -48,9 +52,7 @@ const BaseAddress: FC<Props> = ({
   const { addToast } = useToast()
   const { benzinNetworks } = useBenzinNetworksContext()
   // Standalone Benzin doesn't have access to controllers
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
 
   const actualNetworks = networks ?? benzinNetworks
   const network = actualNetworks?.find((n) => n.chainId === chainId)
@@ -74,7 +76,7 @@ const BaseAddress: FC<Props> = ({
         address === ZeroAddress
           ? // Exception for native tokens, they don't have a block explorer URLs
             getCoinGeckoTokenUrl(network.nativeAssetId)
-          : `${network.explorerUrl}/address/${address}`
+          : `${network.explorerUrl}/${isToken ? 'token' : 'address'}/${address}`
 
       // use Linking instead of openInTab as openInTab may trigger
       // a close of the action window. We don't want to close it, we
@@ -85,15 +87,16 @@ const BaseAddress: FC<Props> = ({
         type: 'error'
       })
     }
-  }, [addToast, address, network, t])
+  }, [addToast, address, network, isToken, t])
 
   // The uuid must be unique for each tooltip, otherwise multiple tooltips
   // will be show at the same time. We cannot use a shared tooltip as the content
   // is JSX and not a string.
   const tooltipId = useMemo(() => `address-${address}-${nanoid(6)}`, [address])
-  const showInlineActions = actionsMode === 'inline'
+  const isInlineMode = actionsMode === 'inline'
+  const showInlineActions = isInlineMode && !hideActions
   const displayValue =
-    showInlineActions && isDisplayingPlainAddress ? shortenAddress(address, 18, 4) : children
+    isInlineMode && isDisplayingPlainAddress ? shortenAddress(address, 18, 4) : children
   const textStyle = {
     flexShrink: 1,
     ...(isWeb ? { wordBreak: 'break-all' } : {})
@@ -114,8 +117,8 @@ const BaseAddress: FC<Props> = ({
         flexbox.alignCenter,
         flexbox.directionRow,
         flexbox.wrap,
-        isWeb && !showInlineActions && flexbox.flex1,
-        showInlineActions && { maxWidth: '100%' }
+        isWeb && !isInlineMode && flexbox.flex1,
+        isInlineMode && { maxWidth: '100%' }
       ]}
     >
       {showInlineActions && !!network?.explorerUrl ? (
@@ -143,13 +146,16 @@ const BaseAddress: FC<Props> = ({
               >
                 {displayValue}
               </Text>
-              <View style={[!isMobile ? { marginLeft: 2, marginTop: -8 } : {}, flexbox.center]}>
-                <OpenIcon
-                  color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={isMobile ? 14 : 10}
-                  height={isMobile ? 14 : 10}
-                />
-              </View>
+              {/* On mobile the icon clutters the rows and the whole value is tappable anyway */}
+              {!isMobile && (
+                <View style={[{ marginLeft: 2, marginTop: -8 }, flexbox.center]}>
+                  <OpenIcon
+                    color={hovered ? theme.primaryText : theme.secondaryText}
+                    width={10}
+                    height={10}
+                  />
+                </View>
+              )}
             </>
           )}
         </Pressable>
@@ -163,7 +169,7 @@ const BaseAddress: FC<Props> = ({
           {...rest}
         >
           {displayValue}
-          {isWeb && !showInlineActions && (
+          {isWeb && !isInlineMode && !hideActions && (
             <Pressable style={spacings.mlMi}>
               {({ hovered }: any) => (
                 <InfoIcon
@@ -177,7 +183,7 @@ const BaseAddress: FC<Props> = ({
           )}
         </Text>
       )}
-      {!showInlineActions && (
+      {!isInlineMode && !hideActions && (
         <Tooltip
           id={tooltipId}
           style={{ padding: 0, overflow: 'hidden' }}

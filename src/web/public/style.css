@@ -19,11 +19,28 @@ body,
   flex: 1;
 }
 
+/* Pre-paint background driven by the theme class set by rootTheme.js (a
+   render-blocking <head> script). These colors match the app theme's
+   primaryBackground so there is no flash between the first paint and React
+   mounting. The prefers-color-scheme block below is only a fallback for the
+   unlikely case rootTheme.js throws before adding the class. */
+html.theme-dark,
+html.theme-dark body,
+html.theme-dark #root {
+  background-color: #1b1d20;
+}
+
+html.theme-light,
+html.theme-light body,
+html.theme-light #root {
+  background-color: #ffffff;
+}
+
 @media (prefers-color-scheme: dark) {
-  html,
-  body,
-  #root {
-    background-color: #0d0d0f;
+  html:not(.theme-light):not(.theme-dark),
+  html:not(.theme-light):not(.theme-dark) body,
+  html:not(.theme-light):not(.theme-dark) #root {
+    background-color: #1b1d20;
   }
 }
 

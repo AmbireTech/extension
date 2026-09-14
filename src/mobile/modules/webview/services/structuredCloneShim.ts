@@ -130,17 +130,14 @@ const isNativeStructuredCloneSafe = (): boolean => {
 // fully remounts the WebView on each reload (no HMR — see WebViewWorker.tsx), so
 // this re-evaluates and re-installs every time.
 //
-// This module is imported first in injectedLogic.ts — before console forwarding
+// This module runs first in the worker webpack entry — before console forwarding
 // is wired up — so logging the outcome here would not reach Metro. Instead we
-// stash the outcome on globalThis; `getStructuredCloneShimStatus()` is logged
-// later from initControllers, once forwarding is active.
+// stash the outcome message on globalThis; injectedLogic reads
+// `__structuredCloneShimStatus` and logs it later, once forwarding is active.
 const nativeIsSafe = isNativeStructuredCloneSafe()
 if (!nativeIsSafe) {
   ;(globalThis as any).structuredClone = bigIntSafeStructuredClone
 }
-;(globalThis as any).__structuredCloneNativeIsSafe = nativeIsSafe
-
-export const getStructuredCloneShimStatus = () =>
-  (globalThis as any).__structuredCloneNativeIsSafe
-    ? '[structuredCloneShim] native structuredClone is safe (iOS 17.4+ / Hermes) — keeping native'
-    : '[structuredCloneShim] native structuredClone is broken (iOS < 17.4) — installed JS shim'
+;(globalThis as any).__structuredCloneShimStatus = nativeIsSafe
+  ? '[structuredCloneShim] native structuredClone is safe (iOS 17.4+ / Hermes) — keeping native'
+  : '[structuredCloneShim] native structuredClone is broken (iOS < 17.4) — installed JS shim'

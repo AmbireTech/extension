@@ -1,4 +1,4 @@
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 
 const getIsSignLoading = (status?: ISignAccountOpController['status']) =>

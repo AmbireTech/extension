@@ -5,9 +5,9 @@ import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
 import { SwapAmountWarning } from '@ambire-common/consts/safeguards/swapAmountWarnings'
-import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import {
   calculateAmountWarnings,
   getIsTokenEligibleForSwapAndBridge
@@ -24,7 +24,7 @@ import { getUiType } from '@common/utils/uiType'
 
 type SessionId = ReturnType<typeof nanoid>
 
-const { isPopup, isRequestWindow } = getUiType()
+const { isPopup, isRequestWindow, isSidePanel } = getUiType()
 
 const useSwapAndBridgeForm = () => {
   const {
@@ -43,7 +43,9 @@ const useSwapAndBridgeForm = () => {
     supportedChainIds,
     updateQuoteStatus,
     sessionIds,
-    toSelectedToken
+    toSelectedToken,
+    swapProviders,
+    disabledSwapProviderIds
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
@@ -67,10 +69,6 @@ const useSwapAndBridgeForm = () => {
   })
 
   const isLocalStateOutOfSync = controllerAmountFieldValue !== fromAmountValue
-  /**
-   * @deprecated - the settings menu is not used anymore
-   */
-  const [settingModalVisible, setSettingsModalVisible] = useState<boolean>(false)
   const [activeRoute, setActiveRoute] = useState<SwapAndBridgeActiveRoute | undefined>(undefined)
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
@@ -98,17 +96,23 @@ const useSwapAndBridgeForm = () => {
     open: openPriceImpactModal,
     close: closePriceImpactModal
   } = useModalize()
+  const {
+    ref: providerSettingsModalRef,
+    open: openProviderSettingsModal,
+    close: closeProviderSettingsModal
+  } = useModalize()
 
   const closePriceImpactModalWrapped = useCallback(() => {
     setFrozenPriceImpactWarning(null)
     closePriceImpactModal()
   }, [closePriceImpactModal])
 
-  const { visibleUserRequests } = useController('RequestsController').state
+  const { state: visibleUserRequests } = useController('RequestsController', 'visibleUserRequests')
   const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
   const sessionId = useMemo(() => {
     if (isPopup) return 'popup'
     if (isRequestWindow) return 'request-window'
+    if (isSidePanel) return 'side-panel'
 
     return nanoid()
   }, []) // purposely, so it is unique per hook lifetime
@@ -117,6 +121,13 @@ const useSwapAndBridgeForm = () => {
     if (!fromSelectedToken || !toSelectedToken) return false
     return fromSelectedToken.chainId !== BigInt(toSelectedToken.chainId)
   }, [fromSelectedToken, toSelectedToken])
+
+  const areAllProvidersDisabled = useMemo(
+    () =>
+      swapProviders.length > 0 &&
+      swapProviders.every(({ id }) => disabledSwapProviderIds.includes(id)),
+    [disabledSwapProviderIds, swapProviders]
+  )
 
   const networkUserRequests = useMemo(() => {
     if (!fromSelectedToken || !account || !userRequests.length) return []
@@ -449,13 +460,6 @@ const useSwapAndBridgeForm = () => {
     }
     closeEstimationModal()
   }, [closeEstimationModal, swapAndBridgeDispatch, formStatus])
-  /**
-   * @deprecated - the settings menu is not used anymore
-   */
-  const handleToggleSettingsMenu = useCallback(() => {
-    setSettingsModalVisible((p) => !p)
-  }, [])
-
   const selectedAccActiveRoutes = useMemo(() => {
     return (
       (activeRoutes || [])
@@ -537,8 +541,9 @@ const useSwapAndBridgeForm = () => {
     priceImpactModalRef,
     closePriceImpactModal: closePriceImpactModalWrapped,
     acknowledgeHighPriceImpact,
-    settingModalVisible,
-    handleToggleSettingsMenu,
+    providerSettingsModalRef,
+    openProviderSettingsModal,
+    closeProviderSettingsModal,
     selectedAccActiveRoutes,
     routesModalRef,
     displayedView,
@@ -553,7 +558,8 @@ const useSwapAndBridgeForm = () => {
     batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch
+    shouldDisableAddToBatch,
+    areAllProvidersDisabled
   }
 }
 

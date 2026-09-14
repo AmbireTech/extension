@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, ScrollView, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import SearchIcon from '@common/assets/svg/SearchIcon'
+import Input from '@common/components/Input'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -14,6 +16,7 @@ import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
 
 const NetworkOption = ({
@@ -76,11 +79,23 @@ const NetworkSelector = ({
 }) => {
   const { dispatch } = useControllersMiddleware()
 
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
+    const { state: balancePerNetwork } = useController(
+      'SelectedAccountController',
+      (state) => state.portfolio.balancePerNetwork
+    )
   const { theme } = useTheme()
   const { t } = useTranslation()
 
+  const [search, setSearch] = useState('')
+
   const networkData = networks.filter((n) => Number(n.chainId) === dapp.chainId)[0]
+
+  const filteredNetworks = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return sortNetworksByBalance(networks, balancePerNetwork)
+    return sortNetworksByBalance(networks.filter((n) => n.name.toLowerCase().includes(term)), balancePerNetwork)
+  }, [networks, search])
 
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -99,16 +114,17 @@ const NetworkSelector = ({
           chainId: Number(chainId)
         }
       })
+      setSearch('')
       setIsExpanded(false)
     },
-    [dispatch, dapp.id, setIsExpanded]
+    [dispatch, dapp.id, setIsExpanded, setSearch]
   )
 
   const networkList = (
     // I've been unable to animate the maxHeight of the container without causing
     // jittering of the other elements on Firefox.
-    <ScrollView style={{ maxHeight: isExpanded ? 320 : 0 }}>
-      {networks.map((network) => (
+    <ScrollView style={{ maxHeight: isExpanded ? 280 : 0 }}>
+      {filteredNetworks.map((network) => (
         <NetworkOption
           onSelectNetwork={onSelectNetwork}
           key={network.chainId}
@@ -119,9 +135,31 @@ const NetworkSelector = ({
     </ScrollView>
   )
 
+  const searchInput = isExpanded && (
+    <Input
+      containerStyle={spacings.mvMi}
+      inputWrapperStyle={{
+        borderRadius: 42,
+        height: 40,
+        // Matches the dropdown's `minWidth: 216` in ManageCurrentlyConnectedApp.web.tsx,
+        // minus its horizontal padding (`spacings.phTy` = 8 on each side)
+        width: 200,
+        backgroundColor: theme.tertiaryBackground
+      }}
+      leftIcon={() => <SearchIcon color={theme.secondaryText} />}
+      leftIconStyle={spacings.plSm}
+      inputStyle={spacings.plTy}
+      placeholder={t('Search network...')}
+      value={search}
+      onChangeText={setSearch}
+      autoFocus
+    />
+  )
+
   return (
     <View>
       {isAbove && networkList}
+      {isAbove && searchInput}
       <AnimatedPressable
         {...bindAnim}
         style={[
@@ -134,6 +172,7 @@ const NetworkSelector = ({
           { borderRadius: 8 }
         ]}
         onPress={() => {
+          if (isExpanded) setSearch('')
           setIsExpanded((prev) => !prev)
         }}
       >
@@ -161,6 +200,7 @@ const NetworkSelector = ({
           }}
         />
       </AnimatedPressable>
+      {!isAbove && searchInput}
       {!isAbove && networkList}
     </View>
   )

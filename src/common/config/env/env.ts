@@ -8,7 +8,6 @@ import {
   NFT_CDN_URL,
   RELAYER_URL,
   SENTRY_DSN,
-  SQUID_INTEGRATOR_ID,
   UNISWAP_API_KEY,
   VELCRO_URL,
   WALLETCONNECT_PROJECT_ID
@@ -46,13 +45,6 @@ export const APP_VERSION = appJSON.version
  */
 export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
-export const RELEASE_CHANNEL = 'N/A' // TODO: Get the release channel
-export const RUNTIME_VERSION = 'N/A' // TODO: Get the runtime version
-// FIXME: We should figure out a way to get this,
-// because 'expo-constants' uses window refs that break our extension service worker
-// export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
-export const EXPO_SDK = 'N/A'
-
 export const isMobile = Platform.OS === 'ios' || Platform.OS === 'android'
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
@@ -76,13 +68,13 @@ const CONFIG: Config = {
   NFT_CDN_URL: NFT_CDN_URL || 'https://nftcdn.ambire.com',
   ENVIRONMENT: process.env.ENVIRONMENT || 'development',
   DEFAULT_KEYSTORE_PASSWORD_DEV: process.env.DEFAULT_KEYSTORE_PASSWORD_DEV || '',
+  DEFAULT_INVITE_CODE_DEV: process.env.DEFAULT_INVITE_CODE_DEV || '',
   LEGENDS_NFT_ADDRESS:
     process.env.LEGENDS_NFT_ADDRESS || '0xF51dF52d0a9BEeB7b6E4B6451e729108a115B863',
   SENTRY_DSN_LEGENDS: process.env.SENTRY_DSN_LEGENDS || '',
   SENTRY_DSN_BROWSER_EXTENSION: process.env.SENTRY_DSN_BROWSER_EXTENSION || '',
   BUNGEE_API_KEY,
   LI_FI_API_KEY,
-  SQUID_INTEGRATOR_ID: SQUID_INTEGRATOR_ID || '',
   UNISWAP_API_KEY: UNISWAP_API_KEY || '',
   WALLETCONNECT_PROJECT_ID
 }
@@ -95,12 +87,5 @@ if (isProd) {
 
 // This is only used for development builds, and it is not a secret, so it's fine to log it.
 export const LEDGER_EMULATOR_HTTP_URL = process.env.LEDGER_EMULATOR_HTTP_URL
-
-/**
- * Option to run the app without the Ambire Relayer. See `RELAYER_URL`
- * That's special app mode, which is meant to be turned on only manually.
- * TODO: This is never tested, so it might not work!
- */
-export const isRelayerless = !CONFIG.RELAYER_URL
 
 export default CONFIG

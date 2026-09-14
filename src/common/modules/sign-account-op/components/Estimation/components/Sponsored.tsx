@@ -4,16 +4,16 @@ import { View } from 'react-native'
 
 import { Sponsor } from '@ambire-common/libs/erc7677/types'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
+import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: boolean }) => {
   const { t } = useTranslation()
-  const { currentUserRequest } = useController('RequestsController').state
+  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
   const { theme } = useTheme()
 
   return (
@@ -28,12 +28,19 @@ const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: bo
         size={64}
         isRound
         containerStyle={[
-          { backgroundColor: theme.secondaryBackground },
+          { backgroundColor: theme.secondaryBackground, flexShrink: 0 },
           isOneClick && spacings.mbTy
         ]}
         fallback={() => <ManifestFallbackIcon width={48} height={48} />}
       />
-      <View style={isOneClick ? flexbox.alignCenter : spacings.ml}>
+      <View
+        style={[
+          isOneClick ? flexbox.alignCenter : spacings.ml,
+          // Without these the row won't let this text wrap - a long dapp name (or the
+          // fallback text) runs past the edge of the screen instead
+          !isOneClick && { flexShrink: 1, minWidth: 0 }
+        ]}
+      >
         <Text fontSize={20} weight="semiBold" style={spacings.mbTy}>
           {sponsor?.name ||
             currentUserRequest?.dappPromises?.[0]?.session.name ||

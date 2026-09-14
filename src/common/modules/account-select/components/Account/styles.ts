@@ -9,7 +9,9 @@ interface Style {
   accountContainer: ViewStyle
 }
 
-export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = 57
+// Every screen stacks name / address / balance+badges on three rows, which need this height.
+// Web fits them in less, as it has no vertical padding and its text does not scale up
+export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = isWeb ? 82 : 88
 export const ACCOUNT_SELECT_ACCOUNT_MB = SPACING_TY
 
 const getStyles = () =>
@@ -19,8 +21,8 @@ const getStyles = () =>
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
       ...spacings.phTy,
-      ...spacings.pvTy,
-      ...(isWeb ? spacings.prSm : {}),
+      // The fixed height already leaves the three rows enough room on web
+      ...(isWeb ? spacings.pv0 : spacings.pvTy),
       ...common.borderRadiusPrimary,
       marginBottom: ACCOUNT_SELECT_ACCOUNT_MB,
       minHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT,

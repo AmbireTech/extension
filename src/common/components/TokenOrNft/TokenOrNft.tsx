@@ -39,15 +39,11 @@ const TokenOrNft: FC<Props> = ({
     tokenInfo?: TokenResult
     nftInfo?: CollectionResult
   }>({})
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const { dispatchAndWait } = useController('ProvidersController')
 
   const { t } = useTranslation()
-  const {
-    state: { networks: controllerNetworks }
-  } = useController('NetworksController')
+  const { state: controllerNetworks } = useController('NetworksController', 'networks')
   const { benzinNetworks, addNetwork } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = controllerNetworks ?? benzinNetworks

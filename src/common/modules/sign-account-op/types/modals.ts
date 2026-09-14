@@ -14,7 +14,7 @@ export type ModalsProps = Pick<
   | 'shouldDisplayLedgerConnectModal'
   | 'handleDismissLedgerConnectModal'
   | 'shouldDisplayQrSigningModal'
-  | 'handleQrSingingFlowOnContinuePressed'
+  | 'handleQrSigningFlowOnContinuePressed'
   | 'handleQrSigningFlowSubmitSignatureResponse'
   | 'handleQrSigningFlowOnClosePressed'
   | 'handleQrSigningFlowOnRejectPressed'

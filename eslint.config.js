@@ -62,6 +62,32 @@ module.exports = [
       'react/jsx-key': 'error'
     }
   },
+  // The extension UI must import only TYPES from ambire-common controllers and
+  // heavy business-logic libs - they run in the background service worker. A plain value import
+  // drags the whole module (and its transitive deps) into the UI bundle.
+  {
+    files: ['src/common/**/*.{ts,tsx}', 'src/web/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'warn',
+        {
+          patterns: [
+            {
+              group: [
+                '@ambire-common/controllers/*',
+                '@ambire-common/libs/humanizer',
+                '@ambire-common/libs/humanizer/*'
+              ],
+              // permits `import type`, warns on value imports.
+              allowTypeImports: true,
+              message:
+                'Import only types from ambire-common controllers and heavy modules in the UI (use `import type`). Such imports bundle background-only code into the extension UI.'
+            }
+          ]
+        }
+      ]
+    }
+  },
   // After ambire-common spread so root rule overrides stay; disables formatting rules vs Prettier.
   require('eslint-config-prettier')
 ]

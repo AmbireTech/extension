@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme/useTheme'
 import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
@@ -23,10 +24,15 @@ const ExpandedContent = ({ call, size, sizeMultiplier }: Props) => {
 
   return (
     <View
-      style={{
-        paddingHorizontal: SPACING_SM * sizeMultiplier[size],
-        paddingVertical: SPACING_TY * sizeMultiplier[size]
-      }}
+      style={
+        // On mobile the expanded card is already padded, so this only wastes width
+        isMobile
+          ? undefined
+          : {
+              paddingHorizontal: SPACING_SM * sizeMultiplier[size],
+              paddingVertical: SPACING_TY * sizeMultiplier[size]
+            }
+      }
     >
       {call.to && (
         <Text selectable fontSize={12} style={styles.bodyText}>

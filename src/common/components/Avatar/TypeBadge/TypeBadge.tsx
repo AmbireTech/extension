@@ -10,6 +10,9 @@ import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 
+/** Sized so the badge stays the same fraction of the avatar on every platform and size */
+const SAFE_BADGE_ICON_SIZE = 16
+
 interface Props {
   smartAccountType?: 'Ambire' | 'Safe'
   size?: 'big' | 'small'
@@ -53,28 +56,26 @@ const TypeBadge: FC<Props> = ({ smartAccountType, size, showTooltip = false }) =
   }
 
   return (
-    <SafeIcon
+    <View
       dataSet={createGlobalTooltipDataSet({
         id: tooltipId,
         content: badgePreset.tooltipText,
         hidden: !showTooltip
       })}
-      width={size === 'big' ? 21 : 15}
-      height={size === 'big' ? 21 : 15}
       style={{
         position: 'absolute',
-        left: size === 'big' ? -2 : -SPACING_MI,
-        top: size === 'big' ? -4 : -SPACING_MI,
+        // The badge carries no ring, so the offsets don't have to make up for a border
+        left: size === 'big' ? 0 : -SPACING_MI + 2,
+        top: size === 'big' ? -2 : -SPACING_MI + 2,
         paddingHorizontal: 2,
         paddingVertical: 2,
         backgroundColor: theme.successText,
         zIndex: 2,
-        borderRadius: 50,
-        borderWidth: size === 'big' ? 3 : 2,
-        borderColor:
-          themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground
+        borderRadius: 50
       }}
-    />
+    >
+      <SafeIcon width={SAFE_BADGE_ICON_SIZE} height={SAFE_BADGE_ICON_SIZE} />
+    </View>
   )
 }
 

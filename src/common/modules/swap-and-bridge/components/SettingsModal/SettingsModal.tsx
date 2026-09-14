@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { Animated, Pressable, View, ViewStyle } from 'react-native'
 
-import SettingsIcon from '@common/assets/svg/SettingsIcon/SettingsIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -63,7 +63,7 @@ const SettingsModal: React.FC<Props> = ({ handleToggleSettingsMenu, settingModal
   const { styles, theme } = useTheme(getStyles)
   const settingButtonRef: any = useRef(null)
   const settingMenuRef: any = useRef(null)
-  const { routePriority } = useController('SwapAndBridgeController').state
+  const { state: routePriority } = useController('SwapAndBridgeController', 'routePriority')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { x: settingButtonX, y: settingButtonY } = useElementSize(settingButtonRef)
   const [bindAnim, , isHovered, , animatedValues] = useCustomHover({

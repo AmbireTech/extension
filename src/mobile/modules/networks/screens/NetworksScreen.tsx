@@ -22,7 +22,6 @@ import NetworkBottomSheet, {
 } from '@common/modules/networks/components/NetworkBottomSheet'
 import Networks from '@common/modules/networks/components/Networks'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
@@ -94,8 +93,7 @@ const NetworksScreen = () => {
   }, [closeSettingsBottomSheet])
 
   const handleOpenAddNetworkBottomSheet = useCallback(() => {
-    alert('Coming soon!')
-    // openAddNetworkBottomSheet()
+    openAddNetworkBottomSheet()
   }, [openAddNetworkBottomSheet])
 
   const openBlockExplorer = useCallback(
@@ -145,7 +143,6 @@ const NetworksScreen = () => {
         <FooterGlassView size="sm">
           <Button
             text={t('Add new network')}
-            size="smaller"
             hasBottomSpacing={false}
             style={spacings.mtSm}
             childrenPosition="left"

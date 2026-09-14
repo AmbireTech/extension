@@ -9,14 +9,14 @@ import { getUiType } from '@common/utils/uiType'
 
 import { RenderSelectedOptionParams } from '../types'
 
-const { isPopup } = getUiType()
+const { isPopup, isSidePanel } = getUiType()
 
 // Hoisted stable references so that re-renders of this component don't
 // create new inline object/function props every time, which would defeat
 // the `React.memo` wrapper on `BottomSheet` and cause the nested-Portal
 // infinite-update loop inside `react-native-modalize` / `@gorhom/portal`.
 const CONTAINER_INNER_WRAPPER_STYLES = { flex: 1 } as const
-const BOTTOM_SHEET_WIDTH = isPopup || isMobile ? ('100%' as const) : 450
+const BOTTOM_SHEET_WIDTH = isPopup || isSidePanel || isMobile ? ('100%' as const) : 450
 
 type Props = Pick<RenderSelectedOptionParams, 'isMenuOpen' | 'toggleMenu'> & {
   id?: string

@@ -1,10 +1,9 @@
 import { ZeroAddress } from 'ethers'
 
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Contacts } from '@ambire-common/interfaces/addressBook'
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
-import { canBecomeSmarter } from '@ambire-common/libs/account/account'
+import { FeeSpeed, ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { canBecomeSmarter, isAmbireV2Account } from '@ambire-common/libs/account/account'
 import { canFeeOptionCoverAmount } from '@ambire-common/libs/account/feeOptions'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { getExtremeGasFeeWarningState } from '@ambire-common/libs/safeguards/extremeGasFee'
@@ -21,6 +20,12 @@ const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
   if (!aPrice && bPrice) return 1
   return 0
 }
+
+const getFeeOptionValue = (feeOption: FeePaymentOption) =>
+  feeOption.paidBy +
+  feeOption.token.address +
+  feeOption.token.symbol.toLowerCase() +
+  (feeOption.token.flags.onGasTank ? 'gasTank' : '')
 
 /**
  * Sorts fee options by the following criteria:
@@ -71,7 +76,6 @@ const mapFeeOptions = (
   let disabledReason: string | undefined
   let disabledTextAppearance: 'errorText' | 'infoText' | undefined
 
-  const gasTankKey = feeOption.token.flags.onGasTank ? 'gasTank' : ''
   const speedCoverage: FeeSpeed[] = []
   const id = getFeeSpeedIdentifier(feeOption, signAccountOpState.accountOp.accountAddr)
 
@@ -87,10 +91,24 @@ const mapFeeOptions = (
   const feeSpeedUsd = feeSpeed?.amountUsd || '0'
 
   if (!speedCoverage.includes(FeeSpeed.Slow)) {
-    if (!feeOption.token.priceIn.length) {
+    const hasBundlerFailure = signAccountOpState.warnings.some(
+      (warning) => warning.id === 'bundler-failure'
+    )
+    const isPaidByAccount = feeOption.paidBy === signAccountOpState.account.addr
+    const isEoa7702 =
+      'is7702' in signAccountOpState.baseAccount && signAccountOpState.baseAccount.is7702
+    const isUnavailableBecauseOfBundlerFailure =
+      hasBundlerFailure &&
+      ((isAmbireV2Account(signAccountOpState.account.creation?.factoryAddr) && isPaidByAccount) ||
+        (isEoa7702 && feeOption.token.address !== ZERO_ADDRESS && isPaidByAccount) ||
+        (!!signAccountOpState.account.safeCreation && feeOption.token.flags.onGasTank))
+
+    if (isUnavailableBecauseOfBundlerFailure) {
+      disabledReason = 'Currently unavailable'
+    } else if (!feeOption.token.priceIn.length) {
       disabledReason = 'No price data'
     } else {
-      disabledReason = 'Insufficient amount'
+      disabledReason = 'insufficient amount'
     }
   }
 
@@ -99,7 +117,7 @@ const mapFeeOptions = (
     feeOption.paidBy === signAccountOpState.account.addr &&
     !feeOption.token.flags.onGasTank
   ) {
-    disabledReason = 'Not supported'
+    disabledReason = 'not supported'
   }
 
   // TODO: TBD, should we refactor and move `disabledReason` logic together with `speedCoverage` into controller.
@@ -116,7 +134,7 @@ const mapFeeOptions = (
   )
 
   if (isExternal && canNotBecomeSmarter && feeOption.token.address !== ZERO_ADDRESS) {
-    disabledReason = 'Coming soon for more hardware wallets'
+    disabledReason = 'Coming soon for more hardware wallets.'
     disabledTextAppearance = 'infoText'
   }
 
@@ -127,7 +145,7 @@ const mapFeeOptions = (
     : undefined
 
   if (signAccountOpState.hasCustomGasPrices && feeOption.token.address !== ZeroAddress) {
-    disabledReason = 'Option not available for advanced gas prices'
+    disabledReason = 'Option not available for advanced gas prices.'
     disabledTextAppearance = 'errorText'
   }
 
@@ -148,11 +166,7 @@ const mapFeeOptions = (
     !!getExtremeGasFeeWarningState(signAccountOpState, signAccountOpState.accountOp.chainId)
 
   return {
-    value:
-      feeOption.paidBy +
-      feeOption.token.address +
-      feeOption.token.symbol.toLowerCase() +
-      gasTankKey,
+    value: getFeeOptionValue(feeOption),
     label: (
       <PayOption
         amount={feeSpeedAmount}
@@ -175,4 +189,4 @@ const mapFeeOptions = (
   }
 }
 
-export { mapFeeOptions, sortFeeOptions }
+export { getFeeOptionValue, mapFeeOptions, sortFeeOptions }

@@ -1,25 +1,46 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform as RNPlatform } from 'react-native'
 
+import { NavigateOptions } from '@ambire-common/interfaces/ui'
 import { LIFI_EXPLORER_URL } from '@ambire-common/services/lifi/consts'
-import { APP_VERSION } from '@common/config/env'
+import { APP_VERSION, isDev } from '@common/config/env'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import useIsAppFocused from '@common/hooks/useIsAppFocused'
+import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
+import { ROUTES } from '@common/modules/router/constants/common'
+import {
+  MAX_VIEW_ROUTE_SYNC_ATTEMPTS,
+  VIEW_ROUTE_SYNC_RE_ASK_INTERVAL
+} from '@common/modules/router/constants/viewRouteSync'
+import { toAbsoluteRoute } from '@common/modules/router/helpers/helpers'
+import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
-import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
-import { MOBILE_CRITICAL_CONTROLLERS } from '@mobile/constants/criticalControllers'
+import { BUNGEE_API_KEY, RELAYER_URL, UNISWAP_API_KEY, VELCRO_URL } from '@env'
+import {
+  MOBILE_CRITICAL_CONTROLLERS,
+  MOBILE_DEFERRED_CONTROLLERS
+} from '@mobile/constants/criticalControllers'
+import { MOBILE_VIEW_ID } from '@mobile/constants/ui'
+import useBootProfileReport from '@mobile/hooks/useBootProfileReport'
 import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
 import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/services/WebViewWorker'
+import { shouldShowMigrationOnboarding } from '@mobile/services/legacyMigration/legacyMigration'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const { controllerStore, stateSubscriptionManager } = useContext(ControllerStoreContext)
   const webviewRef = useRef<WebViewWorkerRef>(null)
+  const hasRequestedDeferredControllers = useRef(false)
   const route = useRoute()
+  const isFocused = useIsAppFocused()
+  const { navigate } = useNavigation()
+  const [isWorkerReady, setIsWorkerReady] = useState(false)
+  const isOnRootRoute = !route.pathname || route.pathname === '/'
 
   const dispatch = useCallback(
     (action: MethodAction | Action, windowId?: number, raw?: boolean) => {
@@ -27,6 +48,39 @@ export const ControllersMiddlewareProvider: React.FC<{
     },
     []
   )
+
+  // The controllers are authoritative for routing: they send the route to go to and whether the
+  // view may be moved at all, so nothing is second-guessed here.
+  const handleNavigate = useCallback(
+    ({ route: nextRoute, options }: { route: string; options?: NavigateOptions }) => {
+      // The initial navigation, or a retry of it, can arrive after the user has already moved on.
+      // Honouring it then would throw them back to where the app started.
+      if (options?.isInitialNavigation && !isOnRootRoute) return
+
+      // Users updating from the legacy v1 app land on the migration onboarding (once) before the
+      // get-started screen, so they understand why their data is gone and can back up their v1
+      // email accounts.
+      const destination =
+        nextRoute === ROUTES.getStarted && shouldShowMigrationOnboarding()
+          ? ROUTES.migrationOnboarding
+          : nextRoute
+
+      // Don't navigate if already there
+      if (`${route.pathname}${route.search}` === toAbsoluteRoute(destination)) return
+
+      navigate(destination, options)
+    },
+    [route.pathname, route.search, navigate, isOnRootRoute]
+  )
+
+  // Follow where the controllers send the app. Registered before the effect that boots the
+  // worker, because registering the view is what triggers the first navigation and the worker
+  // only starts from that effect.
+  useEffect(() => {
+    eventBus.addEventListener('navigate', handleNavigate)
+
+    return () => eventBus.removeEventListener('navigate', handleNavigate)
+  }, [handleNavigate])
 
   // Report which controllers currently have an active subscriber so the WebView
   // worker can skip serializing + bridging the state of controllers no screen is
@@ -64,20 +118,55 @@ export const ControllersMiddlewareProvider: React.FC<{
       ?.init({
         APP_VERSION,
         platform: `mobile-${RNPlatform.OS}`,
+        // Sent as the x-app-version header on the requests to Ambire APIs. Same shape as
+        // the extension's `extension-<version>-<engine>`, so the analytics can tell the
+        // apps and their platforms apart.
+        appVersionHeader: `mobile-${APP_VERSION}-${RNPlatform.OS}`,
+        // Sent as the x-app-env header. No staging builds on mobile, so the value set is
+        // the extension's minus 'next'.
+        appEnv: isDev ? 'dev' : 'prod',
         RELAYER_URL,
         VELCRO_URL,
         LIFI_EXPLORER_URL,
         BUNGEE_API_KEY,
-        SQUID_INTEGRATOR_ID,
         criticalControllers: MOBILE_CRITICAL_CONTROLLERS,
         UNISWAP_API_KEY
       })
       .then((ctrlsNames) => {
-        controllerStore.init(ctrlsNames as any[], MOBILE_CRITICAL_CONTROLLERS, () => {
-          dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsNames as any[] } })
-        })
+        controllerStore.init(
+          ctrlsNames as any[],
+          MOBILE_CRITICAL_CONTROLLERS,
+          () => {
+            dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsNames as any[] } })
+          },
+          MOBILE_DEFERRED_CONTROLLERS
+        )
+        setIsWorkerReady(true)
       })
   }, [controllerStore, dispatch])
+
+  // Ask again while there is still nothing on screen, in case the navigation sent when the view
+  // registered never arrived. Only once the worker is up, because it drops anything dispatched
+  // before that and the attempt would be spent for nothing.
+  useEffect(() => {
+    if (!isWorkerReady || !isOnRootRoute) return
+
+    let attempts = 0
+    let reAskTimeout: ReturnType<typeof setTimeout>
+
+    const askForRoute = () => {
+      if (attempts >= MAX_VIEW_ROUTE_SYNC_ATTEMPTS) return
+      attempts += 1
+
+      dispatch({ type: 'SYNC_VIEW_ROUTE', params: { id: MOBILE_VIEW_ID } })
+
+      reAskTimeout = setTimeout(askForRoute, VIEW_ROUTE_SYNC_RE_ASK_INTERVAL)
+    }
+
+    askForRoute()
+
+    return () => clearTimeout(reAskTimeout)
+  }, [isWorkerReady, isOnRootRoute, dispatch])
 
   useEffect(() => {
     const { pathname = '/', search = '' } = route
@@ -87,15 +176,43 @@ export const ControllersMiddlewareProvider: React.FC<{
     dispatch({
       type: 'UPDATE_UI_VIEW_ROUTE',
       params: {
-        id: 'default-mobile-app-view',
+        id: MOBILE_VIEW_ID,
         route: pathname.startsWith('/') ? pathname.slice(1) : pathname,
         searchParams: searchParamsFormatted
       }
     })
   }, [route.pathname, route.search, dispatch])
 
+  useEffect(() => {
+    if (!isFocused) return
+    dispatch({ type: 'SET_VIEW_FOCUS', params: { id: MOBILE_VIEW_ID } })
+  }, [isFocused, dispatch])
+
+  // The dapp catalog and the phishing lists are the two heaviest storage reads, so
+  // they stay off the boot path and only start once the dashboard is the current
+  // route. Fired after a frame so the dashboard gets to paint first, and skipped
+  // entirely when both controllers already reported ready (a returning visit to the
+  // dashboard, or a flow that needed them earlier and initialized them on demand).
+  useEffect(() => {
+    if (hasRequestedDeferredControllers.current) return
+    if (route.pathname?.replace('/', '') !== ROUTES.dashboard) return
+
+    const areDeferredControllersLoaded = MOBILE_DEFERRED_CONTROLLERS.every(
+      (ctrlName) => (controllerStore.getSnapshot(ctrlName) as { isReady?: boolean }).isReady
+    )
+    if (areDeferredControllersLoaded) return
+
+    const frameHandle = requestAnimationFrame(() => {
+      dispatch({ type: 'INIT_DEFERRED_CONTROLLERS' })
+      hasRequestedDeferredControllers.current = true
+    })
+
+    return () => cancelAnimationFrame(frameHandle)
+  }, [route.pathname, controllerStore, dispatch])
+
   useRequestsControllerHelpers(dispatch)
   useDappsControllerHelpers(dispatch)
+  useBootProfileReport(dispatch)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

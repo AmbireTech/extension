@@ -3,7 +3,10 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { Action, MethodAction } from '@common/types/actions'
 import { browser } from '@web/constants/browserapi'
 
-export type Port = chrome.runtime.Port & { id: string; name: 'popup' | 'tab' | 'request-window' }
+export type Port = chrome.runtime.Port & {
+  id: string
+  name: 'popup' | 'tab' | 'request-window' | 'side-panel'
+}
 
 type MessageType = '> ui' | '> ui-error' | '> ui-toast' | '> background'
 
@@ -50,6 +53,12 @@ export class PortMessenger {
   #portListeners = new Map<string, (data: any) => void>()
 
   #portDisconnectListeners = new Map<string, (data: any) => void>()
+
+  // `port.postMessage` throws synchronously ("Attempting to use a disconnected port object")
+  // once the other end is gone, but `onDisconnect` is an async browser event that can lag behind
+  // (e.g. a background/throttled tab). This lets a caller react to that failure immediately,
+  // at the exact point a message actually failed to send, instead of only via `onDisconnect`.
+  onSendError?: (error: unknown) => void
 
   constructor(ports: Port[] = []) {
     this.ports = ports
@@ -130,6 +139,7 @@ export class PortMessenger {
       })
     } catch (error) {
       console.error('Error in port.postMessage', error)
+      this.onSendError?.(error)
     }
   }
 
@@ -139,6 +149,7 @@ export class PortMessenger {
       port.postMessage({ messageType: type, message: stringify(message), meta: stringify(meta) })
     } catch (error: any) {
       console.error('Error in port.postMessage', error)
+      this.onSendError?.(error)
     }
   }
 

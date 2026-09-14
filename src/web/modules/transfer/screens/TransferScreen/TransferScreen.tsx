@@ -1,18 +1,18 @@
 import { parseUnits } from 'ethers'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
-import { getAddressFromAddressState, getDomainFromAddressState } from '@ambire-common/utils/domains'
+import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -26,11 +26,14 @@ import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import InProgress from '@common/components/TrackProgress/ByStatus/InProgress'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
@@ -50,7 +53,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { verifiedDomainsStatus, domains } = useController('DomainsController').state
   const {
     isTopUp,
     validationFormMsgs,
@@ -81,19 +84,20 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [amountInFiat])
 
   const { navigate } = useNavigation()
+  const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const { t } = useTranslation()
-  const { visibleUserRequests } = useController('RequestsController').state
+  const { state: visibleUserRequests } = useController('RequestsController', 'visibleUserRequests')
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
-  const { userRequests } = useController('RequestsController').state
+  const { state: userRequests } = useController('RequestsController', 'userRequests')
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { accountsOps } = useController('ActivityController').state
+  const { state: accountsOps } = useController('ActivityController', 'accountsOps')
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
@@ -195,16 +199,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     return `https://explorer.ambire.com/${getBenzinUrlParams({ chainId, txnId, identifiedBy })}`
   }, [submittedAccountOp])
 
-  useEffect(() => {
+  useControllerSession({
     // Optimization: Don't apply filtration if we don't have a recent broadcasted account op
-    if (!latestBroadcastedAccountOp?.accountAddr || !latestBroadcastedAccountOp?.chainId) return
-
-    sessionHandler.initSession()
-
-    return () => {
-      sessionHandler.killSession()
-    }
-  }, [latestBroadcastedAccountOp?.accountAddr, latestBroadcastedAccountOp?.chainId, sessionHandler])
+    isEnabled: !!latestBroadcastedAccountOp?.accountAddr && !!latestBroadcastedAccountOp?.chainId,
+    open: sessionHandler.initSession,
+    close: sessionHandler.killSession
+  })
 
   const displayedView: 'transfer' | 'batch' | 'track' | 'loading' = useMemo(() => {
     // If the screen type doesn't match the controller state, we show a loading state
@@ -359,6 +359,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             args: [request.id]
           }
         })
+        // Side-panel routing only auto-navigates on request id changes. Re-opening the
+        // same queued batch from Send must navigate explicitly.
+        if (shouldRenderRequestInPanel) {
+          const targetRoute = getRouteForUserRequest({
+            currentUserRequest: request,
+            transferState
+          })
+          if (targetRoute) navigate(targetRoute)
+        }
         return
       }
 
@@ -382,7 +391,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                         ? FEE_COLLECTOR
                         : getAddressFromAddressState(addressState),
                       executionType,
-                      recipientDomain: getDomainFromAddressState(addressState)
+                      recipientDomain: getResolvedDomainName(domains, addressState)
                     }
                   }
                 ]
@@ -411,7 +420,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                     ? FEE_COLLECTOR
                     : getAddressFromAddressState(addressState),
                   executionType,
-                  recipientDomain: getDomainFromAddressState(addressState)
+                  recipientDomain: getResolvedDomainName(domains, addressState)
                 }
               }
             ]
@@ -427,8 +436,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [
       isSendingBatch,
       isFormValid,
-      transferState.selectedToken,
-      transferState.amount,
+      transferState,
       amountInFiatBigInt,
       visibleUserRequests,
       requestsDispatch,
@@ -439,7 +447,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       resetTransferForm,
       networkUserRequests.length,
       openEstimationModalAndDispatch,
-      account?.safeCreation
+      account?.safeCreation,
+      navigate,
+      shouldRenderRequestInPanel,
+      domains
     ]
   )
 
@@ -463,7 +474,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         }
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
-        isNotReadyToProceed={!isTransferFormValid}
+        isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
@@ -714,16 +725,18 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         portfolio={portfolio}
         account={account}
       />
-      <Estimation
-        updateType="Transfer&TopUp"
-        estimationModalRef={estimationModalRef}
-        closeEstimationModal={closeEstimationModalAndDispatch}
-        updateController={updateController}
-        handleUpdateStatus={handleUpdateStatus}
-        hasProceeded={hasProceeded}
-        signAccountOpController={signAccountOpController}
-        Modals={Modals}
-      />
+      <Suspense fallback={null}>
+        <Estimation
+          updateType="Transfer&TopUp"
+          estimationModalRef={estimationModalRef}
+          closeEstimationModal={closeEstimationModalAndDispatch}
+          updateController={updateController}
+          handleUpdateStatus={handleUpdateStatus}
+          hasProceeded={hasProceeded}
+          signAccountOpController={signAccountOpController}
+          Modals={Modals}
+        />
+      </Suspense>
     </Wrapper>
   )
 }

@@ -29,6 +29,7 @@ import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
+import { getUiType } from '@common/utils/uiType'
 
 import {
   getEip712IntegerFieldNames,
@@ -36,6 +37,8 @@ import {
   isParsedMessageValueShortened
 } from './helpers'
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -65,7 +68,8 @@ const useParsedMessageRows = (
   message: unknown,
   chainId: bigint,
   responsiveSizeMultiplier: number,
-  t: (key: string) => string
+  t: (key: string) => string,
+  withRegularParsedText: boolean
 ): ParsedMessageRow[] => {
   return useMemo(() => {
     if (!message) return []
@@ -87,6 +91,7 @@ const useParsedMessageRows = (
               chainId={BigInt(chainId)}
               address={valueAsString}
               fontSize={14 * responsiveSizeMultiplier}
+              weight={withRegularParsedText ? 'regular' : undefined}
               actionsMode="inline"
             />
           )
@@ -97,7 +102,7 @@ const useParsedMessageRows = (
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               <Text
                 fontSize={16 * responsiveSizeMultiplier}
-                weight="semiBold"
+                weight={withRegularParsedText ? 'regular' : 'semiBold'}
                 style={[spacings.mrTy]}
               >
                 {t('Infinite amount')}
@@ -115,7 +120,7 @@ const useParsedMessageRows = (
           componentToReturn
         }
       })
-  }, [message, chainId, responsiveSizeMultiplier, t])
+  }, [message, chainId, responsiveSizeMultiplier, t, withRegularParsedText])
 }
 
 type ActiveTab = 'parsed' | 'raw'
@@ -130,7 +135,10 @@ const FallbackVisualization: FC<{
   rawOnly?: boolean
   scrollEnabled?: boolean
   withCompactDataRow?: boolean
+  withTwoColumnDataRow?: boolean
   withDecimalIntegerRows?: boolean
+  withRegularParsedText?: boolean
+  parsedValueMaxLength?: number
   disableScroll?: boolean
   hideTabs?: boolean
   containerStyle?: StyleProp<ViewStyle>
@@ -145,7 +153,10 @@ const FallbackVisualization: FC<{
   rawOnly = false,
   scrollEnabled = true,
   withCompactDataRow = false,
+  withTwoColumnDataRow = false,
   withDecimalIntegerRows = false,
+  withRegularParsedText = false,
+  parsedValueMaxLength,
   disableScroll = false,
   hideTabs = false,
   containerStyle,
@@ -162,6 +173,12 @@ const FallbackVisualization: FC<{
   const content = messageToSign?.content
   const chainId = messageToSign?.chainId || 1n
   const isTypedMessage = content?.kind === 'typedMessage'
+  // Stack label above value so long hashes don't collide with labels in narrow UIs
+  // (side panel / Safe EIP-712 compact embedding / mobile).
+  // In some web fullscreen layouts the container ends up narrow too; stack in
+  // that case as well to avoid overlapping text.
+  const withStackedParsedRows =
+    !withTwoColumnDataRow && (withCompactDataRow || isSidePanel || maxWidthSize('m'))
   const erc7730Visualizations = useMemo(
     () => humanizedMessage?.fullVisualization?.filter(isErc7730Visualization) || [],
     [humanizedMessage?.fullVisualization]
@@ -170,7 +187,8 @@ const FallbackVisualization: FC<{
     content?.kind === 'typedMessage' ? content.message : null,
     chainId,
     responsiveSizeMultiplier,
-    t
+    t,
+    withRegularParsedText
   )
   const integerFieldNames = useMemo(
     () =>
@@ -308,11 +326,21 @@ const FallbackVisualization: FC<{
                     : null
                 const hasPlainValue = plainValue !== null
                 const displayedValue = hasPlainValue
-                  ? getParsedMessageValue(i.label, plainValue, integerFieldNames)
+                  ? getParsedMessageValue(
+                      i.label,
+                      plainValue,
+                      integerFieldNames,
+                      parsedValueMaxLength
+                    )
                   : i.componentToReturn
                 const copyValue =
                   typeof plainValue === 'string' &&
-                  isParsedMessageValueShortened(i.label, plainValue, integerFieldNames)
+                  isParsedMessageValueShortened(
+                    i.label,
+                    plainValue,
+                    integerFieldNames,
+                    parsedValueMaxLength
+                  )
                     ? plainValue
                     : null
 
@@ -321,6 +349,13 @@ const FallbackVisualization: FC<{
                     key={`${i.path}-${i.value}`}
                     style={[
                       styles.parsedRow,
+                      withTwoColumnDataRow && { flexWrap: 'nowrap' },
+                      withStackedParsedRows && {
+                        flexDirection: 'column',
+                        alignItems: 'stretch',
+                        justifyContent: 'flex-start',
+                        flexWrap: 'nowrap'
+                      },
                       {
                         marginBottom:
                           i.isArrayItem && isHexString(String(i.value))
@@ -331,11 +366,13 @@ const FallbackVisualization: FC<{
                   >
                     <Text
                       selectable
-                      weight="semiBold"
+                      weight={withRegularParsedText ? 'regular' : 'semiBold'}
                       fontSize={14 * responsiveSizeMultiplier}
                       appearance="secondaryText"
                       style={[
                         styles.parsedLabel,
+                        withTwoColumnDataRow && { minWidth: 0 },
+                        withStackedParsedRows && { flex: 0, minWidth: 0, width: '100%' },
                         {
                           marginLeft: Math.max(i.n - 1, 0) * SPACING_SM * responsiveSizeMultiplier
                         }
@@ -343,15 +380,30 @@ const FallbackVisualization: FC<{
                     >
                       {i.label}
                     </Text>
-                    <View style={styles.parsedValue}>
+                    <View
+                      style={[
+                        styles.parsedValue,
+                        withTwoColumnDataRow && { minWidth: 0 },
+                        withStackedParsedRows && {
+                          flex: 0,
+                          minWidth: 0,
+                          width: '100%',
+                          justifyContent: 'flex-start',
+                          marginTop: SPACING_TY / 2
+                        }
+                      ]}
+                    >
                       {hasPlainValue ? (
                         <>
                           <Text
                             selectable
-                            weight="medium"
+                            weight={withRegularParsedText ? 'regular' : 'medium'}
                             fontSize={14 * responsiveSizeMultiplier}
                             appearance="primaryText"
-                            style={styles.parsedValueText}
+                            style={[
+                              styles.parsedValueText,
+                              withStackedParsedRows && { textAlign: 'left', flexShrink: 1 }
+                            ]}
                           >
                             {displayedValue}
                           </Text>

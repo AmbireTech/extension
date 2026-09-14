@@ -1,5 +1,5 @@
 import { isDevice } from 'expo-device'
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Platform } from 'react-native'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
@@ -9,6 +9,7 @@ import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerSt
 import eventBus from '@common/services/event/eventBus'
 import { getAllSerialized, storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
+import { BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS } from '@mobile/constants/storageSnapshot'
 import {
   approveWalletConnectSession,
   approveWcAuthenticate,
@@ -18,30 +19,44 @@ import {
   rejectWcAuthenticate,
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
+import WebviewDevServerError from '@mobile/modules/webview/components/WebviewDevServerError'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
+import materializeWorkerBundle, {
+  getMaterializedWorkerBundleUri
+} from '@mobile/modules/webview/services/materializeWorkerBundle'
+import {
+  BOOT_MARK,
+  BOOT_MARK_PREFIX,
+  BOOT_PROFILE_MARKS_EVENT,
+  BOOT_PROFILE_MARKS_MESSAGE,
+  bootProfiler,
+  IS_BOOT_PROFILING_ENABLED,
+  markBoot,
+  markBootOnce,
+  markStorageSnapshotKeys,
+  monotonicNow,
+  setWorkerBootProfile
+} from '@mobile/services/bootProfiler'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import { beginNfcPinSessions, endNfcPinSessions, getNfcCardService } from '@mobile/services/nfc'
+import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
 
-// In production the worker bundle ships as a static file inside the signed
-// app (iOS Resources / Android assets) and the WebView loads it from disk via
-// `file://`. The HTML stub is built at compile time with a strict CSP
-// (`script-src file:`) and loads the bundle through a `<script src>` tag
-// pinned with a SHA-384 Subresource Integrity hash, which the engine
-// recomputes and validates before executing the script.
-// In dev the bundle is fetched from webpack-dev-server (HTTP) so HMR keeps
-// working.
-const PROD_BUNDLE_URI = !__DEV__ ? getWebviewBundleUri() : ''
-// Directory containing the HTML + JS pair. WKWebView's `loadFileURL` defaults
-// its read-access scope to the HTML file alone, which blocks the sibling
-// `<script src="webview-bundle.js">` from resolving. We grant read access to
-// the directory only — narrowest scope that lets the bundle load.
-const PROD_BUNDLE_DIR = !__DEV__ ? PROD_BUNDLE_URI.replace(/\/[^/]+$/, '/') : ''
+// In production the worker bundle is materialized from the OTA-shipped copy (which rides
+// the Metro bundle) into a writable, app-sandboxed dir and loaded from there via `file://`,
+// so OTA updates reach it. It falls back to the native-asset copy baked into the signed app
+// if materialization fails. Either way the HTML stub carries a strict CSP (`script-src
+// file:`) and a SHA-384 SRI pinning its sibling `<script src>`, both built together so the
+// SRI always matches the JS. In dev the bundle is fetched from webpack-dev-server (HTTP) so
+// HMR keeps working. The bundle URI resolves asynchronously (see materializeWorkerBundle),
+// so the WebView mounts only once it is ready.
 
 // The dev server URL for webpack-dev-server.
 // - Simulator/emulator: auto-detected via Device.isDevice; uses platform loopback (localhost / 10.0.2.2)
 // - Real device: set WEBVIEW_DEV_HOST to the host machine's LAN IP in .env
 const WEBVIEW_DEV_SERVER_PORT = 8182
+const DEV_SERVER_PROBE_INTERVAL = 2000
 const getDevServerUrl = () => {
   if (!isDevice) {
     return Platform.OS === 'android'
@@ -73,11 +88,85 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   const initResolver = useRef<((ctrls: string[]) => void) | null>(null)
   const initReadyWarningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingConfig = useRef<any>(null)
-  // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live reload)
+  // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live
+  // reload, renderer crash). Holds no storage snapshot — that is taken fresh per injection.
   const lastConfig = useRef<any>(null)
   // Incrementing the key forces a full WebView remount (used for Android dev reload)
   const [webviewKey, setWebviewKey] = useState(0)
   const devUrl = getDevServerUrl()
+
+  // Worker bundle URI. In prod it is materialized from the OTA-shipped copy into a writable
+  // dir (so OTA updates reach it). Resolved synchronously when that dir already holds the
+  // current bundle - which is every launch except the first one after an install or an OTA -
+  // so the WebView mounts on the first render instead of a promise gating it. Empty only on
+  // the launch that has to write the bundle out first, which gates the mount below.
+  const [prodBundleUri, setProdBundleUri] = useState(() =>
+    __DEV__ ? '' : getMaterializedWorkerBundleUri() || ''
+  )
+
+  // Dev only. The worker bundle is a subresource of the WebView's inline HTML, so
+  // a missing dev server fires neither onError nor onHttpError - the app just hangs
+  // on the splash with nothing but a console warning. Optimistic, so the happy path
+  // mounts the WebView without waiting for the first probe.
+  const [isDevServerReachable, setIsDevServerReachable] = useState(true)
+  const wasDevServerReachableRef = useRef(true)
+  // Sticky, so the notice stays up until the worker actually boots instead of
+  // flashing back to a blank screen the moment the dev server answers again.
+  const [hasDevServerFailed, setHasDevServerFailed] = useState(false)
+
+  useEffect(() => {
+    if (!__DEV__ || isReady) return undefined
+
+    let isActive = true
+    let probeTimeoutId: ReturnType<typeof setTimeout> | null = null
+
+    const probe = async () => {
+      let isReachable = false
+      try {
+        // Any HTTP response means the server is up. Only a transport failure
+        // (connection refused, wrong host) counts as unreachable.
+        await fetch(`${devUrl}/webview-bundle.js`, { method: 'HEAD' })
+        isReachable = true
+      } catch {
+        isReachable = false
+      }
+
+      if (!isActive) return
+
+      // Back up after being down: the WebView still holds the page whose <script>
+      // failed and nothing retries it, so remount to re-fetch the bundle.
+      if (isReachable && !wasDevServerReachableRef.current) setWebviewKey((k) => k + 1)
+      wasDevServerReachableRef.current = isReachable
+      setIsDevServerReachable(isReachable)
+      if (!isReachable) setHasDevServerFailed(true)
+
+      probeTimeoutId = setTimeout(probe, DEV_SERVER_PROBE_INTERVAL)
+    }
+
+    void probe()
+
+    return () => {
+      isActive = false
+      if (probeTimeoutId) clearTimeout(probeTimeoutId)
+    }
+  }, [devUrl, isReady])
+
+  useEffect(() => {
+    if (__DEV__ || prodBundleUri) return undefined
+
+    let isActive = true
+    // Falls back to the native-asset bundle baked into the signed app if the OTA copy
+    // cannot be materialized, so the worker always has a working bundle to load.
+    bootProfiler
+      .measureAsync(BOOT_MARK.rnWorkerBundleMaterialized, materializeWorkerBundle())
+      .then((uri) => {
+        if (isActive) setProdBundleUri(uri || getWebviewBundleUri())
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [prodBundleUri])
 
   const clearInitWarningTimeout = () => {
     if (initReadyWarningTimeoutRef.current) {
@@ -118,41 +207,104 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       `)
   }
 
+  // Shared by the two paths that hand the worker its config: init() when the
+  // WebView has already loaded, and the system.loaded handler otherwise (plus dev
+  // reloads). The richJson stringify here covers the whole storage snapshot, which
+  // is why it is measured separately from the injectJavaScript hop.
+  //
+  // PERF: ship a one-shot snapshot of async storage so the worker can seed an
+  // in-memory cache and serve controller-boot reads locally instead of making 80+
+  // separate bridged storage.get round-trips (each delivered via its own
+  // injectJavaScript), which saturated the bridge for seconds. Bulk keys no
+  // controller needs to construct are left out of it (see
+  // BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS) and fetched over the bridge on first use —
+  // the snapshot's `allKeys` is what lets the worker tell those apart from keys that
+  // genuinely are not stored.
+  //
+  // The snapshot is taken here, not once in init(), so a worker that reloads (dev
+  // HMR, a renderer crash) is seeded with what storage holds NOW. Reusing the
+  // boot-time snapshot would hide every write made since from the new context.
+  const injectInitPayload = (configToSend: any) => {
+    bootProfiler.startSpan(BOOT_MARK.rnStorageSnapshot)
+    const storageSnapshot = getAllSerialized(BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS)
+    bootProfiler.endSpan(BOOT_MARK.rnStorageSnapshot, {
+      count: Object.keys(storageSnapshot.values).length
+    })
+    markStorageSnapshotKeys(storageSnapshot)
+
+    bootProfiler.startSpan(BOOT_MARK.rnInitPayloadEncoded)
+    const initPayload = encode(
+      {
+        type: 'init',
+        config: {
+          ...configToSend,
+          __storageSnapshot: storageSnapshot
+        }
+      },
+      true
+    )
+    bootProfiler.endSpan(BOOT_MARK.rnInitPayloadEncoded, { bytes: initPayload.length })
+
+    webviewRef.current?.injectJavaScript(`
+        window.postMessage(${JSON.stringify(initPayload)}, '*');
+        true;
+      `)
+    markBoot(BOOT_MARK.rnInitPayloadInjected)
+  }
+
   useImperativeHandle(ref, () => ({
     dispatch: (action: any, raw?: boolean) => {
       if (!isReadyRef.current) return
       dispatchToWebView(action, raw)
     },
     init: (config: any) => {
-      // PERF: ship a one-shot snapshot of all async storage so the worker can
-      // seed an in-memory cache and serve controller-boot reads locally instead
-      // of making 80+ separate bridged storage.get round-trips (each delivered
-      // via its own injectJavaScript), which saturated the bridge for seconds.
-      const configWithStorage = { ...config, __storageSnapshot: getAllSerialized() }
-      lastConfig.current = configWithStorage
+      lastConfig.current = config
       return new Promise((resolve) => {
         initResolver.current = resolve
         scheduleInitWarningTimeout()
         if (isLoaded) {
-          const initPayload = encode({ type: 'init', config: configWithStorage }, true)
-          webviewRef.current?.injectJavaScript(`
-              window.postMessage(${JSON.stringify(initPayload)}, '*');
-              true;
-            `)
+          injectInitPayload(config)
         } else {
-          pendingConfig.current = configWithStorage
+          pendingConfig.current = config
         }
       })
     }
   }))
 
+  // Times the richJson parse of the first state received per controller, together
+  // with the wire size that produced it. The message type is only known after
+  // decoding, so the duration is captured first and attributed afterwards. Guarded
+  // by the flag because every dapp JSON-RPC message also flows through here.
+  const decodeAndProfile = (raw: string) => {
+    if (!IS_BOOT_PROFILING_ENABLED) return decode(raw)
+
+    const startedAt = monotonicNow()
+    const data = decode(raw)
+    if (data?.type !== 'ctrl.update') return data
+
+    const markName = `${BOOT_MARK_PREFIX.rnCtrlDecode}${data.payload?.ctrlName}`
+    if (bootProfiler.reserveOnce(markName))
+      markBoot(markName, { durationMs: monotonicNow() - startedAt, bytes: raw.length })
+
+    return data
+  }
+
   const handleMessage = async (event: any) => {
     try {
-      const data = decode(event.nativeEvent.data)
+      const raw: string = event.nativeEvent.data
+      const data = decodeAndProfile(raw)
 
       switch (data.type) {
+        case BOOT_PROFILE_MARKS_MESSAGE:
+          // The worker's half of the timeline. Handed to the profiler and also
+          // re-emitted so whoever asked for it knows it has landed.
+          setWorkerBootProfile(data.payload)
+          eventBus.emit(BOOT_PROFILE_MARKS_EVENT, data.payload)
+          break
+
         case 'system.loaded': {
           const isReload = isReadyRef.current
+          markBootOnce(BOOT_MARK.rnWorkerLoadedReceived)
           if (__DEV__) {
             const isReloadStr = isReload ? ' (RELOAD detected)' : ''
             console.log(`[WebViewWorker] WebView internal script loaded${isReloadStr}`)
@@ -169,11 +321,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           const configToSend = pendingConfig.current || (isReload ? lastConfig.current : null)
 
           if (configToSend) {
-            const initPayload = encode({ type: 'init', config: configToSend }, true)
-            webviewRef.current?.injectJavaScript(`
-                window.postMessage(${JSON.stringify(initPayload)}, '*');
-                true;
-              `)
+            injectInitPayload(configToSend)
             pendingConfig.current = null
           }
           break
@@ -193,6 +341,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
         case 'system.ready':
           clearInitWarningTimeout()
+          markBootOnce(BOOT_MARK.rnWorkerReadyReceived, {
+            count: data.payload.controllers?.length
+          })
           isReadyRef.current = true
           setIsReady(true)
           if (initResolver.current) {
@@ -453,6 +604,78 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           }
           break
 
+        // --- TREZOR DEVICE DELEGATION HANDLERS ---
+        // The worker-side TrezorController forwards each Trezor Connect SDK call
+        // here; the SDK (@trezor/connect-mobile) runs natively in
+        // trezorDeeplinkService and delegates to the Trezor Suite app via
+        // deep links. Each handler returns the raw `{ success, payload }` connect
+        // response so the shared TrezorSigner / TrezorKeyIterator can inspect it.
+        case 'trezor.ethereumGetAddress':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumGetAddress(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.getPublicKey':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.getPublicKey(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignTransaction':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignTransaction(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignTypedData':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignTypedData(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignMessage':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignMessage(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.signingCleanup':
+          try {
+            await trezorDeeplinkService.signingCleanup()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'nfc.signHash': {
+          const { nfcWalletType, ...signHashParams } = data.payload
+
+          try {
+            sendResponse(data.id, await getNfcCardService(nfcWalletType).signHash(signHashParams))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        }
+        case 'nfc.cancel':
+          getNfcCardService(data.payload.nfcWalletType).cancel()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.beginPinSession':
+          beginNfcPinSessions()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.endPinSession':
+          endNfcPinSessions()
+          sendResponse(data.id, null)
+          break
+
         default:
           if (__DEV__) console.warn('Unknown message from WebViewWorker:', data.type)
       }
@@ -472,8 +695,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
   // Production loads the static HTML stub from disk; dev keeps the inline
   // template that points at webpack-dev-server so HMR keeps working.
+  const prodBundleDir = prodBundleUri.replace(/\/[^/]+$/, '/')
   const source = !__DEV__
-    ? { uri: PROD_BUNDLE_URI }
+    ? { uri: prodBundleUri }
     : (() => {
         const devCsp = `default-src 'none'; script-src ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
         return {
@@ -552,63 +776,85 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       true;
     `
 
+  // Prod: hold off mounting until the worker bundle URI resolves (see top-of-file note).
+  // The worker is invisible and init() queues via pendingConfig, so this only defers boot.
+  if (!__DEV__ && !prodBundleUri) return null
+
+  // Past this point the WebView element is returned, so the gap from here to
+  // `worker.bundle.evalStart` is WebView process spawn + HTML load + bundle
+  // fetch and parse — the part no JS inside either realm can see on its own.
+  markBootOnce(BOOT_MARK.rnWebviewMounted)
+
   return (
-    <WebView
-      key={webviewKey}
-      ref={webviewRef}
-      source={source}
-      onMessage={handleMessage}
-      onError={(syntheticEvent) => {
-        if (__DEV__) {
-          const { nativeEvent } = syntheticEvent
-          console.warn(
-            `[WebViewWorker] WebView Error (dev host: ${devUrl}). If the dev webview server is down, start it and reload the app.`,
-            nativeEvent
-          )
-        }
-      }}
-      onHttpError={(syntheticEvent) => {
-        if (__DEV__) {
-          const { nativeEvent } = syntheticEvent
-          console.warn(
-            `[WebViewWorker] WebView HTTP Error (dev host: ${devUrl}). ` +
-              `This usually means the dev webview server is not started.`,
-            nativeEvent
-          )
-        }
-      }}
-      onRenderProcessGone={handleRenderProcessGone}
-      onContentProcessDidTerminate={handleRenderProcessGone}
-      javaScriptEnabled={true}
-      injectedJavaScriptBeforeContentLoaded={injectedJSBefore}
-      // iOS only: grant the WebView read access to the bundle directory so
-      // the HTML's sibling `<script src="webview-bundle.js">` can resolve.
-      // Without this, `loadFileURL` scopes access to the HTML file alone.
-      allowingReadAccessToURL={__DEV__ ? undefined : PROD_BUNDLE_DIR}
-      originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
-      onShouldStartLoadWithRequest={(request) => {
-        if (__DEV__) {
-          return request.url.startsWith('file:///') || request.url.startsWith(devUrl)
-        }
-        // In production the WebView only ever navigates to the bundled HTML
-        // stub. The bundle JS is loaded as a sibling `<script src>` from inside
-        // that page (so we never see a navigation for it here). Anything else
-        // is rejected.
-        return request.url === PROD_BUNDLE_URI
-      }}
-      mixedContentMode="never"
-      // Required on Android for the sibling `<script src>` to load over
-      // `file://`. Safe: navigation is locked to the single bundle URI and
-      // `allowUniversalAccessFromFileURLs` stays `false`, so the page cannot
-      // reach http(s) or cross-origin resources.
-      allowFileAccessFromFileURLs={!__DEV__}
-      allowUniversalAccessFromFileURLs={false}
-      domStorageEnabled={true}
-      webviewDebuggingEnabled={__DEV__}
-      style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
-      containerStyle={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
-      pointerEvents="none"
-    />
+    <>
+      {__DEV__ && hasDevServerFailed && !isReady && (
+        <WebviewDevServerError devUrl={devUrl} isDevServerReachable={isDevServerReachable} />
+      )}
+      <WebView
+        key={webviewKey}
+        ref={webviewRef}
+        source={source}
+        onMessage={handleMessage}
+        onLoadStart={() => markBootOnce(BOOT_MARK.rnWebviewLoadStart)}
+        onLoadEnd={() => markBootOnce(BOOT_MARK.rnWebviewLoadEnd)}
+        onError={(syntheticEvent) => {
+          if (__DEV__) {
+            const { nativeEvent } = syntheticEvent
+            console.warn(
+              `[WebViewWorker] WebView Error (dev host: ${devUrl}). If the dev webview server is down, start it and reload the app.`,
+              nativeEvent
+            )
+          }
+        }}
+        onHttpError={(syntheticEvent) => {
+          if (__DEV__) {
+            const { nativeEvent } = syntheticEvent
+            console.warn(
+              `[WebViewWorker] WebView HTTP Error (dev host: ${devUrl}). ` +
+                `This usually means the dev webview server is not started.`,
+              nativeEvent
+            )
+          }
+        }}
+        onRenderProcessGone={handleRenderProcessGone}
+        onContentProcessDidTerminate={handleRenderProcessGone}
+        javaScriptEnabled={true}
+        injectedJavaScriptBeforeContentLoaded={injectedJSBefore}
+        // iOS only: grant the WebView read access to the bundle directory so
+        // the HTML's sibling `<script src="webview-bundle.js">` can resolve.
+        // Without this, `loadFileURL` scopes access to the HTML file alone.
+        allowingReadAccessToURL={__DEV__ ? undefined : prodBundleDir}
+        originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
+        onShouldStartLoadWithRequest={(request) => {
+          if (__DEV__) {
+            return request.url.startsWith('file:///') || request.url.startsWith(devUrl)
+          }
+          // In production the WebView only ever navigates to the bundled HTML
+          // stub. The bundle JS is loaded as a sibling `<script src>` from inside
+          // that page (so we never see a navigation for it here). Anything else
+          // is rejected.
+          return request.url === prodBundleUri
+        }}
+        mixedContentMode="never"
+        // Android-only, defaults to false. Required in prod so the WebView can load the
+        // worker HTML that materializeWorkerBundle() writes to the app's files dir (a real
+        // `file://` path, unlike the exempt `file:///android_asset/` fallback). Without it
+        // the worker never boots and the app hangs on the splash screen. No-op on iOS, which
+        // uses allowingReadAccessToURL above.
+        allowFileAccess={!__DEV__}
+        // Required on Android for the sibling `<script src>` to load over
+        // `file://`. Safe: navigation is locked to the single bundle URI and
+        // `allowUniversalAccessFromFileURLs` stays `false`, so the page cannot
+        // reach http(s) or cross-origin resources.
+        allowFileAccessFromFileURLs={!__DEV__}
+        allowUniversalAccessFromFileURLs={false}
+        domStorageEnabled={true}
+        webviewDebuggingEnabled={__DEV__}
+        style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+        containerStyle={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+        pointerEvents="none"
+      />
+    </>
   )
 })
 

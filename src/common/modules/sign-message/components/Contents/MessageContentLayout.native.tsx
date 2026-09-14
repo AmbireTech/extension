@@ -4,7 +4,11 @@ import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutW
 import { MessageContentLayoutProps } from './MessageContentLayout'
 
 const MessageContentLayout = ({ children, withScroll }: MessageContentLayoutProps) => (
-  <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0} withScroll={withScroll}>
+  <MobileLayoutWrapperMainContent
+    contentContainerStyle={spacings.ph0}
+    withScroll={withScroll}
+    withHorizontalPadding={false}
+  >
     {children}
   </MobileLayoutWrapperMainContent>
 )

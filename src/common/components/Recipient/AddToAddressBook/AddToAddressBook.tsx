@@ -58,8 +58,9 @@ const AddToAddressBook = ({
           {t(domainVerificationMessage)}
         </Text>
       )}
+      {/* On mobile the button spans the whole row */}
       {shouldShowAddToAddressBook && (
-        <View style={flexbox.alignEnd}>
+        <View style={isWeb ? flexbox.alignEnd : flexbox.flex1}>
           {!!domainVerificationMessage && (
             <Text
               fontSize={12}

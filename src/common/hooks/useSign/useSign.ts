@@ -1,15 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
-import {
-  SignAccountOpUpdateProps,
-  SigningStatus
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
@@ -18,6 +14,7 @@ import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSignin
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
+import type { SignAccountOpUpdateProps } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
 
 const PRIMARY_BUTTON_LABELS: Record<
@@ -53,6 +50,7 @@ type Props = {
   isOneClickSign?: boolean
   updateType?: OneClickEstimationProps['updateType'] | undefined
   hasReachedBottom?: boolean | null
+  onSafeSignComplete?: () => void
 }
 
 const useSign = ({
@@ -61,12 +59,11 @@ const useSign = ({
   handleUpdate,
   isOneClickSign,
   updateType = undefined,
-  hasReachedBottom
+  hasReachedBottom,
+  onSafeSignComplete
 }: Props) => {
   const { t } = useTranslation()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
+  const { state: networks } = useController('NetworksController', 'networks')
   const { dispatch: mainControllerDispatch } = useController('MainController')
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -79,6 +76,11 @@ const useSign = ({
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [shouldDisplayQrSigningModal, setShouldDisplayQrSigningModal] = useState(false)
+  const [acknowledgedBannersKey, setAcknowledgedBannersKey] = useState<string | null>(null)
+  const safeSignAndCloseRequest = useRef<{
+    accountOpId: string
+    signingKeyAddr: Key['addr']
+  } | null>(null)
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
   const { isLedgerConnected } = useLedger()
   const {
@@ -89,6 +91,14 @@ const useSign = ({
     submitSignatureResponse,
     signingCleanup
   } = useQrSigningFlow()
+
+  const currentBannersKey = useMemo(
+    () => JSON.stringify(signAccountOpState?.banners || []),
+    [signAccountOpState?.banners]
+  )
+  const shouldHoldToProceed =
+    !!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey
+  const shouldShowSafeSigners = showSafeSigners && !shouldHoldToProceed
 
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
@@ -127,10 +137,6 @@ const useSign = ({
   const isSignLoading = getIsSignLoading(signAccountOpState?.status)
 
   useEffect(() => {
-    if (signAccountOpState?.estimation.estimationRetryError) {
-      setSlowRequest(false)
-      return
-    }
     const timeout = setTimeout(() => {
       // set the request to slow if the state is not init (no estimation)
       // or the gas prices haven't been fetched
@@ -147,11 +153,7 @@ const useSign = ({
     return () => {
       clearTimeout(timeout)
     }
-  }, [
-    signAccountOpState?.isInitialized,
-    signAccountOpState?.gasPrices,
-    signAccountOpState?.estimation.estimationRetryError
-  ])
+  }, [signAccountOpState?.isInitialized, signAccountOpState?.gasPrices])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -206,7 +208,7 @@ const useSign = ({
     []
   )
 
-  const handleQrSingingFlowOnContinuePressed = moveToResponseScan
+  const handleQrSigningFlowOnContinuePressed = moveToResponseScan
   const handleQrSigningFlowOnBackPressed = moveBack
   const handleQrSigningFlowSubmitSignatureResponse = submitSignatureResponse
 
@@ -246,7 +248,10 @@ const useSign = ({
       type: 'method',
       params: {
         method: 'handleSignAndBroadcastAccountOp',
-        args: [type, signAccountOpState.fromRequestId]
+        // Pass the id of the accountOp the user is reviewing on screen. The
+        // background compares it against the live accountOp before signing to
+        // reject signing calls that were appended after this review.
+        args: [type, signAccountOpState.fromRequestId, signAccountOpState.accountOp.id]
       }
     })
   }, [mainControllerDispatch, signAccountOpState, updateType])
@@ -365,6 +370,39 @@ const useSign = ({
     [handleSign, handleUpdate]
   )
 
+  const handleChangeSigningKeyAndClose = useCallback(
+    (signingKeyAddr: Key['addr'], chosenSigningKeyType: Key['type']) => {
+      const accountOpId = signAccountOpState?.accountOp.id
+      if (!accountOpId) return
+
+      safeSignAndCloseRequest.current = {
+        accountOpId,
+        signingKeyAddr
+      }
+      handleChangeSigningKey(signingKeyAddr, chosenSigningKeyType)
+    },
+    [handleChangeSigningKey, signAccountOpState?.accountOp.id]
+  )
+
+  useEffect(() => {
+    const pendingRequest = safeSignAndCloseRequest.current
+    if (!pendingRequest || !signAccountOpState) return
+
+    if (pendingRequest.accountOpId !== signAccountOpState.accountOp.id) {
+      safeSignAndCloseRequest.current = null
+      return
+    }
+
+    const hasSigningCompleted =
+      signAccountOpState.status?.type === SigningStatus.Queued &&
+      signAccountOpState.accountOp.signed?.includes(pendingRequest.signingKeyAddr)
+
+    if (!hasSigningCompleted) return
+
+    safeSignAndCloseRequest.current = null
+    onSafeSignComplete?.()
+  }, [onSafeSignComplete, signAccountOpState])
+
   const handleChangeFeePayerKeyType = useCallback(
     // Done for compatibility with the select component
     (_: Key['addr'], newFeePayerKeyType: Key['type']) => {
@@ -378,8 +416,10 @@ const useSign = ({
   const onSignButtonClick = useCallback(() => {
     if (!signAccountOpState) return
 
+    setAcknowledgedBannersKey(currentBannersKey)
+
     if (!!signAccountOpState.account.safeCreation && !signAccountOpState.canBroadcast) {
-      setShowSafeSigners((prev) => !prev)
+      setShowSafeSigners((prev) => (shouldHoldToProceed ? true : !prev))
       return
     }
 
@@ -392,7 +432,7 @@ const useSign = ({
     }
 
     setIsChooseSignerShown(true)
-  }, [signAccountOpState, handleSign])
+  }, [currentBannersKey, handleSign, shouldHoldToProceed, signAccountOpState])
 
   const acknowledgeWarning = useCallback(() => {
     if (!warningToPromptBeforeSign) return
@@ -482,22 +522,34 @@ const useSign = ({
     warningToPromptBeforeSign
   ])
 
+  const isSignedSafeWaitingForNonce = useMemo(() => {
+    if (
+      !signAccountOpState?.account.safeCreation ||
+      signAccountOpState.canBroadcast ||
+      signAccountOpState.threshold === 0
+    )
+      return false
+
+    return (signAccountOpState.accountOp.signed?.length || 0) >= signAccountOpState.threshold
+  }, [
+    signAccountOpState?.account.safeCreation,
+    signAccountOpState?.accountOp.signed?.length,
+    signAccountOpState?.canBroadcast,
+    signAccountOpState?.threshold
+  ])
+
   const primaryButtonText = useMemo(() => {
     let buttonLabelType: ButtonMode =
       updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
 
     if (signAccountOpState?.account.safeCreation) {
-      const isBroadcast =
-        (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold ||
-        (signAccountOpState?.threshold === 1 &&
-          signAccountOpState?.accountKeyStoreKeys.length === 1)
-      if (isBroadcast) {
+      if (signAccountOpState.canBroadcast || isSignedSafeWaitingForNonce) {
         // the "Safe" term for broadcast is called "Execute"
         return isSignLoading ? 'Executing...' : 'Execute'
       }
 
       // always use the default state of Safes
-      return !showSafeSigners
+      return !shouldShowSafeSigners
         ? PRIMARY_BUTTON_LABELS['Safe'].default
         : PRIMARY_BUTTON_LABELS['Safe'].isLoading
     }
@@ -513,10 +565,9 @@ const useSign = ({
     t,
     updateType,
     signAccountOpState?.account.safeCreation,
-    signAccountOpState?.accountOp.signed?.length,
-    signAccountOpState?.threshold,
-    showSafeSigners,
-    signAccountOpState?.accountKeyStoreKeys.length
+    signAccountOpState?.canBroadcast,
+    isSignedSafeWaitingForNonce,
+    shouldShowSafeSigners
   ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
@@ -547,12 +598,14 @@ const useSign = ({
       notReadyToSignButAlsoNotDone ||
       !signAccountOpState?.readyToSign ||
       (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading) ||
+      isSignedSafeWaitingForNonce ||
       isExtremeGasFeeProceedDelayedForSign
     )
   }, [
     isViewOnly,
     isSignLoading,
     isExtremeGasFeeProceedDelayedForSign,
+    isSignedSafeWaitingForNonce,
     notReadyToSignButAlsoNotDone,
     signAccountOpState
   ])
@@ -614,6 +667,7 @@ const useSign = ({
     acknowledgeWarning,
     onSignButtonClick,
     handleChangeSigningKey,
+    handleChangeSigningKeyAndClose,
     warningToPromptBeforeSign,
     handleDismissLedgerConnectModal,
     isChooseSignerShown,
@@ -640,9 +694,9 @@ const useSign = ({
     bundlerNonceDiscrepancy,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
-    shouldHoldToProceed: !!signAccountOpState?.banners?.length,
+    shouldHoldToProceed,
     shouldDisplayQrSigningModal,
-    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
     handleQrSigningFlowOnRejectPressed,
@@ -650,7 +704,7 @@ const useSign = ({
     currentRequest,
     signingStep,
     disabledReason,
-    showSafeSigners
+    showSafeSigners: shouldShowSafeSigners
   }
 }
 

@@ -1,15 +1,17 @@
-import { FC } from 'react'
+import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useController from '@common/hooks/useController'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
+import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
 import GasFeeUpdatedModal from '@common/modules/sign-account-op/components/GasFeeUpdatedModal/GasFeeUpdatedModal'
 import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
-import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
+import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
@@ -27,15 +29,44 @@ const Modals: FC<ModalsProps> = ({
   autoOpen,
   actionType,
   shouldDisplayLedgerConnectModal,
-  handleDismissLedgerConnectModal
+  handleDismissLedgerConnectModal,
+  shouldDisplayQrSigningModal,
+  handleQrSigningFlowOnContinuePressed,
+  handleQrSigningFlowSubmitSignatureResponse,
+  handleQrSigningFlowOnClosePressed,
+  handleQrSigningFlowOnRejectPressed,
+  handleQrSigningFlowOnBackPressed,
+  currentRequest,
+  signingStep
 }) => {
   const { t } = useTranslation()
-  const { signAccountOpController: swapAndBridgeSignAccountOp } =
-    useController('SwapAndBridgeController').state
   const {
-    state: { signAccountOpController: transferSignAccountOp }
+    state: { signAccountOpController: swapAndBridgeSignAccountOp },
+    dispatch: swapAndBridgeDispatch
+  } = useController('SwapAndBridgeController')
+  const {
+    state: { signAccountOpController: transferSignAccountOp },
+    dispatch: transferDispatch
   } = useController('TransferController')
-  const currentSignAccountOp = useController('SignAccountOpController').state
+  const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
+    useController('SignAccountOpController')
+
+  const transactionProgress = useMemo(() => {
+    const totalTransactions = signAccountOpState?.accountOp?.calls?.length || 0
+    const signedTransactionsCount = signAccountOpState?.signedTransactionsCount
+
+    if (
+      totalTransactions <= 1 ||
+      typeof signedTransactionsCount !== 'number' ||
+      signedTransactionsCount < 0
+    )
+      return null
+
+    return {
+      current: Math.min(signedTransactionsCount, totalTransactions),
+      total: totalTransactions
+    }
+  }, [signAccountOpState?.accountOp?.calls?.length, signAccountOpState?.signedTransactionsCount])
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -109,6 +140,23 @@ const Modals: FC<ModalsProps> = ({
     )
   }
 
+  if (renderedButNotNecessarilyVisibleModal === 'qr-sign' && currentRequest && signingStep) {
+    return (
+      <QrSigningFlowScreen
+        handleClose={handleQrSigningFlowOnClosePressed}
+        isVisible={shouldDisplayQrSigningModal}
+        onContinue={handleQrSigningFlowOnContinuePressed}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        signingRequest={signAccountOpState?.hardwareWalletSigningRequest}
+        transactionProgress={transactionProgress}
+        submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        onReject={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+      />
+    )
+  }
+
   if (renderedButNotNecessarilyVisibleModal === 'hw-sign' && signAccountOpState) {
     return (
       <SignAccountOpHardwareWalletSigningModal
@@ -130,6 +178,27 @@ const Modals: FC<ModalsProps> = ({
         hardwareWalletSigningRequest={signAccountOpState.hardwareWalletSigningRequest}
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
+        cancelReq={() => {
+          void trezorDeeplinkService.signingCleanup()
+
+          if (actionType === 'swapAndBridge') {
+            return swapAndBridgeDispatch({
+              type: 'method',
+              params: { method: 'cancelSignReq', args: [] }
+            })
+          }
+          if (actionType === 'transfer') {
+            return transferDispatch({
+              type: 'method',
+              params: { method: 'cancelSignReq', args: [] }
+            })
+          }
+
+          signAccountOpDispatch({
+            type: 'method',
+            params: { method: 'cancelSignReq', args: [] }
+          })
+        }}
       />
     )
   }

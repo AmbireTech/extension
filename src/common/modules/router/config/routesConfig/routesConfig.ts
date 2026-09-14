@@ -44,6 +44,17 @@ const routesConfig: RouteConfig = {
       web: i18n.t('Onboarding')
     })
   },
+  [ROUTES.sidePanelNoAccounts]: {
+    route: ROUTES.sidePanelNoAccounts,
+    title: Platform.select({
+      default: i18n.t('No accounts'),
+      web: i18n.t('No accounts')
+    }),
+    name: Platform.select({
+      default: i18n.t('No accounts'),
+      web: i18n.t('No accounts')
+    })
+  },
   [ROUTES.importExistingAccount]: {
     route: ROUTES.importExistingAccount,
     title: Platform.select({
@@ -64,6 +75,17 @@ const routesConfig: RouteConfig = {
     name: Platform.select({
       default: i18n.t('Connect Ledger'),
       web: i18n.t('Connect Ledger')
+    })
+  },
+  [ROUTES.trezorConnect]: {
+    route: ROUTES.trezorConnect,
+    title: Platform.select({
+      default: i18n.t('Welcome to Ambire Wallet'),
+      web: i18n.t('Welcome to Ambire Wallet')
+    }),
+    name: Platform.select({
+      default: i18n.t('Connect Trezor'),
+      web: i18n.t('Connect Trezor')
     })
   },
   [ROUTES.authEmailAccount]: {
@@ -210,6 +232,14 @@ const routesConfig: RouteConfig = {
       default: i18n.t('Explore')
     })
   },
+  [ROUTES.walletStaking]: {
+    route: ROUTES.walletStaking,
+    title: Platform.select({
+      default: i18n.t('$WALLET Staking')
+    }),
+    name: Platform.select({ default: i18n.t('$WALLET Staking') }),
+    withTitlePrefix: false
+  },
   [ROUTES.watchAsset]: {
     route: ROUTES.watchAsset,
     title: Platform.select({
@@ -284,20 +314,6 @@ const routesConfig: RouteConfig = {
       default: i18n.t('Welcome to Ambire Wallet')
     }),
     name: Platform.select({ default: i18n.t('Import Smart Account JSON') })
-  },
-  [ROUTES.createSeedPhrasePrepare]: {
-    route: ROUTES.createSeedPhrasePrepare,
-    title: Platform.select({
-      default: i18n.t('Welcome to Ambire Wallet')
-    }),
-    name: Platform.select({ default: i18n.t('Create New Recovery Phrase') })
-  },
-  [ROUTES.createSeedPhraseWrite]: {
-    route: ROUTES.createSeedPhraseWrite,
-    title: Platform.select({
-      default: i18n.t('Backup Recovery Phrase')
-    }),
-    name: Platform.select({ default: i18n.t('Backup Recovery Phrase') })
   },
   [ROUTES.onboardingCompleted]: {
     route: ROUTES.onboardingCompleted,
@@ -429,6 +445,21 @@ const routesConfig: RouteConfig = {
     route: ROUTES.qrPermission,
     title: Platform.select({ default: i18n.t('Camera permission') }),
     name: Platform.select({ default: i18n.t('Camera permission') })
+  },
+  [ROUTES.exportAccountsToMobile]: {
+    route: ROUTES.exportAccountsToMobile,
+    title: Platform.select({ default: i18n.t('Export accounts to mobile') }),
+    name: Platform.select({ default: i18n.t('Export accounts to mobile') })
+  },
+  [ROUTES.importAccountsFromMobile]: {
+    route: ROUTES.importAccountsFromMobile,
+    title: Platform.select({ default: i18n.t('Import from mobile') }),
+    name: Platform.select({ default: i18n.t('Import from mobile') })
+  },
+  [ROUTES.importAccountsFromExtension]: {
+    route: ROUTES.importAccountsFromExtension,
+    title: Platform.select({ default: i18n.t('Import from extension') }),
+    name: Platform.select({ default: i18n.t('Import from extension') })
   }
 }
 

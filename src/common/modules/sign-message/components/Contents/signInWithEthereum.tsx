@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/controllers/autoLogin/autoLogin'
+import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/consts/autoLogin'
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
@@ -18,14 +18,24 @@ import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
-import Info from '@common/modules/sign-message/components/Info'
-import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
-import MessageContentLayout from './MessageContentLayout'
 import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
 import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
+import Info from '@common/modules/sign-message/components/Info'
+import spacings, {
+  SPACING,
+  SPACING_LG,
+  SPACING_MD,
+  SPACING_SM,
+  SPACING_TY
+} from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+import MessageContentLayout from './MessageContentLayout'
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -48,7 +58,14 @@ const Label = ({
   responsiveSizeMultiplier: number
 }) => {
   return (
-    <Text weight="medium" fontSize={14 * responsiveSizeMultiplier} appearance="primaryText">
+    <Text
+      weight="medium"
+      fontSize={14 * responsiveSizeMultiplier}
+      appearance="primaryText"
+      // Only the web layout puts the label and the value on one row, where the value is the one
+      // that has to give way
+      style={isWeb ? { flexShrink: 0 } : undefined}
+    >
       {children}
     </Text>
   )
@@ -57,18 +74,36 @@ const Label = ({
 const Value = ({
   children,
   tooltipId = '',
-  responsiveSizeMultiplier
+  responsiveSizeMultiplier,
+  withWrap = false,
+  breakWords = true
 }: {
   children: React.ReactNode
   tooltipId?: string
   responsiveSizeMultiplier: number
+  withWrap?: boolean
+  // Forces breaks mid-word (e.g. a hex address), unwanted for plain text that already
+  // has spaces to wrap on
+  breakWords?: boolean
 }) => {
+  const fontSize = isMobile ? 12 : 14 * responsiveSizeMultiplier
+
   return (
     <Text
       appearance="secondaryText"
-      fontSize={isMobile ? 12 : 14 * responsiveSizeMultiplier}
+      fontSize={fontSize}
       dataSet={{ tooltipId }}
-      numberOfLines={1}
+      numberOfLines={withWrap ? undefined : 1}
+      style={[
+        isWeb && { flexShrink: 1, minWidth: 0 },
+        withWrap && {
+          // Custom fontSize clears Text's default lineHeight; without an explicit value the
+          // wrapped lines overlap
+          lineHeight: Math.ceil(fontSize * 1.5),
+          // web-only style, needed because a hex address has no word boundaries
+          ...(breakWords && { wordBreak: 'break-all' as const })
+        }
+      ]}
     >
       {children}
     </Text>
@@ -88,6 +123,9 @@ const Row = ({
         isWeb && flexbox.directionRow,
         isWeb && flexbox.justifySpaceBetween,
         isWeb && flexbox.alignCenter,
+        // Without a gap the label and the value touch each other once the value grows wide
+        // enough to fill the row, which happens on the narrow side panel
+        isWeb && { columnGap: SPACING_TY * responsiveSizeMultiplier },
         {
           marginBottom: SPACING_SM * responsiveSizeMultiplier
         }
@@ -120,7 +158,7 @@ const SignInWithEthereum = ({
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
-  const { networks } = useController('NetworksController').state
+  const { state: networks } = useController('NetworksController', 'networks')
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
   const siweMessageToSign = useMemo(() => {
@@ -216,32 +254,47 @@ const SignInWithEthereum = ({
 
   return (
     <Container>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          {
-            marginBottom: SPACING_MD * responsiveSizeMultiplier
-          }
-        ]}
-      >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text
-            weight="medium"
-            fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
-            style={spacings.mrSm}
-          >
+      {isSidePanel ? (
+        <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
+          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
             {t('Sign-in request')}
           </Text>
+          <View style={[flexbox.alignStart, spacings.mtTy]}>
+            <NetworkBadge
+              chainId={signMessageState.messageToSign?.chainId}
+              responsiveSizeMultiplier={responsiveSizeMultiplier}
+              withOnPrefix
+            />
+          </View>
         </View>
-        <NetworkBadge
-          chainId={signMessageState.messageToSign?.chainId}
-          responsiveSizeMultiplier={responsiveSizeMultiplier}
-          withOnPrefix
-        />
-        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
-      </View>
+      ) : (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            {
+              marginBottom: SPACING_MD * responsiveSizeMultiplier
+            }
+          ]}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text
+              weight="medium"
+              fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
+              style={spacings.mrSm}
+            >
+              {t('Sign-in request')}
+            </Text>
+          </View>
+          <NetworkBadge
+            chainId={signMessageState.messageToSign?.chainId}
+            responsiveSizeMultiplier={responsiveSizeMultiplier}
+            withOnPrefix
+          />
+          {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
+        </View>
+      )}
       <View style={styles.container}>
         <View
           style={{
@@ -256,7 +309,7 @@ const SignInWithEthereum = ({
               backgroundColor: theme.secondaryBackground,
               paddingHorizontal: SPACING_SM * responsiveSizeMultiplier,
               paddingVertical: SPACING * responsiveSizeMultiplier,
-              marginBottom: SPACING * responsiveSizeMultiplier,
+              marginBottom: isMobile ? SPACING_SM : SPACING * responsiveSizeMultiplier,
               borderRadius: BORDER_RADIUS_PRIMARY,
               minHeight: 200
             }}
@@ -267,7 +320,13 @@ const SignInWithEthereum = ({
               }}
             >
               <Label responsiveSizeMultiplier={responsiveSizeMultiplier}>{t('Message')}</Label>
-              <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>
+              <Value
+                responsiveSizeMultiplier={responsiveSizeMultiplier}
+                // The full statement must stay readable, so it wraps onto multiple lines
+                // instead of being cut off at the end
+                withWrap
+                breakWords={false}
+              >
                 {siweMessageToSign.parsedMessage.statement}
               </Value>
             </View>
@@ -301,7 +360,14 @@ const SignInWithEthereum = ({
                   </>
                 )}
                 {row.label !== 'Resources' && row.label !== 'Nonce' && (
-                  <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>{row.value}</Value>
+                  <Value
+                    responsiveSizeMultiplier={responsiveSizeMultiplier}
+                    // The address must stay fully readable, so it wraps onto a second line
+                    // instead of being cut off at the end
+                    withWrap={row.label === 'Account'}
+                  >
+                    {row.value}
+                  </Value>
                 )}
               </Row>
             ))}
@@ -345,9 +411,9 @@ const SignInWithEthereum = ({
                 setValue={({ value }) => {
                   updateAutoLoginExpirationTime(Number(value))
                 }}
-                containerStyle={
-                  isMobile ? { width: '100%', marginBottom: 0 } : { width: 120, marginBottom: 0 }
-                }
+                // On mobile the select is the last element above the footer, so it keeps
+                // its default bottom spacing
+                containerStyle={isMobile ? { width: '100%' } : { width: 120, marginBottom: 0 }}
                 size={isMobile ? 'md' : 'sm'}
                 value={AUTO_LOGIN_DURATION_OPTIONS.find(
                   (option) =>
@@ -378,7 +444,9 @@ const SignInWithEthereum = ({
         )}
         {signMessageState.signer &&
           signMessageState.signer.key.type !== 'internal' &&
-          signMessageState.signer.key.type !== 'qr' && (
+          signMessageState.signer.key.type !== 'qr' &&
+          // NFC cards drive their own tap/PIN modal, mounted globally
+          signMessageState.signer.key.type !== 'nfc' && (
             <HardwareWalletSigningModal
               keyType={signMessageState.signer.key.type}
               isVisible={signStatus === 'LOADING'}

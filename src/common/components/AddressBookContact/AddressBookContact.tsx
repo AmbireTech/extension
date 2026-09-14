@@ -1,13 +1,11 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
-import { TooltipRefProps } from 'react-tooltip'
 
 import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -17,9 +15,12 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import ManageContact from './ManageContact'
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   address: string
@@ -32,6 +33,7 @@ interface Props {
   isManageable?: boolean
   isEditable?: boolean
   withCopy?: boolean
+  plainAddressMaxLength?: number
   onPress?: () => void
   style?: ViewStyle
   testID?: string
@@ -48,6 +50,7 @@ const AddressBookContact: FC<Props> = ({
   isManageable,
   isEditable,
   withCopy = true,
+  plainAddressMaxLength,
   onPress,
   testID,
   style = {},
@@ -62,10 +65,8 @@ const AddressBookContact: FC<Props> = ({
   const { theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { accounts } = useController('AccountsController').state
-  const {
-    state: { account: selectedAccount }
-  } = useController('SelectedAccountController')
+  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
   const reverseLookup = useReverseLookup({
     address,
     // This is needed because the component is rendered in AddressInput when a valid address
@@ -81,9 +82,6 @@ const AddressBookContact: FC<Props> = ({
       to: theme.secondaryBackground
     }
   })
-  const tooltipRef = useRef<TooltipRefProps>(null)
-  const containerRef = useRef(null)
-
   const account = useMemo(() => {
     return accounts.find((acc) => acc.addr.toLowerCase() === address.toLowerCase())
   }, [accounts, address])
@@ -95,24 +93,6 @@ const AddressBookContact: FC<Props> = ({
     })
     addToast(t('Successfully renamed contact'))
   }
-
-  const closeTooltip = useCallback(() => {
-    tooltipRef?.current?.close()
-  }, [])
-
-  useEffect(() => {
-    if (!isWeb) return
-
-    if (!containerRef.current) return
-
-    const container = containerRef.current as HTMLElement
-
-    container.addEventListener('mouseleave', closeTooltip, { passive: true })
-
-    return () => {
-      container.removeEventListener('mouseleave', () => closeTooltip)
-    }
-  }, [closeTooltip])
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
@@ -126,7 +106,6 @@ const AddressBookContact: FC<Props> = ({
 
   return (
     <ContainerElement
-      ref={containerRef}
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
@@ -142,7 +121,14 @@ const AddressBookContact: FC<Props> = ({
       {...(onPress ? bindAnim : {})}
       testID={testID}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.flex1,
+          isSidePanel && { minWidth: 0 }
+        ]}
+      >
         <Avatar
           {...(avatarSize && { size: avatarSize })}
           pfp={address}
@@ -150,7 +136,7 @@ const AddressBookContact: FC<Props> = ({
           smartAccountType={smartAccountType}
           displayTypeBadge={displayTypeBadge}
         />
-        <View style={{ flex: 1 }}>
+        <View style={[{ flex: 1 }, isSidePanel && { minWidth: 0 }]}>
           {isEditable ? (
             <Editable
               fontSize={fontSize}
@@ -164,8 +150,15 @@ const AddressBookContact: FC<Props> = ({
               onSave={onSave}
             />
           ) : (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text fontSize={fontSize} weight="medium" style={!name && spacings.mrTy}>
+            <View
+              style={[flexbox.directionRow, flexbox.alignCenter, isSidePanel && { minWidth: 0 }]}
+            >
+              <Text
+                fontSize={fontSize}
+                weight="medium"
+                numberOfLines={isSidePanel ? 1 : undefined}
+                style={!name && spacings.mrTy}
+              >
                 {name ||
                   (account?.addr === selectedAccount?.addr
                     ? account?.preferences.label
@@ -173,21 +166,26 @@ const AddressBookContact: FC<Props> = ({
               </Text>
             </View>
           )}
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              isSidePanel && { flex: 1, minWidth: 0 }
+            ]}
+          >
             <AccountAddress
               {...reverseLookup}
               address={address}
               addressHighlight={addressHighlight}
               containerStyle={{ paddingVertical: 0 }}
               withCopy={withCopy}
+              plainAddressMaxLength={plainAddressMaxLength}
               withUpdateEnsInTooltip={!isEditable}
             />
           </View>
         </View>
       </View>
-      {isManageable && name ? (
-        <ManageContact tooltipRef={tooltipRef} address={address} name={name} />
-      ) : null}
+      {isManageable && name ? <ManageContact address={address} name={name} /> : null}
     </ContainerElement>
   )
 }

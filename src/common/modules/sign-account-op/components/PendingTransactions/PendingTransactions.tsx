@@ -1,5 +1,4 @@
 import React, { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
@@ -30,19 +29,20 @@ const PendingTransactions: FC<Props> = ({
   signAccountOpState,
   size = 'lg'
 }) => {
-  const { t } = useTranslation()
   const controllerSignAccountOpState = useController('SignAccountOpController').state
   const { humanization, banners } = signAccountOpState || controllerSignAccountOpState || {}
 
   return (
-    <View style={isWeb ? spacings.mbLg : spacings.mb}>
+    <View style={isWeb ? spacings.mbMd : spacings.mbSm}>
       {!!banners && !!banners.length && (
         <View style={spacings.mbTy}>
           {banners.map((banner) => (
             <SafetyChecksBanner
               key={banner.id}
               type={banner.type}
+              title={banner.title}
               text={banner.text}
+              secondaryText={banner.secondaryText}
               style={spacings.mbTy}
             />
           ))}

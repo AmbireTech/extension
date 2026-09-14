@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { ReverseLookupOptions } from '@ambire-common/interfaces/domains'
+import { getPrimaryName, NameServiceId } from '@ambire-common/services/nameResolvers'
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import useController from '@common/hooks/useController'
 
@@ -19,7 +20,7 @@ interface Props {
 export interface ReverseLookupResult {
   isLoading: boolean
   name: string | null | undefined
-  type: 'ens' | 'namoshi' | null
+  type: NameServiceId | null
   updatedAt: number | undefined
   // Whether a reverse lookup has ever been stored for this address (regardless of whether it resolved a name)
   isFetched: boolean
@@ -50,10 +51,12 @@ const useReverseLookup = ({
     })
   }, [checksummedAddress, isLoading, dispatch, privacyUpdateMode])
 
+  const primary = getPrimaryName(addressInDomains?.names)
+
   return {
     isLoading: isLoading || (!addressInDomains && privacyUpdateMode !== 'never'),
-    name: addressInDomains?.ens || addressInDomains?.namoshi,
-    type: addressInDomains?.ens ? 'ens' : addressInDomains?.namoshi ? 'namoshi' : null,
+    name: primary?.name,
+    type: primary?.id ?? null,
     updatedAt: addressInDomains?.updatedAt,
     isFetched: !!addressInDomains
   }

@@ -5,7 +5,6 @@ import { DomainsController } from '@ambire-common/controllers/domains/domains'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
@@ -13,6 +12,7 @@ import { storage } from '@common/services/storage'
 import { MethodAction } from '@common/types/actions'
 import { RewardsBaseControllersMappingType } from '@legends/constants/controllersMapping'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
@@ -76,7 +76,7 @@ export const ControllersMiddlewareProvider: React.FC<{
       ctrls.DomainsController = new DomainsController({
         eventEmitterRegistry: eventEmitterRegistry.current,
         providers: ctrls.ProvidersController.providers,
-        isNetworkEnabled: () => true
+        getNetwork: (chainId) => networks.find((n) => n.chainId === chainId)
       })
 
       return ctrls

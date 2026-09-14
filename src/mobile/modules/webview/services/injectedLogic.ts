@@ -1,12 +1,9 @@
-// MUST be first: installs a BigInt-safe structuredClone before any controller
-// code runs. iOS 16's native structuredClone corrupts BigInt-containing
-// portfolio state (see structuredCloneShim.ts), crashing the dashboard.
-import { getStructuredCloneShimStatus } from './structuredCloneShim'
-
 import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { NavigateOptions, View } from '@ambire-common/interfaces/ui'
+import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 // Import the `.native` implementations explicitly. The worker bundle is built
@@ -19,22 +16,32 @@ import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { AutoLockController } from '@common/controllers/auto-lock/auto-lock.native'
 import { WalletStateController } from '@common/controllers/wallet-state/wallet-state.native'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
+import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import NfcHardwareSigner from '@common/modules/hardware-wallets/signers/NfcHardwareSigner'
+import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
+import { resolveViewRoute } from '@common/modules/router/helpers'
+import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
+import { MOBILE_VIEW_ID } from '@mobile/constants/ui'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
+import NfcController from '@mobile/modules/hardware-wallet/controllers/NfcController'
+import TrezorController from '@mobile/modules/hardware-wallet/controllers/TrezorController'
+import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
 
-import {
-  buildStateForFE,
-  getBootPhase,
-  isControllerSubscribed,
-  isCriticalController,
-  isSubscriptionGateActive,
-  queueDeferredCtrlPayload,
-  queueSuppressedCtrlPayload,
-  setCriticalControllers
-} from './bootPhase'
+import { buildStateForFE, queueCtrlStateIfGated, setCriticalControllers } from './bootPhase'
 import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
+import { workerBootProfiler } from './workerBootProfiler'
+
+import type { SerializedStorageSnapshot } from '@common/services/storage/types'
+
+// Everything the worker bundle pulls in (ambire-common, ethers, the controllers)
+// has now been evaluated. The gap to `worker.bundle.evalStart` is the cost of the
+// module graph alone, before a single controller is constructed.
+workerBootProfiler.mark(BOOT_MARK.workerImportsEvaluated)
 
 // Bridge setup
 const pendingPromises: Record<number, { resolve: any; reject: any }> = {}
@@ -73,27 +80,7 @@ function debounceFrontEndEventUpdatesOnSameTick(
     return 'EMITTED'
   }
 
-  // During the critical boot phase, hold back updates for non-critical
-  // controllers. We keep only the latest state so the eventual drain emits
-  // one update per deferred controller, not the full history.
-  if (getBootPhase() === 'critical' && !isCriticalController(ctrlName)) {
-    queueDeferredCtrlPayload(ctrlName, ctrl, forceEmit)
-    return 'DEBOUNCED'
-  }
-
-  // Suppress non-critical controllers that no screen is currently displaying.
-  // The expensive toJSON + stringify + bridge + parse round trip only happens
-  // for state the UI actually consumes. We keep the latest reference so the
-  // moment a screen subscribes, the queued state is flushed (see
-  // setSubscribedControllers) and the UI never renders stale data.
-  if (
-    isSubscriptionGateActive() &&
-    !isCriticalController(ctrlName) &&
-    !isControllerSubscribed(ctrlName)
-  ) {
-    queueSuppressedCtrlPayload(ctrlName, ctrl, forceEmit)
-    return 'DEBOUNCED'
-  }
+  if (queueCtrlStateIfGated(ctrlName, ctrl, forceEmit)) return 'DEBOUNCED'
 
   if (ctrlOnUpdateIsDirtyFlags[ctrlName]) return 'DEBOUNCED'
   ctrlOnUpdateIsDirtyFlags[ctrlName] = true
@@ -136,41 +123,105 @@ const sendToRNAsync = (type: string, payload: any): Promise<any> => {
 // @ts-ignore
 window.sendToRNAsync = sendToRNAsync
 
+// The highest balance seen per account, because a request firing while the portfolio
+// is still loading would otherwise under-report it in the balance hint.
+const userBalances: Record<string, number> = {}
+
+// Resolved per request, because the keystore uid, the invite code and the balance are
+// not available at boot. Requests fired before the keystore is constructed go out with
+// an empty source, same as in the extension.
+const decorateAmbireApiRequest = (
+  url: string
+): { url: string; headers: Record<string, string> } => {
+  if (!isAmbireApiUrl(url)) return { url, headers: {} }
+
+  const currentAccount = mainCtrl?.selectedAccount?.account
+  const currentBalance = mainCtrl?.selectedAccount?.portfolio?.totalBalance || 0
+  if (currentAccount && (userBalances[currentAccount.addr] || 0) < currentBalance)
+    userBalances[currentAccount.addr] = currentBalance
+
+  // The balance hint is worth attaching only if the user has keys for the account
+  const hasCurrentAccountKeys =
+    currentAccount &&
+    getAccountKeysCount({
+      accountAddr: currentAccount.addr,
+      keys: mainCtrl.keystore.keys,
+      accounts: mainCtrl.accounts.accounts
+    })
+
+  return {
+    url:
+      currentAccount && hasCurrentAccountKeys
+        ? attachBalanceHint(url, currentAccount.addr, userBalances[currentAccount.addr] || 0)
+        : url,
+    headers: {
+      'x-app-source': getAppInstanceId(
+        mainCtrl?.keystore?.keyStoreUid,
+        mainCtrl?.invite?.verifiedCode || ''
+      ),
+      'x-app-version': appVersionHeader,
+      'x-app-env': appEnv
+    }
+  }
+}
+
 // Create the bridged fetch and override window.fetch globally.
 // This ensures ALL network requests in the WebView (including ethers.js
 // JSON-RPC providers and any other library using fetch directly) are
 // routed through the RN bridge — not just the explicit fetch param
 // passed to MainController.
-const bridgedFetch = createBridgedFetch(sendToRNAsync)
+const bridgedFetch = createBridgedFetch(sendToRNAsync, decorateAmbireApiRequest)
 // @ts-ignore — override the global fetch with our bridge
 window.fetch = bridgedFetch
 
 // PERF: in-memory mirror of async storage, seeded once from the init snapshot
-// (RN dumps the whole MMKV instance at init). Holds the same RAW serialized
-// strings RN's storage layer stores, so reads parse with richJson exactly as a
-// bridged storage.get would have. Lets the ~79 controller-boot reads resolve
-// locally instead of each making a separate injectJavaScript round-trip.
+// (RN dumps the MMKV instance at init). Holds the same RAW serialized strings
+// RN's storage layer stores, so reads parse with richJson exactly as a bridged
+// storage.get would have. Lets the ~79 controller-boot reads resolve locally
+// instead of each making a separate injectJavaScript round-trip.
 const storageCache: Record<string, string> = {}
 let storageCacheSeeded = false
+// Every key RN's storage holds, including the bulk ones left out of the snapshot
+// to keep them off the boot path. What tells "not stored" apart from "stored but
+// not snapshotted", which is the difference between returning the default value
+// and going to the bridge for it.
+const storedKeys = new Set<string>()
 
-const seedStorageCache = (snapshot: Record<string, string> | undefined) => {
+const seedStorageCache = (snapshot: SerializedStorageSnapshot | undefined) => {
   if (!snapshot) return
-  Object.entries(snapshot).forEach(([key, serialized]) => {
+  Object.entries(snapshot.values).forEach(([key, serialized]) => {
     storageCache[key] = serialized
   })
+  snapshot.allKeys.forEach((key) => storedKeys.add(key))
   storageCacheSeeded = true
+}
+
+// Records the first read of each storage key.
+const markFirstStorageRead = (key: string) => {
+  const markName = `${BOOT_MARK_PREFIX.workerStorageRead}${key}`
+  if (workerBootProfiler.reserveOnce(markName)) workerBootProfiler.mark(markName)
 }
 
 // Proxied Storage API
 const storageAPI = {
   get: (key: string, defaultValue?: any) => {
-    // Serve from the seeded cache to avoid a bridge round-trip. A missing key in
-    // a seeded cache means it genuinely isn't in storage → return defaultValue,
-    // matching RN's storage.get semantics (no bridge hop needed).
+    markFirstStorageRead(key)
+
+    // Serve from the seeded cache to avoid a bridge round-trip.
     if (storageCacheSeeded) {
       const serialized = storageCache[key]
-      const value = serialized !== undefined ? richJson.parse(serialized) : defaultValue
-      return Promise.resolve(value)
+      if (serialized !== undefined) return Promise.resolve(richJson.parse(serialized))
+
+      // A key RN listed as stored but did not snapshot is a bulk key held back from
+      // the init payload (the phishing list, the dapp catalog): fetch it over the
+      // bridge on this first read, off the boot path. A miss on both means the key
+      // genuinely isn't stored → defaultValue, matching RN's storage.get semantics.
+      // Do NOT go to the bridge in that case: ~30 of the keys read at boot are absent
+      // from storage, and one round-trip each is what the snapshot was introduced to
+      // get rid of.
+      if (storedKeys.has(key)) return sendToRNAsync('storage.get', { key, defaultValue })
+
+      return Promise.resolve(defaultValue)
     }
     // Cache not seeded yet (no snapshot for some reason) → fall back to bridge.
     return sendToRNAsync('storage.get', { key, defaultValue })
@@ -178,10 +229,12 @@ const storageAPI = {
   set: (key: string, value: any) => {
     // Keep the cache coherent with the write, then persist through the bridge.
     storageCache[key] = richJson.stringify(value)
+    storedKeys.add(key)
     return sendToRNAsync('storage.set', { key, value })
   },
   remove: (key: string) => {
     delete storageCache[key]
+    storedKeys.delete(key)
     return sendToRNAsync('storage.remove', { key })
   }
 }
@@ -208,6 +261,10 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
 
 // We temporarily pause handling actions until config is fully loaded
 let isConfigured = false
+// The x-app-version and x-app-env header values, built on the RN side (where the app
+// version, the OS and the app env live) and handed over with the init config.
+let appVersionHeader = ''
+let appEnv = ''
 let mainCtrl: any = null
 let walletStateCtrl: any = null
 let autoLockCtrl: any = null
@@ -216,13 +273,20 @@ let currentWindowId = 1
 
 const initControllers = (config: any) => {
   try {
+    appVersionHeader = config.appVersionHeader
+    appEnv = config.appEnv
+
     // Logged here (not in structuredCloneShim) because that module loads before
     // console forwarding is wired up, so its logs never reach Metro.
-    console.log(getStructuredCloneShimStatus())
+    console.log((globalThis as any).__structuredCloneShimStatus)
 
     // PERF: seed the storage cache BEFORE constructing controllers, so their
     // initial-load storage reads hit the in-memory cache instead of the bridge.
-    seedStorageCache(config.__storageSnapshot)
+    workerBootProfiler.measure(
+      BOOT_MARK.workerStorageCacheSeeded,
+      () => seedStorageCache(config.__storageSnapshot),
+      { count: Object.keys(config.__storageSnapshot?.values || {}).length }
+    )
     if (Array.isArray(config.criticalControllers)) {
       setCriticalControllers(config.criticalControllers)
     }
@@ -230,6 +294,20 @@ const initControllers = (config: any) => {
     // Single shared Ledger controller for the worker's lifetime; it forwards
     // device operations to the native ledgerTransportService over the bridge.
     const ledgerCtrl = new LedgerController()
+
+    // TrezorController - forwards Trezor Connect calls to the native
+    // trezorDeeplinkService (which delegates to the Trezor Suite app).
+    const trezorCtrl = new TrezorController()
+
+    // QR (Keystone/Keycard/imToken) is air-gapped: the controller is pure logic
+    // that runs in the worker (no native transport). The camera scan + QR display
+    // happen in the RN UI layer and exchange payloads via controller state.
+    const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+
+    workerBootProfiler.startSpan(BOOT_MARK.workerMainCtrlConstructed)
+    // NFC cards (Keycard, ...) tap-to-sign: the controller only forwards signing to
+    // the tapped card's native service, which owns the NFC radio and the credentials.
+    const nfcCtrl = new NfcController()
 
     mainCtrl = new MainController({
       eventEmitterRegistry,
@@ -241,16 +319,21 @@ const initControllers = (config: any) => {
       velcroUrl: config.VELCRO_URL,
       liFiApiKey: config.LIFI_EXPLORER_URL,
       bungeeApiKey: config.BUNGEE_API_KEY,
-      squidIntegratorId: config.SQUID_INTEGRATOR_ID,
       uniswapApiKey: config.UNISWAP_API_KEY,
       featureFlags: {},
       keystoreSigners: {
         internal: KeystoreSigner,
         // TODO: there is a mismatch in hw signer types, it's not a big deal
-        ledger: LedgerSigner
+        ledger: LedgerSigner,
+        trezor: TrezorSigner,
+        qr: QrHardwareSigner,
+        nfc: NfcHardwareSigner
       } as any,
       externalSignerControllers: {
-        ledger: ledgerCtrl
+        ledger: ledgerCtrl,
+        trezor: trezorCtrl,
+        qr: qrCtrl,
+        nfc: nfcCtrl
       } as any,
       uiManager: {
         window: {
@@ -299,29 +382,36 @@ const initControllers = (config: any) => {
           sendToastMessage: (text: string, options: any) =>
             sendToReactEvent('action.addToast', { text, options }),
           sendUiMessage: (params: any) => sendToReactEvent('action.receiveOneTimeData', params),
-          sendNavigateMessage: (viewId: string, route: string, params: any) =>
-            sendToReactEvent('action.navigate', { route, params })
-        }
+          // The app has a single view, so there is no port to pick - whatever is navigated is
+          // this one.
+          sendNavigateMessage: (viewId: string, route: string, options?: NavigateOptions) =>
+            sendToReactEvent('action.navigate', { route, options })
+        },
+        resolveViewRoute: (view: View) => resolveViewRoute(mainCtrl, view)
       }
     })
 
+    workerBootProfiler.endSpan(BOOT_MARK.workerMainCtrlConstructed)
+
+    workerBootProfiler.startSpan(BOOT_MARK.workerWalletStateCtrlConstructed)
     walletStateCtrl = new WalletStateController({
       eventEmitterRegistry,
       onLogLevelUpdateCallback: () => Promise.resolve(),
       storage: storageAPI
     })
+    workerBootProfiler.endSpan(BOOT_MARK.workerWalletStateCtrlConstructed)
 
-    autoLockCtrl = new AutoLockController(
-      eventEmitterRegistry,
-      () => mainCtrl.keystore.lock(),
-      storageAPI
-    )
+    workerBootProfiler.startSpan(BOOT_MARK.workerAutoLockCtrlConstructed)
+    autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => mainCtrl.lock(), storageAPI)
+    workerBootProfiler.endSpan(BOOT_MARK.workerAutoLockCtrlConstructed)
 
-    // Initialize UI view inside the WebView worker context natively
-    mainCtrl.ui.addView({ id: 'default-mobile-app-view', type: 'mobile' })
+    // Initialize UI view inside the WebView worker context natively. Registering it is what
+    // sends the app to the screen it should open on.
+    mainCtrl.ui.addView({ id: MOBILE_VIEW_ID, type: 'mobile' })
 
     // Notify RN that we are ready with ALL controller names
     const allControllerNames = eventEmitterRegistry.values().map((c) => c.name)
+    workerBootProfiler.mark(BOOT_MARK.workerReady, { count: allControllerNames.length })
     sendToReactEvent('system.ready', { controllers: allControllerNames })
     isConfigured = true
   } catch (e: any) {
@@ -334,14 +424,32 @@ const initControllers = (config: any) => {
 
 // Proxy Listener
 window.addEventListener('message', (event) => {
+  let data: any
   try {
-    const data = typeof event.data === 'string' ? decode(event.data) : event.data
+    data = typeof event.data === 'string' ? decode(event.data) : event.data
+  } catch (e) {
+    // NEVER log the raw message nor the parse error itself in production.
+    // Dispatched actions could carry secrets (keystore password, extra entropy) and V8
+    // quotes a slice of the offending input inside its JSON.parse error message,
+    // so both would leak them into logcat. DefinePlugin inlines __DEV__ (see
+    // webpack.webview.config.js), so this branch is stripped from prod bundles.
+    if (__DEV__) console.error('WebView failed to decode message', e, event.data)
+    else console.error('WebView failed to decode an incoming message')
+    return
+  }
+
+  try {
     if (data.type === 'response') {
       const { id, result, error } = data
       if (error) pendingPromises[id]?.reject(new Error(error))
       else pendingPromises[id]?.resolve(result)
       delete pendingPromises[id]
     } else if (data.type === 'init') {
+      // Recorded after the decode above, so the gap to `rn.initPayload.injected`
+      // is the injectJavaScript hop plus the richJson parse of the storage snapshot.
+      workerBootProfiler.mark(BOOT_MARK.workerInitReceived, {
+        bytes: typeof event.data === 'string' ? event.data.length : undefined
+      })
       initControllers(data.config)
     } else if (data.type === 'dispatchAction') {
       if (!isConfigured) {
@@ -350,7 +458,7 @@ window.addEventListener('message', (event) => {
       handleActions(data.action, { eventEmitterRegistry, mainCtrl, sendToReactEvent })
     }
   } catch (e) {
-    console.error('WebView failed to parse message', e, event.data)
+    console.error('WebView failed to handle message', data?.type, e)
   }
 })
 

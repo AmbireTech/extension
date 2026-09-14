@@ -2,15 +2,12 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   informationCircle: ViewStyle
   footerContainer: ViewStyle
   footer: ViewStyle
-  progressContainer: ViewStyle
-  progress: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
@@ -28,18 +25,6 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       shadowOffset: { width: 0, height: -2 },
       shadowRadius: 4,
       elevation: 7
-    },
-    progressContainer: {
-      ...flexbox.directionRow,
-      ...flexbox.justifyCenter,
-      ...spacings.pb,
-      ...spacings.ptMi
-    },
-    progress: {
-      width: 64,
-      height: 4,
-      ...common.borderRadiusPrimary,
-      ...spacings.mhMi
     },
     footer: {
       ...flexbox.flex1,

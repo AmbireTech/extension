@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
-import AccountPickerController from '@ambire-common/controllers/accountPicker/accountPicker'
 import Alert from '@common/components/Alert'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import { openInTab } from '@common/utils/links'
 
+import type AccountPickerController from '@ambire-common/controllers/accountPicker/accountPicker'
 interface Props {
   pageError: AccountPickerController['pageError']
   page: AccountPickerController['page']

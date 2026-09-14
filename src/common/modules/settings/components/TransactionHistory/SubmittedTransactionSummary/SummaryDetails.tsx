@@ -14,6 +14,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import TransactionSummary, {
   sizeMultiplier
@@ -27,13 +28,13 @@ import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import {
   getFormattedSubmittedDate,
-  getHumanizedCalls,
   getModalFinalStatus,
   getPresentationalStatus,
   getSummaryBalanceChanges,
   getTruncatedNetworkName,
   getTruncatedTxnHash
 } from './helpers'
+import { getHumanizedCalls } from './humanizedHelpers'
 import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
 
@@ -48,6 +49,7 @@ const SummaryDetails = ({
   size: 'sm' | 'md' | 'lg'
   defaultType: Props['defaultType']
 }) => {
+  const { isCompactSidePanelLayout, isCompactLayout } = useCompactActionRequestLayout()
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -94,12 +96,7 @@ const SummaryDetails = ({
   }
 
   const renderBalanceChangesCard = (title: string, changes: DisplayBalanceChange[]) => (
-    <View
-      style={[
-        styles.modalSimulationContainer,
-        title === 'Assets out' && assetsIn.length ? spacings.mrTy : undefined
-      ]}
-    >
+    <View style={styles.modalSimulationContainer}>
       <View style={styles.modalSimulationContainerHeader}>
         <Text fontSize={14} weight="semiBold" appearance="secondaryText">
           {t(title)}
@@ -145,157 +142,181 @@ const SummaryDetails = ({
 
   return (
     <View style={spacings.phSm}>
-      <View style={spacings.phSm}>
-        <View style={styles.modalSection} testID="activity-transaction-details-step">
-          <Text appearance="tertiaryText" weight="medium" style={spacings.mbSm}>
-            {t('Transaction details')}
-          </Text>
-          {!isDelegationTxn &&
-            humanizedCalls.map((call: IrCall, i) => (
-              <TransactionSummary
-                key={`${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`}
-                style={{ marginBottom: SPACING_SM * sizeMultiplier[size] }}
-                call={call}
-                chainId={submittedAccountOp.chainId}
-                type="benzin"
-                enableExpand={defaultType === 'full-info'}
-                size={size}
-                rightIcon={
-                  submittedAccountOp.calls[i]?.txnId && network.explorerUrl ? (
-                    <View
-                      dataSet={createGlobalTooltipDataSet({
-                        id: `call-open-explorer-${submittedAccountOp.id}-${i}`,
-                        content: 'Open explorer'
-                      })}
-                    >
-                      <OpenIcon width={18} height={18} color={theme.secondaryText} />
-                    </View>
-                  ) : undefined
-                }
-                hasCallFailed={
-                  !isPendingConfirmation &&
-                  submittedAccountOp.identifiedBy.type === 'MultipleTxns' &&
-                  submittedAccountOp.calls[i]?.txnId === undefined
-                }
-                onRightIconPress={
-                  submittedAccountOp.calls[i]?.txnId && network.explorerUrl
-                    ? () => {
-                        void openCallExplorer(submittedAccountOp.calls[i]?.txnId)
-                      }
-                    : undefined
-                }
-                disableSelectorFetching
-              />
-            ))}
-          {!isDelegationTxn && !humanizedCalls.length && (
-            <SkeletonLoader width="100%" height={112} />
-          )}
-          {isDelegationTxn && (
-            <View style={spacings.pbSm}>
-              <DelegationHumanization
-                setDelegation={submittedAccountOp.meta?.setDelegation}
-                delegatedContract={submittedAccountOp.meta?.delegation?.address}
-              />
-            </View>
-          )}
-        </View>
-        <View style={[styles.modalSection, spacings.pb0]} testID="activity-balance-changes-step">
-          <Text appearance="tertiaryText" weight="medium" style={spacings.mbSm}>
-            {t('Balance changes')}
-          </Text>
-          <View style={flexbox.flex1}>
-            {hasAssetBalanceChanges && (
-              <View style={[flexbox.directionRow, flexbox.flex1]}>
-                {!!assetsOut.length && (
-                  <View style={[flexbox.flex1, assetsIn.length ? spacings.mrTy : undefined]}>
-                    {renderBalanceChangesCard('Assets out', assetsOut)}
+      <View style={styles.modalSection} testID="activity-transaction-details-step">
+        <Text appearance="tertiaryText" weight="medium" style={spacings.mbSm}>
+          {t('Transaction details')}
+        </Text>
+        {!isDelegationTxn &&
+          humanizedCalls.map((call: IrCall, i) => (
+            <TransactionSummary
+              key={`${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`}
+              style={{ marginBottom: SPACING_SM * sizeMultiplier[size] }}
+              call={call}
+              chainId={submittedAccountOp.chainId}
+              type="benzin"
+              enableExpand={defaultType === 'full-info'}
+              size={size}
+              rightIcon={
+                submittedAccountOp.calls[i]?.txnId && network.explorerUrl ? (
+                  <View
+                    dataSet={createGlobalTooltipDataSet({
+                      id: `call-open-explorer-${submittedAccountOp.id}-${i}`,
+                      content: 'Open explorer'
+                    })}
+                  >
+                    <OpenIcon width={18} height={18} color={theme.secondaryText} />
                   </View>
-                )}
-                {!!assetsIn.length && (
-                  <View style={flexbox.flex1}>
-                    {renderBalanceChangesCard('Assets in', assetsIn)}
-                  </View>
-                )}
-              </View>
-            )}
-            {!hasBalanceChangesLoaded && (
-              <View style={hasAssetBalanceChanges ? spacings.mtSm : undefined}>
-                {loadingBalanceChanges}
-              </View>
-            )}
-            {hasBalanceChangesLoaded &&
-              !hasAssetBalanceChanges &&
-              (isPendingConfirmation ? (
-                loadingBalanceChanges
-              ) : (
-                <View
-                  style={[
-                    spacings.phSm,
-                    spacings.pvSm,
-                    {
-                      backgroundColor: theme.secondaryBackground,
-                      borderWidth: 1,
-                      borderColor: theme.secondaryBorder,
-                      ...common.borderRadiusPrimary
+                ) : undefined
+              }
+              hasCallFailed={
+                !isPendingConfirmation &&
+                submittedAccountOp.identifiedBy.type === 'MultipleTxns' &&
+                submittedAccountOp.calls[i]?.txnId === undefined
+              }
+              onRightIconPress={
+                submittedAccountOp.calls[i]?.txnId && network.explorerUrl
+                  ? () => {
+                      void openCallExplorer(submittedAccountOp.calls[i]?.txnId)
                     }
-                  ]}
-                >
-                  <Text fontSize={14} appearance="secondaryText">
-                    {t('No balance changes detected')}
-                  </Text>
-                </View>
-              ))}
-          </View>
-        </View>
-        {shouldShowTransactionHashStep && (
-          <View
-            style={[styles.modalConfirmedRow, spacings.mbSm]}
-            testID="activity-transaction-hash-step"
-          >
-            <View style={styles.modalStepRow}>
-              <Text appearance="tertiaryText" weight="medium">
-                {t('Transaction hash')}
-              </Text>
-              <View style={styles.modalStepRowRight}>
-                <Text fontSize={14} appearance="secondaryText">
-                  {getTruncatedTxnHash(submittedAccountOp.txnId)}
-                </Text>
-                <Pressable
-                  onPress={() => {
-                    if (!submittedAccountOp.txnId) return
-                    void setStringAsync(submittedAccountOp.txnId)
-                    addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
-                  }}
-                  style={styles.modalHashCopyButton}
-                >
-                  <CopyIcon width={16} height={16} color={theme.primaryText} />
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        )}
-        {!!modalFinalStatus && (
-          <View style={[styles.modalConfirmedRow, spacings.mbSm]} testID="activity-confirmed-step">
-            <View style={[styles.modalStepRow, spacings.mbSm]}>
-              <Text appearance={modalFinalStatus.appearance} fontSize={16} weight="medium">
-                {modalFinalStatus.label}
-              </Text>
-              {submittedAccountOp.status === AccountOpStatus.Success && (
-                <View style={styles.modalStepRowRight}>
-                  <Text fontSize={14} appearance="secondaryText">
-                    {submittedDate} on {getTruncatedNetworkName(network.name)}
-                  </Text>
-                  <NetworkIcon
-                    id={submittedAccountOp.chainId.toString()}
-                    size={20}
-                    style={spacings.mlMi}
-                  />
-                </View>
-              )}
-            </View>
+                  : undefined
+              }
+              disableSelectorFetching
+            />
+          ))}
+        {!isDelegationTxn && !humanizedCalls.length && <SkeletonLoader width="100%" height={112} />}
+        {isDelegationTxn && (
+          <View style={spacings.pbSm}>
+            <DelegationHumanization
+              setDelegation={submittedAccountOp.meta?.setDelegation}
+              delegatedContract={submittedAccountOp.meta?.delegation?.address}
+            />
           </View>
         )}
       </View>
+      <View style={[styles.modalSection, spacings.pb0]} testID="activity-balance-changes-step">
+        <Text appearance="tertiaryText" weight="medium" style={spacings.mbSm}>
+          {t('Balance changes')}
+        </Text>
+        <View style={flexbox.flex1}>
+          {/* Side by side, the two cards are too narrow for an amount, a symbol and a fiat value
+          to fit on one line, so a compact layout stacks them */}
+          {hasAssetBalanceChanges && (
+            <View style={!isCompactLayout ? [flexbox.directionRow, flexbox.flex1] : undefined}>
+              {!!assetsOut.length && (
+                <View
+                  style={[
+                    !isCompactLayout && flexbox.flex1,
+                    assetsIn.length ? (isCompactLayout ? spacings.mbTy : spacings.mrTy) : undefined
+                  ]}
+                >
+                  {renderBalanceChangesCard('Assets out', assetsOut)}
+                </View>
+              )}
+              {!!assetsIn.length && (
+                <View style={!isCompactLayout ? flexbox.flex1 : undefined}>
+                  {renderBalanceChangesCard('Assets in', assetsIn)}
+                </View>
+              )}
+            </View>
+          )}
+          {!hasBalanceChangesLoaded && (
+            <View style={hasAssetBalanceChanges ? spacings.mtSm : undefined}>
+              {loadingBalanceChanges}
+            </View>
+          )}
+          {hasBalanceChangesLoaded &&
+            !hasAssetBalanceChanges &&
+            (isPendingConfirmation ? (
+              loadingBalanceChanges
+            ) : (
+              <View
+                style={[
+                  spacings.phSm,
+                  spacings.pvSm,
+                  {
+                    backgroundColor: theme.secondaryBackground,
+                    borderWidth: 1,
+                    borderColor: theme.secondaryBorder,
+                    ...common.borderRadiusPrimary
+                  }
+                ]}
+              >
+                <Text fontSize={14} appearance="secondaryText">
+                  {t('No balance changes detected')}
+                </Text>
+              </View>
+            ))}
+        </View>
+      </View>
+      {shouldShowTransactionHashStep && (
+        <View
+          style={[styles.modalConfirmedRow, spacings.mbSm]}
+          testID="activity-transaction-hash-step"
+        >
+          <View style={styles.modalStepRow}>
+            <Text appearance="tertiaryText" weight="medium">
+              {t('Transaction hash')}
+            </Text>
+            <View style={styles.modalStepRowRight}>
+              <Text fontSize={14} appearance="secondaryText">
+                {getTruncatedTxnHash(submittedAccountOp.txnId)}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  if (!submittedAccountOp.txnId) return
+                  void setStringAsync(submittedAccountOp.txnId)
+                  addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
+                }}
+                style={styles.modalHashCopyButton}
+              >
+                <CopyIcon width={16} height={16} color={theme.primaryText} />
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+      {!!modalFinalStatus && (
+        <View style={[styles.modalConfirmedRow, spacings.mbSm]} testID="activity-confirmed-step">
+          <View
+            style={[
+              styles.modalStepRow,
+              spacings.mbSm,
+              isCompactSidePanelLayout && { gap: SPACING_SM, flexWrap: 'wrap' }
+            ]}
+          >
+            <Text
+              appearance={modalFinalStatus.appearance}
+              fontSize={16}
+              weight="medium"
+              style={isCompactSidePanelLayout ? spacings.mrTy : undefined}
+            >
+              {modalFinalStatus.label}
+            </Text>
+            {submittedAccountOp.status === AccountOpStatus.Success && (
+              <View
+                style={[
+                  styles.modalStepRowRight,
+                  isCompactSidePanelLayout && { flexShrink: 1, minWidth: 0 }
+                ]}
+              >
+                <Text
+                  fontSize={14}
+                  appearance="secondaryText"
+                  numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
+                  style={isCompactSidePanelLayout ? { flexShrink: 1 } : undefined}
+                >
+                  {submittedDate} on {getTruncatedNetworkName(network.name)}
+                </Text>
+                <NetworkIcon
+                  id={submittedAccountOp.chainId.toString()}
+                  size={20}
+                  style={spacings.mlMi}
+                />
+              </View>
+            )}
+          </View>
+        </View>
+      )}
     </View>
   )
 }

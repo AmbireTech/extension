@@ -56,6 +56,8 @@ export type WrapperProps<T = any> = BaseProps &
     ) => React.ReactElement | null
     keyExtractor?: (item: T, index: number) => string
     data?: T[]
+    // Forwarded to the draggable list for fixed-height row positioning
+    itemHeight?: number
   }
 
 const ScrollableWrapper = ({

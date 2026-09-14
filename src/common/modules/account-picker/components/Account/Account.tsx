@@ -1,11 +1,13 @@
 import React, { useCallback, useMemo } from 'react'
-import { Platform, Pressable, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
+import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import {
   Account as AccountInterface,
   AccountWithNetworkMeta,
   ImportStatus
 } from '@ambire-common/interfaces/account'
+import { Key } from '@ambire-common/interfaces/keystore'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -25,6 +27,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -41,9 +44,15 @@ const Account = ({
   onDeselect,
   isDisabled,
   importStatus,
+  importedKeyTypes,
+  associatedKeysStats,
+  currentKeyType,
   displayTypeBadge = true,
   displayTypePill = true,
-  shouldBeDisplayedAsNew = false
+  shouldBeDisplayedAsNew = false,
+  identityDisplayMode = 'responsive',
+  selectOnRowPress = true,
+  footer
 }: {
   account: AccountWithNetworkMeta
   type: 'basic' | 'smart' | 'linked'
@@ -54,32 +63,52 @@ const Account = ({
   onDeselect: (account: AccountInterface) => void
   isDisabled?: boolean
   importStatus: ImportStatus
+  /** The key types this account is already imported with, if any. */
+  importedKeyTypes?: Key['type'][]
+  /** How many keys can sign for this account and how many of them are imported. */
+  associatedKeysStats?: { total: number; imported: number }
+  /** The key type the user is importing with right now. */
+  currentKeyType?: Key['type']
   displayTypeBadge?: boolean
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
+  identityDisplayMode?: 'responsive' | 'compact'
+  selectOnRowPress?: boolean
+  footer?: React.ReactNode
 }) => {
   const { isLoading: isDomainResolving, name: reverseLookupName } = useReverseLookup({
     address: account.addr
   })
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
   const { minWidthSize, maxWidthSize } = useWindowSize()
   const { addToast } = useToast()
   const isAccountImported = importStatus !== ImportStatus.NotImported
   const usedOnNetworks = Array.isArray(account.usedOnNetworks) ? account.usedOnNetworks : undefined
   const isUsedOnNetworksLoading = account.usedOnNetworks !== null && !usedOnNetworks
   const hasUsedOnNetworks = !!usedOnNetworks && usedOnNetworks.length > 0
-  const shouldShowUsedOnNetworks = !unused && (hasUsedOnNetworks || isUsedOnNetworksLoading)
+  const shouldShowUsedOnNetworks =
+    identityDisplayMode === 'responsive' &&
+    !unused &&
+    (hasUsedOnNetworks || isUsedOnNetworksLoading)
 
-  const toggleSelectedState = useCallback(() => {
-    if (isSelected) {
-      !!onDeselect && onDeselect(account)
-    } else {
-      !!onSelect && onSelect(account)
-    }
-  }, [isSelected, onSelect, onDeselect, account])
+  const handleSelectionChange = useCallback(
+    (shouldSelect: boolean) => {
+      if (shouldSelect) {
+        onSelect(account)
+      } else {
+        onDeselect(account)
+      }
+    },
+    [account, onDeselect, onSelect]
+  )
+
+  const handlePress = useCallback(() => {
+    handleSelectionChange(!isSelected)
+  }, [handleSelectionChange, isSelected])
 
   const formattedAddress = useMemo(() => {
+    if (identityDisplayMode === 'compact') return shortenAddress(account.addr, 16)
     if (minWidthSize('m') || reverseLookupName || isDomainResolving) {
       return shortenAddress(account.addr, 16)
     }
@@ -90,7 +119,59 @@ const Account = ({
       return account.addr
     }
     return shortenAddress(account.addr, 16)
-  }, [account.addr, reverseLookupName, isDomainResolving, maxWidthSize, minWidthSize])
+  }, [
+    account.addr,
+    identityDisplayMode,
+    reverseLookupName,
+    isDomainResolving,
+    maxWidthSize,
+    minWidthSize
+  ])
+
+  const shouldShowImportedAddress =
+    !account.preferences.label || (!isMobile && identityDisplayMode === 'responsive')
+  const identityFontSize = identityDisplayMode === 'compact' ? 14 : 16
+  const isCompactWebIdentity = isWeb && identityDisplayMode === 'compact'
+  const compactIdentityTooltipDataSet = useMemo(
+    () =>
+      isCompactWebIdentity
+        ? createGlobalTooltipDataSet({
+            id: `account-picker-identity-${account.addr}`,
+            content: account.addr
+          })
+        : undefined,
+    [account.addr, isCompactWebIdentity]
+  )
+  const shouldShowOnlyResolvedName = isCompactWebIdentity && !!reverseLookupName
+
+  const getKeyTypeLabel = useCallback(
+    (keyType: Key['type']) =>
+      keyType === 'internal'
+        ? t('recovery phrase or private key')
+        : t('{{deviceName}} key', { deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType] }),
+    [t]
+  )
+  const importedKeyTypesLabel = useMemo(() => {
+    if (!importedKeyTypes?.length) return t('existing key')
+
+    const labels = importedKeyTypes.map(getKeyTypeLabel)
+    if (labels.length === 1) return labels[0]
+
+    return t('{{allButLast}} and {{last}}', {
+      allButLast: labels.slice(0, -1).join(', '),
+      last: labels[labels.length - 1]
+    })
+  }, [getKeyTypeLabel, importedKeyTypes, t])
+  const currentKeyTypeLabel = useMemo(
+    () => (currentKeyType ? getKeyTypeLabel(currentKeyType) : t('key')),
+    [currentKeyType, getKeyTypeLabel, t]
+  )
+
+  const backgroundColor = useMemo(() => {
+    if (identityDisplayMode === 'compact') return theme.secondaryBackground
+
+    return themeType === THEME_TYPES.DARK ? theme.neutral400 : theme.neutral200
+  }, [identityDisplayMode, theme, themeType])
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
@@ -106,9 +187,12 @@ const Account = ({
         flexbox.alignCenter,
         withBottomSpacing ? spacings.mbTy : spacings.mb0,
         common.borderRadiusPrimary,
-        common.hidden
+        common.hidden,
+        // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+        isWeb && !selectOnRowPress && { cursor: 'default' },
+        { backgroundColor }
       ]}
-      onPress={isDisabled ? undefined : toggleSelectedState}
+      onPress={isDisabled || !selectOnRowPress ? undefined : handlePress}
       testID={`add-account-${account.addr}`}
     >
       <View
@@ -119,9 +203,11 @@ const Account = ({
         ]}
       >
         <FatToggle
+          id={`add-account-toggle-${account.addr}`}
           isOn={isSelected}
-          onToggle={toggleSelectedState}
+          onToggle={handleSelectionChange}
           disabled={isDisabled}
+          stopPropagation
           style={flexbox.alignSelfStart}
           width={44}
           height={24}
@@ -133,7 +219,9 @@ const Account = ({
               style={[
                 flexbox.directionRow,
                 flexbox.alignCenter,
-                isMobile ? spacings.mrTy : spacings.mrMd
+                isMobile ? spacings.mrTy : spacings.mrMd,
+                // Lets the row shrink below its content's natural width so the name can truncate
+                { flexShrink: 1, minWidth: 0 }
               ]}
             >
               {isAccountImported ? (
@@ -148,14 +236,17 @@ const Account = ({
                     displayTypeBadge={displayTypeBadge}
                   />
                   <Text
-                    fontSize={16}
+                    fontSize={identityFontSize}
                     weight="medium"
                     appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
-                    style={spacings.mrTy}
+                    style={[spacings.mrTy, { flexShrink: 1, minWidth: 0 }]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    dataSet={compactIdentityTooltipDataSet}
                   >
                     {account.preferences.label}
                   </Text>
-                  {(!isMobile || !account.preferences.label) && (
+                  {shouldShowImportedAddress && (
                     <Text
                       fontSize={14}
                       appearance="secondaryText"
@@ -174,10 +265,13 @@ const Account = ({
                 <>
                   {reverseLookupName ? (
                     <Text
-                      fontSize={16}
+                      fontSize={identityFontSize}
                       weight="medium"
                       appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
-                      style={spacings.mrTy}
+                      style={[spacings.mrTy, { flexShrink: 1, minWidth: 0 }]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      dataSet={compactIdentityTooltipDataSet}
                     >
                       {reverseLookupName}
                     </Text>
@@ -186,21 +280,23 @@ const Account = ({
                       {t('Resolving domain...')}
                     </Text>
                   ) : null}
-                  <Text
-                    fontSize={14}
-                    appearance={isMobile && type === 'linked' ? 'infoText' : 'secondaryText'}
-                    style={spacings.mrMi}
-                    weight="mono_regular"
-                  >
-                    {reverseLookupName || (isWeb && isDomainResolving) ? '(' : ''}
-                    {formattedAddress}
-                    {reverseLookupName || (isWeb && isDomainResolving) ? ')' : ''}
-                  </Text>
+                  {!shouldShowOnlyResolvedName && (
+                    <Text
+                      fontSize={14}
+                      appearance={isMobile && type === 'linked' ? 'infoText' : 'secondaryText'}
+                      style={spacings.mrMi}
+                      weight="mono_regular"
+                    >
+                      {reverseLookupName || (isWeb && isDomainResolving) ? '(' : ''}
+                      {formattedAddress}
+                      {reverseLookupName || (isWeb && isDomainResolving) ? ')' : ''}
+                    </Text>
+                  )}
                 </>
               )}
 
               {!isMobile && (maxWidthSize('l') || isAccountImported || reverseLookupName) && (
-                <Pressable onPress={handleCopyAddress}>
+                <Pressable style={{ cursor: 'pointer' }} onPress={handleCopyAddress}>
                   <CopyIcon width={14} height={14} />
                 </Pressable>
               )}
@@ -275,30 +371,41 @@ const Account = ({
           </View>
         </View>
       </View>
+      {footer}
       {[
         ImportStatus.ImportedWithSomeOfTheKeys,
         ImportStatus.ImportedWithDifferentKeys,
         ImportStatus.ImportedWithoutKey
       ].includes(importStatus) && (
-        <View style={[spacings.mh, spacings.mvTy, flexbox.alignSelfStart]}>
-          {importStatus === ImportStatus.ImportedWithSomeOfTheKeys && (
-            <Label
-              isTypeLabelHidden
-              customTextStyle={styles.label}
-              hasBottomSpacing={false}
-              text={t(
-                'Already imported with some of the keys found on this page but not all. Re-import now to use this account with multiple keys.'
-              )}
-              type="success"
-            />
-          )}
+        <View
+          style={[
+            spacings.mh,
+            spacings.mvTy,
+            isMobile ? { alignSelf: 'stretch' } : flexbox.alignSelfStart
+          ]}
+        >
+          {importStatus === ImportStatus.ImportedWithSomeOfTheKeys &&
+            !!associatedKeysStats &&
+            associatedKeysStats.imported < associatedKeysStats.total && (
+              <Label
+                isTypeLabelHidden
+                customTextStyle={styles.label}
+                hasBottomSpacing={false}
+                text={t(
+                  'This account has {{total}} keys, {{imported}} of them already imported. Import again to add the ones found on this page.',
+                  associatedKeysStats
+                )}
+                type="success"
+              />
+            )}
           {importStatus === ImportStatus.ImportedWithDifferentKeys && (
             <Label
               isTypeLabelHidden
               customTextStyle={styles.label}
               hasBottomSpacing={false}
               text={t(
-                'Already imported, associated with a different key. Re-import now to use this account with multiple keys.'
+                'Already imported with your {{importedKeyTypesLabel}}. Import again to also sign with this {{currentKeyTypeLabel}}.',
+                { importedKeyTypesLabel, currentKeyTypeLabel }
               )}
               type="info"
             />
@@ -308,9 +415,7 @@ const Account = ({
               isTypeLabelHidden
               customTextStyle={styles.label}
               hasBottomSpacing={false}
-              text={t(
-                'Already imported as a view only account. Import now to be able to manage this account.'
-              )}
+              text={t('Already imported as view-only. Import now to be able to sign.')}
               type="info"
             />
           )}

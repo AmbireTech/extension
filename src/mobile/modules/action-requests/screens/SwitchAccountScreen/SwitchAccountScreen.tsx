@@ -3,18 +3,19 @@ import { View } from 'react-native'
 
 import DownArrowLongIcon from '@common/assets/svg/DownArrowLongIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
-import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
+import Alert from '@common/components/Alert'
+import ManifestImage from '@common/components/ManifestImage'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
 import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
-import ManifestImage from '@web/components/ManifestImage'
 
 import getStyles from './styles'
 
@@ -23,7 +24,7 @@ const SwitchAccountScreen = () => {
     t,
     account,
     isAuthorizing,
-    userRequest,
+    isRequestBroken,
     nextAccount,
     nextAccountData,
     nextRequestLabel,
@@ -36,13 +37,14 @@ const SwitchAccountScreen = () => {
 
   return (
     <MobileLayoutContainer
+      header={<ActionHeader />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handleAuthorizeButtonPress}
           resolveButtonText={isAuthorizing ? t('Switching...') : t('Switch Account')}
-          resolveDisabled={isAuthorizing}
+          resolveDisabled={isAuthorizing || isRequestBroken}
           rejectButtonText={t('Deny')}
           resolveButtonTestID="switch-account-button"
         />
@@ -55,22 +57,13 @@ const SwitchAccountScreen = () => {
               style={{
                 ...flexbox.center,
                 backgroundColor: theme.tertiaryBackground,
-                ...spacings.pvLg
-              }}
-            >
-              <Text fontSize={20} weight="medium">
-                {t('Switch Account Request')}
-              </Text>
-            </View>
-            <View
-              style={{
-                backgroundColor: theme.primaryBackground,
-                ...flexbox.alignCenter,
                 ...spacings.pv,
-                ...flexbox.flex1,
                 ...spacings.phSm
               }}
             >
+              <Text fontSize={20} weight="medium" style={!!dAppData && spacings.mbLg}>
+                {t('Switch Account Request')}
+              </Text>
               {!!dAppData && (
                 <View
                   style={[
@@ -82,7 +75,7 @@ const SwitchAccountScreen = () => {
                 >
                   <ManifestImage
                     uri={dAppData.icon}
-                    size={responsiveSizeMultiplier * 56}
+                    size={responsiveSizeMultiplier * 48}
                     containerStyle={{
                       backgroundColor: theme.secondaryBackground
                     }}
@@ -92,15 +85,15 @@ const SwitchAccountScreen = () => {
                     }}
                     fallback={() => (
                       <ManifestFallbackIcon
-                        width={responsiveSizeMultiplier * 56}
-                        height={responsiveSizeMultiplier * 56}
+                        width={responsiveSizeMultiplier * 48}
+                        height={responsiveSizeMultiplier * 48}
                       />
                     )}
                   />
                 </View>
               )}
               {!!dAppData && (
-                <Text appearance="secondaryText" style={[spacings.mbSm, text.center]} fontSize={16}>
+                <Text appearance="secondaryText" style={text.center} fontSize={16}>
                   <Text appearance="primaryText" fontSize={16} weight="medium">
                     {dAppData.name}
                   </Text>{' '}
@@ -112,7 +105,16 @@ const SwitchAccountScreen = () => {
                   </Text>
                 </Text>
               )}
-
+            </View>
+            <View
+              style={{
+                backgroundColor: theme.primaryBackground,
+                ...flexbox.alignCenter,
+                ...spacings.pv,
+                ...flexbox.flex1,
+                ...spacings.phSm
+              }}
+            >
               {account && <Account style={spacings.mbSm} {...account} />}
               <DownArrowLongIcon
                 style={[spacings.mbSm]}
@@ -134,14 +136,24 @@ const SwitchAccountScreen = () => {
                 />
               ) : (
                 <Text appearance="errorText" style={spacings.mbLg} fontSize={16}>
-                  {t('Invalid account data')}
+                  {nextAccount || t('Invalid account data')}
                 </Text>
               )}
-              <Text style={text.center} appearance="secondaryText" fontSize={16}>
-                {t(
-                  'Would you like to switch to this account now to continue with the signing process?'
-                )}
-              </Text>
+              {isRequestBroken ? (
+                <Alert
+                  type="error"
+                  title={t('Unable to switch account')}
+                  text={t(
+                    'The requested account is not available. Add the account or reconnect the app to continue. If the issue persists, please contact support.'
+                  )}
+                />
+              ) : (
+                <Text style={text.center} appearance="secondaryText" fontSize={16}>
+                  {t(
+                    'Would you like to switch to this account now to continue with the signing process?'
+                  )}
+                </Text>
+              )}
             </View>
           </View>
         ) : (

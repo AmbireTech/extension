@@ -10,10 +10,11 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - `background` in the wallet refers to:
   - Service worker on Chrome (`src/web/extension-services/background/`)
   - Background script on Firefox (`src/web/extension-services/background/`)
-  - Webview worker on mobile (`src/mobile/services/WebViewWorker/`)
+  - Webview worker on mobile (`src/mobile/modules/webview/services/`)
 - Unlike typical manifest version 3 extensions where the service worker is allowed to sleep, this extension is designed to stay alive: the UI periodically sends `ambire-extension-ping` messages, the background responds with `ambire-extension-pong` to prevent the service worker from being suspended, and the background's `init()` function (which bootstraps all controllers) is called on every incoming message - a no-op if already initialized, but essential after a service worker suspension because the JS context is destroyed on sleep and `isInitialized` resets
 - The business logic and persistent state is handled primarily using `controllers` (JS classes), which usually run in the `background`
 - The websites run some controllers separately without a `background`
+- The extension's scripts (background, content script, inpage, UI) and the messaging between them are documented in `src/web/extension-services/README.md` and `src/web/extension-services/messengers/README.md`
 - `src/ambire-common` is a **git submodule** that contains the business logic of the application. Changes inside it are in a separate repo and require a separate commit flow
 - `src/common` can be imported by all environments, but environments shouldn't import from other environments (e.g., `web/` SHOULD NOT import from `mobile/`)
 - There are environment specific files. Be VERY careful when creating files and debugging as they exist in two ways:
@@ -44,6 +45,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - ALWAYS wrap text in `t()` from `useTranslation()` (`imported from '@common/config/localization'`)
 - ALWAYS use `react-native-modalize` with `BottomSheet` for modals and bottom sheets
 - Tooltips are added using the pattern: `dataSet={createGlobalTooltipDataSet(...)}` which creates a global dataset that is picked up by a `GlobalTooltip` component at the root of the app.
+- All warnings, errors, and other user-facing text (banners, toasts, etc.) must be written in plain, human-understandable language — NEVER assume the user is technical or Web3/blockchain-knowledgeable. Same rule for controller errors and humanizer warnings originating in `src/ambire-common` — see its `AGENTS.md` for the jargon-avoidance guidance and examples
 - All icons are in src/common/assets/svg/...; ALWAYS use icons from there and report if you can't find a suitable one by adding a comment instead of the icon and asking the human to add it
 
 ### Security:
@@ -55,13 +57,15 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 
 - Ensure that list keys are unique and stable (NEVER use the array index)
 - ALWAYS memoize functions, components and complex values with `useMemo`, `useCallback` and `React.memo`.
-- ALWAYS ensure that subscriptions, event listeners, timers and other side effects are properly cleaned up
+- ALWAYS use state selectors with `useControllerState` if reading a specific slice of the state - `const { state: mainStatuses, dispatch: mainDispatch } = useController('MainController', selectMainStatuses)`, where selectMainStatuses is defined as a pure function outside of the component (`const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses`)
+- ALWAYS ensure that subscriptions, event listeners, timers and other side effects are properly cleaned up. Even if it's a simple `setTimeout` used to reject a promise, it should be cleared.
 - NEVER delete existing comments when updating a code block. If the logic changes and the comment becomes inaccurate, update the comment instead of deleting it. Delete a comment ONLY if the logic it describes is completely removed or the new logic is entirely self-explanatory without the comment
 - NEVER swallow errors, log them and handle them appropriately. If the error is unexpected also track it in Sentry with `captureException`
 - NEVER modify git config or run destructive git operations
 - NEVER commit unless explicitly requested by user
 - NEVER stage changes unless explicitly requested by user
 - Avoid regex for parsing strings or business logic. Prefer explicit parsing, small helper functions, existing parsers or available library functions.
+- Comments of reusable functions, types and constants should be public to allow reading them on hover (but don't edit existing comments that are outside of the scope of the task).
 
 ## Controller state update lifecycle
 

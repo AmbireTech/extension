@@ -81,20 +81,15 @@ export class TransferPage extends BasePage {
   }
 
   async assertAddedContact(contactName: string, contactAddress: string) {
-    const maxLength = 16
-    const slicedAddress = `${contactAddress.slice(0, maxLength / 2 - 1)}...${contactAddress.slice(
-      -maxLength / 2 + 2
-    )}`
+    const addedContact = this.page
+      .getByTestId(selectors.contactNameText)
+      .filter({ hasText: contactName })
+    const addedContactAddress = addedContact.getByTestId(selectors.contactAddressText)
 
-    // The address is rendered as three separate text nodes — "(", the sliced
-    // address and ")" — so an XPath `contains(text(), ...)` only ever sees the
-    // first "(" node and never matches. `getByText` matches the element's full
-    // text content, so it resolves correctly across the split text nodes.
-    const addedContactName = this.page.getByText(contactName)
-    const addedContactAddress = this.page.getByText(`(${slicedAddress})`)
-
-    await expect(addedContactName).toContainText(contactName)
-    await expect(addedContactAddress).toContainText(slicedAddress)
+    // The address can be full or shortened depending on the ENS lookup state.
+    await expect(addedContact).toContainText(contactName)
+    await expect(addedContactAddress).toContainText(contactAddress.slice(0, 7))
+    await expect(addedContactAddress).toContainText(contactAddress.slice(-6))
   }
 
   // TODO: move to dashboard page once POM is refactored
@@ -144,7 +139,7 @@ export class TransferPage extends BasePage {
     // session the app's periodic (every 2 min) all-network portfolio refresh can land inside that
     // window and fail the check, so shared-state callers must set this to false.
     assertPortfolioRefreshScopedToSendNetwork?: boolean
-  }) {
+  }): Promise<boolean> {
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
     if (holdProceedButton) {
@@ -175,6 +170,7 @@ export class TransferPage extends BasePage {
       console.warn(
         `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
       )
+      return false
     } else {
       // start monitoring requests
       await this.monitorRequests()
@@ -246,48 +242,40 @@ export class TransferPage extends BasePage {
 
       // Close page
       await this.click(selectors.closeProgressModalButton)
+
+      return true
     }
   }
 
   async checkRecepientTransactionOnExplorer({
     newPage,
-    recepientAddress,
     options
   }: {
     newPage: Page
     recepientAddress: string
     options?: { expectedTransactionsCount?: number }
   }): Promise<void> {
-    const expectedTransactionsCount = options?.expectedTransactionsCount ?? 1 // expect at least 1 transaction
-    let transactionDetails: any
+    const expectedTransactionsCount = options?.expectedTransactionsCount ?? 1
 
-    // assert signed block
     await expect(newPage.getByTestId(selectors.transaction.explorer.txnSignedStep)).toContainText(
       'Signed'
     )
 
-    // assert transaction details block
-    await expect(newPage.getByTestId(selectors.transaction.explorer.txnProgressStep)).toContainText(
-      'Transaction details'
-    )
+    const details = newPage.getByTestId(selectors.transaction.explorer.txnProgressStep)
+    await expect(details).toContainText('Transaction details')
 
-    for (let i = 0; i < expectedTransactionsCount; i++) {
-      // eslint-disable-next-line no-await-in-loop
-      transactionDetails = newPage
-        .getByTestId(selectors.transaction.explorer.recepientAddressBlock)
-        .nth(i)
+    const blocks = details.locator('[data-testid^="recipient-address-"]')
+    await expect(blocks).toHaveCount(expectedTransactionsCount)
+
+    for (let i = 0; i < expectedTransactionsCount; i += 1) {
+      const block = blocks.nth(i)
+      if (!(await block.getByText('Amount').isVisible())) {
+        await block.getByText('Send', { exact: true }).click()
+      }
+      await expect(block).toContainText('0.001')
+      await expect(block).toContainText('USDC')
     }
-    await expect(transactionDetails).toHaveText(/Send/)
-    await expect(transactionDetails).toHaveText(/0\.001/)
-    await expect(transactionDetails).toHaveText(/USDC/)
 
-    // commenting out this for now as this could be different values from now on:
-    // 1. an ens, if one exists
-    // 2. a name in the extension for the address, if one is added
-    // 3. a shortened address like 0x1234...abab
-    // await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
-
-    // assert confirmed block
     await expect(
       newPage.getByTestId(selectors.transaction.explorer.txnConfirmedStep)
     ).toContainText('confirmed')

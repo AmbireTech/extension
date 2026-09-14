@@ -26,12 +26,12 @@ jobs:
       # and without them typing out the whole model name. Done so we can test with both models
       model: >-
         ${{ contains(github.event.comment.body, '--sonnet')
-            && 'openrouter/anthropic/claude-sonnet-4.6'
-            || 'openrouter/moonshotai/kimi-k2.6:nitro' }}
+            && 'openrouter/anthropic/claude-sonnet-5'
+            || 'openrouter/z-ai/glm-5.2:nitro' }}
       fallback_models: >-
         ${{ contains(github.event.comment.body, '--sonnet')
-            && '["openrouter/moonshotai/kimi-k2.6:nitro"]'
-            || '["openrouter/anthropic/claude-sonnet-4.6"]' }}
+            && '["openrouter/z-ai/glm-5.2:nitro"]'
+            || '["openrouter/anthropic/claude-sonnet-5"]' }}
       extra_instructions: |
         You are reviewing a security-critical, self-custodial Web3 wallet monorepo. The
         same `src/` tree builds several products that share code:

@@ -10,10 +10,19 @@ declare const globalIsAmbireNext: boolean
  * want to communicate between different parts of the extension,
  * like between a content script and the background script.
  */
-function sendMessage<TPayload>(message: SendMessage<TPayload>, { tabId }: { tabId?: number } = {}) {
+function sendMessage<TPayload>(
+  message: SendMessage<TPayload>,
+  { tabId, frameId, documentId }: { tabId?: number; frameId?: number; documentId?: string } = {}
+) {
   if (typeof tabId === 'undefined') return chrome?.runtime?.sendMessage?.(message)
 
-  return chrome.tabs?.sendMessage?.(tabId, message)
+  // SECURITY: target the exact document/frame that sent the request so replies
+  // never leak to other frames in the tab (broadcasts pass neither, stay tab-wide).
+  const options: { frameId?: number; documentId?: string } = {}
+  if (typeof documentId === 'string') options.documentId = documentId
+  else if (typeof frameId === 'number') options.frameId = frameId
+
+  return chrome.tabs?.sendMessage?.(tabId, message, options)
 }
 
 /**
@@ -78,6 +87,11 @@ export const tabMessenger = createMessenger({
       }
       const repliedTopic = message.topic.replace('>', '<')
 
+      // documentId is present at runtime on modern browsers but not in the
+      // installed chrome type defs; read it via a narrow local cast.
+      const senderDocumentId = (sender as chrome.runtime.MessageSender & { documentId?: string })
+        .documentId
+
       try {
         const response = await callback(message.payload, {
           id: message.id,
@@ -90,7 +104,7 @@ export const tabMessenger = createMessenger({
             payload: { response },
             id: message.id
           },
-          { tabId: sender.tab?.id }
+          { tabId: sender.tab?.id, frameId: sender.frameId, documentId: senderDocumentId }
         )
       } catch (error_) {
         // Errors do not serialize properly over `chrome.runtime.sendMessage`, so
@@ -107,7 +121,9 @@ export const tabMessenger = createMessenger({
             id: message.id
           },
           {
-            tabId: sender.tab?.id
+            tabId: sender.tab?.id,
+            frameId: sender.frameId,
+            documentId: senderDocumentId
           }
         )
       }

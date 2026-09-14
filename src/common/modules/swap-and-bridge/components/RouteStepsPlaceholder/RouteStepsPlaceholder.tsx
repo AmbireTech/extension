@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { SwapAndBridgeToToken } from '@ambire-common/interfaces/swapAndBridge'
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
@@ -15,6 +14,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import styles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 const RouteStepsPlaceholder = ({
   fromSelectedToken,
   toSelectedToken,

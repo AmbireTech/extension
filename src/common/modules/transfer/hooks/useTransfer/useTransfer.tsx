@@ -1,19 +1,20 @@
 import { parseUnits } from 'ethers'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
-import { getAddressFromAddressState, getDomainFromAddressState } from '@ambire-common/utils/domains'
+import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useSyncedState from '@common/hooks/useSyncedState'
@@ -29,7 +30,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { verifiedDomainsStatus, domains } = useController('DomainsController').state
   const {
     isTopUp,
     validationFormMsgs,
@@ -62,18 +63,18 @@ const useTransfer = (isTopUpScreen: boolean) => {
 
   const { navigate } = useNavigation()
   const { t } = useTranslation()
-  const { visibleUserRequests } = useController('RequestsController').state
+  const { state: visibleUserRequests } = useController('RequestsController', 'visibleUserRequests')
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
-  const { userRequests } = useController('RequestsController').state
+  const { state: userRequests } = useController('RequestsController', 'userRequests')
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { accountsOps } = useController('ActivityController').state
+  const { state: accountsOps } = useController('ActivityController', 'accountsOps')
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
@@ -175,16 +176,12 @@ const useTransfer = (isTopUpScreen: boolean) => {
     return `https://explorer.ambire.com/${getBenzinUrlParams({ chainId, txnId, identifiedBy })}`
   }, [submittedAccountOp])
 
-  useEffect(() => {
+  useControllerSession({
     // Optimization: Don't apply filtration if we don't have a recent broadcasted account op
-    if (!latestBroadcastedAccountOp?.accountAddr || !latestBroadcastedAccountOp?.chainId) return
-
-    sessionHandler.initSession()
-
-    return () => {
-      sessionHandler.killSession()
-    }
-  }, [latestBroadcastedAccountOp?.accountAddr, latestBroadcastedAccountOp?.chainId, sessionHandler])
+    isEnabled: !!latestBroadcastedAccountOp?.accountAddr && !!latestBroadcastedAccountOp?.chainId,
+    open: sessionHandler.initSession,
+    close: sessionHandler.killSession
+  })
 
   const displayedView: 'transfer' | 'batch' | 'track' | 'loading' = useMemo(() => {
     // If the screen type doesn't match the controller state, we show a loading state
@@ -362,7 +359,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
                         ? FEE_COLLECTOR
                         : getAddressFromAddressState(addressState),
                       executionType,
-                      recipientDomain: getDomainFromAddressState(addressState)
+                      recipientDomain: getResolvedDomainName(domains, addressState)
                     }
                   }
                 ]
@@ -391,7 +388,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
                     ? FEE_COLLECTOR
                     : getAddressFromAddressState(addressState),
                   executionType,
-                  recipientDomain: getDomainFromAddressState(addressState)
+                  recipientDomain: getResolvedDomainName(domains, addressState)
                 }
               }
             ]
@@ -443,7 +440,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
         }
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
-        isNotReadyToProceed={!isTransferFormValid}
+        isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}

@@ -1,20 +1,22 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Image, View } from 'react-native'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
+import { WALLET_STAKING_ADDR } from '@ambire-common/consts/addresses'
+import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
-// @ts-ignore
 import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import XWalletConversionTooltip from '@common/components/XWalletConversionTooltip'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
@@ -26,11 +28,17 @@ import { privateValue } from '@common/utils/ui'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
 
+import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
+import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import type { TokenResult } from '@ambire-common/libs/portfolio'
+import type { WalletStateController } from '@common/controllers/wallet-state'
+
+const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
+
 type Props = {
   token: TokenResult
   extraActions?: React.ReactNode
   rewardsStyle?: boolean
-  label?: string | React.ReactNode
   borderRadius?: number
   decimalRulesType?: FormatType
   hasBottomSpacing?: boolean
@@ -48,14 +56,32 @@ const BaseTokenItem = ({
   onPress,
   wrapperTestID
 }: Props) => {
-  const { state: portfolio } = useController(
-    'SelectedAccountController',
-    (state) => state.portfolio
+  const {
+    symbol,
+    address,
+    chainId,
+    flags: { onGasTank }
+  } = token
+
+  const selectSimulatedAccountOp = useCallback(
+    (state: SelectedAccountController) =>
+      state.portfolio?.networkSimulatedAccountOp?.[chainId.toString()],
+    [chainId]
   )
-  const { isPrivacyModeEnabled } = useController('WalletStateController').state
-  const { state: networks } = useController('NetworksController', (state) => state.networks)
-  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { state: simulatedAccountOp } = useController(
+    'SelectedAccountController',
+    selectSimulatedAccountOp
+  )
+  const { state: isPrivacyModeEnabled } = useController(
+    'WalletStateController',
+    selectIsPrivacyModeEnabled
+  )
+  const { state: visibleUserRequests, dispatch: requestsDispatch } = useController(
+    'RequestsController',
+    (state) => state.visibleUserRequests
+  )
   const { t } = useTranslation()
+  const { addToast } = useToast()
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
 
@@ -65,14 +91,8 @@ const BaseTokenItem = ({
   })
 
   const tokenId = getTokenId(token)
-  const simulatedAccountOp = portfolio.networkSimulatedAccountOp[token.chainId.toString()]
-
-  const {
-    symbol,
-    address,
-    chainId,
-    flags: { onGasTank }
-  } = token
+  const isLegacyXWallet =
+    chainId === ETHEREUM_CHAIN_ID && address.toLowerCase() === WALLET_STAKING_ADDR.toLowerCase()
 
   const {
     balanceFormatted,
@@ -89,9 +109,39 @@ const BaseTokenItem = ({
     pendingToBeSignedFormatted,
     pendingToBeConfirmed,
     pendingToBeConfirmedFormatted
-  } = getAndFormatTokenDetails(token, networks, simulatedAccountOp, { decimalRulesType })
+  } = useMemo(
+    () => getAndFormatTokenDetails(token, undefined, simulatedAccountOp, { decimalRulesType }),
+    [token, simulatedAccountOp, decimalRulesType]
+  )
 
   const isPending = !!hasPendingBadges
+
+  const openPendingRequest = useCallback(() => {
+    const networkRequests = visibleUserRequests.filter(
+      (r) =>
+        r.kind === 'calls' &&
+        r.meta.accountAddr === simulatedAccountOp?.accountAddr &&
+        r.meta.chainId === simulatedAccountOp?.chainId
+    ) as CallsUserRequest[]
+    const pendingRequest =
+      networkRequests.find((r) => r.signAccountOp.accountOp.id === simulatedAccountOp?.id) ||
+      networkRequests[0]
+    if (!pendingRequest) {
+      addToast(
+        t('Failed to open the pending transaction. If this error persists please reject it.'),
+        { type: 'error' }
+      )
+      return
+    }
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'setCurrentUserRequestById',
+        args: [pendingRequest.id]
+      }
+    })
+  }, [simulatedAccountOp, visibleUserRequests, requestsDispatch, addToast, t])
 
   const textColor = useMemo(() => {
     if (!isPending) return theme.primaryText
@@ -100,29 +150,52 @@ const BaseTokenItem = ({
 
   const shouldDisplayChange24h = typeof change24h === 'number' && Math.abs(change24h) >= 0.01
 
+  const handlePress = useCallback(() => {
+    if (rewardsStyle && onPress) {
+      onPress()
+      return
+    }
+
+    navigate(ROUTES.tokenDetails, { state: { tokenId } })
+  }, [rewardsStyle, onPress, navigate, tokenId])
+
+  const containerStyle = useMemo(
+    () => [
+      styles.container,
+      {
+        borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
+        marginBottom: hasBottomSpacing ? SPACING_TY : 0,
+        ...(rewardsStyle && {
+          boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`
+        })
+      },
+      animStyle
+    ],
+    [
+      styles.container,
+      borderRadius,
+      hasBottomSpacing,
+      rewardsStyle,
+      isHovered,
+      theme.primaryAccent,
+      animStyle
+    ]
+  )
+
+  const balanceTooltipDataSet = useMemo(() => {
+    if (isPrivacyModeEnabled) return undefined
+
+    return createGlobalTooltipDataSet({
+      id: `${tokenId}-balance`,
+      content: String(isPending ? pendingBalance : balance)
+    })
+  }, [isPrivacyModeEnabled, tokenId, isPending, pendingBalance, balance])
+
   return (
     <AnimatedPressable
       testID={wrapperTestID || undefined}
-      onPress={() =>
-        rewardsStyle && onPress
-          ? onPress()
-          : navigate(ROUTES.tokenDetails, {
-              state: {
-                tokenId
-              }
-            })
-      }
-      style={[
-        styles.container,
-        {
-          borderRadius: borderRadius || BORDER_RADIUS_PRIMARY,
-          marginBottom: hasBottomSpacing ? SPACING_TY : 0,
-          ...(rewardsStyle && {
-            boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent)}`
-          })
-        },
-        animStyle
-      ]}
+      onPress={handlePress}
+      style={containerStyle}
       {...bindAnim}
     >
       <View style={flexboxStyles.flex1}>
@@ -155,29 +228,38 @@ const BaseTokenItem = ({
               ]}
             >
               <View style={spacings.mbMi}>
-                <Text
-                  selectable
-                  color={textColor}
-                  fontSize={16}
-                  weight="semiBold"
-                  numberOfLines={1}
-                  style={{ lineHeight: 22 }}
-                >
-                  {symbol}
-                </Text>
+                <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
+                  <Text
+                    selectable
+                    color={textColor}
+                    fontSize={16}
+                    weight="semiBold"
+                    numberOfLines={1}
+                    style={{ lineHeight: 22 }}
+                  >
+                    {symbol}
+                  </Text>
+                  <XWalletConversionTooltip
+                    address={address}
+                    chainId={chainId}
+                    xWalletAmount={token.amount}
+                    tooltipId={`dashboard-x-wallet-conversion-${tokenId}`}
+                  />
+                  {isLegacyXWallet && (
+                    <View style={styles.legacyBadge}>
+                      <View style={styles.legacyBadgeDot} />
+                      <Text fontSize={8} weight="medium" appearance="warningText">
+                        {t('LEGACY')}
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text
                   selectable
                   fontSize={12}
                   weight="number_medium"
                   numberOfLines={1}
-                  dataSet={
-                    !isPrivacyModeEnabled
-                      ? createGlobalTooltipDataSet({
-                          id: `${tokenId}-balance`,
-                          content: String(isPending ? pendingBalance : balance)
-                        })
-                      : undefined
-                  }
+                  dataSet={balanceTooltipDataSet}
                   appearance="secondaryText"
                   testID={`token-balance-${tokenId}`}
                 >
@@ -233,16 +315,7 @@ const BaseTokenItem = ({
                   Icon={BatchIcon}
                   borderColor="transparent"
                   hoverBorderColor={theme.warning400}
-                  onPress={() => {
-                    if (!simulatedAccountOp) return
-                    requestsDispatch({
-                      type: 'method',
-                      params: {
-                        method: 'setCurrentUserRequestById',
-                        args: [`${simulatedAccountOp.accountAddr}-${simulatedAccountOp.chainId}`]
-                      }
-                    })
-                  }}
+                  onPress={openPendingRequest}
                 />
               )}
 

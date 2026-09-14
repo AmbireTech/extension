@@ -1,6 +1,8 @@
 import * as richJson from '@ambire-common/libs/richJson/richJson'
+import { BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
 
 import { encode } from './bridgeCodec'
+import { workerBootProfiler } from './workerBootProfiler'
 
 declare global {
   interface Window {
@@ -14,10 +16,27 @@ declare global {
 // Everything else (controller state, errors, one-time data, ...) keeps richJson.
 const JSON_SAFE_EVENTS = new Set(['action.sendToDappWebView', 'action.broadcastDappEvent'])
 
+// Profiles the first update of each controller
+const profileCtrlUpdateEncode = (ctrlName: string, encodeState: () => string) => {
+  const markName = `${BOOT_MARK_PREFIX.workerCtrlEncode}${ctrlName}`
+  if (!workerBootProfiler.reserveOnce(markName)) return encodeState()
+
+  workerBootProfiler.startSpan(markName)
+  const message = encodeState()
+  workerBootProfiler.endSpan(markName, { bytes: message.length })
+
+  return message
+}
+
 const sendToReactEvent = (type: string, payload: any) => {
   try {
     if (window.ReactNativeWebView) {
-      window.ReactNativeWebView.postMessage(encode({ type, payload }, !JSON_SAFE_EVENTS.has(type)))
+      const encodeMessage = () => encode({ type, payload }, !JSON_SAFE_EVENTS.has(type))
+      const ctrlName = type === 'ctrl.update' ? payload?.ctrlName : undefined
+
+      window.ReactNativeWebView.postMessage(
+        ctrlName ? profileCtrlUpdateEncode(ctrlName, encodeMessage) : encodeMessage()
+      )
     }
   } catch (e) {
     // Fallback to original console if bridge fails

@@ -37,13 +37,14 @@ const KeyStoreUnlockScreen = () => {
 
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
-    state: { statuses, errorMessage, hasBiometricsSecret },
+    state: { statuses, errorMessage, hasBiometricsSecret, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
   const { theme } = useTheme()
   const { height } = useWindowSize()
 
   const { isLoading, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
+  const canUseBiometrics = hasBiometricsSecret && !isPasswordUnlockRequired
   const hasFaceId = deviceSupportedAuthTypes.includes(
     DEVICE_SUPPORTED_AUTH_TYPES.FACIAL_RECOGNITION
   )
@@ -74,28 +75,22 @@ const KeyStoreUnlockScreen = () => {
   useEffect(() => {
     if (unlockMethod) return
 
-    if (hasBiometricsSecret) {
+    if (canUseBiometrics) {
       setUnlockMethod('biometrics')
     } else {
       setUnlockMethod('password')
     }
-  }, [hasBiometricsSecret])
+  }, [canUseBiometrics])
 
   useEffect(() => {
     if (!isLoading && !initialCheckDone) {
       setInitialCheckDone(true)
-      if (hasBiometricsSecret) {
+      if (canUseBiometrics) {
         setUnlockMethod('biometrics')
         handleBiometricsPrompt().catch(() => {})
       }
     }
-  }, [
-    isLoading,
-    hasBiometricsSecret,
-    initialCheckDone,
-    handleBiometricsPrompt,
-    getBiometricsSecret
-  ])
+  }, [isLoading, canUseBiometrics, initialCheckDone, handleBiometricsPrompt, getBiometricsSecret])
 
   return (
     <MobileLayoutContainer>
@@ -145,6 +140,18 @@ const KeyStoreUnlockScreen = () => {
         <Animated.View style={flexbox.flex1} />
         {unlockMethod === 'password' && (
           <>
+            {!!isPasswordUnlockRequired && (
+              <Text
+                fontSize={14}
+                weight="medium"
+                appearance="secondaryText"
+                style={[text.center, spacings.mbSm]}
+              >
+                {t(
+                  'Enter your password to finish a security update. Biometric unlock will be available right after.'
+                )}
+              </Text>
+            )}
             <Controller
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
@@ -194,7 +201,7 @@ const KeyStoreUnlockScreen = () => {
                 textStyle={{ textDecorationLine: 'underline' }}
               />
             )}
-            {hasBiometricsSecret && (
+            {canUseBiometrics && (
               <Button
                 text={hasFaceId ? t('Unlock with Face ID') : t('Unlock with fingerprint')}
                 type="secondary"

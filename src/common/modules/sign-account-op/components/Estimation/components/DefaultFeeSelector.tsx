@@ -1,33 +1,35 @@
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ViewProps } from 'react-native'
 
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import Checkbox from '@common/components/Checkbox'
 import { SelectValue } from '@common/components/Select/types'
-import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
-import { Props as EstimationProps } from '../types'
+import { DispatchUpdate } from '../types'
 
 type Props = {
   networkName?: string
   payValue?: SelectValue
   signAccountOpState: ISignAccountOpController | null
-  updateType: EstimationProps['updateType']
+  dispatchUpdate: DispatchUpdate
   hasManyPayOptionsByUsOrGasTank: boolean
+  baselineFeeOption: SelectValue['value'] | null
+  style?: ViewProps['style']
 }
 
 const DefaultFeeSelector = ({
   networkName,
   payValue,
   signAccountOpState,
-  updateType,
-  hasManyPayOptionsByUsOrGasTank
+  dispatchUpdate,
+  hasManyPayOptionsByUsOrGasTank,
+  baselineFeeOption,
+  style
 }: Props) => {
-  const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
-  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
-  const { dispatch: transferDispatch } = useController('TransferController')
   const { t } = useTranslation()
 
   const feeTokenPreferenceChainId = signAccountOpState?.accountOp.chainId.toString()
@@ -59,10 +61,21 @@ const DefaultFeeSelector = ({
     return doesFeeTokenPreferenceMatchPayValue(selectedFeeTokenPreference)
   }, [doesFeeTokenPreferenceMatchPayValue, selectedFeeTokenPreference])
 
+  // Only offer to save a default while the selection differs from what was there
+  // before the user touched it. Comparing against the stored preference alone is
+  // not enough - it falls back to native, while the auto-selected option may be
+  // the gas tank or an ERC-20 when native can't cover the fee
   const shouldShowDefaultFeeOptionCheckbox = useMemo(() => {
-    if (!payValue || !hasManyPayOptionsByUsOrGasTank) return false
+    if (!payValue || !hasManyPayOptionsByUsOrGasTank || !baselineFeeOption) return false
+    if (payValue.value === baselineFeeOption) return false
+
     return !isPersistedDefaultFeeOptionSelected
-  }, [isPersistedDefaultFeeOptionSelected, hasManyPayOptionsByUsOrGasTank, payValue])
+  }, [
+    isPersistedDefaultFeeOptionSelected,
+    hasManyPayOptionsByUsOrGasTank,
+    baselineFeeOption,
+    payValue
+  ])
 
   const isDefaultFeeOptionSelected = useMemo(() => {
     if (!payValue || !signAccountOpState) return false
@@ -71,7 +84,7 @@ const DefaultFeeSelector = ({
   }, [doesFeeTokenPreferenceMatchPayValue, payValue, pendingFeeTokenPreference, signAccountOpState])
 
   const defaultFeeOptionCheckboxLabel = useMemo(() => {
-    return t('Set this as a default option for {{network}}?', {
+    return t('Set this as a default token for {{network}}?', {
       network: networkName || t('this network')
     })
   }, [networkName, t])
@@ -80,38 +93,11 @@ const DefaultFeeSelector = ({
     (enabled: boolean) => {
       if (!payValue?.token && enabled) return
 
-      const feeToken = enabled && payValue?.token ? payValue.token : null
-      const update = { pendingFeeTokenPreference: feeToken }
-
-      const args: ['update', [typeof update]] = ['update', [update]]
-
-      if (updateType === 'Swap&Bridge') {
-        swapAndBridgeDispatch({
-          type: 'method',
-          params: {
-            method: 'callSignAccountOpMethod',
-            args
-          }
-        })
-      } else if (updateType === 'Transfer&TopUp') {
-        transferDispatch({
-          type: 'method',
-          params: {
-            method: 'callSignAccountOpMethod',
-            args
-          }
-        })
-      } else {
-        signAccountOpDispatch({
-          type: 'method',
-          params: {
-            method: 'update',
-            args: [update]
-          }
-        })
-      }
+      dispatchUpdate({
+        pendingFeeTokenPreference: enabled && payValue?.token ? payValue.token : null
+      })
     },
-    [payValue?.token, signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType]
+    [dispatchUpdate, payValue?.token]
   )
 
   if (!shouldShowDefaultFeeOptionCheckbox) return null
@@ -119,10 +105,11 @@ const DefaultFeeSelector = ({
   return (
     <Checkbox
       value={isDefaultFeeOptionSelected}
-      style={[spacings.mt, spacings.mb0]}
+      style={style || [spacings.mt, spacings.mb0, flexbox.alignSelfEnd]}
+      checkboxWrapperStyle={spacings.mrMi}
       onValueChange={onSetDefaultFeeOption}
       label={defaultFeeOptionCheckboxLabel}
-      labelProps={{ fontSize: 14 }}
+      labelProps={{ fontSize: 12 }}
       testID="default-fee-option-checkbox"
     />
   )

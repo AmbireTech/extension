@@ -4,11 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { SignMessageStatus } from '@ambire-common/interfaces/signMessage'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
+import { getDappIconFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
-import {
-  EIP_1271_NOT_SUPPORTED_BY,
-  toPersonalSignHex
-} from '@ambire-common/libs/signMessage/signMessage'
+import { EIP_1271_NOT_SUPPORTED_BY, toPersonalSignHex } from '@ambire-common/libs/signMessage/utils'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
@@ -23,11 +21,9 @@ const useSignMessage = () => {
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
-  const { networks } = useController('NetworksController').state
-  const { accountStates } = useController('AccountsController').state
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: accountStates } = useController('AccountsController', 'accountStates')
   const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
@@ -58,6 +54,16 @@ const useSignMessage = () => {
   }, [currentUserRequest])
 
   const { name, icon } = useDappInfo(userRequest)
+  const { state: dappsState } = useController('DappsController')
+
+  const dappUrl = useMemo(
+    () => userRequest?.dappPromises[0]?.session?.origin || userRequest?.meta.dappUrl,
+    [userRequest]
+  )
+  const resolvedIcon = useMemo(
+    () => icon || getDappIconFromUrl(dappUrl || '', dappsState.dapps || []),
+    [icon, dappUrl, dappsState.dapps]
+  )
 
   const isSiwe = useMemo(() => {
     if (!userRequest) return false
@@ -133,9 +139,12 @@ const useSignMessage = () => {
         args: [
           {
             dapp: {
-              name,
-              icon,
-              url: userRequest.dappPromises[0]?.session?.origin,
+              // Safe messages co-signed from another device have no live dapp
+              // session; fall back to the metadata recovered from the message
+              // (icon is resolved from the dapp catalog by url, see resolvedIcon)
+              name: name || userRequest.meta.dappName || '',
+              icon: resolvedIcon,
+              url: dappUrl,
               sessionId: userRequest.dappPromises[0]?.session?.sessionId
             },
             messageToSign: {
@@ -155,7 +164,14 @@ const useSignMessage = () => {
         ]
       }
     })
-  }, [signMessageDispatch, userRequest, signMessageState.messageToSign?.fromRequestId, name, icon])
+  }, [
+    signMessageDispatch,
+    userRequest,
+    signMessageState.messageToSign?.fromRequestId,
+    name,
+    resolvedIcon,
+    dappUrl
+  ])
 
   useEffect(() => {
     return () => {

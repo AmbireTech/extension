@@ -20,9 +20,7 @@ interface Props {
  */
 export const useEncryptionCapability = ({ requestType }: Props = { requestType: 'encrypt' }) => {
   const { t } = useTranslation()
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', 'account')
   const keystoreState = useController('KeystoreController').state
 
   const isViewOnly = getIsViewOnly(keystoreState.keys, account?.associatedKeys || [])

@@ -8,6 +8,7 @@ export type ToggleProps = {
   label?: string
   style?: any
   disabled?: boolean
+  stopPropagation?: boolean
   testID?: string
   labelProps?: TextProps
   toggleStyle?: ViewStyle

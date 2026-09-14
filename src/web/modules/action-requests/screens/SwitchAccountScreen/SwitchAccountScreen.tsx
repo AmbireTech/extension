@@ -3,27 +3,31 @@ import { View } from 'react-native'
 
 import DownArrowLongIcon from '@common/assets/svg/DownArrowLongIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
-import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
+import Alert from '@common/components/Alert'
+import ManifestImage from '@common/components/ManifestImage'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
-import spacings, { SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import ManifestImage from '@web/components/ManifestImage'
+import { getUiType } from '@common/utils/uiType'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 const SwitchAccountScreen = () => {
   const {
     t,
     account,
     isAuthorizing,
-    userRequest,
+    isRequestBroken,
     nextAccount,
     nextAccountData,
     nextRequestLabel,
@@ -33,16 +37,18 @@ const SwitchAccountScreen = () => {
     responsiveSizeMultiplier
   } = useSwitchAccount()
   const { theme, styles } = useTheme(getStyles)
+  const contentWidth = isSidePanel ? '100%' : responsiveSizeMultiplier * 530
 
   return (
     <TabLayoutContainer
       width="full"
+      header={<ActionHeader />}
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handleAuthorizeButtonPress}
           resolveButtonText={isAuthorizing ? t('Switching...') : t('Switch Account')}
-          resolveDisabled={isAuthorizing}
+          resolveDisabled={isAuthorizing || isRequestBroken}
           rejectButtonText={t('Deny')}
           resolveButtonTestID="switch-account-button"
         />
@@ -53,20 +59,18 @@ const SwitchAccountScreen = () => {
           styles.container,
           {
             paddingVertical: SPACING_LG * responsiveSizeMultiplier,
-            width: responsiveSizeMultiplier * 530
+            width: contentWidth,
+            ...(isSidePanel ? { maxWidth: '100%' } : {})
           }
         ]}
       >
-        <AmbireLogoHorizontal
-          style={{ marginBottom: SPACING_LG * responsiveSizeMultiplier, minHeight: 28 }}
-        />
         {!isAuthorizing ? (
           <View style={styles.content}>
             <View
               style={{
                 ...flexbox.center,
-                ...spacings.pvLg,
-                ...spacings.phLg,
+                ...spacings.pv,
+                ...spacings.ph,
                 backgroundColor: theme.secondaryBackground
               }}
             >
@@ -74,7 +78,8 @@ const SwitchAccountScreen = () => {
                 fontSize={20}
                 weight="medium"
                 style={{
-                  marginBottom: SPACING_MD * responsiveSizeMultiplier
+                  marginBottom: SPACING * responsiveSizeMultiplier,
+                  ...(isSidePanel ? { textAlign: 'center' as const } : {})
                 }}
               >
                 {t('Switch Account Request')}
@@ -84,13 +89,13 @@ const SwitchAccountScreen = () => {
                   style={[
                     flexbox.center,
                     {
-                      marginBottom: SPACING_MD * responsiveSizeMultiplier
+                      marginBottom: SPACING * responsiveSizeMultiplier
                     }
                   ]}
                 >
                   <ManifestImage
                     uri={dAppData.icon}
-                    size={responsiveSizeMultiplier * 48}
+                    size={responsiveSizeMultiplier * 40}
                     containerStyle={{
                       backgroundColor: theme.secondaryBackground
                     }}
@@ -100,8 +105,8 @@ const SwitchAccountScreen = () => {
                     }}
                     fallback={() => (
                       <ManifestFallbackIcon
-                        width={responsiveSizeMultiplier * 48}
-                        height={responsiveSizeMultiplier * 48}
+                        width={responsiveSizeMultiplier * 40}
+                        height={responsiveSizeMultiplier * 40}
                       />
                     )}
                   />
@@ -156,25 +161,38 @@ const SwitchAccountScreen = () => {
                 />
               ) : (
                 <Text appearance="errorText" style={spacings.mbLg}>
-                  {t('Invalid account data')}
+                  {nextAccount || t('Invalid account data')}
                 </Text>
               )}
-              <Text style={text.center} weight="medium">
-                {t(
-                  'Would you like to switch to this account now to continue with the signing process?'
-                )}
-              </Text>
+              {!isRequestBroken && (
+                <Text style={text.center} weight="medium">
+                  {t(
+                    'Would you like to switch to this account now to continue with the signing process?'
+                  )}
+                </Text>
+              )}
             </View>
           </View>
         ) : (
           <SkeletonLoader
             style={{
               ...styles.container,
-              paddingVertical: SPACING_LG * responsiveSizeMultiplier
+              paddingVertical: SPACING_LG * responsiveSizeMultiplier,
+              ...(isSidePanel ? { width: '100%', maxWidth: '100%' } : {})
             }}
-            width={responsiveSizeMultiplier * 450}
+            width={isSidePanel ? '100%' : responsiveSizeMultiplier * 450}
             height={responsiveSizeMultiplier * 450}
             appearance="primaryBackground"
+          />
+        )}
+        {isRequestBroken && (
+          <Alert
+            style={spacings.mtLg}
+            type="error"
+            title={t('Unable to switch account')}
+            text={t(
+              'The requested account is not available. Add the account or reconnect the app to continue. If the issue persists, please contact support.'
+            )}
           />
         )}
       </View>

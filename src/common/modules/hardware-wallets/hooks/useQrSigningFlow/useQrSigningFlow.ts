@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer'
 import { useCallback } from 'react'
 
 import useController from '@common/hooks/useController'
@@ -30,11 +31,17 @@ const useQrSigningFlow = () => {
 
   const submitSignatureResponse = useCallback(
     (payload: string | Uint8Array) => {
+      // On mobile the dispatch crosses the RN↔worker bridge, whose richJson codec
+      // does NOT preserve Uint8Array. Send a hex string instead so the CBOR
+      // survives; parseSignatureResponse accepts hex on both web and mobile.
+      const serialized =
+        typeof payload === 'string' ? payload : Buffer.from(payload).toString('hex')
+
       qrHardwareDispatch({
         type: 'method',
         params: {
           method: 'submitSignatureResponse',
-          args: [payload]
+          args: [serialized]
         }
       })
     },

@@ -13,6 +13,7 @@ import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -29,6 +30,8 @@ import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerCon
 import { AMBIRE_SIGNER_APDUS } from '@web/modules/hardware-wallet/controllers/LedgerController/artifacts'
 import { installLedgerApp } from '@web/modules/hardware-wallet/controllers/LedgerController/ledgerSideload'
 
+import { getIsDelegationEnableDisabled } from './helpers'
+
 interface Props {
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
@@ -40,9 +43,13 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     state: { accountStates },
     dispatch: accountsDispatch
   } = useController('AccountsController')
-  const { keys } = useController('KeystoreController').state
-  const { networks } = useController('NetworksController').state
+  const { state: keys } = useController('KeystoreController', 'keys')
+  const { state: networks } = useController('NetworksController', 'networks')
   const { dispatch: requestsDispatch } = useController('RequestsController')
+  const {
+    dispatch: featureFlagsDispatch,
+    state: { flags }
+  } = useController('FeatureFlagsController')
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -113,10 +120,24 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
       setIsInstalling(false)
     }
   }, [addToast, t])
+  const isEip7702Enabled = flags.eip7702
+
+  const enableEip7702 = useCallback(() => {
+    featureFlagsDispatch({
+      type: 'method',
+      params: {
+        method: 'setFeatureFlag',
+        args: ['eip7702', true]
+      }
+    })
+  }, [featureFlagsDispatch])
 
   const delegate = (chainId: bigint) => {
     const network = networks.find((n) => n.chainId === chainId)
     if (!network || !account || !accountState || !accountState[chainId.toString()]) return
+
+    const delegatedContract = accountState[chainId.toString()]?.delegatedContract
+    if (getIsDelegationEnableDisabled(isEip7702Enabled, delegatedContract)) return
 
     requestsDispatch({
       type: 'method',
@@ -170,7 +191,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
               </Text>
 
               {/* TODO: UI and wording are BOTH not polished yet */}
-              {hasLedgerKey && (
+              {hasLedgerKey && isEip7702Enabled && (
                 <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMd]}>
                   <View style={[flexbox.flex1, spacings.mrTy]}>
                     <Text fontSize={14} weight="medium">
@@ -202,6 +223,35 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                 </View>
               )}
 
+              {!isEip7702Enabled && (
+                <View
+                  style={[
+                    {
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.secondaryBorder
+                    },
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.pbTy,
+                    spacings.mbTy
+                  ]}
+                >
+                  <View style={flexbox.flex1}>
+                    <Text fontSize={14} weight="medium">
+                      {t('Enable EIP-7702')}
+                    </Text>
+                  </View>
+                  <View style={[flexbox.flex1, flexbox.alignEnd]}>
+                    <Button
+                      type="primary"
+                      size="tiny"
+                      style={[spacings.mb0, { minWidth: 78, height: 32 }]}
+                      onPress={enableEip7702}
+                      text={t('Enable')}
+                    />
+                  </View>
+                </View>
+              )}
               <View
                 style={[
                   {
@@ -271,7 +321,20 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   </View>
                   <View style={[flexbox.flex1, flexbox.alignEnd]}>
                     {accountState && accountState[net.chainId.toString()] ? (
-                      <View style={[flexbox.directionRow]}>
+                      <View
+                        style={[flexbox.directionRow]}
+                        dataSet={
+                          getIsDelegationEnableDisabled(
+                            isEip7702Enabled,
+                            accountState[net.chainId.toString()]?.delegatedContract
+                          )
+                            ? createGlobalTooltipDataSet({
+                                id: `enable-eip-7702-${net.chainId.toString()}`,
+                                content: t('Enable EIP-7702 first')
+                              })
+                            : {}
+                        }
+                      >
                         <Button
                           type={
                             !accountState?.[net.chainId.toString()]?.delegatedContract
@@ -280,6 +343,10 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                           }
                           size="tiny"
                           style={[spacings.mb0, { minWidth: 78, height: 32 }]}
+                          disabled={getIsDelegationEnableDisabled(
+                            isEip7702Enabled,
+                            accountState[net.chainId.toString()]?.delegatedContract
+                          )}
                           onPress={() => delegate(net.chainId)}
                           text={
                             !accountState?.[net.chainId.toString()]?.delegatedContract

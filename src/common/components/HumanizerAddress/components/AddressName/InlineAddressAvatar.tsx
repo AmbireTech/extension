@@ -20,7 +20,7 @@ const InlineAddressAvatar: FC<Props> = ({ address, shouldShow }) => {
     () => accountsState?.accounts?.find((a) => a.addr === checksummedAddress),
     [accountsState?.accounts, checksummedAddress]
   )
-  const isEnsAddress = !!domains?.[checksummedAddress]?.ens
+  const isEnsAddress = !!domains?.[checksummedAddress]?.names?.ens
 
   if (!shouldShow || (!isEnsAddress && !account)) return null
 

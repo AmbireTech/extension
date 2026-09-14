@@ -51,6 +51,7 @@ type Props = AccountKeyType & {
   tooltipContent?: string
   itemHeight?: number
   onExportKeyPress?: ({ addr, label }: { addr: string; label?: string }) => void
+  singleLineLabel?: boolean
 }
 
 const { isPopup } = getUiType()
@@ -73,7 +74,8 @@ const AccountKey: React.FC<Props> = ({
   onChains,
   tooltipContent,
   itemHeight = 48,
-  onExportKeyPress
+  onExportKeyPress,
+  singleLineLabel = false
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -150,6 +152,7 @@ const AccountKey: React.FC<Props> = ({
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
+            singleLineLabel && { flex: 1, minWidth: 0 },
             !!showExportImport && !isKeyAmbireV1 && spacings.mrSm
           ]}
         >
@@ -161,6 +164,7 @@ const AccountKey: React.FC<Props> = ({
 
           <>
             <View
+              style={singleLineLabel && { flex: 1, minWidth: 0 }}
               dataSet={createGlobalTooltipDataSet({
                 id: `key-${addr}-tooltip`,
                 content: tooltipContent ?? addr
@@ -170,6 +174,8 @@ const AccountKey: React.FC<Props> = ({
                 color={dedicatedToOneSA ? theme.infoDecorative : theme.primaryText}
                 fontSize={fontSize - 1}
                 weight={dedicatedToOneSA ? 'semiBold' : 'regular'}
+                numberOfLines={singleLineLabel ? 1 : undefined}
+                ellipsizeMode={singleLineLabel ? 'middle' : undefined}
                 style={[
                   label || isImported ? spacings.mlMi : {},
                   // Reduce the letter spacing as a hack to be able to fit all elements
