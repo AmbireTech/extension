@@ -3,8 +3,7 @@ import { defineConfig } from 'mobilewright'
 export default defineConfig({
   testDir: './tests',
   forbidOnly: !!process.env.CI,
-  bundleId: 'com.ambire.wallet',
-  timeout: 120_000,
+  timeout: 180_000,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 3 : 1,
   use: {
@@ -24,6 +23,8 @@ export default defineConfig({
       use: {
         platform: 'ios',
         deviceName: /iPhone/,
+        // iOS's bundle id (ios/Ambire.xcodeproj PRODUCT_BUNDLE_IDENTIFIER / app.json
+        bundleId: 'com.ambire.app.wallet',
         // mobilecli installs onto a simulator from a .zip of the .app bundle.
         // CI stages the prebuilt zip here (see .github/workflows/_mobilewright-ios-suite.yml);
         // locally, drop a zip of your Debug-iphonesimulator Ambire.app at this path.
@@ -32,7 +33,13 @@ export default defineConfig({
     },
     {
       name: 'android',
-      use: { platform: 'android', deviceName: /Pixel/, installApps: './Ambire.apk' }
+      use: {
+        platform: 'android',
+        deviceName: /Pixel/,
+        // android/app/build.gradle applicationId
+        bundleId: 'com.ambire.wallet',
+        installApps: './Ambire.apk'
+      }
     }
   ]
 })

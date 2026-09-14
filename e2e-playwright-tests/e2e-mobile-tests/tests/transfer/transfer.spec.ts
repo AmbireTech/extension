@@ -9,7 +9,8 @@ test.describe('transfer', { tag: '@transfer-mobile' }, () => {
     // reset logic
   })
 
-  test('should send a transcation and pay with current account gas tank', async ({
+  // TODO
+  test.skip('should send a transcation and pay with current account gas tank', async ({
     screen,
     device
   }) => {

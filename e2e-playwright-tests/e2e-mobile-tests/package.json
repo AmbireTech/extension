@@ -9,6 +9,7 @@
     "@types/node": "latest"
   },
   "scripts": {
-    "android": "npx mobilewright test --project=android"
+    "android": "npx mobilewright test --project=android",
+    "ios": "npx mobilewright test --project=ios"
   }
 }
