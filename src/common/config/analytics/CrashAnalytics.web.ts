@@ -1,5 +1,5 @@
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
-import CONFIG, { APP_VERSION, isDev } from '@common/config/env'
+import CONFIG, { APP_VERSION, isDev, isTesting } from '@common/config/env'
 import * as Sentry from '@sentry/react'
 import { IS_FIREFOX } from '@web/constants/common'
 
@@ -13,6 +13,8 @@ export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   // Sentry is doing some extra work to make sure the fetch it finds is the right one, but it
   // doesn't work under LavaMoat so we pass it the fetch used in that context.
   transport: (options) => Sentry.makeFetchTransport(options, (...args) => fetch(...args)),
+  // Reports the SDK's own delivery failures instead of swallowing them
+  debug: isTesting,
   // No explicit `event` param type here: annotating this object as
   // Sentry.BrowserOptions lets `event`'s type be inferred contextually as the
   // narrower `ErrorEvent`, which scrubSentryEventSecrets (generic) then
@@ -21,6 +23,24 @@ export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   beforeSend(event) {
     return scrubSentryEventSecrets(event)
   }
+}
+
+/**
+ * Logs every event Sentry actually delivers, so a report that silently never leaves the
+ * extension is distinguishable from no error happening at all. Call it right after
+ * `Sentry.init`, passing the client of the package that initialized it. No-op unless this is
+ * a testing build.
+ */
+export const logSentryDeliveryWhenTesting = (client: ReturnType<typeof Sentry.getClient>) => {
+  if (!isTesting || !client) return
+
+  client.on('afterSendEvent', (event, sendResponse) => {
+    console.log(
+      `[sentry] delivered ${event.type || 'error'} event ${event.event_id} with status ${
+        sendResponse.statusCode
+      }`
+    )
+  })
 }
 
 export const captureException = Sentry.captureException

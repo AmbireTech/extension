@@ -23,6 +23,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
+import { logSentryDeliveryWhenTesting } from '@common/config/analytics/CrashAnalytics.web'
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
@@ -281,6 +282,8 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
       return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
     }
   })
+
+  logSentryDeliveryWhenTesting(Sentry.getClient())
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -845,6 +848,16 @@ browser.runtime.onMessage.addListener(async (message: any) => {
   // The extension UI periodically sends "ping" messages. Responding here wakes up
   // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
   if (message === 'ambire-extension-ping') return 'ambire-extension-pong'
+
+  // Every controller reports through `captureBackgroundException`, so the crash-analytics e2e
+  // spec needs a way to exercise that path. Unreachable outside a testing build.
+  if (
+    process.env.IS_TESTING === 'true' &&
+    message?.type === 'ambire-extension-test-capture-exception-background'
+  ) {
+    captureBackgroundException(new Error(message.errorMessage))
+    return null
+  }
 
   return null
 })
