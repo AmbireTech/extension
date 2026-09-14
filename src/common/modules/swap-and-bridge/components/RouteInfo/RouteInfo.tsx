@@ -17,6 +17,7 @@ import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
@@ -53,6 +54,7 @@ const RouteInfo: FC<Props> = ({
     dispatch: swapAndBridgeDispatch
   } = useController('SwapAndBridgeController')
   const { theme } = useTheme()
+  const { isCompactLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const {
     ref: feeInfoSheetRef,
@@ -115,6 +117,11 @@ const RouteInfo: FC<Props> = ({
     signAccountOpController?.estimation.status === EstimationStatus.Success &&
     formStatus !== SwapAndBridgeFormStatus.InvalidRouteSelected
 
+  const shouldShowServiceTime = shouldShowSelectRoute && !!quote?.selectedRoute?.serviceTime
+  // On mobile and in a narrow side panel there isn't enough width for the fee, the button,
+  // the time and the route selection in one row, so the button goes under the fee
+  const shouldPlaceFeeButtonUnderFee = isCompactLayout && shouldShowServiceTime
+
   const updateQuote = useCallback(() => {
     swapAndBridgeDispatch({
       type: 'method',
@@ -171,12 +178,20 @@ const RouteInfo: FC<Props> = ({
       <View
         style={[
           flexbox.directionRow,
-          flexbox.alignCenter,
+          // When the button is under the fee the left side has two rows, so keep the time and
+          // the route selection on the first row instead of centering them vertically
+          shouldPlaceFeeButtonUnderFee ? flexbox.alignStart : flexbox.alignCenter,
           flexbox.justifySpaceBetween,
           { width: '100%' }
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        <View
+          style={
+            shouldPlaceFeeButtonUnderFee
+              ? flexbox.alignStart
+              : [flexbox.directionRow, flexbox.alignCenter]
+          }
+        >
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <Text appearance="secondaryText" fontSize={12} weight="medium">
               {t('Ambire fee')}
@@ -197,31 +212,31 @@ const RouteInfo: FC<Props> = ({
             submitOnEnter={false}
             style={[
               spacings.phTy,
-              spacings.mlTy,
+              shouldPlaceFeeButtonUnderFee ? spacings.mtMi : spacings.mlTy,
               { height: 'auto', paddingTop: 2, paddingBottom: 2 }
             ]}
             childrenPosition="right"
           >
             <RightArrowIcon width={10} height={10} color="#fff" style={spacings.mlMi} />
           </Button>
-
-          {shouldShowSelectRoute && quote?.selectedRoute?.serviceTime ? (
-            <Text appearance="tertiaryText" fontSize={12} weight="medium" style={spacings.mlLg}>
-              {t('Time: {{time}}', {
-                time:
-                  quote?.selectedRoute && getIsBridgeRoute(quote.selectedRoute)
-                    ? `~ ${formatTime(quote.selectedRoute.serviceTime)}`
-                    : t('instant')
-              })}
-            </Text>
-          ) : null}
         </View>
 
         {shouldShowSelectRoute && (
-          <SelectRoute
-            shouldEnableRoutesSelection={shouldEnableRoutesSelection}
-            openRoutesModal={openRoutesModal}
-          />
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            {quote?.selectedRoute?.serviceTime ? (
+              <Text appearance="tertiaryText" fontSize={12} weight="medium">
+                {t('Time: {{time}}', {
+                  time: getIsBridgeRoute(quote.selectedRoute)
+                    ? `~ ${formatTime(quote.selectedRoute.serviceTime)}`
+                    : t('instant')
+                })}
+              </Text>
+            ) : null}
+            <SelectRoute
+              shouldEnableRoutesSelection={shouldEnableRoutesSelection}
+              openRoutesModal={openRoutesModal}
+            />
+          </View>
         )}
       </View>
 

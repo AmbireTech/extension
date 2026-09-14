@@ -14,7 +14,6 @@ import TokenBalanceCard from '@common/modules/token-details/components/TokenBala
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import TokenDetailsTransactionHistory from '@common/modules/token-details/components/TransactionHistory'
-import XWalletMigrationCard from '@common/modules/token-details/components/XWalletMigrationCard'
 import useTokenDetails from '@common/modules/token-details/hooks/useTokenDetails'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -54,11 +53,12 @@ const TokenDetailsScreen = () => {
     <MobileLayoutContainer
       footer={
         <View style={[flexbox.directionRow, flexbox.alignStart, { columnGap: SPACING_MI }]}>
-          {actions.map((action) => (
+          {actions.map((action, index) => (
             <TokenDetailsButton
               key={action.id}
               {...action}
               isDisabled={!!action.isDisabled}
+              isLast={index === actions.length - 1}
               token={token}
               iconWidth={action.iconWidth}
             />
@@ -100,7 +100,6 @@ const TokenDetailsScreen = () => {
           xWalletAmount={token.amount}
           containerStyle={isWalletStakingToken(token) ? spacings.mbTy : undefined}
         />
-        <XWalletMigrationCard token={token} />
         <SwapAndBridgeFeeCard token={token} />
         <TokenData token={token} />
         <Exchanges exchanges={token.meta?.exchanges || []} />
