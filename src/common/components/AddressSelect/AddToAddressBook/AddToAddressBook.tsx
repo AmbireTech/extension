@@ -1,5 +1,5 @@
 import React from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable, PressableStateCallbackType, View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Text from '@common/components/Text'
@@ -11,6 +11,11 @@ import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
+
+/**
+ * The Pressable state, with the `hovered` flag that react-native-web adds on web.
+ */
+type PressableStateWithHover = PressableStateCallbackType & { hovered?: boolean }
 
 type Props = {
   isRecipientAddressUnknown: boolean
@@ -73,7 +78,7 @@ const AddToAddressBook = ({
             </Text>
           )}
           <Pressable
-            style={({ hovered }: any) => [
+            style={({ hovered }: PressableStateWithHover) => [
               styles.addressBookButton,
               {
                 backgroundColor: hovered
