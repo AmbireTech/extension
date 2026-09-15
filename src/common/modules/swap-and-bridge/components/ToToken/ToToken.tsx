@@ -318,6 +318,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
             toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
             addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
             handleAddToTokenByAddress={handleAddToTokenByAddress}
+            areAllProvidersDisabled={disabled}
           />
         </View>
         <View

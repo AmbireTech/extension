@@ -25,6 +25,7 @@ interface Props {
   handleChangeToToken: (value: SelectValue) => void
   addToTokenByAddressStatus: ISwapAndBridgeController['statuses']['addToTokenByAddress']
   handleAddToTokenByAddress: (searchTerm: string) => void
+  areAllProvidersDisabled: boolean
 }
 
 const SECTION_MENU_HEADER_HEIGHT = 50
@@ -68,7 +69,8 @@ const ToTokenSelect: React.FC<Props> = ({
   toTokenAmountSelectDisabled,
   handleChangeToToken,
   addToTokenByAddressStatus,
-  handleAddToTokenByAddress
+  handleAddToTokenByAddress,
+  areAllProvidersDisabled
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -127,10 +129,10 @@ const ToTokenSelect: React.FC<Props> = ({
     : t('Not found. Try with token address?')
 
   const toTokenListError = useMemo(() => {
-    if (isTokenListLoading) return null
+    if (isTokenListLoading || areAllProvidersDisabled) return null
 
     return errors.find(({ id }) => id === TO_TOKEN_LIST_ERROR_ID)
-  }, [errors, isTokenListLoading])
+  }, [areAllProvidersDisabled, errors, isTokenListLoading])
 
   const toTokenValueOrError = useMemo(() => {
     if (toTokenListError && !toTokenOptions.length) {
