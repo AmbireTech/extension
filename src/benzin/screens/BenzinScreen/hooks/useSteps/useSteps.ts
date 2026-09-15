@@ -23,13 +23,13 @@ import {
   fetchFrontRanTxnId,
   fetchTxnId,
   SubmittedAccountOp,
+  submittedAccountOpToAccountOp,
   SubmittedAccountOpLike
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import { hasErc7730Humanization } from '@ambire-common/libs/humanizer/utils'
 import { getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
@@ -1054,16 +1054,6 @@ const useSteps = ({
   useEffect(() => {
     if (!network) return
 
-    const clearSign = submittedAccountOp?.meta?.clearSigningHumanization
-    const persistedHumanization = hasErc7730Humanization(clearSign) ? clearSign : null
-    if (submittedAccountOp && persistedHumanization) {
-      const humanizedCalls = persistedHumanization.filter(filterEntryPointAuthCall)
-      setCalls(parseHumanizer(humanizedCalls))
-      setFrom(submittedAccountOp.accountAddr)
-      setFeeCall(submittedAccountOp.feeCall || null)
-      return
-    }
-
     // if we have the extension account op passed, we do not need to
     // wait to show the calls
     if (extensionAccOp) {
@@ -1071,6 +1061,17 @@ const useSteps = ({
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
       setFeeCall(extensionAccOp.feeCall || null)
+      return
+    }
+
+    // A past activity item (no live extensionAccOp) still has its own `calls`, so humanize those
+    // directly instead of falling all the way to reproducing calls from the raw txn/userOp receipt.
+    if (submittedAccountOp) {
+      const accountOp = submittedAccountOpToAccountOp(submittedAccountOp)
+      const humanizedCalls = humanizeAccountOp(accountOp).filter(filterEntryPointAuthCall)
+      setCalls(parseHumanizer(humanizedCalls))
+      setFrom(submittedAccountOp.accountAddr)
+      setFeeCall(submittedAccountOp.feeCall || null)
       return
     }
 

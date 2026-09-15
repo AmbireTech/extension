@@ -21,6 +21,7 @@ import {
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
+  getErc7730IntentText,
   getVisibleErc7730RowsExcludingTitleParts,
   MOBILE_ERC7730_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
@@ -209,7 +210,7 @@ const TransactionSummary = ({
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
 
-    return erc7730Visualization.title || call.dapp?.name || t('Transaction details')
+    return getErc7730IntentText(erc7730Visualization) || call.dapp?.name || t('Transaction details')
   }, [call.dapp?.name, erc7730Visualization, t])
   const erc7730DetailedIcon = erc7730Visualization?.dapp?.icon || call.dapp?.icon
   const erc7730VisualizationKey = useMemo(
@@ -674,17 +675,12 @@ const TransactionSummary = ({
     }
 
     // Non-detailed ("transaction summary") intents can be an interpolated sentence
-    // (erc7730Visualization.titleParts, e.g. "Swap {amount} for at least {amount}" with real
-    // token icons/amounts) rather than a static string. Reading `.title` directly like the
-    // detailed branch above would silently drop that interpolated detail, so this goes through
-    // the same HumanizedVisualization/Erc7730StructuredVisualization renderer the desktop
-    // title (content row, erc7730TransactionSummarySection="title") already uses.
-    if (
-      !erc7730Visualization.dapp?.icon &&
-      !erc7730Visualization.title &&
-      !erc7730Visualization.titleParts?.length
-    )
-      return null
+    // (erc7730Visualization.intent, e.g. "Swap {amount} for at least {amount}" with
+    // real token icons/amounts) rather than a static string. Reading a plain string directly
+    // like the detailed branch above would silently drop that interpolated detail, so this
+    // goes through the same HumanizedVisualization/Erc7730StructuredVisualization renderer the
+    // desktop title (content row, erc7730TransactionSummarySection="title") already uses.
+    if (!erc7730Visualization.dapp?.icon && !erc7730Visualization.intent.length) return null
 
     return (
       <HumanizedVisualization
