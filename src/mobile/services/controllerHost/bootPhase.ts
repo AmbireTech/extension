@@ -19,6 +19,14 @@ let criticalControllerSet: Set<string> = new Set()
 // already does for non-deferred controllers.
 const deferredCtrlPayloads: Map<string, { ctrl: any; forceEmit?: boolean }> = new Map()
 
+// Whether a screen transition is running. The animation is native, but everything
+// it needs mounted goes through the JS thread, so a controller update landing in that
+// window delays the screen the user is waiting for - and a touch with it. Updates are
+// held (latest per controller) and drained once the platform reports the transition
+// finished.
+let isTransitionInFlight = false
+const transitionCtrlPayloads: Map<string, { ctrl: any; forceEmit?: boolean }> = new Map()
+
 // Set of controllers the UI currently has an active subscriber for. Until the
 // UI sends its first SET_SUBSCRIBED_CONTROLLERS, this gate stays inactive and
 // every controller streams as before (no suppression during the boot window
@@ -90,8 +98,26 @@ export function queueCtrlStateIfBootPhaseDeferred(
   return false
 }
 
+/**
+ * Holds a controller's state back while a screen transition is running. `forceEmit` is
+ * let through: those are the updates a user action is waiting on.
+ */
+function queueCtrlStateIfTransitionInFlight(ctrlName: string, ctrl: any, forceEmit?: boolean) {
+  if (!isTransitionInFlight || forceEmit) return false
+
+  // A controller the UI has never seen a state of is not held: the store gates its
+  // readiness on that first state, and the routing waits on it.
+  if (!hasDeliveredState(ctrlName)) return false
+
+  transitionCtrlPayloads.set(ctrlName, { ctrl, forceEmit })
+
+  return true
+}
+
 export function queueCtrlStateIfGated(ctrlName: string, ctrl: any, forceEmit?: boolean) {
   if (queueCtrlStateIfBootPhaseDeferred(ctrlName, ctrl, forceEmit)) return true
+
+  if (queueCtrlStateIfTransitionInFlight(ctrlName, ctrl, forceEmit)) return true
 
   if (claimReadinessDelivery(ctrlName, ctrl)) return false
 
@@ -174,6 +200,21 @@ export function setBootPhase(phase: 'critical' | 'full') {
 
   const entries = Array.from(deferredCtrlPayloads.entries())
   deferredCtrlPayloads.clear()
+  drainCtrlPayloads(entries)
+}
+
+/**
+ * Called by the SET_TRANSITION_STATE action as the stack starts and finishes animating
+ * a screen. Draining across macrotasks keeps the flush itself from being a stall.
+ */
+export function setTransitionInFlight(inFlight: boolean) {
+  if (inFlight === isTransitionInFlight) return
+  isTransitionInFlight = inFlight
+
+  if (inFlight || transitionCtrlPayloads.size === 0) return
+
+  const entries = Array.from(transitionCtrlPayloads.entries())
+  transitionCtrlPayloads.clear()
   drainCtrlPayloads(entries)
 }
 

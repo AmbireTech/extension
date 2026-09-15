@@ -14,6 +14,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import NetworkStatusRow from './NetworkStatusRow'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   sheetRef: ReturnType<typeof useModalize>['ref']
   closeBottomSheet: () => void
@@ -25,20 +27,23 @@ interface Props {
  *
  * It's not displayed in production and can be used to monitor the performance of the portfolio.
  */
+const selectPortfolioState = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.portfolioState
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: portfolioState } = useController('SelectedAccountController', selectPortfolioState)
   const { theme } = useTheme()
 
   const sortedNetworks = useMemo(() => {
     return networks
       .map((network) => {
         const networkKey = network.chainId.toString()
-        const result = portfolio.portfolioState[networkKey]?.result as
-          | PortfolioNetworkResult
-          | undefined
-        const lastUpdatedAt = portfolio.portfolioState[networkKey]?.lastSuccessfulUpdate
+        const result = portfolioState[networkKey]?.result as PortfolioNetworkResult | undefined
+        const lastUpdatedAt = portfolioState[networkKey]?.lastSuccessfulUpdate
 
         const totalTime =
           (result?.discoveryTime || 0) +
@@ -48,8 +53,7 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         return {
           networkKey,
           result,
-          isLoading:
-            !portfolio.portfolioState[networkKey] || portfolio.portfolioState[networkKey].isLoading,
+          isLoading: !portfolioState[networkKey] || portfolioState[networkKey].isLoading,
           lastUpdatedAt,
           totalTime,
           name: network.name
@@ -68,7 +72,7 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         // Slowest first
         return b.totalTime - a.totalTime
       })
-  }, [networks, portfolio.portfolioState])
+  }, [networks, portfolioState])
 
   return (
     <BottomSheet

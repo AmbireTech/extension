@@ -12,6 +12,10 @@ import {
 } from '@common/modules/action-requests/utils/watchTokenRequest'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const useWatchToken = () => {
   const {
     state: { currentUserRequest },
@@ -24,7 +28,7 @@ const useWatchToken = () => {
   const {
     state: { portfolio: selectedAccountPortfolio, account }
   } = useController('SelectedAccountController')
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { state } = useController('ProvidersController')
 
   const userRequest = useMemo(

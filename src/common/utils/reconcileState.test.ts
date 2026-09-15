@@ -264,6 +264,163 @@ describe('reconcileState', () => {
     })
   })
 
+  // A node the update did not touch is never built, so the object a change does need
+  // is opened out of the previous snapshot rather than out of the walk. What it carries
+  // for the keys and items already passed is therefore whatever `prev` held for them,
+  // and one `prev` never held has to stay out of it.
+  describe('rebuilding a record or an array around a change', () => {
+    it('keeps the identity of the keys walked before and after the one that changed', () => {
+      const live = { before: { a: 1 }, changed: { b: 1 }, after: { c: 1 } }
+
+      const first = reconcileState(undefined, live)
+      live.changed.b = 2
+      const second = reconcileState(first, live)
+
+      expect(second.before).toBe(first.before)
+      expect(second.changed).not.toBe(first.changed)
+      expect(second.after).toBe(first.after)
+    })
+
+    it('keeps the key order of the state, which is the order richJson would write', () => {
+      // The change sits past the second key on purpose: the keys before it are the ones
+      // the object is opened out of, and one key alone cannot come back out of order.
+      const live: Record<string, any> = { z: 1, y: 2, m: { v: 1 }, a: 4 }
+
+      const first = reconcileState(undefined, live)
+      live.m.v = 2
+      const second = reconcileState(first, live) as object
+
+      expect(Object.keys(second)).toEqual(['z', 'y', 'm', 'a'])
+      expect(stringify(second)).toBe(stringify(parse(stringify(live))))
+    })
+
+    it('leaves a dropped key out of the object a later change opens', () => {
+      const live: Record<string, any> = { fn: () => {}, nested: { v: 1 } }
+
+      const first = reconcileState(undefined, live)
+      live.nested.v = 2
+      const second = reconcileState(first, live) as Record<string, unknown>
+
+      // `fn` is walked before `nested`, so the backfill reaches it - and has to skip it
+      // rather than copy what `prev` holds under it, which is nothing.
+      expect(Object.keys(second)).toEqual(['nested'])
+      expect(second.nested).toEqual({ v: 2 })
+    })
+
+    it('shares a record that carries a function, emit after emit', () => {
+      const live = { fn: () => {}, a: 1 }
+
+      const first = reconcileState(undefined, live)
+      const second = reconcileState(first, live)
+
+      // Both snapshots drop the function, so nothing changed - and a record holding one
+      // must not churn its identity on every emit because of it.
+      expect(second).toBe(first)
+    })
+
+    it('treats a key that became a function as a change, since the snapshot loses it', () => {
+      const live: Record<string, unknown> = { a: 1, b: 2 }
+
+      const first = reconcileState(undefined, live)
+      live.b = () => {}
+      const second = reconcileState(first, live) as Record<string, unknown>
+
+      expect(second).not.toBe(first)
+      expect(Object.keys(second)).toEqual(['a'])
+    })
+
+    it('treats a key that lost its value as a change, and one that gained it back too', () => {
+      const live: Record<string, unknown> = { a: 1 }
+
+      const withValue = reconcileState(undefined, live)
+      live.a = undefined
+      const withoutValue = reconcileState(withValue, live)
+      live.a = 1
+      const withValueAgain = reconcileState(withoutValue, live)
+
+      // A snapshot holds no `undefined` under a key, since that is exactly what it
+      // drops - which is what makes reading one back mean the key is not there at all.
+      expect(withoutValue).not.toBe(withValue)
+      expect('a' in (withoutValue as object)).toBe(false)
+      expect(withValueAgain).not.toBe(withoutValue)
+      expect((withValueAgain as any).a).toBe(1)
+    })
+
+    it('keeps the identity of every surviving key when another one was removed', () => {
+      const live: Record<string, any> = { kept: { v: 1 }, other: { v: 2 }, gone: 3 }
+
+      const first = reconcileState(undefined, live)
+      delete live.gone
+      const second = reconcileState(first, live) as any
+
+      // Nothing under the surviving keys moved, so only the record around them is new.
+      expect(second).not.toBe(first)
+      expect(second.kept).toBe((first as any).kept)
+      expect(second.other).toBe((first as any).other)
+      expect('gone' in second).toBe(false)
+    })
+
+    it('shares an array holding a NaN, emit after emit', () => {
+      const live = { rates: [1, NaN, 3] }
+
+      const first = reconcileState(undefined, live)
+      const second = reconcileState(first, live)
+
+      // A NaN holds the same content as itself without being identical to itself, so an
+      // item kept as it is must never be put through the reference check that decides
+      // whether the array around it has to be opened.
+      expect(second).toBe(first)
+    })
+
+    it('keeps a NaN sitting before an item that changed', () => {
+      const live = { rates: [NaN, { v: 1 }] }
+
+      const first = reconcileState(undefined, live)
+      ;(live.rates[1] as any).v = 2
+      const second = reconcileState(first, live)
+
+      expect(second.rates).not.toBe(first.rates)
+      expect(second.rates[0]).toBeNaN()
+      expect(second.rates[1]).toEqual({ v: 2 })
+    })
+
+    it('keeps the identity of the items before the one that changed', () => {
+      const live = { txns: [{ hash: '0x1' }, { hash: '0x2' }, { hash: '0x3' }] }
+
+      const first = reconcileState(undefined, live)
+      live.txns[2]!.hash = '0x9'
+      const second = reconcileState(first, live)
+
+      expect(second.txns[0]).toBe(first.txns[0])
+      expect(second.txns[1]).toBe(first.txns[1])
+      expect(second.txns[2]).not.toBe(first.txns[2])
+    })
+
+    it('shares an array whose dropped item is dropped again', () => {
+      const live = { list: [1, () => {}, 3] }
+
+      const first = reconcileState(undefined, live)
+      const second = reconcileState(first, live)
+
+      // The function is a `null` in both snapshots, and that previous `null` is what the
+      // comparison has to be against - the walk itself only ever sees the function.
+      expect(second).toBe(first)
+      expect(first.list).toEqual([1, null, 3])
+    })
+
+    it('keeps a dropped item as the null it became when a later item changed', () => {
+      const live: any[] = [undefined, { v: 1 }]
+
+      const first = reconcileState(undefined, live)
+      live[1].v = 2
+      const second = reconcileState(first, live)
+
+      expect(second).not.toBe(first)
+      expect(second[0]).toBeNull()
+      expect(second[1]).toEqual({ v: 2 })
+    })
+  })
+
   describe('value handling, matching the richJson round trip', () => {
     const expectMatchesRichJson = (value: object) => {
       expect(reconcileState(undefined, value)).toEqual(parse(stringify(value)))
@@ -401,6 +558,39 @@ describe('reconcileState', () => {
       const snapshot = reconcileState(undefined, live) as any
 
       expect(snapshot.amount).toBe('5')
+    })
+
+    it('honors a toJSON that returns the object it was called on', () => {
+      const ctrl = {
+        v: 1,
+        toJSON(): unknown {
+          return this
+        }
+      }
+
+      const first = reconcileState(undefined, { ctrl }) as any
+      const second = reconcileState(first, { ctrl }) as any
+
+      // The one case where the value and what stands in for it are the same node, so
+      // the walk has to go on to its keys instead of asking `toJSON` again.
+      expect(first.ctrl).toEqual({ v: 1 })
+      expect(second).toBe(first)
+      expectMatchesRichJson({ ctrl })
+    })
+
+    it('walks the state own keys only, which is the set richJson would write', () => {
+      const proto = { inherited: 'from the prototype' }
+      const ctrl = Object.create(proto)
+      ctrl.own = 1
+
+      const first = reconcileState(undefined, { ctrl }) as any
+      const second = reconcileState(first, { ctrl }) as any
+
+      expect(Object.keys(first.ctrl)).toEqual(['own'])
+      // An inherited key is outside the snapshot, so it can neither reach one nor make
+      // one look changed.
+      expect(second).toBe(first)
+      expectMatchesRichJson({ ctrl })
     })
 
     it('keeps null, and keeps it distinct from a dropped key', () => {
@@ -560,6 +750,14 @@ describe('values that richJson cannot tell apart', () => {
     // reusing is what matches the richJson round trip the extension gets.
     expect(second).toBe(first)
     expect(second).toEqual({ kept: 1 })
+  })
+
+  it('reuses when a number turned into a -0, which richJson writes as a 0', () => {
+    const first = reconcileState(undefined, { v: 0 })
+    const second = reconcileState(first, { v: -0 })
+
+    expect(second).toBe(first)
+    expect(stringify({ v: -0 })).toBe(stringify({ v: 0 }))
   })
 })
 

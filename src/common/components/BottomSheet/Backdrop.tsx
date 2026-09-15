@@ -67,7 +67,10 @@ const Backdrop = ({
         }
       ]}
       nativeID={withBlur ? 'modalBackdrop' : undefined}
-      pointerEvents={isVisible ? 'auto' : 'none'}
+      // Stop swallowing taps as soon as the sheet starts closing. The backdrop
+      // stays mounted for the fade-out, and on slow devices a tap landing in
+      // that window would hit it instead of what's underneath.
+      pointerEvents={isVisible && isBottomSheetVisible ? 'auto' : 'none'}
     >
       <TouchableOpacity style={flexboxStyles.flex1} activeOpacity={1} onPress={onPress}>
         {isiOS ? (

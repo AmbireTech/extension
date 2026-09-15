@@ -15,6 +15,8 @@ import { OneClickEstimationProps } from '@common/modules/sign-account-op/compone
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
 import type { SignAccountOpUpdateProps } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
 
 const PRIMARY_BUTTON_LABELS: Record<
@@ -53,6 +55,8 @@ type Props = {
   onSafeSignComplete?: () => void
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const useSign = ({
   handleUpdateStatus,
   signAccountOpState,
@@ -63,7 +67,7 @@ const useSign = ({
   onSafeSignComplete
 }: Props) => {
   const { t } = useTranslation()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { dispatch: mainControllerDispatch } = useController('MainController')
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')

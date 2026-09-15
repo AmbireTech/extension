@@ -18,6 +18,8 @@ import useCompactActionRequestLayout from '@common/modules/action-requests/hooks
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   toTokenOptions: SelectValue[]
   toTokenValue: SelectValue | undefined
@@ -62,6 +64,9 @@ const getToTokenListErrorOption = ({
   }
 }
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const ToTokenSelect: React.FC<Props> = ({
   toTokenOptions,
   toTokenValue,
@@ -75,7 +80,7 @@ const ToTokenSelect: React.FC<Props> = ({
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const { errors, isTokenListLoading, toTokenSearchTerm } =
     useController('SwapAndBridgeController').state
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const [didAttemptSearchingTokenByAddress, setDidAttemptSearchingTokenByAddress] =
     React.useState(false)
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')

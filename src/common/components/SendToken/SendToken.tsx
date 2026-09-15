@@ -23,6 +23,8 @@ import getStyles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const SECTION_MENU_HEADER_HEIGHT = 50
 
 type Props = {
@@ -53,6 +55,9 @@ type Props = {
   renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
 }
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const SendToken: FC<Props> = ({
   label,
   fromTokenOptions,
@@ -76,7 +81,7 @@ const SendToken: FC<Props> = ({
   sections,
   renderSectionHeader
 }) => {
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()

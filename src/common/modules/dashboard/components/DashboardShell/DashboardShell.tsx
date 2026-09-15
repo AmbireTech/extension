@@ -20,6 +20,8 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   /**
    * Applied to the block holding the token skeletons, so each platform can constrain it
@@ -29,8 +31,11 @@ interface Props {
 }
 
 // Instant placeholder shown while the data-heavy controllers load
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const DashboardShell = ({ contentContainerStyle }: Props) => {
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
 
   // Read synchronously so the shell paints the last-known balance on its first render.

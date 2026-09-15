@@ -35,6 +35,8 @@ import { getUiType } from '@common/utils/uiType'
 import MessageContentLayout from './MessageContentLayout'
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isSidePanel } = getUiType()
 
 interface Props {
@@ -140,6 +142,8 @@ const Container = ({ children }: { children: React.ReactNode }) => (
   <MessageContentLayout webStyle={spacings.mbLg}>{children}</MessageContentLayout>
 )
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
@@ -158,7 +162,7 @@ const SignInWithEthereum = ({
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
   const siweMessageToSign = useMemo(() => {

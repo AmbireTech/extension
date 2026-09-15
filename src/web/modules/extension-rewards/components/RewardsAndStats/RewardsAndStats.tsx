@@ -16,6 +16,8 @@ import Background2 from './media/Background2'
 import Background3 from './media/Background3'
 import ChevronRight from './media/ChevronRight'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   pastTotalScore: number | null
 }
@@ -30,8 +32,11 @@ const getInitialScore = (scoreChange: number, score: number) => {
 
 const { isPopup } = getUiType()
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const RewardsAndStats: FC<Props> = ({ pastTotalScore }) => {
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { projectedRewardsStats } = portfolio
   const { t } = useTranslation()
 

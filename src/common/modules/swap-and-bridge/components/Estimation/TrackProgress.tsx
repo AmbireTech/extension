@@ -35,6 +35,8 @@ import {
   getSwapInProgressMessage
 } from './getSwapCompletedMessage'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isRequestWindow } = getUiType()
 
 type Props = {
@@ -58,13 +60,18 @@ const buildCompletedMessage = (
   }
 }
 
+const selectActiveRoutes = (state: AllControllersMappingType['SwapAndBridgeController']) =>
+  state.activeRoutes
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const { state: activeRoutes } = useController('SwapAndBridgeController', 'activeRoutes')
+  const { state: activeRoutes } = useController('SwapAndBridgeController', selectActiveRoutes)
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
 
   const lastCompletedRoute =
     activeRoutes.find((r) => r.activeRouteId === activeRoute?.activeRouteId) || activeRoute

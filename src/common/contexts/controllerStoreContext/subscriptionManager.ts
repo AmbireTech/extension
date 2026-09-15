@@ -1,7 +1,6 @@
 import isEqual from 'react-fast-compare'
 
 import { isDev } from '@common/config/env'
-import { isExtension } from '@web/constants/browserapi'
 
 import { ControllerHelpersStore } from './controllerHelpersStore'
 import { ControllerStore } from './controllerStore'
@@ -14,10 +13,9 @@ type Unsubscribe = () => void
  * It is used to optimize performance by:
  * 1. Aggregating subscriptions: It creates only one listener per controller ID in the store,
  *    regardless of how many components use the `useController` hook for that controller.
- * 2. Smart updates: It uses `react-fast-compare` to check for deep equality, preventing
- *    re-renders when the state reference changes but the content remains the same. A store
- *    that reconciles its snapshots answers that question with the reference alone, so there
- *    the comparison is skipped
+ * 2. Smart updates: The store reconciles the snapshots it hands out, so a value that kept
+ *    its reference kept its content too and a re-render is dropped on a reference check
+ *    alone, with no deep comparison anywhere on the emit path
  * 3. Selector support: It allows components to subscribe to specific slices of state via selectors,
  *    triggering updates only when that specific slice changes.
  */
@@ -27,7 +25,12 @@ export class SubscriptionManager {
     Map<
       string,
       {
-        listeners: Set<{ listener: Listener; selector?: (state: any) => any; lastValue: any }>
+        listeners: Set<{
+          listener: Listener
+          selector?: (state: any) => any
+          lastValue: any
+          hasWarnedAboutSelector?: boolean
+        }>
         unsub: Unsubscribe
       }
     >
@@ -100,25 +103,14 @@ export class SubscriptionManager {
       const { listener, selector, lastValue } = entry
       const newValue = selector ? selector(newState) : newState
 
-      // Shallow check for performance
+      // The store's snapshots are reconciled, so an unchanged value comes back as the
+      // very same reference and this check is complete on its own
       if (newValue === lastValue) return
 
-      if (!isExtension) {
-        if (isDev && selector) this.#warnOnAllocatingSelector(id, newValue, lastValue)
+      if (isDev && selector) this.#warnOnAllocatingSelector(entry, id, newValue, lastValue)
 
-        entry.lastValue = newValue
-        listener()
-        return
-      }
-
-      // Deep equality check using react-fast-compare
-      if (!isEqual(newValue, lastValue)) {
-        entry.lastValue = newValue
-        listener()
-      } else {
-        // Update the reference even if they are deeply equal to optimize future shallow checks
-        entry.lastValue = newValue
-      }
+      entry.lastValue = newValue
+      listener()
     })
   }
 
@@ -127,8 +119,18 @@ export class SubscriptionManager {
    * Such a selector returns a new reference on every emit, so with the deep
    * comparison gone it re-renders its component even when nothing it reads changed.
    */
-  #warnOnAllocatingSelector(id: string, newValue: unknown, lastValue: unknown) {
+  #warnOnAllocatingSelector(
+    entry: { hasWarnedAboutSelector?: boolean },
+    id: string,
+    newValue: unknown,
+    lastValue: unknown
+  ) {
+    // Warned about once per subscriber rather than once per emit, because the check
+    // itself is the deep comparison this path exists to avoid.
+    if (entry.hasWarnedAboutSelector) return
     if (!isEqual(newValue, lastValue)) return
+
+    entry.hasWarnedAboutSelector = true
 
     console.warn(
       `The selector for ${id} builds a new value on every update instead of returning one that lives on the state, so its component re-renders even when nothing changed. Return the state's own value, or move the derivation into the component.`

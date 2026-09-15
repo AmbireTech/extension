@@ -5,6 +5,8 @@ import useController from '@common/hooks/useController'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { networkSort } from '@common/utils/sorting'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const ALL_NETWORKS_FILTER = 'all'
 
 type Props = {
@@ -19,11 +21,13 @@ type UseManageTokensReturnType = {
   onTokenPreferenceOrCustomTokenChange: () => void
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const useManageTokens = ({ search, networkFilter }: Props): UseManageTokensReturnType => {
   const debouncedPortfolioUpdateInterval = useRef<NodeJS.Timeout | null>(null)
   const { tokenPreferences, customTokens: portfolioCustomTokens } =
     useController('PortfolioController').state
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { dispatch: mainDispatch } = useController('MainController')
   const {
     state: {

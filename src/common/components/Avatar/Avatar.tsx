@@ -14,6 +14,8 @@ import JazzIcon from './Jazz'
 import Polycons from './Polycons/Polycons'
 import TypeBadge from './TypeBadge'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const getAvatarType = ({
   ensAvatar,
   ensAvatarImageFetchFailed,
@@ -61,6 +63,10 @@ interface Props {
   displayTypeBadge?: boolean
 }
 
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
+const selectLoadingAddresses = (state: AllControllersMappingType['DomainsController']) =>
+  state.loadingAddresses
+
 const Avatar: FC<Props> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   pfp,
@@ -79,9 +85,8 @@ const Avatar: FC<Props> = ({
   )
   const ensAvatarImageFetchFailed = ensAvatarImageState === 'failed'
   // ENS Avatar
-  const {
-    state: { domains, loadingAddresses }
-  } = useController('DomainsController')
+  const { state: domains } = useController('DomainsController', selectDomains)
+  const { state: loadingAddresses } = useController('DomainsController', selectLoadingAddresses)
   // There is no wallet controller state in benzin/rewards so we need to be careful
 
   let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = propAvatarType || 'jazzicons'
