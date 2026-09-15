@@ -1,10 +1,11 @@
 import { execSync } from 'child_process'
-import { KEYSTORE_PASS } from 'constants/env'
+import { IOS_MOBILE_INVITE_CODE, KEYSTORE_PASS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 import { join } from 'path'
 
 import { expect, test } from '../../fixtures/pageObjects'
+import { IOS_SIM_ZIP } from '../../mobilewright.config'
 
 const ANDROID_HOME = process.env.ANDROID_HOME ?? join(process.env.HOME ?? '', 'Library/Android/sdk')
 const ADB_BIN = join(ANDROID_HOME, 'platform-tools', 'adb')
@@ -26,8 +27,22 @@ test.describe('auth', { tag: '@auth-mobile' }, () => {
     if (testInfo.project.name === 'ios') {
       // The simulator has no `pm clear` equivalent, so reinstall to reset state.
       await device.uninstallApp(bundleId)
-      await device.installApp('./Ambire-sim.zip')
+      await device.installApp(IOS_SIM_ZIP)
       await device.launchApp(bundleId)
+    }
+
+    // TODO: add selector for conde input field
+    const inviteCodeInput = screen.getByTestId(selectors.invite.codeInput)
+    if (await inviteCodeInput.count()) {
+      if (!IOS_MOBILE_INVITE_CODE) {
+        throw new Error(
+          'App is showing the invite gate but MOBILE_INVITE_CODE is not set (see e2e-playwright-tests/constants/env.ts).'
+        )
+      }
+      // TODO: add selectors
+      // await inviteCodeInput.fill(IOS_MOBILE_INVITE_CODE)
+      // await screen.getByTestId(selectors.invite.verifyBtn).tap()
+      // await expect(inviteCodeInput).not.toBeVisible()
     }
   })
 

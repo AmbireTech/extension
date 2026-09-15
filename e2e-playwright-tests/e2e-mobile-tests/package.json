@@ -1,11 +1,9 @@
 {
   "dependencies": {
-    "@mobilewright/test": "^0.0.53",
-    "mobilewright": "^0.0.53"
+    "@mobilewright/test": "0.0.58",
+    "mobilewright": "0.0.58"
   },
   "devDependencies": {
-    "@mobilewright/test": "0.0.51",
-    "mobilewright": "0.0.51",
     "@types/node": "latest"
   },
   "scripts": {

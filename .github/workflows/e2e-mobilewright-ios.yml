@@ -42,6 +42,9 @@ jobs:
     environment: testing
     env:
       KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+      # Unlocks the mobile app's invite gate (useMobileInviteGate) — required on every
+      # fresh install, both platforms. See auth.spec.ts's beforeEach.
+      IOS_MOBILE_INVITE_CODE: ${{ secrets.IOS_MOBILE_INVITE_CODE }}
       SEED: ${{ secrets.SEED }}
       SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
@@ -101,8 +104,8 @@ jobs:
             exit 1
           fi
           # mobilecli installs onto a simulator from a .zip of the .app bundle, so keep
-          # the zip as-is — do NOT unzip. Path matches installApps: './Ambire-sim.zip'
-          # in mobilewright.config.ts.
+          # the zip as-is — do NOT unzip. Path matches IOS_SIM_ZIP (Ambire-sim.zip,
+          # resolved relative to the config file) in mobilewright.config.ts.
           cp "$ZIP_PATH" ./e2e-playwright-tests/e2e-mobile-tests/Ambire-sim.zip
 
       - name: Read Xcode version from .xcode-version

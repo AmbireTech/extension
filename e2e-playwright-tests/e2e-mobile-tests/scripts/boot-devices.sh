@@ -12,7 +12,22 @@ IOS_DEVICE_NAME="${IOS_DEVICE_NAME:-iPhone 17 Pro}"
 ANDROID_AVD="${ANDROID_AVD:-Pixel_10a}"
 ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 
+reset_mobilecli_daemon() {
+  # mobilewright starts a persistent `mobilecli daemon` process on first test run
+  # (via its Playwright globalSetup) and never restarts it afterward. It caches
+  # whatever cwd was active when IT first launched — not the cwd of whatever
+  # terminal later runs `npm run ios` — so a stale daemon from an earlier session
+  # can resolve relative installApps paths against the wrong directory even when
+  # you're running commands from the right place. Kill it before every boot so
+  # the next test run always starts a fresh daemon against the current config.
+  if pkill -f "mobilecli.*daemon start" 2>/dev/null; then
+    echo "iOS: reset stale mobilecli daemon"
+    sleep 1
+  fi
+}
+
 boot_ios() {
+  reset_mobilecli_daemon
   if xcrun simctl list devices booted | grep -q "$IOS_DEVICE_NAME ("; then
     echo "iOS: \"$IOS_DEVICE_NAME\" already booted"
   else
