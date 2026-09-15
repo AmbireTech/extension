@@ -33,6 +33,7 @@
 Ambire is self-custodial: it never takes custody of user funds and is not a counterparty to any trade. Where a feature relies on third-party services, the providers, their public documentation and terms, and any fee are documented per feature:
 
 - [Swap & Bridge](./src/common/modules/swap-and-bridge/README.md) - a user interface on top of independent third-party aggregators
+- [Explore](./src/common/modules/explore/README.md) - a directory of bookmarks to public third-party websites, opened in the user's own browser or, on mobile, in an in-app browser
 
 ## Environment Setup
 

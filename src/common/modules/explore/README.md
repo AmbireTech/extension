@@ -4,19 +4,21 @@ This document describes how the Explore section of Ambire Wallet works, where it
 
 ## Summary
 
-Ambire Wallet is a self-custodial wallet. Explore is a **web browser with a directory of bookmarks to public websites**. Every listing is a link to an independent third-party website that is publicly available on the internet and reachable from any other browser with the same URL.
+Ambire Wallet is a self-custodial wallet. Explore is a **directory of bookmarks to public websites**. Every listing is a link to an independent third-party website that is publicly available on the internet and reachable from any other browser with the same URL.
+
+In the browser extension a listing opens in a tab of the user's own browser. The mobile app carries an in-app browser and opens the website there.
 
 Ambire does not host, distribute, package, install, update or execute third-party software. Opening a listing does not download anything to the device, no code is delivered by Ambire, no games are listed, and nothing is sold, unlocked or purchased inside Explore. A listing is a link, not an application, and not an endorsement.
 
 ## What the Explore screen contains
 
-| Section                      | What it is                                                                                                                            | Shown                               |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| Search bar                   | Accepts a search term or any URL. Offers a web search, "open this URL", matching listings and matching tokens                         | Always                              |
-| Explore apps                 | The featured listings (a short, hand-picked set). The `>` arrow opens the full list, browsable and filterable by network and category | Always                              |
-| Trending                     | Market data for crypto assets: name, price, 24h change. Not software, see below                                                       | When the data is available          |
-| Recent, Connected, Favorites | The user's own history: sites visited, sites they granted a connection to, sites they starred                                         | Only when the user has such entries |
-| $WALLET Staking              | A native screen of the wallet itself, not a third-party website                                                                       | Always                              |
+| Section                      | What it is                                                                                                                                                    | Shown                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Search bar                   | Searches the listings and the trending tokens. In the mobile app it also accepts any URL and offers a web search, being the entry point of the in-app browser | Always                              |
+| Explore apps                 | The featured listings (a short, hand-picked set). The `>` arrow opens the full list, browsable and filterable by network and category                         | Always                              |
+| Trending                     | Market data for crypto assets: name, price, 24h change. Not software, see below                                                                               | When the data is available          |
+| Recent, Connected, Favorites | The user's own history: sites visited, sites they granted a connection to, sites they starred                                                                 | Only when the user has such entries |
+| $WALLET Staking              | A native screen of the wallet itself, not a third-party website                                                                                               | Always                              |
 
 The featured set and the full list are two views of the same set of entries; both are covered by the index Ambire publishes with each release (see "Where the listings come from").
 
@@ -29,7 +31,7 @@ The featured set and the full list are two views of the same set of entries; bot
 
 In both cases the site runs as an ordinary web page under its own origin, served by its own operator. The wallet injects an EIP-1193 provider (`window.ethereum`), the same interface every browser wallet exposes, so the page can _ask_ the wallet for a connection or a signature. It cannot obtain either without the user explicitly approving it in the wallet's own UI.
 
-The in-app browser restricts what a page may navigate to:
+The mobile in-app browser restricts what a page may navigate to:
 
 | Scheme                                    | Handling                                             |
 | ----------------------------------------- | ---------------------------------------------------- |
@@ -38,7 +40,7 @@ The in-app browser restricts what a page may navigate to:
 | `javascript:`, `data:`, `tel:`, `mailto:` | Blocked                                              |
 | anything else                             | Blocked by default                                   |
 
-Plain `http:` is not allowed. The bridge between the page and the wallet is origin-checked and token-guarded, so one site cannot act on behalf of another.
+Plain `http:` is not allowed. The bridge between the page and the wallet is origin-checked and token-guarded, so one site cannot act on behalf of another. In the extension, navigation is the browser's own business and the wallet does not interfere with it.
 
 ## Where the listings come from
 
