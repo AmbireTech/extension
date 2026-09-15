@@ -1,15 +1,12 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { View } from 'react-native'
 
 import AccountsIcon from '@common/assets/svg/AccountsIcon'
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
-import GasTankIcon from '@common/assets/svg/GasTankIcon'
-import LightningIcon from '@common/assets/svg/LightningIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
-import ValueIcon from '@common/assets/svg/ValueIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -21,11 +18,6 @@ import flexbox from '@common/styles/utils/flexbox'
 const AmbireApiOptions = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const erc4337RequiredBy = useMemo(() => ({ flag: 'gasTank' as const, title: t('Gas Tank') }), [t])
-  const tokenPricesRequiredBy = useMemo(
-    () => ({ flag: 'erc4337' as const, title: t('ERC-4337') }),
-    [t]
-  )
 
   return (
     <ExpandableCard
@@ -44,41 +36,6 @@ const AmbireApiOptions = () => {
       }
       expandedContent={
         <View style={[spacings.plTy, spacings.pbTy]}>
-          <OptOutControlOption
-            title={t('Gas Tank')}
-            description={t(
-              'Pay network fees cross chain. Requires ERC-4337 smart account features and Token prices.'
-            )}
-            icon={<GasTankIcon width={24} height={24} color={theme.iconPrimary} />}
-            flag="gasTank"
-          />
-          <View
-            style={[
-              spacings.mlLg,
-              spacings.plTy,
-              {
-                borderLeftWidth: 2,
-                borderLeftColor: theme.primaryAccent200
-              }
-            ]}
-          >
-            <OptOutControlOption
-              title={t('ERC-4337 smart account features')}
-              description={t(
-                'Use bundlers and paymasters for smart account gas estimation, Gas Tank, sponsored gas, and token fee payments. Requires Token prices.'
-              )}
-              icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
-              flag="erc4337"
-              requiredBy={erc4337RequiredBy}
-            />
-            <OptOutControlOption
-              title={t('Token prices')}
-              description={t(`Fetch token prices through Ambire's API`)}
-              icon={<ValueIcon width={24} height={24} color={theme.iconPrimary} />}
-              flag="tokenPrices"
-              requiredBy={tokenPricesRequiredBy}
-            />
-          </View>
           <OptOutControlOption
             title={t('Networks configuration')}
             description={t(
