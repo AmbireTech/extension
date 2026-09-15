@@ -31,6 +31,8 @@ interface Props {
   iconWidth?: number
   /** Uses the narrow action layout even when the surrounding screen is not compact. */
   forceCompact?: boolean
+  /** Drops the trailing gap on the last button of a footer row. */
+  isLast?: boolean
 }
 
 const TokenDetailsButton: FC<Props> = ({
@@ -44,7 +46,8 @@ const TokenDetailsButton: FC<Props> = ({
   icon: Icon,
   token,
   testID,
-  forceCompact
+  forceCompact,
+  isLast
 }) => {
   const { styles, theme } = useTheme(getStyles)
   // Compact = mobile or narrow side panel — both use the original mobile button styles.
@@ -68,7 +71,7 @@ const TokenDetailsButton: FC<Props> = ({
         style={[
           shouldUseCompactLayout ? styles.actionCompact : styles.action,
           isDisabled && { opacity: 0.4 },
-          !shouldUseCompactLayout && isWeb && id !== 'hide-unhide' && { marginRight: 6 }
+          !shouldUseCompactLayout && isWeb && !isLast && { marginRight: 6 }
         ]}
         // Purposely don't disable the button (but block the onPress action) in
         // case of a tooltip, because it should be clickable to show the tooltip.
