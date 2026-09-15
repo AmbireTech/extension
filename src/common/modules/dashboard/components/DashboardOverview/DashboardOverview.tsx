@@ -23,6 +23,10 @@ import { OverviewBackground } from './OverviewBackground'
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
+import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+
+const selectTokenPricesEnabled = (state: FeatureFlagsController) => state.flags?.tokenPrices
+
 export const OVERVIEW_CONTENT_MAX_HEIGHT = 162
 
 interface Props {
@@ -42,6 +46,10 @@ const DashboardOverview: FC<Props> = ({
 }) => {
   const { theme } = useTheme(getStyles)
   const { state: isOffline } = useController('MainController', 'isOffline')
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectTokenPricesEnabled
+  )
   const { account, portfolio } = useController('SelectedAccountController').state
   const { state: areNetworksFetchingFromRelayer } = useController(
     'NetworksController',
@@ -168,6 +176,7 @@ const DashboardOverview: FC<Props> = ({
                     totalAmount={totalPortfolioAmount}
                     color={totalPortfolioAmountColor}
                     isPrivacyModeEnabled={isPrivacyModeEnabled}
+                    isTokenPricesEnabled={isTokenPricesEnabled}
                     onPress={togglePrivacyMode}
                     testID="full-balance"
                     badge={

@@ -21,10 +21,18 @@ import {
 } from '@web/modules/dashboard/helpers/dashboardBalanceCache'
 import commonWebStyles from '@web/styles/utils/common'
 
+import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+
+const selectTokenPricesEnabled = (state: FeatureFlagsController) => state.flags?.tokenPrices
+
 // Instant placeholder shown while the data-heavy controllers load
 const DashboardShell = () => {
   const { state: account } = useController('SelectedAccountController', 'account')
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectTokenPricesEnabled
+  )
 
   // Read synchronously so the shell paints the last-known balance on its first render.
   // Keyed on the current address (and TTL-checked), so a value from another account
@@ -62,6 +70,7 @@ const DashboardShell = () => {
                   totalAmount={cachedBalance?.totalBalance || 0}
                   color="#FFFFFF"
                   isPrivacyModeEnabled={isPrivacyModeEnabled}
+                  isTokenPricesEnabled={isTokenPricesEnabled}
                   badge={
                     !showBalanceSkeleton && isCachedBalanceStale ? (
                       <View style={spacings.mrTy}>
