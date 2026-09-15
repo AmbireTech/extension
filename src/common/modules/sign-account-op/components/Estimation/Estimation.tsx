@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
+import {
+  EstimationFailureKind,
+  EstimationStatus
+} from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SpeedCalc, Warning } from '@ambire-common/interfaces/signAccountOp'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
@@ -137,6 +140,11 @@ const Estimation = ({
     open: openCustomGasPriceSheet,
     close: closeCustomGasPriceSheet
   } = useModalize()
+
+  // The estimation failed for a reason that may resolve on its own and there is
+  // no previous result to fall back on, so it keeps asking in the background
+  const isRetryingEstimation =
+    !hasEstimation && signAccountOpState?.estimation.failureKind === EstimationFailureKind.Retriable
 
   const feeTokenPriceUnavailableWarning = useMemo(() => {
     return signAccountOpState?.warnings.find((warning) => warning.id === 'feeTokenPriceUnavailable')
@@ -675,27 +683,32 @@ const Estimation = ({
     return <TitleAndIcon icon={section.title.icon} title={section.title.text} />
   }, [])
 
-  if (!hasEstimation && !!slowRequest) {
+  // A failure the estimation is still retrying keeps the "longer than usual"
+  // warning below. Anything else is a dead end and is rendered elsewhere
+  if (
+    signAccountOpState &&
+    signAccountOpState.estimation.status === EstimationStatus.Error &&
+    !isRetryingEstimation
+  ) {
+    return null
+  }
+
+  if (!hasEstimation && (!!slowRequest || isRetryingEstimation)) {
+    const messagePrefix = slowRequest
+      ? 'Estimating this transaction is taking longer than usual.'
+      : 'Estimating this transaction failed.'
     return (
       <View style={spacings.ptTy}>
         <Alert
           type="warning"
           size="sm"
-          title="Estimating this transaction is taking an unexpectedly long time. We'll keep trying, but it is possible that there's an issue with this network or RPC - please change your RPC provider or contact Ambire support if this issue persists."
+          title={`${messagePrefix} We'll keep trying, but it is possible that there's an issue with this network or RPC - please change your RPC provider or contact Ambire support if this issue persists.`}
         />
       </View>
     )
   }
 
-  if (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Error) {
-    return null
-  }
-
-  if (
-    !signAccountOpState ||
-    (!hasEstimation && signAccountOpState.estimation.estimationRetryError) ||
-    !payValue
-  ) {
+  if (!signAccountOpState || !payValue) {
     if (enableErc4337Prompt) {
       return <View style={spacings.ptTy}>{enableErc4337Prompt}</View>
     }

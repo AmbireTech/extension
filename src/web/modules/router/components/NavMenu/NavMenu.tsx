@@ -9,6 +9,7 @@ import HelpIcon from '@common/assets/svg/HelpIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
 import MaximizeIcon from '@common/assets/svg/MaximizeIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import StarFilledIcon from '@common/assets/svg/StarFilledIcon'
 import TelegramIcon from '@common/assets/svg/TelegramIcon'
 import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import BackButton from '@common/components/BackButton'
@@ -17,14 +18,15 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { AUTO_LOCK_OPTIONS } from '@common/constants/autoLock'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@common/constants/social'
+import { EXTENSION_STORE_REVIEWS_URL } from '@common/constants/stores'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
-import { syncSessionStorage } from '@common/services/storage'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import SettingsLink from '@common/modules/settings/components/SettingsLink'
+import { syncSessionStorage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -35,8 +37,8 @@ import {
   tabLayoutWidths,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import commonWebStyles from '@web/styles/utils/common'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
+import commonWebStyles from '@web/styles/utils/common'
 
 import getStyles from './styles'
 
@@ -67,6 +69,14 @@ const OTHER_LINKS = [
     Icon: AmbireLogoSquare,
     label: 'About',
     path: ROUTES.settingsAbout
+  },
+  {
+    key: 'rate-us',
+    Icon: StarFilledIcon,
+    iconSize: 18,
+    label: 'Rate us',
+    path: EXTENSION_STORE_REVIEWS_URL,
+    isExternal: true
   }
 ]
 
