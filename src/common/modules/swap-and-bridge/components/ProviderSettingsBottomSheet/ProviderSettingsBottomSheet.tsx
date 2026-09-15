@@ -16,11 +16,13 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import type { SwapProviderInfo } from '@ambire-common/interfaces/swapAndBridge'
 import type { Modalize } from 'react-native-modalize'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+const { isTab } = getUiType()
 
 const PROVIDER_ICON_WIDTH = 72
 const PROVIDER_ICON_STYLE = { width: PROVIDER_ICON_WIDTH }
@@ -175,7 +177,7 @@ const ProviderSettingsBottomSheet = ({
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       adjustToContentHeight
-      type="bottom-sheet"
+      type={!isTab ? 'bottom-sheet' : 'modal'}
       HeaderComponent={headerComponent}
       style={SHEET_STYLE}
     >
