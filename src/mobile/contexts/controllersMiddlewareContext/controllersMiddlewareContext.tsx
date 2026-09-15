@@ -6,7 +6,6 @@ import { APP_VERSION } from '@common/config/env'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useCacheDashboardBalance from '@common/hooks/useCacheDashboardBalance'
-import useControllerState from '@common/hooks/useControllerState'
 import useIsAppFocused from '@common/hooks/useIsAppFocused'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
@@ -47,13 +46,8 @@ export const ControllersMiddlewareProvider: React.FC<{
 }> = ({ children }) => {
   const { controllerStore, stateSubscriptionManager } = useContext(ControllerStoreContext)
   const webviewRef = useRef<WebViewWorkerRef>(null)
-  const hasRequestedDeferredControllers = useRef(false)
   const route = useRoute()
   const isFocused = useIsAppFocused()
-  const { state: isAllReady } = useControllerState({
-    id: 'SelectedAccountController',
-    selector: (state) => !!state?.portfolio?.isAllReady
-  })
   const { navigate } = useNavigation()
   const [isWorkerReady, setIsWorkerReady] = useState(false)
   const isOnRootRoute = !route.pathname || route.pathname === '/'
@@ -189,36 +183,6 @@ export const ControllersMiddlewareProvider: React.FC<{
     if (!isFocused) return
     dispatch({ type: 'SET_VIEW_FOCUS', params: { id: MOBILE_VIEW_ID } })
   }, [isFocused, dispatch])
-
-  const path = route.pathname?.replace('/', '') || ''
-  const isOnExploreRoute = path.startsWith(ROUTES.explore)
-  const isOnDashboard = path.startsWith(ROUTES.dashboard)
-
-  // The dapp catalog and the phishing lists are the two heaviest storage reads, so they
-  // stay off the boot path until the portfolio has fully landed - up to that point every
-  // frame is contended and their parsing would stall the dashboard. Opening Explore also
-  // releases them, because that screen cannot render without the catalog and the
-  // portfolio may never reach `isAllReady` (offline, or an account that keeps erroring).
-  // Skipped entirely when both already reported ready, which is the case for a returning
-  // visit or a flow that needed them earlier and initialized them on demand.
-  // Covers the section and webview routes too, which a deep link can open directly
-  // without ever passing through Explore itself.
-  useEffect(() => {
-    if (hasRequestedDeferredControllers.current) return
-    if ((!isAllReady || !isOnDashboard) && !isOnExploreRoute) return
-
-    const areDeferredControllersLoaded = MOBILE_DEFERRED_CONTROLLERS.every(
-      (ctrlName) => (controllerStore.getSnapshot(ctrlName) as { isReady?: boolean }).isReady
-    )
-    if (areDeferredControllersLoaded) return
-
-    const frameHandle = requestAnimationFrame(() => {
-      dispatch({ type: 'INIT_DEFERRED_CONTROLLERS' })
-      hasRequestedDeferredControllers.current = true
-    })
-
-    return () => cancelAnimationFrame(frameHandle)
-  }, [isAllReady, isOnDashboard, isOnExploreRoute, controllerStore, dispatch])
 
   useRequestsControllerHelpers(dispatch)
   useDappsControllerHelpers(dispatch)

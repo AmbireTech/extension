@@ -1,11 +1,13 @@
-import React, { useContext, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { Animated, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GasTankModal from '@common/components/GasTankModal'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
+import { useIsScreenSettled } from '@common/contexts/screenFocusContext'
 import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
@@ -44,6 +46,18 @@ const DashboardScreen = () => {
   const overviewPaddingTop = safeTop > SPACING_XL ? SPACING_MI : SPACING_SM
 
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { dispatch } = useControllersMiddleware()
+  const isScreenSettled = useIsScreenSettled()
+
+  const isShowingRealTree = !!account && areAllControllerStatesLoaded
+
+  // Don't move this out of here - this logic is very finnicky and depends on StackScreen,
+  // the unlock blocking the CPU and the portfolio taking a huge chunk of the CPU's attention.
+  useEffect(() => {
+    if (!portfolio?.isAllReady || !isScreenSettled || !isShowingRealTree) return
+
+    dispatch({ type: 'INIT_DEFERRED_CONTROLLERS' })
+  }, [portfolio?.isAllReady, isScreenSettled, isShowingRealTree, dispatch])
 
   if (!account) return null
 
@@ -55,7 +69,7 @@ const DashboardScreen = () => {
     >
       <View style={flexbox.flex1}>
         <View style={[styles.container, { paddingTop: overviewPaddingTop }]}>
-          {!areAllControllerStatesLoaded ? (
+          {!isShowingRealTree ? (
             <DashboardShell />
           ) : (
             <>
