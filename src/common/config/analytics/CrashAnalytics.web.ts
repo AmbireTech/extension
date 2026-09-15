@@ -14,6 +14,9 @@ export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   // Disables sending personally identifiable information
   sendDefaultPii: false,
   integrations: [],
+  // Sentry is doing some extra work to make sure the fetch it finds is the right one, but it
+  // doesn't work under LavaMoat so we pass it the fetch used in that context.
+  transport: (options) => Sentry.makeFetchTransport(options, (...args) => fetch(...args)),
   // No explicit `event` param type here: annotating this object as
   // Sentry.BrowserOptions lets `event`'s type be inferred contextually as the
   // narrower `ErrorEvent`, which scrubSentryEventSecrets (generic) then
