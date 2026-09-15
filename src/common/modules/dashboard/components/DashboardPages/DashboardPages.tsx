@@ -1,7 +1,6 @@
 import { nanoid } from 'nanoid'
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
 import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
@@ -176,6 +175,7 @@ const DashboardPages = ({
           initTab={initTab}
           animatedOverviewHeight={animatedOverviewHeight}
           network={network}
+          isSearchHidden={isSearchHidden}
           onRefresh={onRefresh}
           refreshing={refreshing}
         />
