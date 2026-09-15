@@ -35,6 +35,17 @@ let forwardRpcRequestId = 0
 const foundDappRpcUrls: string[] = []
 let isDapp = false
 
+
+function logRpcForwardingError(error: unknown) {
+  if (isProd) {
+    // debug is off by default in browsers; keeps page console clean while still diagnosable
+    console.debug('[Ambire] RPC forwarding logic:', error)
+  } else {
+    console.error('RPC forwarding logic:', error)
+  }
+}
+
+
 ;(function () {
   if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
 
@@ -60,11 +71,7 @@ let isDapp = false
         try {
           reqClone = (resource as Request).clone()
         } catch (error) {
-          if (isProd) {
-            // intentionally swallow internal ambire-inpage errors to avoid polluting the page console
-          } else {
-            console.error('RPC forwarding logic:', error)
-          }
+          logRpcForwardingError(error)
         }
 
         if (reqClone) {
@@ -81,11 +88,7 @@ let isDapp = false
               fetchURL = reqClone.url
               fetchBody = body
             } catch (error) {
-              if (isProd) {
-                // intentionally swallow internal ambire-inpage errors to avoid polluting the page console
-              } else {
-                console.error('RPC forwarding logic:', error)
-              }
+              logRpcForwardingError(error)
             }
           }
         }
@@ -100,11 +103,7 @@ let isDapp = false
               if (!foundDappRpcUrls.includes(fetchURL)) foundDappRpcUrls.push(fetchURL) // store potential RPC URL
             }
           } catch (error) {
-            if (isProd) {
-              // intentionally swallow internal ambire-inpage errors to avoid polluting the page console
-            } else {
-              console.error('RPC forwarding logic:', error)
-            }
+            logRpcForwardingError(error)
           }
         } else {
           try {
@@ -120,11 +119,7 @@ let isDapp = false
         }
       }
     })().catch((err) => {
-      if (isProd) {
-        // intentionally swallow internal ambire-inpage errors to avoid polluting the page console
-      } else {
-        console.error('RPC forwarding logic:', err)
-      }
+      logRpcForwardingError(err)
     })
 
     return originalFetch(...args)
