@@ -56,16 +56,22 @@ const KeyStoreUnlockScreen = () => {
   const handleBiometricsPrompt = useCallback(async () => {
     try {
       const biometricsSecret = await getBiometricsSecret()
-      if (biometricsSecret) {
-        keystoreDispatch({
-          type: 'method',
-          params: {
-            method: 'unlockWithSecret',
-            args: ['biometrics', biometricsSecret]
-          }
-        })
+      // No secret means the user cancelled, failed, or the OS locked biometrics out after too many
+      // attempts. The password is the only way in then, so don't leave a dead prompt on screen.
+      if (!biometricsSecret) {
+        setUnlockMethod('password')
+        return
       }
+
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'unlockWithSecret',
+          args: ['biometrics', biometricsSecret]
+        }
+      })
     } catch (e) {
+      setUnlockMethod('password')
       console.log('Biometrics: Authentication failed or cancelled', e)
       // User cancelled or authentication failed (SecureStore throws/rejects on failure with requireAuthentication)
       // We don't need to do much here, the OS already showed the error/prompt.
