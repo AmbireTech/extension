@@ -175,7 +175,6 @@ const ProviderSettingsBottomSheet = ({
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       adjustToContentHeight
-      type="bottom-sheet"
       HeaderComponent={headerComponent}
       style={SHEET_STYLE}
     >

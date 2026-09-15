@@ -17,6 +17,7 @@ export interface BottomSheetProps {
   type?: 'modal' | 'bottom-sheet'
   adjustToContentHeight?: boolean
   modalHeight?: ModalizeProps['modalHeight']
+  modalTopOffset?: ModalizeProps['modalTopOffset']
   style?: ViewStyle
   containerInnerWrapperStyles?: ViewStyle
   flatListProps?: ModalizeProps['flatListProps']
