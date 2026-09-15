@@ -34,7 +34,7 @@ import {
   getTruncatedNetworkName,
   getTruncatedTxnHash
 } from './helpers'
-import { useHumanizedCalls } from './humanizedHelpers'
+import { useHumanizedCalls } from './humanizedCallsHooks'
 import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
 

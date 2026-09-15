@@ -19,7 +19,7 @@ import {
   getVisibleSummaryBalanceChanges,
   MAX_VISIBLE_BALANCE_CHANGES
 } from './helpers'
-import { useDappInteractions } from './humanizedHelpers'
+import { useDappInteractions } from './humanizedCallsHooks'
 import InteractionAddress from './InteractionAddress'
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
