@@ -20,14 +20,6 @@ const PrivacyOptOutsList = () => {
     <View style={isWeb && spacings.mb2Xl}>
       <AmbireApiOptions />
       <OptOutControlOption
-        title={t('ERC-4337 smart account features')}
-        description={t(
-          'Use bundlers and paymasters for smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
-        )}
-        icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
-        flag="erc4337"
-      />
-      <OptOutControlOption
         title={t('ERC-7702 smart account features')}
         description={t(
           `Do not upgrade standard EOA accounts to smart accounts (disabling this doesn't auto revoke any delegations you have set up on your accounts)`
