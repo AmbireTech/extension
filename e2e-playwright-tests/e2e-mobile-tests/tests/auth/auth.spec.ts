@@ -2,8 +2,12 @@ import { execSync } from 'child_process'
 import { KEYSTORE_PASS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
+import { join } from 'path'
 
 import { expect, test } from '../../fixtures/pageObjects'
+
+const ANDROID_HOME = process.env.ANDROID_HOME ?? join(process.env.HOME ?? '', 'Library/Android/sdk')
+const ADB_BIN = join(ANDROID_HOME, 'platform-tools', 'adb')
 
 test.describe('auth', { tag: '@auth-mobile' }, () => {
   test.beforeEach('Reset app to a clean state', async ({ screen, device, bundleId }, testInfo) => {
@@ -11,7 +15,7 @@ test.describe('auth', { tag: '@auth-mobile' }, () => {
 
     if (testInfo.project.name === 'android') {
       // `pm clear` wipes all app data and force-stops it; relaunch for a clean start.
-      execSync(`adb shell pm clear ${bundleId}`)
+      execSync(`"${ADB_BIN}" shell pm clear ${bundleId}`)
       await device.launchApp(bundleId)
 
       // A system dialog can appear right after clearing data — dismiss it if present.
