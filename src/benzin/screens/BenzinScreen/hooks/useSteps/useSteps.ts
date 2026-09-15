@@ -29,6 +29,7 @@ import {
 import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
+import type { Erc7730CallDescriptors } from '@ambire-common/libs/humanizer/erc7730/types'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
@@ -213,6 +214,7 @@ const useSteps = ({
     dispatch: activityDispatch
   } = useController('ActivityController')
   const { dispatchAndWait } = useController('ProvidersController')
+  const { dispatchAndWait: erc7730DispatchAndWait } = useController('Erc7730Controller')
   const benzinActivityOp = useMemo(() => {
     if (!extensionAccOp || !('benzin' in accountsOps)) return null
 
@@ -1054,6 +1056,28 @@ const useSteps = ({
   useEffect(() => {
     if (!network) return
 
+    let isStale = false
+    // Renders the plain humanization immediately (as before), then upgrades the same calls in
+    // place once `Erc7730Controller` resolves the "clear signing" descriptors - avoids a loading
+    // flicker while still showing the detail the live signing flow shows. Any failure leaves the
+    // plain humanization on screen.
+    const enhanceWithErc7730 = (accountOp: AccountOp) => {
+      erc7730DispatchAndWait<'resolveDescriptorsForAccountOp', Erc7730CallDescriptors>({
+        type: 'method',
+        params: { method: 'resolveDescriptorsForAccountOp', args: [accountOp] }
+      })
+        .then((erc7730Descriptors) => {
+          if (isStale || !erc7730Descriptors || !Object.keys(erc7730Descriptors).length) return
+
+          setCalls(
+            parseHumanizer(
+              humanizeAccountOp(accountOp, { erc7730Descriptors }).filter(filterEntryPointAuthCall)
+            )
+          )
+        })
+        .catch(() => null)
+    }
+
     // if we have the extension account op passed, we do not need to
     // wait to show the calls
     if (extensionAccOp) {
@@ -1061,7 +1085,10 @@ const useSteps = ({
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
       setFeeCall(extensionAccOp.feeCall || null)
-      return
+      enhanceWithErc7730(extensionAccOp)
+      return () => {
+        isStale = true
+      }
     }
 
     // A past activity item (no live extensionAccOp) still has its own `calls`, so humanize those
@@ -1072,7 +1099,10 @@ const useSteps = ({
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(submittedAccountOp.accountAddr)
       setFeeCall(submittedAccountOp.feeCall || null)
-      return
+      enhanceWithErc7730(accountOp)
+      return () => {
+        isStale = true
+      }
     }
 
     if (userOpHash && userOp?.hashStatus !== 'found') return
@@ -1109,11 +1139,26 @@ const useSteps = ({
       const humanizedCalls = humanizeAccountOp(accountOp).filter(filterEntryPointAuthCall)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(accountOp.accountAddr)
+      enhanceWithErc7730(accountOp)
       if (decodedFeeCall) {
         setFeeCall(decodedFeeCall)
       }
     }
-  }, [network, txnReceipt, txn, userOpHash, userOp, txnId, extensionAccOp, submittedAccountOp])
+
+    return () => {
+      isStale = true
+    }
+  }, [
+    network,
+    txnReceipt,
+    txn,
+    userOpHash,
+    userOp,
+    txnId,
+    extensionAccOp,
+    submittedAccountOp,
+    erc7730DispatchAndWait
+  ])
 
   return {
     blockData,

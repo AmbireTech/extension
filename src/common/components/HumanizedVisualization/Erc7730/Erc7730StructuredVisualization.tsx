@@ -3,8 +3,8 @@ import { View } from 'react-native'
 
 import { MAX_DISPLAYED_NESTED_CALLDATA_DEPTH } from '@ambire-common/libs/humanizer/erc7730/consts'
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
+import { getErc7730RowLabel, getErc7730RowValues } from '@ambire-common/libs/humanizer/utils'
 import useNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import ChainVisualization from '@common/components/HumanizedVisualization/ChainVisualization'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import { Erc7730StructuredVisualizationProps } from '@common/components/HumanizedVisualization/Erc7730/interfaces'
@@ -17,7 +17,7 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -26,9 +26,10 @@ import {
   getDetailedRows,
   getDetailedValueLines,
   getErc7730IntentText,
+  getErc7730RowInlineValues,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
-  getVisibleErc7730RowsExcludingTitleParts,
+  getVisibleErc7730RowsExcludingIntentFields,
   hasErc7730NativeValueRow,
   hasTokenValue,
   isNestedErc7730Row,
@@ -41,6 +42,17 @@ import {
 const { isSidePanel } = getUiType()
 const withMobileLayout = isMobile || isSidePanel
 const withMobileSummaryLayout = isMobile
+
+// A nested visualization is laid out as an indent, then a gutter holding the connector line and
+// arrow, then its content.
+const NESTED_CONNECTOR_WIDTH = 18
+const NESTED_ROW_INDENT = isSidePanel ? 0 : SPACING_SM
+// A `call` row the legacy modules humanized renders as one flat line, so it has no nested
+// visualization to draw a connector for. It still stands for one embedded call, so it takes the
+// same left offset and stays aligned with the nested calls beside it.
+const flatCallRowIndent = {
+  paddingLeft: NESTED_ROW_INDENT + NESTED_CONNECTOR_WIDTH + SPACING_TY
+}
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
   item,
@@ -94,10 +106,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   const shouldShowDescriptionTitle =
     showDescriptionTitle &&
     !!intentText?.trim() &&
-    detailedRows[0]?.label.trim() !== intentText.trim()
+    (detailedRows[0] ? getErc7730RowLabel(detailedRows[0]).trim() : '') !== intentText.trim()
   // Rows shown directly under the transaction-summary title/intent should not repeat
   // values already rendered as part of the interpolated intent (item.intent).
-  const visibleRows = useMemo(() => getVisibleErc7730RowsExcludingTitleParts(item), [item])
+  const visibleRows = useMemo(() => getVisibleErc7730RowsExcludingIntentFields(item), [item])
   const renderValue = useCallback(
     (valueItem: HumanizerVisualization, overrideTextSize = textSize): React.ReactNode => {
       if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
@@ -295,7 +307,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             flexbox.directionRow,
             flexbox.alignCenter,
             flexbox.wrap,
-            { minWidth: 0, flexShrink: 1 }
+            // The parts carry no surrounding whitespace of their own, so the
+            // spacing between them is the layout's job
+            { minWidth: 0, flexShrink: 1, gap: SPACING_MI }
           ]}
         >
           {item.intent.map((part) => renderValue(part, overrideTextSize))}
@@ -315,7 +329,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           flexbox.wrap,
           {
             minWidth: 0,
-            maxWidth: '100%'
+            maxWidth: '100%',
+            gap: SPACING_TY
           }
         ]}
       >
@@ -323,10 +338,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           const renderedValue = renderValue(value)
           if (!renderedValue) return null
 
-          const isLastElement = value.id === values[values.length - 1]?.id
-
           return (
-            <View key={value.id} style={!isLastElement && spacings.mrTy}>
+            <View key={value.id} style={{ flexShrink: 1, minWidth: 0 }}>
               {renderedValue}
             </View>
           )
@@ -357,7 +370,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
       const nestedTitle = getErc7730IntentText(nestedVisualization)?.trim()
       const shouldShowNestedConnector = getDetailedRows(nestedVisualization).some(
-        (row) => !nestedTitle || row.label.trim() !== nestedTitle
+        (row) => !nestedTitle || getErc7730RowLabel(row).trim() !== nestedTitle
       )
 
       return (
@@ -369,7 +382,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             {
               width: '100%',
               minWidth: 0,
-              paddingLeft: isSidePanel ? 0 : SPACING_SM
+              paddingLeft: NESTED_ROW_INDENT
             },
             nestedIndex > 0 && {
               marginTop: SPACING_TY,
@@ -382,7 +395,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               flexbox.alignCenter,
               {
                 alignSelf: 'stretch',
-                width: 18,
+                width: NESTED_CONNECTOR_WIDTH,
                 marginRight: SPACING_TY
               }
             ]}
@@ -399,9 +412,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 }}
               />
             )}
-            <View style={{ marginTop: SPACING_TY + 3 }}>
-              <RightArrowIcon width={7} height={12} color={theme.secondaryText} />
-            </View>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Erc7730StructuredVisualization
@@ -477,7 +487,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             >
               {visibleRows.map((row) => (
                 <View
-                  key={`${item.id}-transaction-summary-${row.label}-${row.value
+                  key={`${item.id}-transaction-summary-${getErc7730RowLabel(row)}-${getErc7730RowValues(
+                    row
+                  )
                     .map((value) => value.id)
                     .join('-')}`}
                   style={[
@@ -488,14 +500,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     { width: '100%', minWidth: 0 }
                   ]}
                 >
-                  {!!row.label.trim() && (
+                  {!!getErc7730RowLabel(row).trim() && (
                     <Text
                       fontSize={12}
                       weight="regular"
                       appearance="secondaryText"
                       style={[spacings.mrSm, { flexShrink: 1 }]}
                     >
-                      {getTransactionSummaryRowLabel(row.label)}
+                      {getTransactionSummaryRowLabel(getErc7730RowLabel(row))}
                     </Text>
                   )}
                   <View
@@ -507,7 +519,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                       { minWidth: 0, flexShrink: 1 }
                     ]}
                   >
-                    {row.value.map((value, valueIndex) => (
+                    {getErc7730RowInlineValues(row).map((value, valueIndex) => (
                       // `flexShrink`/`minWidth` let the wrapper shrink below the value's
                       // content width. Without them a long unbreakable value (e.g. a
                       // non-EVM recipient hash) keeps its full width and, because the
@@ -612,7 +624,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   numberOfLines={1}
                   style={spacings.mrTy}
                 >
-                  {spenderRow.label}
+                  {getErc7730RowLabel(spenderRow)}
                 </Text>
                 <View
                   style={[
@@ -624,7 +636,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     }
                   ]}
                 >
-                  {spenderRow.value.map((value) => renderValue(value, subtitleTextSize))}
+                  {getErc7730RowValues(spenderRow).map((value) =>
+                    renderValue(value, subtitleTextSize)
+                  )}
                 </View>
               </View>
             )}
@@ -644,7 +658,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
         >
           {summaryRows.map((row, index) => (
             <View
-              key={`${item.id}-summary-${row.label}-${row.value
+              key={`${item.id}-summary-${getErc7730RowLabel(row)}-${getErc7730RowValues(row)
                 .map((value) => value.id)
                 .join('-')}`}
               style={[
@@ -673,7 +687,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                       }
                     ]}
                   >
-                    {row.label}
+                    {getErc7730RowLabel(row)}
                   </Text>
                 )}
               <View
@@ -687,7 +701,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   }
                 ]}
               >
-                {row.value.map((value) => renderValue(value))}
+                {getErc7730RowInlineValues(row).map((value) => renderValue(value))}
               </View>
             </View>
           ))}
@@ -706,16 +720,19 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
         )}
         {detailedRows.map((row) => {
           const actionParts = getDetailedActionParts(row)
-          const rowKey = `${item.id}-${row.label}-${row.value.map((value) => value.id).join('-')}`
+          const isFlatCallRow = row.type === 'call' && !isNestedErc7730Row(row)
+          const rowKey = `${item.id}-${getErc7730RowLabel(row)}-${getErc7730RowValues(row)
+            .map((value) => value.id)
+            .join('-')}`
 
           if (isNestedErc7730Row(row)) {
-            const nestedVisualizations = row.value.filter(isNestedErc7730Value)
+            const nestedVisualizations = getErc7730RowValues(row).filter(isNestedErc7730Value)
 
             return (
               <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
-                {!!row.label.trim() && (
+                {!!getErc7730RowLabel(row).trim() && (
                   <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbTy}>
-                    {row.label}
+                    {getErc7730RowLabel(row)}
                   </Text>
                 )}
                 <View style={{ width: '100%' }}>
@@ -727,8 +744,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
           if (actionParts) {
             return (
-              <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
-                <Text fontSize={textSize} color={theme.secondaryAccent400}>
+              <View
+                key={rowKey}
+                style={[
+                  { width: '100%', paddingVertical: SPACING_TY },
+                  isFlatCallRow && flatCallRowIndent
+                ]}
+              >
+                <Text fontSize={textSize} weight="semiBold" color={theme.secondaryAccent400}>
                   {actionParts.action.content}
                 </Text>
                 {!!actionParts.recipientValues.length && (
@@ -736,7 +759,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     {renderDetailedValueLine(actionParts.recipientValues, 'start')}
                   </View>
                 )}
-                {getDetailedValueLines({ ...row, value: actionParts.rightValues })
+                {getDetailedValueLines(actionParts.rightValues)
                   .filter((line) => line.length)
                   .map((line) => (
                     <View key={line.map((value) => value.id).join('-')} style={spacings.mtMi}>
@@ -748,13 +771,21 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           }
 
           return (
-            <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
-              {!!row.label.trim() && (
+            <View
+              key={rowKey}
+              style={[
+                { width: '100%', paddingVertical: SPACING_TY },
+                isFlatCallRow && flatCallRowIndent
+              ]}
+            >
+              {!!getErc7730RowLabel(row).trim() && (
                 <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbMi}>
-                  {row.label}
+                  {getErc7730RowLabel(row)}
                 </Text>
               )}
-              {getDetailedValueLines(row).map((line) => renderDetailedValueLine(line, 'start'))}
+              {getDetailedValueLines(getErc7730RowValues(row)).map((line) =>
+                renderDetailedValueLine(line, 'start')
+              )}
             </View>
           )
         })}
@@ -771,16 +802,19 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       )}
       {detailedRows.map((row) => {
         const actionParts = getDetailedActionParts(row)
-        const rowKey = `${item.id}-${row.label}-${row.value.map((value) => value.id).join('-')}`
+        const isFlatCallRow = row.type === 'call' && !isNestedErc7730Row(row)
+        const rowKey = `${item.id}-${getErc7730RowLabel(row)}-${getErc7730RowValues(row)
+          .map((value) => value.id)
+          .join('-')}`
 
         if (isNestedErc7730Row(row)) {
-          const nestedVisualizations = row.value.filter(isNestedErc7730Value)
+          const nestedVisualizations = getErc7730RowValues(row).filter(isNestedErc7730Value)
 
           return (
             <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
-              {!!row.label.trim() && (
+              {!!getErc7730RowLabel(row).trim() && (
                 <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbTy}>
-                  {row.label}
+                  {getErc7730RowLabel(row)}
                 </Text>
               )}
               <View style={{ width: '100%' }}>
@@ -802,12 +836,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   width: '100%',
                   paddingVertical: SPACING_TY,
                   flexWrap: 'wrap'
-                }
+                },
+                isFlatCallRow && flatCallRowIndent
               ]}
             >
               <View style={{ flex: 1, minWidth: 160, marginRight: SPACING_SM }}>
                 <Text
                   fontSize={textSize}
+                  weight="semiBold"
                   color={theme.secondaryAccent400}
                   style={{ flexShrink: 1 }}
                 >
@@ -829,7 +865,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   }
                 ]}
               >
-                {getDetailedValueLines({ ...row, value: actionParts.rightValues }).map((line) =>
+                {getDetailedValueLines(actionParts.rightValues).map((line) =>
                   renderDetailedValueLine(line)
                 )}
               </View>
@@ -848,7 +884,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 width: '100%',
                 paddingVertical: SPACING_TY,
                 flexWrap: 'wrap'
-              }
+              },
+              isFlatCallRow && flatCallRowIndent
             ]}
           >
             <Text
@@ -856,7 +893,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               appearance="secondaryText"
               style={{ flex: 1, minWidth: 120, marginRight: SPACING_SM }}
             >
-              {row.label}
+              {getErc7730RowLabel(row)}
             </Text>
             <View
               style={[
@@ -868,7 +905,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 }
               ]}
             >
-              {getDetailedValueLines(row).map((line) => renderDetailedValueLine(line))}
+              {getDetailedValueLines(getErc7730RowValues(row)).map((line) =>
+                renderDetailedValueLine(line)
+              )}
             </View>
           </View>
         )

@@ -2,9 +2,9 @@ import { Dapp } from '@ambire-common/interfaces/dapp'
 import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { submittedAccountOpToAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
-import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
 import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import type { HumanizerVisualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
 
 import { DappInteraction, SubmittedAccountOpLike } from './types'
 
@@ -59,8 +59,23 @@ export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
   }))
 }
 
-export const getDappInteractions = (
-  submittedAccountOp: SubmittedAccountOpLike
+// The verbs a call's intent uses for a plain outgoing transfer. Both are matched because an
+// ERC-7730 descriptor may word it either way, and an interpolated intent leads with the template's
+// own verb rather than with the descriptor's plain `intent`.
+const SEND_INTENT_WORDS = ['send', 'transfer']
+
+const isSendVisualization = (visualization?: HumanizerVisualization): boolean => {
+  if (!visualization) return false
+
+  const intentText =
+    visualization.type === 'erc7730' ? visualization.intent[0]?.content : visualization.content
+
+  return !!intentText && SEND_INTENT_WORDS.includes(intentText.trim().toLowerCase())
+}
+
+export const getDappInteractionsFromHumanizedCalls = (
+  submittedAccountOp: SubmittedAccountOpLike,
+  humanizedCalls: IrCall[]
 ): DappInteraction[] => {
   if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
     const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
@@ -77,19 +92,13 @@ export const getDappInteractions = (
 
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
-  const humanizedCalls = getHumanizedCalls(submittedAccountOp)
   const walletStakingInteraction = getWalletStakingInteraction(humanizedCalls)
   if (walletStakingInteraction) return [walletStakingInteraction]
 
   const sendAddresses = Array.from(
     new Set(
       humanizedCalls.flatMap((call) => {
-        const firstVisualization = call.fullVisualization?.[0]
-        const isSend =
-          firstVisualization?.type === 'erc7730'
-            ? firstVisualization.intent[0]?.content === 'Send'
-            : firstVisualization?.content === 'Send'
-        if (!isSend) return []
+        if (!isSendVisualization(call.fullVisualization?.[0])) return []
 
         return flattenHumanizerVisualizations(call.fullVisualization).flatMap((item) =>
           item.type === 'address' && item.address ? [item.address] : []
