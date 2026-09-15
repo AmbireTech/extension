@@ -3,13 +3,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
+import { STK_WALLET, WALLET_STAKING_ADDR } from '@ambire-common/consts/addresses'
+import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
+import EarnIcon from '@common/assets/svg/EarnIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
+import UnstakeIcon from '@common/assets/svg/UnstakeIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
+import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
@@ -19,6 +24,8 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 
+import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
+import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
 type UseTokenActionsOptions = {
   /**
    * When set, a zero-balance token keeps Send disabled but shows this tooltip explaining why
@@ -36,15 +43,39 @@ type UseTokenActionsOptions = {
    * hold), so hiding it would have no effect and the Hide button is disabled.
    */
   isNotInPortfolio?: boolean
+  /** Adds the Wallet Staking shortcut for the supported WALLET token contracts. */
+  enableWalletStakingAction?: boolean
+}
+
+const selectXWalletLockedShares = (state: SelectedAccountController) =>
+  state.portfolio.walletStaking?.lockedShares
+
+const WALLET_STAKING_ACTIONS: Record<
+  string,
+  {
+    text: 'Withdraw' | 'Unstake'
+    icon: typeof EarnIcon
+    strokeWidth?: number
+    mode: WalletStakingMode
+  }
+> = {
+  [WALLET_STAKING_ADDR.toLowerCase()]: {
+    text: 'Withdraw',
+    icon: WithdrawIcon,
+    strokeWidth: 1,
+    mode: 'unstake'
+  },
+  [STK_WALLET.toLowerCase()]: { text: 'Unstake', icon: UnstakeIcon, mode: 'unstake' }
 }
 
 /**
- * Builds the token-details footer actions (send, swap/bridge, top up, hide) and the hide-token
- * modal wiring for a given token. Extracted from useTokenDetails so both the portfolio token
- * details and the trending token details screens can share the exact same footer.
+ * Builds the token-details footer actions and the hide-token modal wiring for a given token.
+ * Extracted from useTokenDetails so both the portfolio token details and the trending token
+ * details screens can share the exact same footer.
  */
 const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOptions = {}) => {
-  const { noBalanceSendTooltip, enableSwapToBuy, isNotInPortfolio } = options
+  const { noBalanceSendTooltip, enableSwapToBuy, isNotInPortfolio, enableWalletStakingAction } =
+    options
   const { navigate } = useNavigation()
   const {
     ref: hideTokenModalRef,
@@ -54,6 +85,10 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const { addToast } = useToast()
   const { t } = useTranslation()
   const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: lockedShares } = useController(
+    'SelectedAccountController',
+    selectXWalletLockedShares
+  )
   const {
     state: { flags }
   } = useController('FeatureFlagsController')
@@ -96,6 +131,17 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const canToToppedUp = token?.flags.canTopUpGasTank
   const shouldDisableSwapAndBridge =
     network?.isNotSupported || isGasTankOrRewardsToken || isAmountZero
+  const stakingAction =
+    enableWalletStakingAction && token?.chainId === ETHEREUM_CHAIN_ID
+      ? WALLET_STAKING_ACTIONS[token.address.toLowerCase()]
+      : undefined
+  // Withdrawing is only possible for shares already committed to a pending unstake, which are the
+  // ones the staking contract keeps locked. With none locked there's nothing to withdraw, so the
+  // button is left out rather than shown leading to an empty screen. It also stays out until the
+  // locked shares are known, the same as the legacy badge on the dashboard and token details.
+  const hasNothingToWithdraw =
+    stakingAction?.text === 'Withdraw' && (lockedShares === undefined || lockedShares <= 0n)
+  const walletStakingAction = hasNothingToWithdraw ? undefined : stakingAction
 
   const { canUseGasTank, disabledReason } = useHasGasTank({ account })
 
@@ -300,18 +346,6 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
           strokeWidth: 1,
           testID: 'top-up-button'
         },
-        // Note: Withdraw is not implemented yet, so it is disabled.
-        // {
-        //   id: 'withdraw',
-        //   text: t('Withdraw'),
-        //   icon: WithdrawIcon,
-        //   onPress: () => {},
-        //   isDisabled: true,
-        //   tooltipText: isGasTankToken
-        //     ? t('Gas Tank deposits cannot be withdrawn.')
-        //     : notImplementedYetTooltipText,
-        //   strokeWidth: 1
-        // },
         {
           id: 'hide-unhide',
           testID: 'hide-token-button',
@@ -325,6 +359,15 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
           icon: isHidden ? VisibilityIcon : InvisibilityIcon,
           // @TODO: Handle unhide and make the UX good
           onPress: handleHideTokenFromButton
+        },
+        walletStakingAction && {
+          id: 'wallet-staking',
+          testID: 'wallet-staking-button',
+          text: t(walletStakingAction.text),
+          icon: walletStakingAction.icon,
+          strokeWidth: walletStakingAction.strokeWidth,
+          onPress: () =>
+            navigate(ROUTES.walletStaking, { state: { mode: walletStakingAction.mode } })
         }
       ].filter(Boolean) as any[],
     [
@@ -343,7 +386,8 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
       navigate,
       gasTankAssets,
       gasTankAssetsError,
-      addToast
+      addToast,
+      walletStakingAction
     ]
   )
 

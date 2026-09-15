@@ -1,7 +1,7 @@
 import React, { FC, Fragment, memo } from 'react'
 import { View } from 'react-native'
 
-import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
+import type { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import ManifestImage from '@common/components/ManifestImage'
