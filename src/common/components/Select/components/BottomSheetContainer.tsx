@@ -26,6 +26,7 @@ type Props = Pick<RenderSelectedOptionParams, 'isMenuOpen' | 'toggleMenu'> & {
   sectionListProps?: SectionListProps<any, any> & { ref?: React.Ref<any> }
   flatListProps?: FlatListProps<any> & { ref?: React.Ref<any> }
   HeaderComponent?: React.ReactNode
+  onBottomSheetClosed?: () => void
 }
 
 const BottomSheetContainer: FC<Props> = ({
@@ -37,7 +38,8 @@ const BottomSheetContainer: FC<Props> = ({
   contentRef,
   sectionListProps,
   flatListProps,
-  HeaderComponent
+  HeaderComponent,
+  onBottomSheetClosed
 }) => {
   const { theme } = useTheme()
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
@@ -55,7 +57,8 @@ const BottomSheetContainer: FC<Props> = ({
   // closed by dragging it down.
   const handleClosed = useCallback(() => {
     setIsMenuOpen(false)
-  }, [setIsMenuOpen])
+    onBottomSheetClosed?.()
+  }, [onBottomSheetClosed, setIsMenuOpen])
 
   const bottomSheetStyle = useMemo(
     () => ({

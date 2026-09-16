@@ -30,7 +30,7 @@ type Props = {
   onRecipientAddressUnknownAgree?: () => void
 }
 
-const { isRequestWindow } = getUiType()
+const { isRequestWindow, isSidePanel } = getUiType()
 
 const Buttons: FC<Props> = ({
   signAccountOpErrors,
@@ -131,7 +131,7 @@ const Buttons: FC<Props> = ({
             }
             size={isWeb ? 'smaller' : 'regular'}
             disabled={startBatchingDisabled}
-            type="secondary"
+            type={isSidePanel ? 'tertiary' : 'secondary'}
             tooltipDataSet={createGlobalTooltipDataSet({
               id: 'start-batch-info-tooltip',
               content: startBatchingInfo
