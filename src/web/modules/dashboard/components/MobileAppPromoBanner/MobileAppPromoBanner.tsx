@@ -1,11 +1,11 @@
 import React from 'react'
-import { Animated, Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import { useModalize } from 'react-native-modalize'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { isMobile } from '@common/config/env'
-import { DURATIONS, useMultiHover } from '@common/hooks/useHover'
+import { AnimatedPressable, DURATIONS, useMultiHover } from '@common/hooks/useHover'
 import useController from '@common/hooks/useController'
 
 import AnimatedGradientBorder from './AnimatedGradientBorder'
@@ -13,11 +13,6 @@ import { COLLAPSED_WIDTH, PEEK_WIDTH } from './constants'
 import MobileAppInfoBottomSheet from './MobileAppInfoBottomSheet'
 import PillContent from './PillContent'
 import styles from './styles'
-
-// Collapsed, only PEEK_WIDTH of the sliding inner layer is visible inside `container`'s
-// clip - the rest hangs off its right side. `container` itself (the hover-detection box)
-// never moves or resizes, so the slide can't chase/lose the cursor mid-transition.
-const HIDDEN_OFFSET = COLLAPSED_WIDTH - PEEK_WIDTH
 
 const selectMobileInviteKey = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio.mobileInviteKey
@@ -29,8 +24,16 @@ const MobileAppPromoBanner = () => {
   )
   const { ref: sheetRef, open: openInfoSheet, close: closeInfoSheet } = useModalize()
 
+  // `container` itself is the hover box, and its `width` is what's animated (not an inner
+  // layer) - collapsed, it's exactly PEEK_WIDTH, so only the actually visible sliver is
+  // hoverable. This is safe from the earlier feedback-loop bug (where animating a box's
+  // own edge under a stationary cursor fired a spurious hover-out): `right: 0` is fixed,
+  // so growing only ever adds area to the left - a cursor already inside the collapsed
+  // (smallest) bounds stays inside for the whole transition, it's never chased/dropped.
   const [bindAnim, animStyle] = useMultiHover({
-    values: [{ property: 'marginLeft', from: HIDDEN_OFFSET, to: 0, duration: DURATIONS.REGULAR }]
+    values: [
+      { property: 'width', from: PEEK_WIDTH, to: COLLAPSED_WIDTH, duration: DURATIONS.REGULAR }
+    ]
   })
 
   // This component only ever gets bundled from src/web/, so `isMobile` (the native
@@ -42,18 +45,16 @@ const MobileAppPromoBanner = () => {
 
   return (
     <>
-      <Pressable style={styles.container} {...bindAnim}>
-        <View style={styles.slideClip}>
-          <Animated.View style={[styles.headerRow, animStyle]}>
-            <View style={styles.borderClip} pointerEvents="none">
-              <View style={styles.borderLayer}>
-                <AnimatedGradientBorder />
-              </View>
+      <AnimatedPressable style={[styles.container, animStyle]} {...bindAnim}>
+        <View style={styles.headerRow}>
+          <View style={styles.borderClip} pointerEvents="none">
+            <View style={styles.borderLayer}>
+              <AnimatedGradientBorder />
             </View>
-            <PillContent onPress={openInfoSheet} />
-          </Animated.View>
+          </View>
+          <PillContent onPress={openInfoSheet} />
         </View>
-      </Pressable>
+      </AnimatedPressable>
       <MobileAppInfoBottomSheet
         sheetRef={sheetRef}
         closeBottomSheet={closeInfoSheet}
