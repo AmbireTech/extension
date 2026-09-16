@@ -257,7 +257,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   return (
     <ItemPanel
       style={{
-        ...spacings.pv,
+        ...spacings.pvSm,
         ...spacings.pl,
         ...(isMobile ? {} : spacings.prMd)
       }}

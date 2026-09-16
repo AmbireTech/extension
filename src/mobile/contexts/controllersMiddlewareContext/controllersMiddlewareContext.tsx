@@ -4,7 +4,7 @@ import { Platform as RNPlatform } from 'react-native'
 
 import { NavigateOptions } from '@ambire-common/interfaces/ui'
 import { LIFI_EXPLORER_URL } from '@ambire-common/services/lifi/consts'
-import { APP_VERSION } from '@common/config/env'
+import { APP_VERSION, isDev } from '@common/config/env'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useIsAppFocused from '@common/hooks/useIsAppFocused'
@@ -118,6 +118,13 @@ export const ControllersMiddlewareProvider: React.FC<{
       ?.init({
         APP_VERSION,
         platform: `mobile-${RNPlatform.OS}`,
+        // Sent as the x-app-version header on the requests to Ambire APIs. Same shape as
+        // the extension's `extension-<version>-<engine>`, so the analytics can tell the
+        // apps and their platforms apart.
+        appVersionHeader: `mobile-${APP_VERSION}-${RNPlatform.OS}`,
+        // Sent as the x-app-env header. No staging builds on mobile, so the value set is
+        // the extension's minus 'next'.
+        appEnv: isDev ? 'dev' : 'prod',
         RELAYER_URL,
         VELCRO_URL,
         LIFI_EXPLORER_URL,

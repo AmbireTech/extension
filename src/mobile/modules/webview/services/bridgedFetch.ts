@@ -132,10 +132,13 @@ class BridgedResponse {
  * Creates a fetch function that proxies requests through the RN bridge.
  *
  * @param sendToRNAsync - The bridge messaging function (postMessage → response)
+ * @param decorateRequest - Adds the analytics headers and url params at call time,
+ * since they depend on controller state that is not ready at boot
  * @returns A fetch-compatible function
  */
 export const createBridgedFetch = (
-  sendToRNAsync: (type: string, payload: any) => Promise<any>
+  sendToRNAsync: (type: string, payload: any) => Promise<any>,
+  decorateRequest?: (url: string) => { url: string; headers: Record<string, string> }
 ): Fetch => {
   return async (
     input: FetchInput,
@@ -206,6 +209,14 @@ export const createBridgedFetch = (
           body = String(init.body)
         }
       }
+    }
+
+    // Applied last, so that the caller can never overwrite the analytics data
+    if (decorateRequest) {
+      const decorated = decorateRequest(url)
+
+      url = decorated.url
+      Object.assign(headers, decorated.headers)
     }
 
     // Send through bridge and reconstruct response

@@ -53,8 +53,11 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
     [accountPreferences, close, updateLocalPreferences]
   )
 
-  // No need to display this if there is only 1 account available, as there is no choice to be made.
-  if (accounts.length <= 1 || !selectedAccount) return null
+  if (!selectedAccount) return null
+
+  // There is no choice to be made with a single account, but the option is still
+  // displayed (disabled) so it doesn't look like the feature is missing or broken.
+  const hasNoAccountsToChooseFrom = accounts.length <= 1
 
   return (
     <>
@@ -63,49 +66,58 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
         selectedCount={accountPreferences?.accounts.length || 0}
         onToggle={toggleOnlyConnectWithSomeAccounts}
         onOpenAccountSelector={handleOpenBottomSheet}
+        disabled={hasNoAccountsToChooseFrom}
+        disabledTooltip={{
+          id: 'dapp-connect-scoped-accounts-toggle-tooltip',
+          content: t(
+            'You have only one account imported. Add another account to choose which ones to connect with the app.'
+          )
+        }}
       />
-      <BottomSheet
-        id="dapp-connect-account-selector"
-        sheetRef={ref}
-        style={{ maxWidth: 624, ...spacings.pb0 }}
-        containerInnerWrapperStyles={flexbox.flex1}
-        closeBottomSheet={() => handleCloseBottomSheet(false)}
-        isScrollEnabled={false}
-      >
-        <ModalHeader title={t('Select which accounts you want to connect with the app')} />
-        <DAppAccountList
-          accounts={orderedAccountList}
-          allowedAccounts={localPreferences?.accounts || []}
-          onToggleAccount={toggleSelectAccount}
-        />
-        <FooterGlassView absolute={isSidePanel} preferGlassFooter={isSidePanel}>
-          <Button
-            type="secondary"
-            text={t('Cancel')}
-            onPress={() => handleCloseBottomSheet(false)}
-            hasBottomSpacing={false}
-            style={{ ...spacings.mrLg, width: 120 }}
+      {!hasNoAccountsToChooseFrom && (
+        <BottomSheet
+          id="dapp-connect-account-selector"
+          sheetRef={ref}
+          style={{ maxWidth: 624, ...spacings.pb0 }}
+          containerInnerWrapperStyles={flexbox.flex1}
+          closeBottomSheet={() => handleCloseBottomSheet(false)}
+          isScrollEnabled={false}
+        >
+          <ModalHeader title={t('Select which accounts you want to connect with the app')} />
+          <DAppAccountList
+            accounts={orderedAccountList}
+            allowedAccounts={localPreferences?.accounts || []}
+            onToggleAccount={toggleSelectAccount}
           />
-          <View
-            dataSet={createGlobalTooltipDataSet({
-              id: 'dapp-connect-account-selector-continue-button-tooltip',
-              hidden: !isContinueDisabled,
-              content: t('Please select an account to connect')
-            })}
-          >
+          <FooterGlassView absolute={isSidePanel} preferGlassFooter={isSidePanel}>
             <Button
-              onPress={() => {
-                save()
-                handleCloseBottomSheet(true)
-              }}
-              style={{ width: 160 }}
-              text={t('Continue')}
+              type="secondary"
+              text={t('Cancel')}
+              onPress={() => handleCloseBottomSheet(false)}
               hasBottomSpacing={false}
-              disabled={isContinueDisabled}
+              style={{ ...spacings.mrLg, width: 120 }}
             />
-          </View>
-        </FooterGlassView>
-      </BottomSheet>
+            <View
+              dataSet={createGlobalTooltipDataSet({
+                id: 'dapp-connect-account-selector-continue-button-tooltip',
+                hidden: !isContinueDisabled,
+                content: t('Please select an account to connect')
+              })}
+            >
+              <Button
+                onPress={() => {
+                  save()
+                  handleCloseBottomSheet(true)
+                }}
+                style={{ width: 160 }}
+                text={t('Continue')}
+                hasBottomSpacing={false}
+                disabled={isContinueDisabled}
+              />
+            </View>
+          </FooterGlassView>
+        </BottomSheet>
+      )}
     </>
   )
 }

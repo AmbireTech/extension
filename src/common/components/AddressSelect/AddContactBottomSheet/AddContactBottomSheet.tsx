@@ -1,5 +1,6 @@
 import React, { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Modalize } from 'react-native-modalize'
 
 import AddressBookContact from '@common/components/AddressBookContact'
 import BottomSheet from '@common/components/BottomSheet'
@@ -16,7 +17,7 @@ import useCompactActionRequestLayout from '@common/modules/action-requests/hooks
 import spacings from '@common/styles/spacings'
 
 interface Props {
-  sheetRef: any
+  sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
   address: string
 }

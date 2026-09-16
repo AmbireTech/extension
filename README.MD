@@ -28,6 +28,13 @@
   </p>
 </div>
 
+## Third-party integrations
+
+Ambire is self-custodial: it never takes custody of user funds and is not a counterparty to any trade. Where a feature relies on third-party services, the providers, their public documentation and terms, and any fee are documented per feature:
+
+- [Swap & Bridge](./src/common/modules/swap-and-bridge/README.md) - a user interface on top of independent third-party aggregators
+- [Explore](./src/common/modules/explore/README.md) - a directory of bookmarks to public third-party websites, opened in the user's own browser or, on mobile, in an in-app browser
+
 ## Environment Setup
 
 Built in a hybrid approach (with React Native and React Native Web) so that in a single codebase we can support building cross-browser extensions, mobile apps and web apps.
@@ -67,6 +74,14 @@ git submodule update
 ## Environment Variables
 
 Create ".env" file in the root directory and fill in all variables, see ".env-sample" for a reference.
+
+## Crash Analytics
+
+Ambire sends anonymous crash reports to a self-hosted Sentry, so we can find and fix bugs without asking anyone to reproduce them.
+
+The safeguards we use to keep private keys, seed phrases, passwords and other sensitive data out of these reports are documented in [`CRASH-ANALYTICS.md`](./src/common/config/analytics/CRASH-ANALYTICS.md).
+
+Users can opt out of sending crash analytics at any time from Settings - Privacy opt-outs.
 
 ## Editor Config
 
@@ -469,13 +484,11 @@ $LEDGER_EMULATOR_SEED='<LEDGER-SEED-PHRASE>' ./start-emulator.sh
 lsof -i :5000
 ```
 
-If nothing is returned, the port is free.
-If you see a process listed, the port is occupied.
+If nothing is returned, the port is free. If you see a process listed, the port is occupied.
 
 2. **macOS specific context**
 
-On macOS, port 5000 is commonly taken by AirPlay Receiver (enabled by default on newer macOS versions).
-To check:
+On macOS, port 5000 is commonly taken by AirPlay Receiver (enabled by default on newer macOS versions). To check:
 
 System Settings → General → AirDrop & Handoff → AirPlay Receiver
 
