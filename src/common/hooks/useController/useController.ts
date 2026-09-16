@@ -154,7 +154,6 @@ export default function useController<
         ...action,
         params: { ...action.params, ctrlName: id, args: [...action.params.args, requestId] }
       } as never as AnyControllerAction
-      controllersMiddlewareDispatch(ctrlAction as any)
 
       return new Promise<R>((resolve, reject) => {
         let settled = false
@@ -191,7 +190,10 @@ export default function useController<
           )
         }, timeoutMs)
 
+        // Listen before dispatching: on mobile the controllers run in this realm and
+        // can reply synchronously, before a listener added afterwards would exist
         eventBus.addEventListener('receiveOneTimeData', onResponse)
+        controllersMiddlewareDispatch(ctrlAction as any)
       })
     },
     [controllersMiddlewareDispatch, id]
