@@ -4,6 +4,7 @@ import { Animated, Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import { isMobile } from '@common/config/env'
 import { DURATIONS, useMultiHover } from '@common/hooks/useHover'
 import useController from '@common/hooks/useController'
 
@@ -32,9 +33,12 @@ const MobileAppPromoBanner = () => {
     values: [{ property: 'marginLeft', from: HIDDEN_OFFSET, to: 0, duration: DURATIONS.REGULAR }]
   })
 
+  // This component only ever gets bundled from src/web/, so `isMobile` (the native
+  // iOS/Android app) can never actually be true here - kept as an explicit guard anyway,
+  // since the mobile app must never show a banner promoting itself.
   // The relayer only returns a mobile invite key for accounts it has generated one for -
   // hide the whole promo when there isn't one to activate the mobile app with.
-  if (!mobileInviteKey) return null
+  if (isMobile || !mobileInviteKey) return null
 
   return (
     <>
