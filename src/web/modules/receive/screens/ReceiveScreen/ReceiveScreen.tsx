@@ -91,7 +91,7 @@ const ReceiveScreen: FC = () => {
               style={[
                 flexbox.directionRow,
                 isSidePanel
-                  ? [flexbox.alignCenter, { width: '100%' }]
+                  ? [flexbox.alignCenter, { alignSelf: 'center' }]
                   : [flexbox.center, { flexShrink: 1, minWidth: 0, maxWidth: '100%' }]
               ]}
             >
