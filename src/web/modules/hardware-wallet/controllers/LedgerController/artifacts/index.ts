@@ -6,8 +6,7 @@ import { AMBIRE_SIGNER_NANO_S_PLUS_APDU } from './ambireSignerNanoSPlus'
 import { AMBIRE_SIGNER_NANO_X_APDU } from './ambireSignerNanoX'
 import { AMBIRE_SIGNER_STAX_APDU } from './ambireSignerStax'
 
-/** The on-device name of the sideloaded app, as baked into every build below. */
-export const AMBIRE_SIGNER_APP_NAME = 'Ambire Signer'
+export { AMBIRE_SIGNER_APP_NAME } from './constants'
 
 // Per-device-model "Ambire Signer" load scripts, keyed by the connected model.
 // Sideloading works on Nano S Plus, Stax, Flex and Apex. The Nano X entry is
