@@ -27,7 +27,8 @@ const style: {
 } = {
   'update-available': {
     overflow: 'hidden',
-    width: 496,
+    width: '100%',
+    maxWidth: 496,
     ...spacings.ph0,
     ...spacings.pv0
   }

@@ -11,11 +11,14 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
 /** Matches the original mobile token-details footer icon hit area. */
 const ICON_AREA_HEIGHT = 52
+
+const { isSidePanel } = getUiType()
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 interface Props {
@@ -53,11 +56,12 @@ const TokenDetailsButton: FC<Props> = ({
   // Compact = mobile or narrow side panel — both use the original mobile button styles.
   const { isCompactLayout } = useCompactActionRequestLayout()
   const shouldUseCompactLayout = isCompactLayout || forceCompact
+  // Side panel uses the tertiary (mobile-like) hover colors instead of the popup/tab secondary ones.
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: isWeb ? theme.primaryBackground : theme.secondaryBackground,
-      to: isWeb ? theme.secondaryBackground : theme.tertiaryBackground
+      from: isWeb && !isSidePanel ? theme.primaryBackground : theme.secondaryBackground,
+      to: isWeb && !isSidePanel ? theme.secondaryBackground : theme.tertiaryBackground
     }
   })
   const tooltipId = `tooltip-${id}`

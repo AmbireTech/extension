@@ -101,14 +101,9 @@ const TokenDetailsScreen = () => {
       </ScrollableWrapper>
       <FooterGlassView
         size="sm"
-        style={shouldUseCompactFooter ? spacings.phSm : undefined}
-        glassViewProps={
-          shouldUseCompactFooter ? { cssStyle: { width: '100%', alignSelf: 'stretch' } } : undefined
-        }
+        fullWidth={isCompactSidePanelLayout}
         innerContainerStyle={
-          shouldUseCompactFooter
-            ? { gap: SPACING_MI, width: '100%', alignItems: 'stretch' }
-            : undefined
+          isCompactSidePanelLayout ? { flexDirection: 'row', gap: SPACING_MI } : undefined
         }
       >
         {actions.map((action, index) => (

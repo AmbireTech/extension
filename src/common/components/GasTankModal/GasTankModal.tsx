@@ -18,6 +18,7 @@ import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
@@ -47,6 +48,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     state: { flags }
   } = useController('FeatureFlagsController')
   const { canUseGasTank, disabledReason, requiresEip7702 } = useHasGasTank({ account })
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const isErc4337Enabled = flags.erc4337
   const isEip7702Enabled = flags.eip7702
   const isGasTankEnabled = isErc4337Enabled && (!requiresEip7702 || isEip7702Enabled)
@@ -152,14 +154,25 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           size="sm"
           style={{ ...flexbox.flex1, alignItems: 'stretch' }}
           mobileStyle={{ flexDirection: 'column' }}
-          innerContainerStyle={{
-            ...flexbox.justifySpaceBetween,
-            ...flexbox.alignCenter,
-            ...flexbox.flex1
-          }}
+          innerContainerStyle={
+            isCompactSidePanelLayout
+              ? undefined
+              : {
+                  ...flexbox.justifySpaceBetween,
+                  ...flexbox.alignCenter,
+                  ...flexbox.flex1
+                }
+          }
           absolute={false}
+          fullWidth={isCompactSidePanelLayout}
         >
-          <View style={[flexbox.directionRow, flexbox.alignCenter, isMobile && spacings.mbLg]}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              (isMobile || isCompactSidePanelLayout) && spacings.mbLg
+            ]}
+          >
             <TokenIcon
               withContainer
               address={token?.address || ''}
@@ -185,7 +198,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             testID="top-up-gas-tank-modal-button"
             type="primary"
             text={t('Top up')}
-            size={isMobile ? 'regular' : 'smaller'}
+            size={isMobile || isCompactSidePanelLayout ? 'regular' : 'smaller'}
             hasBottomSpacing={false}
             style={{
               minWidth: 128

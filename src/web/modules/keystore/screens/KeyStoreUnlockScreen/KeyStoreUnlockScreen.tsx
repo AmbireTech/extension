@@ -360,7 +360,7 @@ const KeyStoreUnlockScreen = () => {
 
             {canUseBiometrics && (
               <Button
-                type="secondary"
+                type={isSidePanel ? 'tertiary' : 'secondary'}
                 hasBottomSpacing={false}
                 style={[styles.switchButton, spacings.mt]}
                 text={t('Unlock with biometrics')}
