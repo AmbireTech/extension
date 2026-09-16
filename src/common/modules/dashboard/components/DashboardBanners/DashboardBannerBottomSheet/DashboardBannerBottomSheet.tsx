@@ -1,8 +1,8 @@
-import React, { FC } from 'react'
+import { memo, RefObject, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
-import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
+import { getIsIntentRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
@@ -13,9 +13,11 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
+import type { FC } from 'react'
+
 type Props = {
   id: string
-  sheetRef: React.RefObject<any>
+  sheetRef: RefObject<any>
   closeBottomSheet: () => void
 }
 
@@ -37,6 +39,19 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
   const { t } = useTranslation()
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { state: activeRoutes } = useController('SwapAndBridgeController', 'activeRoutes')
+  const intentRoutes = useMemo(
+    () =>
+      activeRoutes.filter(
+        (activeRoute) =>
+          activeRoute.route &&
+          getIsIntentRoute(activeRoute.route) &&
+          (activeRoute.routeStatus === 'in-progress' ||
+            activeRoute.routeStatus === 'completed' ||
+            activeRoute.routeStatus === 'refunded' ||
+            activeRoute.routeStatus === 'failed')
+      ),
+    [activeRoutes]
+  )
 
   if (!WITH_BOTTOM_SHEET.includes(id)) return null
 
@@ -77,28 +92,17 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
             weight="medium"
             style={[spacings.mbLg, isMobile && text.center]}
           >
-            {t('Pending bridge transactions')}
+            {t('Pending transactions')}
           </Text>
-          {activeRoutes
-            .filter(
-              (route) =>
-                route.route &&
-                getIsBridgeRoute(route.route) &&
-                (route.routeStatus === 'in-progress' ||
-                  route.routeStatus === 'completed' ||
-                  route.routeStatus === 'refunded' ||
-                  route.routeStatus === 'failed')
-            )
-
-            .map((route) => (
-              <View key={route.activeRouteId} style={spacings.mbTy}>
-                <ActiveRouteCard activeRoute={route} />
-              </View>
-            ))}
+          {intentRoutes.map((activeRoute) => (
+            <View key={activeRoute.activeRouteId} style={spacings.mbTy}>
+              <ActiveRouteCard activeRoute={activeRoute} />
+            </View>
+          ))}
         </View>
       )}
     </BottomSheet>
   )
 }
 
-export default DashboardBannerBottomSheet
+export default memo(DashboardBannerBottomSheet)
