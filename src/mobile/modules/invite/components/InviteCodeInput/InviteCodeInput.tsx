@@ -2,6 +2,7 @@ import React, { useCallback } from 'react'
 
 import Input from '@common/components/Input'
 import { useTranslation } from '@common/config/localization'
+import { GEIST_MONO_FONT_FAMILIES } from '@common/hooks/useFonts/constants'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -75,7 +76,10 @@ const InviteCodeInput = ({ value, onChange, onSubmitEditing, editable = true, er
       onButtonPress={handlePaste}
       maxLength={INVITE_CODE_LENGTH}
       error={error}
-      nativeInputStyle={{ fontSize: 16, letterSpacing: 2 }}
+      // Mono font keeps the code's chars evenly spaced and easy to proofread. Note that
+      // `letterSpacing` can't be used for this, because on iOS it leaks into the text of
+      // inputs mounted afterwards on other screens.
+      nativeInputStyle={{ fontSize: 16, fontFamily: GEIST_MONO_FONT_FAMILIES.REGULAR }}
       containerStyle={spacings.mbLg}
       backgroundColor={theme.secondaryBackground}
       autoFocus

@@ -65,7 +65,8 @@ const SelectContainer: FC<Props> = ({
   listRef,
   sectionListProps,
   flatListProps,
-  renderHeaderChildren
+  renderHeaderChildren,
+  onBottomSheetClosed
 }) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -205,6 +206,7 @@ const SelectContainer: FC<Props> = ({
           sectionListProps={sectionListProps}
           flatListProps={flatListProps}
           HeaderComponent={bottomSheetHeader}
+          onBottomSheetClosed={onBottomSheetClosed}
         >
           {children}
         </BottomSheetContainer>
