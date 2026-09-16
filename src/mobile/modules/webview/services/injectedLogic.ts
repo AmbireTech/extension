@@ -318,6 +318,7 @@ const initControllers = (config: any) => {
       relayerUrl: config.RELAYER_URL,
       velcroUrl: config.VELCRO_URL,
       liFiApiKey: config.LIFI_EXPLORER_URL,
+      cowSwapApiKey: config.COWSWAP_API_KEY,
       bungeeApiKey: config.BUNGEE_API_KEY,
       uniswapApiKey: config.UNISWAP_API_KEY,
       featureFlags: {},

@@ -273,7 +273,11 @@ const SwapAndBridgeScreen = () => {
               isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
             />
           </View>
-          <ToToken simulationFailed={!!toChainSimulationError} disabled={areAllProvidersDisabled} />
+          <ToToken
+            simulationFailed={!!toChainSimulationError}
+            disabled={areAllProvidersDisabled}
+            openProviderSettingsModal={openProviderSettingsModal}
+          />
         </View>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
