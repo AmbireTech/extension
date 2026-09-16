@@ -183,15 +183,16 @@ class LedgerSigner implements KeystoreSignerInterface {
       const signature = await this.controller.sign7702(path, chainId, contract, nonce)
       const v = Signature.getNormalizedV(signature.v)
 
-      return {
-        r: signature.r,
-        s: signature.s,
-        yParity: v === 27 ? '0x00' : '0x01'
-      }
+      const yParity = v === 27 ? '0x00' : '0x01'
+      return { r: signature.r, s: signature.s, yParity }
     } catch (e: any) {
       throw new ExternalSignerError(
-        e?.message ||
-          'Signing the message failed. Please try again or contact Ambire support if issue persists.'
+        e?.message || 'ledgerSigner: singing failed for unknown reason',
+        {
+          // We don't want to send crash reports of expected errors. If the errors is
+          // TypeError, RuntimeError, etc. - we want to send it.
+          sendCrashReport: e instanceof ExternalSignerError ? e.sendCrashReport : true
+        }
       )
     }
   }
