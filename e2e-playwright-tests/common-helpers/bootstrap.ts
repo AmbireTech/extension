@@ -2,16 +2,21 @@ import { KEYSTORE_PASS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 
+import path from 'path'
+
 import { BrowserContext, chromium, Page } from '@playwright/test'
 
-const buildPath = `build/${process.env.WEBPACK_BUILD_OUTPUT_PATH || 'webkit-prod'}`
+// Mirrors the build output resolution of webpack/env.js, so the tests pick up the
+// extension even when BUILD_DIR moves the builds outside of the repo.
+const buildDir = process.env.BUILD_DIR || path.resolve(__dirname, '../../build')
+const extensionPath = path.join(buildDir, process.env.WEBPACK_BUILD_OUTPUT_PATH || 'webkit-prod')
 const USER_DATA_DIR = '' // you can set a temp dir if needed
 
 let currentContext: BrowserContext | null = null
 
 const playwrightArgs = [
-  `--disable-extensions-except=${__dirname}/../../${buildPath}/`,
-  `--load-extension=${__dirname}/../${buildPath}/`,
+  `--disable-extensions-except=${extensionPath}/`,
+  `--load-extension=${extensionPath}/`,
   '--disable-features=DialMediaRouteProvider,LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests',
   '--clipboard-write=granted',
   '--clipboard-read=prompt',

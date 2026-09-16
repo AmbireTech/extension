@@ -13,6 +13,7 @@ declare module '@env' {
     SENTRY_DSN?: string
     ENVIRONMENT: string
     DEFAULT_KEYSTORE_PASSWORD_DEV: string
+    DEFAULT_INVITE_CODE_DEV: string
     NFT_CDN_URL: string
     LEGENDS_NFT_ADDRESS: string
     SENTRY_DSN_LEGENDS?: string
@@ -74,6 +75,11 @@ declare module '@env' {
    * Auto-Fill Keystore Password during development
    */
   export const DEFAULT_KEYSTORE_PASSWORD_DEV: EnvTypes['DEFAULT_KEYSTORE_PASSWORD_DEV']
+
+  /**
+   * Auto-Fill the mobile invite code during development
+   */
+  export const DEFAULT_INVITE_CODE_DEV: EnvTypes['DEFAULT_INVITE_CODE_DEV']
 
   /**
    * Are we running the E2E tests?
