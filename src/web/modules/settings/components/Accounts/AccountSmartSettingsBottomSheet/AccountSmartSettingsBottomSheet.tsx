@@ -210,7 +210,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
               {/* This sheet is rendered by the mobile AccountsSettingsScreen too, where
                   there is no WebHID and no bundled app builds, so the install can only
                   ever fail there. */}
-              {isWeb && hasLedgerKey && (
+              {isWeb && hasLedgerKey && isEip7702Enabled && (
                 <Alert
                   type="info"
                   size="md"
@@ -279,17 +279,33 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
               </Text>
 
               {!isEip7702Enabled && (
-                <Alert
-                  type="warning"
-                  size="sm"
-                  style={spacings.mbMd}
-                  title={t('This is an experimental feature')}
-                  text={t(
-                    'Smart features for your existing account are new and still being tested. Turn them on only if you are comfortable trying them out - you can turn them off at any time.'
-                  )}
-                  buttonProps={{ text: t('Turn on'), onPress: enableEip7702 }}
-                  isButtonTopRight
-                />
+                <View
+                  style={[
+                    {
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.secondaryBorder
+                    },
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.pbTy,
+                    spacings.mbTy
+                  ]}
+                >
+                  <View style={flexbox.flex1}>
+                    <Text fontSize={14} weight="medium">
+                      {t('EIP-7702 smart account features are disabled.')}
+                    </Text>
+                  </View>
+                  <View style={[flexbox.flex1, flexbox.alignEnd]}>
+                    <Button
+                      type="primary"
+                      size="tiny"
+                      style={[spacings.mb0, { minWidth: 78, height: 32 }]}
+                      onPress={enableEip7702}
+                      text={t('Enable')}
+                    />
+                  </View>
+                </View>
               )}
 
               <View
