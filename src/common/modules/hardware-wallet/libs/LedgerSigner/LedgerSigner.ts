@@ -179,7 +179,11 @@ class LedgerSigner implements KeystoreSignerInterface {
 
     try {
       const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
-      // @ts-expect-error method is there, just the type is missing in Ledger SDK
+      // sign7702 is deliberately NOT on LedgerControllerInterface: only the web
+      // controller implements it (it needs the sideloaded "Ambire Signer" app,
+      // which is extension-only). Don't "fix" this by adding it to the interface -
+      // on mobile the call would still blow up at runtime.
+      // @ts-expect-error see above
       const signature = await this.controller.sign7702(path, chainId, contract, nonce)
       const v = Signature.getNormalizedV(signature.v)
 
