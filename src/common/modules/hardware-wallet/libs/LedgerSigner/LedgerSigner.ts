@@ -179,6 +179,7 @@ class LedgerSigner implements KeystoreSignerInterface {
 
     try {
       const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
+      // @ts-expect-error method is there, just the type is missing in Ledger SDK
       const signature = await this.controller.sign7702(path, chainId, contract, nonce)
       const v = Signature.getNormalizedV(signature.v)
 
