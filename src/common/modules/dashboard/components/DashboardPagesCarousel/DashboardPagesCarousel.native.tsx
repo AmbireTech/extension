@@ -562,12 +562,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
           <DashboardBanners />
         </View>
         <View onLayout={onTabsLayout}>
-          <TabsAndSearch
-            openTab={openTab}
-            setOpenTab={setOpenTab}
-            currentTab={openTab}
-            sessionId={sessionId}
-          />
+          <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
         </View>
       </Animated.View>
       {/* Outside the pager, so a swipe doesn't carry it along, and only what the open

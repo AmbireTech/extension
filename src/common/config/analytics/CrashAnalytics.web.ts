@@ -1,15 +1,22 @@
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
-import CONFIG, { APP_VERSION, isDev } from '@common/config/env'
+import CONFIG, { APP_VERSION, isAmbireNext, isDev } from '@common/config/env'
 import * as Sentry from '@sentry/react'
 import { IS_FIREFOX } from '@web/constants/common'
 
 export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   dsn: CONFIG.SENTRY_DSN_BROWSER_EXTENSION,
   environment: CONFIG.APP_ENV as string,
-  release: `extension-${process.env.WEB_ENGINE}@${APP_VERSION}`,
+  // Ambire Next is a second production webkit build carrying the very same
+  // version, so it needs a release of its own - otherwise its events and source
+  // maps land in the stable build's release. Must stay in sync with the release
+  // name that scripts/build-extensions.sh uploads the source maps under.
+  release: `extension-${isAmbireNext ? 'next-' : ''}${process.env.WEB_ENGINE}@${APP_VERSION}`,
   // Disables sending personally identifiable information
   sendDefaultPii: false,
   integrations: [],
+  // Sentry is doing some extra work to make sure the fetch it finds is the right one, but it
+  // doesn't work under LavaMoat so we pass it the fetch used in that context.
+  transport: (options) => Sentry.makeFetchTransport(options, (...args) => fetch(...args)),
   // No explicit `event` param type here: annotating this object as
   // Sentry.BrowserOptions lets `event`'s type be inferred contextually as the
   // narrower `ErrorEvent`, which scrubSentryEventSecrets (generic) then

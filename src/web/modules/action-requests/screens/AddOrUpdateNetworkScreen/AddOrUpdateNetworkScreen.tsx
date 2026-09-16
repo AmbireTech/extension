@@ -34,6 +34,7 @@ const AddOrUpdateNetworkScreen = () => {
     userRequest,
     statuses,
     features,
+    isCheckingNetwork,
     existingNetwork,
     isActionButtonPressed,
     successStateText,
@@ -76,9 +77,8 @@ const AddOrUpdateNetworkScreen = () => {
               !areParamsValid ||
               statuses.addNetwork === 'LOADING' ||
               statuses.updateNetwork === 'LOADING' ||
-              (features &&
-                (features.some((f) => f.level === 'loading') ||
-                  !!features.find((f) => f.id === 'flagged'))) ||
+              isCheckingNetwork ||
+              !!features.find((f) => f.id === 'flagged') ||
               isActionButtonPressed
             }
           />
@@ -146,9 +146,8 @@ const AddOrUpdateNetworkScreen = () => {
             !areParamsValid ||
             statuses.addNetwork === 'LOADING' ||
             statuses.updateNetwork === 'LOADING' ||
-            (features &&
-              (features.some((f) => f.level === 'loading') ||
-                !!features.filter((f) => f.id === 'flagged')[0])) ||
+            isCheckingNetwork ||
+            !!features.find((f) => f.id === 'flagged') ||
             isActionButtonPressed
           }
         />
