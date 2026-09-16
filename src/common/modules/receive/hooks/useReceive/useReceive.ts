@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { useMultiHover } from '@common/hooks/useHover'
 import useNetworks from '@common/hooks/useNetworks'
@@ -13,6 +14,7 @@ import { hexToRgba } from '@common/styles/utils/common'
 const MAX_VISIBLE_NETWORKS = isMobile ? 8 : 10
 
 const useReceive = () => {
+  const { t } = useTranslation()
   const { state } = useRoute()
   const { address } = state || {}
 
@@ -46,6 +48,14 @@ const useReceive = () => {
   const isViewOnly = useMemo(() => {
     return !account?.safeCreation && getIsViewOnly(keys, account?.associatedKeys || [])
   }, [account, keys])
+
+  const warningMessage = account?.safeCreation
+    ? t(
+        "Only receive assets on networks where this Safe account is deployed on. Assets sent on other networks won't be accessible."
+      )
+    : isViewOnly
+      ? t('The account is view-only.')
+      : null
 
   const { label, pfp } = account?.preferences || { label: '', pfp: '' }
 
@@ -88,7 +98,7 @@ const useReceive = () => {
 
   return {
     account,
-    isViewOnly,
+    warningMessage,
     label,
     pfp,
     name,
