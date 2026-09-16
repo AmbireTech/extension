@@ -52,7 +52,7 @@ const ReceiveScreen: FC = () => {
     <MobileLayoutContainer>
       <HeaderWithTitle />
       <MobileLayoutWrapperMainContent>
-        <View style={[isEOA ? spacings.pt3Xl : spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
+        <View style={[isEOA ? spacings.pt3Xl : spacings.ptTy, spacings.mb, flexbox.alignCenter]}>
           <Avatar
             size={40}
             pfp={pfp}
