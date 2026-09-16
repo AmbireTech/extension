@@ -19,6 +19,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -214,7 +215,10 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
         <Authorization7702>
           {is7702 && delegationNetworks?.length ? (
             <>
-              {hasLedgerKey && (
+              {/* This sheet is rendered by the mobile AccountsSettingsScreen too, where
+                  there is no WebHID and no bundled app builds, so the install can only
+                  ever fail there. */}
+              {isWeb && hasLedgerKey && (
                 <Alert
                   type="info"
                   size="md"
