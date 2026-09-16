@@ -83,10 +83,11 @@ const SigningAuthBottomSheet = ({
     onConfirmWithBiometrics()
   }, [onConfirmWithBiometrics])
 
-  // On native the prompt is what the user expects to see straight away, the same way the unlock
-  // screen behaves. On web the WebAuthn prompt only opens from a user gesture, so it is a tap.
-  const handleOpened = useCallback(() => {
-    if (isWeb || !isUsingBiometrics) return
+  // The prompt is what the user expects to see straight away, the same way the unlock screen
+  // behaves on both platforms. `onOpen` rather than `onOpened`, because the web sheet only
+  // wires the former.
+  const handleOpen = useCallback(() => {
+    if (!isUsingBiometrics) return
 
     onConfirmWithBiometrics()
   }, [isUsingBiometrics, onConfirmWithBiometrics])
@@ -100,7 +101,7 @@ const SigningAuthBottomSheet = ({
       sheetRef={sheetRef}
       closeBottomSheet={onCancel}
       onBackdropPress={onCancel}
-      onOpened={handleOpened}
+      onOpen={handleOpen}
       onClosed={handleClosed}
       adjustToContentHeight
       style={isWeb ? { maxWidth: 432 } : undefined}

@@ -3,11 +3,24 @@ import { useModalize } from 'react-native-modalize'
 
 import { SigningAuthRequirement } from '@ambire-common/interfaces/signingAuth'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
+import { getUiType } from '@common/utils/uiType'
+import { IS_FIREFOX } from '@web/constants/common'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const { isPopup, isSidePanel } = getUiType()
+
+/**
+ * WebAuthn cannot prompt inside the Chrome side panel or the Firefox popup - the browser tries
+ * to show a modal these surfaces cannot host, so the call hangs or the surface closes. The
+ * unlock screen escapes to a dedicated tab, which a signing request cannot do without losing
+ * itself, so the password is the way in there.
+ */
+const CAN_PROMPT_BIOMETRICS_HERE = !((IS_FIREFOX && isPopup) || isSidePanel)
 
 const selectHasBiometricsSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.hasBiometricsSecret
@@ -54,9 +67,12 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   // Results are read from a shared controller field, so only the prompt that asked for one may
   // act on it - otherwise a leftover result would let the next request through untouched
   const isAwaitingResult = useRef(false)
+  /** Whether a biometric ceremony is already up, so a second one is not started on top of it. */
+  const isPromptPending = useRef(false)
   const onAuthenticated = useRef<(() => void) | null>(null)
 
-  const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
+  const canUseBiometrics =
+    !!hasBiometricsSecret && !!hasBiometricsHardware && CAN_PROMPT_BIOMETRICS_HERE
   const isUsingBiometrics = canUseBiometrics && !hasSwitchedToPassword
 
   const reason = useMemo(() => {
@@ -100,6 +116,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
 
       onAuthenticated.current = onConfirmed
       isAwaitingResult.current = false
+      isPromptPending.current = false
       setHasSwitchedToPassword(false)
       keystoreDispatch({ type: 'method', params: { method: 'resetSigningAuthResult', args: [] } })
       openSheet()
@@ -121,7 +138,17 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   )
 
   const confirmWithBiometrics = useCallback(async () => {
+    // The sheet opening and a tap on the icon can both ask for it, and a second ceremony
+    // while one is already up is what makes the browser hang
+    if (isPromptPending.current) return
+
+    isPromptPending.current = true
+
     try {
+      // WebAuthn is started before any state update, so a tap's user gesture is preserved -
+      // getBiometricsSecret only awaits storage when the credential cache is cold
+      if (isWeb) window.focus()
+
       const biometricsSecret = await getBiometricsSecret()
       // A cancelled or failed prompt resolves to null, which the OS has already reported
       if (!biometricsSecret) return
@@ -134,6 +161,8 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
     } catch (error) {
       captureException(error)
       setHasSwitchedToPassword(true)
+    } finally {
+      isPromptPending.current = false
     }
   }, [getBiometricsSecret, keystoreDispatch])
 
