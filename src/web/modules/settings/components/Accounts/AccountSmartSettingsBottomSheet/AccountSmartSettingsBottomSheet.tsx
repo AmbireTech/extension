@@ -29,10 +29,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
-import {
-  AMBIRE_SIGNER_APDUS,
-  AMBIRE_SIGNER_APP_NAME
-} from '@web/modules/hardware-wallet/controllers/LedgerController/artifacts'
+import { AMBIRE_SIGNER_APDUS } from '@web/modules/hardware-wallet/controllers/LedgerController/artifacts'
 import {
   installLedgerApp,
   LedgerAppInstallStep
@@ -111,25 +108,19 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   // Sideloads the "Ambire Signer" app (a fork of the Ethereum app that whitelists
   // the Ambire EIP-7702 delegator) needed to authorize delegation with a Ledger.
   // It coexists with the official Ethereum app and is used only for this one-off.
+  // Runs unconditionally, which doubles as the update path - the device asks to
+  // remove the old build first when there already is one.
   const installAmbireSigner = useCallback(async () => {
     try {
       setInstallStep('connecting')
       setInstallProgress(0)
       await LedgerController.grantDevicePermissionIfNeeded()
-      const wasAlreadyInstalled = await installLedgerApp(
-        AMBIRE_SIGNER_APP_NAME,
-        AMBIRE_SIGNER_APDUS,
-        (step, percent) => {
-          setInstallStep(step)
-          setInstallProgress(percent)
-        }
-      )
+      await installLedgerApp(AMBIRE_SIGNER_APDUS, (step, percent) => {
+        setInstallStep(step)
+        setInstallProgress(percent)
+      })
       setIsAmbireSignerInstalled(true)
-      addToast(
-        wasAlreadyInstalled
-          ? t('Ambire Signer is already on your Ledger. You can now turn on the networks below.')
-          : t('Ambire Signer installed. You can now turn on the networks below.')
-      )
+      addToast(t('Ambire Signer is ready on your Ledger. You can now turn on the networks below.'))
     } catch (error: any) {
       addToast(error?.message || t('Failed to install Ambire Signer on your Ledger.'), {
         type: 'error'
@@ -139,15 +130,16 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     }
   }, [addToast, t])
 
-  // The device asks for two separate approvals and names neither of them after
-  // Ambire, so spell out what is being asked instead of showing a bare spinner.
+  // The device names none of its prompts after Ambire, so spell out what is being
+  // asked instead of showing a bare spinner.
   const installStepText = useMemo(() => {
     if (installStep === 'connecting') return t('Unlock your Ledger and keep it on its home screen.')
-    if (installStep === 'confirmingAppList')
-      return t('On your Ledger: allow Ambire to check which apps you already have.')
     if (installStep === 'confirmingInstall')
       return t('On your Ledger: approve the install request.')
-    if (installStep === 'loading') return t('Installing. Keep your Ledger connected.')
+    if (installStep === 'loading')
+      return t(
+        'Installing. Keep your Ledger connected. If you already have an older Ambire Signer, your Ledger will ask to remove it first.'
+      )
 
     return null
   }, [installStep, t])
@@ -250,7 +242,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                         description={
                           installStepText ??
                           t(
-                            'Needed before you can turn on any of the networks below. Unlock your Ledger and stay on its home screen.'
+                            'Needed before you can turn on any of the networks below. Unlock your Ledger and stay on its home screen. Already have Ambire Signer? Install it again to get the latest version - your Ledger will ask to remove the old one first.'
                           )
                         }
                       >

@@ -6,8 +6,6 @@ import { AMBIRE_SIGNER_NANO_S_PLUS_APDU } from './ambireSignerNanoSPlus'
 // import { AMBIRE_SIGNER_NANO_X_APDU } from './ambireSignerNanoX'
 import { AMBIRE_SIGNER_STAX_APDU } from './ambireSignerStax'
 
-export { AMBIRE_SIGNER_APP_NAME } from './constants'
-
 // Per-device-model "Ambire Signer" load scripts, keyed by the connected model.
 // Sideloading works on a limited set of newer Ledger devices.
 // Every build is validated (name "Ambire Signer" + Ambire delegator whitelisted)

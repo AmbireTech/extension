@@ -39,9 +39,10 @@ export const getInstallErrorMessage = (statusCode: Uint8Array): string => {
   // Refused by the user on-device ("Back to safety").
   if (sw === '5501' || sw === '6985') return 'App installation was rejected on the Ledger device.'
 
-  // An app with the same name is already installed.
+  // An app with the same name is already installed. Most firmwares instead offer
+  // to remove it on-device (that is our update path), so this is a rare fallback.
   if (sw === '6a80' || sw === '6a81' || sw === '6a8e' || sw === '6a8f')
-    return 'This app is already installed on the Ledger device.'
+    return 'Ambire Signer is already on your Ledger. Remove it from the device, then try again to get the latest version.'
 
   // Nano X firmware forbids sideloading custom apps (Nano S Plus / Stax / Flex allow it).
   if (sw === '5120')
