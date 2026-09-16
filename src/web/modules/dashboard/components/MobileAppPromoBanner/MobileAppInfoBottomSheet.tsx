@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useCallback } from 'react'
 import { TextStyle, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
@@ -38,13 +38,13 @@ const MobileAppInfoBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, invit
   const { theme } = useTheme()
   const { addToast } = useToast()
 
-  const handleCopyInviteCode = () => {
+  const handleCopyInviteCode = useCallback(() => {
     setStringAsync(inviteCode).catch((error) => {
       console.error('Failed to copy invite code to clipboard', error)
       captureException(error)
     })
     addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
-  }
+  }, [inviteCode, addToast, t])
 
   return (
     <BottomSheet
