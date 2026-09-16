@@ -27,7 +27,10 @@ const DappConnectScreen = () => {
     handleDenyButtonPress,
     handleAuthorizeButtonPress,
     shouldHoldToProceed,
-    resolveButtonText
+    resolveButtonText,
+    isTrustedByUser,
+    canBeTrustedByUser,
+    toggleTrust
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
   const { minHeightSize } = useWindowSize()
@@ -88,10 +91,14 @@ const DappConnectScreen = () => {
                 id={dappToConnect.id}
                 icon={dappToConnect.icon!}
                 securityCheck={dappToConnect.blacklisted}
+                isTrustedByUser={isTrustedByUser}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
               <DAppConnectBody
                 securityCheck={dappToConnect.blacklisted}
+                isTrustedByUser={isTrustedByUser}
+                canBeTrustedByUser={canBeTrustedByUser}
+                onToggleTrust={toggleTrust}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>
