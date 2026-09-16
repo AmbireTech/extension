@@ -6,10 +6,11 @@ import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
  *
  * A Ledger `.apdu` file produced by the app build is a plaintext BOLOS load
  * script: one hex-encoded APDU per line, all wrapped as `E0 00 00 00 <Lc> <cmd>`
- * (CREATE APP, LOAD code chunks, CRC, COMMIT). There is NO secure channel, so the
- * script is a static, replayable sequence — no APDU depends on a device response.
- * The device shows a single "Open unverified app? / For developers only" prompt
- * that the user approves on-device. See the `ledger` skill for the full picture.
+ * (CREATE APP, LOAD code chunks, CRC, COMMIT). Its payloads are the *unwrapped*
+ * inner secure commands, so they cannot be replayed in the clear — the device
+ * answers `0x6615`. `ledgerSideload.ts` opens an SCP v2 secure channel and wraps
+ * every payload before sending it; no payload depends on a device response, so
+ * the order is static. See the `ledger` skill for the full picture.
  */
 
 // Parses a Ledger `.apdu` load script into the raw commands to replay in order.

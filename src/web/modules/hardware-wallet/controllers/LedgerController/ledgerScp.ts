@@ -9,9 +9,9 @@ import { sha256 } from '@noble/hashes/sha256'
  * sideload a custom app: the load commands must be wrapped in this channel,
  * they cannot be replayed in the clear.
  *
- * All primitives are validated byte-for-byte against ledgerctl reference
- * vectors (see scratchpad self-check). Uses only existing deps: ethers
- * (secp256k1), @noble/hashes (SHA256), aes-js (AES-128-CBC).
+ * All primitives were validated byte-for-byte against ledgerctl reference
+ * vectors. Uses only existing deps: ethers (secp256k1), @noble/hashes (SHA256),
+ * aes-js (AES-128-CBC).
  */
 
 // secp256k1 curve order
