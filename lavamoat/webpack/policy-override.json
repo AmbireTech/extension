@@ -386,12 +386,13 @@
     },
     "@sentry/react>@sentry/core": {
       "globals": {
+        "console": "write",
         "fetch": true,
         "onerror": "write",
         "onunhandledrejection": "write"
       },
       "meta": {
-        "note": "GLOBAL_OBJ lives in this package and is every Sentry package's view of globalThis. getNativeImplementation (in @sentry-internal/browser-utils) reads GLOBAL_OBJ[name] with a runtime key and globalError/globalUnhandledRejection assign onto GLOBAL_OBJ, neither of which the policy generator can see. Without fetch the default transport resolves undefined and no crash report ever leaves the extension; the handlers must be \"write\" so the assignment reaches the real global instead of the compartment copy."
+        "note": "GLOBAL_OBJ lives in this package and is every Sentry package's view of globalThis. getNativeImplementation (in @sentry-internal/browser-utils) reads GLOBAL_OBJ[name] with a runtime key and globalError/globalUnhandledRejection assign onto GLOBAL_OBJ, neither of which the policy generator can see. Without fetch the default transport resolves undefined and no crash report ever leaves the extension; the handlers must be \"write\" so the assignment reaches the real global instead of the compartment copy. The whole console object is needed for the `debug` option (on in testing builds): Sentry's own logger calls GLOBAL_OBJ.console[level] with a runtime level the generator cannot see, and consoleSandbox swaps those methods out and back around every log line. Read-only access makes Sentry.init throw and kills crash reporting outright, and LavaMoat only allows \"write\" on a top-level global, so the individual console.* levels cannot be granted one by one. This also lets the console breadcrumbs the SDK is configured to collect actually attach, in every build."
       }
     }
   }

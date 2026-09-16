@@ -23,6 +23,9 @@ concurrency:
 # that needs them (and in the reusable suite workflow, which does not inherit this env).
 env:
   IS_TESTING: 'true'
+  # A fake DSN, so the Sentry SDK builds a real envelope URL that the crash-analytics spec can
+  # intercept.
+  SENTRY_DSN_BROWSER_EXTENSION: 'https://fake@sentry.io/0000000'
   E2E_DEBUG: ${{ vars.E2E_DEBUG }}
   RELAYER_URL: ${{ vars.RELAYER_URL }}
   VELCRO_URL: ${{ vars.VELCRO_URL }}
