@@ -1,3 +1,26 @@
+# EIP-7702 delegation routing patch (HOPEFULLY TEMPORARY)
+#
+# Ledger's DSK hardcodes `appName: "Ethereum"` for every device action, so DMK
+# always opens the official Ethereum app before running the task. That app does
+# not whitelist the Ambire EIP-7702 delegator (0x5A7FC11397E9a8AD41BF10bf13F22B0a63f96f6d),
+# so it refuses to sign our delegation authorization.
+#
+# Until https://github.com/LedgerHQ/app-ethereum/pull/948 ("add EF-recognized delegators incl. Ambire")
+# ships in an official Ethereum app release, we sign that one authorization with
+# "Ambire Signer" - a fork of the Ethereum app that whitelists the delegator and
+# is sideloaded onto the device (src/web/modules/hardware-wallet/controllers/
+# LedgerController/ledgerSideload.ts).
+#
+# This patch therefore changes exactly ONE string, in ONE method:
+# `signDelegationAuthorization` opens "Ambire Signer" instead of "Ethereum".
+# Everything else (getAddress, signPersonalMessage, signTypedData,
+# signTransaction - including the ongoing type-4 sends) keeps using the official
+# Ethereum app. Patching rather than reimplementing the APDU keeps DSK's
+# maintained 7702 TLV payload building and chunking.
+#
+# Both the cjs and esm builds are patched, since bundlers pick either one.
+#
+# REMOVE this patch (and the whole sideload flow) once https://github.com/LedgerHQ/app-ethereum/pull/948 is released.
 diff --git a/node_modules/@ledgerhq/device-signer-kit-ethereum/lib/cjs/internal/app-binder/EthAppBinder.js b/node_modules/@ledgerhq/device-signer-kit-ethereum/lib/cjs/internal/app-binder/EthAppBinder.js
 index 17606db..265ddbb 100644
 --- a/node_modules/@ledgerhq/device-signer-kit-ethereum/lib/cjs/internal/app-binder/EthAppBinder.js
