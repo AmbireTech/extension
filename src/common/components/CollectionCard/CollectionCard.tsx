@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { useTranslation } from '@common/config/localization'
 
 import { Network } from '@ambire-common/interfaces/network'
+import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Badge from '@common/components/Badge'
 import Collectible from '@common/components/Collectible'
 import { COLLECTIBLE_SIZE } from '@common/components/Collectible/styles'
@@ -49,6 +50,8 @@ const CollectionCard: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
+  // The portfolio has no name for collections that don't implement ERC721Metadata
+  const label = name || shortenAddress(address, 13)
 
   const networkData = useMemo(() => {
     return networks.find(({ chainId: nChainId }) => chainId === nChainId.toString())
@@ -67,7 +70,7 @@ const CollectionCard: FC<Props> = ({
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, spacings.mrXl]}>
           <Text testID="collection-item" weight="medium" numberOfLines={1} lineBreakMode="tail">
-            {name}
+            {label}
           </Text>
           <View
             style={{
@@ -125,7 +128,7 @@ const CollectionCard: FC<Props> = ({
             key={address + collectible}
             id={collectible}
             collectionData={{
-              name,
+              name: label,
               address,
               chainId: BigInt(chainId),
               priceIn: priceIn.length ? priceIn[0] : null

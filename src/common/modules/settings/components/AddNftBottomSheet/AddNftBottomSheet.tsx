@@ -11,7 +11,6 @@ import {
   TokenValidationResult
 } from '@ambire-common/libs/portfolio/interfaces'
 import { isValidAddress } from '@ambire-common/services/address'
-import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Alert from '@common/components/Alert/Alert'
 import CollectionCard from '@common/components/CollectionCard'
 import Input from '@common/components/Input'
@@ -167,16 +166,8 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       return
     }
 
-    // The collectible is requested as a hint, so the portfolio can verify the
-    // ownership and display it
-    portfolioDispatch({
-      type: 'method',
-      params: {
-        method: 'addErc721sToBeLearned',
-        args: [[[checksummedAddress, [BigInt(tokenId)]]], account.addr, network.chainId]
-      }
-    })
-
+    // The custom token carries the id, which is enough for the portfolio to
+    // request the collectible and verify the ownership
     portfolioDispatch({
       type: 'method',
       params: {
@@ -345,7 +336,7 @@ const AddNftBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       {/* The NFT, the same way the dashboard displays it */}
       {validation?.isValid && ownership?.isValid && network && !isAlreadyAdded && !isHidden ? (
         <CollectionCard
-          name={collectionMeta?.name || shortenAddress(address, 13)}
+          name={collectionMeta?.name || ''}
           address={address}
           chainId={network.chainId.toString() as NetworkIconIdType}
           collectibles={[BigInt(tokenId)]}
