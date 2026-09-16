@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import Spinner from '@common/components/Spinner'
+import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
@@ -60,7 +61,10 @@ const SignMessageScreen = () => {
     view,
     threshold,
     isSafeNotDeployed,
-    isLoading
+    isLoading,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   } = useSignMessage()
   const { styles } = useTheme(getStyles)
 
@@ -122,6 +126,11 @@ const SignMessageScreen = () => {
         </View>
       }
     >
+      <SigningAuthBottomSheet
+        sheetRef={signingAuthSheetRef}
+        onCancel={cancelSigningAuth}
+        {...signingAuthProps}
+      />
       <KeySelect
         isSigning={signStatus === 'LOADING'}
         handleChooseKey={setSigner}

@@ -1,0 +1,210 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useModalize } from 'react-native-modalize'
+
+import { SigningAuthRequirement } from '@ambire-common/interfaces/signingAuth'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { useTranslation } from '@common/config/localization'
+import useBiometrics from '@common/hooks/useBiometrics'
+import useController from '@common/hooks/useController'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectHasBiometricsSecret = (state: AllControllersMappingType['KeystoreController']) =>
+  state.hasBiometricsSecret
+// Both read a value that lives on the state rather than building one, so the store's
+// reconciled snapshots stay reference stable and the component only re-renders on a change
+const selectSigningAuthResult = (state: AllControllersMappingType['KeystoreController']) =>
+  state.signingAuthResult
+const selectIsVerifyingSecret = (state: AllControllersMappingType['KeystoreController']) =>
+  state.statuses.verifySecret === 'LOADING'
+
+type Props = {
+  /** Why the request has to be confirmed, or `null`/`undefined` when it does not. */
+  requirement: SigningAuthRequirement | null | undefined
+  /**
+   * The request the confirmation belongs to. A confirmation is remembered for this id only, so
+   * changing the calls of a batch (or moving to another request) asks for it again.
+   */
+  requestId: string | number | null | undefined
+}
+
+/**
+ * Asks the user to confirm their password or biometrics before a first time signing request goes
+ * through, and remembers the dapps they confirmed for.
+ */
+const useSigningAuth = ({ requirement, requestId }: Props) => {
+  const { t } = useTranslation()
+  const { dispatch: keystoreDispatch } = useController('KeystoreController')
+  const { dispatch: dappsDispatch } = useController('DappsController')
+  const { state: hasBiometricsSecret } = useController(
+    'KeystoreController',
+    selectHasBiometricsSecret
+  )
+  const { state: signingAuthResult } = useController('KeystoreController', selectSigningAuthResult)
+  const { state: isVerifying } = useController('KeystoreController', selectIsVerifyingSecret)
+  const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+
+  const [hasSwitchedToPassword, setHasSwitchedToPassword] = useState(false)
+  // Nothing renders differently once a request has been confirmed - the confirmation only has to
+  // be readable by the next attempt to sign - so it is a ref rather than state. It is wrapped in
+  // an object so a request with no id of its own still gets a latch, instead of matching the
+  // "nothing confirmed yet" value and re-opening the prompt forever.
+  const authenticatedFor = useRef<{ requestId: Props['requestId'] } | null>(null)
+  // Results are read from a shared controller field, so only the prompt that asked for one may
+  // act on it - otherwise a leftover result would let the next request through untouched
+  const isAwaitingResult = useRef(false)
+  const onAuthenticated = useRef<(() => void) | null>(null)
+
+  const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
+  const isUsingBiometrics = canUseBiometrics && !hasSwitchedToPassword
+
+  const reason = useMemo(() => {
+    if (!requirement) return ''
+
+    const { firstTimeRecipients, unauthenticatedDapps } = requirement
+    const sentences: string[] = []
+
+    if (firstTimeRecipients.length === 1) {
+      sentences.push(t('You are sending to this address for the first time.'))
+    } else if (firstTimeRecipients.length > 1) {
+      sentences.push(
+        t('You are sending to {{count}} addresses for the first time.', {
+          count: firstTimeRecipients.length
+        })
+      )
+    }
+
+    if (unauthenticatedDapps.length) {
+      sentences.push(
+        t('This is your first time signing for {{dappNames}}.', {
+          dappNames: unauthenticatedDapps.map(({ name }) => name).join(', ')
+        })
+      )
+    }
+
+    sentences.push(t('Please confirm it is you.'))
+
+    return sentences.join(' ')
+  }, [requirement, t])
+
+  /**
+   * Opens the prompt and runs `onConfirmed` once the user has proven their identity. Returns
+   * whether the prompt took over, so the caller can stop and wait for it. Callers are the ones
+   * that know which key is about to sign, so they must not call this for an external signer -
+   * the hardware device asks for the confirmation itself.
+   */
+  const requestSigningAuth = useCallback(
+    (onConfirmed: () => void) => {
+      if (!requirement || authenticatedFor.current?.requestId === requestId) return false
+
+      onAuthenticated.current = onConfirmed
+      isAwaitingResult.current = false
+      setHasSwitchedToPassword(false)
+      keystoreDispatch({ type: 'method', params: { method: 'resetSigningAuthResult', args: [] } })
+      openSheet()
+
+      return true
+    },
+    [requirement, requestId, keystoreDispatch, openSheet]
+  )
+
+  const confirmWithPassword = useCallback(
+    (password: string) => {
+      isAwaitingResult.current = true
+      keystoreDispatch({
+        type: 'method',
+        params: { method: 'verifySecret', args: ['password', password] }
+      })
+    },
+    [keystoreDispatch]
+  )
+
+  const confirmWithBiometrics = useCallback(async () => {
+    try {
+      const biometricsSecret = await getBiometricsSecret()
+      // A cancelled or failed prompt resolves to null, which the OS has already reported
+      if (!biometricsSecret) return
+
+      isAwaitingResult.current = true
+      keystoreDispatch({
+        type: 'method',
+        params: { method: 'verifySecret', args: ['biometrics', biometricsSecret] }
+      })
+    } catch (error) {
+      captureException(error)
+      setHasSwitchedToPassword(true)
+    }
+  }, [getBiometricsSecret, keystoreDispatch])
+
+  const switchToPassword = useCallback(() => setHasSwitchedToPassword(true), [])
+
+  const resetError = useCallback(() => {
+    if (!signingAuthResult) return
+
+    keystoreDispatch({ type: 'method', params: { method: 'resetSigningAuthResult', args: [] } })
+  }, [keystoreDispatch, signingAuthResult])
+
+  const cancelSigningAuth = useCallback(() => {
+    onAuthenticated.current = null
+    isAwaitingResult.current = false
+    closeSheet()
+  }, [closeSheet])
+
+  useEffect(() => {
+    if (!isAwaitingResult.current) return
+    if (signingAuthResult?.status !== 'success') return
+
+    isAwaitingResult.current = false
+
+    // Remembered so the dapp is never asked about again, which is also what stops this prompt
+    // from re-opening for the very same request
+    requirement?.unauthenticatedDapps.forEach(({ id }) => {
+      dappsDispatch({
+        type: 'method',
+        params: { method: 'updateDapp', args: [id, { signingAuthenticated: true }] }
+      })
+    })
+
+    authenticatedFor.current = { requestId }
+    closeSheet()
+
+    const proceed = onAuthenticated.current
+    onAuthenticated.current = null
+    proceed?.()
+  }, [closeSheet, dappsDispatch, requestId, requirement, signingAuthResult])
+
+  const signingAuthProps = useMemo(
+    () => ({
+      reason,
+      isUsingBiometrics,
+      canUseBiometrics,
+      isVerifying,
+      errorMessage: signingAuthResult?.status === 'failed' ? signingAuthResult.error || '' : '',
+      onConfirmWithPassword: confirmWithPassword,
+      onConfirmWithBiometrics: confirmWithBiometrics,
+      onSwitchToPassword: switchToPassword,
+      onPasswordChange: resetError
+    }),
+    [
+      reason,
+      isUsingBiometrics,
+      canUseBiometrics,
+      isVerifying,
+      signingAuthResult,
+      confirmWithPassword,
+      confirmWithBiometrics,
+      switchToPassword,
+      resetError
+    ]
+  )
+
+  return {
+    sheetRef,
+    requestSigningAuth,
+    cancelSigningAuth,
+    signingAuthProps
+  }
+}
+
+export default useSigningAuth

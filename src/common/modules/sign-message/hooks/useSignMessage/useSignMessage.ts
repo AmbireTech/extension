@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -10,6 +10,7 @@ import { EIP_1271_NOT_SUPPORTED_BY, toPersonalSignHex } from '@ambire-common/lib
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
+import useSigningAuth from '@common/hooks/useSigningAuth'
 import useToast from '@common/hooks/useToast'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
@@ -49,6 +50,15 @@ const useSignMessage = () => {
     signingCleanup
   } = useQrSigningFlow()
   const { addToast } = useToast()
+  const {
+    sheetRef: signingAuthSheetRef,
+    requestSigningAuth,
+    cancelSigningAuth,
+    signingAuthProps
+  } = useSigningAuth({
+    requirement: signMessageState.signingAuthRequirement,
+    requestId: signMessageState.messageToSign?.fromRequestId
+  })
 
   const userRequest = useMemo(() => {
     if (
@@ -199,6 +209,12 @@ const useSignMessage = () => {
     })
   }, [userRequest, t, requestsDispatch])
 
+  // Lets the signing authentication prompt resume the very call it interrupted, without
+  // handleSign having to depend on itself
+  const handleSignRef = useRef<
+    ((signers?: { addr: Key['addr']; type: Key['type'] }[]) => void) | null
+  >(null)
+
   const handleSign = useCallback(
     (signers?: { addr: Key['addr']; type: Key['type'] }[]) => {
       // Has more than one key, should first choose the key to sign with
@@ -218,6 +234,13 @@ const useSignMessage = () => {
         return
       }
 
+      // Signing for a dapp for the first time has to be confirmed with the password or
+      // biometrics, but only when the keystore holds the key - a hardware wallet confirms
+      // on the device
+      const isSigningWithInternalKey = chosenSigners.some(({ type }) => type === 'internal')
+      if (isSigningWithInternalKey && requestSigningAuth(() => handleSignRef.current?.(signers)))
+        return
+
       const isLedgerKeyChosen = chosenSigners.find((s) => s.type === 'ledger')
       if (isLedgerKeyChosen && !isLedgerConnected) {
         setShouldDisplayLedgerConnectModal(true)
@@ -229,8 +252,12 @@ const useSignMessage = () => {
         params: { signers: chosenSigners }
       })
     },
-    [isLedgerConnected, dispatch, addToast, t, signMessageState.signers]
+    [isLedgerConnected, dispatch, addToast, t, signMessageState.signers, requestSigningAuth]
   )
+
+  useEffect(() => {
+    handleSignRef.current = handleSign
+  }, [handleSign])
 
   const cancelQrSigningFlow = useCallback(() => {
     signingCleanup()
@@ -410,7 +437,10 @@ const useSignMessage = () => {
     holdToProceedCompleteText,
     hasSafetyBanners,
     holdToProceedButtonType,
-    isResolveActionDisabled
+    isResolveActionDisabled,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   }
 }
 
