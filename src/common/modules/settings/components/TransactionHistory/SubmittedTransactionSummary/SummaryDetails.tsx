@@ -34,7 +34,7 @@ import {
   getTruncatedNetworkName,
   getTruncatedTxnHash
 } from './helpers'
-import { getHumanizedCalls } from './humanizedHelpers'
+import { useHumanizedCalls } from './humanizedCallsHooks'
 import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
 
@@ -57,7 +57,7 @@ const SummaryDetails = ({
     () => getFormattedSubmittedDate(submittedAccountOp.timestamp),
     [submittedAccountOp.timestamp]
   )
-  const humanizedCalls = useMemo(() => getHumanizedCalls(submittedAccountOp), [submittedAccountOp])
+  const humanizedCalls = useHumanizedCalls(submittedAccountOp)
   const summaryBalanceChanges = useMemo(
     () => getSummaryBalanceChanges(submittedAccountOp),
     [submittedAccountOp]

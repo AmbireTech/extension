@@ -139,6 +139,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const explorerLink = useMemo(() => {
     if (!lastCompletedRoute) return
     if (providerId === 'uniswap') return
+    if (providerId === 'cowswap') return getLink(lastCompletedRoute)
 
     if (!isSwap) {
       return getLink(lastCompletedRoute)

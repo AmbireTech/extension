@@ -16,6 +16,7 @@ function categorizeRequests(requests: string[]) {
     'li.quest',
     'dedicated-backend.socket.tech',
     'trade-api.gateway.uniswap.org',
+    'partners.cow.fi',
     // RPCs
     '480.rpc.thirdweb.com',
     'unichain-rpc.publicnode.com',
@@ -47,7 +48,9 @@ function categorizeRequests(requests: string[]) {
     'strapi.jumper.exchange',
     'assets.coingecko.com',
     'coin-images.coingecko.com',
-    'cdn.dexscreener.com'
+    'cdn.dexscreener.com',
+    // swap&bridge to tokens
+    'files.cow.fi'
   ]
 
   const reqs = requests.reduce(

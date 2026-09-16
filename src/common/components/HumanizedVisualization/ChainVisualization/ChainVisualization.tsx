@@ -12,7 +12,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 // The default NetworkIcon size (32) is too large next to the humanized text on mobile
-const CHAIN_ICON_SIZE = isMobile ? 26 : 32
+const CHAIN_ICON_SIZE = isMobile ? 24 : 32
 
 interface Props {
   chainId: bigint
