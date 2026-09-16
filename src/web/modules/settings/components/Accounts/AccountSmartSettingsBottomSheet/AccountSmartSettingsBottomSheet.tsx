@@ -269,7 +269,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                     <Step number={2} title={t('Turn on the networks you want, below')} />
                     <Text fontSize={14} appearance="secondaryText">
                       {t(
-                        'Ambire Signer is not available in Ledger Wallet. Install and manage it only from these smart settings. Requires a Ledger device that supports custom apps: Nano S Plus, Stax, Flex, Nano Gen5, or newer.'
+                        'Ambire Signer is not available in Ledger Wallet. Install and manage it only from these smart settings. Requires a Ledger device that supports custom apps: Nano S Plus, Stax, Flex or Nano Gen5.'
                       )}
                     </Text>
                   </View>

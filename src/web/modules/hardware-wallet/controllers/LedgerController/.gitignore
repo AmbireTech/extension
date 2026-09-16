@@ -1,4 +1,0 @@
-# Raw Ledger app build outputs (per-device-model zips from the app-ethereum fork).
-# The only file we need — bin/app.apdu — is extracted into artifacts/*.ts (committed),
-# which is what the extension bundles and runs. Keep the zips out of git.
-*.zip
