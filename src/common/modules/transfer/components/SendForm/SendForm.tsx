@@ -23,7 +23,9 @@ import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 
+import type { AmountAdjustmentInfo } from '@ambire-common/interfaces/transfer'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
 type GasTankSection = {
   title: { icon: FC<SvgProps>; text: string }
   data: SelectValue[]
@@ -40,7 +42,8 @@ const SendForm = ({
   amountFieldValue,
   setAmountFieldValue,
   addressStateFieldValue,
-  setAddressStateFieldValue
+  setAddressStateFieldValue,
+  amountAdjustmentInfo
 }: {
   addressInputState: ReturnType<typeof useAddressInput>
   canUseGasTank: boolean
@@ -52,6 +55,7 @@ const SendForm = ({
   setAmountFieldValue: (value: string) => void
   addressStateFieldValue: string
   setAddressStateFieldValue: (value: string) => void
+  amountAdjustmentInfo?: AmountAdjustmentInfo | null
 }) => {
   const { validation } = addressInputState
   const {
@@ -316,6 +320,7 @@ const SendForm = ({
           inputTestId="amount-field"
           selectTestId="tokens-select"
           simulationFailed={!!simulationError}
+          amountAdjustmentInfo={amountAdjustmentInfo}
         />
       )}
     </>
