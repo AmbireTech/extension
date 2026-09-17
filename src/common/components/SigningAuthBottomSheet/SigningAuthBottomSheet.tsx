@@ -60,6 +60,9 @@ const SigningAuthBottomSheet = ({
   const { theme } = useTheme()
   const { deviceSupportedAuthTypes } = useBiometrics()
   const [password, setPassword] = useState('')
+  // Focusing while the sheet is still animating shifts the layout under it, so the field waits
+  // for the sheet to be up. Web has no such wait - it keeps the plain `autoFocus`.
+  const [hasSheetOpened, setHasSheetOpened] = useState(false)
 
   const BiometricsIcon = deviceSupportedAuthTypes.includes(
     DEVICE_SUPPORTED_AUTH_TYPES.FACIAL_RECOGNITION
@@ -94,7 +97,12 @@ const SigningAuthBottomSheet = ({
     onConfirmWithBiometrics()
   }, [isUsingBiometrics, onConfirmWithBiometrics])
 
-  const handleClosed = useCallback(() => setPassword(''), [])
+  const handleOpened = useCallback(() => setHasSheetOpened(true), [])
+
+  const handleClosed = useCallback(() => {
+    setPassword('')
+    setHasSheetOpened(false)
+  }, [])
 
   return (
     <BottomSheet
@@ -104,6 +112,7 @@ const SigningAuthBottomSheet = ({
       closeBottomSheet={onCancel}
       onBackdropPress={onCancel}
       onOpen={handleOpen}
+      onOpened={handleOpened}
       onClosed={handleClosed}
       adjustToContentHeight
       style={isWeb ? { maxWidth: 432 } : undefined}
@@ -152,7 +161,7 @@ const SigningAuthBottomSheet = ({
             testID="signing-auth-password-field"
             placeholder={t('Enter your password')}
             value={password}
-            autoFocus={isWeb}
+            autoFocus={isWeb || hasSheetOpened}
             onChangeText={handlePasswordChange}
             isValid={isValidPassword(password)}
             error={errorMessage}

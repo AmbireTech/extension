@@ -11,7 +11,6 @@ import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
@@ -159,7 +158,7 @@ const KeyStoreUnlockScreen = () => {
                   testID="passphrase-field"
                   onBlur={onBlur}
                   placeholder={t('Enter your password')}
-                  autoFocus={isWeb}
+                  autoFocus
                   inputStyle={{ height: 54 }} // 56-2px border
                   inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
                   onChangeText={(val: string) => {
