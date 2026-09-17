@@ -13,6 +13,7 @@ import {
   getIsTokenEligibleForSwapAndBridge
 } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
@@ -27,6 +28,7 @@ type SessionId = ReturnType<typeof nanoid>
 const { isPopup, isRequestWindow, isSidePanel } = getUiType()
 
 const useSwapAndBridgeForm = () => {
+  const { t } = useTranslation()
   const {
     fromAmount,
     fromChainId,
@@ -80,7 +82,11 @@ const useSwapAndBridgeForm = () => {
     acc: account,
     additionalCheck: {
       chainIds: supportedChainIds,
-      reason: 'Network is not supported by our service provider.'
+      reason: t(
+        disabledSwapProviderIds.length
+          ? 'Network is not supported by the enabled service providers. Enable more providers for wider support'
+          : 'Network is not supported by our service provider.'
+      )
     }
   })
   const currentRoute = useLocation()

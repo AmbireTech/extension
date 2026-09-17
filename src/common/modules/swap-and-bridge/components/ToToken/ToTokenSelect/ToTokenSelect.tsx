@@ -1,23 +1,24 @@
 import { isAddress, ZeroAddress } from 'ethers'
-import React, { useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { View } from 'react-native'
 
-import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import StarFilledIcon from '@common/assets/svg/StarFilledIcon'
 import Button from '@common/components/Button'
+import HoverablePressable from '@common/components/HoverablePressable'
 import { SectionedSelect } from '@common/components/Select'
-import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
+import type { RenderSelectedOptionParams, SelectValue } from '@common/components/Select/types'
 interface Props {
   toTokenOptions: SelectValue[]
   toTokenValue: SelectValue | undefined
@@ -26,6 +27,7 @@ interface Props {
   addToTokenByAddressStatus: ISwapAndBridgeController['statuses']['addToTokenByAddress']
   handleAddToTokenByAddress: (searchTerm: string) => void
   areAllProvidersDisabled: boolean
+  openProviderSettingsModal: () => void
 }
 
 const SECTION_MENU_HEADER_HEIGHT = 50
@@ -70,16 +72,25 @@ const ToTokenSelect: React.FC<Props> = ({
   handleChangeToToken,
   addToTokenByAddressStatus,
   handleAddToTokenByAddress,
-  areAllProvidersDisabled
+  areAllProvidersDisabled,
+  openProviderSettingsModal
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const { errors, isTokenListLoading, toTokenSearchTerm } =
-    useController('SwapAndBridgeController').state
+  const {
+    errors,
+    isTokenListLoading,
+    toTokenSearchTerm,
+    toChainId,
+    supportedChainIds,
+    swapProviders,
+    disabledSwapProviderIds
+  } = useController('SwapAndBridgeController').state
   const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const [didAttemptSearchingTokenByAddress, setDidAttemptSearchingTokenByAddress] =
     React.useState(false)
+  const shouldOpenProviderSettingsOnClose = useRef(false)
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
   const handleAttemptToFetchMoreOptions = useCallback(
@@ -127,6 +138,73 @@ const ToTokenSelect: React.FC<Props> = ({
   const notFoundPlaceholderText = didAttemptSearchingTokenByAddress
     ? t('Not found. Wrong receive network?') // TODO: Add "... or unsupported token" when UI allows longer messages
     : t('Not found. Try with token address?')
+
+  const enabledProviderNames = useMemo(
+    () =>
+      swapProviders
+        .filter(({ id }) => !disabledSwapProviderIds.includes(id))
+        .map(({ name }) => name)
+        .join(', '),
+    [disabledSwapProviderIds, swapProviders]
+  )
+  const isReceiveNetworkUnsupported =
+    toChainId !== null &&
+    supportedChainIds.length > 0 &&
+    !supportedChainIds.includes(BigInt(toChainId))
+  const shouldShowProviderSupportLink =
+    isReceiveNetworkUnsupported && !!enabledProviderNames && disabledSwapProviderIds.length > 0
+
+  const handleOpenProviderSettings = useCallback((closeTokenSelect: () => void) => {
+    shouldOpenProviderSettingsOnClose.current = true
+    closeTokenSelect()
+  }, [])
+
+  const handleTokenSelectClosed = useCallback(() => {
+    if (!shouldOpenProviderSettingsOnClose.current) return
+
+    shouldOpenProviderSettingsOnClose.current = false
+    openProviderSettingsModal()
+  }, [openProviderSettingsModal])
+
+  const renderHeaderChildren = useCallback(
+    ({ toggleMenu }: RenderSelectedOptionParams) => {
+      if (!shouldShowProviderSupportLink) return null
+
+      return (
+        <HoverablePressable
+          accessibilityRole="button"
+          onPress={() => handleOpenProviderSettings(toggleMenu)}
+          testID="receive-token-provider-settings-link"
+        >
+          <Text
+            fontSize={14}
+            weight="medium"
+            color={theme.warningText}
+            style={[
+              spacings.phSm,
+              spacings.mbTy,
+              {
+                textAlign: 'center',
+                textDecorationColor: theme.warningText,
+                textDecorationLine: 'underline'
+              }
+            ]}
+          >
+            {t('Network not supported by {{providerNames}}. Enable other providers', {
+              providerNames: enabledProviderNames
+            })}
+          </Text>
+        </HoverablePressable>
+      )
+    },
+    [
+      enabledProviderNames,
+      handleOpenProviderSettings,
+      shouldShowProviderSupportLink,
+      t,
+      theme.warningText
+    ]
+  )
 
   const toTokenListError = useMemo(() => {
     if (isTokenListLoading || areAllProvidersDisabled) return null
@@ -232,6 +310,8 @@ const ToTokenSelect: React.FC<Props> = ({
       setValue={handleChangeToTokenOrRetry}
       mode="bottomSheet"
       bottomSheetTitle={t('Receive token')}
+      renderHeaderChildren={renderHeaderChildren}
+      onBottomSheetClosed={handleTokenSelectClosed}
       sections={selectSections}
       renderSectionHeader={renderFeeOptionSectionHeader}
       value={toTokenValueOrError}
