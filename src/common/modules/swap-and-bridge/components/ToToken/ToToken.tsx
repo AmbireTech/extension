@@ -1,6 +1,5 @@
 import { formatUnits, isAddress } from 'ethers'
 import React, { FC, memo, useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
@@ -15,6 +14,7 @@ import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
@@ -34,9 +34,10 @@ import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 type Props = {
   simulationFailed?: boolean
   disabled?: boolean
+  openProviderSettingsModal: () => void
 }
 
-const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
+const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSettingsModal }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
@@ -54,6 +55,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
     updateToTokenListStatus,
     switchTokensStatus,
     supportedChainIds,
+    disabledSwapProviderIds,
     signAccountOpController
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -67,7 +69,11 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
     acc: account,
     additionalCheck: {
       chainIds: supportedChainIds,
-      reason: 'Network is not supported by our service provider.'
+      reason: t(
+        disabledSwapProviderIds.length
+          ? 'Network is not supported by the enabled service providers. Enable more providers for wider support'
+          : 'Network is not supported by our service provider.'
+      )
     }
   })
 
@@ -147,35 +153,35 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
   const toNetworksOptions: SelectValue[] = useMemo(
     () =>
       sortNetworksByBalance(networks, balancePerNetwork).map((n) => {
-          const tooltipId = `network-${n.chainId}-not-supported-tooltip`
+        const tooltipId = `network-${n.chainId}-not-supported-tooltip`
 
-          return {
-            value: String(n.chainId),
-            extraSearchProps: { name: n.name },
-            disabled: n.isNotSupported,
-            label: (
-              <>
-                <Text
-                  fontSize={isMobile ? 14 : 16}
-                  appearance="secondaryText"
-                  weight="medium"
-                  dataSet={{ tooltipId }}
-                  style={flexbox.flex1}
-                  numberOfLines={1}
-                >
-                  {n.name}
-                </Text>
-                {n.isNotSupported && (
-                  <NotSupportedNetworkTooltip
-                    tooltipId={tooltipId}
-                    message={n.notSupportedReason || t('Network unavailable')}
-                  />
-                )}
-              </>
-            ),
-            icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
-          }
-        }),
+        return {
+          value: String(n.chainId),
+          extraSearchProps: { name: n.name },
+          disabled: n.isNotSupported,
+          label: (
+            <>
+              <Text
+                fontSize={isMobile ? 14 : 16}
+                appearance="secondaryText"
+                weight="medium"
+                dataSet={{ tooltipId }}
+                style={flexbox.flex1}
+                numberOfLines={1}
+              >
+                {n.name}
+              </Text>
+              {n.isNotSupported && (
+                <NotSupportedNetworkTooltip
+                  tooltipId={tooltipId}
+                  message={n.notSupportedReason || t('Network unavailable')}
+                />
+              )}
+            </>
+          ),
+          icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
+        }
+      }),
     [networks, balancePerNetwork, t]
   )
 
@@ -318,6 +324,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
             toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
             addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
             handleAddToTokenByAddress={handleAddToTokenByAddress}
+            openProviderSettingsModal={openProviderSettingsModal}
           />
         </View>
         <View
