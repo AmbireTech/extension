@@ -14,6 +14,11 @@ import JazzIcon from './Jazz'
 import Polycons from './Polycons/Polycons'
 import TypeBadge from './TypeBadge'
 
+import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+
+const selectKeepEnsProfilesUpToDate = (state: FeatureFlagsController) =>
+  state.flags?.keepEnsProfilesUpToDate ?? false
+
 const getAvatarType = ({
   ensAvatar,
   ensAvatarImageFetchFailed,
@@ -82,6 +87,10 @@ const Avatar: FC<Props> = ({
   const {
     state: { domains, loadingAddresses }
   } = useController('DomainsController')
+  const { state: keepEnsProfilesUpToDate } = useController(
+    'FeatureFlagsController',
+    selectKeepEnsProfilesUpToDate
+  )
   // There is no wallet controller state in benzin/rewards so we need to be careful
 
   let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = propAvatarType || 'jazzicons'
@@ -92,7 +101,9 @@ const Avatar: FC<Props> = ({
   }
 
   const isEnsLoading = address ? loadingAddresses?.includes(address) : false
-  const ensAvatar = domains?.[address]?.avatar
+  // Standalone apps don't expose wallet privacy controls and retain their existing behavior.
+  const shouldLoadEnsAvatar = isLegends || isBenzin || keepEnsProfilesUpToDate
+  const ensAvatar = shouldLoadEnsAvatar ? domains?.[address]?.avatar : undefined
   const avatarType = getAvatarType({
     ensAvatar,
     ensAvatarImageFetchFailed,

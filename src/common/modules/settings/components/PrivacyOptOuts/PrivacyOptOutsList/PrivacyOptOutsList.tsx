@@ -63,7 +63,7 @@ const PrivacyOptOutsList = () => {
       <OptOutControlOption
         title={t('Keep ENS profiles up to date')}
         description={t(
-          'Automatically update ENS names and avatars in the background. This improves freshness, but may reduce privacy by linking your accounts together.'
+          'Automatically update ENS names and load profile pictures. This improves freshness, but may reduce privacy by linking your accounts together.'
         )}
         icon={<EnsIcon width={20} height={20} color={theme.iconPrimary} />}
         flag="keepEnsProfilesUpToDate"
