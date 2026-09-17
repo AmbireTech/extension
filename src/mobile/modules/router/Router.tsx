@@ -30,7 +30,7 @@ const Router = () => {
   )
   const { authStatus } = useAuth()
   const keystoreState = useController('KeystoreController').state
-  const { requestModalRef, closeRequestModal, onBottomSheetClosed, onBottomSheetOpened } =
+  const { requestModalRef, onBottomSheetClosed, onBottomSheetOpened } =
     useController('RequestsController')
   // The mobile app is invite-only for fresh installs. Lives here rather than in a route guard,
   // because this is the one component that is mounted no matter where the app has navigated to.
@@ -129,7 +129,6 @@ const Router = () => {
 
       <RequestsBottomSheet
         sheetRef={requestModalRef as any}
-        closeBottomSheet={closeRequestModal as any}
         onClosed={handleBottomSheetClosed}
         onOpened={onBottomSheetOpened as any}
       />

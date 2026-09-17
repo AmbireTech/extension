@@ -2,12 +2,20 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
+import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import GlassView from '@common/components/GlassView'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -16,7 +24,15 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 import type { FeeExemptionReason } from '@ambire-common/libs/swapAndBridge/fee'
+
+const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.tokens
+
+const getUsdPrice = (token?: TokenResult) =>
+  token?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')?.price
+
 type Props = {
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
@@ -36,13 +52,55 @@ const FeeInfoBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
+  const { state: portfolioTokens } = useController(
+    'SelectedAccountController',
+    selectPortfolioTokens
+  )
+  const walletPrice = useMemo(() => {
+    const walletToken = portfolioTokens.find(
+      (token) =>
+        token.chainId === ETHEREUM_CHAIN_ID &&
+        token.address.toLowerCase() === WALLET_TOKEN.toLowerCase()
+    )
+    const stkWalletToken = portfolioTokens.find(
+      (token) =>
+        token.chainId === ETHEREUM_CHAIN_ID &&
+        token.address.toLowerCase() === STK_WALLET.toLowerCase()
+    )
+
+    return getUsdPrice(walletToken) ?? getUsdPrice(stkWalletToken)
+  }, [portfolioTokens])
   const feeTiers = useMemo(
     () => [
-      { id: 'over-700k', heldLabel: t('700,000+'), feePercent: 0, feeLabel: '0%' },
-      { id: 'over-100k', heldLabel: t('100,000+'), feePercent: 0.25, feeLabel: '0.25%' },
-      { id: 'over-33k', heldLabel: t('33,000+'), feePercent: 0.4, feeLabel: '0.40%' },
-      { id: 'up-to-33k', heldLabel: t('Up to 33,000'), feePercent: 0.5, feeLabel: '0.50%' }
+      {
+        id: 'under-33k',
+        heldLabel: t('Under 33,000'),
+        minStkWalletHeld: 0,
+        feePercent: 0.5,
+        feeLabel: '0.50%'
+      },
+      {
+        id: 'over-33k',
+        heldLabel: t('33,000+'),
+        minStkWalletHeld: 33_000,
+        feePercent: 0.4,
+        feeLabel: '0.40%'
+      },
+      {
+        id: 'over-100k',
+        heldLabel: t('100,000+'),
+        minStkWalletHeld: 100_000,
+        feePercent: 0.25,
+        feeLabel: '0.25%'
+      },
+      {
+        id: 'over-700k',
+        heldLabel: t('700,000+'),
+        minStkWalletHeld: 700_000,
+        feePercent: 0,
+        feeLabel: '0.00%'
+      }
     ],
     [t]
   )
@@ -72,9 +130,12 @@ const FeeInfoBottomSheet = ({
       closeBottomSheet={closeBottomSheet}
       type="bottom-sheet"
       withBackdropBlur
+      isScrollEnabled={false}
+      adjustToContentHeight
+      modalTopOffset={isWeb ? 0 : undefined}
     >
       {feeExemptionExplanation ? (
-        <View style={[styles.feeExemption, spacings.ph, spacings.pvSm, spacings.mtSm]}>
+        <View style={[styles.feeExemption, spacings.phSm, spacings.pvSm, spacings.mtSm]}>
           <Text appearance="successText" fontSize={14} weight="semiBold">
             {t('No fee for this operation')}
           </Text>
@@ -84,93 +145,213 @@ const FeeInfoBottomSheet = ({
         </View>
       ) : (
         <>
-          <Text fontSize={20} weight="semiBold" style={[styles.centeredText, spacings.mtSm]}>
-            {t('Stake $WALLET and pay less in trading fees')}
+          <Text fontSize={18} weight="semiBold" style={[styles.centeredText, spacings.mtMi]}>
+            {t('Stake $WALLET, pay less in trading fees')}
           </Text>
           <Text
             appearance="secondaryText"
             fontSize={12}
-            style={[styles.centeredText, spacings.mtTy]}
+            style={[styles.centeredText, spacings.mtMi]}
           >
-            {t('(100% of accrued fees are used for $WALLET buybacks)')}
+            {t('Move up through the tiers to reduce swap and bridge fees.')}
           </Text>
 
-          <View style={[styles.table, spacings.mtLg]}>
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifySpaceBetween,
-                spacings.ph,
-                spacings.pvTy
-              ]}
-            >
-              <Text appearance="secondaryText" fontSize={13} weight="medium">
-                {t('$stkWALLET held')}
-              </Text>
-              <Text appearance="secondaryText" fontSize={13} weight="medium">
-                {t('Fee')}
-              </Text>
-            </View>
-
-            {feeTiers.map((tier) => {
+          <View style={spacings.mtSm}>
+            {feeTiers.map((tier, index) => {
               const isCurrent = feePercent === tier.feePercent
+              const isMaximum = tier.feePercent === 0
+              const isBelowCurrent = tier.feePercent > feePercent
+              const savingsPercent = feePercent
+                ? Math.round(((feePercent - tier.feePercent) / feePercent) * 100)
+                : 0
+              const approximateUsdValue =
+                walletPrice && tier.minStkWalletHeld
+                  ? t('≈ ${{amount}}', {
+                      amount: formatDecimals(tier.minStkWalletHeld * walletPrice, 'noDecimal')
+                    })
+                  : null
 
               return (
-                <View
-                  key={tier.id}
-                  style={[
-                    styles.tierRow,
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.justifySpaceBetween,
-                    spacings.ph,
-                    spacings.pvSm,
-                    isCurrent && styles.currentTierRow
-                  ]}
-                >
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <Text fontSize={14} weight={isCurrent ? 'semiBold' : 'medium'}>
-                      {tier.heldLabel}
-                    </Text>
-                    {isCurrent && (
-                      <Badge
-                        text={t('Current')}
-                        type="primaryAccent"
-                        style={spacings.mlTy}
-                        testId="current-swap-and-bridge-fee-tier"
-                      />
+                <React.Fragment key={tier.id}>
+                  <View
+                    style={[
+                      styles.tierCard,
+                      spacings.phSm,
+                      spacings.pvTy,
+                      isCurrent && styles.currentTierCard,
+                      isMaximum && styles.maximumTierCard
+                    ]}
+                    testID={`swap-and-bridge-fee-tier-${tier.id}`}
+                  >
+                    {(isCurrent || isMaximum) && (
+                      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+                        {isCurrent && (
+                          <Badge
+                            text={t('Your tier')}
+                            type="primaryAccent"
+                            style={styles.currentTierBadge}
+                            textStyle={styles.currentTierBadgeText}
+                            testId="current-swap-and-bridge-fee-tier"
+                          />
+                        )}
+                        {isMaximum && (
+                          <View style={isCurrent ? spacings.mlTy : undefined}>
+                            <Badge
+                              text={t('Maximum benefit')}
+                              type="success"
+                              style={styles.maximumTierBadge}
+                              textStyle={styles.maximumTierBadgeText}
+                            />
+                          </View>
+                        )}
+                      </View>
                     )}
+                    <View
+                      style={[
+                        flexbox.directionRow,
+                        flexbox.alignCenter,
+                        flexbox.justifySpaceBetween
+                      ]}
+                    >
+                      <View
+                        style={[
+                          flexbox.flex1,
+                          styles.tierDetails,
+                          flexbox.directionRow,
+                          flexbox.alignCenter,
+                          flexbox.wrap
+                        ]}
+                      >
+                        <Text fontSize={isMaximum ? 18 : 17} weight="medium">
+                          {tier.heldLabel}
+                        </Text>
+                        {!!approximateUsdValue && (
+                          <Text appearance="secondaryText" fontSize={11} style={spacings.mlTy}>
+                            {approximateUsdValue}
+                          </Text>
+                        )}
+                      </View>
+                      <Text
+                        fontSize={isMaximum ? 24 : 18}
+                        weight="medium"
+                        appearance={isMaximum ? 'successText' : 'primaryText'}
+                        style={spacings.mlSm}
+                      >
+                        {tier.feeLabel}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        flexbox.directionRow,
+                        flexbox.alignStart,
+                        flexbox.justifySpaceBetween
+                      ]}
+                    >
+                      <Text appearance="secondaryText" fontSize={12}>
+                        {t('$stkWALLET held')}
+                      </Text>
+                      {isCurrent && !isMaximum && (
+                        <Text appearance="primary" fontSize={12} style={spacings.mlSm}>
+                          {t('fee')}
+                        </Text>
+                      )}
+                      {!isCurrent && !isMaximum && !isBelowCurrent && (
+                        <Text appearance="primary" fontSize={12} style={spacings.mlSm}>
+                          {t('{{percent}}% lower', { percent: savingsPercent })}
+                        </Text>
+                      )}
+                      {isMaximum && (
+                        <View style={[flexbox.alignEnd, styles.feeDetails, spacings.mlSm]}>
+                          <Text appearance="secondaryText" fontSize={11}>
+                            {t('Swap & Bridge fee')}
+                          </Text>
+                          <Text appearance="successText" fontSize={12} style={spacings.mtMi}>
+                            {t('Fee-free')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <Text fontSize={14} weight={isCurrent ? 'semiBold' : 'medium'}>
-                    {tier.feeLabel}
-                  </Text>
-                </View>
+
+                  {index === 0 && feeTiers.length > 1 && (
+                    <View
+                      style={[
+                        flexbox.directionRow,
+                        flexbox.alignCenter,
+                        flexbox.justifyCenter,
+                        spacings.pvMi
+                      ]}
+                    >
+                      <DownArrowIcon
+                        width={12}
+                        height={7}
+                        color={theme.secondaryText}
+                        strokeWidth="2"
+                      />
+                      <Text appearance="secondaryText" fontSize={12} style={spacings.mlTy}>
+                        {t('stake more, pay less')}
+                      </Text>
+                    </View>
+                  )}
+                  {index > 0 && index < feeTiers.length - 1 && <View style={spacings.mtMi} />}
+                </React.Fragment>
               )
             })}
           </View>
 
+          <Text
+            appearance="secondaryText"
+            fontSize={11}
+            style={[styles.centeredText, spacings.mtSm, spacings.mbSm]}
+          >
+            {t('100% of accrued fees are used for $WALLET buybacks.')}
+          </Text>
+
           {withActions && (
-            <Button
-              text={t('Stake $WALLET')}
-              onPress={handleStakePress}
-              hasBottomSpacing={false}
-              style={spacings.mtLg}
-              testID="swap-and-bridge-stake-wallet-button"
-            />
+            <GlassView
+              borderRadius={30}
+              cssStyle={{
+                maxWidth: 300,
+                alignSelf: 'center',
+                paddingLeft: 12,
+                paddingRight: 12,
+                paddingTop: 12,
+                paddingBottom: 12
+              }}
+            >
+              <Button
+                type="secondary"
+                size="regular"
+                text={t('Cancel')}
+                onPress={closeBottomSheet}
+                hasBottomSpacing={false}
+                submitOnEnter={false}
+                style={styles.cancelButton}
+                textStyle={styles.actionButtonText}
+                testID="swap-and-bridge-fee-info-not-now"
+              />
+              <Button
+                size="regular"
+                text={t('Stake $WALLET')}
+                onPress={handleStakePress}
+                hasBottomSpacing={false}
+                style={styles.stakeButton}
+                textStyle={styles.actionButtonText}
+                testID="swap-and-bridge-stake-wallet-button"
+              />
+            </GlassView>
           )}
-          {(withActions || withCloseAction) && (
-            <View style={[flexbox.alignCenter, withActions ? spacings.mtSm : spacings.mtLg]}>
+
+          {withCloseAction && !withActions && (
+            <View style={[flexbox.alignCenter, spacings.mtSm]}>
               <HoverablePressable
                 onPress={closeBottomSheet}
                 hitSlop={8}
                 accessibilityRole="button"
-                testID={
-                  withActions ? 'swap-and-bridge-fee-info-not-now' : 'wallet-staking-fee-info-close'
-                }
+                testID="wallet-staking-fee-info-close"
               >
                 <Text appearance="primary" fontSize={14} weight="medium">
-                  {withActions ? t('Not now') : t('Close')}
+                  {t('Close')}
                 </Text>
               </HoverablePressable>
             </View>

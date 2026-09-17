@@ -15,11 +15,8 @@ import WatchTokenRequestScreen from '@mobile/modules/action-requests/screens/Wat
 import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
 import SignMessageScreen from '@mobile/modules/sign-message/screens/SignMessageScreen'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
 interface Props {
   sheetRef: React.RefObject<Modalize>
-  closeBottomSheet: () => void
   onClosed?: () => void
   onOpened?: () => void
 }
@@ -28,19 +25,8 @@ interface Props {
  * Renders the appropriate action request screen based on the currentUserRequest kind.
  * Each screen is wrapped in a container that adapts it for bottom sheet display.
  */
-const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
-  state.currentUserRequest
-
-const RequestsBottomSheet: React.FC<Props> = ({
-  sheetRef,
-  closeBottomSheet,
-  onClosed,
-  onOpened
-}) => {
-  const { state: currentUserRequest } = useController(
-    'RequestsController',
-    selectCurrentUserRequest
-  )
+const RequestsBottomSheet: React.FC<Props> = ({ sheetRef, onClosed, onOpened }) => {
+  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
 
   const requestContent = useMemo(() => {
     if (!currentUserRequest) return null
@@ -87,11 +73,12 @@ const RequestsBottomSheet: React.FC<Props> = ({
     <BottomSheet
       id="requests-bottom-sheet"
       sheetRef={sheetRef}
-      closeBottomSheet={closeBottomSheet}
       onClosed={onClosed}
       onOpened={onOpened}
       adjustToContentHeight={false}
       shouldBeClosableOnDrag={false}
+      // No `closeBottomSheet`, so the user has to reject or approve the request
+      // using the buttons
       isScrollEnabled={false}
       containerInnerWrapperStyles={flexbox.flex1}
       customRenderer={requestContent}

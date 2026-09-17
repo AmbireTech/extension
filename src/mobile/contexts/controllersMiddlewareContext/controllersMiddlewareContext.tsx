@@ -17,7 +17,7 @@ import {
 import { toAbsoluteRoute } from '@common/modules/router/helpers/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
-import { BUNGEE_API_KEY, RELAYER_URL, UNISWAP_API_KEY, VELCRO_URL } from '@env'
+import { BUNGEE_API_KEY, COWSWAP_API_KEY, RELAYER_URL, UNISWAP_API_KEY, VELCRO_URL } from '@env'
 import {
   MOBILE_CRITICAL_CONTROLLERS,
   MOBILE_DEFERRED_CONTROLLERS
@@ -34,6 +34,7 @@ import { shouldShowMigrationOnboarding } from '@mobile/services/legacyMigration/
 const CONTROLLER_HOST_CONFIG = {
   APP_VERSION,
   RELAYER_URL,
+  COWSWAP_API_KEY,
   VELCRO_URL,
   LIFI_EXPLORER_URL,
   BUNGEE_API_KEY,
