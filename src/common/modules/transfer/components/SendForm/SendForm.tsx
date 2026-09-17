@@ -2,7 +2,6 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
-import gasTankFeeTokens from '@ambire-common/consts/gasTankFeeTokens'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import Recipient from '@common/components/Recipient'
@@ -23,6 +22,7 @@ import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 
+import type { AmountAdjustmentInfo } from '@ambire-common/interfaces/transfer'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -48,7 +48,8 @@ const SendForm = ({
   amountFieldValue,
   setAmountFieldValue,
   addressStateFieldValue,
-  setAddressStateFieldValue
+  setAddressStateFieldValue,
+  amountAdjustmentInfo
 }: {
   addressInputState: ReturnType<typeof useAddressInput>
   canUseGasTank: boolean
@@ -60,6 +61,7 @@ const SendForm = ({
   setAmountFieldValue: (value: string) => void
   addressStateFieldValue: string
   setAddressStateFieldValue: (value: string) => void
+  amountAdjustmentInfo?: AmountAdjustmentInfo | null
 }) => {
   const { validation } = addressInputState
   const {
@@ -163,11 +165,6 @@ const SendForm = ({
         return !currentOptionKeys.has(getKey(asset.address, asset.chainId))
       })
       .map((asset) => {
-        const feeToken = gasTankFeeTokens.find(
-          (ft) =>
-            ft.address.toLowerCase() === asset.address?.toLowerCase() &&
-            ft.chainId === BigInt(asset.chainId!)
-        )
         const network = networks.find((n) => n.chainId === BigInt(asset.chainId!))
 
         const symbol = (asset.symbol?.trim() || 'No symbol').toUpperCase()
@@ -327,6 +324,7 @@ const SendForm = ({
           inputTestId="amount-field"
           selectTestId="tokens-select"
           simulationFailed={!!simulationError}
+          amountAdjustmentInfo={amountAdjustmentInfo}
         />
       )}
     </>
