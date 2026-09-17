@@ -83,11 +83,10 @@ const KeyStoreUnlockScreen = () => {
   const canUseBiometrics =
     !!hasBiometricsSecret && !!hasBiometricsHardware && !isPasswordUnlockRequired
 
-  // WebAuthn (Touch ID / passkey) cannot prompt inside the Chrome side panel or the
-  // Firefox popup: the browser tries to show a modal that these surfaces can't host, so
-  // the call hangs (side panel) or the surface auto-closes (Firefox popup). In both cases
-  // we run the biometric ceremony in a dedicated tab, which is the only context where it works.
-  const shouldUseTabForBiometrics = (IS_FIREFOX && isPopup) || isSidePanel
+  // WebAuthn (Touch ID / passkey) cannot prompt inside the Firefox popup: the browser shows a
+  // modal that takes focus, and the popup closes with it, taking the ceremony down. There we run
+  // it in a dedicated tab, which is the only context it survives in.
+  const shouldUseTabForBiometrics = IS_FIREFOX && isPopup
   const isBiometricsUnlockLoading =
     isBiometricsPromptPending || (unlockMethod === 'biometrics' && isBiometricsUnlockInProgress)
 
@@ -152,18 +151,15 @@ const KeyStoreUnlockScreen = () => {
   useEffect(() => {
     if (unlockMethod) return
 
-    // In the side panel, biometrics can't prompt in-place, so default to the password
-    // view. The user can still tap "Unlock with biometrics" to run it in a tab.
-    setUnlockMethod(canUseBiometrics && !isSidePanel ? 'biometrics' : 'password')
-  }, [canUseBiometrics, isSidePanel, unlockMethod])
+    setUnlockMethod(canUseBiometrics ? 'biometrics' : 'password')
+  }, [canUseBiometrics, unlockMethod])
 
   useEffect(() => {
     if (
       !canUseBiometrics ||
       unlockMethod !== 'biometrics' ||
       hasAutoPromptedBiometricsRef.current ||
-      shouldSkipAutoPrompt ||
-      isSidePanel
+      shouldSkipAutoPrompt
     )
       return
 
@@ -171,7 +167,7 @@ const KeyStoreUnlockScreen = () => {
     handleBiometricsPrompt().catch((e) => {
       console.log('failed to open biometrics prompt', e)
     })
-  }, [canUseBiometrics, handleBiometricsPrompt, shouldSkipAutoPrompt, isSidePanel, unlockMethod])
+  }, [canUseBiometrics, handleBiometricsPrompt, shouldSkipAutoPrompt, unlockMethod])
 
   useEffect(() => {
     if (isUnlocked) return
