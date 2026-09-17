@@ -1,6 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
-import { networks } from '@ambire-common/consts/networks'
 import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
 import { DomainsController } from '@ambire-common/controllers/domains/domains'
 import { Erc7730Controller } from '@ambire-common/controllers/erc7730/erc7730'
@@ -8,7 +7,9 @@ import { EventEmitterRegistryController } from '@ambire-common/controllers/event
 import { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
-import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
+import { UiController } from '@ambire-common/controllers/ui/ui'
+import { buildTimeNetworks } from '@benzin/constants/networks'
+import { benzinUiManager } from '@benzin/contexts/controllersMiddlewareContext/uiManager'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
@@ -16,7 +17,6 @@ import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { RELAYER_URL } from '@env'
 
-import type { IUiController } from '@ambire-common/interfaces/ui'
 import type { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
@@ -67,12 +67,15 @@ export const ControllersMiddlewareProvider: React.FC<{
   const controllers = useRef<ExplorerBaseControllersMappingType>(
     (() => {
       const ctrls: ExplorerBaseControllersMappingType = {} as ExplorerBaseControllersMappingType
+      // Not registered in the controller mapping, because no benzin screen reads
+      // its state - it exists so the controllers that need a UI have one
+      const uiCtrl = new UiController({ uiManager: benzinUiManager })
       ctrls.StorageController = new StorageController(storage)
       ctrls.FeatureFlagsController = new FeatureFlagsController({}, ctrls.StorageController)
       ctrls.ProvidersController = new ProvidersController({
         eventEmitterRegistry: eventEmitterRegistry.current,
         storage: ctrls.StorageController,
-        getNetworks: () => networks,
+        getNetworks: () => buildTimeNetworks,
         sendUiMessage: (params) => {
           eventBus.emit('receiveOneTimeData', params)
         }
@@ -81,7 +84,7 @@ export const ControllersMiddlewareProvider: React.FC<{
       ctrls.DomainsController = new DomainsController({
         eventEmitterRegistry: eventEmitterRegistry.current,
         providers: ctrls.ProvidersController.providers,
-        getNetwork: (chainId) => networks.find((n) => n.chainId === chainId)
+        getNetwork: (chainId) => buildTimeNetworks.find((n) => n.chainId === chainId)
       })
 
       ctrls.Erc7730Controller = new Erc7730Controller({
@@ -93,13 +96,7 @@ export const ControllersMiddlewareProvider: React.FC<{
           url: RELAYER_URL,
           fetch: window.fetch.bind(window) as any
         }),
-        ui: {
-          message: {
-            sendUiMessage: (params) => {
-              eventBus.emit('receiveOneTimeData', params)
-            }
-          }
-        } as IUiController
+        ui: uiCtrl
       })
 
       ctrls.ContractNamesController = new ContractNamesController({
