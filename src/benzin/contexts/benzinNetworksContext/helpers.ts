@@ -8,11 +8,14 @@ const LOG_EVENT = 'networks'
 /**
  * Converts the relayer network config that webpack inlines at build time into the
  * Ambire network format. Falls back to the networks predefined in ambire-common
- * when the build could not reach the relayer, in which case the config is null.
+ * when the config is null, meaning the benzin build could not reach the relayer,
+ * or undefined, meaning this is not a benzin build and nothing was ever inlined.
  */
 export const getBuildTimeNetworks = (
-  relayerNetworks: RelayerNetworkConfigResponse | null
+  relayerNetworks: RelayerNetworkConfigResponse | null | undefined
 ): Network[] => {
+  if (relayerNetworks === undefined) return predefinedNetworks
+
   if (!relayerNetworks) {
     logWarnWithPrefix(
       LOG_EVENT,

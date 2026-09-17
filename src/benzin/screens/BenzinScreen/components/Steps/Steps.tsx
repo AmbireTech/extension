@@ -290,8 +290,8 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                 ]}
               >
                 <Text fontSize={14} appearance="secondaryText">
-                  We could not check which assets moved, because this network did not answer. The
-                  transaction itself went through - open it in the explorer to see the details.
+                  Failed to load balance changes. The transaction itself went through - open it in
+                  the explorer to see the details.
                 </Text>
               </View>
             )}
