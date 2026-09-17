@@ -12,7 +12,7 @@ import useIsScrollable from '@web/hooks/useIsScrollable'
 
 import Backdrop from './Backdrop'
 import { BottomSheetProps } from './BottomSheet'
-import { BottomSheetContext } from './BottomSheetContext'
+import { BottomSheetContext, useBottomSheetContextValue } from './BottomSheetContext'
 import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
@@ -136,9 +136,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     shouldUseScrollPadding
   ])
 
+  const bottomSheetContextValue = useBottomSheetContextValue(isOpen)
+
   return (
     <Portal hostName="global">
-      <BottomSheetContext.Provider value={true}>
+      <BottomSheetContext.Provider value={bottomSheetContextValue}>
         {/* Wrapping the content in a View with a stable `key` prevents Portal */}
         {/* from losing track of its subtree during React reconciliation and re-renders. */}
         {/* Without this, the backdrop stays, but Modalize could disappear */}

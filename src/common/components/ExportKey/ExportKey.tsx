@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -83,6 +83,18 @@ const ExportKey = ({
   }, [isExportingV2SA])
 
   const { getExtraEntropy } = useExtraEntropy()
+
+  const revealPrivateKey = useCallback(() => {
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'sendPrivateKeyToUi',
+        args: [keyAddr]
+      }
+    })
+    closeConfirmPassword()
+  }, [closeConfirmPassword, keyAddr, keystoreDispatch])
+
   const onPasswordConfirmed = (password: string) => {
     if (isExportingV2SA) {
       keystoreDispatch({
@@ -163,6 +175,10 @@ const ExportKey = ({
                 )
           }
           onPasswordConfirmed={onPasswordConfirmed}
+          // The JSON export encrypts the key with the password itself, so there is nothing a
+          // fingerprint could hand it. Revealing the key needs no more than proof of identity.
+          onBiometricsConfirmed={isExportingV2SA ? undefined : revealPrivateKey}
+          withFullHeightLayout
           onBackButtonPress={closeConfirmPassword}
         />
       </BottomSheet>

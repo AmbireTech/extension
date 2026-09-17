@@ -1,27 +1,24 @@
 import React, { useCallback, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
+import { SvgProps } from 'react-native-svg'
 
 import { isValidPassword } from '@ambire-common/services/validations'
+import BiometricsPrompt, { SwitchToBiometricsButton } from '@common/components/BiometricsPrompt'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-
-const BIOMETRICS_BUTTON_SIZE = 80
 
 export type SigningAuthProps = {
   title: string
+  BiometricsIcon: React.FC<SvgProps>
   /** One short sentence on why the confirmation is being asked for. */
   reason: string
   isUsingBiometrics: boolean
@@ -43,6 +40,7 @@ const SigningAuthBottomSheet = ({
   sheetRef,
   onCancel,
   title,
+  BiometricsIcon,
   reason,
   isUsingBiometrics,
   canUseBiometrics,
@@ -55,7 +53,6 @@ const SigningAuthBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { BiometricsIcon } = useBiometricsAvailability()
   const [password, setPassword] = useState('')
   // Focusing while the sheet is still animating shifts the layout under it, so the field waits
   // for the sheet to be up. Web has no such wait - it keeps the plain `autoFocus`.
@@ -114,38 +111,13 @@ const SigningAuthBottomSheet = ({
       </Text>
 
       {isUsingBiometrics ? (
-        <View style={flexbox.alignCenter}>
-          <Pressable
-            testID="signing-auth-biometrics-button"
-            onPress={handleConfirmWithBiometrics}
-            disabled={isVerifying}
-            style={{
-              width: BIOMETRICS_BUTTON_SIZE,
-              height: BIOMETRICS_BUTTON_SIZE,
-              borderRadius: BIOMETRICS_BUTTON_SIZE / 2,
-              backgroundColor: theme.secondaryBackground,
-              ...flexbox.center,
-              ...spacings.mbLg
-            }}
-          >
-            <BiometricsIcon width={56} height={56} color={theme.iconPrimary} />
-          </Pressable>
-          {!!errorMessage && (
-            <Text fontSize={12} appearance="errorText" style={[text.center, spacings.mbSm]}>
-              {errorMessage}
-            </Text>
-          )}
-          <Button
-            testID="signing-auth-use-password-button"
-            text={t('Confirm with password')}
-            type="secondary"
-            size="large"
-            hasBottomSpacing={false}
-            disabled={isVerifying}
-            onPress={onSwitchToPassword}
-            style={common.fullWidth}
-          />
-        </View>
+        <BiometricsPrompt
+          BiometricsIcon={BiometricsIcon}
+          isVerifying={isVerifying}
+          errorMessage={errorMessage}
+          onConfirm={handleConfirmWithBiometrics}
+          onSwitchToPassword={onSwitchToPassword}
+        />
       ) : (
         <View>
           <InputPassword
@@ -170,24 +142,11 @@ const SigningAuthBottomSheet = ({
             onPress={handleConfirmWithPassword}
           />
           {!!canUseBiometrics && (
-            <Button
-              testID="signing-auth-use-biometrics-button"
-              text={t('Confirm with biometrics')}
-              type="secondary"
-              size="large"
-              hasBottomSpacing={false}
-              disabled={isVerifying}
+            <SwitchToBiometricsButton
+              BiometricsIcon={BiometricsIcon}
+              isVerifying={isVerifying}
               onPress={handleConfirmWithBiometrics}
-              childrenPosition="left"
-              style={spacings.mtSm}
-            >
-              <BiometricsIcon
-                width={24}
-                height={24}
-                color={theme.primaryText}
-                style={spacings.mrTy}
-              />
-            </Button>
+            />
           )}
         </View>
       )}
