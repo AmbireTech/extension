@@ -151,15 +151,19 @@ const KeyStoreUnlockScreen = () => {
   useEffect(() => {
     if (unlockMethod) return
 
-    setUnlockMethod(canUseBiometrics ? 'biometrics' : 'password')
-  }, [canUseBiometrics, unlockMethod])
+    // Where the ceremony has to run in a tab, the password is what the screen opens on, so
+    // unlocking does not throw the user into a tab they did not ask for. Biometrics stays one
+    // tap away, and takes them there when they choose it.
+    setUnlockMethod(canUseBiometrics && !shouldUseTabForBiometrics ? 'biometrics' : 'password')
+  }, [canUseBiometrics, shouldUseTabForBiometrics, unlockMethod])
 
   useEffect(() => {
     if (
       !canUseBiometrics ||
       unlockMethod !== 'biometrics' ||
       hasAutoPromptedBiometricsRef.current ||
-      shouldSkipAutoPrompt
+      shouldSkipAutoPrompt ||
+      shouldUseTabForBiometrics
     )
       return
 
@@ -167,7 +171,13 @@ const KeyStoreUnlockScreen = () => {
     handleBiometricsPrompt().catch((e) => {
       console.log('failed to open biometrics prompt', e)
     })
-  }, [canUseBiometrics, handleBiometricsPrompt, shouldSkipAutoPrompt, unlockMethod])
+  }, [
+    canUseBiometrics,
+    handleBiometricsPrompt,
+    shouldSkipAutoPrompt,
+    shouldUseTabForBiometrics,
+    unlockMethod
+  ])
 
   useEffect(() => {
     if (isUnlocked) return
