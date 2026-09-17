@@ -24,6 +24,7 @@ import text from '@common/styles/utils/text'
 const BIOMETRICS_BUTTON_SIZE = 80
 
 export type SigningAuthProps = {
+  title: string
   /** One short sentence on why the confirmation is being asked for. */
   reason: string
   isUsingBiometrics: boolean
@@ -44,6 +45,7 @@ type Props = SigningAuthProps & {
 const SigningAuthBottomSheet = ({
   sheetRef,
   onCancel,
+  title,
   reason,
   isUsingBiometrics,
   canUseBiometrics,
@@ -106,7 +108,7 @@ const SigningAuthBottomSheet = ({
       adjustToContentHeight
       style={isWeb ? { maxWidth: 432 } : undefined}
     >
-      <ModalHeader handleClose={onCancel} title={t('Signing authentication')} />
+      <ModalHeader handleClose={onCancel} title={title} />
       <Text fontSize={14} appearance="secondaryText" style={[text.center, spacings.mbLg]}>
         {reason}
       </Text>

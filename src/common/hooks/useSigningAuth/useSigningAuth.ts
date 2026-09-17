@@ -81,6 +81,8 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
   const isUsingBiometrics = canUseBiometrics && !hasSwitchedToPassword
 
+  const title = t('Signing authentication')
+
   const reason = useMemo(() => {
     if (!requirement) return ''
 
@@ -173,7 +175,15 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
       // getBiometricsSecret only awaits storage when the credential cache is cold
       if (isWeb) window.focus()
 
-      const biometricsSecret = await getBiometricsSecret()
+      // Native shows this on the operating system's own prompt, so it reads the same as the
+      // sheet behind it. The browser writes its own dialog and ignores it.
+      const biometricsSecretPromise = getBiometricsSecret(`${title}\n${reason}`)
+      // Only once the ceremony is under way, so the tap's user gesture is not spent on a
+      // re-render. Without it the sheet stays on the password it was started from, which is
+      // what the user is left looking at behind the prompt.
+      setHasSwitchedToPassword(false)
+
+      const biometricsSecret = await biometricsSecretPromise
       // A cancelled or failed prompt resolves to null, which the OS has already reported
       if (!biometricsSecret) return
 
@@ -193,7 +203,9 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
     keystoreDispatch,
     cancelSigningAuth,
     path,
-    requestWindow?.windowProps?.createdFromWindowId
+    requestWindow?.windowProps?.createdFromWindowId,
+    title,
+    reason
   ])
 
   const switchToPassword = useCallback(() => setHasSwitchedToPassword(true), [])
@@ -229,6 +241,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
 
   const signingAuthProps = useMemo(
     () => ({
+      title,
       reason,
       isUsingBiometrics,
       canUseBiometrics,
@@ -240,6 +253,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
       onPasswordChange: resetError
     }),
     [
+      title,
       reason,
       isUsingBiometrics,
       canUseBiometrics,
