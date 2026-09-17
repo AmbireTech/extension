@@ -281,7 +281,7 @@ Releases before v6.19.2 have neither a signature nor a `SHA256SUMS` file.
 
 ## Mobile Apps
 
-The mobile apps share the same codebase, but the business logic (the `background`) runs inside a WebView worker (`src/mobile/modules/webview/services/`) instead of a service worker. That's why every mobile build needs the webview bundle built (or the webview dev server running).
+The mobile apps share the same codebase. The business logic (the `background`) runs in the React Native realm (`src/mobile/services/controllerHost/`), in the same JS context as the UI. The WebView worker (`src/mobile/modules/webview/services/`) is still mounted and its bridge is live, so a controller can be moved back into it, but it hosts none today.
 
 ### Install
 
@@ -295,13 +295,7 @@ The mobile apps share the same codebase, but the business logic (the `background
 
 ### Development-optimized Builds
 
-Run the webview dev server in one terminal (the app shows an explicit error screen if it isn't running):
-
-```bash
-yarn dev:webview
-```
-
-Then, in another terminal, compile a new native build and run it on a simulator/emulator or a connected device:
+Compile a new native build and run it on a simulator/emulator or a connected device:
 
 ```bash
 yarn ios
@@ -318,6 +312,12 @@ yarn start:clean
 A new native build is only needed after changing native code or native dependencies.
 
 #### Webview dev server
+
+```bash
+yarn dev:webview
+```
+
+Not needed for a normal dev flow. The app boots without it, because the worker hosts no controllers, and dapp browsing falls back to the inpage bundles `yarn setup` already built via `yarn build:webview`. Run it when you are editing the webview or inpage code and want those changes without rebuilding. If a controller is ever moved back into the worker, it becomes required again (see `WebViewWorker.tsx`).
 
 It listens on port `8182` and is separate from the Metro bundler (port `8081`), which `yarn ios`/`yarn android` start on their own. The app resolves its host automatically:
 

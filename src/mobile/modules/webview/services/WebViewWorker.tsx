@@ -48,6 +48,10 @@ import { decode, encode } from './bridgeCodec'
 // anything moved back into the worker gets storage, fetch, the hardware-wallet
 // transports and the controller-state channel without further wiring.
 //
+// Moving a controller back in also makes `yarn dev:webview` required again for development
+// builds, and the dev-server notice below live again — both are dormant only because nothing
+// calls init() today. Restore the README's dev-server step along with it.
+//
 // In production the worker bundle is materialized from the OTA-shipped copy (which rides
 // the Metro bundle) into a writable, app-sandboxed dir and loaded from there via `file://`,
 // so OTA updates reach it. It falls back to the native-asset copy baked into the signed app
@@ -124,6 +128,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // Sticky, so the notice stays up until the worker actually boots instead of
   // flashing back to a blank screen the moment the dev server answers again.
   const [hasDevServerFailed, setHasDevServerFailed] = useState(false)
+  // Nothing calls init() while the worker hosts no controllers, so this stays false and the
+  // dev-server probe below never runs — a missing dev server is harmless today. It turns back
+  // on by itself if a controller is moved into the worker.
   const isInitializeRequested = !!lastConfig.current || !!pendingConfig.current
 
   useEffect(() => {
