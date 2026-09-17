@@ -3,6 +3,7 @@ import { getBytes, hexlify } from 'ethers'
 import { EntropyGenerator } from '@ambire-common/libs/entropyGenerator/entropyGenerator'
 import { CIPHER, decryptWithKey, encryptWithKey } from '@ambire-common/libs/keystore/keystore'
 import { storage } from '@common/services/storage'
+import { IS_FIREFOX } from '@web/constants/common'
 import { captureException } from '@sentry/browser'
 
 import type { AESGCMEncrypted } from '@ambire-common/interfaces/keystore'
@@ -11,15 +12,30 @@ const WEBAUTHN_TIMEOUT_MS = 60_000
 const WEBAUTHN_AUTHENTICATOR_DATA_FLAGS_INDEX = 32
 const WEBAUTHN_USER_VERIFIED_FLAG = 0x04
 
+/**
+ * The domain a credential is tied to, for the browsers that will not derive one from the
+ * extension's own address. Asserting it takes host permissions for the domain, which the
+ * manifest already grants through its wildcard https host permission.
+ */
+const BIOMETRICS_RP_ID = 'ambire.com'
+
 type StoredPrfBiometricsCredential = {
   version: 1
   credentialId: string
   salt: string
+  /**
+   * The relying party id the credential was created with, when it was set explicitly. Absent on
+   * credentials stored before that was needed, which the browser resolves from the origin as
+   * before - it has to stay that way, or an existing credential can no longer be found.
+   */
+  rpId?: string
 }
 
 type StoredEncryptedBiometricsCredential = {
   version: 2
   credentialId: string
+  /** See the note on the same field of `StoredPrfBiometricsCredential`. */
+  rpId?: string
 } & AESGCMEncrypted
 
 type StoredCredential = StoredPrfBiometricsCredential | StoredEncryptedBiometricsCredential
@@ -137,6 +153,7 @@ const getAssertionForPrfCredential = async (storedCredential: StoredPrfBiometric
         challenge: getRandomBytes(32),
         timeout: WEBAUTHN_TIMEOUT_MS,
         userVerification: 'preferred',
+        ...(storedCredential.rpId ? { rpId: storedCredential.rpId } : {}),
         allowCredentials: [
           {
             id: decodeStoredBytes(storedCredential.credentialId),
@@ -183,6 +200,7 @@ const getAssertionUserHandle = async (storedCredential: StoredEncryptedBiometric
       challenge: getRandomBytes(32),
       timeout: WEBAUTHN_TIMEOUT_MS,
       userVerification: 'required',
+      ...(storedCredential.rpId ? { rpId: storedCredential.rpId } : {}),
       allowCredentials: [
         {
           id: decodeStoredBytes(storedCredential.credentialId),
@@ -270,6 +288,11 @@ export const webauthnBiometrics = {
     const isSupported = await this.isSupported()
     if (!isSupported) return null
 
+    // Firefox will not derive a relying party id from a moz-extension address and rejects the
+    // ceremony outright, so the domain is named here. Left to the browser everywhere it already
+    // works, because a credential can only be found again under the id it was created with.
+    const rpId = IS_FIREFOX ? BIOMETRICS_RP_ID : undefined
+
     const salt = getRandomBytes(32)
     // we need a fresh random secret material for the user id
     // so using the old userId is no longer possible
@@ -278,7 +301,8 @@ export const webauthnBiometrics = {
       publicKey: {
         challenge: getRandomBytes(32),
         rp: {
-          name: 'ambire.com'
+          name: 'ambire.com',
+          ...(rpId ? { id: rpId } : {})
         },
         user: {
           id: userHandle,
@@ -320,7 +344,8 @@ export const webauthnBiometrics = {
     const storedPrfCredential: StoredPrfBiometricsCredential = {
       version: 1,
       credentialId: hexlify(toUint8Array((credential as any).rawId)),
-      salt: hexlify(salt)
+      salt: hexlify(salt),
+      ...(rpId ? { rpId } : {})
     }
     const extensionResults = getCredentialExtensionResults(credential)
     let secretBytes = getHmacSecretOutput(extensionResults)
@@ -343,7 +368,8 @@ export const webauthnBiometrics = {
     const storedCredential: StoredEncryptedBiometricsCredential = {
       version: 2,
       credentialId: hexlify(toUint8Array((credential as any).rawId)),
-      ...encrypted
+      ...encrypted,
+      ...(rpId ? { rpId } : {})
     }
 
     await storage.set(WEBAUTHN_BIOMETRICS_STORAGE_KEY, storedCredential)
@@ -409,7 +435,7 @@ export const webauthnBiometrics = {
     try {
       if (publicKeyCredentialCtor.signalUnknownCredential) {
         await publicKeyCredentialCtor.signalUnknownCredential({
-          rpId: getBiometricRpId(),
+          rpId: storedCredential.rpId ?? getBiometricRpId(),
           credentialId: toBase64Url(decodeStoredBytes(storedCredential.credentialId))
         })
       }
