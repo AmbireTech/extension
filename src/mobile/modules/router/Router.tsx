@@ -22,7 +22,7 @@ import { markSplashHidden } from '@mobile/services/bootProfiler'
 const Router = () => {
   const { authStatus } = useAuth()
   const keystoreState = useController('KeystoreController').state
-  const { requestModalRef, closeRequestModal, onBottomSheetClosed, onBottomSheetOpened } =
+  const { requestModalRef, onBottomSheetClosed, onBottomSheetOpened } =
     useController('RequestsController')
   const { canRenderRoute } = useContext(ControllersStateLoadedContext)
   // The mobile app is invite-only for fresh installs. Lives here rather than in a route guard,
@@ -101,7 +101,6 @@ const Router = () => {
 
       <RequestsBottomSheet
         sheetRef={requestModalRef as any}
-        closeBottomSheet={closeRequestModal as any}
         onClosed={handleBottomSheetClosed}
         onOpened={onBottomSheetOpened as any}
       />

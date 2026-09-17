@@ -48,6 +48,7 @@ import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScree
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import { logWarnWithPrefix } from '@common/utils/logger'
 
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
@@ -84,6 +85,8 @@ export interface StepsData {
   finalizedStatus: FinalizedStatusType
   feePaidWith: FeePaidWith | null
   balanceChanges?: BalanceChange[]
+  /** Set when the balance changes could not be read, so the UI can say so instead of waiting. */
+  hasBalanceChangesFailed: boolean
   calls: IrCall[] | null
   txnId: string | null
   from: string | null
@@ -206,6 +209,7 @@ const useSteps = ({
   const [isFrontRan, setIsFrontRan] = useState<boolean>(false)
   const [isFetching, setIsFetching] = useState<boolean>(false)
   const [balanceChanges, setBalanceChanges] = useState<BalanceChange[] | undefined>(undefined)
+  const [hasBalanceChangesFailed, setHasBalanceChangesFailed] = useState<boolean>(false)
   const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOpLike | null>(null)
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
@@ -1023,15 +1027,31 @@ const useSteps = ({
         })
           .then((res) => {
             if (!isMounted) return
+
+            setHasBalanceChangesFailed(false)
             setBalanceChanges(res)
           })
-          .catch(() => null)
+          .catch((error) => {
+            if (!isMounted) return
+
+            logWarnWithPrefix(
+              'balance changes',
+              `Reading the balances on chain ${network.chainId.toString()} failed`,
+              error
+            )
+            setHasBalanceChangesFailed(true)
+          })
 
         if (!isMounted) return
       } catch (error) {
         if (!isMounted) return
 
-        setBalanceChanges([])
+        logWarnWithPrefix(
+          'balance changes',
+          `Reading the transferred tokens on chain ${network.chainId.toString()} failed`,
+          error
+        )
+        setHasBalanceChangesFailed(true)
       }
     })()
 
@@ -1165,6 +1185,7 @@ const useSteps = ({
     finalizedStatus,
     feePaidWith,
     balanceChanges,
+    hasBalanceChangesFailed,
     calls: calls || null,
     txnId: foundTxnId,
     from: from || null,

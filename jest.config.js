@@ -8,7 +8,8 @@ module.exports = {
   moduleNameMapper: {
     ...baseConfig.moduleNameMapper,
     '^@ambire-common/(.*)$': path.join('<rootDir>', 'src/ambire-common/src/$1'),
-    '^@common/(.*)$': path.join('<rootDir>', 'src/common/$1')
+    '^@common/(.*)$': path.join('<rootDir>', 'src/common/$1'),
+    '^@benzin/(.*)$': path.join('<rootDir>', 'src/benzin/$1')
   },
   testPathIgnorePatterns: [
     path.join('<rootDir>', 'e2e-playwright-tests/'), // E2E tests, handled by another configuration
