@@ -3,17 +3,14 @@ import { View, ViewStyle } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
-import FaceIDIcon from '@common/assets/svg/FaceIDIcon'
-import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isDev, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
-import useController from '@common/hooks/useController'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -21,17 +18,12 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
 type Props = {
   isUnlocking: boolean
   unlockErrorMessage: string
   onUnlock: (secretId: 'password' | 'biometrics', secret: string) => void
   onPasswordChange: () => void
 }
-
-const selectHasBiometricsSecret = (state: AllControllersMappingType['KeystoreController']) =>
-  state.hasBiometricsSecret
 
 const BackupUnlockStep = ({
   isUnlocking,
@@ -41,25 +33,16 @@ const BackupUnlockStep = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: hasBiometricsSecret } = useController(
-    'KeystoreController',
-    selectHasBiometricsSecret
-  )
-  const { hasBiometricsHardware, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
+  const { getBiometricsSecret } = useBiometrics()
+  const { canUnlockWithBiometrics, BiometricsIcon } = useBiometricsAvailability()
   const [password, setPassword] = useState(
     isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
   )
   const [hasSwitchedToPassword, setHasSwitchedToPassword] = useState(false)
 
-  const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
   // Biometrics are offered first when set up, but the password stays reachable, because
   // the prompt can be unavailable (Firefox popups) or keep failing on a given device.
-  const isUsingBiometrics = canUseBiometrics && !hasSwitchedToPassword
-  const BiometricsIcon = deviceSupportedAuthTypes.includes(
-    DEVICE_SUPPORTED_AUTH_TYPES.FACIAL_RECOGNITION
-  )
-    ? FaceIDIcon
-    : FingerprintIcon
+  const isUsingBiometrics = canUnlockWithBiometrics && !hasSwitchedToPassword
 
   const handlePasswordChange = useCallback(
     (value: string) => {

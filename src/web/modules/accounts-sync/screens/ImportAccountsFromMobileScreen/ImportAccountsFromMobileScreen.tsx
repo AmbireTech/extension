@@ -11,11 +11,14 @@ import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import SyncImportSteps, { SyncImportStepsFooter } from '@common/modules/accounts-sync/components/SyncImportSteps'
+import SyncImportSteps, {
+  SyncImportStepsFooter
+} from '@common/modules/accounts-sync/components/SyncImportSteps'
 import SyncPasswordOptions from '@common/modules/accounts-sync/components/SyncPasswordOptions'
 import SyncScanFeedbackAlert from '@common/modules/accounts-sync/components/SyncScanFeedbackAlert'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
@@ -74,10 +77,11 @@ const ImportAccountsFromMobileScreen = () => {
   // so there is no second one to set. Off means the extension asks for its own next.
   const [isPasswordReused, setIsPasswordReused] = useState(true)
   const [isBiometricsToggled, setIsBiometricsToggled] = useState<boolean | null>(null)
-  const { isLoading, hasBiometricsHardware, saveBiometricsSecret } = useBiometrics()
+  const { saveBiometricsSecret } = useBiometrics()
+  const { canEnableBiometrics } = useBiometricsAvailability()
   // Biometrics on the extension are a WebAuthn credential, so what matters is whether
   // the browser and the computer support one, not whether one is already stored
-  const isBiometricsAvailable = !isLoading && !!hasBiometricsHardware
+  const isBiometricsAvailable = canEnableBiometrics
   // On by default once biometrics turn out to be available, until the user says otherwise
   const isBiometricsEnabled = isBiometricsToggled ?? isBiometricsAvailable
 

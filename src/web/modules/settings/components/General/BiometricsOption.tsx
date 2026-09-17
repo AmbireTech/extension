@@ -6,6 +6,7 @@ import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
@@ -15,8 +16,8 @@ import BottomSheetPasswordConfirmation from '@web/modules/settings/components/Bo
 const BiometricsOption = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { isLoading, hasBiometricsHardware, saveBiometricsSecret, removeBiometricsSecret } =
-    useBiometrics()
+  const { saveBiometricsSecret, removeBiometricsSecret } = useBiometrics()
+  const { canEnableBiometrics } = useBiometricsAvailability()
   const { getExtraEntropy } = useExtraEntropy()
 
   const {
@@ -60,16 +61,14 @@ const BiometricsOption = () => {
     }
   }, [addToast, removeBiometricsSecret, statuses.removeSecret, t])
 
+  // `canEnableBiometrics` is false while the capability is still being resolved, so by the time
+  // anything renders there is nothing left to wait for
   const disabled = useMemo(
-    () =>
-      isBusy ||
-      statuses.addSecret !== 'INITIAL' ||
-      statuses.removeSecret !== 'INITIAL' ||
-      isLoading,
-    [isBusy, isLoading, statuses.addSecret, statuses.removeSecret]
+    () => isBusy || statuses.addSecret !== 'INITIAL' || statuses.removeSecret !== 'INITIAL',
+    [isBusy, statuses.addSecret, statuses.removeSecret]
   )
 
-  if (!hasPasswordSecret || (!isLoading && !hasBiometricsHardware)) return null
+  if (!hasPasswordSecret || !canEnableBiometrics) return null
 
   const closePasswordConfirmation = useCallback(() => {
     keystoreDispatch({

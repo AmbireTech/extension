@@ -6,6 +6,7 @@ import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import { openInternalPageInTab } from '@common/utils/links'
@@ -23,8 +24,6 @@ const { isPopup, isTab, isSidePanel } = getUiType()
  */
 const SHOULD_USE_TAB_FOR_BIOMETRICS = IS_FIREFOX && isPopup
 
-const selectHasBiometricsSecret = (state: AllControllersMappingType['KeystoreController']) =>
-  state.hasBiometricsSecret
 // Both read a value that lives on the state rather than building one, so the store's
 // reconciled snapshots stay reference stable and the component only re-renders on a change
 const selectSigningAuthResult = (state: AllControllersMappingType['KeystoreController']) =>
@@ -52,14 +51,11 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   const { t } = useTranslation()
   const { dispatch: keystoreDispatch } = useController('KeystoreController')
   const { dispatch: dappsDispatch } = useController('DappsController')
-  const { state: hasBiometricsSecret } = useController(
-    'KeystoreController',
-    selectHasBiometricsSecret
-  )
   const { state: signingAuthResult } = useController('KeystoreController', selectSigningAuthResult)
   const { state: isVerifying } = useController('KeystoreController', selectIsVerifyingSecret)
   const { state: requestWindow } = useController('RequestsController', selectRequestWindow)
-  const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
+  const { getBiometricsSecret } = useBiometrics()
+  const { canUnlockWithBiometrics } = useBiometricsAvailability()
   const { path } = useRoute()
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
 
@@ -78,8 +74,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   const isPromptPending = useRef(false)
   const onAuthenticated = useRef<(() => void) | null>(null)
 
-  const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
-  const isUsingBiometrics = canUseBiometrics && !hasSwitchedToPassword
+  const isUsingBiometrics = canUnlockWithBiometrics && !hasSwitchedToPassword
 
   const title = t('Signing authentication')
 
@@ -244,7 +239,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
       title,
       reason,
       isUsingBiometrics,
-      canUseBiometrics,
+      canUseBiometrics: canUnlockWithBiometrics,
       isVerifying,
       errorMessage: signingAuthResult?.status === 'failed' ? signingAuthResult.error || '' : '',
       onConfirmWithPassword: confirmWithPassword,
@@ -256,7 +251,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
       title,
       reason,
       isUsingBiometrics,
-      canUseBiometrics,
+      canUnlockWithBiometrics,
       isVerifying,
       signingAuthResult,
       confirmWithPassword,

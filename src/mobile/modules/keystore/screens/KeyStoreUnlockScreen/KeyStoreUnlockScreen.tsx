@@ -5,15 +5,13 @@ import Animated from 'react-native-reanimated'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
-import FaceIDIcon from '@common/assets/svg/FaceIDIcon'
-import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -36,18 +34,18 @@ const KeyStoreUnlockScreen = () => {
 
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
-    state: { statuses, errorMessage, hasBiometricsSecret, isPasswordUnlockRequired },
+    state: { statuses, errorMessage, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
   const { theme } = useTheme()
   const { height } = useWindowSize()
 
-  const { isLoading, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
-  const canUseBiometrics = hasBiometricsSecret && !isPasswordUnlockRequired
-  const hasFaceId = deviceSupportedAuthTypes.includes(
-    DEVICE_SUPPORTED_AUTH_TYPES.FACIAL_RECOGNITION
-  )
-  const BiometricsIcon = hasFaceId ? FaceIDIcon : FingerprintIcon
+  const { isLoading, getBiometricsSecret } = useBiometrics()
+  const {
+    canUnlockWithBiometrics: canUseBiometrics,
+    BiometricsIcon,
+    biometricsAuthLabel
+  } = useBiometricsAvailability()
 
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
   const [initialCheckDone, setInitialCheckDone] = useState(false)
@@ -202,7 +200,7 @@ const KeyStoreUnlockScreen = () => {
             )}
             {canUseBiometrics && (
               <Button
-                text={hasFaceId ? t('Unlock with Face ID') : t('Unlock with fingerprint')}
+                text={t('Unlock with {{biometricsAuthLabel}}', { biometricsAuthLabel })}
                 type="secondary"
                 hasBottomSpacing={false}
                 onPress={() => {

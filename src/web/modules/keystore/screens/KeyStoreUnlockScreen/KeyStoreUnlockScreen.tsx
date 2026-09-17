@@ -21,6 +21,7 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -59,7 +60,7 @@ const KeyStoreUnlockScreen = () => {
   } = useController('WalletStateController')
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
-    state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked, isPasswordUnlockRequired },
+    state: { statuses, errorMessage, isUnlocked, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
   const { state: requestWindow } = useController('RequestsController', selectRequestWindow)
@@ -68,7 +69,8 @@ const KeyStoreUnlockScreen = () => {
     selectIsExtensionUpdateAvailable
   )
   const { theme } = useTheme()
-  const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
+  const { getBiometricsSecret } = useBiometrics()
+  const { canUnlockWithBiometrics: canUseBiometrics } = useBiometricsAvailability()
   const { isPopup, isTab, isSidePanel } = getUiType()
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
   const hasAutoPromptedBiometricsRef = useRef(false)
@@ -79,9 +81,6 @@ const KeyStoreUnlockScreen = () => {
     if (shouldSkip) syncSessionStorage.remove(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE)
     return shouldSkip
   })
-
-  const canUseBiometrics =
-    !!hasBiometricsSecret && !!hasBiometricsHardware && !isPasswordUnlockRequired
 
   // WebAuthn (Touch ID / passkey) cannot prompt inside the Firefox popup: the browser shows a
   // modal that takes focus, and the popup closes with it, taking the ceremony down. There we run

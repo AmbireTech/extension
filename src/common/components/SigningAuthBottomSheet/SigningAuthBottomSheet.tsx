@@ -3,8 +3,6 @@ import { Pressable, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { isValidPassword } from '@ambire-common/services/validations'
-import FaceIDIcon from '@common/assets/svg/FaceIDIcon'
-import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
@@ -13,8 +11,7 @@ import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
-import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -58,17 +55,11 @@ const SigningAuthBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { deviceSupportedAuthTypes } = useBiometrics()
+  const { BiometricsIcon } = useBiometricsAvailability()
   const [password, setPassword] = useState('')
   // Focusing while the sheet is still animating shifts the layout under it, so the field waits
   // for the sheet to be up. Web has no such wait - it keeps the plain `autoFocus`.
   const [hasSheetOpened, setHasSheetOpened] = useState(false)
-
-  const BiometricsIcon = deviceSupportedAuthTypes.includes(
-    DEVICE_SUPPORTED_AUTH_TYPES.FACIAL_RECOGNITION
-  )
-    ? FaceIDIcon
-    : FingerprintIcon
 
   const handlePasswordChange = useCallback(
     (value: string) => {
