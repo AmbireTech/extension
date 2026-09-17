@@ -1,16 +1,10 @@
-import React, { createContext, FC, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { createContext, FC, useCallback, useMemo, useState } from 'react'
 
-import { networks as predefinedNetworks } from '@ambire-common/consts/networks'
 import { ChainlistNetwork, Network } from '@ambire-common/interfaces/network'
-import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
-import {
-  convertToAmbireNetworkFormat,
-  mapRelayerNetworkConfigToAmbireNetwork
-} from '@ambire-common/utils/networks'
-import { RELAYER_URL } from '@env'
+import { convertToAmbireNetworkFormat } from '@ambire-common/utils/networks'
+import { buildTimeNetworks } from '@benzin/constants/networks'
 
 const fetch = window.fetch.bind(window) as any
-const callRelayer = relayerCall.bind({ url: RELAYER_URL, fetch })
 
 type Props = {
   children: React.ReactNode
@@ -46,34 +40,10 @@ const fetchNetworkData = async (chainId: bigint) => {
   return networkDataInAmbireNetworkFormat
 }
 
-const fetchNetworks = async () => {
-  try {
-    const timeout = new Promise<void>((_, reject) => {
-      setTimeout(() => reject(new Error('Request timed out')), 20000)
-    })
-    const res = await Promise.race([callRelayer('/v2/config/networks'), timeout])
-    const networks = Object.values(res.data.extensionConfigNetworks).map((net: any) => {
-      return mapRelayerNetworkConfigToAmbireNetwork(BigInt(net.chainId), net)
-    })
-    return networks
-  } catch (error) {
-    console.error('Failed to fetch networks:', error)
-    return predefinedNetworks
-  }
-}
-
 const BenzinNetworksContextProvider: FC<Props> = ({ children }) => {
-  const [benzinNetworks, setBenzinNetworks] = useState<Network[]>([])
+  const [benzinNetworks, setBenzinNetworks] = useState<Network[]>(buildTimeNetworks)
   const [loadingBenzinNetworks, setLoadingBenzinNetworks] = useState<bigint[]>([])
   const [notFoundNetworks, setNotFoundNetworks] = useState<bigint[]>([])
-
-  useEffect(() => {
-    const fetchAndSetNetworks = async () => {
-      const networks = (await fetchNetworks()) as Network[]
-      setBenzinNetworks(networks)
-    }
-    fetchAndSetNetworks()
-  }, [])
 
   const addNetwork = useCallback(
     async (chainId: bigint) => {
