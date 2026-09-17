@@ -47,7 +47,7 @@ const AmbireApiOptions = () => {
           <OptOutControlOption
             title={t('Tokens, NFTs & DeFi positions auto discovery')}
             description={t(
-              'Fetch tokens and positions via Ambire API, using third party providers'
+              'Fetch tokens, token icons and positions via Ambire API, using third party providers'
             )}
             icon={<SearchIcon width={24} height={24} />}
             flag="tokenAndDefiAutoDiscovery"

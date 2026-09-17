@@ -3,9 +3,10 @@ import { Image, ImageProps, View, ViewStyle } from 'react-native'
 import { SvgUri } from 'react-native-svg'
 
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
+import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import MissingTokenIcon from '@common/assets/svg/MissingTokenIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
-import { isMobile } from '@common/config/env'
+import { isBenzin, isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -40,6 +41,11 @@ enum UriStatus {
   IMAGE_EXISTS = 'IMAGE_EXISTS'
 }
 
+const isNeverCancelled = () => false
+
+const selectTokenAndDefiAutoDiscovery = (state: FeatureFlagsController) =>
+  state.flags?.tokenAndDefiAutoDiscovery ?? false
+
 const TokenIcon: React.FC<Props> = ({
   chainId,
   address = '',
@@ -61,9 +67,15 @@ const TokenIcon: React.FC<Props> = ({
   const [uriStatus, setUriStatus] = useState<UriStatus>(UriStatus.UNKNOWN)
   const [imageUrl, setImageUrl] = useState<string | undefined>()
   const { state: ctrlNetworks } = useController('NetworksController', (state) => state.networks)
+  const { state: tokenAndDefiAutoDiscovery } = useController(
+    'FeatureFlagsController',
+    selectTokenAndDefiAutoDiscovery
+  )
   const { benzinNetworks } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = ctrlNetworks ?? benzinNetworks
+  // Benzin has no wallet privacy controls, so preserve its existing icon behavior.
+  const shouldLoadTokenIcon = isBenzin || tokenAndDefiAutoDiscovery
 
   const network = useMemo(
     () => networks.find((n) => String(n.chainId) === String(chainId)),
@@ -71,32 +83,51 @@ const TokenIcon: React.FC<Props> = ({
   )
 
   const handleImageLoaded = useCallback(() => setUriStatus(UriStatus.IMAGE_EXISTS), [])
-  const attemptToLoadFallbackImage = useCallback(async () => {
-    if (fallbackUri) {
-      const doesFallbackUriImageExists = await checkIfImageExists(fallbackUri)
-      if (doesFallbackUriImageExists) {
-        setImageUrl(fallbackUri)
-        setUriStatus(UriStatus.IMAGE_EXISTS)
-        return
-      }
-    }
+  const attemptToLoadFallbackImage = useCallback(
+    async (isCancelled = isNeverCancelled) => {
+      if (!shouldLoadTokenIcon || isCancelled()) return
 
-    // hardcoded icons for citrea
-    if (network?.chainId === 4114n) {
-      const tokenUrl = getHardcodedCitreaIcons(address.toLowerCase())
-      const imageExists = tokenUrl && (await checkIfImageExists(tokenUrl))
-      if (imageExists) {
-        setImageUrl(tokenUrl)
-        setUriStatus(UriStatus.IMAGE_EXISTS)
-        return
-      }
-    }
+      if (fallbackUri) {
+        const doesFallbackUriImageExists = await checkIfImageExists(fallbackUri)
+        if (isCancelled()) return
 
-    setUriStatus(UriStatus.IMAGE_MISSING)
-    setImageUrl(undefined)
-  }, [fallbackUri, address, network?.chainId])
+        if (doesFallbackUriImageExists) {
+          setImageUrl(fallbackUri)
+          setUriStatus(UriStatus.IMAGE_EXISTS)
+          return
+        }
+      }
+
+      // hardcoded icons for citrea
+      if (network?.chainId === 4114n) {
+        const tokenUrl = getHardcodedCitreaIcons(address.toLowerCase())
+        const imageExists = tokenUrl && (await checkIfImageExists(tokenUrl))
+        if (isCancelled()) return
+
+        if (imageExists) {
+          setImageUrl(tokenUrl)
+          setUriStatus(UriStatus.IMAGE_EXISTS)
+          return
+        }
+      }
+
+      setUriStatus(UriStatus.IMAGE_MISSING)
+      setImageUrl(undefined)
+    },
+    [fallbackUri, address, network?.chainId, shouldLoadTokenIcon]
+  )
+  const handleImageError = useCallback(
+    () => attemptToLoadFallbackImage(),
+    [attemptToLoadFallbackImage]
+  )
 
   useEffect(() => {
+    if (!shouldLoadTokenIcon) {
+      return
+    }
+
+    let isCancelled = false
+
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
       const hasAmbireUriRequiredData = !!(network?.platformId && address)
@@ -111,9 +142,20 @@ const TokenIcon: React.FC<Props> = ({
         return
       }
 
-      await attemptToLoadFallbackImage()
+      await attemptToLoadFallbackImage(() => isCancelled)
     })()
-  }, [address, network?.platformId, fallbackUri, attemptToLoadFallbackImage, network])
+
+    return () => {
+      isCancelled = true
+    }
+  }, [
+    address,
+    network?.platformId,
+    fallbackUri,
+    attemptToLoadFallbackImage,
+    network,
+    shouldLoadTokenIcon
+  ])
 
   const memoizedContainerStyle = useMemo(
     () => [
@@ -136,17 +178,18 @@ const TokenIcon: React.FC<Props> = ({
   )
 
   const shouldDisplayNetworkIcon = withNetworkIcon && !!network && !onGasTank
+  const displayedUriStatus = shouldLoadTokenIcon ? uriStatus : UriStatus.IMAGE_MISSING
 
   return (
     <View style={memoizedContainerStyle}>
-      {uriStatus === UriStatus.UNKNOWN ? (
+      {displayedUriStatus === UriStatus.UNKNOWN ? (
         <SkeletonLoader
           width={width}
           height={height}
           style={styles.loader}
           appearance={skeletonAppearance}
         />
-      ) : uriStatus === UriStatus.IMAGE_MISSING ? (
+      ) : displayedUriStatus === UriStatus.IMAGE_MISSING ? (
         <MissingTokenIcon
           width={withContainer ? containerWidth : width}
           height={withContainer ? containerHeight : height}
@@ -157,7 +200,7 @@ const TokenIcon: React.FC<Props> = ({
             width={width}
             height={height}
             uri={imageUrl}
-            onError={attemptToLoadFallbackImage}
+            onError={handleImageError}
             onLoad={handleImageLoaded}
           />
         </View>
@@ -166,7 +209,7 @@ const TokenIcon: React.FC<Props> = ({
           source={{ uri: imageUrl }}
           style={{ width, height, borderRadius: BORDER_RADIUS_PRIMARY }}
           // Just in case the URI is valid and image exists, but still fails to load
-          onError={attemptToLoadFallbackImage}
+          onError={handleImageError}
           onLoad={handleImageLoaded}
           {...props}
         />

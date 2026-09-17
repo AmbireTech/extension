@@ -1,8 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 
+import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTrustDapp from '@common/hooks/useTrustDapp'
+
+const selectIsScamCheckerEnabled = (state: FeatureFlagsController) =>
+  state.flags.scamAndPhishingChecker
 
 const useDappConnect = () => {
   const { t } = useTranslation()
@@ -13,6 +17,10 @@ const useDappConnect = () => {
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { state: dappsState } = useController('DappsController')
+  const { state: isScamCheckerEnabled } = useController(
+    'FeatureFlagsController',
+    selectIsScamCheckerEnabled
+  )
   const { trustDapp, untrustDapp } = useTrustDapp()
 
   const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
@@ -23,7 +31,7 @@ const useDappConnect = () => {
   const canBeTrustedByUser = !!dappToConnect?.canBeTrustedByUser
 
   const isSuspiciousHosting =
-    dappToConnect?.blacklisted === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+    isScamCheckerEnabled && dappToConnect?.blacklisted === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
 
   const toggleTrust = useCallback(() => {
     if (!dappToConnect) return
@@ -69,20 +77,30 @@ const useDappConnect = () => {
   const shouldHoldToProceed = useMemo(() => {
     return (
       !!dappToConnect &&
-      (dappToConnect.blacklisted === 'BLACKLISTED' ||
+      (!isScamCheckerEnabled ||
+        dappToConnect.blacklisted === 'BLACKLISTED' ||
         isSuspiciousHosting ||
         dappToConnect.blacklisted === 'FAILED_TO_GET')
     )
-  }, [dappToConnect, isSuspiciousHosting])
+  }, [dappToConnect, isScamCheckerEnabled, isSuspiciousHosting])
 
   const resolveButtonText = useMemo(() => {
-    if (!dappToConnect || dappToConnect.blacklisted === 'LOADING') return t('Loading...')
+    if (!dappToConnect) return t('Loading...')
     if (isAuthorizing) return t('Connecting...')
+    if (!isScamCheckerEnabled) return t('Hold to connect')
     if (dappToConnect.blacklisted === 'BLACKLISTED' || isSuspiciousHosting)
       return t('Hold to continue anyway')
+    if (dappToConnect.blacklisted === 'LOADING') return t('Loading...')
 
     return shouldHoldToProceed ? t('Hold to connect') : t('Connect')
-  }, [dappToConnect, t, isAuthorizing, shouldHoldToProceed, isSuspiciousHosting])
+  }, [
+    dappToConnect,
+    t,
+    isAuthorizing,
+    shouldHoldToProceed,
+    isSuspiciousHosting,
+    isScamCheckerEnabled
+  ])
 
   return {
     t,
@@ -95,6 +113,7 @@ const useDappConnect = () => {
     resolveButtonText,
     isTrustedByUser,
     canBeTrustedByUser,
+    isScamCheckerEnabled,
     toggleTrust
   }
 }
