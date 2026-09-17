@@ -45,6 +45,11 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
 }
 
+// Rough allowance for whatever sits below the card (footer buttons, warnings) when it isn't
+// measurable from here - keeps the card from reaching all the way to the window edge.
+const FILL_AVAILABLE_HEIGHT_BOTTOM_RESERVE = 140
+const FILL_AVAILABLE_HEIGHT_MIN = 200
+
 type MessageItem = {
   value: string
   type: string
@@ -143,6 +148,12 @@ const FallbackVisualization: FC<{
   hideTabs?: boolean
   containerStyle?: StyleProp<ViewStyle>
   separatorColor?: ColorValue
+  /**
+   * Caps the card's height to whatever room is actually left below it in the viewport,
+   * measured at runtime (varies by screen/window size), so its ScrollView has something
+   * real to overflow against instead of growing to fit the message.
+   */
+  fillAvailableHeight?: boolean
 }> = ({
   messageToSign,
   humanizedMessage,
@@ -160,15 +171,23 @@ const FallbackVisualization: FC<{
   disableScroll = false,
   hideTabs = false,
   containerStyle,
-  separatorColor
+  separatorColor,
+  fillAvailableHeight = false
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { maxWidthSize } = useWindowSize()
+  const { maxWidthSize, height: windowHeight } = useWindowSize()
+  const outerViewRef = useRef<View>(null)
   const scrollViewRef = useRef<ScrollView>(null)
   const scrollOffsetRef = useRef(0)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
+  // Seeded (not null) so the very first paint is already bounded - going from "unbounded" to
+  // "bounded" on a later render doesn't reliably re-trigger the ScrollView's own layout
+  // measurement, which left it permanently stuck reporting its unbounded, content-sized height.
+  const [availableHeight, setAvailableHeight] = useState<number | null>(
+    fillAvailableHeight ? FILL_AVAILABLE_HEIGHT_MIN : null
+  )
   const [activeTab, setActiveTab] = useState<ActiveTab>('parsed')
   const content = messageToSign?.content
   const chainId = messageToSign?.chainId || 1n
@@ -243,10 +262,36 @@ const FallbackVisualization: FC<{
     scrollViewRef.current?.scrollTo({ y: nextOffset, animated: true })
   }, [containerHeight])
 
+  const measureAvailableHeight = useCallback(() => {
+    if (!fillAvailableHeight || !outerViewRef.current) return
+
+    outerViewRef.current.measureInWindow((_x, topY) => {
+      const nextAvailableHeight = Math.max(
+        windowHeight - topY - FILL_AVAILABLE_HEIGHT_BOTTOM_RESERVE,
+        FILL_AVAILABLE_HEIGHT_MIN
+      )
+      setAvailableHeight((prev) => (prev === nextAvailableHeight ? prev : nextAvailableHeight))
+    })
+  }, [fillAvailableHeight, windowHeight])
+
+  // Re-measure whenever the viewport resizes (windowHeight changes) - the card's own layout
+  // (e.g. warnings appearing above it) triggers this too, via the onLayout below.
+  useEffect(() => {
+    measureAvailableHeight()
+  }, [measureAvailableHeight])
+
   if (!messageToSign || !content) return null
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View
+      ref={outerViewRef}
+      onLayout={measureAvailableHeight}
+      style={[
+        styles.container,
+        fillAvailableHeight ? { maxHeight: availableHeight ?? FILL_AVAILABLE_HEIGHT_MIN } : null,
+        containerStyle
+      ]}
+    >
       {isTypedMessage && !rawOnly && !hideTabs && (
         <View style={[styles.tabHeader, !!separatorColor && { borderBottomColor: separatorColor }]}>
           {tabs.map(([tab, label]) => {
@@ -276,6 +321,7 @@ const FallbackVisualization: FC<{
         </View>
       )}
       <ContentWrapper
+        style={styles.contentWrapper}
         {...(!disableScroll
           ? {
               ref: scrollViewRef,

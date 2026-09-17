@@ -21,6 +21,12 @@ const useSignMessage = () => {
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
+  // Tracks which request hasReachedBottom currently reflects, so it can't carry over "already
+  // read" from a previous message onto a new, unread one (would silently skip
+  // isScrollToBottomForced below and hide the down arrow for content that's actually unread).
+  const [hasReachedBottomRequestId, setHasReachedBottomRequestId] = useState<
+    string | number | undefined
+  >(undefined)
   const { state: account } = useController('SelectedAccountController', 'account')
   const { state: networks } = useController('NetworksController', 'networks')
   const { state: accountStates } = useController('AccountsController', 'accountStates')
@@ -52,6 +58,14 @@ const useSignMessage = () => {
 
     return undefined
   }, [currentUserRequest])
+
+  // React-recommended "adjust state when a prop changes" pattern (setting state directly during
+  // render, not in an effect) - resets synchronously in the same render the new request appears,
+  // instead of one render late as an effect-based reset would.
+  if (userRequest?.id !== hasReachedBottomRequestId) {
+    setHasReachedBottomRequestId(userRequest?.id)
+    setHasReachedBottom(null)
+  }
 
   const { name, icon } = useDappInfo(userRequest)
   const { state: dappsState } = useController('DappsController')
