@@ -7,20 +7,21 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
+import useRoute from '@common/hooks/useRoute'
+import { openInternalPageInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 import { IS_FIREFOX } from '@web/constants/common'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const { isPopup, isSidePanel } = getUiType()
+const { isPopup, isTab, isSidePanel } = getUiType()
 
 /**
- * WebAuthn cannot prompt inside the Chrome side panel or the Firefox popup - the browser tries
- * to show a modal these surfaces cannot host, so the call hangs or the surface closes. The
- * unlock screen escapes to a dedicated tab, which a signing request cannot do without losing
- * itself, so the password is the way in there.
+ * WebAuthn cannot prompt inside the Firefox popup: the browser shows a modal that takes focus,
+ * and the popup closes with it, taking the ceremony down. There the request is reopened in a
+ * tab, which is the only context it survives in - the same thing the unlock screen does.
  */
-const CAN_PROMPT_BIOMETRICS_HERE = !((IS_FIREFOX && isPopup) || isSidePanel)
+const SHOULD_USE_TAB_FOR_BIOMETRICS = IS_FIREFOX && isPopup
 
 const selectHasBiometricsSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.hasBiometricsSecret
@@ -30,6 +31,8 @@ const selectSigningAuthResult = (state: AllControllersMappingType['KeystoreContr
   state.signingAuthResult
 const selectIsVerifyingSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.statuses.verifySecret === 'LOADING'
+const selectRequestWindow = (state: AllControllersMappingType['RequestsController']) =>
+  state.requestWindow
 
 type Props = {
   /** Why the request has to be confirmed, or `null`/`undefined` when it does not. */
@@ -55,10 +58,14 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   )
   const { state: signingAuthResult } = useController('KeystoreController', selectSigningAuthResult)
   const { state: isVerifying } = useController('KeystoreController', selectIsVerifyingSecret)
+  const { state: requestWindow } = useController('RequestsController', selectRequestWindow)
   const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
+  const { path } = useRoute()
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
 
-  const [hasSwitchedToPassword, setHasSwitchedToPassword] = useState(false)
+  // Where the ceremony has to run in a tab, the sheet opens on the password, so pressing Sign
+  // does not throw the user into a tab they did not ask for. Biometrics stays one tap away.
+  const [hasSwitchedToPassword, setHasSwitchedToPassword] = useState(SHOULD_USE_TAB_FOR_BIOMETRICS)
   // Nothing renders differently once a request has been confirmed - the confirmation only has to
   // be readable by the next attempt to sign - so it is a ref rather than state. It is wrapped in
   // an object so a request with no id of its own still gets a latch, instead of matching the
@@ -71,8 +78,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   const isPromptPending = useRef(false)
   const onAuthenticated = useRef<(() => void) | null>(null)
 
-  const canUseBiometrics =
-    !!hasBiometricsSecret && !!hasBiometricsHardware && CAN_PROMPT_BIOMETRICS_HERE
+  const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
   const isUsingBiometrics = canUseBiometrics && !hasSwitchedToPassword
 
   const reason = useMemo(() => {
@@ -117,7 +123,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
       onAuthenticated.current = onConfirmed
       isAwaitingResult.current = false
       isPromptPending.current = false
-      setHasSwitchedToPassword(false)
+      setHasSwitchedToPassword(SHOULD_USE_TAB_FOR_BIOMETRICS)
       keystoreDispatch({ type: 'method', params: { method: 'resetSigningAuthResult', args: [] } })
       openSheet()
 
@@ -137,10 +143,28 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
     [keystoreDispatch]
   )
 
+  const cancelSigningAuth = useCallback(() => {
+    onAuthenticated.current = null
+    isAwaitingResult.current = false
+    closeSheet()
+  }, [closeSheet])
+
   const confirmWithBiometrics = useCallback(async () => {
     // The sheet opening and a tap on the icon can both ask for it, and a second ceremony
     // while one is already up is what makes the browser hang
     if (isPromptPending.current) return
+
+    // The request is reopened at the route the user is on, and carried on from there. Its state
+    // lives in the background, so the screen comes back up as they left it.
+    if (SHOULD_USE_TAB_FOR_BIOMETRICS) {
+      cancelSigningAuth()
+      await openInternalPageInTab({
+        route: path.startsWith('/') ? path.slice(1) : path,
+        shouldCloseCurrentWindow: !isTab && !isSidePanel,
+        windowId: requestWindow?.windowProps?.createdFromWindowId
+      })
+      return
+    }
 
     isPromptPending.current = true
 
@@ -164,7 +188,13 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
     } finally {
       isPromptPending.current = false
     }
-  }, [getBiometricsSecret, keystoreDispatch])
+  }, [
+    getBiometricsSecret,
+    keystoreDispatch,
+    cancelSigningAuth,
+    path,
+    requestWindow?.windowProps?.createdFromWindowId
+  ])
 
   const switchToPassword = useCallback(() => setHasSwitchedToPassword(true), [])
 
@@ -173,12 +203,6 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
 
     keystoreDispatch({ type: 'method', params: { method: 'resetSigningAuthResult', args: [] } })
   }, [keystoreDispatch, signingAuthResult])
-
-  const cancelSigningAuth = useCallback(() => {
-    onAuthenticated.current = null
-    isAwaitingResult.current = false
-    closeSheet()
-  }, [closeSheet])
 
   useEffect(() => {
     if (!isAwaitingResult.current) return
