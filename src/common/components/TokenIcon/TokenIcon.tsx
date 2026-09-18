@@ -5,7 +5,7 @@ import { SvgUri } from 'react-native-svg'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import MissingTokenIcon from '@common/assets/svg/MissingTokenIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
-import { isBenzin, isMobile } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -15,11 +15,6 @@ import { getHardcodedCitreaIcons } from '@common/utils/getHardcodedCitreaIcons'
 import SkeletonLoader from '../SkeletonLoader'
 import { SkeletonLoaderProps } from '../SkeletonLoader/types'
 import getStyles from './styles'
-
-import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
-import type { NetworksController } from '@ambire-common/controllers/networks/networks'
-
-const selectNetworks = (state: NetworksController) => state.networks
 
 interface Props extends Partial<ImageProps> {
   /* supports network id or chain id */
@@ -45,22 +40,6 @@ enum UriStatus {
   IMAGE_EXISTS = 'IMAGE_EXISTS'
 }
 
-const isNeverCancelled = () => false
-
-const selectTokenAndDefiAutoDiscovery = (state: FeatureFlagsController) =>
-  state.flags?.tokenAndDefiAutoDiscovery ?? false
-
-/**
- * The icon to show for a proxy url, with no lookup: the url almost always exists, and
- * `onError` handles it when it does not. `target` records which url this was resolved for,
- * so an answer that arrives after the token changed can be recognised and dropped.
- */
-const resolveAmbireIcon = (ambireIconUri?: string) => ({
-  target: ambireIconUri,
-  status: ambireIconUri ? UriStatus.IMAGE_EXISTS : UriStatus.UNKNOWN,
-  uri: ambireIconUri
-})
-
 const TokenIcon: React.FC<Props> = ({
   chainId,
   address = '',
@@ -81,91 +60,43 @@ const TokenIcon: React.FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const [uriStatus, setUriStatus] = useState<UriStatus>(UriStatus.UNKNOWN)
   const [imageUrl, setImageUrl] = useState<string | undefined>()
-  const { state: ctrlNetworks } = useController('NetworksController', (state) => selectNetworks)
-  const { state: tokenAndDefiAutoDiscovery } = useController(
-    'FeatureFlagsController',
-    selectTokenAndDefiAutoDiscovery
-  )
+  const { state: ctrlNetworks } = useController('NetworksController', (state) => state.networks)
   const { benzinNetworks } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = ctrlNetworks ?? benzinNetworks
-  // Benzin has no wallet privacy controls, so preserve its existing icon behavior.
-  const shouldLoadTokenIcon = isBenzin || tokenAndDefiAutoDiscovery
 
   const network = useMemo(
     () => networks.find((n) => String(n.chainId) === String(chainId)),
     [chainId, networks]
   )
 
-  const platformId = network?.platformId
-  const chainIdOfNetwork = network?.chainId
-
-  const ambireIconUri = useMemo(
-    () =>
-      platformId && address
-        ? `https://cena.ambire.com/iconProxy/${platformId}/${address}`
-        : undefined,
-    [platformId, address]
-  )
-
-  const [resolved, setResolved] = useState(() => resolveAmbireIcon(ambireIconUri))
-
-  // Adjusted while rendering rather than written from an effect, which had every icon of
-  // every token row and every select option paint a skeleton and then render again for a
-  // url its own props already decide.
-  if (resolved.target !== ambireIconUri) setResolved(resolveAmbireIcon(ambireIconUri))
-
-  const { status: uriStatus, uri: imageUrl } = resolved
-
-  const handleImageLoaded = useCallback(
-    () =>
-      setResolved((prev) =>
-        prev.status === UriStatus.IMAGE_EXISTS ? prev : { ...prev, status: UriStatus.IMAGE_EXISTS }
-      ),
-    []
-  )
-
+  const handleImageLoaded = useCallback(() => setUriStatus(UriStatus.IMAGE_EXISTS), [])
   const attemptToLoadFallbackImage = useCallback(async () => {
-    // Kept only while the icon still shows the token this ran for: the lookups below are
-    // network calls that outlive a re-used icon, and a late answer would otherwise put the
-    // previous token's image on it.
-    const apply = (status: UriStatus, uri?: string) =>
-      setResolved((prev) =>
-        prev.target === ambireIconUri ? { target: ambireIconUri, status, uri } : prev
-      )
-
     if (fallbackUri) {
       const doesFallbackUriImageExists = await checkIfImageExists(fallbackUri)
       if (doesFallbackUriImageExists) {
-        apply(UriStatus.IMAGE_EXISTS, fallbackUri)
+        setImageUrl(fallbackUri)
+        setUriStatus(UriStatus.IMAGE_EXISTS)
         return
       }
     }
 
     // hardcoded icons for citrea
-    if (chainIdOfNetwork === 4114n) {
+    if (network?.chainId === 4114n) {
       const tokenUrl = getHardcodedCitreaIcons(address.toLowerCase())
       const imageExists = tokenUrl && (await checkIfImageExists(tokenUrl))
       if (imageExists) {
-        apply(UriStatus.IMAGE_EXISTS, tokenUrl)
+        setImageUrl(tokenUrl)
+        setUriStatus(UriStatus.IMAGE_EXISTS)
         return
       }
     }
 
-    apply(UriStatus.IMAGE_MISSING, undefined)
-  }, [ambireIconUri, fallbackUri, address, chainIdOfNetwork])
+    setUriStatus(UriStatus.IMAGE_MISSING)
+    setImageUrl(undefined)
+  }, [fallbackUri, address, network?.chainId])
 
-  // Only the icons the proxy url leaves unsettled need looking up. Read off the network's
-  // fields rather than the network itself, so a networks update - which hands out a new
-  // object every time - does not re-run these network calls per icon.
   useEffect(() => {
-<<<<<<< HEAD
-    if (!shouldLoadTokenIcon) {
-      return
-    }
-
-    let isCancelled = false
-
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
       const hasAmbireUriRequiredData = !!(network?.platformId && address)
@@ -180,26 +111,9 @@ const TokenIcon: React.FC<Props> = ({
         return
       }
 
-      await attemptToLoadFallbackImage(() => isCancelled)
+      await attemptToLoadFallbackImage()
     })()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [
-    address,
-    network?.platformId,
-    fallbackUri,
-    attemptToLoadFallbackImage,
-    network,
-    shouldLoadTokenIcon
-  ])
-=======
-    if (ambireIconUri) return
-
-    void attemptToLoadFallbackImage()
-  }, [ambireIconUri, attemptToLoadFallbackImage])
->>>>>>> 15a5c15cdd9613b188b0656b6e490af3cb9f43c2
+  }, [address, network?.platformId, fallbackUri, attemptToLoadFallbackImage, network])
 
   const memoizedContainerStyle = useMemo(
     () => [
@@ -222,18 +136,17 @@ const TokenIcon: React.FC<Props> = ({
   )
 
   const shouldDisplayNetworkIcon = withNetworkIcon && !!network && !onGasTank
-  const displayedUriStatus = shouldLoadTokenIcon ? uriStatus : UriStatus.IMAGE_MISSING
 
   return (
     <View style={memoizedContainerStyle}>
-      {displayedUriStatus === UriStatus.UNKNOWN ? (
+      {uriStatus === UriStatus.UNKNOWN ? (
         <SkeletonLoader
           width={width}
           height={height}
           style={styles.loader}
           appearance={skeletonAppearance}
         />
-      ) : displayedUriStatus === UriStatus.IMAGE_MISSING ? (
+      ) : uriStatus === UriStatus.IMAGE_MISSING ? (
         <MissingTokenIcon
           width={withContainer ? containerWidth : width}
           height={withContainer ? containerHeight : height}
@@ -244,7 +157,7 @@ const TokenIcon: React.FC<Props> = ({
             width={width}
             height={height}
             uri={imageUrl}
-            onError={handleImageError}
+            onError={attemptToLoadFallbackImage}
             onLoad={handleImageLoaded}
           />
         </View>
@@ -253,7 +166,7 @@ const TokenIcon: React.FC<Props> = ({
           source={{ uri: imageUrl }}
           style={{ width, height, borderRadius: BORDER_RADIUS_PRIMARY }}
           // Just in case the URI is valid and image exists, but still fails to load
-          onError={handleImageError}
+          onError={attemptToLoadFallbackImage}
           onLoad={handleImageLoaded}
           {...props}
         />

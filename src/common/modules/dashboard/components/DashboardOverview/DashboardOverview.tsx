@@ -4,7 +4,9 @@ import { Animated, Pressable, View } from 'react-native'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import DashboardBalance, { BALANCE_HEIGHT } from '@common/modules/dashboard/components/DashboardBalance'
+import DashboardBalance, {
+  BALANCE_HEIGHT
+} from '@common/modules/dashboard/components/DashboardBalance'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
@@ -21,8 +23,7 @@ import { OverviewBackground } from './OverviewBackground'
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
+import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 export const OVERVIEW_CONTENT_MAX_HEIGHT = 162
 
 interface Props {
@@ -35,24 +36,7 @@ interface Props {
   setDashboardOverviewSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
 }
 
-const selectPortfolioTotalBalance = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => state.portfolio?.totalBalance
-const selectPortfolioIsReadyToVisualize = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => state.portfolio?.isReadyToVisualize
-const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.portfolio?.isAllReady
-const selectPortfolioIsReloading = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => state.portfolio?.isReloading
-
-const selectIsOffline = (state: AllControllersMappingType['MainController']) => state.isOffline
-const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.account
-const selectAreNetworksFetchingFromRelayer = (
-  state: AllControllersMappingType['NetworksController']
-) => state.areNetworksFetchingFromRelayer
+const selectTokenPricesEnabled = (state: FeatureFlagsController) => state.flags?.tokenPrices
 
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
@@ -60,37 +44,17 @@ const DashboardOverview: FC<Props> = ({
   setDashboardOverviewSize
 }) => {
   const { theme } = useTheme(getStyles)
-<<<<<<< HEAD
   const { state: isOffline } = useController('MainController', 'isOffline')
+  const { account, portfolio } = useController('SelectedAccountController').state
+  const { state: areNetworksFetchingFromRelayer } = useController(
+    'NetworksController',
+    'areNetworksFetchingFromRelayer'
+  )
   const { state: isTokenPricesEnabled } = useController(
     'FeatureFlagsController',
     selectTokenPricesEnabled
   )
-  const { account, portfolio } = useController('SelectedAccountController').state
-=======
-  const { state: isOffline } = useController('MainController', selectIsOffline)
-  const { state: account } = useController('SelectedAccountController', selectAccount)
-  const { state: totalBalance } = useController(
-    'SelectedAccountController',
-    selectPortfolioTotalBalance
-  )
-  const { state: isPortfolioReadyToVisualize } = useController(
-    'SelectedAccountController',
-    selectPortfolioIsReadyToVisualize
-  )
-  const { state: isPortfolioAllReady } = useController(
-    'SelectedAccountController',
-    selectPortfolioIsAllReady
-  )
-  const { state: isPortfolioReloading } = useController(
-    'SelectedAccountController',
-    selectPortfolioIsReloading
-  )
->>>>>>> 15a5c15cdd9613b188b0656b6e490af3cb9f43c2
-  const { state: areNetworksFetchingFromRelayer } = useController(
-    'NetworksController',
-    selectAreNetworksFetchingFromRelayer
-  )
+
   const {
     state: { isPrivacyModeEnabled },
     dispatch: walletStateDispatch
@@ -106,14 +70,14 @@ const DashboardOverview: FC<Props> = ({
     isLoadingTakingTooLong,
     networksWithErrors
   } = useBalanceAffectingErrors()
-  const totalPortfolioAmount = useMemo(() => totalBalance || 0, [totalBalance])
+  const totalPortfolioAmount = useMemo(() => portfolio?.totalBalance || 0, [portfolio])
   const totalPortfolioAmountColor = useMemo(
     () => (networksWithErrors.length || isOffline ? theme.warningDecorative2 : '#FFFFFF'),
     [isOffline, networksWithErrors.length, theme.warningDecorative2]
   )
 
   // Display the button always on mobile
-  const shouldShowRefreshButton = isBalanceHovered || !isPortfolioReadyToVisualize || !isExtension
+  const shouldShowRefreshButton = isBalanceHovered || !portfolio?.isReadyToVisualize || !isExtension
 
   const { reloadAccount } = useDashboardReload()
 
@@ -205,14 +169,14 @@ const DashboardOverview: FC<Props> = ({
                   rather than flashing a value computed from the stale RPC. */}
                   <DashboardBalance
                     variant={
-                      !isPortfolioReadyToVisualize || areNetworksFetchingFromRelayer
+                      !portfolio?.isReadyToVisualize || areNetworksFetchingFromRelayer
                         ? 'skeleton'
                         : 'ready'
                     }
                     totalAmount={totalPortfolioAmount}
+                    isTokenPricesEnabled={isTokenPricesEnabled}
                     color={totalPortfolioAmountColor}
                     isPrivacyModeEnabled={isPrivacyModeEnabled}
-                    isTokenPricesEnabled={isTokenPricesEnabled}
                     onPress={togglePrivacyMode}
                     testID="full-balance"
                     badge={
@@ -234,14 +198,14 @@ const DashboardOverview: FC<Props> = ({
                         opacity: shouldShowRefreshButton ? (hovered ? 1 : 0.7) : 0
                       })}
                       onPress={reloadAccount}
-                      disabled={!isPortfolioAllReady || isPortfolioReloading}
+                      disabled={!portfolio.isAllReady || portfolio.isReloading}
                       testID="refresh-button"
                       onHoverIn={() => setIsBalanceHovered(true)}
                       // Increase clickable area using prop
                       hitSlop={10}
                     >
                       <RefreshIcon
-                        spin={!isPortfolioAllReady || isPortfolioReloading}
+                        spin={!portfolio.isAllReady || portfolio.isReloading}
                         color="#E3E6EB"
                         width={28}
                         height={28}

@@ -14,12 +14,6 @@ import JazzIcon from './Jazz'
 import Polycons from './Polycons/Polycons'
 import TypeBadge from './TypeBadge'
 
-import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const selectKeepEnsProfilesUpToDate = (state: FeatureFlagsController) =>
-  state.flags?.keepEnsProfilesUpToDate ?? false
-
 const getAvatarType = ({
   ensAvatar,
   ensAvatarImageFetchFailed,
@@ -67,10 +61,6 @@ interface Props {
   displayTypeBadge?: boolean
 }
 
-const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
-const selectLoadingAddresses = (state: AllControllersMappingType['DomainsController']) =>
-  state.loadingAddresses
-
 const Avatar: FC<Props> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   pfp,
@@ -89,12 +79,9 @@ const Avatar: FC<Props> = ({
   )
   const ensAvatarImageFetchFailed = ensAvatarImageState === 'failed'
   // ENS Avatar
-  const { state: domains } = useController('DomainsController', selectDomains)
-  const { state: loadingAddresses } = useController('DomainsController', selectLoadingAddresses)
-  const { state: keepEnsProfilesUpToDate } = useController(
-    'FeatureFlagsController',
-    selectKeepEnsProfilesUpToDate
-  )
+  const {
+    state: { domains, loadingAddresses }
+  } = useController('DomainsController')
   // There is no wallet controller state in benzin/rewards so we need to be careful
 
   let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = propAvatarType || 'jazzicons'
@@ -105,9 +92,7 @@ const Avatar: FC<Props> = ({
   }
 
   const isEnsLoading = address ? loadingAddresses?.includes(address) : false
-  // Standalone apps don't expose wallet privacy controls and retain their existing behavior.
-  const shouldLoadEnsAvatar = isLegends || isBenzin || keepEnsProfilesUpToDate
-  const ensAvatar = shouldLoadEnsAvatar ? domains?.[address]?.avatar : undefined
+  const ensAvatar = domains?.[address]?.avatar
   const avatarType = getAvatarType({
     ensAvatar,
     ensAvatarImageFetchFailed,
@@ -175,7 +160,7 @@ const Avatar: FC<Props> = ({
           height={size}
           borderRadius={borderRadius}
           appearance="secondaryBackground"
-          style={{ zIndex: -1, position: 'absolute', left: 0, top: 0 }}
+          style={{ zIndex: -1, position: 'absolute' }}
         />
       )}
       {avatarType === 'jazzicons' && (
