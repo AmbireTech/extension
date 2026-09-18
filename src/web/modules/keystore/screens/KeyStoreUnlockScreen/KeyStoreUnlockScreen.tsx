@@ -22,6 +22,7 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
+import { SHOULD_USE_TAB_FOR_BIOMETRICS } from '@common/hooks/useSecretConfirmation'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -35,7 +36,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@common/utils/links/links'
 import { getUiType } from '@common/utils/uiType'
-import { IS_FIREFOX } from '@web/constants/common'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
 
 import getStyles from './styles'
@@ -71,7 +71,7 @@ const KeyStoreUnlockScreen = () => {
   const { theme } = useTheme()
   const { getBiometricsSecret } = useBiometrics()
   const { canUnlockWithBiometrics: canUseBiometrics } = useBiometricsAvailability()
-  const { isPopup, isTab, isSidePanel } = getUiType()
+  const { isTab, isSidePanel } = getUiType()
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
   const hasAutoPromptedBiometricsRef = useRef(false)
   const [isBiometricsPromptPending, setIsBiometricsPromptPending] = useState(false)
@@ -82,9 +82,6 @@ const KeyStoreUnlockScreen = () => {
     return shouldSkip
   })
 
-  // WebAuthn cannot prompt inside the Firefox popup: the browser's modal takes focus and the
-  // popup closes with it. There we run the ceremony in a tab, the only context it survives in.
-  const shouldUseTabForBiometrics = IS_FIREFOX && isPopup
   const isBiometricsUnlockLoading =
     isBiometricsPromptPending || (unlockMethod === 'biometrics' && isBiometricsUnlockInProgress)
 
@@ -130,13 +127,13 @@ const KeyStoreUnlockScreen = () => {
   }, [getBiometricsSecret, isBiometricsPromptPending, keystoreDispatch, statuses.unlockWithSecret])
 
   const handleBiometricsPrompt = useCallback(async () => {
-    if (shouldUseTabForBiometrics) {
+    if (SHOULD_USE_TAB_FOR_BIOMETRICS) {
       await openBiometricsInTab()
       return false
     }
 
     return runBiometricsUnlock()
-  }, [openBiometricsInTab, runBiometricsUnlock, shouldUseTabForBiometrics])
+  }, [openBiometricsInTab, runBiometricsUnlock])
 
   // Refresh tooltip content when privacy mode changes while tooltip is active
   useEffect(() => {
@@ -151,8 +148,8 @@ const KeyStoreUnlockScreen = () => {
 
     // Where the ceremony has to run in a tab, the screen opens on the password so unlocking does
     // not throw the user into a tab they did not ask for. Biometrics stays one tap away.
-    setUnlockMethod(canUseBiometrics && !shouldUseTabForBiometrics ? 'biometrics' : 'password')
-  }, [canUseBiometrics, shouldUseTabForBiometrics, unlockMethod])
+    setUnlockMethod(canUseBiometrics && !SHOULD_USE_TAB_FOR_BIOMETRICS ? 'biometrics' : 'password')
+  }, [canUseBiometrics, unlockMethod])
 
   useEffect(() => {
     if (
@@ -160,7 +157,7 @@ const KeyStoreUnlockScreen = () => {
       unlockMethod !== 'biometrics' ||
       hasAutoPromptedBiometricsRef.current ||
       shouldSkipAutoPrompt ||
-      shouldUseTabForBiometrics
+      SHOULD_USE_TAB_FOR_BIOMETRICS
     )
       return
 
@@ -168,13 +165,7 @@ const KeyStoreUnlockScreen = () => {
     handleBiometricsPrompt().catch((e) => {
       console.log('failed to open biometrics prompt', e)
     })
-  }, [
-    canUseBiometrics,
-    handleBiometricsPrompt,
-    shouldSkipAutoPrompt,
-    shouldUseTabForBiometrics,
-    unlockMethod
-  ])
+  }, [canUseBiometrics, handleBiometricsPrompt, shouldSkipAutoPrompt, unlockMethod])
 
   useEffect(() => {
     if (isUnlocked) return
