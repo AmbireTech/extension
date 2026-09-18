@@ -191,6 +191,25 @@ test.describe('crash analytics', { tag: '@crashAnalytics' }, () => {
     expectSecretsRedactedIn(envelope)
   })
 
+  // Same reasoning as the consent test below: this only means something because the tests
+  // above prove reporting works. It is the only check that a drop rule really drops under a
+  // LavaMoat build, where the classification runs inside the background's SES compartment.
+  test('an error the crash report policy classifies as noise never leaves the extension', async () => {
+    await startExtension()
+
+    const marker = crashAnalytics.classifiedAsNoiseMarker
+    const noisyMessage = `${crashAnalytics.classifiedAsNoiseMessage} ${marker}`
+
+    await throwUncaughtErrorIn(page, `${noisyMessage}-ui`)
+    await throwUncaughtErrorIn(serviceWorker, `${noisyMessage}-background`)
+    await captureExceptionInUi(`${noisyMessage}-ui-captured`)
+    await captureExceptionInBackground(`${noisyMessage}-background-captured`)
+
+    await page.waitForTimeout(crashAnalytics.noReportGracePeriod)
+
+    expect(interceptedEnvelopes.filter((envelope) => envelope.includes(marker))).toEqual([])
+  })
+
   // A test that asserts nothing arrives would also pass if reporting were broken outright, so
   // it only means something next to the tests above, which fail in exactly that case.
   test('nothing is reported to Sentry once the user turns crash reporting off', async () => {

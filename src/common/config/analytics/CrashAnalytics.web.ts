@@ -1,3 +1,4 @@
+import { applyCrashReportPolicy } from '@common/config/analytics/applyCrashReportPolicy'
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isTesting } from '@common/config/env'
 import * as Sentry from '@sentry/react'
@@ -24,7 +25,9 @@ export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   // narrower `ErrorEvent`, which scrubSentryEventSecrets (generic) then
   // preserves in its return type -- an explicit `event: Sentry.Event` param
   // widens both to the general Event union, which BrowserOptions rejects.
-  beforeSend(event) {
+  beforeSend(event, hint) {
+    if (!applyCrashReportPolicy(event, hint?.originalException)) return null
+
     return scrubSentryEventSecrets(event)
   }
 }

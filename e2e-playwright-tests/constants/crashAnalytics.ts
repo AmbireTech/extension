@@ -12,6 +12,13 @@ const crashAnalytics = {
   backgroundCaptureExceptionMarker: 'e2e-crash-analytics-background-capture-marker',
   consentDisabledMarker: 'e2e-crash-analytics-consent-disabled-marker',
   redactionErrorMarker: 'e2e-crash-analytics-redaction-marker',
+  classifiedAsNoiseMarker: 'e2e-crash-analytics-noise-marker',
+  /**
+   * A message the crash report policy drops (extension-messaging-target-gone in
+   * src/common/config/analytics/crashReportPolicy.ts). The marker is appended to it, so the
+   * error is still identifiable in an envelope if the policy ever stops matching it.
+   */
+  classifiedAsNoiseMessage: 'No tab with id: 424242.',
   /**
    * A throwaway seed phrase. It has to stay a valid 12-word BIP-39 phrase, otherwise the
    * redaction has nothing to recognize and the test would pass for the wrong reason.
