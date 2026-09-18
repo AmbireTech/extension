@@ -13,6 +13,8 @@ import HumanizerAddress from '../HumanizerAddress'
 import Nft from './components/Nft'
 import Token from './components/Token'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   address: string
   value: bigint
@@ -22,6 +24,10 @@ interface Props {
   tokenMarginRight?: number
   tokenIconContainerSize?: number
 }
+
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const TokenOrNft: FC<Props> = ({
   value,
@@ -39,11 +45,11 @@ const TokenOrNft: FC<Props> = ({
     tokenInfo?: TokenResult
     nftInfo?: CollectionResult
   }>({})
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { dispatchAndWait } = useController('ProvidersController')
 
   const { t } = useTranslation()
-  const { state: controllerNetworks } = useController('NetworksController', 'networks')
+  const { state: controllerNetworks } = useController('NetworksController', selectNetworks)
   const { benzinNetworks, addNetwork } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = controllerNetworks ?? benzinNetworks

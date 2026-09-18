@@ -19,6 +19,12 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const PayOption = ({
   feeOption,
   amountUsd,
@@ -39,8 +45,8 @@ const PayOption = ({
   // showAccountBalanceBadge?: boolean // Note: Under discussion
 }) => {
   const { styles, theme } = useTheme(getStyles)
-  const { state: accounts } = useController('AccountsController', 'accounts')
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const signAccountOpState = useController('SignAccountOpController').state
 
   const paidByAccountData = useMemo(

@@ -31,6 +31,8 @@ import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
@@ -45,6 +47,8 @@ type Props = {
   children?: any
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const AccountsOnPageList = ({
   state,
   setPage,
@@ -54,7 +58,7 @@ const AccountsOnPageList = ({
   children
 }: Props) => {
   const { t } = useTranslation()
-  const { state: allNetworks } = useController('NetworksController', 'networks')
+  const { state: allNetworks } = useController('NetworksController', selectNetworks)
   const { state: accountPickerState, dispatch: accountPickerDispatch } =
     useController('AccountPickerController')
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)

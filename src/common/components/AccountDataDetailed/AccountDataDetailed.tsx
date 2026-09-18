@@ -12,10 +12,15 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isSidePanel } = getUiType()
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const AccountDataDetailed = () => {
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const reverseLookup = useReverseLookup({
     address: account?.addr || ''
   })

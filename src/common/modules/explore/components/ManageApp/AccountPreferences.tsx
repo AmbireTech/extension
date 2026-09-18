@@ -14,11 +14,16 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface AccountPreferencesProps {
   dapp: Dapp
   onManageAccountsPress: () => void
   closeMenu?: () => void
 }
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const AccountPreferences = ({
   dapp,
@@ -28,7 +33,7 @@ const AccountPreferences = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { theme } = useTheme()
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { dispatch: dappDispatch } = useController('DappsController')
 
   const [manageAccountsBindAnim, manageAccountsAnimStyle] = useCustomHover({

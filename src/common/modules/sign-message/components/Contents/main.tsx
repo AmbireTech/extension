@@ -33,6 +33,8 @@ import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isSidePanel } = getUiType()
 
 interface Props {
@@ -65,6 +67,8 @@ const Container = ({
   </MessageContentLayout>
 )
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const Main = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
@@ -89,7 +93,7 @@ const Main = ({
   const { styles, theme } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const network = useMemo(
     () =>
       networks.find((n) => {
