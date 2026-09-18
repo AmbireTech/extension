@@ -112,7 +112,12 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
    */
   const requestSigningAuth = useCallback(
     (onConfirmed: () => void) => {
-      if (!requirement || authenticatedFor.current?.requestId === requestId) return false
+      // The latch has to be read off the object itself - optional chaining an empty one yields
+      // `undefined`, which a request with no id of its own matches, skipping the prompt entirely
+      const isAlreadyAuthenticated =
+        !!authenticatedFor.current && authenticatedFor.current.requestId === requestId
+
+      if (!requirement || isAlreadyAuthenticated) return false
 
       onAuthenticated.current = onConfirmed
       reset()
