@@ -10,7 +10,10 @@ import gradient780 from '@benzin/assets/images/gradient-780.png'
 import Buttons from '@benzin/screens/BenzinScreen/components/Buttons'
 import Header from '@benzin/screens/BenzinScreen/components/Header'
 import Steps from '@benzin/screens/BenzinScreen/components/Steps'
-import { shouldShowTxnProgress } from '@benzin/screens/BenzinScreen/components/Steps/utils/rows'
+import {
+  hasBalanceChangesSettled,
+  shouldShowTxnProgress
+} from '@benzin/screens/BenzinScreen/components/Steps/utils/rows'
 import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Spinner from '@common/components/Spinner'
@@ -208,11 +211,10 @@ const Benzin = ({
   } = state
 
   const finalizedStatus = stepsState.finalizedStatus
-  const hasBalanceChangesLoaded =
-    typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined' ||
-    typeof stepsState.balanceChanges !== 'undefined'
   const displayActiveStep =
-    activeStep === 'finalized' && shouldShowTxnProgress(finalizedStatus) && !hasBalanceChangesLoaded
+    activeStep === 'finalized' &&
+    shouldShowTxnProgress(finalizedStatus) &&
+    !hasBalanceChangesSettled(stepsState)
       ? 'balance-changes'
       : activeStep
   // Keep the celebration overlay on the whole Benzin view (outside the scroll content) so it can
