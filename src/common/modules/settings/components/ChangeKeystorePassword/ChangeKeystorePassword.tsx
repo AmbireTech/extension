@@ -166,17 +166,32 @@ const ChangeKeystorePassword: React.FC<Props> = ({
           withFullHeightLayout
         />
       </BottomSheet>
-      <BottomSheet id="device-password-success-modal" sheetRef={modalRef}>
-        <PanelTitle title={successModalTitle} style={spacings.mbXl} />
-        <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
-        <Text fontSize={16} style={[spacings.mbLg, text.center]} appearance="secondaryText">
-          {successText}
-        </Text>
+      <BottomSheet
+        id="device-password-success-modal"
+        sheetRef={modalRef}
+        type={isWeb ? 'modal' : 'bottom-sheet'}
+        // Same shape as the confirmation it follows, so the two do not resize around each other
+        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
+        containerInnerWrapperStyles={isWeb ? { flex: 1 } : undefined}
+        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+      >
+        {/* PanelTitle grows to fill what it is given, so it is boxed to its own height here -
+        otherwise it takes the modal and pushes everything below it to the bottom */}
+        <View>
+          <PanelTitle title={successModalTitle} style={spacings.mbXl} />
+        </View>
+        {/* The gap to the button below. On the web it sits under the centred content, on mobile
+        the sheet is only as tall as what is in it, so this is the whole of the breathing room */}
+        <View style={[flexbox.flex1, flexbox.center, spacings.mbLg]}>
+          <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
+          <Text fontSize={16} style={text.center} appearance="secondaryText">
+            {successText}
+          </Text>
+        </View>
         <Button
           testID="device-pass-success-modal"
           text={t('Got it')}
           hasBottomSpacing={false}
-          style={{ minWidth: 232 }}
           onPress={() => closeModal()}
         />
       </BottomSheet>
