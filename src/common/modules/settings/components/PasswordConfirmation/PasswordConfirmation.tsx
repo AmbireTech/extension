@@ -10,6 +10,7 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { useIsBottomSheetOpen } from '@common/components/BottomSheet/BottomSheetContext'
 import { isDev, isMobile, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useSecretConfirmation from '@common/hooks/useSecretConfirmation'
@@ -140,6 +141,11 @@ const PasswordConfirmation: React.FC<Props> = ({
     [keystoreDispatch, onCustomSubmit]
   )
 
+  // Read here rather than off `useSecretConfirmation`, because the title it builds is what that
+  // hook is given for the operating system's own prompt
+  const { biometricsAuthLabel } = useBiometricsAvailability()
+  const biometricsTitle = t('Confirm with {{biometricsAuthLabel}}', { biometricsAuthLabel })
+
   const handleBiometricsConfirmed = useCallback(() => {
     onBiometricsConfirmed?.()
   }, [onBiometricsConfirmed])
@@ -155,10 +161,13 @@ const PasswordConfirmation: React.FC<Props> = ({
     reset: resetSecretConfirmation
   } = useSecretConfirmation({
     onConfirmed: handleBiometricsConfirmed,
-    promptMessage: `${t(title)}\n${text}`
+    promptMessage: `${biometricsTitle}\n${text}`
   })
 
   const isOfferingBiometrics = !!onBiometricsConfirmed && canUseBiometrics
+  // The panel says what is actually being asked for, so it does not read "password" while the
+  // fingerprint or face prompt is the thing on screen
+  const panelTitle = isOfferingBiometrics && isUsingBiometrics ? biometricsTitle : t(title)
 
   // The content is mounted with the screen rather than when the sheet opens, so the prompt waits
   // for the sheet to actually come up - otherwise it would fire the moment the screen renders.
@@ -200,7 +209,7 @@ const PasswordConfirmation: React.FC<Props> = ({
     <View style={flexbox.flex1}>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
         {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
-        <PanelTitle title={t(title)} style={isWeb ? textStyles.left : textStyles.center} />
+        <PanelTitle title={panelTitle} style={isWeb ? textStyles.left : textStyles.center} />
       </View>
       {isOfferingBiometrics && isUsingBiometrics ? (
         <BiometricsPrompt
