@@ -10,6 +10,8 @@ import { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isSidePanel } = getUiType()
 
 interface Props {
@@ -25,6 +27,8 @@ interface Props {
   responsiveSizeMultiplier?: number
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const NetworkBadge: FC<Props> = ({
   chainId,
   withOnPrefix,
@@ -39,7 +43,7 @@ const NetworkBadge: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const network = useMemo(() => {
     return networks.find((n) => n.chainId === chainId)

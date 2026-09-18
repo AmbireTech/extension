@@ -106,7 +106,7 @@ export const SETTINGS_LINKS = [
   {
     key: 'manage-tokens',
     Icon: CustomTokensIcon,
-    label: 'Custom tokens',
+    label: 'Custom assets',
     path: ROUTES.manageTokens
   }
 ]

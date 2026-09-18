@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
@@ -8,6 +8,7 @@ import { has7702 } from '@ambire-common/libs/7702/7702'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
@@ -18,15 +19,26 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import Authorization7702 from '@common/modules/sign-message/components/Contents/authorization7702'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
+import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import { AMBIRE_SIGNER_APDUS } from '@web/modules/hardware-wallet/controllers/LedgerController/artifacts'
+import {
+  installLedgerApp,
+  LedgerAppInstallStep
+} from '@web/modules/hardware-wallet/controllers/LedgerController/ledgerSideload'
 
+import Step from './components/Step'
 import { getIsDelegationEnableDisabled } from './helpers'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>
@@ -34,13 +46,16 @@ interface Props {
   account: Account | null
 }
 
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, account }) => {
   const {
     state: { accountStates },
     dispatch: accountsDispatch
   } = useController('AccountsController')
-  const { state: keys } = useController('KeystoreController', 'keys')
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const {
     dispatch: featureFlagsDispatch,
@@ -48,7 +63,13 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   } = useController('FeatureFlagsController')
   const { theme } = useTheme()
   const { t } = useTranslation()
+  const { addToast } = useToast()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
+  const [installStep, setInstallStep] = useState<LedgerAppInstallStep | null>(null)
+  const [installProgress, setInstallProgress] = useState(0)
+  // Deliberately not persisted - the only source of truth is the device itself,
+  // which `installLedgerApp` checks before installing anything.
+  const [isAmbireSignerInstalled, setIsAmbireSignerInstalled] = useState(false)
 
   const accountState = useMemo(() => {
     if (!account) return null
@@ -83,6 +104,50 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     )
   }, [account, keys])
 
+  const hasLedgerKey = useMemo(
+    () =>
+      !!account && keys.some((k) => account.associatedKeys.includes(k.addr) && k.type === 'ledger'),
+    [account, keys]
+  )
+
+  // Sideloads the "Ambire Signer" app (a fork of the Ethereum app that whitelists
+  // the Ambire EIP-7702 delegator) needed to authorize delegation with a Ledger.
+  // It coexists with the official Ethereum app and is used only for this one-off.
+  // Runs unconditionally, which doubles as the update path - the device asks to
+  // remove the old build first when there already is one.
+  const installAmbireSigner = useCallback(async () => {
+    try {
+      setInstallStep('connecting')
+      setInstallProgress(0)
+      await LedgerController.grantDevicePermissionIfNeeded()
+      await installLedgerApp(AMBIRE_SIGNER_APDUS, (step, percent) => {
+        setInstallStep(step)
+        setInstallProgress(percent)
+      })
+      setIsAmbireSignerInstalled(true)
+      addToast(t('Ambire Signer is ready on your Ledger. You can now turn on the networks below.'))
+    } catch (error: any) {
+      addToast(error?.message || t('Failed to install Ambire Signer on your Ledger.'), {
+        type: 'error'
+      })
+    } finally {
+      setInstallStep(null)
+    }
+  }, [addToast, t])
+
+  // The device names none of its prompts after Ambire, so spell out what is being
+  // asked instead of showing a bare spinner.
+  const installStepText = useMemo(() => {
+    if (installStep === 'connecting') return t('Unlock your Ledger and keep it on its home screen.')
+    if (installStep === 'confirmingInstall')
+      return t('On your Ledger: approve the install request.')
+    if (installStep === 'loading')
+      return t(
+        'Installing. Keep your Ledger connected. If you already have an older Ambire Signer, your Ledger will ask to remove it first.'
+      )
+
+    return null
+  }, [installStep, t])
   const isEip7702Enabled = flags.eip7702
 
   const enableEip7702 = useCallback(() => {
@@ -147,11 +212,77 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
         <Authorization7702>
           {is7702 && delegationNetworks?.length ? (
             <>
+              {/* This sheet is rendered by the mobile AccountsSettingsScreen too, where
+                  there is no WebHID and no bundled app builds, so the install can only
+                  ever fail there. */}
+              {isWeb && hasLedgerKey && isEip7702Enabled && (
+                <Alert
+                  type="info"
+                  size="md"
+                  style={spacings.mbMd}
+                  customIcon={LedgerLetterIcon}
+                  title={
+                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                      <Text fontSize={14} weight="semiBold">
+                        {t('Extra step for Ledger devices')}
+                      </Text>
+                      <Badge type="warning" text={t('Experimental')} style={spacings.mlTy} />
+                    </View>
+                  }
+                  text={t(
+                    'Ledger’s official Ethereum app blocks every other wallet’s upgrade, Ambire included. Ambire Signer is a custom companion app for your Ledger that unlocks the Ambire upgrade.\nInstall it once and use it only to approve the upgrade - everything else is still signed with the official Ethereum app.'
+                  )}
+                >
+                  <View style={spacings.mtSm}>
+                    {isAmbireSignerInstalled ? (
+                      <Step
+                        number={1}
+                        isCompleted
+                        title={t('Ambire Signer is installed on your Ledger')}
+                      />
+                    ) : (
+                      <Step
+                        number={1}
+                        title={t('Install Ambire Signer on your Ledger')}
+                        description={
+                          installStepText ??
+                          t(
+                            'Needed before you can turn on any of the networks below. Unlock your Ledger and stay on its home screen. Already have Ambire Signer? Install it again to get the latest version - your Ledger will ask to remove the old one first.'
+                          )
+                        }
+                      >
+                        <Button
+                          type="info"
+                          size="small"
+                          disabled={!!installStep}
+                          style={spacings.mb0}
+                          onPress={installAmbireSigner}
+                          text={
+                            installStep === 'loading'
+                              ? t('Installing... {{progress}}%', { progress: installProgress })
+                              : installStep
+                                ? t('Check your Ledger')
+                                : t('Install')
+                          }
+                        />
+                      </Step>
+                    )}
+                    <Step number={2} title={t('Turn on the networks you want, below')} />
+                    <Text fontSize={14} appearance="secondaryText">
+                      {t(
+                        'Ambire Signer is not available in Ledger Wallet. Install and manage it only from these smart settings. Requires a Ledger device that supports custom apps: Nano S Plus, Stax, Flex or Nano Gen5.'
+                      )}
+                    </Text>
+                  </View>
+                </Alert>
+              )}
+
               <Text fontSize={14} style={[spacings.mbMd]} appearance="secondaryText">
                 {t(
                   'While we support multiple networks, only those that have implemented EIP-7702 are listed here. As more networks adopt this upgrade, we will update the list to reflect broader availability.'
                 )}
               </Text>
+
               {!isEip7702Enabled && (
                 <View
                   style={[
@@ -167,7 +298,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                 >
                   <View style={flexbox.flex1}>
                     <Text fontSize={14} weight="medium">
-                      {t('Enable EIP-7702')}
+                      {t('EIP-7702 smart account features are disabled.')}
                     </Text>
                   </View>
                   <View style={[flexbox.flex1, flexbox.alignEnd]}>
@@ -181,6 +312,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   </View>
                 </View>
               )}
+
               <View
                 style={[
                   {

@@ -15,15 +15,23 @@ import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+
 const useSignMessage = () => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
-  const { state: account } = useController('SelectedAccountController', 'account')
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { state: accountStates } = useController('AccountsController', 'accountStates')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)

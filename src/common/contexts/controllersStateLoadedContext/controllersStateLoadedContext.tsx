@@ -8,8 +8,10 @@ export interface ControllersStateLoadedContextType {
    */
   canRenderRoute: boolean
   /**
-   * Every registered controller has reported its state. Gate on this before reading
-   * or acting on state that isn't in the current route's critical subset.
+   * Every registered controller has reported its state, except the ones the platform
+   * deliberately loads after the first paint - waiting on those is expected, so they
+   * are left out. Gate on this before reading or acting on state that isn't in the
+   * current route's critical subset.
    */
   areAllControllerStatesLoaded: boolean
   /**

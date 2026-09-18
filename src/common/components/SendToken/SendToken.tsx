@@ -1,10 +1,11 @@
-import React, { FC, memo, useCallback } from 'react'
+import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { textToValidDecimal } from '@ambire-common/utils/numbers/formatters'
 import FlipIcon from '@common/assets/svg/FlipIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import AmountInput from '@common/components/AmountInput'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
@@ -21,7 +22,10 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import getStyles from './styles'
 
+import type { AmountAdjustmentInfo } from '@ambire-common/interfaces/transfer'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const SECTION_MENU_HEADER_HEIGHT = 50
 
@@ -49,9 +53,13 @@ type Props = {
   selectTestId?: string
   maxAmountDisabled?: boolean
   simulationFailed?: boolean
+  amountAdjustmentInfo?: AmountAdjustmentInfo | null
   sections?: SectionedSelectProps['sections']
   renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
 }
+
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
 
 const SendToken: FC<Props> = ({
   label,
@@ -73,10 +81,11 @@ const SendToken: FC<Props> = ({
   selectTestId,
   maxAmountDisabled,
   simulationFailed,
+  amountAdjustmentInfo,
   sections,
   renderSectionHeader
 }) => {
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
@@ -92,6 +101,12 @@ const SendToken: FC<Props> = ({
       }
     },
     [fromAmountValue, onFromAmountChange]
+  )
+
+  const formattedAdjustedFeeAmount = useMemo(
+    () =>
+      amountAdjustmentInfo ? formatDecimals(Number(amountAdjustmentInfo.feeAmount), 'precise') : '',
+    [amountAdjustmentInfo]
   )
 
   const nonEmptySections = sections?.filter((s) => s.data.length > 0)
@@ -258,6 +273,35 @@ const SendToken: FC<Props> = ({
               <View />
             )}
           </View>
+          {!!amountAdjustmentInfo && (
+            <View
+              testID="amount-adjustment-info"
+              style={[
+                flexbox.directionRow,
+                flexbox.alignStart,
+                spacings.mtSm,
+                spacings.phSm,
+                spacings.pvSm,
+                {
+                  backgroundColor: theme.primaryAccent100,
+                  borderRadius: 12
+                }
+              ]}
+            >
+              <InfoIcon width={20} height={20} color={theme.primaryAccent} />
+              <View style={[flexbox.flex1, spacings.mlSm]}>
+                <Text fontSize={12} weight="semiBold">
+                  {t('Max amount adjusted')}
+                </Text>
+                <Text fontSize={12} appearance="secondaryText" style={spacings.mtMi}>
+                  {t('{{feeAmount}} {{tokenSymbol}} kept for the network fee', {
+                    feeAmount: formattedAdjustedFeeAmount,
+                    tokenSymbol: amountAdjustmentInfo.tokenSymbol
+                  })}
+                </Text>
+              </View>
+            </View>
+          )}
         </ItemPanel>
       </View>
       {validateFromAmount?.message && (

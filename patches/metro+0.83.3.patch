@@ -1,0 +1,22 @@
+diff --git a/node_modules/metro/src/node-haste/DependencyGraph.js b/node_modules/metro/src/node-haste/DependencyGraph.js
+index bd42485..73d7c84 100644
+--- a/node_modules/metro/src/node-haste/DependencyGraph.js
++++ b/node_modules/metro/src/node-haste/DependencyGraph.js
+@@ -188,6 +188,17 @@ class DependencyGraph extends _events.default {
+   async getOrComputeSha1(mixedPath) {
+     const result = await this._fileSystem.getOrComputeSha1(mixedPath);
+     if (!result || !result.sha1) {
++      // Worklets Bundle Mode writes its generated worklet modules during transform,
++      // long after Metro crawled the filesystem, so they are missing from the file
++      // map and this would otherwise fail the build. Hash them straight from disk.
++      // Remove once https://github.com/facebook/metro/issues/1496 is resolved.
++      try {
++        const contents = require("fs").readFileSync(mixedPath);
++        return {
++          sha1: require("crypto").createHash("sha1").update(contents).digest("hex"),
++          content: contents,
++        };
++      } catch {}
+       throw new Error(`Failed to get the SHA-1 for: ${mixedPath}.
+       Potential causes:
+         1) The file is not watched. Ensure it is under the configured \`projectRoot\` or \`watchFolders\`.

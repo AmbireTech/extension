@@ -15,8 +15,7 @@ export default function useDappsControllerHelpers(
   dispatch: (action: MethodAction | Action) => void
 ) {
   const { state, updateHelpers } = useControllerState({
-    id: 'DappsController',
-    subscriptionEnabled: true
+    id: 'DappsController'
   })
 
   const [dappUrl, setDappUrlState] = useState<string>('')
@@ -35,15 +34,6 @@ export default function useDappsControllerHelpers(
 
       const requestId = nanoid()
       const dappId = getDappIdFromUrl(new URL(url).origin)
-
-      dispatch({
-        type: 'method',
-        params: {
-          ctrlName: 'DappsController',
-          method: 'getCurrentDappAndSendResToUi',
-          args: [{ requestId, dappId, currentSessionId: undefined }]
-        }
-      })
 
       return new Promise<Dapp | null>((resolve, reject) => {
         let settled = false
@@ -95,7 +85,17 @@ export default function useDappsControllerHelpers(
           reject(new Error('Getting current dapp timed out after 10 seconds'))
         }, 10_000)
 
+        // Listen before dispatching: the controllers run in this realm and reply
+        // synchronously, before a listener added afterwards would exist
         eventBus.addEventListener('receiveOneTimeData', onResponse)
+        dispatch({
+          type: 'method',
+          params: {
+            ctrlName: 'DappsController',
+            method: 'getCurrentDappAndSendResToUi',
+            args: [{ requestId, dappId, currentSessionId: undefined }]
+          }
+        })
       })
     },
     [dispatch, dappUrl]

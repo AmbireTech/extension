@@ -18,14 +18,29 @@ import { privateValue } from '@common/utils/ui'
 
 import RewardsButtonWrapper from './RewardsButtonWrapper'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.tokens
+const selectPortfolioIsReadyToVisualize = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.isReadyToVisualize
+
 const RewardsButton = () => {
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolioTokens } = useController(
+    'SelectedAccountController',
+    selectPortfolioTokens
+  )
+  const { state: isPortfolioReadyToVisualize } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsReadyToVisualize
+  )
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const { navigate } = useNavigation()
   const { t } = useTranslation()
 
   const total: number = useMemo(() => {
-    const projectedRewardsToken = portfolio.tokens.find(
+    const projectedRewardsToken = portfolioTokens.find(
       (t) => t.flags.rewardsType === 'wallet-projected-rewards'
     )
     const price = projectedRewardsToken?.priceIn[0]?.price
@@ -39,7 +54,7 @@ const RewardsButton = () => {
         price
       )
     )
-  }, [portfolio.tokens])
+  }, [portfolioTokens])
 
   const totalNoDecimal = useMemo(() => {
     return formatDecimals(total, 'noDecimal')
@@ -53,7 +68,7 @@ const RewardsButton = () => {
     return `+$${totalNoDecimal}`
   }, [totalNoDecimal])
 
-  if (!portfolio.isReadyToVisualize) {
+  if (!isPortfolioReadyToVisualize) {
     return (
       <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} style={spacings.mlMi} />
     )

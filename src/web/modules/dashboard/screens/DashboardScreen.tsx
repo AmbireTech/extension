@@ -11,10 +11,12 @@ import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
+import DashboardShell from '@common/modules/dashboard/components/DashboardShell'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import getStyles from '@common/modules/dashboard/screens/styles'
 import { getUiType } from '@common/utils/uiType'
-import DashboardShell from '@web/modules/dashboard/components/DashboardShell'
+import MobileAppPromoBanner from '@web/modules/dashboard/components/MobileAppPromoBanner'
+import commonWebStyles from '@web/styles/utils/common'
 
 const { isPopup } = getUiType()
 
@@ -88,7 +90,7 @@ const DashboardScreen = () => {
     <LayoutWrapper>
       {!areAllControllerStatesLoaded ? (
         <View style={styles.container}>
-          <DashboardShell />
+          <DashboardShell contentContainerStyle={commonWebStyles.contentContainer} />
         </View>
       ) : (
         <>
@@ -112,6 +114,7 @@ const DashboardScreen = () => {
               animatedOverviewHeight={animatedOverviewHeight}
               isSearchHidden={isSearchHidden}
             />
+            <MobileAppPromoBanner />
           </View>
         </>
       )}

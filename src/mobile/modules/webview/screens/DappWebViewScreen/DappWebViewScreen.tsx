@@ -42,6 +42,8 @@ import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
 // Cross-origin iframes cannot read main-frame globals (Same-Origin Policy), so they
 // cannot forge messages with a valid token. Called once per WebView mount.
@@ -250,6 +252,9 @@ const EDGE_SWIPE_ACTIVATION_OFFSET_X = 5
 const EDGE_SWIPE_FAIL_OFFSET_Y = 20
 const EDGE_SWIPE_VELOCITY_IMPACT = 0.3
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const DappWebViewScreen = () => {
   const [devAmbireCode, setDevAmbireCode] = useState<string | null>(null)
   const [devEthereumCode, setDevEthereumCode] = useState<string | null>(null)
@@ -377,7 +382,7 @@ const DappWebViewScreen = () => {
     [searchControl, t]
   )
 
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
