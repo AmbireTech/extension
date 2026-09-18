@@ -10,7 +10,6 @@ import { nanoid } from 'nanoid'
 
 import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { ProviderError } from '@ambire-common/classes/ProviderError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
@@ -23,7 +22,12 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
+import { applyCrashReportPolicy } from '@common/config/analytics/applyCrashReportPolicy'
 import { logSentryDeliveryWhenTesting } from '@common/config/analytics/CrashAnalytics.web'
+import {
+  isProviderErrorLike,
+  isSuccessfulRpcStatusCode
+} from '@common/config/analytics/crashReportPolicy'
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
@@ -91,6 +95,7 @@ import {
 import { sendCriticalControllerStates } from './criticalControllerStates'
 import { getReportableAction } from './getReportableAction'
 
+import type { ProviderError } from '@ambire-common/classes/ProviderError'
 const debugLogs: {
   key: string
   value: object
@@ -142,6 +147,10 @@ function stateDebug(
   logInfoWithPrefix(key, debugLogs)
 }
 
+// An RPC that timed out carries nothing beyond the fact that it timed out, so its event is
+// stripped down the same way a non-2xx one is.
+const RPC_TIMEOUT_MESSAGE_SUBSTRING = 'rpc-timeout'
+
 function captureBackgroundExceptionFromControllerError(error: ErrorRef, controllerName: string) {
   if (
     (typeof error.sendCrashReport === 'boolean' && !error.sendCrashReport) ||
@@ -155,45 +164,6 @@ function captureBackgroundExceptionFromControllerError(error: ErrorRef, controll
       controllerName
     }
   })
-}
-
-// THESE MUST BE LOWERCASE
-const IGNORED_SHORT_MESSAGE_SUBSTRINGS = ['missing revert data']
-const IGNORED_ERROR_SUBSTRINGS = ['failed to fetch', 'network error']
-
-const checkSubstrings = (text: string, substrings: string[]) =>
-  substrings.some((substring) => text.toLowerCase().includes(substring))
-
-const isIgnoredError = (error?: any) => {
-  const { message, shortMessage } = error || {}
-
-  return (
-    (!!message && checkSubstrings(message, IGNORED_ERROR_SUBSTRINGS)) ||
-    (!!shortMessage && checkSubstrings(shortMessage, IGNORED_SHORT_MESSAGE_SUBSTRINGS))
-  )
-}
-
-const getErrorType = (error: any) => {
-  const { statusCode, message, isProviderInvictus } = error
-
-  if (typeof statusCode === 'number') {
-    if (statusCode >= 200 && statusCode < 300) {
-      return '2xx'
-    }
-
-    if (typeof isProviderInvictus === 'boolean' && !isProviderInvictus) {
-      // No need to report custom RPC non-2xx errors
-      return 'ignored-error'
-    }
-
-    return 'non-2xx'
-  }
-
-  if (message.includes('rpc-timeout')) return 'rpc-timeout'
-
-  // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
-  // and have handling just in case statusCode is explicitly set to 200-299
-  return isIgnoredError(error) ? 'ignored-error' : '2xx'
 }
 
 let isInitialized = false
@@ -210,20 +180,22 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
     beforeSend(event, hint) {
       const error = hint.originalException
 
-      // Custom handling for ProviderError to adjust event data and fingerprinting
-      // Docs: https://docs.sentry.io/platforms/javascript/enriching-events/fingerprinting/#group-errors-with-greater-granularity
-      if (error instanceof ProviderError) {
-        const errorType = getErrorType(error)
+      // Whether this shape of error is worth sending, how loud it is and which issue it
+      // joins all live in one place, shared with the UI's own beforeSend.
+      if (!applyCrashReportPolicy(event, error)) return null
 
-        if (errorType === 'ignored-error') {
-          // Drop ignored errors
-          return null
-        }
+      // Matched by name rather than `instanceof`, so an error that reached us through the
+      // messengers still counts. Those arrive as plain objects, not ProviderError instances.
+      if (isProviderErrorLike(error)) {
+        const { providerUrl, isProviderInvictus, statusCode, message } = error as ProviderError
 
         // Always delete breadcrumbs to reduce event size.
         delete event.breadcrumbs
 
-        if (errorType !== '2xx') {
+        if (
+          !isSuccessfulRpcStatusCode(statusCode) ||
+          (message || '').includes(RPC_TIMEOUT_MESSAGE_SUBSTRING)
+        ) {
           // We don't care about any data for non-2XX errors
           // We only want to know how many of them happened and group them accordingly
 
@@ -234,27 +206,18 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
 
         event.extra = {
           ...(event.extra || {}),
-          providerUrl: error.providerUrl
+          providerUrl
         }
 
-        event.fingerprint = [
-          '{{ default }}',
-          error.isProviderInvictus ? error.providerUrl || 'invictus' : 'custom-rpc',
-          errorType
-        ]
-
-        if (error.isProviderInvictus) {
-          event.tags = {
-            ...(event.tags || {}),
-            // Allows us to filter issues by provider in Sentry's UI
-            providerUrl: error.providerUrl || 'should-never-be-undefined',
-            providerType: 'invictus'
-          }
-        } else {
-          event.tags = {
-            ...(event.tags || {}),
-            providerType: 'custom-rpc'
-          }
+        event.tags = {
+          ...(event.tags || {}),
+          ...(isProviderInvictus
+            ? {
+                // Allows us to filter issues by provider in Sentry's UI
+                providerUrl: providerUrl || 'should-never-be-undefined',
+                providerType: 'invictus'
+              }
+            : { providerType: 'custom-rpc' })
         }
       }
 
