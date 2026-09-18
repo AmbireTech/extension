@@ -229,11 +229,19 @@ type SetBootPhaseAction = {
 }
 
 // Mobile-only. The UI reports which controllers currently have at least one
-// active `useController` subscriber so the WebView worker can skip serializing
-// and bridging the state of controllers no screen is displaying.
+// active `useController` subscriber so the host can skip serializing the state of
+// controllers no screen is displaying.
 type SetSubscribedControllersAction = {
   type: 'SET_SUBSCRIBED_CONTROLLERS'
   params: { controllers: string[] }
+}
+
+// Mobile-only. The UI reports when the stack starts and finishes animating a screen,
+// so the host can keep controller updates out of that window - the animation needs the
+// JS thread, and so does the next touch.
+type SetTransitionStateAction = {
+  type: 'SET_TRANSITION_STATE'
+  params: { isInFlight: boolean }
 }
 
 // Mobile-only, boot profiling. Asks the WebView worker to post its boot marks so
@@ -242,8 +250,8 @@ type FlushBootProfileAction = {
   type: 'FLUSH_BOOT_PROFILE'
 }
 
-// Mobile-only. Loads the dapp catalog and phishing lists in the WebView worker after
-// the dashboard has rendered, keeping them off the boot path. Idempotent in the worker.
+// Mobile-only. Loads the dapp catalog and phishing lists after the dashboard has
+// rendered, keeping them off the boot path. Idempotent.
 type InitDeferredControllersAction = {
   type: 'INIT_DEFERRED_CONTROLLERS'
 }
@@ -281,5 +289,6 @@ export type Action =
   | DispatchDappTabFocusAction
   | SetBootPhaseAction
   | SetSubscribedControllersAction
+  | SetTransitionStateAction
   | FlushBootProfileAction
   | InitDeferredControllersAction

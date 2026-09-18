@@ -2,7 +2,6 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
-import gasTankFeeTokens from '@ambire-common/consts/gasTankFeeTokens'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import Recipient from '@common/components/Recipient'
@@ -26,11 +25,18 @@ import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/use
 import type { AmountAdjustmentInfo } from '@ambire-common/interfaces/transfer'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type GasTankSection = {
   title: { icon: FC<SvgProps>; text: string }
   data: SelectValue[]
   key: string
 }
+
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectVerifiedDomainsStatus = (state: AllControllersMappingType['DomainsController']) =>
+  state.verifiedDomainsStatus
 
 const SendForm = ({
   addressInputState,
@@ -73,12 +79,15 @@ const SendForm = ({
     },
     dispatch: transferDispatch
   } = useController('TransferController')
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
 
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: verifiedDomainsStatus } = useController(
+    'DomainsController',
+    selectVerifiedDomainsStatus
+  )
   const domainVerificationMessage =
     verifiedDomainsStatus[addressStateFieldValue.trim()] === 'VERIFIED' ? 'Verified by Colibri' : ''
 
@@ -156,11 +165,6 @@ const SendForm = ({
         return !currentOptionKeys.has(getKey(asset.address, asset.chainId))
       })
       .map((asset) => {
-        const feeToken = gasTankFeeTokens.find(
-          (ft) =>
-            ft.address.toLowerCase() === asset.address?.toLowerCase() &&
-            ft.chainId === BigInt(asset.chainId!)
-        )
         const network = networks.find((n) => n.chainId === BigInt(asset.chainId!))
 
         const symbol = (asset.symbol?.trim() || 'No symbol').toUpperCase()

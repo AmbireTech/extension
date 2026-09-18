@@ -20,6 +20,8 @@ import { getUiType } from '@common/utils/uiType'
 import ManageContact from './ManageContact'
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isSidePanel } = getUiType()
 
 interface Props {
@@ -43,6 +45,10 @@ interface Props {
   isActive?: boolean
 }
 
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const AddressBookContact: FC<Props> = ({
   address,
   name,
@@ -65,8 +71,8 @@ const AddressBookContact: FC<Props> = ({
   const { theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { state: accounts } = useController('AccountsController', 'accounts')
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const reverseLookup = useReverseLookup({
     address,
     // This is needed because the component is rendered in AddressInput when a valid address

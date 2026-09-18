@@ -11,14 +11,20 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { hexToRgba } from '@common/styles/utils/common'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const MAX_VISIBLE_NETWORKS = isMobile ? 8 : 10
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 
 const useReceive = () => {
   const { t } = useTranslation()
   const { state } = useRoute()
   const { address } = state || {}
 
-  const { state: stateAccount } = useController('SelectedAccountController', 'account')
+  const { state: stateAccount } = useController('SelectedAccountController', selectAccount)
 
   const {
     state: { accounts }
@@ -40,7 +46,7 @@ const useReceive = () => {
   } = useReverseLookup({
     address: account?.addr || ''
   })
-  const { state: keys } = useController('KeystoreController', 'keys')
+  const { state: keys } = useController('KeystoreController', selectKeys)
   const { theme } = useTheme()
   const qrCodeRef: any = useRef(null)
   const [qrCodeError, setQrCodeError] = useState<string | boolean | null>(null)

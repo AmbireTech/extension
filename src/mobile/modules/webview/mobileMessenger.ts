@@ -1,17 +1,16 @@
 import { Messenger } from '@ambire-common/interfaces/messenger'
-
-import { sendToReactEvent } from './webviewLogger'
+import { emitDappEventBroadcast } from '@mobile/services/controllerHost/uiEvents'
 
 /**
  * A mobile-specific Messenger implementation that routes broadcast session events
- * (e.g. disconnect, accountsChanged, chainChanged) through the RN bridge to the
- * DappWebViewScreen, which then injects them into the visible dapp WebView.
+ * (e.g. disconnect, accountsChanged, chainChanged) to the DappWebViewScreen,
+ * which then injects them into the visible dapp WebView.
  *
  * This mirrors the role that bridgeMessenger plays on the web extension:
  * background → content script → inpage provider.
  *
  * Mobile equivalent:
- * WebViewWorker (JS) → sendToReactEvent → WebViewWorker (RN) → eventBus → DappWebViewScreen → injectJavaScript
+ * DappsController → eventBus → DappWebViewScreen → injectJavaScript
  */
 export const mobileMessenger: Messenger = {
   available: true,
@@ -24,7 +23,7 @@ export const mobileMessenger: Messenger = {
   ): Promise<TResponse> => {
     if (topic.includes('broadcast')) {
       const { event, data, origin } = payload as any
-      sendToReactEvent('action.broadcastDappEvent', {
+      emitDappEventBroadcast({
         event,
         data,
         origin,

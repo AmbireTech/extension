@@ -28,19 +28,24 @@ import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
 
 import { getIsDelegationEnableDisabled } from './helpers'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
   account: Account | null
 }
 
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, account }) => {
   const {
     state: { accountStates },
     dispatch: accountsDispatch
   } = useController('AccountsController')
-  const { state: keys } = useController('KeystoreController', 'keys')
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const {
     dispatch: featureFlagsDispatch,

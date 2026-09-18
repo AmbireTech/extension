@@ -24,8 +24,14 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 
+import type { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
 import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectSupportedChainIds = (state: SwapAndBridgeController) => state.supportedChainIds
+
 type UseTokenActionsOptions = {
   /**
    * When set, a zero-balance token keeps Send disabled but shows this tooltip explaining why
@@ -73,6 +79,11 @@ const WALLET_STAKING_ACTIONS: Record<
  * Extracted from useTokenDetails so both the portfolio token details and the trending token
  * details screens can share the exact same footer.
  */
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectTokenPreferences = (state: AllControllersMappingType['PortfolioController']) =>
+  state.tokenPreferences
+
 const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOptions = {}) => {
   const { noBalanceSendTooltip, enableSwapToBuy, isNotInPortfolio, enableWalletStakingAction } =
     options
@@ -84,7 +95,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   } = useModalize()
   const { addToast } = useToast()
   const { t } = useTranslation()
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: lockedShares } = useController(
     'SelectedAccountController',
     selectXWalletLockedShares
@@ -95,14 +106,14 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const isErc4337Enabled = flags.erc4337
   const { state: supportedChainIds } = useController(
     'SwapAndBridgeController',
-    (state) => state.supportedChainIds
+    selectSupportedChainIds
   )
   const { state: disabledSwapProviderIds } = useController(
     'SwapAndBridgeController',
     (state) => state.disabledSwapProviderIds
   )
   const { dispatch: portfolioDispatch } = useController('PortfolioController')
-  const { state: tokenPreferences } = useController('PortfolioController', 'tokenPreferences')
+  const { state: tokenPreferences } = useController('PortfolioController', selectTokenPreferences)
   const networks = useNetworks({
     acc: account,
     additionalCheck: {

@@ -10,6 +10,7 @@ import CollectibleModal, { SelectedCollectible } from '@common/components/Collec
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
@@ -24,6 +25,9 @@ import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
@@ -40,7 +44,22 @@ interface Props {
   onRefresh?: () => void
 }
 
+const SEARCH_DEBOUNCE_MS = 200
+
 const { isPopup } = getUiType()
+
+const selectPortfolioCollections = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.collections
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
+const selectPortfolioIsReadyToVisualize = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.isReadyToVisualize
+
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
 
 const Collections: FC<Props> = ({
   openTab,
@@ -55,15 +74,30 @@ const Collections: FC<Props> = ({
   refreshing,
   onRefresh
 }) => {
-  const {
-    state: { portfolio, dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
+  const { state: collections } = useController(
+    'SelectedAccountController',
+    selectPortfolioCollections
+  )
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
+  const { state: isPortfolioReadyToVisualize } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsReadyToVisualize
+  )
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    selectDashboardNetworkFilter
+  )
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [selectedCollectible, setSelectedCollectible] = useState<SelectedCollectible | null>(null)
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
-  const searchValue = watch('search')
+  const inputSearchValue = watch('search')
+  // Debounced so a keystroke doesn't re-index every collection the account holds
+  const searchValue = useDebounce({ value: inputSearchValue, delay: SEARCH_DEBOUNCE_MS })
 
   const closeCollectibleModal = useCallback(() => {
     closeModal()
@@ -78,17 +112,14 @@ const Collections: FC<Props> = ({
   )
 
   const filteredPortfolioCollections = useMemo(() => {
-    const searchableCollections = (portfolio?.collections || []).filter(
-      ({ chainId, collectibles }) => {
-        let isMatchingNetwork = true
+    // Built once instead of per collection, since every one of them is compared to it
+    const filteredChainId = dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : null
 
-        if (dashboardNetworkFilter) {
-          isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
-        }
+    const searchableCollections = (collections || []).filter(({ chainId, collectibles }) => {
+      const isMatchingNetwork = filteredChainId === null || chainId === filteredChainId
 
-        return isMatchingNetwork && collectibles.length
-      }
-    )
+      return isMatchingNetwork && collectibles.length
+    })
 
     return tokenOrCollectionSearch({
       networks,
@@ -96,13 +127,13 @@ const Collections: FC<Props> = ({
       search: searchValue,
       searchType: 'collection'
     })
-  }, [portfolio?.collections, networks, searchValue, dashboardNetworkFilter])
+  }, [collections, networks, searchValue, dashboardNetworkFilter])
 
   const isReadyToVisualizeCollections = useMemo(() => {
-    if (portfolio.isAllReady) return true
+    if (isPortfolioAllReady) return true
 
-    return portfolio?.isReadyToVisualize && filteredPortfolioCollections.length
-  }, [filteredPortfolioCollections.length, portfolio.isAllReady, portfolio?.isReadyToVisualize])
+    return isPortfolioReadyToVisualize && filteredPortfolioCollections.length
+  }, [filteredPortfolioCollections.length, isPortfolioAllReady, isPortfolioReadyToVisualize])
 
   const renderItem = useCallback(
     ({ item }: any) => {
@@ -210,7 +241,7 @@ const Collections: FC<Props> = ({
         data={[
           ...(isMobile ? [] : ['header']),
           ...(initTab?.collectibles ? filteredPortfolioCollections : []),
-          !filteredPortfolioCollections.length && portfolio?.isAllReady ? 'empty' : '',
+          !filteredPortfolioCollections.length && isPortfolioAllReady ? 'empty' : '',
           !isReadyToVisualizeCollections ? 'skeleton' : 'keep-this-to-avoid-key-warning'
         ]}
         renderItem={renderItem}

@@ -17,9 +17,13 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   onTokenPreferenceOrCustomTokenChange: () => void
 } & TokenResult
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const Token: FC<Props> = ({
   address,
@@ -30,7 +34,7 @@ const Token: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { isHidden, toggleHideToken, removeCustomToken } = useManageToken({
     address,
     chainId,

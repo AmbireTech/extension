@@ -19,6 +19,8 @@ import ImageIcon from '@web/assets/svg/ImageIcon'
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isTab } = getUiType()
 
 export type SelectedCollectible = {
@@ -30,6 +32,8 @@ export type SelectedCollectible = {
   image: string
   collectionName: string
 } | null
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const CollectibleModal = ({
   handleClose,
@@ -45,7 +49,7 @@ const CollectibleModal = ({
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const modalContent = useMemo(() => {
     if (!selectedCollectible) return null
 

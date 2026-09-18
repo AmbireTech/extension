@@ -21,8 +21,8 @@ export const secureStorage: {
   remove: (key: string) => Promise<void>
 }
 // PERF: snapshot of the async storage as raw serialized strings, used to seed the
-// mobile WebView worker's in-memory cache at init (see WebViewWorker). Keys listed
-// in `excludedKeys` are not read and not included in `values`, but still appear in
-// `allKeys` so the worker knows to fetch them over the bridge on first use.
-export const getAllSerialized: (excludedKeys?: readonly string[]) => SerializedStorageSnapshot
+// mobile WebView worker's in-memory cache at init (see WebViewWorker). Only the keys
+// in `keysToSnapshot` are read into `values`; every stored key still appears in
+// `allKeys` so the worker knows which of the rest to fetch over the bridge.
+export const getAllSerialized: (keysToSnapshot: readonly string[]) => SerializedStorageSnapshot
 export type { SerializedStorageSnapshot }
