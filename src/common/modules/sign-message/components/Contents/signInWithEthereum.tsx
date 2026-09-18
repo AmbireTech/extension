@@ -391,6 +391,9 @@ const SignInWithEthereum = ({
                   flexbox.directionRow,
                   flexbox.alignCenter,
                   isWeb && flexbox.justifyEnd,
+                  // In the narrow side panel the label must wrap instead of pushing
+                  // the toggle out of the viewport
+                  isWeb && { flexShrink: 1 },
                   isMobile && spacings.mbSm
                 ]}
               >
@@ -404,7 +407,7 @@ const SignInWithEthereum = ({
                 <Text
                   fontSize={14 * responsiveSizeMultiplier}
                   appearance="secondaryText"
-                  style={spacings.mrSm}
+                  style={[spacings.mrSm, isWeb && { flexShrink: 1 }]}
                 >
                   {t('Auto-login on this network for the next')}
                 </Text>
