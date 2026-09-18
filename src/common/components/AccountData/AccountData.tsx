@@ -18,6 +18,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
@@ -42,7 +43,8 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
-  const { isPopup, isSidePanel } = getUiType()
+  const { isPopup } = getUiType()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { isStoreReady } = useControllerStore()
 
   const { state: account } = useController('SelectedAccountController', selectAccount)
@@ -80,12 +82,12 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const formattedAddress = useMemo(() => {
     if (!account) return ''
 
-    if (isSidePanel) return account.addr
+    if (isNarrowWebLayout) return account.addr
 
     if (isMobile) return shortenAddress(account.addr, 18, 4)
 
     return shortenAddress(account.addr, 13)
-  }, [account, isSidePanel])
+  }, [account, isNarrowWebLayout])
 
   if (!account) return null
 
@@ -105,7 +107,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           {
             backgroundColor: '#000000A3',
             flexShrink: 1,
-            ...(isSidePanel ? { minWidth: 0 } : {}),
+            ...(isNarrowWebLayout ? { minWidth: 0 } : {}),
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
           },
           isMobile && {
@@ -127,7 +129,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           ) : (
             <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />
           )}
-          {isSidePanel ? (
+          {isNarrowWebLayout ? (
             <>
               <Text
                 numberOfLines={1}

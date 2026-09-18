@@ -52,7 +52,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     state: { flags }
   } = useController('FeatureFlagsController')
   const { canUseGasTank, disabledReason, requiresEip7702 } = useHasGasTank({ account })
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const isErc4337Enabled = flags.erc4337
   const isEip7702Enabled = flags.eip7702
   const isGasTankEnabled = isErc4337Enabled && (!requiresEip7702 || isEip7702Enabled)
@@ -159,7 +159,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           style={{ ...flexbox.flex1, alignItems: 'stretch' }}
           mobileStyle={{ flexDirection: 'column' }}
           innerContainerStyle={
-            isCompactSidePanelLayout
+            isNarrowWebLayout
               ? undefined
               : {
                   ...flexbox.justifySpaceBetween,
@@ -168,13 +168,13 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
                 }
           }
           absolute={false}
-          fullWidth={isCompactSidePanelLayout}
+          fullWidth={isNarrowWebLayout}
         >
           <View
             style={[
               flexbox.directionRow,
               flexbox.alignCenter,
-              (isMobile || isCompactSidePanelLayout) && spacings.mbLg
+              (isMobile || isNarrowWebLayout) && spacings.mbLg
             ]}
           >
             <TokenIcon
@@ -202,7 +202,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             testID="top-up-gas-tank-modal-button"
             type="primary"
             text={t('Top up')}
-            size={isMobile || isCompactSidePanelLayout ? 'regular' : 'smaller'}
+            size={isMobile || isNarrowWebLayout ? 'regular' : 'smaller'}
             hasBottomSpacing={false}
             style={{
               minWidth: 128

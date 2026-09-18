@@ -15,7 +15,7 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 const InteractionAddress = ({ address }: { address: string }) => {
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const reverseLookup = useReverseLookup({ address })
   const { contacts = [] } = useController('AddressBookController').state
   const { state: accounts = [] } = useController('AccountsController', selectAccounts)
@@ -35,7 +35,7 @@ const InteractionAddress = ({ address }: { address: string }) => {
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        isCompactSidePanelLayout && { flexShrink: 1, minWidth: 0 }
+        isNarrowWebLayout && { flexShrink: 1, minWidth: 0 }
       ]}
     >
       {truncatedLocalLabel && (
@@ -43,8 +43,8 @@ const InteractionAddress = ({ address }: { address: string }) => {
           fontSize={12}
           weight="medium"
           appearance="secondaryText"
-          numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
-          style={[spacings.mrMi, isCompactSidePanelLayout && { flexShrink: 1, lineHeight: 16 }]}
+          numberOfLines={isNarrowWebLayout ? 1 : undefined}
+          style={[spacings.mrMi, isNarrowWebLayout && { flexShrink: 1, lineHeight: 16 }]}
         >
           {truncatedLocalLabel}
         </Text>
@@ -52,7 +52,7 @@ const InteractionAddress = ({ address }: { address: string }) => {
       <Text
         fontSize={12}
         appearance="secondaryText"
-        style={isCompactSidePanelLayout ? { lineHeight: 16 } : undefined}
+        style={isNarrowWebLayout ? { lineHeight: 16 } : undefined}
       >
         {truncatedLocalLabel ? `(${shortenAddress(address, 12)})` : shortenAddress(address, 12)}
       </Text>

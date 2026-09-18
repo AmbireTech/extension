@@ -6,9 +6,6 @@ import useShouldShowFullAddressOnWeb from '@common/components/AccountAddress/use
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
 
 interface Props {
   maxLength: number
@@ -35,7 +32,7 @@ const PlainAddress: FC<Props> = ({
   withWrap = false,
   highlight
 }) => {
-  const { shouldShowFullAddressOnWeb, isNarrowSidePanel, effectiveMaxLength } =
+  const { shouldShowFullAddressOnWeb, isNarrowWebLayout, effectiveMaxLength } =
     useShouldShowFullAddressOnWeb(maxLength, containerWidth)
 
   if (highlight) {
@@ -65,20 +62,18 @@ const PlainAddress: FC<Props> = ({
           minWidth: 0,
           // @ts-ignore web-only style for wrapping long hex addresses
           wordBreak: 'break-all',
-          ...(isSidePanel && {
+          ...(isNarrowWebLayout && {
             // Custom fontSize clears Text's default lineHeight; without an explicit
-            // value, wrapped mono hex addresses overlap on narrow side panel layouts.
+            // value, wrapped mono hex addresses overlap on narrow layouts.
             lineHeight: Math.ceil(fontSize * 1.5)
           })
         }
       ]}
       numberOfLines={shouldShowFullAddressOnWeb ? undefined : 1}
-      ellipsizeMode={isMobile || isNarrowSidePanel ? 'middle' : undefined}
+      ellipsizeMode={isMobile || isNarrowWebLayout ? 'middle' : undefined}
     >
       {hideParentheses ? '' : '('}
-      {shouldShowFullAddressOnWeb
-        ? address
-        : shortenAddress(address, effectiveMaxLength)}
+      {shouldShowFullAddressOnWeb ? address : shortenAddress(address, effectiveMaxLength)}
       {hideParentheses ? '' : ')'}
     </Text>
   )
