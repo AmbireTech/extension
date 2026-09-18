@@ -14,6 +14,11 @@ import JazzIcon from './Jazz'
 import Polycons from './Polycons/Polycons'
 import TypeBadge from './TypeBadge'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectShouldDisplayEnsAvatar = (state: AllControllersMappingType['FeatureFlagsController']) =>
+  isLegends || isBenzin || state.flags.keepEnsProfilesUpToDate
+
 const getAvatarType = ({
   ensAvatar,
   ensAvatarImageFetchFailed,
@@ -82,6 +87,10 @@ const Avatar: FC<Props> = ({
   const {
     state: { domains, loadingAddresses }
   } = useController('DomainsController')
+  const { state: shouldDisplayEnsAvatar } = useController(
+    'FeatureFlagsController',
+    selectShouldDisplayEnsAvatar
+  )
   // There is no wallet controller state in benzin/rewards so we need to be careful
 
   let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = propAvatarType || 'jazzicons'
@@ -92,7 +101,7 @@ const Avatar: FC<Props> = ({
   }
 
   const isEnsLoading = address ? loadingAddresses?.includes(address) : false
-  const ensAvatar = domains?.[address]?.avatar
+  const ensAvatar = shouldDisplayEnsAvatar ? domains?.[address]?.avatar : undefined
   const avatarType = getAvatarType({
     ensAvatar,
     ensAvatarImageFetchFailed,
