@@ -1,9 +1,14 @@
 import React, { FC, useMemo } from 'react'
 import { View } from 'react-native'
 
+import { useTranslation } from '@common/config/localization'
+
 import { Network } from '@ambire-common/interfaces/network'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import shortenAddress from '@ambire-common/utils/shortenAddress'
+import Badge from '@common/components/Badge'
 import Collectible from '@common/components/Collectible'
+import { COLLECTIBLE_SIZE } from '@common/components/Collectible/styles'
+import CollectionThumbnail from '@common/components/CollectionThumbnail'
 import { SelectedCollectible } from '@common/components/CollectibleModal'
 import NetworkIcon from '@common/components/NetworkIcon'
 import { NetworkIconIdType } from '@common/components/NetworkIcon/NetworkIcon'
@@ -25,37 +30,28 @@ interface Props {
     baseCurrency: string
     price: number
   }[]
-  openCollectibleModal: (collectible: SelectedCollectible) => void
+  openCollectibleModal?: (collectible: SelectedCollectible) => void
   networks: Network[]
-}
-
-export const formatCollectiblePrice = ({
-  baseCurrency,
-  price
-}: {
-  baseCurrency: string
-  price: number
-}) => {
-  if (baseCurrency === 'usd') {
-    return `$${formatDecimals(price)}`
-  }
-
-  // @TODO: handle other currencies
-  return `${formatDecimals(price)} ${baseCurrency.toUpperCase()}`
+  /** Labels a collection the user added themselves, which shows only the collectibles they added */
+  isCustom?: boolean
 }
 
 const { isTab } = getUiType()
 
-const Collection: FC<Props> = ({
+const CollectionCard: FC<Props> = ({
   address,
   name,
   chainId,
   collectibles,
   priceIn,
   openCollectibleModal,
-  networks
+  networks,
+  isCustom
 }) => {
+  const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
+  // The portfolio has no name for collections that don't implement ERC721Metadata
+  const label = name || shortenAddress(address, 13)
 
   const networkData = useMemo(() => {
     return networks.find(({ chainId: nChainId }) => chainId === nChainId.toString())
@@ -74,7 +70,7 @@ const Collection: FC<Props> = ({
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, spacings.mrXl]}>
           <Text testID="collection-item" weight="medium" numberOfLines={1} lineBreakMode="tail">
-            {name}
+            {label}
           </Text>
           <View
             style={{
@@ -90,6 +86,7 @@ const Collection: FC<Props> = ({
               {collectibles.length}
             </Text>
           </View>
+          {isCustom && <Badge text={t('Custom')} />}
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <View
@@ -112,6 +109,16 @@ const Collection: FC<Props> = ({
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.wrap]}>
+        {!collectibles.length && (
+          <View style={spacings.mbSm}>
+            <CollectionThumbnail
+              address={address}
+              chainId={BigInt(chainId)}
+              size={COLLECTIBLE_SIZE}
+              networks={networks}
+            />
+          </View>
+        )}
         {collectibles.map((collectible, index) => (
           <Collectible
             style={{
@@ -121,7 +128,7 @@ const Collection: FC<Props> = ({
             key={address + collectible}
             id={collectible}
             collectionData={{
-              name,
+              name: label,
               address,
               chainId: BigInt(chainId),
               priceIn: priceIn.length ? priceIn[0] : null
@@ -135,4 +142,4 @@ const Collection: FC<Props> = ({
   )
 }
 
-export default React.memo(Collection)
+export default React.memo(CollectionCard)

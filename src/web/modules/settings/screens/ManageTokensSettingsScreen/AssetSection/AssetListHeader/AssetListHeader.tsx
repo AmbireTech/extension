@@ -6,13 +6,18 @@ import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-const TokenListHeader = () => {
+type Props = {
+  /** The label of the first column. Defaults to 'Token' */
+  assetLabel?: string
+}
+
+const AssetListHeader = ({ assetLabel = 'Token' }: Props) => {
   const { t } = useTranslation()
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvMi]}>
       <View style={{ flex: 1.25, ...spacings.plSm }}>
         <Text appearance="secondaryText" fontSize={14}>
-          {t('Token')}
+          {t(assetLabel)}
         </Text>
       </View>
       <View style={{ flex: 1.5 }}>
@@ -31,4 +36,4 @@ const TokenListHeader = () => {
   )
 }
 
-export default TokenListHeader
+export default AssetListHeader
