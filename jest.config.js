@@ -27,6 +27,7 @@ module.exports = {
     '^@viem-original/decodeFunctionResult$':
       '<rootDir>/node_modules/viem/_cjs/utils/abi/decodeFunctionResult.js',
     '^@viem-original/encodeFunctionData$':
+      '<rootDir>/node_modules/viem/_cjs/utils/abi/encodeFunctionData.js'
   },
   testPathIgnorePatterns: [
     path.join('<rootDir>', 'e2e-playwright-tests/'), // E2E tests, handled by another configuration
