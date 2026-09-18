@@ -322,10 +322,15 @@ const open = async (
   const url = `request-window.html${route ? `#/${route}` : ''}`
   return create(url, customSize, baseWindowId)
 }
+/** How long a window gets to report itself focused before it is treated as unfocusable. */
+const FOCUS_CONFIRMATION_TIMEOUT = 1000
+
 /**
- * Focuses an existing window. In some cases, the passed window
- * cannot be focused (e.g., on Arc browser). If the window cannot be focused
- * within 1 second, a new window is created and the old one is removed.
+ * Focuses an existing window and repositions it over the window it was opened from. Some windows
+ * can never be focused (Arc does this) - one that still isn't focused after a second is replaced
+ * by a fresh one, unless the caller asked for the window to be left alone.
+ *
+ * Resolves with the props of whichever window the caller ends up with.
  */
 const focus = async (
   windowProps: WindowProps,
@@ -353,8 +358,23 @@ const focus = async (
 
   const updatedProps = { width, height, left, top, focused: true }
 
+  /**
+   * Whether the browser reports the window as focused right now. Asked rather than inferred:
+   * a window that was already focused when we got here never fires a focus event, and one that
+   * was just created can still be reported as unfocused by the call that focuses it. Neither
+   * silence is evidence that focusing failed.
+   */
+  const isWindowFocused = async () => {
+    const win = await chrome.windows.get(id).catch((e) => {
+      console.error(e)
+      return undefined
+    })
+
+    return !!win?.focused
+  }
+
   return new Promise<WindowProps>((resolve, reject) => {
-    let isFocused = false
+    let isSettled = false
     let timeoutId: NodeJS.Timeout
 
     const cleanup = () => {
@@ -362,55 +382,67 @@ const focus = async (
       if (timeoutId) clearTimeout(timeoutId)
     }
 
+    const settleWith = (props: WindowProps) => {
+      if (isSettled) return
+
+      isSettled = true
+      cleanup()
+      resolve(props)
+    }
+
+    const settle = () => settleWith({ id, createdFromWindowId, ...updatedProps })
+
+    const fail = (error: any) => {
+      if (isSettled) return
+
+      isSettled = true
+      cleanup()
+      reject(error)
+    }
+
     const focusListener = async (winId: number) => {
-      if (winId === id) {
-        const win = await chrome.windows.get(id).catch((e) => {
-          console.error(e)
-          return undefined
-        })
-        // In some Arc browser instances, the window never gets focused
-        // therefore we need a fallback logic that will open a new window
-        // and close the unfocused one
-        if (win && win.focused) {
-          isFocused = true
-          resolve({ id, createdFromWindowId, ...updatedProps })
-          cleanup()
-        }
-      }
+      if (winId !== id || isSettled) return
+
+      if (await isWindowFocused()) settle()
     }
 
     chrome.windows.onFocusChanged.addListener(focusListener)
 
-    // Attempt to focus the window
     chrome.windows
       .update(id, updatedProps)
-      .then((focusedWindow) => {
-        if (focusedWindow && focusedWindow.focused) {
-          isFocused = true
-          cleanup()
-          resolve({ id, createdFromWindowId, ...updatedProps })
-        }
-      })
-      .catch((error) => {
-        cleanup()
-        reject(error)
-      })
+      .then(async (focusedWindow) => {
+        if (isSettled) return
 
-    // Handle focus timeout - fallback to creating new window
+        if (focusedWindow?.focused || (await isWindowFocused())) settle()
+      })
+      .catch(fail)
+
     timeoutId = setTimeout(async () => {
-      cleanup()
+      if (isSettled) return
 
-      if (!isFocused && reopenIfNeeded) {
-        try {
-          // Create new window and remove the old one
-          const newWindow = await open()
-          await chrome.windows.remove(id)
-          resolve(newWindow)
-        } catch (error) {
-          reject(error)
-        }
+      // Last word before the window is replaced. Removing one the user is looking at is far
+      // worse than leaving an unfocused one up, so it only happens once the browser has
+      // confirmed the window really is not focused.
+      if (await isWindowFocused()) {
+        settle()
+        return
       }
-    }, 1000)
+
+      // Nothing left to try and the caller would rather keep an unfocused window than lose it
+      // (closing the request window mid-signing aborts the signing)
+      if (!reopenIfNeeded) {
+        settle()
+        return
+      }
+
+      try {
+        const newWindow = await open()
+        await chrome.windows.remove(id)
+        settleWith(newWindow)
+      } catch (error) {
+        fail(error)
+      }
+    }, FOCUS_CONFIRMATION_TIMEOUT)
   })
 }
 

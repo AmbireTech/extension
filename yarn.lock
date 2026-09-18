@@ -17,6 +17,14 @@
   resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.11.1.tgz#6c2d657d4b2dfb37f8ea811dcb3e60843d4ac24a"
   integrity sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==
 
+"@ambire/react-native-crypto@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@ambire/react-native-crypto/-/react-native-crypto-1.0.0.tgz#07f3d2bc869721d8a63c2fcaa848efece6c9d5c2"
+  integrity sha512-dpPXBzzJ1HCbXYoe4OqAeuTq7cUBbkUCIiVR/rsMuX1nKzVdy/APSgdpkxBSn80V6klRydJLzMzyM29mOUBR+g==
+  dependencies:
+    "@ubjs/core" "0.31.0-3"
+    uniffi-bindgen-react-native "0.31.0-3"
+
 "@ambire/signature-validator@1.5.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@ambire/signature-validator/-/signature-validator-1.5.0.tgz#a4a41865cdaf6278cb8235d64da4ae2067bdc73d"
@@ -15226,10 +15234,6 @@ react-is@^19.1.0:
   version "19.2.4"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.2.4.tgz#a080758243c572ccd4a63386537654298c99d135"
   integrity sha512-W+EWGn2v0ApPKgKKCy/7s7WHXkboGcsrXE+2joLyVxkbyVQfO3MUEaUQDHoSmb8TFFrSKYa9mw64WZHNHSDzYA==
-
-"react-native-ambire-crypto@link:./modules/react-native-ambire-crypto":
-  version "0.0.0"
-  uid ""
 
 react-native-app-intro-slider@4.0.4:
   version "4.0.4"

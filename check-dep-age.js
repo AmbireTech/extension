@@ -23,6 +23,9 @@ const NON_REGISTRY_PROTOCOLS = [
   'http:',
   'https:'
 ]
+// First-party packages we publish ourselves. The gate exists to catch a
+// compromised upstream release, and we control this publish end to end.
+const FIRST_PARTY_PACKAGES = ['@ambire/react-native-crypto']
 
 /* -------- helpers -------- */
 
@@ -72,6 +75,12 @@ function extractResolvedPackages(lockObject) {
   return result
 }
 
+function splitNameAndVersion(nameAndVersion) {
+  const at = nameAndVersion.lastIndexOf('@')
+
+  return { name: nameAndVersion.slice(0, at), version: nameAndVersion.slice(at + 1) }
+}
+
 function getChangedPackages() {
   const headText = fs.readFileSync(LOCKFILE, 'utf8')
   const baseText = readBaseLockfile()
@@ -79,7 +88,9 @@ function getChangedPackages() {
   const headPackages = extractResolvedPackages(parseLockfile(headText))
   const basePackages = extractResolvedPackages(parseLockfile(baseText))
 
-  return [...headPackages].filter((pkg) => !basePackages.has(pkg))
+  return [...headPackages].filter(
+    (pkg) => !basePackages.has(pkg) && !FIRST_PARTY_PACKAGES.includes(splitNameAndVersion(pkg).name)
+  )
 }
 
 async function fetchPackageMetadata(name) {
@@ -97,9 +108,7 @@ async function checkPackageAges(packages, minDays) {
   const tooNew = []
 
   for (const item of packages) {
-    const idx = item.lastIndexOf('@')
-    const name = item.slice(0, idx)
-    const version = item.slice(idx + 1)
+    const { name, version } = splitNameAndVersion(item)
 
     try {
       const meta = await fetchPackageMetadata(name)

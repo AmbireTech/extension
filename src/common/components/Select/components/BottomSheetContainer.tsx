@@ -26,6 +26,7 @@ type Props = Pick<RenderSelectedOptionParams, 'isMenuOpen'> & {
   sectionListProps?: SectionListProps<any, any> & { ref?: React.Ref<any> }
   flatListProps?: FlatListProps<any> & { ref?: React.Ref<any> }
   HeaderComponent?: React.ReactNode
+  onBottomSheetClosed?: () => void
 }
 
 const BottomSheetContainer: FC<Props> = ({
@@ -36,7 +37,8 @@ const BottomSheetContainer: FC<Props> = ({
   contentRef,
   sectionListProps,
   flatListProps,
-  HeaderComponent
+  HeaderComponent,
+  onBottomSheetClosed
 }) => {
   const { theme } = useTheme()
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
@@ -53,7 +55,8 @@ const BottomSheetContainer: FC<Props> = ({
   // down, and stops a backdrop press mid-close from flipping it back open.
   const closeMenu = useCallback(() => {
     setIsMenuOpen(false)
-  }, [setIsMenuOpen])
+    onBottomSheetClosed?.()
+  }, [onBottomSheetClosed, setIsMenuOpen])
 
   const bottomSheetStyle = useMemo(
     () => ({

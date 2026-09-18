@@ -14,7 +14,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 // The default NetworkIcon size (32) is too large next to the humanized text on mobile
-const CHAIN_ICON_SIZE = isMobile ? 26 : 32
+const CHAIN_ICON_SIZE = isMobile ? 24 : 32
 
 interface Props {
   chainId: bigint

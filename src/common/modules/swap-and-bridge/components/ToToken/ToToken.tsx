@@ -1,6 +1,5 @@
 import { formatUnits, isAddress } from 'ethers'
 import React, { FC, memo, useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
@@ -15,6 +14,7 @@ import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
@@ -36,12 +36,13 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 type Props = {
   simulationFailed?: boolean
   disabled?: boolean
+  openProviderSettingsModal: () => void
 }
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
 
-const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
+const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSettingsModal }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
@@ -59,6 +60,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
     updateToTokenListStatus,
     switchTokensStatus,
     supportedChainIds,
+    disabledSwapProviderIds,
     signAccountOpController
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -72,7 +74,11 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
     acc: account,
     additionalCheck: {
       chainIds: supportedChainIds,
-      reason: 'Network is not supported by our service provider.'
+      reason: t(
+        disabledSwapProviderIds.length
+          ? 'Network is not supported by the enabled service providers. Enable more providers for wider support'
+          : 'Network is not supported by our service provider.'
+      )
     }
   })
 
@@ -323,6 +329,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
             toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
             addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
             handleAddToTokenByAddress={handleAddToTokenByAddress}
+            openProviderSettingsModal={openProviderSettingsModal}
           />
         </View>
         <View

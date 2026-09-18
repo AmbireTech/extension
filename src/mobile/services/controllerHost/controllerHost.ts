@@ -39,6 +39,7 @@ import {
 export type ControllerHostConfig = {
   APP_VERSION: string
   RELAYER_URL: string
+  COWSWAP_API_KEY: string
   VELCRO_URL: string
   LIFI_EXPLORER_URL: string
   BUNGEE_API_KEY: string
@@ -271,6 +272,7 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
       liFiApiKey: config.LIFI_EXPLORER_URL,
       bungeeApiKey: config.BUNGEE_API_KEY,
       uniswapApiKey: config.UNISWAP_API_KEY,
+      cowSwapApiKey: config.COWSWAP_API_KEY,
       featureFlags: {},
       keystoreSigners: {
         internal: KeystoreSigner,

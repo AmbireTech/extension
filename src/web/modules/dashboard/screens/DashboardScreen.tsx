@@ -15,6 +15,7 @@ import DashboardShell from '@common/modules/dashboard/components/DashboardShell'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import getStyles from '@common/modules/dashboard/screens/styles'
 import { getUiType } from '@common/utils/uiType'
+import MobileAppPromoBanner from '@web/modules/dashboard/components/MobileAppPromoBanner'
 import commonWebStyles from '@web/styles/utils/common'
 
 const { isPopup } = getUiType()
@@ -113,6 +114,7 @@ const DashboardScreen = () => {
               animatedOverviewHeight={animatedOverviewHeight}
               isSearchHidden={isSearchHidden}
             />
+            <MobileAppPromoBanner />
           </View>
         </>
       )}
