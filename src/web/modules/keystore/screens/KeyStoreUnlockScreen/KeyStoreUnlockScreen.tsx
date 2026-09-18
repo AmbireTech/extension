@@ -74,16 +74,13 @@ const KeyStoreUnlockScreen = () => {
   const { isTab, isSidePanel } = getUiType()
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
   const hasAutoPromptedBiometricsRef = useRef(false)
-  const [isBiometricsPromptPending, setIsBiometricsPromptPending] = useState(false)
+  const biometricsAttemptIdRef = useRef(0)
   const [isBiometricsUnlockInProgress, setIsBiometricsUnlockInProgress] = useState(false)
   const [shouldSkipAutoPrompt] = useState(() => {
     const shouldSkip = syncSessionStorage.get(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE) === 'true'
     if (shouldSkip) syncSessionStorage.remove(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE)
     return shouldSkip
   })
-
-  const isBiometricsUnlockLoading =
-    isBiometricsPromptPending || (unlockMethod === 'biometrics' && isBiometricsUnlockInProgress)
 
   const openBiometricsInTab = useCallback(async () => {
     await openInternalPageInTab({
@@ -95,36 +92,36 @@ const KeyStoreUnlockScreen = () => {
   }, [isSidePanel, isTab, requestWindow?.windowProps?.createdFromWindowId])
 
   const runBiometricsUnlock = useCallback(async () => {
-    if (isBiometricsPromptPending || statuses.unlockWithSecret === 'LOADING') return false
+    if (statuses.unlockWithSecret === 'LOADING') return false
 
-    // Start WebAuthn before any React state update so the click user-gesture is preserved.
+    // A dismissed prompt is not always reported back (the side panel leaves it pending forever), so
+    // an attempt never blocks a later one - it takes over and the stale one aborts on its own.
+    const attemptId = biometricsAttemptIdRef.current + 1
+    biometricsAttemptIdRef.current = attemptId
+
+    // Start WebAuthn on the click itself so the user-gesture is preserved.
     // getBiometricsSecret() only awaits storage when the credential cache is cold.
     window.focus()
-    const biometricsSecretPromise = getBiometricsSecret()
-    setIsBiometricsPromptPending(true)
+    const biometricsSecret = await getBiometricsSecret()
 
-    try {
-      const biometricsSecret = await biometricsSecretPromise
+    if (biometricsAttemptIdRef.current !== attemptId) return false
 
-      if (!biometricsSecret) {
-        setIsBiometricsUnlockInProgress(false)
-        return false
-      }
-
-      setIsBiometricsUnlockInProgress(true)
-      keystoreDispatch({
-        type: 'method',
-        params: {
-          method: 'unlockWithSecret',
-          args: ['biometrics', biometricsSecret]
-        }
-      })
-
-      return true
-    } finally {
-      setIsBiometricsPromptPending(false)
+    if (!biometricsSecret) {
+      setIsBiometricsUnlockInProgress(false)
+      return false
     }
-  }, [getBiometricsSecret, isBiometricsPromptPending, keystoreDispatch, statuses.unlockWithSecret])
+
+    setIsBiometricsUnlockInProgress(true)
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'unlockWithSecret',
+        args: ['biometrics', biometricsSecret]
+      }
+    })
+
+    return true
+  }, [getBiometricsSecret, keystoreDispatch, statuses.unlockWithSecret])
 
   const handleBiometricsPrompt = useCallback(async () => {
     if (SHOULD_USE_TAB_FOR_BIOMETRICS) {
@@ -279,7 +276,7 @@ const KeyStoreUnlockScreen = () => {
               testID="button-unlock-biometrics-icon"
               activeOpacity={0.85}
               style={styles.biometricsIconButton}
-              disabled={isBiometricsUnlockLoading}
+              disabled={isBiometricsUnlockInProgress}
               onPress={() => {
                 handleBiometricsPrompt().catch((e) => {
                   addToast(`failed to open biometrics prompt`)
@@ -287,7 +284,7 @@ const KeyStoreUnlockScreen = () => {
                 })
               }}
             >
-              {isBiometricsUnlockLoading ? (
+              {isBiometricsUnlockInProgress ? (
                 <Spinner variant="black" style={{ width: 64, height: 64 }} />
               ) : (
                 <FingerprintIcon width={64} height={64} color={theme.iconPrimary} />
@@ -298,7 +295,7 @@ const KeyStoreUnlockScreen = () => {
               style={styles.switchButton}
               hasBottomSpacing={false}
               text={t('Unlock with password')}
-              disabled={isBiometricsUnlockLoading}
+              disabled={isBiometricsUnlockInProgress}
               onPress={() => setUnlockMethod('password')}
             />
           </View>

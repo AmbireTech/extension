@@ -141,8 +141,24 @@ const getCredentialExtensionResults = (credential: PublicKeyCredential | null) =
 const shouldTryPrfAssertion = (results: any) =>
   results?.prf?.enabled !== false || results?.hmacCreateSecret === true
 
+// The Chrome side panel never settles an assertion the user dismissed, which would leave the
+// ceremony pending forever and make every later one fail with "a request is already pending".
+// Keeping the controller around lets a new attempt abort the stale one.
+let pendingAssertionAbortController: AbortController | null = null
+
+const beginAssertion = () => {
+  pendingAssertionAbortController?.abort()
+  pendingAssertionAbortController = new AbortController()
+
+  return pendingAssertionAbortController
+}
+
+const endAssertion = (abortController: AbortController) => {
+  if (pendingAssertionAbortController === abortController) pendingAssertionAbortController = null
+}
+
 const getAssertionForPrfCredential = async (storedCredential: StoredPrfBiometricsCredential) => {
-  const abortController = new AbortController()
+  const abortController = beginAssertion()
   const timeoutId = setTimeout(() => abortController.abort(), WEBAUTHN_TIMEOUT_MS)
 
   try {
@@ -183,6 +199,7 @@ const getAssertionForPrfCredential = async (storedCredential: StoredPrfBiometric
     throw error
   } finally {
     clearTimeout(timeoutId)
+    endAssertion(abortController)
   }
 }
 
@@ -193,20 +210,24 @@ const getAssertionForPrfCredential = async (storedCredential: StoredPrfBiometric
 // from the credential's userHandle, which WebAuthn returns after successful user
 // verification for the resident credential we created.
 const getAssertionUserHandle = async (storedCredential: StoredEncryptedBiometricsCredential) => {
-  const credential = (await navigator.credentials.get({
-    publicKey: {
-      challenge: getRandomBytes(32),
-      timeout: WEBAUTHN_TIMEOUT_MS,
-      userVerification: 'required',
-      ...(storedCredential.rpId ? { rpId: storedCredential.rpId } : {}),
-      allowCredentials: [
-        {
-          id: decodeStoredBytes(storedCredential.credentialId),
-          type: 'public-key'
-        }
-      ]
-    }
-  } as CredentialRequestOptions)) as PublicKeyCredential | null
+  const abortController = beginAssertion()
+  const credential = (await navigator.credentials
+    .get({
+      publicKey: {
+        challenge: getRandomBytes(32),
+        timeout: WEBAUTHN_TIMEOUT_MS,
+        userVerification: 'required',
+        ...(storedCredential.rpId ? { rpId: storedCredential.rpId } : {}),
+        allowCredentials: [
+          {
+            id: decodeStoredBytes(storedCredential.credentialId),
+            type: 'public-key'
+          }
+        ]
+      },
+      signal: abortController.signal
+    } as CredentialRequestOptions)
+    .finally(() => endAssertion(abortController))) as PublicKeyCredential | null
 
   // the user cancelled the req
   if (!credential) return null
