@@ -16,8 +16,8 @@ const useDappConnect = () => {
   } = useController('RequestsController')
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
-  const { state: dappsState } = useController('DappsController')
-  const { state: isScamCheckerEnabled, dispatch: featureFlagsDispatch } = useController(
+  const { state: dappsState, dispatch: dappsDispatch } = useController('DappsController')
+  const { state: isScamCheckerEnabled } = useController(
     'FeatureFlagsController',
     selectIsScamCheckerEnabled
   )
@@ -75,14 +75,14 @@ const useDappConnect = () => {
   }, [userRequest, dappToConnect, requestsDispatch])
 
   const handleEnableScamChecker = useCallback(() => {
-    featureFlagsDispatch({
+    dappsDispatch({
       type: 'method',
       params: {
-        method: 'setFeatureFlags',
-        args: [{ scamAndPhishingChecker: true }]
+        method: 'enableScamCheckerAndRefreshDappToConnect',
+        args: []
       }
     })
-  }, [featureFlagsDispatch])
+  }, [dappsDispatch])
 
   const shouldHoldToProceed = useMemo(() => {
     return (
