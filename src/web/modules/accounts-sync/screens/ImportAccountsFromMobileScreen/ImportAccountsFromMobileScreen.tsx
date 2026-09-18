@@ -79,11 +79,8 @@ const ImportAccountsFromMobileScreen = () => {
   const [isBiometricsToggled, setIsBiometricsToggled] = useState<boolean | null>(null)
   const { saveBiometricsSecret } = useBiometrics()
   const { canEnableBiometrics } = useBiometricsAvailability()
-  // Biometrics on the extension are a WebAuthn credential, so what matters is whether
-  // the browser and the computer support one, not whether one is already stored
-  const isBiometricsAvailable = canEnableBiometrics
   // On by default once biometrics turn out to be available, until the user says otherwise
-  const isBiometricsEnabled = isBiometricsToggled ?? isBiometricsAvailable
+  const isBiometricsEnabled = isBiometricsToggled ?? canEnableBiometrics
 
   const steps: SyncImportStep[] = useMemo(
     () => [
@@ -357,7 +354,7 @@ const ImportAccountsFromMobileScreen = () => {
           <SyncPasswordOptions
             isPasswordReused={isPasswordReused}
             onTogglePasswordReuse={togglePasswordReuse}
-            isBiometricsAvailable={isBiometricsAvailable}
+            isBiometricsAvailable={canEnableBiometrics}
             isBiometricsEnabled={isBiometricsEnabled}
             onToggleBiometrics={toggleBiometrics}
           />

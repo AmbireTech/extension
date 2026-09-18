@@ -154,10 +154,6 @@ const PasswordConfirmation: React.FC<Props> = ({
   const { biometricsAuthLabel } = useBiometricsAvailability()
   const biometricsTitle = t('Confirm with {{biometricsAuthLabel}}', { biometricsAuthLabel })
 
-  const handleBiometricsConfirmed = useCallback(() => {
-    onBiometricsConfirmed?.()
-  }, [onBiometricsConfirmed])
-
   const {
     isUsingBiometrics,
     canUseBiometrics,
@@ -170,7 +166,7 @@ const PasswordConfirmation: React.FC<Props> = ({
     switchToPassword,
     reset: resetSecretConfirmation
   } = useSecretConfirmation({
-    onConfirmed: handleBiometricsConfirmed,
+    onConfirmed: onBiometricsConfirmed,
     promptMessage: `${biometricsTitle}\n${text}`
   })
 

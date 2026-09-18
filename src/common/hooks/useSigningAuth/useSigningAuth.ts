@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { useModalize } from 'react-native-modalize'
 
 import { SigningAuthRequirement } from '@ambire-common/interfaces/signingAuth'
@@ -29,13 +29,6 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   // Wrapped in an object so a request with no id of its own still gets a latch.
   const authenticatedFor = useRef<{ requestId: Props['requestId'] } | null>(null)
   const onAuthenticated = useRef<(() => void) | null>(null)
-  const requestIdRef = useRef(requestId)
-  const unauthenticatedDappsRef = useRef(requirement?.unauthenticatedDapps)
-
-  useEffect(() => {
-    requestIdRef.current = requestId
-    unauthenticatedDappsRef.current = requirement?.unauthenticatedDapps
-  }, [requestId, requirement])
 
   const title = t('Signing authentication')
 
@@ -71,20 +64,20 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   const handleConfirmed = useCallback(() => {
     // Remembered so the dapp is never asked about again, which is also what stops this prompt
     // from re-opening for the very same request
-    unauthenticatedDappsRef.current?.forEach(({ id }) => {
+    requirement?.unauthenticatedDapps.forEach(({ id }) => {
       dappsDispatch({
         type: 'method',
         params: { method: 'updateDapp', args: [id, { signingAuthenticated: true }] }
       })
     })
 
-    authenticatedFor.current = { requestId: requestIdRef.current }
+    authenticatedFor.current = { requestId }
     closeSheet()
 
     const proceed = onAuthenticated.current
     onAuthenticated.current = null
     proceed?.()
-  }, [closeSheet, dappsDispatch])
+  }, [closeSheet, dappsDispatch, requirement, requestId])
 
   const {
     isUsingBiometrics,

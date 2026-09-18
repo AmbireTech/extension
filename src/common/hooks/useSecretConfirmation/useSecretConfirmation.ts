@@ -37,7 +37,7 @@ const selectRequestWindow = (state: AllControllersMappingType['RequestsControlle
 
 type Props = {
   /** Runs once the user has proven who they are. */
-  onConfirmed: () => void
+  onConfirmed?: () => void
   /**
    * What the operating system's own biometric prompt says, so it reads the same as the screen
    * behind it. Honoured on native - the browser writes that dialog itself.
@@ -173,7 +173,7 @@ const useSecretConfirmation = ({ onConfirmed, promptMessage }: Props) => {
     if (result?.status !== 'success') return
 
     isAwaitingResult.current = false
-    onConfirmedRef.current()
+    onConfirmedRef.current?.()
   }, [result])
 
   return {

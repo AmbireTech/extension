@@ -77,10 +77,6 @@ const SigningAuthBottomSheet = ({
     onConfirmWithPassword(password)
   }, [isVerifying, onConfirmWithPassword, password])
 
-  const handleConfirmWithBiometrics = useCallback(() => {
-    onConfirmWithBiometrics()
-  }, [onConfirmWithBiometrics])
-
   // The prompt follows the sheet so the user can read the reason first. `onOpen` rather than
   // `onOpened`, because the web sheet only wires the former.
   const handleOpen = useCallback(() => {
@@ -120,7 +116,7 @@ const SigningAuthBottomSheet = ({
           BiometricsIcon={BiometricsIcon}
           isVerifying={isVerifying}
           errorMessage={errorMessage}
-          onConfirm={handleConfirmWithBiometrics}
+          onConfirm={onConfirmWithBiometrics}
           onSwitchToPassword={onSwitchToPassword}
         />
       ) : (
@@ -150,7 +146,7 @@ const SigningAuthBottomSheet = ({
             <SwitchToBiometricsButton
               BiometricsIcon={BiometricsIcon}
               isVerifying={isVerifying}
-              onPress={handleConfirmWithBiometrics}
+              onPress={onConfirmWithBiometrics}
             />
           )}
         </View>
