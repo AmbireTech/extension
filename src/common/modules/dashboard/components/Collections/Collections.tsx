@@ -1,4 +1,3 @@
-import Fuse from 'fuse.js'
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -7,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
+import CollectionCard from '@common/components/CollectionCard'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -20,7 +20,6 @@ import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
 import FloatingBottomBar from '../FloatingBottomBar'
-import Collection from './Collection'
 import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
 
@@ -115,10 +114,15 @@ const Collections: FC<Props> = ({
     // Built once instead of per collection, since every one of them is compared to it
     const filteredChainId = dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : null
 
-    const searchableCollections = (collections || []).filter(({ chainId, collectibles }) => {
+    const searchableCollections = (collections || []).filter(({ chainId, collectibles, flags }) => {
+      // Collections carried no flags before they could be hidden, so a result
+      // from an older background has none
+      if (flags?.isHidden) return false
+
       const isMatchingNetwork = filteredChainId === null || chainId === filteredChainId
 
-      return isMatchingNetwork && collectibles.length
+      // A collection with no collectibles of the account has nothing to display
+      return isMatchingNetwork && !!collectibles.length
     })
 
     return tokenOrCollectionSearch({
@@ -158,13 +162,16 @@ const Collections: FC<Props> = ({
               t("You don't have any collectibles (NFTs) yet.")}
             {!searchValue &&
               !!dashboardNetworkFilter &&
-              t(`You don't have any collectibles (NFTs) on ${dashboardNetworkFilterName}.`)}
+              t("You don't have any collectibles (NFTs) on {{network}}.", {
+                network: dashboardNetworkFilterName
+              })}
             {searchValue &&
-              t(
-                `No collectibles (NFTs) match "${searchValue}"${
-                  dashboardNetworkFilterName ? ` on ${dashboardNetworkFilterName}` : ''
-                }.`
-              )}
+              (dashboardNetworkFilterName
+                ? t('No collectibles (NFTs) match "{{search}}" on {{network}}.', {
+                    search: searchValue,
+                    network: dashboardNetworkFilterName
+                  })
+                : t('No collectibles (NFTs) match "{{search}}".', { search: searchValue }))}
           </Text>
         )
       }
@@ -175,10 +182,10 @@ const Collections: FC<Props> = ({
 
       if (!initTab?.collectibles || !item || item === 'keep-this-to-avoid-key-warning') return null
 
-      const { name, address, chainId, collectibles, priceIn } = item
+      const { name, address, chainId, collectibles, priceIn, flags } = item
 
       return (
-        <Collection
+        <CollectionCard
           key={address}
           name={name}
           address={address}
@@ -187,6 +194,7 @@ const Collections: FC<Props> = ({
           priceIn={priceIn}
           openCollectibleModal={openCollectibleModal}
           networks={networks}
+          isCustom={flags?.isCustom}
         />
       )
     },
@@ -232,6 +240,7 @@ const Collections: FC<Props> = ({
         modalRef={modalRef}
         handleClose={closeCollectibleModal}
         selectedCollectible={selectedCollectible}
+        canHideCollectible
       />
       <DashboardPageScrollContainer
         floatingBar={floatingBar}
