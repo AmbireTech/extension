@@ -63,6 +63,24 @@ describe('classifyCrashReport', () => {
     })
   })
 
+  describe('the two timeout errors', () => {
+    it('drops the plain fetch timeout, whose message is exactly that', () => {
+      expect(classifyCrashReport(buildError('request-timeout')).shouldSend).toBe(false)
+    })
+
+    it('drops the RPC timeout, which carries the RPC it gave up on', () => {
+      const error = buildError('rpc-timeout. Rpc: https://invictus.ambire.com/ethereum')
+
+      expect(classifyCrashReport(error).shouldSend).toBe(false)
+    })
+
+    it('does not treat a message that merely mentions a timeout as either', () => {
+      const decision = classifyCrashReport(buildError('the request timed out, rpc-timeout maybe'))
+
+      expect(decision.shouldSend && decision.fingerprint).toEqual([DEFAULT_SENTRY_GROUPING])
+    })
+  })
+
   describe('rule ordering', () => {
     // `invalid BytesLike value` is a ProviderError like
     // the rules below it, but it means our own code passed a malformed value to an RPC.
@@ -137,10 +155,8 @@ describe('classifyCrashReport', () => {
       expect(classifyCrashReport(thrown).shouldSend).toBe(true)
     })
 
-    it('classifies a thrown string by its text', () => {
-      const decision = classifyCrashReport('request-timeout')
-
-      expect(decision.shouldSend && decision.fingerprint).toEqual(['rpc-request-timeout'])
+    it('classifies a thrown string by its text, not only a thrown Error', () => {
+      expect(classifyCrashReport('request-timeout').shouldSend).toBe(false)
     })
   })
 

@@ -18,6 +18,7 @@ import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/f
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
+import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/rpc'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
@@ -147,10 +148,6 @@ function stateDebug(
   logInfoWithPrefix(key, debugLogs)
 }
 
-// An RPC that timed out carries nothing beyond the fact that it timed out, so its event is
-// stripped down the same way a non-2xx one is.
-const RPC_TIMEOUT_MESSAGE_SUBSTRING = 'rpc-timeout'
-
 function captureBackgroundExceptionFromControllerError(error: ErrorRef, controllerName: string) {
   if (
     (typeof error.sendCrashReport === 'boolean' && !error.sendCrashReport) ||
@@ -192,9 +189,11 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         // Always delete breadcrumbs to reduce event size.
         delete event.breadcrumbs
 
+        // An RPC that timed out carries nothing beyond the fact that it timed out, so its
+        // event is stripped down the same way a non-2xx one is.
         if (
           !isSuccessfulRpcStatusCode(statusCode) ||
-          (message || '').includes(RPC_TIMEOUT_MESSAGE_SUBSTRING)
+          (message || '').startsWith(RPC_HARDCODED_ERRORS.rpcTimeout)
         ) {
           // We don't care about any data for non-2XX errors
           // We only want to know how many of them happened and group them accordingly

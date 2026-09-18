@@ -1,5 +1,5 @@
 import { CallbackFunction, ReplyMessage, SendMessage } from '@ambire-common/interfaces/messenger'
-import { logInfoWithPrefix } from '@common/utils/logger'
+import { logInfoWithPrefix, logWarnWithPrefix } from '@common/utils/logger'
 import { createMessenger } from '@web/extension-services/messengers/internal/createMessenger'
 import { isValidReply } from '@web/extension-services/messengers/internal/isValidReply'
 import { isValidSend } from '@web/extension-services/messengers/internal/isValidSend'
@@ -36,9 +36,13 @@ const TARGET_GONE_ERROR_SUBSTRINGS = [
   'No window with id'
 ]
 
-const isTargetGoneError = (error: unknown) =>
-  error instanceof Error &&
-  TARGET_GONE_ERROR_SUBSTRINGS.some((substring) => error.message.includes(substring))
+const isTargetGoneError = (error: unknown) => {
+  if (!(error instanceof Error)) return false
+
+  const message = error.message.toLowerCase()
+
+  return TARGET_GONE_ERROR_SUBSTRINGS.some((substring) => message.includes(substring.toLowerCase()))
+}
 
 /**
  * Sends a message and reports whether it reached its target. Resolves to false when the
@@ -64,6 +68,18 @@ async function sendMessageToTarget<TPayload>(
   }
 }
 
+/** Sends a message nobody is waiting on, so it logs every failure instead of rejecting. */
+async function sendMessageWithoutReply<TPayload>(
+  message: SendMessage<TPayload>,
+  options: { tabId?: number; frameId?: number; documentId?: string } = {}
+) {
+  try {
+    await sendMessageToTarget(message, options)
+  } catch (error) {
+    logWarnWithPrefix('tabMessenger', `could not send "${message.topic}"`, error)
+  }
+}
+
 /**
  * Creates a "tab messenger" that can be used to communicate between
  * scripts where `chrome.tabs` & `chrome.runtime` is defined.
@@ -82,7 +98,7 @@ export const tabMessenger = createMessenger({
     { id, tabId }: { id?: number | string; tabId?: number } = {}
   ) {
     if (topic.includes(globalIsAmbireNext ? 'broadcast-next' : 'broadcast')) {
-      await sendMessageToTarget({ topic: `> ${topic}`, payload, id }, { tabId })
+      await sendMessageWithoutReply({ topic: `> ${topic}`, payload, id }, { tabId })
       return null as any
     }
 
@@ -165,7 +181,7 @@ export const tabMessenger = createMessenger({
         replyPayload = { error }
       }
 
-      await sendMessageToTarget(
+      await sendMessageWithoutReply(
         {
           topic: repliedTopic,
           payload: replyPayload,

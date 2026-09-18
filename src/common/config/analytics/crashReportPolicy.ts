@@ -1,3 +1,5 @@
+import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/rpc'
+
 /**
  * Decides what happens to a crash report before it leaves the browser.
  *
@@ -55,6 +57,7 @@ type CrashReportRule = {
 
 const PROVIDER_ERROR_NAME = 'ProviderError'
 const SWAP_AND_BRIDGE_PROVIDER_API_ERROR_NAME = 'SwapAndBridgeProviderApiError'
+/** What `fetchWithTimeout` rejects with. The whole message, nothing appended. */
 const RPC_REQUEST_TIMEOUT_MESSAGE = 'request-timeout'
 const HTTP_STATUS_OK = 200
 const HTTP_STATUS_MULTIPLE_CHOICES = 300
@@ -89,6 +92,9 @@ const includesAny = (text: string, substrings: string[]) => {
 }
 
 const includes = (text: string, substring: string) => includesAny(text, [substring])
+
+const startsWith = (text: string, prefix: string) =>
+  text.toLowerCase().startsWith(prefix.toLowerCase())
 
 export const isProviderErrorLike = (error: unknown) =>
   readCrashReportErrorDetails(error).name === PROVIDER_ERROR_NAME
@@ -141,10 +147,15 @@ const CRASH_REPORT_RULES: CrashReportRule[] = [
     severity: CRASH_REPORT_SEVERITY.DROP
   },
   {
-    // The message is literally this and nothing else - no host, no URL, nothing to debug.
-    id: 'rpc-request-timeout',
+    id: 'request-timeout',
     matches: ({ message }) => message === RPC_REQUEST_TIMEOUT_MESSAGE,
-    severity: CRASH_REPORT_SEVERITY.INFO
+    severity: CRASH_REPORT_SEVERITY.DROP
+  },
+  {
+    // Matched by prefix, because this one carries a tail naming the RPC it gave up on.
+    id: 'rpc-timeout',
+    matches: ({ message }) => startsWith(message, RPC_HARDCODED_ERRORS.rpcTimeout),
+    severity: CRASH_REPORT_SEVERITY.DROP
   },
   {
     id: 'rpc-provider-destroyed',
