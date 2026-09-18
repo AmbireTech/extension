@@ -66,10 +66,8 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
 
   const paddingTop = isInsideBottomSheet ? 0 : insets.top + (withTopPadding ? SPACING_SM : 0)
 
-  // A sheet opening turns the avoidance off, and a sheet opens the keyboard on its way down -
-  // so switching off at that moment leaves the animation part way, with the content sized for a
-  // keyboard that is no longer there. The avoidance stays on until the keyboard has actually
-  // gone; by then it is at rest, so turning it off moves nothing.
+  // A sheet opening turns the avoidance off mid keyboard-hide animation, leaving the content
+  // sized for a keyboard that has gone. It stays on until the keyboard is actually down.
   const isKeyboardAvoidingEnabled =
     keyboardAwareFooter && (!isSheetOpen || isKeyboardUp) && !keepSuppressedUntilKeyboardHidden
 

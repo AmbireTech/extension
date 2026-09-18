@@ -39,16 +39,13 @@ interface Props {
    */
   withAutoFocus?: boolean
   /**
-   * Runs when the user proved who they are with biometrics, which offers them as an
-   * alternative to the password. Leave it out where the password itself is needed - to encrypt
-   * an export or to decrypt someone else's payload - because biometrics produce no password to
-   * hand over.
+   * Runs when the user proved who they are with biometrics. Leave it out where the password
+   * itself is needed (encrypting an export, say) - biometrics produce no password to hand over.
    */
   onBiometricsConfirmed?: () => void
   /**
-   * Lays the confirmation out over the whole modal rather than stacking it at the top: the
-   * biometrics icon centred with the way out at the bottom, and full width buttons. For the
-   * taller modals, where stacking leaves the lower half of the panel empty.
+   * Lays the confirmation over the whole modal instead of stacking it at the top: icon centred,
+   * the way out at the bottom, full width buttons. For the taller modals.
    */
   withFullHeightLayout?: boolean
 }
@@ -107,9 +104,8 @@ const PasswordConfirmation: React.FC<Props> = ({
 
   const passwordFieldValue = watch('password')
 
-  // The status sits on SUCCESS for a moment before returning to INITIAL, and this effect runs
-  // again for every render in that window, so the confirmation is latched to the one transition.
-  // Without it a caller that can only run once - changing the password, say - is invoked twice.
+  // The status sits on SUCCESS for a moment, so the effect would fire for every render in that
+  // window. Latched to the one transition, or a caller that can only run once is invoked twice.
   const hasConfirmedRef = useRef(false)
 
   useEffect(() => {
@@ -202,8 +198,7 @@ const PasswordConfirmation: React.FC<Props> = ({
   // fingerprint or face prompt is the thing on screen
   const panelTitle = isOfferingBiometrics && isUsingBiometrics ? biometricsTitle : t(title)
 
-  // The content is mounted with the screen rather than when the sheet opens, so the prompt waits
-  // for the sheet to actually come up - otherwise it would fire the moment the screen renders.
+  // Sheet content mounts with the screen, so the prompt waits for the sheet to actually come up.
   // Once per opening, the way the signing sheet and the unlock screen both do it.
   const hasAutoPromptedRef = useRef(false)
 

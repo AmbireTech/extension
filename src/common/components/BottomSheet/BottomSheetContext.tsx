@@ -14,9 +14,8 @@ export const BottomSheetContext = createContext<BottomSheetContextValue>({
 export const useIsInsideBottomSheet = () => useContext(BottomSheetContext).isInsideBottomSheet
 
 /**
- * Whether the sheet the caller is rendered in is open. The content is mounted with the screen
- * rather than when the sheet opens, so anything that should happen as the sheet comes up - a
- * biometric prompt, focusing a field - has to wait for this instead of for its own mount.
+ * Whether the sheet the caller sits in is open. Sheet content mounts with the screen, so
+ * anything that must happen as the sheet comes up waits for this, not for its own mount.
  */
 export const useIsBottomSheetOpen = () => useContext(BottomSheetContext).isOpen
 

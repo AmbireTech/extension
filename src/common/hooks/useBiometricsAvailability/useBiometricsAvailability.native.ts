@@ -48,9 +48,8 @@ const useBiometricsAvailability = (): BiometricsAvailability => {
 
     return {
       canEnableBiometrics: isDeviceCapable,
-      // A secret left over from before the user dropped their fingerprints cannot be read back,
-      // so the device has to still be capable - and the password is the only way in while the
-      // keystore is waiting for the one unlock that migrates it.
+      // A secret left from before the user dropped their fingerprints cannot be read back, and the
+      // password is the only way in while the keystore waits for the unlock that migrates it.
       canUnlockWithBiometrics:
         isDeviceCapable && !!hasBiometricsSecret && !isPasswordUnlockRequired,
       BiometricsIcon: hasFaceId ? FaceIDIcon : FingerprintIcon,

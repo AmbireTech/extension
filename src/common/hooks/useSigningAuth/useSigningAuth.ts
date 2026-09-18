@@ -25,10 +25,8 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   const { dispatch: dappsDispatch } = useController('DappsController')
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
 
-  // Nothing renders differently once a request has been confirmed - the confirmation only has to
-  // be readable by the next attempt to sign - so it is a ref rather than state. It is wrapped in
-  // an object so a request with no id of its own still gets a latch, instead of matching the
-  // "nothing confirmed yet" value and re-opening the prompt forever.
+  // Nothing renders differently once a request is confirmed, so it is a ref rather than state.
+  // Wrapped in an object so a request with no id of its own still gets a latch.
   const authenticatedFor = useRef<{ requestId: Props['requestId'] } | null>(null)
   const onAuthenticated = useRef<(() => void) | null>(null)
   const requestIdRef = useRef(requestId)
@@ -109,10 +107,8 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   })
 
   /**
-   * Opens the prompt and runs `onConfirmed` once the user has proven their identity. Returns
-   * whether the prompt took over, so the caller can stop and wait for it. Callers are the ones
-   * that know which key is about to sign, so they must not call this for an external signer -
-   * the hardware device asks for the confirmation itself.
+   * Opens the prompt and runs `onConfirmed` once the user proved their identity; returns whether
+   * it took over. Never call it for an external signer - the device asks for confirmation itself.
    */
   const requestSigningAuth = useCallback(
     (onConfirmed: () => void) => {

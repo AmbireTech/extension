@@ -82,9 +82,8 @@ const KeyStoreUnlockScreen = () => {
     return shouldSkip
   })
 
-  // WebAuthn (Touch ID / passkey) cannot prompt inside the Firefox popup: the browser shows a
-  // modal that takes focus, and the popup closes with it, taking the ceremony down. There we run
-  // it in a dedicated tab, which is the only context it survives in.
+  // WebAuthn cannot prompt inside the Firefox popup: the browser's modal takes focus and the
+  // popup closes with it. There we run the ceremony in a tab, the only context it survives in.
   const shouldUseTabForBiometrics = IS_FIREFOX && isPopup
   const isBiometricsUnlockLoading =
     isBiometricsPromptPending || (unlockMethod === 'biometrics' && isBiometricsUnlockInProgress)
@@ -150,9 +149,8 @@ const KeyStoreUnlockScreen = () => {
   useEffect(() => {
     if (unlockMethod) return
 
-    // Where the ceremony has to run in a tab, the password is what the screen opens on, so
-    // unlocking does not throw the user into a tab they did not ask for. Biometrics stays one
-    // tap away, and takes them there when they choose it.
+    // Where the ceremony has to run in a tab, the screen opens on the password so unlocking does
+    // not throw the user into a tab they did not ask for. Biometrics stays one tap away.
     setUnlockMethod(canUseBiometrics && !shouldUseTabForBiometrics ? 'biometrics' : 'password')
   }, [canUseBiometrics, shouldUseTabForBiometrics, unlockMethod])
 

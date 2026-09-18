@@ -81,9 +81,8 @@ const SigningAuthBottomSheet = ({
     onConfirmWithBiometrics()
   }, [onConfirmWithBiometrics])
 
-  // The prompt follows the sheet rather than arriving with it, so the user can read what they
-  // are being asked before the operating system covers it. `onOpen` rather than `onOpened`,
-  // because the web sheet only wires the former.
+  // The prompt follows the sheet so the user can read the reason first. `onOpen` rather than
+  // `onOpened`, because the web sheet only wires the former.
   const handleOpen = useCallback(() => {
     if (!isUsingBiometrics) return
 

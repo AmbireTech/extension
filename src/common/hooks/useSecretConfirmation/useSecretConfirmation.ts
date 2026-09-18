@@ -15,18 +15,14 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const { isPopup, isTab, isSidePanel } = getUiType()
 
 /**
- * WebAuthn cannot prompt inside the Firefox popup: the browser shows a modal that takes focus,
- * and the popup closes with it, taking the ceremony down. There the screen is reopened in a tab,
- * which is the only context it survives in.
+ * WebAuthn cannot prompt inside the Firefox popup: the browser's modal takes focus and the popup
+ * closes with it. There the screen is reopened in a tab, the only context it survives in.
  */
 export const SHOULD_USE_TAB_FOR_BIOMETRICS = IS_FIREFOX && isPopup
 
 /**
- * How long a screen is left to itself before the ceremony starts on its own. The operating
- * system's prompt covers what is behind it, so asking the instant the screen appears means the
- * user never gets to read why they are being asked - and on mobile it takes focus while the
- * keyboard is still on its way down, which leaves the screen laid out for a keyboard that has
- * gone. A tap on the icon is not delayed, only the prompt nobody asked for.
+ * How long a screen is left alone before the ceremony starts on its own, so the user can read
+ * why they are asked and the keyboard can finish going down. A tap on the icon is not delayed.
  */
 const AUTO_PROMPT_DELAY = 750
 
@@ -50,9 +46,8 @@ type Props = {
 }
 
 /**
- * Re-confirming who the user is, on an already unlocked keystore, with the same behaviour
- * wherever it is asked for: biometrics when they are set up, the password always reachable, and
- * the switch between the two in one place rather than re-implemented per screen.
+ * Re-confirming who the user is on an already unlocked keystore: biometrics when set up, the
+ * password always reachable, and the switch between the two in one place rather than per screen.
  */
 const useSecretConfirmation = ({ onConfirmed, promptMessage }: Props) => {
   const { getBiometricsSecret } = useBiometrics()
@@ -119,9 +114,8 @@ const useSecretConfirmation = ({ onConfirmed, promptMessage }: Props) => {
       if (isWeb) window.focus()
 
       const biometricsSecretPromise = getBiometricsSecret(promptMessage)
-      // Only once the ceremony is under way, so the tap's gesture is not spent on a re-render.
-      // Without it the screen stays on the password it was started from, which is what the user
-      // is left looking at behind the prompt.
+      // Only once the ceremony is under way, so the tap's gesture is not spent on a re-render -
+      // otherwise the screen is left on the password field the user started from, behind the prompt.
       setHasSwitchedToPassword(false)
 
       const biometricsSecret = await biometricsSecretPromise

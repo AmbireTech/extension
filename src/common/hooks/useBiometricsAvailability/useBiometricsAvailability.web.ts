@@ -39,9 +39,8 @@ const useBiometricsAvailability = (): BiometricsAvailability => {
       // migrates it.
       canUnlockWithBiometrics:
         isDeviceCapable && !!hasBiometricsSecret && !isPasswordUnlockRequired,
-      // WebAuthn never says which modality the platform authenticator used - Touch ID, Windows
-      // Hello and a phone passkey all look the same from here - so the icon and the wording stay
-      // generic rather than claiming something that may be wrong.
+      // WebAuthn never says which modality was used - Touch ID, Windows Hello and a phone passkey
+      // all look the same from here - so the icon and the wording stay generic.
       BiometricsIcon: FingerprintIcon,
       biometricsAuthLabel: t('biometrics')
     }

@@ -234,9 +234,8 @@ const useSignMessage = () => {
         return
       }
 
-      // Signing for a dapp for the first time has to be confirmed with the password or
-      // biometrics, but only when the keystore holds the key - a hardware wallet confirms
-      // on the device
+      // A first time dapp has to be confirmed with the password or biometrics, but only when the
+      // keystore holds the key - a hardware wallet confirms on the device
       const isSigningWithInternalKey = chosenSigners.some(({ type }) => type === 'internal')
       if (isSigningWithInternalKey && requestSigningAuth(() => handleSignRef.current?.(signers)))
         return

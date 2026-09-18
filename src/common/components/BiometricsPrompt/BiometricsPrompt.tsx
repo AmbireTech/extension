@@ -22,9 +22,8 @@ type Props = {
   /** The wording of the way out, e.g. "Unlock with password". */
   switchToPasswordText?: string
   /**
-   * Spreads over the height it is given instead of stacking at the top: the icon sits in the
-   * middle of what is left and the way out goes to the bottom. For the taller modals, where
-   * stacking leaves the whole lower half empty.
+   * Fills the height it is given instead of stacking at the top: the icon centred, the way out
+   * at the bottom. For the taller modals, where stacking leaves the lower half empty.
    */
   fillHeight?: boolean
 }

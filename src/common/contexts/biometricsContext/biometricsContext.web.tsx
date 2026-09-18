@@ -96,10 +96,8 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           isLoading,
           hasBiometricsHardware,
           isEnrolled,
-          // WebAuthn answers whether a platform authenticator exists and nothing else - not how
-          // strong it is, nor whether it reads a face or a finger. These stay at their empty
-          // values rather than claiming a strength and a modality the browser never reported.
-          // `useBiometricsAvailability` is what answers those questions per platform.
+          // WebAuthn only answers whether a platform authenticator exists - not its strength or modality
+          // - so these stay empty; `useBiometricsAvailability` answers that per platform.
           deviceSecurityLevel: DEVICE_SECURITY_LEVEL.NONE,
           deviceSupportedAuthTypes: [],
           deviceSupportedAuthTypesLabel: hasBiometricsHardware ? t('biometrics') : '',

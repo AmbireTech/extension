@@ -13,9 +13,8 @@ const WEBAUTHN_AUTHENTICATOR_DATA_FLAGS_INDEX = 32
 const WEBAUTHN_USER_VERIFIED_FLAG = 0x04
 
 /**
- * The domain a credential is tied to, for the browsers that will not derive one from the
- * extension's own address. Asserting it takes host permissions for the domain, which the
- * manifest already grants through its wildcard https host permission.
+ * The domain a credential is tied to, for browsers that will not derive one from the extension's
+ * address. Asserting it needs host permissions, which the manifest's https wildcard grants.
  */
 const BIOMETRICS_RP_ID = 'ambire.com'
 
@@ -24,9 +23,8 @@ type StoredPrfBiometricsCredential = {
   credentialId: string
   salt: string
   /**
-   * The relying party id the credential was created with, when it was set explicitly. Absent on
-   * credentials stored before that was needed, which the browser resolves from the origin as
-   * before - it has to stay that way, or an existing credential can no longer be found.
+   * The relying party id the credential was created with, when set explicitly. Absent on older
+   * credentials, which must keep resolving from the origin or they can no longer be found.
    */
   rpId?: string
 }
@@ -288,9 +286,8 @@ export const webauthnBiometrics = {
     const isSupported = await this.isSupported()
     if (!isSupported) return null
 
-    // Firefox will not derive a relying party id from a moz-extension address and rejects the
-    // ceremony outright, so the domain is named here. Left to the browser everywhere it already
-    // works, because a credential can only be found again under the id it was created with.
+    // Firefox rejects the ceremony rather than derive a relying party id from a moz-extension
+    // address. Left to the browser elsewhere - a credential is only found under the id it got.
     const rpId = IS_FIREFOX ? BIOMETRICS_RP_ID : undefined
 
     const salt = getRandomBytes(32)
