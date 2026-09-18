@@ -9,11 +9,8 @@ interface Styles {
   currentTierCard: ViewStyle
   maximumTierCard: ViewStyle
   tierDetails: ViewStyle
-  feeDetails: ViewStyle
   currentTierBadge: ViewStyle
   currentTierBadgeText: TextStyle
-  maximumTierBadge: ViewStyle
-  maximumTierBadgeText: TextStyle
   cancelButton: ViewStyle
   stakeButton: ViewStyle
   actionButtonText: TextStyle
@@ -42,21 +39,11 @@ const getStyles = (theme: ThemeProps) =>
     tierDetails: {
       minWidth: 0
     },
-    feeDetails: {
-      flexShrink: 0
-    },
     currentTierBadge: {
       backgroundColor: theme.neutral800
     },
     currentTierBadgeText: {
       color: theme.primaryBackground,
-      fontSize: 11
-    },
-    maximumTierBadge: {
-      backgroundColor: theme.successText
-    },
-    maximumTierBadgeText: {
-      color: theme.successBackground,
       fontSize: 11
     },
     cancelButton: {

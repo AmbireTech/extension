@@ -153,17 +153,13 @@ const FeeInfoBottomSheet = ({
             fontSize={12}
             style={[styles.centeredText, spacings.mtMi]}
           >
-            {t('Move up through the tiers to reduce swap and bridge fees.')}
+            {t('Stake more $WALLET to reduce your swap and bridge fees.')}
           </Text>
 
           <View style={spacings.mtSm}>
             {feeTiers.map((tier, index) => {
               const isCurrent = feePercent === tier.feePercent
               const isMaximum = tier.feePercent === 0
-              const isBelowCurrent = tier.feePercent > feePercent
-              const savingsPercent = feePercent
-                ? Math.round(((feePercent - tier.feePercent) / feePercent) * 100)
-                : 0
               const approximateUsdValue =
                 walletPrice && tier.minStkWalletHeld
                   ? t('≈ ${{amount}}', {
@@ -183,29 +179,6 @@ const FeeInfoBottomSheet = ({
                     ]}
                     testID={`swap-and-bridge-fee-tier-${tier.id}`}
                   >
-                    {(isCurrent || isMaximum) && (
-                      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
-                        {isCurrent && (
-                          <Badge
-                            text={t('Your tier')}
-                            type="primaryAccent"
-                            style={styles.currentTierBadge}
-                            textStyle={styles.currentTierBadgeText}
-                            testId="current-swap-and-bridge-fee-tier"
-                          />
-                        )}
-                        {isMaximum && (
-                          <View style={isCurrent ? spacings.mlTy : undefined}>
-                            <Badge
-                              text={t('Maximum benefit')}
-                              type="success"
-                              style={styles.maximumTierBadge}
-                              textStyle={styles.maximumTierBadgeText}
-                            />
-                          </View>
-                        )}
-                      </View>
-                    )}
                     <View
                       style={[
                         flexbox.directionRow,
@@ -231,14 +204,26 @@ const FeeInfoBottomSheet = ({
                           </Text>
                         )}
                       </View>
-                      <Text
-                        fontSize={isMaximum ? 24 : 18}
-                        weight="medium"
-                        appearance={isMaximum ? 'successText' : 'primaryText'}
-                        style={spacings.mlSm}
-                      >
-                        {tier.feeLabel}
-                      </Text>
+                      <View style={[flexbox.alignEnd, spacings.mlSm]}>
+                        {isCurrent && (
+                          <View style={spacings.mbMi}>
+                            <Badge
+                              text={t('Your tier')}
+                              type="primaryAccent"
+                              style={styles.currentTierBadge}
+                              textStyle={styles.currentTierBadgeText}
+                              testId="current-swap-and-bridge-fee-tier"
+                            />
+                          </View>
+                        )}
+                        <Text
+                          fontSize={isMaximum ? 24 : 18}
+                          weight="medium"
+                          appearance={isMaximum ? 'successText' : 'primaryText'}
+                        >
+                          {tier.feeLabel}
+                        </Text>
+                      </View>
                     </View>
                     <View
                       style={[
@@ -248,27 +233,12 @@ const FeeInfoBottomSheet = ({
                       ]}
                     >
                       <Text appearance="secondaryText" fontSize={12}>
-                        {t('$stkWALLET held')}
+                        {t('Total $stkWALLET held')}
                       </Text>
-                      {isCurrent && !isMaximum && (
-                        <Text appearance="primary" fontSize={12} style={spacings.mlSm}>
-                          {t('fee')}
-                        </Text>
-                      )}
-                      {!isCurrent && !isMaximum && !isBelowCurrent && (
-                        <Text appearance="primary" fontSize={12} style={spacings.mlSm}>
-                          {t('{{percent}}% lower', { percent: savingsPercent })}
-                        </Text>
-                      )}
                       {isMaximum && (
-                        <View style={[flexbox.alignEnd, styles.feeDetails, spacings.mlSm]}>
-                          <Text appearance="secondaryText" fontSize={11}>
-                            {t('Swap & Bridge fee')}
-                          </Text>
-                          <Text appearance="successText" fontSize={12} style={spacings.mtMi}>
-                            {t('Fee-free')}
-                          </Text>
-                        </View>
+                        <Text appearance="secondaryText" fontSize={11} style={spacings.mlSm}>
+                          {t('Swap & Bridge fee')}
+                        </Text>
                       )}
                     </View>
                   </View>
