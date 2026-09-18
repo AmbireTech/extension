@@ -24,7 +24,7 @@ export const SHOULD_USE_TAB_FOR_BIOMETRICS = IS_FIREFOX && isPopup
  * How long a screen is left alone before the ceremony starts on its own, so the user can read
  * why they are asked and the keyboard can finish going down. A tap on the icon is not delayed.
  */
-const AUTO_PROMPT_DELAY = 750
+const AUTO_PROMPT_DELAY = 500
 
 // One value each, read off the state rather than built, so the store's reconciled snapshots stay
 // reference stable. A selector that allocates returns a new value on every read and never settles.
