@@ -29,11 +29,14 @@ if [ -z "$ENGINE" ]; then
   exit 1
 fi
 
+# The folder that holds the build outputs, honouring the optional BUILD_DIR env
+BUILD_DIR="$(node -p "require('./webpack/env').buildDir")"
+
 # Set the build folder based on ENGINE
 if [ "$ENGINE" = "webkit" ]; then
-  BUILD_FOLDER="./build/webkit-prod"
+  BUILD_FOLDER="$BUILD_DIR/webkit-prod"
 elif [ "$ENGINE" = "gecko" ]; then
-  BUILD_FOLDER="./build/gecko-prod"
+  BUILD_FOLDER="$BUILD_DIR/gecko-prod"
 else
   echo "❌ Error: Invalid engine type. Please use 'webkit' or 'gecko'."
   exit 1
@@ -53,7 +56,7 @@ if [ -z "$MAP_FILES" ]; then
 fi
 
 # Define the destination folder for source map files
-MAP_FOLDER="./build/${ENGINE}-prod-source-maps"
+MAP_FOLDER="$BUILD_DIR/${ENGINE}-prod-source-maps"
 
 # Create or clean the MAP_FOLDER
 if [ -d "$MAP_FOLDER" ]; then

@@ -30,7 +30,7 @@ const ReceiveScreen: FC = () => {
 
   const {
     account,
-    isViewOnly,
+    warningMessage,
     label,
     pfp,
     isEOA,
@@ -54,7 +54,7 @@ const ReceiveScreen: FC = () => {
       <HeaderWithTitle />
 
       <ScrollableWrapper showsVerticalScrollIndicator={false}>
-        <View style={[isEOA ? spacings.pt3Xl : spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
+        <View style={[isEOA ? spacings.pt3Xl : spacings.ptTy, spacings.mb, flexbox.alignCenter]}>
           <Avatar
             size={40}
             pfp={pfp}
@@ -91,7 +91,7 @@ const ReceiveScreen: FC = () => {
               style={[
                 flexbox.directionRow,
                 isSidePanel
-                  ? [flexbox.alignCenter, { width: '100%' }]
+                  ? [flexbox.alignCenter, { alignSelf: 'center' }]
                   : [flexbox.center, { flexShrink: 1, minWidth: 0, maxWidth: '100%' }]
               ]}
             >
@@ -105,7 +105,7 @@ const ReceiveScreen: FC = () => {
               />
             </View>
           </View>
-          {isViewOnly ? (
+          {warningMessage ? (
             <View
               style={[
                 spacings.mbSm,
@@ -115,7 +115,7 @@ const ReceiveScreen: FC = () => {
                 }
               ]}
             >
-              <Alert size="sm" type="warning" title={t('The account is view-only.')} />
+              <Alert size="sm" type="warning" title={warningMessage} />
             </View>
           ) : (
             <View style={spacings.mb2Xl} />

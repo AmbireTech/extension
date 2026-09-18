@@ -5,9 +5,14 @@ import useRoute from '@common/hooks/useRoute'
 import useTokenActions from '@common/modules/token-details/hooks/useTokenActions'
 import { getTokenId } from '@common/utils/token'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const useTokenDetails = () => {
   const { state } = useRoute()
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const tokenId = state?.tokenId
   const token = useMemo(() => {
     if (!tokenId) return null
@@ -15,7 +20,7 @@ const useTokenDetails = () => {
   }, [portfolio, tokenId])
 
   const { networks, hideTokenModalRef, closeHideTokenModal, handleHideTokenFromModal, actions } =
-    useTokenActions(token)
+    useTokenActions(token, { enableWalletStakingAction: true })
 
   return {
     token,

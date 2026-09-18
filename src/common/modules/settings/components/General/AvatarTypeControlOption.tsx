@@ -11,14 +11,19 @@ import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const AVATAR_TYPES: AvatarType[] = ['blockies', 'jazzicons', 'polycons']
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
   const {
     state: { avatarType },
     dispatch: walletStateDispatch
   } = useController('WalletStateController')
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { theme } = useTheme()
   const { t } = useTranslation()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })

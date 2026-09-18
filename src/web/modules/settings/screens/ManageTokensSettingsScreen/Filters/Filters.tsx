@@ -17,6 +17,10 @@ import { ASSET_COPY } from '@common/modules/settings/constants/assetCopy'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 type Props = {
   control: any
   networkFilter: string
@@ -43,7 +47,7 @@ const Filters: FC<Props> = ({
   openAddAssetBottomSheet
 }) => {
   const { t } = useTranslation()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { theme } = useTheme()
   const isNftsTab = activeTab === 'nfts'
   const copy = ASSET_COPY[isNftsTab ? 'ERC721' : 'ERC20']

@@ -28,6 +28,13 @@
   </p>
 </div>
 
+## Third-party integrations
+
+Ambire is self-custodial: it never takes custody of user funds and is not a counterparty to any trade. Where a feature relies on third-party services, the providers, their public documentation and terms, and any fee are documented per feature:
+
+- [Swap & Bridge](./src/common/modules/swap-and-bridge/README.md) - a user interface on top of independent third-party aggregators
+- [Explore](./src/common/modules/explore/README.md) - a directory of bookmarks to public third-party websites, opened in the user's own browser or, on mobile, in an in-app browser
+
 ## Environment Setup
 
 Built in a hybrid approach (with React Native and React Native Web) so that in a single codebase we can support building cross-browser extensions, mobile apps and web apps.
@@ -67,6 +74,14 @@ git submodule update
 ## Environment Variables
 
 Create ".env" file in the root directory and fill in all variables, see ".env-sample" for a reference.
+
+## Crash Analytics
+
+Ambire sends anonymous crash reports to a self-hosted Sentry, so we can find and fix bugs without asking anyone to reproduce them.
+
+The safeguards we use to keep private keys, seed phrases, passwords and other sensitive data out of these reports are documented in [`CRASH-ANALYTICS.md`](./src/common/config/analytics/CRASH-ANALYTICS.md).
+
+Users can opt out of sending crash analytics at any time from Settings - Privacy opt-outs.
 
 ## Editor Config
 
@@ -266,7 +281,7 @@ Releases before v6.19.2 have neither a signature nor a `SHA256SUMS` file.
 
 ## Mobile Apps
 
-The mobile apps share the same codebase, but the business logic (the `background`) runs inside a WebView worker (`src/mobile/modules/webview/services/`) instead of a service worker. That's why every mobile build needs the webview bundle built (or the webview dev server running).
+The mobile apps share the same codebase. The business logic (the `background`) runs in the React Native realm (`src/mobile/services/controllerHost/`), in the same JS context as the UI. The WebView worker (`src/mobile/modules/webview/services/`) is still mounted and its bridge is live, so a controller can be moved back into it, but it hosts none today.
 
 ### Install
 
@@ -280,13 +295,7 @@ The mobile apps share the same codebase, but the business logic (the `background
 
 ### Development-optimized Builds
 
-Run the webview dev server in one terminal (the app shows an explicit error screen if it isn't running):
-
-```bash
-yarn dev:webview
-```
-
-Then, in another terminal, compile a new native build and run it on a simulator/emulator or a connected device:
+Compile a new native build and run it on a simulator/emulator or a connected device:
 
 ```bash
 yarn ios
@@ -303,6 +312,12 @@ yarn start:clean
 A new native build is only needed after changing native code or native dependencies.
 
 #### Webview dev server
+
+```bash
+yarn dev:webview
+```
+
+Not needed for a normal dev flow. The app boots without it, because the worker hosts no controllers, and dapp browsing falls back to the inpage bundles `yarn setup` already built via `yarn build:webview`. Run it when you are editing the webview or inpage code and want those changes without rebuilding. If a controller is ever moved back into the worker, it becomes required again (see `WebViewWorker.tsx`).
 
 It listens on port `8182` and is separate from the Metro bundler (port `8081`), which `yarn ios`/`yarn android` start on their own. The app resolves its host automatically:
 
@@ -469,13 +484,11 @@ $LEDGER_EMULATOR_SEED='<LEDGER-SEED-PHRASE>' ./start-emulator.sh
 lsof -i :5000
 ```
 
-If nothing is returned, the port is free.
-If you see a process listed, the port is occupied.
+If nothing is returned, the port is free. If you see a process listed, the port is occupied.
 
 2. **macOS specific context**
 
-On macOS, port 5000 is commonly taken by AirPlay Receiver (enabled by default on newer macOS versions).
-To check:
+On macOS, port 5000 is commonly taken by AirPlay Receiver (enabled by default on newer macOS versions). To check:
 
 System Settings → General → AirDrop & Handoff → AirPlay Receiver
 

@@ -19,7 +19,7 @@ import {
   getVisibleSummaryBalanceChanges,
   MAX_VISIBLE_BALANCE_CHANGES
 } from './helpers'
-import { getDappInteractions } from './humanizedHelpers'
+import { useDappInteractions } from './humanizedCallsHooks'
 import InteractionAddress from './InteractionAddress'
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
@@ -43,10 +43,7 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
     0
   )
   const shouldShowBalanceChangesSummary = orderedBalanceChanges.length > 0
-  const dappInteractions = useMemo(
-    () => getDappInteractions(submittedAccountOp),
-    [submittedAccountOp]
-  )
+  const dappInteractions = useDappInteractions(submittedAccountOp)
 
   return (
     <View style={[styles.contentContainer, isCompactSidePanelLayout && { minWidth: 0 }]}>
@@ -164,7 +161,6 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 fontSize={12}
                 weight="medium"
                 appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                // @ts-ignore
                 style={{
                   cursor: 'pointer',
                   ...(isCompactSidePanelLayout ? { lineHeight: 16 } : {})

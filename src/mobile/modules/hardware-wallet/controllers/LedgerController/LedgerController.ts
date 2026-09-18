@@ -6,20 +6,17 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
-import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
+import {
+  LedgerControllerInterface,
+  LedgerSignature
+} from '@common/modules/hardware-wallet/interfaces/ledgerController'
+import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 
-// Mobile counterpart of the web LedgerController. The actual device handling lives in the
-// React Native native context (see src/mobile/services/ledger/ledgerTransportService).
-// This controller runs inside the WebView worker bundle alongside the rest of
-// the ambire-common controllers, and forwards every operation to the native
-// service over the message bridge (`window.sendToRNAsync`).
-export type LedgerSignature = { r: string; s: string; v: number }
-
-const callNative = <T>(type: string, payload: Record<string, any> = {}): Promise<T> => {
-  // sendToRNAsync is installed on `window` by injectedLogic.ts. The controller
-  // only ever runs inside the worker, so it is always present here.
-  return (window as any).sendToRNAsync(type, payload)
-}
+// Mobile counterpart of the web LedgerController. The device handling itself lives
+// in ledgerTransportService (BLE/USB via the Ledger DMK); this controller is the
+// ambire-common-facing wrapper around it. Scanning and connecting are driven
+// separately from the connect screen (via the useLedger hook), not from here.
+export type { LedgerSignature }
 
 class LedgerController implements ExternalSignerController, LedgerControllerInterface {
   unlockedPath: string = ''
@@ -51,7 +48,7 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     if (!expectedKeyOnThisPath && this.isUnlocked(path)) return 'ALREADY_UNLOCKED'
 
     try {
-      const address = await callNative<string>('ledger.getAddress', { path })
+      const address = await ledgerTransportService.getAddress(path)
 
       const wasAlreadyUnlocked = this.unlockedPath === path && this.unlockedPathKeyAddr === address
       this.unlockedPath = path
@@ -66,7 +63,13 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
   retrieveAddresses = async (paths: string[]) => {
     try {
-      return await callNative<string[]>('ledger.retrieveAddresses', { paths })
+      const addresses: string[] = []
+      // Serialized one-by-one (the service queue enforces this too); the Ledger
+      // can't handle parallel getAddress calls.
+      for (const path of paths) {
+        addresses.push(await ledgerTransportService.getAddress(path))
+      }
+      return addresses
     } catch (e: any) {
       throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
     }
@@ -74,10 +77,10 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
   async signPersonalMessage(derivationPath: string, messageHex: string) {
     try {
-      return await callNative<LedgerSignature>('ledger.signPersonalMessage', {
-        path: derivationPath,
-        messageHex: stripHexPrefix(messageHex)
-      })
+      return await ledgerTransportService.signPersonalMessage(
+        derivationPath,
+        stripHexPrefix(messageHex)
+      )
     } catch (e: any) {
       throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
     }
@@ -85,10 +88,10 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
   async signTransaction(derivationPath: string, transaction: Uint8Array) {
     try {
-      return await callNative<LedgerSignature>('ledger.signTransaction', {
-        path: derivationPath,
-        rawTxHex: stripHexPrefix(hexlify(transaction))
-      })
+      return await ledgerTransportService.signTransaction(
+        derivationPath,
+        stripHexPrefix(hexlify(transaction))
+      )
     } catch (e: any) {
       throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
     }
@@ -102,24 +105,29 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     signTypedData: TypedMessageUserRequest['meta']['params']
   }) => {
     try {
-      return await callNative<LedgerSignature>('ledger.signTypedData', {
-        path,
-        typedData: { domain, types, message, primaryType }
-      })
+      return await ledgerTransportService.signTypedData(path, {
+        domain,
+        types,
+        message,
+        primaryType
+      } as any)
     } catch (e: any) {
       throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
     }
   }
 
   async signingCleanup() {
-    await callNative('ledger.signingCleanup')
+    // Flushes the device's pending command state after an abandoned/rejected sign
+    // so the next command starts clean. Does NOT cancel an in-flight on-device
+    // prompt (that still resolves on the device).
+    await ledgerTransportService.signingCleanup()
   }
 
   cleanUp = async () => {
     this.unlockedPath = ''
     this.unlockedPathKeyAddr = ''
     this.walletSDK = false
-    await callNative('ledger.cleanUp')
+    await ledgerTransportService.cleanUp()
   }
 }
 

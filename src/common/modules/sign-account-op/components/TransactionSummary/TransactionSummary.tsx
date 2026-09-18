@@ -21,7 +21,8 @@ import {
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
-  getVisibleErc7730RowsExcludingTitleParts,
+  getErc7730IntentText,
+  getVisibleErc7730RowsExcludingIntentFields,
   MOBILE_ERC7730_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
@@ -49,6 +50,8 @@ import type {
   HumanizerErc7730Visualization,
   IrCall
 } from '@ambire-common/libs/humanizer/interfaces'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const { isSidePanel } = getUiType()
 const withMobileLayout = isMobile || isSidePanel
@@ -147,6 +150,9 @@ const DataArgs = ({
   })
 }
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const TransactionSummary = ({
   style,
   call,
@@ -166,7 +172,7 @@ const TransactionSummary = ({
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()
@@ -200,7 +206,7 @@ const TransactionSummary = ({
   const hasErc7730TransactionSummaryRows = useMemo(
     () =>
       !!erc7730Visualization &&
-      getVisibleErc7730RowsExcludingTitleParts(erc7730Visualization).length > 0,
+      getVisibleErc7730RowsExcludingIntentFields(erc7730Visualization).length > 0,
     [erc7730Visualization]
   )
   const shouldPadMobileErc7730TitleBottom =
@@ -209,7 +215,7 @@ const TransactionSummary = ({
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
 
-    return erc7730Visualization.title || call.dapp?.name || t('Transaction details')
+    return getErc7730IntentText(erc7730Visualization) || call.dapp?.name || t('Transaction details')
   }, [call.dapp?.name, erc7730Visualization, t])
   const erc7730DetailedIcon = erc7730Visualization?.dapp?.icon || call.dapp?.icon
   const erc7730VisualizationKey = useMemo(
@@ -674,17 +680,12 @@ const TransactionSummary = ({
     }
 
     // Non-detailed ("transaction summary") intents can be an interpolated sentence
-    // (erc7730Visualization.titleParts, e.g. "Swap {amount} for at least {amount}" with real
-    // token icons/amounts) rather than a static string. Reading `.title` directly like the
-    // detailed branch above would silently drop that interpolated detail, so this goes through
-    // the same HumanizedVisualization/Erc7730StructuredVisualization renderer the desktop
-    // title (content row, erc7730TransactionSummarySection="title") already uses.
-    if (
-      !erc7730Visualization.dapp?.icon &&
-      !erc7730Visualization.title &&
-      !erc7730Visualization.titleParts?.length
-    )
-      return null
+    // (erc7730Visualization.intent, e.g. "Swap {amount} for at least {amount}" with
+    // real token icons/amounts) rather than a static string. Reading a plain string directly
+    // like the detailed branch above would silently drop that interpolated detail, so this
+    // goes through the same HumanizedVisualization/Erc7730StructuredVisualization renderer the
+    // desktop title (content row, erc7730TransactionSummarySection="title") already uses.
+    if (!erc7730Visualization.dapp?.icon && !erc7730Visualization.intent.length) return null
 
     return (
       <HumanizedVisualization

@@ -34,6 +34,10 @@ import {
 
 import AssetSection from './AssetSection'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const FILTERS_HEIGHT = 40
 
 const ManageTokensSettingsScreen = () => {
@@ -49,7 +53,7 @@ const ManageTokensSettingsScreen = () => {
     open: openAddNftBottomSheet,
     close: closeAddNftBottomSheet
   } = useModalize()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)
   const [activeTab, setActiveTab] = useState<AssetTab>('tokens')

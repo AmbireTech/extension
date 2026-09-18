@@ -55,6 +55,21 @@ const { isPopup } = getUiType()
 const selectScheduledUpdateChainIds = (state: AllControllersMappingType['PortfolioController']) =>
   state.scheduledUpdateChainIds
 
+const selectPortfolioDefiPositions = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.defiPositions
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+const selectBanners = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.banners
+
 const DeFiPositions: FC<Props> = ({
   openTab,
   setOpenTab,
@@ -72,14 +87,25 @@ const DeFiPositions: FC<Props> = ({
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme } = useTheme()
   const searchValue = watch('search')
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: scheduledUpdateChainIds, dispatch: portfolioDispatch } = useController(
     'PortfolioController',
     selectScheduledUpdateChainIds
   )
-  const {
-    state: { account, portfolio, dashboardNetworkFilter, banners }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: defiPositions } = useController(
+    'SelectedAccountController',
+    selectPortfolioDefiPositions
+  )
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    selectDashboardNetworkFilter
+  )
+  const { state: banners } = useController('SelectedAccountController', selectBanners)
   const { setSearchParams, navigate } = useNavigation()
 
   const hasPendingUpdate = useMemo(
@@ -134,7 +160,7 @@ const DeFiPositions: FC<Props> = ({
   })
 
   const filteredPositions = useMemo(() => {
-    const defiToSearch = portfolio.defiPositions
+    const defiToSearch = defiPositions
       .filter(({ chainId, positions }) => {
         let isMatchingNetwork = true
 
@@ -157,19 +183,14 @@ const DeFiPositions: FC<Props> = ({
       search: searchValue,
       keys: ['providerName', 'assetNames']
     })
-  }, [portfolio.defiPositions, dashboardNetworkFilter, searchValue, networks])
+  }, [defiPositions, dashboardNetworkFilter, searchValue, networks])
 
   const renderItem = useCallback(
     ({ item }: any) => {
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              currentTab="defi"
-              sessionId={sessionId}
-            />
+            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
           </View>
         )
       }
@@ -301,11 +322,11 @@ const DeFiPositions: FC<Props> = ({
       if (hasPendingUpdate) {
         items.push('pending-update')
       }
-      items.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
-      if (initTab?.defi && portfolio.isAllReady) {
+      items.push(!isPortfolioAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
+      if (initTab?.defi && isPortfolioAllReady) {
         filteredPositions.forEach((p: any) => items.push(p))
       }
-      items.push(portfolio.isAllReady && !filteredPositions.length ? 'empty' : '')
+      items.push(isPortfolioAllReady && !filteredPositions.length ? 'empty' : '')
     } else {
       items.push('disabled')
     }
@@ -317,12 +338,12 @@ const DeFiPositions: FC<Props> = ({
     flags.tokenAndDefiAutoDiscovery,
     hasPendingUpdate,
     initTab?.defi,
-    portfolio.isAllReady
+    isPortfolioAllReady
   ])
 
   // Rendered above the carousel on mobile, so it stays put through a swipe
   const floatingBar = useMemo(
-    () => ({ control, searchPlaceholder: t('Search DeFi') }),
+    () => ({ control, networkFilterTab: 'defi' as const, searchPlaceholder: t('Search DeFi') }),
     [control, t]
   )
 

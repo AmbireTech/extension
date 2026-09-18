@@ -15,7 +15,7 @@ import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
-import { Fetch } from '@ambire-common/interfaces/fetch'
+import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
@@ -23,6 +23,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
+import { logSentryDeliveryWhenTesting } from '@common/config/analytics/CrashAnalytics.web'
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
@@ -37,12 +38,14 @@ import handleProviderRequests from '@common/modules/provider/handleProviderReque
 import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
   BUNGEE_API_KEY,
+  COWSWAP_API_KEY,
   LI_FI_API_KEY,
   RELAYER_URL,
   UNISWAP_API_KEY,
@@ -76,7 +79,6 @@ import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerCon
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
-import { getExtensionInstanceId } from '@web/utils/analytics'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
 import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
@@ -281,6 +283,8 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
       return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
     }
   })
+
+  logSentryDeliveryWhenTesting(Sentry.getClient())
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -381,34 +385,23 @@ const init = async () => {
   // (only internal Ambire APIs need the x-app-* headers and tracking params)
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
-    const urlString = url.toString()
-    try {
-      const urlObj = new URL(urlString)
-      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
-        // @ts-ignore
-        return fetch(url, init)
-      }
-    } catch (error) {
-      console.error(error)
-      // If URL parsing fails, skip analytics for safety
+    if (!isAmbireApiUrl(url.toString())) {
       // @ts-ignore
       return fetch(url, init)
     }
 
-    // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || {
-      headers: {
-        'x-app-source': '',
-        'x-app-version': '',
-        'x-app-env': isAmbireNext ? 'next' : isDev ? 'dev' : 'prod'
-      }
-    }
+    // As of v4.26.0, custom internal headers. The mobile app sends the same ones from
+    // its worker (see decorateAmbireApiRequest there).
+    const initWithCustomHeaders: RequestInitWithCustomHeaders = init || { headers: {} }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
+    // Set here rather than as a default for a missing init, so that it is sent no matter
+    // whether the caller passed an init of its own (most of them do)
+    initWithCustomHeaders.headers['x-app-env'] = isAmbireNext ? 'next' : isDev ? 'dev' : 'prod'
 
     // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
     // in that case we can still fetch but without our custom header
     if (mainCtrl?.keystore?.keyStoreUid) {
-      const instanceId = getExtensionInstanceId(
+      const instanceId = getAppInstanceId(
         mainCtrl.keystore.keyStoreUid,
         mainCtrl.invite?.verifiedCode || ''
       )
@@ -418,13 +411,9 @@ const init = async () => {
       initWithCustomHeaders.headers['x-app-version'] = versionHeader
     }
 
-    // we want to calculate the TVL of our users
-    // we can achieve this by making a relayer (server-side trusted environment) script that gets the balances of all our users
-    // but doing this with all our users would be 'expensive'.
-    // we already calculate the user balance in the extension, but is not 100% trusted as any user can modify it
-    // that why we will use the user balance from the extension as a 'hint' so we can determine
-    // on which accounts we should execute the 'expensive' script on the backend
-    // those addresses should be 1) loaded with key in the extension 2) have more than $0 balance
+    // The balance hint (see attachBalanceHint) is worth attaching only if the user has
+    // keys for the account. The highest balance seen is kept, because a request firing
+    // while the portfolio is still loading would otherwise under-report it.
     const currentAccount = mainCtrl.selectedAccount.account
     const hasCurrentAccountKeys =
       currentAccount &&
@@ -433,9 +422,6 @@ const init = async () => {
         keys: mainCtrl.keystore.keys,
         accounts: mainCtrl.accounts.accounts
       })
-    // we use any cena request, because if we narrow it down to one route we might not have the full balance loaded
-    // on the relayer side we will simply use middleware that captures all routes and looks for the specific params with balance
-    // we want to attach the data only if the user has keys for the account
     const currentBalance = mainCtrl.selectedAccount.portfolio.totalBalance
     if (
       currentAccount &&
@@ -443,16 +429,12 @@ const init = async () => {
     )
       backgroundState.userBalances[currentAccount?.addr] = currentBalance
 
-    const shouldAttachBalance =
-      url.toString().startsWith('https://cena.ambire.com/') && hasCurrentAccountKeys
-    if (shouldAttachBalance) {
-      const urlObj = new URL(url.toString())
-      const balance = backgroundState.userBalances[currentAccount?.addr] || 0
-
-      urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
-
-      url = decodeURIComponent(urlObj.toString())
-    }
+    if (currentAccount && hasCurrentAccountKeys)
+      url = attachBalanceHint(
+        url.toString(),
+        currentAccount.addr,
+        backgroundState.userBalances[currentAccount.addr] || 0
+      )
 
     // Use the native fetch (instead of node-fetch or whatever else) since
     // browser extensions are designed to run within the web environment,
@@ -473,7 +455,7 @@ const init = async () => {
             const keystoreCtrl = ctrl as IKeystoreController
             if (keystoreCtrl.isReadyToStoreKeys) {
               setBackgroundUserContext({
-                id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
+                id: getAppInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
               })
               if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
@@ -531,6 +513,7 @@ const init = async () => {
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
+    cowSwapApiKey: COWSWAP_API_KEY,
     bungeeApiKey: BUNGEE_API_KEY,
     uniswapApiKey: UNISWAP_API_KEY,
     featureFlags: {},
@@ -867,6 +850,16 @@ browser.runtime.onMessage.addListener(async (message: any) => {
   // The extension UI periodically sends "ping" messages. Responding here wakes up
   // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
   if (message === 'ambire-extension-ping') return 'ambire-extension-pong'
+
+  // Every controller reports through `captureBackgroundException`, so the crash-analytics e2e
+  // spec needs a way to exercise that path. Unreachable outside a testing build.
+  if (
+    process.env.IS_TESTING === 'true' &&
+    message?.type === 'ambire-extension-test-capture-exception-background'
+  ) {
+    captureBackgroundException(new Error(message.errorMessage))
+    return null
+  }
 
   return null
 })

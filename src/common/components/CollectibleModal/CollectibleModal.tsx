@@ -20,6 +20,10 @@ import HideCollectibleButton from './HideCollectibleButton'
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const { isTab } = getUiType()
 
 export type SelectedCollectible = {
@@ -49,7 +53,7 @@ const CollectibleModal = ({
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   // No actions on a collectible that is only being previewed (in a simulation)
   const shouldDisplayHideCollectionAction = !hideSendNft && !!canHideCollectible
 
@@ -162,7 +166,6 @@ const CollectibleModal = ({
   }, [
     handleClose,
     networks,
-    canHideCollectible,
     selectedCollectible,
     shouldDisplayHideCollectionAction,
     styles.image,
