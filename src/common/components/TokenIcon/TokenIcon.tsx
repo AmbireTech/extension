@@ -3,7 +3,6 @@ import { Image, ImageProps, View, ViewStyle } from 'react-native'
 import { SvgUri } from 'react-native-svg'
 
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
-import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import MissingTokenIcon from '@common/assets/svg/MissingTokenIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
 import { isBenzin, isMobile } from '@common/config/env'
@@ -16,6 +15,11 @@ import { getHardcodedCitreaIcons } from '@common/utils/getHardcodedCitreaIcons'
 import SkeletonLoader from '../SkeletonLoader'
 import { SkeletonLoaderProps } from '../SkeletonLoader/types'
 import getStyles from './styles'
+
+import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+const selectNetworks = (state: NetworksController) => state.networks
 
 interface Props extends Partial<ImageProps> {
   /* supports network id or chain id */
@@ -46,6 +50,17 @@ const isNeverCancelled = () => false
 const selectTokenAndDefiAutoDiscovery = (state: FeatureFlagsController) =>
   state.flags?.tokenAndDefiAutoDiscovery ?? false
 
+/**
+ * The icon to show for a proxy url, with no lookup: the url almost always exists, and
+ * `onError` handles it when it does not. `target` records which url this was resolved for,
+ * so an answer that arrives after the token changed can be recognised and dropped.
+ */
+const resolveAmbireIcon = (ambireIconUri?: string) => ({
+  target: ambireIconUri,
+  status: ambireIconUri ? UriStatus.IMAGE_EXISTS : UriStatus.UNKNOWN,
+  uri: ambireIconUri
+})
+
 const TokenIcon: React.FC<Props> = ({
   chainId,
   address = '',
@@ -66,7 +81,7 @@ const TokenIcon: React.FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const [uriStatus, setUriStatus] = useState<UriStatus>(UriStatus.UNKNOWN)
   const [imageUrl, setImageUrl] = useState<string | undefined>()
-  const { state: ctrlNetworks } = useController('NetworksController', (state) => state.networks)
+  const { state: ctrlNetworks } = useController('NetworksController', (state) => selectNetworks)
   const { state: tokenAndDefiAutoDiscovery } = useController(
     'FeatureFlagsController',
     selectTokenAndDefiAutoDiscovery
@@ -82,46 +97,69 @@ const TokenIcon: React.FC<Props> = ({
     [chainId, networks]
   )
 
-  const handleImageLoaded = useCallback(() => setUriStatus(UriStatus.IMAGE_EXISTS), [])
-  const attemptToLoadFallbackImage = useCallback(
-    async (isCancelled = isNeverCancelled) => {
-      if (!shouldLoadTokenIcon || isCancelled()) return
+  const platformId = network?.platformId
+  const chainIdOfNetwork = network?.chainId
 
-      if (fallbackUri) {
-        const doesFallbackUriImageExists = await checkIfImageExists(fallbackUri)
-        if (isCancelled()) return
-
-        if (doesFallbackUriImageExists) {
-          setImageUrl(fallbackUri)
-          setUriStatus(UriStatus.IMAGE_EXISTS)
-          return
-        }
-      }
-
-      // hardcoded icons for citrea
-      if (network?.chainId === 4114n) {
-        const tokenUrl = getHardcodedCitreaIcons(address.toLowerCase())
-        const imageExists = tokenUrl && (await checkIfImageExists(tokenUrl))
-        if (isCancelled()) return
-
-        if (imageExists) {
-          setImageUrl(tokenUrl)
-          setUriStatus(UriStatus.IMAGE_EXISTS)
-          return
-        }
-      }
-
-      setUriStatus(UriStatus.IMAGE_MISSING)
-      setImageUrl(undefined)
-    },
-    [fallbackUri, address, network?.chainId, shouldLoadTokenIcon]
-  )
-  const handleImageError = useCallback(
-    () => attemptToLoadFallbackImage(),
-    [attemptToLoadFallbackImage]
+  const ambireIconUri = useMemo(
+    () =>
+      platformId && address
+        ? `https://cena.ambire.com/iconProxy/${platformId}/${address}`
+        : undefined,
+    [platformId, address]
   )
 
+  const [resolved, setResolved] = useState(() => resolveAmbireIcon(ambireIconUri))
+
+  // Adjusted while rendering rather than written from an effect, which had every icon of
+  // every token row and every select option paint a skeleton and then render again for a
+  // url its own props already decide.
+  if (resolved.target !== ambireIconUri) setResolved(resolveAmbireIcon(ambireIconUri))
+
+  const { status: uriStatus, uri: imageUrl } = resolved
+
+  const handleImageLoaded = useCallback(
+    () =>
+      setResolved((prev) =>
+        prev.status === UriStatus.IMAGE_EXISTS ? prev : { ...prev, status: UriStatus.IMAGE_EXISTS }
+      ),
+    []
+  )
+
+  const attemptToLoadFallbackImage = useCallback(async () => {
+    // Kept only while the icon still shows the token this ran for: the lookups below are
+    // network calls that outlive a re-used icon, and a late answer would otherwise put the
+    // previous token's image on it.
+    const apply = (status: UriStatus, uri?: string) =>
+      setResolved((prev) =>
+        prev.target === ambireIconUri ? { target: ambireIconUri, status, uri } : prev
+      )
+
+    if (fallbackUri) {
+      const doesFallbackUriImageExists = await checkIfImageExists(fallbackUri)
+      if (doesFallbackUriImageExists) {
+        apply(UriStatus.IMAGE_EXISTS, fallbackUri)
+        return
+      }
+    }
+
+    // hardcoded icons for citrea
+    if (chainIdOfNetwork === 4114n) {
+      const tokenUrl = getHardcodedCitreaIcons(address.toLowerCase())
+      const imageExists = tokenUrl && (await checkIfImageExists(tokenUrl))
+      if (imageExists) {
+        apply(UriStatus.IMAGE_EXISTS, tokenUrl)
+        return
+      }
+    }
+
+    apply(UriStatus.IMAGE_MISSING, undefined)
+  }, [ambireIconUri, fallbackUri, address, chainIdOfNetwork])
+
+  // Only the icons the proxy url leaves unsettled need looking up. Read off the network's
+  // fields rather than the network itself, so a networks update - which hands out a new
+  // object every time - does not re-run these network calls per icon.
   useEffect(() => {
+<<<<<<< HEAD
     if (!shouldLoadTokenIcon) {
       return
     }
@@ -156,6 +194,12 @@ const TokenIcon: React.FC<Props> = ({
     network,
     shouldLoadTokenIcon
   ])
+=======
+    if (ambireIconUri) return
+
+    void attemptToLoadFallbackImage()
+  }, [ambireIconUri, attemptToLoadFallbackImage])
+>>>>>>> 15a5c15cdd9613b188b0656b6e490af3cb9f43c2
 
   const memoizedContainerStyle = useMemo(
     () => [

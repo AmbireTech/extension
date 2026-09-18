@@ -31,11 +31,16 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   simulationFailed?: boolean
   disabled?: boolean
   openProviderSettingsModal: () => void
 }
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSettingsModal }) => {
   const { theme, themeType } = useTheme(getStyles)
@@ -60,7 +65,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: balancePerNetwork } = useController(
     'SelectedAccountController',
     (state) => state.portfolio.balancePerNetwork

@@ -59,7 +59,8 @@ module.exports = [
       'no-nested-ternary': 'off',
       'prefer-promise-reject-errors': 'off',
       'no-underscore-dangle': 'off',
-      'react/jsx-key': 'error'
+      'react/jsx-key': 'error',
+      'react/display-name': 'off'
     }
   },
   // The extension UI must import only TYPES from ambire-common controllers and

@@ -11,8 +11,9 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 type Props = {
   control: any
@@ -30,9 +31,11 @@ const ALL_NETWORKS_OPTION = {
   )
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const Filters: FC<Props> = ({ control, networkFilter, setNetworkFilterValue }) => {
   const { t } = useTranslation()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { theme } = useTheme()
   const networksOptions: SelectValue[] = useMemo(
     () => [

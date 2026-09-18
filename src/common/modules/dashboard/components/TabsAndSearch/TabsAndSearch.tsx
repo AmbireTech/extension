@@ -34,7 +34,10 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, sessionId }) => {
       ]}
     >
       <Tabs
-        handleChangeQuery={(tab) => setSearchParams({ tab, sessionId })}
+        // Only the extension routes on the search params. On mobile the open tab lives
+        // in state, and writing it would navigate the dashboard to a location that
+        // differs only in its search - which re-renders the whole screen.
+        handleChangeQuery={(tab) => !isMobile && setSearchParams({ tab, sessionId })}
         setOpenTab={setOpenTab}
         openTab={openTab}
       />

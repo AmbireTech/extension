@@ -30,7 +30,11 @@ import {
 
 import TokenSection from './TokenSection'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const FILTERS_HEIGHT = 40
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const ManageTokensSettingsScreen = () => {
   const { t } = useTranslation()
@@ -40,7 +44,7 @@ const ManageTokensSettingsScreen = () => {
     open: openAddTokenBottomSheet,
     close: closeAddTokenBottomSheet
   } = useModalize()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)
   const search = watch('search')

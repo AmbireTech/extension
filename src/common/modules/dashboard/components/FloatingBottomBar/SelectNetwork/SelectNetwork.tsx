@@ -12,17 +12,23 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   /** The dashboard tab the button is shown on. Only names it for the e2e tests. */
   currentTab?: TabType
 }
 
 /** Opens the networks page, badged with the network the dashboard is filtered by. */
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+
 const SelectNetwork = ({ currentTab }: Props) => {
   const { styles: tokenIconStyles } = useTheme(getTokenIconStyles)
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
-    'dashboardNetworkFilter'
+    selectDashboardNetworkFilter
   )
   const { navigate } = useNavigation()
   const { theme } = useTheme()

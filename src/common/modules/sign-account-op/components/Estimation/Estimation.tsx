@@ -47,6 +47,8 @@ import { getFeeOptionValue, mapFeeOptions, sortFeeOptions } from './helpers'
 import getStyles from './styles'
 import { DispatchUpdate, Props } from './types'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const FEE_SECTION_LIST_MENU_HEADER_HEIGHT = 34
 const ADVANCED_OPTIONS_TOOLTIP_ID = 'sign-account-op-advanced-options-tooltip'
 
@@ -109,6 +111,8 @@ const FeeSpeedLabel = ({
   )
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const Estimation = ({
   signAccountOpState,
   disabled,
@@ -127,7 +131,7 @@ const Estimation = ({
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: transferDispatch } = useController('TransferController')
   const { state } = useController('AddressBookController')
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()

@@ -76,6 +76,10 @@ const SelectContainer: FC<Props> = ({
     if (ref) searchInputRef.current = ref
   }, [])
 
+  // The close button must close, never toggle - a second tap while the sheet is
+  // still animating out would otherwise reopen it.
+  const closeMenu = useCallback(() => setIsMenuOpen(false), [setIsMenuOpen])
+
   // Workaround for auto-focusing the Search input when it's rendered inside the BottomSheet.
   // If we try to enable it via the <Search autoFocus /> prop, a layout shift occurs beneath the BottomSheet.
   // This is most likely due to the BottomSheet's absolute positioning - when it starts opening,
@@ -96,7 +100,7 @@ const SelectContainer: FC<Props> = ({
   const bottomSheetHeader = useMemo(
     () => (
       <View>
-        <ModalHeader title={bottomSheetTitle} handleClose={toggleMenu} />
+        <ModalHeader title={bottomSheetTitle} handleClose={closeMenu} />
         {renderHeaderChildren?.({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef })}
         {!!withSearch && (
           <Search
@@ -111,6 +115,7 @@ const SelectContainer: FC<Props> = ({
     ),
     [
       bottomSheetTitle,
+      closeMenu,
       toggleMenu,
       renderHeaderChildren,
       setIsMenuOpen,
@@ -201,7 +206,6 @@ const SelectContainer: FC<Props> = ({
           id={id}
           isMenuOpen={isMenuOpen}
           setIsMenuOpen={setIsMenuOpen}
-          toggleMenu={toggleMenu}
           contentRef={listRef}
           sectionListProps={sectionListProps}
           flatListProps={flatListProps}

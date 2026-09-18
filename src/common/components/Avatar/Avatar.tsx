@@ -15,6 +15,7 @@ import Polycons from './Polycons/Polycons'
 import TypeBadge from './TypeBadge'
 
 import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectKeepEnsProfilesUpToDate = (state: FeatureFlagsController) =>
   state.flags?.keepEnsProfilesUpToDate ?? false
@@ -66,6 +67,10 @@ interface Props {
   displayTypeBadge?: boolean
 }
 
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
+const selectLoadingAddresses = (state: AllControllersMappingType['DomainsController']) =>
+  state.loadingAddresses
+
 const Avatar: FC<Props> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   pfp,
@@ -84,9 +89,8 @@ const Avatar: FC<Props> = ({
   )
   const ensAvatarImageFetchFailed = ensAvatarImageState === 'failed'
   // ENS Avatar
-  const {
-    state: { domains, loadingAddresses }
-  } = useController('DomainsController')
+  const { state: domains } = useController('DomainsController', selectDomains)
+  const { state: loadingAddresses } = useController('DomainsController', selectLoadingAddresses)
   const { state: keepEnsProfilesUpToDate } = useController(
     'FeatureFlagsController',
     selectKeepEnsProfilesUpToDate
@@ -171,7 +175,7 @@ const Avatar: FC<Props> = ({
           height={size}
           borderRadius={borderRadius}
           appearance="secondaryBackground"
-          style={{ zIndex: -1, position: 'absolute' }}
+          style={{ zIndex: -1, position: 'absolute', left: 0, top: 0 }}
         />
       )}
       {avatarType === 'jazzicons' && (
