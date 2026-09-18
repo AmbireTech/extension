@@ -42,16 +42,19 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   const isSheetOpen = openBottomSheetsCount > 0
 
   const [keepSuppressedUntilKeyboardHidden, setKeepSuppressedUntilKeyboardHidden] = useState(false)
+  const [isKeyboardUp, setIsKeyboardUp] = useState(false)
   const isSheetOpenRef = useRef(isSheetOpen)
   isSheetOpenRef.current = isSheetOpen
 
   useEffect(() => {
     const willShowSub = KeyboardEvents.addListener('keyboardWillShow', () => {
+      setIsKeyboardUp(true)
       // If the keyboard comes up while a sheet is open, remember that we must
       // keep avoidance suppressed through the keyboard's hide animation later.
       if (isSheetOpenRef.current) setKeepSuppressedUntilKeyboardHidden(true)
     })
     const didHideSub = KeyboardEvents.addListener('keyboardDidHide', () => {
+      setIsKeyboardUp(false)
       setKeepSuppressedUntilKeyboardHidden(false)
     })
 
@@ -63,8 +66,12 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
 
   const paddingTop = isInsideBottomSheet ? 0 : insets.top + (withTopPadding ? SPACING_SM : 0)
 
+  // A sheet opening turns the avoidance off, and a sheet opens the keyboard on its way down -
+  // so switching off at that moment leaves the animation part way, with the content sized for a
+  // keyboard that is no longer there. The avoidance stays on until the keyboard has actually
+  // gone; by then it is at rest, so turning it off moves nothing.
   const isKeyboardAvoidingEnabled =
-    keyboardAwareFooter && !isSheetOpen && !keepSuppressedUntilKeyboardHidden
+    keyboardAwareFooter && (!isSheetOpen || isKeyboardUp) && !keepSuppressedUntilKeyboardHidden
 
   return (
     // `behavior="height"` shrinks the whole container by the keyboard's overlap,
