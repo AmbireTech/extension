@@ -364,6 +364,9 @@ const KeyStoreUnlockScreen = () => {
                 style={[styles.switchButton, spacings.mt]}
                 text={t('Unlock with biometrics')}
                 onPress={() => {
+                  // The tab flow deliberately keeps this window on the password, so only the
+                  // in-place ceremony switches the screen before the prompt shows up.
+                  if (!SHOULD_USE_TAB_FOR_BIOMETRICS) setUnlockMethod('biometrics')
                   handleBiometricsPrompt().catch((e) => {
                     addToast(`failed to open biometrics prompt`)
                     console.log('failed to open biometrics prompt', e)
