@@ -27,6 +27,9 @@ export type SigningAuthProps = {
   errorMessage: string
   onConfirmWithPassword: (password: string) => void
   onConfirmWithBiometrics: () => void
+  /** Starts the ceremony a moment after the sheet is up, rather than the instant it appears. */
+  onAutoPromptBiometrics: () => void
+  onCancelAutoPrompt: () => void
   onSwitchToPassword: () => void
   onPasswordChange: () => void
 }
@@ -48,6 +51,8 @@ const SigningAuthBottomSheet = ({
   errorMessage,
   onConfirmWithPassword,
   onConfirmWithBiometrics,
+  onAutoPromptBiometrics,
+  onCancelAutoPrompt,
   onSwitchToPassword,
   onPasswordChange
 }: Props) => {
@@ -76,21 +81,22 @@ const SigningAuthBottomSheet = ({
     onConfirmWithBiometrics()
   }, [onConfirmWithBiometrics])
 
-  // The prompt is what the user expects to see straight away, the same way the unlock screen
-  // behaves on both platforms. `onOpen` rather than `onOpened`, because the web sheet only
-  // wires the former.
+  // The prompt follows the sheet rather than arriving with it, so the user can read what they
+  // are being asked before the operating system covers it. `onOpen` rather than `onOpened`,
+  // because the web sheet only wires the former.
   const handleOpen = useCallback(() => {
     if (!isUsingBiometrics) return
 
-    onConfirmWithBiometrics()
-  }, [isUsingBiometrics, onConfirmWithBiometrics])
+    onAutoPromptBiometrics()
+  }, [isUsingBiometrics, onAutoPromptBiometrics])
 
   const handleOpened = useCallback(() => setHasSheetOpened(true), [])
 
   const handleClosed = useCallback(() => {
+    onCancelAutoPrompt()
     setPassword('')
     setHasSheetOpened(false)
-  }, [])
+  }, [onCancelAutoPrompt])
 
   return (
     <BottomSheet

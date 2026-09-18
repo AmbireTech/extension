@@ -21,6 +21,15 @@ const { isPopup, isTab, isSidePanel } = getUiType()
  */
 export const SHOULD_USE_TAB_FOR_BIOMETRICS = IS_FIREFOX && isPopup
 
+/**
+ * How long a screen is left to itself before the ceremony starts on its own. The operating
+ * system's prompt covers what is behind it, so asking the instant the screen appears means the
+ * user never gets to read why they are being asked - and on mobile it takes focus while the
+ * keyboard is still on its way down, which leaves the screen laid out for a keyboard that has
+ * gone. A tap on the icon is not delayed, only the prompt nobody asked for.
+ */
+const AUTO_PROMPT_DELAY = 750
+
 // One value each, read off the state rather than built, so the store's reconciled snapshots stay
 // reference stable. A selector that allocates returns a new value on every read and never settles.
 const selectSecretVerificationResult = (state: AllControllersMappingType['KeystoreController']) =>
@@ -59,6 +68,7 @@ const useSecretConfirmation = ({ onConfirmed, promptMessage }: Props) => {
   const [hasSwitchedToPassword, setHasSwitchedToPassword] = useState(SHOULD_USE_TAB_FOR_BIOMETRICS)
   /** Whether a biometric ceremony is already up, so a second is not started on top of it. */
   const isPromptPending = useRef(false)
+  const autoPromptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Results are read from a shared controller field, so only the screen that asked for one may
   // act on it - otherwise a leftover result would let the next one through untouched
   const isAwaitingResult = useRef(false)
@@ -137,6 +147,25 @@ const useSecretConfirmation = ({ onConfirmed, promptMessage }: Props) => {
     requestWindow?.windowProps?.createdFromWindowId
   ])
 
+  const cancelAutoPrompt = useCallback(() => {
+    if (!autoPromptTimeoutRef.current) return
+
+    clearTimeout(autoPromptTimeoutRef.current)
+    autoPromptTimeoutRef.current = null
+  }, [])
+
+  /** Starts the ceremony a moment after the screen it belongs to is up. */
+  const autoPromptBiometrics = useCallback(() => {
+    cancelAutoPrompt()
+
+    autoPromptTimeoutRef.current = setTimeout(() => {
+      autoPromptTimeoutRef.current = null
+      confirmWithBiometrics().catch(() => {})
+    }, AUTO_PROMPT_DELAY)
+  }, [cancelAutoPrompt, confirmWithBiometrics])
+
+  useEffect(() => cancelAutoPrompt, [cancelAutoPrompt])
+
   const switchToPassword = useCallback(() => setHasSwitchedToPassword(true), [])
 
   const resetError = useCallback(() => {
@@ -160,6 +189,8 @@ const useSecretConfirmation = ({ onConfirmed, promptMessage }: Props) => {
     isVerifying,
     errorMessage: result?.status === 'failed' ? result.error || '' : '',
     confirmWithBiometrics,
+    autoPromptBiometrics,
+    cancelAutoPrompt,
     confirmWithPassword,
     switchToPassword,
     resetError,

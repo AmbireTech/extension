@@ -95,6 +95,8 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
     isVerifying,
     errorMessage,
     confirmWithBiometrics,
+    autoPromptBiometrics,
+    cancelAutoPrompt,
     confirmWithPassword,
     switchToPassword,
     resetError,
@@ -141,6 +143,8 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
       errorMessage,
       onConfirmWithPassword: confirmWithPassword,
       onConfirmWithBiometrics: confirmWithBiometrics,
+      onAutoPromptBiometrics: autoPromptBiometrics,
+      onCancelAutoPrompt: cancelAutoPrompt,
       onSwitchToPassword: switchToPassword,
       onPasswordChange: resetError
     }),
@@ -154,6 +158,8 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
       errorMessage,
       confirmWithPassword,
       confirmWithBiometrics,
+      autoPromptBiometrics,
+      cancelAutoPrompt,
       switchToPassword,
       resetError
     ]

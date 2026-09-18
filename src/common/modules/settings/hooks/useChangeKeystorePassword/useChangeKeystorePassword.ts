@@ -1,5 +1,7 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Keyboard } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -7,7 +9,6 @@ import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
 
 export interface ChangeKeystorePasswordFormValues {
-  password: string
   newPassword: string
   confirmNewPassword: string
 }
@@ -18,10 +19,17 @@ const useChangeKeystorePassword = () => {
   const { state, dispatch: keystoreDispatch } = useController('KeystoreController')
   const { getExtraEntropy } = useExtraEntropy()
   const {
+    ref: confirmationModalRef,
+    open: openConfirmation,
+    close: closeConfirmation
+  } = useModalize()
+  // Held until the keystore is idle enough to accept it, see the effect below
+  const [pendingChange, setPendingChange] = useState<{ oldPassword?: string } | null>(null)
+  const hasDispatchedRef = useRef(false)
+  const {
     control,
     handleSubmit,
     watch,
-    setError,
     getValues,
     trigger,
     reset,
@@ -29,7 +37,6 @@ const useChangeKeystorePassword = () => {
   } = useForm<ChangeKeystorePasswordFormValues>({
     mode: 'all',
     defaultValues: {
-      password: '',
       newPassword: '',
       confirmNewPassword: ''
     }
@@ -46,32 +53,44 @@ const useChangeKeystorePassword = () => {
   }, [newPassword, trigger, addToast, t, getValues])
 
   useEffect(() => {
-    if (state.errorMessage) setError('password', { message: state.errorMessage })
-  }, [state.errorMessage, setError])
-
-  useEffect(() => {
     if (state.statuses.changeKeystorePassword === 'SUCCESS') reset()
   }, [reset, state.statuses.changeKeystorePassword])
 
-  const resetErrorState = () =>
+  // The old password is asked for in the confirmation sheet rather than as a third field, so
+  // the user proves who they are the same way they do everywhere else in the app.
+  const handleChangeKeystorePassword = handleSubmit(() => {
+    hasDispatchedRef.current = false
+    openConfirmation()
+  })
+
+  // The confirmation stays up while the change runs - it is what shows the progress, and a wrong
+  // password keeps it open with the error. It is closed once the change is through, and the
+  // success is opened only after it has finished closing.
+  const changePassword = useCallback((oldPassword?: string) => {
+    Keyboard.dismiss()
+    setPendingChange({ oldPassword })
+  }, [])
+
+  // Biometrics prove who the user is, and the old password is only ever used for that too - the
+  // keystore re-wraps the main key it already holds, so there is nothing else to hand over.
+  const changePasswordAfterBiometrics = useCallback(() => changePassword(), [changePassword])
+
+  // The keystore refuses to start an action while another is still settling, and confirming is
+  // an action of its own - it is only on its way back to idle when it reports that it passed. So
+  // the change waits for that rather than racing it.
+  useEffect(() => {
+    if (!pendingChange || hasDispatchedRef.current) return
+    if (Object.values(state.statuses).some((status) => status !== 'INITIAL')) return
+
+    hasDispatchedRef.current = true
     keystoreDispatch({
       type: 'method',
       params: {
-        method: 'resetErrorState',
-        args: []
+        method: 'changeKeystorePassword',
+        args: [getValues('newPassword'), pendingChange.oldPassword, getExtraEntropy()]
       }
     })
-
-  const handleChangeKeystorePassword = handleSubmit(
-    ({ password, newPassword: newPasswordFieldValue }) =>
-      keystoreDispatch({
-        type: 'method',
-        params: {
-          method: 'changeKeystorePassword',
-          args: [newPasswordFieldValue, password, getExtraEntropy()]
-        }
-      })
-  )
+  }, [pendingChange, state.statuses, keystoreDispatch, getValues, getExtraEntropy])
 
   return {
     control,
@@ -79,10 +98,12 @@ const useChangeKeystorePassword = () => {
     isValid,
     newPassword,
     status: state.statuses.changeKeystorePassword,
-    errorMessage: state.errorMessage,
     hasPasswordSecret: state.hasPasswordSecret,
-    resetErrorState,
-    handleChangeKeystorePassword
+    handleChangeKeystorePassword,
+    confirmationModalRef,
+    closeConfirmation,
+    changePassword,
+    changePasswordAfterBiometrics
   }
 }
 

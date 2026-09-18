@@ -7,7 +7,10 @@ import BiometricsPrompt, { SwitchToBiometricsButton } from '@common/components/B
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import { useIsBottomSheetOpen } from '@common/components/BottomSheet/BottomSheetContext'
+import {
+  useIsBottomSheetOpen,
+  useIsInsideBottomSheet
+} from '@common/components/BottomSheet/BottomSheetContext'
 import { isDev, isMobile, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
@@ -68,6 +71,8 @@ const PasswordConfirmation: React.FC<Props> = ({
   withFullHeightLayout
 }) => {
   const { t } = useTranslation()
+  const isBottomSheetOpen = useIsBottomSheetOpen()
+  const isInsideBottomSheet = useIsInsideBottomSheet()
   const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
   const inputRef = useRef<TextInput | null>(null)
   const { navigate } = useNavigation()
@@ -75,14 +80,6 @@ const PasswordConfirmation: React.FC<Props> = ({
   const setInputRef = useCallback((ref: TextInput | null) => {
     if (ref) inputRef.current = ref
   }, [])
-
-  useEffect(() => {
-    if (!withAutoFocus) return undefined
-
-    const focusTimeout = setTimeout(() => inputRef.current?.focus(), FOCUS_DELAY)
-
-    return () => clearTimeout(focusTimeout)
-  }, [withAutoFocus])
 
   // if using the onCustomSubmit method, it means we're using the
   // password confirmation for something different than unlocks
@@ -110,11 +107,26 @@ const PasswordConfirmation: React.FC<Props> = ({
 
   const passwordFieldValue = watch('password')
 
+  // The status sits on SUCCESS for a moment before returning to INITIAL, and this effect runs
+  // again for every render in that window, so the confirmation is latched to the one transition.
+  // Without it a caller that can only run once - changing the password, say - is invoked twice.
+  const hasConfirmedRef = useRef(false)
+
   useEffect(() => {
-    if (keystoreState.errorMessage) setError('password', { message: keystoreState.errorMessage })
-    else if (keystoreState.statuses.unlockWithSecret === 'SUCCESS') {
-      onPasswordConfirmed(passwordFieldValue)
+    if (keystoreState.errorMessage) {
+      setError('password', { message: keystoreState.errorMessage })
+      return
     }
+
+    if (keystoreState.statuses.unlockWithSecret !== 'SUCCESS') {
+      hasConfirmedRef.current = false
+      return
+    }
+
+    if (hasConfirmedRef.current) return
+
+    hasConfirmedRef.current = true
+    onPasswordConfirmed(passwordFieldValue)
   }, [
     keystoreState.errorMessage,
     keystoreState.statuses.unlockWithSecret,
@@ -157,6 +169,8 @@ const PasswordConfirmation: React.FC<Props> = ({
     isVerifying,
     errorMessage: biometricsErrorMessage,
     confirmWithBiometrics,
+    autoPromptBiometrics,
+    cancelAutoPrompt,
     switchToPassword,
     reset: resetSecretConfirmation
   } = useSecretConfirmation({
@@ -165,6 +179,25 @@ const PasswordConfirmation: React.FC<Props> = ({
   })
 
   const isOfferingBiometrics = !!onBiometricsConfirmed && canUseBiometrics
+
+  useEffect(() => {
+    if (!withAutoFocus) return undefined
+    // Inside a sheet the content is mounted with the screen rather than when the sheet opens, so
+    // the field waits for it to be up. Outside one there is nothing to wait for.
+    if (isInsideBottomSheet && !isBottomSheetOpen) return undefined
+    // Nothing to focus while biometrics are what is being asked for
+    if (isOfferingBiometrics && isUsingBiometrics) return undefined
+
+    const focusTimeout = setTimeout(() => inputRef.current?.focus(), FOCUS_DELAY)
+
+    return () => clearTimeout(focusTimeout)
+  }, [
+    withAutoFocus,
+    isInsideBottomSheet,
+    isBottomSheetOpen,
+    isOfferingBiometrics,
+    isUsingBiometrics
+  ])
   // The panel says what is actually being asked for, so it does not read "password" while the
   // fingerprint or face prompt is the thing on screen
   const panelTitle = isOfferingBiometrics && isUsingBiometrics ? biometricsTitle : t(title)
@@ -172,12 +205,12 @@ const PasswordConfirmation: React.FC<Props> = ({
   // The content is mounted with the screen rather than when the sheet opens, so the prompt waits
   // for the sheet to actually come up - otherwise it would fire the moment the screen renders.
   // Once per opening, the way the signing sheet and the unlock screen both do it.
-  const isBottomSheetOpen = useIsBottomSheetOpen()
   const hasAutoPromptedRef = useRef(false)
 
   useEffect(() => {
     if (!isBottomSheetOpen) {
       hasAutoPromptedRef.current = false
+      cancelAutoPrompt()
       return
     }
 
@@ -186,12 +219,13 @@ const PasswordConfirmation: React.FC<Props> = ({
     hasAutoPromptedRef.current = true
     // Clears whatever the previous confirmation left behind before asking for a new one
     resetSecretConfirmation()
-    confirmWithBiometrics().catch(() => {})
+    autoPromptBiometrics()
   }, [
     isBottomSheetOpen,
     isOfferingBiometrics,
     isUsingBiometrics,
-    confirmWithBiometrics,
+    autoPromptBiometrics,
+    cancelAutoPrompt,
     resetSecretConfirmation
   ])
 
