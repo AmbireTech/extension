@@ -15,6 +15,7 @@ import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import Header from '@common/modules/header/components/Header/Header'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
@@ -24,12 +25,17 @@ import TokenDetailsTitle from '@common/modules/token-details/components/Title'
 import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import useTokenActions from '@common/modules/token-details/hooks/useTokenActions'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: NetworksController) => state.networks
 
 /**
  * Builds a portfolio-shaped TokenResult from a trending token so the same token-details components
@@ -58,13 +64,16 @@ const buildTokenResult = (token: TrendingToken, chainId: bigint, address: string
   flags: { onGasTank: false, rewardsType: null, canTopUpGasTank: false, isFeeToken: false }
 })
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const TrendingTokenDetailsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state } = useRoute()
   const { state: dappsState } = useController('DappsController')
-  const { state: networks } = useController('NetworksController', (s) => s.networks)
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { isNarrowWebLayout } = useCompactActionRequestLayout()
 
   const token: TrendingToken | undefined = useMemo(
@@ -245,11 +254,12 @@ const TrendingTokenDetailsScreen = () => {
                 spacings.phSm
               ]}
             >
-              {actions.map((action) => (
+              {actions.map((action, index) => (
                 <TokenDetailsButton
                   key={action.id}
                   {...action}
                   isDisabled={!!action.isDisabled}
+                  isLast={index === actions.length - 1}
                   token={displayToken}
                   iconWidth={action.iconWidth}
                 />
@@ -269,11 +279,12 @@ const TrendingTokenDetailsScreen = () => {
                 : undefined
             }
           >
-            {actions.map((action) => (
+            {actions.map((action, index) => (
               <TokenDetailsButton
                 key={action.id}
                 {...action}
                 isDisabled={!!action.isDisabled}
+                isLast={index === actions.length - 1}
                 token={displayToken}
                 iconWidth={action.iconWidth}
               />

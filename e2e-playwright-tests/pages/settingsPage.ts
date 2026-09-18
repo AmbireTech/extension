@@ -32,8 +32,8 @@ export class SettingsPage extends BasePage {
   async openCustomTokensPage() {
     await this.openSettingsGeneral()
 
-    // go to Add account page and assert url
-    await this.page.locator('//div[contains(text(),"Custom tokens")]').first().click()
+    // go to the Custom assets page and assert url
+    await this.page.locator('//div[contains(text(),"Custom assets")]').first().click()
     await this.checkUrl('/settings/manage-tokens')
   }
 

@@ -41,7 +41,12 @@ import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constant
 import getStyles from './styles'
 import UpdateAvailableBanner, { selectIsExtensionUpdateAvailable } from './UpdateAvailableBanner'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const FOOTER_BUTTON_HIT_SLOP = { top: 10, bottom: 15 }
+
+const selectRequestWindow = (state: AllControllersMappingType['RequestsController']) =>
+  state.requestWindow
 
 const KeyStoreUnlockScreen = () => {
   const { control, handleSubmit, errors, passwordFieldError, disableSubmit, handleUnlock } =
@@ -59,7 +64,7 @@ const KeyStoreUnlockScreen = () => {
     state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
-  const { state: requestWindow } = useController('RequestsController', 'requestWindow')
+  const { state: requestWindow } = useController('RequestsController', selectRequestWindow)
   const { state: isExtensionUpdateAvailable } = useController(
     'ExtensionUpdateController',
     selectIsExtensionUpdateAvailable
@@ -363,7 +368,7 @@ const KeyStoreUnlockScreen = () => {
 
             {canUseBiometrics && (
               <Button
-                type="secondary"
+                type={isSidePanel ? 'tertiary' : 'secondary'}
                 hasBottomSpacing={false}
                 style={[styles.switchButton, spacings.mt]}
                 text={t('Unlock with biometrics')}

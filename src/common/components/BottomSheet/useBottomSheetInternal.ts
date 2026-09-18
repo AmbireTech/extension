@@ -18,7 +18,14 @@ const ANIMATION_DURATION: number = 250
 const { isPopup, isMobileApp } = getUiType()
 
 const useBottomSheetInternal = (props: BottomSheetProps) => {
-  const { id: _id, type: _type, sheetRef, autoOpen = false, customZIndex } = props
+  const {
+    id: _id,
+    type: _type,
+    sheetRef,
+    autoOpen = false,
+    customZIndex,
+    modalTopOffset: customModalTopOffset
+  } = props
   const { closeBottomSheet: _closeBottomSheet = () => {} } = props
   const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
   const { isNarrowWebLayout } = useCompactActionRequestLayout()
@@ -100,6 +107,7 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
   }, [closeBottomSheet, isOpen])
 
   const modalTopOffset = useMemo(() => {
+    if (customModalTopOffset !== undefined) return customModalTopOffset
     if (isPopup && isModal) return 0
     if (isNarrowWebLayout) return 0
     if (isWeb) return HEADER_HEIGHT - 20
@@ -107,7 +115,7 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
     const topOffset = top - SPACING_SM
 
     return topOffset
-  }, [isModal, isNarrowWebLayout, top])
+  }, [customModalTopOffset, isModal, isNarrowWebLayout, top])
 
   // Compute dynamic zIndex based on nesting level when the sheet opened
   // Each nested sheet gets a higher zIndex so its backdrop renders on top of parent sheets

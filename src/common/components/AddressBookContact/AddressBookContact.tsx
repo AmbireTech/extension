@@ -12,13 +12,15 @@ import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import ManageContact from './ManageContact'
 import getStyles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   address: string
@@ -40,6 +42,10 @@ interface Props {
   height?: number
   isActive?: boolean
 }
+
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const AddressBookContact: FC<Props> = ({
   address,
@@ -64,8 +70,8 @@ const AddressBookContact: FC<Props> = ({
   const { theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { state: accounts } = useController('AccountsController', 'accounts')
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const reverseLookup = useReverseLookup({
     address,
     // This is needed because the component is rendered in AddressInput when a valid address

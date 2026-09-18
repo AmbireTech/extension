@@ -1,23 +1,53 @@
+import { applyCrashReportPolicy } from '@common/config/analytics/applyCrashReportPolicy'
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
-import CONFIG, { APP_VERSION, isDev } from '@common/config/env'
+import CONFIG, { APP_VERSION, isAmbireNext, isDev, isTesting } from '@common/config/env'
 import * as Sentry from '@sentry/react'
 import { IS_FIREFOX } from '@web/constants/common'
 
 export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   dsn: CONFIG.SENTRY_DSN_BROWSER_EXTENSION,
   environment: CONFIG.APP_ENV as string,
-  release: `extension-${process.env.WEB_ENGINE}@${APP_VERSION}`,
+  // Ambire Next is a second production webkit build carrying the very same
+  // version, so it needs a release of its own - otherwise its events and source
+  // maps land in the stable build's release. Must stay in sync with the release
+  // name that scripts/build-extensions.sh uploads the source maps under.
+  release: `extension-${isAmbireNext ? 'next-' : ''}${process.env.WEB_ENGINE}@${APP_VERSION}`,
   // Disables sending personally identifiable information
   sendDefaultPii: false,
   integrations: [],
+  // Sentry is doing some extra work to make sure the fetch it finds is the right one, but it
+  // doesn't work under LavaMoat so we pass it the fetch used in that context.
+  transport: (options) => Sentry.makeFetchTransport(options, (...args) => fetch(...args)),
+  // Reports the SDK's own delivery failures instead of swallowing them
+  debug: isTesting,
   // No explicit `event` param type here: annotating this object as
   // Sentry.BrowserOptions lets `event`'s type be inferred contextually as the
   // narrower `ErrorEvent`, which scrubSentryEventSecrets (generic) then
   // preserves in its return type -- an explicit `event: Sentry.Event` param
   // widens both to the general Event union, which BrowserOptions rejects.
-  beforeSend(event) {
+  beforeSend(event, hint) {
+    if (!applyCrashReportPolicy(event, hint?.originalException)) return null
+
     return scrubSentryEventSecrets(event)
   }
+}
+
+/**
+ * Logs every event Sentry actually delivers, so a report that silently never leaves the
+ * extension is distinguishable from no error happening at all. Call it right after
+ * `Sentry.init`, passing the client of the package that initialized it. No-op unless this is
+ * a testing build.
+ */
+export const logSentryDeliveryWhenTesting = (client: ReturnType<typeof Sentry.getClient>) => {
+  if (!isTesting || !client) return
+
+  client.on('afterSendEvent', (event, sendResponse) => {
+    console.log(
+      `[sentry] delivered ${event.type || 'error'} event ${event.event_id} with status ${
+        sendResponse.statusCode
+      }`
+    )
+  })
 }
 
 export const captureException = Sentry.captureException

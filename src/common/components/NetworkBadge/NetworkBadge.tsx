@@ -6,9 +6,11 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import Text, { TextWeight } from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   chainId?: bigint
@@ -22,6 +24,8 @@ interface Props {
   renderNetworkName?: (networkName: string) => React.ReactNode
   responsiveSizeMultiplier?: number
 }
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const NetworkBadge: FC<Props> = ({
   chainId,
@@ -38,7 +42,7 @@ const NetworkBadge: FC<Props> = ({
   const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const network = useMemo(() => {
     return networks.find((n) => n.chainId === chainId)

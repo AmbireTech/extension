@@ -109,11 +109,12 @@ const AccountAddress: FC<Props> = ({
     return `${name} (${t('Updated {{timeAgo}}', { timeAgo: getTimeAgo(new Date(updatedAt)) })})`
   }, [name, updatedAt, t])
 
-  // On mobile the address takes the whole row width, but when a resolved name is
-  // displayed next to it, keep it short so the name isn't truncated
+  // On mobile, and in a narrow view, the address takes most of the row width,
+  // but when a resolved name is displayed next to it, keep it short so the name isn't
+  // truncated (shortened further in a narrow view, where space is tighter)
   const getWithCopyMaxLength = () => {
     if (addressHighlight || withWrap) return 42
-    if (!isMobile) return 16
+    if (!isMobile) return showResolvedName && isNarrowWebLayout ? 10 : 16
 
     return showResolvedName ? 13 : 42
   }

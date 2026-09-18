@@ -1,9 +1,10 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
+import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -17,6 +18,14 @@ type Props = {
   resolveType?: ButtonProps['type']
   rejectButtonTestID?: string
   resolveButtonTestID?: string
+  /**
+   * Turns Reject into a button that can also clear the app's whole queue or silence it.
+   */
+  withRejectOptions?: boolean
+  /** Title of the reject options sheet, e.g. "Cancel connection". Needed with `withRejectOptions`. */
+  rejectOptionsTitle?: string
+  /** How the plain rejection reads as an option, e.g. "Cancel this connection". */
+  rejectOptionText?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
   /** Optional content rendered above the footer buttons (e.g. view-only alert) */
@@ -32,6 +41,9 @@ const ActionFooter = ({
   resolveType = 'primary',
   rejectButtonTestID,
   resolveButtonTestID,
+  withRejectOptions = false,
+  rejectOptionsTitle = '',
+  rejectOptionText = '',
   resolveNode,
   children
 }: Props) => {
@@ -39,16 +51,17 @@ const ActionFooter = ({
   const { isWideFooterLayout } = useCompactActionRequestLayout()
 
   const handleOnResolve = useCallback(() => onResolve(), [onResolve])
-  const showReject = useMemo(() => !!onReject, [onReject])
 
-  const rejectButton = showReject ? (
+  const rejectButton = onReject ? (
     <View style={[flexbox.flex1, { minWidth: 0 }]}>
-      <Button
+      <RejectRequestButton
         text={rejectButtonText || t('Reject')}
-        type="danger"
         hasBottomSpacing={false}
         size="large"
-        onPress={onReject}
+        onReject={onReject}
+        withOptions={withRejectOptions}
+        optionsTitle={rejectOptionsTitle}
+        rejectOptionText={rejectOptionText}
         testID={rejectButtonTestID}
       />
     </View>
@@ -88,14 +101,16 @@ const ActionFooter = ({
       <GlassView borderRadius={28} cssStyle={{ flexDirection: 'column', padding: SPACING }}>
         <View style={[flexbox.directionRow]}>
           <View style={flexbox.flex1}>
-            {showReject && (
+            {!!onReject && (
               <View style={[flexbox.flex1, spacings.mrLg]}>
-                <Button
+                <RejectRequestButton
                   text={rejectButtonText || t('Reject')}
-                  type="danger"
                   hasBottomSpacing={false}
                   size="large"
-                  onPress={onReject}
+                  onReject={onReject}
+                  withOptions={withRejectOptions}
+                  optionsTitle={rejectOptionsTitle}
+                  rejectOptionText={rejectOptionText}
                   testID={rejectButtonTestID}
                   style={flexbox.alignSelfStart}
                 />

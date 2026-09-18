@@ -23,6 +23,8 @@ import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   onPress?: () => void
   /**
@@ -33,6 +35,9 @@ type Props = {
   withArrowRightIcon?: boolean
 }
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -42,7 +47,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { isStoreReady } = useControllerStore()
 
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
     duration: 50

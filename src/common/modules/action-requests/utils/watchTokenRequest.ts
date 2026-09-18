@@ -4,6 +4,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import { RPCProviders } from '@ambire-common/interfaces/provider'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
 import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
+import { getAssetCacheKey } from '@ambire-common/libs/portfolio/helpers'
 import { TemporaryTokens } from '@ambire-common/libs/portfolio/interfaces'
 import { TokenData } from '@web/modules/action-requests/screens/WatchTokenRequestScreen/WatchTokenRequestScreen' // Polygon MATIC token address
 
@@ -20,14 +21,14 @@ const selectNetwork = async (
 ) => {
   if (!network && !tokenNetwork?.chainId) {
     const validTokenNetworks = networks.filter((_network: Network) => {
-      const key = `${tokenData?.address}-${_network.chainId}`
+      const key = getAssetCacheKey(tokenData?.address, _network.chainId)
       const isValid = validTokens.erc20[key]?.isValid === true
 
       return isValid
     })
 
     const allNetworksChecked = networks.every((_network: Network) => {
-      const key = `${tokenData?.address}-${_network.chainId}`
+      const key = getAssetCacheKey(tokenData?.address, _network.chainId)
       const hasKey = key in validTokens.erc20
       const isWorking = providers[_network.chainId.toString()]?.isWorking
       const hasError = validTokens.erc20[key]?.error || validTokens.erc20[key] === false
@@ -56,7 +57,7 @@ const selectNetwork = async (
     } else {
       // Get networks that haven't been tried yet and have working providers
       const untried = networks.filter((_network: Network) => {
-        const key = `${tokenData?.address}-${_network.chainId}`
+        const key = getAssetCacheKey(tokenData?.address, _network.chainId)
         const hasKey = key in validTokens.erc20
         const isWorking = providers[_network.chainId.toString()]?.isWorking
         const hasError = validTokens.erc20[key]?.error || validTokens.erc20[key] === false
@@ -87,7 +88,7 @@ const getTokenEligibility = (
     return undefined
   }
 
-  const key = `${tokenData.address}-${tokenNetwork.chainId}`
+  const key = getAssetCacheKey(tokenData.address, tokenNetwork.chainId)
   const tokenValidation = validTokens.erc20[key]
 
   if (tokenValidation === true || tokenValidation?.isValid === true) {

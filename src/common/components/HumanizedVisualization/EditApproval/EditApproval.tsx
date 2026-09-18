@@ -21,6 +21,8 @@ import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type EditApprovalAmountInputProps = {
   initialAmount: string
   backgroundColor: ColorValue
@@ -101,6 +103,9 @@ const EditApprovalAmountInput = memo(
     )
   }
 )
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const EditApproval = ({
   editCall,
   token,
@@ -129,7 +134,7 @@ const EditApproval = ({
     open: openEditApprovals,
     close: closeEditApprovals
   } = useModalize()
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const amountRef = useRef<string>('0')
   const [initialAmount, setInitialAmount] = useState<string>('0')
   const [initialValueSet, setInitialValueSet] = useState<boolean>(false)

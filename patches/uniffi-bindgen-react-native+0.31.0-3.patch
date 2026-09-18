@@ -1,0 +1,14 @@
+diff --git a/node_modules/uniffi-bindgen-react-native/package.json b/node_modules/uniffi-bindgen-react-native/package.json
+index 16a7d72..c9ce317 100644
+--- a/node_modules/uniffi-bindgen-react-native/package.json
++++ b/node_modules/uniffi-bindgen-react-native/package.json
+@@ -20,7 +20,8 @@
+       "types": "./typescript/dist/esm/index.d.ts",
+       "import": "./typescript/dist/esm/index.js",
+       "require": "./typescript/dist/cjs/index.js"
+-    }
++    },
++    "./package.json": "./package.json"
+   },
+   "bin": {
+     "ubrn": "./bin/cli.cjs",

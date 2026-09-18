@@ -2,7 +2,8 @@ import HumanizedVisualization from './HumanizedVisualization'
 import Erc7730StructuredVisualization from './Erc7730/Erc7730StructuredVisualization'
 
 export {
-  getVisibleErc7730RowsExcludingTitleParts,
+  getErc7730IntentText,
+  getVisibleErc7730RowsExcludingIntentFields,
   MOBILE_ERC7730_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
 } from './Erc7730/helpers'
