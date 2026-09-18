@@ -31,6 +31,7 @@ const DappConnectScreen = () => {
     isTrustedByUser,
     canBeTrustedByUser,
     isScamCheckerEnabled,
+    handleEnableScamChecker,
     toggleTrust
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
@@ -104,6 +105,7 @@ const DappConnectScreen = () => {
                 isTrustedByUser={isTrustedByUser}
                 canBeTrustedByUser={canBeTrustedByUser}
                 onToggleTrust={toggleTrust}
+                onEnableScamChecker={handleEnableScamChecker}
                 isScamCheckerEnabled={isScamCheckerEnabled}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />

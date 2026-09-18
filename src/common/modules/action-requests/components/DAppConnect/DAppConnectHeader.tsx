@@ -43,7 +43,8 @@ const DAppConnectHeader: FC<Props> = ({
   // shows no verified mark - the app did not pass our checks, the user simply trusts it.
   const isSuspiciousHosting =
     isScamCheckerEnabled && securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
-  const isScamCheckerDisabled = !isScamCheckerEnabled
+  const isBlacklisted = isScamCheckerEnabled && securityCheck === 'BLACKLISTED'
+  const hasFailedToGet = isScamCheckerEnabled && securityCheck === 'FAILED_TO_GET'
 
   const { minHeightSize } = useWindowSize()
 
@@ -60,12 +61,11 @@ const DAppConnectHeader: FC<Props> = ({
       style={[
         styles.contentHeader,
         {
-          backgroundColor:
-            isScamCheckerEnabled && securityCheck === 'BLACKLISTED'
-              ? theme.errorBackground
-              : isScamCheckerDisabled || isSuspiciousHosting || securityCheck === 'FAILED_TO_GET'
-                ? theme.warningBackground
-                : theme.tertiaryBackground
+          backgroundColor: isBlacklisted
+            ? theme.errorBackground
+            : isSuspiciousHosting || hasFailedToGet
+              ? theme.warningBackground
+              : theme.tertiaryBackground
         },
         spacingsStyle
       ]}
@@ -120,7 +120,7 @@ const DAppConnectHeader: FC<Props> = ({
               <TrustedIcon />
             </View>
           )}
-          {isScamCheckerEnabled && securityCheck === 'BLACKLISTED' && (
+          {isBlacklisted && (
             <View
               style={{
                 position: 'absolute',
@@ -131,7 +131,7 @@ const DAppConnectHeader: FC<Props> = ({
               <ErrorFilledIcon width={18} height={18} />
             </View>
           )}
-          {(isScamCheckerDisabled || isSuspiciousHosting || securityCheck === 'FAILED_TO_GET') && (
+          {(isSuspiciousHosting || hasFailedToGet) && (
             <View
               style={{
                 position: 'absolute',

@@ -17,7 +17,7 @@ const useDappConnect = () => {
 
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { state: dappsState } = useController('DappsController')
-  const { state: isScamCheckerEnabled } = useController(
+  const { state: isScamCheckerEnabled, dispatch: featureFlagsDispatch } = useController(
     'FeatureFlagsController',
     selectIsScamCheckerEnabled
   )
@@ -74,11 +74,21 @@ const useDappConnect = () => {
     })
   }, [userRequest, dappToConnect, requestsDispatch])
 
+  const handleEnableScamChecker = useCallback(() => {
+    featureFlagsDispatch({
+      type: 'method',
+      params: {
+        method: 'setFeatureFlags',
+        args: [{ scamAndPhishingChecker: true }]
+      }
+    })
+  }, [featureFlagsDispatch])
+
   const shouldHoldToProceed = useMemo(() => {
     return (
       !!dappToConnect &&
-      (!isScamCheckerEnabled ||
-        dappToConnect.blacklisted === 'BLACKLISTED' ||
+      isScamCheckerEnabled &&
+      (dappToConnect.blacklisted === 'BLACKLISTED' ||
         isSuspiciousHosting ||
         dappToConnect.blacklisted === 'FAILED_TO_GET')
     )
@@ -87,7 +97,7 @@ const useDappConnect = () => {
   const resolveButtonText = useMemo(() => {
     if (!dappToConnect) return t('Loading...')
     if (isAuthorizing) return t('Connecting...')
-    if (!isScamCheckerEnabled) return t('Hold to connect')
+    if (!isScamCheckerEnabled) return t('Connect')
     if (dappToConnect.blacklisted === 'BLACKLISTED' || isSuspiciousHosting)
       return t('Hold to continue anyway')
     if (dappToConnect.blacklisted === 'LOADING') return t('Loading...')
@@ -114,6 +124,7 @@ const useDappConnect = () => {
     isTrustedByUser,
     canBeTrustedByUser,
     isScamCheckerEnabled,
+    handleEnableScamChecker,
     toggleTrust
   }
 }
