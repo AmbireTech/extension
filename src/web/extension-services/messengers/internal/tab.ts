@@ -1,4 +1,5 @@
 import { CallbackFunction, ReplyMessage, SendMessage } from '@ambire-common/interfaces/messenger'
+import { logInfoWithPrefix } from '@common/utils/logger'
 import { createMessenger } from '@web/extension-services/messengers/internal/createMessenger'
 import { isValidReply } from '@web/extension-services/messengers/internal/isValidReply'
 import { isValidSend } from '@web/extension-services/messengers/internal/isValidSend'
@@ -26,6 +27,44 @@ function sendMessage<TPayload>(
 }
 
 /**
+ * The messages Chrome rejects with when the tab, window or extension page we are
+ * addressing has already gone away.
+ */
+const TARGET_GONE_ERROR_SUBSTRINGS = [
+  'Receiving end does not exist',
+  'No tab with id',
+  'No window with id'
+]
+
+const isTargetGoneError = (error: unknown) =>
+  error instanceof Error &&
+  TARGET_GONE_ERROR_SUBSTRINGS.some((substring) => error.message.includes(substring))
+
+/**
+ * Sends a message and reports whether it reached its target. Resolves to false when the
+ * target was already gone, which is expected here and only gets logged. Every other
+ * failure rejects, so a genuine messaging bug still surfaces.
+ */
+async function sendMessageToTarget<TPayload>(
+  message: SendMessage<TPayload>,
+  options: { tabId?: number; frameId?: number; documentId?: string } = {}
+): Promise<boolean> {
+  try {
+    await sendMessage(message, options)
+    return true
+  } catch (error) {
+    if (!isTargetGoneError(error)) throw error
+
+    logInfoWithPrefix(
+      'tabMessenger',
+      `dropped "${message.topic}" because the target is gone`,
+      error
+    )
+    return false
+  }
+}
+
+/**
  * Creates a "tab messenger" that can be used to communicate between
  * scripts where `chrome.tabs` & `chrome.runtime` is defined.
  *
@@ -43,8 +82,8 @@ export const tabMessenger = createMessenger({
     { id, tabId }: { id?: number | string; tabId?: number } = {}
   ) {
     if (topic.includes(globalIsAmbireNext ? 'broadcast-next' : 'broadcast')) {
-      sendMessage({ topic: `> ${topic}`, payload, id }, { tabId })
-      return Promise.resolve(null) as any
+      await sendMessageToTarget({ topic: `> ${topic}`, payload, id }, { tabId })
+      return null as any
     }
 
     return new Promise<TResponse>((resolve, reject) => {
@@ -65,7 +104,21 @@ export const tabMessenger = createMessenger({
       }
       chrome.runtime.onMessage?.addListener(listener)
 
-      sendMessage({ topic: `> ${topic}`, payload, id }, { tabId })
+      // A target that is already gone will never reply, so the listener has to be
+      // removed here instead - otherwise it stays registered in the long-lived
+      // background for the rest of the session and this promise never settles.
+      sendMessageToTarget({ topic: `> ${topic}`, payload, id }, { tabId }).then(
+        (wasDelivered) => {
+          if (wasDelivered) return
+
+          chrome.runtime.onMessage?.removeListener(listener)
+          resolve(null as TResponse)
+        },
+        (error) => {
+          chrome.runtime.onMessage?.removeListener(listener)
+          reject(error)
+        }
+      )
     })
   },
   reply<TPayload, TResponse>(topic: string, callback: CallbackFunction<TPayload, TResponse>) {
@@ -92,20 +145,15 @@ export const tabMessenger = createMessenger({
       const senderDocumentId = (sender as chrome.runtime.MessageSender & { documentId?: string })
         .documentId
 
+      let replyPayload: { response: TResponse } | { error: Record<string, unknown> }
       try {
-        const response = await callback(message.payload, {
-          id: message.id,
-          sender,
-          topic: message.topic
-        })
-        sendMessage(
-          {
-            topic: repliedTopic,
-            payload: { response },
-            id: message.id
-          },
-          { tabId: sender.tab?.id, frameId: sender.frameId, documentId: senderDocumentId }
-        )
+        replyPayload = {
+          response: await callback(message.payload, {
+            id: message.id,
+            sender,
+            topic: message.topic
+          })
+        }
       } catch (error_) {
         // Errors do not serialize properly over `chrome.runtime.sendMessage`, so
         // we are manually serializing it to an object.
@@ -114,19 +162,18 @@ export const tabMessenger = createMessenger({
         for (const key of Object.getOwnPropertyNames(error_)) {
           error[key] = (<Error>error_)[<keyof Error>key]
         }
-        sendMessage(
-          {
-            topic: repliedTopic,
-            payload: { error },
-            id: message.id
-          },
-          {
-            tabId: sender.tab?.id,
-            frameId: sender.frameId,
-            documentId: senderDocumentId
-          }
-        )
+        replyPayload = { error }
       }
+
+      await sendMessageToTarget(
+        {
+          topic: repliedTopic,
+          payload: replyPayload,
+          id: message.id
+        },
+        { tabId: sender.tab?.id, frameId: sender.frameId, documentId: senderDocumentId }
+      )
+
       sendResponse({})
       return true
     }
