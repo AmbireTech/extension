@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -14,7 +13,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 export function GlobalTooltip() {
-  const { t } = useTranslation()
   const [activeTooltip, setActiveTooltip] = useState(tooltipManager.getActiveTooltip())
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
   const isClosingRef = React.useRef(false)
@@ -54,12 +52,16 @@ export function GlobalTooltip() {
           <View
             style={[
               flexbox.alignSelfCenter,
-              { backgroundColor: theme.infoBackground, borderRadius: 50 }
+              { backgroundColor: theme.infoBackground, borderRadius: 50 },
+              // Without a title there is no header to space the icon from the content
+              !activeTooltip?.title && spacings.mb
             ]}
           >
             <InfoIcon width={30} height={30} color={theme.infoDecorative} />
           </View>
-          <ModalHeader title={t('Info modal')} handleClose={closeSheet} />
+          {!!activeTooltip?.title && (
+            <ModalHeader title={activeTooltip.title} handleClose={closeSheet} />
+          )}
         </View>
       }
     >
