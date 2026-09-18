@@ -14,6 +14,8 @@ import { Portal } from '@gorhom/portal'
 
 import getStyles, { SETTINGS_MODAL_WIDTH } from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const SETTINGS_ICON_SIZE = 20
 
 const RadioButton = ({
@@ -58,12 +60,15 @@ interface Props {
   settingModalVisible: boolean
 }
 
+const selectRoutePriority = (state: AllControllersMappingType['SwapAndBridgeController']) =>
+  state.routePriority
+
 const SettingsModal: React.FC<Props> = ({ handleToggleSettingsMenu, settingModalVisible }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const settingButtonRef: any = useRef(null)
   const settingMenuRef: any = useRef(null)
-  const { state: routePriority } = useController('SwapAndBridgeController', 'routePriority')
+  const { state: routePriority } = useController('SwapAndBridgeController', selectRoutePriority)
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { x: settingButtonX, y: settingButtonY } = useElementSize(settingButtonRef)
   const [bindAnim, , isHovered, , animatedValues] = useCustomHover({

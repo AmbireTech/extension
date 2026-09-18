@@ -21,7 +21,7 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
-import { getUiType } from '@common/utils/uiType/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 type CustomGasPriceInputProps = {
   initialAmount: string

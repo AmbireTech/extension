@@ -14,6 +14,10 @@ import { getExchangesWithData } from '@common/utils/exchanges'
 
 import useTokenExchanges from './useTokenExchanges'
 
+import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
+
+const selectExchanges = (state: PortfolioController) => state.exchangeState.exchanges
+
 const LOGO_SIZE = 16
 // Each logo is pulled onto the previous one, so that they read as a single stack
 const LOGO_OVERLAP = 5
@@ -31,10 +35,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const marketData = useTokenExchanges(chainId, address)
-  const { state: exchangeData } = useController(
-    'PortfolioController',
-    (state) => state.exchangeState.exchanges
-  )
+  const { state: exchangeData } = useController('PortfolioController', selectExchanges)
 
   const exchangesWithData = useMemo(
     () => getExchangesWithData(marketData?.exchanges || [], exchangeData),

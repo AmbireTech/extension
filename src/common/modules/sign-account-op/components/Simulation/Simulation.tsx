@@ -24,6 +24,8 @@ import SimulationSkeleton from './SimulationSkeleton'
 import { getIsSimulationOutdated, isAccountOpSimulationCurrent } from './helpers'
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   network?: Network
   // marks whether the estimation has been done regardless
@@ -31,6 +33,8 @@ interface Props {
   isEstimationComplete: boolean
   isViewOnly: boolean
 }
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) => {
   const { t } = useTranslation()
@@ -46,7 +50,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   } = useController('SelectedAccountController')
   const [initialSimulationLoaded, setInitialSimulationLoaded] = useState(false)
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const currentNetworkSimulatedAccountOp = network?.chainId
     ? networkSimulatedAccountOp[network.chainId.toString()]

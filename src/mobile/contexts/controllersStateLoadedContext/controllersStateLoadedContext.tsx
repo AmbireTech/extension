@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION, isDev } from '@common/config/env'
@@ -7,6 +7,7 @@ import {
   ControllersStateLoadedContextType
 } from '@common/contexts/controllersStateLoadedContext'
 import useControllerStore from '@common/hooks/useControllerStore'
+import { MOBILE_DEFERRED_CONTROLLERS } from '@mobile/constants/criticalControllers'
 
 const MIN_LOADING_TIME = 250
 
@@ -25,8 +26,12 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
       if (eventData === 'controllersLoadingTakingTooLong') {
         const msg = 'ControllersStateLoadedProvider: states loading taking too long'
 
+        // The deferred controllers are pending on purpose at this point, so listing them
+        // would send the report chasing a stall that isn't one.
         const loadingControllers = Array.from(controllerStore.controllersByName).filter(
-          (controllerName) => !controllerStore.initializedControllers.has(controllerName)
+          (controllerName) =>
+            !controllerStore.initializedControllers.has(controllerName) &&
+            !MOBILE_DEFERRED_CONTROLLERS.includes(controllerName)
         )
         const errorData: any = {
           loadingControllers,
@@ -39,8 +44,8 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
         }
 
         setIsStatesLoadingTakingTooLong(true)
-        // In dev this fires on every boot with the webview worker dev server down,
-        // which is a local setup problem, not something worth a Sentry event.
+        // In dev this can fire from a local setup problem rather than a real
+        // stall, which is not worth a Sentry event.
         if (!isDev) captureMessage(msg, { level: 'warning', extra: errorData })
         console.error(msg)
       }
@@ -65,9 +70,10 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
   }, [hasMinLoadingTimePassed])
 
   // On mobile the route renders on the critical-controllers-only flag so it shows up
-  // ASAP, but never before MIN_LOADING_TIME so the splash doesn't just flash.
-  // `areAllControllerStatesLoaded` still fires later, when every controller has
-  // crossed the webview bridge.
+  // ASAP, but never before MIN_LOADING_TIME so the splash doesn't just flash. The
+  // loaded flag fires later and is what a screen reading beyond the critical subset
+  // waits on. It does not wait on the dapp catalog and the phishing lists, which only
+  // start loading once the portfolio is in.
   const contextValue = useMemo<ControllersStateLoadedContextType>(
     () => ({
       canRenderRoute: hasMinLoadingTimePassed && isReadyToLoadRoutes,

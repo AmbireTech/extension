@@ -42,6 +42,8 @@ import commonWebStyles from '@web/styles/utils/common'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const SOCIAL = [
   { Icon: TwitterIcon, url: TWITTER_URL, label: 'X' },
   { Icon: TelegramIcon, url: TELEGRAM_URL, label: 'Telegram' },
@@ -81,12 +83,15 @@ const OTHER_LINKS = [
 const { isTab } = getUiType()
 const expandViewTooltipId = 'expand-view-tooltip'
 
+const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
+  state.hasPasswordSecret
+
 const NavMenu = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { theme } = useTheme(getStyles)
   const { dispatch: mainDispatch } = useController('MainController')
-  const { state: hasPasswordSecret } = useController('KeystoreController', 'hasPasswordSecret')
+  const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
 
   const handleLockAmbire = useCallback(() => {
     syncSessionStorage.set(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE, 'true')

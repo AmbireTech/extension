@@ -10,6 +10,11 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 
+import type { AccountsController } from '@ambire-common/controllers/accounts/accounts'
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+const selectAccounts = (state: AccountsController) => state.accounts
+const selectNetworks = (state: NetworksController) => state.networks
 type FormValues = {
   ownerAddress: AddressState
 }
@@ -19,12 +24,12 @@ const useSafeImportByOwner = () => {
     dispatch: safeDispatch,
     state: { safeOwnerSearches, ownerCurrentlyDisplayingFor }
   } = useController('SafeController')
-  const { state: importedAccounts } = useController('AccountsController', (state) => state.accounts)
+  const { state: importedAccounts } = useController('AccountsController', selectAccounts)
   const {
     dispatch: mainDispatch,
     state: { statuses: mainStatuses }
   } = useController('MainController')
-  const { state: enabledNetworks } = useController('NetworksController', (state) => state.networks)
+  const { state: enabledNetworks } = useController('NetworksController', selectNetworks)
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const {
     control,

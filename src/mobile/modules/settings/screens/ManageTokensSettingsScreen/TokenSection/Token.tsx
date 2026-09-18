@@ -14,16 +14,20 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   token: TokenResult
   onTokenPreferenceOrCustomTokenChange: () => void
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const Token: FC<Props> = ({ token, onTokenPreferenceOrCustomTokenChange }) => {
   const { address, chainId, flags, symbol } = token
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { isHidden, toggleHideToken, removeCustomToken } = useManageToken({
     address,
     chainId,

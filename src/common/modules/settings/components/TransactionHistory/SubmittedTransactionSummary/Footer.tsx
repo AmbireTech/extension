@@ -27,6 +27,8 @@ import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   network: Network
   size: 'sm' | 'md' | 'lg'
@@ -53,6 +55,9 @@ const canBuildSpeedUpAccountOp = (
   submittedAccountOp.gasLimit !== undefined &&
   submittedAccountOp.signature !== undefined
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const Footer: FC<Props> = ({
   network,
   txnId,
@@ -67,7 +72,7 @@ const Footer: FC<Props> = ({
   const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
 

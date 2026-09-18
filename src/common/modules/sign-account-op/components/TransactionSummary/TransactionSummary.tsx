@@ -51,6 +51,8 @@ import type {
   IrCall
 } from '@ambire-common/libs/humanizer/interfaces'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isSidePanel } = getUiType()
 const withMobileLayout = isMobile || isSidePanel
 interface Props {
@@ -148,6 +150,9 @@ const DataArgs = ({
   })
 }
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const TransactionSummary = ({
   style,
   call,
@@ -167,7 +172,7 @@ const TransactionSummary = ({
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()

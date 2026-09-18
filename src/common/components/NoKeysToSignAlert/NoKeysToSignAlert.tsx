@@ -15,6 +15,8 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   style?: ViewStyle
   isTransaction?: boolean
@@ -22,8 +24,11 @@ interface Props {
   chainId?: bigint
 }
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'long', chainId }) => {
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { ref: addAccountsRef, open: openAddAccounts, close: closeAddAccounts } = useModalize()
   const { t } = useTranslation()

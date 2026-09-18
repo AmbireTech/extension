@@ -10,6 +10,8 @@ import usePrevious from '@common/hooks/usePrevious'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 // Creating the smart account identities on the Relayer and updating their state afterwards
 // can take a while on a slow connection, so the import gets more room than the default.
 const ADD_ACCOUNTS_TIMEOUT_MS = 60_000
@@ -23,6 +25,8 @@ export interface Account {
   index?: number
   balance?: number
 }
+
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 const useAccountPicker = () => {
   const { t } = useTranslation()
@@ -42,7 +46,7 @@ const useAccountPicker = () => {
     dispatch: accountPickerDispatch,
     dispatchAndWait: accountPickerDispatchAndWait
   } = useController('AccountPickerController')
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: accounts } = useController('AccountsController', selectAccounts)
 
   const prevIsInitialized = usePrevious(isInitialized)
   const shouldResetAccountsSelectionOnUnmount = useRef(true)

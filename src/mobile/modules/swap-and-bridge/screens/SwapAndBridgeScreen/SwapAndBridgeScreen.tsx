@@ -32,6 +32,12 @@ import Modals from '@mobile/modules/sign-account-op/components/Modals'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 
 import type { Key } from '@ambire-common/interfaces/keystore'
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectIsPortfolioReadyToVisualize = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio.isReadyToVisualize
+
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -85,12 +91,12 @@ const SwapAndBridgeScreen = () => {
     },
     dispatch: swapAndBridgeDispatch
   } = useController('SwapAndBridgeController')
-  const {
-    state: { portfolio, account }
-  } = useController('SelectedAccountController')
+  const { state: isPortfolioReadyToVisualize } = useController(
+    'SelectedAccountController',
+    selectIsPortfolioReadyToVisualize
+  )
 
   const {
-    dispatch: requestsCtrlDispatch,
     state: { statuses: requestsCtrlStatuses }
   } = useController('RequestsController')
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
@@ -154,7 +160,7 @@ const SwapAndBridgeScreen = () => {
     })
 
     navigate(ROUTES.dashboard)
-  }, [requestsCtrlDispatch, account, navigate, sessionId, swapAndBridgeDispatch])
+  }, [navigate, sessionId, swapAndBridgeDispatch])
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
@@ -258,7 +264,7 @@ const SwapAndBridgeScreen = () => {
             fromTokenAmountSelectDisabled={areAllProvidersDisabled || fromTokenAmountSelectDisabled}
             onFromAmountChange={onFromAmountChange}
             simulationFailed={!!fromChainSimulationError}
-            isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
+            isLoading={!sessionIds.includes(sessionId) || !isPortfolioReadyToVisualize}
           />
         </View>
         <ToToken

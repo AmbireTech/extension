@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import { StyleProp, View, ViewStyle } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
-import { isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import DashboardBalance, {
   BALANCE_HEIGHT
@@ -12,18 +12,30 @@ import { OverviewBackground } from '@common/modules/dashboard/components/Dashboa
 import RefreshIcon from '@common/modules/dashboard/components/DashboardOverview/RefreshIcon'
 import Routes from '@common/modules/dashboard/components/Routes'
 import TokensSkeleton from '@common/modules/dashboard/components/Tokens/TokensSkeleton'
-import spacings from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
 import {
   getCachedDashboardBalance,
   isCachedDashboardBalanceStale
-} from '@web/modules/dashboard/helpers/dashboardBalanceCache'
-import commonWebStyles from '@web/styles/utils/common'
+} from '@common/modules/dashboard/helpers/dashboardBalanceCache'
+import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+interface Props {
+  /**
+   * Applied to the block holding the token skeletons, so each platform can constrain it
+   * the same way its real dashboard content is constrained.
+   */
+  contentContainerStyle?: StyleProp<ViewStyle>
+}
 
 // Instant placeholder shown while the data-heavy controllers load
-const DashboardShell = () => {
-  const { state: account } = useController('SelectedAccountController', 'account')
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
+const DashboardShell = ({ contentContainerStyle }: Props) => {
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
 
   // Read synchronously so the shell paints the last-known balance on its first render.
@@ -35,7 +47,7 @@ const DashboardShell = () => {
   // balance-affecting errors/warnings (it may be inaccurate).
   const showBalanceSkeleton = !cachedBalance || cachedBalance.hasBalanceAffectingErrors
   const isCachedBalanceStale = useMemo(
-    () => (cachedBalance ? isCachedDashboardBalanceStale(cachedBalance) : false),
+    () => !!cachedBalance && isCachedDashboardBalanceStale(cachedBalance),
     [cachedBalance]
   )
 
@@ -46,7 +58,7 @@ const DashboardShell = () => {
           style={[
             common.borderRadiusPrimary,
             spacings.ptTy,
-            isWeb && spacings.phSm,
+            isMobile ? spacings.phTy : spacings.phSm,
             // Not a variable but makes it match DashboardOverview exactly 1:1
             { paddingBottom: 14 },
             { overflow: 'hidden' }
@@ -81,7 +93,7 @@ const DashboardShell = () => {
           </View>
         </View>
       </View>
-      <View style={[commonWebStyles.contentContainer, spacings.phSm, { paddingRight: 16 }]}>
+      <View style={[contentContainerStyle, spacings.phSm, { paddingRight: 16 }]}>
         <TokensSkeleton />
       </View>
     </>

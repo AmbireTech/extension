@@ -21,11 +21,16 @@ import text from '@common/styles/utils/text'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectStatuses = (state: AllControllersMappingType['StorageController']) => state.statuses
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
 const RecoveryPhraseSettingsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: statuses } = useController('StorageController', 'statuses')
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: statuses } = useController('StorageController', selectStatuses)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const { seeds, keys } = useController('KeystoreController').state
   const { notBackedUpSeedIds, seedsSortedByBackupStatus } = useRecoveryPhraseBackupStatus()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()

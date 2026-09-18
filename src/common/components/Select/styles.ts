@@ -28,6 +28,17 @@ export const SELECT_SIZE_TO_HEIGHT = {
 }
 export const MAX_MENU_HEIGHT = 400
 
+/**
+ * How much of a token list a Select keeps mounted. On mobile the list lives in a
+ * bottom sheet that sizes itself to its content, so it has no bounded viewport to
+ * window against: the defaults below used to mount ~80 rows to open a sheet showing
+ * ten of them, at over 10ms a row. The web menu has a fixed max height, so it keeps
+ * the wider window.
+ */
+export const SELECT_LIST_VIRTUALIZATION = isMobile
+  ? { initialNumToRender: 12, windowSize: 3, maxToRenderPerBatch: 8 }
+  : { initialNumToRender: 15, windowSize: 10, maxToRenderPerBatch: 20 }
+
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     selectContainer: {

@@ -11,6 +11,8 @@ import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 // The default NetworkIcon size (32) is too large next to the humanized text on mobile
 const CHAIN_ICON_SIZE = isMobile ? 24 : 32
 
@@ -20,9 +22,11 @@ interface Props {
   textSize?: number
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const ChainVisualization: FC<Props> = ({ chainId, marginRight, textSize }) => {
   const { benzinNetworks, loadingBenzinNetworks = [] } = useNetworksContext()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const actualNetworks = networks ?? benzinNetworks
   const isNetworkLoading = loadingBenzinNetworks.includes(chainId)
   const destinationNetwork = actualNetworks.find((n) => n.chainId === chainId)
