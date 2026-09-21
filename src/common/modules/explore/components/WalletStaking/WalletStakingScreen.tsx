@@ -1099,6 +1099,7 @@ const WalletStakingScreen = () => {
                     <View style={styles.balanceRow}>
                       <BalanceWithMax
                         balanceLabel={balanceLabel}
+                        tokenSymbol={tokenSymbol}
                         disabled={balance <= 0n}
                         onMaxPress={handleMaxPress}
                         testID="wallet-staking-max-button"
