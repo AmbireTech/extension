@@ -13,16 +13,14 @@ import { SelectValue } from '@common/components/Select/types'
 import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SwitchTokensButton from '@common/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { sortNetworksByBalance } from '@common/utils/sorting'
@@ -45,7 +43,6 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSettingsModal }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     statuses: swapAndBridgeCtrlStatuses,
     toSelectedToken,
@@ -167,7 +164,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
           label: (
             <>
               <Text
-                fontSize={isMobile ? 14 : 16}
+                fontSize={14}
                 appearance="secondaryText"
                 weight="medium"
                 dataSet={{ tooltipId }}
@@ -266,8 +263,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
     <ItemPanel
       style={{
         ...spacings.pvSm,
-        ...spacings.pl,
-        ...(isMobile ? {} : spacings.prMd)
+        ...spacings.pl
       }}
     >
       <SwitchTokensButton
@@ -280,26 +276,14 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
         }
       />
       <View
-        style={[
-          isNarrowWebLayout
-            ? [{ width: '100%' }, spacings.mbSm]
-            : [flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]
-        ]}
+        style={[flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]}
       >
-        <Text
-          appearance="secondaryText"
-          fontSize={14}
-          weight="medium"
-          style={isNarrowWebLayout ? spacings.mbTy : spacings.mbSm}
-        >
+        <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
           {t('You receive')}
         </Text>
         <Select
           setValue={handleSetToNetworkValue}
-          containerStyle={{
-            ...spacings.mb0,
-            width: isNarrowWebLayout ? '100%' : isMobile ? 150 : 168
-          }}
+          containerStyle={{ ...spacings.mb0, width: 150 }}
           options={toNetworksOptions}
           selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
           size="sm"
@@ -310,18 +294,8 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
           disabled={disabled}
         />
       </View>
-      <View
-        style={[
-          isNarrowWebLayout
-            ? { width: '100%', gap: SPACING_SM }
-            : [
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                { columnGap: isMobile ? SPACING_SM : SPACING }
-              ]
-        ]}
-      >
-        <View style={isNarrowWebLayout ? { width: '100%' } : [flexbox.flex1]}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_SM }]}>
+        <View style={flexbox.flex1}>
           <ToTokenSelect
             toTokenOptions={toTokenOptions}
             toTokenValue={toTokenValue}
@@ -332,13 +306,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
             openProviderSettingsModal={openProviderSettingsModal}
           />
         </View>
-        <View
-          style={
-            isNarrowWebLayout
-              ? { width: '100%', alignItems: 'flex-end' }
-              : [flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]
-          }
-        >
+        <View style={[flexbox.flex1, { maxWidth: '40%' }]}>
           {isReadyToDisplayAmounts ? (
             <Text
               fontSize={20}

@@ -12,12 +12,10 @@ import AmountSlider from '@common/components/AmountSlider'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
@@ -106,7 +104,6 @@ const SendToken: FC<Props> = ({
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const isError = validateFromAmount?.severity === 'error' && !!validateFromAmount?.message
   const isWarning = validateFromAmount?.severity === 'warning' && !!validateFromAmount?.message
 
@@ -158,7 +155,7 @@ const SendToken: FC<Props> = ({
             // which is with borderRadius: 16
             borderRadius: 13,
             ...spacings.pvSm,
-            ...(isWeb ? spacings.prMd : spacings.prSm),
+            ...spacings.prSm,
             ...(isError ? styles.containerError : {})
           }}
         >
@@ -228,16 +225,12 @@ const SendToken: FC<Props> = ({
           <View
             style={[
               flexbox.flex1,
-              isNarrowWebLayout
-                ? { gap: SPACING_SM }
-                : [
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    { columnGap: isMobile ? SPACING_SM : SPACING }
-                  ]
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              { columnGap: SPACING_SM }
             ]}
           >
-            <View style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}>
+            <View style={flexbox.flex1}>
               {nonEmptySections?.length ? (
                 <SectionedSelect
                   setValue={handleChangeFromToken}
@@ -247,10 +240,7 @@ const SendToken: FC<Props> = ({
                   bottomSheetTitle={t('Send token')}
                   searchPlaceholder={t('Token name or address...')}
                   emptyListPlaceholderText={t('No tokens found.')}
-                  containerStyle={{
-                    ...spacings.mb0,
-                    ...(isNarrowWebLayout ? { width: '100%' } : flexbox.flex1)
-                  }}
+                  containerStyle={{ ...spacings.mb0, ...flexbox.flex1 }}
                   selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
                   mode="bottomSheet"
                   headerHeight={SECTION_MENU_HEADER_HEIGHT}
@@ -267,35 +257,22 @@ const SendToken: FC<Props> = ({
                   bottomSheetTitle={t('Send token')}
                   searchPlaceholder={t('Token name or address...')}
                   emptyListPlaceholderText={t('No tokens found.')}
-                  containerStyle={{
-                    ...spacings.mb0,
-                    ...(isNarrowWebLayout ? { width: '100%' } : flexbox.flex1)
-                  }}
+                  containerStyle={{ ...spacings.mb0, ...flexbox.flex1 }}
                   selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
                   mode="bottomSheet"
                   disabled={fromTokenAmountSelectDisabled}
                 />
               )}
             </View>
-            {isNarrowWebLayout ? (
-              <View style={{ width: '100%', alignItems: 'flex-end' }}>
-                <AmountInput
-                  type={fromAmountFieldMode}
-                  value={fromAmountValue}
-                  onChangeText={handleOnChangeTextAndFormat}
-                  disabled={fromTokenAmountSelectDisabled}
-                  inputTestId={inputTestId}
-                />
-              </View>
-            ) : (
-              <AmountInput
-                type={fromAmountFieldMode}
-                value={fromAmountValue}
-                onChangeText={handleOnChangeTextAndFormat}
-                disabled={fromTokenAmountSelectDisabled}
-                inputTestId={inputTestId}
-              />
-            )}
+            <AmountInput
+              type={fromAmountFieldMode}
+              value={fromAmountValue}
+              onChangeText={handleOnChangeTextAndFormat}
+              disabled={fromTokenAmountSelectDisabled}
+              inputTestId={inputTestId}
+              // Matches the received amount ToToken renders right below it
+              fontSize={20}
+            />
           </View>
           <View style={styles.slider}>
             <AmountSlider

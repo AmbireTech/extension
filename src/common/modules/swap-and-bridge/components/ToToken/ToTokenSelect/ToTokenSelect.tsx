@@ -13,7 +13,6 @@ import TitleAndIcon from '@common/components/TitleAndIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -76,7 +75,6 @@ const ToTokenSelect: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     errors,
     isTokenListLoading,
@@ -326,7 +324,8 @@ const ToTokenSelect: React.FC<Props> = ({
       onSearch={handleOnSearch}
       containerStyle={{
         ...spacings.mb0,
-        ...(isNarrowWebLayout ? { width: '100%' } : { ...flexbox.flex1, ...spacings.mrMd })
+        ...flexbox.flex1,
+        ...spacings.mrMd
       }}
       selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
       stickySectionHeadersEnabled

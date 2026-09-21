@@ -19,11 +19,16 @@ const AmountInput = ({
   fontSize = 24,
   inputWrapperStyle,
   backgroundColor,
+  leftIcon,
   ...rest
 }: AmountInputProps) => {
   const { theme } = useTheme()
 
-  return (
+  // A field that brings no layout of its own gets the same capped, right-aligned column it has on
+  // native, so the token select beside it keeps the wider half of the row on every screen.
+  const hasCustomLayout = !!(leftIcon || inputWrapperStyle)
+
+  const input = (
     <NumberInput
       value={value}
       onChangeText={onChangeText}
@@ -44,6 +49,7 @@ const AmountInput = ({
       containerStyle={[spacings.mb0 as ViewStyle, flexbox.flex1, { overflow: 'hidden' }]}
       inputStyle={spacings.ph0}
       testID={inputTestId}
+      leftIcon={leftIcon}
       childrenBelowInput={
         type === 'fiat' && (
           <View
@@ -80,6 +86,22 @@ const AmountInput = ({
       }
       {...rest}
     />
+  )
+
+  return hasCustomLayout ? (
+    input
+  ) : (
+    <View
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        flexbox.justifyEnd,
+        flexbox.flex1,
+        { maxWidth: '40%' }
+      ]}
+    >
+      {input}
+    </View>
   )
 }
 
