@@ -17,6 +17,7 @@ import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
 import GlassView from '@common/components/GlassView'
 import HoverablePressable from '@common/components/HoverablePressable'
 import LayoutWrapper from '@common/components/LayoutWrapper'
@@ -35,6 +36,7 @@ import useRoute from '@common/hooks/useRoute'
 import useStkWalletFeePercent from '@common/hooks/useStkWalletFeePercent'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { WALLET_STAKING_ROUTE_STORAGE_KEY } from '@common/modules/explore/constants/walletStaking'
 import Header from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -148,6 +150,7 @@ const WalletStakingScreen = () => {
   const { navigate } = useNavigation()
   const { params } = useRoute()
   const { addToast } = useToast()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     ref: feeInfoSheetRef,
     open: openFeeInfoBottomSheet,
@@ -1226,28 +1229,34 @@ const WalletStakingScreen = () => {
 
         {!shouldShowPendingWithdrawalLoader && !shouldShowEmptyState && (
           <View style={styles.footerRow}>
-            <GlassView borderRadius={32} cssStyle={{ overflow: 'hidden' }}>
-              <View style={styles.footer}>
-                <Button
-                  type="secondary"
-                  text={t('Cancel')}
-                  onPress={handleCancel}
-                  hasBottomSpacing={false}
-                  style={styles.footerButton}
-                />
-                <Button
-                  type="primary"
-                  text={submitButtonText}
-                  onPress={handleSubmit}
-                  disabled={
-                    isSubmitDisabled ||
-                    (mode === 'unstake' && !isPendingWithdrawalMode && shareValue === null)
-                  }
-                  hasBottomSpacing={false}
-                  style={styles.footerButton}
-                />
-              </View>
-            </GlassView>
+            <FooterGlassView
+              size="sm"
+              absolute={false}
+              fullWidth={isNarrowWebLayout}
+              innerContainerStyle={
+                isNarrowWebLayout ? styles.footerButtonsCompact : styles.footerButtons
+              }
+              mobileStyle={styles.footerButtonsMobile}
+            >
+              <Button
+                type="secondary"
+                text={t('Cancel')}
+                onPress={handleCancel}
+                hasBottomSpacing={false}
+                style={styles.footerButton}
+              />
+              <Button
+                type="primary"
+                text={submitButtonText}
+                onPress={handleSubmit}
+                disabled={
+                  isSubmitDisabled ||
+                  (mode === 'unstake' && !isPendingWithdrawalMode && shareValue === null)
+                }
+                hasBottomSpacing={false}
+                style={styles.footerButton}
+              />
+            </FooterGlassView>
           </View>
         )}
         <FeeInfoBottomSheet

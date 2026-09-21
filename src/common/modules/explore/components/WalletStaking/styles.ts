@@ -1,6 +1,7 @@
 import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings, { SPACING } from '@common/styles/spacings'
+import { isWeb } from '@common/config/env'
+import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -54,7 +55,9 @@ interface Styles {
   details: ViewStyle
   detailRow: ViewStyle
   footerRow: ViewStyle
-  footer: ViewStyle
+  footerButtons: ViewStyle
+  footerButtonsCompact: ViewStyle
+  footerButtonsMobile: ViewStyle
   footerButton: ViewStyle
   validation: TextStyle
 }
@@ -113,8 +116,10 @@ const getStyles = (theme: ThemeProps) =>
     },
     screenContent: {
       ...flexbox.flex1,
-      ...spacings.ph2Xl,
-      ...spacings.pbSm
+      ...spacings.phSm,
+      // On native `LayoutWrapper` already pads the bottom safe area, so padding here too
+      // would lift the footer buttons higher than the Swap & Bridge ones
+      ...(isWeb ? spacings.pbSm : {})
     },
     // A ScrollView (not a plain View): on a fixed-height, non-scrolling screen, content taller
     // than the space left for it used to overflow visually into footerRow below (flex children
@@ -131,12 +136,12 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.justifyCenter,
       ...flexbox.wrap,
-      ...spacings.mb2Xl
+      ...spacings.mb
     },
     tabs: {
       ...flexbox.directionRow,
       ...flexbox.justifyCenter,
-      ...spacings.mbXl
+      ...spacings.mbLg
     },
     tab: {
       ...spacings.phSm,
@@ -334,21 +339,22 @@ const getStyles = (theme: ThemeProps) =>
       columnGap: SPACING
     },
     footerRow: {
-      ...flexbox.directionRow,
-      ...flexbox.justifyCenter,
       marginTop: 'auto'
     },
-    footer: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...spacings.ph,
-      ...spacings.pvSm,
+    footerButtons: {
       columnGap: SPACING
+    },
+    // The compact flat footer stacks with `column`, which would put Cancel above Stake
+    footerButtonsCompact: {
+      flexDirection: 'column-reverse'
+    },
+    footerButtonsMobile: {
+      rowGap: SPACING_SM
     },
     footerButton: {
       ...spacings.mb0,
-      ...spacings.phLg,
-      height: 48,
+      ...(isWeb ? spacings.phLg : {}),
+      height: isWeb ? 48 : 56,
       borderRadius: 18
     },
     validation: {
