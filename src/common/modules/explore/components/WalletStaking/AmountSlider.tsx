@@ -247,6 +247,10 @@ const AmountSlider = ({
   // usable instead.
   const emitValueChange = useCallback(
     (nextValue: bigint) => {
+      // A drag fires dozens of times a second, most of them landing back on the amount that is
+      // already set - re-rendering the whole form for those is pure waste.
+      if (nextValue === clampedValue) return
+
       try {
         onValueChange(nextValue)
       } catch (error) {
@@ -254,7 +258,7 @@ const AmountSlider = ({
         captureException(error)
       }
     },
-    [onValueChange]
+    [clampedValue, onValueChange]
   )
 
   // Every touch pushes the bubble's hiding back, so it stays up throughout a drag and lingers for
