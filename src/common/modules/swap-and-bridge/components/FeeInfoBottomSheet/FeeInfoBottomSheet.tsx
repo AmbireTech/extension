@@ -9,7 +9,7 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
-import GlassView from '@common/components/GlassView'
+import FooterGlassView from '@common/components/FooterGlassView'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -312,38 +312,22 @@ const FeeInfoBottomSheet = ({
           </Text>
 
           {withActions && (
-            <GlassView
-              borderRadius={30}
-              cssStyle={{
-                maxWidth: 300,
-                alignSelf: 'center',
-                paddingLeft: 12,
-                paddingRight: 12,
-                paddingTop: 12,
-                paddingBottom: 12
-              }}
+            <FooterGlassView
+              size="sm"
+              absolute={false}
+              style={spacings.mtSm}
+              mobileStyle={spacings.mtSm}
             >
-              <Button
-                type="secondary"
-                size="regular"
-                text={t('Cancel')}
-                onPress={closeBottomSheet}
-                hasBottomSpacing={false}
-                submitOnEnter={false}
-                style={styles.cancelButton}
-                textStyle={styles.actionButtonText}
-                testID="swap-and-bridge-fee-info-not-now"
-              />
               <Button
                 size="regular"
                 text={t('Stake $WALLET')}
                 onPress={handleStakePress}
                 hasBottomSpacing={false}
-                style={styles.stakeButton}
+                style={isWeb ? styles.stakeButton : undefined}
                 textStyle={styles.actionButtonText}
                 testID="swap-and-bridge-stake-wallet-button"
               />
-            </GlassView>
+            </FooterGlassView>
           )}
         </>
       )}
