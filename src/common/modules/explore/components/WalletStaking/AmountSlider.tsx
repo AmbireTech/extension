@@ -18,11 +18,14 @@ const QUARTER_DOT_SIZE = 8
 const SLIDER_STEPS = 10000n
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
-// How close (in px, from either side) the pointer needs to be to a quarter dot, a threshold tick,
-// or either end of the track, for the value to magnetically snap onto it instead of the raw
-// pointer position. The track ends are checked first (see updateValue), so a mark that happens to
+// How close (in px, from either side) the pointer needs to be, while dragging, to a quarter dot,
+// a threshold tick or either end of the track, for the value to magnetically snap onto it instead
+// of the raw pointer position. The track ends are checked first (see updateValue), so a mark that happens to
 // sit within the radius of an end loses to that end.
 const SNAP_RADIUS = 8
+// A press is a deliberate "give me that mark" rather than a fine adjustment, so it snaps from
+// much further out than a drag does - tapping near a dot should land on it, not a few percent off.
+const PRESS_SNAP_RADIUS = 24
 // The slider is also divided into quarters, each marked by a dot the drag snaps onto, so round
 // 0/25/50/75/100% amounts are reachable without having to land on them pixel by pixel.
 const QUARTERS = [0n, 1n, 2n, 3n, 4n]
@@ -220,18 +223,18 @@ const AmountSlider = ({
   }, [])
 
   const updateValue = useCallback(
-    (locationX: number) => {
+    (locationX: number, snapRadius: number) => {
       if (!availableWidth || maximumValue <= 0n) return
 
       const position = Math.min(Math.max(locationX - THUMB_SIZE / 2, 0), availableWidth)
 
       // Magnetic snap to the track's own ends takes priority over snapping to a threshold -
       // checked first so an end wins whenever a threshold happens to sit within the radius of it.
-      if (position <= SNAP_RADIUS) {
+      if (position <= snapRadius) {
         onValueChange(0n)
         return
       }
-      if (position >= availableWidth - SNAP_RADIUS) {
+      if (position >= availableWidth - snapRadius) {
         onValueChange(maximumValue)
         return
       }
@@ -241,7 +244,7 @@ const AmountSlider = ({
       const nearestSnapPoint = snapPoints.reduce<(typeof snapPoints)[number] | null>(
         (nearest, snapPoint) => {
           const distance = Math.abs(snapPoint.position - position)
-          if (distance > SNAP_RADIUS) return nearest
+          if (distance > snapRadius) return nearest
 
           return !nearest || distance < Math.abs(nearest.position - position) ? snapPoint : nearest
         },
@@ -268,8 +271,8 @@ const AmountSlider = ({
         .activeOffsetX([-8, 8])
         .failOffsetY([-12, 12])
         .runOnJS(true)
-        .onBegin(({ x }) => updateValue(x))
-        .onUpdate(({ x }) => updateValue(x)),
+        .onBegin(({ x }) => updateValue(x, PRESS_SNAP_RADIUS))
+        .onUpdate(({ x }) => updateValue(x, SNAP_RADIUS)),
     [maximumValue, updateValue]
   )
   const handleAccessibilityAction = useCallback(

@@ -302,7 +302,7 @@ const getStyles = (theme: ThemeProps) =>
       width: SLIDER_TRACK_HEIGHT - 2,
       height: SLIDER_TRACK_HEIGHT - 2,
       borderRadius: 50,
-      backgroundColor: theme.secondaryBackground
+      backgroundColor: theme.neutral400
     },
     amountSliderThreshold: {
       position: 'absolute',
