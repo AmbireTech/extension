@@ -79,6 +79,7 @@ import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeC
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
+import { getPrivacyPoolsSnapshots } from '@web/modules/privacy-pools/snapshots'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
@@ -512,6 +513,10 @@ const init = async () => {
     // Copied next to the bundle at build time (see webpack/extension.js) and served same-origin,
     // so proving needs no network and no CSP entry for a third-party host.
     privacyPoolsCircuitsBaseUrl: browser.runtime.getURL('privacy-pools-circuits/'),
+    // Shipped beside the bundle like the circuits above, and read only when a chain has no stored
+    // history of its own - which is what saves a first sync from walking Ethereum block by block.
+    getPrivacyPoolsInitialState: () =>
+      getPrivacyPoolsSnapshots(browser.runtime.getURL('privacy-pools-snapshots/')),
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
