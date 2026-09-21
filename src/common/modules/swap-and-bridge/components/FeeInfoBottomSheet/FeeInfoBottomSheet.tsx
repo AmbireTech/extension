@@ -159,26 +159,18 @@ const FeeInfoBottomSheet = ({
             style={[
               flexbox.directionRow,
               flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
               spacings.phSm,
               spacings.mtSm,
               spacings.mbMi
             ]}
           >
-            <View style={[flexbox.flex1, styles.tierDetails]}>
-              <Text appearance="secondaryText" fontSize={12}>
-                {t('$stkWALLET held')}
-              </Text>
-            </View>
-            <View style={[flexbox.flex1, flexbox.alignCenter]}>
-              <Text appearance="secondaryText" fontSize={12} style={styles.centeredText}>
-                {t('~USD value')}
-              </Text>
-            </View>
-            <View style={[flexbox.flex1, flexbox.alignEnd]}>
-              <Text appearance="secondaryText" fontSize={12} style={styles.rightAlignedText}>
-                {t('Swap & Bridge fee')}
-              </Text>
-            </View>
+            <Text appearance="secondaryText" fontSize={12} weight="semiBold">
+              {t('Total $stkWALLET held')}
+            </Text>
+            <Text appearance="secondaryText" fontSize={12} weight="semiBold" style={spacings.mlSm}>
+              {t('Swap & Bridge fee')}
+            </Text>
           </View>
 
           <View>
@@ -200,28 +192,29 @@ const FeeInfoBottomSheet = ({
                       spacings.phSm,
                       spacings.pvTy,
                       isCurrent && styles.currentTierCard,
-                      isMaximum && styles.maximumTierCard
+                      isMaximum && styles.maximumTierCard,
+                      isCurrent && isMaximum && styles.currentMaximumTierCard
                     ]}
                     testID={`swap-and-bridge-fee-tier-${tier.id}`}
                   >
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                    <View
+                      style={[
+                        flexbox.directionRow,
+                        flexbox.alignCenter,
+                        flexbox.justifySpaceBetween
+                      ]}
+                    >
                       <View style={[flexbox.flex1, styles.tierDetails]}>
                         <Text fontSize={isMaximum ? 18 : 17} weight="medium">
                           {tier.heldLabel}
                         </Text>
-                      </View>
-                      <View style={[flexbox.flex1, flexbox.alignCenter]}>
                         {!!approximateUsdValue && (
-                          <Text
-                            appearance="secondaryText"
-                            fontSize={14}
-                            style={styles.centeredText}
-                          >
+                          <Text appearance="secondaryText" fontSize={12}>
                             {approximateUsdValue}
                           </Text>
                         )}
                       </View>
-                      <View style={[flexbox.flex1, flexbox.alignEnd]}>
+                      <View style={[flexbox.alignEnd, spacings.mlSm]}>
                         {isCurrent && (
                           <View style={spacings.mbMi}>
                             <Badge
