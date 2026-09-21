@@ -47,6 +47,7 @@ interface Styles {
   amountSliderDisabled: ViewStyle
   amountSliderTrack: ViewStyle
   amountSliderProgressContainer: ViewStyle
+  amountSliderQuarter: ViewStyle
   amountSliderThreshold: ViewStyle
   amountSliderThumb: ViewStyle
   feePreviewRow: ViewStyle
@@ -66,6 +67,7 @@ interface Styles {
 }
 
 const SLIDER_THUMB_SIZE = 20
+const SLIDER_TRACK_HEIGHT = 8
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
@@ -294,12 +296,19 @@ const getStyles = (theme: ThemeProps) =>
       overflow: 'hidden',
       flexDirection: 'row'
     },
+    amountSliderQuarter: {
+      position: 'absolute',
+      top: 11,
+      width: SLIDER_TRACK_HEIGHT - 2,
+      height: SLIDER_TRACK_HEIGHT - 2,
+      borderRadius: 50,
+      backgroundColor: theme.secondaryBackground
+    },
     amountSliderThreshold: {
       position: 'absolute',
       top: 6,
       width: 1,
       height: 16,
-      marginLeft: -0.5,
       backgroundColor: theme.secondaryBackground
     },
     amountSliderThumb: {

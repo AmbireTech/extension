@@ -12,9 +12,9 @@ import {
   SWAP_AND_BRIDGE_FEE_THRESHOLDS
 } from '@ambire-common/libs/swapAndBridge/fee'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import FlipIcon from '@common/assets/svg/FlipIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
-import FlipIcon from '@common/assets/svg/FlipIcon'
 import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'

@@ -12,14 +12,21 @@ import { THEME_TYPES } from '@common/styles/theme/types'
 import getStyles from './styles'
 
 const THUMB_SIZE = 20
+// Matches the track's height (and so its corner radius), so the first and last dot fill the
+// track's rounded caps exactly - see the edge alignment in quarterMarkers.
+const QUARTER_DOT_SIZE = 8
 const SLIDER_STEPS = 10000n
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
-// How close (in px, from either side) the pointer needs to be to a threshold tick, or to either
-// end of the track, for the value to magnetically snap onto it instead of the raw pointer
-// position. The track ends are checked first (see updateValue), so a threshold that happens to
+// How close (in px, from either side) the pointer needs to be to a quarter dot, a threshold tick,
+// or either end of the track, for the value to magnetically snap onto it instead of the raw
+// pointer position. The track ends are checked first (see updateValue), so a mark that happens to
 // sit within the radius of an end loses to that end.
 const SNAP_RADIUS = 8
+// The slider is also divided into quarters, each marked by a dot the drag snaps onto, so round
+// 0/25/50/75/100% amounts are reachable without having to land on them pixel by pixel.
+const QUARTERS = [0n, 1n, 2n, 3n, 4n]
+const QUARTER_COUNT = 4n
 const parseHexChannels = (hex: string) => {
   const cleanHex = hex.replace('#', '')
   return [
@@ -172,6 +179,42 @@ const AmountSlider = ({
     [availableWidth, maximumValue, thresholds, tierBoundaries, tierOffset]
   )
 
+  const quarterMarkers = useMemo(
+    () =>
+      QUARTERS.map((quarter, index) => {
+        const position = (Number(quarter) / Number(QUARTER_COUNT)) * availableWidth
+        // Every dot but the two ends is centered on its own position. Those two are pulled fully
+        // inside the track instead, so they sit flush with its rounded caps rather than hanging
+        // half a dot over each end.
+        const edgeOffset =
+          index === 0
+            ? 1
+            : index === QUARTERS.length - 1
+              ? -QUARTER_DOT_SIZE + 1
+              : -QUARTER_DOT_SIZE / 2
+
+        return {
+          key: `${quarter}`,
+          amount: (maximumValue * quarter) / QUARTER_COUNT,
+          position,
+          left: THUMB_SIZE / 2 + position + edgeOffset
+        }
+      }),
+    [availableWidth, maximumValue]
+  )
+  // Everything the drag magnetically snaps onto - the quarter dots and the fee thresholds - on
+  // the same axis, so the nearest of the two always wins.
+  const snapPoints = useMemo(
+    () => [
+      ...quarterMarkers,
+      ...thresholdMarkers.map(({ value: thresholdValue, position }) => ({
+        amount: thresholdValue - tierOffset,
+        position
+      }))
+    ],
+    [quarterMarkers, thresholdMarkers, tierOffset]
+  )
+
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     setWidth(event.nativeEvent.layout.width)
   }, [])
@@ -193,20 +236,26 @@ const AmountSlider = ({
         return
       }
 
-      // Magnetic snap: land exactly on a threshold's own value (not just its nearest slider
-      // step) whenever the pointer is close to its tick mark, from either side.
-      const nearestThreshold = thresholdMarkers.find(
-        (threshold) => Math.abs(threshold.position - position) <= SNAP_RADIUS
+      // Magnetic snap: land exactly on a quarter's or a threshold's own value (not just its
+      // nearest slider step) whenever the pointer is close to its mark, from either side.
+      const nearestSnapPoint = snapPoints.reduce<(typeof snapPoints)[number] | null>(
+        (nearest, snapPoint) => {
+          const distance = Math.abs(snapPoint.position - position)
+          if (distance > SNAP_RADIUS) return nearest
+
+          return !nearest || distance < Math.abs(nearest.position - position) ? snapPoint : nearest
+        },
+        null
       )
-      if (nearestThreshold) {
-        onValueChange(nearestThreshold.value - tierOffset)
+      if (nearestSnapPoint) {
+        onValueChange(nearestSnapPoint.amount)
         return
       }
 
       const nextStep = BigInt(Math.round((position / availableWidth) * Number(SLIDER_STEPS)))
       onValueChange((maximumValue * nextStep) / SLIDER_STEPS)
     },
-    [availableWidth, maximumValue, onValueChange, thresholdMarkers, tierOffset]
+    [availableWidth, maximumValue, onValueChange, snapPoints]
   )
 
   const panGesture = useMemo(
@@ -277,6 +326,9 @@ const AmountSlider = ({
               />
             ))}
           </View>
+          {quarterMarkers.map((quarter) => (
+            <View key={quarter.key} style={[styles.amountSliderQuarter, { left: quarter.left }]} />
+          ))}
           {thresholdMarkers.map((threshold) => (
             <View
               key={threshold.tooltipId || `${threshold.value}`}
