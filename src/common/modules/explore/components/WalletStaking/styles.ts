@@ -43,16 +43,6 @@ interface Styles {
   amountInput: ViewStyle
   amountInputWrapper: ViewStyle
   amountNativeInput: TextStyle
-  amountSlider: ViewStyle
-  amountSliderDisabled: ViewStyle
-  amountSliderTrack: ViewStyle
-  amountSliderProgressContainer: ViewStyle
-  amountSliderQuarter: ViewStyle
-  amountSliderWrapper: ViewStyle
-  amountSliderValueBubble: ViewStyle
-  amountSliderThreshold: ViewStyle
-  amountSliderThumb: ViewStyle
-  amountSliderThumbInner: ViewStyle
   feePreviewRow: ViewStyle
   feePreviewLabel: ViewStyle
   feeDetailsButton: ViewStyle
@@ -69,10 +59,6 @@ interface Styles {
   footerButton: ViewStyle
   validation: TextStyle
 }
-
-const SLIDER_THUMB_SIZE = 20
-const SLIDER_TRACK_HEIGHT = 8
-const SLIDER_VALUE_BUBBLE_WIDTH = 48
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
@@ -274,83 +260,6 @@ const getStyles = (theme: ThemeProps) =>
       color: theme.primaryText,
       fontSize: 16,
       textAlign: 'left'
-    },
-    amountSlider: {
-      ...flexbox.justifyCenter,
-      height: 28,
-      position: 'relative'
-    },
-    amountSliderDisabled: {
-      opacity: 0.5
-    },
-    amountSliderTrack: {
-      position: 'absolute',
-      top: 10,
-      right: 0,
-      left: 0,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: theme.tertiaryText
-    },
-    amountSliderProgressContainer: {
-      position: 'absolute',
-      top: 10,
-      left: 0,
-      height: 8,
-      borderRadius: 4,
-      overflow: 'hidden',
-      flexDirection: 'row'
-    },
-    amountSliderQuarter: {
-      position: 'absolute',
-      top: 11,
-      width: SLIDER_TRACK_HEIGHT - 2,
-      height: SLIDER_TRACK_HEIGHT - 2,
-      borderRadius: 50,
-      backgroundColor: theme.neutral400
-    },
-    amountSliderWrapper: {
-      // The amount input above the slider carries a zIndex of its own (see Input's styles), so
-      // the bubble needs the whole slider lifted above it to not end up behind the input.
-      zIndex: 11
-    },
-    amountSliderValueBubble: {
-      position: 'absolute',
-      top: -32,
-      width: SLIDER_VALUE_BUBBLE_WIDTH,
-      ...flexbox.center,
-      ...spacings.pvMi,
-      borderRadius: 11,
-      backgroundColor: theme.primaryAccent100,
-      // Lighter than every shadow in the common utils - just enough to lift the bubble off the
-      // card behind it.
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-      elevation: 2
-    },
-    amountSliderThreshold: {
-      position: 'absolute',
-      top: 6,
-      width: 1,
-      height: 16,
-      backgroundColor: theme.secondaryBackground
-    },
-    amountSliderThumb: {
-      position: 'absolute',
-      top: 4,
-      width: SLIDER_THUMB_SIZE,
-      height: SLIDER_THUMB_SIZE,
-      borderRadius: SLIDER_THUMB_SIZE / 2,
-      backgroundColor: theme.primaryAccent200,
-      ...flexbox.center
-    },
-    amountSliderThumbInner: {
-      width: SLIDER_THUMB_SIZE - 6,
-      height: SLIDER_THUMB_SIZE - 6,
-      borderRadius: SLIDER_THUMB_SIZE / 2,
-      backgroundColor: theme.primaryAccent300
     },
     feePreviewRow: {
       ...flexbox.directionRow,

@@ -84,8 +84,8 @@ const buildGradient = (fromHex: string, toHex: string, steps: number) =>
 const PROGRESS_TIER_COLORS = buildGradient(GRADIENT_START_HEX, GRADIENT_END_HEX, 5)
 
 interface Threshold {
-  /** The absolute stkWALLET amount, on the same axis as the active (draggable) range, at which
-   * the marker sits. */
+  /** The absolute amount, on the same axis as the active (draggable) range, at which the marker
+   * sits. */
   value: bigint
   /** Optional label rendered under the tick, e.g. a tooltip trigger. */
   tooltipContent?: string
@@ -97,14 +97,12 @@ interface Props {
   maximumValue: bigint
   onValueChange: (value: bigint) => void
   accessibilityLabel?: string
-  /** The stkWALLET amount already held before this slider's draggable range even starts - e.g.
-   * stkWALLET already staked (stake mode). Not shown on the track itself; it only shifts the fee
-   * tier thresholds so they still land at the correct absolute stkWALLET amount rather than at
-   * `threshold - alreadyStakedAmount`. Irrelevant (and left at 0) in unstake mode, since the
-   * WALLET balance not being unstaked is a different token with no bearing on the fee tier. */
+  /** The amount already held before this slider's draggable range even starts - e.g. the tokens
+   * already staked. Not shown on the track itself; it only shifts the thresholds so they still
+   * land at the correct absolute amount rather than at `threshold - alreadyHeldAmount`. */
   tierOffset?: bigint
-  /** Tick marks (e.g. Swap & Bridge fee thresholds) for the active (draggable) range - also used
-   * to color it by tier. Values outside that range are ignored. */
+  /** Tick marks (e.g. fee thresholds) for the active (draggable) range - also used to color it
+   * by tier. Values outside that range are ignored. */
   thresholds?: Threshold[]
 }
 
@@ -267,7 +265,7 @@ const AmountSlider = ({
       try {
         onValueChange(nextValue)
       } catch (error) {
-        console.error('Failed to apply the $WALLET staking slider value', error)
+        console.error('Failed to apply the amount slider value', error)
         captureException(error)
       }
     },
@@ -367,9 +365,9 @@ const AmountSlider = ({
   )
 
   return (
-    <View style={styles.amountSliderWrapper}>
+    <View style={styles.wrapper}>
       {!!valueBubbleTouches && (
-        <View style={[styles.amountSliderValueBubble, { left: valueBubbleLeft }]}>
+        <View style={[styles.valueBubble, { left: valueBubbleLeft }]}>
           <Text fontSize={12} weight="medium" appearance="primary">
             {`${Math.round(Number(sliderStep) / 100)}%`}
           </Text>
@@ -379,16 +377,16 @@ const AmountSlider = ({
         <HoverablePressable
           accessible
           accessibilityActions={ACCESSIBILITY_ACTIONS}
-          accessibilityLabel={accessibilityLabel || t('$WALLET amount')}
+          accessibilityLabel={accessibilityLabel || t('Amount')}
           accessibilityRole="adjustable"
           accessibilityValue={accessibilityValue}
           onAccessibilityAction={handleAccessibilityAction}
           onLayout={handleLayout}
           disabled={isDisabled}
-          style={[styles.amountSlider, isDisabled && styles.amountSliderDisabled]}
+          style={[styles.slider, isDisabled && styles.disabled]}
         >
-          <View style={styles.amountSliderTrack} />
-          <View style={[styles.amountSliderProgressContainer, { width: progressWidth }]}>
+          <View style={styles.track} />
+          <View style={[styles.progressContainer, { width: progressWidth }]}>
             {progressSegments.map((segment, index) => (
               <View
                 key={segment.key}
@@ -404,7 +402,7 @@ const AmountSlider = ({
             ))}
           </View>
           {quarterMarkers.map((quarter) => (
-            <View key={quarter.key} style={[styles.amountSliderQuarter, { left: quarter.left }]} />
+            <View key={quarter.key} style={[styles.quarter, { left: quarter.left }]} />
           ))}
           {thresholdMarkers.map((threshold) => (
             <View
@@ -417,11 +415,11 @@ const AmountSlider = ({
                     })
                   : undefined
               }
-              style={[styles.amountSliderThreshold, { left: threshold.position }]}
+              style={[styles.threshold, { left: threshold.position }]}
             />
           ))}
-          <View style={[styles.amountSliderThumb, { left: thumbPosition }]}>
-            <View style={styles.amountSliderThumbInner} />
+          <View style={[styles.thumb, { left: thumbPosition }]}>
+            <View style={styles.thumbInner} />
           </View>
         </HoverablePressable>
       </GestureDetector>
