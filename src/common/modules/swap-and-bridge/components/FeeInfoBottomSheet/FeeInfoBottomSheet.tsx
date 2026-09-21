@@ -153,7 +153,7 @@ const FeeInfoBottomSheet = ({
             fontSize={12}
             style={[styles.centeredText, spacings.mtMi]}
           >
-            {t('Stake more $WALLET to reduce your swap and bridge fees.')}
+            {t('Hold $stkWALLET to reduce your swap and bridge fees.')}
           </Text>
 
           <View style={spacings.mtSm}>
@@ -186,23 +186,20 @@ const FeeInfoBottomSheet = ({
                         flexbox.justifySpaceBetween
                       ]}
                     >
-                      <View
-                        style={[
-                          flexbox.flex1,
-                          styles.tierDetails,
-                          flexbox.directionRow,
-                          flexbox.alignCenter,
-                          flexbox.wrap
-                        ]}
-                      >
-                        <Text fontSize={isMaximum ? 18 : 17} weight="medium">
-                          {tier.heldLabel}
-                        </Text>
-                        {!!approximateUsdValue && (
-                          <Text appearance="secondaryText" fontSize={11} style={spacings.mlTy}>
-                            {approximateUsdValue}
+                      <View style={[flexbox.flex1, styles.tierDetails]}>
+                        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+                          <Text fontSize={isMaximum ? 18 : 17} weight="medium">
+                            {tier.heldLabel}
                           </Text>
-                        )}
+                          {!!approximateUsdValue && (
+                            <Text appearance="secondaryText" fontSize={11} style={spacings.mlTy}>
+                              {approximateUsdValue}
+                            </Text>
+                          )}
+                        </View>
+                        <Text appearance="secondaryText" fontSize={12}>
+                          {t('Total $stkWALLET held')}
+                        </Text>
                       </View>
                       <View style={[flexbox.alignEnd, spacings.mlSm]}>
                         {isCurrent && (
@@ -223,23 +220,12 @@ const FeeInfoBottomSheet = ({
                         >
                           {tier.feeLabel}
                         </Text>
+                        {isMaximum && (
+                          <Text appearance="secondaryText" fontSize={11}>
+                            {t('Swap & Bridge fee')}
+                          </Text>
+                        )}
                       </View>
-                    </View>
-                    <View
-                      style={[
-                        flexbox.directionRow,
-                        flexbox.alignStart,
-                        flexbox.justifySpaceBetween
-                      ]}
-                    >
-                      <Text appearance="secondaryText" fontSize={12}>
-                        {t('Total $stkWALLET held')}
-                      </Text>
-                      {isMaximum && (
-                        <Text appearance="secondaryText" fontSize={11} style={spacings.mlSm}>
-                          {t('Swap & Bridge fee')}
-                        </Text>
-                      )}
                     </View>
                   </View>
 
