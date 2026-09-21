@@ -229,6 +229,9 @@ const AmountSlider = ({
   // right now - a quick tap begins and ends within the same render, so a plain "is being used"
   // flag would never flip back and the bubble would stay up forever. 0 means hidden.
   const [valueBubbleTouches, setValueBubbleTouches] = useState(0)
+  // Hovering the thumb reads the picked percentage without having to move the slider at all -
+  // a pointer-only affordance, so it stays put on the mobile app, where nothing hovers.
+  const [isThumbHovered, setIsThumbHovered] = useState(false)
   const valueBubbleLeft = Math.min(
     Math.max(fractionOfWidth(sliderStep) - VALUE_BUBBLE_WIDTH / 2, 0),
     Math.max(width - VALUE_BUBBLE_WIDTH, 0)
@@ -359,7 +362,7 @@ const AmountSlider = ({
 
   return (
     <View style={styles.wrapper}>
-      {!!valueBubbleTouches && (
+      {(!!valueBubbleTouches || isThumbHovered) && !isDisabled && (
         <View style={[styles.valueBubble, { left: valueBubbleLeft }]}>
           <Text fontSize={12} weight="medium" appearance="primary">
             {`${Math.round(Number(sliderStep) / 100)}%`}
@@ -408,7 +411,11 @@ const AmountSlider = ({
               style={[styles.mark, { left: marker.left }]}
             />
           ))}
-          <View style={[styles.thumb, { left: thumbPosition }]}>
+          <View
+            style={[styles.thumb, { left: thumbPosition }]}
+            onMouseEnter={() => setIsThumbHovered(true)}
+            onMouseLeave={() => setIsThumbHovered(false)}
+          >
             <View style={styles.thumbInner} />
           </View>
         </HoverablePressable>

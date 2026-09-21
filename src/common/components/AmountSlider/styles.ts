@@ -2,6 +2,7 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -46,7 +47,7 @@ const getStyles = (theme: ThemeProps) =>
       left: 0,
       height: TRACK_HEIGHT,
       borderRadius: 4,
-      backgroundColor: theme.tertiaryText
+      backgroundColor: hexToRgba(theme.tertiaryText, 0.6)
     },
     progressContainer: {
       position: 'absolute',
@@ -63,7 +64,7 @@ const getStyles = (theme: ThemeProps) =>
       width: MARK_SIZE,
       height: MARK_SIZE,
       borderRadius: 50,
-      backgroundColor: theme.neutral400
+      backgroundColor: theme.secondaryBackground
     },
     valueBubble: {
       position: 'absolute',

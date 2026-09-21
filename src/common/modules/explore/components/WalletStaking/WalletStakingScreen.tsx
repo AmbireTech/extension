@@ -1175,10 +1175,10 @@ const WalletStakingScreen = () => {
                       <View style={styles.feePreviewRow}>
                         <View style={styles.feePreviewLabel}>
                           <Text fontSize={12} appearance="secondaryText">
-                            {t('Swap & Bridge fee')}
+                            {t('Swap & Bridge fee tier')}
                           </Text>
                           <Button
-                            text={t('Details')}
+                            text={t('Tier details')}
                             type="outline"
                             size="tiny"
                             accentColor={theme.primaryAccent300}
@@ -1193,7 +1193,7 @@ const WalletStakingScreen = () => {
                           {projectedFeePercent !== currentFeePercent && (
                             <Text
                               fontSize={12}
-                              appearance="tertiaryText"
+                              appearance="errorText"
                               style={styles.feePreviewOldFee}
                             >
                               {currentFeePercent.toFixed(2)}%
