@@ -1,9 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { AccessibilityActionEvent, LayoutChangeEvent, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
+import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
@@ -30,6 +31,10 @@ const PRESS_SNAP_RADIUS = 24
 // 0/25/50/75/100% amounts are reachable without having to land on them pixel by pixel.
 const QUARTERS = [0n, 1n, 2n, 3n, 4n]
 const QUARTER_COUNT = 4n
+// The bubble showing the picked percentage while the slider is being used, and how long it stays
+// up after the finger leaves it.
+const VALUE_BUBBLE_WIDTH = 48
+const VALUE_BUBBLE_LINGER = 700
 const parseHexChannels = (hex: string) => {
   const cleanHex = hex.replace('#', '')
   return [
@@ -218,9 +223,28 @@ const AmountSlider = ({
     [quarterMarkers, thresholdMarkers, tierOffset]
   )
 
+  // Counts the touches the bubble has seen instead of tracking whether the slider is being used
+  // right now - a quick tap begins and ends within the same render, so a plain "is being used"
+  // flag would never flip back and the bubble would stay up forever. 0 means hidden.
+  const [valueBubbleTouches, setValueBubbleTouches] = useState(0)
+  const valueBubbleLeft = Math.min(
+    Math.max(thumbPosition + THUMB_SIZE / 2 - VALUE_BUBBLE_WIDTH / 2, 0),
+    Math.max(width - VALUE_BUBBLE_WIDTH, 0)
+  )
+
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     setWidth(event.nativeEvent.layout.width)
   }, [])
+
+  // Every touch pushes the bubble's hiding back, so it stays up throughout a drag and lingers for
+  // a moment after the finger leaves it, keeping the picked percentage readable.
+  useEffect(() => {
+    if (!valueBubbleTouches) return () => {}
+
+    const hideTimeout = setTimeout(() => setValueBubbleTouches(0), VALUE_BUBBLE_LINGER)
+
+    return () => clearTimeout(hideTimeout)
+  }, [valueBubbleTouches])
 
   const updateValue = useCallback(
     (locationX: number, snapRadius: number) => {
@@ -271,8 +295,14 @@ const AmountSlider = ({
         .activeOffsetX([-8, 8])
         .failOffsetY([-12, 12])
         .runOnJS(true)
-        .onBegin(({ x }) => updateValue(x, PRESS_SNAP_RADIUS))
-        .onUpdate(({ x }) => updateValue(x, SNAP_RADIUS)),
+        .onBegin(({ x }) => {
+          setValueBubbleTouches((touches) => touches + 1)
+          updateValue(x, PRESS_SNAP_RADIUS)
+        })
+        .onUpdate(({ x }) => {
+          setValueBubbleTouches((touches) => touches + 1)
+          updateValue(x, SNAP_RADIUS)
+        }),
     [maximumValue, updateValue]
   )
   const handleAccessibilityAction = useCallback(
@@ -295,7 +325,14 @@ const AmountSlider = ({
   )
 
   return (
-    <View>
+    <View style={styles.amountSliderWrapper}>
+      {!!valueBubbleTouches && (
+        <View style={[styles.amountSliderValueBubble, { left: valueBubbleLeft }]}>
+          <Text fontSize={12} weight="medium" appearance="primary">
+            {`${Math.round(Number(sliderStep) / 100)}%`}
+          </Text>
+        </View>
+      )}
       <GestureDetector gesture={panGesture}>
         <HoverablePressable
           accessible
@@ -346,7 +383,9 @@ const AmountSlider = ({
               style={[styles.amountSliderThreshold, { left: THUMB_SIZE / 2 + threshold.position }]}
             />
           ))}
-          <View style={[styles.amountSliderThumb, { left: thumbPosition }]} />
+          <View style={[styles.amountSliderThumb, { left: thumbPosition }]}>
+            <View style={styles.amountSliderThumbInner} />
+          </View>
         </HoverablePressable>
       </GestureDetector>
     </View>

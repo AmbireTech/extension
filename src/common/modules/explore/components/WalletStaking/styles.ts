@@ -3,7 +3,7 @@ import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 import { isWeb } from '@common/config/env'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
@@ -48,8 +48,11 @@ interface Styles {
   amountSliderTrack: ViewStyle
   amountSliderProgressContainer: ViewStyle
   amountSliderQuarter: ViewStyle
+  amountSliderWrapper: ViewStyle
+  amountSliderValueBubble: ViewStyle
   amountSliderThreshold: ViewStyle
   amountSliderThumb: ViewStyle
+  amountSliderThumbInner: ViewStyle
   feePreviewRow: ViewStyle
   feePreviewLabel: ViewStyle
   feeDetailsButton: ViewStyle
@@ -68,6 +71,7 @@ interface Styles {
 
 const SLIDER_THUMB_SIZE = 20
 const SLIDER_TRACK_HEIGHT = 8
+const SLIDER_VALUE_BUBBLE_WIDTH = 48
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
@@ -304,6 +308,27 @@ const getStyles = (theme: ThemeProps) =>
       borderRadius: 50,
       backgroundColor: theme.neutral400
     },
+    amountSliderWrapper: {
+      // The amount input above the slider carries a zIndex of its own (see Input's styles), so
+      // the bubble needs the whole slider lifted above it to not end up behind the input.
+      zIndex: 11
+    },
+    amountSliderValueBubble: {
+      position: 'absolute',
+      top: -32,
+      width: SLIDER_VALUE_BUBBLE_WIDTH,
+      ...flexbox.center,
+      ...spacings.pvMi,
+      borderRadius: 11,
+      backgroundColor: theme.primaryAccent100,
+      // Lighter than every shadow in the common utils - just enough to lift the bubble off the
+      // card behind it.
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      elevation: 2
+    },
     amountSliderThreshold: {
       position: 'absolute',
       top: 6,
@@ -317,8 +342,13 @@ const getStyles = (theme: ThemeProps) =>
       width: SLIDER_THUMB_SIZE,
       height: SLIDER_THUMB_SIZE,
       borderRadius: SLIDER_THUMB_SIZE / 2,
-      borderWidth: 3,
-      borderColor: theme.primaryAccent200,
+      backgroundColor: theme.primaryAccent200,
+      ...flexbox.center
+    },
+    amountSliderThumbInner: {
+      width: SLIDER_THUMB_SIZE - 6,
+      height: SLIDER_THUMB_SIZE - 6,
+      borderRadius: SLIDER_THUMB_SIZE / 2,
       backgroundColor: theme.primaryAccent300
     },
     feePreviewRow: {
