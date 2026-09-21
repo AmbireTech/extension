@@ -12,6 +12,7 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
@@ -25,7 +26,6 @@ import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
   TabLayoutContainer,
@@ -412,7 +412,9 @@ const SignAccountOpScreen = () => {
               networkChainId={network?.chainId}
               onTabChange={handleSafeAccountTabChange}
             />
-          ) : isNarrowWebLayout && signAccountOpState?.account.safeCreation ? (
+          ) : isNarrowWebLayout &&
+            signAccountOpState?.account.safeCreation &&
+            !signAccountOpState?.accountOp.meta?.isSafeDeploy ? (
             <SafeNonce withNetwork />
           ) : (
             <View

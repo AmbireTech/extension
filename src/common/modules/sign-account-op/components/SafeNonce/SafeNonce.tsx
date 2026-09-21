@@ -313,7 +313,11 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     ]
   )
 
-  if (!signAccountOpState?.account.safeCreation) return null
+  if (
+    !signAccountOpState?.account.safeCreation ||
+    !!signAccountOpState?.accountOp.meta?.isSafeDeploy
+  )
+    return null
 
   return !hasNetworkLayout ? (
     <View ref={containerRef} style={{ width: 165, height: 40 }}>

@@ -374,7 +374,8 @@ const SignAccountOpScreen = () => {
           // child's own press handler.
           keyboardShouldPersistTaps="handled"
         >
-          {signAccountOpState?.account.safeCreation ? (
+          {signAccountOpState?.account.safeCreation &&
+          !signAccountOpState?.accountOp.meta?.isSafeDeploy ? (
             <SafeNonce />
           ) : (
             <View
