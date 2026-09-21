@@ -68,7 +68,7 @@ const Wrapper: FC<WrapperProps> = ({ children }) => {
 }
 
 const Content: FC<ContentProps> = ({ children, buttons }) => {
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   // Reserves exactly as much scroll space as the floating footer occupies, so content only
   // becomes scrollable once it would otherwise be covered by the footer, not before
   const [footerHeight, setFooterHeight] = useState(0)
@@ -89,11 +89,11 @@ const Content: FC<ContentProps> = ({ children, buttons }) => {
       </ScrollableWrapper>
       <FooterGlassView
         size="sm"
-        fullWidth={isCompactSidePanelLayout}
+        fullWidth={isNarrowWebLayout}
         style={isRequestWindow ? { bottom: SPACING } : {}}
         onLayout={handleFooterLayout}
       >
-        {isCompactSidePanelLayout ? (
+        {isNarrowWebLayout ? (
           buttons
         ) : (
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>{buttons}</View>

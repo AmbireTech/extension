@@ -6,8 +6,10 @@ import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import HoverablePressable from '@common/components/HoverablePressable'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
+import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -17,29 +19,44 @@ import RouteStepsPreview from '@common/modules/swap-and-bridge/components/RouteS
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 import RetryButton from '@web/components/RetryButton'
 import { TRANSACTION_FORM_WIDTH } from '@web/components/TransactionsScreen/styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 import getStyles from './styles'
 
 const FLAT_LIST_ITEM_HEIGHT = 138.5
 
-const { isPopup, isSidePanel } = getUiType()
+const { isPopup } = getUiType()
+
+const selectDisabledSwapProviderIds = (
+  state: AllControllersMappingType['SwapAndBridgeController']
+) => state.disabledSwapProviderIds
 
 const RoutesModal = ({
   sheetRef,
-  closeBottomSheet
+  closeBottomSheet,
+  openProviderSettingsBottomSheet
 }: {
   sheetRef: React.RefObject<any>
   closeBottomSheet: (dest?: 'default' | 'alwaysOpen' | undefined) => void
+  openProviderSettingsBottomSheet: () => void
 }) => {
   const { t } = useTranslation()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { styles, theme } = useTheme(getStyles)
   const { quote, signAccountOpController, updateQuoteStatus } =
     useController('SwapAndBridgeController').state
+  const { state: disabledSwapProviderIds } = useController(
+    'SwapAndBridgeController',
+    selectDisabledSwapProviderIds
+  )
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const scrollRef = useRef<FlatList<SwapAndBridgeRoute>>(null)
+  const shouldOpenProviderSettingsOnClose = useRef(false)
   const { height } = useWindowSize()
   // there's a small discrepancy between ticks and we want to capture that
   const [userSelectedRoute, setUserSelectedRoute] = useState<SwapAndBridgeRoute | undefined>(
@@ -89,6 +106,51 @@ const RoutesModal = ({
   }, [swapAndBridgeDispatch])
 
   const isQuoteLoading = updateQuoteStatus === 'LOADING'
+
+  const handleOpenProviderSettings = useCallback(() => {
+    shouldOpenProviderSettingsOnClose.current = true
+    closeBottomSheet()
+  }, [closeBottomSheet])
+
+  const handleRoutesModalClosed = useCallback(() => {
+    if (!shouldOpenProviderSettingsOnClose.current) return
+
+    shouldOpenProviderSettingsOnClose.current = false
+    openProviderSettingsBottomSheet()
+  }, [openProviderSettingsBottomSheet])
+
+  const listFooterComponent = useMemo(() => {
+    if (!disabledSwapProviderIds.length || isQuoteLoading) return null
+
+    return (
+      <HoverablePressable
+        accessibilityRole="button"
+        onPress={handleOpenProviderSettings}
+        testID="enable-more-swap-providers-button"
+      >
+        <View style={[flexbox.center, spacings.pv]}>
+          <Text
+            fontSize={14}
+            weight="medium"
+            color={theme.linkText}
+            style={{
+              textAlign: 'center',
+              textDecorationColor: theme.linkText,
+              textDecorationLine: 'underline'
+            }}
+          >
+            {t('Enable other providers for more options')}
+          </Text>
+        </View>
+      </HoverablePressable>
+    )
+  }, [
+    disabledSwapProviderIds.length,
+    handleOpenProviderSettings,
+    isQuoteLoading,
+    t,
+    theme.linkText
+  ])
 
   useEffect(() => {
     if (!signAccountOpController) return
@@ -214,6 +276,7 @@ const RoutesModal = ({
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       adjustToContentHeight={isWeb}
+      onClosed={handleRoutesModalClosed}
       HeaderComponent={
         <ModalHeader
           title={t('Select route')}
@@ -237,6 +300,7 @@ const RoutesModal = ({
         windowSize: 6,
         maxToRenderPerBatch: 6,
         removeClippedSubviews: true,
+        ListFooterComponent: listFooterComponent,
         onContentSizeChange: (_, contentHeight: number) => {
           if (contentHeight > 0 && contentHeight !== listHeight) {
             setListHeight(contentHeight)
@@ -246,7 +310,7 @@ const RoutesModal = ({
       customRenderer={undefined}
       style={{
         overflow: 'hidden',
-        width: isMobile ? 'auto' : isPopup || isSidePanel ? '100%' : TRANSACTION_FORM_WIDTH,
+        width: isMobile ? 'auto' : isPopup || isNarrowWebLayout ? '100%' : TRANSACTION_FORM_WIDTH,
         minHeight: isMobile ? undefined : height * 0.7
       }}
       scrollViewProps={{

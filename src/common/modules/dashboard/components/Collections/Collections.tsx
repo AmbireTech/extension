@@ -1,4 +1,3 @@
-import Fuse from 'fuse.js'
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -7,8 +6,11 @@ import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
+import CollectionCard from '@common/components/CollectionCard'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
@@ -18,11 +20,13 @@ import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
 import FloatingBottomBar from '../FloatingBottomBar'
-import Collection from './Collection'
 import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
@@ -30,16 +34,31 @@ interface Props {
     [key: string]: boolean
   }
   sessionId: string
-  onScroll: FlatListProps<any>['onScroll']
+  onScroll?: FlatListProps<any>['onScroll']
   networks: Network[]
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
-  isSearchHidden: boolean
+  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
 
+const SEARCH_DEBOUNCE_MS = 200
+
 const { isPopup } = getUiType()
+
+const selectPortfolioCollections = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.collections
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
+const selectPortfolioIsReadyToVisualize = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.isReadyToVisualize
+
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
 
 const Collections: FC<Props> = ({
   openTab,
@@ -54,15 +73,30 @@ const Collections: FC<Props> = ({
   refreshing,
   onRefresh
 }) => {
-  const {
-    state: { portfolio, dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
+  const { state: collections } = useController(
+    'SelectedAccountController',
+    selectPortfolioCollections
+  )
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
+  const { state: isPortfolioReadyToVisualize } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsReadyToVisualize
+  )
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    selectDashboardNetworkFilter
+  )
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [selectedCollectible, setSelectedCollectible] = useState<SelectedCollectible | null>(null)
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
-  const searchValue = watch('search')
+  const inputSearchValue = watch('search')
+  // Debounced so a keystroke doesn't re-index every collection the account holds
+  const searchValue = useDebounce({ value: inputSearchValue, delay: SEARCH_DEBOUNCE_MS })
 
   const closeCollectibleModal = useCallback(() => {
     closeModal()
@@ -77,17 +111,19 @@ const Collections: FC<Props> = ({
   )
 
   const filteredPortfolioCollections = useMemo(() => {
-    const searchableCollections = (portfolio?.collections || []).filter(
-      ({ chainId, collectibles }) => {
-        let isMatchingNetwork = true
+    // Built once instead of per collection, since every one of them is compared to it
+    const filteredChainId = dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : null
 
-        if (dashboardNetworkFilter) {
-          isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
-        }
+    const searchableCollections = (collections || []).filter(({ chainId, collectibles, flags }) => {
+      // Collections carried no flags before they could be hidden, so a result
+      // from an older background has none
+      if (flags?.isHidden) return false
 
-        return isMatchingNetwork && collectibles.length
-      }
-    )
+      const isMatchingNetwork = filteredChainId === null || chainId === filteredChainId
+
+      // A collection with no collectibles of the account has nothing to display
+      return isMatchingNetwork && !!collectibles.length
+    })
 
     return tokenOrCollectionSearch({
       networks,
@@ -95,25 +131,20 @@ const Collections: FC<Props> = ({
       search: searchValue,
       searchType: 'collection'
     })
-  }, [portfolio?.collections, networks, searchValue, dashboardNetworkFilter])
+  }, [collections, networks, searchValue, dashboardNetworkFilter])
 
   const isReadyToVisualizeCollections = useMemo(() => {
-    if (portfolio.isAllReady) return true
+    if (isPortfolioAllReady) return true
 
-    return portfolio?.isReadyToVisualize && filteredPortfolioCollections.length
-  }, [filteredPortfolioCollections.length, portfolio.isAllReady, portfolio?.isReadyToVisualize])
+    return isPortfolioReadyToVisualize && filteredPortfolioCollections.length
+  }, [filteredPortfolioCollections.length, isPortfolioAllReady, isPortfolioReadyToVisualize])
 
   const renderItem = useCallback(
     ({ item }: any) => {
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              currentTab="collectibles"
-              sessionId={sessionId}
-            />
+            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
           </View>
         )
       }
@@ -131,13 +162,16 @@ const Collections: FC<Props> = ({
               t("You don't have any collectibles (NFTs) yet.")}
             {!searchValue &&
               !!dashboardNetworkFilter &&
-              t(`You don't have any collectibles (NFTs) on ${dashboardNetworkFilterName}.`)}
+              t("You don't have any collectibles (NFTs) on {{network}}.", {
+                network: dashboardNetworkFilterName
+              })}
             {searchValue &&
-              t(
-                `No collectibles (NFTs) match "${searchValue}"${
-                  dashboardNetworkFilterName ? ` on ${dashboardNetworkFilterName}` : ''
-                }.`
-              )}
+              (dashboardNetworkFilterName
+                ? t('No collectibles (NFTs) match "{{search}}" on {{network}}.', {
+                    search: searchValue,
+                    network: dashboardNetworkFilterName
+                  })
+                : t('No collectibles (NFTs) match "{{search}}".', { search: searchValue }))}
           </Text>
         )
       }
@@ -148,10 +182,10 @@ const Collections: FC<Props> = ({
 
       if (!initTab?.collectibles || !item || item === 'keep-this-to-avoid-key-warning') return null
 
-      const { name, address, chainId, collectibles, priceIn } = item
+      const { name, address, chainId, collectibles, priceIn, flags } = item
 
       return (
-        <Collection
+        <CollectionCard
           key={address}
           name={name}
           address={address}
@@ -160,6 +194,7 @@ const Collections: FC<Props> = ({
           priceIn={priceIn}
           openCollectibleModal={openCollectibleModal}
           networks={networks}
+          isCustom={flags?.isCustom}
         />
       )
     },
@@ -189,21 +224,33 @@ const Collections: FC<Props> = ({
     setValue('search', '')
   }, [openTab, setValue])
 
+  // Rendered above the carousel on mobile, so it stays put through a swipe
+  const floatingBar = useMemo(
+    () => ({
+      control,
+      networkFilterTab: 'collectibles' as const,
+      searchPlaceholder: t('Search NFT')
+    }),
+    [control, t]
+  )
+
   return (
     <>
       <CollectibleModal
         modalRef={modalRef}
         handleClose={closeCollectibleModal}
         selectedCollectible={selectedCollectible}
+        canHideCollectible
       />
       <DashboardPageScrollContainer
+        floatingBar={floatingBar}
         tab="collectibles"
         openTab={openTab}
-        ListHeaderComponent={<DashboardBanners />}
+        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         data={[
-          'header',
+          ...(isMobile ? [] : ['header']),
           ...(initTab?.collectibles ? filteredPortfolioCollections : []),
-          !filteredPortfolioCollections.length && portfolio?.isAllReady ? 'empty' : '',
+          !filteredPortfolioCollections.length && isPortfolioAllReady ? 'empty' : '',
           !isReadyToVisualizeCollections ? 'skeleton' : 'keep-this-to-avoid-key-warning'
         ]}
         renderItem={renderItem}
@@ -216,12 +263,9 @@ const Collections: FC<Props> = ({
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-      {openTab === 'collectibles' && (
-        <FloatingBottomBar
-          control={control}
-          isHidden={isSearchHidden}
-          searchPlaceholder={t('Search NFT')}
-        />
+      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
+      {!isMobile && openTab === 'collectibles' && (
+        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
       )}
     </>
   )

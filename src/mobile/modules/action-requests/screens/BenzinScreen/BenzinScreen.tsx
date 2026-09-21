@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -11,12 +11,20 @@ import {
 import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
+
+const pendingRequestsTopContent = isMobile ? (
+  <PendingRequests
+    style={[common.borderRadiusPrimary, spacings.mbSm, { borderTopWidth: 1, marginTop: -12 }]}
+  />
+) : undefined
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
@@ -64,12 +72,16 @@ const BenzinScreen = () => {
   const pendingRequests = useMemo(() => {
     if (!visibleUserRequests.length) return []
 
-    return visibleUserRequests.filter((r) => r.kind !== 'benzin')
+    return visibleUserRequests.filter(
+      (r) =>
+        r.kind !== 'benzin' &&
+        (r.kind !== 'calls' || (r.signAccountOp.accountOp.signed || []).length === 0)
+    )
   }, [visibleUserRequests])
 
   return (
     <MobileLayoutContainer>
-      <Benzin state={state}>
+      <Benzin state={state} topContent={pendingRequestsTopContent}>
         <View
           style={[
             spacings.phSm,
@@ -114,4 +126,4 @@ const BenzinScreen = () => {
   )
 }
 
-export default React.memo(BenzinScreen)
+export default memo(BenzinScreen)

@@ -28,6 +28,26 @@ export const applyPanelMode = async (enabled: boolean) => {
 }
 
 /**
+ * Whether the toolbar action opens the side panel instead of the popup. Read from the browser
+ * instead of the wallet state, so the mode is available without plumbing a controller around.
+ */
+export const isSidePanelModeEnabled = async () => {
+  const sidePanelApi = getChromeSidePanelApi()
+  if (!sidePanelApi?.getPanelBehavior) return false
+
+  try {
+    const behavior = await sidePanelApi.getPanelBehavior()
+
+    return !!behavior?.openPanelOnActionClick
+  } catch (error) {
+    console.error('Failed to read the side panel mode', error)
+    captureBackgroundException(error)
+
+    return false
+  }
+}
+
+/**
  * Opens the side panel for the given window (the active window when omitted). Chrome only allows
  * this while handling a user gesture, so it must never be called on behalf of a dapp request -
  * those are handled in the panel when it is already open and in a request window otherwise.

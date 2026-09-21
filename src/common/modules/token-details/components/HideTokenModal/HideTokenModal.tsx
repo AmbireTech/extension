@@ -42,7 +42,7 @@ const HideTokenModal = ({
         {t('Are you sure you want to hide this token?')}
       </Text>
       <Text testID="hide-token-modal-description">
-        {t('You can always unhide it from the Settings menu > Custom tokens.')}
+        {t('You can always unhide it from the Settings menu > Custom assets.')}
       </Text>
 
       <Pressable

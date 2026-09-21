@@ -1,6 +1,5 @@
 import { formatUnits, isAddress } from 'ethers'
 import React, { FC, memo, useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
@@ -15,6 +14,7 @@ import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
@@ -25,19 +25,27 @@ import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/To
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 import { getTokenId } from '@common/utils/token'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   simulationFailed?: boolean
+  disabled?: boolean
+  openProviderSettingsModal: () => void
 }
 
-const ToToken: FC<Props> = ({ simulationFailed }) => {
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
+const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSettingsModal }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     statuses: swapAndBridgeCtrlStatuses,
     toSelectedToken,
@@ -52,18 +60,25 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
     updateToTokenListStatus,
     switchTokensStatus,
     supportedChainIds,
+    disabledSwapProviderIds,
     signAccountOpController
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
-  const {
-    state: { account }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
   const networks = useNetworks({
     acc: account,
     additionalCheck: {
       chainIds: supportedChainIds,
-      reason: 'Network is not supported by our service provider.'
+      reason: t(
+        disabledSwapProviderIds.length
+          ? 'Network is not supported by the enabled service providers. Enable more providers for wider support'
+          : 'Network is not supported by our service provider.'
+      )
     }
   })
 
@@ -142,45 +157,37 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
 
   const toNetworksOptions: SelectValue[] = useMemo(
     () =>
-      networks
-        .sort((a, b) => {
-          const aIsSupported = !a.isNotSupported
-          const bIsSupported = !b.isNotSupported
-          if (aIsSupported && !bIsSupported) return -1
-          if (!aIsSupported && bIsSupported) return 1
-          return 0
-        })
-        .map((n) => {
-          const tooltipId = `network-${n.chainId}-not-supported-tooltip`
+      sortNetworksByBalance(networks, balancePerNetwork).map((n) => {
+        const tooltipId = `network-${n.chainId}-not-supported-tooltip`
 
-          return {
-            value: String(n.chainId),
-            extraSearchProps: [n.name],
-            disabled: n.isNotSupported,
-            label: (
-              <>
-                <Text
-                  fontSize={isMobile ? 14 : 16}
-                  appearance="secondaryText"
-                  weight="medium"
-                  dataSet={{ tooltipId }}
-                  style={flexbox.flex1}
-                  numberOfLines={1}
-                >
-                  {n.name}
-                </Text>
-                {n.isNotSupported && (
-                  <NotSupportedNetworkTooltip
-                    tooltipId={tooltipId}
-                    message={n.notSupportedReason || t('Network unavailable')}
-                  />
-                )}
-              </>
-            ),
-            icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
-          }
-        }),
-    [networks, t]
+        return {
+          value: String(n.chainId),
+          extraSearchProps: { name: n.name },
+          disabled: n.isNotSupported,
+          label: (
+            <>
+              <Text
+                fontSize={isMobile ? 14 : 16}
+                appearance="secondaryText"
+                weight="medium"
+                dataSet={{ tooltipId }}
+                style={flexbox.flex1}
+                numberOfLines={1}
+              >
+                {n.name}
+              </Text>
+              {n.isNotSupported && (
+                <NotSupportedNetworkTooltip
+                  tooltipId={tooltipId}
+                  message={n.notSupportedReason || t('Network unavailable')}
+                />
+              )}
+            </>
+          ),
+          icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
+        }
+      }),
+    [networks, balancePerNetwork, t]
   )
 
   const getToNetworkSelectValue = useMemo(() => {
@@ -258,7 +265,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   return (
     <ItemPanel
       style={{
-        ...spacings.pv,
+        ...spacings.pvSm,
         ...spacings.pl,
         ...(isMobile ? {} : spacings.prMd)
       }}
@@ -266,6 +273,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
       <SwitchTokensButton
         onPress={handleSwitchFromAndToTokens}
         disabled={
+          disabled ||
           switchTokensStatus === 'LOADING' ||
           updateQuoteStatus === 'LOADING' ||
           updateToTokenListStatus === 'LOADING'
@@ -273,7 +281,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
       />
       <View
         style={[
-          isCompactSidePanelLayout
+          isNarrowWebLayout
             ? [{ width: '100%' }, spacings.mbSm]
             : [flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]
         ]}
@@ -282,7 +290,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           appearance="secondaryText"
           fontSize={14}
           weight="medium"
-          style={isCompactSidePanelLayout ? spacings.mbTy : spacings.mbSm}
+          style={isNarrowWebLayout ? spacings.mbTy : spacings.mbSm}
         >
           {t('You receive')}
         </Text>
@@ -290,7 +298,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           setValue={handleSetToNetworkValue}
           containerStyle={{
             ...spacings.mb0,
-            width: isCompactSidePanelLayout ? '100%' : isMobile ? 150 : 168
+            width: isNarrowWebLayout ? '100%' : isMobile ? 150 : 168
           }}
           options={toNetworksOptions}
           selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
@@ -299,11 +307,12 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           mode="bottomSheet"
           bottomSheetTitle={t('Receive token network')}
           testID="to-network-select"
+          disabled={disabled}
         />
       </View>
       <View
         style={[
-          isCompactSidePanelLayout
+          isNarrowWebLayout
             ? { width: '100%', gap: SPACING_SM }
             : [
                 flexbox.directionRow,
@@ -312,19 +321,20 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
               ]
         ]}
       >
-        <View style={isCompactSidePanelLayout ? { width: '100%' } : [flexbox.flex1]}>
+        <View style={isNarrowWebLayout ? { width: '100%' } : [flexbox.flex1]}>
           <ToTokenSelect
             toTokenOptions={toTokenOptions}
             toTokenValue={toTokenValue}
             handleChangeToToken={handleChangeToToken}
-            toTokenAmountSelectDisabled={toTokenAmountSelectDisabled}
+            toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
             addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
             handleAddToTokenByAddress={handleAddToTokenByAddress}
+            openProviderSettingsModal={openProviderSettingsModal}
           />
         </View>
         <View
           style={
-            isCompactSidePanelLayout
+            isNarrowWebLayout
               ? { width: '100%', alignItems: 'flex-end' }
               : [flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]
           }

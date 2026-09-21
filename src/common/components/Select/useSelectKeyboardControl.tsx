@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { MenuOption } from '@common/components/Select/components/MenuOption'
+import { isMobile } from '@common/config/env'
 import usePrevious from '@common/hooks/usePrevious'
 
 import { SectionedSelectProps, SelectProps, SelectValue } from './types'
@@ -261,6 +262,11 @@ const useSelectKeyboardControl = ({
     setHighlightedItemIndex(null)
   }, [])
 
+  // Highlighting is driven by hover and by the keyboard, neither of which exists on
+  // mobile. Keeping it out of `renderItem` there keeps that callback's identity stable,
+  // so the list does not re-render every mounted row whenever the highlight moves.
+  const highlightedItemIndexForRender = isMobile ? null : highlightedItemIndex
+
   const renderItem = useCallback(
     ({ item, index: optionIndex, section }: { item: SelectValue; index: number; section: any }) => {
       let onHoverIn = () => {}
@@ -277,9 +283,9 @@ const useSelectKeyboardControl = ({
         onHoverIn = () => handleSetHoverIn({ sectionIndex, optionIndex })
 
         if (
-          highlightedItemIndex &&
-          highlightedItemIndex.sectionIndex === sectionIndex &&
-          highlightedItemIndex.optionIndex === optionIndex
+          highlightedItemIndexForRender &&
+          highlightedItemIndexForRender.sectionIndex === sectionIndex &&
+          highlightedItemIndexForRender.optionIndex === optionIndex
         ) {
           isHighlighted = true
         }
@@ -307,7 +313,7 @@ const useSelectKeyboardControl = ({
       value?.value,
       handleOptionSelect,
       size,
-      highlightedItemIndex,
+      highlightedItemIndexForRender,
       handleSetHoverIn,
       handleSetHoverOut,
       sections,

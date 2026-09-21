@@ -16,7 +16,7 @@ import { RouteItemType } from './RouteItem/RouteItem'
 
 const Routes = () => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
 
   const routeItems: RouteItemType[] = [
     {
@@ -61,7 +61,7 @@ const Routes = () => {
     <View
       style={[
         flexbox.directionRow,
-        isCompactSidePanelLayout && [flexbox.justifyCenter, { width: '100%' }]
+        isNarrowWebLayout && [flexbox.justifyCenter, { width: '100%' }]
       ]}
     >
       {routeItems.map((routeItem, index) => (
@@ -70,7 +70,7 @@ const Routes = () => {
           routeItem={routeItem}
           index={index}
           routeItemsLength={routeItems.length}
-          isCompactSidePanelLayout={isCompactSidePanelLayout}
+          isNarrowWebLayout={isNarrowWebLayout}
         />
       ))}
     </View>

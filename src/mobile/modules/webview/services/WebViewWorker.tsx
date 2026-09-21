@@ -9,7 +9,7 @@ import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerSt
 import eventBus from '@common/services/event/eventBus'
 import { getAllSerialized, storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
-import { BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS } from '@mobile/constants/storageSnapshot'
+import { BOOT_SNAPSHOT_STORAGE_KEYS } from '@mobile/constants/storageSnapshot'
 import {
   approveWalletConnectSession,
   approveWcAuthenticate,
@@ -43,6 +43,15 @@ import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService
 
 import { decode, encode } from './bridgeCodec'
 
+// The worker hosts no controllers — those run in the RN realm (see
+// @mobile/services/controllerHost). It is still mounted and its bridge is live, so
+// anything moved back into the worker gets storage, fetch, the hardware-wallet
+// transports and the controller-state channel without further wiring.
+//
+// Moving a controller back in also makes `yarn dev:webview` required again for development
+// builds, and the dev-server notice below live again — both are dormant only because nothing
+// calls init() today. Restore the README's dev-server step along with it.
+//
 // In production the worker bundle is materialized from the OTA-shipped copy (which rides
 // the Metro bundle) into a writable, app-sandboxed dir and loaded from there via `file://`,
 // so OTA updates reach it. It falls back to the native-asset copy baked into the signed app
@@ -78,6 +87,12 @@ const globalErrorHandler = `
 export interface WebViewWorkerRef {
   dispatch: (action: any, raw?: boolean) => void
   init: (config: any) => Promise<string[]>
+  /**
+   * Asks the worker to post its boot marks. Returns false when the worker has not
+   * loaded its bundle yet, so the caller can print the report without waiting for
+   * marks that are never coming.
+   */
+  flushBootProfile: () => boolean
 }
 
 export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
@@ -113,9 +128,13 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // Sticky, so the notice stays up until the worker actually boots instead of
   // flashing back to a blank screen the moment the dev server answers again.
   const [hasDevServerFailed, setHasDevServerFailed] = useState(false)
+  // Nothing calls init() while the worker hosts no controllers, so this stays false and the
+  // dev-server probe below never runs — a missing dev server is harmless today. It turns back
+  // on by itself if a controller is moved into the worker.
+  const isInitializeRequested = !!lastConfig.current || !!pendingConfig.current
 
   useEffect(() => {
-    if (!__DEV__ || isReady) return undefined
+    if (!__DEV__ || isReady || !isInitializeRequested) return undefined
 
     let isActive = true
     let probeTimeoutId: ReturnType<typeof setTimeout> | null = null
@@ -149,7 +168,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       isActive = false
       if (probeTimeoutId) clearTimeout(probeTimeoutId)
     }
-  }, [devUrl, isReady])
+  }, [devUrl, isInitializeRequested, isReady])
 
   useEffect(() => {
     if (__DEV__ || prodBundleUri) return undefined
@@ -181,8 +200,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
     initReadyWarningTimeoutRef.current = setTimeout(() => {
       if (initResolver.current && !isReadyRef.current) {
         console.warn(
-          `[WebViewWorker] Controllers are not ready after ${CONTROLLER_STORE_MAX_LOADING_TIME}ms. ` +
-            `Actions may be dropped. Dev host: ${devUrl}. ` +
+          `[WebViewWorker] The worker did not report ready after ${CONTROLLER_STORE_MAX_LOADING_TIME}ms. ` +
+            `Actions dispatched to it are dropped. Dev host: ${devUrl}. ` +
             `If you are developing locally, ensure the webview dev server is running.`
         )
       }
@@ -212,21 +231,19 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // reloads). The richJson stringify here covers the whole storage snapshot, which
   // is why it is measured separately from the injectJavaScript hop.
   //
-  // PERF: ship a one-shot snapshot of async storage so the worker can seed an
-  // in-memory cache and serve controller-boot reads locally instead of making 80+
-  // separate bridged storage.get round-trips (each delivered via its own
-  // injectJavaScript), which saturated the bridge for seconds. Bulk keys no
-  // controller needs to construct are left out of it (see
-  // BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS) and fetched over the bridge on first use —
-  // the snapshot's `allKeys` is what lets the worker tell those apart from keys that
-  // genuinely are not stored.
+  // PERF: ship a one-shot snapshot of the async storage keys a controller hosted in
+  // the worker needs to construct (see BOOT_SNAPSHOT_STORAGE_KEYS), so it can seed an
+  // in-memory cache and serve those reads locally instead of making one bridged
+  // storage.get round-trip per key, each delivered via its own injectJavaScript. The
+  // snapshot's `allKeys` is what lets the worker tell a key it has to fetch over the
+  // bridge from one that simply is not stored.
   //
   // The snapshot is taken here, not once in init(), so a worker that reloads (dev
   // HMR, a renderer crash) is seeded with what storage holds NOW. Reusing the
   // boot-time snapshot would hide every write made since from the new context.
   const injectInitPayload = (configToSend: any) => {
     bootProfiler.startSpan(BOOT_MARK.rnStorageSnapshot)
-    const storageSnapshot = getAllSerialized(BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS)
+    const storageSnapshot = getAllSerialized(BOOT_SNAPSHOT_STORAGE_KEYS)
     bootProfiler.endSpan(BOOT_MARK.rnStorageSnapshot, {
       count: Object.keys(storageSnapshot.values).length
     })
@@ -268,6 +285,15 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           pendingConfig.current = config
         }
       })
+    },
+    flushBootProfile: () => {
+      // `isLoaded`, not `isReady`: the worker answers this before it is configured,
+      // and its bundle-eval and page timings are worth having even when it hosts
+      // nothing and therefore never reports ready.
+      if (!isLoaded) return false
+
+      dispatchToWebView({ type: 'FLUSH_BOOT_PROFILE' })
+      return true
     }
   }))
 

@@ -4,7 +4,11 @@ import { jest } from '@jest/globals'
 
 import type { SubmittedAccountOpLike } from '@ambire-common/libs/accountOp/submittedAccountOp'
 
-import { getDappInteractions } from './humanizedHelpers'
+import { getDappInteractionsFromHumanizedCalls, getHumanizedCalls } from './humanizedHelpers'
+
+// The hooks wrap this pure helper; testing it directly keeps these cases free of React/controllers.
+const getDappInteractions = (submittedAccountOp: SubmittedAccountOpLike) =>
+  getDappInteractionsFromHumanizedCalls(submittedAccountOp, getHumanizedCalls(submittedAccountOp))
 
 jest.mock('@ambire-common/libs/humanizer', () => ({ humanizeAccountOp: () => [] }))
 

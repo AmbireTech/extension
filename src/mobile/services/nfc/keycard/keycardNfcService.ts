@@ -42,8 +42,12 @@ import type { Commandset } from 'keycard-sdk/dist/commandset'
 // held in memory for one account op's signing at most (see `#sessionPin`). It is never
 // persisted, never sent over the bridge and never written to a controller.
 
-/** The account-level path the extended public key is exported from (BIP44 standard). */
-export const KEYCARD_ACCOUNT_HD_PATH = "m/44'/60'/0'/0"
+/**
+ * The path the extended public key is exported from. It sits one level above the
+ * BIP44 standard chain, so the same key covers both the standard chain (0/<index>)
+ * and the Ledger Legacy path (<index>) without tapping the card again.
+ */
+export const KEYCARD_ACCOUNT_HD_PATH = "m/44'/60'/0'"
 
 /**
  * Android's default IsoDep timeout (~600ms) is too short for the card's key

@@ -9,6 +9,7 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
 import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
@@ -36,6 +37,7 @@ const SwitchAccountScreen = () => {
 
   return (
     <MobileLayoutContainer
+      header={<ActionHeader />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter
@@ -55,22 +57,13 @@ const SwitchAccountScreen = () => {
               style={{
                 ...flexbox.center,
                 backgroundColor: theme.tertiaryBackground,
-                ...spacings.pvLg
-              }}
-            >
-              <Text fontSize={20} weight="medium">
-                {t('Switch Account Request')}
-              </Text>
-            </View>
-            <View
-              style={{
-                backgroundColor: theme.primaryBackground,
-                ...flexbox.alignCenter,
                 ...spacings.pv,
-                ...flexbox.flex1,
                 ...spacings.phSm
               }}
             >
+              <Text fontSize={20} weight="medium" style={!!dAppData && spacings.mbLg}>
+                {t('Switch Account Request')}
+              </Text>
               {!!dAppData && (
                 <View
                   style={[
@@ -82,7 +75,7 @@ const SwitchAccountScreen = () => {
                 >
                   <ManifestImage
                     uri={dAppData.icon}
-                    size={responsiveSizeMultiplier * 56}
+                    size={responsiveSizeMultiplier * 48}
                     containerStyle={{
                       backgroundColor: theme.secondaryBackground
                     }}
@@ -92,15 +85,15 @@ const SwitchAccountScreen = () => {
                     }}
                     fallback={() => (
                       <ManifestFallbackIcon
-                        width={responsiveSizeMultiplier * 56}
-                        height={responsiveSizeMultiplier * 56}
+                        width={responsiveSizeMultiplier * 48}
+                        height={responsiveSizeMultiplier * 48}
                       />
                     )}
                   />
                 </View>
               )}
               {!!dAppData && (
-                <Text appearance="secondaryText" style={[spacings.mbSm, text.center]} fontSize={16}>
+                <Text appearance="secondaryText" style={text.center} fontSize={16}>
                   <Text appearance="primaryText" fontSize={16} weight="medium">
                     {dAppData.name}
                   </Text>{' '}
@@ -112,7 +105,16 @@ const SwitchAccountScreen = () => {
                   </Text>
                 </Text>
               )}
-
+            </View>
+            <View
+              style={{
+                backgroundColor: theme.primaryBackground,
+                ...flexbox.alignCenter,
+                ...spacings.pv,
+                ...flexbox.flex1,
+                ...spacings.phSm
+              }}
+            >
               {account && <Account style={spacings.mbSm} {...account} />}
               <DownArrowLongIcon
                 style={[spacings.mbSm]}

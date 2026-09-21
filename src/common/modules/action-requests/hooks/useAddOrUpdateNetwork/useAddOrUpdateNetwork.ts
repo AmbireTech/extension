@@ -2,9 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
-import { getFeatures } from '@ambire-common/libs/networks/networks'
+import {
+  getFeatures,
+  getLoadingFeatures,
+  isNetworkInfoPending
+} from '@ambire-common/libs/networks/networks'
 import useController from '@common/hooks/useController'
 import validateRequestParams from '@common/modules/action-requests/utils/validateRequestParams'
+
+// Initial state
+const NETWORK_INFO_PENDING_FEATURES: NetworkFeature[] = getLoadingFeatures()
 
 const useAddOrUpdateNetwork = () => {
   const { t } = useTranslation()
@@ -17,7 +24,6 @@ const useAddOrUpdateNetwork = () => {
     dispatch: networksDispatch
   } = useController('NetworksController')
 
-  const [features, setFeatures] = useState<NetworkFeature[]>(getFeatures(undefined, undefined))
   const [rpcUrlIndex, setRpcUrlIndex] = useState<number>(0)
   const [existingNetwork, setExistingNetwork] = useState<Network | null | undefined>(undefined)
   // The screens render from this flag (button label, disabled state, invalid params alert), so it
@@ -128,24 +134,28 @@ const useAddOrUpdateNetwork = () => {
     networkToAddOrUpdate?.chainId
   ])
 
-  useEffect(() => {
-    if (existingNetwork) {
-      setFeatures(
-        getFeatures(
-          {
-            ...existingNetwork,
-            isOptimistic: !!existingNetwork.isOptimistic,
-            flagged: !!existingNetwork.flagged
-          },
-          existingNetwork
-        )
+  const networkInfo = networkToAddOrUpdate?.info
+
+  const features = useMemo(() => {
+    if (existingNetwork)
+      return getFeatures(
+        {
+          ...existingNetwork,
+          isOptimistic: !!existingNetwork.isOptimistic,
+          flagged: !!existingNetwork.flagged
+        },
+        existingNetwork
       )
 
-      return
-    }
+    if (!networkInfo) return NETWORK_INFO_PENDING_FEATURES
 
-    setFeatures(getFeatures(networkToAddOrUpdate?.info, undefined))
-  }, [networkToAddOrUpdate?.info, networkDetails, existingNetwork])
+    return getFeatures(networkInfo, undefined)
+  }, [existingNetwork, networkInfo])
+
+  const isCheckingNetwork = useMemo(
+    () => !existingNetwork && isNetworkInfoPending(networkInfo),
+    [existingNetwork, networkInfo]
+  )
 
   useEffect(() => {
     if (!userRequest) return
@@ -290,6 +300,7 @@ const useAddOrUpdateNetwork = () => {
     userRequest,
     statuses,
     features,
+    isCheckingNetwork,
     existingNetwork,
     isActionButtonPressed,
     successStateText,

@@ -240,7 +240,7 @@ test.describe('dashboard', { tag: '@dashboard' }, () => {
       )
       await pages.basePage.compareText(
         selectors.dashboard.hideTokenModalDescription,
-        'You can always unhide it from the Settings menu > Custom tokens.'
+        'You can always unhide it from the Settings menu > Custom assets.'
       )
 
       await pages.basePage.click(selectors.dashboard.yesHideItButton)

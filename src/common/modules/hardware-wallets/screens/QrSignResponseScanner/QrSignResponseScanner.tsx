@@ -4,7 +4,7 @@ import { View } from 'react-native'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -12,7 +12,7 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 type Props = {
   onSignatureScanned: (payload: Uint8Array) => void
@@ -21,10 +21,8 @@ type Props = {
 
 const SCANNER_SIZE = 280
 
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
-
 const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
+  const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const [isCameraTornDown, setIsCameraTornDown] = useState(false)
 

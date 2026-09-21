@@ -2,8 +2,6 @@ import { useEffect, useRef } from 'react'
 
 import useControllerStore from '@common/hooks/useControllerStore'
 import eventBus from '@common/services/event/eventBus'
-import { Action, MethodAction } from '@common/types/actions'
-import { MOBILE_DEFERRED_CONTROLLERS } from '@mobile/constants/criticalControllers'
 import {
   BOOT_MARK,
   BOOT_PROFILE_DEADLINE,
@@ -15,17 +13,19 @@ import {
 
 /**
  * Marks the controller-store readiness milestones and, once the boot has settled,
- * asks the WebView worker for its marks and prints the assembled two-realm
- * timeline. A no-op unless boot profiling is switched on.
+ * asks the WebView worker for its marks and prints the assembled timeline. A no-op
+ * unless boot profiling is switched on.
  *
- * Reports on whichever comes first: every non-deferred controller state having
- * landed, or BOOT_PROFILE_DEADLINE elapsing. The deferred controllers are left out
- * because they only start loading after unlock, which may take a long time or never
- * happen at all.
+ * Reports on whichever comes first: the store reporting ready, or
+ * BOOT_PROFILE_DEADLINE elapsing. The store's readiness leaves the deferred
+ * controllers out, because they only start loading once the portfolio is in, which may
+ * take a long time or never happen at all.
+ *
+ * `flushWorkerBootProfile` returns false when the worker has not loaded, in which case
+ * the report is printed without its half instead of waiting for marks that are never
+ * coming.
  */
-const useBootProfileReport = (
-  dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
-) => {
+const useBootProfileReport = (flushWorkerBootProfile: () => boolean) => {
   const { controllerStore, isReadyToLoadRoutes } = useControllerStore()
   const hasReportedRef = useRef(false)
 
@@ -75,7 +75,11 @@ const useBootProfileReport = (
       removeWorkerMarksListener = () =>
         eventBus.removeEventListener(BOOT_PROFILE_MARKS_EVENT, onWorkerMarks)
 
-      dispatch({ type: 'FLUSH_BOOT_PROFILE' })
+      if (!flushWorkerBootProfile()) {
+        void print()
+        return
+      }
+
       // Print without the worker's half rather than never printing at all — a
       // worker that cannot answer is itself the finding.
       workerFlushId = setTimeout(() => {
@@ -87,11 +91,7 @@ const useBootProfileReport = (
     const checkNonDeferredReadiness = () => {
       readinessFrameId = null
 
-      const nonDeferredControllers = controllerStore.controllersByName.filter(
-        (ctrlName) => !MOBILE_DEFERRED_CONTROLLERS.includes(ctrlName)
-      )
-      if (!nonDeferredControllers.length) return
-      if (!controllerStore.areControllersReady(nonDeferredControllers)) return
+      if (!controllerStore.isReady) return
 
       markBootOnce(BOOT_MARK.rnStoreNonDeferredReady)
       eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
@@ -121,7 +121,7 @@ const useBootProfileReport = (
       eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
       removeWorkerMarksListener?.()
     }
-  }, [controllerStore, dispatch])
+  }, [controllerStore, flushWorkerBootProfile])
 }
 
 export default useBootProfileReport

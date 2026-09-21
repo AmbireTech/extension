@@ -1,18 +1,25 @@
 import { HDNodeWallet, Mnemonic } from 'ethers'
 
-import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
+import {
+  BIP44_LEDGER_DERIVATION_TEMPLATE,
+  BIP44_STANDARD_DERIVATION_TEMPLATE,
+  LEGACY_POPULAR_DERIVATION_TEMPLATE
+} from '@ambire-common/consts/derivation'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 
 import NfcKeyIterator from './nfcKeyIterator'
 
 const MNEMONIC = 'test test test test test test test test test test test junk'
-const ACCOUNT_HD_PATH = "m/44'/60'/0'/0"
+const ACCOUNT_HD_PATH = "m/44'/60'/0'"
 const KEY_UID = 'a1b2c3'
 
 const getAccountNode = () =>
   HDNodeWallet.fromMnemonic(Mnemonic.fromPhrase(MNEMONIC), ACCOUNT_HD_PATH)
 
 const getExpectedAddress = (index: number) =>
+  HDNodeWallet.fromMnemonic(Mnemonic.fromPhrase(MNEMONIC), `${ACCOUNT_HD_PATH}/0/${index}`).address
+
+const getExpectedLegacyAddress = (index: number) =>
   HDNodeWallet.fromMnemonic(Mnemonic.fromPhrase(MNEMONIC), `${ACCOUNT_HD_PATH}/${index}`).address
 
 const getController = () =>
@@ -58,6 +65,34 @@ describe('NfcKeyIterator', () => {
     ])
   })
 
+  it('derives the Ledger Legacy addresses from the same card key', async () => {
+    const { keyIterator } = getInitializedIterator()
+
+    const addresses = await keyIterator.retrieve(
+      [{ from: 0, to: 2 }],
+      LEGACY_POPULAR_DERIVATION_TEMPLATE
+    )
+
+    expect(addresses).toEqual([0, 1, 2].map(getExpectedLegacyAddress))
+  })
+
+  it('offers the standard and the legacy path only', () => {
+    const { keyIterator } = getInitializedIterator()
+
+    expect(keyIterator.derivableHdPathTemplates).toEqual([
+      BIP44_STANDARD_DERIVATION_TEMPLATE,
+      LEGACY_POPULAR_DERIVATION_TEMPLATE
+    ])
+  })
+
+  it('refuses a path the card key cannot reach', async () => {
+    const { keyIterator } = getInitializedIterator()
+
+    await expect(
+      keyIterator.retrieve([{ from: 0, to: 0 }], BIP44_LEDGER_DERIVATION_TEMPLATE)
+    ).rejects.toThrow(/cannot be browsed/)
+  })
+
   it('uses the standard BIP44 template and records which card the accounts came from', () => {
     const { keyIterator, controller } = getInitializedIterator()
 
@@ -74,7 +109,7 @@ describe('NfcKeyIterator', () => {
     expect(() =>
       keyIterator.initFromExportedKey({
         extendedPublicKey: getAccountNode().neuter().extendedKey,
-        hdPath: "m/44'/60'/0'",
+        hdPath: "m/44'/1'/0'",
         keyUid: KEY_UID,
         nfcWalletType: 'keycard'
       })

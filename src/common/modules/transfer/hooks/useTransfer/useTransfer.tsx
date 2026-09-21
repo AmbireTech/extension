@@ -1,5 +1,5 @@
 import { parseUnits } from 'ethers'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
@@ -14,6 +14,7 @@ import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-commo
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useSyncedState from '@common/hooks/useSyncedState'
@@ -23,13 +24,29 @@ import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import { getUiType } from '@common/utils/uiType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isRequestWindow } = getUiType()
+
+const selectVerifiedDomainsStatus = (state: AllControllersMappingType['DomainsController']) =>
+  state.verifiedDomainsStatus
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
+const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.visibleUserRequests
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+const selectAccountsOps = (state: AllControllersMappingType['ActivityController']) =>
+  state.accountsOps
 
 const useTransfer = (isTopUpScreen: boolean) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { verifiedDomainsStatus, domains } = useController('DomainsController').state
+  const { state: verifiedDomainsStatus } = useController(
+    'DomainsController',
+    selectVerifiedDomainsStatus
+  )
+  const { state: domains } = useController('DomainsController', selectDomains)
   const {
     isTopUp,
     validationFormMsgs,
@@ -62,18 +79,21 @@ const useTransfer = (isTopUpScreen: boolean) => {
 
   const { navigate } = useNavigation()
   const { t } = useTranslation()
-  const { visibleUserRequests } = useController('RequestsController').state
+  const { state: visibleUserRequests } = useController(
+    'RequestsController',
+    selectVisibleUserRequests
+  )
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
-  const { userRequests } = useController('RequestsController').state
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { accountsOps } = useController('ActivityController').state
+  const { state: accountsOps } = useController('ActivityController', selectAccountsOps)
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
@@ -175,16 +195,12 @@ const useTransfer = (isTopUpScreen: boolean) => {
     return `https://explorer.ambire.com/${getBenzinUrlParams({ chainId, txnId, identifiedBy })}`
   }, [submittedAccountOp])
 
-  useEffect(() => {
+  useControllerSession({
     // Optimization: Don't apply filtration if we don't have a recent broadcasted account op
-    if (!latestBroadcastedAccountOp?.accountAddr || !latestBroadcastedAccountOp?.chainId) return
-
-    sessionHandler.initSession()
-
-    return () => {
-      sessionHandler.killSession()
-    }
-  }, [latestBroadcastedAccountOp?.accountAddr, latestBroadcastedAccountOp?.chainId, sessionHandler])
+    isEnabled: !!latestBroadcastedAccountOp?.accountAddr && !!latestBroadcastedAccountOp?.chainId,
+    open: sessionHandler.initSession,
+    close: sessionHandler.killSession
+  })
 
   const displayedView: 'transfer' | 'batch' | 'track' | 'loading' = useMemo(() => {
     // If the screen type doesn't match the controller state, we show a loading state

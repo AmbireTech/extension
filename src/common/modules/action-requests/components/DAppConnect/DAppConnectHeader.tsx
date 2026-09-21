@@ -23,6 +23,7 @@ import TrustedIcon from './TrustedIcon'
 type Props = Partial<DappProviderRequest['session']> & {
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
+  isTrustedByUser?: boolean
 }
 
 const DAppConnectHeader: FC<Props> = ({
@@ -30,10 +31,15 @@ const DAppConnectHeader: FC<Props> = ({
   name = 'Unknown App',
   icon,
   responsiveSizeMultiplier = 1,
-  securityCheck
+  securityCheck,
+  isTrustedByUser = false
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+
+  // The user vouched for this app, so the header stops flagging where it is hosted. It still shows
+  // no verified mark - the app did not pass our checks, the user simply trusts it.
+  const isSuspiciousHosting = securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
 
   const { minHeightSize } = useWindowSize()
 
@@ -53,7 +59,7 @@ const DAppConnectHeader: FC<Props> = ({
           backgroundColor:
             securityCheck === 'BLACKLISTED'
               ? theme.errorBackground
-              : securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET'
+              : isSuspiciousHosting || securityCheck === 'FAILED_TO_GET'
                 ? theme.warningBackground
                 : theme.tertiaryBackground
         },
@@ -121,7 +127,7 @@ const DAppConnectHeader: FC<Props> = ({
               <ErrorFilledIcon width={18} height={18} />
             </View>
           )}
-          {(securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET') && (
+          {(isSuspiciousHosting || securityCheck === 'FAILED_TO_GET') && (
             <View
               style={{
                 position: 'absolute',

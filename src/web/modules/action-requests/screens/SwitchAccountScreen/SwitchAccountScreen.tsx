@@ -4,25 +4,24 @@ import { View } from 'react-native'
 import DownArrowLongIcon from '@common/assets/svg/DownArrowLongIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
-import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import ManifestImage from '@common/components/ManifestImage'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
-import spacings, { SPACING_LG, SPACING_MD } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
-const { isSidePanel } = getUiType()
-
 const SwitchAccountScreen = () => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     t,
     account,
@@ -37,11 +36,12 @@ const SwitchAccountScreen = () => {
     responsiveSizeMultiplier
   } = useSwitchAccount()
   const { theme, styles } = useTheme(getStyles)
-  const contentWidth = isSidePanel ? '100%' : responsiveSizeMultiplier * 530
+  const contentWidth = isNarrowWebLayout ? '100%' : responsiveSizeMultiplier * 530
 
   return (
     <TabLayoutContainer
       width="full"
+      header={<ActionHeader />}
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
@@ -59,20 +59,17 @@ const SwitchAccountScreen = () => {
           {
             paddingVertical: SPACING_LG * responsiveSizeMultiplier,
             width: contentWidth,
-            ...(isSidePanel ? { maxWidth: '100%' } : {})
+            ...(isNarrowWebLayout ? { maxWidth: '100%' } : {})
           }
         ]}
       >
-        <AmbireLogoHorizontal
-          style={{ marginBottom: SPACING_LG * responsiveSizeMultiplier, minHeight: 28 }}
-        />
         {!isAuthorizing ? (
           <View style={styles.content}>
             <View
               style={{
                 ...flexbox.center,
-                ...spacings.pvLg,
-                ...spacings.phLg,
+                ...spacings.pv,
+                ...spacings.ph,
                 backgroundColor: theme.secondaryBackground
               }}
             >
@@ -80,8 +77,8 @@ const SwitchAccountScreen = () => {
                 fontSize={20}
                 weight="medium"
                 style={{
-                  marginBottom: SPACING_MD * responsiveSizeMultiplier,
-                  ...(isSidePanel ? { textAlign: 'center' as const } : {})
+                  marginBottom: SPACING * responsiveSizeMultiplier,
+                  ...(isNarrowWebLayout ? { textAlign: 'center' as const } : {})
                 }}
               >
                 {t('Switch Account Request')}
@@ -91,13 +88,13 @@ const SwitchAccountScreen = () => {
                   style={[
                     flexbox.center,
                     {
-                      marginBottom: SPACING_MD * responsiveSizeMultiplier
+                      marginBottom: SPACING * responsiveSizeMultiplier
                     }
                   ]}
                 >
                   <ManifestImage
                     uri={dAppData.icon}
-                    size={responsiveSizeMultiplier * 48}
+                    size={responsiveSizeMultiplier * 40}
                     containerStyle={{
                       backgroundColor: theme.secondaryBackground
                     }}
@@ -107,8 +104,8 @@ const SwitchAccountScreen = () => {
                     }}
                     fallback={() => (
                       <ManifestFallbackIcon
-                        width={responsiveSizeMultiplier * 48}
-                        height={responsiveSizeMultiplier * 48}
+                        width={responsiveSizeMultiplier * 40}
+                        height={responsiveSizeMultiplier * 40}
                       />
                     )}
                   />
@@ -180,9 +177,9 @@ const SwitchAccountScreen = () => {
             style={{
               ...styles.container,
               paddingVertical: SPACING_LG * responsiveSizeMultiplier,
-              ...(isSidePanel ? { width: '100%', maxWidth: '100%' } : {})
+              ...(isNarrowWebLayout ? { width: '100%', maxWidth: '100%' } : {})
             }}
-            width={isSidePanel ? '100%' : responsiveSizeMultiplier * 450}
+            width={isNarrowWebLayout ? '100%' : responsiveSizeMultiplier * 450}
             height={responsiveSizeMultiplier * 450}
             appearance="primaryBackground"
           />

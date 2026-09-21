@@ -10,6 +10,7 @@ import type { DappsController } from '@ambire-common/controllers/dapps/dapps'
 import type { DebugController } from '@ambire-common/controllers/debug/debug'
 import type { DomainsController } from '@ambire-common/controllers/domains/domains'
 import type { EmailVaultController } from '@ambire-common/controllers/emailVault/emailVault'
+import type { Erc7730Controller } from '@ambire-common/controllers/erc7730/erc7730'
 import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import type { InviteController } from '@ambire-common/controllers/invite/invite'
 import type { KeystoreController } from '@ambire-common/controllers/keystore/keystore'
@@ -55,6 +56,7 @@ export type ControllersNestedInMainMappingType = {
   RequestsController: RequestsController
   AddressBookController: AddressBookController
   DomainsController: DomainsController
+  Erc7730Controller: Erc7730Controller
   ContractNamesController: ContractNamesController
   InviteController: InviteController
   SwapAndBridgeController: SwapAndBridgeController
@@ -94,6 +96,7 @@ export const controllersNestedInMainMapping =
     'RequestsController',
     'AddressBookController',
     'DomainsController',
+    'Erc7730Controller',
     'ContractNamesController',
     'InviteController',
     'SwapAndBridgeController',

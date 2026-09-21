@@ -19,7 +19,7 @@ export type DappInteraction = {
   id: string
   name: string
   iconUrl?: string | null
-  iconType?: 'send' | 'swap' | 'receive' | 'ambire' | 'safe'
+  iconType?: 'send' | 'swap' | 'receive' | 'ambire' | 'walletStaking' | 'safe'
   description?: string
   address?: string
   safeNonce?: bigint

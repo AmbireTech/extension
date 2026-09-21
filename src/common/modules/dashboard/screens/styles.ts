@@ -17,6 +17,9 @@ const getStyles = (theme: ThemeProps) =>
     container: {
       ...flexbox.flex1,
       ...spacings.ptSm,
+      // Anchors MobileAppPromoBanner's `position: 'absolute'`, so it floats within
+      // this popup/side-panel/tab content box instead of an unrelated ancestor.
+      position: 'relative',
       backgroundColor: theme.primaryBackground
     }
   })

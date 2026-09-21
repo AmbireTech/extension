@@ -11,14 +11,15 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import usePrevious from '@common/hooks/usePrevious'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useTheme from '@common/hooks/useTheme'
 import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
 import PendingTransactions from '@common/modules/dashboard/components/Activity/PendingTransactions/lazyPendingTransactions'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
+import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import SubmittedTransactionSummary, {
@@ -31,14 +32,17 @@ import { getUiType } from '@common/utils/uiType'
 
 import styles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll: FlatListProps<any>['onScroll']
+  onScroll?: FlatListProps<any>['onScroll']
   animatedOverviewHeight: Animated.Value
   network: Network | null
+  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
@@ -64,6 +68,15 @@ type Item =
   | 'skeleton'
   | 'load-more'
 
+const selectAccountsOps = (state: AllControllersMappingType['ActivityController']) =>
+  state.accountsOps
+const selectBanners = (state: AllControllersMappingType['ActivityController']) => state.banners
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+
 const ActivityPositions: FC<Props> = ({
   openTab,
   sessionId,
@@ -72,20 +85,25 @@ const ActivityPositions: FC<Props> = ({
   onScroll,
   animatedOverviewHeight,
   network,
+  isSearchHidden,
   refreshing,
   onRefresh
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const {
-    state: { accountsOps, banners },
-    dispatch: activityDispatch
-  } = useController('ActivityController')
-  const {
-    state: { account, dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
-  const prevOpenTab = usePrevious(openTab)
+  const { state: accountsOps, dispatch: activityDispatch } = useController(
+    'ActivityController',
+    selectAccountsOps
+  )
+  const { state: banners } = useController('ActivityController', selectBanners)
+  // Read as slices rather than off the whole state, so the page does not re-render on
+  // every portfolio tick - it holds no portfolio data of its own.
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    selectDashboardNetworkFilter
+  )
 
   const currentAccountBanners = useMemo(() => {
     return getCurrentAccountBanners(banners, account?.addr)
@@ -97,51 +115,48 @@ const ActivityPositions: FC<Props> = ({
     void preloadSummaryPreview()
   }, [])
 
-  useEffect(() => {
-    if (prevOpenTab === 'activity' && openTab !== 'activity') {
+  // The filtered set of account ops is the session: it is what the list renders,
+  // and what tells an account with no transactions apart from one whose
+  // transactions have not been asked for yet. Tied to the screen being the one the
+  // user is on rather than to an effect, because the session is closed while the
+  // user is elsewhere - and it is this that asks for it again on the way back.
+  useControllerSession({
+    // Optimization: Don't apply filtration if we are not on Activity tab
+    isEnabled: openTab === 'activity' && !!account?.addr,
+    reopenOn: `${account?.addr}-${dashboardNetworkFilter ?? ''}`,
+    open: () =>
+      activityDispatch({
+        type: 'method',
+        params: {
+          method: 'filterAccountsOps',
+          args: [
+            sessionId,
+            {
+              account: account!.addr,
+              ...(dashboardNetworkFilter && {
+                chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
+              })
+            },
+            {
+              itemsPerPage: ITEMS_PER_PAGE,
+              fromPage: 0
+            }
+          ]
+        }
+      }),
+    close: () =>
       activityDispatch({
         type: 'method',
         params: { method: 'resetAccountsOpsFilters', args: [sessionId] }
       })
-    }
-  }, [prevOpenTab, openTab, activityDispatch, sessionId])
-
-  useEffect(() => {
-    // Optimization: Don't apply filtration if we are not on Activity tab
-    if (!account?.addr || openTab !== 'activity') return
-
-    activityDispatch({
-      type: 'method',
-      params: {
-        method: 'filterAccountsOps',
-        args: [
-          sessionId,
-          {
-            account: account.addr,
-            ...(dashboardNetworkFilter && {
-              chainId: dashboardNetworkFilter ? BigInt(dashboardNetworkFilter) : undefined
-            })
-          },
-          {
-            itemsPerPage: ITEMS_PER_PAGE,
-            fromPage: 0
-          }
-        ]
-      }
-    })
-  }, [openTab, account?.addr, activityDispatch, dashboardNetworkFilter, sessionId])
+  })
 
   const renderItem = useCallback(
     ({ item }: { item: Item }) => {
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              currentTab="activity"
-              sessionId={sessionId}
-            />
+            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
 
             {!!accountsOps[sessionId] && (
               <View style={spacings.mbMi}>
@@ -316,32 +331,41 @@ const ActivityPositions: FC<Props> = ({
     return `${positionOrElement.id}-${positionOrElement.txnId}-${positionOrElement.timestamp}`
   }, [])
 
+  // The transactions are not searchable, so the bar carries the network picker alone.
+  // Rendered above the carousel on mobile, so it stays put through a swipe
+  const floatingBar = useMemo(() => ({ networkFilterTab: 'activity' as const }), [])
+
   return (
-    <DashboardPageScrollContainer
-      tab="activity"
-      openTab={openTab}
-      ListHeaderComponent={<DashboardBanners />}
-      data={[
-        'header',
-        'pending',
-        !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
-        ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
-          ? accountsOps[sessionId].result.items
-          : []),
-        accountsOps?.[sessionId] && !accountsOps[sessionId].result.items.length ? 'empty' : '',
-        'load-more'
-      ]}
-      renderItem={renderItem}
-      keyExtractor={keyExtractor}
-      onEndReachedThreshold={isPopup ? 5 : 2.5}
-      initialNumToRender={isPopup ? 10 : 20}
-      windowSize={9} // Larger values can cause performance issues.
-      onScroll={onScroll}
-      scrollEventThrottle={16}
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      animatedOverviewHeight={animatedOverviewHeight}
-    />
+    <>
+      <DashboardPageScrollContainer
+        floatingBar={floatingBar}
+        tab="activity"
+        openTab={openTab}
+        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
+        data={[
+          ...(isMobile ? [] : ['header']),
+          'pending',
+          !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
+          ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
+            ? accountsOps[sessionId].result.items
+            : []),
+          accountsOps?.[sessionId] && !accountsOps[sessionId].result.items.length ? 'empty' : '',
+          'load-more'
+        ]}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        onEndReachedThreshold={isPopup ? 5 : 2.5}
+        initialNumToRender={isPopup ? 10 : 20}
+        windowSize={9} // Larger values can cause performance issues.
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        animatedOverviewHeight={animatedOverviewHeight}
+      />
+      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
+      {openTab === 'activity' && <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />}
+    </>
   )
 }
 

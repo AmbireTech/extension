@@ -34,7 +34,10 @@ const getStyles = (theme: ThemeProps) =>
     },
     header: {
       ...flexbox.directionRow,
-      ...flexbox.alignStart,
+      // Centered so the title lines up with whatever sits in the slot opposite it - the severity
+      // badge and the taller "Trust this app" action have different heights, and top-aligning the
+      // boxes would leave each of their labels at a different offset from the title.
+      ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
       ...spacings.mbTy
     },

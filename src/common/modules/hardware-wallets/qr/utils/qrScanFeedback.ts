@@ -39,11 +39,11 @@ export const QR_SCAN_FEEDBACK_INTERVAL = 500
 // A code was read this long ago at most, otherwise the camera is considered to have lost it
 const LAST_READ_TIMEOUT = 1200
 /**
- * The scanned area is downscaled before decoding (to 400x400 on web), so a code covering
+ * The scanned area is downscaled before decoding so a code covering
  * less than this much of it has under 3 pixels per module at the sizes the accounts sync
  * uses - too little for the decoder to tell the modules apart reliably.
  */
-const MIN_COVERAGE = 0.35
+const MIN_COVERAGE = 0.27
 // Any bigger and the code is about to grow out of the scanned area, which fails every frame
 const MAX_COVERAGE = 0.9
 

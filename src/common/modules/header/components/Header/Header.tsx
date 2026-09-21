@@ -92,7 +92,6 @@ const Header = ({ width, withOG }: CommonHeaderProps) => {
   return (
     <Wrapper width={width}>
       <AccountData />
-      <AmbireLogoHorizontalWithOG withOG={withOG} />
     </Wrapper>
   )
 }
@@ -173,4 +172,4 @@ Header.BackButton = HeaderBackButton
 Header.Logo = AmbireLogoHorizontalWithOG
 
 export default Header
-export { HeaderWithTitle, HeaderWithLogoOnly, HEADER_HEIGHT }
+export { HEADER_HEIGHT, HeaderWithLogoOnly, HeaderWithTitle }

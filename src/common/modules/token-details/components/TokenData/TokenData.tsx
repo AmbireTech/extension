@@ -12,7 +12,6 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -21,6 +20,10 @@ import { openInTab } from '@common/utils/links'
 import TokenDetailsTitle from '../Title'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+const selectNetworks = (state: NetworksController) => state.networks
 type Props = {
   token: TokenResult
 }
@@ -56,7 +59,7 @@ const Row = memo(
     isLast: boolean
     chainId: bigint
   }) => {
-    const networks = useController('NetworksController', (state) => state.networks).state
+    const networks = useController('NetworksController', selectNetworks).state
     const networkData = networks.find((net) => net.chainId === chainId)
     const [bindOpenAnim, openAnimStyle] = useHover({ preset: 'opacityInverted' })
 

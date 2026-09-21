@@ -53,18 +53,15 @@ const storage: Storage = {
   }
 }
 
-const getAllSerialized = (excludedKeys: readonly string[] = []): SerializedStorageSnapshot => {
+const getAllSerialized = (keysToSnapshot: readonly string[]): SerializedStorageSnapshot => {
   const values: Record<string, string> = {}
-  const allKeys = asyncStorageInstance.getAllKeys()
 
-  allKeys.forEach((key) => {
-    if (excludedKeys.includes(key)) return
-
+  keysToSnapshot.forEach((key) => {
     const serialized = asyncStorageInstance.getString(key)
     if (serialized !== undefined) values[key] = serialized
   })
 
-  return { values, allKeys }
+  return { values, allKeys: asyncStorageInstance.getAllKeys() }
 }
 
 const syncStorage = {

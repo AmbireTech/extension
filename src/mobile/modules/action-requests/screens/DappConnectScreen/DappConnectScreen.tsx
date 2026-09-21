@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
@@ -20,16 +21,23 @@ const DappConnectScreen = () => {
     handleDenyButtonPress,
     handleAuthorizeButtonPress,
     shouldHoldToProceed,
-    resolveButtonText
+    resolveButtonText,
+    isTrustedByUser,
+    canBeTrustedByUser,
+    toggleTrust
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
 
   return (
     <MobileLayoutContainer
+      header={<ActionHeader />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}
+          withRejectOptions
+          rejectOptionsTitle={t('Cancel connection')}
+          rejectOptionText={t('Cancel this connection')}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
           resolveNode={
             shouldHoldToProceed ? (
@@ -58,6 +66,7 @@ const DappConnectScreen = () => {
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
       }
+      style={spacings.mt}
     >
       {!!dappToConnect && (
         <View style={styles.content}>
@@ -66,8 +75,14 @@ const DappConnectScreen = () => {
             id={dappToConnect.id}
             icon={dappToConnect.icon!}
             securityCheck={dappToConnect.blacklisted}
+            isTrustedByUser={isTrustedByUser}
           />
-          <DAppConnectBody securityCheck={dappToConnect.blacklisted} />
+          <DAppConnectBody
+            securityCheck={dappToConnect.blacklisted}
+            isTrustedByUser={isTrustedByUser}
+            canBeTrustedByUser={canBeTrustedByUser}
+            onToggleTrust={toggleTrust}
+          />
         </View>
       )}
     </MobileLayoutContainer>

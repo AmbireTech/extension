@@ -4,6 +4,7 @@ import { memo, useCallback, useState } from 'react'
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
+import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
 import useTheme from '@common/hooks/useTheme'
 import { getQrCodeCoverage } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import flexbox from '@common/styles/utils/flexbox'
@@ -29,6 +30,9 @@ interface Props {
 // responsibility — mount this only once camera access is granted.
 const CameraScanner = ({ onScan, isProcessing = false, frameSize = SCAN_FRAME_SIZE }: Props) => {
   const { styles } = useTheme(getStyles)
+  // The screen stays mounted underneath when another one is pushed on top of it,
+  // so the camera has to be switched off explicitly.
+  const isFocused = useIsScreenFocused()
   const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(null)
 
   const frameTop = containerSize ? (containerSize.height - frameSize) / 2 : 0
@@ -117,6 +121,7 @@ const CameraScanner = ({ onScan, isProcessing = false, frameSize = SCAN_FRAME_SI
       )}
 
       <CameraView
+        active={isFocused}
         style={StyleSheet.absoluteFill}
         facing="back"
         barcodeScannerSettings={{ barcodeTypes: ['qr'] }}

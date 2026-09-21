@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    # Release tags are cut from release/* branches, which are merged into main only
+    # after the release ships. Mirroring tags as they are created keeps the public
+    # repo able to hold a release for that exact commit right away.
+    tags:
+      - 'v*'
 
 permissions:
   contents: write

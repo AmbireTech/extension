@@ -1,5 +1,5 @@
 import { formatUnits } from 'ethers'
-import React, { FC, useCallback, useEffect, useMemo } from 'react'
+import React, { FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -16,6 +16,7 @@ import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import InProgress from '@common/components/TrackProgress/ByStatus/InProgress'
 import Refunded from '@common/components/TrackProgress/ByStatus/Refunded'
 import useController from '@common/hooks/useController'
+import useControllerSession from '@common/hooks/useControllerSession'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -33,6 +34,8 @@ import {
   getSwapCompletedMessageTemplate,
   getSwapInProgressMessage
 } from './getSwapCompletedMessage'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const { isRequestWindow } = getUiType()
 
@@ -57,13 +60,18 @@ const buildCompletedMessage = (
   }
 }
 
+const selectActiveRoutes = (state: AllControllersMappingType['SwapAndBridgeController']) =>
+  state.activeRoutes
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const { activeRoutes } = useController('SwapAndBridgeController').state
+  const { state: activeRoutes } = useController('SwapAndBridgeController', selectActiveRoutes)
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { account } = useController('SelectedAccountController').state
+  const { state: account } = useController('SelectedAccountController', selectAccount)
 
   const lastCompletedRoute =
     activeRoutes.find((r) => r.activeRouteId === activeRoute?.activeRouteId) || activeRoute
@@ -125,30 +133,20 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
     sessionId: 'swapAndBridge'
   })
 
-  useEffect(() => {
+  useControllerSession({
     // Optimization: Don't apply filtration if we don't have a completed route.
-    if (
-      !lastCompletedRoute?.userTxHash ||
-      !lastCompletedRoute?.route?.fromChainId ||
-      !lastCompletedRoute?.route.userAddress
-    )
-      return
-
-    sessionHandler.initSession()
-
-    return () => {
-      sessionHandler.killSession()
-    }
-  }, [
-    lastCompletedRoute?.route?.fromChainId,
-    lastCompletedRoute?.route?.userAddress,
-    lastCompletedRoute?.userTxHash,
-    sessionHandler
-  ])
+    isEnabled:
+      !!lastCompletedRoute?.userTxHash &&
+      !!lastCompletedRoute?.route?.fromChainId &&
+      !!lastCompletedRoute?.route.userAddress,
+    open: sessionHandler.initSession,
+    close: sessionHandler.killSession
+  })
 
   const explorerLink = useMemo(() => {
     if (!lastCompletedRoute) return
     if (providerId === 'uniswap') return
+    if (providerId === 'cowswap') return getLink(lastCompletedRoute)
 
     if (!isSwap) {
       return getLink(lastCompletedRoute)

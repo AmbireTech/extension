@@ -89,9 +89,9 @@ export const markBootOnce = (name: string, detail?: BootMarkDetail) => {
 }
 
 /**
- * Records the wire size of every key in the init storage snapshot, so the report
- * can say which keys make up the payload the worker has to receive and parse
- * before it can construct a single controller.
+ * Records the wire size of every key in the init storage snapshot, so the report can
+ * say which keys make up the payload the worker has to receive and parse before it
+ * can construct a single controller.
  *
  * Sizes are string lengths, the same unit the bridge payload marks use, so the
  * per-key numbers add up against `rn.initPayload.encoded`. Keys held out of the

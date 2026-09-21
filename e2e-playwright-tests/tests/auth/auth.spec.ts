@@ -87,6 +87,7 @@ test.describe('trezor', { tag: '@trezorTests' }, () => {
     await setup(controller, emulatorOptions)
     await initTrezorConnect(controller)
     await pages.initWithoutStorage()
+    await pages.basePage.closeDuplicateExtensionTabs()
   })
 
   test.afterEach(async ({ context }) => {
@@ -147,6 +148,7 @@ test.describe('trezor', { tag: '@trezorTests' }, () => {
     })
 
     await test.step('import first 2 accounts', async () => {
+      await page.waitForTimeout(2000)
       const firstTrezorAccount = page.getByTestId(
         `add-account-${mainConstants.addresses.trezorAccount1}`
       )

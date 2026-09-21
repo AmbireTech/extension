@@ -3,12 +3,14 @@ import { useCallback } from 'react'
 import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useTrustDapp from '@common/hooks/useTrustDapp'
 
 const useManageApp = (dapp: Dapp) => {
   const { dispatch } = useControllersMiddleware()
-  const { account } = useController('SelectedAccountController').state
-  const { networks } = useController('NetworksController').state
-  const { accounts } = useController('AccountsController').state
+  const { trustDapp, untrustDapp } = useTrustDapp()
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: accounts } = useController('AccountsController', 'accounts')
 
   const onDisconnect = useCallback(
     (source?: ConnectionSource) => {
@@ -19,6 +21,15 @@ const useManageApp = (dapp: Dapp) => {
     },
     [dispatch, dapp.id, dapp.url]
   )
+
+  const onToggleTrust = useCallback(() => {
+    if (dapp.isTrustedByUser) {
+      untrustDapp(dapp.id)
+      return
+    }
+
+    trustDapp(dapp.url)
+  }, [trustDapp, untrustDapp, dapp.isTrustedByUser, dapp.id, dapp.url])
 
   const onSelectNetwork = useCallback(
     (chainId: bigint) => {
@@ -38,7 +49,8 @@ const useManageApp = (dapp: Dapp) => {
     accounts,
     networks,
     onDisconnect,
-    onSelectNetwork
+    onSelectNetwork,
+    onToggleTrust
   }
 }
 

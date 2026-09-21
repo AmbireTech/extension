@@ -22,6 +22,7 @@ const SignMessageScreen = () => {
   const closeActionWindow = useCloseActionWindow()
   const { isWideFooterLayout } = useCompactActionRequestLayout()
   const {
+    t,
     signMessageState,
     signStatus,
     humanizedMessage,
@@ -101,6 +102,9 @@ const SignMessageScreen = () => {
               resolveDisabled={isResolveActionDisabled}
               resolveButtonTestID="button-sign"
               rejectButtonText="Reject"
+              withRejectOptions
+              rejectOptionsTitle={t('Reject request')}
+              rejectOptionText={t('Reject this request')}
               {...(hasSafetyBanners && !isViewOnly
                 ? {
                     resolveNode: (

@@ -1,24 +1,24 @@
 import { isAddress, ZeroAddress } from 'ethers'
-import React, { useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { View } from 'react-native'
 
-import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import StarFilledIcon from '@common/assets/svg/StarFilledIcon'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import Button from '@common/components/Button'
+import HoverablePressable from '@common/components/HoverablePressable'
 import { SectionedSelect } from '@common/components/Select'
-import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+
+import type { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
+import type { RenderSelectedOptionParams, SelectValue } from '@common/components/Select/types'
 
 interface Props {
   toTokenOptions: SelectValue[]
@@ -27,45 +27,41 @@ interface Props {
   handleChangeToToken: (value: SelectValue) => void
   addToTokenByAddressStatus: ISwapAndBridgeController['statuses']['addToTokenByAddress']
   handleAddToTokenByAddress: (searchTerm: string) => void
+  openProviderSettingsModal: () => void
 }
 
 const SECTION_MENU_HEADER_HEIGHT = 50
+const TO_TOKEN_LIST_ERROR_ID = 'to-token-list-fetch-failed'
 
 const getToTokenListErrorOption = ({
   t,
-  theme,
-  title,
-  text,
   id,
-  isValue
+  title,
+  retryToTokenList
 }: {
   t: (key: string) => string
-  theme: ThemeProps
-  title: string
-  text?: string
   id: string
-  isValue: boolean
+  title: string
+  retryToTokenList: () => void
 }) => {
   return {
     value: id,
     label: (
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <Text fontSize={14} weight="medium" appearance="errorText" style={spacings.mrMi}>
-          {t(isValue ? 'Temporarily unavailable' : title)}
+        <Text fontSize={14} weight="medium" appearance="errorText" style={spacings.mrSm}>
+          {t(title)}
         </Text>
-        <InfoIcon
-          color={theme.secondaryText}
-          width={14}
-          height={14}
-          dataSet={createGlobalTooltipDataSet({
-            id: 'to-token-list-error-tooltip',
-            content: text
-          })}
+        <Button
+          type="primary"
+          size="tiny"
+          text={t('Retry')}
+          onPress={retryToTokenList}
+          hasBottomSpacing={false}
+          testID="retry-to-token-list"
         />
       </View>
     ),
-    icon: null,
-    disabled: true
+    icon: null
   }
 }
 
@@ -75,18 +71,25 @@ const ToTokenSelect: React.FC<Props> = ({
   toTokenAmountSelectDisabled,
   handleChangeToToken,
   addToTokenByAddressStatus,
-  handleAddToTokenByAddress
+  handleAddToTokenByAddress,
+  openProviderSettingsModal
 }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const { errors, isTokenListLoading, toTokenSearchTerm } =
-    useController('SwapAndBridgeController').state
+  const { theme } = useTheme()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+    errors,
+    isTokenListLoading,
+    toTokenSearchTerm,
+    toChainId,
+    supportedChainIds,
+    swapProviders,
+    disabledSwapProviderIds
+  } = useController('SwapAndBridgeController').state
+  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const [didAttemptSearchingTokenByAddress, setDidAttemptSearchingTokenByAddress] =
     React.useState(false)
+  const shouldOpenProviderSettingsOnClose = useRef(false)
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
   const handleAttemptToFetchMoreOptions = useCallback(
@@ -111,29 +114,115 @@ const ToTokenSelect: React.FC<Props> = ({
     [swapAndBridgeDispatch]
   )
 
+  const retryToTokenList = useCallback(() => {
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: { method: 'updateToTokenList', args: [false] }
+    })
+  }, [swapAndBridgeDispatch])
+
+  const handleChangeToTokenOrRetry = useCallback(
+    (value: SelectValue) => {
+      if (value.value === TO_TOKEN_LIST_ERROR_ID) {
+        retryToTokenList()
+        return
+      }
+
+      handleChangeToToken(value)
+    },
+    [handleChangeToToken, retryToTokenList]
+  )
+
   const isAttemptingToAddToTokenByAddress = addToTokenByAddressStatus !== 'INITIAL'
   const notFoundPlaceholderText = didAttemptSearchingTokenByAddress
     ? t('Not found. Wrong receive network?') // TODO: Add "... or unsupported token" when UI allows longer messages
     : t('Not found. Try with token address?')
 
+  const enabledProviderNames = useMemo(
+    () =>
+      swapProviders
+        .filter(({ id }) => !disabledSwapProviderIds.includes(id))
+        .map(({ name }) => name)
+        .join(', '),
+    [disabledSwapProviderIds, swapProviders]
+  )
+  const isReceiveNetworkUnsupported =
+    toChainId !== null &&
+    supportedChainIds.length > 0 &&
+    !supportedChainIds.includes(BigInt(toChainId))
+  const shouldShowProviderSupportLink =
+    isReceiveNetworkUnsupported && !!enabledProviderNames && disabledSwapProviderIds.length > 0
+
+  const handleOpenProviderSettings = useCallback((closeTokenSelect: () => void) => {
+    shouldOpenProviderSettingsOnClose.current = true
+    closeTokenSelect()
+  }, [])
+
+  const handleTokenSelectClosed = useCallback(() => {
+    if (!shouldOpenProviderSettingsOnClose.current) return
+
+    shouldOpenProviderSettingsOnClose.current = false
+    openProviderSettingsModal()
+  }, [openProviderSettingsModal])
+
+  const renderHeaderChildren = useCallback(
+    ({ toggleMenu }: RenderSelectedOptionParams) => {
+      if (!shouldShowProviderSupportLink) return null
+
+      return (
+        <HoverablePressable
+          accessibilityRole="button"
+          onPress={() => handleOpenProviderSettings(toggleMenu)}
+          testID="receive-token-provider-settings-link"
+        >
+          <Text
+            fontSize={14}
+            weight="medium"
+            color={theme.warningText}
+            style={[
+              spacings.phSm,
+              spacings.mbTy,
+              {
+                textAlign: 'center',
+                textDecorationColor: theme.warningText,
+                textDecorationLine: 'underline'
+              }
+            ]}
+          >
+            {t('Network not supported by {{providerNames}}. Enable other providers', {
+              providerNames: enabledProviderNames
+            })}
+          </Text>
+        </HoverablePressable>
+      )
+    },
+    [
+      enabledProviderNames,
+      handleOpenProviderSettings,
+      shouldShowProviderSupportLink,
+      t,
+      theme.warningText
+    ]
+  )
+
   const toTokenListError = useMemo(() => {
     if (isTokenListLoading) return null
 
-    return errors.find(({ id }) => id === 'to-token-list-fetch-failed')
+    return errors.find(({ id }) => id === TO_TOKEN_LIST_ERROR_ID)
   }, [errors, isTokenListLoading])
 
   const toTokenValueOrError = useMemo(() => {
     if (toTokenListError && !toTokenOptions.length) {
       return getToTokenListErrorOption({
-        ...toTokenListError,
+        id: toTokenListError.id,
+        title: toTokenListError.title,
         t,
-        theme,
-        isValue: true
+        retryToTokenList
       })
     }
 
     return toTokenValue
-  }, [t, theme, toTokenListError, toTokenOptions.length, toTokenValue])
+  }, [t, retryToTokenList, toTokenListError, toTokenOptions.length, toTokenValue])
 
   const selectSections = useMemo(() => {
     const { toTokenOptionsInAccount, restToTokenOptions } = toTokenOptions.reduce<{
@@ -170,10 +259,10 @@ const ToTokenSelect: React.FC<Props> = ({
     if (toTokenListError) {
       restToTokenOptions.unshift(
         getToTokenListErrorOption({
-          ...toTokenListError,
+          id: toTokenListError.id,
+          title: toTokenListError.title,
           t,
-          theme,
-          isValue: false
+          retryToTokenList
         })
       )
     }
@@ -198,7 +287,7 @@ const ToTokenSelect: React.FC<Props> = ({
         key: 'swap-and-bridge-to-service-provider-tokens'
       }
     ]
-  }, [toTokenOptions, toTokenListError, t, portfolio.tokens, theme, toTokenSearchTerm])
+  }, [toTokenOptions, toTokenListError, t, portfolio.tokens, retryToTokenList, toTokenSearchTerm])
 
   const renderFeeOptionSectionHeader = useCallback(
     ({ section }: any) => {
@@ -217,14 +306,16 @@ const ToTokenSelect: React.FC<Props> = ({
 
   return (
     <SectionedSelect
-      setValue={handleChangeToToken}
+      setValue={handleChangeToTokenOrRetry}
       mode="bottomSheet"
       bottomSheetTitle={t('Receive token')}
+      renderHeaderChildren={renderHeaderChildren}
+      onBottomSheetClosed={handleTokenSelectClosed}
       sections={selectSections}
       renderSectionHeader={renderFeeOptionSectionHeader}
       value={toTokenValueOrError}
       headerHeight={SECTION_MENU_HEADER_HEIGHT}
-      disabled={toTokenAmountSelectDisabled || (toTokenValueOrError && !toTokenOptions.length)}
+      disabled={toTokenAmountSelectDisabled}
       testID="to-token-select"
       searchPlaceholder={t('Token name or address...')}
       // menuLeftHorizontalOffset={285}
@@ -235,7 +326,7 @@ const ToTokenSelect: React.FC<Props> = ({
       onSearch={handleOnSearch}
       containerStyle={{
         ...spacings.mb0,
-        ...(isCompactSidePanelLayout ? { width: '100%' } : { ...flexbox.flex1, ...spacings.mrMd })
+        ...(isNarrowWebLayout ? { width: '100%' } : { ...flexbox.flex1, ...spacings.mrMd })
       }}
       selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
       stickySectionHeadersEnabled

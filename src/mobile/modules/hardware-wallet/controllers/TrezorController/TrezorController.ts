@@ -9,21 +9,13 @@ import {
   TrezorControllerInterface,
   TrezorWalletSDK
 } from '@common/modules/hardware-wallet/interfaces/trezorController'
+import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 // Mobile counterpart of the web TrezorController. The actual device handling is
-// delegated to the Trezor Suite app via deep links, driven from the React
-// Native native context (see src/mobile/services/trezor/trezorDeeplinkService).
-// This controller runs inside the WebView worker bundle alongside the rest of
-// the ambire-common controllers; its `walletSDK` is a shim that forwards each
-// Trezor Connect call to the native service over the bridge (`sendToRNAsync`),
-// returning the raw `{ success, payload }` response the shared TrezorSigner /
-// TrezorKeyIterator expect.
-
-const callNative = <T>(type: string, payload: Record<string, any> = {}): Promise<T> => {
-  // sendToRNAsync is installed on `window` by injectedLogic.ts. The controller
-  // only ever runs inside the worker, so it is always present here.
-  return (window as any).sendToRNAsync(type, payload)
-}
+// delegated to the Trezor Suite app via deep links, driven by
+// trezorDeeplinkService (@trezor/connect-mobile). Its `walletSDK` is that
+// service, which returns the raw `{ success, payload }` Trezor Connect response
+// the shared TrezorSigner / TrezorKeyIterator expect.
 
 class TrezorController implements ExternalSignerController, TrezorControllerInterface {
   type = 'trezor'
@@ -37,27 +29,20 @@ class TrezorController implements ExternalSignerController, TrezorControllerInte
   deviceId = ''
 
   /**
-   * The native service initializes @trezor/connect-mobile lazily on the first
-   * call, so from the worker's perspective the SDK is always ready to be called.
+   * The service initializes @trezor/connect-mobile lazily on the first call, so
+   * the SDK is always ready to be called.
    */
   isInitiated = true
 
   initialLoadPromise = Promise.resolve()
 
   /**
-   * Bridge shim: each method forwards the Trezor Connect call to the native
-   * service and resolves with the raw `{ success, payload }` response. The SDK
-   * methods are overloaded, so the object is cast to the interface once here;
-   * the real type-checking of arguments happens where TrezorSigner /
-   * TrezorKeyIterator call `controller.walletSDK.*` (typed via the interface).
+   * The Trezor Connect SDK methods are overloaded, so the service is cast to the
+   * interface once here; the real type-checking of arguments happens where
+   * TrezorSigner / TrezorKeyIterator call `controller.walletSDK.*` (typed via
+   * the interface).
    */
-  walletSDK: TrezorWalletSDK = {
-    ethereumGetAddress: (params: any) => callNative('trezor.ethereumGetAddress', params),
-    getPublicKey: (params: any) => callNative('trezor.getPublicKey', params),
-    ethereumSignTransaction: (params: any) => callNative('trezor.ethereumSignTransaction', params),
-    ethereumSignTypedData: (params: any) => callNative('trezor.ethereumSignTypedData', params),
-    ethereumSignMessage: (params: any) => callNative('trezor.ethereumSignMessage', params)
-  } as unknown as TrezorWalletSDK
+  walletSDK: TrezorWalletSDK = trezorDeeplinkService as unknown as TrezorWalletSDK
 
   cleanUp() {
     this.unlockedPath = ''
@@ -65,7 +50,7 @@ class TrezorController implements ExternalSignerController, TrezorControllerInte
   }
 
   async signingCleanup() {
-    await callNative('trezor.signingCleanup')
+    await trezorDeeplinkService.signingCleanup()
   }
 
   isUnlocked(path?: string, expectedKeyOnThisPath?: string) {

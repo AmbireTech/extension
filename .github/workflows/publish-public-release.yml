@@ -1,0 +1,140 @@
+name: 🔓 Publish · Public repo release
+
+# Copies the assets of an already built release from this (private) repo into a
+# draft release in the public repo, which is where users download from.
+#
+# Nothing is rebuilt on purpose: the published .zips must be byte-for-byte the
+# ones that were tested and submitted to the stores as a pre-release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to copy to the public repo, e.g. v6.19.0
+        required: true
+        type: string
+  release:
+    # Fires when a pre-release is promoted to latest, which is how production
+    # releases are cut here. Building happens earlier, on `published`.
+    types: [released]
+
+jobs:
+  publish-public-release:
+    name: Create the public repo draft release
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ inputs.tag || github.event.release.tag_name }}
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      PUBLIC_REPO: AmbireTech/extension
+    steps:
+      - name: Download the release assets from this repo 📥
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir assets --clobber || true
+        shell: bash
+
+      - name: Verify what is about to be published
+        run: |
+          set -euo pipefail
+          cd assets 2>/dev/null || {
+            echo "::error::Release $TAG has no assets. If the build is still running, re-run this workflow once it is done."
+            exit 1
+          }
+
+          # Source maps stay in this repo's release only.
+          rm -f ./*-source-maps.zip
+
+          if compgen -G '*source-code*' > /dev/null; then
+            echo "::error::A source code archive slipped into the release assets - it contains .env secrets"
+            exit 1
+          fi
+
+          # One .zip per build variant. Publishing an incomplete set is
+          # unrecoverable once the release is immutable.
+          ZIP_COUNT=$(ls -1 ./*.zip 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$ZIP_COUNT" -ne 3 ]; then
+            echo "::error::Expected 3 .zip assets on release $TAG, got $ZIP_COUNT. If the build is still running, re-run this workflow once it is done."
+            ls -la
+            exit 1
+          fi
+
+          # Proves the .zips being published match the checksum list published
+          # next to them - the very check users are told to run.
+          sha256sum -c SHA256SUMS
+        shell: bash
+
+      - name: Resolve the release commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA=$(gh api "/repos/$GITHUB_REPOSITORY/commits/$TAG" --jq '.sha')
+          echo "RELEASE_SHA=$SHA" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Create the public repo draft release
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_REPO_RELEASE_TOKEN }}
+          PRIVATE_REPO_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # Checked first, because an expired or revoked token makes every call below
+          # fail with 401 - including the commit lookup, whose error message would
+          # send whoever is on release duty looking for a mirror problem instead.
+          if ! gh api "/repos/$PUBLIC_REPO" --silent 2>/dev/null; then
+            echo "::error::Cannot reach $PUBLIC_REPO with PUBLIC_REPO_RELEASE_TOKEN. The token has most likely expired or been revoked - generate a new fine-grained PAT (Contents: write on $PUBLIC_REPO only) and update the repository secret, then re-run this workflow."
+            exit 1
+          fi
+
+          # The public repo is a mirror of main, updated on merge, so a release cut
+          # from a branch that isn't merged yet has no commit to point at there.
+          if ! gh api "/repos/$PUBLIC_REPO/commits/$RELEASE_SHA" --silent 2>/dev/null; then
+            echo "::error::Commit $RELEASE_SHA is not in $PUBLIC_REPO yet. The mirror (public-update.yml) pushes it on every v* tag - check that it ran for $TAG, then re-run this workflow."
+            exit 1
+          fi
+
+          EXISTING_STATE=$(gh release view "$TAG" --repo "$PUBLIC_REPO" --json isDraft --jq '.isDraft' 2>/dev/null || echo missing)
+
+          if [ "$EXISTING_STATE" = "false" ]; then
+            echo "Release $TAG is already published in $PUBLIC_REPO - immutable, nothing to do."
+            exit 0
+          fi
+
+          if [ "$EXISTING_STATE" = "true" ]; then
+            gh release upload "$TAG" assets/*.zip assets/SHA256SUMS --repo "$PUBLIC_REPO" --clobber
+            exit 0
+          fi
+
+          # Release notes are written in this repo, so they are copied over rather
+          # than regenerated. Passed through files, because they contain characters
+          # the shell would otherwise interpret.
+          GH_TOKEN="$PRIVATE_REPO_TOKEN" gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json name,body --jq '.name' > release-title.txt
+          GH_TOKEN="$PRIVATE_REPO_TOKEN" gh release view "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --json name,body --jq '.body' > release-notes.md
+
+          # Rewritten for a public audience: the compare link has to point at the
+          # public repo, and PR links point at this private one, so they would 404
+          # for everyone reading the public release. Links to ambire-common are left
+          # alone - that repo is public.
+          sed -i \
+            -e 's|https://github.com/AmbireTech/ambire-app/compare/|https://github.com/AmbireTech/extension/compare/|g' \
+            -e 's| https://github.com/AmbireTech/ambire-app/pull/[0-9]*||g' \
+            release-notes.md
+
+          if grep -q 'AmbireTech/ambire-app' release-notes.md; then
+            echo "::warning::The release notes still link to this private repo, these will 404 publicly:"
+            grep -n 'AmbireTech/ambire-app' release-notes.md
+          fi
+
+          # Immutable releases lock their assets on publish, so a human reviews the
+          # draft and publishes it - that publish is what gets signed by GitHub.
+          gh release create "$TAG" assets/*.zip assets/SHA256SUMS \
+            --repo "$PUBLIC_REPO" \
+            --draft \
+            --target "$RELEASE_SHA" \
+            --title "$(cat release-title.txt)" \
+            --notes-file release-notes.md
+        shell: bash

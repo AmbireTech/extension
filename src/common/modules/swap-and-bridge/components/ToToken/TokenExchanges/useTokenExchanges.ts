@@ -2,6 +2,10 @@ import { ToTokenMarketData } from '@ambire-common/interfaces/swapAndBridge'
 import { getTokenMarketDataKey } from '@ambire-common/libs/swapAndBridge/tokenMarketData'
 import useController from '@common/hooks/useController'
 
+import type { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+
+const selectToTokenMarketData = (state: SwapAndBridgeController) => state.toTokenMarketData
+
 /**
  * The exchange data of a "to" token. Tokens the controller hasn't fetched yet are absent
  * from its state, which means the same thing for the UI as an explicitly loading one.
@@ -14,7 +18,7 @@ const useTokenExchanges = (chainId: number, address: string): ToTokenMarketData 
   } = useController('FeatureFlagsController')
   const { state: marketDataByToken } = useController(
     'SwapAndBridgeController',
-    (state) => state.toTokenMarketData
+    selectToTokenMarketData
   )
 
   if (!flags.swapAndBridgeTokenInfo) return null

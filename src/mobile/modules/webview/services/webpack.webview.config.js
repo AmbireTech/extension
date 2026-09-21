@@ -81,7 +81,6 @@ const sharedResolve = {
     react: path.resolve(ROOT_DIR, 'node_modules/react'),
     'react-native$': 'react-native-web',
     'react-native-quick-crypto': 'crypto-browserify',
-    'react-native-quick-base64': 'buffer',
     'scrypt-js': path.resolve(ROOT_DIR, 'src/mobile/shims/scrypt-js.ts'),
     pbkdf2: path.resolve(ROOT_DIR, 'src/mobile/shims/pbkdf2.ts'),
     '@react-native-community/netinfo': false,
@@ -346,7 +345,7 @@ class EmitOtaBundleJsonPlugin {
  * Why only these three keys? Everything else is already inlined WITHOUT this object:
  *   - our own `process.env.X` reads -> babel's transform-inline-environment-variables replaces them
  *     with their literal value at each read site;
- *   - `@env` imports (RELAYER_URL, VELCRO_URL, the REACT_APP_ keys, LI_FI, BUNGEE, UNISWAP,
+ *   - `@env` imports (RELAYER_URL, VELCRO_URL, the REACT_APP_ keys, LI_FI, COWSWAP, BUNGEE, UNISWAP,
  *     WALLETCONNECT, SENTRY_DSN, ...) -> react-native-dotenv inlines them at each import site.
  * This object only backstops WHOLESALE `process.env` reads in third-party deps, and the only key a
  * bundled dep actually reads that way is NODE_ENV (React et al. branch on it). WEB_ENGINE and APP_ENV

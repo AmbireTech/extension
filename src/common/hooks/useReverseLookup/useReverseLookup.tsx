@@ -5,6 +5,8 @@ import { getPrimaryName, NameServiceId } from '@ambire-common/services/nameResol
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import useController from '@common/hooks/useController'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   address: string
   /**
@@ -26,16 +28,21 @@ export interface ReverseLookupResult {
   isFetched: boolean
 }
 
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
+const selectLoadingAddresses = (state: AllControllersMappingType['DomainsController']) =>
+  state.loadingAddresses
+
 const useReverseLookup = ({
   address,
   privacyUpdateMode = 'whenStale'
 }: Props): ReverseLookupResult => {
   const checksummedAddress = getAddressCaught(address)
 
-  const {
-    state: { domains, loadingAddresses },
-    dispatch
-  } = useController('DomainsController')
+  const { state: domains } = useController('DomainsController', selectDomains)
+  const { state: loadingAddresses, dispatch } = useController(
+    'DomainsController',
+    selectLoadingAddresses
+  )
   const isLoading = loadingAddresses.includes(checksummedAddress)
   const addressInDomains = domains[checksummedAddress]
 

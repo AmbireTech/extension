@@ -10,13 +10,11 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import useWatchToken from '@common/modules/action-requests/hooks/useWatchToken'
-import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
@@ -35,7 +33,6 @@ const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const {
-    userRequest,
     tokenData,
     tokenNetwork,
     isLoading,
@@ -47,7 +44,6 @@ const WatchTokenRequestScreen = () => {
     handleCancel,
     isTokenCustom,
     temporaryToken,
-    portfolioToken,
     handleAddToken,
     tokenDetails
   } = useWatchToken()
@@ -65,7 +61,7 @@ const WatchTokenRequestScreen = () => {
 
   return (
     <MobileLayoutContainer
-      header={isMobile ? undefined : <HeaderWithLogoOnly />}
+      header={<ActionHeader />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter
@@ -83,6 +79,7 @@ const WatchTokenRequestScreen = () => {
           }
         />
       }
+      style={spacings.mt}
     >
       <View style={styles.container}>
         <View style={styles.content}>
@@ -90,21 +87,23 @@ const WatchTokenRequestScreen = () => {
             <Text weight="medium" fontSize={20} style={spacings.mbLg} numberOfLines={1}>
               {t('Add suggested token')}
             </Text>
-            <View style={spacings.mb}>
-              <TokenIcon
-                withContainer
-                chainId={tokenNetwork?.chainId}
-                containerHeight={56}
-                containerWidth={56}
-                networkSize={20}
-                address={tokenData?.address}
-                width={48}
-                height={48}
-              />
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <View style={[spacings.mb, spacings.mrTy]}>
+                <TokenIcon
+                  withContainer
+                  chainId={tokenNetwork?.chainId}
+                  containerHeight={40}
+                  containerWidth={40}
+                  networkSize={16}
+                  address={tokenData?.address}
+                  width={40}
+                  height={40}
+                />
+              </View>
+              <Text weight="semiBold" fontSize={20} numberOfLines={1} style={spacings.mbTy}>
+                {tokenData?.symbol}
+              </Text>
             </View>
-            <Text weight="semiBold" fontSize={20} numberOfLines={1} style={spacings.mbTy}>
-              {tokenData?.symbol}
-            </Text>
             <NetworkBadge
               withOnPrefix
               chainId={tokenNetwork?.chainId}

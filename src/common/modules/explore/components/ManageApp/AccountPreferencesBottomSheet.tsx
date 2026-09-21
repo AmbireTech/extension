@@ -16,9 +16,7 @@ import ToggleDAppScopedAccounts from '@common/modules/dapp-catalog/components/To
 import useDAppAccountPreferences from '@common/modules/dapp-catalog/hooks/useDAppAccountPreferences'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 interface AccountPreferencesBottomSheetProps {
   dapp: Dapp
@@ -31,9 +29,11 @@ const AccountPreferencesBottomSheet = ({
   sheetRef,
   closeBottomSheet
 }: AccountPreferencesBottomSheetProps) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const {
+    accounts,
     orderedAccountList,
     toggleSelectAccount,
     toggleOnlyConnectWithSomeAccounts,
@@ -42,6 +42,9 @@ const AccountPreferencesBottomSheet = ({
     save
   } = useDAppAccountPreferences(dapp.id, 'existingDapp', dapp.accountPreferences)
   const isConfirmDisabled = !!localPreferences?.enabled && !localPreferences.accounts.length
+  // There is no choice to be made with a single account, but the option is still
+  // displayed (disabled) so it doesn't look like the feature is missing or broken.
+  const hasNoAccountsToChooseFrom = accounts.length <= 1
 
   const handleConfirm = useCallback(() => {
     save()
@@ -67,6 +70,13 @@ const AccountPreferencesBottomSheet = ({
         enabled={localPreferences?.enabled ?? false}
         selectedCount={localPreferences?.accounts.length || 0}
         onToggle={toggleOnlyConnectWithSomeAccounts}
+        disabled={hasNoAccountsToChooseFrom}
+        disabledTooltip={{
+          id: 'manage-accounts-scoped-accounts-toggle-tooltip',
+          content: t(
+            'You have only one account imported. Add another account to choose which ones to connect with the app.'
+          )
+        }}
       />
       <View style={[{ height: 1, backgroundColor: theme.primaryBorder }, spacings.mv]} />
       {localPreferences?.enabled ? (
@@ -85,7 +95,7 @@ const AccountPreferencesBottomSheet = ({
         /* Placeholder to rendering the content behind buttons */
         <View style={{ height: 120 }} />
       )}
-      <FooterGlassView size="sm" absolute={isSidePanel} preferGlassFooter={isSidePanel}>
+      <FooterGlassView size="sm" absolute={isNarrowWebLayout} preferGlassFooter={isNarrowWebLayout}>
         <Button
           type="secondary"
           size="smaller"

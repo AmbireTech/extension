@@ -3,17 +3,14 @@ import { View, ViewStyle } from 'react-native'
 
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import getStyles from './styles'
-
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
 
 type ContentRenderProps = {
   isExpanded: boolean
@@ -56,6 +53,7 @@ const ExpandableCard = ({
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
+  const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
   const hasMobileHeader = withMobileLayout && (!!mobileHeaderContent || !!mobileHeaderTitle)
 
   const Element = enableToggleExpand ? AnimatedPressable : View

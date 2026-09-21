@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
-import useControllerState from '@common/hooks/useControllerState'
+import useControllerState, { createSubscriptionIntent } from '@common/hooks/useControllerState'
 import eventBus from '@common/services/event/eventBus'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -88,16 +88,37 @@ export default function useController<K extends keyof AllControllersMappingType,
 
 export default function useController<
   K extends keyof AllControllersMappingType,
+  S extends keyof AllControllersMappingType[K]
+>(id: K, selector: S): UseControllerReturn<K, AllControllersMappingType[K][S]>
+
+export default function useController<
+  K extends keyof AllControllersMappingType,
   S = AllControllersMappingType[K]
->(id: K, selector?: (state: AllControllersMappingType[K]) => S): UseControllerReturn<K, S> {
+>(
+  id: K,
+  selector?: ((state: AllControllersMappingType[K]) => S) | keyof AllControllersMappingType[K]
+): UseControllerReturn<K, S> {
   const controllersMiddleware = useContext(ControllersMiddlewareContext)
 
   if (!controllersMiddleware) {
     throw new Error('useController must be used within ControllersMiddlewareProvider')
   }
 
-  const [isSubscribed, setIsSubscribed] = useState(false)
-  const { state, helpers } = useControllerState({ id, selector, subscriptionEnabled: isSubscribed })
+  // Whether this call site reads the controller's state, which is what decides if it is
+  // worth subscribing to. Reported to an object the first render can write to instead of
+  // to state, because a state update from the render that mounts the component makes
+  // React render it a second time - and almost every call site reads the state in that
+  // very render, so the second pass was being paid for on mount by all of them.
+  const [subscriptionIntent] = useState(createSubscriptionIntent)
+  // Changed only when the state is read for the first time after the subscription was
+  // already decided against, which is the one case that has to ask for it again.
+  const [resubscribeSignal, setResubscribeSignal] = useState(0)
+  const { state, helpers } = useControllerState({
+    id,
+    selector: selector as any,
+    subscriptionIntent,
+    resubscribeSignal
+  })
   const { dispatch: controllersMiddlewareDispatch } = controllersMiddleware
 
   const dispatch = useCallback(
@@ -133,7 +154,6 @@ export default function useController<
         ...action,
         params: { ...action.params, ctrlName: id, args: [...action.params.args, requestId] }
       } as never as AnyControllerAction
-      controllersMiddlewareDispatch(ctrlAction as any)
 
       return new Promise<R>((resolve, reject) => {
         let settled = false
@@ -170,7 +190,10 @@ export default function useController<
           )
         }, timeoutMs)
 
+        // Listen before dispatching: on mobile the controllers run in this realm and
+        // can reply synchronously, before a listener added afterwards would exist
         eventBus.addEventListener('receiveOneTimeData', onResponse)
+        controllersMiddlewareDispatch(ctrlAction as any)
       })
     },
     [controllersMiddlewareDispatch, id]
@@ -189,13 +212,18 @@ export default function useController<
   return useMemo(() => {
     return new Proxy(resultObject, {
       get: (target, prop) => {
-        // If a component tries to access state/helpers and we aren't subscribed yet, toggle it.
-        if ((prop === 'state' || prop === 'helpers' || prop in (helpers || {})) && !isSubscribed) {
-          setIsSubscribed(true)
+        // A component reading state/helpers is what makes it worth subscribing to them.
+        // Reading during the render that mounts the component is answered by the
+        // subscription that is established right after it; a first read past that point
+        // is what has to have it established again.
+        if (prop === 'state' || prop === 'helpers' || prop in (helpers || {})) {
+          if (subscriptionIntent.reportStateRead()) {
+            setResubscribeSignal((signal) => signal + 1)
+          }
         }
 
         return Reflect.get(target, prop)
       }
     })
-  }, [resultObject, isSubscribed, helpers])
+  }, [resultObject, helpers, subscriptionIntent])
 }

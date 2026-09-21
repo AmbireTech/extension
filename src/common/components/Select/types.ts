@@ -62,6 +62,7 @@ export type CommonSelectProps = {
     isMenuOpen,
     selectRef
   }: RenderSelectedOptionParams) => ReactNode
+  onBottomSheetClosed?: () => void
   attemptToFetchMoreOptions?: (search: string) => void
   onSearch?: (search: string) => void
   renderSelectedOption?: ({

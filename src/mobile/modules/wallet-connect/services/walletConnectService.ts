@@ -684,11 +684,9 @@ export const rejectWalletConnectSession = async (proposalId: number) => {
 }
 
 /**
- * Handles broadcast events from the webview's wcBridgeMessenger.
- * When a dapp session in the webview broadcasts an event (e.g. disconnect,
- * chainChanged, accountsChanged), the wcBridgeMessenger sends it back to RN
- * via sendToReactEvent, and this function translates it into the appropriate
- * WalletConnect SDK call.
+ * Handles broadcast events coming from a dapp session in the dapp WebView (e.g.
+ * disconnect, chainChanged, accountsChanged) and translates them into the
+ * appropriate WalletConnect SDK call.
  */
 export const handleWcSessionBroadcast = async (payload: {
   wcSessionTopic: string
@@ -787,6 +785,19 @@ export const handleWcSessionBroadcast = async (payload: {
     } else {
       throw e
     }
+  }
+}
+
+/**
+ * Tears down one WalletConnect session, keeping a relay failure local. Callers tear down
+ * several sessions and then revoke auto-login policies, and neither may be skipped because
+ * one socket was down - `handleWcSessionBroadcast` rethrows in that case.
+ */
+export const terminateWcSession = async (wcSessionTopic: string) => {
+  try {
+    await handleWcSessionBroadcast({ wcSessionTopic, chainId: 1, event: 'disconnect', data: {} })
+  } catch (error) {
+    console.error('[WalletConnect] Failed to disconnect session', wcSessionTopic, error)
   }
 }
 

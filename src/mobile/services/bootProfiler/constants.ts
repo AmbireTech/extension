@@ -42,8 +42,8 @@ export const BOOT_PROFILE_WORKER_FLUSH_TIMEOUT = 1500
 export const BOOT_PROFILE_DEADLINE = 25000
 
 // Marks a storage key that exists but is deliberately kept out of the init payload
-// (see BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS). Carried as the mark's note because
-// there is no size to record — measuring one would cost as much as shipping it.
+// (see BOOT_SNAPSHOT_STORAGE_KEYS). Carried as the mark's note because there is no
+// size to record — measuring one would cost as much as shipping it.
 export const STORAGE_KEY_NOT_SNAPSHOTTED = 'not in init payload'
 
 /**
@@ -65,8 +65,8 @@ export const BOOT_MARK = {
   rnEntryModuleEvaluated: 'rn.entryModule.evaluated',
   rnAppRender: 'rn.app.render',
   rnAppInitMounted: 'rn.appInit.mounted',
-  // Synchronous full-MMKV dump handed to the worker so it can serve controller
-  // boot reads from memory instead of ~79 bridge round-trips.
+  // Synchronous MMKV dump handed to the worker so a controller hosted there can serve
+  // its boot reads from memory instead of a bridge round-trip per key.
   rnStorageSnapshot: 'rn.storageSnapshot',
   // Prod only: writing the OTA-shipped worker bundle to the app sandbox.
   rnWorkerBundleMaterialized: 'rn.workerBundle.materialized',
@@ -77,6 +77,13 @@ export const BOOT_MARK = {
   rnInitPayloadEncoded: 'rn.initPayload.encoded',
   rnInitPayloadInjected: 'rn.initPayload.injected',
   rnWorkerReadyReceived: 'rn.worker.readyReceived',
+  // Constructing the controllers in the RN realm, on the JS thread, so the spans are
+  // the honest cost of building the controller graph before the first screen renders.
+  rnMainCtrlConstructed: 'rn.mainCtrl.constructed',
+  rnWalletStateCtrlConstructed: 'rn.walletStateCtrl.constructed',
+  rnAutoLockCtrlConstructed: 'rn.autoLockCtrl.constructed',
+  rnControllersReady: 'rn.controllers.ready',
+  rnBootPhaseFull: 'rn.bootPhase.full',
   rnStoreCriticalReady: 'rn.store.criticalReady',
   // Every controller except the deferred ones has landed in the store. The deferred
   // ones only start loading after unlock, which may never happen, so this is where the
@@ -98,11 +105,7 @@ export const BOOT_MARK = {
   workerImportsEvaluated: 'worker.imports.evaluated',
   workerInitReceived: 'worker.init.received',
   workerStorageCacheSeeded: 'worker.storageCache.seeded',
-  workerMainCtrlConstructed: 'worker.mainCtrl.constructed',
-  workerWalletStateCtrlConstructed: 'worker.walletStateCtrl.constructed',
-  workerAutoLockCtrlConstructed: 'worker.autoLockCtrl.constructed',
   workerReady: 'worker.ready',
-  workerBootPhaseFull: 'worker.bootPhase.full',
 
   // --- Native realm, from `performance.rnStartupTiming` ---
   nativeStartTime: 'native.startTime',
@@ -117,11 +120,13 @@ export const BOOT_MARK = {
  * storage key is appended; the report groups them back into their own tables.
  */
 export const BOOT_MARK_PREFIX = {
+  // RN side: `toJSON()` + nested-controller pruning for the first emit.
+  rnCtrlSerialize: 'rn.ctrl.serialize.',
   // Worker side: `toJSON()` + nested-controller pruning for the first emit.
   workerCtrlSerialize: 'worker.ctrl.serialize.',
   // Worker side: richJson stringify + postMessage of the first emit.
   workerCtrlEncode: 'worker.ctrl.encode.',
-  // RN side: richJson parse of the first state received.
+  // RN side: richJson parse of the first state received from the worker.
   rnCtrlDecode: 'rn.ctrl.decode.',
   // RN side: wire size of one storage key inside the init snapshot.
   rnStorageKey: 'rn.storage.key.',

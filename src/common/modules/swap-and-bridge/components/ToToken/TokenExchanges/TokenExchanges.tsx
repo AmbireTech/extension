@@ -2,7 +2,7 @@ import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import HelpIcon from '@common/assets/svg/HelpIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
@@ -13,6 +13,10 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getExchangesWithData } from '@common/utils/exchanges'
 
 import useTokenExchanges from './useTokenExchanges'
+
+import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
+
+const selectExchanges = (state: PortfolioController) => state.exchangeState.exchanges
 
 const LOGO_SIZE = 16
 // Each logo is pulled onto the previous one, so that they read as a single stack
@@ -31,10 +35,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const marketData = useTokenExchanges(chainId, address)
-  const { state: exchangeData } = useController(
-    'PortfolioController',
-    (state) => state.exchangeState.exchanges
-  )
+  const { state: exchangeData } = useController('PortfolioController', selectExchanges)
 
   const exchangesWithData = useMemo(
     () => getExchangesWithData(marketData?.exchanges || [], exchangeData),
@@ -43,7 +44,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
 
   // Shown in place of a logo that failed to load, instead of leaving an empty circle
   const renderFallbackIcon = useCallback(
-    () => <HelpIcon width={LOGO_SIZE - 6} height={LOGO_SIZE - 6} color={theme.secondaryText} />,
+    () => <WarningIcon width={LOGO_SIZE - 6} height={LOGO_SIZE - 6} color={theme.secondaryText} />,
     [theme.secondaryText]
   )
 
@@ -62,7 +63,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
         })}
         style={spacings.mlTy}
       >
-        <HelpIcon width={LOGO_SIZE} height={LOGO_SIZE} color={theme.secondaryText} />
+        <WarningIcon width={LOGO_SIZE} height={LOGO_SIZE} color={theme.secondaryText} />
       </View>
     )
 

@@ -2,14 +2,13 @@ import React from 'react'
 import { View } from 'react-native'
 
 import Spinner from '@common/components/Spinner'
-import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import AddChain from '@common/modules/action-requests/components/AddOrUpdateChain/AddChain'
 import AlreadyAddedChain from '@common/modules/action-requests/components/AddOrUpdateChain/AlreadyAddedChain'
 import UpdateChain from '@common/modules/action-requests/components/AddOrUpdateChain/UpdateChain'
 import useAddOrUpdateNetwork from '@common/modules/action-requests/hooks/useAddOrUpdateNetwork'
-import spacings, { SPACING_LG } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
@@ -27,6 +26,7 @@ const AddOrUpdateNetworkScreen = () => {
     userRequest,
     statuses,
     features,
+    isCheckingNetwork,
     existingNetwork,
     isActionButtonPressed,
     successStateText,
@@ -43,7 +43,6 @@ const AddOrUpdateNetworkScreen = () => {
     resolveButtonText,
     view
   } = useAddOrUpdateNetwork()
-  const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
 
   if (view === 'loading') {
     return (
@@ -68,9 +67,8 @@ const AddOrUpdateNetworkScreen = () => {
               !areParamsValid ||
               statuses.addNetwork === 'LOADING' ||
               statuses.updateNetwork === 'LOADING' ||
-              (features &&
-                (features.some((f) => f.level === 'loading') ||
-                  !!features.find((f) => f.id === 'flagged'))) ||
+              isCheckingNetwork ||
+              !!features.find((f) => f.id === 'flagged') ||
               isActionButtonPressed
             }
           />
@@ -133,9 +131,8 @@ const AddOrUpdateNetworkScreen = () => {
             !areParamsValid ||
             statuses.addNetwork === 'LOADING' ||
             statuses.updateNetwork === 'LOADING' ||
-            (features &&
-              (features.some((f) => f.level === 'loading') ||
-                !!features.filter((f) => f.id === 'flagged')[0])) ||
+            isCheckingNetwork ||
+            !!features.find((f) => f.id === 'flagged') ||
             isActionButtonPressed
           }
         />

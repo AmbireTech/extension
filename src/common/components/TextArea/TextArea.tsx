@@ -3,6 +3,7 @@ import { BlurEvent, TextInput, TextInputProps, TextStyle, View, ViewStyle } from
 
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useAutoFocus from '@common/hooks/useAutoFocus'
 import useTheme from '@common/hooks/useTheme'
 
 import getStyles from './styles'
@@ -40,10 +41,12 @@ const TextArea = ({
   nativeInputStyle,
   leftIcon,
   value,
+  autoFocus,
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
   const { theme, styles } = useTheme(getStyles)
+  const { autoFocus: nativeAutoFocus, setInputRef } = useAutoFocus(autoFocus)
 
   const handleOnFocus = (e: BlurEvent) => {
     setIsFocused(true)
@@ -84,6 +87,8 @@ const TextArea = ({
             editable={!disabled}
             onBlur={handleOnBlur}
             onFocus={handleOnFocus}
+            ref={setInputRef}
+            autoFocus={nativeAutoFocus}
             value={value}
             {...rest}
             style={{

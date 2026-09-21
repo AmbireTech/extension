@@ -1,30 +1,18 @@
 This is the iOS and Android app. Read the root `AGENTS.md` first - this file only covers what is specific to mobile.
 
-## The split: RN side vs worker side
+## There is no separate background
 
-Mobile builds two separate JS bundles, with two different build systems:
+The controllers run in the same React Native JS realm as the UI, so there is no background context and no bridge between the two. `services/controllerHost/` is the `background`: it owns `MainController` and everything from `src/ambire-common`, and `handlers/handleActions.ts` is its action router (the counterpart of the extension's background `handleActions`).
 
-| Bundle | Built by                                            | Entry                                       | Runs             |
-| ------ | --------------------------------------------------- | ------------------------------------------- | ---------------- |
-| RN/UI  | Metro (`yarn ios` / `yarn android` / `yarn start`)  | `index.js`                                  | Native app       |
-| Worker | webpack (`yarn dev:webview` / `yarn build:webview`) | `modules/webview/services/injectedLogic.ts` | Inside a WebView |
+A change anywhere reaches the app through the Metro bundle, so a plain reload is enough.
 
-The worker is the `background`: it owns `MainController` and everything from `src/ambire-common`. The RN side is the UI plus the native capabilities.
+## The WebView worker
 
-`yarn dev:webview` must be running the whole time you develop, whatever you touch - the app cannot boot without it, since no controller exists until the worker loads its bundle.
+Mobile still builds a second bundle with webpack (`yarn dev:webview` / `yarn build:webview`, entry `modules/webview/services/injectedLogic.ts`) and `WebViewWorker.tsx` still mounts it. It hosts no controllers and reads no storage - what is left is the host a controller would need if one is ever moved back in: the RN bridge, a bridged fetch and storage, and the registry wiring that streams controller state to the UI.
 
-Which bundle you touched only decides how the change reaches the app:
+`yarn dev:webview` is therefore not needed for the app to boot, but it still serves the inpage bundles `DappWebViewScreen` fetches in dev, so keep it running to browse dapps. For a native build the bundles are baked in by `yarn build:webview` - the production build commands already run it.
 
-- Controller, `ambire-common`, anything reached from `injectedLogic.ts` -> **worker bundle**. webpack rebuilds it and the WebView remounts itself, so the change lands on its own.
-- Screen, component, hook, navigation -> **Metro bundle**. A plain reload is enough.
-
-For a native build, the worker bundle is baked in by `yarn build:webview` - the production build commands already run it.
-
-Some worker-side code lives outside `modules/webview/`, so the folder is not a reliable signal - `handlers/handleActions.ts` (the worker's action router, the counterpart of the extension's background `handleActions`) is the main one. Follow the imports from `injectedLogic.ts` when unsure.
-
-## The worker has no native APIs
-
-It is a WebView, so there is no React Native, no Expo, no native module inside it. Everything it needs crosses the bridge to the RN side, where `WebViewWorker.tsx` handles it:
+Everything the worker needs from the platform crosses the bridge to the RN side, where `WebViewWorker.tsx` handles it. The full set of messages is live regardless of whether anything is using them:
 
 | Group                               | What it covers                                                             |
 | ----------------------------------- | -------------------------------------------------------------------------- |
@@ -39,6 +27,10 @@ It is a WebView, so there is no React Native, no Expo, no native module inside i
 
 `shims/` swaps a few crypto packages (`eth-crypto`, `scrypt-js`, `pbkdf2`) for native-backed versions, wired through the aliases in `babel.config.js`. Those are for the RN bundle.
 
+The init payload carries a one-shot snapshot of the storage keys listed in `constants/storageSnapshot.ts`, so a controller hosted in the worker can serve its boot reads from memory instead of one bridge round-trip per key. The list is empty while nothing is hosted there.
+
+The wire format below applies to the worker's bridge only.
+
 ## The wire format
 
 `bridgeCodec.ts` tags every message with one character:
@@ -50,20 +42,21 @@ It is a WebView, so there is no React Native, no Expo, no native module inside i
 
 ## Cold start is a first-class constraint
 
-The worker has to boot before any controller exists, so the boot path is tuned and easy to regress:
+The controllers are constructed on the JS thread the UI renders on, so the boot path is tuned and easy to regress:
 
-- The RN side ships a one-shot storage snapshot when it injects the worker, instead of the worker making N separate `storage.get` round-trips.
 - Controllers are all initialized together; only `PhishingController` and `DappsController` are held back, because the lists they read are too large to sit on the boot path (with the goal of displaying the splash screen for less time). The dashboard fires `INIT_DEFERRED_CONTROLLERS` for them after its first render.
-- What _is_ tiered is the streaming of state to the RN side. Only the controllers in `constants/criticalControllers.ts` stream during boot - the rest are queued and drained once the splash hides and the RN side flips the phase to `full`, so the heavy stringify+bridge+parse never contends with the first paint. See `modules/webview/services/bootPhase.ts`.
+- What _is_ tiered is the streaming of state to the UI. Only the controllers in `constants/criticalControllers.ts` stream during boot - the rest are queued and drained once the splash hides and the UI flips the phase to `full`, so the heavy serialization never contends with the first paint. See `services/controllerHost/bootPhase.ts`.
 - Past boot, that same file also suppresses state for any controller the UI has no subscriber for, and flushes it the moment one appears.
-- The worker bundle is minified with `keep_classnames`. It must stay: controller identity comes from `this.constructor.name`, and mangling it breaks the app.
+- Both bundles are minified with `keep_classnames` and `keep_fnames` (see `metro.config.js`). They must stay: controller identity comes from `this.constructor.name`, and mangling it breaks the app.
+- `services/bootProfiler/` measures where the cold start goes, across the RN realm, the worker and the native launch. See its README.
 
 ## Where the non-obvious code lives
 
-- `modules/webview/services/` - the bridge. `WebViewWorker.tsx` (RN side), `injectedLogic.ts` (worker entry), `bridgeCodec.ts`, `bootPhase.ts`, `materializeWorkerBundle.ts`, `webpack.webview.config.js`.
-- `handlers/handleActions.ts` - worker side, despite the location.
+- `services/controllerHost/` - the `background`. `controllerHost.ts` (constructs the controllers), `bootPhase.ts`, `uiEvents.ts` (the controllers' only channel to the UI).
+- `handlers/handleActions.ts` - the action router.
+- `modules/webview/services/` - the worker and its bridge. `WebViewWorker.tsx` (RN side), `injectedLogic.ts` (worker entry), `bridgeCodec.ts`, `materializeWorkerBundle.ts`, `webpack.webview.config.js`.
 - `contexts/controllersMiddlewareContext/` - where the UI's `dispatch` actually goes.
-- `services/` - native-only: `ledger`, `trezor`, `nfc`, `bootProfiler`, `legacyMigration`.
+- `services/` - native-only: `ledger`, `trezor`, `nfc`, `bootProfiler`, `legacyMigration`, `nativeAbi`, `nativeCrypto`.
 - `modules/inpage/` - the provider injected into dapp WebViews. A third bundle, built by the same webpack config.
 
 ## Gotchas

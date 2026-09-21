@@ -13,6 +13,7 @@ import {
   getIsTokenEligibleForSwapAndBridge
 } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
@@ -22,11 +23,25 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { getTokenId } from '@common/utils/token'
 import { getUiType } from '@common/utils/uiType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type SessionId = ReturnType<typeof nanoid>
 
 const { isPopup, isRequestWindow, isSidePanel } = getUiType()
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectIsPortfolioReadyToVisualize = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio.isReadyToVisualize
+const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.tokens
+
+const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.visibleUserRequests
+
 const useSwapAndBridgeForm = () => {
+  const { t } = useTranslation()
   const {
     fromAmount,
     fromChainId,
@@ -43,14 +58,22 @@ const useSwapAndBridgeForm = () => {
     supportedChainIds,
     updateQuoteStatus,
     sessionIds,
-    toSelectedToken
+    toSelectedToken,
+    swapProviders,
+    disabledSwapProviderIds
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
   const { userRequests } = requestsState
-  const {
-    state: { account, portfolio }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: isPortfolioReadyToVisualize } = useController(
+    'SelectedAccountController',
+    selectIsPortfolioReadyToVisualize
+  )
+  const { state: portfolioTokens } = useController(
+    'SelectedAccountController',
+    selectPortfolioTokens
+  )
   const controllerAmountFieldValue = fromAmountFieldMode === 'token' ? fromAmount : fromAmountInFiat
   const [fromAmountValue, setFromAmountValue] = useSyncedState<string>({
     backgroundState: controllerAmountFieldValue,
@@ -67,10 +90,6 @@ const useSwapAndBridgeForm = () => {
   })
 
   const isLocalStateOutOfSync = controllerAmountFieldValue !== fromAmountValue
-  /**
-   * @deprecated - the settings menu is not used anymore
-   */
-  const [settingModalVisible, setSettingsModalVisible] = useState<boolean>(false)
   const [activeRoute, setActiveRoute] = useState<SwapAndBridgeActiveRoute | undefined>(undefined)
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
@@ -82,7 +101,11 @@ const useSwapAndBridgeForm = () => {
     acc: account,
     additionalCheck: {
       chainIds: supportedChainIds,
-      reason: 'Network is not supported by our service provider.'
+      reason: t(
+        disabledSwapProviderIds.length
+          ? 'Network is not supported by the enabled service providers. Enable more providers for wider support'
+          : 'Network is not supported by our service provider.'
+      )
     }
   })
   const currentRoute = useLocation()
@@ -98,13 +121,21 @@ const useSwapAndBridgeForm = () => {
     open: openPriceImpactModal,
     close: closePriceImpactModal
   } = useModalize()
+  const {
+    ref: providerSettingsModalRef,
+    open: openProviderSettingsModal,
+    close: closeProviderSettingsModal
+  } = useModalize()
 
   const closePriceImpactModalWrapped = useCallback(() => {
     setFrozenPriceImpactWarning(null)
     closePriceImpactModal()
   }, [closePriceImpactModal])
 
-  const { visibleUserRequests } = useController('RequestsController').state
+  const { state: visibleUserRequests } = useController(
+    'RequestsController',
+    selectVisibleUserRequests
+  )
   const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
   const sessionId = useMemo(() => {
     if (isPopup) return 'popup'
@@ -118,6 +149,13 @@ const useSwapAndBridgeForm = () => {
     if (!fromSelectedToken || !toSelectedToken) return false
     return fromSelectedToken.chainId !== BigInt(toSelectedToken.chainId)
   }, [fromSelectedToken, toSelectedToken])
+
+  const areAllProvidersDisabled = useMemo(
+    () =>
+      swapProviders.length > 0 &&
+      swapProviders.every(({ id }) => disabledSwapProviderIds.includes(id)),
+    [disabledSwapProviderIds, swapProviders]
+  )
 
   const networkUserRequests = useMemo(() => {
     if (!fromSelectedToken || !account || !userRequests.length) return []
@@ -197,7 +235,7 @@ const useSwapAndBridgeForm = () => {
     // Init each session only once after the cleanup
     if (sessionIdsRequestedToBeInit.current.includes(sessionId)) return
 
-    if (!portfolio.isReadyToVisualize) return
+    if (!isPortfolioReadyToVisualize) return
 
     const routeState = currentRoute.state as
       | {
@@ -208,7 +246,7 @@ const useSwapAndBridgeForm = () => {
         }
       | undefined
 
-    const tokenToSelectOnInit = portfolio.tokens.find(
+    const tokenToSelectOnInit = portfolioTokens.find(
       (t) =>
         t.address === routeState?.preselectedFromToken?.address &&
         t.chainId === routeState?.preselectedFromToken?.chainId &&
@@ -239,8 +277,8 @@ const useSwapAndBridgeForm = () => {
     account,
     currentRoute.state,
     navigate,
-    portfolio.isReadyToVisualize,
-    portfolio.tokens,
+    isPortfolioReadyToVisualize,
+    portfolioTokens,
     requestsDispatch,
     sessionId,
     sessionIds,
@@ -450,13 +488,6 @@ const useSwapAndBridgeForm = () => {
     }
     closeEstimationModal()
   }, [closeEstimationModal, swapAndBridgeDispatch, formStatus])
-  /**
-   * @deprecated - the settings menu is not used anymore
-   */
-  const handleToggleSettingsMenu = useCallback(() => {
-    setSettingsModalVisible((p) => !p)
-  }, [])
-
   const selectedAccActiveRoutes = useMemo(() => {
     return (
       (activeRoutes || [])
@@ -538,8 +569,9 @@ const useSwapAndBridgeForm = () => {
     priceImpactModalRef,
     closePriceImpactModal: closePriceImpactModalWrapped,
     acknowledgeHighPriceImpact,
-    settingModalVisible,
-    handleToggleSettingsMenu,
+    providerSettingsModalRef,
+    openProviderSettingsModal,
+    closeProviderSettingsModal,
     selectedAccActiveRoutes,
     routesModalRef,
     displayedView,
@@ -554,7 +586,8 @@ const useSwapAndBridgeForm = () => {
     batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch
+    shouldDisableAddToBatch,
+    areAllProvidersDisabled
   }
 }
 

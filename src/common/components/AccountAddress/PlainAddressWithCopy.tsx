@@ -11,11 +11,9 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import PlainAddress from './PlainAddress'
-
-const { isSidePanel } = getUiType()
 
 interface Props {
   maxLength: number
@@ -42,6 +40,7 @@ const PlainAddressWithCopy: FC<Props> = ({
   withWrap = false,
   highlight
 }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { theme } = useTheme()
@@ -56,7 +55,7 @@ const PlainAddressWithCopy: FC<Props> = ({
 
   const { shouldShowFullAddressOnWeb } = useShouldShowFullAddressOnWeb(
     maxLength,
-    isSidePanel ? containerWidth : undefined
+    isNarrowWebLayout ? containerWidth : undefined
   )
 
   const handleCopy = async () => {
@@ -71,7 +70,7 @@ const PlainAddressWithCopy: FC<Props> = ({
   const iconSize = fontSize + 8
 
   const containerStyle = useMemo((): ViewStyle => {
-    if (!isSidePanel) {
+    if (!isNarrowWebLayout) {
       // Keep popup / tab layout identical to v2.
       if (withWrap) {
         return { flexBasis: 110, flexGrow: 1, flexShrink: 1 }
@@ -90,10 +89,10 @@ const PlainAddressWithCopy: FC<Props> = ({
     }
 
     return { flex: 1, flexShrink: 1, minWidth: 0 }
-  }, [withWrap])
+  }, [withWrap, isNarrowWebLayout])
 
   const plainAddressStyle = useMemo(() => {
-    if (!isSidePanel) {
+    if (!isNarrowWebLayout) {
       // Keep popup / tab layout identical to v2.
       return {
         ...style,
@@ -111,18 +110,18 @@ const PlainAddressWithCopy: FC<Props> = ({
           ? { flex: 1, flexShrink: 1, minWidth: 0 }
           : { flex: 1, flexShrink: 1, minWidth: 0 })
     }
-  }, [style, withWrap, shouldShowFullAddressOnWeb, maxLength])
+  }, [style, withWrap, shouldShowFullAddressOnWeb, maxLength, isNarrowWebLayout])
 
   return (
     <View
-      onLayout={isSidePanel ? handleLayout : undefined}
+      onLayout={isNarrowWebLayout ? handleLayout : undefined}
       style={[flexbox.directionRow, flexbox.alignCenter, containerStyle]}
     >
       <PlainAddress
         maxLength={maxLength}
         address={address}
         hideParentheses={hideParentheses}
-        containerWidth={isSidePanel ? containerWidth : undefined}
+        containerWidth={isNarrowWebLayout ? containerWidth : undefined}
         style={plainAddressStyle}
         fontSize={fontSize}
         withWrap={withWrap}
@@ -130,7 +129,7 @@ const PlainAddressWithCopy: FC<Props> = ({
       />
       <AnimatedPressable
         onPress={handleCopy}
-        style={[animStyle, isSidePanel && [spacings.mlMi, { flexShrink: 0 }]]}
+        style={[animStyle, isNarrowWebLayout && [spacings.mlMi, { flexShrink: 0 }]]}
         {...bindAnim}
       >
         {/* The icon is as small as the address next to it, so the default stroke reads as too thick */}

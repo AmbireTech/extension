@@ -10,6 +10,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import InlineAddressAvatar from './InlineAddressAvatar'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props extends TextProps {
   address: string
   chainId: bigint
@@ -18,6 +20,9 @@ interface Props extends TextProps {
   fallbackLabel?: string
   isToken?: boolean
 }
+
+const selectContractNames = (state: AllControllersMappingType['ContractNamesController']) =>
+  state.contractNames
 
 const AddressName: FC<Props> = ({
   address,
@@ -29,10 +34,10 @@ const AddressName: FC<Props> = ({
   ...rest
 }) => {
   const { name, isLoading } = useReverseLookup({ address })
-  const {
-    state: { contractNames },
-    dispatch: contractNamesDispatch
-  } = useController('ContractNamesController')
+  const { state: contractNames, dispatch: contractNamesDispatch } = useController(
+    'ContractNamesController',
+    selectContractNames
+  )
 
   const contract = useMemo(() => {
     return contractNames[address]

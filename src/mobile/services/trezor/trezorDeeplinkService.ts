@@ -1,17 +1,15 @@
 import { Linking } from 'react-native'
 
-import TrezorConnect from '@trezor/connect-mobile'
-
 import { TREZOR_CONNECT_MANIFEST } from '@common/modules/hardware-wallet/constants/trezor'
+import TrezorConnect from '@trezor/connect-mobile'
 
 // All Trezor communication on mobile happens HERE, in the React Native native
 // JS context. Trezor has no supported way to talk to the device from inside our own process on mobile:
 // the only official path is @trezor/connect-mobile, which deep-links into the
 // Trezor Suite app — Suite owns the USB/Bluetooth connection, shows the
 // on-device confirmation, and returns the signed result back to us via a deep
-// link. The WebView worker (where the controllers live) can't open deep links,
-// so the worker-side TrezorController forwards every SDK call to this singleton
-// over the message bridge (see WebViewWorker.tsx `trezor.*` cases).
+// link. The mobile TrezorController uses this singleton directly as its
+// `walletSDK`.
 
 const CALLBACK_URL = 'ambire://trezor'
 

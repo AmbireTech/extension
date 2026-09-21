@@ -16,10 +16,10 @@ import { isExtension } from '@web/constants/browserapi'
 
 const useIsCompactBenzinButtonsLayout = () => {
   const { maxWidthSize } = useWindowSize()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
 
   // Standalone Benzin website uses viewport width only; extension uses the shared side-panel rule.
-  return (isBenzin && !maxWidthSize('m')) || (isExtension && isCompactSidePanelLayout)
+  return (isBenzin && !maxWidthSize('m')) || (isExtension && isNarrowWebLayout)
 }
 
 interface Props {

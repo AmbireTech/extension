@@ -25,6 +25,12 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import applyOtaUpdate from './applyOtaUpdate'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.visibleUserRequests
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const DashboardBanner = ({
   banner
 }: {
@@ -35,15 +41,15 @@ const DashboardBanner = ({
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
-  const {
-    state: { visibleUserRequests },
-    dispatch: requestsDispatch
-  } = useController('RequestsController')
+  const { state: visibleUserRequests, dispatch: requestsDispatch } = useController(
+    'RequestsController',
+    selectVisibleUserRequests
+  )
   const transferState = useController('TransferController').state
-  const {
-    state: { networks },
-    dispatch: networksDispatch
-  } = useController('NetworksController')
+  const { state: networks, dispatch: networksDispatch } = useController(
+    'NetworksController',
+    selectNetworks
+  )
   const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch: emailVaultDispatch } = useController('EmailVaultController')
@@ -52,6 +58,8 @@ const DashboardBanner = ({
   const primaryAction = actions[0]
   const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
   const isPendingSignatureRequest = banner.id === 'safe-message-request-banner'
+  const isSwapAndBridgeStatus = category === 'bridge-in-progress'
+  const isSingleRow = isPendingAccountOp || isPendingSignatureRequest || isSwapAndBridgeStatus
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
@@ -301,8 +309,8 @@ const DashboardBanner = ({
         subtitle={subtitle}
         type={type}
         text={text}
-        singleRow={isPendingAccountOp || isPendingSignatureRequest}
-        style={isPendingAccountOp ? spacings.pbTy : undefined}
+        singleRow={isSingleRow}
+        style={isSingleRow ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined

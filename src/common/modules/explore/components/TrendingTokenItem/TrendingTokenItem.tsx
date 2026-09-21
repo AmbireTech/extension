@@ -15,6 +15,10 @@ import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+const selectNetworks = (state: NetworksController) => state.networks
+
 type Props = {
   token: TrendingToken
 }
@@ -25,7 +29,7 @@ const TrendingTokenItem = ({ token }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const { state: networks } = useController('NetworksController', (s) => s.networks)
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const chainId = useMemo(
     () => networks.find((n) => n.platformId === token.platformId)?.chainId,

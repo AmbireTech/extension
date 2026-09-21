@@ -6,9 +6,7 @@ import { isMobile } from '@common/config/env'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 interface Props {
   handleClose?: () => void
@@ -32,6 +30,7 @@ const ModalHeader: FC<Props> = ({
   forceBackButtonOnMobile,
   headerTestID
 }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const withSideContainers = !!handleClose || !!children
   const showBackButton = ((handleClose && !isMobile) || forceBackButtonOnMobile) && !!handleClose
   const shouldBalanceCenteredTitle = titlePosition === 'center' && showBackButton && !children
@@ -42,7 +41,7 @@ const ModalHeader: FC<Props> = ({
     minHeight: 28
   }
 
-  if (isSidePanel) {
+  if (isNarrowWebLayout) {
     return (
       <Header.Wrapper
         containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0, ...spacings.mb0 }}

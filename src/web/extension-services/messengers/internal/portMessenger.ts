@@ -60,6 +60,12 @@ export class PortMessenger {
 
   #portDisconnectListeners = new Map<string, (data: any) => void>()
 
+  // `port.postMessage` throws synchronously ("Attempting to use a disconnected port object")
+  // once the other end is gone, but `onDisconnect` is an async browser event that can lag behind
+  // (e.g. a background/throttled tab). This lets a caller react to that failure immediately,
+  // at the exact point a message actually failed to send, instead of only via `onDisconnect`.
+  onSendError?: (error: unknown) => void
+
   constructor(ports: Port[] = []) {
     this.ports = ports
   }
@@ -174,6 +180,7 @@ export class PortMessenger {
       port.postMessage({ messageType: type, message: stringify(message), meta: stringify(meta) })
     } catch (error) {
       console.error('Error in port.postMessage', error)
+      this.onSendError?.(error)
     }
   }
 

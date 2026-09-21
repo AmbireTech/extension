@@ -291,7 +291,14 @@ class LatticeController implements ExternalSignerController {
   }
 
   async _initSession() {
-    const setupData = {
+    const setupData: {
+      name?: string | undefined
+      baseUrl?: string | undefined
+      timeout?: number | undefined
+      privKey?: string | Buffer<ArrayBufferLike> | undefined
+      skipRetryOnWrongWallet?: boolean | undefined
+      stateData?: string | undefined
+    } = {
       name: LATTICE_APP_NAME,
       baseUrl: this.creds.endpoint || LATTICE_BASE_URL,
       timeout: SDK_TIMEOUT,
