@@ -5,6 +5,7 @@ import common from '@common/styles/utils/common'
 
 interface Styles {
   centeredText: TextStyle
+  rightAlignedText: TextStyle
   tierCard: ViewStyle
   currentTierCard: ViewStyle
   maximumTierCard: ViewStyle
@@ -21,6 +22,9 @@ const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
     centeredText: {
       textAlign: 'center'
+    },
+    rightAlignedText: {
+      textAlign: 'right'
     },
     tierCard: {
       ...common.borderRadiusSecondary,

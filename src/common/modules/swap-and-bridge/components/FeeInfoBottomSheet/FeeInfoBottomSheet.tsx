@@ -5,7 +5,6 @@ import { Modalize } from 'react-native-modalize'
 import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -52,7 +51,7 @@ const FeeInfoBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const { state: portfolioTokens } = useController(
     'SelectedAccountController',
     selectPortfolioTokens
@@ -156,7 +155,33 @@ const FeeInfoBottomSheet = ({
             {t('Hold $stkWALLET to reduce your swap and bridge fees.')}
           </Text>
 
-          <View style={spacings.mtSm}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              spacings.phSm,
+              spacings.mtSm,
+              spacings.mbMi
+            ]}
+          >
+            <View style={[flexbox.flex1, styles.tierDetails]}>
+              <Text appearance="secondaryText" fontSize={12}>
+                {t('$stkWALLET held')}
+              </Text>
+            </View>
+            <View style={[flexbox.flex1, flexbox.alignCenter]}>
+              <Text appearance="secondaryText" fontSize={12} style={styles.centeredText}>
+                {t('~USD value')}
+              </Text>
+            </View>
+            <View style={[flexbox.flex1, flexbox.alignEnd]}>
+              <Text appearance="secondaryText" fontSize={12} style={styles.rightAlignedText}>
+                {t('Swap & Bridge fee')}
+              </Text>
+            </View>
+          </View>
+
+          <View>
             {feeTiers.map((tier, index) => {
               const isCurrent = feePercent === tier.feePercent
               const isMaximum = tier.feePercent === 0
@@ -179,29 +204,24 @@ const FeeInfoBottomSheet = ({
                     ]}
                     testID={`swap-and-bridge-fee-tier-${tier.id}`}
                   >
-                    <View
-                      style={[
-                        flexbox.directionRow,
-                        flexbox.alignCenter,
-                        flexbox.justifySpaceBetween
-                      ]}
-                    >
+                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                       <View style={[flexbox.flex1, styles.tierDetails]}>
-                        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
-                          <Text fontSize={isMaximum ? 18 : 17} weight="medium">
-                            {tier.heldLabel}
-                          </Text>
-                          {!!approximateUsdValue && (
-                            <Text appearance="secondaryText" fontSize={11} style={spacings.mlTy}>
-                              {approximateUsdValue}
-                            </Text>
-                          )}
-                        </View>
-                        <Text appearance="secondaryText" fontSize={12}>
-                          {t('Total $stkWALLET held')}
+                        <Text fontSize={isMaximum ? 18 : 17} weight="medium">
+                          {tier.heldLabel}
                         </Text>
                       </View>
-                      <View style={[flexbox.alignEnd, spacings.mlSm]}>
+                      <View style={[flexbox.flex1, flexbox.alignCenter]}>
+                        {!!approximateUsdValue && (
+                          <Text
+                            appearance="secondaryText"
+                            fontSize={14}
+                            style={styles.centeredText}
+                          >
+                            {approximateUsdValue}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={[flexbox.flex1, flexbox.alignEnd]}>
                         {isCurrent && (
                           <View style={spacings.mbMi}>
                             <Badge
@@ -220,36 +240,11 @@ const FeeInfoBottomSheet = ({
                         >
                           {tier.feeLabel}
                         </Text>
-                        {isMaximum && (
-                          <Text appearance="secondaryText" fontSize={11}>
-                            {t('Swap & Bridge fee')}
-                          </Text>
-                        )}
                       </View>
                     </View>
                   </View>
 
-                  {index === 0 && feeTiers.length > 1 && (
-                    <View
-                      style={[
-                        flexbox.directionRow,
-                        flexbox.alignCenter,
-                        flexbox.justifyCenter,
-                        spacings.pvMi
-                      ]}
-                    >
-                      <DownArrowIcon
-                        width={12}
-                        height={7}
-                        color={theme.secondaryText}
-                        strokeWidth="2"
-                      />
-                      <Text appearance="secondaryText" fontSize={12} style={spacings.mlTy}>
-                        {t('stake more, pay less')}
-                      </Text>
-                    </View>
-                  )}
-                  {index > 0 && index < feeTiers.length - 1 && <View style={spacings.mtMi} />}
+                  {index < feeTiers.length - 1 && <View style={spacings.mtMi} />}
                 </React.Fragment>
               )
             })}
