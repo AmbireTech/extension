@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Keyboard, Pressable, View, ViewStyle } from 'react-native'
 
-import { getAccountOpNonce, isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
@@ -13,7 +13,7 @@ import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { isValidSafeNonce } from './helpers'
+import { getQueuedSafeNonces, isValidSafeNonce } from './helpers'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -47,20 +47,12 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
 
     const { accountOp } = signAccountOpState
 
-    return userRequests.reduce<bigint[]>((nonces, request) => {
-      if (
-        request.kind !== 'calls' ||
-        request.id === fromRequestId ||
-        !request.signAccountOp.account.safeCreation ||
-        request.signAccountOp.accountOp.accountAddr !== accountOp.accountAddr ||
-        request.signAccountOp.accountOp.chainId !== accountOp.chainId
-      )
-        return nonces
-
-      const requestNonce = getAccountOpNonce(request.signAccountOp.accountOp)
-      if (requestNonce !== null) nonces.push(requestNonce)
-      return nonces
-    }, [])
+    return getQueuedSafeNonces(
+      userRequests,
+      fromRequestId,
+      accountOp.accountAddr,
+      accountOp.chainId
+    )
   }, [fromRequestId, signAccountOpState, userRequests])
 
   const nonce = useMemo(
