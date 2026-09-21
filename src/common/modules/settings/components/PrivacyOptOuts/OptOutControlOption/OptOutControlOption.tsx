@@ -13,9 +13,9 @@ import spacings from '@common/styles/spacings'
 import getFeatureFlagUpdates from './getFeatureFlagUpdates'
 
 import type { FeatureFlags } from '@ambire-common/consts/featureFlags'
-import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 
-const selectFeatureFlags = (state: FeatureFlagsController) => state.flags
+const selectFeatureFlags = (state: IFeatureFlagsController) => state.flags
 
 interface RequiredBy {
   flag: keyof FeatureFlags

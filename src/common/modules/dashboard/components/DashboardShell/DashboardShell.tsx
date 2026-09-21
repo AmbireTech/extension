@@ -30,9 +30,9 @@ interface Props {
   contentContainerStyle?: StyleProp<ViewStyle>
 }
 
-import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 
-const selectTokenPricesEnabled = (state: FeatureFlagsController) => state.flags?.tokenPrices
+const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
 
 // Instant placeholder shown while the data-heavy controllers load
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>

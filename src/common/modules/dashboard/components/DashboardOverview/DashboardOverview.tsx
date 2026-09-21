@@ -23,7 +23,7 @@ import { OverviewBackground } from './OverviewBackground'
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
-import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 export const OVERVIEW_CONTENT_MAX_HEIGHT = 162
 
 interface Props {
@@ -36,7 +36,7 @@ interface Props {
   setDashboardOverviewSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
 }
 
-const selectTokenPricesEnabled = (state: FeatureFlagsController) => state.flags?.tokenPrices
+const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
 
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,

@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 
-import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTrustDapp from '@common/hooks/useTrustDapp'
 
-const selectIsScamCheckerEnabled = (state: FeatureFlagsController) =>
+const selectIsScamCheckerEnabled = (state: IFeatureFlagsController) =>
   state.flags.scamAndPhishingChecker
 
 const useDappConnect = () => {

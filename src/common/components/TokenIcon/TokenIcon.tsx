@@ -12,7 +12,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
 import { getHardcodedCitreaIcons } from '@common/utils/getHardcodedCitreaIcons'
 
-import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import SkeletonLoader from '../SkeletonLoader'
 import { SkeletonLoaderProps } from '../SkeletonLoader/types'
 import getStyles from './styles'
@@ -41,7 +41,7 @@ enum UriStatus {
   IMAGE_EXISTS = 'IMAGE_EXISTS'
 }
 
-const selectAreTokenIconsEnabled = (state: FeatureFlagsController) =>
+const selectAreTokenIconsEnabled = (state: IFeatureFlagsController) =>
   state.flags?.tokenAndDefiAutoDiscovery
 
 const TokenIcon: React.FC<Props> = ({
