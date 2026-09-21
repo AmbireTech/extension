@@ -1197,20 +1197,23 @@ const WalletStakingScreen = () => {
                         </View>
                       </View>
                     )}
+
+                    <View style={styles.cardDetails}>
+                      <WalletStakingApy />
+                      {mode === 'unstake' && (
+                        <View style={styles.detailRow}>
+                          <Text fontSize={13} appearance="secondaryText">
+                            {t('Lock')}
+                          </Text>
+                          <Text fontSize={13} appearance="secondaryText">
+                            {t('30 days unbond period')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
 
                   <View style={styles.details}>
-                    <WalletStakingApy />
-                    {mode === 'unstake' && (
-                      <View style={styles.detailRow}>
-                        <Text fontSize={13} appearance="secondaryText">
-                          {t('Lock')}
-                        </Text>
-                        <Text fontSize={13} appearance="secondaryText">
-                          {t('30 days unbond period')}
-                        </Text>
-                      </View>
-                    )}
                     <Text fontSize={11} appearance="errorText" style={styles.validation}>
                       {hasInsufficientBalance ? t('The amount is higher than your balance.') : ''}
                     </Text>

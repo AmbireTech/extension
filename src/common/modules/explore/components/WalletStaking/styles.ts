@@ -60,6 +60,7 @@ interface Styles {
   feePreviewOldFee: TextStyle
   feePreviewNewFee: TextStyle
   details: ViewStyle
+  cardDetails: ViewStyle
   detailRow: ViewStyle
   footerRow: ViewStyle
   footerButtons: ViewStyle
@@ -386,11 +387,14 @@ const getStyles = (theme: ThemeProps) =>
     details: {
       ...spacings.phSm
     },
+    cardDetails: {
+      ...spacings.mtSm,
+      rowGap: SPACING_SM
+    },
     detailRow: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
-      ...spacings.mbSm,
       columnGap: SPACING
     },
     footerRow: {
