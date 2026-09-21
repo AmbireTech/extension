@@ -192,7 +192,6 @@ const FeeInfoBottomSheet = ({
                       spacings.phSm,
                       spacings.pvTy,
                       isCurrent && styles.currentTierCard,
-                      isMaximum && styles.maximumTierCard,
                       isCurrent && isMaximum && styles.currentMaximumTierCard
                     ]}
                     testID={`swap-and-bridge-fee-tier-${tier.id}`}

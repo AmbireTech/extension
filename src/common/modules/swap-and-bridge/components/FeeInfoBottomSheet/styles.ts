@@ -8,7 +8,6 @@ interface Styles {
   rightAlignedText: TextStyle
   tierCard: ViewStyle
   currentTierCard: ViewStyle
-  maximumTierCard: ViewStyle
   currentMaximumTierCard: ViewStyle
   tierDetails: ViewStyle
   currentTierBadge: ViewStyle
@@ -35,9 +34,6 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.secondaryBackground,
       borderColor: theme.neutral600,
       borderWidth: 1
-    },
-    maximumTierCard: {
-      backgroundColor: theme.successBackground
     },
     currentMaximumTierCard: {
       borderColor: theme.successText,
