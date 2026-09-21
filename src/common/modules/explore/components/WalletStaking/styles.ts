@@ -336,8 +336,11 @@ const getStyles = (theme: ThemeProps) =>
     footerButtons: {
       columnGap: SPACING
     },
-    // The compact flat footer stacks with `column`, which would put Cancel above Stake
+    // The compact flat footer stacks with `column`, which would put Cancel above Stake. It also
+    // pads itself horizontally, which on top of the padding screenContent already applies would
+    // leave the buttons narrower than the cards above them
     footerButtonsCompact: {
+      ...spacings.ph0,
       flexDirection: 'column-reverse'
     },
     footerButtonsMobile: {
