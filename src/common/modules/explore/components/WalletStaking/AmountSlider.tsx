@@ -125,10 +125,21 @@ const AmountSlider = ({
   )
   const [width, setWidth] = useState(0)
   const isDisabled = maximumValue <= 0n
-  const availableWidth = Math.max(width - THUMB_SIZE, 0)
   const clampedValue = value < 0n ? 0n : value > maximumValue ? maximumValue : value
   const sliderStep = maximumValue > 0n ? (clampedValue * SLIDER_STEPS) / maximumValue : 0n
-  const thumbPosition = Number(sliderStep) * (availableWidth / Number(SLIDER_STEPS))
+  // Values live on the track's own axis, edge to edge, so a mark and the thumb picking it out
+  // always land on the same spot.
+  const fractionOfWidth = useCallback(
+    (steps: bigint) => (Number(steps) / Number(SLIDER_STEPS)) * width,
+    [width]
+  )
+  // Only the thumb's rendering is pulled back inside the track, so it can't hang off either end.
+  // The half it shifts by at 0% and 100% is covered by the thumb itself, which is why the mark
+  // underneath still looks centered.
+  const thumbPosition = Math.min(
+    Math.max(fractionOfWidth(sliderStep) - THUMB_SIZE / 2, 0),
+    Math.max(width - THUMB_SIZE, 0)
+  )
   // Thresholds within the active (draggable) range only - a threshold beyond `maximumValue` away
   // from `tierOffset` isn't reachable by dragging, and one already covered by tierOffset alone
   // doesn't need a tick (see startTierIndex below, which colors the segment as if already past
@@ -175,23 +186,23 @@ const AmountSlider = ({
 
     return segments
   }, [clampedValue, maximumValue, tierBoundaries, tierOffset])
-  const progressWidth = Math.max(thumbPosition, 0)
+  const progressWidth = Math.max(fractionOfWidth(sliderStep), 0)
   const thresholdMarkers = useMemo(
     () =>
       tierBoundaries.map((thresholdValue) => {
         const steps =
           maximumValue > 0n ? ((thresholdValue - tierOffset) * SLIDER_STEPS) / maximumValue : 0n
-        const position = Number(steps) * (availableWidth / Number(SLIDER_STEPS))
+        const position = fractionOfWidth(steps)
         const matchingThreshold = (thresholds || []).find(({ value: v }) => v === thresholdValue)
         return { ...matchingThreshold, value: thresholdValue, position }
       }),
-    [availableWidth, maximumValue, thresholds, tierBoundaries, tierOffset]
+    [fractionOfWidth, maximumValue, thresholds, tierBoundaries, tierOffset]
   )
 
   const quarterMarkers = useMemo(
     () =>
       QUARTERS.map((quarter, index) => {
-        const position = (Number(quarter) / Number(QUARTER_COUNT)) * availableWidth
+        const position = (Number(quarter) / Number(QUARTER_COUNT)) * width
         // Every dot but the two ends is centered on its own position. Those two are pulled fully
         // inside the track instead, so they sit flush with its rounded caps rather than hanging
         // half a dot over each end.
@@ -206,10 +217,10 @@ const AmountSlider = ({
           key: `${quarter}`,
           amount: (maximumValue * quarter) / QUARTER_COUNT,
           position,
-          left: THUMB_SIZE / 2 + position + edgeOffset
+          left: position + edgeOffset
         }
       }),
-    [availableWidth, maximumValue]
+    [maximumValue, width]
   )
   // Everything the drag magnetically snaps onto - the quarter dots and the fee thresholds - on
   // the same axis, so the nearest of the two always wins.
@@ -229,7 +240,7 @@ const AmountSlider = ({
   // flag would never flip back and the bubble would stay up forever. 0 means hidden.
   const [valueBubbleTouches, setValueBubbleTouches] = useState(0)
   const valueBubbleLeft = Math.min(
-    Math.max(thumbPosition + THUMB_SIZE / 2 - VALUE_BUBBLE_WIDTH / 2, 0),
+    Math.max(fractionOfWidth(sliderStep) - VALUE_BUBBLE_WIDTH / 2, 0),
     Math.max(width - VALUE_BUBBLE_WIDTH, 0)
   )
 
@@ -273,12 +284,12 @@ const AmountSlider = ({
 
   const updateValue = useCallback(
     (locationX: number, snapRadius: number) => {
-      if (!availableWidth || maximumValue <= 0n) return
+      if (!width || maximumValue <= 0n) return
       // Guards every calculation below, but the BigInt conversion at the end above all - it
       // throws on anything that isn't a whole, finite number.
       if (!Number.isFinite(locationX)) return
 
-      const position = Math.min(Math.max(locationX - THUMB_SIZE / 2, 0), availableWidth)
+      const position = Math.min(Math.max(locationX, 0), width)
 
       // Magnetic snap to the track's own ends takes priority over snapping to a threshold -
       // checked first so an end wins whenever a threshold happens to sit within the radius of it.
@@ -286,7 +297,7 @@ const AmountSlider = ({
         emitValueChange(0n)
         return
       }
-      if (position >= availableWidth - snapRadius) {
+      if (position >= width - snapRadius) {
         emitValueChange(maximumValue)
         return
       }
@@ -307,11 +318,11 @@ const AmountSlider = ({
         return
       }
 
-      const rawStep = Math.round((position / availableWidth) * Number(SLIDER_STEPS))
+      const rawStep = Math.round((position / width) * Number(SLIDER_STEPS))
       const nextStep = BigInt(Math.min(Math.max(rawStep, 0), Number(SLIDER_STEPS)))
       emitValueChange((maximumValue * nextStep) / SLIDER_STEPS)
     },
-    [availableWidth, emitValueChange, maximumValue, snapPoints]
+    [emitValueChange, maximumValue, snapPoints, width]
   )
 
   const panGesture = useMemo(
@@ -375,12 +386,7 @@ const AmountSlider = ({
           style={[styles.amountSlider, isDisabled && styles.amountSliderDisabled]}
         >
           <View style={styles.amountSliderTrack} />
-          <View
-            style={[
-              styles.amountSliderProgressContainer,
-              { left: THUMB_SIZE / 2, width: progressWidth }
-            ]}
-          >
+          <View style={[styles.amountSliderProgressContainer, { width: progressWidth }]}>
             {progressSegments.map((segment, index) => (
               <View
                 key={segment.key}
@@ -409,7 +415,7 @@ const AmountSlider = ({
                     })
                   : undefined
               }
-              style={[styles.amountSliderThreshold, { left: THUMB_SIZE / 2 + threshold.position }]}
+              style={[styles.amountSliderThreshold, { left: threshold.position }]}
             />
           ))}
           <View style={[styles.amountSliderThumb, { left: thumbPosition }]}>

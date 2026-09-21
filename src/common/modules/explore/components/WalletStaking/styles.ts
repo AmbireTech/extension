@@ -3,7 +3,7 @@ import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 import { isWeb } from '@common/config/env'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common, { hexToRgba } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
@@ -286,8 +286,8 @@ const getStyles = (theme: ThemeProps) =>
     amountSliderTrack: {
       position: 'absolute',
       top: 10,
-      right: SLIDER_THUMB_SIZE / 2,
-      left: SLIDER_THUMB_SIZE / 2,
+      right: 0,
+      left: 0,
       height: 8,
       borderRadius: 4,
       backgroundColor: theme.tertiaryText
@@ -295,7 +295,7 @@ const getStyles = (theme: ThemeProps) =>
     amountSliderProgressContainer: {
       position: 'absolute',
       top: 10,
-      left: SLIDER_THUMB_SIZE / 2,
+      left: 0,
       height: 8,
       borderRadius: 4,
       overflow: 'hidden',
