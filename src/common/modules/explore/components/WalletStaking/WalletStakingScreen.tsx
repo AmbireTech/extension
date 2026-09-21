@@ -14,7 +14,7 @@ import {
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
-import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
+import FlipIcon from '@common/assets/svg/FlipIcon'
 import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
@@ -1097,9 +1097,12 @@ const WalletStakingScreen = () => {
                 >
                   <View style={styles.amountCard}>
                     <View style={styles.balanceRow}>
-                      {/* Flips the field between the token and its USD value, showing whichever
-                      of the two the field isn't currently taking - the same way the send form's
-                      amount field works. */}
+                      <BalanceWithMax
+                        balanceLabel={balanceLabel}
+                        disabled={balance <= 0n}
+                        onMaxPress={handleMaxPress}
+                        testID="wallet-staking-max-button"
+                      />
                       <HoverablePressable
                         onPress={switchAmountFieldMode}
                         disabled={isAmountFieldModeSwitchDisabled}
@@ -1107,23 +1110,14 @@ const WalletStakingScreen = () => {
                         testID="wallet-staking-switch-amount-field-mode"
                       >
                         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                          <SwapAndBridgeIcon
-                            width={14}
-                            height={14}
-                            color={theme.primaryAccent200}
-                            strokeWidth={1.8}
-                          />
-                          <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
+                          <Text fontSize={12} appearance="secondaryText" style={spacings.mrTy}>
                             {amountFieldMode === 'token' ? amountInUsd : amountInToken}
                           </Text>
+                          <View style={styles.switchAmountFieldModeIcon}>
+                            <FlipIcon width={11} height={11} color={theme.primary} />
+                          </View>
                         </View>
                       </HoverablePressable>
-                      <BalanceWithMax
-                        balanceLabel={balanceLabel}
-                        disabled={balance <= 0n}
-                        onMaxPress={handleMaxPress}
-                        testID="wallet-staking-max-button"
-                      />
                     </View>
 
                     <NumberInput

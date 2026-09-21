@@ -39,6 +39,7 @@ interface Styles {
   balanceRow: ViewStyle
   maxButton: ViewStyle
   maxButtonDisabled: ViewStyle
+  switchAmountFieldModeIcon: ViewStyle
   amountInput: ViewStyle
   amountInputWrapper: ViewStyle
   amountNativeInput: TextStyle
@@ -243,6 +244,13 @@ const getStyles = (theme: ThemeProps) =>
     },
     maxButtonDisabled: {
       opacity: 0.5
+    },
+    switchAmountFieldModeIcon: {
+      ...flexbox.center,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: theme.primaryAccent100
     },
     amountInput: {
       ...spacings.mbSm
