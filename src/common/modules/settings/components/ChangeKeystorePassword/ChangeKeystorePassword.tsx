@@ -12,6 +12,10 @@ import InputPassword from '@common/components/InputPassword'
 import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import {
+  CURRENT_PASSWORD_AUTOFILL_PROPS,
+  NEW_PASSWORD_AUTOFILL_PROPS
+} from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
 import { UseChangeKeystorePasswordReturn } from '@common/modules/settings/hooks/useChangeKeystorePassword'
 import spacings from '@common/styles/spacings'
@@ -60,6 +64,7 @@ const ChangeKeystorePassword: React.FC<Props> = ({
           rules={{ validate: isValidPassword }}
           render={({ field: { onChange, onBlur, value } }) => (
             <InputPassword
+              {...CURRENT_PASSWORD_AUTOFILL_PROPS}
               testID="enter-current-pass-field"
               onBlur={onBlur}
               placeholder={t('Enter current password')}
@@ -86,6 +91,7 @@ const ChangeKeystorePassword: React.FC<Props> = ({
           rules={{ validate: isValidPassword }}
           render={({ field: { onChange, onBlur, value } }) => (
             <InputPassword
+              {...NEW_PASSWORD_AUTOFILL_PROPS}
               testID="enter-new-pass-field"
               onBlur={onBlur}
               placeholder={t('Enter new password')}
@@ -110,6 +116,7 @@ const ChangeKeystorePassword: React.FC<Props> = ({
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
+              {...NEW_PASSWORD_AUTOFILL_PROPS}
               testID="repeat-new-pass-field"
               onBlur={onBlur}
               placeholder={t('Repeat new password')}

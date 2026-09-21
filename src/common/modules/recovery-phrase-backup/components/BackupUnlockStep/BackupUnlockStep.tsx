@@ -11,6 +11,7 @@ import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isDev, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { CURRENT_PASSWORD_AUTOFILL_PROPS } from '@common/constants/textInput'
 import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
@@ -106,6 +107,7 @@ const BackupUnlockStep = ({
       <View style={[flexbox.flex1, flexbox.justifyEnd, isWeb && flexbox.alignCenter]}>
         {!isUsingBiometrics && (
           <InputPassword
+            {...CURRENT_PASSWORD_AUTOFILL_PROPS}
             testID="backup-recovery-phrase-password-field"
             placeholder={t('Enter your password')}
             value={password}

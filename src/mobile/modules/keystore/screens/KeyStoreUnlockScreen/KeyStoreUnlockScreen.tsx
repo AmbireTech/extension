@@ -13,6 +13,7 @@ import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { CURRENT_PASSWORD_AUTOFILL_PROPS } from '@common/constants/textInput'
 import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
@@ -156,6 +157,7 @@ const KeyStoreUnlockScreen = () => {
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
                 <InputPassword
+                  {...CURRENT_PASSWORD_AUTOFILL_PROPS}
                   testID="passphrase-field"
                   onBlur={onBlur}
                   placeholder={t('Enter your password')}
