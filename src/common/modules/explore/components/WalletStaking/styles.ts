@@ -38,6 +38,7 @@ interface Styles {
   amountCard: ViewStyle
   balanceRow: ViewStyle
   maxButton: ViewStyle
+  maxButtonDisabled: ViewStyle
   amountInput: ViewStyle
   amountInputWrapper: ViewStyle
   amountNativeInput: TextStyle
@@ -141,7 +142,7 @@ const getStyles = (theme: ThemeProps) =>
     tabs: {
       ...flexbox.directionRow,
       ...flexbox.justifyCenter,
-      ...spacings.mbLg
+      ...spacings.mb
     },
     tab: {
       ...spacings.phSm,
@@ -236,9 +237,12 @@ const getStyles = (theme: ThemeProps) =>
     },
     maxButton: {
       ...spacings.mlTy,
-      ...spacings.phTy,
-      ...spacings.pv0,
-      height: 24
+      ...spacings.phSm,
+      paddingVertical: 2,
+      borderRadius: 11
+    },
+    maxButtonDisabled: {
+      opacity: 0.5
     },
     amountInput: {
       ...spacings.mbSm

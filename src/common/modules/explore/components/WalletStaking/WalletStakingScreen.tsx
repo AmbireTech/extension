@@ -132,7 +132,7 @@ const StakingTab = ({ mode, activeMode, label, onSelect }: TabProps) => {
   return (
     <AnimatedPressable onPress={handlePress} style={[styles.tab, isActive && styles.activeTab]}>
       <Text
-        fontSize={18}
+        fontSize={16}
         weight={isActive ? 'semiBold' : 'medium'}
         appearance={isActive ? 'primaryText' : 'tertiaryText'}
       >
@@ -973,11 +973,11 @@ const WalletStakingScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.learnMore}>
-            <Text fontSize={12} appearance="secondaryText">
+            <Text fontSize={14} appearance="secondaryText">
               {t('Learn more about')}{' '}
             </Text>
             <AnimatedPressable onPress={handleOpenHelp}>
-              <Text fontSize={12} color={theme.primaryAccent200}>
+              <Text fontSize={14} color={theme.primaryAccent200}>
                 {t('how staking works')}
               </Text>
             </AnimatedPressable>

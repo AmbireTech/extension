@@ -1,10 +1,10 @@
 import React from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
-import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -25,18 +25,24 @@ const BalanceWithMax = ({ balanceLabel, disabled, onMaxPress, testID }: Props) =
       <Text fontSize={12} appearance="secondaryText">
         {t('Balance: {{balance}}', { balance: balanceLabel })}
       </Text>
-      <Button
-        text={t('Max')}
-        type="outline"
-        size="tiny"
-        accentColor={theme.primaryAccent300}
+      <Pressable
+        style={({ hovered }: any) => [
+          styles.maxButton,
+          {
+            backgroundColor:
+              hovered && !disabled
+                ? hexToRgba(theme.primaryAccent200, 0.16)
+                : theme.primaryAccent100
+          },
+          disabled && styles.maxButtonDisabled
+        ]}
         onPress={onMaxPress}
         disabled={disabled}
-        hasBottomSpacing={false}
-        submitOnEnter={false}
-        style={styles.maxButton}
-        testID={testID}
-      />
+      >
+        <Text fontSize={12} weight="medium" appearance="primary" testID={testID}>
+          {t('Max')}
+        </Text>
+      </Pressable>
     </View>
   )
 }
