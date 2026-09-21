@@ -24,7 +24,7 @@ const BalanceWithMax = ({ balanceLabel, tokenSymbol, disabled, onMaxPress, testI
   const { styles, theme } = useTheme(getStyles)
 
   return (
-    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+    <View style={[flexbox.directionRow, flexbox.alignCenter, styles.balanceWithMax]}>
       <WalletIcon width={20} height={20} color={theme.tertiaryText} />
       <Text
         numberOfLines={1}

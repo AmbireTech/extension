@@ -38,8 +38,11 @@ interface Styles {
   amountCard: ViewStyle
   detailsCard: ViewStyle
   balanceRow: ViewStyle
+  balanceWithMax: ViewStyle
   maxButton: ViewStyle
   maxButtonDisabled: ViewStyle
+  switchAmountFieldMode: ViewStyle
+  switchAmountFieldModeValue: TextStyle
   switchAmountFieldModeIcon: ViewStyle
   amountInput: ViewStyle
   amountInputWrapper: ViewStyle
@@ -239,14 +242,28 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mbTy,
       minHeight: 24
     },
+    balanceWithMax: {
+      // The balance and the Max button keep their size, so only the converted amount next to them
+      // gives way when it is too long for the row
+      flexShrink: 0
+    },
     maxButton: {
       ...spacings.mlTy,
+      ...spacings.mrMi,
       ...spacings.phSm,
       paddingVertical: 2,
       borderRadius: 11
     },
     maxButtonDisabled: {
       opacity: 0.5
+    },
+    switchAmountFieldMode: {
+      ...flexbox.flex1,
+      minWidth: 0
+    },
+    switchAmountFieldModeValue: {
+      ...spacings.mrTy,
+      flexShrink: 1
     },
     switchAmountFieldModeIcon: {
       ...flexbox.center,

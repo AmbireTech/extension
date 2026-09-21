@@ -1104,21 +1104,31 @@ const WalletStakingScreen = () => {
                         onMaxPress={handleMaxPress}
                         testID="wallet-staking-max-button"
                       />
-                      <HoverablePressable
-                        onPress={switchAmountFieldMode}
-                        disabled={isAmountFieldModeSwitchDisabled}
-                        accessibilityLabel={t('Switch between token and USD amount')}
-                        testID="wallet-staking-switch-amount-field-mode"
-                      >
-                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                          <Text fontSize={12} appearance="secondaryText" style={spacings.mrTy}>
-                            {amountFieldMode === 'token' ? amountInUsd : amountInToken}
-                          </Text>
-                          <View style={styles.switchAmountFieldModeIcon}>
-                            <FlipIcon width={11} height={11} color={theme.primary} />
+                      <View style={styles.switchAmountFieldMode}>
+                        <HoverablePressable
+                          onPress={switchAmountFieldMode}
+                          disabled={isAmountFieldModeSwitchDisabled}
+                          accessibilityLabel={t('Switch between token and USD amount')}
+                          testID="wallet-staking-switch-amount-field-mode"
+                        >
+                          <View
+                            style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}
+                          >
+                            <Text
+                              fontSize={12}
+                              appearance="secondaryText"
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
+                              style={styles.switchAmountFieldModeValue}
+                            >
+                              {amountFieldMode === 'token' ? amountInUsd : amountInToken}
+                            </Text>
+                            <View style={styles.switchAmountFieldModeIcon}>
+                              <FlipIcon width={11} height={11} color={theme.primary} />
+                            </View>
                           </View>
-                        </View>
-                      </HoverablePressable>
+                        </HoverablePressable>
+                      </View>
                     </View>
 
                     <NumberInput
