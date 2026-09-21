@@ -30,6 +30,10 @@ const SNAP_RADIUS = 3
 // A press is a deliberate "give me that mark" rather than a fine adjustment, so it snaps from
 // much further out than a drag does - tapping near a dot should land on it, not a few percent off.
 const PRESS_SNAP_RADIUS = 24
+// How far the pointer may travel before what started as a press counts as a drag. On the web a
+// mouse click jitters by a pixel or two, which is movement enough to start reporting updates, and
+// without this the drag's tight radius would immediately undo the press's snap.
+const PRESS_MAX_TRAVEL = 8
 // The slider is also divided into quarters, each marked by a dot the drag snaps onto, so round
 // 0/25/50/75/100% amounts are reachable without having to land on them pixel by pixel.
 const QUARTERS = [0n, 1n, 2n, 3n, 4n]
@@ -339,9 +343,12 @@ const AmountSlider = ({
           setValueBubbleTouches((touches) => touches + 1)
           updateValue(x, PRESS_SNAP_RADIUS)
         })
-        .onUpdate(({ x }) => {
+        .onUpdate(({ x, translationX }) => {
           setValueBubbleTouches((touches) => touches + 1)
-          updateValue(x, SNAP_RADIUS)
+          updateValue(
+            x,
+            Math.abs(translationX) < PRESS_MAX_TRAVEL ? PRESS_SNAP_RADIUS : SNAP_RADIUS
+          )
         }),
     [maximumValue, updateValue]
   )
