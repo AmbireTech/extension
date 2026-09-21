@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router-native'
 
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
-import WalletStakingScreen from '@common/modules/explore/components/WalletStaking/WalletStakingScreen'
+import WalletStakingScreen from '@mobile/modules/wallet-staking/screens/WalletStakingScreen'
 import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountPickerScreen'
