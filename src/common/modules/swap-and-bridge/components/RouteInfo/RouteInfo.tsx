@@ -202,7 +202,7 @@ const RouteInfo: FC<Props> = ({
           </View>
 
           <Button
-            text={isFeeSuccess ? t('Details') : t('Reduce fee')}
+            text={isFeeSuccess ? t('Tier details') : t('Reduce fee')}
             type={isFeeSuccess ? 'success' : 'primary'}
             size="tiny"
             onPress={handleOpenFeeInfoBottomSheet}

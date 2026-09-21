@@ -1278,7 +1278,6 @@ const WalletStakingScreen = () => {
           closeBottomSheet={closeFeeInfoBottomSheet}
           feePercent={currentFeePercent}
           withActions={false}
-          withCloseAction
         />
       </View>
     </LayoutWrapper>
