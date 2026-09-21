@@ -5,6 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
@@ -233,8 +234,28 @@ const AmountSlider = ({
   )
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    setWidth(event.nativeEvent.layout.width)
+    const { width: nextWidth } = event.nativeEvent.layout
+    // A non-finite width would spread through every position below and end up in a style, which
+    // native layout refuses outright.
+    if (!Number.isFinite(nextWidth)) return
+
+    setWidth(nextWidth)
   }, [])
+
+  // The parent's handler runs inside a gesture callback, so anything it throws would escape with
+  // nothing above it to catch it and take the app down mid-drag. Report it and keep the slider
+  // usable instead.
+  const emitValueChange = useCallback(
+    (nextValue: bigint) => {
+      try {
+        onValueChange(nextValue)
+      } catch (error) {
+        console.error('Failed to apply the $WALLET staking slider value', error)
+        captureException(error)
+      }
+    },
+    [onValueChange]
+  )
 
   // Every touch pushes the bubble's hiding back, so it stays up throughout a drag and lingers for
   // a moment after the finger leaves it, keeping the picked percentage readable.
@@ -249,17 +270,20 @@ const AmountSlider = ({
   const updateValue = useCallback(
     (locationX: number, snapRadius: number) => {
       if (!availableWidth || maximumValue <= 0n) return
+      // Guards every calculation below, but the BigInt conversion at the end above all - it
+      // throws on anything that isn't a whole, finite number.
+      if (!Number.isFinite(locationX)) return
 
       const position = Math.min(Math.max(locationX - THUMB_SIZE / 2, 0), availableWidth)
 
       // Magnetic snap to the track's own ends takes priority over snapping to a threshold -
       // checked first so an end wins whenever a threshold happens to sit within the radius of it.
       if (position <= snapRadius) {
-        onValueChange(0n)
+        emitValueChange(0n)
         return
       }
       if (position >= availableWidth - snapRadius) {
-        onValueChange(maximumValue)
+        emitValueChange(maximumValue)
         return
       }
 
@@ -275,14 +299,15 @@ const AmountSlider = ({
         null
       )
       if (nearestSnapPoint) {
-        onValueChange(nearestSnapPoint.amount)
+        emitValueChange(nearestSnapPoint.amount)
         return
       }
 
-      const nextStep = BigInt(Math.round((position / availableWidth) * Number(SLIDER_STEPS)))
-      onValueChange((maximumValue * nextStep) / SLIDER_STEPS)
+      const rawStep = Math.round((position / availableWidth) * Number(SLIDER_STEPS))
+      const nextStep = BigInt(Math.min(Math.max(rawStep, 0), Number(SLIDER_STEPS)))
+      emitValueChange((maximumValue * nextStep) / SLIDER_STEPS)
     },
-    [availableWidth, maximumValue, onValueChange, snapPoints]
+    [availableWidth, emitValueChange, maximumValue, snapPoints]
   )
 
   const panGesture = useMemo(
@@ -310,9 +335,9 @@ const AmountSlider = ({
       const direction = event.nativeEvent.actionName === 'increment' ? 1n : -1n
       const nextStep = sliderStep + ACCESSIBILITY_STEP * direction
       const clampedStep = nextStep < 0n ? 0n : nextStep > SLIDER_STEPS ? SLIDER_STEPS : nextStep
-      onValueChange((maximumValue * clampedStep) / SLIDER_STEPS)
+      emitValueChange((maximumValue * clampedStep) / SLIDER_STEPS)
     },
-    [maximumValue, onValueChange, sliderStep]
+    [emitValueChange, maximumValue, sliderStep]
   )
   const accessibilityValue = useMemo(
     () => ({
