@@ -22,9 +22,11 @@ const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
 // How close (in px, from either side) the pointer needs to be, while dragging, to a quarter dot,
 // a threshold tick or either end of the track, for the value to magnetically snap onto it instead
-// of the raw pointer position. The track ends are checked first (see updateValue), so a mark that happens to
-// sit within the radius of an end loses to that end.
-const SNAP_RADIUS = 8
+// of the raw pointer position. The track ends are checked first (see updateValue), so a mark that
+// happens to sit within the radius of an end loses to that end. Deliberately tiny: a mark holds
+// the value for as long as the pointer is within its radius, so a wider one makes dragging off it
+// jump by that whole radius - several percent of the range, which reads as skipped values.
+const SNAP_RADIUS = 3
 // A press is a deliberate "give me that mark" rather than a fine adjustment, so it snaps from
 // much further out than a drag does - tapping near a dot should land on it, not a few percent off.
 const PRESS_SNAP_RADIUS = 24
