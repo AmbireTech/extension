@@ -14,16 +14,16 @@ import { THEME_TYPES } from '@common/styles/theme/types'
 import getStyles from './styles'
 
 const THUMB_SIZE = 20
-// Matches the track's height (and so its corner radius), so the first and last dot fill the
-// track's rounded caps exactly - see the edge alignment in quarterMarkers.
-const QUARTER_DOT_SIZE = 8
+// Matches the track's height (and so its corner radius), so a dot at either end fills the track's
+// rounded cap exactly - see the edge alignment in markers.
+const MARK_DOT_SIZE = 8
 const SLIDER_STEPS = 10000n
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
-// How close (in px, from either side) the pointer needs to be, while dragging, to a quarter dot,
-// a threshold tick or either end of the track, for the value to magnetically snap onto it instead
-// of the raw pointer position. The track ends are checked first (see updateValue), so a mark that
-// happens to sit within the radius of an end loses to that end. Deliberately tiny: a mark holds
+// How close (in px, from either side) the pointer needs to be, while dragging, to a dot or to
+// either end of the track, for the value to magnetically snap onto it instead of the raw pointer
+// position. The track ends are checked first (see updateValue), so a mark that happens to sit
+// within the radius of an end loses to that end. Deliberately tiny: a mark holds
 // the value for as long as the pointer is within its radius, so a wider one makes dragging off it
 // jump by that whole radius - several percent of the range, which reads as skipped values.
 const SNAP_RADIUS = 3
@@ -34,8 +34,9 @@ const PRESS_SNAP_RADIUS = 24
 // mouse click jitters by a pixel or two, which is movement enough to start reporting updates, and
 // without this the drag's tight radius would immediately undo the press's snap.
 const PRESS_MAX_TRAVEL = 8
-// The slider is also divided into quarters, each marked by a dot the drag snaps onto, so round
-// 0/25/50/75/100% amounts are reachable without having to land on them pixel by pixel.
+// The marks a caller that passes none of its own gets: the slider divided into quarters, each
+// marked by a dot the drag snaps onto, so round 0/25/50/75/100% amounts are reachable without
+// having to land on them pixel by pixel.
 const QUARTERS = [0n, 1n, 2n, 3n, 4n]
 const QUARTER_COUNT = 4n
 // The bubble showing the picked percentage while the slider is being used, and how long it stays
@@ -87,11 +88,10 @@ const buildGradient = (fromHex: string, toHex: string, steps: number) =>
 // SWAP_AND_BRIDGE_FEE_TIERS), from light purple to Ambire's primary brand purple.
 const PROGRESS_TIER_COLORS = buildGradient(GRADIENT_START_HEX, GRADIENT_END_HEX, 5)
 
-interface Threshold {
-  /** The absolute amount, on the same axis as the active (draggable) range, at which the marker
-   * sits. */
+interface Mark {
+  /** The absolute amount, on the same axis as `tierOffset`, at which the dot sits. */
   value: bigint
-  /** Optional label rendered under the tick, e.g. a tooltip trigger. */
+  /** Optional tooltip shown on the dot. */
   tooltipContent?: string
   tooltipId?: string
 }
@@ -102,12 +102,14 @@ interface Props {
   onValueChange: (value: bigint) => void
   accessibilityLabel?: string
   /** The amount already held before this slider's draggable range even starts - e.g. the tokens
-   * already staked. Not shown on the track itself; it only shifts the thresholds so they still
-   * land at the correct absolute amount rather than at `threshold - alreadyHeldAmount`. */
+   * already staked. Not shown on the track itself; it only shifts the marks so they still land at
+   * the correct absolute amount rather than at `mark - alreadyHeldAmount`. */
   tierOffset?: bigint
-  /** Tick marks (e.g. fee thresholds) for the active (draggable) range - also used to color it
-   * by tier. Values outside that range are ignored. */
-  thresholds?: Threshold[]
+  /** The dots on the track, as absolute amounts on the same axis as `tierOffset` - the drag snaps
+   * onto them and the filled track is shaded by the range each one opens. Marks outside the
+   * draggable range are ignored. Defaults to the quarters (0/25/50/75/100%), which are dots only
+   * and leave the filled track a single shade. */
+  marks?: Mark[]
 }
 
 const AmountSlider = ({
@@ -116,7 +118,7 @@ const AmountSlider = ({
   onValueChange,
   accessibilityLabel,
   tierOffset = 0n,
-  thresholds
+  marks
 }: Props) => {
   const { t } = useTranslation()
   const { styles, themeType } = useTheme(getStyles)
@@ -144,26 +146,24 @@ const AmountSlider = ({
     Math.max(fractionOfWidth(sliderStep) - THUMB_SIZE / 2, 0),
     Math.max(width - THUMB_SIZE, 0)
   )
-  // Thresholds within the active (draggable) range only - a threshold beyond `maximumValue` away
-  // from `tierOffset` isn't reachable by dragging, and one already covered by tierOffset alone
-  // doesn't need a tick (see startTierIndex below, which colors the segment as if already past
-  // it).
+  // The marks that actually split the filled track into shaded tiers - a mark beyond
+  // `maximumValue` away from `tierOffset` isn't reachable by dragging, and one already covered by
+  // tierOffset alone doesn't open a tier of its own (see startTierIndex below, which colors the
+  // segment as if already past it).
   const allBoundaries = useMemo(
     () =>
-      (thresholds || [])
-        .map(({ value: thresholdValue }) => thresholdValue)
-        .filter(
-          (thresholdValue) => thresholdValue > 0n && thresholdValue < tierOffset + maximumValue
-        )
+      (marks || [])
+        .map(({ value: markValue }) => markValue)
+        .filter((markValue) => markValue > 0n && markValue < tierOffset + maximumValue)
         .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
-    [maximumValue, thresholds, tierOffset]
+    [marks, maximumValue, tierOffset]
   )
   const startTierIndex = useMemo(
-    () => allBoundaries.filter((thresholdValue) => thresholdValue <= tierOffset).length,
+    () => allBoundaries.filter((markValue) => markValue <= tierOffset).length,
     [allBoundaries, tierOffset]
   )
   const tierBoundaries = useMemo(
-    () => allBoundaries.filter((thresholdValue) => thresholdValue > tierOffset),
+    () => allBoundaries.filter((markValue) => markValue > tierOffset),
     [allBoundaries, tierOffset]
   )
   // Splits the filled part of the track (0..clampedValue) into one segment per fee tier it
@@ -191,53 +191,39 @@ const AmountSlider = ({
     return segments
   }, [clampedValue, maximumValue, tierBoundaries, tierOffset])
   const progressWidth = Math.max(fractionOfWidth(sliderStep), 0)
-  const thresholdMarkers = useMemo(
-    () =>
-      tierBoundaries.map((thresholdValue) => {
-        const steps =
-          maximumValue > 0n ? ((thresholdValue - tierOffset) * SLIDER_STEPS) / maximumValue : 0n
-        const position = fractionOfWidth(steps)
-        const matchingThreshold = (thresholds || []).find(({ value: v }) => v === thresholdValue)
-        return { ...matchingThreshold, value: thresholdValue, position }
-      }),
-    [fractionOfWidth, maximumValue, thresholds, tierBoundaries, tierOffset]
-  )
-
-  const quarterMarkers = useMemo(
-    () =>
-      QUARTERS.map((quarter, index) => {
-        const position = (Number(quarter) / Number(QUARTER_COUNT)) * width
-        // Every dot but the two ends is centered on its own position. Those two are pulled fully
-        // inside the track instead, so they sit flush with its rounded caps rather than hanging
-        // half a dot over each end.
-        const edgeOffset =
-          index === 0
-            ? 1
-            : index === QUARTERS.length - 1
-              ? -QUARTER_DOT_SIZE + 1
-              : -QUARTER_DOT_SIZE / 2
-
-        return {
-          key: `${quarter}`,
+  // Every dot on the track, on the slider's own axis - the same list the drag snaps onto.
+  const markers = useMemo(() => {
+    const amounts = marks
+      ? marks
+          .map(({ value: markValue, tooltipContent, tooltipId }) => ({
+            amount: markValue - tierOffset,
+            tooltipContent,
+            tooltipId
+          }))
+          .filter(({ amount }) => amount >= 0n && amount <= maximumValue)
+      : QUARTERS.map((quarter) => ({
           amount: (maximumValue * quarter) / QUARTER_COUNT,
-          position,
-          left: position + edgeOffset
-        }
-      }),
-    [maximumValue, width]
-  )
-  // Everything the drag magnetically snaps onto - the quarter dots and the fee thresholds - on
-  // the same axis, so the nearest of the two always wins.
-  const snapPoints = useMemo(
-    () => [
-      ...quarterMarkers,
-      ...thresholdMarkers.map(({ value: thresholdValue, position }) => ({
-        amount: thresholdValue - tierOffset,
-        position
-      }))
-    ],
-    [quarterMarkers, thresholdMarkers, tierOffset]
-  )
+          tooltipContent: undefined,
+          tooltipId: undefined
+        }))
+
+    return amounts.map((mark) => {
+      const steps = maximumValue > 0n ? (mark.amount * SLIDER_STEPS) / maximumValue : 0n
+      const position = fractionOfWidth(steps)
+      // Every dot but one sitting at either end of the track is centered on its own position.
+      // Those are pulled fully inside the track instead, so they sit flush with its rounded caps
+      // rather than hanging half a dot over the end.
+      const edgeOffset =
+        position <= 0 ? 1 : position >= width ? -MARK_DOT_SIZE + 1 : -MARK_DOT_SIZE / 2
+
+      return {
+        ...mark,
+        key: mark.tooltipId || `${mark.amount}`,
+        position,
+        left: position + edgeOffset
+      }
+    })
+  }, [fractionOfWidth, marks, maximumValue, tierOffset, width])
 
   // Counts the touches the bubble has seen instead of tracking whether the slider is being used
   // right now - a quick tap begins and ends within the same render, so a plain "is being used"
@@ -295,19 +281,19 @@ const AmountSlider = ({
 
       const position = Math.min(Math.max(locationX, 0), width)
 
-      // Magnetic snap to the track's own ends takes priority over snapping to a threshold -
-      // checked first so an end wins whenever a threshold happens to sit within the radius of it.
-      if (position <= snapRadius) {
-        emitValueChange(0n)
-        return
-      }
-      if (position >= width - snapRadius) {
-        emitValueChange(maximumValue)
-        return
-      }
-
-      // Magnetic snap: land exactly on a quarter's or a threshold's own value (not just its
-      // nearest slider step) whenever the pointer is close to its mark, from either side.
+      // Magnetic snap: land exactly on a mark's own value (not just its nearest slider step)
+      // whenever the pointer is close to its dot, from either side. The track's own two ends snap
+      // the same way and, listed first, win a tie - but only a tie: a mark sitting closer to the
+      // pointer than an end beats it, or one that happens to sit within the press radius of an
+      // end would never be reachable by pressing on it.
+      const snapPoints: { amount: bigint; position: number }[] = [
+        { amount: 0n, position: 0 },
+        { amount: maximumValue, position: width },
+        ...markers.map(({ amount, position: markPosition }) => ({
+          amount,
+          position: markPosition
+        }))
+      ]
       const nearestSnapPoint = snapPoints.reduce<(typeof snapPoints)[number] | null>(
         (nearest, snapPoint) => {
           const distance = Math.abs(snapPoint.position - position)
@@ -326,7 +312,7 @@ const AmountSlider = ({
       const nextStep = BigInt(Math.min(Math.max(rawStep, 0), Number(SLIDER_STEPS)))
       emitValueChange((maximumValue * nextStep) / SLIDER_STEPS)
     },
-    [emitValueChange, maximumValue, snapPoints, width]
+    [emitValueChange, markers, maximumValue, width]
   )
 
   const panGesture = useMemo(
@@ -408,21 +394,18 @@ const AmountSlider = ({
               />
             ))}
           </View>
-          {quarterMarkers.map((quarter) => (
-            <View key={quarter.key} style={[styles.quarter, { left: quarter.left }]} />
-          ))}
-          {thresholdMarkers.map((threshold) => (
+          {markers.map((marker) => (
             <View
-              key={threshold.tooltipId || `${threshold.value}`}
+              key={marker.key}
               dataSet={
-                threshold.tooltipContent && threshold.tooltipId
+                marker.tooltipContent && marker.tooltipId
                   ? createGlobalTooltipDataSet({
-                      id: threshold.tooltipId,
-                      content: threshold.tooltipContent
+                      id: marker.tooltipId,
+                      content: marker.tooltipContent
                     })
                   : undefined
               }
-              style={[styles.threshold, { left: threshold.position }]}
+              style={[styles.mark, { left: marker.left }]}
             />
           ))}
           <View style={[styles.thumb, { left: thumbPosition }]}>

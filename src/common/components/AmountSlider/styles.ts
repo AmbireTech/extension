@@ -10,17 +10,15 @@ interface Style {
   disabled: ViewStyle
   track: ViewStyle
   progressContainer: ViewStyle
-  quarter: ViewStyle
+  mark: ViewStyle
   valueBubble: ViewStyle
-  threshold: ViewStyle
   thumb: ViewStyle
   thumbInner: ViewStyle
 }
 
 const THUMB_SIZE = 20
 const TRACK_HEIGHT = 8
-const QUARTER_SIZE = TRACK_HEIGHT - 2
-const THRESHOLD_HEIGHT = 16
+const MARK_SIZE = TRACK_HEIGHT - 2
 const VALUE_BUBBLE_WIDTH = 48
 // The thumb is the tallest part of the slider, so it sets the height and everything else is
 // centered against it.
@@ -59,11 +57,11 @@ const getStyles = (theme: ThemeProps) =>
       overflow: 'hidden',
       flexDirection: 'row'
     },
-    quarter: {
+    mark: {
       position: 'absolute',
-      top: centerOffset(QUARTER_SIZE),
-      width: QUARTER_SIZE,
-      height: QUARTER_SIZE,
+      top: centerOffset(MARK_SIZE),
+      width: MARK_SIZE,
+      height: MARK_SIZE,
       borderRadius: 50,
       backgroundColor: theme.neutral400
     },
@@ -82,13 +80,6 @@ const getStyles = (theme: ThemeProps) =>
       shadowOpacity: 0.08,
       shadowRadius: 4,
       elevation: 2
-    },
-    threshold: {
-      position: 'absolute',
-      top: centerOffset(THRESHOLD_HEIGHT),
-      width: 1,
-      height: THRESHOLD_HEIGHT,
-      backgroundColor: theme.secondaryBackground
     },
     thumb: {
       position: 'absolute',

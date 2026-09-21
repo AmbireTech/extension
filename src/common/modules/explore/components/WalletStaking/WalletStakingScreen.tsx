@@ -344,7 +344,7 @@ const WalletStakingScreen = () => {
   // each division instead sits at (current balance - threshold) - the drag amount that leaves
   // exactly `threshold` stkWALLET behind - skipped when that's not reachable (the balance is
   // already below the threshold, putting it off the chart).
-  const sliderThresholds = useMemo(() => {
+  const sliderTierMarks = useMemo(() => {
     const feeThresholds = SWAP_AND_BRIDGE_FEE_THRESHOLDS.map((thresholdAmount) => ({
       thresholdAmount,
       thresholdWei: parseUnits(String(thresholdAmount), TOKEN_DECIMALS)
@@ -1166,7 +1166,7 @@ const WalletStakingScreen = () => {
                       maximumValue={balance}
                       onValueChange={handleSliderValueChange}
                       tierOffset={mode === 'stake' ? stkWalletBalance : 0n}
-                      thresholds={sliderThresholds}
+                      marks={sliderTierMarks}
                     />
                   </View>
 
