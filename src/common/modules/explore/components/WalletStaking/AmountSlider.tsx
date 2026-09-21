@@ -108,6 +108,7 @@ const AmountSlider = ({
     [themeType]
   )
   const [width, setWidth] = useState(0)
+  const isDisabled = maximumValue <= 0n
   const availableWidth = Math.max(width - THUMB_SIZE, 0)
   const clampedValue = value < 0n ? 0n : value > maximumValue ? maximumValue : value
   const sliderStep = maximumValue > 0n ? (clampedValue * SLIDER_STEPS) / maximumValue : 0n
@@ -252,7 +253,8 @@ const AmountSlider = ({
           accessibilityValue={accessibilityValue}
           onAccessibilityAction={handleAccessibilityAction}
           onLayout={handleLayout}
-          style={styles.amountSlider}
+          disabled={isDisabled}
+          style={[styles.amountSlider, isDisabled && styles.amountSliderDisabled]}
         >
           <View style={styles.amountSliderTrack} />
           <View

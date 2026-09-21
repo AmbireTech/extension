@@ -44,6 +44,7 @@ interface Styles {
   amountInputWrapper: ViewStyle
   amountNativeInput: TextStyle
   amountSlider: ViewStyle
+  amountSliderDisabled: ViewStyle
   amountSliderTrack: ViewStyle
   amountSliderProgressContainer: ViewStyle
   amountSliderThreshold: ViewStyle
@@ -271,6 +272,9 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.justifyCenter,
       height: 28,
       position: 'relative'
+    },
+    amountSliderDisabled: {
+      opacity: 0.5
     },
     amountSliderTrack: {
       position: 'absolute',
