@@ -29,13 +29,11 @@ import Info from '@common/modules/sign-message/components/Info'
 import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const { isSidePanel } = getUiType()
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -86,6 +84,7 @@ const Main = ({
   humanizedMessage,
   isHumanizing
 }: Props) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
@@ -141,7 +140,7 @@ const Main = ({
 
   return (
     <Container withScroll={shouldUseErc7730TypedMessageCard || isMobile}>
-      {isSidePanel ? (
+      {isNarrowWebLayout ? (
         <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
           <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
             {t('Sign message')}

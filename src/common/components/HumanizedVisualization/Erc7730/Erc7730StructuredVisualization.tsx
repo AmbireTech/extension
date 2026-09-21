@@ -19,7 +19,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import {
   getDetailedActionParts,
@@ -41,21 +41,12 @@ import {
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
 const withMobileSummaryLayout = isMobile
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 // A nested visualization is laid out as an indent, then a gutter holding the connector line and
 // arrow, then its content.
 const NESTED_CONNECTOR_WIDTH = 18
-const NESTED_ROW_INDENT = isSidePanel ? 0 : SPACING_SM
-// A `call` row the legacy modules humanized renders as one flat line, so it has no nested
-// visualization to draw a connector for. It still stands for one embedded call, so it takes the
-// same left offset and stays aligned with the nested calls beside it.
-const flatCallRowIndent = {
-  paddingLeft: NESTED_ROW_INDENT + NESTED_CONNECTOR_WIDTH + SPACING_TY
-}
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
   item,
@@ -73,6 +64,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   showDescriptionTitle = false,
   nestingDepth = 0
 }) => {
+  const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
+  const nestedRowIndent = isNarrowWebLayout ? 0 : SPACING_SM
+  // A `call` row the legacy modules humanized renders as one flat line, so it has no nested
+  // visualization to draw a connector for. It still stands for one embedded call, so it takes the
+  // same left offset and stays aligned with the nested calls beside it.
+  const flatCallRowIndent = {
+    paddingLeft: nestedRowIndent + NESTED_CONNECTOR_WIDTH + SPACING_TY
+  }
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { state: controllerNetworks } = useController('NetworksController', selectNetworks)
@@ -385,7 +384,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             {
               width: '100%',
               minWidth: 0,
-              paddingLeft: NESTED_ROW_INDENT
+              paddingLeft: nestedRowIndent
             },
             nestedIndex > 0 && {
               marginTop: SPACING_TY,
@@ -433,6 +432,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     },
     [
       chainId,
+      nestedRowIndent,
       dappIconSize,
       nestingDepth,
       sizeMultiplierSize,

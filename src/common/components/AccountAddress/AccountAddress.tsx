@@ -18,9 +18,7 @@ import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 interface Props extends Omit<ReturnType<typeof useReverseLookup>, 'updatedAt' | 'isFetched'> {
   // Optional so callers that don't run a reverse lookup (e.g. receive screens) can omit them.
@@ -83,6 +81,7 @@ const AccountAddress: FC<Props> = ({
   withWrap = false,
   withUpdateEnsInTooltip = false
 }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
   // If highlight is required, prioritize showing it over domain resolving/name UI so the highlight stays visible.
@@ -96,7 +95,7 @@ const AccountAddress: FC<Props> = ({
   const isEnsOlderThanOneDay = updatedAt ? Date.now() - updatedAt > 24 * 60 * 60 * 1000 : false
 
   const shouldShowFullAddressOnWeb =
-    !isSidePanel &&
+    !isNarrowWebLayout &&
     isWeb &&
     plainAddressMaxLength >= 42 &&
     !showResolvedName &&
@@ -110,12 +109,12 @@ const AccountAddress: FC<Props> = ({
     return `${name} (${t('Updated {{timeAgo}}', { timeAgo: getTimeAgo(new Date(updatedAt)) })})`
   }, [name, updatedAt, t])
 
-  // On mobile, and in the narrow side panel, the address takes most of the row width,
+  // On mobile, and in a narrow view, the address takes most of the row width,
   // but when a resolved name is displayed next to it, keep it short so the name isn't
-  // truncated (shortened further on the side panel, where space is tighter)
+  // truncated (shortened further in a narrow view, where space is tighter)
   const getWithCopyMaxLength = () => {
     if (addressHighlight || withWrap) return 42
-    if (!isMobile) return showResolvedName && isSidePanel ? 10 : 16
+    if (!isMobile) return showResolvedName && isNarrowWebLayout ? 10 : 16
 
     return showResolvedName ? 13 : 42
   }
@@ -193,9 +192,9 @@ const AccountAddress: FC<Props> = ({
                 maxLength={isMobile ? 13 : 16}
                 address={address}
                 // A shortened address already hides its middle, so letting it shrink would add a
-                // trailing ellipsis on top of that and hide the suffix. On the narrow side panel
+                // trailing ellipsis on top of that and hide the suffix. On a narrow view
                 // the resolved name next to it gives way instead.
-                style={{ ...spacings.mlMi, ...(isSidePanel ? { flexShrink: 0 } : {}) }}
+                style={{ ...spacings.mlMi, ...(isNarrowWebLayout ? { flexShrink: 0 } : {}) }}
                 fontSize={fontSize}
                 withWrap={withWrap}
                 highlight={addressHighlight}

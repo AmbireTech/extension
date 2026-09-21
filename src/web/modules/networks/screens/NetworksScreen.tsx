@@ -30,7 +30,7 @@ import { openInTab } from '@common/utils/links'
 const NetworksScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   // Reserves exactly as much scroll space as the floating footer occupies, so the last
   // network in the list is never covered by it (the footer grows taller on narrow side panels).
   const [footerHeight, setFooterHeight] = useState(0)
@@ -148,16 +148,12 @@ const NetworksScreen = () => {
             onPress={handleChangeNetwork}
           />
         </ScrollableWrapper>
-        <FooterGlassView
-          size="sm"
-          fullWidth={isCompactSidePanelLayout}
-          onLayout={handleFooterLayout}
-        >
+        <FooterGlassView size="sm" fullWidth={isNarrowWebLayout} onLayout={handleFooterLayout}>
           <Button
             text={t('Add new network')}
-            size={isCompactSidePanelLayout ? 'regular' : 'smaller'}
+            size={isNarrowWebLayout ? 'regular' : 'smaller'}
             hasBottomSpacing={false}
-            style={isCompactSidePanelLayout ? { width: '100%' } : { minWidth: 174 }}
+            style={isNarrowWebLayout ? { width: '100%' } : { minWidth: 174 }}
             childrenPosition="left"
             onPress={handleOpenAddNetworkBottomSheet}
           >
