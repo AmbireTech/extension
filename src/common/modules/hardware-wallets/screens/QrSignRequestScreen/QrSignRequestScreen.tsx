@@ -13,7 +13,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 type Props = {
   onContinue: () => void
@@ -32,11 +32,8 @@ type Props = {
 const ANIMATION_INTERVAL = 200
 const BASE_QR_SIZE = 300
 const BASE_QR_SIZE_WITH_PROGRESS = 280
-const SIDE_PANEL_QR_SIZE = 284
+const NARROW_LAYOUT_QR_SIZE = 284
 const MAX_MOBILE_QR_SIZE = 400
-
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
 
 const QrSignRequestScreen = ({
   onContinue,
@@ -46,6 +43,7 @@ const QrSignRequestScreen = ({
   transactionProgress = null,
   signingRequest = null
 }: Props) => {
+  const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { themeType } = useTheme()
   const { width: windowWidth } = useWindowDimensions()
@@ -54,8 +52,8 @@ const QrSignRequestScreen = ({
   // larger devices so it stays centered. The desktop panel has a fixed larger code.
   const qrSize = isMobile
     ? Math.min(windowWidth - SPACING_SM * 2, MAX_MOBILE_QR_SIZE)
-    : isSidePanel
-      ? SIDE_PANEL_QR_SIZE
+    : isNarrowWebLayout
+      ? NARROW_LAYOUT_QR_SIZE
       : transactionProgress
         ? BASE_QR_SIZE_WITH_PROGRESS
         : BASE_QR_SIZE

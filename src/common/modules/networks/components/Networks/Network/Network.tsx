@@ -17,12 +17,16 @@ import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   chainId: bigint | string
   openBlockExplorer: (url?: string) => void
   openSettingsBottomSheet: (chainId: bigint | string) => void
   onPress: (chainId: bigint | string) => void
 }
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomSheet, onPress }) => {
   const { theme, styles } = useTheme(getStyles)
@@ -33,7 +37,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
       to: theme.secondaryBackground
     }
   })
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const {
     state: { portfolio, dashboardNetworkFilter }
   } = useController('SelectedAccountController')

@@ -8,14 +8,19 @@ import { getTenderlySimulationLink } from '@common/modules/sign-account-op/helpe
 
 import TenderlySimulationLink from '../TenderlySimulationLink'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   style?: ViewStyle
 }
 
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+
 const TenderlySimulation = ({ style }: Props) => {
   const { t } = useTranslation()
   const signAccountOpState = useController('SignAccountOpController').state
-  const { state: accountStates } = useController('AccountsController', 'accountStates')
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
 
   const state = useMemo(() => {
     if (!signAccountOpState) return undefined

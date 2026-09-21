@@ -1,5 +1,5 @@
 import { BlurView } from 'expo-blur'
-import React, { FC, useCallback, useEffect, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -21,35 +21,37 @@ const MIN_DISPLAY_TIME = 500
 const SafetyChecksOverlay: FC<Props> = ({ shouldBeVisible }) => {
   const { t } = useTranslation()
   const [isOverlayActuallyVisible, setIsOverlayActuallyVisible] = useState(shouldBeVisible)
-  const [startedLoadingTimestamp, setStartedLoadingTimestamp] = useState<number | null>(null)
+  const [prevShouldBeVisible, setPrevShouldBeVisible] = useState(shouldBeVisible)
+  const startedLoadingTimestampRef = useRef<number | null>(null)
 
-  const handleHide = useCallback(() => {
-    setIsOverlayActuallyVisible(false)
-  }, [])
+  if (shouldBeVisible !== prevShouldBeVisible) {
+    setPrevShouldBeVisible(shouldBeVisible)
+    if (shouldBeVisible) setIsOverlayActuallyVisible(true)
+  }
 
+  // Depends on `shouldBeVisible` alone, so that hiding the overlay doesn't re-run
+  // this effect and bring the overlay back while the checks are still loading
   useEffect(() => {
-    let timeout: any
-    const now = Date.now()
+    let timeout: ReturnType<typeof setTimeout>
 
     if (shouldBeVisible) {
-      if (!isOverlayActuallyVisible || !startedLoadingTimestamp) {
-        setStartedLoadingTimestamp(now)
-        setIsOverlayActuallyVisible(true)
-      }
+      startedLoadingTimestampRef.current = Date.now()
 
-      timeout = setTimeout(handleHide, MAX_DISPLAY_TIME)
-    } else if (!shouldBeVisible && isOverlayActuallyVisible && startedLoadingTimestamp) {
-      const timeDifference = now - startedLoadingTimestamp
-      // Either a delay of 0 or the difference between the current time and the time the loading started
+      timeout = setTimeout(() => setIsOverlayActuallyVisible(false), MAX_DISPLAY_TIME)
+    } else {
+      const timeDifference = startedLoadingTimestampRef.current
+        ? Date.now() - startedLoadingTimestampRef.current
+        : MIN_DISPLAY_TIME
+      // Either a delay of 0 or the time left until the minimum display time is reached
       const delay = Math.max(MIN_DISPLAY_TIME - timeDifference, 0)
 
-      timeout = setTimeout(handleHide, delay)
+      timeout = setTimeout(() => setIsOverlayActuallyVisible(false), delay)
     }
 
     return () => {
       clearTimeout(timeout)
     }
-  }, [handleHide, isOverlayActuallyVisible, shouldBeVisible, startedLoadingTimestamp])
+  }, [shouldBeVisible])
 
   if (!isOverlayActuallyVisible) return null
 

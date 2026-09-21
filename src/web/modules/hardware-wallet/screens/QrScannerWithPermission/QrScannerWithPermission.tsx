@@ -10,6 +10,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 import { browser, engine, isSafari } from '@web/constants/browserapi'
 import QrScanner from '@web/modules/hardware-wallet/screens/QrScannerWithPermission/QrScanner'
@@ -67,8 +68,9 @@ const QrScannerWithPermission = ({
   onExternalRetry,
   onProgress
 }: Props) => {
-  const { isPopup, isSidePanel } = getUiType()
-  const needsFullScreenCameraFallback = isPopup || isSidePanel
+  const { isPopup } = getUiType()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const needsFullScreenCameraFallback = isPopup || isNarrowWebLayout
   const { t } = useTranslation()
   const { theme } = useTheme()
 

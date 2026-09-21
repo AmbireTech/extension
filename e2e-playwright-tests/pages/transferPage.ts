@@ -139,7 +139,7 @@ export class TransferPage extends BasePage {
     // session the app's periodic (every 2 min) all-network portfolio refresh can land inside that
     // window and fail the check, so shared-state callers must set this to false.
     assertPortfolioRefreshScopedToSendNetwork?: boolean
-  }) {
+  }): Promise<boolean> {
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
     if (holdProceedButton) {
@@ -170,6 +170,7 @@ export class TransferPage extends BasePage {
       console.warn(
         `⚠️ Fee amount ($${feeDollarsAmount}) exceeds the $0.10 limit; transaction signing skipped.`
       )
+      return false
     } else {
       // start monitoring requests
       await this.monitorRequests()
@@ -241,6 +242,8 @@ export class TransferPage extends BasePage {
 
       // Close page
       await this.click(selectors.closeProgressModalButton)
+
+      return true
     }
   }
 

@@ -16,7 +16,10 @@ import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const NetworkOption = ({
   onSelectNetwork,
@@ -65,6 +68,8 @@ const NetworkOption = ({
   )
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const NetworkSelector = ({
   dapp,
   isAbove = false,
@@ -78,7 +83,11 @@ const NetworkSelector = ({
 }) => {
   const { dispatch } = useControllersMiddleware()
 
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
   const { theme } = useTheme()
   const { t } = useTranslation()
 
@@ -88,8 +97,11 @@ const NetworkSelector = ({
 
   const filteredNetworks = useMemo(() => {
     const term = search.trim().toLowerCase()
-    if (!term) return networks
-    return networks.filter((n) => n.name.toLowerCase().includes(term))
+    if (!term) return sortNetworksByBalance(networks, balancePerNetwork)
+    return sortNetworksByBalance(
+      networks.filter((n) => n.name.toLowerCase().includes(term)),
+      balancePerNetwork
+    )
   }, [networks, search])
 
   const [bindAnim, animStyle] = useCustomHover({

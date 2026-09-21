@@ -16,8 +16,13 @@ import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 
+import HideCollectibleButton from './HideCollectibleButton'
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const { isTab } = getUiType()
 
@@ -35,17 +40,23 @@ const CollectibleModal = ({
   handleClose,
   modalRef,
   selectedCollectible,
-  hideSendNft
+  hideSendNft,
+  canHideCollectible
 }: {
   handleClose: () => void
   modalRef: any
   selectedCollectible: SelectedCollectible
   hideSendNft?: boolean
+  /** Displays the action that hides the collectible */
+  canHideCollectible?: boolean
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  // No actions on a collectible that is only being previewed (in a simulation)
+  const shouldDisplayHideCollectionAction = !hideSendNft && !!canHideCollectible
+
   const modalContent = useMemo(() => {
     if (!selectedCollectible) return null
 
@@ -53,27 +64,36 @@ const CollectibleModal = ({
     const networkData = networks.find(({ chainId: networkChainId }) => chainId === networkChainId)
     return (
       <>
-        <ManifestImage
-          uri={image}
-          size={COLLECTIBLE_IMAGE_SIZE}
-          containerStyle={styles.imageContainer}
-          imageStyle={styles.image}
-          fallback={() => (
-            <View
-              style={[
-                flexbox.flex1,
-                flexbox.center,
-                { backgroundColor: theme.primaryBackground, width: '100%' }
-              ]}
-            >
-              <ImageIcon
-                color={theme.secondaryText}
-                width={COLLECTIBLE_IMAGE_SIZE / 2}
-                height={COLLECTIBLE_IMAGE_SIZE / 2}
-              />
-            </View>
+        <View style={styles.imageContainer}>
+          <ManifestImage
+            uri={image}
+            size={COLLECTIBLE_IMAGE_SIZE}
+            imageStyle={styles.image}
+            fallback={() => (
+              <View
+                style={[
+                  flexbox.flex1,
+                  flexbox.center,
+                  { backgroundColor: theme.primaryBackground, width: '100%' }
+                ]}
+              >
+                <ImageIcon
+                  color={theme.secondaryText}
+                  width={COLLECTIBLE_IMAGE_SIZE / 2}
+                  height={COLLECTIBLE_IMAGE_SIZE / 2}
+                />
+              </View>
+            )}
+          />
+          {shouldDisplayHideCollectionAction && (
+            <HideCollectibleButton
+              address={address}
+              chainId={chainId}
+              tokenId={id}
+              handleClose={handleClose}
+            />
           )}
-        />
+        </View>
         <View
           style={[
             flexbox.directionRow,
@@ -114,7 +134,6 @@ const CollectibleModal = ({
           style={[
             spacings.phSm,
             spacings.pvSm,
-            // !hideSendNft && spacings.mbSm,
             {
               borderRadius: BORDER_RADIUS_PRIMARY,
               backgroundColor: theme.secondaryBackground,
@@ -145,8 +164,10 @@ const CollectibleModal = ({
       </>
     )
   }, [
+    handleClose,
     networks,
     selectedCollectible,
+    shouldDisplayHideCollectionAction,
     styles.image,
     styles.imageContainer,
     t,
@@ -162,11 +183,11 @@ const CollectibleModal = ({
       type="modal"
       sheetRef={modalRef}
       closeBottomSheet={handleClose}
-      style={isCompactSidePanelLayout ? styles.sidePanelSheet : styles.modal}
-      autoWidth={!isCompactSidePanelLayout}
-      containerInnerWrapperStyles={isCompactSidePanelLayout ? flexbox.alignCenter : undefined}
+      style={isNarrowWebLayout ? styles.sidePanelSheet : styles.modal}
+      autoWidth={!isNarrowWebLayout}
+      containerInnerWrapperStyles={isNarrowWebLayout ? flexbox.alignCenter : undefined}
     >
-      {isCompactSidePanelLayout ? (
+      {isNarrowWebLayout ? (
         <View style={styles.sidePanelContent}>{modalContent}</View>
       ) : (
         modalContent

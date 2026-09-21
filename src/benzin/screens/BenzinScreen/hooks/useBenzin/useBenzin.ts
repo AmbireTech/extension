@@ -19,6 +19,8 @@ import useToast from '@common/hooks/useToast'
 import { setStringAsync } from '@common/utils/clipboard'
 import { RELAYER_URL } from '@env'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const fetch = (typeof window !== 'undefined' ? window.fetch.bind(window) : global.fetch) as any
 const standardOptions = {
   fetch,
@@ -51,6 +53,8 @@ const getParams = (search?: string) => {
   }
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Props = {}) => {
   const { addToast } = useToast()
   const route = useRoute()
@@ -65,7 +69,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Pro
       }
     : routeParams
 
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const {
     benzinNetworks,
     loadingBenzinNetworks = [],
@@ -74,24 +78,27 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Pro
   } = useBenzinNetworksContext()
   const bigintChainId = BigInt(chainId || '') || 0n
   const actualNetworks = networks ?? benzinNetworks
-  const areRelayerNetworksLoaded = actualNetworks && actualNetworks.length
+  const areNetworksLoaded = actualNetworks && actualNetworks.length
   const isNetworkLoading = loadingBenzinNetworks.includes(bigintChainId)
   const [activeStep, setActiveStep] = useState<ActiveStepType>('signed')
   const isInitialized =
-    !isNetworkLoading && areRelayerNetworksLoaded && (!!extensionAccOp || activeStep !== 'signed')
+    !isNetworkLoading && areNetworksLoaded && (!!extensionAccOp || activeStep !== 'signed')
 
   const network = useMemo(() => {
     return actualNetworks.find((n) => n.chainId === bigintChainId) || null
   }, [actualNetworks, bigintChainId])
 
-  const {
-    dispatch: providerDispatch,
-    state: { providers }
-  } = useController('ProvidersController')
+  const { dispatch: providerDispatch, state: providersState } = useController('ProvidersController')
+  // Undefined until the controller emits its first update, which can land after
+  // the network is already known, because the networks ship with the build
+  const providers = providersState?.providers
 
   useEffect(() => {
     if (!network) return
-    if (providers[network.chainId.toString()]) return
+    // Ask for the provider while the state is still missing too, otherwise a network
+    // the controller cannot auto-initialize (any chain outside the ones predefined in
+    // ambire-common) never gets one. Setting it twice is a no-op.
+    if (providers?.[network.chainId.toString()]) return
 
     providerDispatch({ type: 'method', params: { method: 'setProvider', args: [network] } })
   }, [network, providers, providerDispatch])
@@ -134,10 +141,10 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Pro
   }, [relayerId, userOpHash, switcher, txnId])
 
   useEffect(() => {
-    if (areRelayerNetworksLoaded && !network && bigintChainId) {
+    if (areNetworksLoaded && !network && bigintChainId) {
       addNetwork(bigintChainId)
     }
-  }, [bigintChainId, network, isNetworkLoading, addNetwork, areRelayerNetworksLoaded])
+  }, [bigintChainId, network, isNetworkLoading, addNetwork, areNetworksLoaded])
 
   const handleCopyText = useCallback(async () => {
     try {

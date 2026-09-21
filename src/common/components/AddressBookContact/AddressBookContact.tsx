@@ -12,15 +12,15 @@ import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import ManageContact from './ManageContact'
 import getStyles from './styles'
 
-const { isSidePanel } = getUiType()
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   address: string
@@ -43,6 +43,10 @@ interface Props {
   isActive?: boolean
 }
 
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const AddressBookContact: FC<Props> = ({
   address,
   name,
@@ -59,14 +63,15 @@ const AddressBookContact: FC<Props> = ({
   height = 20,
   isActive = false
 }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const ContainerElement = onPress ? AnimatedPressable : View
 
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { state: accounts } = useController('AccountsController', 'accounts')
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const reverseLookup = useReverseLookup({
     address,
     // This is needed because the component is rendered in AddressInput when a valid address
@@ -126,7 +131,7 @@ const AddressBookContact: FC<Props> = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.flex1,
-          isSidePanel && { minWidth: 0 }
+          isNarrowWebLayout && { minWidth: 0 }
         ]}
       >
         <Avatar
@@ -136,7 +141,7 @@ const AddressBookContact: FC<Props> = ({
           smartAccountType={smartAccountType}
           displayTypeBadge={displayTypeBadge}
         />
-        <View style={[{ flex: 1 }, isSidePanel && { minWidth: 0 }]}>
+        <View style={[{ flex: 1 }, isNarrowWebLayout && { minWidth: 0 }]}>
           {isEditable ? (
             <Editable
               fontSize={fontSize}
@@ -151,12 +156,16 @@ const AddressBookContact: FC<Props> = ({
             />
           ) : (
             <View
-              style={[flexbox.directionRow, flexbox.alignCenter, isSidePanel && { minWidth: 0 }]}
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                isNarrowWebLayout && { minWidth: 0 }
+              ]}
             >
               <Text
                 fontSize={fontSize}
                 weight="medium"
-                numberOfLines={isSidePanel ? 1 : undefined}
+                numberOfLines={isNarrowWebLayout ? 1 : undefined}
                 style={!name && spacings.mrTy}
               >
                 {name ||
@@ -170,7 +179,7 @@ const AddressBookContact: FC<Props> = ({
             style={[
               flexbox.directionRow,
               flexbox.alignCenter,
-              isSidePanel && { flex: 1, minWidth: 0 }
+              isNarrowWebLayout && { flex: 1, minWidth: 0 }
             ]}
           >
             <AccountAddress

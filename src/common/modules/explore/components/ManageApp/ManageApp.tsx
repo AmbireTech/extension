@@ -24,6 +24,12 @@ import useManageApp from '@common/modules/explore/hooks/useManageApp'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { sortNetworksByBalance } from '@common/utils/sorting'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+// The same footprint the sheet's other row action ("Manage") has, with a floor on the width so
+// flipping between "Trust" and "Untrust" cannot shift the row. Both labels sit well below it.
+const TRUST_BUTTON_STYLE: ViewStyle = { ...spacings.mlSm, height: 50, minWidth: 90 }
 
 interface ManageAppProps {
   dapp: Dapp
@@ -35,6 +41,9 @@ interface ManageAppProps {
   onReloadDapp?: () => void
 }
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const ManageApp = ({
   dapp,
   children,
@@ -44,7 +53,8 @@ const ManageApp = ({
   onReloadDapp
 }: ManageAppProps) => {
   const { theme } = useTheme()
-  const { account, accounts, networks, onDisconnect, onSelectNetwork } = useManageApp(dapp)
+  const { account, accounts, networks, onDisconnect, onSelectNetwork, onToggleTrust } =
+    useManageApp(dapp)
   const { ref: sheetRef, open, close } = useModalize()
   const {
     ref: disconnectChooserRef,
@@ -58,7 +68,11 @@ const ManageApp = ({
   } = useModalize()
   const { t } = useTranslation()
   const { dispatch: mainDispatch } = useController('MainController')
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
 
   const connectedSources = dapp.connectedSources ?? []
   const hasMultipleSources = connectedSources.length > 1
@@ -83,8 +97,9 @@ const ManageApp = ({
 
   const networksOptions: SelectValue[] = useMemo(
     () =>
-      networks.map((n) => ({
+      sortNetworksByBalance(networks, balancePerNetwork).map((n) => ({
         value: n.chainId.toString(),
+        extraSearchProps: { name: n.name },
         label: (
           <Text weight="medium" fontSize={14} numberOfLines={1}>
             {n.name}
@@ -92,7 +107,7 @@ const ManageApp = ({
         ),
         icon: <NetworkIcon size={24} id={n.chainId.toString()} />
       })),
-    [networks]
+    [networks, balancePerNetwork]
   )
 
   const selectedNetwork = useMemo(
@@ -273,6 +288,41 @@ const ManageApp = ({
                 hasBottomSpacing={false}
                 style={{ ...spacings.mlSm, height: 50 }}
               />
+            </View>
+          </View>
+        )}
+
+        {dapp.blacklisted === 'SUSPICIOUS_HOSTING' && (
+          <View style={spacings.mbSm}>
+            <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
+              {t('Suspicious app hosting')}
+            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <View
+                style={[
+                  flexbox.flex1,
+                  common.borderRadiusPrimary,
+                  spacings.ph,
+                  spacings.pvTy,
+                  { backgroundColor: theme.tertiaryBackground }
+                ]}
+              >
+                <Text fontSize={14} appearance="secondaryText">
+                  {t(
+                    'Shared hosting, commonly used for phishing. Trust this app and we stop warning you.'
+                  )}
+                </Text>
+              </View>
+              {!!dapp.canBeTrustedByUser && (
+                <Button
+                  type={dapp.isTrustedByUser ? 'tertiary' : 'warning'}
+                  text={dapp.isTrustedByUser ? t('Untrust') : t('Trust')}
+                  onPress={onToggleTrust}
+                  hasBottomSpacing={false}
+                  testID="trust-dapp-button"
+                  style={TRUST_BUTTON_STYLE}
+                />
+              )}
             </View>
           </View>
         )}

@@ -6,17 +6,13 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import NoEntryIcon from '@common/assets/svg/NoEntryIcon/NoEntryIcon'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { default as flexbox } from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import ButtonWithLoader from '../ButtonWithLoader/ButtonWithLoader'
 import getStyles from './styles'
-
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
 
 const SAFE_GLOBAL_STALL_WARNING_DELAY_MS = 5000
 
@@ -66,6 +62,7 @@ const SafeKeyWrapper = ({
 }: Props) => {
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
 
   return (
     <View style={style}>
