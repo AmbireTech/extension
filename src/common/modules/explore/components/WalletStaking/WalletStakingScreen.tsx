@@ -302,10 +302,13 @@ const WalletStakingScreen = () => {
     [balance]
   )
   const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
-  const amountInUsd = useMemo(
-    () => formatDecimals(Number(amount || 0) * walletPrice, 'value'),
-    [amount, walletPrice]
-  )
+  const amountInUsd = useMemo(() => {
+    const usdAmount = Number(amount || 0) * walletPrice
+
+    // An empty field is worth nothing at all, so the two decimals formatDecimals keeps for a
+    // value ("$0.00") are just noise next to it
+    return usdAmount ? formatDecimals(usdAmount, 'value') : '$0'
+  }, [amount, walletPrice])
   // What the field shows next to the flip icon while it's taking a USD amount
   const amountInToken = useMemo(
     () => `${formatDecimals(Number(amount || 0), 'amount')} ${tokenSymbol}`,
@@ -1118,6 +1121,7 @@ const WalletStakingScreen = () => {
                               fontSize={12}
                               appearance="secondaryText"
                               numberOfLines={1}
+                              weight="medium"
                               ellipsizeMode="tail"
                               style={styles.switchAmountFieldModeValue}
                             >
