@@ -1157,7 +1157,9 @@ const WalletStakingScreen = () => {
                       tierOffset={mode === 'stake' ? stkWalletBalance : 0n}
                       thresholds={sliderThresholds}
                     />
+                  </View>
 
+                  <View style={styles.detailsCard}>
                     {shouldShowFeePreview && (
                       <View style={styles.feePreviewRow}>
                         <View style={styles.feePreviewLabel}>

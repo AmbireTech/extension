@@ -36,6 +36,7 @@ interface Styles {
   buyWalletWrapper: ViewStyle
   buyWalletButton: ViewStyle
   amountCard: ViewStyle
+  detailsCard: ViewStyle
   balanceRow: ViewStyle
   maxButton: ViewStyle
   maxButtonDisabled: ViewStyle
@@ -219,7 +220,15 @@ const getStyles = (theme: ThemeProps) =>
     amountCard: {
       ...spacings.phSm,
       ...spacings.pvSm,
+      ...spacings.mbSm,
+      backgroundColor: theme.secondaryBackground,
+      borderRadius: 16
+    },
+    detailsCard: {
+      ...spacings.phSm,
+      ...spacings.pvSm,
       ...spacings.mbLg,
+      rowGap: SPACING_SM,
       backgroundColor: theme.secondaryBackground,
       borderRadius: 16
     },
@@ -265,7 +274,6 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
-      ...spacings.mtSm,
       ...spacings.phSm,
       ...spacings.ptSm,
       ...spacings.pbSm,
@@ -297,7 +305,6 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phSm
     },
     cardDetails: {
-      ...spacings.mtSm,
       rowGap: SPACING_SM
     },
     detailRow: {

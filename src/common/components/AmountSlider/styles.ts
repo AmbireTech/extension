@@ -19,7 +19,12 @@ interface Style {
 
 const THUMB_SIZE = 20
 const TRACK_HEIGHT = 8
+const QUARTER_SIZE = TRACK_HEIGHT - 2
+const THRESHOLD_HEIGHT = 16
 const VALUE_BUBBLE_WIDTH = 48
+// The thumb is the tallest part of the slider, so it sets the height and everything else is
+// centered against it.
+const centerOffset = (size: number) => (THUMB_SIZE - size) / 2
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
@@ -30,7 +35,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     slider: {
       ...flexbox.justifyCenter,
-      height: 28,
+      height: THUMB_SIZE,
       position: 'relative'
     },
     disabled: {
@@ -38,7 +43,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     track: {
       position: 'absolute',
-      top: 10,
+      top: centerOffset(TRACK_HEIGHT),
       right: 0,
       left: 0,
       height: TRACK_HEIGHT,
@@ -47,7 +52,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     progressContainer: {
       position: 'absolute',
-      top: 10,
+      top: centerOffset(TRACK_HEIGHT),
       left: 0,
       height: TRACK_HEIGHT,
       borderRadius: 4,
@@ -56,15 +61,15 @@ const getStyles = (theme: ThemeProps) =>
     },
     quarter: {
       position: 'absolute',
-      top: 11,
-      width: TRACK_HEIGHT - 2,
-      height: TRACK_HEIGHT - 2,
+      top: centerOffset(QUARTER_SIZE),
+      width: QUARTER_SIZE,
+      height: QUARTER_SIZE,
       borderRadius: 50,
       backgroundColor: theme.neutral400
     },
     valueBubble: {
       position: 'absolute',
-      top: -32,
+      top: -36,
       width: VALUE_BUBBLE_WIDTH,
       ...flexbox.center,
       ...spacings.pvMi,
@@ -80,14 +85,14 @@ const getStyles = (theme: ThemeProps) =>
     },
     threshold: {
       position: 'absolute',
-      top: 6,
+      top: centerOffset(THRESHOLD_HEIGHT),
       width: 1,
-      height: 16,
+      height: THRESHOLD_HEIGHT,
       backgroundColor: theme.secondaryBackground
     },
     thumb: {
       position: 'absolute',
-      top: 4,
+      top: 0,
       width: THUMB_SIZE,
       height: THUMB_SIZE,
       borderRadius: THUMB_SIZE / 2,
