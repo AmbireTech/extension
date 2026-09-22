@@ -10,6 +10,8 @@ interface Styles {
   switchAmountFieldMode: ViewStyle
   switchAmountFieldModeValue: TextStyle
   switchAmountFieldModeIcon: ViewStyle
+  sliderRow: ViewStyle
+  maxButton: ViewStyle
   amountInput: ViewStyle
   amountInputWrapper: ViewStyle
   amountNativeInput: TextStyle
@@ -28,9 +30,18 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
-      ...spacings.mbTy,
+      // Sits right on top of the amount field below it, the way its own label would
+      ...spacings.mbMi,
       minHeight: 24
     },
+    sliderRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      // The slider lifts itself above the amount field so its value bubble isn't drawn behind it
+      // (see Input's styles), and this row has to carry that lift or it only applies within itself
+      zIndex: 11
+    },
+    maxButton: { ...spacings.mlSm },
     switchAmountFieldMode: {
       ...flexbox.flex1,
       minWidth: 0

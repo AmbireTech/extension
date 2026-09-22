@@ -4,12 +4,13 @@ import { View } from 'react-native'
 import FlipIcon from '@common/assets/svg/FlipIcon'
 import AmountSlider from '@common/components/AmountSlider'
 import HoverablePressable from '@common/components/HoverablePressable'
+import MaxButton from '@common/components/MaxButton'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import BalanceRatioProgress from '@common/modules/wallet-staking/components/BalanceRatioProgress'
-import BalanceWithMax from '@common/modules/wallet-staking/components/BalanceWithMax'
+import BalanceLabel from '@common/modules/wallet-staking/components/BalanceLabel'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -54,13 +55,7 @@ const StakingAmountCard = ({ form }: Props) => {
   return (
     <View style={styles.amountCard}>
       <View style={styles.balanceRow}>
-        <BalanceWithMax
-          balanceLabel={balanceLabel}
-          tokenSymbol={tokenSymbol}
-          disabled={balance <= 0n}
-          onMaxPress={onMaxPress}
-          testID="wallet-staking-max-button"
-        />
+        <BalanceLabel balanceLabel={balanceLabel} tokenSymbol={tokenSymbol} />
         <View style={styles.switchAmountFieldMode}>
           <HoverablePressable
             onPress={switchAmountFieldMode}
@@ -115,13 +110,23 @@ const StakingAmountCard = ({ form }: Props) => {
         }
       />
 
-      <AmountSlider
-        value={amountInWei}
-        maximumValue={balance}
-        onValueChange={onSliderValueChange}
-        tierOffset={mode === 'stake' ? stkWalletBalance : 0n}
-        marks={sliderTierMarks}
-      />
+      <View style={styles.sliderRow}>
+        <View style={flexbox.flex1}>
+          <AmountSlider
+            value={amountInWei}
+            maximumValue={balance}
+            onValueChange={onSliderValueChange}
+            tierOffset={mode === 'stake' ? stkWalletBalance : 0n}
+            marks={sliderTierMarks}
+          />
+        </View>
+        <MaxButton
+          onPress={onMaxPress}
+          disabled={balance <= 0n}
+          testID="wallet-staking-max-button"
+          style={styles.maxButton}
+        />
+      </View>
     </View>
   )
 }

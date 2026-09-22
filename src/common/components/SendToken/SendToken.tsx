@@ -9,6 +9,7 @@ import FlipIcon from '@common/assets/svg/FlipIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import AmountInput from '@common/components/AmountInput'
 import AmountSlider from '@common/components/AmountSlider'
+import MaxButton from '@common/components/MaxButton'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
@@ -184,8 +185,6 @@ const SendToken: FC<Props> = ({
                 isLoading={!portfolio?.isReadyToVisualize}
                 maxAmount={Number(maxFromAmount)}
                 selectedTokenSymbol={fromSelectedToken?.symbol || ''}
-                onMaxButtonPress={handleSetMaxFromAmount}
-                disabled={maxAmountDisabled}
                 simulationFailed={simulationFailed}
               />
             ) : (
@@ -283,11 +282,21 @@ const SendToken: FC<Props> = ({
               amountInput
             )}
           </View>
-          <View style={[styles.slider, sliderStyle]}>
-            <AmountSlider
-              value={sliderAmount}
-              maximumValue={fromTokenAmountSelectDisabled ? 0n : maxSliderAmount}
-              onValueChange={handleSliderValueChange}
+          <View style={[styles.sliderRow, sliderStyle]}>
+            <View style={flexbox.flex1}>
+              <AmountSlider
+                value={sliderAmount}
+                maximumValue={fromTokenAmountSelectDisabled ? 0n : maxSliderAmount}
+                onValueChange={handleSliderValueChange}
+              />
+            </View>
+            <MaxButton
+              onPress={handleSetMaxFromAmount}
+              disabled={
+                maxAmountDisabled || fromTokenAmountSelectDisabled || !Number(maxFromAmount)
+              }
+              testID="max-amount-button"
+              style={styles.maxButton}
             />
           </View>
           {!!amountAdjustmentInfo && (

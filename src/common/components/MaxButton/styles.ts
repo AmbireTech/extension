@@ -2,22 +2,14 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 
-interface Styles {
-  balanceWithMax: ViewStyle
+interface Style {
   maxButton: ViewStyle
   maxButtonDisabled: ViewStyle
 }
 
 const getStyles = () =>
-  StyleSheet.create<Styles>({
-    balanceWithMax: {
-      // The balance and the Max button keep their size, so only the converted amount next to them
-      // gives way when it is too long for the row
-      flexShrink: 0
-    },
+  StyleSheet.create<Style>({
     maxButton: {
-      ...spacings.mlTy,
-      ...spacings.mrMi,
       ...spacings.phSm,
       paddingVertical: 2,
       borderRadius: 11

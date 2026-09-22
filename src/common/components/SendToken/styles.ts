@@ -26,7 +26,8 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
-      ...spacings.mbSm,
+      // Sits right on top of the select below it, the way a field's own label would
+      ...spacings.mbMi,
       minHeight: 24
     },
     switchAmountFieldMode: {
@@ -73,11 +74,14 @@ const getStyles = (theme: ThemeProps) =>
       width: '50%',
       paddingLeft: SWITCH_TOKENS_BUTTON_OVERHANG
     },
-    slider: {
+    sliderRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
       ...spacings.ptSm,
       // The value bubble sits above the track, over the amount input, which carries a zIndex of
       // its own (see Input's styles)
       zIndex: 11
-    }
+    },
+    maxButton: { ...spacings.mlSm }
   })
 export default getStyles
