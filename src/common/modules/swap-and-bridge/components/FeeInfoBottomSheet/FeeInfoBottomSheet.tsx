@@ -147,14 +147,6 @@ const FeeInfoBottomSheet = ({
           <Text fontSize={18} weight="semiBold" style={[styles.centeredText, spacings.mtMi]}>
             {t('Stake $WALLET, pay less in trading fees')}
           </Text>
-          <Text
-            appearance="secondaryText"
-            fontSize={12}
-            style={[styles.centeredText, spacings.mtMi]}
-          >
-            {t('Hold $stkWALLET to reduce your swap and bridge fees.')}
-          </Text>
-
           <View
             style={[
               flexbox.directionRow,
