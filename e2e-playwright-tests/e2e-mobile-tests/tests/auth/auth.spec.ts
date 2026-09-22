@@ -5,7 +5,6 @@ import selectors from 'constants/selectors'
 import { join } from 'path'
 
 import { expect, test } from '../../fixtures/pageObjects'
-import { IOS_SIM_ZIP } from '../../mobilewright.config'
 
 const ANDROID_HOME = process.env.ANDROID_HOME ?? join(process.env.HOME ?? '', 'Library/Android/sdk')
 const ADB_BIN = join(ANDROID_HOME, 'platform-tools', 'adb')
@@ -25,13 +24,16 @@ test.describe('auth', { tag: '@auth-mobile' }, () => {
     }
 
     if (testInfo.project.name === 'ios') {
-      // The simulator has no `pm clear` equivalent, so reinstall to reset state.
-      await device.uninstallApp(bundleId)
-      await device.installApp(IOS_SIM_ZIP)
+      // mobilewright has no equivalent for clearAppData()/pm-clear, but xcrun simctl does
+      // clearing just the app data container
+      await device.terminateApp(bundleId).catch(() => {})
+      const dataContainer = execSync(`xcrun simctl get_app_container ${device.id} ${bundleId} data`)
+        .toString()
+        .trim()
+      execSync(`rm -rf "${dataContainer}"`)
       await device.launchApp(bundleId)
     }
 
-    // TODO: add selector for conde input field
     const inviteCodeInput = screen.getByTestId(selectors.invite.codeInput)
     if (await inviteCodeInput.count()) {
       if (!IOS_MOBILE_INVITE_CODE) {
@@ -39,10 +41,10 @@ test.describe('auth', { tag: '@auth-mobile' }, () => {
           'App is showing the invite gate but MOBILE_INVITE_CODE is not set (see e2e-playwright-tests/constants/env.ts).'
         )
       }
-      // TODO: add selectors
-      // await inviteCodeInput.fill(IOS_MOBILE_INVITE_CODE)
-      // await screen.getByTestId(selectors.invite.verifyBtn).tap()
-      // await expect(inviteCodeInput).not.toBeVisible()
+
+      await inviteCodeInput.fill(IOS_MOBILE_INVITE_CODE)
+      await screen.getByTestId(selectors.invite.verifyBtn).tap()
+      await expect(inviteCodeInput).not.toBeVisible()
     }
   })
 
