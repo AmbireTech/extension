@@ -10,6 +10,7 @@ import HoverablePressable from '@common/components/HoverablePressable'
 import { SectionedSelect } from '@common/components/Select'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -325,7 +326,9 @@ const ToTokenSelect: React.FC<Props> = ({
       containerStyle={{
         ...spacings.mb0,
         ...flexbox.flex1,
-        ...spacings.mrMd
+        // On the web the select fills its column, which already stops on the right edge of the
+        // switch tokens button, and the amount column beside it carries the gap
+        ...(isWeb ? {} : spacings.mrMd)
       }}
       selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
       stickySectionHeadersEnabled

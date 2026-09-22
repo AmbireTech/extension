@@ -1,7 +1,7 @@
 import { formatUnits, parseUnits } from 'ethers'
 import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { textToValidDecimal } from '@ambire-common/utils/numbers/formatters'
@@ -12,10 +12,11 @@ import AmountSlider from '@common/components/AmountSlider'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
@@ -72,6 +73,8 @@ type Props = {
   amountAdjustmentInfo?: AmountAdjustmentInfo | null
   sections?: SectionedSelectProps['sections']
   renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
+  /** Extra styling for the amount slider's own row, e.g. to give it room before the panel ends. */
+  sliderStyle?: ViewStyle
 }
 
 const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -99,7 +102,8 @@ const SendToken: FC<Props> = ({
   simulationFailed,
   amountAdjustmentInfo,
   sections,
-  renderSectionHeader
+  renderSectionHeader,
+  sliderStyle
 }) => {
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { theme, styles } = useTheme(getStyles)
@@ -144,6 +148,18 @@ const SendToken: FC<Props> = ({
   const handleSliderValueChange = useCallback(
     (nextAmount: bigint) => onFromAmountChange(formatUnits(nextAmount, sliderDecimals)),
     [onFromAmountChange, sliderDecimals]
+  )
+
+  const amountInput = (
+    <AmountInput
+      type={fromAmountFieldMode}
+      value={fromAmountValue}
+      onChangeText={handleOnChangeTextAndFormat}
+      disabled={fromTokenAmountSelectDisabled}
+      inputTestId={inputTestId}
+      // Matches the received amount ToToken renders right below it
+      fontSize={20}
+    />
   )
 
   return (
@@ -222,14 +238,7 @@ const SendToken: FC<Props> = ({
               <View />
             )}
           </View>
-          <View
-            style={[
-              flexbox.flex1,
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              { columnGap: SPACING_SM }
-            ]}
-          >
+          <View style={styles.tokenRow}>
             <View style={flexbox.flex1}>
               {nonEmptySections?.length ? (
                 <SectionedSelect
@@ -264,17 +273,17 @@ const SendToken: FC<Props> = ({
                 />
               )}
             </View>
-            <AmountInput
-              type={fromAmountFieldMode}
-              value={fromAmountValue}
-              onChangeText={handleOnChangeTextAndFormat}
-              disabled={fromTokenAmountSelectDisabled}
-              inputTestId={inputTestId}
-              // Matches the received amount ToToken renders right below it
-              fontSize={20}
-            />
+            {isWeb ? (
+              // The column runs under the select's last stretch, so it must not swallow the
+              // clicks that belong to it - its own content is padded clear of it
+              <View style={styles.amountColumn} pointerEvents="box-none">
+                {amountInput}
+              </View>
+            ) : (
+              amountInput
+            )}
           </View>
-          <View style={styles.slider}>
+          <View style={[styles.slider, sliderStyle]}>
             <AmountSlider
               value={sliderAmount}
               maximumValue={fromTokenAmountSelectDisabled ? 0n : maxSliderAmount}

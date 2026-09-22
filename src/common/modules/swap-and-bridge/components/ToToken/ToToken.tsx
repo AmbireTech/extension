@@ -13,6 +13,7 @@ import { SelectValue } from '@common/components/Select/types'
 import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
@@ -20,7 +21,7 @@ import useNetworks from '@common/hooks/useNetworks'
 import useTheme from '@common/hooks/useTheme'
 import SwitchTokensButton from '@common/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { sortNetworksByBalance } from '@common/utils/sorting'
@@ -41,7 +42,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
   state.account
 
 const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSettingsModal }) => {
-  const { theme, themeType } = useTheme(getStyles)
+  const { theme, themeType, styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const {
     statuses: swapAndBridgeCtrlStatuses,
@@ -260,12 +261,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
     'balanceFormatted' in toTokenValue
 
   return (
-    <ItemPanel
-      style={{
-        ...spacings.pvSm,
-        ...spacings.pl
-      }}
-    >
+    <ItemPanel style={spacings.pvSm}>
       <SwitchTokensButton
         onPress={handleSwitchFromAndToTokens}
         disabled={
@@ -281,20 +277,22 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
         <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
           {t('You receive')}
         </Text>
-        <Select
-          setValue={handleSetToNetworkValue}
-          containerStyle={{ ...spacings.mb0, width: 150 }}
-          options={toNetworksOptions}
-          selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
-          size="sm"
-          value={getToNetworkSelectValue}
-          mode="bottomSheet"
-          bottomSheetTitle={t('Receive token network')}
-          testID="to-network-select"
-          disabled={disabled}
-        />
+        <View style={isWeb ? styles.networkColumn : undefined}>
+          <Select
+            setValue={handleSetToNetworkValue}
+            containerStyle={{ ...spacings.mb0, width: isWeb ? '100%' : 150 }}
+            options={toNetworksOptions}
+            selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
+            size="sm"
+            value={getToNetworkSelectValue}
+            mode="bottomSheet"
+            bottomSheetTitle={t('Receive token network')}
+            testID="to-network-select"
+            disabled={disabled}
+          />
+        </View>
       </View>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_SM }]}>
+      <View style={styles.tokenRow}>
         <View style={flexbox.flex1}>
           <ToTokenSelect
             toTokenOptions={toTokenOptions}
@@ -306,7 +304,10 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
             openProviderSettingsModal={openProviderSettingsModal}
           />
         </View>
-        <View style={[flexbox.flex1, { maxWidth: '40%' }]}>
+        <View
+          style={isWeb ? styles.amountColumn : [flexbox.flex1, { maxWidth: '40%' }]}
+          pointerEvents="box-none"
+        >
           {isReadyToDisplayAmounts ? (
             <Text
               fontSize={20}
