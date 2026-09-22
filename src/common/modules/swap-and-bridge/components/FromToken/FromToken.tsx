@@ -114,7 +114,7 @@ const FromToken: FC<Props> = ({
       sliderStyle={spacings.pbTy}
     />
   ) : (
-    <SkeletonLoader width="100%" height={193} />
+    <SkeletonLoader width="100%" height={185} />
   )
 }
 

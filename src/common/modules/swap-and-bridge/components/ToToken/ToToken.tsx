@@ -292,61 +292,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
           />
         </View>
       </View>
-      <View style={styles.tokenRow}>
-        <View style={flexbox.flex1}>
-          <ToTokenSelect
-            toTokenOptions={toTokenOptions}
-            toTokenValue={toTokenValue}
-            handleChangeToToken={handleChangeToToken}
-            toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
-            addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
-            handleAddToTokenByAddress={handleAddToTokenByAddress}
-            openProviderSettingsModal={openProviderSettingsModal}
-          />
-        </View>
-        <View
-          style={isWeb ? styles.amountColumn : [flexbox.flex1, { maxWidth: '40%' }]}
-          pointerEvents="box-none"
-        >
-          {isReadyToDisplayAmounts ? (
-            <Text
-              fontSize={20}
-              weight="medium"
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              appearance={
-                formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
-              }
-              dataSet={createGlobalTooltipDataSet({
-                id: 'to-amount',
-                content: toAmount,
-                hidden: formattedToAmount === '0'
-              })}
-              style={{ textAlign: 'right' }}
-            >
-              {formattedToAmount}
-            </Text>
-          ) : (
-            <SkeletonLoader
-              appearance="primaryBackground"
-              width={100}
-              height={32}
-              style={{ marginLeft: 'auto' }}
-            />
-          )}
-        </View>
-      </View>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          spacings.ptSm,
-          {
-            height: 32 // Prevents layout shifts
-          }
-        ]}
-      >
+      <View style={styles.balanceRow}>
         {hasSelectedToToken && (
           <View
             style={[flexbox.directionRow, flexbox.alignCenter]}
@@ -390,6 +336,50 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
             {formatDecimals(quote.selectedRoute.outputValueInUsd || 0, 'price')}
           </Text>
         )}
+      </View>
+      <View style={styles.tokenRow}>
+        <View style={flexbox.flex1}>
+          <ToTokenSelect
+            toTokenOptions={toTokenOptions}
+            toTokenValue={toTokenValue}
+            handleChangeToToken={handleChangeToToken}
+            toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
+            addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
+            handleAddToTokenByAddress={handleAddToTokenByAddress}
+            openProviderSettingsModal={openProviderSettingsModal}
+          />
+        </View>
+        <View
+          style={isWeb ? styles.amountColumn : [flexbox.flex1, { maxWidth: '40%' }]}
+          pointerEvents="box-none"
+        >
+          {isReadyToDisplayAmounts ? (
+            <Text
+              fontSize={20}
+              weight="medium"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              appearance={
+                formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
+              }
+              dataSet={createGlobalTooltipDataSet({
+                id: 'to-amount',
+                content: toAmount,
+                hidden: formattedToAmount === '0'
+              })}
+              style={{ textAlign: 'right' }}
+            >
+              {formattedToAmount}
+            </Text>
+          ) : (
+            <SkeletonLoader
+              appearance="primaryBackground"
+              width={100}
+              height={32}
+              style={{ marginLeft: 'auto' }}
+            />
+          )}
+        </View>
       </View>
     </ItemPanel>
   )
