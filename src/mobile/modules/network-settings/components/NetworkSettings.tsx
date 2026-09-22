@@ -22,6 +22,11 @@ import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRo
 
 import BatchingControlOption from './BatchingControlOption'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectAllNetworks = (state: AllControllersMappingType['NetworksController']) =>
+  state.allNetworks
+
 const NetworksSettings = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -32,7 +37,7 @@ const NetworksSettings = () => {
     open: openNetworkDetailsSheet,
     close: closeNetworkDetailsSheet
   } = useModalize()
-  const { state: allNetworks } = useController('NetworksController', 'allNetworks')
+  const { state: allNetworks } = useController('NetworksController', selectAllNetworks)
   const {
     state: { providers }
   } = useController('ProvidersController')

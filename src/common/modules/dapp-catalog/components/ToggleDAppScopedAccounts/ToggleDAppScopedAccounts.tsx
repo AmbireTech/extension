@@ -11,7 +11,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 type Props = {
   enabled: boolean
@@ -24,8 +24,6 @@ type Props = {
   disabledTooltip?: { id: string; content: string }
 }
 
-const { isSidePanel } = getUiType()
-
 const ToggleDAppScopedAccounts: FC<Props> = ({
   enabled,
   selectedCount,
@@ -35,10 +33,11 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
   disabled,
   disabledTooltip
 }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
-  // Side panel is too narrow for toggle + account badge on one row.
-  const stackToggleAndBadge = isSidePanel
+  // A narrow view has no room for toggle + account badge on one row.
+  const stackToggleAndBadge = isNarrowWebLayout
   const canOpenAccountSelector = !disabled && !!onOpenAccountSelector
 
   const PillContainer = canOpenAccountSelector ? HoverablePressable : View

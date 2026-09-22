@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { Platform as RNPlatform } from 'react-native'
 
 import { NavigateOptions } from '@ambire-common/interfaces/ui'
 import { LIFI_EXPLORER_URL } from '@ambire-common/services/lifi/consts'
-import { APP_VERSION, isDev } from '@common/config/env'
+import { APP_VERSION } from '@common/config/env'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import useCacheDashboardBalance from '@common/hooks/useCacheDashboardBalance'
 import useIsAppFocused from '@common/hooks/useIsAppFocused'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
@@ -18,7 +17,7 @@ import {
 import { toAbsoluteRoute } from '@common/modules/router/helpers/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
-import { BUNGEE_API_KEY, RELAYER_URL, UNISWAP_API_KEY, VELCRO_URL } from '@env'
+import { BUNGEE_API_KEY, COWSWAP_API_KEY, RELAYER_URL, UNISWAP_API_KEY, VELCRO_URL } from '@env'
 import {
   MOBILE_CRITICAL_CONTROLLERS,
   MOBILE_DEFERRED_CONTROLLERS
@@ -27,27 +26,40 @@ import { MOBILE_VIEW_ID } from '@mobile/constants/ui'
 import useBootProfileReport from '@mobile/hooks/useBootProfileReport'
 import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
+import useSelectedAccountControllerHelpers from '@mobile/hooks/useSelectedAccountControllerHelpers'
 import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/services/WebViewWorker'
+import { dispatchToControllers, initControllerHost } from '@mobile/services/controllerHost'
 import { shouldShowMigrationOnboarding } from '@mobile/services/legacyMigration/legacyMigration'
+
+const CONTROLLER_HOST_CONFIG = {
+  APP_VERSION,
+  RELAYER_URL,
+  COWSWAP_API_KEY,
+  VELCRO_URL,
+  LIFI_EXPLORER_URL,
+  BUNGEE_API_KEY,
+  criticalControllers: MOBILE_CRITICAL_CONTROLLERS,
+  UNISWAP_API_KEY
+}
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const { controllerStore, stateSubscriptionManager } = useContext(ControllerStoreContext)
   const webviewRef = useRef<WebViewWorkerRef>(null)
-  const hasRequestedDeferredControllers = useRef(false)
   const route = useRoute()
   const isFocused = useIsAppFocused()
   const { navigate } = useNavigation()
   const [isWorkerReady, setIsWorkerReady] = useState(false)
   const isOnRootRoute = !route.pathname || route.pathname === '/'
 
-  const dispatch = useCallback(
-    (action: MethodAction | Action, windowId?: number, raw?: boolean) => {
-      webviewRef.current?.dispatch(action, raw)
-    },
-    []
-  )
+  const dispatch = useCallback((action: MethodAction | Action) => {
+    dispatchToControllers(action)
+  }, [])
+
+  // Boot profiling only. Goes to the worker directly rather than through `dispatch`,
+  // which reaches the controllers in this realm and not the WebView.
+  const flushWorkerBootProfile = useCallback(() => !!webviewRef.current?.flushBootProfile(), [])
 
   // The controllers are authoritative for routing: they send the route to go to and whether the
   // view may be moved at all, so nothing is second-guessed here.
@@ -82,9 +94,9 @@ export const ControllersMiddlewareProvider: React.FC<{
     return () => eventBus.removeEventListener('navigate', handleNavigate)
   }, [handleNavigate])
 
-  // Report which controllers currently have an active subscriber so the WebView
-  // worker can skip serializing + bridging the state of controllers no screen is
-  // displaying. The SubscriptionManager fires on every first-subscribe /
+  // Report which controllers currently have an active subscriber so the controller
+  // host can skip serializing the state of controllers no screen is displaying.
+  // The SubscriptionManager fires on every first-subscribe /
   // last-unsubscribe; a single screen transition can mount/unmount many hooks at
   // once, so we coalesce to one dispatch per tick using the latest reported set.
   // Critical controllers are always included — they gate unlock/route readiness
@@ -114,35 +126,20 @@ export const ControllersMiddlewareProvider: React.FC<{
   }, [stateSubscriptionManager, dispatch])
 
   useEffect(() => {
-    webviewRef.current
-      ?.init({
-        APP_VERSION,
-        platform: `mobile-${RNPlatform.OS}`,
-        // Sent as the x-app-version header on the requests to Ambire APIs. Same shape as
-        // the extension's `extension-<version>-<engine>`, so the analytics can tell the
-        // apps and their platforms apart.
-        appVersionHeader: `mobile-${APP_VERSION}-${RNPlatform.OS}`,
-        // Sent as the x-app-env header. No staging builds on mobile, so the value set is
-        // the extension's minus 'next'.
-        appEnv: isDev ? 'dev' : 'prod',
-        RELAYER_URL,
-        VELCRO_URL,
-        LIFI_EXPLORER_URL,
-        BUNGEE_API_KEY,
-        criticalControllers: MOBILE_CRITICAL_CONTROLLERS,
-        UNISWAP_API_KEY
-      })
-      .then((ctrlsNames) => {
-        controllerStore.init(
-          ctrlsNames as any[],
-          MOBILE_CRITICAL_CONTROLLERS,
-          () => {
-            dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsNames as any[] } })
-          },
-          MOBILE_DEFERRED_CONTROLLERS
-        )
-        setIsWorkerReady(true)
-      })
+    const ctrlsNames = initControllerHost(CONTROLLER_HOST_CONFIG)
+
+    // Webview has no controllers now
+    // void webviewRef.current?.init(CONTROLLER_HOST_CONFIG)
+
+    controllerStore.init(
+      ctrlsNames as any[],
+      MOBILE_CRITICAL_CONTROLLERS,
+      () => {
+        dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsNames as any[] } })
+      },
+      MOBILE_DEFERRED_CONTROLLERS
+    )
+    setIsWorkerReady(true)
   }, [controllerStore, dispatch])
 
   // Ask again while there is still nothing on screen, in case the navigation sent when the view
@@ -188,31 +185,11 @@ export const ControllersMiddlewareProvider: React.FC<{
     dispatch({ type: 'SET_VIEW_FOCUS', params: { id: MOBILE_VIEW_ID } })
   }, [isFocused, dispatch])
 
-  // The dapp catalog and the phishing lists are the two heaviest storage reads, so
-  // they stay off the boot path and only start once the dashboard is the current
-  // route. Fired after a frame so the dashboard gets to paint first, and skipped
-  // entirely when both controllers already reported ready (a returning visit to the
-  // dashboard, or a flow that needed them earlier and initialized them on demand).
-  useEffect(() => {
-    if (hasRequestedDeferredControllers.current) return
-    if (route.pathname?.replace('/', '') !== ROUTES.dashboard) return
-
-    const areDeferredControllersLoaded = MOBILE_DEFERRED_CONTROLLERS.every(
-      (ctrlName) => (controllerStore.getSnapshot(ctrlName) as { isReady?: boolean }).isReady
-    )
-    if (areDeferredControllersLoaded) return
-
-    const frameHandle = requestAnimationFrame(() => {
-      dispatch({ type: 'INIT_DEFERRED_CONTROLLERS' })
-      hasRequestedDeferredControllers.current = true
-    })
-
-    return () => cancelAnimationFrame(frameHandle)
-  }, [route.pathname, controllerStore, dispatch])
-
   useRequestsControllerHelpers(dispatch)
   useDappsControllerHelpers(dispatch)
-  useBootProfileReport(dispatch)
+  useCacheDashboardBalance()
+  useSelectedAccountControllerHelpers()
+  useBootProfileReport(flushWorkerBootProfile)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

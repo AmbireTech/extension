@@ -16,13 +16,17 @@ import PendingTokenSummary from '@common/modules/sign-account-op/components/Pend
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import Step from './components/Step'
-import { getFee, getFinalizedRows, getTimestamp, shouldShowTxnProgress } from './utils/rows'
-
-const { isSidePanel } = getUiType()
+import {
+  getFee,
+  getFinalizedRows,
+  getTimestamp,
+  hasBalanceChangesSettled,
+  shouldShowTxnProgress
+} from './utils/rows'
 
 interface Props {
   activeStep: ActiveStepType
@@ -34,21 +38,21 @@ interface Props {
 }
 
 const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, delegation }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { width: windowWidth } = useWindowDimensions()
   const { theme } = useTheme()
   const { blockData, finalizedStatus, feePaidWith, from, originatedFrom } = stepsState
   const finalStepRows: any = getFinalizedRows(blockData, finalizedStatus)
   const balanceChanges =
     stepsState.submittedAccountOp?.balanceChanges || stepsState.balanceChanges || []
-  const hasBalanceChangesLoaded =
-    typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined' ||
-    typeof stepsState.balanceChanges !== 'undefined'
+  const { hasBalanceChangesFailed } = stepsState
+  const hasBalanceChangesLoaded = hasBalanceChangesSettled(stepsState) && !hasBalanceChangesFailed
   const assetsOut = balanceChanges.filter((change) => change.balanceChange < 0n)
   const assetsIn = balanceChanges.filter((change) => change.balanceChange > 0n)
   const shouldShowBalanceChanges = shouldShowTxnProgress(finalizedStatus)
   const shouldRenderBalanceChangesInColumns = windowWidth > 700
   const displayActiveStep =
-    activeStep === 'finalized' && shouldShowBalanceChanges && !hasBalanceChangesLoaded
+    activeStep === 'finalized' && shouldShowBalanceChanges && !hasBalanceChangesSettled(stepsState)
       ? 'balance-changes'
       : activeStep
 
@@ -194,7 +198,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   return (
     <View
       style={
-        isMobile || isSidePanel
+        isMobile || isNarrowWebLayout
           ? undefined
           : IS_MOBILE_UP_BENZIN_BREAKPOINT
             ? spacings.mb2Xl
@@ -250,7 +254,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
           testID="balance-changes-step"
         >
           <View style={flexbox.flex1}>
-            {!hasBalanceChangesLoaded && (
+            {!hasBalanceChangesLoaded && !hasBalanceChangesFailed && (
               <View
                 style={[
                   flexbox.directionRow,
@@ -268,6 +272,25 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                 <Spinner style={{ width: 18, height: 18 }} />
                 <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
                   Loading balance changes
+                </Text>
+              </View>
+            )}
+            {hasBalanceChangesFailed && (
+              <View
+                style={[
+                  spacings.phSm,
+                  spacings.pvSm,
+                  {
+                    backgroundColor: theme.secondaryBackground,
+                    borderWidth: 1,
+                    borderColor: theme.secondaryBorder,
+                    ...common.borderRadiusPrimary
+                  }
+                ]}
+              >
+                <Text fontSize={14} appearance="secondaryText">
+                  Failed to load balance changes. The transaction itself went through - open it in
+                  the explorer to see the details.
                 </Text>
               </View>
             )}

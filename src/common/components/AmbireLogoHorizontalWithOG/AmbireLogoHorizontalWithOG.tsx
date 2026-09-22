@@ -10,12 +10,16 @@ import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnim
 import styles, { CONFETTI_HEIGHT, CONFETTI_WIDTH } from './styles'
 import ToggleOG from './ToggleOG'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   withOG?: boolean
 }
 
+const selectIsOG = (state: AllControllersMappingType['InviteController']) => state.isOG
+
 const AmbireLogoHorizontalWithOG: React.FC<Props & SvgProps> = ({ withOG, ...rest }) => {
-  const { state: isOG } = useController('InviteController', 'isOG')
+  const { state: isOG } = useController('InviteController', selectIsOG)
   const prevIsOG = usePrevious(isOG)
 
   const hasJustBecomeOG = prevIsOG !== undefined && isOG && !prevIsOG

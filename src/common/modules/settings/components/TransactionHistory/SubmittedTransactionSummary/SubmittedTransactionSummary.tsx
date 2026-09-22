@@ -18,6 +18,8 @@ import SummaryDetailsSheet from './SummaryDetailsSheet'
 import SummaryHeader from './SummaryHeader'
 import { Props } from './types'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export { preloadSummaryPreview }
 
 // Matches ActivityPositionsSkeleton's row height so the loading state is visually seamless
@@ -25,6 +27,8 @@ export { preloadSummaryPreview }
 const ROW_SKELETON_HEIGHT = 96
 
 const { isTab } = getUiType()
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const SubmittedTransactionSummaryInner = ({
   submittedAccountOp,
@@ -34,7 +38,7 @@ const SubmittedTransactionSummaryInner = ({
   modalType
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
   const network: Network | undefined = useMemo(

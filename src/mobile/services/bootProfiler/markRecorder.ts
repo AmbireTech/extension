@@ -9,7 +9,7 @@ export const monotonicNow = (): number =>
 
 /**
  * Records timestamped boot marks for one JS realm. Both the RN side and the
- * WebView worker keep their own instance; the marks are merged on the RN side via
+ * native realm keeps its own instance; the marks are merged via
  * the epoch timestamps, which is the only clock the two realms share.
  *
  * Every mark carries both clocks: epoch for cross-realm ordering, monotonic for

@@ -9,7 +9,7 @@ import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import spacings from '@common/styles/spacings'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import { getSafeEip712DataValue, getSafeEip712HashRows } from './helpers'
 import getStyles from './styles'
@@ -30,8 +30,6 @@ interface Props {
 
 export type ActiveTab = 'hashes' | 'parsed' | 'raw'
 
-const { isSidePanel } = getUiType()
-
 const SafeEip712Data: FC<Props> = ({
   accountAddr,
   chainId,
@@ -41,6 +39,7 @@ const SafeEip712Data: FC<Props> = ({
   onTabChange,
   hideTabs = false
 }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const [internalActiveTab, setInternalActiveTab] = useState<ActiveTab>('hashes')
@@ -178,7 +177,7 @@ const SafeEip712Data: FC<Props> = ({
             withTwoColumnDataRow
             withDecimalIntegerRows
             withRegularParsedText
-            parsedValueMaxLength={isMobile || isSidePanel ? 24 : undefined}
+            parsedValueMaxLength={isMobile || isNarrowWebLayout ? 24 : undefined}
             hideTabs
             containerStyle={styles.fallbackVisualization}
             separatorColor={theme.secondaryBackground}
