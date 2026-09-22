@@ -3,7 +3,7 @@ import { buildSelector } from '@helpers/buildSelector'
 // TODO: this should be refactored; we should have single file with selector IDs
 const selectors = {
   invite: {
-    codeInput: 'invite-code-input', // TODO: add selectors
+    codeInput: 'invite-code-input',
     pasteBtn: 'paste-invite-code-btn',
     verifyBtn: 'verify-invite-code-btn'
   },
