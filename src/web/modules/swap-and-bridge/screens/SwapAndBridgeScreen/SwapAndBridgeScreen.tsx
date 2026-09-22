@@ -260,7 +260,8 @@ const SwapAndBridgeScreen = () => {
             <PanelTitle title={t('Swap & Bridge')} />
             <ProviderSettingsButton onPress={openProviderSettingsModal} />
           </View>
-          <View style={spacings.mbTy}>
+          {/* The gap the switch tokens button centres itself on - see its own styles */}
+          <View style={spacings.mbSm}>
             <FromToken
               fromTokenOptions={fromTokenOptions}
               fromTokenValue={fromTokenValue}
