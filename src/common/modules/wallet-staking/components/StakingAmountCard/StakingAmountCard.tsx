@@ -9,8 +9,8 @@ import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import BalanceRatioProgress from '@common/modules/wallet-staking/components/BalanceRatioProgress'
 import BalanceLabel from '@common/modules/wallet-staking/components/BalanceLabel'
+import BalanceRatioProgress from '@common/modules/wallet-staking/components/BalanceRatioProgress'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -87,6 +87,7 @@ const StakingAmountCard = ({ form }: Props) => {
         onChangeText={amountFieldMode === 'fiat' ? onFiatAmountChange : onTokenAmountChange}
         precision={amountFieldMode === 'fiat' ? FIAT_DECIMALS : TOKEN_DECIMALS}
         placeholder="0.00"
+        numberOfLines={1}
         borderless
         containerStyle={styles.amountInput}
         inputWrapperStyle={styles.amountInputWrapper}

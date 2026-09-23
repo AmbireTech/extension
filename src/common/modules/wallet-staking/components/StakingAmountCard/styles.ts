@@ -1,5 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
+import { isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -17,6 +18,9 @@ interface Styles {
   amountInputField: ViewStyle
   amountNativeInput: TextStyle
 }
+
+// Wider than the widest amount a balance can hold, so the amount never has to wrap
+const SINGLE_ROW_AMOUNT_WIDTH = 1000
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
@@ -66,17 +70,25 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phSm,
       backgroundColor: theme.tertiaryBackground,
       borderRadius: 14,
-      borderWidth: 0
+      borderWidth: 0,
+      // An amount longer than the field is clipped at its end instead of spilling out of it
+      overflow: 'hidden'
     },
     // Input pads itself horizontally on top of the wrapper's padding, which would leave the value
     // sitting twice as far from the left edge as the token symbol sits from the right one
     amountInputField: {
-      ...spacings.pl0
+      ...spacings.pl0,
+      // Bounds the value to the space left of the token symbol and clips whatever runs past it
+      overflow: 'hidden'
     },
     amountNativeInput: {
       color: theme.primaryText,
       fontSize: 16,
-      textAlign: 'left'
+      textAlign: 'left',
+      // Sized to fit the space beside the token symbol, a longer amount wraps onto a second row on
+      // native. Room for any amount instead keeps it on one row, and amountInputField clips what
+      // runs past. Left alone on web, where the field doesn't wrap and needs to follow the caret
+      ...(isWeb ? {} : { width: SINGLE_ROW_AMOUNT_WIDTH })
     }
   })
 
