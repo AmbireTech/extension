@@ -1,7 +1,9 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings from '@common/styles/spacings'
+import { SELECT_SIZE_TO_HEIGHT } from '@common/components/Select/styles'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
@@ -10,9 +12,12 @@ interface Styles {
   switchAmountFieldMode: ViewStyle
   switchAmountFieldModeValue: TextStyle
   switchAmountFieldModeIcon: ViewStyle
-  amountInput: ViewStyle
-  amountInputWrapper: ViewStyle
-  amountNativeInput: TextStyle
+  sliderRow: ViewStyle
+  maxButton: ViewStyle
+  tokenRow: ViewStyle
+  token: ViewStyle
+  tokenLabel: ViewStyle
+  amountColumn: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -28,9 +33,18 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
-      ...spacings.mbTy,
+      // Sits right on top of the amount field below it, the way its own label would
+      ...spacings.mbMi,
       minHeight: 24
     },
+    sliderRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      // The slider lifts itself above the amount field so its value bubble isn't drawn behind it
+      // (see Input's styles), and this row has to carry that lift or it only applies within itself
+      zIndex: 11
+    },
+    maxButton: { ...spacings.mlSm },
     switchAmountFieldMode: {
       ...flexbox.flex1,
       minWidth: 0
@@ -46,20 +60,32 @@ const getStyles = (theme: ThemeProps) =>
       borderRadius: 10,
       backgroundColor: theme.primaryAccent100
     },
-    amountInput: {
-      ...spacings.mbSm
+    tokenRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...spacings.mbSm,
+      columnGap: SPACING_SM
     },
-    amountInputWrapper: {
-      height: 48,
-      ...spacings.phSm,
-      backgroundColor: theme.tertiaryBackground,
-      borderRadius: 14,
-      borderWidth: 0
+    // Matches the closed token select on the swap screen (see Select's styles), minus the arrow
+    token: {
+      ...flexbox.flex1,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...spacings.plTy,
+      ...spacings.prSm,
+      height: SELECT_SIZE_TO_HEIGHT.md,
+      ...common.borderRadiusPrimary,
+      backgroundColor: theme.primaryBackground
     },
-    amountNativeInput: {
-      color: theme.primaryText,
-      fontSize: 16,
-      textAlign: 'left'
+    tokenLabel: {
+      ...flexbox.flex1,
+      ...spacings.mlTy
+    },
+    amountColumn: {
+      ...flexbox.flex1,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyEnd
     }
   })
 

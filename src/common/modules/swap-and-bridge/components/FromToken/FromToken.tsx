@@ -6,6 +6,7 @@ import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
 import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
+import spacings from '@common/styles/spacings'
 import { getTokenId } from '@common/utils/token'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
@@ -109,9 +110,11 @@ const FromToken: FC<Props> = ({
       inputTestId="from-amount-input-sab"
       selectTestId="from-token-select"
       simulationFailed={simulationFailed}
+      // The You receive panel follows right below, so the slider needs room before this one ends
+      sliderStyle={spacings.pbTy}
     />
   ) : (
-    <SkeletonLoader width="100%" height={161} />
+    <SkeletonLoader width="100%" height={185} />
   )
 }
 
