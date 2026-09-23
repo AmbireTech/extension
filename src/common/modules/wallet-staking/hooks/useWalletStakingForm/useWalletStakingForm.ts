@@ -239,10 +239,6 @@ const useWalletStakingForm = () => {
   // because a USD zero leaves the token amount empty rather than at zero
   const amountFieldValue = amountFieldMode === 'fiat' ? fiatAmount : amount
   const hasZeroAmount = amountFieldValue !== '' && Number(amountFieldValue) === 0
-  const balanceLabel = useMemo(
-    () => formatDecimals(Number(formatUnits(balance, TOKEN_DECIMALS)), 'amount'),
-    [balance]
-  )
   const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const amountInUsd = useMemo(() => {
     const usdAmount = Number(amount || 0) * walletPrice
@@ -694,7 +690,6 @@ const useWalletStakingForm = () => {
     amountInToken,
     amountInWei,
     balance,
-    balanceLabel,
     tokenSymbol,
     stkWalletBalance,
     hasInsufficientBalance,

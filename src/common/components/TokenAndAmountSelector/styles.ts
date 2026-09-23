@@ -9,6 +9,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create({
+    // A ring in the panel's own colour until there is an error, so the panel doesn't resize for one
     outerContainer: {
       borderWidth: 2,
       borderRadius: BORDER_RADIUS_PRIMARY,
@@ -18,9 +19,20 @@ const getStyles = (theme: ThemeProps) =>
     outerContainerError: {
       borderColor: theme.errorBackground
     },
+    container: {
+      // magic number to match the curve of the outer container
+      // which is with borderRadius: 16
+      borderRadius: 13,
+      ...spacings.pvSm,
+      ...spacings.prSm
+    },
     containerError: {
       borderWidth: 1,
       borderColor: theme.errorDecorative
+    },
+    message: {
+      ...spacings.mlMi,
+      ...spacings.mtMi
     },
     balanceRow: {
       ...flexbox.directionRow,
@@ -56,6 +68,9 @@ const getStyles = (theme: ThemeProps) =>
       // past the middle of the row and a gap here would push the amount out of the panel
       columnGap: isWeb ? 0 : SPACING_SM
     },
+    tokenRowEven: {
+      columnGap: SPACING_SM
+    },
     // The select ends on the right edge of the switch tokens button, which sits half its width past
     // the middle of the panel. This column gives up exactly that much through a negative margin, so
     // the select's column - a plain flex1 taking whatever is left of the row - reaches it. A select
@@ -72,6 +87,17 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.flex1,
       maxWidth: '40%'
     },
+    // An even split: the amount gets the same width as the token beside it
+    evenAmountColumn: {
+      ...flexbox.flex1
+    },
+    // The amount and whatever the caller shows beside it
+    amount: {
+      ...flexbox.flex1,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
+    },
+    amountAccessory: { ...spacings.mlSm },
     // The mirror of the above, for a column that hangs off the right edge of the row: it starts on
     // the same line the select column ends on. Padding is enough here, because it shrinks a
     // `width: 100%` select rather than having to grow one.
@@ -89,4 +115,5 @@ const getStyles = (theme: ThemeProps) =>
     },
     maxButton: { ...spacings.mlSm }
   })
+
 export default getStyles
