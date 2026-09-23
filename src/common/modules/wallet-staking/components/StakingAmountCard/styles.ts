@@ -3,11 +3,15 @@ import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 import { SELECT_SIZE_TO_HEIGHT } from '@common/components/Select/styles'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
+  amountCardOuter: ViewStyle
+  amountCardOuterError: ViewStyle
   amountCard: ViewStyle
+  amountCardError: ViewStyle
+  errorMessage: TextStyle
   balanceRow: ViewStyle
   switchAmountFieldMode: ViewStyle
   switchAmountFieldModeValue: TextStyle
@@ -22,12 +26,30 @@ interface Styles {
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
+    // A ring in the card's own colour until there is an error, so the card doesn't resize for one
+    amountCardOuter: {
+      borderWidth: 2,
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      borderColor: theme.secondaryBackground,
+      overflow: 'hidden'
+    },
+    amountCardOuterError: {
+      borderColor: theme.errorBackground
+    },
     amountCard: {
       ...spacings.phSm,
       ...spacings.pvSm,
-      ...spacings.mbSm,
       backgroundColor: theme.secondaryBackground,
-      borderRadius: 16
+      // Follows the curve of the ring around it, as SendToken's panel does
+      borderRadius: BORDER_RADIUS_PRIMARY - 3
+    },
+    amountCardError: {
+      borderWidth: 1,
+      borderColor: theme.errorDecorative
+    },
+    errorMessage: {
+      ...spacings.mlMi,
+      ...spacings.mtMi
     },
     balanceRow: {
       ...flexbox.directionRow,

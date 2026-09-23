@@ -1,4 +1,4 @@
-import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
+import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -10,8 +10,7 @@ interface Styles {
   stakingFormContainer: ViewStyle
   loadingState: ViewStyle
   disabledStakingForm: ViewStyle
-  details: ViewStyle
-  validation: TextStyle
+  amountSection: ViewStyle
 }
 
 const getStyles = () =>
@@ -46,13 +45,8 @@ const getStyles = () =>
     disabledStakingForm: {
       opacity: 0.18
     },
-    details: {
-      ...spacings.phSm
-    },
-    validation: {
-      ...spacings.mtTy,
-      ...spacings.mlSm,
-      minHeight: 16
+    amountSection: {
+      ...spacings.mbSm
     }
   })
 

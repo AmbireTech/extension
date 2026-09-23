@@ -31,7 +31,6 @@ const StakingForm = ({ form }: Props) => {
   const {
     mode,
     onSelectMode,
-    hasInsufficientBalance,
     isMissingWithdrawalDetails,
     isPendingWithdrawalMode,
     isWithdrawalReady,
@@ -76,13 +75,10 @@ const StakingForm = ({ form }: Props) => {
               pointerEvents={shouldDisableStakingForm ? 'none' : 'auto'}
               style={shouldDisableStakingForm ? styles.disabledStakingForm : undefined}
             >
-              <StakingAmountCard form={form} />
-              <StakingDetailsCard form={form} />
-              <View style={styles.details}>
-                <Text fontSize={11} appearance="errorText" style={styles.validation}>
-                  {hasInsufficientBalance ? t('The amount is higher than your balance.') : ''}
-                </Text>
+              <View style={styles.amountSection}>
+                <StakingAmountCard form={form} />
               </View>
+              <StakingDetailsCard form={form} />
             </View>
           )}
         </View>

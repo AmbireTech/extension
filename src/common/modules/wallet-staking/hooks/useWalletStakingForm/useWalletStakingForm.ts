@@ -235,6 +235,10 @@ const useWalletStakingForm = () => {
   }, [walletPrice, xWalletShareValue, xWalletToken])
   const amountInWei = getWalletStakingAmountInWei(amount)
   const hasInsufficientBalance = amountInWei > balance
+  // A zero typed into the field, as opposed to an empty one. Read from the unit the field shows,
+  // because a USD zero leaves the token amount empty rather than at zero
+  const amountFieldValue = amountFieldMode === 'fiat' ? fiatAmount : amount
+  const hasZeroAmount = amountFieldValue !== '' && Number(amountFieldValue) === 0
   const balanceLabel = useMemo(
     () => formatDecimals(Number(formatUnits(balance, TOKEN_DECIMALS)), 'amount'),
     [balance]
@@ -694,6 +698,7 @@ const useWalletStakingForm = () => {
     tokenSymbol,
     stkWalletBalance,
     hasInsufficientBalance,
+    hasZeroAmount,
     onMaxPress: handleMaxPress,
     onSliderValueChange: handleSliderValueChange,
     sliderTierMarks,

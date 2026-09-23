@@ -53,104 +53,122 @@ const StakingAmountCard = ({ form }: Props) => {
     onFiatAmountChange,
     switchAmountFieldMode,
     onMaxPress,
-    onSliderValueChange
+    onSliderValueChange,
+    hasInsufficientBalance,
+    hasZeroAmount
   } = form
   const tokenAddress = mode === 'stake' ? WALLET_TOKEN : STK_WALLET
 
+  const errorMessage = hasInsufficientBalance
+    ? t('The amount is higher than your balance.')
+    : hasZeroAmount
+      ? t('The amount must be greater than 0.')
+      : ''
+
+  // Bordered and followed by its error the way Swap & Bridge's You send panel is (see SendToken)
   return (
-    <View style={styles.amountCard}>
-      <View style={styles.balanceRow}>
-        <BalanceLabel balanceLabel={balanceLabel} tokenSymbol={tokenSymbol} />
-        <View style={styles.switchAmountFieldMode}>
-          <HoverablePressable
-            onPress={switchAmountFieldMode}
-            disabled={isAmountFieldModeSwitchDisabled}
-            accessibilityLabel={t('Switch between token and USD amount')}
-            testID="wallet-staking-switch-amount-field-mode"
-          >
-            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
-              <Text
-                fontSize={12}
-                appearance="secondaryText"
-                numberOfLines={1}
-                weight="medium"
-                ellipsizeMode="tail"
-                style={styles.switchAmountFieldModeValue}
+    <>
+      <View style={[styles.amountCardOuter, !!errorMessage && styles.amountCardOuterError]}>
+        <View style={[styles.amountCard, !!errorMessage && styles.amountCardError]}>
+          <View style={styles.balanceRow}>
+            <BalanceLabel balanceLabel={balanceLabel} tokenSymbol={tokenSymbol} />
+            <View style={styles.switchAmountFieldMode}>
+              <HoverablePressable
+                onPress={switchAmountFieldMode}
+                disabled={isAmountFieldModeSwitchDisabled}
+                accessibilityLabel={t('Switch between token and USD amount')}
+                testID="wallet-staking-switch-amount-field-mode"
               >
-                {amountFieldMode === 'token' ? amountInUsd : amountInToken}
-              </Text>
-              <View style={styles.switchAmountFieldModeIcon}>
-                <FlipIcon width={11} height={11} color={theme.primary} />
+                <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
+                  <Text
+                    fontSize={12}
+                    appearance="secondaryText"
+                    numberOfLines={1}
+                    weight="medium"
+                    ellipsizeMode="tail"
+                    style={styles.switchAmountFieldModeValue}
+                  >
+                    {amountFieldMode === 'token' ? amountInUsd : amountInToken}
+                  </Text>
+                  <View style={styles.switchAmountFieldModeIcon}>
+                    <FlipIcon width={11} height={11} color={theme.primary} />
+                  </View>
+                </View>
+              </HoverablePressable>
+            </View>
+          </View>
+
+          <View style={styles.tokenRow}>
+            {/* Laid out like the swap screen's token select, but the token is fixed by the mode */}
+            <View style={styles.token}>
+              <TokenIcon
+                containerHeight={28}
+                containerWidth={28}
+                width={24}
+                height={24}
+                networkSize={12}
+                withContainer
+                withNetworkIcon
+                address={tokenAddress}
+                chainId={ETHEREUM_CHAIN_ID}
+              />
+              <View style={styles.tokenLabel}>
+                <Text fontSize={isMobile ? 14 : 16} weight="semiBold" numberOfLines={1}>
+                  {tokenSymbol}
+                </Text>
+                <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
+                  {t('on Ethereum')}
+                </Text>
               </View>
             </View>
-          </HoverablePressable>
-        </View>
-      </View>
-
-      <View style={styles.tokenRow}>
-        {/* Laid out like the swap screen's token select, but the token is fixed by the mode */}
-        <View style={styles.token}>
-          <TokenIcon
-            containerHeight={28}
-            containerWidth={28}
-            width={24}
-            height={24}
-            networkSize={12}
-            withContainer
-            withNetworkIcon
-            address={tokenAddress}
-            chainId={ETHEREUM_CHAIN_ID}
-          />
-          <View style={styles.tokenLabel}>
-            <Text fontSize={isMobile ? 14 : 16} weight="semiBold" numberOfLines={1}>
-              {tokenSymbol}
-            </Text>
-            <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-              {t('on Ethereum')}
-            </Text>
+            <View style={styles.amountColumn}>
+              <AmountInput
+                type={amountFieldMode}
+                value={amountFieldMode === 'fiat' ? fiatAmount : amount}
+                onChangeText={amountFieldMode === 'fiat' ? onFiatAmountChange : onTokenAmountChange}
+                precision={amountFieldMode === 'fiat' ? FIAT_DECIMALS : TOKEN_DECIMALS}
+                inputTestId="wallet-staking-amount-input"
+                // Matches the amount the swap screen's You send panel renders
+                fontSize={20}
+              />
+              {shouldShowBalanceRatioProgress && (
+                <View style={spacings.mlSm}>
+                  <BalanceRatioProgress
+                    segments={balanceRatioSegments}
+                    testID="wallet-staking-balance-ratio"
+                    size={28}
+                    strokeWidth={4}
+                  />
+                </View>
+              )}
+            </View>
           </View>
-        </View>
-        <View style={styles.amountColumn}>
-          <AmountInput
-            type={amountFieldMode}
-            value={amountFieldMode === 'fiat' ? fiatAmount : amount}
-            onChangeText={amountFieldMode === 'fiat' ? onFiatAmountChange : onTokenAmountChange}
-            precision={amountFieldMode === 'fiat' ? FIAT_DECIMALS : TOKEN_DECIMALS}
-            inputTestId="wallet-staking-amount-input"
-            // Matches the amount the swap screen's You send panel renders
-            fontSize={20}
-          />
-          {shouldShowBalanceRatioProgress && (
-            <View style={spacings.mlSm}>
-              <BalanceRatioProgress
-                segments={balanceRatioSegments}
-                testID="wallet-staking-balance-ratio"
-                size={28}
-                strokeWidth={4}
+
+          <View style={styles.sliderRow}>
+            <View style={flexbox.flex1}>
+              <AmountSlider
+                value={amountInWei}
+                maximumValue={balance}
+                onValueChange={onSliderValueChange}
+                tierOffset={mode === 'stake' ? stkWalletBalance : 0n}
+                marks={sliderTierMarks}
               />
             </View>
-          )}
+            <MaxButton
+              onPress={onMaxPress}
+              disabled={balance <= 0n}
+              testID="wallet-staking-max-button"
+              style={styles.maxButton}
+            />
+          </View>
         </View>
       </View>
-
-      <View style={styles.sliderRow}>
-        <View style={flexbox.flex1}>
-          <AmountSlider
-            value={amountInWei}
-            maximumValue={balance}
-            onValueChange={onSliderValueChange}
-            tierOffset={mode === 'stake' ? stkWalletBalance : 0n}
-            marks={sliderTierMarks}
-          />
-        </View>
-        <MaxButton
-          onPress={onMaxPress}
-          disabled={balance <= 0n}
-          testID="wallet-staking-max-button"
-          style={styles.maxButton}
-        />
-      </View>
-    </View>
+      {!!errorMessage && (
+        <Text fontSize={12} appearance="errorText" style={styles.errorMessage}>
+          {errorMessage}
+        </Text>
+      )}
+    </>
   )
 }
 
