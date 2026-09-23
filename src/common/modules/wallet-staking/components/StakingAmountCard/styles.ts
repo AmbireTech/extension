@@ -1,8 +1,9 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import { isWeb } from '@common/config/env'
-import spacings from '@common/styles/spacings'
+import { SELECT_SIZE_TO_HEIGHT } from '@common/components/Select/styles'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
@@ -13,14 +14,11 @@ interface Styles {
   switchAmountFieldModeIcon: ViewStyle
   sliderRow: ViewStyle
   maxButton: ViewStyle
-  amountInput: ViewStyle
-  amountInputWrapper: ViewStyle
-  amountInputField: ViewStyle
-  amountNativeInput: TextStyle
+  tokenRow: ViewStyle
+  token: ViewStyle
+  tokenLabel: ViewStyle
+  amountColumn: ViewStyle
 }
-
-// Wider than the widest amount a balance can hold, so the amount never has to wrap
-const SINGLE_ROW_AMOUNT_WIDTH = 1000
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
@@ -62,33 +60,32 @@ const getStyles = (theme: ThemeProps) =>
       borderRadius: 10,
       backgroundColor: theme.primaryAccent100
     },
-    amountInput: {
-      ...spacings.mbSm
+    tokenRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...spacings.mbSm,
+      columnGap: SPACING_SM
     },
-    amountInputWrapper: {
-      height: 48,
-      ...spacings.phSm,
-      backgroundColor: theme.tertiaryBackground,
-      borderRadius: 14,
-      borderWidth: 0,
-      // An amount longer than the field is clipped at its end instead of spilling out of it
-      overflow: 'hidden'
+    // Matches the closed token select on the swap screen (see Select's styles), minus the arrow
+    token: {
+      ...flexbox.flex1,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...spacings.plTy,
+      ...spacings.prSm,
+      height: SELECT_SIZE_TO_HEIGHT.md,
+      ...common.borderRadiusPrimary,
+      backgroundColor: theme.primaryBackground
     },
-    // Input pads itself horizontally on top of the wrapper's padding, which would leave the value
-    // sitting twice as far from the left edge as the token symbol sits from the right one
-    amountInputField: {
-      ...spacings.pl0,
-      // Bounds the value to the space left of the token symbol and clips whatever runs past it
-      overflow: 'hidden'
+    tokenLabel: {
+      ...flexbox.flex1,
+      ...spacings.mlTy
     },
-    amountNativeInput: {
-      color: theme.primaryText,
-      fontSize: 16,
-      textAlign: 'left',
-      // Sized to fit the space beside the token symbol, a longer amount wraps onto a second row on
-      // native. Room for any amount instead keeps it on one row, and amountInputField clips what
-      // runs past. Left alone on web, where the field doesn't wrap and needs to follow the caret
-      ...(isWeb ? {} : { width: SINGLE_ROW_AMOUNT_WIDTH })
+    amountColumn: {
+      ...flexbox.flex1,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyEnd
     }
   })
 
