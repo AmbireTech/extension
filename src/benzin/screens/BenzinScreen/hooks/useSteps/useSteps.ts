@@ -87,6 +87,7 @@ export interface StepsData {
   blockData: null | Block
   finalizedStatus: FinalizedStatusType
   feePaidWith: FeePaidWith | null
+  tokenPricesEnabled: boolean
   balanceChanges?: BalanceChange[]
   /** Set when the balance changes could not be read, so the UI can say so instead of waiting. */
   hasBalanceChangesFailed: boolean
@@ -1202,6 +1203,7 @@ const useSteps = ({
     blockData,
     finalizedStatus,
     feePaidWith,
+    tokenPricesEnabled,
     balanceChanges,
     hasBalanceChangesFailed,
     calls: calls || null,
