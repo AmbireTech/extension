@@ -5,15 +5,13 @@ import common from '@common/styles/utils/common'
 
 interface Styles {
   centeredText: TextStyle
+  rightAlignedText: TextStyle
   tierCard: ViewStyle
   currentTierCard: ViewStyle
-  maximumTierCard: ViewStyle
+  currentMaximumTierCard: ViewStyle
   tierDetails: ViewStyle
-  feeDetails: ViewStyle
   currentTierBadge: ViewStyle
   currentTierBadgeText: TextStyle
-  maximumTierBadge: ViewStyle
-  maximumTierBadgeText: TextStyle
   cancelButton: ViewStyle
   stakeButton: ViewStyle
   actionButtonText: TextStyle
@@ -25,6 +23,9 @@ const getStyles = (theme: ThemeProps) =>
     centeredText: {
       textAlign: 'center'
     },
+    rightAlignedText: {
+      textAlign: 'right'
+    },
     tierCard: {
       ...common.borderRadiusSecondary,
       backgroundColor: theme.secondaryBackground
@@ -34,29 +35,18 @@ const getStyles = (theme: ThemeProps) =>
       borderColor: theme.neutral600,
       borderWidth: 1
     },
-    maximumTierCard: {
-      backgroundColor: theme.successBackground,
+    currentMaximumTierCard: {
       borderColor: theme.successText,
       borderWidth: 1
     },
     tierDetails: {
       minWidth: 0
     },
-    feeDetails: {
-      flexShrink: 0
-    },
     currentTierBadge: {
       backgroundColor: theme.neutral800
     },
     currentTierBadgeText: {
       color: theme.primaryBackground,
-      fontSize: 11
-    },
-    maximumTierBadge: {
-      backgroundColor: theme.successText
-    },
-    maximumTierBadgeText: {
-      color: theme.successBackground,
       fontSize: 11
     },
     cancelButton: {
