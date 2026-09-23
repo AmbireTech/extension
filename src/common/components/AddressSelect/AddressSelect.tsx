@@ -200,18 +200,12 @@ const SelectedMenuOption: React.FC<{
         button={
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
-        buttonProps={{
-          onPress: () => {
-            if (!address || filteredContacts.length) {
-              setIsMenuOpen(true)
-            }
-          }
-        }}
+        buttonProps={{ onPress: () => setIsMenuOpen(true) }}
         inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
         buttonStyle={{
           ...spacings.pv0,
-          ...spacings.pl,
-          ...spacings.prTy,
+          // Even padding keeps the clear button's press area centered on its icon
+          ...(address ? spacings.phTy : { ...spacings.pl, ...spacings.prTy }),
           ...spacings.mr0,
           ...spacings.ml0
         }}
