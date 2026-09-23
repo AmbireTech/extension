@@ -72,6 +72,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
   )
   const networks = useNetworks({
     acc: account,
+    allowUndeployedSafeOnChainId: fromSelectedToken?.chainId,
     additionalCheck: {
       chainIds: supportedChainIds,
       reason: t(
