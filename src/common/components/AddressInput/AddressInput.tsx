@@ -155,7 +155,6 @@ const AddressInput: React.FC<Props> = ({
                       onPress={handleCopyResolvedAddress}
                       {...bindAnim}
                     >
-                      {/* flex1 here makes Yoga stretch the row to the full width, squeezing the input to nothing */}
                       <Text style={{ flexShrink: 1 }} numberOfLines={1}>
                         <Text
                           style={{
