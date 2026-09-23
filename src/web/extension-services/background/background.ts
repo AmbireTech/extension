@@ -88,6 +88,7 @@ import {
 } from './CrashAnalytics'
 import { sendCriticalControllerStates } from './criticalControllerStates'
 import { getReportableAction } from './getReportableAction'
+import { isJsonSyntaxError } from './isJsonSyntaxError'
 
 const debugLogs: {
   key: string
@@ -207,6 +208,10 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
     integrations: [Sentry.extraErrorDataIntegration()],
     beforeSend(event, hint) {
       const error = hint.originalException
+
+      // Our services return HTML error pages during outages. The callers already retry, and
+      // reporting every failed parse would only flood Sentry.
+      if (isJsonSyntaxError(error)) return null
 
       // Custom handling for ProviderError to adjust event data and fingerprinting
       // Docs: https://docs.sentry.io/platforms/javascript/enriching-events/fingerprinting/#group-errors-with-greater-granularity
