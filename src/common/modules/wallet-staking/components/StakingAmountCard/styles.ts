@@ -18,6 +18,7 @@ interface Styles {
   token: ViewStyle
   tokenLabel: ViewStyle
   amountColumn: ViewStyle
+  amountInputWrapper: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -86,6 +87,10 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifyEnd
+    },
+    // As tall as the token beside it, so the whole stretch next to the token focuses the input
+    amountInputWrapper: {
+      height: SELECT_SIZE_TO_HEIGHT.md
     }
   })
 
