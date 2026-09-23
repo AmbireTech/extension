@@ -117,9 +117,6 @@ const StakingAmountCard = ({ form }: Props) => {
             onChangeText={amountFieldMode === 'fiat' ? onFiatAmountChange : onTokenAmountChange}
             precision={amountFieldMode === 'fiat' ? FIAT_DECIMALS : TOKEN_DECIMALS}
             inputTestId="wallet-staking-amount-input"
-            // A wrapper style of its own lets the input fill the column instead of hugging its value
-            inputWrapperStyle={styles.amountInputWrapper}
-            textAlign="right"
             // Matches the amount the swap screen's You send panel renders
             fontSize={20}
           />

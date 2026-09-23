@@ -279,7 +279,7 @@ const SendToken: FC<Props> = ({
                 {amountInput}
               </View>
             ) : (
-              amountInput
+              <View style={styles.nativeAmountColumn}>{amountInput}</View>
             )}
           </View>
           <View style={[styles.sliderRow, sliderStyle]}>

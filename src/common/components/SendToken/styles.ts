@@ -67,6 +67,11 @@ const getStyles = (theme: ThemeProps) =>
       // gap the row itself no longer carries
       paddingLeft: SWITCH_TOKENS_BUTTON_OVERHANG + SPACING_SM
     },
+    // On native the select keeps the wider part of the row, and the amount lines up at its end
+    nativeAmountColumn: {
+      ...flexbox.flex1,
+      maxWidth: '40%'
+    },
     // The mirror of the above, for a column that hangs off the right edge of the row: it starts on
     // the same line the select column ends on. Padding is enough here, because it shrinks a
     // `width: 100%` select rather than having to grow one.
