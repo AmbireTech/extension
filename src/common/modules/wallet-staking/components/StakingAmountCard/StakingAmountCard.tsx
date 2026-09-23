@@ -90,10 +90,11 @@ const StakingAmountCard = ({ form }: Props) => {
         borderless
         containerStyle={styles.amountInput}
         inputWrapperStyle={styles.amountInputWrapper}
+        inputStyle={styles.amountInputField}
         nativeInputStyle={styles.amountNativeInput}
         childrenBeforeButtons={
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
+            <Text fontSize={16} appearance="secondaryText" style={spacings.mlSm}>
               {amountFieldMode === 'fiat' ? t('USD') : tokenSymbol}
             </Text>
             {shouldShowBalanceRatioProgress && (

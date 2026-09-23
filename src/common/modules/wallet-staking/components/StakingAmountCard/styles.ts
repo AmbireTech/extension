@@ -14,6 +14,7 @@ interface Styles {
   maxButton: ViewStyle
   amountInput: ViewStyle
   amountInputWrapper: ViewStyle
+  amountInputField: ViewStyle
   amountNativeInput: TextStyle
 }
 
@@ -66,6 +67,11 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.tertiaryBackground,
       borderRadius: 14,
       borderWidth: 0
+    },
+    // Input pads itself horizontally on top of the wrapper's padding, which would leave the value
+    // sitting twice as far from the left edge as the token symbol sits from the right one
+    amountInputField: {
+      ...spacings.pl0
     },
     amountNativeInput: {
       color: theme.primaryText,
