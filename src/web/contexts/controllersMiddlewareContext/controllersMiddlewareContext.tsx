@@ -97,6 +97,8 @@ if (isExtension) {
     pm.addConnectListener(pm.ports[0].id, (messageType, { method, params, forceEmit }) => {
       if (method === 'portReady' && !backgroundReady) {
         backgroundReady = true
+        // Connected, so a later retries exhaustion is a new failure that deserves its own reload
+        sessionStorage.removeItem('connectRetriesExhaustedReloaded')
         // The 'sw-started' broadcast that normally triggers recovery is a single best-effort
         // message the fresh background sends once - if this view misses it, nothing else would
         // ever tell it the port died. onDisconnect is a browser-level event fired reliably on
@@ -175,9 +177,10 @@ if (isExtension) {
     // Use at least 1000ms; on slower PCs, background responses can be slightly delayed,
     // causing multiple recursive connectPort calls and slowing down window initialization.
     // Once MAX_RETRIES is reached, it stops retrying. Recovering from there (below) reloads at
-    // most once per session, the same way handleBackgroundDisconnected does for a dead port -
-    // if the reloaded view hits this again, retrying further wouldn't fix a problem that
-    // survived a fresh reload, so it's left to the fatal Sentry capture to surface instead.
+    // most once per failure (the flag is cleared on 'portReady'), the same way
+    // handleBackgroundDisconnected does for a dead port - if the reloaded view hits this again,
+    // retrying further wouldn't fix a problem that survived a fresh reload, so it's left to the
+    // fatal Sentry capture to surface instead.
     setTimeout(() => {
       if (!backgroundReady && retries === MAX_RETRIES) {
         captureMessage(

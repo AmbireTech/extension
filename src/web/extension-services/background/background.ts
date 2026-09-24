@@ -709,10 +709,14 @@ const setupStorageForTesting = async () => {
 // so UI ports (popup, side panel, tab) can connect without waiting for a ping.
 // Kept as a promise (instead of fire-and-forget) so the `onConnect` listener below can await
 // it - see the comment there for why.
-const initPromise = init().catch((err) => {
-  captureBackgroundException(err)
-  console.error(err)
-})
+// Resolves to whether `init()` succeeded - it never rejects.
+const initPromise = init()
+  .then(() => true)
+  .catch((err) => {
+    captureBackgroundException(err)
+    console.error(err)
+    return false
+  })
 
 // Registered synchronously here, at the top level of the script, rather than inside `init()`.
 // Chrome requires MV3 event listeners to be added synchronously during the service worker's
@@ -738,10 +742,19 @@ browser.runtime.onConnect.addListener(async (port: Port) => {
     return
   }
 
-  await initPromise
-  // `initPromise` never rejects (errors are caught above), so this is how a failed `init()`
-  // (leaving `pm`/`mainCtrl` etc. unassigned) is detected here.
-  if (!pm) {
+  // The view can close while `init()` is still running. Its onDisconnect would then fire before
+  // the PortMessenger listener below exists, leaving a dead port registered for good.
+  let disconnectedWhileWaitingForInit = false
+  const onDisconnectWhileWaitingForInit = () => {
+    disconnectedWhileWaitingForInit = true
+  }
+  port.onDisconnect.addListener(onDisconnectWhileWaitingForInit)
+  const isInitSuccessful = await initPromise
+  port.onDisconnect.removeListener(onDisconnectWhileWaitingForInit)
+  if (disconnectedWhileWaitingForInit) return
+
+  // A failed `init()` can leave `pm`/`mainCtrl` etc. unassigned or only partially assigned.
+  if (!isInitSuccessful) {
     port.disconnect()
     return
   }
