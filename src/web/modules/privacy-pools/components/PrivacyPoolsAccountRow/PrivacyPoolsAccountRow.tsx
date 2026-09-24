@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react'
-import { View } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { View, ViewStyle } from 'react-native'
 
 import BadgeWithPreset from '@common/components/BadgeWithPreset'
+import Dropdown from '@common/components/Dropdown'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -19,9 +20,15 @@ const selectMainStatuses = (state: AllControllersMappingType['MainController']) 
 
 type Props = {
   account: PrivacyPoolsAccountDisplay
-  isSelected: boolean
-  onSelect: (seedId: string) => void
+  isSelected?: boolean
+  /** Makes the row select the account when pressed. Left out, the row is only informative. */
+  onSelect?: (seedId: string) => void
+  /** Adds a "Remove account" option to the row's menu. */
+  onRemove?: (account: PrivacyPoolsAccountDisplay) => void
+  containerStyle?: ViewStyle
 }
+
+const REMOVE_OPTION_VALUE = 'remove'
 
 /**
  * A Privacy Pools account in the account list - the counterpart of `Account`, with the same
@@ -30,7 +37,13 @@ type Props = {
  * The balance is a dash: it is only known once the account is opened and synced, and a stale or
  * guessed figure next to real ones would be misleading.
  */
-const PrivacyPoolsAccountRow = ({ account, isSelected, onSelect }: Props) => {
+const PrivacyPoolsAccountRow = ({
+  account,
+  isSelected = false,
+  onSelect,
+  onRemove,
+  containerStyle
+}: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getAccountStyles)
   const { state: mainStatuses, dispatch: mainDispatch } = useController(
@@ -42,7 +55,11 @@ const PrivacyPoolsAccountRow = ({ account, isSelected, onSelect }: Props) => {
     values: { from: theme.primaryBackground, to: theme.secondaryBackground }
   })
 
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
+
   const handlePress = useCallback(() => {
+    if (!onSelect) return
+
     if (!isSelected) {
       mainDispatch({
         type: 'method',
@@ -53,16 +70,36 @@ const PrivacyPoolsAccountRow = ({ account, isSelected, onSelect }: Props) => {
     onSelect(account.seedId)
   }, [account.seedId, isSelected, mainDispatch, onSelect])
 
+  const menuOptions = useMemo(
+    () => [
+      {
+        label: t('Remove account'),
+        value: REMOVE_OPTION_VALUE,
+        style: { color: theme.errorDecorative }
+      }
+    ],
+    [t, theme.errorDecorative]
+  )
+
+  const handleMenuSelect = useCallback(
+    (item: { value: string }) => {
+      if (item.value === REMOVE_OPTION_VALUE) onRemove?.(account)
+    },
+    [account, onRemove]
+  )
+
   return (
     <AnimatedPressable
-      disabled={mainStatuses.selectAccount !== 'INITIAL'}
+      disabled={!onSelect || mainStatuses.selectAccount !== 'INITIAL'}
       onPress={handlePress}
-      {...bindAnim}
+      {...(onSelect ? bindAnim : {})}
       testID="privacy-pools-account"
       style={[
         styles.accountContainer,
-        animStyle,
-        isSelected && { backgroundColor: theme.secondaryBackground }
+        // @ts-expect-error: Web style
+        onSelect ? animStyle : { cursor: 'default' },
+        onSelect && isSelected && { backgroundColor: theme.secondaryBackground },
+        containerStyle
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
@@ -89,6 +126,17 @@ const PrivacyPoolsAccountRow = ({ account, isSelected, onSelect }: Props) => {
           </View>
         </View>
       </View>
+      {!!onRemove && (
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
+          <Dropdown
+            data={menuOptions}
+            externalPosition={dropdownPosition}
+            setExternalPosition={setDropdownPosition}
+            onSelect={handleMenuSelect}
+            kebabIconProps={{ width: 28, height: 28 }}
+          />
+        </View>
+      )}
     </AnimatedPressable>
   )
 }

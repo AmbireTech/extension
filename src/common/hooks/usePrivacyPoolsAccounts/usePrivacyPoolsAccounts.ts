@@ -17,6 +17,22 @@ export type PrivacyPoolsAccountDisplay = {
   isBackedUp: boolean
 }
 
+/**
+ * The accounts a search matches. They are matched on their name and on what they are, since that
+ * is all they have - there is no address or key to search by.
+ */
+export const filterPrivacyPoolsAccountsBySearch = (
+  accounts: PrivacyPoolsAccountDisplay[],
+  search: string,
+  /** How the kind of account reads in the user's language, e.g. "Privacy Pools". */
+  kindLabel: string
+) => {
+  const query = search.trim().toLowerCase()
+  if (!query) return accounts
+
+  return accounts.filter(({ label }) => `${label} ${kindLabel}`.toLowerCase().includes(query))
+}
+
 const selectPrivacyPoolsAccounts = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.accounts
 const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds

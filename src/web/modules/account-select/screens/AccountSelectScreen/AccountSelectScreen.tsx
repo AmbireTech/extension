@@ -17,7 +17,9 @@ import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
-import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
+import usePrivacyPoolsAccounts, {
+  filterPrivacyPoolsAccountsBySearch
+} from '@common/hooks/usePrivacyPoolsAccounts'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
@@ -114,16 +116,10 @@ const AccountSelectScreen = () => {
     []
   )
 
-  // Matched on their name and on what they are, since that is all they have - there is no address
-  // or key to search by
-  const filteredPrivacyPoolsAccounts = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    if (!query) return privacyPoolsAccounts
-
-    return privacyPoolsAccounts.filter(({ label }) =>
-      `${label} ${t('Privacy Pools')}`.toLowerCase().includes(query)
-    )
-  }, [privacyPoolsAccounts, search, t])
+  const filteredPrivacyPoolsAccounts = useMemo(
+    () => filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')),
+    [privacyPoolsAccounts, search, t]
+  )
 
   const renderItem = useCallback(
     ({ item: acc }: { item: AccountType }) => {

@@ -19,6 +19,10 @@ import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
 import useNavigation from '@common/hooks/useNavigation'
+import usePrivacyPoolsAccounts, {
+  filterPrivacyPoolsAccountsBySearch,
+  PrivacyPoolsAccountDisplay
+} from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
@@ -29,13 +33,16 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/PrivacyPoolsAccountRow'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
-  const { accounts, control, keyExtractor, getItemLayout } = useAccountsList()
+  const { accounts, control, search, keyExtractor, getItemLayout } = useAccountsList()
+  const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
+  const { dispatch: privacyPoolsDispatch } = useController('PrivacyPoolsController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
@@ -55,6 +62,11 @@ const AccountsSettingsScreen = () => {
     close: closeRemoveAccount
   } = useModalize()
   const {
+    ref: sheetRefRemovePrivacyPoolsAccount,
+    open: openRemovePrivacyPoolsAccount,
+    close: closeRemovePrivacyPoolsAccount
+  } = useModalize()
+  const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
@@ -72,6 +84,8 @@ const AccountsSettingsScreen = () => {
   const [exportImportAccount, setExportImportAccount] = useState<AccountInterface | null>(null)
   const [accountToRemove, setAccountToRemove] = useState<AccountInterface | null>(null)
   const [smartSettingsAccount, setSmartSettingsAccount] = useState<AccountInterface | null>(null)
+  const [privacyPoolsAccountToRemove, setPrivacyPoolsAccountToRemove] =
+    useState<PrivacyPoolsAccountDisplay | null>(null)
   const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
 
   useEffect(() => {
@@ -115,6 +129,10 @@ const AccountsSettingsScreen = () => {
     if (smartSettingsAccount) openAccountSmartSettings()
   }, [openAccountSmartSettings, smartSettingsAccount])
 
+  useEffect(() => {
+    if (privacyPoolsAccountToRemove) openRemovePrivacyPoolsAccount()
+  }, [openRemovePrivacyPoolsAccount, privacyPoolsAccountToRemove])
+
   const shortenAccountAddr = useCallback(() => {
     if (maxElementWidthSize(800)) return undefined
     if (maxElementWidthSize(700) && minElementWidthSize(800)) return 32
@@ -145,6 +163,46 @@ const AccountsSettingsScreen = () => {
     })
     closeRemoveAccount()
   }, [accountToRemove, mainDispatch, closeRemoveAccount])
+
+  const cancelRemovePrivacyPoolsAccount = useCallback(() => {
+    setPrivacyPoolsAccountToRemove(null)
+    closeRemovePrivacyPoolsAccount()
+  }, [closeRemovePrivacyPoolsAccount])
+
+  const removePrivacyPoolsAccount = useCallback(() => {
+    if (!privacyPoolsAccountToRemove) return
+
+    privacyPoolsDispatch({
+      type: 'method',
+      params: { method: 'removeAccount', args: [privacyPoolsAccountToRemove.seedId] }
+    })
+    cancelRemovePrivacyPoolsAccount()
+  }, [cancelRemovePrivacyPoolsAccount, privacyPoolsAccountToRemove, privacyPoolsDispatch])
+
+  // Below the regular accounts and not draggable among them: their order is not stored, and they
+  // have no address for the list to key them by
+  const privacyPoolsAccountRows = useMemo(
+    () =>
+      filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')).map(
+        (privacyPoolsAccount) => (
+          <View
+            key={privacyPoolsAccount.seedId}
+            style={[
+              spacings.mbTy,
+              spacings.plSm,
+              { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
+            ]}
+          >
+            <PrivacyPoolsAccountRow
+              account={privacyPoolsAccount}
+              onRemove={setPrivacyPoolsAccountToRemove}
+              containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
+            />
+          </View>
+        )
+      ),
+    [privacyPoolsAccounts, search, t, theme.secondaryBackground]
+  )
 
   const renderItem = useCallback(
     (
@@ -271,7 +329,12 @@ const AccountsSettingsScreen = () => {
           onDragEnd={handleAccDragEnd}
           renderItem={renderItem}
           getItemLayout={getItemLayout}
-          ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          ListFooterComponent={
+            privacyPoolsAccountRows.length ? <>{privacyPoolsAccountRows}</> : null
+          }
+          ListEmptyComponent={
+            !privacyPoolsAccountRows.length ? <Text>{t('No accounts found')}</Text> : null
+          }
         />
       </View>
       <AccountSmartSettingsBottomSheet
@@ -335,6 +398,45 @@ const AccountsSettingsScreen = () => {
             style={spacings.mtTy}
             text={t('Remove account')}
             onPress={removeAccount}
+          />
+        </View>
+      </BottomSheet>
+      <BottomSheet
+        id="remove-privacy-pools-account-sheet"
+        type="modal"
+        sheetRef={sheetRefRemovePrivacyPoolsAccount}
+        closeBottomSheet={cancelRemovePrivacyPoolsAccount}
+        onBackdropPress={cancelRemovePrivacyPoolsAccount}
+        scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
+        containerInnerWrapperStyles={{ flex: 1 }}
+        style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+          <PanelBackButton onPress={cancelRemovePrivacyPoolsAccount} style={spacings.mrSm} />
+          <PanelTitle
+            title={t('Remove {{ label }}', {
+              label: privacyPoolsAccountToRemove?.label || t('account')
+            })}
+            style={text.left}
+          />
+        </View>
+        <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
+          <Text fontSize={16} weight="medium" style={{ ...spacings.mbSm, textAlign: 'center' }}>
+            {t('Are you sure you want to remove this Privacy Pools account?')}
+          </Text>
+          <Text fontSize={14} appearance="secondaryText" style={{ textAlign: 'center' }}>
+            {t(
+              'Its funds stay in Privacy Pools, tied to its recovery phrase. Adding the account again from the same phrase brings them back.'
+            )}
+          </Text>
+        </View>
+        <View style={flexbox.alignCenter}>
+          <Button
+            testID="confirm-remove-privacy-pools-account-button"
+            type="danger"
+            style={spacings.mtTy}
+            text={t('Remove account')}
+            onPress={removePrivacyPoolsAccount}
           />
         </View>
       </BottomSheet>
