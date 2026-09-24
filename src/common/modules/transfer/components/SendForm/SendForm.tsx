@@ -4,6 +4,7 @@ import { SvgProps } from 'react-native-svg'
 
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import Alert from '@common/components/Alert'
 import Recipient from '@common/components/Recipient'
 import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
@@ -15,7 +16,9 @@ import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
+import { PrivacyPoolsAccountDisplay } from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
+import PrivacyPoolsRecipient from '@common/modules/transfer/components/PrivacyPoolsRecipient'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
@@ -37,6 +40,8 @@ const selectPortfolio = (state: AllControllersMappingType['SelectedAccountContro
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 const selectVerifiedDomainsStatus = (state: AllControllersMappingType['DomainsController']) =>
   state.verifiedDomainsStatus
+const selectDepositAssetConfigs = (state: AllControllersMappingType['PrivacyPoolsController']) =>
+  state.depositAssetConfigs
 
 const SendForm = ({
   addressInputState,
@@ -49,7 +54,9 @@ const SendForm = ({
   setAmountFieldValue,
   addressStateFieldValue,
   setAddressStateFieldValue,
-  amountAdjustmentInfo
+  amountAdjustmentInfo,
+  privacyPoolsAccounts,
+  onSelectPrivacyPoolsRecipient
 }: {
   addressInputState: ReturnType<typeof useAddressInput>
   canUseGasTank: boolean
@@ -62,6 +69,10 @@ const SendForm = ({
   addressStateFieldValue: string
   setAddressStateFieldValue: (value: string) => void
   amountAdjustmentInfo?: AmountAdjustmentInfo | null
+  /** Offered as recipients where Privacy Pools is available - left out, only addresses are. */
+  privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
+  /** Sends to a Privacy Pools account by its recovery phrase id, or back to an address with null. */
+  onSelectPrivacyPoolsRecipient?: (seedId: string | null) => void
 }) => {
   const { validation } = addressInputState
   const {
@@ -75,10 +86,17 @@ const SendForm = ({
       addressState,
       amount: controllerAmount,
       areDefaultsSet,
-      addressPoisoningMatch
+      addressPoisoningMatch,
+      privacyPoolsRecipient,
+      isPreparingPrivacyPoolsDeposit,
+      privacyPoolsDepositError
     },
     dispatch: transferDispatch
   } = useController('TransferController')
+  const { state: depositAssetConfigs } = useController(
+    'PrivacyPoolsController',
+    selectDepositAssetConfigs
+  )
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
 
   const { t } = useTranslation()
@@ -258,6 +276,30 @@ const SendForm = ({
     })
   }, [transferDispatch])
 
+  const privacyPoolsRecipientAccount = useMemo(
+    () =>
+      privacyPoolsRecipient
+        ? (privacyPoolsAccounts || []).find(({ seedId }) => seedId === privacyPoolsRecipient)
+        : undefined,
+    [privacyPoolsAccounts, privacyPoolsRecipient]
+  )
+
+  // Read from the chain for the selected token, so it is known a moment after the token is picked
+  const privacyPoolsFeePercent = useMemo(() => {
+    if (!privacyPoolsRecipient || !selectedToken) return null
+
+    const config =
+      depositAssetConfigs?.[`${selectedToken.chainId}:${selectedToken.address.toLowerCase()}`]
+    if (!config) return null
+
+    return Number(config.vettingFeeBps) / 100
+  }, [depositAssetConfigs, privacyPoolsRecipient, selectedToken])
+
+  const clearPrivacyPoolsRecipient = useCallback(
+    () => onSelectPrivacyPoolsRecipient?.(null),
+    [onSelectPrivacyPoolsRecipient]
+  )
+
   const switchAmountFieldMode = useCallback(() => {
     transferDispatch({
       type: 'method',
@@ -275,7 +317,13 @@ const SendForm = ({
   return (
     <>
       <View>
-        {!isTopUp && (
+        {!isTopUp && !!privacyPoolsRecipient && (
+          <PrivacyPoolsRecipient
+            label={privacyPoolsRecipientAccount?.label || t('Privacy Pools account')}
+            onClear={clearPrivacyPoolsRecipient}
+          />
+        )}
+        {!isTopUp && !privacyPoolsRecipient && (
           <Recipient
             disabled={disableForm}
             address={addressStateFieldValue}
@@ -292,9 +340,22 @@ const SendForm = ({
             isRecipientDomainResolving={addressState.isDomainResolving}
             selectedTokenSymbol={selectedToken?.symbol}
             addressPoisoningMatch={addressPoisoningMatch}
+            privacyPoolsAccounts={privacyPoolsAccounts}
+            onSelectPrivacyPoolsAccount={onSelectPrivacyPoolsRecipient}
           />
         )}
       </View>
+
+      {!!privacyPoolsRecipient && !tokens.length && areDefaultsSet && (
+        <Alert
+          type="info"
+          size="sm"
+          style={spacings.mbTy}
+          text={t(
+            'None of your tokens can be sent to a Privacy Pools account. It accepts ETH, USDC, USDT and a few other tokens on Ethereum.'
+          )}
+        />
+      )}
 
       {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
         <SkeletonLoader width="100%" height={156} />
@@ -326,6 +387,40 @@ const SendForm = ({
           simulationFailed={!!simulationError}
           amountAdjustmentInfo={amountAdjustmentInfo}
         />
+      )}
+
+      {!!privacyPoolsRecipient && !!tokens.length && (
+        <View style={spacings.mtSm}>
+          {!!privacyPoolsDepositError && (
+            <Alert type="error" size="sm" style={spacings.mbTy} text={privacyPoolsDepositError} />
+          )}
+          {isPreparingPrivacyPoolsDeposit && (
+            <Alert
+              type="info"
+              size="sm"
+              style={spacings.mbTy}
+              text={t(
+                'Getting the Privacy Pools account ready. The first time on a network this can take a few minutes.'
+              )}
+            />
+          )}
+          {/* What sets this transfer apart from any other, said before anything is signed: part of
+          it is kept, the sending itself is public, and the funds cannot be spent right away */}
+          <Alert
+            type="info"
+            size="sm"
+            text={
+              privacyPoolsFeePercent !== null
+                ? t(
+                    'Privacy Pools keeps {{fee}}% of what you send. Sending into Privacy Pools is public, but what the account later sends cannot be traced back to this transfer. The funds can be sent on once Privacy Pools approves them, which can take a while.',
+                    { fee: privacyPoolsFeePercent }
+                  )
+                : t(
+                    'Privacy Pools keeps a small part of what you send. Sending into Privacy Pools is public, but what the account later sends cannot be traced back to this transfer. The funds can be sent on once Privacy Pools approves them, which can take a while.'
+                  )
+            }
+          />
+        </View>
       )}
     </>
   )

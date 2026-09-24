@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, Pressable } from 'react-native'
+import { ColorValue, Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/interfaces/addressBook'
@@ -13,6 +13,7 @@ import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
@@ -21,6 +22,7 @@ import AddressScanButton from '@common/components/AddressInput/AddressScanButton
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
 import { InputProps } from '@common/components/Input'
+import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import { SectionedSelect } from '@common/components/Select'
 import {
   RenderSelectedOptionParams,
@@ -33,6 +35,10 @@ import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
+import {
+  filterPrivacyPoolsAccountsBySearch,
+  PrivacyPoolsAccountDisplay
+} from '@common/hooks/usePrivacyPoolsAccounts'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
@@ -66,7 +72,16 @@ export interface AddressSelectProps extends InputProps {
   isRecipientHumanizerKnownTokenOrSmartContract?: boolean
   isRecipientAddressUnknown?: boolean
   addressPoisoningMatch?: AddressPoisoningMatch | null
+  /**
+   * The wallet's Privacy Pools accounts, listed as recipients of their own. They have no address,
+   * so picking one goes to `onSelectPrivacyPoolsAccount` instead of filling the field.
+   */
+  privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
+  onSelectPrivacyPoolsAccount?: (seedId: string) => void
 }
+
+// Marks a list option as a Privacy Pools account rather than an address - see `setAddressWrapped`
+const PRIVACY_POOLS_OPTION_VALUE_PREFIX = 'privacy-pools-account:'
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
   severity: 'error', // Don't let the user submit, just in case there is an error
@@ -263,7 +278,9 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   addressPoisoningMatch,
   bottomSheetTitle,
   withShortenedAddresses,
-  inputBackgroundColor
+  inputBackgroundColor,
+  privacyPoolsAccounts,
+  onSelectPrivacyPoolsAccount
 }) => {
   const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
@@ -317,13 +334,68 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     return results.map((result) => result.item.contact)
   }, [contacts, actualAddress, searchableContacts])
 
+  const filteredPrivacyPoolsAccounts = useMemo(
+    () =>
+      privacyPoolsAccounts && onSelectPrivacyPoolsAccount
+        ? filterPrivacyPoolsAccountsBySearch(
+            privacyPoolsAccounts,
+            isMobile ? '' : actualAddress,
+            t('Privacy Pools')
+          )
+        : [],
+    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, actualAddress, t]
+  )
+
+  // A Privacy Pools account's option value is not an address, so it is looked up rather than
+  // parsed back into the account it stands for
+  const privacyPoolsSeedIdByOptionValue = useMemo(
+    () =>
+      new Map(
+        filteredPrivacyPoolsAccounts.map(({ seedId }) => [
+          `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
+          seedId
+        ])
+      ),
+    [filteredPrivacyPoolsAccounts]
+  )
+
   const setAddressWrapped = useCallback(
     ({ value: newAddress }: Pick<SelectValue, 'value'>) => {
       if (typeof newAddress !== 'string') return
 
+      const privacyPoolsSeedId = privacyPoolsSeedIdByOptionValue.get(newAddress)
+      if (privacyPoolsSeedId) {
+        onSelectPrivacyPoolsAccount?.(privacyPoolsSeedId)
+        return
+      }
+
       setAddress(newAddress)
     },
-    [setAddress]
+    [onSelectPrivacyPoolsAccount, privacyPoolsSeedIdByOptionValue, setAddress]
+  )
+
+  const privacyPoolsAccountOptions = useMemo(
+    () =>
+      filteredPrivacyPoolsAccounts.map(({ seedId, label }) => ({
+        value: `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
+        label: (
+          <View
+            testID={`address-book-privacy-pools-account-${seedId}`}
+            style={[flexbox.directionRow, flexbox.alignCenter]}
+          >
+            <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+            <View style={flexbox.flex1}>
+              <Text fontSize={14} weight="medium" numberOfLines={1}>
+                {label}
+              </Text>
+              <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
+                {t('Privacy Pools account')}
+              </Text>
+            </View>
+          </View>
+        )
+      })),
+    [filteredPrivacyPoolsAccounts, t]
   )
 
   const walletAccountsSourcedContactOptions = useMemo(
@@ -386,7 +458,11 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   )
 
   const sections = useMemo(() => {
-    if (!walletAccountsSourcedContactOptions.length && !manuallyAddedContactOptions.length)
+    if (
+      !walletAccountsSourcedContactOptions.length &&
+      !privacyPoolsAccountOptions.length &&
+      !manuallyAddedContactOptions.length
+    )
       return []
 
     return [
@@ -395,15 +471,22 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
         key: 'my-wallets'
       },
       {
+        data: privacyPoolsAccountOptions,
+        key: 'privacy-pools-accounts'
+      },
+      {
         data: manuallyAddedContactOptions,
         key: 'contacts'
       }
     ]
-  }, [walletAccountsSourcedContactOptions, manuallyAddedContactOptions])
+  }, [walletAccountsSourcedContactOptions, privacyPoolsAccountOptions, manuallyAddedContactOptions])
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: SectionedSelectProps['sections'][0] }) => {
       if (section.data.length === 0) return null
+
+      if (section.key === 'privacy-pools-accounts')
+        return <TitleAndIcon title={t('Privacy Pools accounts')} icon={ShieldInvisibilityIcon} />
 
       return section.key === 'contacts' ? (
         <TitleAndIcon title={t('Address Book')} icon={AddressBookIcon}>
