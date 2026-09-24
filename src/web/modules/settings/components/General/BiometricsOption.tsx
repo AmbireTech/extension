@@ -68,8 +68,6 @@ const BiometricsOption = () => {
     [isBusy, statuses.addSecret, statuses.removeSecret]
   )
 
-  if (!hasPasswordSecret || !canEnableBiometrics) return null
-
   const closePasswordConfirmation = useCallback(() => {
     keystoreDispatch({
       type: 'method',
@@ -127,6 +125,8 @@ const BiometricsOption = () => {
 
     openConfirmPassword()
   }, [disabled, hasBiometricsSecret, keystoreDispatch, openConfirmPassword])
+
+  if (!hasPasswordSecret || !canEnableBiometrics) return null
 
   return (
     <>

@@ -104,24 +104,23 @@ const PasswordConfirmation: React.FC<Props> = ({
 
   const passwordFieldValue = watch('password')
 
-  // The status sits on SUCCESS for a moment, so the effect would fire for every render in that
-  // window. Latched to the one transition, or a caller that can only run once is invoked twice.
-  const hasConfirmedRef = useRef(false)
+  // The unlock status and error are shared by every surface, so only an unlock this component
+  // dispatched may confirm it. Cleared on the first outcome, as the status sits on SUCCESS for a
+  // moment and a caller that can only run once would otherwise be invoked twice.
+  const isAwaitingUnlockRef = useRef(false)
 
   useEffect(() => {
+    if (!isAwaitingUnlockRef.current) return
+
     if (keystoreState.errorMessage) {
+      isAwaitingUnlockRef.current = false
       setError('password', { message: keystoreState.errorMessage })
       return
     }
 
-    if (keystoreState.statuses.unlockWithSecret !== 'SUCCESS') {
-      hasConfirmedRef.current = false
-      return
-    }
+    if (keystoreState.statuses.unlockWithSecret !== 'SUCCESS') return
 
-    if (hasConfirmedRef.current) return
-
-    hasConfirmedRef.current = true
+    isAwaitingUnlockRef.current = false
     onPasswordConfirmed(passwordFieldValue)
   }, [
     keystoreState.errorMessage,
@@ -138,6 +137,7 @@ const PasswordConfirmation: React.FC<Props> = ({
         return
       }
 
+      isAwaitingUnlockRef.current = true
       keystoreDispatch({
         type: 'method',
         params: {
@@ -239,7 +239,7 @@ const PasswordConfirmation: React.FC<Props> = ({
       {isOfferingBiometrics && isUsingBiometrics ? (
         <BiometricsPrompt
           BiometricsIcon={BiometricsIcon}
-          isVerifying={isVerifying}
+          isVerifying={isVerifying || !!isSubmittingCustom}
           errorMessage={biometricsErrorMessage}
           onConfirm={confirmWithBiometrics}
           onSwitchToPassword={switchToPassword}
@@ -305,7 +305,7 @@ const PasswordConfirmation: React.FC<Props> = ({
             {!!isOfferingBiometrics && (
               <SwitchToBiometricsButton
                 BiometricsIcon={BiometricsIcon}
-                isVerifying={isVerifying}
+                isVerifying={isVerifying || !!isSubmittingCustom}
                 onPress={confirmWithBiometrics}
               />
             )}

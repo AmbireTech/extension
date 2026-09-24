@@ -8,12 +8,29 @@ import {
   DEVICE_SUPPORTED_AUTH_TYPES
 } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useController from '@common/hooks/useController'
 
 import { BiometricsAvailability } from './types'
-import useCanUnlockWithBiometrics from './useCanUnlockWithBiometrics'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+// One value each, read off the state rather than built, so the store's reconciled snapshots stay
+// reference stable. A selector that allocates returns a new value on every read and never settles.
+const selectHasBiometricsSecret = (state: AllControllersMappingType['KeystoreController']) =>
+  state.hasBiometricsSecret
+const selectIsPasswordUnlockRequired = (state: AllControllersMappingType['KeystoreController']) =>
+  state.isPasswordUnlockRequired
 
 const useBiometricsAvailability = (): BiometricsAvailability => {
   const { t } = useTranslation()
+  const { state: hasBiometricsSecret } = useController(
+    'KeystoreController',
+    selectHasBiometricsSecret
+  )
+  const { state: isPasswordUnlockRequired } = useController(
+    'KeystoreController',
+    selectIsPasswordUnlockRequired
+  )
   const { hasBiometricsHardware, isEnrolled, deviceSecurityLevel, deviceSupportedAuthTypes } =
     useBiometrics()
 
@@ -26,7 +43,10 @@ const useBiometricsAvailability = (): BiometricsAvailability => {
     !!hasBiometricsHardware &&
     isEnrolled &&
     deviceSecurityLevel === DEVICE_SECURITY_LEVEL.BIOMETRIC_STRONG
-  const canUnlockWithBiometrics = useCanUnlockWithBiometrics(isDeviceCapable)
+  // A secret left from before the user dropped their fingerprints cannot be read back, and the
+  // password is the only way in while the keystore waits for the unlock that migrates it.
+  const canUnlockWithBiometrics =
+    isDeviceCapable && !!hasBiometricsSecret && !isPasswordUnlockRequired
 
   return useMemo(
     () => ({

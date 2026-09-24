@@ -70,14 +70,16 @@ const KeyStoreUnlockScreen = () => {
   }, [getBiometricsSecret, keystoreDispatch])
 
   useEffect(() => {
-    if (unlockMethod) return
+    // Until the device capability is known, `canUseBiometrics` reads false - deciding then would
+    // flash the password field and raise the keyboard before the biometric prompt
+    if (unlockMethod || isLoading) return
 
     if (canUseBiometrics) {
       setUnlockMethod('biometrics')
     } else {
       setUnlockMethod('password')
     }
-  }, [canUseBiometrics])
+  }, [canUseBiometrics, isLoading])
 
   useEffect(() => {
     if (!isLoading && !initialCheckDone) {

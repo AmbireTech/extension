@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useModalize } from 'react-native-modalize'
 
 import { SigningAuthRequirement } from '@ambire-common/interfaces/signingAuth'
@@ -29,6 +29,8 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   // Wrapped in an object so a request with no id of its own still gets a latch.
   const authenticatedFor = useRef<{ requestId: Props['requestId'] } | null>(null)
   const onAuthenticated = useRef<(() => void) | null>(null)
+  // Counts up per request, so the sheet opens only once the reset before it has rendered
+  const [sheetOpenRequestId, setSheetOpenRequestId] = useState(0)
 
   const title = t('Signing authentication')
 
@@ -114,12 +116,20 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
 
       onAuthenticated.current = onConfirmed
       reset()
-      openSheet()
+      // Opened from an effect instead: the sheet's `onOpen` fires synchronously and would still
+      // see the mode from before the reset, skipping the biometrics auto-prompt
+      setSheetOpenRequestId((id) => id + 1)
 
       return true
     },
-    [requirement, requestId, reset, openSheet]
+    [requirement, requestId, reset]
   )
+
+  useEffect(() => {
+    if (!sheetOpenRequestId) return
+
+    openSheet()
+  }, [sheetOpenRequestId, openSheet])
 
   const cancelSigningAuth = useCallback(() => {
     onAuthenticated.current = null

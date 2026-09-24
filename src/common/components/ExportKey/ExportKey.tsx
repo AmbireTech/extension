@@ -84,7 +84,7 @@ const ExportKey = ({
 
   const { getExtraEntropy } = useExtraEntropy()
 
-  const revealPrivateKey = useCallback(() => {
+  const onBiometricsConfirmed = useCallback(() => {
     keystoreDispatch({
       type: 'method',
       params: {
@@ -177,7 +177,7 @@ const ExportKey = ({
           onPasswordConfirmed={onPasswordConfirmed}
           // The JSON export encrypts the key with the password itself, so there is nothing a
           // fingerprint could hand it. Revealing the key needs no more than proof of identity.
-          onBiometricsConfirmed={isExportingV2SA ? undefined : revealPrivateKey}
+          onBiometricsConfirmed={isExportingV2SA ? undefined : onBiometricsConfirmed}
           withFullHeightLayout
           onBackButtonPress={closeConfirmPassword}
         />

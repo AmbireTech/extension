@@ -15,8 +15,9 @@ const WEBAUTHN_USER_VERIFIED_FLAG = 0x04
 /**
  * The domain a credential is tied to, for browsers that will not derive one from the extension's
  * address. Asserting it needs host permissions, which the manifest's https wildcard grants.
+ * A subdomain that serves nothing: a credential under a live site could be asserted by its pages.
  */
-const BIOMETRICS_RP_ID = 'ambire.com'
+const BIOMETRICS_RP_ID = 'webauthn.ambire.com'
 
 type StoredPrfBiometricsCredential = {
   version: 1
@@ -211,8 +212,10 @@ const getAssertionForPrfCredential = async (storedCredential: StoredPrfBiometric
 // verification for the resident credential we created.
 const getAssertionUserHandle = async (storedCredential: StoredEncryptedBiometricsCredential) => {
   const abortController = beginAssertion()
-  const credential = (await navigator.credentials
-    .get({
+  let credential: PublicKeyCredential | null
+
+  try {
+    credential = (await navigator.credentials.get({
       publicKey: {
         challenge: getRandomBytes(32),
         timeout: WEBAUTHN_TIMEOUT_MS,
@@ -226,8 +229,15 @@ const getAssertionUserHandle = async (storedCredential: StoredEncryptedBiometric
         ]
       },
       signal: abortController.signal
-    } as CredentialRequestOptions)
-    .finally(() => endAssertion(abortController))) as PublicKeyCredential | null
+    } as CredentialRequestOptions)) as PublicKeyCredential | null
+  } catch (error) {
+    // Aborted by a newer attempt, which is the one the user is looking at - not a failure
+    if (abortController.signal.aborted) return null
+
+    throw error
+  } finally {
+    endAssertion(abortController)
+  }
 
   // the user cancelled the req
   if (!credential) return null
