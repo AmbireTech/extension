@@ -11,7 +11,7 @@ import Input from '@common/components/Input'
 import InputPassword from '@common/components/InputPassword'
 import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
@@ -159,7 +159,6 @@ const ChangeKeystorePassword: React.FC<Props> = ({
           onPasswordConfirmed={changePassword}
           onBiometricsConfirmed={changePasswordAfterBiometrics}
           onBackButtonPress={closeConfirmation}
-          title={isMobile ? 'Confirm app password' : 'Confirm extension password'}
           text={t('Please enter your current password to change it.')}
           submitText={t('Change password')}
           isSubmitting={status === 'LOADING'}

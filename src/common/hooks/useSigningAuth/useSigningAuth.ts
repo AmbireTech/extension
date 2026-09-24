@@ -29,6 +29,17 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   // Wrapped in an object so a request with no id of its own still gets a latch.
   const authenticatedFor = useRef<{ requestId: Props['requestId'] } | null>(null)
   const onAuthenticated = useRef<(() => void) | null>(null)
+  // What the sheet was opened for, so a confirmation applies to exactly what the user was shown
+  const shownRequest = useRef<{
+    requirement: SigningAuthRequirement
+    requestId: Props['requestId']
+  } | null>(null)
+  const latestRequestId = useRef(requestId)
+
+  useEffect(() => {
+    latestRequestId.current = requestId
+  }, [requestId])
+
   // Counts up per request, so the sheet opens only once the reset before it has rendered
   const [sheetOpenRequestId, setSheetOpenRequestId] = useState(0)
 
@@ -64,22 +75,30 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
   }, [requirement, t])
 
   const handleConfirmed = useCallback(() => {
+    const shown = shownRequest.current
+    if (!shown) return
+    shownRequest.current = null
+
     // Remembered so the dapp is never asked about again, which is also what stops this prompt
-    // from re-opening for the very same request
-    requirement?.unauthenticatedDapps.forEach(({ id }) => {
+    // from re-opening for the very same request. Only the dapps the user was shown are marked.
+    shown.requirement.unauthenticatedDapps.forEach(({ id }) => {
       dappsDispatch({
         type: 'method',
         params: { method: 'updateDapp', args: [id, { signingAuthenticated: true }] }
       })
     })
 
-    authenticatedFor.current = { requestId }
+    authenticatedFor.current = { requestId: shown.requestId }
     closeSheet()
 
     const proceed = onAuthenticated.current
     onAuthenticated.current = null
+    // The request changed while the prompt was up (e.g. a dapp updated the batch), so what gets
+    // signed is not what was confirmed - the next sign attempt asks again for the new one
+    if (shown.requestId !== latestRequestId.current) return
+
     proceed?.()
-  }, [closeSheet, dappsDispatch, requirement, requestId])
+  }, [closeSheet, dappsDispatch])
 
   const {
     isUsingBiometrics,
@@ -115,6 +134,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
       if (!requirement || isAlreadyAuthenticated) return false
 
       onAuthenticated.current = onConfirmed
+      shownRequest.current = { requirement, requestId }
       reset()
       // Opened from an effect instead: the sheet's `onOpen` fires synchronously and would still
       // see the mode from before the reset, skipping the biometrics auto-prompt
@@ -133,6 +153,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
 
   const cancelSigningAuth = useCallback(() => {
     onAuthenticated.current = null
+    shownRequest.current = null
     closeSheet()
   }, [closeSheet])
 

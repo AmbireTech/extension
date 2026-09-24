@@ -154,7 +154,8 @@ const useSecretConfirmation = ({ onConfirmed, promptMessage }: Props) => {
 
     autoPromptTimeoutRef.current = setTimeout(() => {
       autoPromptTimeoutRef.current = null
-      confirmWithBiometrics().catch(() => {})
+      // Failures inside the ceremony are handled there; only opening the tab can reject here
+      confirmWithBiometrics().catch(captureException)
     }, AUTO_PROMPT_DELAY)
   }, [cancelAutoPrompt, confirmWithBiometrics])
 
