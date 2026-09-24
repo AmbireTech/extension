@@ -36,7 +36,8 @@ type Props = {
   fromAmountValue: string
   fromTokenAmountSelectDisabled: boolean
   handleChangeFromToken: (value: SelectValue) => void
-  fromSelectedToken: TokenResult | null
+  // Only what the field shows of the token, so a token that is not a portfolio one can be sent too
+  fromSelectedToken: Pick<TokenResult, 'symbol' | 'priceIn'> | null
   fromAmount?: string
   fromAmountInFiat?: string
   fromAmountFieldMode: 'token' | 'fiat'
@@ -56,6 +57,11 @@ type Props = {
   amountAdjustmentInfo?: AmountAdjustmentInfo | null
   sections?: SectionedSelectProps['sections']
   renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
+  /**
+   * Whether the maximum is still being worked out. Defaults to the selected account's portfolio,
+   * where the maximum usually comes from - pass it when it comes from somewhere else.
+   */
+  isMaxAmountLoading?: boolean
 }
 
 const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -83,7 +89,8 @@ const SendToken: FC<Props> = ({
   simulationFailed,
   amountAdjustmentInfo,
   sections,
-  renderSectionHeader
+  renderSectionHeader,
+  isMaxAmountLoading
 }) => {
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { theme, styles } = useTheme(getStyles)
@@ -209,7 +216,7 @@ const SendToken: FC<Props> = ({
           >
             {!fromTokenAmountSelectDisabled ? (
               <MaxAmount
-                isLoading={!portfolio?.isReadyToVisualize}
+                isLoading={isMaxAmountLoading ?? !portfolio?.isReadyToVisualize}
                 maxAmount={Number(maxFromAmount)}
                 selectedTokenSymbol={fromSelectedToken?.symbol || ''}
                 onMaxButtonPress={handleSetMaxFromAmount}
