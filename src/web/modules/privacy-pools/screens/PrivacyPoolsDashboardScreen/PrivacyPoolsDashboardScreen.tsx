@@ -1,16 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
-import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import PrivacyPoolsActionSheet, {
-  PrivacyPoolsActionSubmitParams
-} from '@web/modules/privacy-pools/components/PrivacyPoolsActionSheet'
 import PrivacyPoolsActivity from '@web/modules/privacy-pools/components/PrivacyPoolsActivity'
 import PrivacyPoolsBackupBanner from '@web/modules/privacy-pools/components/PrivacyPoolsBackupBanner'
 import PrivacyPoolsBalances from '@web/modules/privacy-pools/components/PrivacyPoolsBalances'
@@ -19,7 +16,6 @@ import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyP
 import PrivacyPoolsTabs, {
   PrivacyPoolsTab
 } from '@web/modules/privacy-pools/components/PrivacyPoolsTabs'
-import PrivacyPoolsWithdrawalSheet from '@web/modules/privacy-pools/components/PrivacyPoolsWithdrawalSheet'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
 
@@ -42,24 +38,14 @@ const PrivacyPoolsDashboardScreen = () => {
     totalPrivateBalance,
     pendingPrivateBalance,
     activity,
-    operation,
-    getNetworkName,
     syncChain,
-    refreshLoadedChains,
-    prepareWithdrawal,
-    broadcastWithdrawal,
-    dismissOperation
+    refreshLoadedChains
   } = usePrivacyPools()
   const { withdrawTokens } = usePrivacyPoolsTokens()
 
   const [openTab, setOpenTab] = useState<PrivacyPoolsTab>('pooled')
 
-  const { ref: actionSheetRef, open: openActionSheet, close: closeActionSheet } = useModalize()
-  const {
-    ref: withdrawalSheetRef,
-    open: openWithdrawalSheet,
-    close: closeWithdrawalSheet
-  } = useModalize()
+  const { navigate } = useNavigation()
 
   /**
    * Re-reads the networks already read on this device, once per mount.
@@ -78,42 +64,8 @@ const PrivacyPoolsDashboardScreen = () => {
     refreshLoadedChains()
   }, [isAvailable, refreshLoadedChains])
 
-  /**
-   * Brings the sheet back for the confirmation.
-   *
-   * Closing it while the proof is being built does not cancel anything - the controller refuses to
-   * drop a withdrawal in flight - so without this a user who closed it would be left with a proved
-   * withdrawal waiting on a confirmation that is nowhere on screen.
-   */
-  const operationPhase = operation?.phase
-  const operationStatus = operation?.status
-
-  useEffect(() => {
-    if (operationStatus !== 'pending' || operationPhase !== 'ready') return
-
-    openWithdrawalSheet()
-  }, [operationStatus, operationPhase, openWithdrawalSheet])
-
-  /**
-   * Opens the progress sheet as the withdrawal is dispatched, rather than waiting for the
-   * background to report back: quoting and proving take about ten seconds together, which would
-   * otherwise be a closed form and nothing to look at.
-   */
-  const handleSubmit = useCallback(
-    (params: PrivacyPoolsActionSubmitParams) => {
-      openWithdrawalSheet()
-      prepareWithdrawal(params)
-    },
-    [prepareWithdrawal, openWithdrawalSheet]
-  )
-
-  // The withdrawal in flight is described in the token's own units, which only the pool's asset
-  // config knows - the operation itself carries raw amounts.
-  const operationAsset = useMemo(() => {
-    if (!operation) return null
-
-    return getPrivacyPoolsAsset(BigInt(operation.chainId), operation.tokenAddress)
-  }, [operation])
+  // Sending is a screen of its own, laid out like the regular Send - see PrivacyPoolsSendScreen
+  const openSend = useCallback(() => navigate(WEB_ROUTES.privacyPoolsSend), [navigate])
 
   return (
     <LayoutWrapper>
@@ -132,9 +84,9 @@ const PrivacyPoolsDashboardScreen = () => {
               isSyncing={isSyncingAnyChain}
               totalPrivateBalance={totalPrivateBalance}
               pendingPrivateBalance={pendingPrivateBalance}
-              canWithdraw={!!withdrawTokens.length}
+              canSend={!!withdrawTokens.length}
               onRefresh={refreshLoadedChains}
-              onWithdraw={openActionSheet as any}
+              onSend={openSend}
             />
           </View>
 
@@ -153,23 +105,6 @@ const PrivacyPoolsDashboardScreen = () => {
             <PrivacyPoolsActivity activity={activity} />
           )}
         </View>
-
-        <PrivacyPoolsActionSheet
-          tokens={withdrawTokens}
-          sheetRef={actionSheetRef}
-          closeBottomSheet={closeActionSheet}
-          onSubmit={handleSubmit}
-        />
-        <PrivacyPoolsWithdrawalSheet
-          operation={operation}
-          symbol={operationAsset?.symbol || ''}
-          decimals={operationAsset?.decimals ?? 18}
-          networkName={operation ? getNetworkName(operation.chainId) : ''}
-          sheetRef={withdrawalSheetRef}
-          closeBottomSheet={closeWithdrawalSheet}
-          onSend={broadcastWithdrawal}
-          onClosed={dismissOperation}
-        />
       </ScrollableWrapper>
     </LayoutWrapper>
   )

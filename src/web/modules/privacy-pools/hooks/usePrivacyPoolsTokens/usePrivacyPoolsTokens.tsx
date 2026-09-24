@@ -97,7 +97,7 @@ const getTokenOption = ({
 })
 
 /**
- * The token dropdown of the withdrawal form: what the pools hold for this recovery phrase and the
+ * The token dropdown of the Send form: what the pools hold for this recovery phrase and the
  * association set has approved. Pending notes are deliberately absent: they cannot be withdrawn
  * privately at all.
  */
@@ -117,7 +117,7 @@ const usePrivacyPoolsTokens = () => {
             symbol: balance.symbol,
             decimals: balance.decimals,
             networkName: getNetworkName(chainId),
-            note: t('ready to withdraw'),
+            note: t('ready to send'),
             availableAmount: balance.approvedAmount
           })
         ),

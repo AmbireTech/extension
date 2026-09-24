@@ -21,9 +21,10 @@ interface Props {
   activity: PrivacyPoolsActivityDisplay[]
 }
 
+// In the words the wallet uses for them: funds sent to the account, and funds it sent on
 const TYPE_LABEL: { [type in PrivacyPoolsActivityType]: string } = {
-  deposit: 'Deposit',
-  withdraw: 'Withdraw',
+  deposit: 'Received',
+  withdraw: 'Sent',
   reclaim: 'Taken back'
 }
 
@@ -59,7 +60,7 @@ const PrivacyPoolsActivity: FC<Props> = ({ activity }) => {
             {t('No activity yet')}
           </Text>
           <Text fontSize={12} color={theme.secondaryText} style={styles.centeredText}>
-            {t('Deposits and withdrawals you make here show up in this list.')}
+            {t('What you send to and from this account shows up in this list.')}
           </Text>
         </View>
       </View>

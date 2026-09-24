@@ -33,34 +33,35 @@ interface Props {
   closeBottomSheet: () => void
   onSend: () => void
   // Fires once the sheet has actually left the screen, dragging it down included - which the close
-  // handler above does not cover, and which is where a finished withdrawal is dismissed
+  // handler above does not cover, and which is where a finished transfer is dismissed
   onClosed: () => void
 }
 
 const STEPS: { phase: PrivacyPoolsOperationPhase; label: string }[] = [
-  { phase: 'proving', label: 'Building the proof that hides where the funds came from' },
+  { phase: 'proving', label: 'Preparing a transfer that cannot be traced back to you' },
   { phase: 'ready', label: 'Waiting for you to confirm' },
   { phase: 'broadcasting', label: 'Sending it' },
   { phase: 'finalizing', label: 'Checking what you have left' }
 ]
 
 const TITLES = {
-  pending: 'Withdrawing',
-  success: 'Withdrawn',
-  failed: 'Withdrawal failed'
+  pending: 'Sending',
+  success: 'Sent',
+  failed: 'Transfer failed'
 }
 
 /**
- * What a withdrawal is doing, while it does it - and the confirmation in the middle of it.
+ * What a transfer from a Privacy Pools account is doing, while it does it - and the confirmation in
+ * the middle of it. The counterpart of the regular Send's fee sheet.
  *
  * The pause on 'ready' is the point of the sheet: the proof takes ten seconds and up and the network
- * fee is not known until the withdrawal is priced, so committing to both before either was shown
- * would mean paying a fee the user never saw. Nothing leaves the pool until the button here is pressed.
+ * fee is not known until the transfer is priced, so committing to both before either was shown
+ * would mean paying a fee the user never saw. Nothing is sent until the button here is pressed.
  *
  * Always mounted, even with nothing to show: a bottom sheet opened in the same commit it first
  * mounts does not animate in.
  */
-const PrivacyPoolsWithdrawalSheet: FC<Props> = ({
+const PrivacyPoolsSendSheet: FC<Props> = ({
   operation,
   symbol,
   decimals,
@@ -79,7 +80,7 @@ const PrivacyPoolsWithdrawalSheet: FC<Props> = ({
   const isRunning = operation?.status === 'pending'
   const isReady = isRunning && operation?.phase === 'ready'
 
-  // One clock per run: restarted when a withdrawal begins, stopped as soon as none is running. It
+  // One clock per run: restarted when a transfer begins, stopped as soon as none is running. It
   // is paused on 'ready' too - the wait there is the user's own, and a timer on it would read as
   // a deadline.
   useEffect(() => {
@@ -100,7 +101,7 @@ const PrivacyPoolsWithdrawalSheet: FC<Props> = ({
 
   return (
     <BottomSheet
-      id="privacy-pools-withdrawal"
+      id="privacy-pools-send"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       onClosed={onClosed}
@@ -161,20 +162,20 @@ const PrivacyPoolsWithdrawalSheet: FC<Props> = ({
               size="sm"
               type="info"
               text={t(
-                'This takes up to half a minute, longer on a slower computer. Nothing has left the pool yet.'
+                'This takes up to half a minute, longer on a slower computer. Nothing has been sent yet.'
               )}
               style={spacings.mbSm}
             />
           )}
 
-          {/* The whole reason the withdrawal stops here: what it costs is only known now. */}
+          {/* The whole reason the transfer stops here: what it costs is only known now. */}
           {isReady && (
             <Alert
               size="sm"
               type="info"
               title={t('Ready to send')}
               text={t(
-                'The network fee of {{fee}} {{symbol}} is taken from the withdrawn amount. The address you entered receives {{net}} {{symbol}}.',
+                'The network fee of {{fee}} {{symbol}} is taken from the amount you send. The address you entered receives {{net}} {{symbol}}.',
                 {
                   fee: formatDecimals(
                     Number(formatUnits(operation.quote?.feeAmount ?? 0n, decimals)),
@@ -213,8 +214,10 @@ const PrivacyPoolsWithdrawalSheet: FC<Props> = ({
                 before it was sent spent nothing, while one during sending may have gone through
                 already - which the refreshed balance settles. */}
                 {operation.phase === 'broadcasting' || operation.phase === 'finalizing'
-                  ? t('Check the network above - your pooled balance has just been refreshed.')
-                  : t('Nothing left the pool.')}
+                  ? t(
+                      'Your balance has just been refreshed - check it to see whether the transfer went through.'
+                    )
+                  : t('Nothing was sent.')}
               </Text>
             </View>
           )}
@@ -222,7 +225,7 @@ const PrivacyPoolsWithdrawalSheet: FC<Props> = ({
           {isReady && (
             <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
               <Button
-                testID="privacy-pools-send-withdrawal"
+                testID="privacy-pools-send-confirm"
                 text={t('Send')}
                 onPress={onSend}
                 hasBottomSpacing={false}
@@ -248,4 +251,4 @@ const PrivacyPoolsWithdrawalSheet: FC<Props> = ({
   )
 }
 
-export default React.memo(PrivacyPoolsWithdrawalSheet)
+export default React.memo(PrivacyPoolsSendSheet)

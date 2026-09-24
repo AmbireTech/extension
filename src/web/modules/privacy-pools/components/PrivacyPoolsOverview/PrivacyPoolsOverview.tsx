@@ -36,9 +36,9 @@ interface Props {
   // Value still waiting on the association set, so excluded from the total above. Surfaced rather
   // than folded in, because it genuinely cannot be withdrawn privately yet.
   pendingPrivateBalance: number
-  canWithdraw: boolean
+  canSend: boolean
   onRefresh: () => void
-  onWithdraw: () => void
+  onSend: () => void
 }
 
 const PrivacyPoolsOverview: FC<Props> = ({
@@ -47,9 +47,9 @@ const PrivacyPoolsOverview: FC<Props> = ({
   isSyncing,
   totalPrivateBalance,
   pendingPrivateBalance,
-  canWithdraw,
+  canSend,
   onRefresh,
-  onWithdraw
+  onSend
 }) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -180,9 +180,9 @@ const PrivacyPoolsOverview: FC<Props> = ({
               )}
             </View>
 
-            {/* Withdrawing needs the notes read first: without them there is nothing to withdraw,
-            and the form would have an empty dropdown. */}
-            <PrivacyPoolsActions onWithdraw={onWithdraw} isWithdrawDisabled={!canWithdraw} />
+            {/* Sending needs the notes read first: without them there is nothing to send, and the
+            form would have an empty dropdown. */}
+            <PrivacyPoolsActions onSend={onSend} isSendDisabled={!canSend} />
           </>
         )}
       </View>

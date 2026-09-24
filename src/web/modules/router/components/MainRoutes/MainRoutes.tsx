@@ -29,6 +29,7 @@ import { SettingsRoutesProvider } from '@web/modules/settings/contexts/SettingsR
 import SurveyScreen from '@web/modules/survey/screens/SurveyScreen/SurveyScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
+import PrivacyPoolsSendScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsSendScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
 
 const MainRoutes = () => {
@@ -236,6 +237,7 @@ const MainRoutes = () => {
           <Route element={<AuthenticatedRoute />}>
             <Route path={WEB_ROUTES.transfer} element={<TransferScreen />} />
             <Route path={WEB_ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
+            <Route path={WEB_ROUTES.privacyPoolsSend} element={<PrivacyPoolsSendScreen />} />
             <Route
               path={WEB_ROUTES.signAccountOp}
               element={<RequestWindowGroupScreen pick={(m) => m.SignAccountOpScreen} />}
