@@ -1,6 +1,47 @@
+/**
+ * Removes a TypeScript `this` parameter before the presets run.
+ *
+ * A `this` parameter is type-only and TypeScript's own transform drops it, but with
+ * Hermes as the target Babel's parameter transform still counts it while rewriting
+ * defaulted parameters into `arguments[N]` lookups. Every parameter after the first
+ * then reads one argument too far - silently, and in the mobile build only, because the
+ * webpack builds do not pass `engine: 'hermes'`. `relayerCall` is the one function in
+ * the codebase that declares a `this` parameter, and it was reading its `body` as its
+ * `method`, which broke every POST to the relayer.
+ *
+ * Babel runs plugins ahead of presets, so stripping the parameter here leaves the
+ * presets with the same parameter list the emitted indices are computed from.
+ */
+const stripTypeScriptThisParam = () => ({
+  name: 'strip-typescript-this-param',
+  visitor: {
+    Function(path) {
+      const [firstParam] = path.node.params
+
+      if (firstParam && firstParam.type === 'Identifier' && firstParam.name === 'this') {
+        path.node.params.shift()
+      }
+    }
+  }
+})
+
 module.exports = function (api) {
   const isLegends = process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
-  api.cache(true)
+  // Keyed on the env the config below branches on, rather than cached outright, so a
+  // build for one target cannot reuse the config computed for another.
+  api.cache.using(() => `${process.env.WEB_ENGINE}|${process.env.WEBPACK_BUILD_OUTPUT_PATH}`)
+
+  const isMobile =
+    !process.env.WEB_ENGINE &&
+    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('benzin') &&
+    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
+
+  // Bundle Mode is mobile-only: it pairs with getBundleModeMetroConfig in
+  // metro.config.js and has no counterpart in the webpack builds.
+  const workletsPluginOptions = {
+    relativeSourceLocation: true,
+    ...(isMobile ? { bundleMode: true, strictGlobal: true } : {})
+  }
 
   const pathAliases = {
     '@': './src/ambire-common/src',
@@ -27,7 +68,7 @@ module.exports = function (api) {
           path: '.env'
         }
       ],
-      ['react-native-worklets/plugin', { relativeSourceLocation: true }]
+      ['react-native-worklets/plugin', workletsPluginOptions]
     ]
   }
 
@@ -68,6 +109,8 @@ module.exports = function (api) {
   const mobileConfig = {
     ...config,
     plugins: [
+      // First, so the `this` parameter is gone before any preset reads the parameter list.
+      stripTypeScriptThisParam,
       ...config.plugins,
       [
         'module-resolver',
@@ -110,11 +153,6 @@ module.exports = function (api) {
       ]
     ]
   }
-
-  const isMobile =
-    !process.env.WEB_ENGINE &&
-    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('benzin') &&
-    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
 
   return isMobile ? mobileConfig : webConfig
 }

@@ -25,7 +25,7 @@ const PrivacyPoolsActions: FC<Props> = ({
   isWithdrawDisabled
 }) => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
 
   const routeItems: RouteItemType[] = useMemo(
     () => [
@@ -59,7 +59,7 @@ const PrivacyPoolsActions: FC<Props> = ({
           routeItem={routeItem}
           index={index}
           routeItemsLength={routeItems.length}
-          isCompactSidePanelLayout={isCompactSidePanelLayout}
+          isNarrowWebLayout={isNarrowWebLayout}
         />
       ))}
     </View>

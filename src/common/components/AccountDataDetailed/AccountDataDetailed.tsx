@@ -8,14 +8,18 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
-const { isSidePanel } = getUiType()
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const AccountDataDetailed = () => {
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const reverseLookup = useReverseLookup({
     address: account?.addr || ''
   })
@@ -34,7 +38,7 @@ const AccountDataDetailed = () => {
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.flex1,
-        isSidePanel && { minWidth: 0 }
+        isNarrowWebLayout && { minWidth: 0 }
       ]}
     >
       <Avatar
@@ -42,21 +46,31 @@ const AccountDataDetailed = () => {
         pfp={account.preferences.pfp}
         smartAccountType={smartAccountType}
       />
-      <View style={[flexbox.flex1, isSidePanel && spacings.mlSm, isSidePanel && { minWidth: 0 }]}>
-        <View style={[flexbox.directionRow, flexbox.alignCenter, isSidePanel && { minWidth: 0 }]}>
+      <View
+        style={[
+          flexbox.flex1,
+          isNarrowWebLayout && spacings.mlSm,
+          isNarrowWebLayout && { minWidth: 0 }
+        ]}
+      >
+        <View
+          style={[flexbox.directionRow, flexbox.alignCenter, isNarrowWebLayout && { minWidth: 0 }]}
+        >
           <Text
             fontSize={16}
             weight="semiBold"
             numberOfLines={1}
             // A long label would otherwise push the badges out of the narrow panel
-            style={isSidePanel ? { flexShrink: 1, minWidth: 0 } : undefined}
+            style={isNarrowWebLayout ? { flexShrink: 1, minWidth: 0 } : undefined}
           >
             {account.preferences.label}
           </Text>
           <AccountBadges accountData={account} />
         </View>
-        <View style={[flexbox.directionRow, flexbox.alignCenter, isSidePanel && { minWidth: 0 }]}>
-          {isSidePanel ? (
+        <View
+          style={[flexbox.directionRow, flexbox.alignCenter, isNarrowWebLayout && { minWidth: 0 }]}
+        >
+          {isNarrowWebLayout ? (
             <AccountAddress
               {...reverseLookup}
               address={account.addr}

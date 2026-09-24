@@ -12,7 +12,6 @@ import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomS
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -130,7 +129,6 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   title,
   ...rest
 }) => {
-  const { isOnboardingRoute } = useOnboardingNavigation()
   const { goBack } = useNavigation()
   const insets = useSafeAreaInsets()
   const isInsideKeyboardAwareContainer = useContext(KeyboardAwareContainerContext)

@@ -15,15 +15,29 @@ import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+
 const useSignMessage = () => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
-  const { state: account } = useController('SelectedAccountController', 'account')
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { state: accountStates } = useController('AccountsController', 'accountStates')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
+  // Tracks which request hasReachedBottom currently reflects, so it can't carry over "already
+  // read" from a previous message onto a new, unread one (would silently skip
+  // isScrollToBottomForced below and hide the down arrow for content that's actually unread).
+  const [hasReachedBottomRequestId, setHasReachedBottomRequestId] = useState<
+    string | number | undefined
+  >(undefined)
   const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
@@ -52,6 +66,14 @@ const useSignMessage = () => {
 
     return undefined
   }, [currentUserRequest])
+
+  // React-recommended "adjust state when a prop changes" pattern (setting state directly during
+  // render, not in an effect) - resets synchronously in the same render the new request appears,
+  // instead of one render late as an effect-based reset would.
+  if (userRequest?.id !== hasReachedBottomRequestId) {
+    setHasReachedBottomRequestId(userRequest?.id)
+    setHasReachedBottom(null)
+  }
 
   const { name, icon } = useDappInfo(userRequest)
   const { state: dappsState } = useController('DappsController')

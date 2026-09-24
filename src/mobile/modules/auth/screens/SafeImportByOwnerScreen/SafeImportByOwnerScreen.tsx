@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { Controller } from 'react-hook-form'
 import { Keyboard, Pressable, View } from 'react-native'
 
-import AddressInput from '@common/components/AddressInput'
+import AddressSelect from '@common/components/AddressSelect'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
@@ -81,22 +81,18 @@ const SafeImportByOwnerScreen = () => {
             control={control}
             rules={{ validate: validateOwnerAddress, required: true }}
             name="ownerAddress.fieldValue"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <AddressInput
-                testID="add-safe-owner-field"
-                onBlur={onBlur}
-                autoFocus
-                placeholder={t('Add Safe owner address')}
-                onChangeText={onChange}
-                onScanAddress={onChange}
-                value={value}
-                withDetails
+            render={({ field: { onChange, value } }) => (
+              <AddressSelect
+                address={value}
+                setAddress={onChange}
                 validation={ownerAddressValidation}
                 resolvedAddress={ownerAddressState.resolvedAddress}
                 resolvedAddressType={ownerAddressState.resolvedAddressType}
                 isRecipientDomainResolving={ownerAddressState.isDomainResolving}
-                backgroundColor={theme.tertiaryBackground}
-                autoCorrect={false}
+                bottomSheetTitle={t('Add Safe owner')}
+                // The parent has the same color as the default input background, so use the focused
+                // input color to keep the input visible and the same before and after focus
+                inputBackgroundColor={theme.tertiaryBackground}
               />
             )}
           />

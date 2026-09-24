@@ -19,6 +19,13 @@ import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import ProgressBar from './ProgressBar'
 import SurveyInnerState from './SurveyInnerState'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectKeyStoreUid = (state: AllControllersMappingType['KeystoreController']) =>
+  state.keyStoreUid
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const SurveyScreen = () => {
   const { addToast } = useToast()
   const {
@@ -26,9 +33,9 @@ const SurveyScreen = () => {
     state: { status, questions, answers, currentQuestion, errorMessage, surveyId, bannerId }
   } = useController('SurveyController')
 
-  const { state: keyStoreUid } = useController('KeystoreController', 'keyStoreUid')
+  const { state: keyStoreUid } = useController('KeystoreController', selectKeyStoreUid)
 
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
 
   const { navigate } = useNavigation()
 

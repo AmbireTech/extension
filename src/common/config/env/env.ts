@@ -3,6 +3,7 @@ import { Platform } from 'react-native'
 
 import {
   BUNGEE_API_KEY,
+  COWSWAP_API_KEY,
   EnvTypes,
   LI_FI_API_KEY,
   NFT_CDN_URL,
@@ -75,6 +76,7 @@ const CONFIG: Config = {
   SENTRY_DSN_BROWSER_EXTENSION: process.env.SENTRY_DSN_BROWSER_EXTENSION || '',
   BUNGEE_API_KEY,
   LI_FI_API_KEY,
+  COWSWAP_API_KEY,
   UNISWAP_API_KEY: UNISWAP_API_KEY || '',
   WALLETCONNECT_PROJECT_ID
 }

@@ -11,6 +11,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import AccountKeyBanner from '../AccountKeyBanner'
 import AccountKeyIcon from '../AccountKeyIcon/AccountKeyIcon'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export type KeyType = Key['type'] | 'none' | 'safe'
 
 const AccountKeyIconOrBanner = ({
@@ -29,6 +31,8 @@ const AccountKeyIconOrBanner = ({
   )
 }
 
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+
 const AccountKeyIcons = ({
   account,
   isExtended,
@@ -39,7 +43,7 @@ const AccountKeyIcons = ({
   isExtended: boolean
   withContainerSpacing?: boolean
 }) => {
-  const { state: keys } = useController('KeystoreController', 'keys')
+  const { state: keys } = useController('KeystoreController', selectKeys)
   const { theme } = useTheme()
   const associatedKeys = account?.associatedKeys || []
   const importedKeyTypes = Array.from(

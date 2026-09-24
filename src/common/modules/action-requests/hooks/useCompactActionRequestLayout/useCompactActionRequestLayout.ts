@@ -2,26 +2,25 @@ import { isMobile, isWeb } from '@common/config/env'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { getUiType } from '@common/utils/uiType'
 
-const { isSidePanel } = getUiType()
+const { isPopup } = getUiType()
 
 /**
  * Single source of truth for compact vs desktop layout across the app.
  *
- * Compact = mobile, or a narrow side panel (below the `m` / 768px breakpoint).
- * Wide side panel and other web surfaces keep desktop / two-column layouts.
+ * Compact = mobile, or a web surface narrower than the `s` / 576px breakpoint - the side panel,
+ * the request window that is sized to match it, and a narrow tab. The popup is excluded: it is
+ * narrower than the breakpoint by definition, but its screens are designed for that width.
  */
 const useCompactActionRequestLayout = () => {
-  const { maxWidthSize } = useWindowSize()
-  const isNarrowSidePanel = isSidePanel && !maxWidthSize('m')
-  const isCompactLayout = isMobile || isNarrowSidePanel
-  const isCompactSidePanelLayout = isNarrowSidePanel
+  const { minWidthSize } = useWindowSize()
+  const isNarrowWebLayout = isWeb && !isPopup && minWidthSize('s')
+  const isCompactLayout = isMobile || isNarrowWebLayout
   const isTwoColumnLayout = isWeb && !isCompactLayout
-  const isWideFooterLayout = !isSidePanel || maxWidthSize('m')
+  const isWideFooterLayout = !isNarrowWebLayout
 
   return {
     isCompactLayout,
-    isCompactSidePanelLayout,
-    isNarrowSidePanel,
+    isNarrowWebLayout,
     isTwoColumnLayout,
     isWideFooterLayout
   }

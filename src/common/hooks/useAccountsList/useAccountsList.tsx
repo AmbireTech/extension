@@ -13,7 +13,15 @@ import {
   ACCOUNT_SELECT_ACCOUNT_MB
 } from '@common/modules/account-select/components/Account/styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const ITEM_HEIGHT = ACCOUNT_SELECT_ACCOUNT_HEIGHT + ACCOUNT_SELECT_ACCOUNT_MB
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const useAccountsList = ({
   flatlistRef
 }: {
@@ -27,13 +35,12 @@ const useAccountsList = ({
   })
   const search = watch('search')
   const [shouldDisplayAccounts, setShouldDisplayAccounts] = useState(false)
-  const {
-    state: { domains }
-  } = useController('DomainsController')
-  const { state: accounts } = useController('AccountsController', 'accounts')
-  const { state: keys } = useController('KeystoreController', 'keys')
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { state: domains } = useController('DomainsController', selectDomains)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const prevSearchRef = useRef(search)
 
   const searchableAccounts = useMemo(
     () =>
@@ -146,6 +153,14 @@ const useAccountsList = ({
   useEffect(() => {
     scrollToSelectedAccount()
   }, [scrollToSelectedAccount])
+
+  // Scrolls to top on search
+  useEffect(() => {
+    if (prevSearchRef.current === search) return
+
+    prevSearchRef.current = search
+    flatlistRef?.current?.scrollToOffset({ animated: false, offset: 0 })
+  }, [flatlistRef, search])
 
   return {
     accounts: filteredAccounts,

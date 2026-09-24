@@ -13,6 +13,7 @@ import {
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import Text, { TextAppearance } from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useAutoFocus from '@common/hooks/useAutoFocus'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -90,9 +91,14 @@ const Input = ({
   backgroundColor,
   renderConfirmAddress,
   preventJumpOnValidationChange,
+  autoFocus,
   ...rest
 }: InputProps) => {
   const { theme, styles } = useTheme(getStyles)
+  const { autoFocus: nativeAutoFocus, setInputRef: setAutoFocusInputRef } = useAutoFocus(
+    autoFocus,
+    setInputRef
+  )
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
   const [isFocused, setIsFocused] = useState(false)
 
@@ -164,7 +170,8 @@ const Input = ({
               editable={editable ?? !disabled}
               onBlur={handleOnBlur}
               onFocus={handleOnFocus}
-              ref={setInputRef}
+              ref={setAutoFocusInputRef}
+              autoFocus={nativeAutoFocus}
               {...rest}
               style={[
                 styles.nativeInput,

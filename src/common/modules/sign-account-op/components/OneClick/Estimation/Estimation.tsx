@@ -57,7 +57,7 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const hasFreshActionPressRef = useRef(false)
 
   const signingErrors = useMemo(() => {
@@ -153,6 +153,7 @@ const OneClickEstimation = ({
                 title={banner.title}
                 text={banner.text}
                 secondaryText={banner.secondaryText}
+                trustableDappUrls={banner.trustableDappUrls}
                 style={spacings.mbTy}
               />
             ))}
@@ -215,12 +216,12 @@ const OneClickEstimation = ({
               isSimpleBlur={false}
               style={isMobile ? spacings.ptLg : spacings.pt}
               innerContainerStyle={
-                isCompactSidePanelLayout
+                isNarrowWebLayout
                   ? { width: '100%', gap: SPACING_TY, alignItems: 'stretch' }
                   : undefined
               }
             >
-              {!isMobile && !isCompactSidePanelLayout && (
+              {!isMobile && !isNarrowWebLayout && (
                 <Button
                   testID="back-button"
                   type="secondary"
@@ -242,7 +243,7 @@ const OneClickEstimation = ({
                   onPressIn={markFreshActionPress}
                   onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
                   size={isMobile ? 'regular' : 'smaller'}
-                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
                 />
               ) : (
                 <ButtonWithLoader
@@ -254,12 +255,12 @@ const OneClickEstimation = ({
                   onPressIn={markFreshActionPress}
                   onPress={() => runWithFreshActionPress(onSignButtonClick)}
                   size={isMobile ? 'regular' : 'smaller'}
-                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
                 />
               )}
 
               {/* Side panel only: stack Back under the primary action */}
-              {!isMobile && isCompactSidePanelLayout && (
+              {!isMobile && isNarrowWebLayout && (
                 <Button
                   testID="back-button"
                   type="secondary"

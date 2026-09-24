@@ -80,17 +80,10 @@ const Text: React.FC<Props> = ({
   const fontSize = _fontSize ? (shouldScale ? _fontSize + TEXT_SCALE : _fontSize) : _fontSize
   const { theme } = useTheme()
 
-  const textAppearances: { [key in TextAppearance]: ColorValue } = {
-    primary: theme.primary,
-    primaryText: theme.primaryText,
-    secondaryText: theme.secondaryText,
-    tertiaryText: theme.tertiaryText,
-    successText: theme.successText,
-    warningText: theme.warningText,
-    errorText: theme.errorText,
-    infoText: theme.infoText,
-    linkText: theme.linkText
-  }
+  // Every appearance names the theme colour it uses, so the colour is read straight off
+  // the theme. Building a map of all nine of them to read one, on every render of every
+  // one of the hundreds of texts a screen holds, is what this replaces.
+  const appearanceColor: ColorValue = theme[appearance]
 
   return (
     <RNText
@@ -109,7 +102,7 @@ const Text: React.FC<Props> = ({
           // the default one when using a custom `fontSize`.
           lineHeight: undefined
         },
-        !!appearance && { color: textAppearances[appearance] },
+        !!appearance && { color: appearanceColor },
         !!color && { color },
         style
       ])}
@@ -119,4 +112,4 @@ const Text: React.FC<Props> = ({
     </RNText>
   )
 }
-export default Text
+export default React.memo(Text)

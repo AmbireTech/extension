@@ -28,6 +28,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { sortNetworksByBalance } from '@common/utils/sorting'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const TYPE_TITLES: Record<ExploreSectionType, string> = {
   // 'trending' is listed for type completeness; trending has its own dedicated screen (it never
   // routes to this dapp-only section screen).
@@ -38,12 +40,14 @@ const TYPE_TITLES: Record<ExploreSectionType, string> = {
   apps: 'Explore apps'
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const ExploreSectionScreen = () => {
   const { t } = useTranslation()
   const { params } = useRoute()
   const { theme } = useTheme()
   const { state } = useController('DappsController')
-  const { state: allNetworks } = useController('NetworksController', 'networks')
+  const { state: allNetworks } = useController('NetworksController', selectNetworks)
   const { state: balancePerNetwork } = useController(
     'SelectedAccountController',
     (state) => state.portfolio.balancePerNetwork

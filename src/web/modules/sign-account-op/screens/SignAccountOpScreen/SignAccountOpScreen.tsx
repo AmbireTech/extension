@@ -25,7 +25,7 @@ import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
   TabLayoutContainer,
@@ -41,7 +41,6 @@ import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
 import type { SafeAccountTab } from '@web/modules/sign-account-op/components/SafeAccountTabs'
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
-const { isSidePanel } = getUiType()
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -49,6 +48,7 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 const SignAccountOpScreen = () => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     state: { currentUserRequest, visibleUserRequests },
     dispatch: requestsDispatch
@@ -155,7 +155,7 @@ const SignAccountOpScreen = () => {
     safeAccountTabState.requestId === accountOpRequest?.id
       ? safeAccountTabState.activeTab
       : 'overview'
-  const shouldUseSafeAccountTabs = !!signAccountOpState?.account.safeCreation && !isSidePanel
+  const shouldUseSafeAccountTabs = !!signAccountOpState?.account.safeCreation && !isNarrowWebLayout
   const isOverviewTabActive = !shouldUseSafeAccountTabs || activeSafeAccountTab === 'overview'
 
   const handleSafeAccountTabChange = useCallback(
@@ -412,7 +412,7 @@ const SignAccountOpScreen = () => {
               networkChainId={network?.chainId}
               onTabChange={handleSafeAccountTabChange}
             />
-          ) : isSidePanel && signAccountOpState?.account.safeCreation ? (
+          ) : isNarrowWebLayout && signAccountOpState?.account.safeCreation ? (
             <SafeNonce withNetwork />
           ) : (
             <View

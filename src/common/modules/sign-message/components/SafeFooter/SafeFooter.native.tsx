@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GestureResponderEvent, View } from 'react-native'
+import { View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
-import Button from '@common/components/Button'
+import Button, { Props as ButtonProps } from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
+import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -30,7 +31,7 @@ const SafeFooter = ({
   signed: string[]
   importedKeys: Key[]
   threshold: number
-  onReject: (event: GestureResponderEvent) => void
+  onReject: () => void
   // closes the signing UI while keeping the request pending with the collected
   // signatures already pushed to Safe Global (dismisses the sheet)
   onSignLater: () => void
@@ -49,6 +50,17 @@ const SafeFooter = ({
     onSign(signer.addr, signer.type)
   }, [isSingle, onSign, importedKeys])
 
+  const rejectButton = (props?: { size?: ButtonProps['size']; style?: ButtonProps['style'] }) => (
+    <RejectRequestButton
+      text={t('Reject')}
+      hasBottomSpacing={false}
+      onReject={onReject}
+      optionsTitle={t('Reject request')}
+      rejectOptionText={t('Reject this request')}
+      {...props}
+    />
+  )
+
   return (
     <View style={[spacings.ptSm, spacings.phSm]}>
       {showSafeSigners && (
@@ -66,28 +78,12 @@ const SafeFooter = ({
       )}
       {threshold === 0 && (
         <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
-          <View style={flexbox.flex1}>
-            <Button
-              text={t('Reject')}
-              type="danger"
-              hasBottomSpacing={false}
-              size="large"
-              onPress={onReject}
-            />
-          </View>
+          <View style={flexbox.flex1}>{rejectButton({ size: 'large' })}</View>
         </View>
       )}
       {threshold > 0 && isSingle && (
         <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
-          <View style={flexbox.flex1}>
-            <Button
-              text={t('Reject')}
-              type="danger"
-              hasBottomSpacing={false}
-              size="large"
-              onPress={onReject}
-            />
-          </View>
+          <View style={flexbox.flex1}>{rejectButton({ size: 'large' })}</View>
           <View style={flexbox.flex1}>
             <Button
               size="large"
@@ -114,15 +110,7 @@ const SafeFooter = ({
               />
             </View>
             <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
-              <View style={flexbox.flex1}>
-                <Button
-                  text={t('Reject')}
-                  type="danger"
-                  hasBottomSpacing={false}
-                  onPress={onReject}
-                  style={{ height: 50 }}
-                />
-              </View>
+              <View style={flexbox.flex1}>{rejectButton({ style: { height: 50 } })}</View>
               <View style={flexbox.flex1}>
                 <Button
                   type="secondary"

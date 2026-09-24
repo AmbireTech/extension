@@ -26,6 +26,7 @@
     "relayer": "npx playwright test -g @relayer",
     "keystore:migration": "npx playwright test -g @keystoreMigration",
     "performance": "npx playwright test -g @performance",
+    "crash:analytics": "npx playwright test -g @crashAnalytics",
     "postinstall": "patch-package"
   },
   "author": "Filip",

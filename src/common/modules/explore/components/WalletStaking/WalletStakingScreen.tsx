@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
+import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import {
   getFeePercent,
@@ -14,11 +15,14 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
+import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
+import HoverablePressable from '@common/components/HoverablePressable'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NumberInput from '@common/components/NumberInput'
 import Spinner from '@common/components/Spinner'
+import SupportLink from '@common/components/SupportLink'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import CONFIG, { isWeb } from '@common/config/env'
@@ -75,6 +79,28 @@ const TOKEN_DECIMALS = 18
 const EMPTY_STATE_BALANCE_THRESHOLD = parseUnits('0.001', TOKEN_DECIMALS)
 const STAKING_HELP_URL = 'https://help.ambire.com/en/collections/18211458-wallet-token-governance'
 const WALLET_STAKING_COMMITMENT_ABI = 'function commitments(bytes32) view returns (uint256)'
+const FIAT_DECIMALS = 2
+
+/**
+ * Renders a converted amount as plain field text - fixed to the field's own precision, without
+ * the exponent notation `String()` falls into for very small numbers, and without the trailing
+ * zeros that would fight the user's next keystroke.
+ */
+const toAmountFieldValue = (value: number, precision: number) => {
+  if (!Number.isFinite(value) || value <= 0) return ''
+
+  const fixed = value.toFixed(precision)
+  if (!fixed.includes('.')) return fixed
+
+  let end = fixed.length
+  while (end > 0 && fixed[end - 1] === '0') end -= 1
+  if (fixed[end - 1] === '.') end -= 1
+
+  return fixed.slice(0, end)
+}
+
+const getUsdPrice = (token?: TokenResult) =>
+  token?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')?.price
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
@@ -84,6 +110,10 @@ const selectIsPortfolioReady = (state: AllControllersMappingType['SelectedAccoun
   state.portfolio.isReadyToVisualize
 const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
   state.currentUserRequest
+const selectXWalletShareValue = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.walletStaking?.shareValue
+const selectXWalletLockedShares = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.walletStaking?.lockedShares
 
 interface TabProps {
   mode: WalletStakingMode
@@ -132,6 +162,14 @@ const WalletStakingScreen = () => {
     'SelectedAccountController',
     selectIsPortfolioReady
   )
+  const { state: xWalletShareValue } = useController(
+    'SelectedAccountController',
+    selectXWalletShareValue
+  )
+  const { state: xWalletLockedShares } = useController(
+    'SelectedAccountController',
+    selectXWalletLockedShares
+  )
   const { state: currentUserRequest, dispatch: requestsDispatch } = useController(
     'RequestsController',
     selectCurrentUserRequest
@@ -141,6 +179,11 @@ const WalletStakingScreen = () => {
     params?.mode === 'unstake' ? 'unstake' : 'stake'
   )
   const [amount, setAmount] = useState('')
+  // The amount field can be typed in either the token or its USD value. `amount` stays the token
+  // amount throughout (everything downstream - the slider, the calls, the fee preview - works in
+  // tokens), and `fiatAmount` is only what the field shows while in fiat mode.
+  const [amountFieldMode, setAmountFieldMode] = useState<'token' | 'fiat'>('token')
+  const [fiatAmount, setFiatAmount] = useState('')
   const [shareValue, setShareValue] = useState<bigint | null>(null)
   const [isLoadingShareValue, setIsLoadingShareValue] = useState(false)
   const [pendingWithdrawal, setPendingWithdrawal] = useState<PendingWalletWithdrawal | null>(null)
@@ -203,6 +246,17 @@ const WalletStakingScreen = () => {
     mode === 'unstake' &&
     shouldUsePendingWalletWithdrawalMode(pendingWithdrawal, xWalletBalance, totalPendingShares)
   const shouldShowPendingWithdrawalLoader = mode === 'unstake' && isLoadingPendingWithdrawal
+  // The staking contract holds shares for a withdrawal we can't describe: the leave event reaches
+  // us through the relayer's logs, which lag the transaction, and the cached copy is gone
+  // (another device, or cleared storage). The unstake form stays locked either way - those shares
+  // are committed - so the screen says the details are missing instead of showing an amount and a
+  // timer it doesn't have.
+  const isMissingWithdrawalDetails =
+    mode === 'unstake' &&
+    !isLoadingPendingWithdrawal &&
+    !pendingWithdrawal &&
+    (xWalletLockedShares || 0n) > 0n
+  const shouldDisableStakingForm = isPendingWithdrawalMode || isMissingWithdrawalDetails
   const isWithdrawalReady = pendingWithdrawal
     ? isPendingWalletWithdrawalReady(pendingWithdrawal.unlocksAt, nowMs)
     : false
@@ -210,47 +264,49 @@ const WalletStakingScreen = () => {
     isPortfolioReady &&
     walletBalance < EMPTY_STATE_BALANCE_THRESHOLD &&
     stkWalletBalance < EMPTY_STATE_BALANCE_THRESHOLD &&
-    !isPendingWithdrawalMode
-  const activeToken = mode === 'stake' ? walletToken : stkWalletToken
+    !isPendingWithdrawalMode &&
+    // Unstaking the whole balance empties both, so the locked shares are the whole story here -
+    // "buy some $WALLET" would be the wrong thing to say while a withdrawal is still pending.
+    !isMissingWithdrawalDetails
   const balance = mode === 'stake' ? walletBalance : stkWalletBalance
-  const price = useMemo(
-    () =>
-      activeToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ??
-      walletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ??
-      0,
-    [activeToken?.priceIn, walletToken?.priceIn]
-  )
-  // Per-token USD prices (unlike `price` above, not mode-dependent), used to value the
-  // WALLET / stkWALLET / xWALLET balances for the balance ratio ring next to the amount input.
+  // One price for both WALLET and stkWALLET: staking mints stkWALLET 1:1 for the WALLET
+  // deposited, so a share is worth exactly the token it was minted for. Read from whichever of
+  // the two the portfolio prices, because it only carries the tokens the account actually holds
+  // - an account with no stkWALLET yet has no stkWALLET token to read a price off, and one that
+  // has staked everything has no WALLET token. Falling back to 0 there would value the whole
+  // stake/unstake flow at $0, and would drop the priced-at-nothing segment out of the balance
+  // ratio ring as the user drags the slider.
   const walletPrice = useMemo(
-    () =>
-      walletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ?? 0,
-    [walletToken?.priceIn]
+    () => getUsdPrice(walletToken) ?? getUsdPrice(stkWalletToken) ?? 0,
+    [stkWalletToken, walletToken]
   )
-  const stkWalletPrice = useMemo(
-    () =>
-      stkWalletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ?? 0,
-    [stkWalletToken?.priceIn]
-  )
-  const xWalletPrice = useMemo(
-    () =>
-      xWalletToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
-        ?.price ?? 0,
-    [xWalletToken?.priceIn]
-  )
+  // xWALLET is priced separately - a share is worth `shareValue` WALLET, not 1:1 - so when the
+  // portfolio has no price for it, WALLET's price is converted at that rate rather than reused
+  // as-is. The rate comes from the portfolio's shared copy (the same one the conversion tooltips
+  // read), so no extra RPC call is needed; it's undefined until that first read lands, which
+  // just leaves the price at 0 for as long as the portfolio itself can't value the balance.
+  const xWalletPrice = useMemo(() => {
+    const portfolioPrice = getUsdPrice(xWalletToken)
+    if (portfolioPrice !== undefined) return portfolioPrice
+    if (!xWalletShareValue) return 0
+
+    return walletPrice * Number(formatUnits(xWalletShareValue, TOKEN_DECIMALS))
+  }, [walletPrice, xWalletShareValue, xWalletToken])
   const amountInWei = getWalletStakingAmountInWei(amount)
   const hasInsufficientBalance = amountInWei > balance
   const balanceLabel = useMemo(
     () => formatDecimals(Number(formatUnits(balance, TOKEN_DECIMALS)), 'amount'),
     [balance]
   )
+  const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const amountInUsd = useMemo(
-    () => formatDecimals(Number(amount || 0) * price, 'value'),
-    [amount, price]
+    () => formatDecimals(Number(amount || 0) * walletPrice, 'value'),
+    [amount, walletPrice]
+  )
+  // What the field shows next to the flip icon while it's taking a USD amount
+  const amountInToken = useMemo(
+    () => `${formatDecimals(Number(amount || 0), 'amount')} ${tokenSymbol}`,
+    [amount, tokenSymbol]
   )
   // The "current" badge is based on the confirmed on-chain stkWALLET balance (shared with
   // SwapAndBridgeController, so it always matches the fee a real swap would apply right now) -
@@ -342,7 +398,7 @@ const WalletStakingScreen = () => {
   // The USD value of stkWALLET being unstaked, redirected into the xWALLET segment (see comment
   // above) instead of into WALLET.
   const unstakedAmountUsd =
-    mode === 'unstake' ? Number(formatUnits(amountInWei, TOKEN_DECIMALS)) * stkWalletPrice : 0
+    mode === 'unstake' ? Number(formatUnits(amountInWei, TOKEN_DECIMALS)) * walletPrice : 0
   const balanceRatioSegments = useMemo(
     () => [
       {
@@ -359,13 +415,13 @@ const WalletStakingScreen = () => {
       },
       {
         key: 'stkWallet',
-        label: 'stkWALLET',
-        valueUsd: Number(formatUnits(projectedStkWalletBalance, TOKEN_DECIMALS)) * stkWalletPrice,
+        label: '$stkWALLET',
+        valueUsd: Number(formatUnits(projectedStkWalletBalance, TOKEN_DECIMALS)) * walletPrice,
         color: ACCENT_PRIMITIVES.primaryAccent200[THEME_TYPES.LIGHT]
       },
       {
         key: 'xWallet',
-        label: 'xWALLET',
+        label: '$xWALLET',
         valueUsd:
           Number(formatUnits(xWalletBalance, TOKEN_DECIMALS)) * xWalletPrice + unstakedAmountUsd,
         // Muted gray rather than a brand hue - xWALLET isn't part of the WALLET <-> stkWALLET
@@ -377,7 +433,6 @@ const WalletStakingScreen = () => {
       projectedWalletBalance,
       walletPrice,
       projectedStkWalletBalance,
-      stkWalletPrice,
       xWalletBalance,
       xWalletPrice,
       unstakedAmountUsd,
@@ -391,9 +446,9 @@ const WalletStakingScreen = () => {
   const shouldShowBalanceRatioProgress =
     [walletBalance, stkWalletBalance, xWalletBalance].filter((tokenBalance) => tokenBalance > 0n)
       .length > 1
-  const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const isSubmitDisabled = useMemo(() => {
     if (!account || isSubmitting || (mode === 'unstake' && isLoadingPendingWithdrawal)) return true
+    if (isMissingWithdrawalDetails) return true
     if (isPendingWithdrawalMode) return !isWithdrawalReady || hasPendingWithdrawalLoadFailed
 
     return (
@@ -408,6 +463,7 @@ const WalletStakingScreen = () => {
     hasPendingWithdrawalLoadFailed,
     isLoadingPendingWithdrawal,
     isLoadingShareValue,
+    isMissingWithdrawalDetails,
     isPendingWithdrawalMode,
     isSubmitting,
     isWithdrawalReady,
@@ -627,26 +683,54 @@ const WalletStakingScreen = () => {
     }
   }, [addToast, providersDispatchAndWait, t])
 
+  // Only one of the two fields is ever typed into; the other follows from the price, so flipping
+  // the field mode never changes the amount that will actually be staked.
+  const setTokenAmount = useCallback(
+    (nextAmount: string) => {
+      setAmount(nextAmount)
+      setFiatAmount(toAmountFieldValue(Number(nextAmount || 0) * walletPrice, FIAT_DECIMALS))
+    },
+    [walletPrice]
+  )
+  const handleFiatAmountChange = useCallback(
+    (nextFiatAmount: string) => {
+      setFiatAmount(nextFiatAmount)
+      setAmount(
+        walletPrice > 0
+          ? toAmountFieldValue(Number(nextFiatAmount || 0) / walletPrice, TOKEN_DECIMALS)
+          : ''
+      )
+    },
+    [walletPrice]
+  )
+  // Without a price there's nothing to convert to, so the field stays on the token it stakes.
+  const isAmountFieldModeSwitchDisabled = walletPrice <= 0
+  const switchAmountFieldMode = useCallback(() => {
+    setAmountFieldMode((prevMode) => (prevMode === 'token' ? 'fiat' : 'token'))
+    // Converted here rather than only on every keystroke, so an amount typed before the price
+    // had loaded still carries over into the USD field.
+    setFiatAmount(toAmountFieldValue(Number(amount || 0) * walletPrice, FIAT_DECIMALS))
+  }, [amount, walletPrice])
   const handleSelectMode = useCallback(
     (nextMode: WalletStakingMode) => {
       setMode(nextMode)
-      setAmount('')
+      setTokenAmount('')
       setIsSubmitting(false)
       shouldPersistStakingRouteRef.current = false
       if (nextMode === 'unstake' && hasPendingWithdrawalLoadFailed) {
         startPendingWithdrawalLoad()
       }
     },
-    [hasPendingWithdrawalLoadFailed, startPendingWithdrawalLoad]
+    [hasPendingWithdrawalLoadFailed, setTokenAmount, startPendingWithdrawalLoad]
   )
 
   const handleSliderValueChange = useCallback(
-    (nextAmount: bigint) => setAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
-    []
+    (nextAmount: bigint) => setTokenAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
+    [setTokenAmount]
   )
   const handleMaxPress = useCallback(() => {
-    setAmount(formatUnits(balance, TOKEN_DECIMALS))
-  }, [balance])
+    setTokenAmount(formatUnits(balance, TOKEN_DECIMALS))
+  }, [balance, setTokenAmount])
   const handleOpenFeeInfoBottomSheet = useCallback(
     () => openFeeInfoBottomSheet(),
     [openFeeInfoBottomSheet]
@@ -918,10 +1002,32 @@ const WalletStakingScreen = () => {
             </View>
           ) : (
             <View style={styles.stakingFormContainer}>
-              {isPendingWithdrawalMode && (
+              {isMissingWithdrawalDetails && (
                 <View style={styles.pendingWithdrawalCard}>
                   <View style={styles.pendingWithdrawalIcon}>
                     <LockWithTimerIcon width={54} height={54} color={theme.errorText} />
+                  </View>
+                  <Text fontSize={18} weight="semiBold" style={styles.pendingWithdrawalText}>
+                    {t('We couldn’t find your withdrawal details')}
+                  </Text>
+                  <Text
+                    fontSize={13}
+                    appearance="secondaryText"
+                    style={styles.pendingWithdrawalDescription}
+                  >
+                    {t(
+                      'Your $WALLET is locked for a withdrawal, but we can’t load the details of it. If this doesn’t resolve on its own, please '
+                    )}
+                    <SupportLink fontSize={13} />
+                    {t(' and we will help.')}
+                  </Text>
+                </View>
+              )}
+
+              {isPendingWithdrawalMode && (
+                <View style={styles.pendingWithdrawalCard}>
+                  <View style={styles.pendingWithdrawalIcon}>
+                    <WithdrawIcon width={54} height={54} color={theme.errorText} />
                   </View>
                   {isWithdrawalReady ? (
                     <>
@@ -983,22 +1089,32 @@ const WalletStakingScreen = () => {
                 </View>
               ) : (
                 <View
-                  pointerEvents={isPendingWithdrawalMode ? 'none' : 'auto'}
-                  style={isPendingWithdrawalMode ? styles.disabledStakingForm : undefined}
+                  pointerEvents={shouldDisableStakingForm ? 'none' : 'auto'}
+                  style={shouldDisableStakingForm ? styles.disabledStakingForm : undefined}
                 >
                   <View style={styles.amountCard}>
                     <View style={styles.balanceRow}>
-                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <SwapAndBridgeIcon
-                          width={14}
-                          height={14}
-                          color={theme.primaryAccent200}
-                          strokeWidth={1.8}
-                        />
-                        <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
-                          {amountInUsd}
-                        </Text>
-                      </View>
+                      {/* Flips the field between the token and its USD value, showing whichever
+                      of the two the field isn't currently taking - the same way the send form's
+                      amount field works. */}
+                      <HoverablePressable
+                        onPress={switchAmountFieldMode}
+                        disabled={isAmountFieldModeSwitchDisabled}
+                        accessibilityLabel={t('Switch between token and USD amount')}
+                        testID="wallet-staking-switch-amount-field-mode"
+                      >
+                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                          <SwapAndBridgeIcon
+                            width={14}
+                            height={14}
+                            color={theme.primaryAccent200}
+                            strokeWidth={1.8}
+                          />
+                          <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
+                            {amountFieldMode === 'token' ? amountInUsd : amountInToken}
+                          </Text>
+                        </View>
+                      </HoverablePressable>
                       <BalanceWithMax
                         balanceLabel={balanceLabel}
                         disabled={balance <= 0n}
@@ -1008,9 +1124,11 @@ const WalletStakingScreen = () => {
                     </View>
 
                     <NumberInput
-                      value={amount}
-                      onChangeText={setAmount}
-                      precision={TOKEN_DECIMALS}
+                      value={amountFieldMode === 'fiat' ? fiatAmount : amount}
+                      onChangeText={
+                        amountFieldMode === 'fiat' ? handleFiatAmountChange : setTokenAmount
+                      }
+                      precision={amountFieldMode === 'fiat' ? FIAT_DECIMALS : TOKEN_DECIMALS}
                       placeholder="0.00"
                       borderless
                       containerStyle={styles.amountInput}
@@ -1019,7 +1137,7 @@ const WalletStakingScreen = () => {
                       childrenBeforeButtons={
                         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                           <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
-                            {tokenSymbol}
+                            {amountFieldMode === 'fiat' ? t('USD') : tokenSymbol}
                           </Text>
                           {shouldShowBalanceRatioProgress && (
                             <View style={spacings.mlSm}>

@@ -28,6 +28,8 @@ import {
 import { syncSessionStorage } from '@common/services/storage'
 import { getUiType } from '@common/utils/uiType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
 type HwWalletsNeedingRedirect = 'trezor' | 'lattice' | null
 
@@ -73,8 +75,12 @@ const getAccountsToPersonalizeFromSession = (): Account[] => {
   }
 }
 
+const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
+  state.hasPasswordSecret
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
-  const { state: hasPasswordSecret } = useController('KeystoreController', 'hasPasswordSecret')
+  const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { statuses: emailVaultStatuses } = useController('EmailVaultController').state
   const { path, params } = useRoute()
   const prevPath: string | undefined = usePrevious(path)
@@ -85,7 +91,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const { authStatus } = useAuth()
   const { dispatch } = useControllersMiddleware()
   const { isSetupComplete } = useController('WalletStateController').state
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const {
     state: { isInitialized, subType, initParams, type },
     dispatch: accountPickerDispatch

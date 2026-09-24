@@ -1,13 +1,20 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { ThemeProps } from '@common/styles/themeConfig'
-import common, { hexToRgba } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 
 interface Styles {
   centeredText: TextStyle
-  table: ViewStyle
-  tierRow: ViewStyle
-  currentTierRow: ViewStyle
+  rightAlignedText: TextStyle
+  tierCard: ViewStyle
+  currentTierCard: ViewStyle
+  currentMaximumTierCard: ViewStyle
+  tierDetails: ViewStyle
+  currentTierBadge: ViewStyle
+  currentTierBadgeText: TextStyle
+  cancelButton: ViewStyle
+  stakeButton: ViewStyle
+  actionButtonText: TextStyle
   feeExemption: ViewStyle
 }
 
@@ -16,18 +23,47 @@ const getStyles = (theme: ThemeProps) =>
     centeredText: {
       textAlign: 'center'
     },
-    table: {
+    rightAlignedText: {
+      textAlign: 'right'
+    },
+    tierCard: {
       ...common.borderRadiusSecondary,
-      borderWidth: 1,
-      borderColor: theme.primaryBorder,
-      overflow: 'hidden'
+      backgroundColor: theme.secondaryBackground
     },
-    tierRow: {
-      borderTopWidth: 1,
-      borderTopColor: theme.primaryBorder
+    currentTierCard: {
+      backgroundColor: theme.secondaryBackground,
+      borderColor: theme.neutral600,
+      borderWidth: 1
     },
-    currentTierRow: {
-      backgroundColor: hexToRgba(theme.primaryAccent, 0.12)
+    currentMaximumTierCard: {
+      borderColor: theme.successText,
+      borderWidth: 1
+    },
+    tierDetails: {
+      minWidth: 0
+    },
+    currentTierBadge: {
+      backgroundColor: theme.neutral800
+    },
+    currentTierBadgeText: {
+      color: theme.primaryBackground,
+      fontSize: 11
+    },
+    cancelButton: {
+      width: 'auto',
+      paddingLeft: 16,
+      paddingRight: 16,
+      height: 52
+    },
+    stakeButton: {
+      width: 'auto',
+      marginLeft: 24,
+      paddingLeft: 24,
+      paddingRight: 24,
+      height: 52
+    },
+    actionButtonText: {
+      fontSize: 16
     },
     feeExemption: {
       ...common.borderRadiusSecondary,

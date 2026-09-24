@@ -18,7 +18,10 @@ export const handleCleanUpOnPortDisconnect = async ({
     const isAnotherPanelOpen = mainCtrl.ui.views.some(isSidePanelView)
     const isRequestInOwnWindow = !!mainCtrl.requests.requestWindow.windowProps
 
-    if (!isAnotherPanelOpen && !isRequestInOwnWindow) await mainCtrl.requests.closeRequestWindow()
+    // Not counted against the apps that were waiting - a port also drops on an extension
+    // reload or a service worker restart, which is not the user refusing anything.
+    if (!isAnotherPanelOpen && !isRequestInOwnWindow)
+      await mainCtrl.requests.closeRequestWindow({ isUserInitiated: false })
   }
 
   if (!port.sender || !port.sender?.url) return

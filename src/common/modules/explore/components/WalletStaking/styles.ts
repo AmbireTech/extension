@@ -227,11 +227,13 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
       ...spacings.mbTy,
-      minHeight: 20
+      minHeight: 24
     },
     maxButton: {
       ...spacings.mlTy,
-      ...spacings.phTy
+      ...spacings.phTy,
+      ...spacings.pv0,
+      height: 24
     },
     amountInput: {
       ...spacings.mbSm
@@ -306,6 +308,9 @@ const getStyles = (theme: ThemeProps) =>
     feeDetailsButton: {
       ...spacings.mtTy,
       ...spacings.mb0,
+      // The tiny button vertical padding leaves less space than the text line height,
+      // which pushes the text off the vertical center
+      ...spacings.pv0,
       height: 24,
       borderColor: theme.primaryAccent300
     },

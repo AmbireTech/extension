@@ -29,6 +29,7 @@ const SignMessageScreen = () => {
   }, [closeRequestModal, isInsideBottomSheet])
 
   const {
+    t,
     signMessageState,
     signStatus,
     humanizedMessage,
@@ -107,6 +108,9 @@ const SignMessageScreen = () => {
               }
               resolveButtonTestID="button-sign"
               rejectButtonText="Reject"
+              withRejectOptions
+              rejectOptionsTitle={t('Reject request')}
+              rejectOptionText={t('Reject this request')}
             >
               {isViewOnly && (
                 <View style={[spacings.mbSm]}>

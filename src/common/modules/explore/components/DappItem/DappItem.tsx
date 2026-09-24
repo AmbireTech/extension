@@ -58,6 +58,7 @@ const DappItem = (dapp: DappItemProps) => {
     isFeatured,
     favorite,
     blacklisted,
+    isTrustedByUser,
     tvl,
     twitter,
     onPressOverride,
@@ -68,9 +69,12 @@ const DappItem = (dapp: DappItemProps) => {
   const { t } = useTranslation()
   const navigation = useNavigation()
 
+  // The user vouched for this app, so its hosting is no longer flagged here either.
+  const isSuspiciousHosting = blacklisted === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+
   const getCardBackground = (hovered: boolean) => {
     if (blacklisted === 'BLACKLISTED') return theme.errorBackground
-    if (blacklisted === 'SUSPICIOUS_HOSTING') return theme.warningBackground
+    if (isSuspiciousHosting) return theme.warningBackground
     return hovered ? theme.tertiaryBackground : theme.secondaryBackground
   }
 
@@ -249,19 +253,6 @@ const DappItem = (dapp: DappItemProps) => {
                       <TwitterIcon width={20} height={20} />
                     </AnimatedPressable>
                   )}
-                  {blacklisted === 'BLACKLISTED' && (
-                    <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
-                  )}
-                  {blacklisted === 'SUSPICIOUS_HOSTING' && (
-                    <Badge
-                      text={t('Suspicious hosting')}
-                      type="warning"
-                      tooltipText={t(
-                        'This app is hosted on a shared platform commonly used for phishing. Be careful when interacting with it unless you are certain you trust it.'
-                      )}
-                      style={spacings.mrTy}
-                    />
-                  )}
                   {!isInSettings && (
                     <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
                       <ManageApp
@@ -279,6 +270,29 @@ const DappItem = (dapp: DappItemProps) => {
                     </View>
                   )}
                 </View>
+                {blacklisted === 'BLACKLISTED' && (
+                  <Badge text={t('Blacklisted')} type="error" style={spacings.mlTy} />
+                )}
+                {isSuspiciousHosting && (
+                  <Badge
+                    text={t('Suspicious hosting')}
+                    type="warning"
+                    tooltipText={t(
+                      'This app is hosted on a shared platform commonly used for phishing. Be careful when interacting with it unless you are certain you trust it.'
+                    )}
+                    style={spacings.mlTy}
+                  />
+                )}
+                {!!isTrustedByUser && (
+                  <Badge
+                    text={t('Trusted by you')}
+                    type="warning"
+                    tooltipText={t(
+                      'Hosted on a shared platform commonly used for phishing, but you marked it as trusted, so we no longer warn you.'
+                    )}
+                    style={spacings.mlTy}
+                  />
+                )}
                 {isFeatured && !isInSettings && (
                   <Badge
                     text={t('Featured')}

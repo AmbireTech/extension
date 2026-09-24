@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { isMobile } from '@common/config/env'
 import usePrevious from '@common/hooks/usePrevious'
@@ -47,14 +47,10 @@ const useSelectInternal = ({
     [setValue, setIsMenuOpen, setSearch]
   )
 
-  const prevSearch = usePrevious(search)
   const prevIsMenuOpen = usePrevious(isMenuOpen)
 
   const filteredData = useMemo(() => {
     const normalizedSearchTerm = search.trim().toLowerCase()
-
-    const hasNewSearchTerm = onSearch && search !== prevSearch
-    if (hasNewSearchTerm) onSearch(search)
 
     if (!search) return data
 
@@ -109,13 +105,22 @@ const useSelectInternal = ({
       }
     })
     const noMatchesFound = sectionsWithFilteredData.every((section) => section.data.length === 0)
-    const isAnotherSearchTerm = search !== prevSearch
-    const shouldAttemptToFetchMoreOptions =
-      noMatchesFound && isAnotherSearchTerm && !!attemptToFetchMoreOptions
-    if (shouldAttemptToFetchMoreOptions) attemptToFetchMoreOptions(search)
 
     return noMatchesFound ? [] : sectionsWithFilteredData
-  }, [search, onSearch, prevSearch, data, attemptToFetchMoreOptions])
+  }, [search, data])
+
+  // Both of these call into a controller, so they must not run while filtering: that
+  // memo runs in the render phase, and the controller work would then block the very
+  // commit the keystroke is waiting on.
+  const searchReportedRef = useRef(search)
+
+  useEffect(() => {
+    if (searchReportedRef.current === search) return
+    searchReportedRef.current = search
+
+    onSearch?.(search)
+    if (!filteredData.length) attemptToFetchMoreOptions?.(search)
+  }, [search, filteredData, onSearch, attemptToFetchMoreOptions])
 
   const keyExtractor = useCallback((item: SelectValue) => item.key || item.value, [])
 

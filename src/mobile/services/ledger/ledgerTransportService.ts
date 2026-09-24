@@ -23,13 +23,11 @@ import { RNHidTransportFactory } from '@ledgerhq/device-transport-kit-react-nati
 // All Ledger device communication on mobile happens HERE, in the React Native
 // native JS context, using Ledger's Device Management Kit (DMK) — the same
 // stack the extension uses (see src/web/.../LedgerController.ts), but with the
-// React Native BLE/USB transports. The WebView worker (where the controllers
-// live) has no access to Bluetooth/USB or native modules, so the worker-side
-// LedgerController forwards every operation to this singleton over the message
-// bridge (see WebViewWorker.tsx `ledger.*` cases).
+// React Native BLE/USB transports. The mobile LedgerController is a thin wrapper
+// around this singleton.
 //
 // This service throws RAW device messages / status codes (never normalized):
-// both call sites — the worker LedgerController (bridge) and the connect UI —
+// both call sites — the LedgerController and the connect UI —
 // run the result through `normalizeLedgerMessage`, so normalizing here would
 // double-map and mangle the text.
 

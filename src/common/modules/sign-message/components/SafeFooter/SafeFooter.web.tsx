@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GestureResponderEvent, View } from 'react-native'
+import { View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
-import Button from '@common/components/Button'
+import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import Spinner from '@common/components/Spinner'
+import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
@@ -32,7 +33,7 @@ const SafeFooter = ({
   signed: string[]
   importedKeys: Key[]
   threshold: number
-  onReject: (event: GestureResponderEvent) => void
+  onReject: () => void
   // closes the signing UI while keeping the txn pending with the collected
   // signatures already pushed to Safe Global (web: close popup; mobile: dismiss sheet)
   onSignLater: () => void
@@ -52,6 +53,17 @@ const SafeFooter = ({
     onSign(signer.addr, signer.type)
   }, [isSingle, onSign, importedKeys])
 
+  const rejectButton = (props?: { size?: ButtonProps['size']; style?: ButtonProps['style'] }) => (
+    <RejectRequestButton
+      text={t('Reject')}
+      hasBottomSpacing={false}
+      onReject={onReject}
+      optionsTitle={t('Reject request')}
+      rejectOptionText={t('Reject this request')}
+      {...props}
+    />
+  )
+
   if (isCompactLayout) {
     return (
       <View style={[spacings.ptSm, spacings.phSm, spacings.pbMd]}>
@@ -68,26 +80,10 @@ const SafeFooter = ({
             style={spacings.mb}
           />
         )}
-        {threshold === 0 && (
-          <Button
-            text={t('Reject')}
-            type="danger"
-            hasBottomSpacing={false}
-            size="large"
-            onPress={onReject}
-          />
-        )}
+        {threshold === 0 && rejectButton({ size: 'large' })}
         {threshold > 0 && isSingle && (
           <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
-            <View style={flexbox.flex1}>
-              <Button
-                text={t('Reject')}
-                type="danger"
-                hasBottomSpacing={false}
-                size="large"
-                onPress={onReject}
-              />
-            </View>
+            <View style={flexbox.flex1}>{rejectButton({ size: 'large' })}</View>
             <View style={flexbox.flex1}>
               <Button
                 size="large"
@@ -114,15 +110,7 @@ const SafeFooter = ({
                 />
               </View>
               <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
-                <View style={flexbox.flex1}>
-                  <Button
-                    text={t('Reject')}
-                    type="danger"
-                    hasBottomSpacing={false}
-                    onPress={onReject}
-                    style={{ height: 50 }}
-                  />
-                </View>
+                <View style={flexbox.flex1}>{rejectButton({ style: { height: 50 } })}</View>
                 <View style={flexbox.flex1}>
                   <Button
                     type="secondary"
@@ -169,27 +157,13 @@ const SafeFooter = ({
         )}
         {threshold === 0 && (
           <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt, spacings.ph]}>
-            <Button
-              text={t('Reject')}
-              type="danger"
-              hasBottomSpacing={false}
-              size="large"
-              onPress={onReject}
-              style={[{ maxWidth: 'auto' }]}
-            />
+            {rejectButton({ size: 'large', style: [{ maxWidth: 'auto' }] })}
           </View>
         )}
         {threshold > 0 && isSingle ? (
           <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt, spacings.ph]}>
             <View style={[flexbox.directionRow]}>
-              <Button
-                text={t('Reject')}
-                type="danger"
-                hasBottomSpacing={false}
-                size="large"
-                onPress={onReject}
-                style={[{ maxWidth: 'auto' }]}
-              />
+              {rejectButton({ size: 'large', style: [{ maxWidth: 'auto' }] })}
               <Button
                 size="large"
                 type="primary"
@@ -204,14 +178,7 @@ const SafeFooter = ({
           <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt, spacings.ph]}>
             {threshold > signed.length ? (
               <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, { width: '100%' }]}>
-                <Button
-                  text={t('Reject')}
-                  type="danger"
-                  hasBottomSpacing={false}
-                  size="large"
-                  onPress={onReject}
-                  style={[{ maxWidth: 'auto' }]}
-                />
+                {rejectButton({ size: 'large', style: [{ maxWidth: 'auto' }] })}
                 <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                   <Button
                     size="large"

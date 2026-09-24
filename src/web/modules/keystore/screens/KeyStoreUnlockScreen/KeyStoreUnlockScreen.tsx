@@ -33,6 +33,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@common/utils/links/links'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 import { IS_FIREFOX } from '@web/constants/common'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
@@ -40,13 +41,19 @@ import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constant
 import getStyles from './styles'
 import UpdateAvailableBanner, { selectIsExtensionUpdateAvailable } from './UpdateAvailableBanner'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const FOOTER_BUTTON_HIT_SLOP = { top: 10, bottom: 15 }
+
+const selectRequestWindow = (state: AllControllersMappingType['RequestsController']) =>
+  state.requestWindow
 
 const KeyStoreUnlockScreen = () => {
   const { control, handleSubmit, errors, passwordFieldError, disableSubmit, handleUnlock } =
     useKeyStoreUnlock()
   const { t } = useTranslation()
   const { addToast } = useToast()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { styles } = useTheme(getStyles)
   const {
     state: { isPrivacyModeEnabled },
@@ -57,7 +64,7 @@ const KeyStoreUnlockScreen = () => {
     state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
-  const { state: requestWindow } = useController('RequestsController', 'requestWindow')
+  const { state: requestWindow } = useController('RequestsController', selectRequestWindow)
   const { state: isExtensionUpdateAvailable } = useController(
     'ExtensionUpdateController',
     selectIsExtensionUpdateAvailable
@@ -178,22 +185,22 @@ const KeyStoreUnlockScreen = () => {
   }, [isUnlocked, statuses.unlockWithSecret])
 
   return (
-    <LayoutWrapper style={styles.panel}>
+    <LayoutWrapper style={styles.panel} backgroundStyle={styles.background}>
       <View
-        style={{
-          height: 324,
-          width: '100%',
-          ...spacings.phSm,
-          // The update banner takes over the gap below the card, so the rest of the screen stays in place
-          marginBottom:
-            isExtensionUpdateAvailable && !isPasswordUnlockRequired
-              ? SPACING_TY
-              : canUseBiometrics
-                ? 42
-                : isPasswordUnlockRequired
-                  ? 24
-                  : 56
-        }}
+        style={[
+          styles.hero,
+          {
+            // The update banner takes over the gap below the card, so the rest of the screen stays in place
+            marginBottom:
+              isExtensionUpdateAvailable && !isPasswordUnlockRequired
+                ? SPACING_TY
+                : canUseBiometrics
+                  ? 42
+                  : isPasswordUnlockRequired
+                    ? 24
+                    : 56
+          }
+        ]}
       >
         <View
           style={{
@@ -273,7 +280,8 @@ const KeyStoreUnlockScreen = () => {
           <UpdateAvailableBanner />
         </View>
       )}
-      <View style={styles.container}>
+      {/* A narrow layout's width can match the container maxWidth, so keep the form inset */}
+      <View style={[styles.container, isNarrowWebLayout && spacings.phSm]}>
         {unlockMethod === 'biometrics' && canUseBiometrics && (
           <View style={styles.biometricsContainer}>
             <TouchableOpacity
@@ -360,7 +368,7 @@ const KeyStoreUnlockScreen = () => {
 
             {canUseBiometrics && (
               <Button
-                type="secondary"
+                type={isSidePanel ? 'tertiary' : 'secondary'}
                 hasBottomSpacing={false}
                 style={[styles.switchButton, spacings.mt]}
                 text={t('Unlock with biometrics')}

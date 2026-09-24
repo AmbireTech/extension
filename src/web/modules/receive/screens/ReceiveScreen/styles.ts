@@ -18,12 +18,14 @@ interface Style {
   supportedNetworks: ViewStyle
   supportedNetwork: ViewStyle
   accountAddressWrapper: ViewStyle
+  accountAddressWrapperNarrow: ViewStyle
+  accountAddressWrapperWide: ViewStyle
   seeMoreWrapper: ViewStyle
   extraNetwork: ViewStyle
   extraNetworkVisible: ViewStyle
 }
 
-const { isTab, isSidePanel } = getUiType()
+const { isTab } = getUiType()
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
@@ -68,18 +70,17 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 1,
       borderColor: theme.secondaryBorder
     },
+    accountAddressWrapperNarrow: {
+      maxWidth: 420,
+      width: '100%',
+      alignItems: 'stretch'
+    },
+    accountAddressWrapperWide: {
+      maxWidth: '100%',
+      ...flexbox.center
+    },
     accountAddressWrapper: {
       marginHorizontal: 'auto',
-      ...(isSidePanel
-        ? {
-            maxWidth: 420,
-            width: '100%',
-            alignItems: 'stretch'
-          }
-        : {
-            maxWidth: '100%',
-            ...flexbox.center
-          }),
       ...spacings.phSm,
       ...spacings.pvSm,
       ...spacings.mbSm,

@@ -61,6 +61,72 @@ const PULL_RESISTANCE = 0.5
 // The gap the pages are held open by while the refresh runs, sized to the spinner
 const PULL_SPINNER_HEIGHT = 56
 
+/**
+ * The work the carousel may only do while the dashboard is the screen the user is on.
+ * Its own component, and one that renders nothing, because focus is read through a
+ * context that re-renders whoever reads it - and a render of the carousel re-attaches
+ * its pull gesture. Losing focus is the commit that starts the transition to the screen
+ * the user asked for, so it has to stay as small as it can be.
+ */
+const WhileFocused = ({
+  openTabIndex,
+  renderTabs,
+  initAllTabs
+}: {
+  openTabIndex: number
+  renderTabs: (tabs: (TabType | undefined)[]) => void
+  initAllTabs: () => void
+}) => {
+  const isScreenFocused = useIsScreenFocused()
+
+  // Every page ends up rendered, so no swipe can outrun them: closest first and one at
+  // a time, never during a gesture or in the same frame as another. Only while this is
+  // the screen the user is on, or the rest would be built over the screen it was left for.
+  useEffect(() => {
+    if (!isScreenFocused) return undefined
+
+    let isCancelled = false
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+
+    const byDistanceToOpenTab = TABS.map((tab, index) => ({
+      tab,
+      distance: Math.abs(index - openTabIndex)
+    }))
+      .sort((a, b) => a.distance - b.distance)
+      .map(({ tab }) => tab)
+
+    const renderFrom = (index: number) => {
+      if (isCancelled || index >= byDistanceToOpenTab.length) return
+
+      renderTabs([byDistanceToOpenTab[index]])
+
+      timeoutId = setTimeout(() => renderFrom(index + 1), PAGE_RENDER_STEP)
+    }
+
+    const interaction = InteractionManager.runAfterInteractions(() => {
+      timeoutId = setTimeout(() => renderFrom(0), PAGE_RENDER_DELAY)
+    })
+
+    return () => {
+      isCancelled = true
+      interaction.cancel()
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [isScreenFocused, openTabIndex, renderTabs])
+
+  // Deferred until the interactions are over, and a navigation away is one of them,
+  // so this has to ask whether the dashboard is still the screen it was deferred on.
+  useEffect(() => {
+    if (!isScreenFocused) return undefined
+
+    const interaction = InteractionManager.runAfterInteractions(initAllTabs)
+
+    return () => interaction.cancel()
+  }, [initAllTabs, isScreenFocused])
+
+  return null
+}
+
 const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   openTab,
   setOpenTab,
@@ -71,7 +137,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   children
 }) => {
   const { styles } = useTheme(getStyles)
-  const isScreenFocused = useIsScreenFocused()
   const scrollRef = useRef<ScrollView>(null)
   const scrollY = useMemo(() => new Animated.Value(0), [])
   // The pages are explicitly sized because a page taller than the pager would
@@ -184,51 +249,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       return next
     })
   }, [])
-
-  // Every page ends up rendered, so no swipe can outrun them: closest first and one at
-  // a time, never during a gesture or in the same frame as another. Only while this is
-  // the screen the user is on, or the rest would be built over the screen it was left for.
-  useEffect(() => {
-    if (!isScreenFocused) return undefined
-
-    let isCancelled = false
-    let timeoutId: ReturnType<typeof setTimeout> | undefined
-
-    const byDistanceToOpenTab = TABS.map((tab, index) => ({
-      tab,
-      distance: Math.abs(index - openTabIndex)
-    }))
-      .sort((a, b) => a.distance - b.distance)
-      .map(({ tab }) => tab)
-
-    const renderFrom = (index: number) => {
-      if (isCancelled || index >= byDistanceToOpenTab.length) return
-
-      renderTabs([byDistanceToOpenTab[index]])
-
-      timeoutId = setTimeout(() => renderFrom(index + 1), PAGE_RENDER_STEP)
-    }
-
-    const interaction = InteractionManager.runAfterInteractions(() => {
-      timeoutId = setTimeout(() => renderFrom(0), PAGE_RENDER_DELAY)
-    })
-
-    return () => {
-      isCancelled = true
-      interaction.cancel()
-      if (timeoutId) clearTimeout(timeoutId)
-    }
-  }, [isScreenFocused, openTabIndex, renderTabs])
-
-  // Deferred until the interactions are over, and a navigation away is one of them,
-  // so this has to ask whether the dashboard is still the screen it was deferred on.
-  useEffect(() => {
-    if (!isScreenFocused) return undefined
-
-    const interaction = InteractionManager.runAfterInteractions(initAllTabs)
-
-    return () => interaction.cancel()
-  }, [initAllTabs, isScreenFocused])
 
   const onLayout = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => {
     setPageSize((prev) =>
@@ -516,6 +536,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
   return (
     <View style={styles.container}>
+      <WhileFocused openTabIndex={openTabIndex} renderTabs={renderTabs} initAllTabs={initAllTabs} />
       <View style={flexbox.flex1} onLayout={onLayout}>
         <DashboardCarouselContext.Provider value={carousel}>
           {(isPulling || !!refreshing) && (
@@ -562,12 +583,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
           <DashboardBanners />
         </View>
         <View onLayout={onTabsLayout}>
-          <TabsAndSearch
-            openTab={openTab}
-            setOpenTab={setOpenTab}
-            currentTab={openTab}
-            sessionId={sessionId}
-          />
+          <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
         </View>
       </Animated.View>
       {/* Outside the pager, so a swipe doesn't carry it along, and only what the open

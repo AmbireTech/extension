@@ -15,6 +15,13 @@ import flexbox from '@common/styles/utils/flexbox'
 import { Props } from './Footer'
 import RejectButton from './RejectButton'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const Footer = ({
   onReject,
   onAddToCart,
@@ -32,8 +39,8 @@ const Footer = ({
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
-  const { state: userRequests } = useController('RequestsController', 'userRequests')
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 

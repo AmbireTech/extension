@@ -1,6 +1,9 @@
 import { engine } from '@web/constants/browserapi'
 
 export const POPUP_WIDTH = 480
+// Chrome doesn't expose the width the user gave the side panel, so the request window opens at
+// the width Chrome opens the panel with.
+export const SIDE_PANEL_WIDTH = 400
 export const TAB_CONTENT_WIDTH = 990
 export const TAB_WIDE_CONTENT_WIDTH = 1320
 

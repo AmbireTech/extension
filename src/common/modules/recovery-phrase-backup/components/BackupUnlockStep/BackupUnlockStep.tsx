@@ -21,12 +21,17 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   isUnlocking: boolean
   unlockErrorMessage: string
   onUnlock: (secretId: 'password' | 'biometrics', secret: string) => void
   onPasswordChange: () => void
 }
+
+const selectHasBiometricsSecret = (state: AllControllersMappingType['KeystoreController']) =>
+  state.hasBiometricsSecret
 
 const BackupUnlockStep = ({
   isUnlocking,
@@ -36,7 +41,10 @@ const BackupUnlockStep = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: hasBiometricsSecret } = useController('KeystoreController', 'hasBiometricsSecret')
+  const { state: hasBiometricsSecret } = useController(
+    'KeystoreController',
+    selectHasBiometricsSecret
+  )
   const { hasBiometricsHardware, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
   const [password, setPassword] = useState(
     isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''

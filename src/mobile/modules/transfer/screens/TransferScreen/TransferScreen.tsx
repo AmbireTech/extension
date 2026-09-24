@@ -168,6 +168,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               addressInputState={addressInputState}
               canUseGasTank={canUseGasTank}
               amountErrorMessage={validationFormMsgs.amount.message || ''}
+              amountAdjustmentInfo={transferState.amountAdjustmentInfo}
               isRecipientAddressUnknown={isRecipientAddressUnknown}
               isRecipientHumanizerKnownTokenOrSmartContract={
                 isRecipientHumanizerKnownTokenOrSmartContract
