@@ -1,10 +1,12 @@
 import React from 'react'
 import { View } from 'react-native'
 
+import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import spacings from '@common/styles/spacings'
 import DetailRow from '@common/modules/wallet-staking/components/DetailRow'
 import StakingApy from '@common/modules/wallet-staking/components/StakingApy'
 
@@ -46,7 +48,15 @@ const StakingDetailsCard = ({ form }: Props) => {
               submitOnEnter={false}
               style={styles.feeDetailsButton}
               testID="wallet-staking-fee-details-button"
-            />
+              childrenPosition="right"
+            >
+              <RightArrowIcon
+                width={10}
+                height={10}
+                color={theme.primaryAccent300}
+                style={spacings.mlMi}
+              />
+            </Button>
           </View>
           <View style={styles.feePreviewValues}>
             {projectedFeePercent !== currentFeePercent && (
