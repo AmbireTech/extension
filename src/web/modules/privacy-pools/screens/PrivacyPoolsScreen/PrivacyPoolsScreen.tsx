@@ -37,7 +37,6 @@ const PrivacyPoolsScreen = () => {
     balancesState,
     totalPrivateBalance,
     pendingPrivateBalance,
-    hasUnpricedTokens,
     activity,
     operation,
     getNetworkName,
@@ -148,7 +147,6 @@ const PrivacyPoolsScreen = () => {
             isSyncing={isSyncingAnyChain}
             totalPrivateBalance={totalPrivateBalance}
             pendingPrivateBalance={pendingPrivateBalance}
-            hasUnpricedTokens={hasUnpricedTokens}
             canWithdraw={!!withdrawTokens.length}
             onRefresh={refreshLoadedChains}
             onDeposit={openAction('deposit')}

@@ -36,9 +36,6 @@ interface Props {
   // Value still waiting on the association set, so excluded from the total above. Surfaced rather
   // than folded in, because it genuinely cannot be withdrawn privately yet.
   pendingPrivateBalance: number
-  // Whether some pooled token has no known price, which makes the total an understatement. An
-  // incomplete figure presented as a complete one is what the user would act on.
-  hasUnpricedTokens: boolean
   canWithdraw: boolean
   onRefresh: () => void
   onDeposit: () => void
@@ -51,7 +48,6 @@ const PrivacyPoolsOverview: FC<Props> = ({
   isSyncing,
   totalPrivateBalance,
   pendingPrivateBalance,
-  hasUnpricedTokens,
   canWithdraw,
   onRefresh,
   onDeposit,
@@ -176,20 +172,14 @@ const PrivacyPoolsOverview: FC<Props> = ({
                 )}
               </View>
 
-              {/* Both notes qualify the figure above rather than adding to it: one says part of the
-              balance cannot be withdrawn privately yet, the other that the figure is an
-              understatement. Without them a total that silently omits money reads as a complete
-              one. */}
+              {/* Qualifies the figure above rather than adding to it: part of the balance cannot be
+              withdrawn privately yet. Without it a total that silently omits money reads as a
+              complete one. */}
               {!isPrivacyModeEnabled && pendingPrivateBalance > 0 && (
                 <Text fontSize={12} color={OVERVIEW_COLORS.secondaryText} numberOfLines={1}>
                   {t('+{{value}} waiting to be approved', {
                     value: formatDecimals(pendingPrivateBalance, 'value')
                   })}
-                </Text>
-              )}
-              {hasUnpricedTokens && (
-                <Text fontSize={12} color={OVERVIEW_COLORS.secondaryText} numberOfLines={1}>
-                  {t('Some pooled assets have no known price and are not counted')}
                 </Text>
               )}
             </View>

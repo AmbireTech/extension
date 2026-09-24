@@ -202,13 +202,6 @@ const usePrivacyPools = () => {
     [tokenBalances, getTokenPrice]
   )
 
-  // Whether some pooled token has no known price, which makes the total an understatement. An
-  // incomplete figure presented as a complete one is what the user would act on.
-  const hasUnpricedTokens = useMemo(
-    () => balances.some((balance) => balance.value === null),
-    [balances]
-  )
-
   const balancesState: PrivacyPoolsBalancesState = useMemo(() => {
     if (!isAvailableForSelectedAccount) return 'unavailable'
     if (hasSyncedAnyChain) return 'ready'
@@ -290,7 +283,6 @@ const usePrivacyPools = () => {
     balancesState,
     totalPrivateBalance,
     pendingPrivateBalance,
-    hasUnpricedTokens,
     activity: activityDisplay,
     operation,
     tokenBalances,
