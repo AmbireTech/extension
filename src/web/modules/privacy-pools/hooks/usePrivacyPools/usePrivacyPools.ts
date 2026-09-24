@@ -2,6 +2,7 @@ import { formatUnits } from 'ethers'
 import { useCallback, useMemo } from 'react'
 
 import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
+import { getPrivacyPoolsPriceKey } from '@ambire-common/libs/privacyPools/prices'
 import {
   PrivacyPoolsActivityEntry,
   PrivacyPoolsChainState,
@@ -33,8 +34,10 @@ export type PrivacyPoolsBalanceDisplay = {
   tokenAddress: string
   symbol: string
   decimals: number
-  /** Formatted with the token's own decimals - the part that can be withdrawn privately. */
+  /** Formatted with the token's own decimals - the part that can be sent on privately. */
   approvedAmount: string
+  /** Whether any of it is approved, i.e. can be sent on - kept apart from the formatted amount. */
+  isReadyToSend: boolean
   /**
    * The part still waiting on the association set, formatted the same way, or null when there is
    * none. Not spendable privately, so it is shown apart rather than added in.
@@ -78,9 +81,6 @@ export type PrivacyPoolsBalancesState = 'unavailable' | 'not-loaded' | 'loading'
  */
 const usePrivacyPools = () => {
   const { state, dispatch } = useController('PrivacyPoolsController')
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
   const { state: { networks = [] } = {} } = useController('NetworksController')
 
   const {
@@ -91,7 +91,8 @@ const usePrivacyPools = () => {
     operation = null,
     unavailableReason = null,
     isAvailableForSelectedAccount = false,
-    hasSyncedAnyChain = false
+    hasSyncedAnyChain = false,
+    prices = {}
   } = state
 
   // Falls back to the raw chain id rather than to a translated "Unknown network": the chains here
@@ -104,27 +105,16 @@ const usePrivacyPools = () => {
   )
 
   /**
-   * USD price of a pooled token, taken from the public portfolio.
+   * USD price of a pooled token, as the Privacy Pools controller priced it - there is no selected
+   * account's portfolio to take it from while a Privacy Pools account is selected.
    *
-   * Null rather than 0 when the token is not held publicly: a balance with no price is not a
-   * balance worth nothing, and the difference decides whether a row shows a value at all.
+   * Null rather than 0 when the token has no known price: a balance with no price is not a balance
+   * worth nothing, and the difference decides whether a row shows a value at all.
    */
   const getTokenPrice = useCallback(
-    (chainId: string, tokenAddress: string) => {
-      const token = (portfolio?.tokens || []).find(
-        (portfolioToken) =>
-          portfolioToken.chainId.toString() === chainId &&
-          portfolioToken.address.toLowerCase() === tokenAddress.toLowerCase() &&
-          !portfolioToken.flags.onGasTank &&
-          !portfolioToken.flags.rewardsType
-      )
-
-      return (
-        token?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')?.price ??
-        null
-      )
-    },
-    [portfolio?.tokens]
+    (chainId: string, tokenAddress: string) =>
+      prices[getPrivacyPoolsPriceKey(chainId, tokenAddress)] ?? null,
+    [prices]
   )
 
   const networkRows: PrivacyPoolsNetworkRow[] = useMemo(
@@ -175,6 +165,7 @@ const usePrivacyPools = () => {
             symbol: balance.symbol,
             decimals: balance.decimals,
             approvedAmount: formatUnits(balance.approvedAmount, balance.decimals),
+            isReadyToSend: balance.approvedAmount > 0n,
             pendingAmount: balance.pendingAmount
               ? formatUnits(balance.pendingAmount, balance.decimals)
               : null,
@@ -240,16 +231,15 @@ const usePrivacyPools = () => {
   )
 
   /**
-   * Re-reads only the networks that have been read before.
+   * Reads every supported network for the account on screen, one after the other.
    *
-   * Deliberately not the controller's `sync()`, which covers every supported chain: a first
-   * Ethereum walk is hundreds of sequential `eth_getLogs` calls, and starting one from a refresh
-   * button - or worse, from opening the screen - is not what pressing refresh means. A first read
-   * is asked for per network, on its own row.
+   * Every network, including one never read on this device: its first read is the long one, but
+   * the pools' history comes from the published copy where there is one, and the account is not
+   * usable on a network until it has been read. The screen says when a first read is under way.
    */
-  const refreshLoadedChains = useCallback(() => {
-    networkRows.filter((row) => !row.needsFirstLoad).forEach((row) => syncChain(row.chainId))
-  }, [networkRows, syncChain])
+  const syncAllChains = useCallback(() => {
+    dispatch({ type: 'method', params: { method: 'sync', args: [] } })
+  }, [dispatch])
 
   const prepareWithdrawal = useCallback(
     (params: { chainId: string; tokenAddress: string; amount: bigint; recipient: string }) => {
@@ -281,7 +271,7 @@ const usePrivacyPools = () => {
     tokenBalances,
     getNetworkName,
     syncChain,
-    refreshLoadedChains,
+    syncAllChains,
     prepareWithdrawal,
     broadcastWithdrawal,
     dismissOperation

@@ -8,12 +8,12 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-export type PrivacyPoolsTab = 'pooled' | 'activity'
+export type PrivacyPoolsTab = 'tokens' | 'activity'
 
 const ACTIVE_TAB_BORDER_WIDTH = 2
 
 const TABS: { tab: PrivacyPoolsTab; label: string }[] = [
-  { tab: 'pooled', label: 'Pooled' },
+  { tab: 'tokens', label: 'Tokens' },
   { tab: 'activity', label: 'Activity' }
 ]
 

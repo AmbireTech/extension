@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import Badge from '@common/components/Badge'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -47,7 +48,7 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
   if (state === 'not-loaded')
     return renderNotice(
       t('Nothing has been checked yet'),
-      t('Check a network above, and whatever you have in its pools shows up here.')
+      t('Once a network is checked, what this account holds on it shows up here.')
     )
 
   // Placeholders rather than an empty list, and only while nothing has been read yet: once there
@@ -92,9 +93,35 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
               <Text fontSize={14} weight="medium" numberOfLines={1}>
                 {balance.symbol}
               </Text>
-              <Text fontSize={12} color={theme.secondaryText} numberOfLines={1}>
-                {balance.networkName}
-              </Text>
+              <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+                <Text fontSize={12} color={theme.secondaryText} numberOfLines={1}>
+                  {balance.networkName}
+                </Text>
+                {/* What can be done with the funds, the way the regular dashboard marks a pending
+                balance: sent on, or still waiting for Privacy Pools to approve them */}
+                {balance.isReadyToSend && (
+                  <Badge
+                    text={t('Ready to send')}
+                    type="success"
+                    size="sm"
+                    style={spacings.mlTy}
+                    tooltipText={t(
+                      'Privacy Pools has approved these funds, so they can be sent on.'
+                    )}
+                  />
+                )}
+                {!!balance.pendingAmount && (
+                  <Badge
+                    text={t('Under review')}
+                    type="warning"
+                    size="sm"
+                    style={spacings.mlTy}
+                    tooltipText={t(
+                      'Privacy Pools checks every transfer into it before the funds can be sent on. This can take a while.'
+                    )}
+                  />
+                )}
+              </View>
             </View>
           </View>
           <View style={[flexbox.alignEnd, spacings.mlSm]}>

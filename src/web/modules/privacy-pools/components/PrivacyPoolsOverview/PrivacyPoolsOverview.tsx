@@ -104,9 +104,8 @@ const PrivacyPoolsOverview: FC<Props> = ({
               {t('Privacy Pools')}
             </Text>
           </View>
-          {/* Refreshes only the networks already read - a first read is started from its own row,
-          since on Ethereum it is long enough that it must be asked for rather than triggered by a
-          refresh button. */}
+          {/* Reads every supported network again, the same as opening the account does. Shown once
+          something has been read, since before that the first read is already running. */}
           {hasSyncedAnyChain && (
             <Pressable
               testID="privacy-pools-refresh-button"

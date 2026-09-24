@@ -1,9 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 
+import Alert from '@common/components/Alert'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
+import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -39,30 +42,37 @@ const PrivacyPoolsDashboardScreen = () => {
     pendingPrivateBalance,
     activity,
     syncChain,
-    refreshLoadedChains
+    syncAllChains
   } = usePrivacyPools()
+  const { selectedAccountId } = usePrivacyPoolsAccounts()
+  const { t } = useTranslation()
   const { withdrawTokens } = usePrivacyPoolsTokens()
 
-  const [openTab, setOpenTab] = useState<PrivacyPoolsTab>('pooled')
+  const [openTab, setOpenTab] = useState<PrivacyPoolsTab>('tokens')
 
   const { navigate } = useNavigation()
 
   /**
-   * Re-reads the networks already read on this device, once per mount.
-   *
-   * Deliberately not every supported network: a first read walks the chain from the entrypoint's
-   * deployment block, which on Ethereum is long enough that it has to be asked for rather than
-   * started by opening a screen. Refreshing what is already there is cheap and catches a deposit
-   * made from another device.
+   * Reads every supported network when the account is opened - and again for another account
+   * selected while the screen is up - so its balances are current without asking. Syncs run one
+   * after the other, so opening a second account while the first still syncs only queues it.
    */
-  const hasRefreshedOnOpen = useRef(false)
+  const syncedAccountId = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!isAvailable || hasRefreshedOnOpen.current) return
+    if (!isAvailable || !selectedAccountId || syncedAccountId.current === selectedAccountId) return
 
-    hasRefreshedOnOpen.current = true
-    refreshLoadedChains()
-  }, [isAvailable, refreshLoadedChains])
+    syncedAccountId.current = selectedAccountId
+    syncAllChains()
+  }, [isAvailable, selectedAccountId, syncAllChains])
+
+  const firstReadNetworkNames = useMemo(
+    () =>
+      networkRows
+        .filter(({ syncStatus }) => syncStatus === 'initializing')
+        .map((row) => row.networkName),
+    [networkRows]
+  )
 
   // Sending is a screen of its own, laid out like the regular Send - see PrivacyPoolsSendScreen
   const openSend = useCallback(() => navigate(WEB_ROUTES.privacyPoolsSend), [navigate])
@@ -77,6 +87,19 @@ const PrivacyPoolsDashboardScreen = () => {
       <ScrollableWrapper contentContainerStyle={styles.contentContainer}>
         <View style={styles.content}>
           <PrivacyPoolsBackupBanner />
+          {/* The one wait worth explaining: a network read for the first time takes minutes, not
+          seconds, and nothing else on screen says why the balance is not there yet */}
+          {!!firstReadNetworkNames.length && (
+            <Alert
+              type="info"
+              size="sm"
+              style={spacings.mbSm}
+              text={t(
+                'Checking {{networks}} for the first time. This can take a few minutes - you can keep using the wallet meanwhile.',
+                { networks: firstReadNetworkNames.join(', ') }
+              )}
+            />
+          )}
           <View style={spacings.mbSm}>
             <PrivacyPoolsOverview
               unavailableReason={unavailableReason}
@@ -85,7 +108,7 @@ const PrivacyPoolsDashboardScreen = () => {
               totalPrivateBalance={totalPrivateBalance}
               pendingPrivateBalance={pendingPrivateBalance}
               canSend={!!withdrawTokens.length}
-              onRefresh={refreshLoadedChains}
+              onRefresh={syncAllChains}
               onSend={openSend}
             />
           </View>
@@ -99,7 +122,7 @@ const PrivacyPoolsDashboardScreen = () => {
           )}
 
           <PrivacyPoolsTabs openTab={openTab} setOpenTab={setOpenTab} />
-          {openTab === 'pooled' ? (
+          {openTab === 'tokens' ? (
             <PrivacyPoolsBalances balances={balances} state={balancesState} />
           ) : (
             <PrivacyPoolsActivity activity={activity} />
