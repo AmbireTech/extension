@@ -8,6 +8,7 @@ import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/util
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import wait from '@ambire-common/utils/wait'
 import { isProd } from '@common/config/env'
+import { LEDGER_ORIGIN_TOKEN } from '@common/modules/hardware-wallet/constants/ledger'
 import { ContextModuleBuilder, ContextModuleChainID } from '@ledgerhq/context-module'
 import {
   DeviceActionStatus,
@@ -302,7 +303,7 @@ class LedgerTransportService {
     this.#lastDevice = device
 
     const contextModule = new ContextModuleBuilder({
-      originToken: 'ambire',
+      originToken: LEDGER_ORIGIN_TOKEN,
       loggerFactory: createContextLogger
     })
       .setChain(ContextModuleChainID.Ethereum)

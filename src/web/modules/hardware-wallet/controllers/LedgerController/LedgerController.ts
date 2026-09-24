@@ -8,6 +8,7 @@ import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { isLedgerEmulator, isProd, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
+import { LEDGER_ORIGIN_TOKEN } from '@common/modules/hardware-wallet/constants/ledger'
 import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
 import { ContextModuleBuilder, ContextModuleChainID } from '@ledgerhq/context-module'
 import {
@@ -231,7 +232,7 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       this.deviceId = connectedDevice.id
 
       const contextModule = new ContextModuleBuilder({
-        originToken: 'ambire',
+        originToken: LEDGER_ORIGIN_TOKEN,
         loggerFactory: this.#createContextLogger
       })
         .setChain(ContextModuleChainID.Ethereum)
