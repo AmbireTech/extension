@@ -30,6 +30,12 @@ const BADGE_PRESETS: { [preset in Preset]: BadgePreset } = {
     type: 'warning',
     tooltipText: 'This account has a Metamask EIP-7702 delegation',
     specialType: 'metamask'
+  },
+  'privacy-pools': {
+    text: 'Privacy Pools',
+    type: 'secondaryAccent',
+    tooltipText:
+      'Keeps funds private in Privacy Pools. It has no public address of its own and is created from one of your recovery phrases - write that phrase down, as it is the only way to recover the account.'
   }
 }
 

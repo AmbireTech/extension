@@ -17,6 +17,7 @@ import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
+import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
@@ -28,6 +29,7 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/PrivacyPoolsAccountRow'
 
 import getStyles from './styles'
 
@@ -57,17 +59,24 @@ const ACCOUNT_OPTIONS = { markSelected: true }
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
+const selectPrivacyPoolsAccountId = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.privacyPoolsAccountId
 
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
   const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const flatlistRef = useRef(null)
-  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
-    { flatlistRef }
-  )
+  const { accounts, control, search, keyExtractor, getItemLayout, shouldDisplayAccounts } =
+    useAccountsList({ flatlistRef })
+  const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: privacyPoolsAccountId } = useController(
+    'SelectedAccountController',
+    selectPrivacyPoolsAccountId
+  )
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const {
     ref: syncSheetRef,
@@ -77,6 +86,8 @@ const AccountSelectScreen = () => {
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
+  const [pendingToBeSetSelectedPrivacyPoolsAccount, setPendingToBeSetSelectedPrivacyPoolsAccount] =
+    useState('')
   // Reserves exactly as much scroll space as the floating footer occupies, so the last
   // account in the list is never covered by it (the footer grows taller on narrow side panels).
   const [footerHeight, setFooterHeight] = useState(0)
@@ -103,6 +114,17 @@ const AccountSelectScreen = () => {
     []
   )
 
+  // Matched on their name and on what they are, since that is all they have - there is no address
+  // or key to search by
+  const filteredPrivacyPoolsAccounts = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return privacyPoolsAccounts
+
+    return privacyPoolsAccounts.filter(({ label }) =>
+      `${label} ${t('Privacy Pools')}`.toLowerCase().includes(query)
+    )
+  }, [privacyPoolsAccounts, search, t])
+
   const renderItem = useCallback(
     ({ item: acc }: { item: AccountType }) => {
       return (
@@ -128,6 +150,30 @@ const AccountSelectScreen = () => {
       navigate(ROUTES.dashboard)
     }
   }, [account, navigate, pendingToBeSetSelectedAccount])
+
+  // The same for a Privacy Pools account, which is selected by its recovery phrase instead
+  useEffect(() => {
+    if (!pendingToBeSetSelectedPrivacyPoolsAccount) return
+
+    if (privacyPoolsAccountId === pendingToBeSetSelectedPrivacyPoolsAccount) {
+      navigate(ROUTES.dashboard)
+    }
+  }, [navigate, pendingToBeSetSelectedPrivacyPoolsAccount, privacyPoolsAccountId])
+
+  // Below the regular accounts rather than among them: they have no address to be ordered or
+  // scrolled to by, and the list's fixed row layout stays exact for the rows above
+  const privacyPoolsAccountRows = useMemo(
+    () =>
+      filteredPrivacyPoolsAccounts.map((privacyPoolsAccount) => (
+        <PrivacyPoolsAccountRow
+          key={privacyPoolsAccount.seedId}
+          account={privacyPoolsAccount}
+          isSelected={privacyPoolsAccount.seedId === privacyPoolsAccountId}
+          onSelect={setPendingToBeSetSelectedPrivacyPoolsAccount}
+        />
+      )),
+    [filteredPrivacyPoolsAccounts, privacyPoolsAccountId]
+  )
 
   const addAccountButton = (
     <Button
@@ -159,7 +205,7 @@ const AccountSelectScreen = () => {
     </Button>
   )
 
-  return !pendingToBeSetSelectedAccount ? (
+  return !pendingToBeSetSelectedAccount && !pendingToBeSetSelectedPrivacyPoolsAccount ? (
     <LayoutWrapper>
       <HeaderWithTitle>
         <HoverablePressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
@@ -184,7 +230,12 @@ const AccountSelectScreen = () => {
           renderItem={renderItem}
           getItemLayout={getItemLayout}
           keyExtractor={keyExtractor}
-          ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          ListFooterComponent={
+            privacyPoolsAccountRows.length ? <>{privacyPoolsAccountRows}</> : null
+          }
+          ListEmptyComponent={
+            !privacyPoolsAccountRows.length ? <Text>{t('No accounts found')}</Text> : null
+          }
         />
         <FooterGlassView
           isSimpleBlur={false}
