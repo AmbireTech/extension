@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -15,6 +15,7 @@ import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -23,6 +24,8 @@ import Option from '@common/components/Option'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useNavigation from '@common/hooks/useNavigation'
+import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -63,7 +66,19 @@ const AddAccount = ({
     open: openSeedPhraseBottomSheet,
     close: closeSeedPhraseBottomSheet
   } = useModalize()
+  const {
+    ref: privacyPoolsSheetRef,
+    open: openPrivacyPoolsBottomSheet,
+    close: closePrivacyPoolsBottomSheet
+  } = useModalize()
   const { state: seeds } = useController('KeystoreController', selectSeeds)
+  const { navigate } = useNavigation()
+
+  const handlePrivacyPoolsAccountAdded = useCallback(() => {
+    closePrivacyPoolsBottomSheet()
+    closeBottomSheet()
+    navigate(ROUTES.dashboard)
+  }, [closeBottomSheet, closePrivacyPoolsBottomSheet, navigate])
 
   const optionsHW = useMemo(() => {
     if (isMobile)
@@ -234,6 +249,17 @@ const AddAccount = ({
             disabled={isCreatingNewSeedAccount}
           />
         )}
+        {/* Extension only for now, and never where only importing is offered */}
+        {isWeb && !showImportOnly && (
+          <Option
+            text={t('Add a Privacy Pools account')}
+            icon={ShieldInvisibilityIcon}
+            iconProps={{ width: 24, height: 27 }}
+            onPress={openPrivacyPoolsBottomSheet as any}
+            testID="add-privacy-pools-account"
+            status="none"
+          />
+        )}
         <ExpandableOptionSection
           dropdownText={t('Import an account')}
           dropdownIcon={ImportAccountIcon}
@@ -276,6 +302,13 @@ const AddAccount = ({
         )}
       </View>
 
+      {isWeb && !showImportOnly && (
+        <AddPrivacyPoolsAccountBottomSheet
+          sheetRef={privacyPoolsSheetRef}
+          closeBottomSheet={closePrivacyPoolsBottomSheet}
+          onAdded={handlePrivacyPoolsAccountAdded}
+        />
+      )}
       <SavedSeedPhrasesBottomSheet
         sheetRef={seedPhraseSheetRef}
         open={openSeedPhraseBottomSheet}
