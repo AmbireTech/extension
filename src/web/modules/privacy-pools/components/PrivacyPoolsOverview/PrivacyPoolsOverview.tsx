@@ -71,16 +71,14 @@ const PrivacyPoolsOverview: FC<Props> = ({
     [totalPrivateBalance]
   )
 
-  // The reasons Privacy Pools can't be used are structural (no recovery phrase, no supported
-  // network) or temporary (locked), so each gets its own explanation rather than a disabled button
+  // The reasons Privacy Pools can't be used are structural (no Privacy Pools account selected, no
+  // supported network) or temporary (locked), so each gets its own explanation rather than a disabled button
   // with no hint.
   const unavailableLabel = useMemo(() => {
     if (!unavailableReason) return ''
 
     const labels: { [reason in PrivacyPoolsUnavailableReason]: string } = {
-      'no-seed': t(
-        'Privacy Pools works with accounts created from a recovery phrase saved in this wallet - the keys to your deposits come from that phrase. Hardware wallet, private key and watch-only accounts cannot use it.'
-      ),
+      'no-account': t('Select a Privacy Pools account to see what it holds.'),
       'unsupported-network': t(
         'Privacy Pools is not available on any of the networks you have added. It runs on Ethereum and on the Sepolia test network.'
       ),
