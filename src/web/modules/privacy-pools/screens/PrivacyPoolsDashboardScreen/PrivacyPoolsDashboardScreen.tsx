@@ -12,6 +12,7 @@ import PrivacyPoolsActionSheet, {
   PrivacyPoolsActionSubmitParams
 } from '@web/modules/privacy-pools/components/PrivacyPoolsActionSheet'
 import PrivacyPoolsActivity from '@web/modules/privacy-pools/components/PrivacyPoolsActivity'
+import PrivacyPoolsBackupBanner from '@web/modules/privacy-pools/components/PrivacyPoolsBackupBanner'
 import PrivacyPoolsBalances from '@web/modules/privacy-pools/components/PrivacyPoolsBalances'
 import PrivacyPoolsNetworks from '@web/modules/privacy-pools/components/PrivacyPoolsNetworks'
 import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyPoolsOverview'
@@ -146,6 +147,7 @@ const PrivacyPoolsDashboardScreen = () => {
       </View>
       <ScrollableWrapper contentContainerStyle={styles.contentContainer}>
         <View style={styles.content}>
+          <PrivacyPoolsBackupBanner />
           <View style={spacings.mbSm}>
             <PrivacyPoolsOverview
               unavailableReason={unavailableReason}
