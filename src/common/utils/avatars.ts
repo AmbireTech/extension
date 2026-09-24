@@ -1,3 +1,5 @@
+import { dataSlice, id } from 'ethers'
+
 import { blockyColors } from '@common/components/Avatar/Blockies/utils'
 import { generateSeedEthereum, getPolyconColors } from '@common/components/Avatar/Polycons/utils'
 import { AvatarType } from '@common/controllers/wallet-state'
@@ -39,4 +41,12 @@ const getAvatarColors = (avatarType: AvatarType, address: string): AvatarColors 
   return FALLBACK_COLORS
 }
 
-export { getAvatarColors }
+/**
+ * An address-shaped value to seed a Privacy Pools account's colors with, the way an address seeds a
+ * regular account's. The account has no address - it is identified by its recovery phrase's id,
+ * which the avatar color generators reject - so one is hashed out of that id. It only picks
+ * colors, stays the same for the same account, and is never shown or used as an address.
+ */
+const getPrivacyPoolsColorSeed = (seedId: string) => dataSlice(id(seedId), 12)
+
+export { getAvatarColors, getPrivacyPoolsColorSeed }

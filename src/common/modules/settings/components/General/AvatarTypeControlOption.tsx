@@ -8,22 +8,19 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { AvatarType } from '@common/controllers/wallet-state'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
+import useSelectedAccountColorSeed from '@common/hooks/useSelectedAccountColorSeed'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
 const AVATAR_TYPES: AvatarType[] = ['blockies', 'jazzicons', 'polycons']
-
-const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.account
 
 const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
   const {
     state: { avatarType },
     dispatch: walletStateDispatch
   } = useController('WalletStateController')
-  const { state: account } = useController('SelectedAccountController', selectAccount)
+  // Previewed on the selected account, which may be a Privacy Pools one - it has no address
+  const previewAddress = useSelectedAccountColorSeed()
   const { theme } = useTheme()
   const { t } = useTranslation()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
@@ -59,7 +56,7 @@ const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
     >
       <Avatar
         pfp=""
-        address={account?.addr || ''}
+        address={previewAddress}
         size={36}
         avatarType={type}
         // Ensures that there won't be any visual glitches between the border

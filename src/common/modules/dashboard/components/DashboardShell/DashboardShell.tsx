@@ -4,6 +4,7 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useSelectedAccountColorSeed from '@common/hooks/useSelectedAccountColorSeed'
 import DashboardBalance, {
   BALANCE_HEIGHT
 } from '@common/modules/dashboard/components/DashboardBalance'
@@ -40,6 +41,8 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const DashboardShell = ({ contentContainerStyle }: Props) => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
+  // A Privacy Pools account is shown in this shell too, while its own dashboard loads
+  const backgroundColorSeed = useSelectedAccountColorSeed()
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const { state: isTokenPricesEnabled } = useController(
     'FeatureFlagsController',
@@ -72,7 +75,7 @@ const DashboardShell = ({ contentContainerStyle }: Props) => {
             { overflow: 'hidden' }
           ]}
         >
-          <OverviewBackground address={account?.addr || ''} />
+          <OverviewBackground address={backgroundColorSeed} />
           <View style={{ zIndex: 2 }}>
             <DashboardHeader />
             <View style={[flexbox.alignCenter, spacings.pt]}>

@@ -8,6 +8,7 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useSelectedAccountColorSeed from '@common/hooks/useSelectedAccountColorSeed'
 import useTheme from '@common/hooks/useTheme'
 import { OverviewBackground } from '@common/modules/dashboard/components/DashboardOverview/OverviewBackground'
 import RefreshIcon from '@common/modules/dashboard/components/DashboardOverview/RefreshIcon'
@@ -58,9 +59,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
   } = useController('WalletStateController')
   // The gradient is seeded with the selected Privacy Pools account, so each one keeps a card of
   // its own the way each regular account does.
-  const {
-    state: { privacyPoolsAccountId }
-  } = useController('SelectedAccountController')
+  const backgroundColorSeed = useSelectedAccountColorSeed()
 
   // Split so the cents can be rendered smaller than the dollars, the same way the dashboard's
   // balance is presented.
@@ -88,7 +87,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      <OverviewBackground address={privacyPoolsAccountId || ''} />
+      <OverviewBackground address={backgroundColorSeed} />
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
