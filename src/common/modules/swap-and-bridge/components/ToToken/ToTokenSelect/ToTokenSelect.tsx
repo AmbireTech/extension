@@ -27,6 +27,7 @@ interface Props {
   handleChangeToToken: (value: SelectValue) => void
   addToTokenByAddressStatus: ISwapAndBridgeController['statuses']['addToTokenByAddress']
   handleAddToTokenByAddress: (searchTerm: string) => void
+  areAllProvidersDisabled: boolean
   openProviderSettingsModal: () => void
 }
 
@@ -72,6 +73,7 @@ const ToTokenSelect: React.FC<Props> = ({
   handleChangeToToken,
   addToTokenByAddressStatus,
   handleAddToTokenByAddress,
+  areAllProvidersDisabled,
   openProviderSettingsModal
 }) => {
   const { t } = useTranslation()
@@ -205,10 +207,10 @@ const ToTokenSelect: React.FC<Props> = ({
   )
 
   const toTokenListError = useMemo(() => {
-    if (isTokenListLoading) return null
+    if (isTokenListLoading || areAllProvidersDisabled) return null
 
     return errors.find(({ id }) => id === TO_TOKEN_LIST_ERROR_ID)
-  }, [errors, isTokenListLoading])
+  }, [areAllProvidersDisabled, errors, isTokenListLoading])
 
   const toTokenValueOrError = useMemo(() => {
     if (toTokenListError && !toTokenOptions.length) {

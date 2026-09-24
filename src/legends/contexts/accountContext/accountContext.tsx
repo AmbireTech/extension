@@ -4,6 +4,7 @@ import { AccountIdentityResponse } from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import { normalizeIdentityResponse } from '@ambire-common/libs/accountPicker/accountPicker'
 import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
+import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useToast from '@legends/hooks/useToast'
@@ -39,6 +40,16 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
   const [chainId, setChainId] = React.useState<bigint | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  const [isAmbireSmartAccountsEnabled, setIsAmbireSmartAccountsEnabled] = React.useState<
+    boolean | null
+  >(null)
+
+  useEffect(() => {
+    storage
+      .get('flags', {})
+      .then((flags) => setIsAmbireSmartAccountsEnabled(flags.ambireSmartAccounts !== false))
+      .catch(() => setIsAmbireSmartAccountsEnabled(true))
+  }, [])
 
   const getConnectedAccount = useCallback(async (): Promise<string | null> => {
     if (!provider) return null
@@ -67,7 +78,7 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
     async (address: string) => {
       try {
         // Add: timeout to this request
-        // @ts-ignore types mismatch a bit with the extension, which is fine
+        // @ts-expect-error types mismatch a bit with the extension, which is fine
         const callRelayer = relayerCall.bind({ url: RELAYER_URL, fetch })
         const identityRes: AccountIdentityResponse | null = await callRelayer(
           `/v2/identity/${address}`
@@ -113,6 +124,13 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
     localStorage.removeItem(LOCAL_STORAGE_ACC_KEY)
   }, [])
 
+  const setAccountWithoutValidation = useCallback((address: string) => {
+    setError(null)
+    setV1Account(null)
+    setConnectedAccount(address)
+    localStorage.setItem(LOCAL_STORAGE_ACC_KEY, address)
+  }, [])
+
   useEffect(() => {
     if (!isConnected && connectedAccount) {
       handleDisconnectFromWallet()
@@ -139,7 +157,7 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
   // On Account connect or change set the new Legends address and fetch its portfolio,
   // while on Account disconnect, we simply reload the Legends, which resets all the hooks state.
   useEffect(() => {
-    if (!provider) return
+    if (!provider || isAmbireSmartAccountsEnabled === null) return
 
     const onAccountsChanged = async (accounts: string[]) => {
       setIsLoading(true)
@@ -151,7 +169,8 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
         return
       }
 
-      await validateAndSetAccount(firstAccount)
+      if (isAmbireSmartAccountsEnabled) await validateAndSetAccount(firstAccount)
+      else setAccountWithoutValidation(firstAccount)
       setIsLoading(false)
     }
 
@@ -162,7 +181,8 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
           return
         }
 
-        await validateAndSetAccount(account)
+        if (isAmbireSmartAccountsEnabled) await validateAndSetAccount(account)
+        else setAccountWithoutValidation(account)
         setIsLoading(false)
       })
       .catch(() => console.error('Error fetching connected account'))
@@ -173,7 +193,14 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
     return () => {
       provider.removeListener('accountsChanged', onAccountsChanged)
     }
-  }, [provider, getConnectedAccount, handleDisconnectFromWallet, validateAndSetAccount])
+  }, [
+    provider,
+    getConnectedAccount,
+    handleDisconnectFromWallet,
+    isAmbireSmartAccountsEnabled,
+    setAccountWithoutValidation,
+    validateAndSetAccount
+  ])
 
   const contextValue: AccountContextType = useMemo(
     () => ({
@@ -190,4 +217,4 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
   return <accountContext.Provider value={contextValue}>{children}</accountContext.Provider>
 }
 
-export { AccountContextProvider, accountContext }
+export { accountContext, AccountContextProvider }

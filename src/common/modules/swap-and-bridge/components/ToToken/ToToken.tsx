@@ -346,6 +346,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
             toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
             addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
             handleAddToTokenByAddress={handleAddToTokenByAddress}
+            areAllProvidersDisabled={disabled}
             openProviderSettingsModal={openProviderSettingsModal}
           />
         </View>
