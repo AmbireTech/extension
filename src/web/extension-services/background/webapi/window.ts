@@ -218,16 +218,20 @@ const calculateWindowSizeAndPosition = async (
       (activeTab.height - desiredHeight) / 2 + topOffset + baseWindow.height! - activeTab.height
   }
 
+  // The browser rejects fractional sizes
+  const width = Math.round(desiredWidth)
+  const height = Math.round(desiredHeight)
+
   // The browser rejects bounds that are mostly outside the visible screen space. Without a known
   // display layout the position can only be kept away from the top left corner.
   return {
-    width: desiredWidth,
-    height: desiredHeight,
+    width,
+    height,
     left: workArea
-      ? clampToWorkArea(leftPosition, desiredWidth, workArea.left, workArea.width)
+      ? clampToWorkArea(leftPosition, width, workArea.left, workArea.width)
       : Math.round(Math.max(leftPosition, SPACING)),
     top: workArea
-      ? clampToWorkArea(topPosition, desiredHeight, workArea.top, workArea.height)
+      ? clampToWorkArea(topPosition, height, workArea.top, workArea.height)
       : Math.round(Math.max(topPosition, SPACING))
   }
 }
