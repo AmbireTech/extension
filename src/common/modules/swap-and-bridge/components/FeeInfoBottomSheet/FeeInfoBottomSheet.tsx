@@ -232,7 +232,7 @@ const FeeInfoBottomSheet = ({
                     </View>
                   </View>
 
-                  {index < feeTiers.length - 1 && <View style={spacings.mtMi} />}
+                  {index < feeTiers.length - 1 && <View style={spacings.mtTy} />}
                 </React.Fragment>
               )
             })}
