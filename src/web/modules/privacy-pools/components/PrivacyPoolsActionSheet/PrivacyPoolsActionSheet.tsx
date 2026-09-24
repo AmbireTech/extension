@@ -2,7 +2,6 @@ import { formatUnits, parseUnits } from 'ethers'
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { PrivacyPoolsWithdrawalMode } from '@ambire-common/interfaces/privacyPools'
 import { isValidAddress } from '@ambire-common/services/address'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Alert from '@common/components/Alert'
@@ -14,7 +13,6 @@ import NumberInput from '@common/components/NumberInput'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
-import Toggle from '@common/components/Toggle'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -28,7 +26,6 @@ export type PrivacyPoolsActionSubmitParams = {
   tokenAddress: string
   amount: bigint
   recipient: string
-  mode: PrivacyPoolsWithdrawalMode
 }
 
 interface Props {
@@ -70,7 +67,7 @@ const MODE_CONFIG: {
     noTokensText:
       'Nothing can be withdrawn yet. Either you have not deposited, or your deposits are still waiting to be approved.',
     hasRecipient: true,
-    note: 'Nothing is sent until you confirm. Preparing takes about ten seconds - the fee and the exact amount are shown before anything leaves the pool.'
+    note: 'Nothing is sent until you confirm. Preparing takes up to half a minute - the network fee and the exact amount the address receives are shown before anything leaves the pool. The fee is taken from the withdrawn amount, so the receiving address does not need any ETH.'
   }
 }
 
@@ -95,13 +92,11 @@ const PrivacyPoolsActionSheet: FC<Props> = ({
   const [selectedValue, setSelectedValue] = useState('')
   const [amount, setAmount] = useState('')
   const [recipient, setRecipient] = useState('')
-  const [isSelfRelay, setIsSelfRelay] = useState(false)
 
   const resetForm = useCallback(() => {
     setSelectedValue('')
     setAmount('')
     setRecipient('')
-    setIsSelfRelay(false)
   }, [])
 
   // One sheet serves both actions, so switching mode has to clear what the previous one was filled
@@ -189,22 +184,12 @@ const PrivacyPoolsActionSheet: FC<Props> = ({
       chainId: selectedToken.chainId,
       tokenAddress: selectedToken.tokenAddress,
       amount: parsedAmount,
-      recipient,
-      mode: isSelfRelay ? 'self' : 'relayed'
+      recipient
     })
 
     resetForm()
     closeBottomSheet()
-  }, [
-    canSubmit,
-    selectedToken,
-    parsedAmount,
-    recipient,
-    isSelfRelay,
-    onSubmit,
-    resetForm,
-    closeBottomSheet
-  ])
+  }, [canSubmit, selectedToken, parsedAmount, recipient, onSubmit, resetForm, closeBottomSheet])
 
   return (
     <BottomSheet
@@ -258,31 +243,6 @@ const PrivacyPoolsActionSheet: FC<Props> = ({
           onChangeText={setRecipient}
           error={recipientError}
           containerStyle={spacings.mbSm}
-        />
-      )}
-
-      {config.hasRecipient && (
-        <View style={spacings.mbSm}>
-          <Toggle
-            isOn={isSelfRelay}
-            onToggle={setIsSelfRelay}
-            label={t('Send it myself, without a relayer')}
-          />
-        </View>
-      )}
-
-      {/* The trap this toggle sets is not obvious from its label: paying the gas yourself is what
-      puts your own address next to the recipient, which is the exact link the pool exists to
-      break. */}
-      {config.hasRecipient && isSelfRelay && (
-        <Alert
-          type="warning"
-          size="sm"
-          title={t('This links your wallet to the receiving address')}
-          text={t(
-            'Sending it yourself means paying the gas from one of your own addresses, which puts it on the blockchain next to the address you are withdrawing to. Use it to move funds back to an address already known to be yours, or when no relayer will take the withdrawal - not as a cheaper way to reach a fresh address.'
-          )}
-          style={spacings.mbSm}
         />
       )}
 

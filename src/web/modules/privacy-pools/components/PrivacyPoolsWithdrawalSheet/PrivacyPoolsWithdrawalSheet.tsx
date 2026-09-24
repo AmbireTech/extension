@@ -38,7 +38,6 @@ interface Props {
 }
 
 const STEPS: { phase: PrivacyPoolsOperationPhase; label: string }[] = [
-  { phase: 'quoting', label: 'Asking relayers what they charge' },
   { phase: 'proving', label: 'Building the proof that hides where the funds came from' },
   { phase: 'ready', label: 'Waiting for you to confirm' },
   { phase: 'broadcasting', label: 'Sending it' },
@@ -54,9 +53,9 @@ const TITLES = {
 /**
  * What a withdrawal is doing, while it does it - and the confirmation in the middle of it.
  *
- * The pause on 'ready' is the point of the sheet: the proof takes about ten seconds and the
- * relayer's fee is not known until it quotes, so committing to both before either was shown would
- * mean paying a fee the user never saw. Nothing leaves the pool until the button here is pressed.
+ * The pause on 'ready' is the point of the sheet: the proof takes ten seconds and up and the network
+ * fee is not known until the withdrawal is priced, so committing to both before either was shown
+ * would mean paying a fee the user never saw. Nothing leaves the pool until the button here is pressed.
  *
  * Always mounted, even with nothing to show: a bottom sheet opened in the same commit it first
  * mounts does not animate in.
@@ -162,7 +161,7 @@ const PrivacyPoolsWithdrawalSheet: FC<Props> = ({
               size="sm"
               type="info"
               text={t(
-                'This takes about ten seconds, longer on a slower computer. Nothing has left the pool yet.'
+                'This takes up to half a minute, longer on a slower computer. Nothing has left the pool yet.'
               )}
               style={spacings.mbSm}
             />
@@ -174,28 +173,20 @@ const PrivacyPoolsWithdrawalSheet: FC<Props> = ({
               size="sm"
               type="info"
               title={t('Ready to send')}
-              text={
-                operation.mode === 'self'
-                  ? t(
-                      'You pay the gas for this yourself and no relayer takes a cut, so the address receives the full {{amount}}.',
-                      { amount: amountText }
-                    )
-                  : t(
-                      '{{relayer}} sends it and keeps {{fee}} {{symbol}}. The address you entered receives {{net}} {{symbol}}.',
-                      {
-                        relayer: operation.quote?.relayerName ?? t('The relayer'),
-                        fee: formatDecimals(
-                          Number(formatUnits(operation.quote?.feeAmount ?? 0n, decimals)),
-                          'amount'
-                        ),
-                        net: formatDecimals(
-                          Number(formatUnits(operation.quote?.amountAfterFee ?? 0n, decimals)),
-                          'amount'
-                        ),
-                        symbol
-                      }
-                    )
-              }
+              text={t(
+                'The network fee of {{fee}} {{symbol}} is taken from the withdrawn amount. The address you entered receives {{net}} {{symbol}}.',
+                {
+                  fee: formatDecimals(
+                    Number(formatUnits(operation.quote?.feeAmount ?? 0n, decimals)),
+                    'amount'
+                  ),
+                  net: formatDecimals(
+                    Number(formatUnits(operation.quote?.amountAfterFee ?? 0n, decimals)),
+                    'amount'
+                  ),
+                  symbol
+                }
+              )}
               style={spacings.mbSm}
             />
           )}

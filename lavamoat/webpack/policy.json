@@ -643,6 +643,7 @@
         "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits": true,
         "@kohaku-eth/privacy-pools>@kohaku-eth/provider": true,
         "@kohaku-eth/privacy-pools>@reduxjs/toolkit": true,
+        "@kohaku-eth/privacy-pools>@saga-sync/client": true,
         "@kohaku-eth/privacy-pools>@zk-kit/lean-imt": true,
         "ox>abitype": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
@@ -811,6 +812,11 @@
         "@noble/hashes": true
       }
     },
+    "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/curves": {
+      "packages": {
+        "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/hashes": true
+      }
+    },
     "@metamask/eth-sig-util>ethereum-cryptography>@noble/curves": {
       "globals": {
         "TextEncoder": true
@@ -851,6 +857,12 @@
     "@noble/hashes": {
       "globals": {
         "TextDecoder": true,
+        "TextEncoder": true,
+        "crypto": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/hashes": {
+      "globals": {
         "TextEncoder": true,
         "crypto": true
       }
@@ -967,6 +979,29 @@
     "@safe-global/api-kit>@safe-global/types-kit": {
       "packages": {
         "ox>abitype": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@saga-sync/client": {
+      "globals": {
+        "Blob": true,
+        "DecompressionStream": true,
+        "Response": true,
+        "TextDecoder": true
+      },
+      "packages": {
+        "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core": {
+      "globals": {
+        "TextDecoder": true,
+        "TextEncoder": true,
+        "fetch": true,
+        "process.env": true
+      },
+      "packages": {
+        "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/curves": true,
+        "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/hashes": true
       }
     },
     "@metamask/eth-sig-util>@scure/base": {
@@ -3554,10 +3589,19 @@
     },
     "@kohaku-eth/privacy-pools>viem": {
       "globals": {
+        "AbortController": true,
+        "DOMException": true,
+        "Request": true,
         "TextDecoder": true,
-        "TextEncoder": true
+        "TextEncoder": true,
+        "URL": true,
+        "btoa": true,
+        "clearTimeout": true,
+        "fetch": true,
+        "setTimeout": true
       },
       "packages": {
+        "viem>@noble/curves": true,
         "@noble/hashes": true,
         "ox>abitype": true
       }

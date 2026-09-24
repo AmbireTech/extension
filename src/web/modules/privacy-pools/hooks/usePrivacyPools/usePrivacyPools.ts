@@ -5,8 +5,7 @@ import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
 import {
   PrivacyPoolsActivityEntry,
   PrivacyPoolsChainState,
-  PrivacyPoolsTokenBalance,
-  PrivacyPoolsWithdrawalMode
+  PrivacyPoolsTokenBalance
 } from '@ambire-common/interfaces/privacyPools'
 import useController from '@common/hooks/useController'
 
@@ -267,13 +266,7 @@ const usePrivacyPools = () => {
   )
 
   const prepareWithdrawal = useCallback(
-    (params: {
-      chainId: string
-      tokenAddress: string
-      amount: bigint
-      recipient: string
-      mode: PrivacyPoolsWithdrawalMode
-    }) => {
+    (params: { chainId: string; tokenAddress: string; amount: bigint; recipient: string }) => {
       dispatch({ type: 'method', params: { method: 'prepareWithdrawal', args: [params] } })
     },
     [dispatch]
