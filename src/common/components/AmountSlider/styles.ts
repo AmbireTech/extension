@@ -12,15 +12,15 @@ interface Style {
   track: ViewStyle
   progressContainer: ViewStyle
   mark: ViewStyle
-  valueBubble: ViewStyle
+  percentage: ViewStyle
   thumb: ViewStyle
   thumbInner: ViewStyle
 }
 
 const THUMB_SIZE = 20
-const TRACK_HEIGHT = 8
+const TRACK_HEIGHT = 6
 const MARK_SIZE = TRACK_HEIGHT - 2
-const VALUE_BUBBLE_WIDTH = 48
+const PERCENTAGE_MIN_WIDTH = 28
 // The thumb is the tallest part of the slider, so it sets the height and everything else is
 // centered against it.
 const centerOffset = (size: number) => (THUMB_SIZE - size) / 2
@@ -28,11 +28,11 @@ const centerOffset = (size: number) => (THUMB_SIZE - size) / 2
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     wrapper: {
-      // An amount input above the slider may carry a zIndex of its own (see Input's styles), so
-      // the bubble needs the whole slider lifted above it to not end up behind the input.
-      zIndex: 11
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
     },
     slider: {
+      ...flexbox.flex1,
       ...flexbox.justifyCenter,
       height: THUMB_SIZE,
       position: 'relative'
@@ -46,7 +46,7 @@ const getStyles = (theme: ThemeProps) =>
       right: 0,
       left: 0,
       height: TRACK_HEIGHT,
-      borderRadius: 4,
+      borderRadius: TRACK_HEIGHT / 2,
       backgroundColor: hexToRgba(theme.tertiaryText, 0.6)
     },
     progressContainer: {
@@ -54,7 +54,7 @@ const getStyles = (theme: ThemeProps) =>
       top: centerOffset(TRACK_HEIGHT),
       left: 0,
       height: TRACK_HEIGHT,
-      borderRadius: 4,
+      borderRadius: TRACK_HEIGHT / 2,
       overflow: 'hidden',
       flexDirection: 'row'
     },
@@ -66,21 +66,13 @@ const getStyles = (theme: ThemeProps) =>
       borderRadius: 50,
       backgroundColor: theme.secondaryBackground
     },
-    valueBubble: {
-      position: 'absolute',
-      top: -36,
-      width: VALUE_BUBBLE_WIDTH,
-      ...flexbox.center,
-      ...spacings.pvMi,
-      borderRadius: 11,
-      backgroundColor: theme.primaryAccent100,
-      // Lighter than every shadow in the common utils - just enough to lift the bubble off the
-      // background behind it.
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-      elevation: 2
+    percentage: {
+      // Wide enough for "100%" and left-aligned, so the text grows to the right and the track
+      // keeps its width as the percentage changes
+      minWidth: PERCENTAGE_MIN_WIDTH,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...spacings.mlTy
     },
     thumb: {
       position: 'absolute',

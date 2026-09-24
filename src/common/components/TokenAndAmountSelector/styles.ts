@@ -108,10 +108,7 @@ const getStyles = (theme: ThemeProps) =>
     sliderRow: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      ...spacings.ptSm,
-      // The value bubble sits above the track, over the amount input, which carries a zIndex of
-      // its own (see Input's styles)
-      zIndex: 11
+      ...spacings.ptSm
     },
     maxButton: { ...spacings.mlSm }
   })

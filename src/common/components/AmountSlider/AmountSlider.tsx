@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { AccessibilityActionEvent, LayoutChangeEvent, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 
@@ -16,7 +16,7 @@ import getStyles from './styles'
 const THUMB_SIZE = 20
 // Matches the track's height (and so its corner radius), so a dot at either end fills the track's
 // rounded cap exactly - see the edge alignment in markers.
-const MARK_DOT_SIZE = 8
+const MARK_DOT_SIZE = 6
 const SLIDER_STEPS = 10000n
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
@@ -39,10 +39,6 @@ const PRESS_MAX_TRAVEL = 8
 // having to land on them pixel by pixel.
 const QUARTERS = [0n, 1n, 2n, 3n, 4n]
 const QUARTER_COUNT = 4n
-// The bubble showing the picked percentage while the slider is being used, and how long it stays
-// up after the finger leaves it.
-const VALUE_BUBBLE_WIDTH = 48
-const VALUE_BUBBLE_LINGER = 700
 const parseHexChannels = (hex: string) => {
   const cleanHex = hex.replace('#', '')
   return [
@@ -225,18 +221,6 @@ const AmountSlider = ({
     })
   }, [fractionOfWidth, marks, maximumValue, tierOffset, width])
 
-  // Counts the touches the bubble has seen instead of tracking whether the slider is being used
-  // right now - a quick tap begins and ends within the same render, so a plain "is being used"
-  // flag would never flip back and the bubble would stay up forever. 0 means hidden.
-  const [valueBubbleTouches, setValueBubbleTouches] = useState(0)
-  // Hovering the thumb reads the picked percentage without having to move the slider at all -
-  // a pointer-only affordance, so it stays put on the mobile app, where nothing hovers.
-  const [isThumbHovered, setIsThumbHovered] = useState(false)
-  const valueBubbleLeft = Math.min(
-    Math.max(fractionOfWidth(sliderStep) - VALUE_BUBBLE_WIDTH / 2, 0),
-    Math.max(width - VALUE_BUBBLE_WIDTH, 0)
-  )
-
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width: nextWidth } = event.nativeEvent.layout
     // A non-finite width would spread through every position below and end up in a style, which
@@ -264,16 +248,6 @@ const AmountSlider = ({
     },
     [clampedValue, onValueChange]
   )
-
-  // Every touch pushes the bubble's hiding back, so it stays up throughout a drag and lingers for
-  // a moment after the finger leaves it, keeping the picked percentage readable.
-  useEffect(() => {
-    if (!valueBubbleTouches) return () => {}
-
-    const hideTimeout = setTimeout(() => setValueBubbleTouches(0), VALUE_BUBBLE_LINGER)
-
-    return () => clearTimeout(hideTimeout)
-  }, [valueBubbleTouches])
 
   const updateValue = useCallback(
     (locationX: number, snapRadius: number) => {
@@ -329,11 +303,9 @@ const AmountSlider = ({
         .failOffsetY([-12, 12])
         .runOnJS(true)
         .onBegin(({ x }) => {
-          setValueBubbleTouches((touches) => touches + 1)
           updateValue(x, PRESS_SNAP_RADIUS)
         })
         .onUpdate(({ x, translationX }) => {
-          setValueBubbleTouches((touches) => touches + 1)
           updateValue(
             x,
             Math.abs(translationX) < PRESS_MAX_TRAVEL ? PRESS_SNAP_RADIUS : SNAP_RADIUS
@@ -362,13 +334,6 @@ const AmountSlider = ({
 
   return (
     <View style={styles.wrapper}>
-      {(!!valueBubbleTouches || isThumbHovered) && !isDisabled && (
-        <View style={[styles.valueBubble, { left: valueBubbleLeft }]}>
-          <Text fontSize={12} weight="medium" appearance="primary">
-            {`${Math.round(Number(sliderStep) / 100)}%`}
-          </Text>
-        </View>
-      )}
       <GestureDetector gesture={panGesture}>
         <HoverablePressable
           accessible
@@ -411,15 +376,21 @@ const AmountSlider = ({
               style={[styles.mark, { left: marker.left }]}
             />
           ))}
-          <View
-            style={[styles.thumb, { left: thumbPosition }]}
-            onMouseEnter={() => setIsThumbHovered(true)}
-            onMouseLeave={() => setIsThumbHovered(false)}
-          >
+          <View style={[styles.thumb, { left: thumbPosition }]}>
             <View style={styles.thumbInner} />
           </View>
         </HoverablePressable>
       </GestureDetector>
+      <View style={styles.percentage}>
+        <Text
+          fontSize={12}
+          weight="medium"
+          appearance="secondaryText"
+          style={{ position: 'absolute', textAlign: 'center', width: 34 }}
+        >
+          {`${Math.round(Number(sliderStep) / 100)}%`}
+        </Text>
+      </View>
     </View>
   )
 }
