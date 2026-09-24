@@ -1,4 +1,4 @@
-import { formatUnits, parseUnits } from 'ethers'
+import { parseUnits } from 'ethers'
 import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
@@ -14,6 +14,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getSliderAmountFieldValue } from '@common/utils/amountSlider'
 
 import type { AmountAdjustmentInfo } from '@ambire-common/interfaces/transfer'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
@@ -136,8 +137,9 @@ const SendToken: FC<Props> = ({
         )
   const sliderAmount = toAmountWei(fromAmountValue, sliderDecimals)
   const handleSliderValueChange = useCallback(
-    (nextAmount: bigint) => onFromAmountChange(formatUnits(nextAmount, sliderDecimals)),
-    [onFromAmountChange, sliderDecimals]
+    (nextAmount: bigint) =>
+      onFromAmountChange(getSliderAmountFieldValue(nextAmount, maxSliderAmount, sliderDecimals)),
+    [maxSliderAmount, onFromAmountChange, sliderDecimals]
   )
 
   const tokenSelect = nonEmptySections?.length ? (

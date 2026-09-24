@@ -36,6 +36,7 @@ import {
 } from '@common/modules/wallet-staking/helpers/pendingWithdrawal'
 import usePendingWalletWithdrawal from '@common/modules/wallet-staking/hooks/usePendingWalletWithdrawal'
 import useXWalletShareValue from '@common/modules/wallet-staking/hooks/useXWalletShareValue'
+import { getSliderAmountFieldValue } from '@common/utils/amountSlider'
 import { storage } from '@common/services/storage'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
 import { THEME_TYPES } from '@common/styles/theme/types'
@@ -482,8 +483,9 @@ const useWalletStakingForm = () => {
   )
 
   const handleSliderValueChange = useCallback(
-    (nextAmount: bigint) => setTokenAmount(formatUnits(nextAmount, TOKEN_DECIMALS)),
-    [setTokenAmount]
+    (nextAmount: bigint) =>
+      setTokenAmount(getSliderAmountFieldValue(nextAmount, balance, TOKEN_DECIMALS)),
+    [balance, setTokenAmount]
   )
   const handleMaxPress = useCallback(() => {
     setTokenAmount(formatUnits(balance, TOKEN_DECIMALS))
