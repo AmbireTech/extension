@@ -17,6 +17,19 @@ import { PRIVACY_POOLS_SUPPORTED_CHAIN_IDS } from '@ambire-common/consts/privacy
  * plugin verifies whatever it loaded against the pools at the end of every sync regardless.
  */
 
+/**
+ * Whether a first sync still starts from the files below.
+ *
+ * Off while we run Privacy Pools entirely off the saga-sync CDN, which serves the same pool history
+ * fresher, verified, and without several megabytes in the build. The snapshots and the script that
+ * builds them are kept until that has proven itself on Ethereum - and they are the only thing
+ * Sepolia has either way, since nobody publishes it.
+ *
+ * Flipping this back on is the whole rollback: the plugin prefers a shipped history to the CDN, and
+ * the CDN is skipped entirely for a chain that already has one.
+ */
+export const ARE_PRIVACY_POOLS_SNAPSHOTS_ENABLED = false
+
 /** Keyed `privacy-pool-state-<chainId>-<entrypoint>`, exactly as the plugin keys its own store. */
 export type PrivacyPoolsSnapshots = Record<string, any>
 

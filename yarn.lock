@@ -2842,34 +2842,35 @@
     bs58check "^2.1.2"
     tslib "^2.3.0"
 
-"@kohaku-eth/plugins@0.0.1-alpha.13":
-  version "0.0.1-alpha.13"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/plugins/-/plugins-0.0.1-alpha.13.tgz#54c50d972fd1cfcd44dcd9c3017471b97b75c343"
-  integrity sha512-zi2BzDNO1vucBuETLt9EvhYOginlsSWORMj1Fw055g2RBqZGZleMnekMf+qroAkg1aRnK6iQZjGorS/mMKgB5g==
+"@kohaku-eth/plugins@0.0.1-alpha.14":
+  version "0.0.1-alpha.14"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/plugins/-/plugins-0.0.1-alpha.14.tgz#bf3a5c42c22c7ed74d6404a64257035dd4ae117a"
+  integrity sha512-PU0H1xvtrHa0ZjpMaJo6CjAb9VJA1bJ90GhLa9dbKdw1L8RHi+o1m61WSqdx/Kxxc4fUOGxjqHFZ2h9djMtLrg==
   dependencies:
-    "@kohaku-eth/provider" "0.1.0-alpha.9"
+    "@kohaku-eth/provider" "0.1.0-alpha.10"
     "@scure/bip32" "^2.2.0"
     "@scure/bip39" "^2.2.0"
     ox "^0.12.0"
 
-"@kohaku-eth/privacy-pools@0.0.2-alpha.16":
-  version "0.0.2-alpha.16"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.0.2-alpha.16.tgz#38b4db3fc14d8e9d1cbaccf6d1f1747dca4dea4d"
-  integrity sha512-8So6cDkQEu0aWOVrIis7yV6ek52/zaTsbHuzKVcTpGCdaxdM00N2mrkKsqlVW/K/VaVKISHymz2KseAeFaNg5A==
+"@kohaku-eth/privacy-pools@0.0.2-alpha.17":
+  version "0.0.2-alpha.17"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.0.2-alpha.17.tgz#2056474562a1b31061a05df8707478d85bef8f53"
+  integrity sha512-9IdqUWm0yLNWWStvbHpXj/aPMeMratL7NjHenrqfq7I8ycYsmhy1TEXCq4+l75vdC2x0Xe4ADLDbTsW1VxFzIA==
   dependencies:
     "@fatsolutions/privacy-pools-core-circuits" "1.0.5"
-    "@kohaku-eth/plugins" "0.0.1-alpha.13"
-    "@kohaku-eth/provider" "0.1.0-alpha.9"
+    "@kohaku-eth/plugins" "0.0.1-alpha.14"
+    "@kohaku-eth/provider" "0.1.0-alpha.10"
     "@reduxjs/toolkit" "^2.11.2"
+    "@saga-sync/client" "^0.1.4"
     "@zk-kit/lean-imt" "^2.2.4"
     maci-crypto "2.5.0"
     ox "^0.12.0"
     viem "^2.51.3"
 
-"@kohaku-eth/provider@0.1.0-alpha.9":
-  version "0.1.0-alpha.9"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/provider/-/provider-0.1.0-alpha.9.tgz#bfed89fdaf320cfa84f2ccf717ad96e51e2b5c21"
-  integrity sha512-Jzxse8Bh8PmDZaNLd80Zs2Ed47zrtWmj6SrpdDJIgh0XU35TfC9kTKQ7ZXQEasgU49qUN1CzkC0lw9I24H8w0Q==
+"@kohaku-eth/provider@0.1.0-alpha.10":
+  version "0.1.0-alpha.10"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/provider/-/provider-0.1.0-alpha.10.tgz#787bcec3904627c8b5baef54e2ea5ddca16276dd"
+  integrity sha512-0hEjz75Jif7IxSXVLyy9VySjb3x9CLfQ+BXawE7Xlv6wuGRnVT07WvHsFpKUAOO77dg8M9AKD2fHkcFlP8E36A==
   dependencies:
     ox "^0.12.0"
 
@@ -3175,7 +3176,7 @@
   dependencies:
     "@noble/hashes" "2.2.0"
 
-"@noble/curves@2.4.0":
+"@noble/curves@2.4.0", "@noble/curves@^2.2.0":
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-2.4.0.tgz#367c869bfd790c3a2248152562f255b5f8898b74"
   integrity sha512-P4/62zrgfH33CneE3Dn4WhJVA22YUU0eR51wKIan4NVRvwsA0YnPTwWGpNbpuacSujmSFLvyzpyuR30+fbq2Ew==
@@ -3224,7 +3225,7 @@
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.2.0.tgz#22da1d16a469954fce877055d559900a6c73b63b"
   integrity sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==
 
-"@noble/hashes@2.4.0":
+"@noble/hashes@2.4.0", "@noble/hashes@^2.2.0":
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.4.0.tgz#e6a3e98edbed3c8659b28bb8f9b18ca02ec8ea4b"
   integrity sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==
@@ -3796,6 +3797,21 @@
   integrity sha512-uI6lFV8wOji4rb7juu0/LRMND0rq2NWaqH4zFzE2FUjO8lTvbCT+/5W/+flUUfkcaqyLDlJ1OPjasa2bEakrbw==
   dependencies:
     abitype "^1.0.2"
+
+"@saga-sync/client@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@saga-sync/client/-/client-0.1.4.tgz#d7dc9a52533962088504af899ed440e0cab55cca"
+  integrity sha512-q/5rxQOGB2ShYNxsQggfd6KGZ4BAF2z4wSUdWmiRjN/8CXStbyVYgjupdCLbZ8jbtOdvKKEu1dhZDO7/o5gCEg==
+  dependencies:
+    "@saga-sync/core" "0.1.4"
+
+"@saga-sync/core@0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@saga-sync/core/-/core-0.1.4.tgz#3c848b10ff8047a4b51c2f3a742289f61ac29803"
+  integrity sha512-eGO87WP57D4CulvLUHfrhj0SpQEYC6UX8rBowkai0UG8dz3X/uHfOMu7TVuIvKdvjhWOaKxeYpwecx2G+k1ntA==
+  dependencies:
+    "@noble/curves" "^2.2.0"
+    "@noble/hashes" "^2.2.0"
 
 "@scure/base@1.2.6", "@scure/base@^1.1.3", "@scure/base@~1.2.5":
   version "1.2.6"
