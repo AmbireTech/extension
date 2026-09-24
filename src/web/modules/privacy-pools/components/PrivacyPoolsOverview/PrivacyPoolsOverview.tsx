@@ -38,7 +38,6 @@ interface Props {
   pendingPrivateBalance: number
   canWithdraw: boolean
   onRefresh: () => void
-  onDeposit: () => void
   onWithdraw: () => void
 }
 
@@ -50,7 +49,6 @@ const PrivacyPoolsOverview: FC<Props> = ({
   pendingPrivateBalance,
   canWithdraw,
   onRefresh,
-  onDeposit,
   onWithdraw
 }) => {
   const { t } = useTranslation()
@@ -182,15 +180,9 @@ const PrivacyPoolsOverview: FC<Props> = ({
               )}
             </View>
 
-            {/* Depositing needs nothing read first - it spends the public balance the portfolio
-            already knows. Withdrawing does: without notes there is nothing to withdraw, and the
-            form would have an empty dropdown. */}
-            <PrivacyPoolsActions
-              onDeposit={onDeposit}
-              onWithdraw={onWithdraw}
-              isDepositDisabled={false}
-              isWithdrawDisabled={!canWithdraw}
-            />
+            {/* Withdrawing needs the notes read first: without them there is nothing to withdraw,
+            and the form would have an empty dropdown. */}
+            <PrivacyPoolsActions onWithdraw={onWithdraw} isWithdrawDisabled={!canWithdraw} />
           </>
         )}
       </View>

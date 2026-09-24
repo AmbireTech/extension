@@ -67,8 +67,8 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
 
   if (!balances.length)
     return renderNotice(
-      t('Nothing in the pools yet'),
-      t('Deposit some ETH to start building a private balance.')
+      t('Nothing in this account yet'),
+      t('Send ETH or another supported token to it from any of your other accounts.')
     )
 
   return (

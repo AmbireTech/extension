@@ -22,7 +22,6 @@ import PrivacyPoolsTabs, {
 import PrivacyPoolsWithdrawalSheet from '@web/modules/privacy-pools/components/PrivacyPoolsWithdrawalSheet'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
-import { PrivacyPoolsActionMode } from '@web/modules/privacy-pools/types'
 
 import getStyles from './styles'
 
@@ -47,16 +46,13 @@ const PrivacyPoolsDashboardScreen = () => {
     getNetworkName,
     syncChain,
     refreshLoadedChains,
-    deposit,
     prepareWithdrawal,
     broadcastWithdrawal,
     dismissOperation
   } = usePrivacyPools()
-  const { depositTokens, withdrawTokens } = usePrivacyPoolsTokens()
+  const { withdrawTokens } = usePrivacyPoolsTokens()
 
   const [openTab, setOpenTab] = useState<PrivacyPoolsTab>('pooled')
-  // One sheet for both forms - only one can be open at a time, and they differ by `mode`.
-  const [actionMode, setActionMode] = useState<PrivacyPoolsActionMode>('deposit')
 
   const { ref: actionSheetRef, open: openActionSheet, close: closeActionSheet } = useModalize()
   const {
@@ -98,14 +94,6 @@ const PrivacyPoolsDashboardScreen = () => {
     openWithdrawalSheet()
   }, [operationStatus, operationPhase, openWithdrawalSheet])
 
-  const openAction = useCallback(
-    (mode: PrivacyPoolsActionMode) => () => {
-      setActionMode(mode)
-      openActionSheet()
-    },
-    [openActionSheet]
-  )
-
   /**
    * Opens the progress sheet as the withdrawal is dispatched, rather than waiting for the
    * background to report back: quoting and proving take about ten seconds together, which would
@@ -113,21 +101,10 @@ const PrivacyPoolsDashboardScreen = () => {
    */
   const handleSubmit = useCallback(
     (params: PrivacyPoolsActionSubmitParams) => {
-      if (actionMode === 'deposit') {
-        // No sheet: a deposit is an ordinary transaction and opens the normal signing flow, which
-        // has its own progress UI.
-        deposit({
-          chainId: params.chainId,
-          tokenAddress: params.tokenAddress,
-          amount: params.amount
-        })
-        return
-      }
-
       openWithdrawalSheet()
       prepareWithdrawal(params)
     },
-    [actionMode, deposit, prepareWithdrawal, openWithdrawalSheet]
+    [prepareWithdrawal, openWithdrawalSheet]
   )
 
   // The withdrawal in flight is described in the token's own units, which only the pool's asset
@@ -157,8 +134,7 @@ const PrivacyPoolsDashboardScreen = () => {
               pendingPrivateBalance={pendingPrivateBalance}
               canWithdraw={!!withdrawTokens.length}
               onRefresh={refreshLoadedChains}
-              onDeposit={openAction('deposit')}
-              onWithdraw={openAction('withdraw')}
+              onWithdraw={openActionSheet as any}
             />
           </View>
 
@@ -179,8 +155,7 @@ const PrivacyPoolsDashboardScreen = () => {
         </View>
 
         <PrivacyPoolsActionSheet
-          mode={actionMode}
-          tokens={actionMode === 'deposit' ? depositTokens : withdrawTokens}
+          tokens={withdrawTokens}
           sheetRef={actionSheetRef}
           closeBottomSheet={closeActionSheet}
           onSubmit={handleSubmit}

@@ -251,13 +251,6 @@ const usePrivacyPools = () => {
     networkRows.filter((row) => !row.needsFirstLoad).forEach((row) => syncChain(row.chainId))
   }, [networkRows, syncChain])
 
-  const deposit = useCallback(
-    (params: { chainId: string; tokenAddress: string; amount: bigint }) => {
-      dispatch({ type: 'method', params: { method: 'deposit', args: [params] } })
-    },
-    [dispatch]
-  )
-
   const prepareWithdrawal = useCallback(
     (params: { chainId: string; tokenAddress: string; amount: bigint; recipient: string }) => {
       dispatch({ type: 'method', params: { method: 'prepareWithdrawal', args: [params] } })
@@ -289,7 +282,6 @@ const usePrivacyPools = () => {
     getNetworkName,
     syncChain,
     refreshLoadedChains,
-    deposit,
     prepareWithdrawal,
     broadcastWithdrawal,
     dismissOperation

@@ -17,7 +17,6 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { PrivacyPoolsTokenOption } from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens/usePrivacyPoolsTokens'
-import { PrivacyPoolsActionMode } from '@web/modules/privacy-pools/types'
 
 export type PrivacyPoolsActionSubmitParams = {
   // The pool the action runs against, taken from the selected token rather than from a screen-wide
@@ -29,65 +28,33 @@ export type PrivacyPoolsActionSubmitParams = {
 }
 
 interface Props {
-  mode: PrivacyPoolsActionMode
   tokens: PrivacyPoolsTokenOption[]
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
   onSubmit: (params: PrivacyPoolsActionSubmitParams) => void
 }
 
-const MODE_CONFIG: {
-  [mode in PrivacyPoolsActionMode]: {
-    title: string
-    description: string
-    submitText: string
-    tokenLabel: string
-    noTokensText: string
-    hasRecipient: boolean
-    note: string
-  }
-} = {
-  deposit: {
-    title: 'Deposit',
-    description: 'Move funds from your account into a Privacy Pool.',
-    submitText: 'Deposit',
-    tokenLabel: 'Token',
-    noTokensText:
-      'No tokens with a balance on the networks Privacy Pools supports. Fund your account first.',
-    hasRecipient: false,
-    // The one thing about depositing that surprises people, and it cannot be undone once the funds
-    // are in: the deposit itself hides nothing.
-    note: 'Everyone can see this deposit, including which address made it. What stays private is which deposit a later withdrawal comes from - so withdraw to a different address, and wait a while before you do.'
-  },
-  withdraw: {
-    title: 'Withdraw',
-    description: 'Take funds out of the pools, to any address you choose.',
-    submitText: 'Prepare withdrawal',
-    tokenLabel: 'Pooled token',
-    noTokensText:
-      'Nothing can be withdrawn yet. Either you have not deposited, or your deposits are still waiting to be approved.',
-    hasRecipient: true,
-    note: 'Nothing is sent until you confirm. Preparing takes up to half a minute - the network fee and the exact amount the address receives are shown before anything leaves the pool. The fee is taken from the withdrawn amount, so the receiving address does not need any ETH.'
-  }
+// The words of the form. Kept together, so the form reads as one piece of copy.
+const FORM_COPY = {
+  title: 'Withdraw',
+  description: 'Take funds out of the pools, to any address you choose.',
+  submitText: 'Prepare withdrawal',
+  tokenLabel: 'Pooled token',
+  noTokensText:
+    'Nothing can be withdrawn yet. Either nothing has been sent to this account, or what has is still waiting to be approved.',
+  note: 'Nothing is sent until you confirm. Preparing takes up to half a minute - the network fee and the exact amount the address receives are shown before anything leaves the pool. The fee is taken from the withdrawn amount, so the receiving address does not need any ETH.'
 }
 
 /**
- * The deposit and withdraw forms.
+ * The withdrawal form. Sending into the account is not done here: it is a transfer from another of
+ * the wallet's accounts, made from that account's Send.
  *
- * One sheet for both, because only one can be open at a time and they differ by `mode`. The network
- * comes from the selected token rather than from a separate dropdown - a token and the pool it sits
- * in are one choice, not two.
+ * The network comes from the selected token rather than from a separate dropdown - a token and the
+ * pool it sits in are one choice, not two.
  */
-const PrivacyPoolsActionSheet: FC<Props> = ({
-  mode,
-  tokens,
-  sheetRef,
-  closeBottomSheet,
-  onSubmit
-}) => {
+const PrivacyPoolsActionSheet: FC<Props> = ({ tokens, sheetRef, closeBottomSheet, onSubmit }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const config = MODE_CONFIG[mode]
 
   const [selectedValue, setSelectedValue] = useState('')
   const [amount, setAmount] = useState('')
@@ -98,17 +65,6 @@ const PrivacyPoolsActionSheet: FC<Props> = ({
     setAmount('')
     setRecipient('')
   }, [])
-
-  // One sheet serves both actions, so switching mode has to clear what the previous one was filled
-  // with - a pooled balance is not a valid amount for a deposit, and a deposit has no recipient.
-  // Adjusted during render rather than in an effect, which is what React recommends for "reset
-  // state when a prop changes": the discarded values never reach the screen, and no second commit
-  // is needed to clear them.
-  const [renderedMode, setRenderedMode] = useState(mode)
-  if (renderedMode !== mode) {
-    setRenderedMode(mode)
-    resetForm()
-  }
 
   const handleChangeToken = useCallback((option: SelectValue) => {
     setSelectedValue(String(option.value))
@@ -135,47 +91,26 @@ const PrivacyPoolsActionSheet: FC<Props> = ({
     if (parsedAmount <= 0n) return t('Enter an amount greater than zero.')
 
     if (parsedAmount > selectedToken.availableAmount)
-      return mode === 'deposit'
-        ? t('You have {{max}} {{symbol}} on this network.', {
-            max: formatDecimals(
-              Number(formatUnits(selectedToken.availableAmount, selectedToken.decimals)),
-              'amount'
-            ),
-            symbol: selectedToken.symbol
-          })
-        : t('You can withdraw at most {{max}} {{symbol}}.', {
-            max: formatDecimals(
-              Number(formatUnits(selectedToken.availableAmount, selectedToken.decimals)),
-              'amount'
-            ),
-            symbol: selectedToken.symbol
-          })
-
-    if (selectedToken.maxDeposit !== null && parsedAmount > selectedToken.maxDeposit)
-      return t('The most you can deposit at once is {{max}} {{symbol}}.', {
+      return t('You can withdraw at most {{max}} {{symbol}}.', {
         max: formatDecimals(
-          Number(formatUnits(selectedToken.maxDeposit, selectedToken.decimals)),
+          Number(formatUnits(selectedToken.availableAmount, selectedToken.decimals)),
           'amount'
         ),
         symbol: selectedToken.symbol
       })
 
     return ''
-  }, [selectedToken, parsedAmount, mode, t])
+  }, [selectedToken, parsedAmount, t])
 
   const recipientError = useMemo(() => {
-    if (!config.hasRecipient || !recipient) return ''
+    if (!recipient) return ''
     if (!isValidAddress(recipient)) return t('That does not look like a wallet address.')
 
     return ''
-  }, [config.hasRecipient, recipient, t])
+  }, [recipient, t])
 
   const canSubmit =
-    !!selectedToken &&
-    parsedAmount !== null &&
-    !amountError &&
-    !recipientError &&
-    (!config.hasRecipient || !!recipient)
+    !!selectedToken && parsedAmount !== null && !amountError && !recipientError && !!recipient
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit || !selectedToken || parsedAmount === null) return
@@ -193,26 +128,26 @@ const PrivacyPoolsActionSheet: FC<Props> = ({
 
   return (
     <BottomSheet
-      // Must not vary with `mode`: BottomSheet feeds this into the `key` of its Modalize, so a
-      // per-mode id remounts the sheet in the same commit the caller opened it - leaving the
-      // backdrop up and the sheet itself gone until the next attempt.
+      // Must stay fixed: BottomSheet feeds this into the `key` of its Modalize, so a changing id
+      // remounts the sheet in the same commit the caller opened it - leaving the backdrop up and
+      // the sheet itself gone until the next attempt.
       id="privacy-pools-action"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       backgroundColor="primaryBackground"
     >
-      <ModalHeader title={t(config.title)} handleClose={closeBottomSheet} />
+      <ModalHeader title={t(FORM_COPY.title)} handleClose={closeBottomSheet} />
       <Text fontSize={14} color={theme.secondaryText} style={spacings.mbSm}>
-        {t(config.description)}
+        {t(FORM_COPY.description)}
       </Text>
 
       {!tokens.length && (
-        <Alert size="sm" type="info" text={t(config.noTokensText)} style={spacings.mbSm} />
+        <Alert size="sm" type="info" text={t(FORM_COPY.noTokensText)} style={spacings.mbSm} />
       )}
 
       <Select
-        testID={`privacy-pools-token-select-${mode}`}
-        label={t(config.tokenLabel)}
+        testID="privacy-pools-token-select-withdraw"
+        label={t(FORM_COPY.tokenLabel)}
         options={tokens}
         value={selectedToken}
         setValue={handleChangeToken}
@@ -220,7 +155,7 @@ const PrivacyPoolsActionSheet: FC<Props> = ({
         placeholder={t('Select a token')}
         searchPlaceholder={t('Token name or address...')}
         emptyListPlaceholderText={t('No tokens found.')}
-        bottomSheetTitle={t(config.tokenLabel)}
+        bottomSheetTitle={t(FORM_COPY.tokenLabel)}
         containerStyle={spacings.mbSm}
       />
 
@@ -235,23 +170,21 @@ const PrivacyPoolsActionSheet: FC<Props> = ({
         containerStyle={spacings.mbSm}
       />
 
-      {config.hasRecipient && (
-        <Input
-          label={t('Send to')}
-          placeholder="0x..."
-          value={recipient}
-          onChangeText={setRecipient}
-          error={recipientError}
-          containerStyle={spacings.mbSm}
-        />
-      )}
+      <Input
+        label={t('Send to')}
+        placeholder="0x..."
+        value={recipient}
+        onChangeText={setRecipient}
+        error={recipientError}
+        containerStyle={spacings.mbSm}
+      />
 
-      <Alert size="sm" type="info" text={t(config.note)} style={spacings.mbSm} />
+      <Alert size="sm" type="info" text={t(FORM_COPY.note)} style={spacings.mbSm} />
 
       <View style={spacings.mbSm}>
         <Button
-          testID={`privacy-pools-submit-${mode}`}
-          text={t(config.submitText)}
+          testID="privacy-pools-submit-withdraw"
+          text={t(FORM_COPY.submitText)}
           onPress={handleSubmit}
           disabled={!canSubmit}
           hasBottomSpacing={false}
