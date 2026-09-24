@@ -164,19 +164,10 @@ const calculateWindowSizeAndPosition = async (
 
   const workArea = await getDisplayWorkArea(baseWindow)
 
-  let screenWidth = 0
-  let screenHeight = 0
-
-  if (isSafari()) {
-    screenWidth = formatScreenWidth(NOTIFICATION_WINDOW_WIDTH)
-    screenHeight = formatScreenHeight(NOTIFICATION_WINDOW_HEIGHT)
-  } else if (engine === 'webkit' && workArea) {
-    screenWidth = formatScreenWidth(workArea.width)
-    screenHeight = formatScreenHeight(workArea.height)
-  } else {
-    screenWidth = formatScreenWidth(window.screen.width)
-    screenHeight = formatScreenHeight(window.screen.height)
-  }
+  // The service worker has no screen to fall back to, so an unknown display layout, as in Safari
+  // or when Chrome can't report its displays, is sized like the default request window
+  const screenWidth = formatScreenWidth(workArea?.width ?? NOTIFICATION_WINDOW_WIDTH)
+  const screenHeight = formatScreenHeight(workArea?.height ?? NOTIFICATION_WINDOW_HEIGHT)
 
   const ratio = 0.9 // 90% of the screen/tab size
 
@@ -218,16 +209,20 @@ const calculateWindowSizeAndPosition = async (
       (activeTab.height - desiredHeight) / 2 + topOffset + baseWindow.height! - activeTab.height
   }
 
+  // The browser rejects fractional sizes
+  const width = Math.round(desiredWidth)
+  const height = Math.round(desiredHeight)
+
   // The browser rejects bounds that are mostly outside the visible screen space. Without a known
   // display layout the position can only be kept away from the top left corner.
   return {
-    width: desiredWidth,
-    height: desiredHeight,
+    width,
+    height,
     left: workArea
-      ? clampToWorkArea(leftPosition, desiredWidth, workArea.left, workArea.width)
+      ? clampToWorkArea(leftPosition, width, workArea.left, workArea.width)
       : Math.round(Math.max(leftPosition, SPACING)),
     top: workArea
-      ? clampToWorkArea(topPosition, desiredHeight, workArea.top, workArea.height)
+      ? clampToWorkArea(topPosition, height, workArea.top, workArea.height)
       : Math.round(Math.max(topPosition, SPACING))
   }
 }
