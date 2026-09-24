@@ -58,10 +58,10 @@ const PrivacyPoolsOverview: FC<Props> = ({
   const {
     state: { isPrivacyModeEnabled }
   } = useController('WalletStateController')
-  // The gradient is seeded with the selected account, so the privacy card reads as a sibling of
-  // that account's dashboard card.
+  // The gradient is seeded with the selected Privacy Pools account, so each one keeps a card of
+  // its own the way each regular account does.
   const {
-    state: { account }
+    state: { privacyPoolsAccountId }
   } = useController('SelectedAccountController')
 
   // Split so the cents can be rendered smaller than the dollars, the same way the dashboard's
@@ -90,7 +90,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
 
   return (
     <View style={styles.container}>
-      <OverviewBackground address={account?.addr || ''} />
+      <OverviewBackground address={privacyPoolsAccountId || ''} />
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>

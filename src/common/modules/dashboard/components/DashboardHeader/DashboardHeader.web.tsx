@@ -18,6 +18,7 @@ import useSidePanelSettingsTab from '@web/hooks/useSidePanelSettingsTab'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
+import PrivacyPoolsAccountButton from './PrivacyPoolsAccountButton'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -27,9 +28,17 @@ const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
+const selectPrivacyPoolsAccountId = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.privacyPoolsAccountId
 
 const DashboardHeader = () => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
+  // Selected in place of a regular account, so `account` is null while it is
+  const { state: privacyPoolsAccountId } = useController(
+    'SelectedAccountController',
+    selectPrivacyPoolsAccountId
+  )
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted', duration: 50 })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
     preset: 'opacityInverted',
@@ -44,7 +53,7 @@ const DashboardHeader = () => {
     close: closeNetworkStatusesSheet
   } = useModalize()
 
-  if (!account) return null
+  if (!account && !privacyPoolsAccountId) return null
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>
@@ -55,7 +64,7 @@ const DashboardHeader = () => {
         />
       )}
       <View style={[flexbox.directionRow, flexbox.flex1, flexbox.justifySpaceBetween]}>
-        <AccountButton />
+        {account ? <AccountButton /> : <PrivacyPoolsAccountButton />}
         <View style={[flexbox.directionRow, flexbox.alignStart]}>
           {SHOULD_DISPLAY_NETWORK_STATUSES && (
             <Pressable

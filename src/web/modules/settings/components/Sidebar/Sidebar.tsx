@@ -12,7 +12,6 @@ import HelpIcon from '@common/assets/svg/HelpIcon'
 import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
-import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
@@ -88,12 +87,6 @@ export const SETTINGS_LINKS = [
     Icon: PasswordRecoverySettingsIcon,
     label: 'Password recovery',
     path: ROUTES.devicePasswordRecovery
-  },
-  {
-    key: 'privacy-pools',
-    Icon: ShieldInvisibilityIcon,
-    label: 'Privacy Pools',
-    path: ROUTES.privacyPools
   },
   {
     key: 'opt-outs',

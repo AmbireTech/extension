@@ -1,10 +1,12 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import useTheme from '@common/hooks/useTheme'
+import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import spacings from '@common/styles/spacings'
 import PrivacyPoolsActionSheet, {
   PrivacyPoolsActionSubmitParams
@@ -20,13 +22,15 @@ import PrivacyPoolsWithdrawalSheet from '@web/modules/privacy-pools/components/P
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
 import { PrivacyPoolsActionMode } from '@web/modules/privacy-pools/types'
-import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 import getStyles from './styles'
 
-const PrivacyPoolsScreen = () => {
+/**
+ * The dashboard of a Privacy Pools account, shown on the dashboard route in place of the regular
+ * one while a Privacy Pools account is selected.
+ */
+const PrivacyPoolsDashboardScreen = () => {
   const { styles } = useTheme(getStyles)
-  const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const {
     unavailableReason,
     isAvailable,
@@ -59,10 +63,6 @@ const PrivacyPoolsScreen = () => {
     open: openWithdrawalSheet,
     close: closeWithdrawalSheet
   } = useModalize()
-
-  useEffect(() => {
-    setCurrentSettingsPage('privacy-pools')
-  }, [setCurrentSettingsPage])
 
   /**
    * Re-reads the networks already read on this device, once per mount.
@@ -138,57 +138,64 @@ const PrivacyPoolsScreen = () => {
   }, [operation])
 
   return (
-    <ScrollableWrapper contentContainerStyle={styles.contentContainer}>
-      <View style={styles.content}>
-        <View style={spacings.mbSm}>
-          <PrivacyPoolsOverview
-            unavailableReason={unavailableReason}
-            hasSyncedAnyChain={hasSyncedAnyChain}
-            isSyncing={isSyncingAnyChain}
-            totalPrivateBalance={totalPrivateBalance}
-            pendingPrivateBalance={pendingPrivateBalance}
-            canWithdraw={!!withdrawTokens.length}
-            onRefresh={refreshLoadedChains}
-            onDeposit={openAction('deposit')}
-            onWithdraw={openAction('withdraw')}
-          />
+    <LayoutWrapper>
+      <View style={styles.header}>
+        <View style={styles.content}>
+          <DashboardHeader />
+        </View>
+      </View>
+      <ScrollableWrapper contentContainerStyle={styles.contentContainer}>
+        <View style={styles.content}>
+          <View style={spacings.mbSm}>
+            <PrivacyPoolsOverview
+              unavailableReason={unavailableReason}
+              hasSyncedAnyChain={hasSyncedAnyChain}
+              isSyncing={isSyncingAnyChain}
+              totalPrivateBalance={totalPrivateBalance}
+              pendingPrivateBalance={pendingPrivateBalance}
+              canWithdraw={!!withdrawTokens.length}
+              onRefresh={refreshLoadedChains}
+              onDeposit={openAction('deposit')}
+              onWithdraw={openAction('withdraw')}
+            />
+          </View>
+
+          {/* Each network is read on its own - see PrivacyPoolsNetworks. Hidden when the account
+        cannot use Privacy Pools at all, since then there is nothing to read either. */}
+          {isAvailable && (
+            <View style={spacings.mbSm}>
+              <PrivacyPoolsNetworks rows={networkRows} onSync={syncChain} />
+            </View>
+          )}
+
+          <PrivacyPoolsTabs openTab={openTab} setOpenTab={setOpenTab} />
+          {openTab === 'pooled' ? (
+            <PrivacyPoolsBalances balances={balances} state={balancesState} />
+          ) : (
+            <PrivacyPoolsActivity activity={activity} />
+          )}
         </View>
 
-        {/* Each network is read on its own - see PrivacyPoolsNetworks. Hidden when the account
-        cannot use Privacy Pools at all, since then there is nothing to read either. */}
-        {isAvailable && (
-          <View style={spacings.mbSm}>
-            <PrivacyPoolsNetworks rows={networkRows} onSync={syncChain} />
-          </View>
-        )}
-
-        <PrivacyPoolsTabs openTab={openTab} setOpenTab={setOpenTab} />
-        {openTab === 'pooled' ? (
-          <PrivacyPoolsBalances balances={balances} state={balancesState} />
-        ) : (
-          <PrivacyPoolsActivity activity={activity} />
-        )}
-      </View>
-
-      <PrivacyPoolsActionSheet
-        mode={actionMode}
-        tokens={actionMode === 'deposit' ? depositTokens : withdrawTokens}
-        sheetRef={actionSheetRef}
-        closeBottomSheet={closeActionSheet}
-        onSubmit={handleSubmit}
-      />
-      <PrivacyPoolsWithdrawalSheet
-        operation={operation}
-        symbol={operationAsset?.symbol || ''}
-        decimals={operationAsset?.decimals ?? 18}
-        networkName={operation ? getNetworkName(operation.chainId) : ''}
-        sheetRef={withdrawalSheetRef}
-        closeBottomSheet={closeWithdrawalSheet}
-        onSend={broadcastWithdrawal}
-        onClosed={dismissOperation}
-      />
-    </ScrollableWrapper>
+        <PrivacyPoolsActionSheet
+          mode={actionMode}
+          tokens={actionMode === 'deposit' ? depositTokens : withdrawTokens}
+          sheetRef={actionSheetRef}
+          closeBottomSheet={closeActionSheet}
+          onSubmit={handleSubmit}
+        />
+        <PrivacyPoolsWithdrawalSheet
+          operation={operation}
+          symbol={operationAsset?.symbol || ''}
+          decimals={operationAsset?.decimals ?? 18}
+          networkName={operation ? getNetworkName(operation.chainId) : ''}
+          sheetRef={withdrawalSheetRef}
+          closeBottomSheet={closeWithdrawalSheet}
+          onSend={broadcastWithdrawal}
+          onClosed={dismissOperation}
+        />
+      </ScrollableWrapper>
+    </LayoutWrapper>
   )
 }
 
-export default React.memo(PrivacyPoolsScreen)
+export default React.memo(PrivacyPoolsDashboardScreen)
