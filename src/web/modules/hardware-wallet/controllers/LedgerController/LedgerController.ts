@@ -8,9 +8,8 @@ import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { isLedgerEmulator, isProd, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
-import { LEDGER_ORIGIN_TOKEN } from '@common/modules/hardware-wallet/constants/ledger'
 import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
-import { ContextModuleBuilder, ContextModuleChainID } from '@ledgerhq/context-module'
+import { buildLedgerContextModule } from '@common/modules/hardware-wallet/libs/buildLedgerContextModule'
 import {
   DeviceManagementKitBuilder,
   DeviceModelId as LedgerDeviceModels,
@@ -47,7 +46,10 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
   #rejectSigningSubscription: (() => void) | null = null
 
-  constructor() {
+  #isSigningReportAllowed: () => boolean
+
+  constructor(isSigningReportAllowed: () => boolean) {
+    this.#isSigningReportAllowed = isSigningReportAllowed
     // When the `cleanUpListener` method gets passed to the navigator.hid listeners
     // the `this` context gets lost, so we need to bind it here. The `this` context
     // in the `cleanUp` method should be the `LedgerController` instance.
@@ -231,12 +233,10 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       this.deviceModel = connectedDevice.modelId
       this.deviceId = connectedDevice.id
 
-      const contextModule = new ContextModuleBuilder({
-        originToken: LEDGER_ORIGIN_TOKEN,
-        loggerFactory: this.#createContextLogger
+      const contextModule = buildLedgerContextModule({
+        loggerFactory: this.#createContextLogger,
+        isSigningReportAllowed: this.#isSigningReportAllowed
       })
-        .setChain(ContextModuleChainID.Ethereum)
-        .build()
       this.signerEth = new SignerEthBuilder({ dmk: this.walletSDK, sessionId })
         .withContextModule(contextModule)
         .build()

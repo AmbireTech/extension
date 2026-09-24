@@ -339,7 +339,9 @@ const init = async () => {
   }
 
   const pm = new PortMessenger()
-  const ledgerCtrl = new LedgerController()
+  const ledgerCtrl = new LedgerController(
+    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
+  )
   const trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   const latticeCtrl = new LatticeController()
 
