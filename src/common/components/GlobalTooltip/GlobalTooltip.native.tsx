@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -34,6 +34,14 @@ export function GlobalTooltip() {
     }
   }, [activeTooltip, openSheet, closeSheet])
 
+  // When the content is the same as the title, show it only once, as the title
+  const hasContent = !!activeTooltip?.children && activeTooltip.children !== activeTooltip.title
+  // Without content, the empty content area must not add space below the title
+  const scrollViewProps = useMemo(
+    () => (hasContent ? undefined : { style: spacings.mb0 }),
+    [hasContent]
+  )
+
   return (
     <BottomSheet
       id="global-tooltip-sheet"
@@ -47,6 +55,7 @@ export function GlobalTooltip() {
         tooltipManager.hide()
       }}
       closeBottomSheet={closeSheet}
+      scrollViewProps={scrollViewProps}
       HeaderComponent={
         <View>
           <View
@@ -60,18 +69,22 @@ export function GlobalTooltip() {
             <InfoIcon width={30} height={30} color={theme.infoDecorative} />
           </View>
           {!!activeTooltip?.title && (
-            <ModalHeader title={activeTooltip.title} handleClose={closeSheet} />
+            <ModalHeader
+              title={activeTooltip.title}
+              handleClose={closeSheet}
+              style={hasContent ? undefined : spacings.mbSm}
+            />
           )}
         </View>
       }
     >
-      {activeTooltip?.children ? (
-        typeof activeTooltip.children === 'string' ? (
+      {hasContent ? (
+        typeof activeTooltip?.children === 'string' ? (
           <Text fontSize={14} appearance="secondaryText">
             {activeTooltip.children}
           </Text>
         ) : (
-          activeTooltip.children
+          activeTooltip?.children
         )
       ) : null}
     </BottomSheet>
