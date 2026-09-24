@@ -387,6 +387,7 @@
     "@sentry/react>@sentry/core": {
       "globals": {
         "fetch": true,
+        "navigator.userAgent": true,
         "onerror": "write",
         "onunhandledrejection": "write"
       },
