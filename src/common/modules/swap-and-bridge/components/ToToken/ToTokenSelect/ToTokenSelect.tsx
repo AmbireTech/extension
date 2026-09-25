@@ -10,10 +10,10 @@ import HoverablePressable from '@common/components/HoverablePressable'
 import { SectionedSelect } from '@common/components/Select'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -78,7 +78,6 @@ const ToTokenSelect: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     errors,
     isTokenListLoading,
@@ -328,7 +327,10 @@ const ToTokenSelect: React.FC<Props> = ({
       onSearch={handleOnSearch}
       containerStyle={{
         ...spacings.mb0,
-        ...(isNarrowWebLayout ? { width: '100%' } : { ...flexbox.flex1, ...spacings.mrMd })
+        ...flexbox.flex1,
+        // On the web the select fills its column, which already stops on the right edge of the
+        // switch tokens button, and the amount column beside it carries the gap
+        ...(isWeb ? {} : spacings.mrMd)
       }}
       selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
       stickySectionHeadersEnabled

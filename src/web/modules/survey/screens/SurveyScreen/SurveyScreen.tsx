@@ -233,7 +233,7 @@ const SurveyScreen = () => {
       <Content buttons={buttons}>
         <View>
           <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={[flexbox.flex1]}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
               <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
               <PanelTitle title={'Survey'} style={spacings.pr2Xl} />
             </View>
