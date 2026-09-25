@@ -3,9 +3,16 @@ import { useModalize } from 'react-native-modalize'
 
 import Banner from '@common/components/Banner'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import RecoveryPhraseBackupBottomSheet from '@common/modules/recovery-phrase-backup/components/RecoveryPhraseBackupBottomSheet'
 import useRecoveryPhraseBackupStatus from '@common/modules/recovery-phrase-backup/hooks/useRecoveryPhraseBackupStatus'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectPrivacyPoolsAccountId = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.privacyPoolsAccountId
 
 /**
  * Nudges the user to write down the recovery phrase of the selected account once it
@@ -16,6 +23,10 @@ const RecoveryPhraseBackupBanner = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { seedIdOfSelectedAccountNeedingBackup } = useRecoveryPhraseBackupStatus()
+  const { state: privacyPoolsAccountId } = useController(
+    'SelectedAccountController',
+    selectPrivacyPoolsAccountId
+  )
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
   // Neutral on the dashboard so a freshly created account isn't greeted by a coloured
@@ -32,9 +43,14 @@ const RecoveryPhraseBackupBanner = () => {
       <Banner
         type="warning"
         title={t('Phrase not backed up!')}
-        text={t(
-          'If your device gets lost or stolen, you will lose your wallet and all your funds.'
-        )}
+        text={
+          // Not read until the phrase is backed up, so the backup is also what loads the account
+          privacyPoolsAccountId
+            ? t(
+                'Back up this recovery phrase to start using the account. It is the only way to recover it.'
+              )
+            : t('If your device gets lost or stolen, you will lose your wallet and all your funds.')
+        }
         buttonText={t('Back up now')}
         onPress={openBottomSheet as any}
         style={neutralBackgroundStyle}

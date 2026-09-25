@@ -33,6 +33,8 @@ interface Props {
   isSyncing: boolean
   /** Whether a network could not be read, which leaves the balance short of what it may be. */
   hasSyncError: boolean
+  /** Whether nothing is read yet because the recovery phrase is not backed up - see `syncIfStale`. */
+  isWaitingForBackup: boolean
   /**
    * The pooled balance in USD - the part the association set has approved, matching the rows below.
    * Kept apart from the public portfolio's total on purpose: the pooled side is read on demand, so
@@ -65,6 +67,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
   hasSyncedAnyChain,
   isSyncing,
   hasSyncError,
+  isWaitingForBackup,
   totalPrivateBalance,
   pendingPrivateBalance,
   canSend,
@@ -94,6 +97,10 @@ const PrivacyPoolsOverview: FC<Props> = ({
   // supported network) or temporary (locked), so each gets its own explanation rather than a disabled button
   // with no hint.
   const unavailableLabel = useMemo(() => {
+    // Said in place of a balance that would otherwise be a placeholder for good - the banner
+    // under the card is where the backup is made
+    if (!unavailableReason && isWaitingForBackup)
+      return t('Back up the recovery phrase to load this account.')
     if (!unavailableReason) return ''
 
     const labels: { [reason in PrivacyPoolsUnavailableReason]: string } = {
@@ -105,7 +112,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
     }
 
     return labels[unavailableReason]
-  }, [unavailableReason, t])
+  }, [unavailableReason, isWaitingForBackup, t])
 
   // Shown on hover, like the dashboard's, and while reading - the balance is not final until then -
   // or when a read failed, to try again. Reads every supported network again, the same as opening

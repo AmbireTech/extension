@@ -17,6 +17,8 @@ export type PrivacyPoolsNetworkRow = {
   chainId: string
   networkName: string
   syncStatus: PrivacyPoolsChainState['syncStatus']
+  /** See `PrivacyPoolsChainState['isInitialSyncDone']`. */
+  isInitialSyncDone: boolean | null
   syncStartedAt: number | null
   lastSyncedAt: number | null
   error: string | null
@@ -122,6 +124,7 @@ const usePrivacyPools = () => {
           chainId,
           networkName: getNetworkName(chainId),
           syncStatus: chain?.syncStatus || 'idle',
+          isInitialSyncDone: chain?.isInitialSyncDone ?? null,
           syncStartedAt: chain?.syncStartedAt ?? null,
           lastSyncedAt: chain?.lastSyncedAt ?? null,
           error: chain?.error ?? null
@@ -227,7 +230,8 @@ const usePrivacyPools = () => {
   )
 
   /**
-   * Reads every supported network for the account on screen, one after the other.
+   * Reads every supported network for the account on screen, one after the other, however recently
+   * they were read - what the refresh button does.
    *
    * Every network, including one never read on this device: its first read is the long one, but
    * the pools' history comes from the published copy where there is one, and the account is not
@@ -235,6 +239,14 @@ const usePrivacyPools = () => {
    */
   const syncAllChains = useCallback(() => {
     dispatch({ type: 'method', params: { method: 'sync', args: [] } })
+  }, [dispatch])
+
+  /**
+   * What opening the account does: reads the networks not read in the last minute, once its
+   * recovery phrase is backed up - see the controller's `syncIfStale`.
+   */
+  const syncIfStale = useCallback(() => {
+    dispatch({ type: 'method', params: { method: 'syncIfStale', args: [] } })
   }, [dispatch])
 
   const prepareWithdrawal = useCallback(
@@ -269,6 +281,7 @@ const usePrivacyPools = () => {
     getNetworkName,
     getTokenPrice,
     syncAllChains,
+    syncIfStale,
     prepareWithdrawal,
     broadcastWithdrawal,
     dismissOperation

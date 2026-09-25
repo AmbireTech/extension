@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Animated, View } from 'react-native'
 
-import Alert from '@common/components/Alert'
+import Banner from '@common/components/Banner'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -14,7 +14,6 @@ import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/component
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import getDashboardStyles from '@common/modules/dashboard/screens/styles'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
 import PrivacyPoolsActivityPage from '@web/modules/privacy-pools/components/PrivacyPoolsActivityPage'
 import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyPoolsOverview'
 import PrivacyPoolsTokensPage from '@web/modules/privacy-pools/components/PrivacyPoolsTokensPage'
@@ -48,9 +47,11 @@ const PrivacyPoolsDashboardScreen = () => {
     pendingPrivateBalance,
     activity,
     getNetworkName,
-    syncAllChains
+    syncAllChains,
+    syncIfStale
   } = usePrivacyPools()
-  const { selectedAccountId } = usePrivacyPoolsAccounts()
+  const { selectedAccountId, selectedAccount } = usePrivacyPoolsAccounts()
+  const isBackedUp = !!selectedAccount?.isBackedUp
   const { t } = useTranslation()
   const { withdrawTokens } = usePrivacyPoolsTokens()
 
@@ -72,23 +73,27 @@ const PrivacyPoolsDashboardScreen = () => {
   const { navigate } = useNavigation()
 
   /**
-   * Reads every supported network when the account is opened - and again for another account
-   * selected while the screen is up - so its balances are current without asking. Syncs run one
-   * after the other, so opening a second account while the first still syncs only queues it.
+   * Reads the networks when the account is opened - and for another account selected while the
+   * screen is up, and once the recovery phrase is backed up - so its balances are current without
+   * asking. Only those not read in the last minute, and only once the phrase is backed up: see the
+   * controller's `syncIfStale`. Syncs run one after the other, so opening a second account while
+   * the first still syncs only queues it.
    */
-  const syncedAccountId = useRef<string | null>(null)
-
   useEffect(() => {
-    if (!isAvailable || !selectedAccountId || syncedAccountId.current === selectedAccountId) return
+    if (!isAvailable || !selectedAccountId) return
 
-    syncedAccountId.current = selectedAccountId
-    syncAllChains()
-  }, [isAvailable, selectedAccountId, syncAllChains])
+    syncIfStale()
+  }, [isAvailable, isBackedUp, selectedAccountId, syncIfStale])
 
-  const firstReadNetworkNames = useMemo(
+  // Including those still waiting their turn, so the banner names every network in for it at once
+  const firstSyncNetworkNames = useMemo(
     () =>
       networkRows
-        .filter(({ syncStatus }) => syncStatus === 'initializing')
+        .filter(
+          ({ isInitialSyncDone, syncStatus }) =>
+            isInitialSyncDone === false &&
+            (syncStatus === 'syncing' || syncStatus === 'initializing')
+        )
         .map((row) => row.networkName),
     [networkRows]
   )
@@ -100,21 +105,21 @@ const PrivacyPoolsDashboardScreen = () => {
         {/* Under the overview card, where the regular dashboard shows it */}
         <RecoveryPhraseBackupBanner />
         {/* The one wait worth explaining: a network read for the first time takes minutes, not
-        seconds, and nothing else on screen says why the balance is not there yet */}
-        {!!firstReadNetworkNames.length && (
-          <Alert
+        seconds, and nothing else on screen says why the balance is not there yet. Locking the
+        wallet skips the networks still waiting their turn, hence asking to keep it unlocked. */}
+        {!!firstSyncNetworkNames.length && (
+          <Banner
             type="info"
-            size="sm"
-            style={spacings.mbSm}
+            title={t('First sync')}
             text={t(
-              'Checking {{networks}} for the first time. This can take a few minutes - you can keep using the wallet meanwhile.',
-              { networks: firstReadNetworkNames.join(', ') }
+              'Reading {{networks}} for the first time. This happens once and takes up to 5 minutes. Keep the wallet unlocked - you can use your other accounts meanwhile.',
+              { networks: firstSyncNetworkNames.join(', ') }
             )}
           />
         )}
       </View>
     ),
-    [firstReadNetworkNames, t]
+    [firstSyncNetworkNames, t]
   )
 
   // Sending is a screen of its own, laid out like the regular Send - see PrivacyPoolsSendScreen
@@ -129,6 +134,7 @@ const PrivacyPoolsDashboardScreen = () => {
           hasSyncedAnyChain={hasSyncedAnyChain}
           isSyncing={isSyncingAnyChain}
           hasSyncError={hasSyncError}
+          isWaitingForBackup={!!selectedAccount && !isBackedUp}
           totalPrivateBalance={totalPrivateBalance}
           pendingPrivateBalance={pendingPrivateBalance}
           canSend={!!withdrawTokens.length}
