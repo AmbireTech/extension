@@ -7,7 +7,13 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   action: ViewStyle
   actionCompact: ViewStyle
+  actionSmall: ViewStyle
 }
+
+const ACTION_WIDTH = 104
+// Used to fit a 5th action in the same footer width without switching to the flexible
+// (stretching) compact layout, e.g. in the popup/expanded window.
+const ACTION_SMALL_WIDTH = 83
 
 const compactActionStyle: ViewStyle = {
   ...common.borderRadiusPrimary,
@@ -22,12 +28,18 @@ const getStyles = () =>
     action: isMobile
       ? compactActionStyle
       : {
-          width: 104,
+          width: ACTION_WIDTH,
           ...flexbox.alignCenter,
           ...flexbox.justifyCenter,
           ...common.borderRadiusPrimary
         },
-    actionCompact: compactActionStyle
+    actionCompact: compactActionStyle,
+    actionSmall: {
+      width: ACTION_SMALL_WIDTH,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter,
+      ...common.borderRadiusPrimary
+    }
   })
 
 export default getStyles

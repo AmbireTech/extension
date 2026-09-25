@@ -16,7 +16,7 @@ import getStyles from './styles'
 
 type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'
 
-const { isTab, isRequestWindow } = getUiType()
+const { isTab } = getUiType()
 
 export const tabLayoutWidths = {
   xs: 420,
@@ -41,7 +41,9 @@ type TabLayoutContainerProps = {
 }
 
 export const getTabLayoutPadding = (maxWidthSize: (size: WindowSizes) => boolean) => {
-  if (isTab || isRequestWindow) {
+  // The request window is as narrow as the popup and the side panel, so it gets their
+  // padding instead of the tab one
+  if (isTab) {
     return {
       paddingHorizontal: maxWidthSize('xl') ? SPACING_3XL : SPACING_MD
     }

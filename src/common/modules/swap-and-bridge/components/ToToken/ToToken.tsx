@@ -45,7 +45,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSettingsModal }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     statuses: swapAndBridgeCtrlStatuses,
     toSelectedToken,
@@ -281,7 +281,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
       />
       <View
         style={[
-          isCompactSidePanelLayout
+          isNarrowWebLayout
             ? [{ width: '100%' }, spacings.mbSm]
             : [flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]
         ]}
@@ -290,7 +290,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
           appearance="secondaryText"
           fontSize={14}
           weight="medium"
-          style={isCompactSidePanelLayout ? spacings.mbTy : spacings.mbSm}
+          style={isNarrowWebLayout ? spacings.mbTy : spacings.mbSm}
         >
           {t('You receive')}
         </Text>
@@ -298,7 +298,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
           setValue={handleSetToNetworkValue}
           containerStyle={{
             ...spacings.mb0,
-            width: isCompactSidePanelLayout ? '100%' : isMobile ? 150 : 168
+            width: isNarrowWebLayout ? '100%' : isMobile ? 150 : 168
           }}
           options={toNetworksOptions}
           selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
@@ -312,7 +312,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
       </View>
       <View
         style={[
-          isCompactSidePanelLayout
+          isNarrowWebLayout
             ? { width: '100%', gap: SPACING_SM }
             : [
                 flexbox.directionRow,
@@ -321,7 +321,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
               ]
         ]}
       >
-        <View style={isCompactSidePanelLayout ? { width: '100%' } : [flexbox.flex1]}>
+        <View style={isNarrowWebLayout ? { width: '100%' } : [flexbox.flex1]}>
           <ToTokenSelect
             toTokenOptions={toTokenOptions}
             toTokenValue={toTokenValue}
@@ -329,12 +329,13 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
             toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
             addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
             handleAddToTokenByAddress={handleAddToTokenByAddress}
+            areAllProvidersDisabled={disabled}
             openProviderSettingsModal={openProviderSettingsModal}
           />
         </View>
         <View
           style={
-            isCompactSidePanelLayout
+            isNarrowWebLayout
               ? { width: '100%', alignItems: 'flex-end' }
               : [flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]
           }

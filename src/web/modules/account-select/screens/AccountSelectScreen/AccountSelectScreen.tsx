@@ -60,7 +60,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const flatlistRef = useRef(null)
   const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
     { flatlistRef }
@@ -133,11 +133,11 @@ const AccountSelectScreen = () => {
     <Button
       testID="button-add-account"
       text={t('Add account')}
-      size={isCompactSidePanelLayout ? 'regular' : 'smaller'}
+      size={isNarrowWebLayout ? 'regular' : 'smaller'}
       hasBottomSpacing={false}
       onPress={openBottomSheet as any}
       childrenPosition="left"
-      style={isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1}
+      style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}
     >
       <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
     </Button>
@@ -147,13 +147,13 @@ const AccountSelectScreen = () => {
       testID="button-sync-with-mobile"
       type="secondary"
       text={t('Sync with mobile')}
-      size={isCompactSidePanelLayout ? 'regular' : 'smaller'}
+      size={isNarrowWebLayout ? 'regular' : 'smaller'}
       hasBottomSpacing={false}
       onPress={openSyncBottomSheet as any}
       childrenPosition="left"
       // On the wide footer, only as wide as its own label, so it never wraps on two
       // rows. The primary action next to it takes whatever is left.
-      style={isCompactSidePanelLayout ? { width: '100%' } : spacings.mrTy}
+      style={isNarrowWebLayout ? { width: '100%' } : spacings.mrTy}
     >
       <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
     </Button>
@@ -188,19 +188,19 @@ const AccountSelectScreen = () => {
         />
         <FooterGlassView
           isSimpleBlur={false}
-          fullWidth={isCompactSidePanelLayout}
+          fullWidth={isNarrowWebLayout}
           onLayout={handleFooterLayout}
         >
           <View
             style={
-              isCompactSidePanelLayout
+              isNarrowWebLayout
                 ? { width: '100%', gap: SPACING_TY }
                 : [flexbox.directionRow, flexbox.alignCenter]
             }
           >
             {/* Mobile stacks "Add account" above "Sync with mobile"; the wide footer
             shows them side by side with the sync action leading instead. */}
-            {isCompactSidePanelLayout ? (
+            {isNarrowWebLayout ? (
               <>
                 {addAccountButton}
                 {syncWithMobileButton}

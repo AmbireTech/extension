@@ -71,7 +71,7 @@ const Footer: FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
@@ -247,7 +247,7 @@ const Footer: FC<Props> = ({
         style={[
           styles.footerButton,
           isMobile && { height: 46 },
-          isCompactSidePanelLayout && {
+          isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
             ...spacings.prTy,
@@ -283,8 +283,8 @@ const Footer: FC<Props> = ({
         style={[
           styles.footerButton,
           isMobile && { height: 46 },
-          !isMobile && !isCompactSidePanelLayout && spacings.mrTy,
-          isCompactSidePanelLayout && {
+          !isMobile && !isNarrowWebLayout && spacings.mrTy,
+          isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
             ...spacings.prTy,
@@ -319,7 +319,7 @@ const Footer: FC<Props> = ({
         hasBottomSpacing={false}
         style={[
           styles.footerButton,
-          isCompactSidePanelLayout && {
+          isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
             ...spacings.prTy,
@@ -345,11 +345,11 @@ const Footer: FC<Props> = ({
     )
 
   return (
-    <View style={[styles.footer, isCompactSidePanelLayout && spacings.phSm]}>
+    <View style={[styles.footer, isNarrowWebLayout && spacings.phSm]}>
       <View
         style={[
           styles.footerButtonsRow,
-          isCompactSidePanelLayout && {
+          isNarrowWebLayout && {
             flexDirection: 'column',
             alignItems: 'stretch',
             gap: SPACING_TY
@@ -360,7 +360,7 @@ const Footer: FC<Props> = ({
         <View
           style={[
             styles.footerRightButtonsGroup,
-            isCompactSidePanelLayout && {
+            isNarrowWebLayout && {
               flexDirection: 'column',
               alignItems: 'stretch',
               width: '100%',

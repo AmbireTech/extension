@@ -85,7 +85,8 @@ const PINNED_TOKEN_KEYS = new Set(
 const isCollapsibleToken = (
   token: TokenResult,
   balanceUSD: number,
-  isLargePortfolio: boolean
+  isLargePortfolio: boolean,
+  isTokenPricesEnabled: boolean
 ): boolean => {
   // Rewards and vesting tokens should never be hidden as lower-value tokens
   if (
@@ -109,8 +110,9 @@ const isCollapsibleToken = (
     return false
   }
 
+  // When token prices are disabled, tokens without a price cannot be classified as lower-value
   if (!tokenHasUSDPrice) {
-    return true
+    return isTokenPricesEnabled
   }
 
   if (isLargePortfolio) {
@@ -136,6 +138,9 @@ const Tokens = ({
 }: Props) => {
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const {
+    state: { flags }
+  } = useController('FeatureFlagsController')
   const { state: customTokens } = useController('PortfolioController', selectCustomTokens)
   const { state: portfolioTokens } = useController(
     'SelectedAccountController',
@@ -285,7 +290,12 @@ const Tokens = ({
         // If there is a price fetch error for a network every token will be considered
         // lower-value, so we need to show all tokens in that case, regardless of their balance
         if (
-          isCollapsibleToken(token, balancesInUSD.get(token) ?? 0, isLargePortfolio) &&
+          isCollapsibleToken(
+            token,
+            balancesInUSD.get(token) ?? 0,
+            isLargePortfolio,
+            flags.tokenPrices
+          ) &&
           !networkIdsWithPriceError.has(token.chainId.toString())
         ) {
           acc.dustTokens.push(token)
@@ -296,7 +306,14 @@ const Tokens = ({
       },
       { visibleTokens: [] as TokenResult[], dustTokens: [] as TokenResult[] }
     )
-  }, [networkIdsWithPriceError, sortedTokens, userHasNoBalance, searchValue, balancesInUSD])
+  }, [
+    flags.tokenPrices,
+    networkIdsWithPriceError,
+    sortedTokens,
+    userHasNoBalance,
+    searchValue,
+    balancesInUSD
+  ])
 
   const dustTotalUSD = useMemo(
     () => dustTokens.reduce((sum, token) => sum + (balancesInUSD.get(token) ?? 0), 0),

@@ -35,6 +35,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@common/utils/links/links'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
 
@@ -53,6 +54,7 @@ const KeyStoreUnlockScreen = () => {
     useKeyStoreUnlock()
   const { t } = useTranslation()
   const { addToast } = useToast()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { styles } = useTheme(getStyles)
   const {
     state: { isPrivacyModeEnabled },
@@ -269,7 +271,8 @@ const KeyStoreUnlockScreen = () => {
           <UpdateAvailableBanner />
         </View>
       )}
-      <View style={styles.container}>
+      {/* A narrow layout's width can match the container maxWidth, so keep the form inset */}
+      <View style={[styles.container, isNarrowWebLayout && spacings.phSm]}>
         {unlockMethod === 'biometrics' && canUseBiometrics && (
           <View style={styles.biometricsContainer}>
             <TouchableOpacity

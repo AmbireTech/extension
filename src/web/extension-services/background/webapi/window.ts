@@ -1,22 +1,18 @@
 import { EventEmitter } from 'events'
 
 import { FocusWindowParams, WindowProps } from '@ambire-common/interfaces/ui'
-import { SPACING } from '@common/styles/spacings'
 import { browser, engine, isExtension, isSafari } from '@web/constants/browserapi'
 import { IS_FIREFOX, IS_WINDOWS } from '@web/constants/common'
 import {
-  MIN_NOTIFICATION_WINDOW_HEIGHT,
   NOTIFICATION_WINDOW_HEIGHT,
   NOTIFICATION_WINDOW_WIDTH,
-  TAB_WIDE_CONTENT_WIDTH
+  POPUP_HEIGHT,
+  POPUP_WIDTH,
+  SIDE_PANEL_WIDTH
 } from '@web/constants/spacings'
+import { isSidePanelModeEnabled } from '@web/extension-services/background/webapi/panel'
 import { PortMessenger } from '@web/extension-services/messengers'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
-
-type CustomSize = {
-  width: number
-  height: number
-}
 
 /**
  * The usable area of a single display, positioned in the desktop coordinate space. A display
@@ -35,6 +31,12 @@ type WorkArea = {
  */
 type ScreenWithOffset = Screen & { availLeft?: number; availTop?: number }
 
+/**
+ * A plausible upper bound for the inset Chromium leaves around the web contents. Anything larger
+ * is something else taking horizontal space from the page, such as docked DevTools.
+ */
+const MAX_WEB_CONTENTS_INSET = 16
+
 const event = new EventEmitter()
 
 if (isExtension) {
@@ -51,31 +53,6 @@ if (isExtension) {
 export const WINDOW_SIZE = {
   width: NOTIFICATION_WINDOW_WIDTH + (IS_WINDOWS ? 14 : 0), // idk why windows cut the width.
   height: NOTIFICATION_WINDOW_HEIGHT
-}
-
-const formatScreenHeight = (h: number) => {
-  try {
-    const height = h > MIN_NOTIFICATION_WINDOW_HEIGHT ? h : MIN_NOTIFICATION_WINDOW_HEIGHT
-
-    return Math.round(height)
-  } catch (error) {
-    return Math.round(MIN_NOTIFICATION_WINDOW_HEIGHT)
-  }
-}
-
-const formatScreenWidth = (w: number) => {
-  try {
-    if (w < NOTIFICATION_WINDOW_WIDTH) {
-      return Math.round(NOTIFICATION_WINDOW_WIDTH)
-    }
-    if (w > TAB_WIDE_CONTENT_WIDTH) {
-      return Math.round(TAB_WIDE_CONTENT_WIDTH)
-    }
-
-    return Math.round(w)
-  } catch (error) {
-    return Math.round(NOTIFICATION_WINDOW_WIDTH)
-  }
 }
 
 const isPointInWorkArea = (workArea: WorkArea, x: number, y: number) =>
@@ -137,8 +114,8 @@ const clampToWorkArea = (
   workAreaStart: number,
   workAreaSize: number
 ) => {
-  const min = workAreaStart + SPACING
-  const max = workAreaStart + workAreaSize - windowSize - SPACING
+  const min = workAreaStart
+  const max = workAreaStart + workAreaSize - windowSize
 
   // The window doesn't fit, so align it to the start of the work area
   if (max < min) return Math.round(min)
@@ -146,9 +123,33 @@ const clampToWorkArea = (
   return Math.round(Math.min(Math.max(position, min), max))
 }
 
-const calculateWindowSizeAndPosition = async (
+/**
+ * Chromium rounds the corners of the web contents and leaves a small, even inset around them. The
+ * browser window and its tab only report their own sizes, so what the page loses on the sides is
+ * that inset - and the same amount sits below the page, inflating the chrome height.
+ */
+const getWebContentsInset = (
   baseWindow: chrome.windows.Window,
-  customSize?: CustomSize
+  activeTab: chrome.tabs.Tab | undefined
+) => {
+  if (!baseWindow.width || !activeTab?.width) return 0
+
+  const inset = (baseWindow.width - activeTab.width) / 2
+
+  // Docked DevTools and an open side panel shrink the tab too, and that is not an inset
+  if (inset < 0 || inset > MAX_WEB_CONTENTS_INSET) return 0
+
+  return inset
+}
+
+/**
+ * Sizes and places the request window so a request shows up beside the page instead of covering
+ * it: spanning the page area along its right edge, at the width of the surface the user picked
+ * for the extension - the popup or the side panel. Chrome exposes neither the popup's anchor nor
+ * the width the user gave the panel, so everything is derived from the browser window.
+ */
+const calculateWindowSizeAndPosition = async (
+  baseWindow: chrome.windows.Window
 ): Promise<{ width: number; height: number; left: number; top: number }> => {
   // In CI (headless: true), the calculated window position is always outside the visible screen, causing window.open() to fail with:
   // "Invalid value for bounds. Bounds must be at least 50% within visible screen space".
@@ -162,81 +163,50 @@ const calculateWindowSizeAndPosition = async (
     }
   }
 
-  const workArea = await getDisplayWorkArea(baseWindow)
-
-  let screenWidth = 0
-  let screenHeight = 0
-
-  if (isSafari()) {
-    screenWidth = formatScreenWidth(NOTIFICATION_WINDOW_WIDTH)
-    screenHeight = formatScreenHeight(NOTIFICATION_WINDOW_HEIGHT)
-  } else if (engine === 'webkit' && workArea) {
-    screenWidth = formatScreenWidth(workArea.width)
-    screenHeight = formatScreenHeight(workArea.height)
-  } else {
-    screenWidth = formatScreenWidth(window.screen.width)
-    screenHeight = formatScreenHeight(window.screen.height)
-  }
-
-  const ratio = 0.9 // 90% of the screen/tab size
-
-  // By default the desired window dimensions should be 720x800
-  // or if the screen height is smaller 800 make the window height 90% of the screen height
-  let desiredWidth = 720
-  let desiredHeight = Math.min(800, screenHeight * ratio)
-
-  if (customSize) {
-    desiredWidth = customSize.width
-    desiredHeight = Math.min(customSize.height, screenHeight * ratio)
-  }
-
-  let leftPosition = (screenWidth - desiredWidth) / 2
-  let topPosition = (screenHeight - desiredHeight) / 2
+  const [workArea, isSidePanelMode] = await Promise.all([
+    getDisplayWorkArea(baseWindow),
+    isSidePanelModeEnabled()
+  ])
 
   const [activeTab] = (baseWindow.tabs || []).find((t) => t.active)
     ? [(baseWindow.tabs || []).find((t) => t.active)]
     : await chrome.tabs.query({ active: true, windowId: baseWindow.id })
 
-  let leftOffset = 0
-  let topOffset = 0
+  const width = isSidePanelMode ? SIDE_PANEL_WIDTH : POPUP_WIDTH
+  const baseLeft = baseWindow.left ?? 0
+  const baseTop = baseWindow.top ?? 0
+  const baseWidth = baseWindow.width || width
+  const baseHeight = baseWindow.height || 0
 
-  if (baseWindow && baseWindow.left !== undefined && baseWindow.top !== undefined) {
-    leftOffset = baseWindow.left
-    topOffset = baseWindow.top
-  }
+  const webContentsInset = getWebContentsInset(baseWindow, activeTab)
 
-  if (activeTab && activeTab.width && activeTab.height) {
-    if (customSize) desiredWidth = customSize.width
-    leftPosition = (activeTab.width - desiredWidth) / 2 + leftOffset
-    // Pass customSize height to the helper as the height may be lower than the minimum height
-    desiredHeight = formatScreenHeight(
-      customSize?.height
-        ? Math.min(customSize.height, activeTab.height * ratio)
-        : Math.min(desiredHeight, activeTab.height * ratio)
-    )
-    topPosition =
-      (activeTab.height - desiredHeight) / 2 + topOffset + baseWindow.height! - activeTab.height
-  }
+  // Everything the browser draws above the page: the title bar, the tab strip and the toolbar
+  const browserChromeHeight =
+    baseHeight && activeTab?.height ? baseHeight - activeTab.height - webContentsInset : 0
+
+  // Both modes span the whole page area; only the width tells them apart
+  let height = activeTab?.height || baseHeight || POPUP_HEIGHT
+
+  if (workArea) height = Math.min(height, workArea.height)
+
+  const leftPosition = baseLeft + baseWidth - webContentsInset - width
+  const topPosition = baseTop + browserChromeHeight
 
   // The browser rejects bounds that are mostly outside the visible screen space. Without a known
   // display layout the position can only be kept away from the top left corner.
   return {
-    width: desiredWidth,
-    height: desiredHeight,
+    width,
+    height: Math.round(height),
     left: workArea
-      ? clampToWorkArea(leftPosition, desiredWidth, workArea.left, workArea.width)
-      : Math.round(Math.max(leftPosition, SPACING)),
+      ? clampToWorkArea(leftPosition, width, workArea.left, workArea.width)
+      : Math.round(Math.max(leftPosition, 0)),
     top: workArea
-      ? clampToWorkArea(topPosition, desiredHeight, workArea.top, workArea.height)
-      : Math.round(Math.max(topPosition, SPACING))
+      ? clampToWorkArea(topPosition, height, workArea.top, workArea.height)
+      : Math.round(Math.max(topPosition, 0))
   }
 }
 
-const create = async (
-  url: string,
-  customSize?: CustomSize,
-  baseWindowId?: number
-): Promise<WindowProps> => {
+const create = async (url: string, baseWindowId?: number): Promise<WindowProps> => {
   let baseWindow: chrome.windows.Window | undefined
 
   if (baseWindowId) {
@@ -260,7 +230,7 @@ const create = async (
     })
   }
 
-  const { width, height, left, top } = await calculateWindowSizeAndPosition(baseWindow, customSize)
+  const { width, height, left, top } = await calculateWindowSizeAndPosition(baseWindow)
 
   const win = await chrome.windows.create({
     focused: true,
@@ -315,12 +285,12 @@ const remove = async (winId: number, pm: PortMessenger) => {
 }
 
 const open = async (
-  options: { route?: string; customSize?: CustomSize; baseWindowId?: number } = {}
+  options: { route?: string; baseWindowId?: number } = {}
 ): Promise<WindowProps> => {
-  const { route, customSize, baseWindowId } = options
+  const { route, baseWindowId } = options
 
   const url = `request-window.html${route ? `#/${route}` : ''}`
-  return create(url, customSize, baseWindowId)
+  return create(url, baseWindowId)
 }
 /** How long a window gets to report itself focused before it is treated as unfocusable. */
 const FOCUS_CONFIRMATION_TIMEOUT = 1000
@@ -338,7 +308,7 @@ const focus = async (
 ): Promise<WindowProps> => {
   if (!windowProps) throw new Error('windowProps is undefined')
 
-  const { id, width, height, createdFromWindowId } = windowProps
+  const { id, createdFromWindowId } = windowProps
   const { reopenIfNeeded = true } = params || {}
 
   let baseWindow: chrome.windows.Window | undefined
@@ -354,7 +324,7 @@ const focus = async (
     baseWindow = await chrome.windows.getCurrent({ populate: true })
   }
 
-  const { left, top } = await calculateWindowSizeAndPosition(baseWindow, { width, height })
+  const { width, height, left, top } = await calculateWindowSizeAndPosition(baseWindow)
 
   const updatedProps = { width, height, left, top, focused: true }
 
