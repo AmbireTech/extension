@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -18,15 +19,19 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import { isMobile, isWeb } from '@common/config/env'
+import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
+import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
@@ -44,6 +49,11 @@ export type OneClickEstimationProps = {
 
 const { isRequestWindow, isTab, isSidePanel } = getUiType()
 
+// The footer takes over the bottom inset, so the scroll content doesn't pad above it too
+const MOBILE_SCROLL_VIEW_PROPS = { contentContainerStyle: { paddingBottom: 0 } }
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const OneClickEstimation = ({
   closeEstimationModal,
   handleUpdateStatus,
@@ -58,7 +68,11 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
+  const { bottom } = useSafeAreaInsets()
   const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const chainId = signAccountOpController?.accountOp.chainId
+  const network = useMemo(() => networks.find((n) => n.chainId === chainId), [networks, chainId])
   const hasFreshActionPressRef = useRef(false)
 
   const signingErrors = useMemo(() => {
@@ -134,6 +148,149 @@ const OneClickEstimation = ({
     action()
   }, [])
 
+  // Everything from the network fee down is the sheet's footer, so it stays visible while the
+  // transaction details above it scroll
+  const footerComponent = useMemo(() => {
+    if (!signAccountOpController) return null
+
+    return (
+      <View style={isMobile ? { paddingBottom: bottom || SPACING_SM } : undefined}>
+        <KeySelect
+          isSigning={isSignLoading || !signAccountOpController.readyToSign}
+          isChooseSignerShown={isChooseSignerShown}
+          isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
+          handleChooseKey={
+            isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
+          }
+          account={signAccountOpController.account}
+          selectedAccountKeyStoreKeys={
+            isChooseFeePayerKeyShown
+              ? signAccountOpController.feePayerKeyStoreKeys
+              : signAccountOpController.accountKeyStoreKeys
+          }
+          handleClose={() => {
+            setIsChooseSignerShown(false)
+            setIsChooseFeePayerKeyShown(false)
+          }}
+        />
+        {signAccountOpController?.canBroadcast && (
+          <Estimation
+            updateType={updateType}
+            signAccountOpState={signAccountOpController}
+            disabled={signAccountOpController.status?.type !== SigningStatus.ReadyToSign}
+            hasEstimation={!!hasEstimation}
+            // TODO<oneClickSwap>
+            slowRequest={false}
+            // TODO<oneClickSwap>
+            isViewOnly={isViewOnly}
+            isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
+            sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
+            serviceFee={serviceFee}
+            isOneClick
+          />
+        )}
+        {isViewOnly && (
+          <NoKeysToSignAlert
+            style={spacings.mt}
+            chainId={signAccountOpController?.accountOp?.chainId}
+          />
+        )}
+        {!isViewOnly && signingErrors && signingErrors[0] && (
+          <Alert title={t(signingErrors[0].title)} type="error" style={spacings.mt} />
+        )}
+        <BundlerWarning
+          signAccountOpState={signAccountOpController}
+          bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+          hasMarginTop
+        />
+        <ButtonsWrapper
+          size="sm"
+          absolute={false}
+          isSimpleBlur={false}
+          style={isCompactLayout ? { ...spacings.ptLg, gap: SPACING_TY } : spacings.pt}
+        >
+          {!isMobile && !isNarrowWebLayout && (
+            <Button
+              testID="back-button"
+              type="secondary"
+              text={t('Back')}
+              onPress={closeEstimationModal}
+              hasBottomSpacing={false}
+              disabled={isSignLoading}
+              style={{ width: 98, ...spacings.mrLg }}
+              size="smaller"
+            />
+          )}
+
+          {!!banners && !!banners.length ? (
+            <HoldToProceedButton
+              testID="sign-proceed-btn"
+              text={t('Hold to sign')}
+              buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
+              disabled={isSignDisabled || signingErrors.length > 0}
+              onPressIn={markFreshActionPress}
+              onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
+              size={isCompactLayout ? 'regular' : 'smaller'}
+            />
+          ) : (
+            <ButtonWithLoader
+              testID="sign-button"
+              text={signButtonText}
+              type={extremeGasFeeSignButtonType}
+              isLoading={isSignLoading}
+              disabled={isSignDisabled || signingErrors.length > 0}
+              onPressIn={markFreshActionPress}
+              onPress={() => runWithFreshActionPress(onSignButtonClick)}
+              size={isCompactLayout ? 'regular' : 'smaller'}
+            />
+          )}
+
+          {/* Side panel only: stack Back under the primary action */}
+          {!isMobile && isNarrowWebLayout && (
+            <Button
+              testID="back-button"
+              // The web secondary background matches the sheet, tertiary keeps it visible
+              type="tertiary"
+              text={t('Back')}
+              onPress={closeEstimationModal}
+              hasBottomSpacing={false}
+              disabled={isSignLoading}
+              size="regular"
+            />
+          )}
+        </ButtonsWrapper>
+      </View>
+    )
+  }, [
+    signAccountOpController,
+    bottom,
+    ButtonsWrapper,
+    banners,
+    bundlerNonceDiscrepancy,
+    closeEstimationModal,
+    extremeGasFeeSignButtonType,
+    handleChangeFeePayerKeyType,
+    handleChangeSigningKey,
+    hasEstimation,
+    isChooseFeePayerKeyShown,
+    isChooseSignerShown,
+    isCompactLayout,
+    isNarrowWebLayout,
+    isSignDisabled,
+    isSignLoading,
+    isViewOnly,
+    markFreshActionPress,
+    onSignButtonClick,
+    runWithFreshActionPress,
+    serviceFee,
+    setIsChooseFeePayerKeyShown,
+    setIsChooseSignerShown,
+    signButtonText,
+    signingErrors,
+    t,
+    updateType
+  ])
+
   return (
     <>
       <BottomSheet
@@ -146,9 +303,9 @@ const OneClickEstimation = ({
         closeBottomSheet={isWeb ? undefined : closeEstimationModal}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={isMobile || shouldShowTxnDetails}
-        // The narrow side panel keeps equal side spacing, the scroll padding is added only once it scrolls
-        reserveScrollPadding={shouldShowTxnDetails && !isNarrowWebLayout}
         shouldBeClosableOnDrag={isMobile}
+        FooterComponent={footerComponent}
+        scrollViewProps={isMobile ? MOBILE_SCROLL_VIEW_PROPS : undefined}
       >
         {!!banners && !!banners.length && (
           <View style={spacings.mbTy}>
@@ -165,113 +322,17 @@ const OneClickEstimation = ({
             ))}
           </View>
         )}
-        {!!signAccountOpController && (
-          <View>
-            <KeySelect
-              isSigning={isSignLoading || !signAccountOpController.readyToSign}
-              isChooseSignerShown={isChooseSignerShown}
-              isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
-              handleChooseKey={
-                isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
-              }
-              account={signAccountOpController.account}
-              selectedAccountKeyStoreKeys={
-                isChooseFeePayerKeyShown
-                  ? signAccountOpController.feePayerKeyStoreKeys
-                  : signAccountOpController.accountKeyStoreKeys
-              }
-              handleClose={() => {
-                setIsChooseSignerShown(false)
-                setIsChooseFeePayerKeyShown(false)
-              }}
-            />
-            {signAccountOpController?.canBroadcast && (
-              <Estimation
-                updateType={updateType}
-                signAccountOpState={signAccountOpController}
-                disabled={signAccountOpController.status?.type !== SigningStatus.ReadyToSign}
-                hasEstimation={!!hasEstimation}
-                // TODO<oneClickSwap>
-                slowRequest={false}
-                // TODO<oneClickSwap>
-                isViewOnly={isViewOnly}
-                isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
-                sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
-                serviceFee={serviceFee}
-                isOneClick
-                shouldShowTxnDetails={shouldShowTxnDetails}
-              />
-            )}
-            {isViewOnly && (
-              <NoKeysToSignAlert
-                style={spacings.mt}
-                chainId={signAccountOpController?.accountOp?.chainId}
-              />
-            )}
-            {!isViewOnly && signingErrors && signingErrors[0] && (
-              <Alert title={t(signingErrors[0].title)} type="error" style={spacings.mt} />
-            )}
-            <BundlerWarning
+        {!!signAccountOpController && shouldShowTxnDetails && (
+          // A small top margin keeps the sheet's drag handle vertically centered
+          <View style={spacings.mtTy}>
+            <PendingTransactions
+              network={network}
+              setDelegation={signAccountOpController.accountOp.meta?.setDelegation}
+              delegatedContract={signAccountOpController.delegatedContract}
+              hideDeleteIcon
               signAccountOpState={signAccountOpController}
-              bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
-              hasMarginTop
+              size="md"
             />
-            <ButtonsWrapper
-              size="sm"
-              absolute={false}
-              isSimpleBlur={false}
-              style={isCompactLayout ? { ...spacings.ptLg, gap: SPACING_TY } : spacings.pt}
-            >
-              {!isMobile && !isNarrowWebLayout && (
-                <Button
-                  testID="back-button"
-                  type="secondary"
-                  text={t('Back')}
-                  onPress={closeEstimationModal}
-                  hasBottomSpacing={false}
-                  disabled={isSignLoading}
-                  style={{ width: 98, ...spacings.mrLg }}
-                  size="smaller"
-                />
-              )}
-
-              {!!banners && !!banners.length ? (
-                <HoldToProceedButton
-                  testID="sign-proceed-btn"
-                  text={t('Hold to sign')}
-                  buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
-                  disabled={isSignDisabled || signingErrors.length > 0}
-                  onPressIn={markFreshActionPress}
-                  onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
-                  size={isCompactLayout ? 'regular' : 'smaller'}
-                />
-              ) : (
-                <ButtonWithLoader
-                  testID="sign-button"
-                  text={signButtonText}
-                  type={extremeGasFeeSignButtonType}
-                  isLoading={isSignLoading}
-                  disabled={isSignDisabled || signingErrors.length > 0}
-                  onPressIn={markFreshActionPress}
-                  onPress={() => runWithFreshActionPress(onSignButtonClick)}
-                  size={isCompactLayout ? 'regular' : 'smaller'}
-                />
-              )}
-
-              {/* Side panel only: stack Back under the primary action */}
-              {!isMobile && isNarrowWebLayout && (
-                <Button
-                  testID="back-button"
-                  // The web secondary background matches the sheet, tertiary keeps it visible
-                  type="tertiary"
-                  text={t('Back')}
-                  onPress={closeEstimationModal}
-                  hasBottomSpacing={false}
-                  disabled={isSignLoading}
-                  size="regular"
-                />
-              )}
-            </ButtonsWrapper>
           </View>
         )}
       </BottomSheet>
