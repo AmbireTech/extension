@@ -1,4 +1,4 @@
-import { baParams } from 'constants/env'
+import { baParams, KEYSTORE_PASS } from 'constants/env'
 import selectors from 'constants/selectors'
 import Token from 'interfaces/token'
 import { SpeculosDevice } from 'libs/speculos-device/device'
@@ -178,6 +178,10 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
+
+      // Signing auth modal
+      await this.entertext(selectors.transaction.signPassAuthField, KEYSTORE_PASS)
+      await this.click(selectors.transaction.signConfirmButton)
 
       // Accept dual choice modal if fee difference is below 0.1$
       const modalTitle = this.page.getByTestId(selectors.transaction.dualChoiceModalTitle)

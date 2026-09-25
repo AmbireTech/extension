@@ -145,7 +145,9 @@ const selectors = {
     dualChoiceModalAcceptButton: 'dual-choice-modal-primary-button',
     dualChoiceModalTitle: 'dual-choice-modal-title-text',
     previousFeeAmountText: 'previous-fee-amount',
-    updatedFeeAmountText: 'updated-fee-amount'
+    updatedFeeAmountText: 'updated-fee-amount',
+    signPassAuthField: 'signing-auth-password-field',
+    signConfirmButton: 'signing-auth-confirm-button'
   },
   // TODO: update selectors wiyh testID
   ambireRewards: {
