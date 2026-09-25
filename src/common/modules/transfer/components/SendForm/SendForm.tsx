@@ -40,8 +40,6 @@ const selectPortfolio = (state: AllControllersMappingType['SelectedAccountContro
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 const selectVerifiedDomainsStatus = (state: AllControllersMappingType['DomainsController']) =>
   state.verifiedDomainsStatus
-const selectDepositAssetConfigs = (state: AllControllersMappingType['PrivacyPoolsController']) =>
-  state.depositAssetConfigs
 
 const SendForm = ({
   addressInputState,
@@ -88,15 +86,10 @@ const SendForm = ({
       areDefaultsSet,
       addressPoisoningMatch,
       privacyPoolsRecipient,
-      isPreparingPrivacyPoolsDeposit,
       privacyPoolsDepositError
     },
     dispatch: transferDispatch
   } = useController('TransferController')
-  const { state: depositAssetConfigs } = useController(
-    'PrivacyPoolsController',
-    selectDepositAssetConfigs
-  )
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
 
   const { t } = useTranslation()
@@ -284,17 +277,6 @@ const SendForm = ({
     [privacyPoolsAccounts, privacyPoolsRecipient]
   )
 
-  // Read from the chain for the selected token, so it is known a moment after the token is picked
-  const privacyPoolsFeePercent = useMemo(() => {
-    if (!privacyPoolsRecipient || !selectedToken) return null
-
-    const config =
-      depositAssetConfigs?.[`${selectedToken.chainId}:${selectedToken.address.toLowerCase()}`]
-    if (!config) return null
-
-    return Number(config.vettingFeeBps) / 100
-  }, [depositAssetConfigs, privacyPoolsRecipient, selectedToken])
-
   const clearPrivacyPoolsRecipient = useCallback(
     () => onSelectPrivacyPoolsRecipient?.(null),
     [onSelectPrivacyPoolsRecipient]
@@ -389,38 +371,8 @@ const SendForm = ({
         />
       )}
 
-      {!!privacyPoolsRecipient && !!tokens.length && (
-        <View style={spacings.mtSm}>
-          {!!privacyPoolsDepositError && (
-            <Alert type="error" size="sm" style={spacings.mbTy} text={privacyPoolsDepositError} />
-          )}
-          {isPreparingPrivacyPoolsDeposit && (
-            <Alert
-              type="info"
-              size="sm"
-              style={spacings.mbTy}
-              text={t(
-                'Getting the Privacy Pools account ready. The first time on a network this can take a few minutes.'
-              )}
-            />
-          )}
-          {/* What sets this transfer apart from any other, said before anything is signed: part of
-          it is kept, the sending itself is public, and the funds cannot be spent right away */}
-          <Alert
-            type="info"
-            size="sm"
-            text={
-              privacyPoolsFeePercent !== null
-                ? t(
-                    'Privacy Pools keeps {{fee}}% of what you send. Sending into Privacy Pools is public, but what the account later sends cannot be traced back to this transfer. The funds can be sent on once Privacy Pools approves them, which can take a while.',
-                    { fee: privacyPoolsFeePercent }
-                  )
-                : t(
-                    'Privacy Pools keeps a small part of what you send. Sending into Privacy Pools is public, but what the account later sends cannot be traced back to this transfer. The funds can be sent on once Privacy Pools approves them, which can take a while.'
-                  )
-            }
-          />
-        </View>
+      {!!privacyPoolsRecipient && !!tokens.length && !!privacyPoolsDepositError && (
+        <Alert type="error" size="sm" style={spacings.mtSm} text={privacyPoolsDepositError} />
       )}
     </>
   )

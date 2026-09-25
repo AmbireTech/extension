@@ -517,6 +517,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
         isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
+        // The calls into a Privacy Pools account take a moment to prepare - see `isTransferFormValid`
+        isLoading={!!privacyPoolsRecipient && isPreparingPrivacyPoolsDeposit}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
@@ -546,7 +548,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientAddressViewOnly,
     addressPoisoningMatch,
     onRecipientAddressUnknownAgree,
-    addTransaction
+    addTransaction,
+    privacyPoolsRecipient,
+    isPreparingPrivacyPoolsDeposit
   ])
 
   const handleGoBackPress = useCallback(() => {
