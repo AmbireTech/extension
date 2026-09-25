@@ -607,7 +607,7 @@ const TransactionSummary = ({
             {...bindDeleteIconAnim}
             testID={`delete-txn-call-${index}`}
           >
-            <DeleteIcon width={withMobileLayout ? 26 : 28} height={withMobileLayout ? 26 : 28} />
+            <DeleteIcon width={withMobileLayout ? 24 : 26} height={withMobileLayout ? 24 : 26} />
           </AnimatedPressable>
         )}
         {shouldShowRightControl && (
