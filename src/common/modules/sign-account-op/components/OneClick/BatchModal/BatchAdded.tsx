@@ -1,4 +1,4 @@
-import React, { FC, Fragment } from 'react'
+import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -11,6 +11,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Header from '@common/modules/header/components/Header'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING_MD } from '@common/styles/spacings'
@@ -29,9 +30,6 @@ type Props = {
 
 const { isRequestWindow } = getUiType()
 
-const ButtonWrapper: FC<{ children: React.ReactNode; style?: any }> = ({ children, style }) =>
-  isWeb ? <View style={style}>{children}</View> : <Fragment>{children}</Fragment>
-
 const BatchAdded: FC<Props> = ({
   title,
   callsCount,
@@ -42,6 +40,37 @@ const BatchAdded: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+
+  const isWideWebLayout = isWeb && !isNarrowWebLayout
+  const buttonSize = isWideWebLayout ? 'smaller' : 'regular'
+
+  const secondaryButton = (
+    <Button
+      onPress={onSecondaryButtonPress}
+      hasBottomSpacing={false}
+      type="secondary"
+      text={secondaryButtonText}
+      textStyle={spacings.mlMi}
+      testID="add-more-button"
+      size={buttonSize}
+      childrenPosition="left"
+      style={isWideWebLayout ? spacings.mrLg : {}}
+    >
+      <AddCircularIcon width={24} height={24} color={theme.primaryText} />
+    </Button>
+  )
+
+  const primaryButton = (
+    <Button
+      onPress={onPrimaryButtonPress}
+      hasBottomSpacing={isMobile}
+      textStyle={spacings.phTy}
+      text={primaryButtonText}
+      size={buttonSize}
+      testID="go-dashboard-button"
+    />
+  )
 
   return (
     <LayoutWrapper
@@ -93,35 +122,27 @@ const BatchAdded: FC<Props> = ({
           </Text>
         </View>
         <Text fontSize={12} weight="medium" appearance="tertiaryText" style={text.center}>
-          {t('You can add more transactions or\nmanage this batch in the dashboard.')}
+          {t('You can add more transactions or\nmanage this batch on the dashboard.')}
         </Text>
         {isMobile && <View style={flexbox.flex1} />}
-        <FooterGlassView size="sm" fullWidth={false}>
-          <ButtonWrapper
-            style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}
-          >
-            <Button
-              onPress={onSecondaryButtonPress}
-              hasBottomSpacing={false}
-              type="secondary"
-              text={secondaryButtonText}
-              textStyle={spacings.mlMi}
-              testID="add-more-button"
-              size={isWeb ? 'smaller' : 'regular'}
-              childrenPosition="left"
-              style={isWeb ? spacings.mrLg : {}}
-            >
-              <AddCircularIcon width={24} height={24} color={theme.primaryText} />
-            </Button>
-            <Button
-              onPress={onPrimaryButtonPress}
-              hasBottomSpacing={isMobile}
-              textStyle={spacings.phTy}
-              text={primaryButtonText}
-              size={isWeb ? 'smaller' : 'regular'}
-              testID="go-dashboard-button"
-            />
-          </ButtonWrapper>
+        <FooterGlassView size="sm" fullWidth={isNarrowWebLayout}>
+          {isNarrowWebLayout ? (
+            // Stacked full-width buttons, primary on top - same as the mobile footer
+            <>
+              {primaryButton}
+              {secondaryButton}
+            </>
+          ) : isWeb ? (
+            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
+              {secondaryButton}
+              {primaryButton}
+            </View>
+          ) : (
+            <>
+              {secondaryButton}
+              {primaryButton}
+            </>
+          )}
         </FooterGlassView>
       </View>
     </LayoutWrapper>
