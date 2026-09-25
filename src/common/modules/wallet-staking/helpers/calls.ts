@@ -4,7 +4,7 @@ import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/co
 import { getXWalletAmountFromWallet } from '@ambire-common/libs/walletStaking/shareValue'
 
 import type { Call } from '@ambire-common/libs/accountOp/types'
-import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
+import type { WalletStakingMode } from '@common/modules/wallet-staking/constants/staking'
 
 const walletInterface = new Interface(['function approve(address spender, uint256 amount)'])
 const stkWalletInterface = new Interface([

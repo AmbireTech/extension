@@ -9,19 +9,18 @@ import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import DetailRow from '@common/modules/wallet-staking/components/DetailRow'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
-
-import getStyles from './styles'
 
 const STAKING_APY_PROPOSAL_URL =
   'https://snapshot.org/#/s:ambire.eth/proposal/0xfc8edfdf451b2aa25575ea198019572de9dd0cdc1949d83e2176c75b62d6c913'
 const STAKING_APY_TOOLTIP_ID = 'wallet-staking-apy-tooltip'
 
-const WalletStakingApy = () => {
+const StakingApy = () => {
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { theme } = useTheme()
   const { addToast } = useToast()
 
   const handleOpenStakingApyProposal = useCallback(() => {
@@ -53,10 +52,7 @@ const WalletStakingApy = () => {
   )
 
   return (
-    <View style={styles.detailRow}>
-      <Text fontSize={13} appearance="secondaryText">
-        {t('APY')}
-      </Text>
+    <DetailRow label={t('APY')}>
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         <Text fontSize={13} appearance="secondaryText">
           {t('2% (variable rate)')}
@@ -72,8 +68,8 @@ const WalletStakingApy = () => {
           {stakingApyTooltipContent}
         </Tooltip>
       </View>
-    </View>
+    </DetailRow>
   )
 }
 
-export default React.memo(WalletStakingApy)
+export default React.memo(StakingApy)

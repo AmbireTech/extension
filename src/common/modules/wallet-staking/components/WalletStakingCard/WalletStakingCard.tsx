@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient'
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Image, ImageSourcePropType, View } from 'react-native'
 
 import walletStakingIcon from '@common/assets/images/WalletStakingIcon.png'
@@ -7,7 +7,9 @@ import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -15,17 +17,16 @@ import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
-interface Props {
-  onPress: () => void
-}
-
 const GRADIENT_LOCATIONS = [0, 0.5, 1] as const
 const GRADIENT_START = { x: 0, y: 0.5 } as const
 const GRADIENT_END = { x: 1, y: 0.5 } as const
 
-const WalletStakingCard = ({ onPress }: Props) => {
+/** The $WALLET Staking entry card, listed among the apps on the Explore screen. */
+const WalletStakingCard = () => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  const { navigate } = useNavigation()
+  const handleOpen = useCallback(() => navigate(ROUTES.walletStaking), [navigate])
   const gradientColors = useMemo(
     () =>
       [
@@ -47,7 +48,7 @@ const WalletStakingCard = ({ onPress }: Props) => {
     <View style={styles.cardWrapper}>
       <AnimatedPressable
         testID="wallet-staking-card"
-        onPress={onPress}
+        onPress={handleOpen}
         style={[styles.card, animatedStyle]}
         {...bindAnimation}
       >
