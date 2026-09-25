@@ -4,13 +4,13 @@ import { TextInput, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import BiometricsPrompt, { SwitchToBiometricsButton } from '@common/components/BiometricsPrompt'
-import Button from '@common/components/Button'
-import InputPassword from '@common/components/InputPassword'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import {
   useIsBottomSheetOpen,
   useIsInsideBottomSheet
 } from '@common/components/BottomSheet/BottomSheetContext'
+import Button from '@common/components/Button'
+import InputPassword from '@common/components/InputPassword'
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { isDev, isMobile, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
@@ -295,8 +295,8 @@ const PasswordConfirmation: React.FC<Props> = ({
               }
               text={
                 keystoreState.statuses.unlockWithSecret === 'LOADING' || isSubmittingCustom
-                  ? t('Submitting...')
-                  : submitText || t('Submit')
+                  ? t('Confirming...')
+                  : submitText || t('Confirm')
               }
               size="large"
               hasBottomSpacing={false}
