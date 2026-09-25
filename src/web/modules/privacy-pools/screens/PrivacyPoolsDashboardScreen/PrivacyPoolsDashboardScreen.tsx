@@ -8,11 +8,11 @@ import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
+import RecoveryPhraseBackupBanner from '@common/modules/dashboard/components/DashboardBanners/RecoveryPhraseBackupBanner'
 import getDashboardStyles from '@common/modules/dashboard/screens/styles'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import PrivacyPoolsActivity from '@web/modules/privacy-pools/components/PrivacyPoolsActivity'
-import PrivacyPoolsBackupBanner from '@web/modules/privacy-pools/components/PrivacyPoolsBackupBanner'
 import PrivacyPoolsBalances from '@web/modules/privacy-pools/components/PrivacyPoolsBalances'
 import PrivacyPoolsNetworks from '@web/modules/privacy-pools/components/PrivacyPoolsNetworks'
 import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyPoolsOverview'
@@ -90,7 +90,8 @@ const PrivacyPoolsDashboardScreen = () => {
           onSend={openSend}
         />
         <ScrollableWrapper contentContainerStyle={[spacings.phSm, spacings.pbSm]}>
-          <PrivacyPoolsBackupBanner />
+          {/* Under the overview card, where the regular dashboard shows it */}
+          <RecoveryPhraseBackupBanner />
           {/* The one wait worth explaining: a network read for the first time takes minutes, not
           seconds, and nothing else on screen says why the balance is not there yet */}
           {!!firstReadNetworkNames.length && (
