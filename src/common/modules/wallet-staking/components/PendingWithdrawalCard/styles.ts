@@ -12,6 +12,7 @@ interface Styles {
   missingDetailsForm: ViewStyle
   missingDetailsInput: ViewStyle
   missingDetailsInputWrapper: ViewStyle
+  missingDetailsLookupText: TextStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -47,9 +48,15 @@ const getStyles = (theme: ThemeProps) =>
     missingDetailsInput: {
       ...spacings.mbTy
     },
-    // The input's own background matches the card, so a border keeps it visible
+    // The input's own background matches the card, so a border keeps it visible. The semantic
+    // border tokens match the input's background (`secondaryBorder` is white in the light
+    // theme), so this uses the neutral that other input-like fields use for their border
     missingDetailsInputWrapper: {
-      borderColor: theme.secondaryBorder
+      borderColor: theme.neutral400
+    },
+    missingDetailsLookupText: {
+      ...spacings.mtSm,
+      textAlign: 'center'
     }
   })
 

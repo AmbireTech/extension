@@ -44,6 +44,7 @@ const usePendingWalletWithdrawal = (accountAddr?: string) => {
   const isLoading = !!accountAddr && (!status || status === 'loading')
   const hasLoadFailed = status === 'error'
   const txnIdLookupError = accountPendingWithdrawals?.txnIdLookupError || null
+  const isTxnIdLookupLoading = !!accountPendingWithdrawals?.isTxnIdLookupLoading
   const prevStatusRef = useRef(status)
 
   const reload = useCallback(() => {
@@ -107,7 +108,8 @@ const usePendingWalletWithdrawal = (accountAddr?: string) => {
     isWithdrawalsLookupEnabled,
     enableWithdrawalsLookup,
     findWithdrawalByTxnId,
-    txnIdLookupError
+    txnIdLookupError,
+    isTxnIdLookupLoading
   }
 }
 

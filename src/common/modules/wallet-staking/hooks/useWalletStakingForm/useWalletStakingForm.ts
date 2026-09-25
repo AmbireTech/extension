@@ -144,11 +144,17 @@ const useWalletStakingForm = () => {
     isWithdrawalsLookupEnabled,
     enableWithdrawalsLookup,
     findWithdrawalByTxnId,
-    txnIdLookupError
+    txnIdLookupError,
+    isTxnIdLookupLoading
   } = usePendingWalletWithdrawal(account?.addr)
   // Kept here rather than in the missing details card, because the card is unmounted while the
-  // entered transaction ID is being checked
+  // withdrawals reload (e.g. when switching tabs), which would clear the entered transaction ID
   const [withdrawalTxnId, setWithdrawalTxnId] = useState('')
+  // The lookup error belongs to the transaction ID that was checked, so it hides as soon as the
+  // user edits or clears the field
+  const [checkedWithdrawalTxnId, setCheckedWithdrawalTxnId] = useState('')
+  const visibleTxnIdLookupError =
+    withdrawalTxnId.trim() === checkedWithdrawalTxnId ? txnIdLookupError : null
 
   const walletToken = useMemo(
     () =>
@@ -498,10 +504,10 @@ const useWalletStakingForm = () => {
   const handleMaxPress = useCallback(() => {
     setTokenAmount(formatUnits(balance, TOKEN_DECIMALS))
   }, [balance, setTokenAmount])
-  const handleFindWithdrawalByTxnId = useCallback(
-    () => findWithdrawalByTxnId(withdrawalTxnId),
-    [findWithdrawalByTxnId, withdrawalTxnId]
-  )
+  const handleFindWithdrawalByTxnId = useCallback(() => {
+    setCheckedWithdrawalTxnId(withdrawalTxnId.trim())
+    findWithdrawalByTxnId(withdrawalTxnId)
+  }, [findWithdrawalByTxnId, withdrawalTxnId])
   const handleOpenFeeInfoBottomSheet = useCallback(
     () => openFeeInfoBottomSheet(),
     [openFeeInfoBottomSheet]
@@ -727,7 +733,8 @@ const useWalletStakingForm = () => {
     withdrawalTxnId,
     onWithdrawalTxnIdChange: setWithdrawalTxnId,
     onFindWithdrawalByTxnId: handleFindWithdrawalByTxnId,
-    txnIdLookupError,
+    txnIdLookupError: visibleTxnIdLookupError,
+    isTxnIdLookupLoading,
     isWithdrawalReady,
     pendingWithdrawalAmount,
     pendingWithdrawalTime,

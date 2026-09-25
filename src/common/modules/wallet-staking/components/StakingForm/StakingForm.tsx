@@ -38,6 +38,7 @@ const StakingForm = ({ form }: Props) => {
     onWithdrawalTxnIdChange,
     onFindWithdrawalByTxnId,
     txnIdLookupError,
+    isTxnIdLookupLoading,
     isPendingWithdrawalMode,
     isWithdrawalReady,
     pendingWithdrawalAmount,
@@ -71,6 +72,7 @@ const StakingForm = ({ form }: Props) => {
               onTxnIdChange={onWithdrawalTxnIdChange}
               onFindByTxnId={onFindWithdrawalByTxnId}
               txnIdLookupError={txnIdLookupError}
+              isTxnIdLookupLoading={isTxnIdLookupLoading}
               onEnableWithdrawalsLookup={onEnableWithdrawalsLookup}
             />
           )}

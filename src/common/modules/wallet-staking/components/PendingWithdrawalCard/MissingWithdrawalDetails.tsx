@@ -21,6 +21,7 @@ interface Props {
   onTxnIdChange: (txnId: string) => void
   onFindByTxnId: () => void
   txnIdLookupError: WithdrawalTxnIdLookupError | null
+  isTxnIdLookupLoading: boolean
   onEnableWithdrawalsLookup: () => void
 }
 
@@ -37,6 +38,7 @@ const MissingWithdrawalDetails = ({
   onTxnIdChange,
   onFindByTxnId,
   txnIdLookupError,
+  isTxnIdLookupLoading,
   onEnableWithdrawalsLookup
 }: Props) => {
   const { t } = useTranslation()
@@ -80,18 +82,8 @@ const MissingWithdrawalDetails = ({
             style={styles.pendingWithdrawalDescription}
           >
             {t(
-              'Your $WALLET is locked for a withdrawal. You turned off finding pending withdrawals in the privacy settings, so enter the transaction ID of your unstake to find the details. You can also '
+              'You turned off pending withdrawal detection in the privacy settings, so enter the transaction ID of your unstake to find the details.'
             )}
-            <HoverablePressable onPress={onEnableWithdrawalsLookup}>
-              <Text
-                fontSize={13}
-                weight="medium"
-                color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
-              >
-                {t('turn this setting back on')}
-              </Text>
-            </HoverablePressable>
-            {t(', but this reduces your privacy, because it sends your account address to Ambire.')}
           </Text>
           <View style={styles.missingDetailsForm}>
             <Input
@@ -107,11 +99,24 @@ const MissingWithdrawalDetails = ({
               inputWrapperStyle={txnIdErrorMessage ? undefined : styles.missingDetailsInputWrapper}
             />
             <Button
-              text={t('Find withdrawal')}
+              text={isTxnIdLookupLoading ? t('Finding...') : t('Find withdrawal')}
               onPress={onFindByTxnId}
-              disabled={!txnId.trim()}
+              disabled={!txnId.trim() || isTxnIdLookupLoading}
               hasBottomSpacing={false}
             />
+            <Text fontSize={13} appearance="secondaryText" style={styles.missingDetailsLookupText}>
+              {t('…or ')}
+              <HoverablePressable onPress={onEnableWithdrawalsLookup}>
+                <Text
+                  fontSize={13}
+                  weight="medium"
+                  color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+                >
+                  {t('enable lookup')}
+                </Text>
+              </HoverablePressable>
+              {t(' via the Ambire API')}
+            </Text>
           </View>
         </>
       )}
