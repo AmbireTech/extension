@@ -104,6 +104,8 @@ const selectors = {
     manageAccountTreeDotsButton: 'account', // on accounts page, has multiple sam IDs,
     removeAccountButton: '//div[contains(text(),"Remove account")]',
     confirmRemoveAccountButton: 'confirm-remove-account-button',
+    confirmExtensionPassField: 'passphrase-field',
+    confirmExtensionButton: 'button-submit',
     customTokens: {
       addCustomTokenButton: 'add-custom-token-button',
       addTokenModalTitle: 'add-token-modal-title-text',

@@ -123,7 +123,8 @@ export class TransferPage extends BasePage {
     ledgerSimulatorControls,
     holdProceedButton = true,
     awaitConfirmation = true,
-    assertPortfolioRefreshScopedToSendNetwork = true
+    assertPortfolioRefreshScopedToSendNetwork = true,
+    signAuth = true
   }: {
     sendToken: Token
     feeToken?: Token
@@ -139,6 +140,7 @@ export class TransferPage extends BasePage {
     // session the app's periodic (every 2 min) all-network portfolio refresh can land inside that
     // window and fail the check, so shared-state callers must set this to false.
     assertPortfolioRefreshScopedToSendNetwork?: boolean
+    signAuth?: boolean
   }): Promise<boolean> {
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
@@ -178,10 +180,14 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
-
-      // Signing auth modal
-      await this.entertext(selectors.transaction.signPassAuthField, KEYSTORE_PASS)
-      await this.click(selectors.transaction.signConfirmButton)
+      console.log(signAuth)
+      await this.pause()
+      // Signing auth modal; gas tank does not require sign auth
+      if (signAuth) {
+        console.log('no here come')
+        await this.entertext(selectors.transaction.signPassAuthField, KEYSTORE_PASS)
+        await this.click(selectors.transaction.signConfirmButton)
+      }
 
       // Accept dual choice modal if fee difference is below 0.1$
       const modalTitle = this.page.getByTestId(selectors.transaction.dualChoiceModalTitle)

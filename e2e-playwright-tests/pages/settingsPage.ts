@@ -73,10 +73,16 @@ export class SettingsPage extends BasePage {
   }
 
   async changeKeystorePassword(currPass: string, newPass: string): Promise<void> {
-    await this.entertext(selectors.enterCurrentPassField, currPass)
     await this.entertext(selectors.enterNewPassField, newPass)
     await this.entertext(selectors.repeatNewPassField, newPass)
     await this.click(selectors.changeDevicePassButton)
+
+    // confirm with extension pass; button is disabled before entering pass
+    await this.expectButtonDisabled(selectors.settings.confirmExtensionButton)
+    await this.entertext(selectors.settings.confirmExtensionPassField, KEYSTORE_PASS)
+    await this.expectButtonEnabled(selectors.settings.confirmExtensionButton)
+    await this.click(selectors.settings.confirmExtensionButton)
+
     // close success modal
     await this.click(selectors.devicePassSuccessModal)
   }
