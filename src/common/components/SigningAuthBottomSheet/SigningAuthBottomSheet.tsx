@@ -10,7 +10,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { DEV_PREFILLED_PASSWORD, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -58,7 +58,7 @@ const SigningAuthBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const [password, setPassword] = useState('')
+  const [password, setPassword] = useState(DEV_PREFILLED_PASSWORD)
   // Focusing while the sheet is still animating shifts the layout under it, so the field waits
   // for the sheet to be up. Web has no such wait - it keeps the plain `autoFocus`.
   const [hasSheetOpened, setHasSheetOpened] = useState(false)
@@ -89,7 +89,7 @@ const SigningAuthBottomSheet = ({
 
   const handleClosed = useCallback(() => {
     onCancelAutoPrompt()
-    setPassword('')
+    setPassword(DEV_PREFILLED_PASSWORD)
     setHasSheetOpened(false)
   }, [onCancelAutoPrompt])
 

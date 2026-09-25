@@ -11,7 +11,7 @@ import {
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import { isDev, isMobile, isTesting, isWeb } from '@common/config/env'
+import { DEV_PREFILLED_PASSWORD, isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
@@ -21,7 +21,6 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
-import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
 interface Props {
   onPasswordConfirmed: (password: string) => void
@@ -98,7 +97,7 @@ const PasswordConfirmation: React.FC<Props> = ({
   } = useForm({
     mode: 'all',
     defaultValues: {
-      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
+      password: DEV_PREFILLED_PASSWORD
     }
   })
 

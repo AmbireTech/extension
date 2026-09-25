@@ -7,7 +7,7 @@ import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
-import { isDev, isTesting, isWeb } from '@common/config/env'
+import { DEV_PREFILLED_PASSWORD, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
@@ -16,7 +16,6 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
 type Props = {
   isUnlocking: boolean
@@ -35,9 +34,7 @@ const BackupUnlockStep = ({
   const { theme } = useTheme()
   const { getBiometricsSecret } = useBiometrics()
   const { canUnlockWithBiometrics, BiometricsIcon } = useBiometricsAvailability()
-  const [password, setPassword] = useState(
-    isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
-  )
+  const [password, setPassword] = useState(DEV_PREFILLED_PASSWORD)
   const [hasSwitchedToPassword, setHasSwitchedToPassword] = useState(false)
 
   // Biometrics are offered first when set up, but the password stays reachable, because
