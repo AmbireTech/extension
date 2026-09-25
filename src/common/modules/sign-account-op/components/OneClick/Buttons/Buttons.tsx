@@ -50,7 +50,8 @@ const Buttons: FC<Props> = ({
   isLocalStateOutOfSync
 }) => {
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const buttonSize = isCompactLayout ? 'regular' : 'smaller'
   const callsCount = getCallsCount(networkUserRequests)
 
   const oneClickDisabledReason = useMemo(() => {
@@ -129,7 +130,7 @@ const Buttons: FC<Props> = ({
                   })
                 : t('Start a batch')
             }
-            size={isWeb ? 'smaller' : 'regular'}
+            size={buttonSize}
             disabled={startBatchingDisabled}
             type={isSidePanel ? 'tertiary' : 'secondary'}
             tooltipDataSet={createGlobalTooltipDataSet({
@@ -172,6 +173,7 @@ const Buttons: FC<Props> = ({
               handleSubmitForm(true)
             }}
             testID="proceed-btn"
+            size={buttonSize}
             style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
           />
         ) : (
@@ -184,7 +186,7 @@ const Buttons: FC<Props> = ({
 
               handleSubmitForm(true)
             }}
-            size={isWeb ? 'smaller' : 'regular'}
+            size={buttonSize}
             testID="proceed-btn"
             style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
           />

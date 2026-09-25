@@ -6,8 +6,9 @@ import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridg
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -32,13 +33,14 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { isCompactLayout } = useCompactActionRequestLayout()
 
   const buttonsContent = (
     <View
       style={[
         routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,
-        isMobile && { flexDirection: 'column-reverse' },
-        !isMobile && flexbox.alignCenter,
+        isCompactLayout && { flexDirection: 'column-reverse' },
+        !isCompactLayout && flexbox.alignCenter,
         !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter
       ]}
     >
@@ -46,12 +48,12 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
         <Button
           onPress={handleClose}
           hasBottomSpacing={false}
-          size={isMobile ? 'regular' : 'smaller'}
+          size={isCompactLayout ? 'regular' : 'smaller'}
           type={routeStatus !== 'failed' ? 'secondary' : 'primary'}
           text={secondaryButtonText}
           testID="track-progress-secondary-button"
           style={{
-            ...(isMobile ? {} : routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg),
+            ...(isCompactLayout ? {} : routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg),
             minWidth: 144
           }}
         />
@@ -60,10 +62,10 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
       )}
       <Button
         onPress={onPrimaryButtonPress}
-        hasBottomSpacing={isMobile}
-        style={!isMobile ? { width: isRequestWindow ? 160 : 104 } : {}}
+        hasBottomSpacing={isCompactLayout}
+        style={!isCompactLayout ? { width: isRequestWindow ? 160 : 104 } : {}}
         text={t('Close')}
-        size={isMobile ? 'regular' : 'smaller'}
+        size={isCompactLayout ? 'regular' : 'smaller'}
         type={routeStatus !== 'failed' ? 'primary' : 'secondary'}
         testID="track-progress-primary-button"
       />

@@ -71,7 +71,7 @@ const Footer: FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
   const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
@@ -230,7 +230,7 @@ const Footer: FC<Props> = ({
 
   const openExplorerButton = (
     <View
-      style={isMobile ? styles.footerButtonWrapper : undefined}
+      style={isCompactLayout ? styles.footerButtonWrapper : undefined}
       dataSet={createGlobalTooltipDataSet({
         id: `open-explorer-disabled-${submittedAccountOp.id}`,
         content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
@@ -264,7 +264,7 @@ const Footer: FC<Props> = ({
 
   const repeatButton = (
     <View
-      style={isMobile ? styles.footerButtonWrapper : undefined}
+      style={isCompactLayout ? styles.footerButtonWrapper : undefined}
       dataSet={createGlobalTooltipDataSet({
         id: `repeat-disabled-${submittedAccountOp.id}`,
         content: isExternal
@@ -314,7 +314,7 @@ const Footer: FC<Props> = ({
         text={t('Copy link')}
         onPress={handleCopyTransaction}
         type="primary"
-        size={buttonSize}
+        size={isCompactLayout ? 'regular' : 'smaller'}
         disabled={areExplorerButtonsDisabled}
         hasBottomSpacing={false}
         style={[
@@ -333,10 +333,17 @@ const Footer: FC<Props> = ({
     </View>
   )
 
-  if (isMobile)
+  if (isCompactLayout)
     return (
-      <View style={[styles.footer, { paddingBottom: bottom || SPACING_SM }]}>
-        <View style={styles.footerButtonsRow}>
+      <View
+        style={[styles.footer, isMobile ? { paddingBottom: bottom || SPACING_SM } : spacings.phSm]}
+      >
+        <View
+          style={[
+            styles.footerButtonsRow,
+            isNarrowWebLayout && { columnGap: SPACING_TY, ...spacings.mbTy }
+          ]}
+        >
           {openExplorerButton}
           {repeatButton}
         </View>
@@ -345,29 +352,10 @@ const Footer: FC<Props> = ({
     )
 
   return (
-    <View style={[styles.footer, isNarrowWebLayout && spacings.phSm]}>
-      <View
-        style={[
-          styles.footerButtonsRow,
-          isNarrowWebLayout && {
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            gap: SPACING_TY
-          }
-        ]}
-      >
+    <View style={styles.footer}>
+      <View style={styles.footerButtonsRow}>
         {openExplorerButton}
-        <View
-          style={[
-            styles.footerRightButtonsGroup,
-            isNarrowWebLayout && {
-              flexDirection: 'column',
-              alignItems: 'stretch',
-              width: '100%',
-              gap: SPACING_TY
-            }
-          ]}
-        >
+        <View style={styles.footerRightButtonsGroup}>
           {repeatButton}
           {copyLinkButton}
         </View>

@@ -155,7 +155,7 @@ const QrSigningFlowScreen = ({
             <Button
               text={t('Close')}
               onPress={() => close()}
-              size="smaller"
+              size={withMobileLayout ? 'regular' : 'smaller'}
               hasBottomSpacing={false}
               type="secondary"
             />

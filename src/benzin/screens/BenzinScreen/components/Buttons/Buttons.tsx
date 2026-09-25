@@ -22,6 +22,13 @@ const useIsCompactBenzinButtonsLayout = () => {
   return (isBenzin && !maxWidthSize('m')) || (isExtension && isNarrowWebLayout)
 }
 
+const getButtonSize = (isCompactLayout: boolean) => {
+  if (isMobile) return 'regular'
+  if (!isCompactLayout) return 'large'
+  // The standalone website stacks the buttons, while the extension puts them on one row
+  return isBenzin ? 'regular' : 'smaller'
+}
+
 interface Props {
   handleCopyText: () => void
   handleOpenExplorer: () => void
@@ -45,7 +52,7 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer' | 'disableOpenExpl
       text="Open explorer"
       childrenPosition="left"
       hasBottomSpacing={isMobile}
-      size={isMobile ? 'regular' : isCompactLayout ? 'smaller' : 'large'}
+      size={getButtonSize(isCompactLayout)}
       disabled={disableOpenExplorerBtn}
       style={
         isWeb
@@ -96,7 +103,7 @@ const CopyButton: FC<Pick<Props, 'handleCopyText'>> = ({ handleCopyText }) => {
       hasBottomSpacing={isMobile}
       type={isExtension || isMobile ? 'secondary' : 'primary'}
       childrenPosition="left"
-      size={isMobile ? 'regular' : isCompactLayout ? 'smaller' : 'large'}
+      size={getButtonSize(isCompactLayout)}
     >
       <CopyIcon style={spacings.mrMi} />
     </Button>

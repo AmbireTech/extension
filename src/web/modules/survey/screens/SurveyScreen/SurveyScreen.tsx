@@ -10,6 +10,7 @@ import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -28,6 +29,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const SurveyScreen = () => {
   const { addToast } = useToast()
+  const { isCompactLayout } = useCompactActionRequestLayout()
   const {
     dispatch: dispatchToSurvey,
     state: { status, questions, answers, currentQuestion, errorMessage, surveyId, bannerId }
@@ -194,13 +196,13 @@ const SurveyScreen = () => {
             disabled={!buttonState.callback}
             isLoading={buttonState.loading}
             onPress={buttonState.callback}
-            size={isWeb ? 'smaller' : 'regular'}
+            size={isCompactLayout ? 'regular' : 'smaller'}
             testID="proceed-btn"
           />
         </View>
       </View>
     )
-  }, [buttonState.callback, buttonState.loading, buttonState.text])
+  }, [buttonState.callback, buttonState.loading, buttonState.text, isCompactLayout])
 
   const percentageDone = useMemo(() => {
     if (status === 'success-submitted') return 100

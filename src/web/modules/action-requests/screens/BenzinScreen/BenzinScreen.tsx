@@ -75,7 +75,7 @@ const BenzinScreen = () => {
           : { minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }
       }
       hasBottomSpacing={false}
-      size={isNarrowWebLayout ? 'smaller' : 'large'}
+      size={isNarrowWebLayout ? 'regular' : 'large'}
       text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
     >
       {!!pendingRequests.length && (
