@@ -33,7 +33,7 @@ import {
   formatPendingWalletWithdrawalDuration,
   isPendingWalletWithdrawalReady,
   shouldUsePendingWalletWithdrawalMode
-} from '@common/modules/wallet-staking/helpers/pendingWithdrawal'
+} from '@ambire-common/libs/walletStaking/pendingWithdrawal'
 import usePendingWalletWithdrawal from '@common/modules/wallet-staking/hooks/usePendingWalletWithdrawal'
 import useXWalletShareValue from '@common/modules/wallet-staking/hooks/useXWalletShareValue'
 import { getSliderAmountFieldValue } from '@common/utils/amountSlider'
