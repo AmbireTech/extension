@@ -74,6 +74,7 @@ const FeeSpeedLabel = ({
   isValue?: boolean
 }) => {
   const { t } = useTranslation()
+  const { isCompactLayout } = useCompactActionRequestLayout()
 
   if (isValue) {
     return (
@@ -93,7 +94,8 @@ const FeeSpeedLabel = ({
       ]}
       testID={SPEED_TEST_IDS[speed.type]}
     >
-      <Text fontSize={isMobile ? 14 : 12} style={spacings.mrMi}>
+      {/* Matches the selected value's size where the select is boxed (mobile, narrow web) */}
+      <Text fontSize={isCompactLayout ? 14 : 12} style={spacings.mrMi}>
         {t(getFeeSpeedLabelText(speed))}
       </Text>
       <Text
@@ -624,18 +626,25 @@ const Estimation = ({
   const renderFeeSpeedSelect = useCallback(() => {
     if (!selectedFee) return null
 
-    // On mobile the select sits next to the title, so it keeps its own boxed appearance
-    if (isMobile) {
+    // On mobile and the narrow side panel the select sits next to the title, so it keeps its own
+    // boxed appearance. It needs the opposite fill of what it sits on to stay visible
+    if (withCompactFeeHeader) {
       return (
         <Select
           value={selectedFee}
           // @ts-expect-error TODO: types mismatch
           setValue={onFeeSelect}
           options={feeSpeedOptions}
-          selectStyle={{ height: 40, backgroundColor: theme.secondaryBackground }}
+          selectStyle={{
+            height: 40,
+            backgroundColor:
+              isMobile || isOneClick ? theme.secondaryBackground : theme.primaryBackground
+          }}
+          menuPosition="top"
           bottomSheetTitle={t('Network fee')}
           withSearch={false}
-          containerStyle={{ ...spacings.mb0, width: 126 }}
+          // The web menu matches the select's width, so it needs extra room for "Medium <$0.01"
+          containerStyle={{ ...spacings.mb0, width: isMobile ? 126 : 156 }}
           disabled={disabled}
           testID="fee-speed-select"
         />
@@ -674,7 +683,10 @@ const Estimation = ({
     renderFeeSpeedSelectedOption,
     selectedFee,
     t,
-    theme.secondaryBackground
+    theme.primaryBackground,
+    theme.secondaryBackground,
+    withCompactFeeHeader,
+    isOneClick
   ])
 
   const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
@@ -798,7 +810,7 @@ const Estimation = ({
           isMobile && spacings.ptSm
         ]}
       >
-        {isMobile ? (
+        {withCompactFeeHeader ? (
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
             <Text fontSize={18} weight="medium">
               {estimationTitle}
@@ -840,10 +852,10 @@ const Estimation = ({
             )}
           </>
         )}
-        {isMobile && renderFeeSpeedSelect()}
+        {withCompactFeeHeader && renderFeeSpeedSelect()}
       </View>
       <View>
-        {!isMobile && (
+        {!withCompactFeeHeader && (
           <View
             style={[
               flexbox.directionRow,
@@ -890,7 +902,7 @@ const Estimation = ({
           menuPosition="top"
           bottomSheetTitle={t('Network fee')}
         />
-        {isMobile && (
+        {withCompactFeeHeader && (
           <DefaultFeeSelector
             networkName={network?.name}
             payValue={payValue}
@@ -902,7 +914,7 @@ const Estimation = ({
           />
         )}
       </View>
-      {!isMobile && (
+      {!withCompactFeeHeader && (
         <>
           {!!selectedFee && (
             <View
