@@ -1,0 +1,3 @@
+import AmbireSmartAccountsDisabledModal from './AmbireSmartAccountsDisabledModal'
+
+export default AmbireSmartAccountsDisabledModal

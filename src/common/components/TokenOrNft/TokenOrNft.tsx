@@ -28,6 +28,8 @@ interface Props {
 const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectTokenPricesEnabled = (state: AllControllersMappingType['FeatureFlagsController']) =>
+  state.flags?.tokenPrices === true
 
 const TokenOrNft: FC<Props> = ({
   value,
@@ -47,6 +49,11 @@ const TokenOrNft: FC<Props> = ({
   }>({})
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { dispatchAndWait } = useController('ProvidersController')
+  const { state: tokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectTokenPricesEnabled
+  )
+  const isTokenPricesEnabled = useCallback(() => tokenPricesEnabled, [tokenPricesEnabled])
 
   const { t } = useTranslation()
   const { state: controllerNetworks } = useController('NetworksController', selectNetworks)
@@ -105,10 +112,15 @@ const TokenOrNft: FC<Props> = ({
     if (tokenFromPortfolio || nftFromPortfolio)
       setAssetInfo({ tokenInfo: tokenFromPortfolio, nftInfo: nftFromPortfolio })
     else if (network)
-      resolveAssetInfo(address, network, (_assetInfo: any) => {
-        setAssetInfo(_assetInfo)
-        fetchFallbackNameIfNeeded(_assetInfo).catch(console.error)
-      }).catch((e) => {
+      resolveAssetInfo(
+        address,
+        network,
+        (_assetInfo: any) => {
+          setAssetInfo(_assetInfo)
+          fetchFallbackNameIfNeeded(_assetInfo).catch(console.error)
+        },
+        isTokenPricesEnabled
+      ).catch((e) => {
         fetchFallbackNameIfNeeded({}).catch(console.error)
         console.error(e)
       })
@@ -121,7 +133,8 @@ const TokenOrNft: FC<Props> = ({
     portfolio?.tokens,
     t,
     addNetwork,
-    chainId
+    chainId,
+    isTokenPricesEnabled
   ])
 
   if (!assetInfo.nftInfo && !assetInfo.tokenInfo)

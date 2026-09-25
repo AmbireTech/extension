@@ -1,11 +1,12 @@
-import { StepsData } from '@benzin/screens/BenzinScreen/hooks/useSteps'
+import { FeePaidWith, StepsData } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 
-import { hasBalanceChangesSettled } from './rows'
+import { getFee, hasBalanceChangesSettled } from './rows'
 
 const STEPS_STATE: StepsData = {
   blockData: null,
   finalizedStatus: null,
   feePaidWith: null,
+  tokenPricesEnabled: true,
   hasBalanceChangesFailed: false,
   calls: null,
   txnId: null,
@@ -13,6 +14,26 @@ const STEPS_STATE: StepsData = {
   originatedFrom: null,
   userOp: null
 }
+
+const FEE_PAID_WITH: FeePaidWith = {
+  address: '0x0000000000000000000000000000000000000000',
+  amount: '0.001',
+  symbol: 'ETH',
+  usdValue: '-$',
+  isErc20: false,
+  isSponsored: false,
+  chainId: 1n
+}
+
+describe('getFee', () => {
+  it('shows the fiat value when token prices are enabled', () => {
+    expect(getFee(FEE_PAID_WITH, null, true)).toBe('0.001 ETH (-$)')
+  })
+
+  it('hides the fiat value when token prices are disabled', () => {
+    expect(getFee(FEE_PAID_WITH, null, false)).toBe('0.001 ETH')
+  })
+})
 
 describe('hasBalanceChangesSettled', () => {
   it('keeps the spinner up while the balances are still being read', () => {

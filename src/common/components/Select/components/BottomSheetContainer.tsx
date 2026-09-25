@@ -26,6 +26,7 @@ type Props = Pick<RenderSelectedOptionParams, 'isMenuOpen'> & {
   flatListProps?: FlatListProps<any> & { ref?: React.Ref<any> }
   HeaderComponent?: React.ReactNode
   onBottomSheetClosed?: () => void
+  isFullHeight?: boolean
 }
 
 const BottomSheetContainer: FC<Props> = ({
@@ -37,7 +38,8 @@ const BottomSheetContainer: FC<Props> = ({
   sectionListProps,
   flatListProps,
   HeaderComponent,
-  onBottomSheetClosed
+  onBottomSheetClosed,
+  isFullHeight
 }) => {
   const { theme } = useTheme()
   const { isCompactLayout } = useCompactActionRequestLayout()
@@ -77,6 +79,7 @@ const BottomSheetContainer: FC<Props> = ({
       HeaderComponent={HeaderComponent}
       closeBottomSheet={closeMenu}
       onClosed={closeMenu}
+      adjustToContentHeight={!isFullHeight}
       containerInnerWrapperStyles={CONTAINER_INNER_WRAPPER_STYLES}
       style={bottomSheetStyle}
       isScrollEnabled={false}

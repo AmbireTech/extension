@@ -10,7 +10,7 @@ import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
 import { webauthnBiometrics } from '@web/services/webauthnBiometrics'
 
-import { DEVICE_SECURITY_LEVEL, DEVICE_SUPPORTED_AUTH_TYPES } from './constants'
+import { DEVICE_SECURITY_LEVEL } from './constants'
 
 const BiometricsContext = createContext<BiometricsContextReturnType>(biometricsContextDefaults)
 
@@ -96,12 +96,10 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           isLoading,
           hasBiometricsHardware,
           isEnrolled,
-          deviceSecurityLevel: hasBiometricsHardware
-            ? DEVICE_SECURITY_LEVEL.BIOMETRIC_STRONG
-            : DEVICE_SECURITY_LEVEL.NONE,
-          deviceSupportedAuthTypes: hasBiometricsHardware
-            ? [DEVICE_SUPPORTED_AUTH_TYPES.FINGERPRINT]
-            : [],
+          // WebAuthn only answers whether a platform authenticator exists - not its strength or modality
+          // - so these stay empty; `useBiometricsAvailability` answers that per platform.
+          deviceSecurityLevel: DEVICE_SECURITY_LEVEL.NONE,
+          deviceSupportedAuthTypes: [],
           deviceSupportedAuthTypesLabel: hasBiometricsHardware ? t('biometrics') : '',
           authenticate,
           saveBiometricsSecret,

@@ -3,18 +3,24 @@ import { Controller, useForm } from 'react-hook-form'
 import { TextInput, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
+import BiometricsPrompt, { SwitchToBiometricsButton } from '@common/components/BiometricsPrompt'
+import {
+  useIsBottomSheetOpen,
+  useIsInsideBottomSheet
+} from '@common/components/BottomSheet/BottomSheetContext'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import { isDev, isMobile, isTesting, isWeb } from '@common/config/env'
+import { DEV_PREFILLED_PASSWORD, isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
+import useSecretConfirmation from '@common/hooks/useSecretConfirmation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
-import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
 interface Props {
   onPasswordConfirmed: (password: string) => void
@@ -31,6 +37,16 @@ interface Props {
    * bottom sheet that opens later, where the field is tapped to be focused instead.
    */
   withAutoFocus?: boolean
+  /**
+   * Runs when the user proved who they are with biometrics. Leave it out where the password
+   * itself is needed (encrypting an export, say) - biometrics produce no password to hand over.
+   */
+  onBiometricsConfirmed?: () => void
+  /**
+   * Lays the confirmation over the whole modal instead of stacking it at the top: icon centred,
+   * the way out at the bottom, full width buttons. For the taller modals.
+   */
+  withFullHeightLayout?: boolean
 }
 
 // Long enough for the panel the field sits in to finish animating in, otherwise
@@ -46,9 +62,13 @@ const PasswordConfirmation: React.FC<Props> = ({
   children,
   submitText,
   isSubmitting: isSubmittingCustom,
-  withAutoFocus = true
+  withAutoFocus = true,
+  onBiometricsConfirmed,
+  withFullHeightLayout
 }) => {
   const { t } = useTranslation()
+  const isBottomSheetOpen = useIsBottomSheetOpen()
+  const isInsideBottomSheet = useIsInsideBottomSheet()
   const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
   const inputRef = useRef<TextInput | null>(null)
   const { navigate } = useNavigation()
@@ -56,14 +76,6 @@ const PasswordConfirmation: React.FC<Props> = ({
   const setInputRef = useCallback((ref: TextInput | null) => {
     if (ref) inputRef.current = ref
   }, [])
-
-  useEffect(() => {
-    if (!withAutoFocus) return undefined
-
-    const focusTimeout = setTimeout(() => inputRef.current?.focus(), FOCUS_DELAY)
-
-    return () => clearTimeout(focusTimeout)
-  }, [withAutoFocus])
 
   // if using the onCustomSubmit method, it means we're using the
   // password confirmation for something different than unlocks
@@ -85,17 +97,30 @@ const PasswordConfirmation: React.FC<Props> = ({
   } = useForm({
     mode: 'all',
     defaultValues: {
-      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
+      password: DEV_PREFILLED_PASSWORD
     }
   })
 
   const passwordFieldValue = watch('password')
 
+  // The unlock status and error are shared by every surface, so only an unlock this component
+  // dispatched may confirm it. Cleared on the first outcome, as the status sits on SUCCESS for a
+  // moment and a caller that can only run once would otherwise be invoked twice.
+  const isAwaitingUnlockRef = useRef(false)
+
   useEffect(() => {
-    if (keystoreState.errorMessage) setError('password', { message: keystoreState.errorMessage })
-    else if (keystoreState.statuses.unlockWithSecret === 'SUCCESS') {
-      onPasswordConfirmed(passwordFieldValue)
+    if (!isAwaitingUnlockRef.current) return
+
+    if (keystoreState.errorMessage) {
+      isAwaitingUnlockRef.current = false
+      setError('password', { message: keystoreState.errorMessage })
+      return
     }
+
+    if (keystoreState.statuses.unlockWithSecret !== 'SUCCESS') return
+
+    isAwaitingUnlockRef.current = false
+    onPasswordConfirmed(passwordFieldValue)
   }, [
     keystoreState.errorMessage,
     keystoreState.statuses.unlockWithSecret,
@@ -111,6 +136,7 @@ const PasswordConfirmation: React.FC<Props> = ({
         return
       }
 
+      isAwaitingUnlockRef.current = true
       keystoreDispatch({
         type: 'method',
         params: {
@@ -121,6 +147,77 @@ const PasswordConfirmation: React.FC<Props> = ({
     },
     [keystoreDispatch, onCustomSubmit]
   )
+
+  // Read here rather than off `useSecretConfirmation`, because the title it builds is what that
+  // hook is given for the operating system's own prompt
+  const { biometricsAuthLabel } = useBiometricsAvailability()
+  const biometricsTitle = t('Confirm with {{biometricsAuthLabel}}', { biometricsAuthLabel })
+
+  const {
+    isUsingBiometrics,
+    canUseBiometrics,
+    BiometricsIcon,
+    isVerifying,
+    errorMessage: biometricsErrorMessage,
+    confirmWithBiometrics,
+    autoPromptBiometrics,
+    cancelAutoPrompt,
+    switchToPassword,
+    reset: resetSecretConfirmation
+  } = useSecretConfirmation({
+    onConfirmed: onBiometricsConfirmed,
+    promptMessage: `${biometricsTitle}\n${text}`
+  })
+
+  const isOfferingBiometrics = !!onBiometricsConfirmed && canUseBiometrics
+
+  useEffect(() => {
+    if (!withAutoFocus) return undefined
+    // Inside a sheet the content is mounted with the screen rather than when the sheet opens, so
+    // the field waits for it to be up. Outside one there is nothing to wait for.
+    if (isInsideBottomSheet && !isBottomSheetOpen) return undefined
+    // Nothing to focus while biometrics are what is being asked for
+    if (isOfferingBiometrics && isUsingBiometrics) return undefined
+
+    const focusTimeout = setTimeout(() => inputRef.current?.focus(), FOCUS_DELAY)
+
+    return () => clearTimeout(focusTimeout)
+  }, [
+    withAutoFocus,
+    isInsideBottomSheet,
+    isBottomSheetOpen,
+    isOfferingBiometrics,
+    isUsingBiometrics
+  ])
+  // The panel says what is actually being asked for, so it does not read "password" while the
+  // fingerprint or face prompt is the thing on screen
+  const panelTitle = isOfferingBiometrics && isUsingBiometrics ? biometricsTitle : t(title)
+
+  // Sheet content mounts with the screen, so the prompt waits for the sheet to actually come up.
+  // Once per opening, the way the signing sheet and the unlock screen both do it.
+  const hasAutoPromptedRef = useRef(false)
+
+  useEffect(() => {
+    if (!isBottomSheetOpen) {
+      hasAutoPromptedRef.current = false
+      cancelAutoPrompt()
+      return
+    }
+
+    if (!isOfferingBiometrics || !isUsingBiometrics || hasAutoPromptedRef.current) return
+
+    hasAutoPromptedRef.current = true
+    // Clears whatever the previous confirmation left behind before asking for a new one
+    resetSecretConfirmation()
+    autoPromptBiometrics()
+  }, [
+    isBottomSheetOpen,
+    isOfferingBiometrics,
+    isUsingBiometrics,
+    autoPromptBiometrics,
+    cancelAutoPrompt,
+    resetSecretConfirmation
+  ])
 
   const passwordFieldError: string | undefined = useMemo(() => {
     if (!errors.password) return undefined
@@ -136,64 +233,84 @@ const PasswordConfirmation: React.FC<Props> = ({
     <View style={flexbox.flex1}>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
         {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
-        <PanelTitle title={t(title)} style={isWeb ? textStyles.left : textStyles.center} />
+        <PanelTitle title={panelTitle} style={isWeb ? textStyles.left : textStyles.center} />
       </View>
-      <Controller
-        control={control}
-        rules={{ validate: isValidPassword }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <InputPassword
-            setInputRef={setInputRef}
-            testID="passphrase-field"
-            onBlur={onBlur}
-            placeholder={t('Enter password')}
-            onChangeText={(val: string) => {
-              onChange(val)
-              if (keystoreState.errorMessage) {
-                keystoreDispatch({
-                  type: 'method',
-                  params: {
-                    method: 'resetErrorState',
-                    args: []
-                  }
-                })
-              }
-            }}
-            label={text}
-            isValid={isValidPassword(value)}
-            value={value}
-            onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
-            error={passwordFieldError}
-          />
-        )}
-        name="password"
-      />
-      {children}
-      <View
-        style={[
-          isMobile && spacings.pt2Xl,
-          isWeb && flexbox.alignCenter,
-          flexbox.flex1,
-          flexbox.justifyEnd
-        ]}
-      >
-        <Button
-          testID="button-submit"
-          disabled={
-            keystoreState.statuses.unlockWithSecret !== 'INITIAL' ||
-            !isValid ||
-            !!isSubmittingCustom
-          }
-          text={
-            keystoreState.statuses.unlockWithSecret === 'LOADING' || isSubmittingCustom
-              ? t('Submitting...')
-              : submitText || t('Submit')
-          }
-          size="large"
-          hasBottomSpacing={false}
-          onPress={handleSubmit((data) => handleUnlock(data))}
+      {isOfferingBiometrics && isUsingBiometrics ? (
+        <BiometricsPrompt
+          BiometricsIcon={BiometricsIcon}
+          isVerifying={isVerifying || !!isSubmittingCustom}
+          errorMessage={biometricsErrorMessage}
+          onConfirm={confirmWithBiometrics}
+          onSwitchToPassword={switchToPassword}
+          fillHeight={withFullHeightLayout}
         />
-      </View>
+      ) : (
+        <>
+          <Controller
+            control={control}
+            rules={{ validate: isValidPassword }}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <InputPassword
+                setInputRef={setInputRef}
+                testID="passphrase-field"
+                onBlur={onBlur}
+                placeholder={t('Enter password')}
+                onChangeText={(val: string) => {
+                  onChange(val)
+                  if (keystoreState.errorMessage) {
+                    keystoreDispatch({
+                      type: 'method',
+                      params: {
+                        method: 'resetErrorState',
+                        args: []
+                      }
+                    })
+                  }
+                }}
+                label={text}
+                isValid={isValidPassword(value)}
+                value={value}
+                onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
+                error={passwordFieldError}
+              />
+            )}
+            name="password"
+          />
+          {children}
+          <View
+            style={[
+              isMobile && spacings.pt2Xl,
+              isWeb && !withFullHeightLayout && flexbox.alignCenter,
+              flexbox.flex1,
+              flexbox.justifyEnd
+            ]}
+          >
+            <Button
+              testID="button-submit"
+              disabled={
+                keystoreState.statuses.unlockWithSecret !== 'INITIAL' ||
+                !isValid ||
+                !!isSubmittingCustom
+              }
+              text={
+                keystoreState.statuses.unlockWithSecret === 'LOADING' || isSubmittingCustom
+                  ? t('Confirming...')
+                  : submitText || t('Confirm')
+              }
+              size="large"
+              hasBottomSpacing={false}
+              onPress={handleSubmit((data) => handleUnlock(data))}
+            />
+            {!!isOfferingBiometrics && (
+              <SwitchToBiometricsButton
+                BiometricsIcon={BiometricsIcon}
+                isVerifying={isVerifying || !!isSubmittingCustom}
+                onPress={confirmWithBiometrics}
+              />
+            )}
+          </View>
+        </>
+      )}
     </View>
   )
 }

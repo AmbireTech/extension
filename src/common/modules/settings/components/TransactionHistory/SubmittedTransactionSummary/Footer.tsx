@@ -246,6 +246,7 @@ const Footer: FC<Props> = ({
         hasBottomSpacing={false}
         style={[
           styles.footerButton,
+          isMobile && { height: 46 },
           isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
@@ -256,7 +257,7 @@ const Footer: FC<Props> = ({
         childrenPosition="left"
         testID="view-transaction-link"
       >
-        <OpenIcon style={spacings.mrMi} width={16} height={16} />
+        <OpenIcon style={spacings.mrMi} width={20} height={20} />
       </Button>
     </View>
   )
@@ -281,6 +282,7 @@ const Footer: FC<Props> = ({
         disabled={!canRepeatTransaction}
         style={[
           styles.footerButton,
+          isMobile && { height: 46 },
           !isMobile && !isNarrowWebLayout && spacings.mrTy,
           isNarrowWebLayout && {
             width: '100%',
@@ -292,9 +294,9 @@ const Footer: FC<Props> = ({
         childrenPosition="left"
       >
         {shouldShowSpeedUp ? (
-          <SpeedUpIcon style={spacings.mrMi} width={16} height={16} />
+          <SpeedUpIcon style={spacings.mrMi} width={20} height={20} />
         ) : (
-          <RefreshIcon style={spacings.mrMi} width={16} height={16} />
+          <RefreshIcon style={spacings.mrMi} width={20} height={20} strokeWidth="2" />
         )}
       </Button>
     </View>
@@ -326,7 +328,7 @@ const Footer: FC<Props> = ({
         ]}
         childrenPosition="left"
       >
-        <CopyIcon style={spacings.mrMi} width={16} height={16} />
+        <CopyIcon style={spacings.mrMi} width={20} height={20} />
       </Button>
     </View>
   )

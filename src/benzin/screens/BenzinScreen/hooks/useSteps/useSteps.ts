@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { EIP7702Auth } from '@ambire-common/consts/7702'
 import { AMBIRE_PAYMASTER, ERC_4337_ENTRYPOINT } from '@ambire-common/consts/deploy'
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { Network } from '@ambire-common/interfaces/network'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
@@ -54,6 +55,8 @@ import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils
 
 const REFETCH_TIME = 3000 // 3 seconds
 const REFETCH_TIME_ETHEREUM = 12000 // 12 seconds
+const selectTokenPricesEnabled = (state: IFeatureFlagsController) =>
+  state.flags?.tokenPrices === true
 
 export type FeePaidWith = {
   address: string
@@ -84,6 +87,7 @@ export interface StepsData {
   blockData: null | Block
   finalizedStatus: FinalizedStatusType
   feePaidWith: FeePaidWith | null
+  tokenPricesEnabled: boolean
   balanceChanges?: BalanceChange[]
   /** Set when the balance changes could not be read, so the UI can say so instead of waiting. */
   hasBalanceChangesFailed: boolean
@@ -219,6 +223,11 @@ const useSteps = ({
   } = useController('ActivityController')
   const { dispatchAndWait } = useController('ProvidersController')
   const { dispatchAndWait: erc7730DispatchAndWait } = useController('Erc7730Controller')
+  const { state: tokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectTokenPricesEnabled
+  )
+  const isTokenPricesEnabled = useCallback(() => tokenPricesEnabled, [tokenPricesEnabled])
   const benzinActivityOp = useMemo(() => {
     if (!extensionAccOp || !('benzin' in accountsOps)) return null
 
@@ -962,7 +971,8 @@ const useSteps = ({
           isSponsored,
           chainId: tokenChainId
         })
-      }
+      },
+      isTokenPricesEnabled
     ).catch(() => {
       if (!isMounted) return
       setFeePaidWith({
@@ -979,7 +989,16 @@ const useSteps = ({
     return () => {
       isMounted = false
     }
-  }, [txnReceipt.actualGasCost, feePaidWith, feeCall, network, userOp, networks, extensionAccOp])
+  }, [
+    txnReceipt.actualGasCost,
+    feePaidWith,
+    feeCall,
+    network,
+    userOp,
+    networks,
+    extensionAccOp,
+    isTokenPricesEnabled
+  ])
 
   useEffect(() => {
     if (
@@ -1184,6 +1203,7 @@ const useSteps = ({
     blockData,
     finalizedStatus,
     feePaidWith,
+    tokenPricesEnabled,
     balanceChanges,
     hasBalanceChangesFailed,
     calls: calls || null,

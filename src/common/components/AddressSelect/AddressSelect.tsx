@@ -18,9 +18,9 @@ import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
-import { InputProps } from '@common/components/Input'
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
+import { InputProps } from '@common/components/Input'
 import { SectionedSelect } from '@common/components/Select'
 import {
   RenderSelectedOptionParams,
@@ -200,18 +200,12 @@ const SelectedMenuOption: React.FC<{
         button={
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
-        buttonProps={{
-          onPress: () => {
-            if (!address || filteredContacts.length) {
-              setIsMenuOpen(true)
-            }
-          }
-        }}
+        buttonProps={{ onPress: () => setIsMenuOpen(true) }}
         inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
         buttonStyle={{
           ...spacings.pv0,
-          ...spacings.pl,
-          ...spacings.prTy,
+          // Even padding keeps the clear button's press area centered on its icon
+          ...(address ? spacings.phTy : { ...spacings.pl, ...spacings.prTy }),
           ...spacings.mr0,
           ...spacings.ml0
         }}
@@ -499,13 +493,6 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     ]
   )
 
-  const shouldAutoFocus = useMemo(() => {
-    if (walletAccountsSourcedContactOptions.length || manuallyAddedContactOptions.length)
-      return false
-
-    return true
-  }, [walletAccountsSourcedContactOptions, manuallyAddedContactOptions])
-
   return (
     <>
       <SectionedSelect
@@ -521,11 +508,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
         bottomSheetTitle={bottomSheetTitle}
+        isBottomSheetFullHeight
         renderHeaderChildren={({ toggleMenu, isMenuOpen, selectRef }) => (
           <SelectedMenuOption
             type="input"
             selectRef={selectRef}
-            autoFocus={shouldAutoFocus}
+            autoFocus
             setIsMenuOpen={toggleMenu}
             filteredContacts={filteredContacts}
             isMenuOpen={isMenuOpen}

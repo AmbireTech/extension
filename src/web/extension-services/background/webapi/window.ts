@@ -192,11 +192,14 @@ const calculateWindowSizeAndPosition = async (
   const leftPosition = baseLeft + baseWidth - webContentsInset - width
   const topPosition = baseTop + browserChromeHeight
 
+  // The browser rejects fractional sizes
+  height = Math.round(height)
+
   // The browser rejects bounds that are mostly outside the visible screen space. Without a known
   // display layout the position can only be kept away from the top left corner.
   return {
     width,
-    height: Math.round(height),
+    height,
     left: workArea
       ? clampToWorkArea(leftPosition, width, workArea.left, workArea.width)
       : Math.round(Math.max(leftPosition, 0)),

@@ -4,19 +4,18 @@ import { ContractNamesController } from '@ambire-common/controllers/contractName
 import { DomainsController } from '@ambire-common/controllers/domains/domains'
 import { Erc7730Controller } from '@ambire-common/controllers/erc7730/erc7730'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
+import { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { UiController } from '@ambire-common/controllers/ui/ui'
+import { buildTimeNetworks } from '@benzin/constants/networks'
+import { benzinUiManager } from '@benzin/contexts/controllersMiddlewareContext/uiManager'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
-import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { storage } from '@common/services/storage'
-import { RELAYER_URL } from '@env'
 import { Action, MethodAction } from '@common/types/actions'
-
-import { buildTimeNetworks } from '@benzin/constants/networks'
-import { benzinUiManager } from '@benzin/contexts/controllersMiddlewareContext/uiManager'
+import { RELAYER_URL } from '@env'
 
 import type { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 export const ControllersMiddlewareProvider: React.FC<{
@@ -72,6 +71,7 @@ export const ControllersMiddlewareProvider: React.FC<{
       // its state - it exists so the controllers that need a UI have one
       const uiCtrl = new UiController({ uiManager: benzinUiManager })
       ctrls.StorageController = new StorageController(storage)
+      ctrls.FeatureFlagsController = new FeatureFlagsController({}, ctrls.StorageController)
       ctrls.ProvidersController = new ProvidersController({
         eventEmitterRegistry: eventEmitterRegistry.current,
         storage: ctrls.StorageController,
@@ -90,6 +90,7 @@ export const ControllersMiddlewareProvider: React.FC<{
       ctrls.Erc7730Controller = new Erc7730Controller({
         eventEmitterRegistry: eventEmitterRegistry.current,
         storage: ctrls.StorageController,
+        featureFlags: ctrls.FeatureFlagsController,
         providers: ctrls.ProvidersController,
         callRelayer: relayerCall.bind({
           url: RELAYER_URL,

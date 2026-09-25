@@ -1,7 +1,7 @@
 import React from 'react'
 import { Image, ImageSourcePropType, StyleSheet, View } from 'react-native'
 
-import mobilePromoBannerIcon from '@common/assets/images/mobilePromoBanner.png'
+import ringingPhone from '@common/assets/images/ringing-phone.gif'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -32,9 +32,8 @@ const PillContent: React.FC<Props> = ({ onPress }) => {
       style={[StyleSheet.absoluteFill, flexbox.directionRow, flexbox.alignCenter, spacings.phSm]}
     >
       <Image
-        source={mobilePromoBannerIcon as ImageSourcePropType}
-        // 5px above where vertical centering alone would place it
-        style={{ width: 31, height: 41, marginTop: -5 }}
+        source={ringingPhone as ImageSourcePropType}
+        style={{ width: 28, height: 28 }}
         resizeMode="contain"
       />
       <Text

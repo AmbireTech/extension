@@ -156,22 +156,6 @@ const SwapProviderSettingsComponent = () => {
     'SwapAndBridgeController',
     selectDisabledSwapProviderIds
   )
-  const { theme } = useTheme()
-
-  const hasCowSwapProvider = useMemo(
-    () => swapProviders.some(({ id }) => id === COW_SWAP_PROVIDER_ID),
-    [swapProviders]
-  )
-  const isMevProtectionEnabled = useMemo(
-    () =>
-      hasCowSwapProvider &&
-      swapProviders.every(({ id }) =>
-        id === COW_SWAP_PROVIDER_ID
-          ? !disabledSwapProviderIds.includes(id)
-          : disabledSwapProviderIds.includes(id)
-      ),
-    [disabledSwapProviderIds, hasCowSwapProvider, swapProviders]
-  )
 
   const setProviderEnabled = useCallback(
     (providerId: SwapProviderInfo['id'], isEnabled: boolean) => {
@@ -183,54 +167,11 @@ const SwapProviderSettingsComponent = () => {
     [swapAndBridgeDispatch]
   )
 
-  const setMevProtectionEnabled = useCallback(
-    (isEnabled: boolean) => {
-      swapAndBridgeDispatch({
-        type: 'method',
-        params: { method: 'setMevProtectionEnabled', args: [isEnabled] }
-      })
-    },
-    [swapAndBridgeDispatch]
-  )
-
   return (
     <>
       <Text fontSize={14} appearance="secondaryText" style={spacings.mbTy}>
         {t('Choose your providers for suggesting swap and bridge routes.')}
       </Text>
-      {hasCowSwapProvider && (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.pvSm,
-            spacings.mbTy,
-            { borderBottomColor: theme.primaryBorder, borderBottomWidth: 1 }
-          ]}
-        >
-          <View style={PROVIDER_ICON_STYLE}>
-            <SecurityIcon
-              width={24}
-              height={28}
-              color={isMevProtectionEnabled ? theme.success400 : theme.iconPrimary}
-            />
-          </View>
-          <View style={flexbox.flex1}>
-            <Text fontSize={16} weight="medium">
-              {t('Require MEV protection')}
-            </Text>
-            <Text fontSize={12} appearance="secondaryText" style={spacings.mtMi}>
-              {t('Only CoW Swap supports this setting')}
-            </Text>
-          </View>
-          <FatToggle
-            testID="mev-protection-toggle"
-            isOn={isMevProtectionEnabled}
-            onToggle={setMevProtectionEnabled}
-            trackStyle={spacings.mr0}
-          />
-        </View>
-      )}
       {swapProviders.map((provider: SwapProviderInfo) => (
         <ProviderRow
           key={provider.id}

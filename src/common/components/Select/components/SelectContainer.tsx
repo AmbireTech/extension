@@ -66,7 +66,8 @@ const SelectContainer: FC<Props> = ({
   sectionListProps,
   flatListProps,
   renderHeaderChildren,
-  onBottomSheetClosed
+  onBottomSheetClosed,
+  isBottomSheetFullHeight
 }) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -211,6 +212,7 @@ const SelectContainer: FC<Props> = ({
           flatListProps={flatListProps}
           HeaderComponent={bottomSheetHeader}
           onBottomSheetClosed={onBottomSheetClosed}
+          isFullHeight={isBottomSheetFullHeight}
         >
           {children}
         </BottomSheetContainer>
