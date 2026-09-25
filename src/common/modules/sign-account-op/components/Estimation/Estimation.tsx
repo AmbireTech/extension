@@ -777,7 +777,8 @@ const Estimation = ({
         sheetRef={customGasPriceSheetRef}
       />
       {!!isOneClick && shouldShowTxnDetails && (
-        <View style={spacings.mv}>
+        // Compact layouts keep a small top margin so the sheet's drag handle sits vertically centered
+        <View style={withCompactFeeHeader ? spacings.mtTy : spacings.mv}>
           <PendingTransactions
             network={network}
             setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
@@ -807,7 +808,7 @@ const Estimation = ({
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
           spacings.mbTy,
-          isMobile && spacings.ptSm
+          withCompactFeeHeader && spacings.ptSm
         ]}
       >
         {withCompactFeeHeader ? (

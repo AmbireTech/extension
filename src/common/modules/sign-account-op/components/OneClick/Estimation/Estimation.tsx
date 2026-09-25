@@ -58,7 +58,7 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
   const hasFreshActionPressRef = useRef(false)
 
   const signingErrors = useMemo(() => {
@@ -114,7 +114,8 @@ const OneClickEstimation = ({
   })
   const { banners } = signAccountOpController || {}
 
-  const ButtonsWrapper = isMobile ? View : FooterGlassView
+  // The narrow side panel stacks full-width buttons in a plain view like mobile
+  const ButtonsWrapper = isCompactLayout ? View : FooterGlassView
 
   useEffect(() => {
     // Require a fresh click/press for each newly opened estimation flow.
@@ -145,7 +146,8 @@ const OneClickEstimation = ({
         closeBottomSheet={isWeb ? undefined : closeEstimationModal}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={isMobile || shouldShowTxnDetails}
-        reserveScrollPadding={shouldShowTxnDetails}
+        // The narrow side panel keeps equal side spacing, the scroll padding is added only once it scrolls
+        reserveScrollPadding={shouldShowTxnDetails && !isNarrowWebLayout}
         shouldBeClosableOnDrag={isMobile}
       >
         {!!banners && !!banners.length && (
@@ -218,12 +220,7 @@ const OneClickEstimation = ({
               size="sm"
               absolute={false}
               isSimpleBlur={false}
-              style={isMobile ? spacings.ptLg : spacings.pt}
-              innerContainerStyle={
-                isNarrowWebLayout
-                  ? { width: '100%', gap: SPACING_TY, alignItems: 'stretch' }
-                  : undefined
-              }
+              style={isCompactLayout ? { ...spacings.ptLg, gap: SPACING_TY } : spacings.pt}
             >
               {!isMobile && !isNarrowWebLayout && (
                 <Button
@@ -246,8 +243,7 @@ const OneClickEstimation = ({
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onPressIn={markFreshActionPress}
                   onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
-                  size={isMobile ? 'regular' : 'smaller'}
-                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  size={isCompactLayout ? 'regular' : 'smaller'}
                 />
               ) : (
                 <ButtonWithLoader
@@ -258,8 +254,7 @@ const OneClickEstimation = ({
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onPressIn={markFreshActionPress}
                   onPress={() => runWithFreshActionPress(onSignButtonClick)}
-                  size={isMobile ? 'regular' : 'smaller'}
-                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  size={isCompactLayout ? 'regular' : 'smaller'}
                 />
               )}
 
@@ -267,13 +262,13 @@ const OneClickEstimation = ({
               {!isMobile && isNarrowWebLayout && (
                 <Button
                   testID="back-button"
-                  type="secondary"
+                  // The web secondary background matches the sheet, tertiary keeps it visible
+                  type="tertiary"
                   text={t('Back')}
                   onPress={closeEstimationModal}
                   hasBottomSpacing={false}
                   disabled={isSignLoading}
-                  style={{ flex: 1, minWidth: 0 }}
-                  size="smaller"
+                  size="regular"
                 />
               )}
             </ButtonsWrapper>
