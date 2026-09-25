@@ -1,6 +1,7 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
+import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
@@ -10,10 +11,10 @@ interface Styles {
   pendingWithdrawalDescription: TextStyle
   missingDetailsForm: ViewStyle
   missingDetailsInput: ViewStyle
-  missingDetailsWarning: TextStyle
+  missingDetailsInputWrapper: ViewStyle
 }
 
-const getStyles = () =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
     pendingWithdrawalCard: {
       ...flexbox.alignCenter,
@@ -46,10 +47,9 @@ const getStyles = () =>
     missingDetailsInput: {
       ...spacings.mbTy
     },
-    missingDetailsWarning: {
-      ...spacings.mbTy,
-      lineHeight: 20,
-      textAlign: 'center'
+    // The input's own background matches the card, so a border keeps it visible
+    missingDetailsInputWrapper: {
+      borderColor: theme.secondaryBorder
     }
   })
 

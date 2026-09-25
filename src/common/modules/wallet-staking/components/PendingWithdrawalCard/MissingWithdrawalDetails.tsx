@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
-import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
+import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
 import Button from '@common/components/Button'
+import HoverablePressable from '@common/components/HoverablePressable'
 import Input from '@common/components/Input'
 import SupportLink from '@common/components/SupportLink'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 
 import getStyles from './styles'
 
@@ -24,9 +26,10 @@ interface Props {
 
 /**
  * Shown when the staking contract holds shares for a withdrawal we can't describe - the leave
- * event reaches us through the relayer's logs, which lag the transaction, and the cached copy is
- * gone (another device, or cleared storage). When the user opted out of the relayer lookup, it
- * lets them enter the ID of the unstake transaction, or turn the lookup back on.
+ * event reaches us through the relayer's logs, which lag the transaction, and the stored copy is
+ * gone (another device, or cleared storage). When the user turned the withdrawals lookup off in
+ * the privacy settings, it lets them enter the ID of the unstake transaction, or turn the lookup
+ * back on.
  */
 const MissingWithdrawalDetails = ({
   isWithdrawalsLookupEnabled,
@@ -37,7 +40,7 @@ const MissingWithdrawalDetails = ({
   onEnableWithdrawalsLookup
 }: Props) => {
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
 
   const txnIdErrorMessage = useMemo(() => {
     if (txnIdLookupError === 'invalid') {
@@ -56,7 +59,7 @@ const MissingWithdrawalDetails = ({
   return (
     <View style={styles.pendingWithdrawalCard}>
       <View style={styles.pendingWithdrawalIcon}>
-        <LockWithTimerIcon width={54} height={54} color={theme.errorText} />
+        <WithdrawIcon width={54} height={54} color={theme.errorText} />
       </View>
       <Text fontSize={18} weight="semiBold" style={styles.pendingWithdrawalText}>
         {t('We couldn’t find your withdrawal details')}
@@ -77,8 +80,18 @@ const MissingWithdrawalDetails = ({
             style={styles.pendingWithdrawalDescription}
           >
             {t(
-              'Your $WALLET is locked for a withdrawal. To protect your privacy, we only checked the transactions made from this device. Enter the transaction ID of your unstake to find the details.'
+              'Your $WALLET is locked for a withdrawal. You turned off finding pending withdrawals in the privacy settings, so enter the transaction ID of your unstake to find the details. You can also '
             )}
+            <HoverablePressable onPress={onEnableWithdrawalsLookup}>
+              <Text
+                fontSize={13}
+                weight="medium"
+                color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+              >
+                {t('turn this setting back on')}
+              </Text>
+            </HoverablePressable>
+            {t(', but this reduces your privacy, because it sends your account address to Ambire.')}
           </Text>
           <View style={styles.missingDetailsForm}>
             <Input
@@ -90,24 +103,13 @@ const MissingWithdrawalDetails = ({
               autoCorrect={false}
               error={txnIdErrorMessage}
               containerStyle={styles.missingDetailsInput}
+              // Without an error, the input's border would be transparent
+              inputWrapperStyle={txnIdErrorMessage ? undefined : styles.missingDetailsInputWrapper}
             />
             <Button
               text={t('Find withdrawal')}
               onPress={onFindByTxnId}
               disabled={!txnId.trim()}
-              hasBottomSpacing={false}
-            />
-          </View>
-          <View style={styles.missingDetailsForm}>
-            <Text fontSize={13} appearance="secondaryText" style={styles.missingDetailsWarning}>
-              {t(
-                'Or let Ambire find it for you. This reduces your privacy, because it sends your current account address to Ambire.'
-              )}
-            </Text>
-            <Button
-              text={t('Find it automatically')}
-              type="secondary"
-              onPress={onEnableWithdrawalsLookup}
               hasBottomSpacing={false}
             />
           </View>
