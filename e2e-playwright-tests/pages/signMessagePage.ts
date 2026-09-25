@@ -1,4 +1,4 @@
-import { BA_ADDRESS, LEDGER_ADDRESS } from 'constants/env'
+import { BA_ADDRESS, KEYSTORE_PASS, LEDGER_ADDRESS } from 'constants/env'
 import selectors from 'constants/selectors'
 import { SpeculosDevice } from 'libs/speculos-device'
 
@@ -83,6 +83,12 @@ export class SignMessagePage extends BasePage {
     }
 
     await signMessageButton.click()
+
+    // Signing auth modal
+    await signActionWindowPage
+      .getByTestId(selectors.transaction.signPassAuthField)
+      .fill(KEYSTORE_PASS)
+    await signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton).click()
 
     if (ledgerSimulatorControls) {
       // Wait for the "Review message" screen to appear on the Ledger device before confirming the transaction flow.
