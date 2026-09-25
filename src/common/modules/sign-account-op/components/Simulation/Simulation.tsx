@@ -244,7 +244,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   }, [initialSimulationLoaded, simulationView])
 
   return (
-    <View style={styles.simulationSection}>
+    <View style={[styles.simulationSection, isCompactLayout && spacings.pbSm]}>
       {simulationView === 'changes' && (
         <View style={[!isCompactLayout && flexbox.directionRow, flexbox.flex1]}>
           {hasAssetsOut && (

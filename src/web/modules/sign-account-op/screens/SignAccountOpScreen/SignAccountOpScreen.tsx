@@ -441,7 +441,7 @@ const SignAccountOpScreen = () => {
                 flexbox.directionRow,
                 flexbox.alignStart,
                 flexbox.justifySpaceBetween,
-                spacings.mb
+                isNarrowWebLayout ? spacings.mbSm : spacings.mb
               ]}
             >
               <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
