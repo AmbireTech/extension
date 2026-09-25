@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react'
+import React, { FC, ReactNode, useEffect, useState } from 'react'
 import { Animated, ColorValue, View, ViewStyle } from 'react-native'
 
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
@@ -39,12 +39,14 @@ const LastUpdatedAtElapsed: FC<{ lastUpdatedAt?: number }> = ({ lastUpdatedAt })
   )
 }
 
-const Cell: FC<{
+/** One value of a network's row, as a pill. `label` is shown in place of a time when given. */
+export const Cell: FC<{
   backgroundColor: ColorValue
-  time: number | undefined
+  time?: number
+  label?: string
   color: ColorValue
   style?: ViewStyle
-}> = ({ backgroundColor, time, color, style = {} }) => (
+}> = ({ backgroundColor, time, label, color, style = {} }) => (
   <View style={{ flex: 1, alignItems: 'center', ...style }}>
     <View
       style={{
@@ -57,30 +59,24 @@ const Cell: FC<{
       }}
     >
       <Text fontSize={isMobile ? 10 : 12} weight="medium" style={{ color: color }}>
-        {time ? formatResultTime(time) : 'Skipped'}
+        {label ?? (time ? formatResultTime(time) : 'Skipped')}
       </Text>
     </View>
   </View>
 )
 
-const NetworkStatusRow: FC<{
+/**
+ * A network's row of the statuses table - its icon, name and when it was last read, pulsing while
+ * it loads - with the values it is measured by as the children.
+ */
+export const NetworkStatusRowShell: FC<{
   networkKey: string
   name: string
   lastUpdatedAt?: number
-  totalTime: number
   isLoading: boolean
-  result?: PortfolioNetworkResult
   theme: ReturnType<typeof useTheme>['theme']
-}> = ({ networkKey, name, lastUpdatedAt, totalTime, isLoading, result, theme }) => {
-  const discoveryStyle = result
-    ? getCellStyle(result.discoveryTime, 'discovery', theme)
-    : getCellStyle(0, 'discovery', theme)
-  const priceStyle = result
-    ? getCellStyle(result.priceUpdateTime, 'priceUpdate', theme)
-    : getCellStyle(0, 'priceUpdate', theme)
-  const oracleStyle = result
-    ? getCellStyle(result.oracleCallTime, 'oracleCall', theme)
-    : getCellStyle(0, 'oracleCall', theme)
+  children: ReactNode
+}> = ({ networkKey, name, lastUpdatedAt, isLoading, theme, children }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const pulseOpacityAnim = new Animated.Value(0.7)
 
@@ -136,6 +132,38 @@ const NetworkStatusRow: FC<{
           <LastUpdatedAtElapsed lastUpdatedAt={lastUpdatedAt} />
         </View>
       </View>
+      {children}
+    </Animated.View>
+  )
+}
+
+const NetworkStatusRow: FC<{
+  networkKey: string
+  name: string
+  lastUpdatedAt?: number
+  totalTime: number
+  isLoading: boolean
+  result?: PortfolioNetworkResult
+  theme: ReturnType<typeof useTheme>['theme']
+}> = ({ networkKey, name, lastUpdatedAt, totalTime, isLoading, result, theme }) => {
+  const discoveryStyle = result
+    ? getCellStyle(result.discoveryTime, 'discovery', theme)
+    : getCellStyle(0, 'discovery', theme)
+  const priceStyle = result
+    ? getCellStyle(result.priceUpdateTime, 'priceUpdate', theme)
+    : getCellStyle(0, 'priceUpdate', theme)
+  const oracleStyle = result
+    ? getCellStyle(result.oracleCallTime, 'oracleCall', theme)
+    : getCellStyle(0, 'oracleCall', theme)
+
+  return (
+    <NetworkStatusRowShell
+      networkKey={networkKey}
+      name={name}
+      lastUpdatedAt={lastUpdatedAt}
+      isLoading={isLoading}
+      theme={theme}
+    >
       {/* Time taken */}
       {result ? (
         <>
@@ -166,7 +194,7 @@ const NetworkStatusRow: FC<{
           No data
         </Text>
       )}
-    </Animated.View>
+    </NetworkStatusRowShell>
   )
 }
 

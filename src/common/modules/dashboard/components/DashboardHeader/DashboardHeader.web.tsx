@@ -52,11 +52,15 @@ const DashboardHeader = () => {
     close: closeNetworkStatusesSheet
   } = useModalize()
 
+  // A Privacy Pools account's networks are read on demand and take long the first time, so its
+  // statuses are what tells how far along that is - shown in production too
+  const shouldDisplayNetworkStatuses = SHOULD_DISPLAY_NETWORK_STATUSES || !!privacyPoolsAccountId
+
   if (!account && !privacyPoolsAccountId) return null
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>
-      {SHOULD_DISPLAY_NETWORK_STATUSES && (
+      {shouldDisplayNetworkStatuses && (
         <NetworkStatusesBottomSheet
           sheetRef={networkStatusesSheetRef}
           closeBottomSheet={closeNetworkStatusesSheet}
@@ -66,7 +70,7 @@ const DashboardHeader = () => {
         {/* Shows a Privacy Pools account too, selected in place of a regular one */}
         <AccountButton />
         <View style={[flexbox.directionRow, flexbox.alignStart]}>
-          {SHOULD_DISPLAY_NETWORK_STATUSES && (
+          {shouldDisplayNetworkStatuses && (
             <Pressable
               style={[flexbox.justifyCenter, flexbox.alignCenter, { width: 40, height: 40 }]}
               onPress={() => openNetworkStatusesSheet()}

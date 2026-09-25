@@ -20,13 +20,6 @@ export type PrivacyPoolsNetworkRow = {
   syncStartedAt: number | null
   lastSyncedAt: number | null
   error: string | null
-  /**
-   * Whether this network has never been read on this device, i.e. whether pressing its action means
-   * the one-time walk from the entrypoint's deployment block rather than a short catch-up. Per
-   * network, because the two differ by orders of magnitude: Sepolia is minutes behind a fresh
-   * install, Ethereum is far more.
-   */
-  needsFirstLoad: boolean
 }
 
 export type PrivacyPoolsBalanceDisplay = {
@@ -131,8 +124,7 @@ const usePrivacyPools = () => {
           syncStatus: chain?.syncStatus || 'idle',
           syncStartedAt: chain?.syncStartedAt ?? null,
           lastSyncedAt: chain?.lastSyncedAt ?? null,
-          error: chain?.error ?? null,
-          needsFirstLoad: !chain?.lastSyncedAt
+          error: chain?.error ?? null
         }
       }),
     [supportedChainIds, chains, getNetworkName]
@@ -143,6 +135,10 @@ const usePrivacyPools = () => {
       networkRows.some((row) => row.syncStatus === 'syncing' || row.syncStatus === 'initializing'),
     [networkRows]
   )
+
+  // Shown on the balance the way the regular dashboard shows a network that failed to load; which
+  // network it is, is in the network statuses
+  const hasSyncError = useMemo(() => networkRows.some((row) => !!row.error), [networkRows])
 
   const tokenBalances = useMemo(
     () =>
@@ -230,13 +226,6 @@ const usePrivacyPools = () => {
     [activity, getNetworkName]
   )
 
-  const syncChain = useCallback(
-    (chainId: string) => {
-      dispatch({ type: 'method', params: { method: 'syncChain', args: [chainId] } })
-    },
-    [dispatch]
-  )
-
   /**
    * Reads every supported network for the account on screen, one after the other.
    *
@@ -268,6 +257,7 @@ const usePrivacyPools = () => {
     isAvailable: isAvailableForSelectedAccount,
     hasSyncedAnyChain,
     isSyncingAnyChain,
+    hasSyncError,
     networkRows,
     balances,
     balancesState,
@@ -278,7 +268,6 @@ const usePrivacyPools = () => {
     tokenBalances,
     getNetworkName,
     getTokenPrice,
-    syncChain,
     syncAllChains,
     prepareWithdrawal,
     broadcastWithdrawal,

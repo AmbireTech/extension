@@ -16,7 +16,6 @@ import getDashboardStyles from '@common/modules/dashboard/screens/styles'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import PrivacyPoolsActivityPage from '@web/modules/privacy-pools/components/PrivacyPoolsActivityPage'
-import PrivacyPoolsNetworks from '@web/modules/privacy-pools/components/PrivacyPoolsNetworks'
 import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyPoolsOverview'
 import PrivacyPoolsTokensPage from '@web/modules/privacy-pools/components/PrivacyPoolsTokensPage'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
@@ -41,6 +40,7 @@ const PrivacyPoolsDashboardScreen = () => {
     isAvailable,
     hasSyncedAnyChain,
     isSyncingAnyChain,
+    hasSyncError,
     networkRows,
     balances,
     balancesState,
@@ -48,7 +48,6 @@ const PrivacyPoolsDashboardScreen = () => {
     pendingPrivateBalance,
     activity,
     getNetworkName,
-    syncChain,
     syncAllChains
   } = usePrivacyPools()
   const { selectedAccountId } = usePrivacyPoolsAccounts()
@@ -113,16 +112,9 @@ const PrivacyPoolsDashboardScreen = () => {
             )}
           />
         )}
-        {/* Each network is read on its own - see PrivacyPoolsNetworks. Hidden when the account
-        cannot use Privacy Pools at all, since then there is nothing to read either. */}
-        {isAvailable && (
-          <View style={spacings.mbSm}>
-            <PrivacyPoolsNetworks rows={networkRows} onSync={syncChain} />
-          </View>
-        )}
       </View>
     ),
-    [firstReadNetworkNames, isAvailable, networkRows, syncChain, t]
+    [firstReadNetworkNames, t]
   )
 
   // Sending is a screen of its own, laid out like the regular Send - see PrivacyPoolsSendScreen
@@ -136,6 +128,7 @@ const PrivacyPoolsDashboardScreen = () => {
           unavailableReason={unavailableReason}
           hasSyncedAnyChain={hasSyncedAnyChain}
           isSyncing={isSyncingAnyChain}
+          hasSyncError={hasSyncError}
           totalPrivateBalance={totalPrivateBalance}
           pendingPrivateBalance={pendingPrivateBalance}
           canSend={!!withdrawTokens.length}

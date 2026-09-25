@@ -7,6 +7,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useSelectedAccountColorSeed from '@common/hooks/useSelectedAccountColorSeed'
+import useTheme from '@common/hooks/useTheme'
 import DashboardBalance, {
   BALANCE_HEIGHT
 } from '@common/modules/dashboard/components/DashboardBalance'
@@ -30,6 +31,8 @@ interface Props {
    */
   hasSyncedAnyChain: boolean
   isSyncing: boolean
+  /** Whether a network could not be read, which leaves the balance short of what it may be. */
+  hasSyncError: boolean
   /**
    * The pooled balance in USD - the part the association set has approved, matching the rows below.
    * Kept apart from the public portfolio's total on purpose: the pooled side is read on demand, so
@@ -61,6 +64,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
   unavailableReason,
   hasSyncedAnyChain,
   isSyncing,
+  hasSyncError,
   totalPrivateBalance,
   pendingPrivateBalance,
   canSend,
@@ -68,6 +72,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
   onSend
 }) => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const {
     state: { isPrivacyModeEnabled },
     dispatch: walletStateDispatch
@@ -102,9 +107,11 @@ const PrivacyPoolsOverview: FC<Props> = ({
     return labels[unavailableReason]
   }, [unavailableReason, t])
 
-  // Shown on hover, like the dashboard's, and while reading - the balance is not final until then.
-  // Reads every supported network again, the same as opening the account does.
-  const shouldShowRefreshButton = hasSyncedAnyChain && (isBalanceHovered || isSyncing)
+  // Shown on hover, like the dashboard's, and while reading - the balance is not final until then -
+  // or when a read failed, to try again. Reads every supported network again, the same as opening
+  // the account does.
+  const shouldShowRefreshButton =
+    hasSyncedAnyChain && (isBalanceHovered || isSyncing || hasSyncError)
 
   return (
     <View style={[spacings.phSm, spacings.mbTy]}>
@@ -148,7 +155,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
                       variant={!hasSyncedAnyChain ? 'skeleton' : 'ready'}
                       totalAmount={totalPrivateBalance}
                       isTokenPricesEnabled={isTokenPricesEnabled}
-                      color={PRIMARY_TEXT_COLOR}
+                      color={hasSyncError ? theme.warningDecorative2 : PRIMARY_TEXT_COLOR}
                       isPrivacyModeEnabled={isPrivacyModeEnabled}
                       onPress={togglePrivacyMode}
                       testID="privacy-pools-balance"
