@@ -547,8 +547,21 @@ export class SwapAndBridgePage extends BasePage {
     // sign transaction
     await page.getByTestId(selectors.signTransactionButton).click()
 
-    // Signing auth modal
+    // Signing auth modal; submit button is disabled before entering pass
+    await expect(page.getByTestId(selectors.transaction.signConfirmButton)).toHaveAttribute(
+      'aria-disabled',
+      'true',
+      { timeout: 30000 }
+    )
+
     await this.entertext(selectors.transaction.signPassAuthField, KEYSTORE_PASS)
+
+    await expect(page.getByTestId(selectors.transaction.signConfirmButton)).not.toHaveAttribute(
+      'aria-disabled',
+      'true',
+      { timeout: 30000 }
+    )
+
     await this.click(selectors.transaction.signConfirmButton)
   }
 

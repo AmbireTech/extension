@@ -109,10 +109,19 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
         .click({ force: true })
       await signMessageWindow.getByTestId(selectors.signMessageButton).click()
 
-      // Signing auth modal
+      // Signing auth modal; submit button is disabled before entering pass
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
       await signMessageWindow
         .getByTestId(selectors.transaction.signPassAuthField)
         .fill(KEYSTORE_PASS)
+
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
       await signMessageWindow.getByTestId(selectors.transaction.signConfirmButton).click()
 
       // assert message visible on sigtool
@@ -152,10 +161,19 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       ).toBeEnabled()
       await signMessageWindow.getByTestId(selectors.signMessageButton).click()
 
-      // Signing auth modal
+      // Signing auth modal; submit button is disabled before entering pass
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
       await signMessageWindow
         .getByTestId(selectors.transaction.signPassAuthField)
         .fill(KEYSTORE_PASS)
+
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
       await signMessageWindow.getByTestId(selectors.transaction.signConfirmButton).click()
 
       await expect(messageSignatureTitle).toContainText('Message signature')
@@ -216,10 +234,19 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
 
       await signMessageWindow.locator(selectors.sigtool.signInSiweButton).click()
 
-      // Signing auth modal
+      // Signing auth modal; submit button is disabled before entering pass
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
       await signMessageWindow
         .getByTestId(selectors.transaction.signPassAuthField)
         .fill(KEYSTORE_PASS)
+
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
       await signMessageWindow.getByTestId(selectors.transaction.signConfirmButton).click()
     })
 

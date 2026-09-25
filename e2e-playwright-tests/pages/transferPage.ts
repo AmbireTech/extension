@@ -180,13 +180,21 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
-      console.log(signAuth)
-      await this.pause()
+
       // Signing auth modal; gas tank does not require sign auth
       if (signAuth) {
-        console.log('no here come')
-        await this.entertext(selectors.transaction.signPassAuthField, KEYSTORE_PASS)
-        await this.click(selectors.transaction.signConfirmButton)
+        // submit button is disabled before entering pass
+        await expect(
+          this.page.getByTestId(selectors.transaction.signConfirmButton)
+        ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
+        await this.page.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
+
+        await expect(
+          this.page.getByTestId(selectors.transaction.signConfirmButton)
+        ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
+        await this.page.getByTestId(selectors.transaction.signConfirmButton).click()
       }
 
       // Accept dual choice modal if fee difference is below 0.1$

@@ -137,8 +137,19 @@ export async function runBatchTransferFlow({
     await page.waitForTimeout(10000) // wait for the AccountOp details to be displayed on the Ledger simulator
     await actionWindow.getByTestId(selectors.signTransactionButton).click()
 
-    // Signing auth modal
+    // Signing auth modal; submit button is disabled before entering pass
+    await expect(actionWindow.getByTestId(selectors.transaction.signConfirmButton)).toHaveAttribute(
+      'aria-disabled',
+      'true',
+      { timeout: 30000 }
+    )
+
     await actionWindow.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
+
+    await expect(
+      actionWindow.getByTestId(selectors.transaction.signConfirmButton)
+    ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
     await actionWindow.getByTestId(selectors.transaction.signConfirmButton).click()
 
     if (ledgerSimulatorControls) {

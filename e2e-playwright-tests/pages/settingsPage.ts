@@ -77,7 +77,7 @@ export class SettingsPage extends BasePage {
     await this.entertext(selectors.repeatNewPassField, newPass)
     await this.click(selectors.changeDevicePassButton)
 
-    // confirm with extension pass; button is disabled before entering pass
+    // Sign auth modal, confirm with extension pass; submit button is disabled before entering pass
     await this.expectButtonDisabled(selectors.settings.confirmExtensionButton)
     await this.entertext(selectors.settings.confirmExtensionPassField, KEYSTORE_PASS)
     await this.expectButtonEnabled(selectors.settings.confirmExtensionButton)

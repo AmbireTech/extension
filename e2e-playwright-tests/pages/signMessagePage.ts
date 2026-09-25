@@ -84,10 +84,19 @@ export class SignMessagePage extends BasePage {
 
     await signMessageButton.click()
 
-    // Signing auth modal
+    // Signing auth modal; submit button is disabled before entering pass
+    await expect(
+      signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton)
+    ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
     await signActionWindowPage
       .getByTestId(selectors.transaction.signPassAuthField)
       .fill(KEYSTORE_PASS)
+
+    await expect(
+      signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton)
+    ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
     await signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton).click()
 
     if (ledgerSimulatorControls) {
