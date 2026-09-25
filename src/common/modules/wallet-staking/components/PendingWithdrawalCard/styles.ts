@@ -8,6 +8,9 @@ interface Styles {
   pendingWithdrawalIcon: ViewStyle
   pendingWithdrawalText: TextStyle
   pendingWithdrawalDescription: TextStyle
+  missingDetailsForm: ViewStyle
+  missingDetailsInput: ViewStyle
+  missingDetailsWarning: TextStyle
 }
 
 const getStyles = () =>
@@ -32,6 +35,19 @@ const getStyles = () =>
     pendingWithdrawalDescription: {
       ...spacings.mtMd,
       maxWidth: 460,
+      lineHeight: 20,
+      textAlign: 'center'
+    },
+    missingDetailsForm: {
+      ...spacings.mtMd,
+      width: '100%',
+      maxWidth: 460
+    },
+    missingDetailsInput: {
+      ...spacings.mbTy
+    },
+    missingDetailsWarning: {
+      ...spacings.mbTy,
       lineHeight: 20,
       textAlign: 'center'
     }
