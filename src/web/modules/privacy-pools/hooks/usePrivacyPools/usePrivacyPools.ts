@@ -2,7 +2,10 @@ import { formatUnits } from 'ethers'
 import { useCallback, useMemo } from 'react'
 
 import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
-import { getPrivacyPoolsPriceKey } from '@ambire-common/libs/privacyPools/prices'
+import {
+  getPrivacyPoolsPriceKey,
+  getPrivacyPoolsValuePerChain
+} from '@ambire-common/libs/privacyPools/prices'
 import {
   PrivacyPoolsActivityEntry,
   PrivacyPoolsChainState,
@@ -178,8 +181,12 @@ const usePrivacyPools = () => {
   // Only the approved part, matching the rows below it. What is still waiting on the association
   // set is counted separately, because it genuinely cannot be withdrawn yet.
   const totalPrivateBalance = useMemo(
-    () => balances.reduce((total, balance) => total + (balance.value ?? 0), 0),
-    [balances]
+    () =>
+      Object.values(getPrivacyPoolsValuePerChain(balancesByChain, prices)).reduce(
+        (total, value) => total + value,
+        0
+      ),
+    [balancesByChain, prices]
   )
 
   const pendingPrivateBalance = useMemo(
