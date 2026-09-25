@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import { textToValidDecimal } from '@ambire-common/utils/numbers/formatters'
+import {
+  convertTokenPriceToBigInt,
+  textToValidDecimal
+} from '@ambire-common/utils/numbers/formatters'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import TokenAndAmountSelector from '@common/components/TokenAndAmountSelector'
 import Select, { SectionedSelect } from '@common/components/Select'
@@ -37,6 +40,20 @@ const toAmountWei = (value: string, decimals: number) => {
   } catch {
     return 0n
   }
+}
+
+/** The balance priced in USD, in `FIAT_DECIMALS` units. Uses the controllers' bigint math and
+ * rounds down, so the slider's range never reaches past what the account can actually send. */
+const toMaxFiatAmountWei = (maxAmount: string, decimals: number, tokenUsdPrice?: number) => {
+  if (!tokenUsdPrice) return 0n
+
+  const { tokenPriceBigInt, tokenPriceDecimals } = convertTokenPriceToBigInt(tokenUsdPrice)
+  const fiatAmountWei = toAmountWei(maxAmount, decimals) * tokenPriceBigInt
+  const excessDecimals = decimals + tokenPriceDecimals - FIAT_DECIMALS
+
+  return excessDecimals >= 0
+    ? fiatAmountWei / 10n ** BigInt(excessDecimals)
+    : fiatAmountWei * 10n ** BigInt(-excessDecimals)
 }
 
 type Props = {
@@ -131,15 +148,20 @@ const SendToken: FC<Props> = ({
   const maxSliderAmount =
     fromAmountFieldMode !== 'fiat'
       ? toAmountWei(maxFromAmount, sliderDecimals)
-      : toAmountWei(
-          (Number(maxFromAmount) * (tokenUsdPrice || 0)).toFixed(FIAT_DECIMALS),
-          FIAT_DECIMALS
-        )
+      : toMaxFiatAmountWei(maxFromAmount, fromSelectedToken?.decimals ?? 0, tokenUsdPrice)
   const sliderAmount = toAmountWei(fromAmountValue, sliderDecimals)
   const handleSliderValueChange = useCallback(
-    (nextAmount: bigint) =>
-      onFromAmountChange(getSliderAmountFieldValue(nextAmount, maxSliderAmount, sliderDecimals)),
-    [maxSliderAmount, onFromAmountChange, sliderDecimals]
+    (nextAmount: bigint) => {
+      // Sliding all the way is the same as pressing Max, so the controller sets the exact max
+      // itself (incl. any fee it reserves) instead of the slider's converted approximation of it.
+      if (maxSliderAmount > 0n && nextAmount >= maxSliderAmount) {
+        handleSetMaxFromAmount()
+        return
+      }
+
+      onFromAmountChange(getSliderAmountFieldValue(nextAmount, maxSliderAmount, sliderDecimals))
+    },
+    [handleSetMaxFromAmount, maxSliderAmount, onFromAmountChange, sliderDecimals]
   )
 
   const tokenSelect = nonEmptySections?.length ? (
