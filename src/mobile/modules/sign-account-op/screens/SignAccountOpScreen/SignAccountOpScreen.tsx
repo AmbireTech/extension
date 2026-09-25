@@ -10,6 +10,7 @@ import Alert from '@common/components/Alert'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useSign from '@common/hooks/useSign'
@@ -129,7 +130,10 @@ const SignAccountOpScreen = () => {
     handleQrSigningFlowOnRejectPressed,
     handleQrSigningFlowOnBackPressed,
     currentRequest,
-    signingStep
+    signingStep,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -232,6 +236,11 @@ const SignAccountOpScreen = () => {
         shouldBeVisible={
           !signAccountOpState?.isInitialized || !!signAccountOpState.safetyChecksLoading
         }
+      />
+      <SigningAuthBottomSheet
+        sheetRef={signingAuthSheetRef}
+        onCancel={cancelSigningAuth}
+        {...signingAuthProps}
       />
       <Modals
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}

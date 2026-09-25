@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -11,12 +11,11 @@ import Input from '@common/components/Input'
 import InputPassword from '@common/components/InputPassword'
 import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import {
-  CURRENT_PASSWORD_AUTOFILL_PROPS,
-  NEW_PASSWORD_AUTOFILL_PROPS
-} from '@common/constants/textInput'
+import { NEW_PASSWORD_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
+import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import { UseChangeKeystorePasswordReturn } from '@common/modules/settings/hooks/useChangeKeystorePassword'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -44,12 +43,46 @@ const ChangeKeystorePassword: React.FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
-  const { control, errors, newPassword, errorMessage, resetErrorState, status } = form
-  const { handleChangeKeystorePassword } = form
+  const { control, errors, newPassword, status } = form
+  const {
+    handleChangeKeystorePassword,
+    confirmationModalRef,
+    closeConfirmation,
+    changePassword,
+    changePasswordAfterBiometrics
+  } = form
+
+  // Two sheets animating over each other is what leaves the screen half laid out, so the success
+  // waits for the confirmation to have finished closing rather than opening alongside it.
+  const shouldOpenSuccessRef = useRef(false)
+  const isConfirmationOpenRef = useRef(false)
 
   useEffect(() => {
-    if (status === 'SUCCESS') openModal()
-  }, [openModal, status])
+    if (status !== 'SUCCESS') return
+
+    // Nothing to wait for if the user closed the confirmation while the change was still running
+    if (!isConfirmationOpenRef.current) {
+      openModal()
+      return
+    }
+
+    shouldOpenSuccessRef.current = true
+    closeConfirmation()
+  }, [closeConfirmation, openModal, status])
+
+  // `onOpen` rather than `onOpened`, because the web sheet only wires the former
+  const handleConfirmationOpen = useCallback(() => {
+    isConfirmationOpenRef.current = true
+  }, [])
+
+  const handleConfirmationClosed = useCallback(() => {
+    isConfirmationOpenRef.current = false
+
+    if (!shouldOpenSuccessRef.current) return
+
+    shouldOpenSuccessRef.current = false
+    openModal()
+  }, [openModal])
 
   return (
     <>
@@ -59,33 +92,6 @@ const ChangeKeystorePassword: React.FC<Props> = ({
             {title}
           </Text>
         )}
-        <Controller
-          control={control}
-          rules={{ validate: isValidPassword }}
-          render={({ field: { onChange, onBlur, value } }) => (
-            <InputPassword
-              {...CURRENT_PASSWORD_AUTOFILL_PROPS}
-              testID="enter-current-pass-field"
-              onBlur={onBlur}
-              placeholder={t('Enter current password')}
-              onChangeText={(val: string) => {
-                onChange(val)
-                if (errorMessage) resetErrorState()
-              }}
-              isValid={isValidPassword(value)}
-              value={value}
-              error={
-                errors.password &&
-                (errors.password.message || t('Please fill in at least 8 characters for password.'))
-              }
-              autoFocus
-              containerStyle={spacings.mbTy}
-              inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
-              onSubmitEditing={handleChangeKeystorePassword}
-            />
-          )}
-          name="password"
-        />
         <Controller
           control={control}
           rules={{ validate: isValidPassword }}
@@ -136,17 +142,58 @@ const ChangeKeystorePassword: React.FC<Props> = ({
         />
         {submitButton}
       </View>
-      <BottomSheet id="device-password-success-modal" sheetRef={modalRef}>
-        <PanelTitle title={successModalTitle} style={spacings.mbXl} />
-        <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
-        <Text fontSize={16} style={[spacings.mbLg, text.center]} appearance="secondaryText">
-          {successText}
-        </Text>
+      <BottomSheet
+        id="change-password-confirmation-modal"
+        sheetRef={confirmationModalRef}
+        type={isWeb ? 'modal' : 'bottom-sheet'}
+        closeBottomSheet={closeConfirmation}
+        onOpen={handleConfirmationOpen}
+        onClosed={handleConfirmationClosed}
+        // Without these the content stacks at the top instead of filling the modal, so the
+        // confirmation cannot centre itself or put its way out at the bottom
+        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
+        containerInnerWrapperStyles={isWeb ? { flex: 1 } : undefined}
+        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+      >
+        <PasswordConfirmation
+          // The old password goes straight to the keystore, which checks it while re-wrapping
+          // the main key. Confirming it here first would only derive the very same key twice.
+          onCustomSubmit={changePassword}
+          onPasswordConfirmed={changePassword}
+          onBiometricsConfirmed={changePasswordAfterBiometrics}
+          onBackButtonPress={closeConfirmation}
+          text={t('Please enter your current password to change it.')}
+          submitText={t('Change password')}
+          isSubmitting={status === 'LOADING'}
+          withFullHeightLayout
+        />
+      </BottomSheet>
+      <BottomSheet
+        id="device-password-success-modal"
+        sheetRef={modalRef}
+        type={isWeb ? 'modal' : 'bottom-sheet'}
+        // Same shape as the confirmation it follows, so the two do not resize around each other
+        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
+        containerInnerWrapperStyles={isWeb ? { flex: 1 } : undefined}
+        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+      >
+        {/* PanelTitle grows to fill what it is given, so it is boxed to its own height here -
+        otherwise it takes the modal and pushes everything below it to the bottom */}
+        <View>
+          <PanelTitle title={successModalTitle} style={spacings.mbXl} />
+        </View>
+        {/* The gap to the button below. On the web it sits under the centred content, on mobile
+        the sheet is only as tall as what is in it, so this is the whole of the breathing room */}
+        <View style={[flexbox.flex1, flexbox.center, spacings.mbLg]}>
+          <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
+          <Text fontSize={16} style={text.center} appearance="secondaryText">
+            {successText}
+          </Text>
+        </View>
         <Button
           testID="device-pass-success-modal"
           text={t('Got it')}
           hasBottomSpacing={false}
-          style={{ minWidth: 232 }}
           onPress={() => closeModal()}
         />
       </BottomSheet>

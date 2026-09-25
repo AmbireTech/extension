@@ -10,8 +10,8 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import { DEVICE_SECURITY_LEVEL } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -72,14 +72,11 @@ const ImportAccountsFromExtensionScreen = () => {
   // there is no second one to set. Off means the app asks for its own password next.
   const [isPasswordReused, setIsPasswordReused] = useState(true)
   const [isBiometricsToggled, setIsBiometricsToggled] = useState<boolean | null>(null)
-  const { isEnrolled, deviceSecurityLevel, saveBiometricsSecret } = useBiometrics()
-  // The secret is stored behind a key that only a strong (Class 3) biometric can release,
-  // so a weak one (e.g. 2D face unlock on Android) would fail to save it.
-  const isStrongBiometricsEnrolled =
-    isEnrolled && deviceSecurityLevel === DEVICE_SECURITY_LEVEL.BIOMETRIC_STRONG
+  const { saveBiometricsSecret } = useBiometrics()
+  const { canEnableBiometrics } = useBiometricsAvailability()
   // On by default once the device turns out to have biometrics, the same as on the
   // keystore setup screen, until the user says otherwise
-  const isBiometricsEnabled = isBiometricsToggled ?? isStrongBiometricsEnrolled
+  const isBiometricsEnabled = isBiometricsToggled ?? canEnableBiometrics
   const carouselRef = useRef<ICarouselInstance>(null)
   // The carousel needs an explicit width equal to its container's actual laid-out
   // width, so we measure it instead of guessing from the window
@@ -383,7 +380,7 @@ const ImportAccountsFromExtensionScreen = () => {
             <SyncPasswordOptions
               isPasswordReused={isPasswordReused}
               onTogglePasswordReuse={togglePasswordReuse}
-              isBiometricsAvailable={isStrongBiometricsEnrolled}
+              isBiometricsAvailable={canEnableBiometrics}
               isBiometricsEnabled={isBiometricsEnabled}
               onToggleBiometrics={toggleBiometrics}
             />

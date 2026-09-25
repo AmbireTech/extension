@@ -24,6 +24,8 @@ const DappConnectScreen = () => {
     resolveButtonText,
     isTrustedByUser,
     canBeTrustedByUser,
+    isScamCheckerEnabled,
+    handleEnableScamChecker,
     toggleTrust
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
@@ -76,12 +78,15 @@ const DappConnectScreen = () => {
             icon={dappToConnect.icon!}
             securityCheck={dappToConnect.blacklisted}
             isTrustedByUser={isTrustedByUser}
+            isScamCheckerEnabled={isScamCheckerEnabled}
           />
           <DAppConnectBody
             securityCheck={dappToConnect.blacklisted}
             isTrustedByUser={isTrustedByUser}
             canBeTrustedByUser={canBeTrustedByUser}
             onToggleTrust={toggleTrust}
+            onEnableScamChecker={handleEnableScamChecker}
+            isScamCheckerEnabled={isScamCheckerEnabled}
           />
         </View>
       )}

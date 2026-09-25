@@ -388,6 +388,7 @@
       "globals": {
         "console": "write",
         "fetch": true,
+        "navigator.userAgent": true,
         "onerror": "write",
         "onunhandledrejection": "write"
       },
