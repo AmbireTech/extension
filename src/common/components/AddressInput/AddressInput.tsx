@@ -146,11 +146,16 @@ const AddressInput: React.FC<Props> = ({
                 <>
                   {resolvedAddress && !isRecipientDomainResolving ? (
                     <AnimatedPressable
-                      style={[flexbox.alignCenter, flexbox.directionRow, animStyle]}
+                      style={[
+                        flexbox.alignCenter,
+                        flexbox.directionRow,
+                        { flexShrink: 1 },
+                        animStyle
+                      ]}
                       onPress={handleCopyResolvedAddress}
                       {...bindAnim}
                     >
-                      <Text style={flexbox.flex1} numberOfLines={1}>
+                      <Text style={{ flexShrink: 1 }} numberOfLines={1}>
                         <Text
                           style={{
                             flex: 1

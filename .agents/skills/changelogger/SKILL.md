@@ -40,7 +40,7 @@ git log --merges --oneline main..release/v6.8.0
 or, when generating the final GitHub compare link:
 
 ```
-https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>
+[<previous-tag>...<new-tag>](https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>)
 ```
 
 Workflow
@@ -175,10 +175,10 @@ Once all metadata is fetched, cross-check the set of PR numbers against the merg
 
 ## GitHub PR lookup
 
-Always link to the merge PR:
+Always link to the merge PR, using markdown link syntax with `#<pr-number>` as the link text, placed at the end of the entry title:
 
 ```
-https://github.com/<owner>/<repo>/pull/<pr-number>
+[#<pr-number>](https://github.com/<owner>/<repo>/pull/<pr-number>)
 ```
 
 If GitHub CLI is not available, use the GitHub web/API access available in the environment.
@@ -199,7 +199,7 @@ Changelog:
 * Changed: ...
 * Fixed: ...
 
-**Full Changelog**: https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>
+**Full Changelog**: [<previous-tag>...<new-tag>](https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>)
 ```
 ````
 
@@ -231,7 +231,7 @@ Examples of marketing-worthy changes:
 Example:
 
 ```markdown
-* 📣 Added: Address poisoning detection for the recipient on the Send screen https://github.com/AmbireTech/ambire-app/pull/7029
+* 📣 Added: Address poisoning detection for the recipient on the Send screen [#7029](https://github.com/AmbireTech/ambire-app/pull/7029)
   * Highlights suspicious recipient addresses when they closely resemble a previously used trusted address.
   * Requires Hold to Proceed when a possible poisoning attempt is detected.
 ```
@@ -247,14 +247,14 @@ Ask: would someone who has never seen the codebase understand what improved for 
 Good:
 
 ```markdown
-* 📣 Changed: Ambire now better protects your privacy when resolving ENS names https://github.com/AmbireTech/ambire-app/pull/7364
+* 📣 Changed: Ambire now better protects your privacy when resolving ENS names [#7364](https://github.com/AmbireTech/ambire-app/pull/7364)
   * The wallet no longer refreshes ENS profiles for all accounts by default, reducing address exposure to ENS resolvers.
 ```
 
 Bad:
 
 ```markdown
-* 📣 Changed: Reduce ENS reverse lookups for better privacy https://github.com/AmbireTech/ambire-app/pull/7364
+* 📣 Changed: Reduce ENS reverse lookups for better privacy [#7364](https://github.com/AmbireTech/ambire-app/pull/7364)
   * "Reduce ENS reverse lookups" describes the internal mechanism, not the benefit, so it means nothing to most readers. The privacy win is real and worth announcing, it is just worded in an alien language.
 ```
 
@@ -284,9 +284,9 @@ When a change is platform-specific, add a short tag in parentheses at the **star
 The tag is orthogonal to 📣 and goes right after it:
 
 ```markdown
-* 📣 Added: (iOS) Face ID unlock https://github.com/AmbireTech/ambire-app/pull/1234
-* Fixed: (Android) Keyboard covers the amount input on the Send screen https://github.com/AmbireTech/ambire-app/pull/1235
-* Changed: (Extension) Firefox background script reconnect logic https://github.com/AmbireTech/ambire-app/pull/1236
+* 📣 Added: (iOS) Face ID unlock [#1234](https://github.com/AmbireTech/ambire-app/pull/1234)
+* Fixed: (Android) Keyboard covers the amount input on the Send screen [#1235](https://github.com/AmbireTech/ambire-app/pull/1235)
+* Changed: (Extension) Firefox background script reconnect logic [#1236](https://github.com/AmbireTech/ambire-app/pull/1236)
 ```
 
 ### Deciding the platform
@@ -304,7 +304,7 @@ If the PR body claims a platform (e.g. "iOS only") but the files are clearly cro
 Each top-level bullet must:
 
 * include a clear human-readable title
-* include the GitHub PR link
+* include the GitHub PR link as a markdown link at the end of the title: `[#1234](https://github.com/<owner>/<repo>/pull/1234)`
 * describe user impact when possible
 * avoid raw commit-message noise
 * avoid overly technical implementation details unless relevant to developers or release reviewers
@@ -315,11 +315,11 @@ For internal/technical entries (CI fixes, QA test updates, config, docs, TS erro
 Good:
 
 ```markdown
-* 📣 Added: dApp verification banners to signing screens https://github.com/AmbireTech/ambire-app/pull/7052
+* 📣 Added: dApp verification banners to signing screens [#7052](https://github.com/AmbireTech/ambire-app/pull/7052)
   * Shows verification status on SignMessage and SignAccountOp screens.
   * Requires Hold to Proceed when risk-related banners are present.
-* Changed: QA workflow — separate HTML reports per test group https://github.com/AmbireTech/ambire-app/pull/7119
-* Fixed: TypeScript errors from dApp interface changes https://github.com/AmbireTech/ambire-app/pull/7163
+* Changed: QA workflow — separate HTML reports per test group [#7119](https://github.com/AmbireTech/ambire-app/pull/7119)
+* Fixed: TypeScript errors from dApp interface changes [#7163](https://github.com/AmbireTech/ambire-app/pull/7163)
 ```
 
 Bad:
@@ -368,7 +368,7 @@ Never claim a security improvement unless the PR clearly supports it.
 Always end with:
 
 ```markdown
-**Full Changelog**: https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>
+**Full Changelog**: [<previous-tag>...<new-tag>](https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>)
 ```
 
 ## Skipped PRs
@@ -388,7 +388,7 @@ This makes the exclusion decisions transparent and reviewable.
 Before returning the changelog, verify:
 
 * only merge commits were used
-* every top-level entry links to a GitHub PR
+* every top-level entry links to a GitHub PR using markdown link syntax (`[#1234](...)`), never a bare URL
 * marketing-worthy entries have 📣
 * platform-specific entries carry a platform tag ((Mobile)/(iOS)/(Android)/(Extension)/(Chrome)/(Firefox)); cross-platform entries are untagged
 * public wording is clear (📣 titles state the user benefit in plain language, not internal jargon)
