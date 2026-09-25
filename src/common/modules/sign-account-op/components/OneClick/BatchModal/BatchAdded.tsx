@@ -11,6 +11,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Header from '@common/modules/header/components/Header'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -28,7 +29,7 @@ type Props = {
   onSecondaryButtonPress: () => void
 }
 
-const { isRequestWindow } = getUiType()
+const { isRequestWindow, isPopup } = getUiType()
 
 const BatchAdded: FC<Props> = ({
   title,
@@ -77,7 +78,17 @@ const BatchAdded: FC<Props> = ({
       style={isRequestWindow ? { borderRadius: 0, height: '100%' } : {}}
       backgroundStyle={isRequestWindow ? spacings.pt0 : {}}
     >
-      {isWeb ? <Header /> : <HeaderWithTitle title={t('Batch')} withBackButton={false} />}
+      {/* Same header as the Send and Swap & Bridge screens this is shown after */}
+      {isMobile ? (
+        <HeaderWithTitle title={t('Batch')} withBackButton={false} />
+      ) : isPopup ? (
+        <Header.Wrapper containerStyle={spacings.ptSm}>
+          <Header.AccountData />
+          <Header.Logo withOG />
+        </Header.Wrapper>
+      ) : (
+        <ActionHeader />
+      )}
       <View
         style={[
           spacings.phSm,
