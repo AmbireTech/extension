@@ -1,4 +1,5 @@
 import { typeText } from 'common-helpers/typeText'
+import { KEYSTORE_PASS } from 'constants/env'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
 import { SpeculosDevice } from 'libs/speculos-device/device'
@@ -545,6 +546,10 @@ export class SwapAndBridgePage extends BasePage {
 
     // sign transaction
     await page.getByTestId(selectors.signTransactionButton).click()
+
+    // Signing auth modal
+    await this.entertext(selectors.transaction.signPassAuthField, KEYSTORE_PASS)
+    await this.click(selectors.transaction.signConfirmButton)
   }
 
   async getCurrentBalance() {

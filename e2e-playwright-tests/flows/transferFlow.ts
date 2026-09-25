@@ -1,3 +1,4 @@
+import { KEYSTORE_PASS } from 'constants/env'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { SpeculosDevice } from 'libs/speculos-device/device'
@@ -71,7 +72,7 @@ export async function runSimpleTransferFlow({
 
     if (sendToken == tokens.usdc.optimism) {
       expect(viewTransactionTab.url()).toContain('optimistic.etherscan.io')
-// TODO: add assertions on optimism exploreer
+      // TODO: add assertions on optimism exploreer
     } else {
       expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
 
@@ -135,6 +136,10 @@ export async function runBatchTransferFlow({
     const actionWindow = await actionWindowPromise
     await page.waitForTimeout(10000) // wait for the AccountOp details to be displayed on the Ledger simulator
     await actionWindow.getByTestId(selectors.signTransactionButton).click()
+
+    // Signing auth modal
+    await actionWindow.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
+    await actionWindow.getByTestId(selectors.transaction.signConfirmButton).click()
 
     if (ledgerSimulatorControls) {
       await page.waitForTimeout(2000) // wait for the transaction details to be displayed on the Ledger simulator
