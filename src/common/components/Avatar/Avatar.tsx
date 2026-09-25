@@ -17,6 +17,9 @@ import useSharedPulse from './useSharedPulse'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
+const selectShouldDisplayEnsAvatar = (state: AllControllersMappingType['FeatureFlagsController']) =>
+  isLegends || isBenzin || state.flags.keepEnsProfilesUpToDate
+
 const getAvatarType = ({
   ensAvatar,
   ensAvatarImageFetchFailed,
@@ -78,6 +81,10 @@ const Avatar: FC<Props> = ({
   showTooltip = false,
   displayTypeBadge = true
 }) => {
+  const { state: shouldDisplayEnsAvatar } = useController(
+    'FeatureFlagsController',
+    selectShouldDisplayEnsAvatar
+  )
   // the ENS avatar may point to an image that no longer exists or just fails to load
   // In that case we must fallback to the next avatar type
   const [ensAvatarImageState, setEnsAvatarImageState] = useState<'loading' | 'loaded' | 'failed'>(
@@ -87,8 +94,9 @@ const Avatar: FC<Props> = ({
   // ENS Avatar. Both selectors read the one address instead of the whole map, so a
   // lookup that resolves for one address does not re-render every other avatar
   const selectEnsAvatar = useMemo(
-    () => (state: AllControllersMappingType['DomainsController']) => state.domains[address]?.avatar,
-    [address]
+    () => (state: AllControllersMappingType['DomainsController']) =>
+      shouldDisplayEnsAvatar ? state.domains[address]?.avatar : undefined,
+    [address, shouldDisplayEnsAvatar]
   )
   const selectIsEnsLoading = useMemo(
     () => (state: AllControllersMappingType['DomainsController']) =>
@@ -150,7 +158,7 @@ const Avatar: FC<Props> = ({
           height={size}
           borderRadius={borderRadius}
           appearance="secondaryBackground"
-          style={{ zIndex: -1, position: 'absolute', left: 0, top: 0 }}
+          style={{ zIndex: -1, position: 'absolute' }}
         />
       )}
       {avatarType === 'jazzicons' && (
