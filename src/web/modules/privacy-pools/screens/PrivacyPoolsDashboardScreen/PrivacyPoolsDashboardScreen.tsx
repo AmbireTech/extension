@@ -8,7 +8,7 @@ import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
-import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
+import getDashboardStyles from '@common/modules/dashboard/screens/styles'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import PrivacyPoolsActivity from '@web/modules/privacy-pools/components/PrivacyPoolsActivity'
@@ -22,14 +22,12 @@ import PrivacyPoolsTabs, {
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
 
-import getStyles from './styles'
-
 /**
  * The dashboard of a Privacy Pools account, shown on the dashboard route in place of the regular
  * one while a Privacy Pools account is selected.
  */
 const PrivacyPoolsDashboardScreen = () => {
-  const { styles } = useTheme(getStyles)
+  const { styles } = useTheme(getDashboardStyles)
   const {
     unavailableReason,
     isAvailable,
@@ -79,13 +77,19 @@ const PrivacyPoolsDashboardScreen = () => {
 
   return (
     <LayoutWrapper>
-      <View style={styles.header}>
-        <View style={styles.content}>
-          <DashboardHeader />
-        </View>
-      </View>
-      <ScrollableWrapper contentContainerStyle={styles.contentContainer}>
-        <View style={styles.content}>
+      {/* Laid out like the regular dashboard: the overview card on top, the lists under it */}
+      <View style={styles.container}>
+        <PrivacyPoolsOverview
+          unavailableReason={unavailableReason}
+          hasSyncedAnyChain={hasSyncedAnyChain}
+          isSyncing={isSyncingAnyChain}
+          totalPrivateBalance={totalPrivateBalance}
+          pendingPrivateBalance={pendingPrivateBalance}
+          canSend={!!withdrawTokens.length}
+          onRefresh={syncAllChains}
+          onSend={openSend}
+        />
+        <ScrollableWrapper contentContainerStyle={[spacings.phSm, spacings.pbSm]}>
           <PrivacyPoolsBackupBanner />
           {/* The one wait worth explaining: a network read for the first time takes minutes, not
           seconds, and nothing else on screen says why the balance is not there yet */}
@@ -100,19 +104,6 @@ const PrivacyPoolsDashboardScreen = () => {
               )}
             />
           )}
-          <View style={spacings.mbSm}>
-            <PrivacyPoolsOverview
-              unavailableReason={unavailableReason}
-              hasSyncedAnyChain={hasSyncedAnyChain}
-              isSyncing={isSyncingAnyChain}
-              totalPrivateBalance={totalPrivateBalance}
-              pendingPrivateBalance={pendingPrivateBalance}
-              canSend={!!withdrawTokens.length}
-              onRefresh={syncAllChains}
-              onSend={openSend}
-            />
-          </View>
-
           {/* Each network is read on its own - see PrivacyPoolsNetworks. Hidden when the account
         cannot use Privacy Pools at all, since then there is nothing to read either. */}
           {isAvailable && (
@@ -127,8 +118,8 @@ const PrivacyPoolsDashboardScreen = () => {
           ) : (
             <PrivacyPoolsActivity activity={activity} />
           )}
-        </View>
-      </ScrollableWrapper>
+        </ScrollableWrapper>
+      </View>
     </LayoutWrapper>
   )
 }

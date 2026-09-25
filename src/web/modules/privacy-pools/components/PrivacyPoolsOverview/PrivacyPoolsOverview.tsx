@@ -1,23 +1,25 @@
-import React, { FC, useMemo } from 'react'
+import React, { FC, useCallback, useMemo, useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import { PrivacyPoolsUnavailableReason } from '@ambire-common/interfaces/privacyPools'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
-import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useSelectedAccountColorSeed from '@common/hooks/useSelectedAccountColorSeed'
-import useTheme from '@common/hooks/useTheme'
+import DashboardBalance, {
+  BALANCE_HEIGHT
+} from '@common/modules/dashboard/components/DashboardBalance'
+import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import { OverviewBackground } from '@common/modules/dashboard/components/DashboardOverview/OverviewBackground'
 import RefreshIcon from '@common/modules/dashboard/components/DashboardOverview/RefreshIcon'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING } from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { privateValue } from '@common/utils/ui'
 
 import PrivacyPoolsActions from './PrivacyPoolsActions'
-import getStyles, { HERO_AMOUNT_HEIGHT, OVERVIEW_COLORS } from './styles'
+
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 
 interface Props {
   unavailableReason: PrivacyPoolsUnavailableReason | null
@@ -42,6 +44,19 @@ interface Props {
   onSend: () => void
 }
 
+const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
+
+// The card's contents sit on the dark OverviewBackground, so they use the fixed light colors the
+// dashboard overview uses rather than theme ones
+const PRIMARY_TEXT_COLOR = '#FFFFFF'
+const SECONDARY_TEXT_COLOR = '#F2F4F7'
+const ICON_COLOR = '#E3E6EB'
+const REFRESH_BUTTON_SIZE = 28
+
+/**
+ * The Privacy Pools account's counterpart of `DashboardOverview`: the same card, header, balance
+ * and route buttons, with what a Privacy Pools account has in them.
+ */
 const PrivacyPoolsOverview: FC<Props> = ({
   unavailableReason,
   hasSyncedAnyChain,
@@ -53,20 +68,22 @@ const PrivacyPoolsOverview: FC<Props> = ({
   onSend
 }) => {
   const { t } = useTranslation()
-  const { styles } = useTheme(getStyles)
   const {
-    state: { isPrivacyModeEnabled }
+    state: { isPrivacyModeEnabled },
+    dispatch: walletStateDispatch
   } = useController('WalletStateController')
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectTokenPricesEnabled
+  )
   // The gradient is seeded with the selected Privacy Pools account, so each one keeps a card of
   // its own the way each regular account does.
   const backgroundColorSeed = useSelectedAccountColorSeed()
+  const [isBalanceHovered, setIsBalanceHovered] = useState(false)
 
-  // Split so the cents can be rendered smaller than the dollars, the same way the dashboard's
-  // balance is presented.
-  const [integerValue, decimalValue] = useMemo(
-    () => formatDecimals(totalPrivateBalance, 'value').split('.'),
-    [totalPrivateBalance]
-  )
+  const togglePrivacyMode = useCallback(() => {
+    walletStateDispatch({ type: 'method', params: { method: 'togglePrivacyMode', args: [] } })
+  }, [walletStateDispatch])
 
   // The reasons Privacy Pools can't be used are structural (no Privacy Pools account selected, no
   // supported network) or temporary (locked), so each gets its own explanation rather than a disabled button
@@ -85,104 +102,95 @@ const PrivacyPoolsOverview: FC<Props> = ({
     return labels[unavailableReason]
   }, [unavailableReason, t])
 
-  return (
-    <View style={styles.container}>
-      <OverviewBackground address={backgroundColorSeed} />
-      <View style={styles.content}>
-        <View style={styles.headerRow}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <InvisibilityIcon width={20} height={20} color={OVERVIEW_COLORS.primaryText} />
-            {/* No network in the title: the balance spans every supported network, and each row
-            below carries its own network badge - see PrivacyPoolsBalances. */}
-            <Text
-              fontSize={14}
-              weight="medium"
-              color={OVERVIEW_COLORS.primaryText}
-              style={spacings.mlTy}
-            >
-              {t('Privacy Pools')}
-            </Text>
-          </View>
-          {/* Reads every supported network again, the same as opening the account does. Shown once
-          something has been read, since before that the first read is already running. */}
-          {hasSyncedAnyChain && (
-            <Pressable
-              testID="privacy-pools-refresh-button"
-              style={styles.refreshButton}
-              onPress={onRefresh}
-              disabled={isSyncing}
-              hitSlop={10}
-            >
-              <RefreshIcon spin={isSyncing} color={OVERVIEW_COLORS.icon} width={24} height={24} />
-            </Pressable>
-          )}
-        </View>
+  // Shown on hover, like the dashboard's, and while reading - the balance is not final until then.
+  // Reads every supported network again, the same as opening the account does.
+  const shouldShowRefreshButton = hasSyncedAnyChain && (isBalanceHovered || isSyncing)
 
-        {unavailableLabel ? (
-          <View style={styles.unavailableContainer}>
-            <Text
-              fontSize={14}
-              color={OVERVIEW_COLORS.secondaryText}
-              style={styles.unavailableText}
-            >
-              {unavailableLabel}
-            </Text>
-          </View>
-        ) : (
-          <>
-            <View style={styles.hero}>
-              <View style={styles.heroAmountRow}>
-                {isSyncing && !hasSyncedAnyChain ? (
-                  <SkeletonLoader
-                    lowOpacity
-                    width={160}
-                    height={HERO_AMOUNT_HEIGHT}
-                    borderRadius={8}
-                  />
-                ) : (
-                  <View style={[flexbox.directionRow, flexbox.alignEnd]}>
-                    <Text
-                      fontSize={34}
-                      shouldScale={false}
-                      weight="number_bold"
-                      color={OVERVIEW_COLORS.primaryText}
-                      style={styles.heroAmount}
+  return (
+    <View style={[spacings.phSm, spacings.mbTy]}>
+      <View
+        style={[
+          common.borderRadiusPrimary,
+          spacings.ptTy,
+          spacings.phSm,
+          { paddingBottom: SPACING, overflow: 'hidden' }
+        ]}
+      >
+        <OverviewBackground address={backgroundColorSeed} />
+        <View style={{ zIndex: 2 }}>
+          <DashboardHeader />
+          <View style={[flexbox.alignCenter, spacings.pt]}>
+            {unavailableLabel ? (
+              <Text
+                fontSize={14}
+                color={SECONDARY_TEXT_COLOR}
+                style={[spacings.mb, { textAlign: 'center' }]}
+              >
+                {unavailableLabel}
+              </Text>
+            ) : (
+              <View style={[{ width: '100%' }, spacings.mb, flexbox.alignCenter]}>
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    flexbox.justifyCenter,
+                    spacings.mbMi,
+                    { height: BALANCE_HEIGHT, width: '100%' }
+                  ]}
+                  onMouseEnter={() => setIsBalanceHovered(true)}
+                  onMouseLeave={() => setIsBalanceHovered(false)}
+                >
+                  {/* Placeholder matching the refresh button size to keep the balance centered */}
+                  <View style={{ width: REFRESH_BUTTON_SIZE, height: REFRESH_BUTTON_SIZE }} />
+                  <View style={[flexbox.alignCenter, spacings.mhTy]}>
+                    <DashboardBalance
+                      variant={!hasSyncedAnyChain ? 'skeleton' : 'ready'}
+                      totalAmount={totalPrivateBalance}
+                      isTokenPricesEnabled={isTokenPricesEnabled}
+                      color={PRIMARY_TEXT_COLOR}
+                      isPrivacyModeEnabled={isPrivacyModeEnabled}
+                      onPress={togglePrivacyMode}
                       testID="privacy-pools-balance"
-                    >
-                      {privateValue(integerValue, isPrivacyModeEnabled, 4)}
-                    </Text>
-                    {!!decimalValue && !isPrivacyModeEnabled && (
-                      <Text
-                        fontSize={20}
-                        shouldScale={false}
-                        weight="number_bold"
-                        color={OVERVIEW_COLORS.primaryText}
-                        style={styles.heroDecimals}
-                      >
-                        {`.${decimalValue}`}
-                      </Text>
-                    )}
+                    />
                   </View>
+                  <Pressable
+                    testID="privacy-pools-refresh-button"
+                    style={({ hovered }: any) => ({
+                      width: REFRESH_BUTTON_SIZE,
+                      height: REFRESH_BUTTON_SIZE,
+                      opacity: shouldShowRefreshButton ? (hovered ? 1 : 0.7) : 0
+                    })}
+                    onPress={onRefresh}
+                    disabled={!hasSyncedAnyChain || isSyncing}
+                    onHoverIn={() => setIsBalanceHovered(true)}
+                    hitSlop={10}
+                  >
+                    <RefreshIcon
+                      spin={isSyncing}
+                      color={ICON_COLOR}
+                      width={REFRESH_BUTTON_SIZE}
+                      height={REFRESH_BUTTON_SIZE}
+                    />
+                  </Pressable>
+                </View>
+                {/* Qualifies the figure above rather than adding to it: part of the balance cannot
+                be withdrawn privately yet. Without it a total that silently omits money reads as a
+                complete one. */}
+                {!isPrivacyModeEnabled && pendingPrivateBalance > 0 && (
+                  <Text fontSize={12} color={SECONDARY_TEXT_COLOR} numberOfLines={1}>
+                    {t('+{{value}} waiting to be approved', {
+                      value: formatDecimals(pendingPrivateBalance, 'value')
+                    })}
+                  </Text>
                 )}
               </View>
-
-              {/* Qualifies the figure above rather than adding to it: part of the balance cannot be
-              withdrawn privately yet. Without it a total that silently omits money reads as a
-              complete one. */}
-              {!isPrivacyModeEnabled && pendingPrivateBalance > 0 && (
-                <Text fontSize={12} color={OVERVIEW_COLORS.secondaryText} numberOfLines={1}>
-                  {t('+{{value}} waiting to be approved', {
-                    value: formatDecimals(pendingPrivateBalance, 'value')
-                  })}
-                </Text>
-              )}
-            </View>
-
+            )}
             {/* Sending needs the notes read first: without them there is nothing to send, and the
             form would have an empty dropdown. */}
             <PrivacyPoolsActions onSend={onSend} isSendDisabled={!canSend} />
-          </>
-        )}
+          </View>
+        </View>
       </View>
     </View>
   )

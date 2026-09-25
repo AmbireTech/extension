@@ -18,7 +18,6 @@ import useSidePanelSettingsTab from '@web/hooks/useSidePanelSettingsTab'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
-import PrivacyPoolsAccountButton from './PrivacyPoolsAccountButton'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -64,7 +63,8 @@ const DashboardHeader = () => {
         />
       )}
       <View style={[flexbox.directionRow, flexbox.flex1, flexbox.justifySpaceBetween]}>
-        {account ? <AccountButton /> : <PrivacyPoolsAccountButton />}
+        {/* Shows a Privacy Pools account too, selected in place of a regular one */}
+        <AccountButton />
         <View style={[flexbox.directionRow, flexbox.alignStart]}>
           {SHOULD_DISPLAY_NETWORK_STATUSES && (
             <Pressable
