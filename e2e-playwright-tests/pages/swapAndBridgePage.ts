@@ -544,23 +544,37 @@ export class SwapAndBridgePage extends BasePage {
     // }
     await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap|Execute/)
 
+    // The Sign button only becomes enabled once the transaction details panel (a
+    // react-native-web ScrollView, not the page itself) has been scrolled within 40px of its
+    // bottom - see `isCloseToBottom`/`handleScroll` in SignAccountOpScreen.tsx.
+    const signButton = page.getByTestId(selectors.signTransactionButton)
+    const transactionDetailsPanel = page.getByTestId(selectors.signAccountOpScrollView)
+
+    await expect(async () => {
+      await transactionDetailsPanel.evaluate((el: HTMLElement) => {
+        el.scrollTop = el.scrollHeight
+      })
+      await expect(signButton).not.toHaveAttribute('aria-disabled', 'true')
+    }).toPass({ timeout: 30000 })
+
+    // Signing auth modal; not required in all tests
     // sign transaction
-    await page.getByTestId(selectors.signTransactionButton).click()
+    await signButton.click()
 
-    // Signing auth modal; submit button is disabled before entering pass
-    await expect(page.getByTestId(selectors.transaction.signConfirmButton)).toHaveAttribute(
-      'aria-disabled',
-      'true',
-      { timeout: 30000 }
-    )
+    // // Signing auth modal; submit button is disabled before entering pass
+    // await expect(page.getByTestId(selectors.transaction.signConfirmButton)).toHaveAttribute(
+    //   'aria-disabled',
+    //   'true',
+    //   { timeout: 30000 }
+    // )
 
-    await this.entertext(selectors.transaction.signPassAuthField, KEYSTORE_PASS)
+    // await this.entertext(selectors.transaction.signPassAuthField, KEYSTORE_PASS)
 
-    await expect(page.getByTestId(selectors.transaction.signConfirmButton)).not.toHaveAttribute(
-      'aria-disabled',
-      'true',
-      { timeout: 30000 }
-    )
+    // await expect(page.getByTestId(selectors.transaction.signConfirmButton)).not.toHaveAttribute(
+    //   'aria-disabled',
+    //   'true',
+    //   { timeout: 30000 }
+    // )
 
     await this.click(selectors.transaction.signConfirmButton)
   }

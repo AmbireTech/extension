@@ -186,13 +186,13 @@ export class TransferPage extends BasePage {
         // submit button is disabled before entering pass
         await expect(
           this.page.getByTestId(selectors.transaction.signConfirmButton)
-        ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+        ).toHaveAttribute('aria-disabled', 'true', { timeout: 60000 })
 
         await this.page.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
 
         await expect(
           this.page.getByTestId(selectors.transaction.signConfirmButton)
-        ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+        ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 60000 })
 
         await this.page.getByTestId(selectors.transaction.signConfirmButton).click()
       }

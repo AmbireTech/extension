@@ -10,8 +10,8 @@ import {
 } from 'fixtures/keystoreMigration'
 
 import { expect } from '@playwright/test'
-import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '../../../../src/web/modules/keystore/constants'
 
+import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '../../../../src/web/modules/keystore/constants'
 import { test } from '../../../fixtures/pageObjects'
 
 const PASSWORD_UNLOCK_REQUIRED_NOTICE =

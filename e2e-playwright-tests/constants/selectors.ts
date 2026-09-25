@@ -303,6 +303,7 @@ const selectors = {
   confirmFollowUpTxn: 'confirm-follow-up-txns-checkbox',
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',
+  signAccountOpScrollView: 'sign-account-op-scroll-view',
   maxAvailableAmount: 'max-available-amount',
   // Swap & Bridge selectors
   selectRouteButton: 'select-route',
