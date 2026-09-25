@@ -165,7 +165,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     footerButton: {
       ...spacings.mb0,
-      ...(isMobile ? { ...spacings.phSm, height: 46 } : { ...spacings.pl, ...spacings.prLg })
+      ...(isMobile ? { ...spacings.phSm } : { ...spacings.pl, ...spacings.prLg })
     }
   })
 
