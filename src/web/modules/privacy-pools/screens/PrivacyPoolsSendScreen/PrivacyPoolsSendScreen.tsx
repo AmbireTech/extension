@@ -6,13 +6,15 @@ import { useModalize } from 'react-native-modalize'
 import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import Alert from '@common/components/Alert'
-import Button from '@common/components/Button'
+import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useNavigation from '@common/hooks/useNavigation'
@@ -23,6 +25,7 @@ import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
+import { AmountFieldMode, getAmountsFromFieldValue } from '@web/modules/privacy-pools/utils/amount'
 
 const DEFAULT_ADDRESS_STATE: AddressState = {
   fieldValue: '',
@@ -31,15 +34,11 @@ const DEFAULT_ADDRESS_STATE: AddressState = {
   isDomainResolving: false
 }
 
-// Nothing to price it in: the pooled tokens are not the selected account's portfolio
-const NO_PRICES: never[] = []
-
-// There is no fiat mode to switch to without prices
-const noop = () => {}
+const NO_AMOUNTS = { amount: '', amountInFiat: '' }
 
 /**
  * Send from a Privacy Pools account - a withdrawal, in the protocol's terms - laid out like the
- * regular Send: a recipient, a token and an amount.
+ * regular Send: a recipient, a token and an amount, typed in the token or in USD.
  *
  * Only what the association set has approved can be sent. Proving, the fee and sending happen in
  * `PrivacyPoolsSendSheet`, the way the regular Send hands over to its fee sheet: the proof takes
@@ -51,6 +50,7 @@ const PrivacyPoolsSendScreen = () => {
   const {
     operation,
     getNetworkName,
+    getTokenPrice,
     prepareWithdrawal,
     broadcastWithdrawal,
     dismissOperation,
@@ -61,7 +61,10 @@ const PrivacyPoolsSendScreen = () => {
 
   const [addressState, setAddressState] = useState<AddressState>(DEFAULT_ADDRESS_STATE)
   const [selectedTokenValue, setSelectedTokenValue] = useState('')
-  const [amount, setAmount] = useState('')
+  // Both sides of the amount are kept, like the regular Send's, so switching what it is typed in
+  // shows the other side instead of starting over
+  const [amounts, setAmounts] = useState(NO_AMOUNTS)
+  const [amountFieldMode, setAmountFieldMode] = useState<AmountFieldMode>('token')
 
   const updateAddressState = useCallback((update: AddressStateOptional) => {
     setAddressState((previous) => ({ ...previous, ...update }))
@@ -82,21 +85,60 @@ const PrivacyPoolsSendScreen = () => {
 
   const handleChangeToken = useCallback((option: SelectValue) => {
     setSelectedTokenValue(String(option.value))
-    setAmount('')
+    setAmounts(NO_AMOUNTS)
   }, [])
+
+  const tokenPrice = useMemo(
+    () => (selectedToken ? getTokenPrice(selectedToken.chainId, selectedToken.tokenAddress) : null),
+    [getTokenPrice, selectedToken]
+  )
+  // There is nothing to type a USD amount against without a price
+  const fieldMode: AmountFieldMode = tokenPrice === null ? 'token' : amountFieldMode
+
+  const setAmountFieldValue = useCallback(
+    (fieldValue: string) =>
+      setAmounts(
+        getAmountsFromFieldValue({
+          fieldValue,
+          fieldMode,
+          price: tokenPrice,
+          decimals: selectedToken?.decimals ?? 18
+        })
+      ),
+    [fieldMode, selectedToken?.decimals, tokenPrice]
+  )
+  const switchAmountFieldMode = useCallback(
+    () => setAmountFieldMode((mode) => (mode === 'token' ? 'fiat' : 'token')),
+    []
+  )
 
   const maxAmount = useMemo(
     () =>
       selectedToken ? formatUnits(selectedToken.availableAmount, selectedToken.decimals) : '0',
     [selectedToken]
   )
-  const setMaxAmount = useCallback(() => setAmount(maxAmount), [maxAmount])
+  const setMaxAmount = useCallback(
+    () =>
+      setAmounts(
+        getAmountsFromFieldValue({
+          fieldValue: maxAmount,
+          fieldMode: 'token',
+          price: tokenPrice,
+          decimals: selectedToken?.decimals ?? 18
+        })
+      ),
+    [maxAmount, selectedToken?.decimals, tokenPrice]
+  )
 
+  const { amount } = amounts
   const parsedAmount = useMemo(() => {
     if (!selectedToken || !amount) return null
 
     try {
-      return parseUnits(amount, selectedToken.decimals)
+      return parseUnits(
+        getSafeAmountFromFieldValue(amount, selectedToken.decimals),
+        selectedToken.decimals
+      )
     } catch {
       // An in-progress entry like "0." is not an error worth showing; the button stays disabled
       return null
@@ -165,7 +207,7 @@ const PrivacyPoolsSendScreen = () => {
     if (!wasSent) return
 
     setAddressState(DEFAULT_ADDRESS_STATE)
-    setAmount('')
+    setAmounts(NO_AMOUNTS)
     navigate(ROUTES.dashboard)
   }, [dismissOperation, navigate, operation?.status])
 
@@ -177,21 +219,30 @@ const PrivacyPoolsSendScreen = () => {
     [operation]
   )
 
+  // Priced by the Privacy Pools controller - the pooled tokens are not the selected account's
+  // portfolio
   const selectedTokenForField = useMemo(
-    () => (selectedToken ? { symbol: selectedToken.symbol, priceIn: NO_PRICES } : null),
-    [selectedToken]
+    () =>
+      selectedToken
+        ? {
+            symbol: selectedToken.symbol,
+            priceIn: tokenPrice === null ? [] : [{ baseCurrency: 'usd', price: tokenPrice }]
+          }
+        : null,
+    [selectedToken, tokenPrice]
   )
 
   return (
     <Wrapper>
       <Content
         buttons={
-          <Button
+          <ButtonWithLoader
             testID="privacy-pools-send-button"
-            text={t('Send')}
+            text={t('Proceed')}
             onPress={handleSend}
             disabled={!canSend}
-            hasBottomSpacing={false}
+            isLoading={isTransferInFlight}
+            size={isWeb ? 'smaller' : 'regular'}
           />
         }
       >
@@ -228,29 +279,21 @@ const PrivacyPoolsSendScreen = () => {
             label={t('Send token')}
             fromTokenOptions={withdrawTokens}
             fromTokenValue={selectedToken || undefined}
-            fromAmountValue={amount}
+            fromAmountValue={fieldMode === 'token' ? amount : amounts.amountInFiat}
             fromTokenAmountSelectDisabled={!withdrawTokens.length}
             handleChangeFromToken={handleChangeToken}
             fromSelectedToken={selectedTokenForField}
             fromAmount={amount}
-            fromAmountFieldMode="token"
+            fromAmountInFiat={amounts.amountInFiat}
+            fromAmountFieldMode={fieldMode}
             maxFromAmount={maxAmount}
             validateFromAmount={amountValidation}
-            onFromAmountChange={setAmount}
-            handleSwitchFromAmountFieldMode={noop}
+            onFromAmountChange={setAmountFieldValue}
+            handleSwitchFromAmountFieldMode={switchAmountFieldMode}
             handleSetMaxFromAmount={setMaxAmount}
             isMaxAmountLoading={false}
             inputTestId="privacy-pools-amount-field"
             selectTestId="privacy-pools-tokens-select"
-          />
-
-          <Alert
-            type="info"
-            size="sm"
-            style={spacings.mtSm}
-            text={t(
-              'The address you send to cannot be linked to how the funds got into this account. The network fee is taken from the amount you send, so that address does not need any ETH. Nothing is sent until you confirm the fee.'
-            )}
           />
         </ScrollableWrapper>
       </Content>

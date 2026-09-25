@@ -270,6 +270,7 @@ const usePrivacyPools = () => {
     operation,
     tokenBalances,
     getNetworkName,
+    getTokenPrice,
     syncChain,
     syncAllChains,
     prepareWithdrawal,
