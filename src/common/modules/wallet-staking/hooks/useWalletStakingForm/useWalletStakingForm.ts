@@ -589,7 +589,12 @@ const useWalletStakingForm = () => {
 
     if (amountInWei <= 0n || hasInsufficientBalance) return
 
-    if (mode === 'unstake' && shareValue === null) {
+    if (mode === 'stake') {
+      dispatchStakingRequest(getStakeWalletCalls(amountInWei))
+      return
+    }
+
+    if (shareValue === null) {
       addToast(t("We couldn't load the unstaking details. Please try again."), { type: 'error' })
       void loadShareValue()
       return
@@ -597,12 +602,8 @@ const useWalletStakingForm = () => {
 
     const missingPendingShares =
       totalPendingShares > xWalletBalance ? totalPendingShares - xWalletBalance : 0n
-    const calls =
-      mode === 'stake'
-        ? getStakeWalletCalls(amountInWei)
-        : getUnstakeWalletCalls(amountInWei, shareValue!, missingPendingShares)
 
-    dispatchStakingRequest(calls)
+    dispatchStakingRequest(getUnstakeWalletCalls(amountInWei, shareValue, missingPendingShares))
   }, [
     account,
     addToast,

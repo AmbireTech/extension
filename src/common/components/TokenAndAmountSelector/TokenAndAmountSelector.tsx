@@ -1,5 +1,5 @@
 import React, { ComponentProps, FC, memo, ReactNode } from 'react'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { Pressable, PressableStateCallbackType, View, ViewStyle } from 'react-native'
 
 import FlipIcon from '@common/assets/svg/FlipIcon'
 import AmountInput from '@common/components/AmountInput'
@@ -15,6 +15,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import getStyles from './styles'
+
+type PressableStateWithHover = PressableStateCallbackType & { hovered?: boolean }
 
 type Props = {
   /** Shown above the balance, e.g. "You send". */
@@ -120,7 +122,7 @@ const TokenAndAmountSelector: FC<Props> = ({
                 style={styles.switchAmountFieldMode}
                 disabled={disabled || amountFieldModeSwitch.disabled}
               >
-                {({ hovered }: any) => (
+                {({ hovered }: PressableStateWithHover) => (
                   <>
                     <Text
                       fontSize={12}

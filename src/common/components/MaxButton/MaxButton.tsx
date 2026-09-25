@@ -1,5 +1,5 @@
 import React from 'react'
-import { Pressable, StyleProp, ViewStyle } from 'react-native'
+import { Pressable, PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -7,6 +7,8 @@ import useTheme from '@common/hooks/useTheme'
 import { hexToRgba } from '@common/styles/utils/common'
 
 import getStyles from './styles'
+
+type PressableStateWithHover = PressableStateCallbackType & { hovered?: boolean }
 
 interface Props {
   onPress: () => void
@@ -22,7 +24,7 @@ const MaxButton = ({ onPress, disabled, testID, style }: Props) => {
 
   return (
     <Pressable
-      style={({ hovered }: any) => [
+      style={({ hovered }: PressableStateWithHover) => [
         styles.maxButton,
         {
           backgroundColor:

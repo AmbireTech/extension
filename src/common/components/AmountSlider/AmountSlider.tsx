@@ -11,12 +11,11 @@ import useTheme from '@common/hooks/useTheme'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
 import { THEME_TYPES } from '@common/styles/theme/types'
 
-import getStyles from './styles'
+import getStyles, { MARK_SIZE } from './styles'
 
 const THUMB_SIZE = 20
-// Matches the track's height (and so its corner radius), so a dot at either end fills the track's
-// rounded cap exactly - see the edge alignment in markers.
-const MARK_DOT_SIZE = 6
+// How far a dot at either end of the track sits from that end - see the edge alignment in markers.
+const EDGE_MARK_INSET = 1
 const SLIDER_STEPS = 10000n
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
@@ -210,7 +209,11 @@ const AmountSlider = ({
       // Those are pulled fully inside the track instead, so they sit flush with its rounded caps
       // rather than hanging half a dot over the end.
       const edgeOffset =
-        position <= 0 ? 1 : position >= width ? -MARK_DOT_SIZE + 1 : -MARK_DOT_SIZE / 2
+        position <= 0
+          ? EDGE_MARK_INSET
+          : position >= width
+            ? -MARK_SIZE - EDGE_MARK_INSET
+            : -MARK_SIZE / 2
 
       return {
         ...mark,

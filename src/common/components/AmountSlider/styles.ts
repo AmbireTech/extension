@@ -19,7 +19,8 @@ interface Style {
 
 const THUMB_SIZE = 20
 const TRACK_HEIGHT = 6
-const MARK_SIZE = TRACK_HEIGHT - 2
+/** The dots' diameter: 1px short of the track on each side, so an end dot sits inside its rounded cap. */
+export const MARK_SIZE = TRACK_HEIGHT - 2
 const PERCENTAGE_MIN_WIDTH = 28
 // The thumb is the tallest part of the slider, so it sets the height and everything else is
 // centered against it.
