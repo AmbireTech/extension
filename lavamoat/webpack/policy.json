@@ -2613,7 +2613,7 @@
         "@babel/runtime": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "react": true,
-        "react-native-reanimated>react-native-is-edge-to-edge": true,
+        "expo-status-bar>react-native-is-edge-to-edge": true,
         "react-native-web": true,
         "react-native-worklets": true
       }
