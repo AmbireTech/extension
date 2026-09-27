@@ -11,6 +11,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -112,7 +113,14 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
           ...current,
           [rowId]: { isLoading: false }
         }))
-      } catch {
+      } catch (error) {
+        const deploymentError = new Error(
+          `Failed to prepare Safe deployment for ${account.addr} on chain ${chainId.toString()}.`,
+          { cause: error }
+        )
+        console.error(deploymentError.message, error)
+        captureException(deploymentError)
+
         if (!isMountedRef.current) return
         setDeploymentRows((current) => ({
           ...current,
