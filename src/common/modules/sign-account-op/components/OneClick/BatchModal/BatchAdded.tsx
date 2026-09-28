@@ -96,7 +96,8 @@ const BatchAdded: FC<Props> = ({
           flexbox.alignCenter,
           // In a narrow view the header already spaces the content like on mobile
           isWeb && !isNarrowWebLayout && spacings.ptMd,
-          isWeb && spacings.pbSm
+          // In a narrow view the footer pads its own bottom edge
+          isWeb && !isNarrowWebLayout && spacings.pbSm
         ]}
       >
         {isWeb && (
@@ -136,8 +137,14 @@ const BatchAdded: FC<Props> = ({
         <Text fontSize={12} weight="medium" appearance="tertiaryText" style={text.center}>
           {t('You can add more transactions or\nmanage this batch on the dashboard.')}
         </Text>
-        {isMobile && <View style={flexbox.flex1} />}
-        <FooterGlassView size="sm" fullWidth={isNarrowWebLayout}>
+        {(isMobile || isNarrowWebLayout) && <View style={flexbox.flex1} />}
+        <FooterGlassView
+          size="sm"
+          // In a narrow view the footer sits under the content like on mobile, instead of floating over it
+          absolute={!isNarrowWebLayout}
+          fullWidth={isNarrowWebLayout}
+          innerContainerStyle={isNarrowWebLayout ? spacings.ph0 : undefined}
+        >
           {isNarrowWebLayout ? (
             // Stacked full-width buttons, primary on top - same as the mobile footer
             <>

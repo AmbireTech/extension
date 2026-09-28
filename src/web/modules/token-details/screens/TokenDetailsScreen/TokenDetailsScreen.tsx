@@ -78,12 +78,8 @@ const TokenDetailsScreen = () => {
         contentContainerStyle={[
           flexbox.flex1,
           spacings.phSm,
-          {
-            // In the compact side-panel layout the footer's own bottom: 0 + paddingBottom:
-            // SPACING_SM already bakes the gap into the measured footerHeight, so adding
-            // SPACING_SM again here would double-count it.
-            paddingBottom: footerHeight ? footerHeight + (isNarrowWebLayout ? 0 : SPACING_SM) : 124
-          }
+          // In a narrow view the footer sits under the content, so no space has to be reserved for it
+          !isNarrowWebLayout && { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 124 }
         ]}
       >
         <HideTokenModal
@@ -122,10 +118,11 @@ const TokenDetailsScreen = () => {
       </ScrollableWrapper>
       <FooterGlassView
         size="sm"
+        // In a narrow view the footer sits under the content like on mobile, instead of floating over it
+        absolute={!isNarrowWebLayout}
         fullWidth={isNarrowWebLayout}
         // On narrow side panels the footer has no glass/blur backing (see FooterGlassView's
-        // flat-footer branch), so it otherwise floats fully transparent over the scrolled
-        // content. Back it with the same page background instead.
+        // flat-footer branch), so back it with the same page background.
         style={
           isNarrowWebLayout
             ? {
