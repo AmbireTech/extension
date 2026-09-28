@@ -13,6 +13,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
+
 // The Hashes/Parsed/Raw tabs used to be sub-tabs nested inside a single "Hashes and JSON" tab.
 // They are flattened into top-level tabs here, alongside Overview, to remove that extra level.
 export type SafeAccountTab = 'overview' | SafeEip712ActiveTab

@@ -18,6 +18,7 @@ import ErrorInformation from '@common/modules/sign-account-op/components/ErrorIn
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
@@ -35,14 +36,13 @@ import {
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
-import SafeAccountTabs from '@web/modules/sign-account-op/components/SafeAccountTabs'
 
 import getStyles from './styles'
 
 import type { Key } from '@ambire-common/interfaces/keystore'
 import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import type { SafeAccountTab } from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
-import type { SafeAccountTab } from '@web/modules/sign-account-op/components/SafeAccountTabs'
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
