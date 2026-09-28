@@ -2026,7 +2026,7 @@
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
-    "@react-native-async-storage/async-storage>idb": {
+    "idb": {
       "globals": {
         "DOMException": true,
         "IDBCursor": true,
