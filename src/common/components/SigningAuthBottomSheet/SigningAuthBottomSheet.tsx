@@ -12,6 +12,7 @@ import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { DEV_PREFILLED_PASSWORD, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
@@ -58,6 +59,7 @@ const SigningAuthBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { isNarrowWebLayout } = useCompactLayout()
   const [password, setPassword] = useState(DEV_PREFILLED_PASSWORD)
   // Focusing while the sheet is still animating shifts the layout under it, so the field waits
   // for the sheet to be up. Web has no such wait - it keeps the plain `autoFocus`.
@@ -104,7 +106,8 @@ const SigningAuthBottomSheet = ({
       onOpened={handleOpened}
       onClosed={handleClosed}
       adjustToContentHeight
-      style={isWeb ? { maxWidth: 432 } : undefined}
+      // A narrow view turns the modal into a full-width bottom sheet, so the cap only fits the modal
+      style={isWeb && !isNarrowWebLayout ? { maxWidth: 432 } : undefined}
     >
       <ModalHeader handleClose={onCancel} title={title} />
       <Text fontSize={14} appearance="secondaryText" style={[text.center, spacings.mbLg]}>
