@@ -257,47 +257,33 @@ const SignInWithEthereum = ({
 
   return (
     <Container>
-      {isNarrowWebLayout ? (
-        <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
-          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
+          {
+            marginBottom: SPACING_MD * responsiveSizeMultiplier
+          }
+        ]}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <Text
+            weight="medium"
+            // In a narrow view the same size as the titles of the other request screens
+            fontSize={isMobile ? 20 : (isNarrowWebLayout ? 20 : 24) * responsiveSizeMultiplier}
+            style={spacings.mrSm}
+          >
             {t('Sign-in request')}
           </Text>
-          <View style={[flexbox.alignStart, spacings.mtTy]}>
-            <NetworkBadge
-              chainId={signMessageState.messageToSign?.chainId}
-              responsiveSizeMultiplier={responsiveSizeMultiplier}
-              withOnPrefix
-            />
-          </View>
         </View>
-      ) : (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            {
-              marginBottom: SPACING_MD * responsiveSizeMultiplier
-            }
-          ]}
-        >
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text
-              weight="medium"
-              fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
-              style={spacings.mrSm}
-            >
-              {t('Sign-in request')}
-            </Text>
-          </View>
-          <NetworkBadge
-            chainId={signMessageState.messageToSign?.chainId}
-            responsiveSizeMultiplier={responsiveSizeMultiplier}
-            withOnPrefix
-          />
-          {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
-        </View>
-      )}
+        <NetworkBadge
+          chainId={signMessageState.messageToSign?.chainId}
+          responsiveSizeMultiplier={responsiveSizeMultiplier}
+          withOnPrefix
+        />
+        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
+      </View>
       <View style={styles.container}>
         <View
           style={{

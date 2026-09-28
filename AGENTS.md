@@ -17,7 +17,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - The extension's scripts (background, content script, inpage, UI) and the messaging between them are documented in `src/web/extension-services/README.md` and `src/web/extension-services/messengers/README.md`
 - `src/ambire-common` is a **git submodule** that contains the business logic of the application. Changes inside it are in a separate repo and require a separate commit flow
 - `src/common` can be imported by all environments, but environments shouldn't import from other environments (e.g., `web/` SHOULD NOT import from `mobile/`)
-- There are environment specific files. Be VERY careful when creating files and debugging as they exist in two ways:
+- Environment-specific files exist in two forms, so check which one applies before creating or debugging a file:
   - Have the file in the environment folder (e.g., `mobile/`, `web/`) and import it from there
   - Use the `.native.tsx` or `.web.tsx` suffix and import from `common/`, which automatically resolves to the correct file based on the environment
 
@@ -56,7 +56,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 ### Code quality:
 
 - Ensure that list keys are unique and stable (NEVER use the array index)
-- ALWAYS memoize functions, components and complex values with `useMemo`, `useCallback` and `React.memo`.
+- Memoize functions, components and complex values with `useMemo`, `useCallback` and `React.memo`.
 - ALWAYS use state selectors with `useControllerState` if reading a specific slice of the state - `const { state: mainStatuses, dispatch: mainDispatch } = useController('MainController', selectMainStatuses)`, where selectMainStatuses is defined as a pure function outside of the component (`const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses`)
 - ALWAYS ensure that subscriptions, event listeners, timers and other side effects are properly cleaned up. Even if it's a simple `setTimeout` used to reject a promise, it should be cleared.
 - NEVER delete existing comments when updating a code block. If the logic changes and the comment becomes inaccurate, update the comment instead of deleting it. Delete a comment ONLY if the logic it describes is completely removed or the new logic is entirely self-explanatory without the comment

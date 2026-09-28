@@ -127,7 +127,8 @@ const NetworksScreen = () => {
   return (
     <LayoutWrapper>
       <HeaderWithTitle displayBackButtonIn="always" />
-      <View style={[flexbox.flex1, spacings.pv, spacings.phSm]}>
+      {/* In a narrow view the footer pads its own bottom edge */}
+      <View style={[flexbox.flex1, spacings.pv, spacings.phSm, isNarrowWebLayout && spacings.pb0]}>
         <Search control={control} autoFocus containerStyle={spacings.mbSm} />
         <NetworkBottomSheet
           chainId={settingsChainId}
@@ -139,7 +140,13 @@ const NetworksScreen = () => {
           sheetRef={addNetworkBottomSheetRef}
           closeBottomSheet={closeAddNetworkBottomSheet}
         />
-        <ScrollableWrapper style={{ paddingBottom: footerHeight ? footerHeight + SPACING_SM : 72 }}>
+        <ScrollableWrapper
+          style={
+            isNarrowWebLayout
+              ? undefined
+              : { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 72 }
+          }
+        >
           <AllNetworksOption onPress={handleChangeNetwork} />
           <Networks
             search={search}
@@ -148,7 +155,14 @@ const NetworksScreen = () => {
             onPress={handleChangeNetwork}
           />
         </ScrollableWrapper>
-        <FooterGlassView size="sm" fullWidth={isNarrowWebLayout} onLayout={handleFooterLayout}>
+        <FooterGlassView
+          size="sm"
+          // In a narrow view the footer sits under the list like on mobile, instead of floating over it
+          absolute={!isNarrowWebLayout}
+          fullWidth={isNarrowWebLayout}
+          innerContainerStyle={isNarrowWebLayout ? spacings.ph0 : undefined}
+          onLayout={handleFooterLayout}
+        >
           <Button
             text={t('Add new network')}
             size={isNarrowWebLayout ? 'regular' : 'smaller'}

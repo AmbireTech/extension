@@ -4,13 +4,12 @@ description: >
   Generates public GitHub release changelogs from merge commits. Compares the release branch/tag
   against main by default, extracts merged PRs, links every entry to its GitHub PR, pulls PR details
   when merge metadata is unclear, marks marketing-worthy changes with 📣, and always appends a Full
-  Changelog compare link.
+  Changelog compare link. Use when the user asks to create, update, or review a changelog for a release.
 ---
 
 # Changelogger
 
 Generate a public GitHub Release changelog from git history.
-Use this skill when the user asks to create, update, or review a changelog for a release.
 
 Default assumption:
 

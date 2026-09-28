@@ -3,10 +3,10 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import HoverablePressable from '@common/components/HoverablePressable'
 import ManifestImage from '@common/components/ManifestImage'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -18,7 +18,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls/lazyCompactHumanizedCalls'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 import CompactMessagePreview from './lazyCompactMessagePreview'
 import {
@@ -83,13 +83,15 @@ const RequestCard = React.memo(function RequestCard({
   networks,
   onOpen,
   shouldRenderHumanization,
-  humanizedMessage
+  humanizedMessage,
+  isLast
 }: {
   request: UserRequest
   networks: Network[]
   onOpen: (requestId: UserRequest['id']) => void
   shouldRenderHumanization: boolean
   humanizedMessage?: IrMessage
+  isLast: boolean
 }) {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -104,7 +106,7 @@ const RequestCard = React.memo(function RequestCard({
   const handleOpen = useCallback(() => onOpen(request.id), [onOpen, request.id])
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isLast && spacings.mb0]}>
       <View style={styles.cardHeader}>
         <View style={styles.cardHeaderLeft}>
           <View style={styles.cardIcon}>
@@ -175,7 +177,7 @@ type Props = {
 
 const PendingRequests = ({ style }: Props) => {
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
   const [shouldRenderHumanization, setShouldRenderHumanization] = useState(false)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -221,25 +223,19 @@ const PendingRequests = ({ style }: Props) => {
   const handleSummaryPress = useCallback(() => openBottomSheet(), [openBottomSheet])
   const sheetHeader = useMemo(
     () => (
+      // Centered title on mobile, and a back arrow with the title next to it on web
       <View style={styles.sheetHeader}>
-        <View style={[flexbox.flex1, spacings.mrSm]}>
-          <Text fontSize={20} weight="semiBold" style={spacings.mbMi}>
-            {t('Pending requests')}
-          </Text>
-          <Text appearance="secondaryText">{t('Open any request to review it.')}</Text>
-        </View>
-        <HoverablePressable
-          onPress={handleClose}
-          hitSlop={8}
-          style={styles.closeButton}
-          accessibilityRole="button"
-          accessibilityLabel={t('Close pending requests')}
-        >
-          <CloseIcon color={theme.iconPrimary} width={14} height={14} />
-        </HoverablePressable>
+        <ModalHeader
+          title={t('Pending requests')}
+          handleClose={handleClose}
+          style={spacings.mbMi}
+        />
+        <Text appearance="secondaryText" style={isMobile ? text.center : undefined}>
+          {t('Open any request to review it.')}
+        </Text>
       </View>
     ),
-    [handleClose, styles.closeButton, styles.sheetHeader, t, theme.iconPrimary]
+    [handleClose, styles.sheetHeader, t]
   )
   const previewIcons = useMemo(
     () => (
@@ -296,7 +292,7 @@ const PendingRequests = ({ style }: Props) => {
         backgroundColor="secondaryBackground"
         HeaderComponent={sheetHeader}
       >
-        {visibleUserRequests.map((request) => (
+        {visibleUserRequests.map((request, index) => (
           <RequestCard
             key={String(request.id)}
             request={request}
@@ -304,6 +300,7 @@ const PendingRequests = ({ style }: Props) => {
             onOpen={openRequest}
             shouldRenderHumanization={shouldRenderHumanization}
             humanizedMessage={humanizedMessage}
+            isLast={index === visibleUserRequests.length - 1}
           />
         ))}
       </BottomSheet>

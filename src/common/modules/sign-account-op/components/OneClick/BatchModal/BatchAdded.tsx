@@ -8,6 +8,7 @@ import BatchIconAnimated from '@common/components/BatchIconAnimated'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -16,6 +17,7 @@ import ActionHeader from '@common/modules/action-requests/components/ActionHeade
 import Header from '@common/modules/header/components/Header'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING_MD } from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
@@ -96,48 +98,61 @@ const BatchAdded: FC<Props> = ({
           flexbox.alignCenter,
           // In a narrow view the header already spaces the content like on mobile
           isWeb && !isNarrowWebLayout && spacings.ptMd,
-          isWeb && spacings.pbSm
+          // In a narrow view the footer pads its own bottom edge
+          isWeb && !isNarrowWebLayout && spacings.pbSm
         ]}
       >
-        {isWeb && (
-          <Text fontSize={20} weight="medium" style={[spacings.mbMd, text.center]}>
-            {title}
-          </Text>
-        )}
-        <BatchIconAnimated />
-        <Text fontSize={20} weight="medium" style={[spacings.mbSm, spacings.mtLg, text.center]}>
-          {t('Successfully added to batch!')}
-        </Text>
-        <Text
-          weight="medium"
-          appearance="secondaryText"
-          style={[text.center, { marginBottom: SPACING_MD * 2 }]}
+        {/* Scrolls on short screens, so the content is never cut off above the footer */}
+        <ScrollableWrapper
+          style={common.fullWidth}
+          contentContainerStyle={flexbox.alignCenter}
+          showsVerticalScrollIndicator={false}
         >
-          {t('You are saving on gas fees compared to sending\nindividually.')}
-        </Text>
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.phSm,
-            spacings.mb,
-            spacings.pvTy,
-            {
-              borderRadius: 64,
-              backgroundColor: theme.primaryAccent100
-            }
-          ]}
-        >
-          <BatchIcon width={24} height={24} color={theme.primaryAccent300} />
-          <Text style={[spacings.mlSm]} color={theme.primaryAccent300}>
-            {t('{{ callsCount }} transactions in batch', { callsCount })}
+          {isWeb && (
+            <Text fontSize={20} weight="medium" style={[spacings.mbMd, text.center]}>
+              {title}
+            </Text>
+          )}
+          <BatchIconAnimated />
+          <Text fontSize={20} weight="medium" style={[spacings.mbSm, spacings.mtLg, text.center]}>
+            {t('Successfully added to batch!')}
           </Text>
-        </View>
-        <Text fontSize={12} weight="medium" appearance="tertiaryText" style={text.center}>
-          {t('You can add more transactions or\nmanage this batch on the dashboard.')}
-        </Text>
-        {isMobile && <View style={flexbox.flex1} />}
-        <FooterGlassView size="sm" fullWidth={isNarrowWebLayout}>
+          <Text
+            weight="medium"
+            appearance="secondaryText"
+            style={[text.center, { marginBottom: SPACING_MD * 2 }]}
+          >
+            {t('You are saving on gas fees compared to sending\nindividually.')}
+          </Text>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              spacings.phSm,
+              spacings.mb,
+              spacings.pvTy,
+              {
+                borderRadius: 64,
+                backgroundColor: theme.primaryAccent100
+              }
+            ]}
+          >
+            <BatchIcon width={24} height={24} color={theme.primaryAccent300} />
+            <Text style={[spacings.mlSm]} color={theme.primaryAccent300}>
+              {t('{{ callsCount }} transactions in batch', { callsCount })}
+            </Text>
+          </View>
+          <Text fontSize={12} weight="medium" appearance="tertiaryText" style={text.center}>
+            {t('You can add more transactions or\nmanage this batch on the dashboard.')}
+          </Text>
+        </ScrollableWrapper>
+        <FooterGlassView
+          size="sm"
+          // In a narrow view the footer sits under the content like on mobile, instead of floating over it
+          absolute={!isNarrowWebLayout}
+          fullWidth={isNarrowWebLayout}
+          innerContainerStyle={isNarrowWebLayout ? spacings.ph0 : undefined}
+        >
           {isNarrowWebLayout ? (
             // Stacked full-width buttons, primary on top - same as the mobile footer
             <>
