@@ -713,89 +713,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     )
   }
 
-  if (withMobileLayout) {
-    return (
-      <View style={{ width: '100%' }}>
-        {shouldShowDescriptionTitle && (
-          <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
-            {renderTitleParts(textSize)}
-          </View>
-        )}
-        {detailedRows.map((row) => {
-          const actionParts = getDetailedActionParts(row)
-          const isFlatCallRow = row.type === 'call' && !isNestedErc7730Row(row)
-          const rowKey = `${item.id}-${getErc7730RowLabel(row)}-${getErc7730RowValues(row)
-            .map((value) => value.id)
-            .join('-')}`
-
-          if (isNestedErc7730Row(row)) {
-            const nestedVisualizations = getErc7730RowValues(row).filter(isNestedErc7730Value)
-
-            return (
-              <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
-                {!!getErc7730RowLabel(row).trim() && (
-                  <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbTy}>
-                    {getErc7730RowLabel(row)}
-                  </Text>
-                )}
-                <View style={{ width: '100%' }}>
-                  {nestedVisualizations.map(renderNestedVisualization)}
-                </View>
-              </View>
-            )
-          }
-
-          if (actionParts) {
-            return (
-              <View
-                key={rowKey}
-                style={[
-                  { width: '100%', paddingVertical: SPACING_TY },
-                  isFlatCallRow && flatCallRowIndent
-                ]}
-              >
-                <Text fontSize={textSize} weight="semiBold" color={theme.secondaryAccent400}>
-                  {actionParts.action.content}
-                </Text>
-                {!!actionParts.recipientValues.length && (
-                  <View style={spacings.mtMi}>
-                    {renderDetailedValueLine(actionParts.recipientValues, 'start')}
-                  </View>
-                )}
-                {getDetailedValueLines(actionParts.rightValues)
-                  .filter((line) => line.length)
-                  .map((line) => (
-                    <View key={line.map((value) => value.id).join('-')} style={spacings.mtMi}>
-                      {renderDetailedValueLine(line, 'start')}
-                    </View>
-                  ))}
-              </View>
-            )
-          }
-
-          return (
-            <View
-              key={rowKey}
-              style={[
-                { width: '100%', paddingVertical: SPACING_TY },
-                isFlatCallRow && flatCallRowIndent
-              ]}
-            >
-              {!!getErc7730RowLabel(row).trim() && (
-                <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbMi}>
-                  {getErc7730RowLabel(row)}
-                </Text>
-              )}
-              {getDetailedValueLines(getErc7730RowValues(row)).map((line) =>
-                renderDetailedValueLine(line, 'start')
-              )}
-            </View>
-          )
-        })}
-      </View>
-    )
-  }
-
   return (
     <View style={{ width: '100%' }}>
       {shouldShowDescriptionTitle && (
@@ -838,12 +755,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 {
                   width: '100%',
                   paddingVertical: SPACING_TY,
-                  flexWrap: 'wrap'
+                  flexWrap: withMobileLayout ? 'nowrap' : 'wrap'
                 },
                 isFlatCallRow && flatCallRowIndent
               ]}
             >
-              <View style={{ flex: 1, minWidth: 160, marginRight: SPACING_SM }}>
+              <View
+                style={{ flex: 1, minWidth: withMobileLayout ? 0 : 160, marginRight: SPACING_SM }}
+              >
                 <Text
                   fontSize={textSize}
                   weight="semiBold"
@@ -864,7 +783,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   flexbox.alignEnd,
                   {
                     flex: 1.6,
-                    minWidth: 160
+                    minWidth: withMobileLayout ? 0 : 160
                   }
                 ]}
               >
@@ -886,7 +805,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               {
                 width: '100%',
                 paddingVertical: SPACING_TY,
-                flexWrap: 'wrap'
+                flexWrap: withMobileLayout ? 'nowrap' : 'wrap'
               },
               isFlatCallRow && flatCallRowIndent
             ]}
@@ -894,7 +813,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             <Text
               fontSize={textSize}
               appearance="secondaryText"
-              style={{ flex: 1, minWidth: 120, marginRight: SPACING_SM }}
+              style={{ flex: 1, minWidth: withMobileLayout ? 0 : 120, marginRight: SPACING_SM }}
             >
               {getErc7730RowLabel(row)}
             </Text>
@@ -904,7 +823,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 flexbox.alignEnd,
                 {
                   flex: 1.6,
-                  minWidth: 160
+                  minWidth: withMobileLayout ? 0 : 160
                 }
               ]}
             >
