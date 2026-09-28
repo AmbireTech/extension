@@ -7,6 +7,7 @@ import Spinner from '@common/components/Spinner'
 import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Main from '@common/modules/sign-message/components/Contents/main'
 import SignInWithEthereum from '@common/modules/sign-message/components/Contents/signInWithEthereum'
@@ -19,9 +20,12 @@ import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWin
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 
+import getStyles from './styles'
+
 const SignMessageScreen = () => {
   const closeActionWindow = useCloseActionWindow()
   const { isWideFooterLayout } = useCompactActionRequestLayout()
+  const { styles } = useTheme(getStyles)
   const {
     t,
     signMessageState,
@@ -98,7 +102,7 @@ const SignMessageScreen = () => {
             )
           }
 
-          return (
+          const actionFooter = (
             <ActionFooter
               onReject={handleReject}
               onResolve={signWithDefaultSignerIfPossible}
@@ -159,6 +163,11 @@ const SignMessageScreen = () => {
               ) : null}
             </ActionFooter>
           )
+
+          if (isWideFooterLayout) return actionFooter
+
+          // Same as the mobile footer - a flat panel with an accent top border
+          return <View style={styles.compactFooterContainer}>{actionFooter}</View>
         }}
       >
         <KeySelect
