@@ -5,11 +5,6 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 
-import type { WalletStakingTxnIdLookupError } from '@ambire-common/controllers/walletToken/walletToken'
-
-/** Why the transaction ID that the user entered didn't reveal a pending withdrawal. */
-export type WithdrawalTxnIdLookupError = WalletStakingTxnIdLookupError
-
 const selectPendingWithdrawals = (state: AllControllersMappingType['WalletTokenController']) =>
   state.pendingWithdrawals
 const selectIsWithdrawalsLookupEnabled = (
