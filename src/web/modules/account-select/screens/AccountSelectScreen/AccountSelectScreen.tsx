@@ -26,7 +26,7 @@ import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottom
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -78,7 +78,7 @@ const AccountSelectScreen = () => {
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
   // Reserves exactly as much scroll space as the floating footer occupies, so the last
-  // account in the list is never covered by it (the footer grows taller on narrow side panels).
+  // account in the list is never covered by it. The narrow view footer doesn't float.
   const [footerHeight, setFooterHeight] = useState(0)
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
@@ -176,9 +176,11 @@ const AccountSelectScreen = () => {
               opacity: shouldDisplayAccounts ? 1 : 0
             }
           ]}
-          contentContainerStyle={{
-            paddingBottom: footerHeight ? footerHeight + SPACING_SM : 88
-          }}
+          contentContainerStyle={
+            isNarrowWebLayout
+              ? undefined
+              : { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 88 }
+          }
           wrapperRef={flatlistRef}
           data={accounts}
           renderItem={renderItem}
@@ -188,13 +190,17 @@ const AccountSelectScreen = () => {
         />
         <FooterGlassView
           isSimpleBlur={false}
+          // In a narrow view the footer sits under the list like on mobile, instead of floating over it
+          absolute={!isNarrowWebLayout}
           fullWidth={isNarrowWebLayout}
+          size={isNarrowWebLayout ? 'sm' : 'md'}
+          innerContainerStyle={isNarrowWebLayout ? spacings.ph0 : undefined}
           onLayout={handleFooterLayout}
         >
           <View
             style={
               isNarrowWebLayout
-                ? { width: '100%', gap: SPACING_TY }
+                ? { width: '100%', gap: SPACING_SM }
                 : [flexbox.directionRow, flexbox.alignCenter]
             }
           >
