@@ -323,28 +323,19 @@ const CustomGasPrice = ({
         size="sm"
         style={spacings.mt}
         mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
-        innerContainerStyle={
-          isNarrowWebLayout
-            ? // The buttons stack here, and the primary one goes on top. Reversing the direction
-              // keeps the same child order as the row layouts, where the primary one goes last
-              { width: '100%', flexDirection: 'column-reverse' }
-            : undefined
-        }
+        innerContainerStyle={isNarrowWebLayout ? { width: '100%' } : undefined}
       >
-        <Button
-          type="secondary"
-          text={t('Cancel')}
-          onPress={closeBottomSheet}
-          hasBottomSpacing={false}
-          style={[
-            // Stacked buttons are spaced by the footer's gap, and a right margin would make this
-            // one narrower than the primary button
-            !isNarrowWebLayout && spacings.mrTy,
-            // flex: 1 would squash the height of the stacked narrow view buttons
-            isNarrowWebLayout ? { width: '100%' } : isCompactLayout ? flexbox.flex1 : { width: 100 }
-          ]}
-          size={isNarrowWebLayout ? 'regular' : 'smaller'}
-        />
+        {/* On web the header's back arrow already closes the sheet */}
+        {isMobile && (
+          <Button
+            type="secondary"
+            text={t('Cancel')}
+            onPress={closeBottomSheet}
+            hasBottomSpacing={false}
+            style={[spacings.mrTy, flexbox.flex1]}
+            size="smaller"
+          />
+        )}
         <Button
           type="primary"
           text={t('Save')}

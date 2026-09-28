@@ -10,7 +10,6 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
-import useCompactLayout from '@common/hooks/useCompactLayout'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -27,7 +26,6 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { isNarrowWebLayout } = useCompactLayout()
   const [name, setName] = useState('')
 
   const handleAddContact = () => {
@@ -67,21 +65,16 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
         style={spacings.mb2Xl}
       />
 
-      <FooterGlassView
-        size="sm"
-        absolute={false}
-        // Keep Cancel → primary child order for row layouts; reverse only when stacked
-        // so the primary action sits on top (same pattern as CustomGasPrice).
-        innerContainerStyle={isNarrowWebLayout ? { flexDirection: 'column-reverse' } : undefined}
-      >
-        <Button
-          hasBottomSpacing={false}
-          type="secondary"
-          text={t('Cancel')}
-          onPress={closeBottomSheet}
-          style={isWeb && { minWidth: 96, ...spacings.mrLg }}
-          size={isWeb ? 'smaller' : 'regular'}
-        />
+      <FooterGlassView size="sm" absolute={false}>
+        {/* On web the header's back arrow already closes the sheet */}
+        {isMobile && (
+          <Button
+            hasBottomSpacing={false}
+            type="secondary"
+            text={t('Cancel')}
+            onPress={closeBottomSheet}
+          />
+        )}
         <Button
           testID="form-add-to-contacts-button"
           style={isWeb && { minWidth: 160 }}

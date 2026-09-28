@@ -253,37 +253,28 @@ const EditApproval = ({
                   // flex: 1 would squash the height of the stacked narrow view buttons
                   style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}
                 />
-                <Button
-                  type={'secondary'}
-                  text={t('Cancel')}
-                  onPress={() => closeEditApprovals()}
-                  hasBottomSpacing={false}
-                  size={isNarrowWebLayout ? 'regular' : 'smaller'}
-                  style={[
-                    isNarrowWebLayout ? { width: '100%' } : flexbox.flex1,
-                    isMobile && spacings.mrTy
-                  ]}
-                />
+                {/* On web the header's back arrow already closes the sheet */}
+                {isMobile && (
+                  <Button
+                    type={'secondary'}
+                    text={t('Cancel')}
+                    onPress={() => closeEditApprovals()}
+                    hasBottomSpacing={false}
+                    size="smaller"
+                    style={[flexbox.flex1, spacings.mrTy]}
+                  />
+                )}
               </>
             ) : (
-              <>
-                <Button
-                  type="secondary"
-                  text={t('Cancel')}
-                  onPress={() => closeEditApprovals()}
-                  hasBottomSpacing={false}
-                  size="smaller"
-                  style={[{ width: 100 }, spacings.mrTy]}
-                />
-                <Button
-                  type="primary"
-                  text={t('Save')}
-                  onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
-                  hasBottomSpacing={false}
-                  size="smaller"
-                  style={[{ width: 100 }, flexbox.flex1]}
-                />
-              </>
+              // No Cancel here, the header's back arrow already closes the sheet
+              <Button
+                type="primary"
+                text={t('Save')}
+                onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
+                hasBottomSpacing={false}
+                size="smaller"
+                style={[{ width: 100 }, flexbox.flex1]}
+              />
             )}
           </FooterGlassView>
         </View>
