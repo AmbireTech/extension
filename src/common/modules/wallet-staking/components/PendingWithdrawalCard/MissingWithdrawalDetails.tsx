@@ -13,14 +13,14 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 
 import getStyles from './styles'
 
-import type { WithdrawalTxnIdLookupError } from '@common/modules/wallet-staking/hooks/usePendingWalletWithdrawal'
+import type { WalletStakingTxnIdLookupError } from '@ambire-common/controllers/walletToken/walletToken'
 
 interface Props {
   isWithdrawalsLookupEnabled: boolean
   txnId: string
   onTxnIdChange: (txnId: string) => void
   onFindByTxnId: () => void
-  txnIdLookupError: WithdrawalTxnIdLookupError | null
+  txnIdLookupError: WalletStakingTxnIdLookupError | null
   isTxnIdLookupLoading: boolean
   onEnableWithdrawalsLookup: () => void
 }
