@@ -15,11 +15,11 @@ import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import {
   getDetailedActionParts,
@@ -64,7 +64,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   showDescriptionTitle = false,
   nestingDepth = 0
 }) => {
-  const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactLayout()
   const nestedRowIndent = isNarrowWebLayout ? 0 : SPACING_SM
   // A `call` row the legacy modules humanized renders as one flat line, so it has no nested
   // visualization to draw a connector for. It still stands for one embedded call, so it takes the

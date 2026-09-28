@@ -13,9 +13,9 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls/lazyCompactHumanizedCalls'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -176,7 +176,7 @@ type Props = {
 const PendingRequests = ({ style }: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
   const [shouldRenderHumanization, setShouldRenderHumanization] = useState(false)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { state: currentUserRequest, dispatch: requestsDispatch } = useController(

@@ -3,8 +3,8 @@ import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
@@ -68,7 +68,7 @@ const Wrapper: FC<WrapperProps> = ({ children }) => {
 }
 
 const Content: FC<ContentProps> = ({ children, buttons }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   // Reserves exactly as much scroll space as the floating footer occupies, so content only
   // becomes scrollable once it would otherwise be covered by the footer, not before
   const [footerHeight, setFooterHeight] = useState(0)

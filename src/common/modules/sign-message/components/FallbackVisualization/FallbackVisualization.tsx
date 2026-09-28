@@ -22,10 +22,10 @@ import CopyText from '@common/components/CopyText'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import AnimatedDownArrow from '@common/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -174,7 +174,7 @@ const FallbackVisualization: FC<{
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { maxWidthSize, height: windowHeight } = useWindowSize()
   const outerViewRef = useRef<View>(null)
   const scrollViewRef = useRef<ScrollView>(null)

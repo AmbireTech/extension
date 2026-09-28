@@ -4,8 +4,8 @@ import { View } from 'react-native'
 
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -23,9 +23,11 @@ const RpcCard = ({
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { isTwoColumnLayout } = useCompactActionRequestLayout()
+  const { isTwoColumnLayout } = useCompactLayout()
   return (
-    <View style={[flexbox.flex1, common.borderRadiusPrimary, isTwoColumnLayout && { maxHeight: 308 }]}>
+    <View
+      style={[flexbox.flex1, common.borderRadiusPrimary, isTwoColumnLayout && { maxHeight: 308 }]}
+    >
       <View
         style={[
           flexbox.directionRow,

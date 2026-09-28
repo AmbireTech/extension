@@ -19,9 +19,9 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
@@ -69,7 +69,7 @@ const OneClickEstimation = ({
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
   const { bottom } = useSafeAreaInsets()
-  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const chainId = signAccountOpController?.accountOp.chainId
   const network = useMemo(() => networks.find((n) => n.chainId === chainId), [networks, chainId])

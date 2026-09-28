@@ -3,8 +3,8 @@ import { FlatList, ScrollView, SectionList, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { getUiType } from '@common/utils/uiType'
@@ -52,7 +52,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   } = props
 
   const { styles, theme } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const {
     isScrollable,

@@ -4,8 +4,8 @@ import { View } from 'react-native'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import getStyles from './styles'
 
@@ -19,7 +19,7 @@ interface Props {
 const StakingFooter = ({ form }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { submitButtonText, isSubmitDisabled, onSubmit, onCancel } = form
   const footerButtonStyle = useMemo(
     () =>

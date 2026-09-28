@@ -7,8 +7,8 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import Spinner from '@common/components/Spinner'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -39,7 +39,7 @@ const SafeFooter = ({
   onSignLater: () => void
 }) => {
   const { t } = useTranslation()
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
   const [showSafeSigners, setShowSafeSigners] = useState(false)
 
   const isSingle = useMemo(() => {

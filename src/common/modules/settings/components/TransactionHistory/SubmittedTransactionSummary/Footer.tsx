@@ -15,10 +15,10 @@ import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
@@ -71,7 +71,7 @@ const Footer: FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
-  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()

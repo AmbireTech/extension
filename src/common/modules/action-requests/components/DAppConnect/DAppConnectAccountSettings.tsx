@@ -9,17 +9,17 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import DAppAccountList from '@common/modules/dapp-catalog/components/DAppAccountList'
 import ToggleDAppScopedAccounts from '@common/modules/dapp-catalog/components/ToggleDAppScopedAccounts'
 import useDAppAccountPreferences from '@common/modules/dapp-catalog/hooks/useDAppAccountPreferences'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 type Props = Pick<Dapp, 'id' | 'accountPreferences'>
 
 const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { ref, open, close } = useModalize()
   const { t } = useTranslation()
   const {

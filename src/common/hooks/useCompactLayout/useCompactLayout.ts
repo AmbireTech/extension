@@ -11,7 +11,7 @@ const { isPopup } = getUiType()
  * the request window that is sized to match it, and a narrow tab. The popup is excluded: it is
  * narrower than the breakpoint by definition, but its screens are designed for that width.
  */
-const useCompactActionRequestLayout = () => {
+const useCompactLayout = () => {
   const { minWidthSize } = useWindowSize()
   const isNarrowWebLayout = isWeb && !isPopup && minWidthSize('s')
   const isCompactLayout = isMobile || isNarrowWebLayout
@@ -26,4 +26,4 @@ const useCompactActionRequestLayout = () => {
   }
 }
 
-export default useCompactActionRequestLayout
+export default useCompactLayout

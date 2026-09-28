@@ -7,10 +7,10 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -29,7 +29,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const SurveyScreen = () => {
   const { addToast } = useToast()
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
   const {
     dispatch: dispatchToSurvey,
     state: { status, questions, answers, currentQuestion, errorMessage, surveyId, bannerId }

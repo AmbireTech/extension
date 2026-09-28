@@ -11,10 +11,10 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import AddNetworkBottomSheet from '@common/modules/networks/components/AddNetworkBottomSheet'
 import AllNetworksOption from '@common/modules/networks/components/AllNetworksOption/AllNetworksOption'
@@ -30,7 +30,7 @@ import { openInTab } from '@common/utils/links'
 const NetworksScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   // Reserves exactly as much scroll space as the floating footer occupies, so the last
   // network in the list is never covered by it (the footer grows taller on narrow side panels).
   const [footerHeight, setFooterHeight] = useState(0)

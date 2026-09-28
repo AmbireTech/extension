@@ -3,10 +3,10 @@ import { View } from 'react-native'
 
 import { isMobile, isWeb } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -16,7 +16,7 @@ const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsCon
 
 const ActionHeader = () => {
   const { theme } = useTheme()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   // In a narrow view the header is inset like the content below it, so all edge spacings are equal
   const webMarginHorizontal = isNarrowWebLayout ? spacings.mhSm : spacings.mhMi
   const { state: visibleUserRequests } = useController(

@@ -12,13 +12,13 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
 import QrSignRequestScreen from '@common/modules/hardware-wallets/screens/QrSignRequestScreen'
 import QrSignResponseScanner from '@common/modules/hardware-wallets/screens/QrSignResponseScanner'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 
 const { isTab } = getUiType()
@@ -52,7 +52,7 @@ const QrSigningFlowScreen = ({
   handleQrSigningFlowOnBackPressed
 }: Props) => {
   const { ref, open, close } = useModalize()
-  const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout: withMobileLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { bottom } = useSafeAreaInsets()

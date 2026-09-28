@@ -22,6 +22,7 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { SHOULD_USE_TAB_FOR_BIOMETRICS } from '@common/hooks/useSecretConfirmation'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -35,7 +36,6 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@common/utils/links/links'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
 
@@ -54,7 +54,7 @@ const KeyStoreUnlockScreen = () => {
     useKeyStoreUnlock()
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { styles } = useTheme(getStyles)
   const {
     state: { isPrivacyModeEnabled },

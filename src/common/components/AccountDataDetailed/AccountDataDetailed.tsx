@@ -6,9 +6,9 @@ import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -18,7 +18,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
   state.account
 
 const AccountDataDetailed = () => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', selectAccount)
   const reverseLookup = useReverseLookup({
     address: account?.addr || ''

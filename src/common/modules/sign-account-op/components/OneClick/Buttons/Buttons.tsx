@@ -11,7 +11,7 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { isMobile, isWeb } from '@common/config/env'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -50,7 +50,7 @@ const Buttons: FC<Props> = ({
   isLocalStateOutOfSync
 }) => {
   const { t } = useTranslation()
-  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const buttonSize = isCompactLayout ? 'regular' : 'smaller'
   const callsCount = getCallsCount(networkUserRequests)
 

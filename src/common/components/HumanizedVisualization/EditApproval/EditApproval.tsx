@@ -15,9 +15,9 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import { INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -48,7 +48,7 @@ const EditApprovalAmountInput = memo(
     getMaxAmountText,
     decimals
   }: EditApprovalAmountInputProps) => {
-    const { isNarrowWebLayout } = useCompactActionRequestLayout()
+    const { isNarrowWebLayout } = useCompactLayout()
     const [draftAmount, setDraftAmount] = useState(initialAmount)
 
     useEffect(() => {
@@ -134,7 +134,7 @@ const EditApproval = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isCompactLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
   const {
     ref: editApprovalsSheetRef,
     open: openEditApprovals,

@@ -27,9 +27,9 @@ import { RenderSelectedOptionParams, SelectValue } from '@common/components/Sele
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
@@ -73,7 +73,7 @@ const FeeSpeedLabel = ({
   isValue?: boolean
 }) => {
   const { t } = useTranslation()
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
 
   if (isValue) {
     return (
@@ -134,7 +134,7 @@ const Estimation = ({
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const {
     ref: customGasPriceSheetRef,
     open: openCustomGasPriceSheet,

@@ -12,10 +12,10 @@ import Banner from '@common/components/Banner'
 import ManifestImage from '@common/components/ManifestImage'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getStyles from '@common/modules/action-requests/styles/styles'
 import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -50,7 +50,7 @@ const UpdateChain = ({
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
-  const { isCompactLayout, isTwoColumnLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout, isTwoColumnLayout } = useCompactLayout()
 
   return (
     <>

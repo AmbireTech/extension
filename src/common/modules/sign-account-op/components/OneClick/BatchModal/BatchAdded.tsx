@@ -10,9 +10,9 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Header from '@common/modules/header/components/Header'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING_MD } from '@common/styles/spacings'
@@ -41,7 +41,7 @@ const BatchAdded: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const isWideWebLayout = isWeb && !isNarrowWebLayout
   const buttonSize = isWideWebLayout ? 'smaller' : 'regular'

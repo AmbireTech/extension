@@ -7,16 +7,16 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isBenzin, isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
 import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
 import { isExtension } from '@web/constants/browserapi'
 
 const useIsCompactBenzinButtonsLayout = () => {
   const { maxWidthSize } = useWindowSize()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   // Standalone Benzin website uses viewport width only; extension uses the shared side-panel rule.
   return (isBenzin && !maxWidthSize('m')) || (isExtension && isNarrowWebLayout)

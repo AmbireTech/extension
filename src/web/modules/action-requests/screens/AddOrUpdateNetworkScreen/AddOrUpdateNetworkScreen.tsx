@@ -2,6 +2,7 @@ import React from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import Spinner from '@common/components/Spinner'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
@@ -9,7 +10,6 @@ import AddChain from '@common/modules/action-requests/components/AddOrUpdateChai
 import AlreadyAddedChain from '@common/modules/action-requests/components/AddOrUpdateChain/AlreadyAddedChain'
 import UpdateChain from '@common/modules/action-requests/components/AddOrUpdateChain/UpdateChain'
 import useAddOrUpdateNetwork from '@common/modules/action-requests/hooks/useAddOrUpdateNetwork'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -52,7 +52,7 @@ const AddOrUpdateNetworkScreen = () => {
     view
   } = useAddOrUpdateNetwork()
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
 
   if (view === 'loading') {
     return (

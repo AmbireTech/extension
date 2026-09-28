@@ -6,8 +6,8 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import { Props as DualChoiceModalProps } from '@common/components/DualChoiceModal/DualChoiceModal'
 import CommonText, { Props } from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -77,7 +77,7 @@ const ButtonWrapper = ({
   reverse: boolean
 }) => {
   const { styles } = useTheme(getStyles)
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
 
   // Mobile and narrow web stack the buttons full-width, primary on top
   if (isCompactLayout) {
@@ -117,7 +117,7 @@ const DualChoiceWarningModal = ({
   type?: Type
 }) => {
   const { theme } = useTheme()
-  const { isCompactLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
 
   return (
     <Wrapper>

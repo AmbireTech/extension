@@ -15,9 +15,9 @@ import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
@@ -54,7 +54,7 @@ const RouteInfo: FC<Props> = ({
     dispatch: swapAndBridgeDispatch
   } = useController('SwapAndBridgeController')
   const { theme } = useTheme()
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
   const { t } = useTranslation()
   const {
     ref: feeInfoSheetRef,

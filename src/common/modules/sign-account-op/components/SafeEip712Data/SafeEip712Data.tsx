@@ -6,10 +6,10 @@ import { stringify } from '@ambire-common/libs/richJson/richJson'
 import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import spacings from '@common/styles/spacings'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import { getSafeEip712DataValue, getSafeEip712HashRows } from './helpers'
 import getStyles from './styles'
@@ -39,7 +39,7 @@ const SafeEip712Data: FC<Props> = ({
   onTabChange,
   hideTabs = false
 }) => {
-  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const [internalActiveTab, setInternalActiveTab] = useState<ActiveTab>('hashes')
