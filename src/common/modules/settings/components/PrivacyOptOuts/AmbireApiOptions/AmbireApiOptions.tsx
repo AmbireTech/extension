@@ -55,7 +55,7 @@ const AmbireApiOptions = () => {
           <OptOutControlOption
             title={t('Clear signing')}
             description={t(
-              `Fetch the latest standard for translating transactions. Disabling this is a huge security issue as transactions become unreadable`
+              `Fetch the latest standard for translating transactions. If you turn this off, some transactions can become unreadable and your security is reduced.`
             )}
             icon={<SearchIcon width={24} height={24} />}
             flag="clearSigning"
