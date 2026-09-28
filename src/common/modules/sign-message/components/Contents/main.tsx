@@ -142,7 +142,8 @@ const Main = ({
     <Container withScroll={shouldUseErc7730TypedMessageCard || isMobile}>
       {isNarrowWebLayout ? (
         <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
-          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
+          {/* Same size as the titles of the other request screens */}
+          <Text weight="medium" fontSize={20 * responsiveSizeMultiplier}>
             {t('Sign message')}
           </Text>
           <View
