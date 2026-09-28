@@ -147,14 +147,21 @@ test.describe(
       const expectedIds = Object.keys(EXPECTED_SEEDS)
       expect(await pages.recoveryPhrases.getSeedCount()).toBe(expectedIds.length)
       for (const [seedId, expected] of Object.entries(EXPECTED_SEEDS)) {
-        const { phrase, passphrase } = await pages.recoveryPhrases.revealSeed(seedId)
+        const { phrase, passphrase } = await pages.recoveryPhrases.revealSeed({
+          seedId: seedId,
+          confirmModal: false
+        })
         expect(phrase).toBe(expected.seed)
         if (expected.passPhrase) expect(passphrase).toBe(expected.passPhrase)
         else expect(passphrase).toBeNull()
       }
 
       for (const key of EXPORTABLE_KEYS) {
-        const privateKey = await pages.accountKeys.exportPrivateKey(key.addr, key.accountAddr)
+        const privateKey = await pages.accountKeys.exportPrivateKey({
+          keyAddr: key.addr,
+          accountAddr: key.accountAddr,
+          confirmModal: false
+        })
         expect(ethers.computeAddress(privateKey).toLowerCase()).toBe(key.addr.toLowerCase())
       }
 

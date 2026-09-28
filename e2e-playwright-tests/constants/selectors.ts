@@ -369,6 +369,7 @@ const selectors = {
   keystoreMigration: {
     recoveryPhraseRow: (id: string) => `recovery-phrase-row-${id}`,
     manageRecoveryPhrase: (id: string) => `manage-recovery-phrase-${id}`,
+    manageRecoveryPhraseHeader: 'manage-recovery-phrase-header',
     recoveryPhraseValue: 'recovery-phrase-value',
     recoveryPhrasePassphraseValue: 'recovery-phrase-passphrase-value',
     revealRecoveryPhraseButton: 'reveal-recovery-phrase-button',

@@ -213,8 +213,6 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     })
 
     await test.step('connect wallet to metamask again', async () => {
-      await pages.basePage.pause()
-
       await connectSigtool(page)
     })
 

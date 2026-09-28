@@ -76,7 +76,15 @@ export class AccountKeysPage extends BasePage {
     throw new Error(`No account found containing key ${keyAddr}`)
   }
 
-  async exportPrivateKey(keyAddr: string, accountAddr: string): Promise<string> {
+  async exportPrivateKey({
+    keyAddr,
+    accountAddr,
+    confirmModal = true
+  }: {
+    keyAddr: string
+    accountAddr: string
+    confirmModal?: boolean
+  }): Promise<string> {
     await this.open()
     await this.findAndOpenAccountKeys(keyAddr, accountAddr)
 
@@ -88,10 +96,13 @@ export class AccountKeysPage extends BasePage {
     await revealBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
     await revealBtn.click()
 
-    const passInput = this.page.getByTestId(selectors.passphraseField)
-    await passInput.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
-    await passInput.fill(KEYSTORE_PASS)
-    await this.click(selectors.submitButton)
+    // some flows do not require password confimation
+    if (confirmModal) {
+      const passInput = this.page.getByTestId(selectors.passphraseField)
+      await passInput.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+      await passInput.fill(KEYSTORE_PASS)
+      await this.click(selectors.submitButton)
+    }
 
     const keyEl = this.page.getByTestId(selectors.keystoreMigration.privateKeyValue)
     await expect(keyEl).not.toBeEmpty({ timeout: 15000 })
