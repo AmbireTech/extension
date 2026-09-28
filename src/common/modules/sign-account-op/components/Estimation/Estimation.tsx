@@ -41,6 +41,7 @@ import ServiceFee from '@common/modules/sign-account-op/components/Estimation/co
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import { NO_FEE_OPTIONS } from './consts'
 import { getFeeOptionValue, mapFeeOptions, sortFeeOptions } from './helpers'
@@ -48,6 +49,8 @@ import getStyles from './styles'
 import { DispatchUpdate, Props } from './types'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const { isPopup } = getUiType()
 
 const FEE_SECTION_LIST_MENU_HEADER_HEIGHT = 34
 const ADVANCED_OPTIONS_TOOLTIP_ID = 'sign-account-op-advanced-options-tooltip'
@@ -525,9 +528,9 @@ const Estimation = ({
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
   const isNarrowLayout = isNarrowWebLayout
-  // The narrow side panel reuses the mobile fee header: a short label with the settings icon
-  // instead of the wider "Advanced" button, which leaves room for the fee speed on the same row
-  const withCompactFeeHeader = isMobile || isNarrowLayout
+  // The narrow side panel and the popup reuse the mobile fee header: a short label with the settings
+  // icon instead of the wider "Advanced" button, which leaves room for the fee speed on the same row
+  const withCompactFeeHeader = isMobile || isNarrowLayout || isPopup
 
   const advancedOptionsTooltip = useMemo(() => {
     if (canSetCustomGasPrices) return undefined

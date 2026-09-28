@@ -49,7 +49,7 @@ export type OneClickEstimationProps = {
   Modals: React.ComponentType<ModalsProps>
 }
 
-const { isRequestWindow, isTab, isSidePanel } = getUiType()
+const { isRequestWindow, isTab, isSidePanel, isPopup } = getUiType()
 
 // The footer takes over the bottom inset, so the scroll content doesn't pad above it too
 const MOBILE_SCROLL_VIEW_PROPS = { contentContainerStyle: { paddingBottom: 0 } }
@@ -80,7 +80,8 @@ const OneClickEstimation = ({
   // On web the back arrow next to "Network fee" replaces the Back button, which stays only as a
   // fallback while that title isn't shown, since the sheet can't be closed any other way there
   const [isFeeHeaderVisible, setIsFeeHeaderVisible] = useState(false)
-  const shouldShowBackButton = !isMobile && !isFeeHeaderVisible
+  // The popup keeps its original Back button instead of the back arrow next to "Network fee"
+  const shouldShowBackButton = !isMobile && (isPopup || !isFeeHeaderVisible)
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -200,7 +201,7 @@ const OneClickEstimation = ({
             sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
             serviceFee={serviceFee}
             isOneClick
-            onBackPress={isWeb ? handleBackPress : undefined}
+            onBackPress={isWeb && !isPopup ? handleBackPress : undefined}
             onFeeHeaderVisibilityChange={setIsFeeHeaderVisible}
           />
         )}
