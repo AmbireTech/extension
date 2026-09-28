@@ -63,6 +63,7 @@ const SwapAndBridgeScreen = () => {
     setActiveRoute,
     displayedView,
     closeEstimationModalWrapped,
+    handleEstimationModalClosed,
     isBridge,
     setShowAddedToBatch,
     batchNetworkUserRequestsCount,
@@ -291,6 +292,7 @@ const SwapAndBridgeScreen = () => {
           updateType="Swap&Bridge"
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalWrapped}
+          onEstimationModalClosed={handleEstimationModalClosed}
           updateController={updateController}
           handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}

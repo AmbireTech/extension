@@ -35,6 +35,8 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
+  /** Called once the sheet closed. Must only reset state, closing the sheet from it loops */
+  onEstimationModalClosed?: () => void
   handleUpdateStatus: (status: SigningStatus) => void
   updateController: (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => void
   estimationModalRef: React.RefObject<any>
@@ -56,6 +58,7 @@ const selectNetworks = (state: AllControllersMappingType['NetworksController']) 
 
 const OneClickEstimation = ({
   closeEstimationModal,
+  onEstimationModalClosed,
   handleUpdateStatus,
   updateController,
   estimationModalRef,
@@ -315,6 +318,9 @@ const OneClickEstimation = ({
         customZIndex={5}
         style={spacings.pb}
         closeBottomSheet={isWeb ? undefined : closeEstimationModal}
+        // Dragging the sheet down closes it without calling closeBottomSheet, which would leave the
+        // flow marked as proceeded and the Proceed button disabled. Every other close already resets it
+        onClosed={isMobile ? onEstimationModalClosed : undefined}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={isMobile || shouldShowTxnDetails}
         shouldBeClosableOnDrag={isMobile}
