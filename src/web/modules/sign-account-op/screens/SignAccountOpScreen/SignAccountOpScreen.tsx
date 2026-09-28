@@ -426,7 +426,8 @@ const SignAccountOpScreen = () => {
         )}
         <TabLayoutWrapperMainContent
           withScroll={false}
-          contentContainerStyle={isNarrowWebLayout ? [spacings.mtSm, spacings.pb0] : spacings.mtSm}
+          // In a narrow view the header already spaces the content like on mobile
+          contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pb0] : spacings.mtSm}
         >
           {shouldUseSafeAccountTabs ? (
             <SafeAccountTabs

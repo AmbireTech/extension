@@ -52,7 +52,7 @@ const AddOrUpdateNetworkScreen = () => {
     view
   } = useAddOrUpdateNetwork()
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
-  const { isCompactLayout } = useCompactLayout()
+  const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
 
   if (view === 'loading') {
     return (
@@ -86,9 +86,10 @@ const AddOrUpdateNetworkScreen = () => {
       >
         <TabLayoutWrapperMainContent
           style={{
-            marginBottom: SPACING_LG * responsiveSizeMultiplier
+            marginBottom: isNarrowWebLayout ? 0 : SPACING_LG * responsiveSizeMultiplier
           }}
           withScroll={isCompactLayout}
+          contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pbSm] : undefined}
         >
           <UpdateChain
             handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
@@ -123,7 +124,11 @@ const AddOrUpdateNetworkScreen = () => {
           />
         )}
       >
-        <TabLayoutWrapperMainContent style={spacings.mbLg} withScroll={false}>
+        <TabLayoutWrapperMainContent
+          style={spacings.mbLg}
+          withScroll={false}
+          contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pbSm] : undefined}
+        >
           <AlreadyAddedChain
             networkAlreadyAdded={networkAlreadyAdded}
             successStateText={successStateText}
@@ -155,10 +160,14 @@ const AddOrUpdateNetworkScreen = () => {
     >
       <TabLayoutWrapperMainContent
         style={{
-          marginBottom: SPACING_LG * responsiveSizeMultiplier
+          marginBottom: isNarrowWebLayout ? 0 : SPACING_LG * responsiveSizeMultiplier
         }}
         withScroll={isCompactLayout}
-        contentContainerStyle={isCompactLayout ? GROWING_CONTENT_CONTAINER_STYLE : undefined}
+        contentContainerStyle={
+          isCompactLayout
+            ? [GROWING_CONTENT_CONTAINER_STYLE, spacings.mt0, spacings.pbSm]
+            : undefined
+        }
       >
         <AddChain
           handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}

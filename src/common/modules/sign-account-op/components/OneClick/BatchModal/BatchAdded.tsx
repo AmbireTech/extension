@@ -94,7 +94,8 @@ const BatchAdded: FC<Props> = ({
           spacings.phSm,
           flexbox.flex1,
           flexbox.alignCenter,
-          isWeb && spacings.ptMd,
+          // In a narrow view the header already spaces the content like on mobile
+          isWeb && !isNarrowWebLayout && spacings.ptMd,
           isWeb && spacings.pbSm
         ]}
       >

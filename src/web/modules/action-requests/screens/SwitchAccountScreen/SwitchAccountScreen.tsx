@@ -57,7 +57,8 @@ const SwitchAccountScreen = () => {
         style={[
           styles.container,
           {
-            paddingVertical: SPACING_LG * responsiveSizeMultiplier,
+            // In a narrow view the header and the footer already space the content like on mobile
+            paddingVertical: isNarrowWebLayout ? 0 : SPACING_LG * responsiveSizeMultiplier,
             width: contentWidth,
             ...(isNarrowWebLayout ? { maxWidth: '100%' } : {})
           }

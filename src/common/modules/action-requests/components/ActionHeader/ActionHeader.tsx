@@ -24,7 +24,8 @@ const ActionHeader = () => {
     selectVisibleUserRequests
   )
   return (
-    <View>
+    // Like on mobile, the bottom spacing matches the side one, so screens add no top spacing
+    <View style={isNarrowWebLayout && spacings.mbSm}>
       <View
         style={[
           flexbox.directionRow,

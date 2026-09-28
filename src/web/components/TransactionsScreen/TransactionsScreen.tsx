@@ -77,7 +77,8 @@ const Content: FC<ContentProps> = ({ children, buttons }) => {
   }
 
   return (
-    <View style={[flexbox.flex1, spacings.pvSm]}>
+    // In a narrow view the header already spaces the content like on mobile
+    <View style={[flexbox.flex1, spacings.pvSm, isNarrowWebLayout && spacings.pt0]}>
       <ScrollableWrapper
         contentContainerStyle={[
           flexbox.flex1,
