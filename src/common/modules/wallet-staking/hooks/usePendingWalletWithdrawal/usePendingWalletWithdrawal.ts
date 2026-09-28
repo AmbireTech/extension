@@ -12,9 +12,11 @@ export type WithdrawalTxnIdLookupError = WalletStakingTxnIdLookupError
 
 const selectPendingWithdrawals = (state: AllControllersMappingType['WalletTokenController']) =>
   state.pendingWithdrawals
+// The staking route renders before the flags' state arrives (it isn't one of the route's critical
+// controllers), so the state can still be empty here
 const selectIsWithdrawalsLookupEnabled = (
   state: AllControllersMappingType['FeatureFlagsController']
-) => state.flags.walletStakingWithdrawalsLookup
+): boolean | undefined => state.flags?.walletStakingWithdrawalsLookup
 
 /**
  * Loads the account's pending $WALLET withdrawal through the WalletTokenController and ticks a
@@ -40,8 +42,10 @@ const usePendingWalletWithdrawal = (accountAddr?: string) => {
   const pendingWithdrawal = accountPendingWithdrawals?.latestWithdrawal || null
   const totalPendingShares = accountPendingWithdrawals?.totalShares || 0n
   const status = accountPendingWithdrawals?.status
-  // Until the first load for the account starts, there is nothing to show yet
-  const isLoading = !!accountAddr && (!status || status === 'loading')
+  // Until the first load for the account starts, or the flag is known, there is nothing to show
+  // yet - the missing details card would otherwise say that the lookup is off
+  const isLoading =
+    !!accountAddr && (!status || status === 'loading' || isWithdrawalsLookupEnabled === undefined)
   const hasLoadFailed = status === 'error'
   const txnIdLookupError = accountPendingWithdrawals?.txnIdLookupError || null
   const isTxnIdLookupLoading = !!accountPendingWithdrawals?.isTxnIdLookupLoading
@@ -59,6 +63,8 @@ const usePendingWalletWithdrawal = (accountAddr?: string) => {
   // Loads again when the user turns the withdrawals lookup on or off, because it changes where
   // the withdrawals come from
   useEffect(() => {
+    if (isWithdrawalsLookupEnabled === undefined) return
+
     reload()
   }, [reload, isWithdrawalsLookupEnabled])
 
@@ -105,7 +111,7 @@ const usePendingWalletWithdrawal = (accountAddr?: string) => {
     hasLoadFailed,
     nowMs,
     reload,
-    isWithdrawalsLookupEnabled,
+    isWithdrawalsLookupEnabled: !!isWithdrawalsLookupEnabled,
     enableWithdrawalsLookup,
     findWithdrawalByTxnId,
     txnIdLookupError,
