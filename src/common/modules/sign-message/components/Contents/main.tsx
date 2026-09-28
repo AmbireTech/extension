@@ -141,27 +141,20 @@ const Main = ({
   return (
     <Container withScroll={shouldUseErc7730TypedMessageCard || isMobile}>
       {isNarrowWebLayout ? (
+        // Like on mobile - the network next to the title and the message type below them
         <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
-          {/* Same size as the titles of the other request screens */}
-          <Text weight="medium" fontSize={20 * responsiveSizeMultiplier}>
-            {t('Sign message')}
-          </Text>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.wrap,
-              spacings.mtTy,
-              { minWidth: 0, rowGap: SPACING_TY, columnGap: SPACING_TY }
-            ]}
-          >
-            {messageTypeBadge}
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
+            {/* Same size as the titles of the other request screens */}
+            <Text weight="medium" fontSize={20 * responsiveSizeMultiplier} style={spacings.mrSm}>
+              {t('Sign message')}
+            </Text>
             <NetworkBadge
               chainId={signMessageState.messageToSign?.chainId}
               responsiveSizeMultiplier={responsiveSizeMultiplier}
               withOnPrefix
             />
           </View>
+          <View style={[flexbox.alignStart, spacings.mtTy]}>{messageTypeBadge}</View>
         </View>
       ) : (
         <View
