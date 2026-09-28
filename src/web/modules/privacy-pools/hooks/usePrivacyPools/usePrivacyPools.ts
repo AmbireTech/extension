@@ -242,7 +242,7 @@ const usePrivacyPools = () => {
   }, [dispatch])
 
   /**
-   * What opening the account does: reads the networks not read in the last minute, once its
+   * What opening the account does: reads the networks not read in the last 10 minutes, once its
    * recovery phrase is backed up - see the controller's `syncIfStale`.
    */
   const syncIfStale = useCallback(() => {

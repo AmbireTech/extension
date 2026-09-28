@@ -1,0 +1,19 @@
+diff --git a/node_modules/@kohaku-eth/privacy-pools/dist/index.js b/node_modules/@kohaku-eth/privacy-pools/dist/index.js
+index 2ec71d9..b6f974a 100644
+--- a/node_modules/@kohaku-eth/privacy-pools/dist/index.js
++++ b/node_modules/@kohaku-eth/privacy-pools/dist/index.js
+@@ -1807,9 +1807,11 @@ var storeFactory = ({
+     reducer: reducers,
+     middleware: (getDefaultMiddleware) => {
+       const defaultMiddleware = getDefaultMiddleware({
+-        serializableCheck: {
+-          ignoreActions: true
+-        }
++        // Patched by Ambire: both dev-only checks walk the whole store on every dispatch (~200-270ms
++        // each with this store's size), which halved withdrawal preparation in dev builds when off.
++        // Drop this patch once the SDK disables them itself.
++        immutableCheck: false,
++        serializableCheck: false
+       });
+       if (logLevel !== "off") {
+         defaultMiddleware.concat(loggerFactory(logLevel));

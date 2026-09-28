@@ -75,9 +75,9 @@ const PrivacyPoolsDashboardScreen = () => {
   /**
    * Reads the networks when the account is opened - and for another account selected while the
    * screen is up, and once the recovery phrase is backed up - so its balances are current without
-   * asking. Only those not read in the last minute, and only once the phrase is backed up: see the
-   * controller's `syncIfStale`. Syncs run one after the other, so opening a second account while
-   * the first still syncs only queues it.
+   * asking. Only those not read in the last 10 minutes, and only once the phrase is backed up: see
+   * the controller's `syncIfStale`. Syncs run one after the other, so opening a second account
+   * while the first still syncs only queues it.
    */
   useEffect(() => {
     if (!isAvailable || !selectedAccountId) return
