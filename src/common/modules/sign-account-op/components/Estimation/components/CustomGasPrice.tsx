@@ -340,17 +340,20 @@ const CustomGasPrice = ({
             // Stacked buttons are spaced by the footer's gap, and a right margin would make this
             // one narrower than the primary button
             !isNarrowWebLayout && spacings.mrTy,
-            isCompactLayout ? flexbox.flex1 : { width: 100 }
+            // flex: 1 would squash the height of the stacked narrow view buttons
+            isNarrowWebLayout ? { width: '100%' } : isCompactLayout ? flexbox.flex1 : { width: 100 }
           ]}
-          size="smaller"
+          size={isNarrowWebLayout ? 'regular' : 'smaller'}
         />
         <Button
           type="primary"
           text={t('Save')}
           onPress={saveCustomGasPrice}
           hasBottomSpacing={false}
-          style={isCompactLayout ? flexbox.flex1 : { width: 100 }}
-          size="smaller"
+          style={
+            isNarrowWebLayout ? { width: '100%' } : isCompactLayout ? flexbox.flex1 : { width: 100 }
+          }
+          size={isNarrowWebLayout ? 'regular' : 'smaller'}
         />
       </FooterGlassView>
     </BottomSheet>

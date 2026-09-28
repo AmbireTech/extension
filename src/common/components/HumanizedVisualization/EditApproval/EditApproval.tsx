@@ -12,6 +12,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import EditButton from '@common/components/EditButton'
 import FooterGlassView from '@common/components/FooterGlassView'
+import { INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -47,6 +48,7 @@ const EditApprovalAmountInput = memo(
     getMaxAmountText,
     decimals
   }: EditApprovalAmountInputProps) => {
+    const { isNarrowWebLayout } = useCompactActionRequestLayout()
     const [draftAmount, setDraftAmount] = useState(initialAmount)
 
     useEffect(() => {
@@ -84,7 +86,11 @@ const EditApprovalAmountInput = memo(
           fontSize={16}
           backgroundColor={backgroundColor}
           textAlign="right"
-          inputWrapperStyle={{ height: isMobile ? 52 : 40, ...spacings.prSm }}
+          // A narrow view matches the height of the other inputs
+          inputWrapperStyle={{
+            height: isMobile ? 52 : isNarrowWebLayout ? INPUT_WRAPPER_HEIGHT : 40,
+            ...spacings.prSm
+          }}
           leftIconStyle={spacings.mrTy}
           leftIcon={leftIcon}
         />
@@ -243,16 +249,20 @@ const EditApproval = ({
                   text={t('Save')}
                   onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
                   hasBottomSpacing={false}
-                  size="smaller"
-                  style={flexbox.flex1}
+                  size={isNarrowWebLayout ? 'regular' : 'smaller'}
+                  // flex: 1 would squash the height of the stacked narrow view buttons
+                  style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}
                 />
                 <Button
-                  type={isNarrowWebLayout ? 'outline' : 'secondary'}
+                  type={'secondary'}
                   text={t('Cancel')}
                   onPress={() => closeEditApprovals()}
                   hasBottomSpacing={false}
-                  size="smaller"
-                  style={[flexbox.flex1, isMobile && spacings.mrTy]}
+                  size={isNarrowWebLayout ? 'regular' : 'smaller'}
+                  style={[
+                    isNarrowWebLayout ? { width: '100%' } : flexbox.flex1,
+                    isMobile && spacings.mrTy
+                  ]}
                 />
               </>
             ) : (
