@@ -22,7 +22,7 @@ import { isExtension } from '@web/constants/browserapi'
 
 const pendingRequestsTopContent = isExtension ? (
   <PendingRequests
-    style={[common.borderRadiusPrimary, spacings.mbSm, { borderTopWidth: 1, marginTop: -12 }]}
+    style={[common.borderRadiusPrimary, spacings.mtTy, spacings.mbSm, { borderTopWidth: 1 }]}
   />
 ) : undefined
 
