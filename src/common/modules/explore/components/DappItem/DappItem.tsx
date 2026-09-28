@@ -153,7 +153,11 @@ const DappItem = (dapp: DappItemProps) => {
                     zIndex: 1
                   }}
                   dataSet={createGlobalTooltipDataSet({
-                    id,
+                    // The "Manage app" bottom sheet renders another `DappItem` for the same dapp,
+                    // which stays mounted (off-screen) even while closed. Suffixing the id keeps
+                    // the two badges from matching the same GlobalTooltip anchor selector, which
+                    // caused the tooltip to bind to the wrong (list) badge's position.
+                    id: isInSettings ? `${id}-manage-app` : id,
                     content: t('Verified app'),
                     delayShow: 250,
                     border: `1px solid ${theme.successDecorative as string}`,
