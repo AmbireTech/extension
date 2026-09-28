@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
@@ -21,6 +21,11 @@ const StakingFooter = ({ form }: Props) => {
   const { styles } = useTheme(getStyles)
   const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { submitButtonText, isSubmitDisabled, onSubmit, onCancel } = form
+  const footerButtonStyle = useMemo(
+    () =>
+      isNarrowWebLayout ? [styles.footerButton, styles.footerButtonCompact] : styles.footerButton,
+    [isNarrowWebLayout, styles.footerButton, styles.footerButtonCompact]
+  )
 
   return (
     <View style={styles.footerRow}>
@@ -36,7 +41,7 @@ const StakingFooter = ({ form }: Props) => {
           text={t('Cancel')}
           onPress={onCancel}
           hasBottomSpacing={false}
-          style={styles.footerButton}
+          style={footerButtonStyle}
         />
         <Button
           type="primary"
@@ -44,7 +49,7 @@ const StakingFooter = ({ form }: Props) => {
           onPress={onSubmit}
           disabled={isSubmitDisabled}
           hasBottomSpacing={false}
-          style={styles.footerButton}
+          style={footerButtonStyle}
         />
       </FooterGlassView>
     </View>
