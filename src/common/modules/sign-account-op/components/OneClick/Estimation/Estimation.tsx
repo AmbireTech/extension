@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -74,6 +74,10 @@ const OneClickEstimation = ({
   const chainId = signAccountOpController?.accountOp.chainId
   const network = useMemo(() => networks.find((n) => n.chainId === chainId), [networks, chainId])
   const hasFreshActionPressRef = useRef(false)
+  // On web the back arrow next to "Network fee" replaces the Back button, which stays only as a
+  // fallback while that title isn't shown, since the sheet can't be closed any other way there
+  const [isFeeHeaderVisible, setIsFeeHeaderVisible] = useState(false)
+  const shouldShowBackButton = !isMobile && !isFeeHeaderVisible
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -127,6 +131,12 @@ const OneClickEstimation = ({
     updateType
   })
   const { banners } = signAccountOpController || {}
+
+  // Disabled while signing, like the Back button
+  const handleBackPress = useCallback(() => {
+    if (isSignLoading) return
+    closeEstimationModal()
+  }, [closeEstimationModal, isSignLoading])
 
   // The narrow side panel stacks full-width buttons in a plain view like mobile
   const ButtonsWrapper = isCompactLayout ? View : FooterGlassView
@@ -187,6 +197,8 @@ const OneClickEstimation = ({
             sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
             serviceFee={serviceFee}
             isOneClick
+            onBackPress={isWeb ? handleBackPress : undefined}
+            onFeeHeaderVisibilityChange={setIsFeeHeaderVisible}
           />
         )}
         {isViewOnly && (
@@ -209,7 +221,7 @@ const OneClickEstimation = ({
           isSimpleBlur={false}
           style={isCompactLayout ? { ...spacings.ptLg, gap: SPACING_TY } : spacings.pt}
         >
-          {!isMobile && !isNarrowWebLayout && (
+          {shouldShowBackButton && !isNarrowWebLayout && (
             <Button
               testID="back-button"
               type="secondary"
@@ -246,7 +258,7 @@ const OneClickEstimation = ({
           )}
 
           {/* Side panel only: stack Back under the primary action */}
-          {!isMobile && isNarrowWebLayout && (
+          {shouldShowBackButton && isNarrowWebLayout && (
             <Button
               testID="back-button"
               // The web secondary background matches the sheet, tertiary keeps it visible
@@ -270,6 +282,7 @@ const OneClickEstimation = ({
     closeEstimationModal,
     extremeGasFeeSignButtonType,
     handleChangeFeePayerKeyType,
+    handleBackPress,
     handleChangeSigningKey,
     hasEstimation,
     isChooseFeePayerKeyShown,
@@ -280,6 +293,7 @@ const OneClickEstimation = ({
     isSignLoading,
     isViewOnly,
     markFreshActionPress,
+    shouldShowBackButton,
     onSignButtonClick,
     runWithFreshActionPress,
     serviceFee,

@@ -22,6 +22,7 @@ import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import { PanelBackButton } from '@common/components/Panel/Panel'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { RenderSelectedOptionParams, SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
@@ -125,7 +126,9 @@ const Estimation = ({
   bundlerNonceDiscrepancy,
   serviceFee,
   isOneClick,
-  isViewOnly
+  isViewOnly,
+  onBackPress,
+  onFeeHeaderVisibilityChange
 }: Props) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -693,6 +696,26 @@ const Estimation = ({
     return <TitleAndIcon icon={section.title.icon} title={section.title.text} />
   }, [])
 
+  // Mirrors the early returns below, which all render without the "Network fee" title
+  const isFeeHeaderVisible =
+    !!signAccountOpState &&
+    !(signAccountOpState.estimation.status === EstimationStatus.Error && !isRetryingEstimation) &&
+    !(!hasEstimation && (!!slowRequest || isRetryingEstimation)) &&
+    !!payValue &&
+    !isSponsored &&
+    !isGaslessTransaction
+
+  useEffect(() => {
+    if (!onFeeHeaderVisibilityChange) return
+    onFeeHeaderVisibilityChange(isFeeHeaderVisible)
+    return () => onFeeHeaderVisibilityChange(false)
+  }, [isFeeHeaderVisible, onFeeHeaderVisibilityChange])
+
+  const backButton = onBackPress ? (
+    // Same test ID as the Back button it replaces, the two are never shown together
+    <PanelBackButton testID="back-button" onPress={onBackPress} style={spacings.mrSm} />
+  ) : null
+
   // A failure the estimation is still retrying keeps the "longer than usual"
   // warning below. Anything else is a dead end and is rendered elsewhere
   if (
@@ -798,6 +821,7 @@ const Estimation = ({
       >
         {withCompactFeeHeader ? (
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
+            {backButton}
             <Text fontSize={18} weight="medium">
               {estimationTitle}
             </Text>
@@ -819,9 +843,12 @@ const Estimation = ({
           </View>
         ) : (
           <>
-            <Text fontSize={18} weight="medium">
-              {estimationTitle}
-            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              {backButton}
+              <Text fontSize={18} weight="medium">
+                {estimationTitle}
+              </Text>
+            </View>
             {signAccountOpState.canAccountBroadcastByItself && (
               <View
                 dataSet={
