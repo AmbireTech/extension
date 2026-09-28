@@ -9,6 +9,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import spacings from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
@@ -22,11 +23,18 @@ interface Props {
   activeTab: SafeAccountTab
   networkChainId?: bigint
   onTabChange: (tab: SafeAccountTab) => void
+  variant?: 'underlined' | 'segmented'
 }
 
-const SafeAccountTabs: FC<Props> = ({ activeTab, networkChainId, onTabChange }) => {
+const SafeAccountTabs: FC<Props> = ({
+  activeTab,
+  networkChainId,
+  onTabChange,
+  variant = 'underlined'
+}) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const isSegmented = variant === 'segmented'
 
   const tabLabels: { [key in SafeAccountTab]: string } = useMemo(
     () => ({
@@ -50,13 +58,28 @@ const SafeAccountTabs: FC<Props> = ({ activeTab, networkChainId, onTabChange }) 
 
   return (
     <View
-      style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween, spacings.mb]}
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        flexbox.justifySpaceBetween,
+        isSegmented
+          ? [
+              spacings.mbSm,
+              {
+                borderWidth: 1,
+                borderColor: theme.primaryBorder,
+                borderRadius: BORDER_RADIUS_PRIMARY,
+                overflow: 'hidden'
+              }
+            ]
+          : spacings.mb
+      ]}
     >
       <View
         style={[
           flexbox.directionRow,
           flexbox.alignCenter,
-          spacings.mrSm,
+          isSegmented ? flexbox.flex1 : spacings.mrSm,
           { flexShrink: 1, minWidth: 0 }
         ]}
       >
@@ -70,11 +93,26 @@ const SafeAccountTabs: FC<Props> = ({ activeTab, networkChainId, onTabChange }) 
               accessibilityState={{ selected: isActive }}
               onPress={onPress}
               style={[
-                index < tabs.length - 1 ? spacings.mrSm : undefined,
-                {
-                  borderBottomWidth: 2,
-                  borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
-                }
+                isSegmented
+                  ? [
+                      flexbox.flex1,
+                      flexbox.center,
+                      spacings.pvTy,
+                      index < tabs.length - 1
+                        ? { borderRightWidth: 1, borderRightColor: theme.primaryBorder }
+                        : undefined,
+                      {
+                        minHeight: 40,
+                        backgroundColor: isActive ? theme.secondaryAccent100 : 'transparent'
+                      }
+                    ]
+                  : [
+                      index < tabs.length - 1 ? spacings.mrSm : undefined,
+                      {
+                        borderBottomWidth: 2,
+                        borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
+                      }
+                    ]
               ]}
             >
               <Text
@@ -82,7 +120,7 @@ const SafeAccountTabs: FC<Props> = ({ activeTab, networkChainId, onTabChange }) 
                 weight={isActive ? 'semiBold' : 'medium'}
                 color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
                 numberOfLines={1}
-                style={{ flexShrink: 1 }}
+                style={isSegmented ? { flexShrink: 1, textAlign: 'center' } : { flexShrink: 1 }}
               >
                 {label}
               </Text>
@@ -90,10 +128,12 @@ const SafeAccountTabs: FC<Props> = ({ activeTab, networkChainId, onTabChange }) 
           )
         })}
       </View>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 0 }]}>
-        <SafeNonce />
-        <NetworkBadge chainId={networkChainId} withOnPrefix style={spacings.mlSm} />
-      </View>
+      {!isSegmented && (
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 0 }]}>
+          <SafeNonce />
+          <NetworkBadge chainId={networkChainId} withOnPrefix style={spacings.mlSm} />
+        </View>
+      )}
     </View>
   )
 }

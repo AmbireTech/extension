@@ -161,7 +161,7 @@ const SignAccountOpScreen = () => {
     safeAccountTabState.requestId === accountOpRequest?.id
       ? safeAccountTabState.activeTab
       : 'overview'
-  const shouldUseSafeAccountTabs = !!signAccountOpState?.account.safeCreation && !isNarrowWebLayout
+  const shouldUseSafeAccountTabs = !!signAccountOpState?.account.safeCreation
   const isOverviewTabActive = !shouldUseSafeAccountTabs || activeSafeAccountTab === 'overview'
 
   const handleSafeAccountTabChange = useCallback(
@@ -430,13 +430,15 @@ const SignAccountOpScreen = () => {
           contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pb0] : spacings.mtSm}
         >
           {shouldUseSafeAccountTabs ? (
-            <SafeAccountTabs
-              activeTab={activeSafeAccountTab}
-              networkChainId={network?.chainId}
-              onTabChange={handleSafeAccountTabChange}
-            />
-          ) : isNarrowWebLayout && signAccountOpState?.account.safeCreation ? (
-            <SafeNonce withNetwork />
+            <>
+              {isNarrowWebLayout && <SafeNonce withNetwork />}
+              <SafeAccountTabs
+                activeTab={activeSafeAccountTab}
+                networkChainId={network?.chainId}
+                onTabChange={handleSafeAccountTabChange}
+                variant={isNarrowWebLayout ? 'segmented' : 'underlined'}
+              />
+            </>
           ) : (
             <View
               style={[
