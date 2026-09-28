@@ -10,7 +10,10 @@ import DAppConnectHeader from '@common/modules/action-requests/components/DAppCo
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
 import useDappConnect from '@common/modules/action-requests/hooks/useDappConnect'
 import spacings from '@common/styles/spacings'
-import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
 
 // Screen for dApps authorization to connect to extension - will be triggered on dApp connect request
 const DappConnectScreen = () => {
@@ -71,24 +74,27 @@ const DappConnectScreen = () => {
       }
     >
       {!!dappToConnect && (
-        <View style={styles.content}>
-          <DAppConnectHeader
-            name={dappToConnect.name}
-            id={dappToConnect.id}
-            icon={dappToConnect.icon!}
-            securityCheck={dappToConnect.blacklisted}
-            isTrustedByUser={isTrustedByUser}
-            isScamCheckerEnabled={isScamCheckerEnabled}
-          />
-          <DAppConnectBody
-            securityCheck={dappToConnect.blacklisted}
-            isTrustedByUser={isTrustedByUser}
-            canBeTrustedByUser={canBeTrustedByUser}
-            onToggleTrust={toggleTrust}
-            onEnableScamChecker={handleEnableScamChecker}
-            isScamCheckerEnabled={isScamCheckerEnabled}
-          />
-        </View>
+        // Scrolls on short screens, so the whole body can be seen
+        <MobileLayoutWrapperMainContent withScroll withHorizontalPadding={false}>
+          <View style={styles.content}>
+            <DAppConnectHeader
+              name={dappToConnect.name}
+              id={dappToConnect.id}
+              icon={dappToConnect.icon!}
+              securityCheck={dappToConnect.blacklisted}
+              isTrustedByUser={isTrustedByUser}
+              isScamCheckerEnabled={isScamCheckerEnabled}
+            />
+            <DAppConnectBody
+              securityCheck={dappToConnect.blacklisted}
+              isTrustedByUser={isTrustedByUser}
+              canBeTrustedByUser={canBeTrustedByUser}
+              onToggleTrust={toggleTrust}
+              onEnableScamChecker={handleEnableScamChecker}
+              isScamCheckerEnabled={isScamCheckerEnabled}
+            />
+          </View>
+        </MobileLayoutWrapperMainContent>
       )}
     </MobileLayoutContainer>
   )

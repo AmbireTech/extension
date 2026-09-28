@@ -32,7 +32,8 @@ const getStyles = (theme: ThemeProps) =>
           ...common.fullWidth,
           borderRadius: BORDER_RADIUS_PRIMARY,
           overflow: 'hidden',
-          ...flexbox.flex1
+          // Grows instead of flex: 1, so on short screens it keeps its height and scrolls
+          flexGrow: 1
         }
       : {
           ...common.fullWidth,
@@ -47,7 +48,7 @@ const getStyles = (theme: ThemeProps) =>
         },
     contentBody: {
       backgroundColor: theme.secondaryBackground,
-      ...(isMobile && flexbox.flex1)
+      ...(isMobile && { flexGrow: 1 })
     },
     securityChecksContainer: {
       backgroundColor: theme.primaryBackground,

@@ -18,14 +18,15 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Styles>({
     container: {
       ...flexbox.alignCenter,
-      ...flexbox.flex1
+      // Grows instead of flex: 1, so on short screens it keeps its height and scrolls
+      flexGrow: 1
     },
     content: {
       ...common.fullWidth,
       borderRadius: BORDER_RADIUS_PRIMARY,
       overflow: 'hidden',
       backgroundColor: theme.tertiaryBackground,
-      ...flexbox.flex1
+      flexGrow: 1
     },
     contentHeader: {
       ...flexbox.alignCenter,
