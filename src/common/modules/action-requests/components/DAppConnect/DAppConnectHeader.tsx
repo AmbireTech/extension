@@ -23,6 +23,12 @@ import TrustedIcon from './TrustedIcon'
 type Props = Partial<DappProviderRequest['session']> & {
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
+  /**
+   * Whether the app is part of the default Ambire app catalog (not added or connected by the user).
+   * Only catalog apps get the "Verified app" badge - passing the security checks alone means
+   * the app isn't known to be malicious, not that it's verified.
+   */
+  isInAppCatalog?: boolean
 }
 
 const DAppConnectHeader: FC<Props> = ({
@@ -30,7 +36,8 @@ const DAppConnectHeader: FC<Props> = ({
   name = 'Unknown App',
   icon,
   responsiveSizeMultiplier = 1,
-  securityCheck
+  securityCheck,
+  isInAppCatalog
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -87,7 +94,7 @@ const DAppConnectHeader: FC<Props> = ({
             )}
           />
 
-          {securityCheck === 'VERIFIED' && (
+          {securityCheck === 'VERIFIED' && !!isInAppCatalog && (
             <View
               style={{
                 position: 'absolute',

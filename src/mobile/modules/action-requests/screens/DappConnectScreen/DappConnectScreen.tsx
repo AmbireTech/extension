@@ -69,6 +69,7 @@ const DappConnectScreen = () => {
             id={dappToConnect.id}
             icon={dappToConnect.icon!}
             securityCheck={dappToConnect.blacklisted}
+            isInAppCatalog={!dappToConnect.isCustom}
           />
           <DAppConnectBody securityCheck={dappToConnect.blacklisted} />
         </View>
