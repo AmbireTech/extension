@@ -61,6 +61,7 @@ const WatchTokenRequestScreen = () => {
 
   return (
     <MobileLayoutContainer
+      withHorizontalPadding
       header={<ActionHeader />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
@@ -79,7 +80,6 @@ const WatchTokenRequestScreen = () => {
           }
         />
       }
-      style={spacings.mt}
     >
       <View style={styles.container}>
         <View style={styles.content}>

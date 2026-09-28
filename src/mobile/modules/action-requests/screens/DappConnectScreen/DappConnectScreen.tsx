@@ -32,6 +32,7 @@ const DappConnectScreen = () => {
 
   return (
     <MobileLayoutContainer
+      withHorizontalPadding
       header={<ActionHeader />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
@@ -68,7 +69,6 @@ const DappConnectScreen = () => {
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
       }
-      style={spacings.mt}
     >
       {!!dappToConnect && (
         <View style={styles.content}>

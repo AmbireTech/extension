@@ -18,11 +18,12 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Styles>({
     container: {
       ...flexbox.alignCenter,
-      ...flexbox.flex1,
-      marginTop: -21
+      ...flexbox.flex1
     },
     content: {
       ...common.fullWidth,
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      overflow: 'hidden',
       backgroundColor: theme.tertiaryBackground,
       ...flexbox.flex1
     },
