@@ -23,6 +23,7 @@
     "transfer": "npx playwright test -g @transfer",
     "ambire:rewards": "npx playwright test -g @rewards",
     "auto:login": "npx playwright test -g @autoLogin",
+    "security": "npx playwright test -g @security",
     "relayer": "npx playwright test -g @relayer",
     "keystore:migration": "npx playwright test -g @keystoreMigration",
     "performance": "npx playwright test -g @performance",

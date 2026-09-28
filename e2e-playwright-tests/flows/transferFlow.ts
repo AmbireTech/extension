@@ -135,7 +135,10 @@ export async function runBatchTransferFlow({
 
     const actionWindow = await actionWindowPromise
     await page.waitForTimeout(10000) // wait for the AccountOp details to be displayed on the Ledger simulator
-    await actionWindow.getByTestId(selectors.signTransactionButton).click()
+    await expect(async () => {
+      await expect(actionWindow.getByTestId(selectors.signTransactionButton)).toBeVisible()      
+      await actionWindow.getByTestId(selectors.signTransactionButton).click()
+    }).toPass({ timeout: 30000 })
 
     // Signing auth modal; submit button is disabled before entering pass
     await expect(actionWindow.getByTestId(selectors.transaction.signConfirmButton)).toHaveAttribute(
