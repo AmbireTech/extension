@@ -90,7 +90,7 @@ const Content: FC<ContentProps> = ({ children, buttons }) => {
       <FooterGlassView
         size="sm"
         fullWidth={isNarrowWebLayout}
-        style={isRequestWindow ? { bottom: SPACING } : {}}
+        style={isRequestWindow && !isNarrowWebLayout ? { bottom: SPACING } : {}}
         onLayout={handleFooterLayout}
       >
         {isNarrowWebLayout ? (

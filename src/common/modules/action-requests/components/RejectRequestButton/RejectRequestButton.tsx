@@ -13,6 +13,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -79,6 +80,7 @@ const RejectRequestButton = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { ref: sheetRef, open, close } = useModalize()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { state: rejectOptions, dispatch: requestsDispatch } = useController(
     'RequestsController',
     selectRejectOptions
@@ -168,27 +170,31 @@ const RejectRequestButton = ({
           backgroundColor="secondaryBackground"
           HeaderComponent={sheetHeader}
         >
-          <RejectOption
-            text={rejectOptionText}
-            onPress={handleRejectCurrent}
-            testID="reject-request-option-current"
-          />
-          {!!canRejectAll && (
+          <View style={[styles.options, !isNarrowWebLayout && spacings.mbSm]}>
             <RejectOption
-              text={t('Cancel all {{count}} requests from this app', { count: dappRequestsCount })}
-              onPress={handleRejectAll}
-              testID="reject-request-option-all"
+              text={rejectOptionText}
+              onPress={handleRejectCurrent}
+              testID="reject-request-option-current"
             />
-          )}
-          {!!canSilenceDapp && (
-            <RejectOption
-              text={t('Block this app from sending requests for {{minutes}} min', {
-                minutes: SILENCE_DURATION_IN_MINUTES
-              })}
-              onPress={handleSilenceDapp}
-              testID="reject-request-option-silence"
-            />
-          )}
+            {!!canRejectAll && (
+              <RejectOption
+                text={t('Cancel all {{count}} requests from this app', {
+                  count: dappRequestsCount
+                })}
+                onPress={handleRejectAll}
+                testID="reject-request-option-all"
+              />
+            )}
+            {!!canSilenceDapp && (
+              <RejectOption
+                text={t('Block this app from sending requests for {{minutes}} min', {
+                  minutes: SILENCE_DURATION_IN_MINUTES
+                })}
+                onPress={handleSilenceDapp}
+                testID="reject-request-option-silence"
+              />
+            )}
+          </View>
         </BottomSheet>
       )}
     </>

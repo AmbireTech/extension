@@ -125,16 +125,11 @@ const TokenDetailsScreen = () => {
         fullWidth={isNarrowWebLayout}
         // On narrow side panels the footer has no glass/blur backing (see FooterGlassView's
         // flat-footer branch), so it otherwise floats fully transparent over the scrolled
-        // content. Back it with the same page background instead. FooterGlassView positions
-        // that box at `bottom: SPACING_SM`, not flush with the edge, so extend it to bottom: 0
-        // and restore the buttons' original offset via padding instead, to avoid a bare gap
-        // between the background and the screen edge.
+        // content. Back it with the same page background instead.
         style={
           isNarrowWebLayout
             ? {
                 backgroundColor: theme.primaryBackground,
-                bottom: 0,
-                paddingBottom: SPACING_SM,
                 justifyContent: 'flex-end'
               }
             : undefined

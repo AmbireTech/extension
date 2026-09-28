@@ -78,6 +78,8 @@ const FooterGlassView: FC<{
         // make the buttons narrower than everything above them
         paddingHorizontal: isInsideBottomSheet ? 0 : params[size].paddingHorizontal,
         paddingVertical: params[size].paddingVertical,
+        // The bottom sheet already pads its bottom edge
+        ...(isInsideBottomSheet ? { paddingBottom: 0 } : {}),
         pointerEvents: 'auto'
       }
     : undefined
@@ -104,7 +106,8 @@ const FooterGlassView: FC<{
               ? {
                   position: 'absolute',
                   left: 0,
-                  bottom: SPACING_SM,
+                  // Flush with the edge, so the inner padding makes the bottom spacing match the side one
+                  bottom: 0,
                   zIndex: 3,
                   pointerEvents: 'none'
                 }

@@ -4,6 +4,7 @@ import { Modalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { getUiType } from '@common/utils/uiType'
@@ -51,6 +52,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   } = props
 
   const { styles, theme } = useTheme(getStyles)
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
 
   const {
     isScrollable,
@@ -179,7 +181,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 paddingHorizontal: isWeb ? (isModal ? SPACING_MD : SPACING_SM) : SPACING,
                 backgroundColor: theme[backgroundColor]
               },
-              style
+              style,
+              // In a narrow view the bottom spacing matches the side one, whatever the call site sets
+              isNarrowWebLayout && !isModal ? { paddingBottom: SPACING_SM } : {}
             ]}
             rootStyle={[isPopup && isModal ? spacings.phSm : {}]}
             handleStyle={[
