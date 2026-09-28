@@ -85,7 +85,7 @@ const ActionFooter = ({
 
   if (!isWideFooterLayout) {
     return (
-      <View style={[spacings.ptSm, spacings.phSm, spacings.pbMd, { width: '100%' }]}>
+      <View style={[spacings.ptSm, spacings.phSm, spacings.pbSm, { width: '100%' }]}>
         {children}
         <View style={[flexbox.directionRow, { width: '100%', gap: SPACING_TY }]}>
           {rejectButton}
