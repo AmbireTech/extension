@@ -150,7 +150,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         {/* from losing track of its subtree during React reconciliation and re-renders. */}
         {/* Without this, the backdrop stays, but Modalize could disappear */}
         {/* without even triggering `onClose` or (this) component unmount */}
-        <View key={`portal-host-${id}`} style={[styles.portalHost, { zIndex: computedZIndex }]}>
+        {/* Modalize mounts the sheet translated below the viewport, which makes the page taller. */}
+        {/* A focus inside it then scrolls the whole app up; `clip` cuts that overflow off unscrollably. */}
+        <View
+          key={`portal-host-${id}`}
+          // @ts-expect-error `clip` is supported by react-native-web, but missing in types
+          style={[styles.portalHost, { zIndex: computedZIndex, overflow: 'clip' }]}
+        >
           {!!isBackdropVisible && (
             <Backdrop
               isVisible={isBackdropVisible}
