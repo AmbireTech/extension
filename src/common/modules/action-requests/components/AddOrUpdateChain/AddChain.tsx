@@ -61,7 +61,7 @@ const AddChain = ({
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
-  const { isCompactLayout, isTwoColumnLayout, isNarrowSidePanel } = useCompactActionRequestLayout()
+  const { isCompactLayout, isTwoColumnLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
 
   return (
     <>
@@ -153,7 +153,7 @@ const AddChain = ({
             // In the side panel the details and the features are taller than the panel. Filling
             // the remaining space would squeeze them and hide the overflow, so instead they keep
             // their full height and the screen scrolls as a whole.
-            !isNarrowSidePanel && flexbox.flex1,
+            !isNarrowWebLayout && flexbox.flex1,
             isWeb && {
               marginBottom: SPACING_LG * responsiveSizeMultiplier
             }

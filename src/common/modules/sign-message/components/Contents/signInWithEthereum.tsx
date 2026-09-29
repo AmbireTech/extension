@@ -30,12 +30,12 @@ import spacings, {
 } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import MessageContentLayout from './MessageContentLayout'
 import getStyles from './styles'
 
-const { isSidePanel } = getUiType()
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -124,7 +124,7 @@ const Row = ({
         isWeb && flexbox.justifySpaceBetween,
         isWeb && flexbox.alignCenter,
         // Without a gap the label and the value touch each other once the value grows wide
-        // enough to fill the row, which happens on the narrow side panel
+        // enough to fill the row, which happens on a narrow view
         isWeb && { columnGap: SPACING_TY * responsiveSizeMultiplier },
         {
           marginBottom: SPACING_SM * responsiveSizeMultiplier
@@ -140,6 +140,8 @@ const Container = ({ children }: { children: React.ReactNode }) => (
   <MessageContentLayout webStyle={spacings.mbLg}>{children}</MessageContentLayout>
 )
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
@@ -152,13 +154,14 @@ const SignInWithEthereum = ({
   handleQrSigningFlowOnRejectPressed,
   handleQrSigningFlowOnBackPressed
 }: Props) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
   const siweMessageToSign = useMemo(() => {
@@ -254,7 +257,7 @@ const SignInWithEthereum = ({
 
   return (
     <Container>
-      {isSidePanel ? (
+      {isNarrowWebLayout ? (
         <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
           <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
             {t('Sign-in request')}
@@ -388,6 +391,9 @@ const SignInWithEthereum = ({
                   flexbox.directionRow,
                   flexbox.alignCenter,
                   isWeb && flexbox.justifyEnd,
+                  // In the narrow side panel the label must wrap instead of pushing
+                  // the toggle out of the viewport
+                  isWeb && { flexShrink: 1 },
                   isMobile && spacings.mbSm
                 ]}
               >
@@ -401,7 +407,7 @@ const SignInWithEthereum = ({
                 <Text
                   fontSize={14 * responsiveSizeMultiplier}
                   appearance="secondaryText"
-                  style={spacings.mrSm}
+                  style={[spacings.mrSm, isWeb && { flexShrink: 1 }]}
                 >
                   {t('Auto-login on this network for the next')}
                 </Text>

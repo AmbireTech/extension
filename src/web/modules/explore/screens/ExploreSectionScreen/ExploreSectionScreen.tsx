@@ -18,8 +18,8 @@ import useDebounce from '@common/hooks/useDebounce'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
-import WalletStaking from '@common/modules/explore/components/WalletStaking'
-import { shouldShowWalletStaking } from '@common/modules/explore/helpers/shouldShowWalletStaking'
+import WalletStakingCard from '@common/modules/wallet-staking/components/WalletStakingCard'
+import { shouldShowWalletStaking } from '@common/modules/wallet-staking/helpers/shouldShowWalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -27,6 +27,8 @@ import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { sortNetworksByBalance } from '@common/utils/sorting'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const TYPE_TITLES: Record<ExploreSectionType, string> = {
   // 'trending' is listed for type completeness; trending has its own dedicated screen (it never
@@ -38,12 +40,14 @@ const TYPE_TITLES: Record<ExploreSectionType, string> = {
   apps: 'Explore apps'
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const ExploreSectionScreen = () => {
   const { t } = useTranslation()
   const { params } = useRoute()
   const { theme } = useTheme()
   const { state } = useController('DappsController')
-  const { state: allNetworks } = useController('NetworksController', 'networks')
+  const { state: allNetworks } = useController('NetworksController', selectNetworks)
   const { state: balancePerNetwork } = useController(
     'SelectedAccountController',
     (state) => state.portfolio.balancePerNetwork
@@ -222,7 +226,7 @@ const ExploreSectionScreen = () => {
           renderItem={renderItem}
           keyExtractor={(item: Dapp) => item.id}
           ListHeaderComponent={
-            sectionType === 'apps' && isWalletStakingVisible ? WalletStaking : undefined
+            sectionType === 'apps' && isWalletStakingVisible ? WalletStakingCard : undefined
           }
           style={spacings.phSm}
           contentContainerStyle={spacings.pr0}

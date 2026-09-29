@@ -6,6 +6,10 @@ export interface BottomSheetProps {
   id?: string
   sheetRef: React.RefObject<Modalize>
   scrollViewRef?: React.RefObject<ScrollView>
+  /**
+   * Leave undefined if you want the BottomSheet to not close by pressing the backdrop,
+   * using gestures etc.
+   */
   closeBottomSheet?: (dest?: 'alwaysOpen' | 'default' | undefined) => void
   onBackdropPress?: () => void
   onClosed?: () => void
@@ -17,6 +21,7 @@ export interface BottomSheetProps {
   type?: 'modal' | 'bottom-sheet'
   adjustToContentHeight?: boolean
   modalHeight?: ModalizeProps['modalHeight']
+  modalTopOffset?: ModalizeProps['modalTopOffset']
   style?: ViewStyle
   containerInnerWrapperStyles?: ViewStyle
   flatListProps?: ModalizeProps['flatListProps']

@@ -9,6 +9,10 @@ import { compareChainIdsByBalance } from '@common/utils/sorting'
 
 import NetworkComponent from './Network'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const Networks = ({
   openSettingsBottomSheet,
   openBlockExplorer,
@@ -20,7 +24,7 @@ const Networks = ({
   search: string
   onPress: (chainId: bigint | string) => void
 }) => {
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')

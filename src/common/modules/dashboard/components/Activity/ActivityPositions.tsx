@@ -32,6 +32,8 @@ import { getUiType } from '@common/utils/uiType'
 
 import styles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
@@ -66,6 +68,15 @@ type Item =
   | 'skeleton'
   | 'load-more'
 
+const selectAccountsOps = (state: AllControllersMappingType['ActivityController']) =>
+  state.accountsOps
+const selectBanners = (state: AllControllersMappingType['ActivityController']) => state.banners
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+
 const ActivityPositions: FC<Props> = ({
   openTab,
   sessionId,
@@ -81,13 +92,18 @@ const ActivityPositions: FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const {
-    state: { accountsOps, banners },
-    dispatch: activityDispatch
-  } = useController('ActivityController')
-  const {
-    state: { account, dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
+  const { state: accountsOps, dispatch: activityDispatch } = useController(
+    'ActivityController',
+    selectAccountsOps
+  )
+  const { state: banners } = useController('ActivityController', selectBanners)
+  // Read as slices rather than off the whole state, so the page does not re-render on
+  // every portfolio tick - it holds no portfolio data of its own.
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    selectDashboardNetworkFilter
+  )
 
   const currentAccountBanners = useMemo(() => {
     return getCurrentAccountBanners(banners, account?.addr)

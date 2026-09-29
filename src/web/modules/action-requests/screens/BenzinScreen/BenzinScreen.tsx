@@ -18,10 +18,8 @@ import useCompactActionRequestLayout from '@common/modules/action-requests/hooks
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
 
-const { isSidePanel } = getUiType()
 const pendingRequestsTopContent = isExtension ? (
   <PendingRequests
     style={[common.borderRadiusPrimary, spacings.mbSm, { borderTopWidth: 1, marginTop: -12 }]}
@@ -30,7 +28,7 @@ const pendingRequestsTopContent = isExtension ? (
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { maxWidthSize } = useWindowSize()
 
   const {
@@ -72,12 +70,12 @@ const BenzinScreen = () => {
     <Button
       onPress={resolveAction}
       style={
-        isCompactSidePanelLayout
+        isNarrowWebLayout
           ? { width: '100%' }
           : { minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }
       }
       hasBottomSpacing={false}
-      size={isCompactSidePanelLayout ? 'smaller' : 'large'}
+      size={isNarrowWebLayout ? 'smaller' : 'large'}
       text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
     >
       {!!pendingRequests.length && (
@@ -91,19 +89,19 @@ const BenzinScreen = () => {
   return (
     <Benzin state={state} topContent={pendingRequestsTopContent}>
       <FooterGlassView
-        // In the side panel the footer is a flex sibling under the scroll view, so it stays pinned
+        // In a narrow view the footer is a flex sibling under the scroll view, so it stays pinned
         // to the bottom of the screen without an absolute spacer that would force a scrollbar
-        absolute={!isSidePanel}
-        fullWidth={isCompactSidePanelLayout}
-        size={isSidePanel ? 'sm' : 'md'}
-        style={isSidePanel ? spacings.pbSm : undefined}
+        absolute={!isNarrowWebLayout}
+        fullWidth={isNarrowWebLayout}
+        size={isNarrowWebLayout ? 'sm' : 'md'}
+        style={isNarrowWebLayout ? spacings.pbSm : undefined}
         innerContainerStyle={
-          isCompactSidePanelLayout
+          isNarrowWebLayout
             ? { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: SPACING_TY }
             : undefined
         }
       >
-        {isCompactSidePanelLayout ? (
+        {isNarrowWebLayout ? (
           <>
             {primaryButton}
             <View

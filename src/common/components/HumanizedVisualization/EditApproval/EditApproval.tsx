@@ -21,6 +21,8 @@ import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type EditApprovalAmountInputProps = {
   initialAmount: string
   backgroundColor: ColorValue
@@ -101,6 +103,9 @@ const EditApprovalAmountInput = memo(
     )
   }
 )
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const EditApproval = ({
   editCall,
   token,
@@ -123,13 +128,13 @@ const EditApproval = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isCompactLayout, isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     ref: editApprovalsSheetRef,
     open: openEditApprovals,
     close: closeEditApprovals
   } = useModalize()
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const amountRef = useRef<string>('0')
   const [initialAmount, setInitialAmount] = useState<string>('0')
   const [initialValueSet, setInitialValueSet] = useState<boolean>(false)
@@ -199,7 +204,7 @@ const EditApproval = ({
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}
-        type={isCompactSidePanelLayout ? 'bottom-sheet' : 'modal'}
+        type={isNarrowWebLayout ? 'bottom-sheet' : 'modal'}
         closeBottomSheet={closeEditApprovals}
         style={isCompactLayout ? { width: '100%' } : { maxWidth: 460 }}
         shouldBeClosableOnDrag={isMobile}
@@ -229,9 +234,9 @@ const EditApproval = ({
               ...flexbox.directionRowReverse,
               ...spacings.mt2Xl
             }}
-            fullWidth={isCompactSidePanelLayout}
+            fullWidth={isNarrowWebLayout}
           >
-            {isMobile || isCompactSidePanelLayout ? (
+            {isMobile || isNarrowWebLayout ? (
               <>
                 <Button
                   type="primary"
@@ -242,7 +247,7 @@ const EditApproval = ({
                   style={flexbox.flex1}
                 />
                 <Button
-                  type={isCompactSidePanelLayout ? 'outline' : 'secondary'}
+                  type={isNarrowWebLayout ? 'outline' : 'secondary'}
                   text={t('Cancel')}
                   onPress={() => closeEditApprovals()}
                   hasBottomSpacing={false}

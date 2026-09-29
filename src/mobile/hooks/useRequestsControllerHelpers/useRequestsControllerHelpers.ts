@@ -12,13 +12,11 @@ export default function useRequestsControllerHelpers(
   dispatch: (action: Action | MethodAction) => void
 ) {
   const { state: requestsState, updateHelpers } = useControllerState({
-    id: 'RequestsController',
-    subscriptionEnabled: true
+    id: 'RequestsController'
   })
 
   const { state: keystoreState } = useControllerState({
-    id: 'KeystoreController',
-    subscriptionEnabled: true
+    id: 'KeystoreController'
   })
 
   const { navigate } = useNavigation()

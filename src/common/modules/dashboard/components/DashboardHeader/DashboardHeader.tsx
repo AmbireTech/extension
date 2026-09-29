@@ -16,12 +16,17 @@ import { getUiType } from '@common/utils/uiType'
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isPopup } = getUiType()
 
 const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const DashboardHeader = () => {
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted', duration: 50 })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
     preset: 'opacityInverted',

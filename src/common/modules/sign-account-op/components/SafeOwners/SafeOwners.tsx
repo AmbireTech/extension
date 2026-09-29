@@ -24,6 +24,8 @@ import { setStringAsync } from '@common/utils/clipboard'
 
 import { getSignAndCloseOwnerAddr } from './helpers'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
   address,
   chainId,
@@ -108,6 +110,9 @@ const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
   )
 })
 
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+
 const SafeOwners = ({
   account,
   onSign,
@@ -132,7 +137,7 @@ const SafeOwners = ({
   style?: ViewStyle
 }) => {
   const { t } = useTranslation()
-  const { state: accountStates } = useController('AccountsController', 'accountStates')
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const [ownerAddrToChooseKeyFor, setOwnerAddrToChooseKeyFor] = useState<Key['addr'] | null>(null)
 
   const owners = useMemo(() => {

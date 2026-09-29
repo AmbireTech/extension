@@ -16,6 +16,7 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import { isMobile, isWeb } from '@common/config/env'
 import useSign from '@common/hooks/useSign'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
@@ -57,7 +58,7 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const hasFreshActionPressRef = useRef(false)
 
   const signingErrors = useMemo(() => {
@@ -100,7 +101,10 @@ const OneClickEstimation = ({
     handleQrSigningFlowOnRejectPressed,
     handleQrSigningFlowOnBackPressed,
     currentRequest,
-    signingStep
+    signingStep,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   } = useSign({
     signAccountOpState: signAccountOpController,
     handleUpdate: updateController,
@@ -153,6 +157,7 @@ const OneClickEstimation = ({
                 title={banner.title}
                 text={banner.text}
                 secondaryText={banner.secondaryText}
+                trustableDappUrls={banner.trustableDappUrls}
                 style={spacings.mbTy}
               />
             ))}
@@ -215,12 +220,12 @@ const OneClickEstimation = ({
               isSimpleBlur={false}
               style={isMobile ? spacings.ptLg : spacings.pt}
               innerContainerStyle={
-                isCompactSidePanelLayout
+                isNarrowWebLayout
                   ? { width: '100%', gap: SPACING_TY, alignItems: 'stretch' }
                   : undefined
               }
             >
-              {!isMobile && !isCompactSidePanelLayout && (
+              {!isMobile && !isNarrowWebLayout && (
                 <Button
                   testID="back-button"
                   type="secondary"
@@ -242,7 +247,7 @@ const OneClickEstimation = ({
                   onPressIn={markFreshActionPress}
                   onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
                   size={isMobile ? 'regular' : 'smaller'}
-                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
                 />
               ) : (
                 <ButtonWithLoader
@@ -254,12 +259,12 @@ const OneClickEstimation = ({
                   onPressIn={markFreshActionPress}
                   onPress={() => runWithFreshActionPress(onSignButtonClick)}
                   size={isMobile ? 'regular' : 'smaller'}
-                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
                 />
               )}
 
               {/* Side panel only: stack Back under the primary action */}
-              {!isMobile && isCompactSidePanelLayout && (
+              {!isMobile && isNarrowWebLayout && (
                 <Button
                   testID="back-button"
                   type="secondary"
@@ -275,6 +280,11 @@ const OneClickEstimation = ({
           </View>
         )}
       </BottomSheet>
+      <SigningAuthBottomSheet
+        sheetRef={signingAuthSheetRef}
+        onCancel={cancelSigningAuth}
+        {...signingAuthProps}
+      />
       <Modals
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpController}

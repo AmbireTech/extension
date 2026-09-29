@@ -10,7 +10,6 @@ import { nanoid } from 'nanoid'
 
 import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { ProviderError } from '@ambire-common/classes/ProviderError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
@@ -21,10 +20,17 @@ import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/f
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
+import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/rpc'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
+import { applyCrashReportPolicy } from '@common/config/analytics/applyCrashReportPolicy'
+import { logSentryDeliveryWhenTesting } from '@common/config/analytics/CrashAnalytics.web'
+import {
+  isProviderErrorLike,
+  isSuccessfulRpcStatusCode
+} from '@common/config/analytics/crashReportPolicy'
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
@@ -46,6 +52,7 @@ import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
   BUNGEE_API_KEY,
+  COWSWAP_API_KEY,
   LI_FI_API_KEY,
   RELAYER_URL,
   UNISWAP_API_KEY,
@@ -90,7 +97,9 @@ import {
 } from './CrashAnalytics'
 import { sendCriticalControllerStates } from './criticalControllerStates'
 import { getReportableAction } from './getReportableAction'
+import { isJsonSyntaxError } from './isJsonSyntaxError'
 
+import type { ProviderError } from '@ambire-common/classes/ProviderError'
 const debugLogs: {
   key: string
   value: object
@@ -157,45 +166,6 @@ function captureBackgroundExceptionFromControllerError(error: ErrorRef, controll
   })
 }
 
-// THESE MUST BE LOWERCASE
-const IGNORED_SHORT_MESSAGE_SUBSTRINGS = ['missing revert data']
-const IGNORED_ERROR_SUBSTRINGS = ['failed to fetch', 'network error']
-
-const checkSubstrings = (text: string, substrings: string[]) =>
-  substrings.some((substring) => text.toLowerCase().includes(substring))
-
-const isIgnoredError = (error?: any) => {
-  const { message, shortMessage } = error || {}
-
-  return (
-    (!!message && checkSubstrings(message, IGNORED_ERROR_SUBSTRINGS)) ||
-    (!!shortMessage && checkSubstrings(shortMessage, IGNORED_SHORT_MESSAGE_SUBSTRINGS))
-  )
-}
-
-const getErrorType = (error: any) => {
-  const { statusCode, message, isProviderInvictus } = error
-
-  if (typeof statusCode === 'number') {
-    if (statusCode >= 200 && statusCode < 300) {
-      return '2xx'
-    }
-
-    if (typeof isProviderInvictus === 'boolean' && !isProviderInvictus) {
-      // No need to report custom RPC non-2xx errors
-      return 'ignored-error'
-    }
-
-    return 'non-2xx'
-  }
-
-  if (message.includes('rpc-timeout')) return 'rpc-timeout'
-
-  // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
-  // and have handling just in case statusCode is explicitly set to 200-299
-  return isIgnoredError(error) ? 'ignored-error' : '2xx'
-}
-
 /**
  * How many times the background tries to open IndexedDB before settling for the key-value
  * fallback. Two, not more: a second attempt covers a slow open, and every further one only
@@ -208,6 +178,14 @@ const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
 let mainCtrl: MainController
 let walletStateCtrl: WalletStateController
 let autoLockCtrl: AutoLockController
+// Hoisted so the `onConnect` listener below (which must be registered synchronously at the
+// top level of the script - see the comment above it) can close over them once `init()` has
+// assigned them, instead of the listener itself living inside `init()`'s local scope.
+let pm: PortMessenger
+let ledgerCtrl: LedgerController
+let trezorCtrl: TrezorController
+let qrCtrl: QrHardwareController
+let eventEmitterRegistry: EventEmitterRegistryController
 
 // Initialize Sentry early to set up global error handlers during initial script evaluation
 if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
@@ -217,20 +195,28 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
     beforeSend(event, hint) {
       const error = hint.originalException
 
-      // Custom handling for ProviderError to adjust event data and fingerprinting
-      // Docs: https://docs.sentry.io/platforms/javascript/enriching-events/fingerprinting/#group-errors-with-greater-granularity
-      if (error instanceof ProviderError) {
-        const errorType = getErrorType(error)
+      // Whether this shape of error is worth sending, how loud it is and which issue it
+      // joins all live in one place, shared with the UI's own beforeSend.
+      if (!applyCrashReportPolicy(event, error)) return null
 
-        if (errorType === 'ignored-error') {
-          // Drop ignored errors
-          return null
-        }
+      // Our services return HTML error pages during outages. The callers already retry, and
+      // reporting every failed parse would only flood Sentry.
+      if (isJsonSyntaxError(error)) return null
+
+      // Matched by name rather than `instanceof`, so an error that reached us through the
+      // messengers still counts. Those arrive as plain objects, not ProviderError instances.
+      if (isProviderErrorLike(error)) {
+        const { providerUrl, isProviderInvictus, statusCode, message } = error as ProviderError
 
         // Always delete breadcrumbs to reduce event size.
         delete event.breadcrumbs
 
-        if (errorType !== '2xx') {
+        // An RPC that timed out carries nothing beyond the fact that it timed out, so its
+        // event is stripped down the same way a non-2xx one is.
+        if (
+          !isSuccessfulRpcStatusCode(statusCode) ||
+          (message || '').startsWith(RPC_HARDCODED_ERRORS.rpcTimeout)
+        ) {
           // We don't care about any data for non-2XX errors
           // We only want to know how many of them happened and group them accordingly
 
@@ -241,27 +227,18 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
 
         event.extra = {
           ...(event.extra || {}),
-          providerUrl: error.providerUrl
+          providerUrl
         }
 
-        event.fingerprint = [
-          '{{ default }}',
-          error.isProviderInvictus ? error.providerUrl || 'invictus' : 'custom-rpc',
-          errorType
-        ]
-
-        if (error.isProviderInvictus) {
-          event.tags = {
-            ...(event.tags || {}),
-            // Allows us to filter issues by provider in Sentry's UI
-            providerUrl: error.providerUrl || 'should-never-be-undefined',
-            providerType: 'invictus'
-          }
-        } else {
-          event.tags = {
-            ...(event.tags || {}),
-            providerType: 'custom-rpc'
-          }
+        event.tags = {
+          ...(event.tags || {}),
+          ...(isProviderInvictus
+            ? {
+                // Allows us to filter issues by provider in Sentry's UI
+                providerUrl: providerUrl || 'should-never-be-undefined',
+                providerType: 'invictus'
+              }
+            : { providerType: 'custom-rpc' })
         }
       }
 
@@ -290,6 +267,8 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
       return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
     }
   })
+
+  logSentryDeliveryWhenTesting(Sentry.getClient())
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -381,9 +360,9 @@ const init = async () => {
     userBalances: {}
   }
 
-  const pm = new PortMessenger()
-  const ledgerCtrl = new LedgerController()
-  const trezorCtrl = new TrezorController(windowManager as UiManager['window'])
+  pm = new PortMessenger()
+  ledgerCtrl = new LedgerController()
+  trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   const latticeCtrl = new LatticeController()
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
@@ -448,7 +427,7 @@ const init = async () => {
     return fetch(url, initWithCustomHeaders)
   }
 
-  const eventEmitterRegistry = new EventEmitterRegistryController(() => {
+  eventEmitterRegistry = new EventEmitterRegistryController(() => {
     eventEmitterRegistry.values().forEach((ctrl) => {
       const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
       if (!hasOnUpdateInitialized) {
@@ -507,7 +486,7 @@ const init = async () => {
     })
   })
 
-  const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+  qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
   // Retried once, because openAmbireIdb() gives up after a second so a blocked upgrade cannot
   // hang the boot — and this is the only call, so a merely slow open (cold browser start, busy
@@ -561,6 +540,7 @@ const init = async () => {
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
+    cowSwapApiKey: COWSWAP_API_KEY,
     bungeeApiKey: BUNGEE_API_KEY,
     uniswapApiKey: UNISWAP_API_KEY,
     featureFlags: {},
@@ -730,105 +710,6 @@ const init = async () => {
 
     return 'EMITTED'
   }
-
-  // listen for messages from UI
-  browser.runtime.onConnect.addListener(async (port: Port) => {
-    const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
-    if (['popup', 'tab', 'request-window', 'side-panel'].includes(name)) {
-      // These port names grant access to every controller method (exporting keys and
-      // the seed phrase included), so only our own extension pages may claim them.
-      const senderUrl = port.sender?.url
-      const isFromOurExtension = port.sender?.id === browser.runtime.id
-      const isFromExtensionPage = !senderUrl || senderUrl.startsWith(browser.runtime.getURL(''))
-
-      if (!isFromOurExtension || !isFromExtensionPage) {
-        port.disconnect()
-        return
-      }
-
-      port.id = id || nanoid()
-
-      port.name = name
-      pm.addOrUpdatePort(port, () => {
-        mainCtrl.ui.addView({ id: port.id, type: port.name })
-
-        // Registering the view is what sends it to a screen, so give it the states that screen
-        // needs at the same time instead of making it ask.
-        sendCriticalControllerStates({ pm, port, eventEmitterRegistry }).catch(
-          captureBackgroundException
-        )
-        if (isExtensionOverlayPort(port.name)) {
-          mainCtrl.onPopupOpen(port.id).catch((error) => {
-            console.error('Failed to initialize overlay view', error)
-          })
-        }
-
-        pm.addConnectListener(
-          port.id,
-          // @ts-ignore
-          async (messageType, action: MethodAction | Action, meta: MessageMeta = {}) => {
-            const { type } = action
-            const { windowId } = meta
-
-            try {
-              if (messageType === '> background' && type) {
-                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl, meta })
-              }
-            } catch (err: any) {
-              console.error(`${type} action failed:`, err)
-              captureBackgroundException(err, {
-                extra: {
-                  action: stringify(getReportableAction(action)),
-                  portId: port.id,
-                  windowId
-                }
-              })
-              const shortenedError =
-                err.message.length > 150 ? `${err.message.slice(0, 150)}...` : err.message
-
-              let message = `Something went wrong! Please contact support. Error: ${shortenedError}`
-              // Emit the raw error only if it's a custom error
-              if (err instanceof EmittableError || err instanceof ExternalSignerError) {
-                message = err.message
-              }
-
-              pm.send('> ui-error', {
-                method: type,
-                params: {
-                  errors: [
-                    {
-                      message,
-                      level: 'major',
-                      error: err
-                    }
-                  ]
-                }
-              })
-            }
-          }
-        )
-
-        pm.addDisconnectListener(port.id, (disconnectedPort) => {
-          mainCtrl.ui.removeView(port.id)
-          handleCleanUpOnPortDisconnect({ port, mainCtrl })
-
-          // The selectedAccount portfolio is reset onLoad of the popup
-          // (from the background) while the portfolio update is triggered
-          // by a useEffect. If that useEffect doesn't trigger, the portfolio
-          // state will remain reset until an automatic update is triggered.
-          // Example: the user has the dashboard opened in tab, opens the popup
-          // and closes it immediately.
-          if (isExtensionOverlayPort(disconnectedPort.name)) mainCtrl.portfolio.forceEmitUpdate()
-          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            ledgerCtrl.cleanUp()
-            trezorCtrl.cleanUp()
-            qrCtrl.signingCleanup()
-          }
-        })
-      })
-    }
-  })
 }
 
 const setupStorageForTesting = async () => {
@@ -851,9 +732,139 @@ const setupStorageForTesting = async () => {
 
 // Ensures controllers are initialized as soon as the service worker starts,
 // so UI ports (popup, side panel, tab) can connect without waiting for a ping.
-init().catch((err) => {
-  captureBackgroundException(err)
-  console.error(err)
+// Kept as a promise (instead of fire-and-forget) so the `onConnect` listener below can await
+// it - see the comment there for why.
+// Resolves to whether `init()` succeeded - it never rejects.
+const initPromise = init()
+  .then(() => true)
+  .catch((err) => {
+    captureBackgroundException(err)
+    console.error(err)
+    return false
+  })
+
+// Registered synchronously here, at the top level of the script, rather than inside `init()`.
+// Chrome requires MV3 event listeners to be added synchronously during the service worker's
+// first, uninterrupted script evaluation to reliably catch events fired right as the worker
+// wakes from suspension - `init()` yields at its first `await` before it would otherwise reach
+// this listener, which is exactly the situation a UI view's reconnect after a background
+// restart/suspend races against. The sender/origin check stays synchronous and unconditional
+// (it's a security check and must not depend on `init()` finishing); only the rest, which needs
+// `pm`/`mainCtrl`/etc., waits on `initPromise`.
+// listen for messages from UI
+browser.runtime.onConnect.addListener(async (port: Port) => {
+  const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
+  if (!['popup', 'tab', 'request-window', 'side-panel'].includes(name)) return
+
+  // These port names grant access to every controller method (exporting keys and
+  // the seed phrase included), so only our own extension pages may claim them.
+  const senderUrl = port.sender?.url
+  const isFromOurExtension = port.sender?.id === browser.runtime.id
+  const isFromExtensionPage = !senderUrl || senderUrl.startsWith(browser.runtime.getURL(''))
+
+  if (!isFromOurExtension || !isFromExtensionPage) {
+    port.disconnect()
+    return
+  }
+
+  // The view can close while `init()` is still running. Its onDisconnect would then fire before
+  // the PortMessenger listener below exists, leaving a dead port registered for good.
+  let disconnectedWhileWaitingForInit = false
+  const onDisconnectWhileWaitingForInit = () => {
+    disconnectedWhileWaitingForInit = true
+  }
+  port.onDisconnect.addListener(onDisconnectWhileWaitingForInit)
+  const isInitSuccessful = await initPromise
+  port.onDisconnect.removeListener(onDisconnectWhileWaitingForInit)
+  if (disconnectedWhileWaitingForInit) return
+
+  // A failed `init()` can leave `pm`/`mainCtrl` etc. unassigned or only partially assigned.
+  if (!isInitSuccessful) {
+    port.disconnect()
+    return
+  }
+
+  port.id = id || nanoid()
+
+  port.name = name
+  pm.addOrUpdatePort(port, () => {
+    mainCtrl.ui.addView({ id: port.id, type: port.name })
+
+    // Registering the view is what sends it to a screen, so give it the states that screen
+    // needs at the same time instead of making it ask.
+    sendCriticalControllerStates({ pm, port, eventEmitterRegistry }).catch(
+      captureBackgroundException
+    )
+    if (isExtensionOverlayPort(port.name)) {
+      mainCtrl.onPopupOpen(port.id).catch((error) => {
+        console.error('Failed to initialize overlay view', error)
+      })
+    }
+
+    pm.addConnectListener(
+      port.id,
+      // @ts-ignore
+      async (messageType, action: MethodAction | Action, meta: MessageMeta = {}) => {
+        const { type } = action
+        const { windowId } = meta
+
+        try {
+          if (messageType === '> background' && type) {
+            await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl, meta })
+          }
+        } catch (err: any) {
+          console.error(`${type} action failed:`, err)
+          captureBackgroundException(err, {
+            extra: {
+              action: stringify(getReportableAction(action)),
+              portId: port.id,
+              windowId
+            }
+          })
+          const shortenedError =
+            err.message.length > 150 ? `${err.message.slice(0, 150)}...` : err.message
+
+          let message = `Something went wrong! Please contact support. Error: ${shortenedError}`
+          // Emit the raw error only if it's a custom error
+          if (err instanceof EmittableError || err instanceof ExternalSignerError) {
+            message = err.message
+          }
+
+          pm.send('> ui-error', {
+            method: type,
+            params: {
+              errors: [
+                {
+                  message,
+                  level: 'major',
+                  error: err
+                }
+              ]
+            }
+          })
+        }
+      }
+    )
+
+    pm.addDisconnectListener(port.id, (disconnectedPort) => {
+      mainCtrl.ui.removeView(port.id)
+      handleCleanUpOnPortDisconnect({ port, mainCtrl })
+
+      // The selectedAccount portfolio is reset onLoad of the popup
+      // (from the background) while the portfolio update is triggered
+      // by a useEffect. If that useEffect doesn't trigger, the portfolio
+      // state will remain reset until an automatic update is triggered.
+      // Example: the user has the dashboard opened in tab, opens the popup
+      // and closes it immediately.
+      if (isExtensionOverlayPort(disconnectedPort.name)) mainCtrl.portfolio.forceEmitUpdate()
+      if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        ledgerCtrl.cleanUp()
+        trezorCtrl.cleanUp()
+        qrCtrl.signingCleanup()
+      }
+    })
+  })
 })
 
 // Ensures controllers are initialized when the browser starts.
@@ -898,6 +909,16 @@ browser.runtime.onMessage.addListener(async (message: any) => {
   // The extension UI periodically sends "ping" messages. Responding here wakes up
   // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
   if (message === 'ambire-extension-ping') return 'ambire-extension-pong'
+
+  // Every controller reports through `captureBackgroundException`, so the crash-analytics e2e
+  // spec needs a way to exercise that path. Unreachable outside a testing build.
+  if (
+    process.env.IS_TESTING === 'true' &&
+    message?.type === 'ambire-extension-test-capture-exception-background'
+  ) {
+    captureBackgroundException(new Error(message.errorMessage))
+    return null
+  }
 
   return null
 })

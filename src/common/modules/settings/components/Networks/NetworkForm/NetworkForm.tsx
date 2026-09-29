@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
@@ -15,6 +15,7 @@ import { isValidURL } from '@ambire-common/services/validations'
 import colibriLogo from '@common/assets/images/colibri-logo.png'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
@@ -228,6 +229,7 @@ const NetworkForm = ({
   // from one the user typed and skip a redundant second check.
   const autoFilledChainIdRef = useRef<string | undefined>(undefined)
   const { styles, theme } = useTheme(getStyles)
+  const colibriTooltipId = useId()
 
   const selectedNetwork = useMemo(
     () => allNetworks.find((network) => network.chainId.toString() === selectedChainId.toString()),
@@ -317,6 +319,17 @@ const NetworkForm = ({
     }
   }, [networkFormValues.chainId])
   const shouldShowColibriSettings = isColibriAvailable
+  const colibriTooltipContent = t(
+    'Colibri verification will be available soon on mobile and is currently available in the extension only.'
+  )
+  const colibriTooltipDataSet = useMemo(
+    () =>
+      createGlobalTooltipDataSet({
+        id: `colibri-mobile-disabled-${colibriTooltipId}`,
+        content: colibriTooltipContent
+      }),
+    [colibriTooltipContent, colibriTooltipId]
+  )
 
   const requestNetworkInfo = useCallback(
     (rpcUrl: string, chainId: bigint) => {
@@ -1009,10 +1022,16 @@ const NetworkForm = ({
                 <Controller
                   control={control}
                   render={({ field: { onChange, value } }) => (
-                    <Checkbox value={!!value} style={flexbox.alignCenter} onValueChange={onChange}>
+                    <Checkbox
+                      value={!!value}
+                      style={flexbox.alignCenter}
+                      onValueChange={onChange}
+                      isDisabled={isMobile}
+                    >
                       <Pressable
                         style={[flexbox.directionRow, flexbox.alignCenter]}
                         onPress={() => onChange(!value)}
+                        disabled={isMobile}
                       >
                         <Image
                           source={colibriLogo as ImageSourcePropType}
@@ -1022,6 +1041,16 @@ const NetworkForm = ({
                         <Text appearance="secondaryText" fontSize={12} shouldScale={false}>
                           {t('Enable Colibri for RPC verification')}
                         </Text>
+                        {isMobile && (
+                          <View style={spacings.mlMi}>
+                            <InfoIcon
+                              width={16}
+                              height={16}
+                              dataSet={colibriTooltipDataSet}
+                              accessibilityLabel={colibriTooltipContent}
+                            />
+                          </View>
+                        )}
                       </Pressable>
                     </Checkbox>
                   )}

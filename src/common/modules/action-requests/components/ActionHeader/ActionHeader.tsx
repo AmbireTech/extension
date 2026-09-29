@@ -6,7 +6,6 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -16,7 +15,6 @@ const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsCon
 
 const ActionHeader = () => {
   const { theme } = useTheme()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const { state: visibleUserRequests } = useController(
     'RequestsController',
     selectVisibleUserRequests
@@ -41,8 +39,6 @@ const ActionHeader = () => {
         ]}
       >
         <Header.AccountDataDetailed />
-        {/* A narrow panel needs the whole row for the account label and address */}
-        {isWeb && !isCompactSidePanelLayout && <Header.Logo style={spacings.mlSm} />}
       </View>
       <PendingRequests style={[isWeb && spacings.mhMi]} />
     </View>

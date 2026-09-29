@@ -26,8 +26,8 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import DisconnectAllBottomSheet, {
   DisconnectAllBottomSheetHandle
 } from '@common/modules/explore/components/DisconnectAllBottomSheet'
-import WalletStaking from '@common/modules/explore/components/WalletStaking'
-import { shouldShowWalletStaking } from '@common/modules/explore/helpers/shouldShowWalletStaking'
+import WalletStakingCard from '@common/modules/wallet-staking/components/WalletStakingCard'
+import { shouldShowWalletStaking } from '@common/modules/wallet-staking/helpers/shouldShowWalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -40,6 +40,8 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const TYPE_TITLES: Record<ExploreSectionType, string> = {
   // 'trending' is listed for type completeness; trending has its own dedicated screen (it never
   // routes to this dapp-only section screen).
@@ -50,13 +52,15 @@ const TYPE_TITLES: Record<ExploreSectionType, string> = {
   apps: 'Explore apps'
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const ExploreSectionScreen = () => {
   const { t } = useTranslation()
   const { params } = useRoute()
   const { navigate } = useNavigation()
   const { theme } = useTheme()
   const { state } = useController('DappsController')
-  const { state: allNetworks } = useController('NetworksController', 'networks')
+  const { state: allNetworks } = useController('NetworksController', selectNetworks)
   const { state: balancePerNetwork } = useController(
     'SelectedAccountController',
     (state) => state.portfolio.balancePerNetwork
@@ -275,7 +279,7 @@ const ExploreSectionScreen = () => {
             renderItem={renderItem}
             keyExtractor={(item: Dapp) => item.id}
             ListHeaderComponent={
-              sectionType === 'apps' && isWalletStakingVisible ? WalletStaking : undefined
+              sectionType === 'apps' && isWalletStakingVisible ? WalletStakingCard : undefined
             }
             ListEmptyComponent={
               sectionType === 'apps' ? null : (

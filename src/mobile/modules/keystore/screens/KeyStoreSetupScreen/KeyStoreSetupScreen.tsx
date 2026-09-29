@@ -9,8 +9,8 @@ import DualChoiceModal from '@common/components/DualChoiceModal'
 import FatToggle from '@common/components/FatToggle'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import { DEVICE_SECURITY_LEVEL } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useTheme from '@common/hooks/useTheme'
@@ -34,12 +34,9 @@ const KeyStoreSetupScreen = () => {
   const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useModalize()
   const animation = useRef(new Animated.Value(0)).current
 
-  const { isEnrolled, isLoading, deviceSecurityLevel, saveBiometricsSecret } = useBiometrics()
+  const { isLoading, saveBiometricsSecret } = useBiometrics()
+  const { canEnableBiometrics } = useBiometricsAvailability()
   const { getExtraEntropy } = useExtraEntropy()
-  // The secret is stored behind a key that only a strong (Class 3) biometric can release,
-  // so a weak one (e.g. 2D face unlock on Android) would fail to save it.
-  const isStrongBiometricsEnrolled =
-    isEnrolled && deviceSecurityLevel === DEVICE_SECURITY_LEVEL.BIOMETRIC_STRONG
   const {
     state: { isReadyToStoreKeys, statuses },
     dispatch: keystoreDispatch
@@ -52,8 +49,8 @@ const KeyStoreSetupScreen = () => {
   const pendingBiometricsSecret = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!isLoading && isStrongBiometricsEnrolled) setBiometricsEnabled(true)
-  }, [isLoading, isStrongBiometricsEnrolled])
+    if (!isLoading && canEnableBiometrics) setBiometricsEnabled(true)
+  }, [isLoading, canEnableBiometrics])
 
   // Once the keystore is unlocked (after addSecret('password', ...) succeeds),
   // register the pending biometrics secret with the keystore.
@@ -104,7 +101,7 @@ const KeyStoreSetupScreen = () => {
             return true
           }}
         >
-          {isStrongBiometricsEnrolled && (
+          {canEnableBiometrics && (
             <View
               style={[
                 flexbox.directionRow,

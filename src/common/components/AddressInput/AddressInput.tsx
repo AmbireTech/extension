@@ -1,7 +1,7 @@
 import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, TextInput, View } from 'react-native'
+import { TextInput, View } from 'react-native'
 
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
@@ -26,6 +26,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props extends InputProps {
   withDetails?: boolean
   resolvedAddress: AddressState['resolvedAddress']
@@ -44,6 +46,9 @@ interface Props extends InputProps {
   // (mobile only) and passes the scanned address back. No-op on web.
   onScanAddress?: (address: string) => void
 }
+
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
 
 const AddressInput: React.FC<Props> = ({
   withDetails,
@@ -66,8 +71,8 @@ const AddressInput: React.FC<Props> = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
-  const { state: contacts } = useController('AddressBookController', 'contacts')
-  const { domains } = useController('DomainsController').state
+  const { state: contacts } = useController('AddressBookController', selectContacts)
+  const { state: domains } = useController('DomainsController', selectDomains)
   const { message, severity } = validation
   const isError = severity === 'error'
 
@@ -93,6 +98,14 @@ const AddressInput: React.FC<Props> = ({
     resolvedAddress,
     fieldValue: value || ''
   })
+
+  const isClearButtonVisible = !rest.button && !!value && !!withDetails
+
+  const handleClear = useCallback(() => {
+    !!onChangeText && onChangeText('')
+    inputRef?.current?.focus()
+    !!onClearButtonPress && onClearButtonPress()
+  }, [onChangeText, onClearButtonPress])
 
   const isValidAddress = useMemo(() => validateAddress(address).severity === 'success', [address])
 
@@ -141,11 +154,16 @@ const AddressInput: React.FC<Props> = ({
                 <>
                   {resolvedAddress && !isRecipientDomainResolving ? (
                     <AnimatedPressable
-                      style={[flexbox.alignCenter, flexbox.directionRow, animStyle]}
+                      style={[
+                        flexbox.alignCenter,
+                        flexbox.directionRow,
+                        { flexShrink: 1 },
+                        animStyle
+                      ]}
                       onPress={handleCopyResolvedAddress}
                       {...bindAnim}
                     >
-                      <Text style={flexbox.flex1} numberOfLines={1}>
+                      <Text style={{ flexShrink: 1 }} numberOfLines={1}>
                         <Text
                           style={{
                             flex: 1
@@ -203,18 +221,14 @@ const AddressInput: React.FC<Props> = ({
           rest.button ||
           (!value && onScanAddress ? (
             <AddressScanButton onScanned={onScanAddress} />
-          ) : value && withDetails ? (
-            <Pressable
-              style={{ width: 24, height: 24, ...flexbox.center }}
-              onPress={() => {
-                !!onChangeText && onChangeText('')
-                inputRef?.current?.focus()
-                !!onClearButtonPress && onClearButtonPress()
-              }}
-            >
-              <CloseIcon width={12} height={12} strokeWidth="1.75" style={spacings.mlMi} />
-            </Pressable>
+          ) : isClearButtonVisible ? (
+            <View style={{ width: 24, height: 24, ...flexbox.center }}>
+              <CloseIcon width={12} height={12} strokeWidth="1.75" />
+            </View>
           ) : null)
+        }
+        buttonProps={
+          isClearButtonVisible ? { ...rest.buttonProps, onPress: handleClear } : rest.buttonProps
         }
       />
     </>

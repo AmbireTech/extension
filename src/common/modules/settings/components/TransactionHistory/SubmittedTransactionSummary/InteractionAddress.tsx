@@ -9,12 +9,16 @@ import useCompactActionRequestLayout from '@common/modules/action-requests/hooks
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 // TODO: Refactor to use the <AccountAddress /> component instead
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
 const InteractionAddress = ({ address }: { address: string }) => {
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const reverseLookup = useReverseLookup({ address })
   const { contacts = [] } = useController('AddressBookController').state
-  const { accounts = [] } = useController('AccountsController').state
+  const { state: accounts = [] } = useController('AccountsController', selectAccounts)
   const addressBookContact = contacts.find(
     (contact) => contact.address.toLowerCase() === address.toLowerCase()
   )
@@ -31,7 +35,7 @@ const InteractionAddress = ({ address }: { address: string }) => {
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        isCompactSidePanelLayout && { flexShrink: 1, minWidth: 0 }
+        isNarrowWebLayout && { flexShrink: 1, minWidth: 0 }
       ]}
     >
       {truncatedLocalLabel && (
@@ -39,8 +43,8 @@ const InteractionAddress = ({ address }: { address: string }) => {
           fontSize={12}
           weight="medium"
           appearance="secondaryText"
-          numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
-          style={[spacings.mrMi, isCompactSidePanelLayout && { flexShrink: 1, lineHeight: 16 }]}
+          numberOfLines={isNarrowWebLayout ? 1 : undefined}
+          style={[spacings.mrMi, isNarrowWebLayout && { flexShrink: 1, lineHeight: 16 }]}
         >
           {truncatedLocalLabel}
         </Text>
@@ -48,7 +52,7 @@ const InteractionAddress = ({ address }: { address: string }) => {
       <Text
         fontSize={12}
         appearance="secondaryText"
-        style={isCompactSidePanelLayout ? { lineHeight: 16 } : undefined}
+        style={isNarrowWebLayout ? { lineHeight: 16 } : undefined}
       >
         {truncatedLocalLabel ? `(${shortenAddress(address, 12)})` : shortenAddress(address, 12)}
       </Text>

@@ -1,8 +1,8 @@
 import { nanoid } from 'nanoid'
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
 import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
-import { useSearchParams } from 'react-router-dom'
 
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -15,6 +15,9 @@ import Collections from '../Collections'
 import DeFiPositions from '../DeFiPositions'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import Tokens from '../Tokens'
+import SessionIdInUrl from './SessionIdInUrl'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   /** Only web collapses the overview and hides the search on scroll. */
@@ -24,6 +27,11 @@ interface Props {
   refreshing?: boolean
   onRefresh?: () => void
 }
+
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const DashboardPages = ({
   onScroll,
@@ -35,13 +43,12 @@ const DashboardPages = ({
   const { t } = useTranslation()
   const route = useRoute()
   const [sessionId] = useState(`dashboard-${nanoid()}`)
-  const [, setSearchParams] = useSearchParams()
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
-    'dashboardNetworkFilter'
+    selectDashboardNetworkFilter
   )
 
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const [openTab, setOpenTab] = useState(() => {
     const params = new URLSearchParams(route?.search)
@@ -101,42 +108,18 @@ const DashboardPages = ({
     }
   }, [openTab, prevOpenTab, initTab])
 
-  // The sessions this screen's pages open are tied to the extension's port through the
-  // id in the url, so the background can drop them when the tab goes away (there is no
-  // window event for that - see `port.onDisconnect`). Each page owns the lifecycle of
-  // its own session, so there is nothing to undo here.
-  useEffect(() => {
-    setSearchParams((prev) => {
-      prev.set('sessionId', sessionId)
-      return prev
-    })
-    // setSearchParams changes identity on every call, so it must stay out of the deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId])
-
   return (
-    <DashboardPagesCarousel
-      openTab={openTab}
-      setOpenTab={setOpenTab}
-      sessionId={sessionId}
-      initAllTabs={initAllTabs}
-      onRefresh={onRefresh}
-      refreshing={refreshing}
-    >
-      <Tokens
-        openTab={pagesOpenTab}
-        sessionId={sessionId}
+    <>
+      <SessionIdInUrl sessionId={sessionId} />
+      <DashboardPagesCarousel
+        openTab={openTab}
         setOpenTab={setOpenTab}
-        onScroll={onScroll}
-        initTab={initTab}
-        dashboardNetworkFilterName={dashboardNetworkFilterName}
-        animatedOverviewHeight={animatedOverviewHeight}
-        isSearchHidden={isSearchHidden}
+        sessionId={sessionId}
+        initAllTabs={initAllTabs}
         onRefresh={onRefresh}
         refreshing={refreshing}
-      />
-      {shouldRenderPage('defi') && (
-        <DeFiPositions
+      >
+        <Tokens
           openTab={pagesOpenTab}
           sessionId={sessionId}
           setOpenTab={setOpenTab}
@@ -148,39 +131,53 @@ const DashboardPages = ({
           onRefresh={onRefresh}
           refreshing={refreshing}
         />
-      )}
+        {shouldRenderPage('defi') && (
+          <DeFiPositions
+            openTab={pagesOpenTab}
+            sessionId={sessionId}
+            setOpenTab={setOpenTab}
+            onScroll={onScroll}
+            initTab={initTab}
+            dashboardNetworkFilterName={dashboardNetworkFilterName}
+            animatedOverviewHeight={animatedOverviewHeight}
+            isSearchHidden={isSearchHidden}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          />
+        )}
 
-      {shouldRenderPage('collectibles') && (
-        <Collections
-          openTab={pagesOpenTab}
-          sessionId={sessionId}
-          setOpenTab={setOpenTab}
-          initTab={initTab}
-          onScroll={onScroll}
-          networks={networks}
-          dashboardNetworkFilterName={dashboardNetworkFilterName}
-          animatedOverviewHeight={animatedOverviewHeight}
-          isSearchHidden={isSearchHidden}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
-        />
-      )}
+        {shouldRenderPage('collectibles') && (
+          <Collections
+            openTab={pagesOpenTab}
+            sessionId={sessionId}
+            setOpenTab={setOpenTab}
+            initTab={initTab}
+            onScroll={onScroll}
+            networks={networks}
+            dashboardNetworkFilterName={dashboardNetworkFilterName}
+            animatedOverviewHeight={animatedOverviewHeight}
+            isSearchHidden={isSearchHidden}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          />
+        )}
 
-      {shouldRenderPage('activity') && (
-        <Activity
-          openTab={pagesOpenTab}
-          sessionId={sessionId}
-          setOpenTab={setOpenTab}
-          onScroll={onScroll}
-          initTab={initTab}
-          animatedOverviewHeight={animatedOverviewHeight}
-          network={network}
-          isSearchHidden={isSearchHidden}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
-        />
-      )}
-    </DashboardPagesCarousel>
+        {shouldRenderPage('activity') && (
+          <Activity
+            openTab={pagesOpenTab}
+            sessionId={sessionId}
+            setOpenTab={setOpenTab}
+            onScroll={onScroll}
+            initTab={initTab}
+            animatedOverviewHeight={animatedOverviewHeight}
+            network={network}
+            isSearchHidden={isSearchHidden}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          />
+        )}
+      </DashboardPagesCarousel>
+    </>
   )
 }
 
