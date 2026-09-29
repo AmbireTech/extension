@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LayoutChangeEvent, Pressable, View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
@@ -21,8 +21,8 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -54,17 +54,16 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 }
 
 const ACCOUNT_OPTIONS = { markSelected: true }
+/** Used until the footer has been measured */
+const FALLBACK_FOOTER_HEIGHT = 88
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
 
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const flatlistRef = useRef(null)
-  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
-    { flatlistRef }
-  )
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const { state: account } = useController('SelectedAccountController', selectAccount)
@@ -83,6 +82,17 @@ const AccountSelectScreen = () => {
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
   }, [])
+  const listBottomInset = footerHeight ? footerHeight + SPACING_SM : FALLBACK_FOOTER_HEIGHT
+  const {
+    accounts,
+    control,
+    keyExtractor,
+    getItemLayout,
+    onListContentSizeChange,
+    initialScrollIndex,
+    shouldDisplayAccounts,
+    isReadyToRender
+  } = useAccountsList({ flatlistRef })
 
   const shouldTriggerAddAccountSheetFromSearch = useMemo(
     () => extractTriggerAddAccountSheetParam(routeParams),
@@ -133,11 +143,11 @@ const AccountSelectScreen = () => {
     <Button
       testID="button-add-account"
       text={t('Add account')}
-      size={isCompactSidePanelLayout ? 'regular' : 'smaller'}
+      size={isNarrowWebLayout ? 'regular' : 'smaller'}
       hasBottomSpacing={false}
       onPress={openBottomSheet as any}
       childrenPosition="left"
-      style={isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1}
+      style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}
     >
       <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
     </Button>
@@ -147,13 +157,13 @@ const AccountSelectScreen = () => {
       testID="button-sync-with-mobile"
       type="secondary"
       text={t('Sync with mobile')}
-      size={isCompactSidePanelLayout ? 'regular' : 'smaller'}
+      size={isNarrowWebLayout ? 'regular' : 'smaller'}
       hasBottomSpacing={false}
       onPress={openSyncBottomSheet as any}
       childrenPosition="left"
       // On the wide footer, only as wide as its own label, so it never wraps on two
       // rows. The primary action next to it takes whatever is left.
-      style={isCompactSidePanelLayout ? { width: '100%' } : spacings.mrTy}
+      style={isNarrowWebLayout ? { width: '100%' } : spacings.mrTy}
     >
       <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
     </Button>
@@ -168,39 +178,38 @@ const AccountSelectScreen = () => {
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.FLAT_LIST}
-          style={[
-            styles.container,
-            {
-              opacity: shouldDisplayAccounts ? 1 : 0
-            }
-          ]}
-          contentContainerStyle={{
-            paddingBottom: footerHeight ? footerHeight + SPACING_SM : 88
-          }}
-          wrapperRef={flatlistRef}
-          data={accounts}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          keyExtractor={keyExtractor}
-          ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
-        />
+        <View style={flexbox.flex1}>
+          {isReadyToRender && (
+            <ScrollableWrapper
+              type={WRAPPER_TYPES.FLAT_LIST}
+              style={[styles.container, { opacity: shouldDisplayAccounts ? 1 : 0 }]}
+              contentContainerStyle={{ paddingBottom: listBottomInset }}
+              wrapperRef={flatlistRef}
+              data={accounts}
+              renderItem={renderItem}
+              getItemLayout={getItemLayout}
+              keyExtractor={keyExtractor}
+              onContentSizeChange={onListContentSizeChange}
+              initialScrollIndex={initialScrollIndex}
+              ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+            />
+          )}
+        </View>
         <FooterGlassView
           isSimpleBlur={false}
-          fullWidth={isCompactSidePanelLayout}
+          fullWidth={isNarrowWebLayout}
           onLayout={handleFooterLayout}
         >
           <View
             style={
-              isCompactSidePanelLayout
+              isNarrowWebLayout
                 ? { width: '100%', gap: SPACING_TY }
                 : [flexbox.directionRow, flexbox.alignCenter]
             }
           >
             {/* Mobile stacks "Add account" above "Sync with mobile"; the wide footer
             shows them side by side with the sync action leading instead. */}
-            {isCompactSidePanelLayout ? (
+            {isNarrowWebLayout ? (
               <>
                 {addAccountButton}
                 {syncWithMobileButton}

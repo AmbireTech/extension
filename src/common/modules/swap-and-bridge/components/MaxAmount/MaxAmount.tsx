@@ -1,15 +1,15 @@
 import React from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import MaxButton from '@common/components/MaxButton'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -63,22 +63,12 @@ const MaxAmount = ({
         </Text>
       </View>
       {!!onMaxButtonPress && !!maxAmount && (
-        <Pressable
-          style={({ hovered }: any) => [
-            styles.maxButton,
-            {
-              backgroundColor: hovered
-                ? hexToRgba(theme.primaryAccent200, 0.16)
-                : theme.primaryAccent100
-            }
-          ]}
+        <MaxButton
           onPress={onMaxButtonPress}
           disabled={disabled}
-        >
-          <Text fontSize={12} weight="medium" appearance="primary" testID="max-amount-button">
-            {t('Max')}
-          </Text>
-        </Pressable>
+          testID="max-amount-button"
+          style={styles.maxButton}
+        />
       )}
     </View>
   ) : (

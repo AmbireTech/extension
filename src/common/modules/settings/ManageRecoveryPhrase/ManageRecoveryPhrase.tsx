@@ -346,6 +346,8 @@ const ManageRecoveryPhrase = ({
             } password to reveal your recovery phrase.`
           )}
           onPasswordConfirmed={onPasswordConfirmed}
+          onBiometricsConfirmed={onPasswordConfirmed}
+          withFullHeightLayout
           onBackButtonPress={closeConfirmPassword}
         />
       </BottomSheet>

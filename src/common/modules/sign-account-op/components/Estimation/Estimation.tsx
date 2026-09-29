@@ -134,7 +134,7 @@ const Estimation = ({
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const {
     ref: customGasPriceSheetRef,
     open: openCustomGasPriceSheet,
@@ -521,7 +521,7 @@ const Estimation = ({
   const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
-  const isNarrowLayout = isCompactSidePanelLayout
+  const isNarrowLayout = isNarrowWebLayout
   // The narrow side panel reuses the mobile fee header: a short label with the settings icon
   // instead of the wider "Advanced" button, which leaves room for the fee speed on the same row
   const withCompactFeeHeader = isMobile || isNarrowLayout

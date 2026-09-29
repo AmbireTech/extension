@@ -21,6 +21,8 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
+import { SHOULD_USE_TAB_FOR_BIOMETRICS } from '@common/hooks/useSecretConfirmation'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -33,8 +35,8 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@common/utils/links/links'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
-import { IS_FIREFOX } from '@web/constants/common'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
 
 import getStyles from './styles'
@@ -52,6 +54,7 @@ const KeyStoreUnlockScreen = () => {
     useKeyStoreUnlock()
   const { t } = useTranslation()
   const { addToast } = useToast()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { styles } = useTheme(getStyles)
   const {
     state: { isPrivacyModeEnabled },
@@ -59,7 +62,7 @@ const KeyStoreUnlockScreen = () => {
   } = useController('WalletStateController')
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
-    state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked, isPasswordUnlockRequired },
+    state: { statuses, errorMessage, isUnlocked, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
   const { state: requestWindow } = useController('RequestsController', selectRequestWindow)
@@ -68,28 +71,18 @@ const KeyStoreUnlockScreen = () => {
     selectIsExtensionUpdateAvailable
   )
   const { theme } = useTheme()
-  const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
-  const { isPopup, isTab, isSidePanel } = getUiType()
+  const { getBiometricsSecret } = useBiometrics()
+  const { canUnlockWithBiometrics: canUseBiometrics } = useBiometricsAvailability()
+  const { isTab, isSidePanel } = getUiType()
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
   const hasAutoPromptedBiometricsRef = useRef(false)
-  const [isBiometricsPromptPending, setIsBiometricsPromptPending] = useState(false)
+  const biometricsAttemptIdRef = useRef(0)
   const [isBiometricsUnlockInProgress, setIsBiometricsUnlockInProgress] = useState(false)
   const [shouldSkipAutoPrompt] = useState(() => {
     const shouldSkip = syncSessionStorage.get(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE) === 'true'
     if (shouldSkip) syncSessionStorage.remove(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE)
     return shouldSkip
   })
-
-  const canUseBiometrics =
-    !!hasBiometricsSecret && !!hasBiometricsHardware && !isPasswordUnlockRequired
-
-  // WebAuthn (Touch ID / passkey) cannot prompt inside the Chrome side panel or the
-  // Firefox popup: the browser tries to show a modal that these surfaces can't host, so
-  // the call hangs (side panel) or the surface auto-closes (Firefox popup). In both cases
-  // we run the biometric ceremony in a dedicated tab, which is the only context where it works.
-  const shouldUseTabForBiometrics = (IS_FIREFOX && isPopup) || isSidePanel
-  const isBiometricsUnlockLoading =
-    isBiometricsPromptPending || (unlockMethod === 'biometrics' && isBiometricsUnlockInProgress)
 
   const openBiometricsInTab = useCallback(async () => {
     await openInternalPageInTab({
@@ -101,45 +94,45 @@ const KeyStoreUnlockScreen = () => {
   }, [isSidePanel, isTab, requestWindow?.windowProps?.createdFromWindowId])
 
   const runBiometricsUnlock = useCallback(async () => {
-    if (isBiometricsPromptPending || statuses.unlockWithSecret === 'LOADING') return false
+    if (statuses.unlockWithSecret === 'LOADING') return false
 
-    // Start WebAuthn before any React state update so the click user-gesture is preserved.
+    // A dismissed prompt is not always reported back (the side panel leaves it pending forever), so
+    // an attempt never blocks a later one - it takes over and the stale one aborts on its own.
+    const attemptId = biometricsAttemptIdRef.current + 1
+    biometricsAttemptIdRef.current = attemptId
+
+    // Start WebAuthn on the click itself so the user-gesture is preserved.
     // getBiometricsSecret() only awaits storage when the credential cache is cold.
     window.focus()
-    const biometricsSecretPromise = getBiometricsSecret()
-    setIsBiometricsPromptPending(true)
+    const biometricsSecret = await getBiometricsSecret()
 
-    try {
-      const biometricsSecret = await biometricsSecretPromise
+    if (biometricsAttemptIdRef.current !== attemptId) return false
 
-      if (!biometricsSecret) {
-        setIsBiometricsUnlockInProgress(false)
-        return false
-      }
-
-      setIsBiometricsUnlockInProgress(true)
-      keystoreDispatch({
-        type: 'method',
-        params: {
-          method: 'unlockWithSecret',
-          args: ['biometrics', biometricsSecret]
-        }
-      })
-
-      return true
-    } finally {
-      setIsBiometricsPromptPending(false)
+    if (!biometricsSecret) {
+      setIsBiometricsUnlockInProgress(false)
+      return false
     }
-  }, [getBiometricsSecret, isBiometricsPromptPending, keystoreDispatch, statuses.unlockWithSecret])
+
+    setIsBiometricsUnlockInProgress(true)
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'unlockWithSecret',
+        args: ['biometrics', biometricsSecret]
+      }
+    })
+
+    return true
+  }, [getBiometricsSecret, keystoreDispatch, statuses.unlockWithSecret])
 
   const handleBiometricsPrompt = useCallback(async () => {
-    if (shouldUseTabForBiometrics) {
+    if (SHOULD_USE_TAB_FOR_BIOMETRICS) {
       await openBiometricsInTab()
       return false
     }
 
     return runBiometricsUnlock()
-  }, [openBiometricsInTab, runBiometricsUnlock, shouldUseTabForBiometrics])
+  }, [openBiometricsInTab, runBiometricsUnlock])
 
   // Refresh tooltip content when privacy mode changes while tooltip is active
   useEffect(() => {
@@ -152,10 +145,10 @@ const KeyStoreUnlockScreen = () => {
   useEffect(() => {
     if (unlockMethod) return
 
-    // In the side panel, biometrics can't prompt in-place, so default to the password
-    // view. The user can still tap "Unlock with biometrics" to run it in a tab.
-    setUnlockMethod(canUseBiometrics && !isSidePanel ? 'biometrics' : 'password')
-  }, [canUseBiometrics, isSidePanel, unlockMethod])
+    // Where the ceremony has to run in a tab, the screen opens on the password so unlocking does
+    // not throw the user into a tab they did not ask for. Biometrics stays one tap away.
+    setUnlockMethod(canUseBiometrics && !SHOULD_USE_TAB_FOR_BIOMETRICS ? 'biometrics' : 'password')
+  }, [canUseBiometrics, unlockMethod])
 
   useEffect(() => {
     if (
@@ -163,7 +156,7 @@ const KeyStoreUnlockScreen = () => {
       unlockMethod !== 'biometrics' ||
       hasAutoPromptedBiometricsRef.current ||
       shouldSkipAutoPrompt ||
-      isSidePanel
+      SHOULD_USE_TAB_FOR_BIOMETRICS
     )
       return
 
@@ -171,7 +164,7 @@ const KeyStoreUnlockScreen = () => {
     handleBiometricsPrompt().catch((e) => {
       console.log('failed to open biometrics prompt', e)
     })
-  }, [canUseBiometrics, handleBiometricsPrompt, shouldSkipAutoPrompt, isSidePanel, unlockMethod])
+  }, [canUseBiometrics, handleBiometricsPrompt, shouldSkipAutoPrompt, unlockMethod])
 
   useEffect(() => {
     if (isUnlocked) return
@@ -278,14 +271,15 @@ const KeyStoreUnlockScreen = () => {
           <UpdateAvailableBanner />
         </View>
       )}
-      <View style={styles.container}>
+      {/* A narrow layout's width can match the container maxWidth, so keep the form inset */}
+      <View style={[styles.container, isNarrowWebLayout && spacings.phSm]}>
         {unlockMethod === 'biometrics' && canUseBiometrics && (
           <View style={styles.biometricsContainer}>
             <TouchableOpacity
               testID="button-unlock-biometrics-icon"
               activeOpacity={0.85}
               style={styles.biometricsIconButton}
-              disabled={isBiometricsUnlockLoading}
+              disabled={isBiometricsUnlockInProgress}
               onPress={() => {
                 handleBiometricsPrompt().catch((e) => {
                   addToast(`failed to open biometrics prompt`)
@@ -293,7 +287,7 @@ const KeyStoreUnlockScreen = () => {
                 })
               }}
             >
-              {isBiometricsUnlockLoading ? (
+              {isBiometricsUnlockInProgress ? (
                 <Spinner variant="black" style={{ width: 64, height: 64 }} />
               ) : (
                 <FingerprintIcon width={64} height={64} color={theme.iconPrimary} />
@@ -304,7 +298,7 @@ const KeyStoreUnlockScreen = () => {
               style={styles.switchButton}
               hasBottomSpacing={false}
               text={t('Unlock with password')}
-              disabled={isBiometricsUnlockLoading}
+              disabled={isBiometricsUnlockInProgress}
               onPress={() => setUnlockMethod('password')}
             />
           </View>
@@ -370,6 +364,9 @@ const KeyStoreUnlockScreen = () => {
                 style={[styles.switchButton, spacings.mt]}
                 text={t('Unlock with biometrics')}
                 onPress={() => {
+                  // The tab flow deliberately keeps this window on the password, so only the
+                  // in-place ceremony switches the screen before the prompt shows up.
+                  if (!SHOULD_USE_TAB_FOR_BIOMETRICS) setUnlockMethod('biometrics')
                   handleBiometricsPrompt().catch((e) => {
                     addToast(`failed to open biometrics prompt`)
                     console.log('failed to open biometrics prompt', e)

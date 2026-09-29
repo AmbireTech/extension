@@ -4,7 +4,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
-const { isSidePanel, isRequestWindow } = getUiType()
+const { isRequestWindow } = getUiType()
 
 interface Style {
   background: ViewStyle
@@ -43,9 +43,7 @@ const getStyles = () =>
       maxWidth: 352,
       width: '100%',
       marginHorizontal: 'auto',
-      ...flexbox.alignCenter,
-      // Narrow side panel width can match maxWidth, so keep form controls inset from the edges.
-      ...(isSidePanel ? spacings.phSm : {})
+      ...flexbox.alignCenter
     },
     biometricsContainer: {
       width: '100%',

@@ -169,26 +169,32 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [authenticate, getExtraEntropy, addToast, t])
 
-  const getBiometricsSecret = useCallback(async () => {
-    setIsAuthInProcess(true)
-    try {
-      return await secureStorage.get(BIOMETRICS_SECRET_KEY, t('Confirm your identity'))
-    } catch (e) {
-      // Dismissing the prompt is the user's own doing, but anything else - most often the lock out
-      // after too many failed scans - would drop them on the password screen with no explanation.
-      if (!isUserCancelledBiometrics(e)) {
-        addToast(
-          t('{{biometrics}} is currently unavailable. Enter your password to continue.', {
-            // The Android labels are lowercase ("fingerprint"), but this one starts a sentence
-            biometrics: capitalize(deviceSupportedAuthTypesLabel || t('biometrics'))
-          }) as string,
-          { type: 'warning' }
+  const getBiometricsSecret = useCallback(
+    async (promptMessage?: string) => {
+      setIsAuthInProcess(true)
+      try {
+        return await secureStorage.get(
+          BIOMETRICS_SECRET_KEY,
+          promptMessage || t('Confirm your identity')
         )
-      }
+      } catch (e) {
+        // Dismissing the prompt is the user's own doing, but anything else - most often the lock out
+        // after too many failed scans - would drop them on the password screen with no explanation.
+        if (!isUserCancelledBiometrics(e)) {
+          addToast(
+            t('{{biometrics}} is currently unavailable. Enter your password to continue.', {
+              // The Android labels are lowercase ("fingerprint"), but this one starts a sentence
+              biometrics: capitalize(deviceSupportedAuthTypesLabel || t('biometrics'))
+            }) as string,
+            { type: 'warning' }
+          )
+        }
 
-      return null
-    }
-  }, [t, addToast, deviceSupportedAuthTypesLabel])
+        return null
+      }
+    },
+    [t, addToast, deviceSupportedAuthTypesLabel]
+  )
 
   const removeBiometricsSecret = useCallback(async () => {
     await secureStorage.remove(BIOMETRICS_SECRET_KEY)

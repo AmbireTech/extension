@@ -26,13 +26,11 @@ import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnim
 import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { DEVICE_HEIGHT, DEVICE_WIDTH, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { isExtension } from '@web/constants/browserapi'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
 import getStyles from './styles'
-
-const { isSidePanel } = getUiType()
 
 const Benzin = ({
   state,
@@ -43,20 +41,21 @@ const Benzin = ({
   children?: ReactNode
   topContent?: ReactNode
 }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const { isStoreReady } = useControllerStore()
   const insets = useSafeAreaInsets()
-  // Side panel keeps the footer in the layout under the scroll view, so it stays at the bottom of
+  // A narrow view keeps the footer in the layout under the scroll view, so it stays at the bottom of
   // the screen. An absolute footer would need a spacer inside the scroll view, which creates a
   // phantom scrollbar when the steps are short.
-  const needsFooterSpacer = !!children && !isMobile && !isSidePanel
+  const needsFooterSpacer = !!children && !isMobile && !isNarrowWebLayout
   const [scrollViewportHeight, setScrollViewportHeight] = useState(0)
   const [scrollContentHeight, setScrollContentHeight] = useState(0)
   const [viewSize, setViewSize] = useState({ width: 0, height: 0 })
   // Layers like confetti can inflate scroll height past the visible steps. Only allow scrolling in
-  // the side panel when the measured content is actually taller than the viewport.
-  const isSidePanelScrollEnabled =
+  // the view when the measured content is actually taller than the viewport.
+  const isNarrowWebLayoutScrollEnabled =
     scrollViewportHeight > 0 && scrollContentHeight > scrollViewportHeight + 1
 
   const handleScrollViewLayout = useCallback(
@@ -257,9 +256,9 @@ const Benzin = ({
             type="tertiary"
             width={viewSize.width}
             height={viewSize.height}
-            // Only the side panel needs a full-bleed stretch; popup/mobile keep the original
+            // Only a narrow view needs a full-bleed stretch; popup/mobile keep the original
             // centered containment so the celebration looks the same there
-            resizeMode={isSidePanel ? 'stretch' : 'contain'}
+            resizeMode={isNarrowWebLayout ? 'stretch' : 'contain'}
             autoPlay
             loop={false}
           />
@@ -267,14 +266,14 @@ const Benzin = ({
       )}
       <ScrollView
         style={flexbox.flex1}
-        scrollEnabled={!isSidePanel || isSidePanelScrollEnabled}
-        onLayout={isSidePanel ? handleScrollViewLayout : undefined}
-        onContentSizeChange={isSidePanel ? handleScrollContentSizeChange : undefined}
+        scrollEnabled={!isNarrowWebLayout || isNarrowWebLayoutScrollEnabled}
+        onLayout={isNarrowWebLayout ? handleScrollViewLayout : undefined}
+        onContentSizeChange={isNarrowWebLayout ? handleScrollContentSizeChange : undefined}
         contentContainerStyle={[
           styles.container,
-          // Less top padding in the side panel so short progress views stay within the scroll area
+          // Less top padding in a narrow view so short progress views stay within the scroll area
           // above the pinned footer
-          isSidePanel && { ...spacings.ptSm, ...spacings.pbSm }
+          isNarrowWebLayout && { ...spacings.ptSm, ...spacings.pbSm }
         ]}
       >
         <View style={styles.content}>
