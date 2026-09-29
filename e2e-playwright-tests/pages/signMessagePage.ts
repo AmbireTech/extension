@@ -84,20 +84,22 @@ export class SignMessagePage extends BasePage {
 
     await signMessageButton.click()
 
-    // Signing auth modal; submit button is disabled before entering pass
-    await expect(
-      signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton)
-    ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+    if (!ledgerSimulatorControls) {
+      // Signing auth modal; submit button is disabled before entering pass
+      await expect(
+        signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton)
+      ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
 
-    await signActionWindowPage
-      .getByTestId(selectors.transaction.signPassAuthField)
-      .fill(KEYSTORE_PASS)
+      await signActionWindowPage
+        .getByTestId(selectors.transaction.signPassAuthField)
+        .fill(KEYSTORE_PASS)
 
-    await expect(
-      signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton)
-    ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+      await expect(
+        signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton)
+      ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
 
-    await signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton).click()
+      await signActionWindowPage.getByTestId(selectors.transaction.signConfirmButton).click()
+    }
 
     if (ledgerSimulatorControls) {
       // Wait for the "Review message" screen to appear on the Ledger device before confirming the transaction flow.

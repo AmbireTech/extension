@@ -135,9 +135,25 @@ export async function runBatchTransferFlow({
 
     const actionWindow = await actionWindowPromise
     await page.waitForTimeout(10000) // wait for the AccountOp details to be displayed on the Ledger simulator
+
+    // A brand-new recipient address makes the app show a warning banner on this screen, which
+    // turns the sign button into a hold-to-sign button (testID `proceed-btn`, see Footer.web.tsx)
+    // instead of the regular one-click button (testID `transaction-button-sign`). In CI this test
+    // runs after another test in the same suite already sent to `recipientAddress`, so the address
+    // is already known and the regular button shows up; running this test in isolation against a
+    // fresh recipient shows the hold-to-sign variant instead, so both need to be handled here.
     await expect(async () => {
-      await expect(actionWindow.getByTestId(selectors.signTransactionButton)).toBeVisible()      
-      await actionWindow.getByTestId(selectors.signTransactionButton).click()
+      const holdToSignButton = actionWindow.getByTestId(selectors.transaction.proceedBtn)
+      if (await holdToSignButton.isVisible()) {
+        // Hold for the same required duration as TransferPage.holdToProceedForUnknownAddress
+        await holdToSignButton.hover()
+        await actionWindow.mouse.down()
+        await actionWindow.waitForTimeout(2000)
+        await actionWindow.mouse.up()
+      } else {
+        await expect(actionWindow.getByTestId(selectors.signTransactionButton)).toBeVisible()
+        await actionWindow.getByTestId(selectors.signTransactionButton).click()
+      }
     }).toPass({ timeout: 30000 })
 
     // Signing auth modal; submit button is disabled before entering pass
