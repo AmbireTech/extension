@@ -1030,9 +1030,7 @@ const TransactionSummary = ({
       <View
         style={{
           paddingHorizontal:
-            (shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout) &&
-            isWeb &&
-            !withMobileLayout
+            shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout
               ? SPACING_SM
               : 42 * sizeMultiplier[size] // magic number
         }}
