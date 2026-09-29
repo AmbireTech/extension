@@ -25,6 +25,13 @@ export const BIOMETRICS_SECRET_KEY = 'biometricsSecret_v2'
 
 const BiometricsContext = createContext<BiometricsContextReturnType>(biometricsContextDefaults)
 
+// expo-secure-store reports a dismissed prompt through the message, not a code: "User canceled the
+// operation." on iOS and "User canceled the authentication" on Android.
+const isUserCancelledBiometrics = (error: any): boolean =>
+  typeof error?.message === 'string' && error.message.includes('User canceled')
+
+const capitalize = (value: string): string => `${value.charAt(0).toUpperCase()}${value.slice(1)}`
+
 const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -170,11 +177,23 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           BIOMETRICS_SECRET_KEY,
           promptMessage || t('Confirm your identity')
         )
-      } catch {
+      } catch (e) {
+        // Dismissing the prompt is the user's own doing, but anything else - most often the lock out
+        // after too many failed scans - would drop them on the password screen with no explanation.
+        if (!isUserCancelledBiometrics(e)) {
+          addToast(
+            t('{{biometrics}} is currently unavailable. Enter your password to continue.', {
+              // The Android labels are lowercase ("fingerprint"), but this one starts a sentence
+              biometrics: capitalize(deviceSupportedAuthTypesLabel || t('biometrics'))
+            }) as string,
+            { type: 'warning' }
+          )
+        }
+
         return null
       }
     },
-    [t]
+    [t, addToast, deviceSupportedAuthTypesLabel]
   )
 
   const removeBiometricsSecret = useCallback(async () => {
