@@ -96,7 +96,7 @@ test.describe('security: private key leak prevention', { tag: '@security' }, () 
     await test.step('read the generated seed phrase from the settings', async () => {
       await pages.recoveryPhrases.open()
       const seedId = await pages.recoveryPhrases.getFirstSeedId()
-      const { phrase } = await pages.recoveryPhrases.revealSeed(seedId)
+      const { phrase } = await pages.recoveryPhrases.revealSeed({ seedId })
       generatedSeed = phrase
     })
 

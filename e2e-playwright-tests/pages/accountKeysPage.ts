@@ -34,49 +34,37 @@ export class AccountKeysPage extends BasePage {
 
   private async findAndOpenAccountKeys(keyAddr: string, accountAddr: string): Promise<void> {
     // Filter the (potentially long) account list down to the owning account so we scan a
-    // handful of rows instead of every account. Fuzzy search may still return a few rows,
-    // so we keep the row loop below to pick the exact one holding the target key.
+    // handful of rows instead of every account. The options (kebab) button is keyed by the
+    // account address, so even if fuzzy search returns a few extra rows we target the exact
+    // one directly instead of guessing based on DOM position/structure.
     await this.entertext(selectors.searchInput, accountAddr)
 
     const accountRows = this.page.getByTestId('account')
     await expect(accountRows.first()).toBeVisible({ timeout: PRESENCE_TIMEOUT })
-    const count = await accountRows.count()
 
-    for (let i = 0; i < count; i++) {
-      const row = accountRows.nth(i)
-      await row.locator('div>div>div>div>svg').last().click()
+    const optionsBtn = this.page.getByTestId(selectors.settings.accountOptionsButton(accountAddr))
+    await optionsBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+    await optionsBtn.click()
 
-      const manageKeys = this.page.getByText('Manage keys').first()
-      const dropdownVisible = await manageKeys
-        .waitFor({ state: 'visible', timeout: 1500 })
-        .then(() => true)
-        .catch(() => false)
+    const manageKeys = this.page.getByText('Manage keys').first()
+    await manageKeys.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+    await manageKeys.click()
 
-      if (!dropdownVisible) {
-        await this.page.keyboard.press('Escape')
-        continue
-      }
-
-      await manageKeys.click()
-
-      // Only locate the export button here — the caller asserts enabled/disabled, since HW
-      // keys render the same button in a disabled state.
-      const exportBtn = this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
-      const found = await exportBtn
-        .waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
-        .then(() => true)
-        .catch(() => false)
-
-      if (found) return
-
-      // Wrong account — close sheet and wait for backdrop to fully clear
-      await this.closeTopSheet()
-    }
-
-    throw new Error(`No account found containing key ${keyAddr}`)
+    // Only locate the export button here — the caller asserts enabled/disabled, since HW
+    // keys render the same button in a disabled state.
+    const exportBtn = this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
+    await exportBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
   }
 
-  async exportPrivateKey(keyAddr: string, accountAddr: string): Promise<string> {
+  async exportPrivateKey({
+    keyAddr,
+    accountAddr,
+    confirmModal = true
+  }: {
+    keyAddr: string
+    accountAddr: string
+    confirmModal?: boolean
+  }): Promise<string> {
     await this.open()
     await this.findAndOpenAccountKeys(keyAddr, accountAddr)
 
@@ -88,10 +76,13 @@ export class AccountKeysPage extends BasePage {
     await revealBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
     await revealBtn.click()
 
-    const passInput = this.page.getByTestId(selectors.passphraseField)
-    await passInput.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
-    await passInput.fill(KEYSTORE_PASS)
-    await this.click(selectors.submitButton)
+    // some flows do not require password confimation
+    if (confirmModal) {
+      const passInput = this.page.getByTestId(selectors.passphraseField)
+      await passInput.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+      await passInput.fill(KEYSTORE_PASS)
+      await this.click(selectors.submitButton)
+    }
 
     const keyEl = this.page.getByTestId(selectors.keystoreMigration.privateKeyValue)
     await expect(keyEl).not.toBeEmpty({ timeout: 15000 })
