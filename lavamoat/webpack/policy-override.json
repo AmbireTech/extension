@@ -394,6 +394,14 @@
       "meta": {
         "note": "GLOBAL_OBJ lives in this package and is every Sentry package's view of globalThis. getNativeImplementation (in @sentry-internal/browser-utils) reads GLOBAL_OBJ[name] with a runtime key and globalError/globalUnhandledRejection assign onto GLOBAL_OBJ, neither of which the policy generator can see. Without fetch the default transport resolves undefined and no crash report ever leaves the extension; the handlers must be \"write\" so the assignment reaches the real global instead of the compartment copy."
       }
+    },
+    "expo-font>fontfaceobserver": {
+      "globals": {
+        "document.fonts": true
+      },
+      "meta": {
+        "note": "Reads document.fonts through a context object, which the policy generator can't see. Without it the observer falls back to guessing from the widths of hidden elements, which can time out even when the font loaded fine."
+      }
     }
   }
 }
