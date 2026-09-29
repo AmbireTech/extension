@@ -102,6 +102,7 @@ const selectors = {
     unhideTokenButton: 'unhide-button',
     youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page,
     manageAccountTreeDotsButton: 'account', // on accounts page, has multiple sam IDs,
+    accountOptionsButton: (addr: string) => `account-options-${addr}`, // kebab menu on an account row, unique per address
     removeAccountButton: '//div[contains(text(),"Remove account")]',
     confirmRemoveAccountButton: 'confirm-remove-account-button',
     confirmExtensionPassField: 'passphrase-field',
