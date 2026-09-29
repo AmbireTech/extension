@@ -351,7 +351,8 @@ export const initWalletConnect = async (
                 providerId: 1,
                 topic,
                 tabId: getWcTabIdFromTopic(topic),
-                isWalletConnect: true
+                isWalletConnect: true,
+                chainId: parseEip155ChainIds([params.chainId])[0]
               }
             },
             undefined,
@@ -606,7 +607,8 @@ export const respondToWalletConnectRequest = async (topic: string, response: any
 export const approveWalletConnectSession = async (
   proposalId: number,
   accounts: string[],
-  dispatch: DispatchFn
+  dispatch: DispatchFn,
+  enabledChainIds?: number[]
 ) => {
   if (!walletKit) return
 
@@ -625,19 +627,37 @@ export const approveWalletConnectSession = async (
 
   const namespaces: any = {}
 
-  const allNamespaces = { ...requiredNamespaces, ...optionalNamespaces }
-  if (allNamespaces.eip155) {
+  const required = requiredNamespaces?.eip155
+  const optional = optionalNamespaces?.eip155
+  if (required || optional) {
+    const requiredChains = required?.chains ?? []
+    const optionalChains = (optional?.chains ?? []).filter((c) => !requiredChains.includes(c))
+    // Chains left out of the session make the dapp ask us to switch (and then add) them, like
+    // an injected wallet. Required ones must stay, or the session won't settle.
+    const enabledOptionalChains = enabledChainIds
+      ? optionalChains.filter((c) => enabledChainIds.includes(parseEip155ChainIds([c])[0]!))
+      : optionalChains
+    const approvedChains = [...requiredChains, ...enabledOptionalChains]
+    // A session needs at least one chain - it gets rejected per request if not enabled by then
+    const chains = approvedChains.length ? approvedChains : [optionalChains[0] ?? 'eip155:1']
+
+    const methods = [...(required?.methods ?? []), ...(optional?.methods ?? [])]
+    const events = [...(required?.events ?? []), ...(optional?.events ?? [])]
+
     namespaces.eip155 = {
-      accounts:
-        allNamespaces.eip155.chains?.map((c: string) => accounts.map((a) => `${c}:${a}`)).flat() ||
-        accounts.map((a: string) => `eip155:1:${a}`),
-      methods: allNamespaces.eip155.methods || [
-        'personal_sign',
-        'eth_sendTransaction',
-        'eth_signTypedData_v4',
-        'wallet_switchEthereumChain'
+      chains,
+      accounts: chains.flatMap((c) => accounts.map((a) => `${c}:${a}`)),
+      // The switch/add methods must be approved, or the dapp can't reach us for left-out chains
+      methods: [
+        ...new Set([
+          ...(methods.length
+            ? methods
+            : ['personal_sign', 'eth_sendTransaction', 'eth_signTypedData_v4']),
+          'wallet_switchEthereumChain',
+          'wallet_addEthereumChain'
+        ])
       ],
-      events: allNamespaces.eip155.events || ['accountsChanged', 'chainChanged']
+      events: [...new Set(events.length ? events : ['accountsChanged', 'chainChanged'])]
     }
   }
 
