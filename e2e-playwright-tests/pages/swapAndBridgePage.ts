@@ -273,14 +273,19 @@ export class SwapAndBridgePage extends BasePage {
 
     await signButton.click()
 
-    // TODO: check why this is needed
-    // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
+    // checks whether a bottom sheet is currently covering the screen and,
+    // if so, waits up to 20 seconds for it to clear before retrying the click
     await page.waitForTimeout(350)
+    const blockingSheet = page.getByTestId('bottom-sheet').first()
+    if (await blockingSheet.isVisible().catch(() => false)) {
+      await blockingSheet.waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {})
+    }
+
     const shouldRetryClick = await signButton.isVisible().catch(() => false)
     if (shouldRetryClick) {
       const stillEnabled = await signButton.isEnabled().catch(() => false)
       if (stillEnabled) {
-        await signButton.click()
+        await signButton.click({ timeout: 10000 })
       }
     }
 
