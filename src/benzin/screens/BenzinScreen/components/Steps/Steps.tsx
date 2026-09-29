@@ -212,14 +212,6 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                   chainId={change.chainId}
                   tokenMarginRight={0}
                 />
-                <Text
-                  fontSize={16}
-                  weight="medium"
-                  appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                >
-                  {change.balanceChange > 0n ? '+' : '-'}
-                  {change.balanceChange > 0n ? change.balanceChange : -change.balanceChange}
-                </Text>
               </View>
             )
           }

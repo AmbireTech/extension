@@ -27,7 +27,6 @@ import { openInTab } from '@common/utils/links'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import {
-  formatBalanceChangeAmount,
   getFormattedSubmittedDate,
   getModalFinalStatus,
   getPresentationalStatus,
@@ -124,14 +123,8 @@ const SummaryDetails = ({
                   chainId={change.chainId}
                   tokenMarginRight={0}
                   textSize={12}
+                  tokenIconContainerSize={16}
                 />
-                <Text
-                  fontSize={12}
-                  weight="medium"
-                  appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                >
-                  {formatBalanceChangeAmount(change)}
-                </Text>
               </View>
             )
           }

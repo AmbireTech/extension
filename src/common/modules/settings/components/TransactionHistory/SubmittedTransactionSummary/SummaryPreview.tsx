@@ -160,21 +160,23 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 isNarrowWebLayout && { minHeight: 18 }
               ]}
             >
-              <Text
-                fontSize={12}
-                weight="medium"
-                appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                style={{
-                  cursor: 'pointer',
-                  ...(isNarrowWebLayout ? { lineHeight: 16 } : {})
-                }}
-                dataSet={createGlobalTooltipDataSet({
-                  id: getBalanceChangeTooltipId(change, submittedAccountOp),
-                  content: getFullBalanceChangeAmount(change)
-                })}
-              >
-                {formatBalanceChangeAmount(change)}
-              </Text>
+              {!isNftBalanceChange(change) && (
+                <Text
+                  fontSize={12}
+                  weight="medium"
+                  appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
+                  style={{
+                    cursor: 'pointer',
+                    ...(isNarrowWebLayout ? { lineHeight: 16 } : {})
+                  }}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: getBalanceChangeTooltipId(change, submittedAccountOp),
+                    content: getFullBalanceChangeAmount(change)
+                  })}
+                >
+                  {formatBalanceChangeAmount(change)}
+                </Text>
+              )}
               {isNftBalanceChange(change) ? (
                 <View style={spacings.mlTy}>
                   <TokenOrNft
@@ -184,6 +186,7 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                     chainId={change.chainId}
                     tokenMarginRight={0}
                     tokenIconContainerSize={16}
+                    nftIconPosition="right"
                   />
                 </View>
               ) : (
