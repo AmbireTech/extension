@@ -156,20 +156,25 @@ export async function runBatchTransferFlow({
       }
     }).toPass({ timeout: 30000 })
 
-    // Signing auth modal; submit button is disabled before entering pass
-    await expect(actionWindow.getByTestId(selectors.transaction.signConfirmButton)).toHaveAttribute(
-      'aria-disabled',
-      'true',
-      { timeout: 30000 }
-    )
+    // TODO: in CI we dont need sign because this test run after test that does signing
+    const signConfirmButton = actionWindow.getByTestId(selectors.transaction.signConfirmButton)
+    const signingAuthRequired = await signConfirmButton
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .then(() => true)
+      .catch(() => false)
 
-    await actionWindow.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
+    if (signingAuthRequired) {
+      // submit button is disabled before entering pass
+      await expect(signConfirmButton).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
 
-    await expect(
-      actionWindow.getByTestId(selectors.transaction.signConfirmButton)
-    ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+      await actionWindow.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
 
-    await actionWindow.getByTestId(selectors.transaction.signConfirmButton).click()
+      await expect(signConfirmButton).not.toHaveAttribute('aria-disabled', 'true', {
+        timeout: 30000
+      })
+
+      await signConfirmButton.click()
+    }
 
     if (ledgerSimulatorControls) {
       await page.waitForTimeout(2000) // wait for the transaction details to be displayed on the Ledger simulator

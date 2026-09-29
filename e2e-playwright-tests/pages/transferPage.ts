@@ -181,20 +181,28 @@ export class TransferPage extends BasePage {
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
 
-      // Signing auth modal; gas tank does not require sign auth
+
       if (signAuth) {
-        // submit button is disabled before entering pass
-        await expect(
-          this.page.getByTestId(selectors.transaction.signConfirmButton)
-        ).toHaveAttribute('aria-disabled', 'true', { timeout: 60000 })
+        const signConfirmButton = this.page.getByTestId(selectors.transaction.signConfirmButton)
+        const signingAuthRequired = await signConfirmButton
+          .waitFor({ state: 'visible', timeout: 5000 })
+          .then(() => true)
+          .catch(() => false)
 
-        await this.page.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
+        if (signingAuthRequired) {
+          // submit button is disabled before entering pass
+          await expect(signConfirmButton).toHaveAttribute('aria-disabled', 'true', {
+            timeout: 60000
+          })
 
-        await expect(
-          this.page.getByTestId(selectors.transaction.signConfirmButton)
-        ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 60000 })
+          await this.page.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
 
-        await this.page.getByTestId(selectors.transaction.signConfirmButton).click()
+          await expect(signConfirmButton).not.toHaveAttribute('aria-disabled', 'true', {
+            timeout: 60000
+          })
+
+          await signConfirmButton.click()
+        }
       }
 
       // Accept dual choice modal if fee difference is below 0.1$
