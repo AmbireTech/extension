@@ -6,6 +6,7 @@ import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useAccountKeys from '@common/hooks/useAccountKeys'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -23,6 +24,7 @@ const AccountDataDetailed = () => {
   const reverseLookup = useReverseLookup({
     address: account?.addr || ''
   })
+  const accountKeys = useAccountKeys(account)
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
@@ -65,7 +67,7 @@ const AccountDataDetailed = () => {
           >
             {account.preferences.label}
           </Text>
-          <AccountBadges accountData={account} />
+          <AccountBadges accountData={account} accountKeys={accountKeys} />
         </View>
         <View
           style={[flexbox.directionRow, flexbox.alignCenter, isNarrowWebLayout && { minWidth: 0 }]}

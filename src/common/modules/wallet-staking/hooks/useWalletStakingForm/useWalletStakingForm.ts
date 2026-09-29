@@ -33,7 +33,7 @@ import {
   formatPendingWalletWithdrawalDuration,
   isPendingWalletWithdrawalReady,
   shouldUsePendingWalletWithdrawalMode
-} from '@common/modules/wallet-staking/helpers/pendingWithdrawal'
+} from '@ambire-common/libs/walletStaking/pendingWithdrawal'
 import usePendingWalletWithdrawal from '@common/modules/wallet-staking/hooks/usePendingWalletWithdrawal'
 import useXWalletShareValue from '@common/modules/wallet-staking/hooks/useXWalletShareValue'
 import { getSliderAmountFieldValue } from '@common/utils/amountSlider'
@@ -140,8 +140,21 @@ const useWalletStakingForm = () => {
     isLoading: isLoadingPendingWithdrawal,
     hasLoadFailed: hasPendingWithdrawalLoadFailed,
     nowMs,
-    reload: reloadPendingWithdrawal
+    reload: reloadPendingWithdrawal,
+    isWithdrawalsLookupEnabled,
+    enableWithdrawalsLookup,
+    findWithdrawalByTxnId,
+    txnIdLookupError,
+    isTxnIdLookupLoading
   } = usePendingWalletWithdrawal(account?.addr)
+  // Kept here rather than in the missing details card, because the card is unmounted while the
+  // withdrawals reload (e.g. when switching tabs), which would clear the entered transaction ID
+  const [withdrawalTxnId, setWithdrawalTxnId] = useState('')
+  // The lookup error belongs to the transaction ID that was checked, so it hides as soon as the
+  // user edits or clears the field
+  const [checkedWithdrawalTxnId, setCheckedWithdrawalTxnId] = useState('')
+  const visibleTxnIdLookupError =
+    withdrawalTxnId.trim() === checkedWithdrawalTxnId ? txnIdLookupError : null
 
   const walletToken = useMemo(
     () =>
@@ -190,7 +203,8 @@ const useWalletStakingForm = () => {
   const shouldShowPendingWithdrawalLoader = mode === 'unstake' && isLoadingPendingWithdrawal
   // The staking contract holds shares for a withdrawal we can't describe: the leave event reaches
   // us through the relayer's logs, which lag the transaction, and the cached copy is gone
-  // (another device, or cleared storage). The unstake form stays locked either way - those shares
+  // (another device, or cleared storage). When the user opted out of the relayer lookup, the
+  // unstake transaction wasn't made from this device either, so the user can enter its ID. The unstake form stays locked either way - those shares
   // are committed - so the screen says the details are missing instead of showing an amount and a
   // timer it doesn't have.
   const isMissingWithdrawalDetails =
@@ -490,6 +504,10 @@ const useWalletStakingForm = () => {
   const handleMaxPress = useCallback(() => {
     setTokenAmount(formatUnits(balance, TOKEN_DECIMALS))
   }, [balance, setTokenAmount])
+  const handleFindWithdrawalByTxnId = useCallback(() => {
+    setCheckedWithdrawalTxnId(withdrawalTxnId.trim())
+    findWithdrawalByTxnId(withdrawalTxnId)
+  }, [findWithdrawalByTxnId, withdrawalTxnId])
   const handleOpenFeeInfoBottomSheet = useCallback(
     () => openFeeInfoBottomSheet(),
     [openFeeInfoBottomSheet]
@@ -710,6 +728,13 @@ const useWalletStakingForm = () => {
     closeFeeInfoBottomSheet,
     isPendingWithdrawalMode,
     isMissingWithdrawalDetails,
+    isWithdrawalsLookupEnabled,
+    onEnableWithdrawalsLookup: enableWithdrawalsLookup,
+    withdrawalTxnId,
+    onWithdrawalTxnIdChange: setWithdrawalTxnId,
+    onFindWithdrawalByTxnId: handleFindWithdrawalByTxnId,
+    txnIdLookupError: visibleTxnIdLookupError,
+    isTxnIdLookupLoading,
     isWithdrawalReady,
     pendingWithdrawalAmount,
     pendingWithdrawalTime,

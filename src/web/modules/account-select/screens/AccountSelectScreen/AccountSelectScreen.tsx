@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LayoutChangeEvent, Pressable, View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
@@ -23,6 +23,7 @@ import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -54,6 +55,8 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 }
 
 const ACCOUNT_OPTIONS = { markSelected: true }
+/** Used until the footer has been measured */
+const FALLBACK_FOOTER_HEIGHT = 88
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
@@ -62,9 +65,6 @@ const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
   const { isNarrowWebLayout } = useCompactLayout()
   const flatlistRef = useRef(null)
-  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
-    { flatlistRef }
-  )
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const { state: account } = useController('SelectedAccountController', selectAccount)
@@ -83,6 +83,17 @@ const AccountSelectScreen = () => {
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
   }, [])
+  const listBottomInset = footerHeight ? footerHeight + SPACING_SM : FALLBACK_FOOTER_HEIGHT
+  const {
+    accounts,
+    control,
+    keyExtractor,
+    getItemLayout,
+    onListContentSizeChange,
+    initialScrollIndex,
+    shouldDisplayAccounts,
+    isReadyToRender
+  } = useAccountsList({ flatlistRef })
 
   const shouldTriggerAddAccountSheetFromSearch = useMemo(
     () => extractTriggerAddAccountSheetParam(routeParams),
@@ -168,26 +179,23 @@ const AccountSelectScreen = () => {
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.FLAT_LIST}
-          style={[
-            styles.container,
-            {
-              opacity: shouldDisplayAccounts ? 1 : 0
-            }
-          ]}
-          contentContainerStyle={
-            isNarrowWebLayout
-              ? undefined
-              : { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 88 }
-          }
-          wrapperRef={flatlistRef}
-          data={accounts}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          keyExtractor={keyExtractor}
-          ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
-        />
+        <View style={flexbox.flex1}>
+          {isReadyToRender && (
+            <ScrollableWrapper
+              type={WRAPPER_TYPES.FLAT_LIST}
+              style={[styles.container, { opacity: shouldDisplayAccounts ? 1 : 0 }]}
+              contentContainerStyle={{ paddingBottom: listBottomInset }}
+              wrapperRef={flatlistRef}
+              data={accounts}
+              renderItem={renderItem}
+              getItemLayout={getItemLayout}
+              keyExtractor={keyExtractor}
+              onContentSizeChange={onListContentSizeChange}
+              initialScrollIndex={initialScrollIndex}
+              ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+            />
+          )}
+        </View>
         <FooterGlassView
           isSimpleBlur={false}
           // In a narrow view the footer sits under the list like on mobile, instead of floating over it
