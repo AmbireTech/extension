@@ -90,6 +90,17 @@ function parseEip155ChainIds(chains?: string[]): number[] {
     .filter((chainId) => Number.isFinite(chainId))
 }
 
+/**
+ * The CAIP-2 chains a session approved. Sessions settled before we started setting
+ * `chains` only carry them in their CAIP-10 `accounts` (`eip155:<chainId>:<address>`).
+ */
+function getSessionChains(namespace: SessionTypes.Namespace): string[] {
+  if (namespace.chains?.length) return [...namespace.chains]
+
+  const chains = namespace.accounts.map((account) => account.split(':').slice(0, 2).join(':'))
+  return [...new Set(chains)]
+}
+
 function guessDappName(rawName: string, url: string) {
   try {
     const host = new URL(url).hostname.replace(/^www\./, '')
@@ -746,7 +757,8 @@ export const handleWcSessionBroadcast = async (payload: {
           let newAccounts = namespaces.eip155.accounts
 
           if (payload.event === 'accountsChanged') {
-            const chains = namespaces.eip155.chains || [`eip155:${payload.chainId}`]
+            const sessionChains = getSessionChains(namespaces.eip155)
+            const chains = sessionChains.length ? sessionChains : [`eip155:${payload.chainId}`]
             newAccounts = chains
               .map((c: string) => payload.data.map((a: string) => `${c}:${a}`))
               .flat()
@@ -763,7 +775,7 @@ export const handleWcSessionBroadcast = async (payload: {
               .filter((addr: string | undefined): addr is string => !!addr)
             const uniqueAddresses = [...new Set(currentAddresses)]
 
-            const chains = namespaces.eip155.chains || []
+            const chains = getSessionChains(namespaces.eip155)
             if (!chains.includes(`eip155:${newChain}`)) {
               chains.push(`eip155:${newChain}`)
             }
