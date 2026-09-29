@@ -149,11 +149,6 @@ async function getDappName() {
   return rawName
 }
 
-export interface ExternalHandlers {
-  sendRequest: (params: any) => Promise<any>
-  onBackgroundMessage: (callback: (msg: any) => Promise<void>) => void
-}
-
 export class EthereumProvider extends EventEmitter {
   #pushEventHandlers?: PushEventHandlers
 
