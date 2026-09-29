@@ -21,6 +21,7 @@ interface Props {
   externalPosition?: { x: number; y: number }
   setExternalPosition?: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>
   onSelect: (item: { label: string; value: string }) => void
+  testID?: string
 }
 
 const Dropdown: FC<Props> = ({
@@ -28,7 +29,8 @@ const Dropdown: FC<Props> = ({
   externalPosition,
   kebabIconProps = {},
   setExternalPosition,
-  onSelect
+  onSelect,
+  testID
 }) => {
   const DropdownButton = useRef(null)
   const { styles, theme } = useTheme(getStyles)
@@ -153,7 +155,7 @@ const Dropdown: FC<Props> = ({
   return (
     <>
       <View onTouchStart={flagTouchStartedInside}>
-        <Pressable onPress={toggleDropdown} ref={DropdownButton}>
+        <Pressable onPress={toggleDropdown} ref={DropdownButton} testID={testID}>
           <View style={styles.button}>
             <KebabMenuIcon {...kebabIconProps} />
           </View>
