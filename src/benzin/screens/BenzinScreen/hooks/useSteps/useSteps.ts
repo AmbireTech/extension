@@ -23,6 +23,7 @@ import {
   BalanceChange,
   fetchFrontRanTxnId,
   fetchTxnId,
+  NftBalanceChange,
   SubmittedAccountOp,
   submittedAccountOpToAccountOp,
   SubmittedAccountOpLike
@@ -32,7 +33,7 @@ import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import type { Erc7730CallDescriptors } from '@ambire-common/libs/humanizer/erc7730/types'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import { getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
+import { getTransferLogNfts, getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
 import { Bundler } from '@ambire-common/services/bundlers/bundler'
@@ -89,6 +90,7 @@ export interface StepsData {
   feePaidWith: FeePaidWith | null
   tokenPricesEnabled: boolean
   balanceChanges?: BalanceChange[]
+  nftBalanceChanges?: NftBalanceChange[]
   /** Set when the balance changes could not be read, so the UI can say so instead of waiting. */
   hasBalanceChangesFailed: boolean
   calls: IrCall[] | null
@@ -170,6 +172,16 @@ const getBalanceChangesSignature = (changes?: BalanceChange[]) =>
         .map((change) => `${change.address}:${change.chainId}:${change.balanceChange.toString()}`)
         .join('|')
 
+const getNftBalanceChangesSignature = (changes?: NftBalanceChange[]) =>
+  typeof changes === 'undefined'
+    ? 'undefined'
+    : changes
+        .map(
+          (change) =>
+            `${change.address}:${change.chainId}:${change.tokenId}:${change.balanceChange.toString()}`
+        )
+        .join('|')
+
 const useSteps = ({
   txnId,
   userOpHash,
@@ -213,6 +225,9 @@ const useSteps = ({
   const [isFrontRan, setIsFrontRan] = useState<boolean>(false)
   const [isFetching, setIsFetching] = useState<boolean>(false)
   const [balanceChanges, setBalanceChanges] = useState<BalanceChange[] | undefined>(undefined)
+  const [nftBalanceChanges, setNftBalanceChanges] = useState<NftBalanceChange[] | undefined>(
+    undefined
+  )
   const [hasBalanceChangesFailed, setHasBalanceChangesFailed] = useState<boolean>(false)
   const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOpLike | null>(null)
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
@@ -246,6 +261,10 @@ const useSteps = ({
   const submittedAccountOp = activityAccOp || extensionAccOp || null
   const submittedAccountOpBalanceChangesSignature = useMemo(
     () => getBalanceChangesSignature(submittedAccountOp?.balanceChanges),
+    [submittedAccountOp]
+  )
+  const submittedAccountOpNftBalanceChangesSignature = useMemo(
+    () => getNftBalanceChangesSignature(submittedAccountOp?.nftBalanceChanges),
     [submittedAccountOp]
   )
 
@@ -319,15 +338,22 @@ const useSteps = ({
     const benzinBalanceChangesSignature = getBalanceChangesSignature(
       benzinActivityOp.balanceChanges
     )
+    const benzinNftBalanceChangesSignature = getNftBalanceChangesSignature(
+      benzinActivityOp.nftBalanceChanges
+    )
     const activityBalanceChangesSignature = getBalanceChangesSignature(
       activityAccOp?.balanceChanges
+    )
+    const activityNftBalanceChangesSignature = getNftBalanceChangesSignature(
+      activityAccOp?.nftBalanceChanges
     )
 
     if (
       activityAccOp?.status === benzinActivityOp.status &&
       activityAccOp?.txnId === benzinActivityOp.txnId &&
       activityAccOp?.blockNumber === benzinActivityOp.blockNumber &&
-      benzinBalanceChangesSignature === activityBalanceChangesSignature
+      benzinBalanceChangesSignature === activityBalanceChangesSignature &&
+      benzinNftBalanceChangesSignature === activityNftBalanceChangesSignature
     ) {
       return
     }
@@ -1007,7 +1033,8 @@ const useSteps = ({
       !receiptLogs ||
       !txnReceipt.blockNumber ||
       typeof balanceChanges !== 'undefined' ||
-      submittedAccountOpBalanceChangesSignature !== 'undefined'
+      (submittedAccountOpBalanceChangesSignature !== 'undefined' &&
+        submittedAccountOpNftBalanceChangesSignature !== 'undefined')
     )
       return
 
@@ -1015,7 +1042,14 @@ const useSteps = ({
 
     void (async () => {
       try {
-        const foundTokens = await getTransferLogTokens(receiptLogs, from)
+        const [foundTokens, foundNfts] = await Promise.all([
+          getTransferLogTokens(receiptLogs, from),
+          getTransferLogNfts(receiptLogs, from)
+        ])
+        const foundNftBalanceChanges = foundNfts.map((change) => ({
+          ...change,
+          chainId: network.chainId
+        }))
 
         dispatchAndWait({
           type: 'method',
@@ -1049,6 +1083,7 @@ const useSteps = ({
 
             setHasBalanceChangesFailed(false)
             setBalanceChanges(res)
+            setNftBalanceChanges(foundNftBalanceChanges)
           })
           .catch((error) => {
             if (!isMounted) return
@@ -1089,7 +1124,8 @@ const useSteps = ({
     txnReceipt.transactionHash,
     from,
     dispatchAndWait,
-    submittedAccountOpBalanceChangesSignature
+    submittedAccountOpBalanceChangesSignature,
+    submittedAccountOpNftBalanceChangesSignature
   ])
 
   useEffect(() => {
@@ -1205,6 +1241,7 @@ const useSteps = ({
     feePaidWith,
     tokenPricesEnabled,
     balanceChanges,
+    nftBalanceChanges,
     hasBalanceChangesFailed,
     calls: calls || null,
     txnId: foundTxnId,

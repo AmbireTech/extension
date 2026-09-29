@@ -17,6 +17,7 @@ import {
   getFullBalanceChangeAmount,
   getSummaryBalanceChanges,
   getVisibleSummaryBalanceChanges,
+  isNftBalanceChange,
   MAX_VISIBLE_BALANCE_CHANGES
 } from './helpers'
 import { useDappInteractions } from './humanizedCallsHooks'
@@ -145,7 +146,11 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
         >
           {visibleBalanceChanges.map((change, index) => (
             <View
-              key={`${change.address}-${change.balanceChange.toString()}`}
+              key={`${change.address}-${
+                isNftBalanceChange(change)
+                  ? change.tokenId.toString()
+                  : change.balanceChange.toString()
+              }`}
               style={[
                 styles.balanceChangeRow,
                 index < visibleBalanceChanges.length - 1 || hiddenBalanceChangesCount
@@ -170,15 +175,30 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
               >
                 {formatBalanceChangeAmount(change)}
               </Text>
-              <Text
-                fontSize={12}
-                weight="medium"
-                appearance="secondaryText"
-                style={[spacings.mlTy, isNarrowWebLayout && { lineHeight: 16 }]}
-              >
-                {change.symbol}
-              </Text>
-              <BalanceChangeToken change={change} />
+              {isNftBalanceChange(change) ? (
+                <View style={spacings.mlTy}>
+                  <TokenOrNft
+                    value={change.tokenId}
+                    address={change.address}
+                    textSize={12}
+                    chainId={change.chainId}
+                    tokenMarginRight={0}
+                    tokenIconContainerSize={16}
+                  />
+                </View>
+              ) : (
+                <>
+                  <Text
+                    fontSize={12}
+                    weight="medium"
+                    appearance="secondaryText"
+                    style={[spacings.mlTy, isNarrowWebLayout && { lineHeight: 16 }]}
+                  >
+                    {change.symbol}
+                  </Text>
+                  <BalanceChangeToken change={change} />
+                </>
+              )}
             </View>
           ))}
           {!!hiddenBalanceChangesCount && (

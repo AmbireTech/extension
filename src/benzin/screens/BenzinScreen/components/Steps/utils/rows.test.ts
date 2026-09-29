@@ -41,7 +41,13 @@ describe('hasBalanceChangesSettled', () => {
   })
 
   it('settles once the balance changes arrive', () => {
-    expect(hasBalanceChangesSettled({ ...STEPS_STATE, balanceChanges: [] })).toBe(true)
+    expect(
+      hasBalanceChangesSettled({
+        ...STEPS_STATE,
+        balanceChanges: [],
+        nftBalanceChanges: []
+      })
+    ).toBe(true)
   })
 
   it('settles once reading them failed, so a bad RPC does not spin forever', () => {
@@ -51,7 +57,7 @@ describe('hasBalanceChangesSettled', () => {
   it('settles on the balance changes of an account op the extension already submitted', () => {
     const stepsState = {
       ...STEPS_STATE,
-      submittedAccountOp: { balanceChanges: [] }
+      submittedAccountOp: { balanceChanges: [], nftBalanceChanges: [] }
     } as unknown as StepsData
 
     expect(hasBalanceChangesSettled(stepsState)).toBe(true)
@@ -61,5 +67,9 @@ describe('hasBalanceChangesSettled', () => {
     const stepsState = { ...STEPS_STATE, submittedAccountOp: {} } as unknown as StepsData
 
     expect(hasBalanceChangesSettled(stepsState)).toBe(false)
+  })
+
+  it('keeps the spinner up until NFT balance changes arrive', () => {
+    expect(hasBalanceChangesSettled({ ...STEPS_STATE, balanceChanges: [] })).toBe(false)
   })
 })
