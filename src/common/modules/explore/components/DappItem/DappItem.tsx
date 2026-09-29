@@ -56,6 +56,7 @@ const DappItem = (dapp: DappItemProps) => {
     description,
     isConnected,
     isFeatured,
+    isCustom,
     favorite,
     blacklisted,
     tvl,
@@ -144,7 +145,8 @@ const DappItem = (dapp: DappItemProps) => {
         >
           <View style={[flexbox.directionRow, !!description && spacings.mbSm]}>
             <View style={spacings.mrTy}>
-              {blacklisted === 'VERIFIED' && (
+              {/* Only default catalog apps are verified - passing the security checks alone isn't enough */}
+              {blacklisted === 'VERIFIED' && !isCustom && (
                 <View
                   style={{
                     position: 'absolute',
