@@ -162,14 +162,20 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [authenticate, getExtraEntropy, addToast, t])
 
-  const getBiometricsSecret = useCallback(async () => {
-    setIsAuthInProcess(true)
-    try {
-      return await secureStorage.get(BIOMETRICS_SECRET_KEY, t('Confirm your identity'))
-    } catch {
-      return null
-    }
-  }, [t])
+  const getBiometricsSecret = useCallback(
+    async (promptMessage?: string) => {
+      setIsAuthInProcess(true)
+      try {
+        return await secureStorage.get(
+          BIOMETRICS_SECRET_KEY,
+          promptMessage || t('Confirm your identity')
+        )
+      } catch {
+        return null
+      }
+    },
+    [t]
+  )
 
   const removeBiometricsSecret = useCallback(async () => {
     await secureStorage.remove(BIOMETRICS_SECRET_KEY)

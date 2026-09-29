@@ -67,9 +67,13 @@ const getFinalizedRows = (blockData: null | Block, finalizedStatus: FinalizedSta
   return rows
 }
 
-const getFee = (cost: FeePaidWith | null, finalizedStatus: FinalizedStatusType) => {
+const getFee = (
+  cost: FeePaidWith | null,
+  finalizedStatus: FinalizedStatusType,
+  tokenPricesEnabled: boolean
+) => {
   if (cost) {
-    return `${cost.amount} ${cost.symbol} (${cost.usdValue})`
+    return `${cost.amount} ${cost.symbol}${tokenPricesEnabled ? ` (${cost.usdValue})` : ''}`
   }
 
   return finalizedStatus && doNotShow.indexOf(finalizedStatus.status) !== -1 ? '-' : 'loading'

@@ -49,7 +49,8 @@ const GasTankButton = ({ onPress, account }: Props) => {
   } = useController('FeatureFlagsController')
   const isErc4337Enabled = flags.erc4337
   const isEip7702Enabled = flags.eip7702
-  const isGasTankEnabled = isErc4337Enabled && (!requiresEip7702 || isEip7702Enabled)
+  const isGasTankEnabled =
+    isErc4337Enabled && flags.gasTank && flags.tokenPrices && (!requiresEip7702 || isEip7702Enabled)
 
   const { state: networks } = useController('NetworksController', selectNetworks)
 
@@ -248,7 +249,6 @@ const GasTankButton = ({ onPress, account }: Props) => {
   return (
     <Pressable
       onPress={handleOnPress}
-      // @ts-ignore
       style={buttonStyle}
       onHoverIn={handleHoverIn}
       onHoverOut={handleHoverOut}

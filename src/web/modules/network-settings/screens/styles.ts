@@ -8,6 +8,7 @@ import commonWebStyles from '@web/styles/utils/common'
 
 interface Style {
   contentContainer: ViewStyle
+  privacyOptOutsContentContainer: ViewStyle
   overview: ViewStyle
 }
 
@@ -28,6 +29,20 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.pvLg,
       ...spacings.phLg,
       ...spacings.ptSm
+    },
+    privacyOptOutsContentContainer: {
+      ...commonWebStyles.contentContainer,
+      ...common.borderRadiusSecondary,
+      backgroundColor: theme.primaryBackground,
+      shadowColor: theme.neutral400,
+      ...common.shadowTertiary,
+      ...flexbox.flex1,
+      ...spacings.mb2Xl,
+      ...spacings.pvLg,
+      ...spacings.phLg,
+      ...spacings.ptSm,
+      maxHeight: 600,
+      ...({ overflowX: 'hidden', overflowY: 'auto' } as any)
     }
   })
 

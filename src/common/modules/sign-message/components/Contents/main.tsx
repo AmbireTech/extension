@@ -319,6 +319,9 @@ const Main = ({
                   humanizedMessage={humanizedMessage}
                   responsiveSizeMultiplier={responsiveSizeMultiplier}
                   withScrollDownArrow
+                  // ExpandableCard's expanded slot has no height of its own, so without a cap the
+                  // ScrollView just grows to fit the message instead of scrolling internally.
+                  fillAvailableHeight
                 />
               )
             }

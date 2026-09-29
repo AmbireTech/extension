@@ -34,6 +34,11 @@ interface Props {
   iconWidth?: number
   /** Uses the narrow action layout even when the surrounding screen is not compact. */
   forceCompact?: boolean
+  /**
+   * Uses a narrower fixed-width layout (smaller icon + 2-line text) without switching to the
+   * flexible compact layout, e.g. to fit a 5th action in the same footer width as 4.
+   */
+  small?: boolean
   /** Drops the trailing gap on the last button of a footer row. */
   isLast?: boolean
 }
@@ -50,12 +55,21 @@ const TokenDetailsButton: FC<Props> = ({
   token,
   testID,
   forceCompact,
+  small,
   isLast
 }) => {
   const { styles, theme } = useTheme(getStyles)
   // Compact = mobile or narrow side panel — both use the original mobile button styles.
   const { isCompactLayout } = useCompactActionRequestLayout()
   const shouldUseCompactLayout = isCompactLayout || forceCompact
+  const shouldUseSmallLayout = !shouldUseCompactLayout && !!small
+  const shouldUseNarrowText = shouldUseCompactLayout || shouldUseSmallLayout
+  const getActionStyle = () => {
+    if (shouldUseCompactLayout) return styles.actionCompact
+    if (shouldUseSmallLayout) return styles.actionSmall
+
+    return styles.action
+  }
   // Side panel uses the tertiary (mobile-like) hover colors instead of the popup/tab secondary ones.
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
@@ -73,9 +87,11 @@ const TokenDetailsButton: FC<Props> = ({
         key={id}
         dataSet={tooltipText ? { tooltipId } : undefined}
         style={[
-          shouldUseCompactLayout ? styles.actionCompact : styles.action,
+          getActionStyle(),
           isDisabled && { opacity: 0.4 },
-          !shouldUseCompactLayout && isWeb && !isLast && { marginRight: 6 }
+          !shouldUseCompactLayout &&
+            isWeb &&
+            !isLast && { marginRight: shouldUseSmallLayout ? 4 : 6 }
         ]}
         // Purposely don't disable the button (but block the onPress action) in
         // case of a tooltip, because it should be clickable to show the tooltip.
@@ -101,15 +117,15 @@ const TokenDetailsButton: FC<Props> = ({
         >
           <Icon
             color={isHovered ? theme.primaryAccent : theme.primaryText}
-            width={iconWidth}
+            width={shouldUseSmallLayout ? Math.round(iconWidth * 0.8) : iconWidth}
             strokeWidth={strokeWidth}
           />
         </Animated.View>
         <Text
-          fontSize={shouldUseCompactLayout ? 10 : 12}
+          fontSize={shouldUseNarrowText ? 10 : 12}
           weight="medium"
-          numberOfLines={shouldUseCompactLayout ? 2 : 1}
-          style={[text.center, shouldUseCompactLayout && { minWidth: 0, width: '100%' }]}
+          numberOfLines={shouldUseNarrowText ? 2 : 1}
+          style={[text.center, shouldUseNarrowText && { minWidth: 0, width: '100%' }]}
         >
           {btnText}
         </Text>

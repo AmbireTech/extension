@@ -1,7 +1,7 @@
 import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, TextInput, View } from 'react-native'
+import { TextInput, View } from 'react-native'
 
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
@@ -99,6 +99,14 @@ const AddressInput: React.FC<Props> = ({
     fieldValue: value || ''
   })
 
+  const isClearButtonVisible = !rest.button && !!value && !!withDetails
+
+  const handleClear = useCallback(() => {
+    !!onChangeText && onChangeText('')
+    inputRef?.current?.focus()
+    !!onClearButtonPress && onClearButtonPress()
+  }, [onChangeText, onClearButtonPress])
+
   const isValidAddress = useMemo(() => validateAddress(address).severity === 'success', [address])
 
   // Ensure the displayed name is the normalized one stored by the resolver, not the raw field value
@@ -146,11 +154,16 @@ const AddressInput: React.FC<Props> = ({
                 <>
                   {resolvedAddress && !isRecipientDomainResolving ? (
                     <AnimatedPressable
-                      style={[flexbox.alignCenter, flexbox.directionRow, animStyle]}
+                      style={[
+                        flexbox.alignCenter,
+                        flexbox.directionRow,
+                        { flexShrink: 1 },
+                        animStyle
+                      ]}
                       onPress={handleCopyResolvedAddress}
                       {...bindAnim}
                     >
-                      <Text style={flexbox.flex1} numberOfLines={1}>
+                      <Text style={{ flexShrink: 1 }} numberOfLines={1}>
                         <Text
                           style={{
                             flex: 1
@@ -208,18 +221,14 @@ const AddressInput: React.FC<Props> = ({
           rest.button ||
           (!value && onScanAddress ? (
             <AddressScanButton onScanned={onScanAddress} />
-          ) : value && withDetails ? (
-            <Pressable
-              style={{ width: 24, height: 24, ...flexbox.center }}
-              onPress={() => {
-                !!onChangeText && onChangeText('')
-                inputRef?.current?.focus()
-                !!onClearButtonPress && onClearButtonPress()
-              }}
-            >
-              <CloseIcon width={12} height={12} strokeWidth="1.75" style={spacings.mlMi} />
-            </Pressable>
+          ) : isClearButtonVisible ? (
+            <View style={{ width: 24, height: 24, ...flexbox.center }}>
+              <CloseIcon width={12} height={12} strokeWidth="1.75" />
+            </View>
           ) : null)
+        }
+        buttonProps={
+          isClearButtonVisible ? { ...rest.buttonProps, onPress: handleClear } : rest.buttonProps
         }
       />
     </>

@@ -297,7 +297,7 @@ const SendForm = ({
       </View>
 
       {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
-        <SkeletonLoader width="100%" height={156} />
+        <SkeletonLoader width="100%" height={180} />
       ) : (
         <SendToken
           label={t('Send token')}

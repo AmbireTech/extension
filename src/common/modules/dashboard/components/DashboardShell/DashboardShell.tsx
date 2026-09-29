@@ -30,6 +30,10 @@ interface Props {
   contentContainerStyle?: StyleProp<ViewStyle>
 }
 
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
+
+const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
+
 // Instant placeholder shown while the data-heavy controllers load
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
@@ -37,6 +41,10 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 const DashboardShell = ({ contentContainerStyle }: Props) => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectTokenPricesEnabled
+  )
 
   // Read synchronously so the shell paints the last-known balance on its first render.
   // Keyed on the current address (and TTL-checked), so a value from another account
@@ -74,6 +82,7 @@ const DashboardShell = ({ contentContainerStyle }: Props) => {
                   totalAmount={cachedBalance?.totalBalance || 0}
                   color="#FFFFFF"
                   isPrivacyModeEnabled={isPrivacyModeEnabled}
+                  isTokenPricesEnabled={isTokenPricesEnabled}
                   badge={
                     !showBalanceSkeleton && isCachedBalanceStale ? (
                       <View style={spacings.mrTy}>

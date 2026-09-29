@@ -11,7 +11,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import { getMigrateXWalletCalls } from '@common/modules/explore/components/WalletStaking/calls'
+import { getMigrateXWalletCalls } from '@common/modules/wallet-staking/helpers/calls'
 
 import getStyles from './styles'
 

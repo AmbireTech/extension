@@ -3,11 +3,18 @@ import { G, Path, Svg, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const FlipIcon: FC<SvgProps> = ({ width, height, color, ...rest }) => {
+// The arrows sit 0.707 from the viewBox edge, so 1.4 is as thick as they get before their round
+// caps are clipped
+const FlipIcon: FC<SvgProps> = ({ width, height, color, strokeWidth = 1.4, ...rest }) => {
   const { theme } = useTheme()
   return (
     <Svg viewBox="0 0 11.419 11.414" width={width} height={height} testID="flip-icon" {...rest}>
-      <G fill="none" stroke={color || theme.iconSecondary} strokeLinecap="round">
+      <G
+        fill="none"
+        stroke={color || theme.iconSecondary}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      >
         <G>
           <Path d="m.707 8.217 2.49 2.49 2.49-2.49" />
           <Path d="M3.197 4.441v6.266" />

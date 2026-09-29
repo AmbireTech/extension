@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import Button from '@common/components/Button'
 import useController from '@common/hooks/useController'
+import AmbireSmartAccountsDisabledModal from '@common/modules/account-picker/components/AmbireSmartAccountsDisabledModal'
 import AccountsOnPageList from '@common/modules/account-picker/components/AccountsOnPageList'
 import ChangeHdPath from '@common/modules/account-picker/components/ChangeHdPath'
 import useAccountPicker from '@common/modules/account-picker/hooks/useAccountPicker/useAccountPicker'
@@ -66,6 +67,7 @@ const AccountPickerScreen = () => {
           lookingForLinkedAccounts={accountPickerState.linkedAccountsLoading}
         />
       </MobileLayoutWrapperMainContent>
+      <AmbireSmartAccountsDisabledModal />
     </MobileLayoutContainer>
   )
 }

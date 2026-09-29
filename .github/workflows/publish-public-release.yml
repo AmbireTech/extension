@@ -121,6 +121,7 @@ jobs:
           # alone - that repo is public.
           sed -i \
             -e 's|https://github.com/AmbireTech/ambire-app/compare/|https://github.com/AmbireTech/extension/compare/|g' \
+            -e 's| \[[^]]*\](https://github.com/AmbireTech/ambire-app/pull/[0-9]*)||g' \
             -e 's| https://github.com/AmbireTech/ambire-app/pull/[0-9]*||g' \
             release-notes.md
 

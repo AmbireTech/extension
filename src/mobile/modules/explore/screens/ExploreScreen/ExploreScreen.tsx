@@ -23,7 +23,7 @@ import DappsSkeletonLoader from '@common/modules/explore/components/DappsSkeleto
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
 import SectionHeader from '@common/modules/explore/components/SectionHeader'
 import TrendingTokenItem from '@common/modules/explore/components/TrendingTokenItem'
-import WalletStaking from '@common/modules/explore/components/WalletStaking'
+import WalletStakingCard from '@common/modules/wallet-staking/components/WalletStakingCard'
 import { MAX_TRENDING_TOKENS_ON_EXPLORE } from '@common/modules/explore/constants/trending'
 import { filterTrendingTokensBySearch } from '@common/modules/explore/helpers/filterTrendingTokens'
 import useExploreSections, {
@@ -216,7 +216,7 @@ const ExploreScreen = () => {
   )
 
   const renderSectionItem = useCallback(({ item }: { item: SectionItem }) => {
-    if (item.kind === 'walletStaking') return <WalletStaking />
+    if (item.kind === 'walletStaking') return <WalletStakingCard />
     if (item.kind === 'row') return <HorizontalDappsRow data={item.dapps} />
     if (item.kind === 'trendingToken') return <TrendingTokenItem token={item.token} />
     return <DappItem {...item.dapp} />

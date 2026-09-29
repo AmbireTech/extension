@@ -24,6 +24,7 @@ type Props = Partial<DappProviderRequest['session']> & {
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
   isTrustedByUser?: boolean
+  isScamCheckerEnabled?: boolean
 }
 
 const DAppConnectHeader: FC<Props> = ({
@@ -32,14 +33,18 @@ const DAppConnectHeader: FC<Props> = ({
   icon,
   responsiveSizeMultiplier = 1,
   securityCheck,
-  isTrustedByUser = false
+  isTrustedByUser = false,
+  isScamCheckerEnabled = true
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
-  // The user vouched for this app, so the header stops flagging where it is hosted. It still shows
-  // no verified mark - the app did not pass our checks, the user simply trusts it.
-  const isSuspiciousHosting = securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+  // When the checker is enabled, a user-trusted app is no longer flagged for its hosting. It still
+  // shows no verified mark - the app did not pass our checks, the user simply trusts it.
+  const isSuspiciousHosting =
+    isScamCheckerEnabled && securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+  const isBlacklisted = isScamCheckerEnabled && securityCheck === 'BLACKLISTED'
+  const hasFailedToGet = isScamCheckerEnabled && securityCheck === 'FAILED_TO_GET'
 
   const { minHeightSize } = useWindowSize()
 
@@ -56,12 +61,11 @@ const DAppConnectHeader: FC<Props> = ({
       style={[
         styles.contentHeader,
         {
-          backgroundColor:
-            securityCheck === 'BLACKLISTED'
-              ? theme.errorBackground
-              : isSuspiciousHosting || securityCheck === 'FAILED_TO_GET'
-                ? theme.warningBackground
-                : theme.tertiaryBackground
+          backgroundColor: isBlacklisted
+            ? theme.errorBackground
+            : isSuspiciousHosting || hasFailedToGet
+              ? theme.warningBackground
+              : theme.tertiaryBackground
         },
         spacingsStyle
       ]}
@@ -93,7 +97,7 @@ const DAppConnectHeader: FC<Props> = ({
             )}
           />
 
-          {securityCheck === 'VERIFIED' && (
+          {isScamCheckerEnabled && securityCheck === 'VERIFIED' && (
             <View
               style={{
                 position: 'absolute',
@@ -116,7 +120,7 @@ const DAppConnectHeader: FC<Props> = ({
               <TrustedIcon />
             </View>
           )}
-          {securityCheck === 'BLACKLISTED' && (
+          {isBlacklisted && (
             <View
               style={{
                 position: 'absolute',
@@ -127,7 +131,7 @@ const DAppConnectHeader: FC<Props> = ({
               <ErrorFilledIcon width={18} height={18} />
             </View>
           )}
-          {(isSuspiciousHosting || securityCheck === 'FAILED_TO_GET') && (
+          {(isSuspiciousHosting || hasFailedToGet) && (
             <View
               style={{
                 position: 'absolute',

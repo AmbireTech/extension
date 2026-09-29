@@ -9,6 +9,7 @@ import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfac
 import useController from '@common/hooks/useController'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
+import useSigningAuth from '@common/hooks/useSigningAuth'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
@@ -95,6 +96,16 @@ const useSign = ({
     submitSignatureResponse,
     signingCleanup
   } = useQrSigningFlow()
+
+  const {
+    sheetRef: signingAuthSheetRef,
+    requestSigningAuth,
+    cancelSigningAuth,
+    signingAuthProps
+  } = useSigningAuth({
+    requirement: signAccountOpState?.signingAuthRequirement,
+    requestId: signAccountOpState?.accountOp.id
+  })
 
   const currentBannersKey = useMemo(
     () => JSON.stringify(signAccountOpState?.banners || []),
@@ -302,6 +313,29 @@ const useSign = ({
     handleBroadcast()
   }, [closeGasFeeUpdatedModal, handleBroadcast])
 
+  const getIsSigningWithInternalKey = useCallback(
+    (_chosenSigningKeyTypes?: Key['type'][]) => {
+      if (_chosenSigningKeyTypes?.length) return _chosenSigningKeyTypes.includes('internal')
+
+      // A Safe is signed by whichever of its owners are imported, so any internal one counts
+      if (signAccountOpState?.account.safeCreation)
+        return !!signAccountOpState.accountOp.signers?.some(({ type }) => type === 'internal')
+
+      return signingKeyType === 'internal'
+    },
+    [
+      signAccountOpState?.account.safeCreation,
+      signAccountOpState?.accountOp.signers,
+      signingKeyType
+    ]
+  )
+
+  // Lets the signing authentication prompt resume the very call it interrupted, without
+  // handleSign having to depend on itself
+  const handleSignRef = useRef<
+    ((_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => void) | null
+  >(null)
+
   const handleSign = useCallback(
     (_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => {
       // Prioritize warning(s) modals over all others
@@ -311,6 +345,14 @@ const useSign = ({
         handleUpdateStatus(SigningStatus.UpdatesPaused)
         return
       }
+
+      // A first time recipient or dapp has to be confirmed with the password or biometrics, but
+      // only when the keystore holds the signing key - a hardware wallet confirms on the device
+      if (
+        getIsSigningWithInternalKey(_chosenSigningKeyTypes) &&
+        requestSigningAuth(() => handleSignRef.current?.(_chosenSigningKeyTypes, _warningAccepted))
+      )
+        return
 
       const isExternalQr =
         signAccountOpState?.accountOp.signingKeyType === 'qr' ||
@@ -358,9 +400,15 @@ const useSign = ({
       isLedgerConnected,
       handleBroadcast,
       openWarningModal,
-      handleUpdateStatus
+      handleUpdateStatus,
+      getIsSigningWithInternalKey,
+      requestSigningAuth
     ]
   )
+
+  useEffect(() => {
+    handleSignRef.current = handleSign
+  }, [handleSign])
 
   const handleChangeSigningKey = useCallback(
     (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => {
@@ -708,7 +756,10 @@ const useSign = ({
     currentRequest,
     signingStep,
     disabledReason,
-    showSafeSigners: shouldShowSafeSigners
+    showSafeSigners: shouldShowSafeSigners,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   }
 }
 

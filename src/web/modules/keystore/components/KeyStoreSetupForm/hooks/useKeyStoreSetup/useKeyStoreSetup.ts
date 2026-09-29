@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
-import { isDev, isTesting } from '@common/config/env'
+import { DEV_PREFILLED_PASSWORD } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
-import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
 const useKeyStoreSetup = () => {
   const { t } = useTranslation()
@@ -15,8 +14,8 @@ const useKeyStoreSetup = () => {
   const { control, handleSubmit, watch, trigger, getValues, formState } = useForm({
     mode: 'all',
     defaultValues: {
-      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : '',
-      confirmPassword: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
+      password: DEV_PREFILLED_PASSWORD,
+      confirmPassword: DEV_PREFILLED_PASSWORD
     }
   })
 

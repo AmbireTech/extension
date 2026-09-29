@@ -7,6 +7,7 @@ import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Badge from '@common/components/Badge'
+import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TrustAppButton from '@common/components/TrustAppButton'
@@ -24,25 +25,32 @@ const DAppConnectBody: FC<{
   isTrustedByUser?: boolean
   canBeTrustedByUser?: boolean
   onToggleTrust?: () => void
+  onEnableScamChecker?: () => void
+  isScamCheckerEnabled?: boolean
 }> = ({
   securityCheck,
   isTrustedByUser = false,
   canBeTrustedByUser = false,
   onToggleTrust,
+  onEnableScamChecker,
+  isScamCheckerEnabled = true,
   responsiveSizeMultiplier = 1
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
-  // The user vouched for this app, so the warning about its hosting is no longer shown - the rest
-  // of the security checks are untouched by that.
-  const isSuspiciousHosting = securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+  // When the checker is enabled, the user can vouch for this app so the warning about its hosting
+  // is no longer shown - the rest of the security checks are untouched by that.
+  const isSuspiciousHosting =
+    isScamCheckerEnabled && securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+  const isScamCheckerDisabled = !isScamCheckerEnabled
+  const isBlacklisted = isScamCheckerEnabled && securityCheck === 'BLACKLISTED'
+  const hasFailedToGet = isScamCheckerEnabled && securityCheck === 'FAILED_TO_GET'
 
   // The trust action takes the severity badge's slot; the warning text below and the box's own
   // border still carry the severity, so nothing is lost by swapping them.
   const shouldOfferTrust = isSuspiciousHosting && canBeTrustedByUser
-  const shouldShowWarningBadge =
-    !shouldOfferTrust && (isSuspiciousHosting || securityCheck === 'FAILED_TO_GET')
+  const shouldShowWarningBadge = !shouldOfferTrust && (isSuspiciousHosting || hasFailedToGet)
 
   const spacingsStyle = useMemo(() => {
     return {
@@ -60,25 +68,32 @@ const DAppConnectBody: FC<{
           {
             marginBottom: SPACING * responsiveSizeMultiplier
           },
-          securityCheck === 'BLACKLISTED' && { borderColor: theme.errorDecorative },
-          (isSuspiciousHosting || securityCheck === 'FAILED_TO_GET') && {
+          isBlacklisted && { borderColor: theme.errorDecorative },
+          (isSuspiciousHosting || hasFailedToGet) && {
             borderColor: theme.warningDecorative
           }
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text fontSize={14} weight="medium" style={spacings.mr} appearance="secondaryText">
-              {t('Security checks')}
+            <Text
+              fontSize={14}
+              weight={isScamCheckerDisabled ? 'semiBold' : 'medium'}
+              style={spacings.mr}
+              appearance="secondaryText"
+            >
+              {isScamCheckerDisabled ? t('Scam checker deactivated') : t('Security checks')}
             </Text>
           </View>
-          {securityCheck === 'LOADING' && <Spinner style={{ width: 18, height: 18 }} />}
-          {securityCheck === 'VERIFIED' && (
+          {isScamCheckerEnabled && securityCheck === 'LOADING' && (
+            <Spinner style={{ width: 18, height: 18 }} />
+          )}
+          {isScamCheckerEnabled && securityCheck === 'VERIFIED' && (
             <Badge type="success" text={t('Passed')} testId="dapp-security-check-passed">
               <CheckIcon width={12} height={12} style={{ marginLeft: SPACING_MI }} />
             </Badge>
           )}
-          {securityCheck === 'BLACKLISTED' && (
+          {isScamCheckerEnabled && securityCheck === 'BLACKLISTED' && (
             <Badge type="error" text={t('Danger')}>
               <ErrorIcon
                 width={12}
@@ -88,7 +103,7 @@ const DAppConnectBody: FC<{
               />
             </Badge>
           )}
-          {isTrustedByUser && (
+          {isScamCheckerEnabled && isTrustedByUser && (
             <Badge
               type="warning"
               text={t('Trusted by you')}
@@ -103,6 +118,16 @@ const DAppConnectBody: FC<{
               fontSize={12 * responsiveSizeMultiplier}
             />
           )}
+          {isScamCheckerDisabled && (
+            <Button
+              type="primary"
+              size="tiny"
+              text={t('Activate')}
+              onPress={onEnableScamChecker}
+              hasBottomSpacing={false}
+              testID="activate-scam-checker-button"
+            />
+          )}
           {shouldShowWarningBadge && (
             <Badge type="warning" text={t('Warning')}>
               <WarningIcon
@@ -114,21 +139,34 @@ const DAppConnectBody: FC<{
             </Badge>
           )}
         </View>
-        {(securityCheck === 'BLACKLISTED' ||
-          isSuspiciousHosting ||
-          securityCheck === 'FAILED_TO_GET') && (
+        {(isScamCheckerDisabled || isBlacklisted || isSuspiciousHosting || hasFailedToGet) && (
           <View style={spacings.ptTy}>
-            <Text
-              fontSize={18 * responsiveSizeMultiplier}
-              weight="semiBold"
-              color={
-                securityCheck === 'BLACKLISTED' ? theme.errorDecorative : theme.warningDecorative
-              }
-              style={[{ lineHeight: 18 * responsiveSizeMultiplier }, spacings.mbTy]}
-            >
-              {securityCheck === 'BLACKLISTED' ? t('Potential danger!') : t('Warning!')}
-            </Text>
-            {securityCheck === 'BLACKLISTED' && (
+            {!isScamCheckerDisabled && (
+              <Text
+                fontSize={18 * responsiveSizeMultiplier}
+                weight="semiBold"
+                color={
+                  isBlacklisted
+                    ? theme.errorDecorative
+                    : isScamCheckerDisabled
+                      ? theme.primaryText
+                      : theme.warningDecorative
+                }
+                style={[{ lineHeight: 18 * responsiveSizeMultiplier }, spacings.mbTy]}
+              >
+                {isBlacklisted ? t('Potential danger!') : t('Warning!')}
+              </Text>
+            )}
+            {isScamCheckerDisabled && (
+              <Text
+                fontSize={14 * responsiveSizeMultiplier}
+                appearance="secondaryText"
+                style={{ lineHeight: 18 * responsiveSizeMultiplier }}
+              >
+                {t('Activate the scam checker to check for scams.')}
+              </Text>
+            )}
+            {isBlacklisted && (
               <Trans>
                 <Text
                   fontSize={12 * responsiveSizeMultiplier}
@@ -174,7 +212,7 @@ const DAppConnectBody: FC<{
                 )}
               </>
             )}
-            {securityCheck === 'FAILED_TO_GET' && (
+            {hasFailedToGet && (
               <Text
                 fontSize={14 * responsiveSizeMultiplier}
                 color={theme.warningDecorative}
@@ -187,11 +225,7 @@ const DAppConnectBody: FC<{
         )}
       </View>
       <DAppPermissions responsiveSizeMultiplier={responsiveSizeMultiplier} />
-      {!(
-        securityCheck === 'BLACKLISTED' ||
-        isSuspiciousHosting ||
-        securityCheck === 'FAILED_TO_GET'
-      ) && (
+      {!(isBlacklisted || isSuspiciousHosting || hasFailedToGet) && (
         <Text
           style={{
             opacity: 0.64,

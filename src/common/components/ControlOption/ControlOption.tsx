@@ -14,6 +14,7 @@ import { openInTab } from '@common/utils/links'
 
 interface Props {
   title: string
+  titleAccessory?: React.ReactNode
   description: string
   forceDescriptionOnMobile?: boolean
   readMoreLink?: string
@@ -25,6 +26,7 @@ interface Props {
 
 const ControlOption: FC<Props> = ({
   title,
+  titleAccessory,
   description,
   forceDescriptionOnMobile,
   readMoreLink,
@@ -73,9 +75,12 @@ const ControlOption: FC<Props> = ({
       <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, spacings.pr]}>
         {isWeb && <View style={{ width: 24, ...flexbox.center }}>{renderIcon}</View>}
         <View style={[isWeb && spacings.ml, flexbox.flex1]}>
-          <Text fontSize={16} weight="medium">
-            {title}
-          </Text>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+            <Text fontSize={16} weight="medium">
+              {title}
+            </Text>
+            {titleAccessory}
+          </View>
           {(isWeb || !!forceDescriptionOnMobile) && (
             <Text
               appearance="secondaryText"

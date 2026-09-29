@@ -55,7 +55,8 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const isErc4337Enabled = flags.erc4337
   const isEip7702Enabled = flags.eip7702
-  const isGasTankEnabled = isErc4337Enabled && (!requiresEip7702 || isEip7702Enabled)
+  const isGasTankEnabled =
+    isErc4337Enabled && flags.gasTank && flags.tokenPrices && (!requiresEip7702 || isEip7702Enabled)
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -76,8 +77,8 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
       featureFlagsDispatch({
         type: 'method',
         params: {
-          method: 'setFeatureFlag',
-          args: ['erc4337', true]
+          method: 'setFeatureFlags',
+          args: [{ erc4337: true, gasTank: true, tokenPrices: true }]
         }
       })
     }
@@ -86,8 +87,8 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
       featureFlagsDispatch({
         type: 'method',
         params: {
-          method: 'setFeatureFlag',
-          args: ['eip7702', true]
+          method: 'setFeatureFlags',
+          args: [{ eip7702: true, erc4337: true, gasTank: true, tokenPrices: true }]
         }
       })
     }

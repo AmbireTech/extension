@@ -16,6 +16,7 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import { isMobile, isWeb } from '@common/config/env'
 import useSign from '@common/hooks/useSign'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
@@ -100,7 +101,10 @@ const OneClickEstimation = ({
     handleQrSigningFlowOnRejectPressed,
     handleQrSigningFlowOnBackPressed,
     currentRequest,
-    signingStep
+    signingStep,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   } = useSign({
     signAccountOpState: signAccountOpController,
     handleUpdate: updateController,
@@ -276,6 +280,11 @@ const OneClickEstimation = ({
           </View>
         )}
       </BottomSheet>
+      <SigningAuthBottomSheet
+        sheetRef={signingAuthSheetRef}
+        onCancel={cancelSigningAuth}
+        {...signingAuthProps}
+      />
       <Modals
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpController}
