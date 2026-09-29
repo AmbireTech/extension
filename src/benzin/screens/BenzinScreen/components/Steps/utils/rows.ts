@@ -20,10 +20,8 @@ const shouldShowTxnProgress = (finalizedStatus: FinalizedStatusType) => {
  * keeps the spinner up.
  */
 const hasBalanceChangesSettled = (stepsState: StepsData) =>
-  (typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined' &&
-    typeof stepsState.submittedAccountOp?.nftBalanceChanges !== 'undefined') ||
-  (typeof stepsState.balanceChanges !== 'undefined' &&
-    typeof stepsState.nftBalanceChanges !== 'undefined') ||
+  typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined' ||
+  typeof stepsState.balanceChanges !== 'undefined' ||
   stepsState.hasBalanceChangesFailed
 
 const getTimestamp = (blockData: null | Block, finalizedStatus: FinalizedStatusType) => {

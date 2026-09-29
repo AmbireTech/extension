@@ -40,7 +40,8 @@ const Nft: FC<Props> = ({
 }) => {
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const [collectibleData, setCollectibleData] = useState<SelectedCollectible | null>(null)
-  const fullName = `${nftInfo?.name || 'NFT'} #${tokenId.toString()}`
+  const nftName = nftInfo?.name || 'NFT'
+  const fullName = `${nftName} #${tokenId.toString()}`
   const isNameTruncated = fullName.length > NFT_LABEL_MAX_LENGTH
   const visibleName = isNameTruncated ? `${fullName.slice(0, NFT_LABEL_MAX_LENGTH)}...` : fullName
   const tooltipId = useMemo(
@@ -65,7 +66,7 @@ const Nft: FC<Props> = ({
       size={iconSize}
       id={tokenId}
       collectionData={{
-        name: nftInfo?.name || 'Unknown NFT',
+        name: nftName,
         address,
         chainId: network.chainId
       }}
