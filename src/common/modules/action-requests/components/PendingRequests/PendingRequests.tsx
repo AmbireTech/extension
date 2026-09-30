@@ -7,6 +7,7 @@ import CloseIcon from '@common/assets/svg/CloseIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import ManifestImage from '@common/components/ManifestImage'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -33,6 +34,7 @@ import {
 } from './requestInfo'
 import getStyles from './styles'
 
+import type { Account, AccountStates } from '@ambire-common/interfaces/account'
 import type { Network } from '@ambire-common/interfaces/network'
 import type { UserRequest } from '@ambire-common/interfaces/userRequest'
 import type { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
@@ -48,6 +50,11 @@ const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsCon
   state.visibleUserRequests
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
 
 const selectHumanizedMessage = (state: AllControllersMappingType['SignMessageController']) =>
   state.humanizedMessage
@@ -81,12 +88,16 @@ const RequestIcon = React.memo(function RequestIcon({
 const RequestCard = React.memo(function RequestCard({
   request,
   networks,
+  accounts,
+  accountStates,
   onOpen,
   shouldRenderHumanization,
   humanizedMessage
 }: {
   request: UserRequest
   networks: Network[]
+  accounts: Account[]
+  accountStates: AccountStates
   onOpen: (requestId: UserRequest['id']) => void
   shouldRenderHumanization: boolean
   humanizedMessage?: IrMessage
@@ -101,6 +112,24 @@ const RequestCard = React.memo(function RequestCard({
       requestChainId: getRequestChainId(request)
     }
   }, [networks, request, t])
+  const account = accounts.find(({ addr }) => addr === request.meta.accountAddr)
+  const accountState = accountStates[account?.addr || '']?.[requestChainId || '']
+  const isOpenDisabled =
+    !!account?.safeCreation &&
+    !accountState?.isDeployed &&
+    request.kind === 'calls' &&
+    !request.meta.isSafeDeploy
+  const disabledOpenTooltip = t('You have to first deploy the Safe account')
+  const disabledOpenTooltipDataSet = useMemo(
+    () =>
+      isOpenDisabled
+        ? createGlobalTooltipDataSet({
+            id: `pending-request-open-${request.id}`,
+            content: disabledOpenTooltip
+          })
+        : undefined,
+    [disabledOpenTooltip, isOpenDisabled, request.id]
+  )
   const handleOpen = useCallback(() => onOpen(request.id), [onOpen, request.id])
 
   return (
@@ -114,16 +143,21 @@ const RequestCard = React.memo(function RequestCard({
             {title}
           </Text>
         </View>
-        <HoverablePressable
-          onPress={handleOpen}
-          style={styles.openButton}
-          accessibilityRole="button"
-          accessibilityLabel={t('Open {{requestTitle}}', { requestTitle: title })}
-        >
-          <Text appearance="linkText" weight="medium">
-            {t('Open')}
-          </Text>
-        </HoverablePressable>
+        <View dataSet={disabledOpenTooltipDataSet}>
+          <HoverablePressable
+            onPress={handleOpen}
+            disabled={isOpenDisabled}
+            style={[styles.openButton, isOpenDisabled && styles.openButtonDisabled]}
+            accessibilityRole="button"
+            accessibilityLabel={t('Open {{requestTitle}}', { requestTitle: title })}
+            accessibilityHint={isOpenDisabled ? disabledOpenTooltip : undefined}
+            accessibilityState={{ disabled: isOpenDisabled }}
+          >
+            <Text appearance="linkText" weight="medium">
+              {t('Open')}
+            </Text>
+          </HoverablePressable>
+        </View>
       </View>
       <Text appearance="secondaryText" fontSize={14} style={styles.cardDescription}>
         {description}
@@ -188,6 +222,8 @@ const PendingRequests = ({ style }: Props) => {
     selectVisibleUserRequests
   )
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const { state: humanizedMessage } = useController('SignMessageController', selectHumanizedMessage)
   const otherRequests = useMemo(() => {
     if (!currentUserRequest) return []
@@ -301,6 +337,8 @@ const PendingRequests = ({ style }: Props) => {
             key={String(request.id)}
             request={request}
             networks={networks}
+            accounts={accounts}
+            accountStates={accountStates}
             onOpen={openRequest}
             shouldRenderHumanization={shouldRenderHumanization}
             humanizedMessage={humanizedMessage}

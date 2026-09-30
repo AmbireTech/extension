@@ -22,6 +22,7 @@ interface Styles {
   sheetHeader: ViewStyle
   closeButton: ViewStyle
   openButton: ViewStyle
+  openButtonDisabled: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -130,6 +131,9 @@ const getStyles = (theme: ThemeProps) =>
       minHeight: 44,
       ...spacings.mlTy,
       flexShrink: 0
+    },
+    openButtonDisabled: {
+      opacity: 0.5
     }
   })
 
