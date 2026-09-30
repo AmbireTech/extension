@@ -40,16 +40,20 @@ export class BasePage {
   }
 
   async clickOnMenuToken(token: Token, menuSelector: string = selectors.tokensSelect) {
-    await this.click(menuSelector)
+    // Retry the click until the BottomSheet
+    // actually shows up instead of assuming a single click always works.
+    const bottomSheet = this.page.getByTestId(selectors.bottomSheet)
+    await expect(async () => {
+      await this.click(menuSelector)
+      await expect(bottomSheet).toBeVisible({ timeout: 2000 })
+    }).toPass({ timeout: 30000 })
 
     // If the token is outside the viewport, we ensure it becomes visible by searching for its symbol
     await this.entertext(selectors.searchInput, token.symbol)
 
     // Ensure we click the token inside the BottomSheet,
     // not the one rendered as the default in the Select menu.
-    const tokenLocator = this.page
-      .getByTestId(selectors.bottomSheet)
-      .getByTestId(`option-${token.address}.${token.chainId}`)
+    const tokenLocator = bottomSheet.getByTestId(`option-${token.address}.${token.chainId}`)
     await tokenLocator.click()
   }
 
