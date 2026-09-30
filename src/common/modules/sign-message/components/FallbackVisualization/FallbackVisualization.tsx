@@ -22,6 +22,7 @@ import CopyText from '@common/components/CopyText'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -288,6 +289,9 @@ const FallbackVisualization: FC<{
       style={[
         styles.container,
         fillAvailableHeight ? { maxHeight: availableHeight ?? FILL_AVAILABLE_HEIGHT_MIN } : null,
+        // On web the card hugs a short message (up to the cap) instead of growing into a tall empty
+        // box. Native keeps flex: Yoga collapses the flexed ScrollView in an auto-height parent
+        fillAvailableHeight && isWeb ? { flexGrow: 0, flexBasis: 'auto', minHeight: 0 } : null,
         containerStyle
       ]}
     >
@@ -320,7 +324,11 @@ const FallbackVisualization: FC<{
         </View>
       )}
       <ContentWrapper
-        style={styles.contentWrapper}
+        style={[
+          styles.contentWrapper,
+          // A 0 flex-basis would collapse the rows once the container stops stretching
+          fillAvailableHeight && isWeb && { flexGrow: 0, flexBasis: 'auto' }
+        ]}
         {...(!disableScroll
           ? {
               ref: scrollViewRef,
