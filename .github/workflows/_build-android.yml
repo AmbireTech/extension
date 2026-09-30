@@ -291,14 +291,12 @@ jobs:
       # Play by hand and must never be a public download, since Play re-signs it and as
       # downloaded here it cannot be installed on a device at all.
       #
-      # An APK already on the release is never replaced, so a colleague running this from a tag
-      # just to grab a test build cannot swap out the one that ships. To replace it on purpose,
-      # delete the asset from the release first, then re-run.
-      #
-      # Only a release that bumped the native version gets an APK. versionName in build.gradle
-      # (major.minor, e.g. 6.22) is bumped by hand only with a native build, while app.json's
-      # version moves with every release, so a later tag like v6.23.0 run just for a test build
-      # would otherwise attach an APK nobody asked for.
+      # Only a build that bumped versionCode gets attached. versionCode is bumped by hand with
+      # every native build, while app.json's version moves with every release, so a later tag
+      # like v6.22.1 or v6.23.0 run just for a test build would otherwise attach an APK nobody
+      # asked for. The same rule means an APK already on a release is never replaced, so a test
+      # run cannot swap out the one that ships. To replace it on purpose, delete the asset from
+      # the release first, then re-run.
       #
       # Failing here loses nothing - the APK is already up as a workflow artifact by this point.
       - name: Attach the APK to the release
@@ -308,23 +306,34 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-
-          NATIVE_VERSION=$(grep -m1 'versionName "' android/app/build.gradle | cut -d'"' -f2)
-          RELEASE_MAJOR_MINOR=$(echo "${{ steps.version.outputs.VERSION }}" | cut -d. -f1,2)
-          if [ "$NATIVE_VERSION" != "$RELEASE_MAJOR_MINOR" ]; then
-            echo "::notice::versionName $NATIVE_VERSION in build.gradle does not match v${{ steps.version.outputs.VERSION }}, so this release has no native build - skipped attaching. The APK is still available as a workflow artifact."
-            exit 0
-          fi
-
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::error::No release exists for tag $TAG. Cut the release first, then re-run this workflow - the APK is available as a workflow artifact in the meantime."
             exit 1
           fi
 
-          EXISTING_APK=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '[.assets[].name | select(endswith(".apk"))] | first // empty')
-          if [ -n "$EXISTING_APK" ]; then
-            echo "::notice::Release $TAG already has $EXISTING_APK - skipped attaching this build. It is still available as a workflow artifact."
-            exit 0
+          VERSION_CODE=$(grep -m1 'versionCode ' android/app/build.gradle | awk '{print $2}')
+
+          # Releases come newest first, so the first tag listed is the latest one with an APK.
+          # Captured whole and split in bash, because piping a paginated call into `head` would
+          # cut it off mid-output and fail the step under pipefail.
+          TAGS_WITH_APK=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
+            --jq '.[] | select(any(.assets[]; .name | endswith(".apk"))) | .tag_name')
+          LAST_APK_TAG="${TAGS_WITH_APK%%$'\n'*}"
+
+          if [ -n "$LAST_APK_TAG" ]; then
+            LAST_GRADLE=$(gh api -H "Accept: application/vnd.github.raw" \
+              "repos/$GITHUB_REPOSITORY/contents/android/app/build.gradle?ref=$LAST_APK_TAG")
+            LAST_VERSION_CODE=$(grep -m1 'versionCode ' <<< "$LAST_GRADLE" | awk '{print $2}')
+
+            if [ -z "$LAST_VERSION_CODE" ]; then
+              echo "::error::Could not read versionCode from build.gradle at $LAST_APK_TAG, so it is unclear whether this build is new"
+              exit 1
+            fi
+
+            if [ "$VERSION_CODE" -le "$LAST_VERSION_CODE" ]; then
+              echo "::notice::versionCode $VERSION_CODE was not bumped since $LAST_APK_TAG (versionCode $LAST_VERSION_CODE), so this is not a new native build - skipped attaching. The APK is still available as a workflow artifact."
+              exit 0
+            fi
           fi
 
           gh release upload "$TAG" "$PACKAGE_PATH" --repo "$GITHUB_REPOSITORY"
