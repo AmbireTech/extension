@@ -90,10 +90,12 @@ const NavigationStack = ({ onScreenSettled }: Props) => {
     return () => clearTimeout(timer)
   }, [topCardKey])
 
+  const settledPathname = entries.find((entry) => entry.cardKey === settledCardKey)?.location
+    .pathname
+
   useEffect(() => {
-    const settledEntry = entries.find((entry) => entry.cardKey === settledCardKey)
-    if (settledEntry) onScreenSettled?.(settledEntry.location.pathname)
-  }, [settledCardKey, entries, onScreenSettled])
+    if (settledPathname) onScreenSettled?.(settledPathname)
+  }, [settledPathname, onScreenSettled])
 
   // Told at the start of every navigation, and released either by the platform
   // reporting the transition finished or by the fallback below.

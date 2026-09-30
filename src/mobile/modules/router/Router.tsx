@@ -119,10 +119,11 @@ const Router = () => {
     }
   }, [canHideSplash])
 
-  // Now that the splash is hidden - or only held over the biometric prompt - let the
-  // webview worker stream the heavy controller states (portfolio, dapps, activity, ...)
-  // that were held back during the critical boot phase. Done after the splash hide
-  // call so any cost of draining the queue does not delay the first paint.
+  // Let the webview worker stream the heavy controller states (portfolio, dapps,
+  // activity, ...) that were held back during the critical boot phase. Dispatched once
+  // the app is ready, even while the splash is held over the biometric prompt, so the
+  // screen unlocked into has them. Runs after the splash hide effect, so when the splash
+  // is hidden the draining never delays that first paint.
   useEffect(() => {
     if (isReady || hasStalledLoading)
       dispatch({ type: 'SET_BOOT_PHASE', params: { phase: 'full' } })
