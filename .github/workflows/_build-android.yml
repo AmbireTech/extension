@@ -295,6 +295,11 @@ jobs:
       # just to grab a test build cannot swap out the one that ships. To replace it on purpose,
       # delete the asset from the release first, then re-run.
       #
+      # Only a release that bumped the native version gets an APK. versionName in build.gradle
+      # (major.minor, e.g. 6.22) is bumped by hand only with a native build, while app.json's
+      # version moves with every release, so a later tag like v6.23.0 run just for a test build
+      # would otherwise attach an APK nobody asked for.
+      #
       # Failing here loses nothing - the APK is already up as a workflow artifact by this point.
       - name: Attach the APK to the release
         if: inputs.package_mode == 'apk' && startsWith(github.ref, 'refs/tags/')
@@ -303,6 +308,14 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
+
+          NATIVE_VERSION=$(grep -m1 'versionName "' android/app/build.gradle | cut -d'"' -f2)
+          RELEASE_MAJOR_MINOR=$(echo "${{ steps.version.outputs.VERSION }}" | cut -d. -f1,2)
+          if [ "$NATIVE_VERSION" != "$RELEASE_MAJOR_MINOR" ]; then
+            echo "::notice::versionName $NATIVE_VERSION in build.gradle does not match v${{ steps.version.outputs.VERSION }}, so this release has no native build - skipped attaching. The APK is still available as a workflow artifact."
+            exit 0
+          fi
+
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::error::No release exists for tag $TAG. Cut the release first, then re-run this workflow - the APK is available as a workflow artifact in the meantime."
             exit 1
