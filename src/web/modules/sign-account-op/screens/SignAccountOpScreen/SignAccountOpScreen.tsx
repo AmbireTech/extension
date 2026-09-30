@@ -159,7 +159,10 @@ const SignAccountOpScreen = () => {
     safeAccountTabState.requestId === accountOpRequest?.id
       ? safeAccountTabState.activeTab
       : 'overview'
-  const shouldUseSafeAccountTabs = !!signAccountOpState?.account.safeCreation && !isNarrowWebLayout
+  const shouldUseSafeAccountTabs =
+    !!signAccountOpState?.account.safeCreation &&
+    !signAccountOpState.accountOp.meta?.isSafeDeploy &&
+    !isNarrowWebLayout
   const isOverviewTabActive = !shouldUseSafeAccountTabs || activeSafeAccountTab === 'overview'
 
   const handleSafeAccountTabChange = useCallback(
