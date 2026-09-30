@@ -13,6 +13,7 @@ import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { DEV_PREFILLED_PASSWORD, isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { CURRENT_PASSWORD_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -255,6 +256,7 @@ const PasswordConfirmation: React.FC<Props> = ({
             rules={{ validate: isValidPassword }}
             render={({ field: { onChange, onBlur, value } }) => (
               <InputPassword
+                {...CURRENT_PASSWORD_AUTOFILL_PROPS}
                 setInputRef={setInputRef}
                 testID="passphrase-field"
                 onBlur={onBlur}
