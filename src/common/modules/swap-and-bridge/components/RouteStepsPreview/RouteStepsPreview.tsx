@@ -15,6 +15,7 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,7 +23,51 @@ import formatTime from '@common/utils/formatTime'
 
 import RouteStepsArrow from '../RouteStepsArrow'
 import { RouteStepsTokenAmount, RouteStepsTokenIcon } from '../RouteStepsToken'
-import styles from './styles'
+import styles, { TOKEN_LABEL_RESERVED_HEIGHT } from './styles'
+
+/**
+ * Icon with its amount/symbol label pinned directly underneath it. The label is
+ * absolutely positioned (anchored to this icon's own box) instead of taking part
+ * in normal flow, so a long label (e.g. "2,647.71 USDC") never widens this step's
+ * layout slot and steals space from the arrow/badge next to it - it just overflows
+ * visually while staying centered (or edge-aligned) on the icon that owns it.
+ */
+const StepToken = ({
+  address,
+  chainId,
+  uri,
+  symbol,
+  amount,
+  amountInUsd,
+  align = 'center'
+}: {
+  address: string
+  chainId: bigint
+  uri?: string
+  symbol: string
+  amount: string
+  amountInUsd?: number
+  align?: 'left' | 'right' | 'center'
+}) => (
+  <View>
+    <RouteStepsTokenIcon address={address} chainId={chainId} uri={uri} />
+    <View
+      style={[
+        styles.labelAnchor,
+        align === 'left' && styles.labelAnchorLeft,
+        align === 'right' && styles.labelAnchorRight,
+        align === 'center' && styles.labelAnchorCenter
+      ]}
+    >
+      <RouteStepsTokenAmount
+        symbol={symbol}
+        amount={amount}
+        amountInUsd={amountInUsd}
+        align={align}
+      />
+    </View>
+  </View>
+)
 
 const RouteStepsPreview = ({
   steps,
@@ -54,6 +99,12 @@ const RouteStepsPreview = ({
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
+  const { maxWidthSize } = useWindowSize()
+
+  // On a narrow window, a multi-hop route already has little room per step (icon +
+  // arrow + badge), so the protocol badge gets a tighter cap to avoid crowding/overlap
+  const isMultiStep = steps.length > 1
+  const badgeStyle = isMultiStep && maxWidthSize('xs') ? { maxWidth: 60 } : undefined
 
   const shouldWarnForLongEstimation = useMemo(() => {
     if (!estimationInSeconds) return false
@@ -137,7 +188,7 @@ const RouteStepsPreview = ({
         weight="medium"
         appearance="secondaryText"
         numberOfLines={1}
-        style={spacings.mlMi}
+        style={[spacings.mlMi, badgeStyle]}
       >
         {step.protocol.displayName}
       </Text>
@@ -146,9 +197,10 @@ const RouteStepsPreview = ({
 
   return (
     <View style={[flexbox.flex1, common.fullWidth]}>
-      <View style={[styles.container, spacings.mb]}>
+      <View style={[styles.container, spacings.mb, { paddingBottom: TOKEN_LABEL_RESERVED_HEIGHT }]}>
         <View style={styles.iconsRow}>
           {steps.map((step, i) => {
+            const isFirst = i === 0
             const isOnlyOneStep = steps.length === 1
             const isLast = i === steps.length - 1
             const userTxIndex = step.userTxIndex ?? 0
@@ -157,10 +209,14 @@ const RouteStepsPreview = ({
               return (
                 <Fragment key={`${step.type}-${i}`}>
                   <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-                    <RouteStepsTokenIcon
+                    <StepToken
                       uri={step.fromAsset.icon}
                       chainId={BigInt(step.fromAsset.chainId)}
                       address={step.fromAsset.address}
+                      symbol={step.fromAsset.symbol}
+                      amount={isOnlyOneStep ? formattedFromAmount : formattedRefundedAmount}
+                      amountInUsd={inputValueInUsd}
+                      align={isOnlyOneStep ? 'left' : 'center'}
                     />
                     <RouteStepsArrow
                       containerStyle={flexbox.flex1}
@@ -170,10 +226,14 @@ const RouteStepsPreview = ({
                       badgePosition="top"
                     />
                   </View>
-                  <RouteStepsTokenIcon
+                  <StepToken
                     address={step.toAsset.address}
                     chainId={BigInt(step.toAsset.chainId)}
                     uri={step.toAsset.icon}
+                    symbol={step.toAsset.symbol}
+                    amount={formattedToAmount}
+                    amountInUsd={outputValueInUsd}
+                    align="right"
                   />
                 </Fragment>
               )
@@ -184,10 +244,13 @@ const RouteStepsPreview = ({
                 key={`${step.type}-${i}`}
                 style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}
               >
-                <RouteStepsTokenIcon
+                <StepToken
                   address={step.fromAsset.address}
                   chainId={BigInt(step.fromAsset.chainId)}
                   uri={step.fromAsset.icon}
+                  symbol={step.fromAsset.symbol}
+                  amount={isFirst ? formattedFromAmount : ''}
+                  align={isFirst ? 'left' : 'center'}
                 />
                 <RouteStepsArrow
                   containerStyle={flexbox.flex1}
@@ -197,45 +260,6 @@ const RouteStepsPreview = ({
                   badgePosition="top"
                 />
               </View>
-            )
-          })}
-        </View>
-
-        <View style={styles.amountsRow}>
-          {steps.map((step, i) => {
-            const isFirst = i === 0
-            const isOnlyOneStep = steps.length === 1
-            const isLast = i === steps.length - 1
-
-            if (isLast) {
-              return (
-                <Fragment key={`amount-${step.type}-${i}`}>
-                  <RouteStepsTokenAmount
-                    symbol={step.fromAsset.symbol}
-                    amount={isOnlyOneStep ? formattedFromAmount : formattedRefundedAmount}
-                    amountInUsd={inputValueInUsd}
-                    align={isOnlyOneStep ? 'left' : 'center'}
-                  />
-                  <View style={flexbox.flex1} />
-                  <RouteStepsTokenAmount
-                    amountInUsd={outputValueInUsd}
-                    symbol={step.toAsset.symbol}
-                    amount={formattedToAmount}
-                    align="right"
-                  />
-                </Fragment>
-              )
-            }
-
-            return (
-              <Fragment key={`amount-${step.type}-${i}`}>
-                <RouteStepsTokenAmount
-                  symbol={step.fromAsset.symbol}
-                  amount={isFirst ? formattedFromAmount : ''}
-                  align="left"
-                />
-                <View style={flexbox.flex1} />
-              </Fragment>
             )
           })}
         </View>

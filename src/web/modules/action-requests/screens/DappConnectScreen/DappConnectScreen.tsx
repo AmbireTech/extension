@@ -88,6 +88,7 @@ const DappConnectScreen = () => {
                 id={dappToConnect.id}
                 icon={dappToConnect.icon!}
                 securityCheck={dappToConnect.blacklisted}
+                isInAppCatalog={!dappToConnect.isCustom}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
               <DAppConnectBody

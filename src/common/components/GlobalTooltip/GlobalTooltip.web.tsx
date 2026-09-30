@@ -30,7 +30,16 @@ export function GlobalTooltip() {
     }
 
     const applyTooltip = (data: any | null) => {
-      setCurrent(data ? { id: data.id, props: data } : { id: null, props: null })
+      if (!data) {
+        setCurrent({ id: null, props: null })
+        return
+      }
+
+      // `title` is for the mobile info modal only. Web tooltips have no header, and react-tooltip
+      // must not receive it
+      const tooltipProps = { ...data }
+      delete tooltipProps.title
+      setCurrent({ id: data.id, props: tooltipProps })
     }
 
     const refreshTooltip = () => {
