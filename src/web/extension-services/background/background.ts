@@ -469,7 +469,7 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
+            params: { errors: ctrl.emittedErrors, controller: ctrl.name }
           })
           captureBackgroundExceptionFromControllerError(error, ctrl.name)
         }, 'background')
