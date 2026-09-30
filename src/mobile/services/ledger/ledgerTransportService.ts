@@ -8,8 +8,7 @@ import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/util
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import wait from '@ambire-common/utils/wait'
 import { isProd } from '@common/config/env'
-import { LEDGER_ORIGIN_TOKEN } from '@common/modules/hardware-wallet/constants/ledger'
-import { ContextModuleBuilder, ContextModuleChainID } from '@ledgerhq/context-module'
+import { buildLedgerContextModule } from '@common/modules/hardware-wallet/libs/buildLedgerContextModule'
 import {
   DeviceActionStatus,
   DeviceManagementKitBuilder,
@@ -127,6 +126,16 @@ class LedgerTransportService {
 
   /** Lazily-created BLE manager, used only to observe the adapter state. */
   #bleManager: BleManager | null = null
+
+  /**
+   * Whether the user allows Ledger's signing reports (see buildLedgerContextModule).
+   * Denied until the controller host wires the real setting in.
+   */
+  #isSigningReportAllowed: () => boolean = () => false
+
+  setIsSigningReportAllowed = (isSigningReportAllowed: () => boolean) => {
+    this.#isSigningReportAllowed = isSigningReportAllowed
+  }
 
   /**
    * Connection-state subscribers (e.g. the useLedger hook), so the UI can react
@@ -302,12 +311,10 @@ class LedgerTransportService {
     this.#sessionId = sessionId
     this.#lastDevice = device
 
-    const contextModule = new ContextModuleBuilder({
-      originToken: LEDGER_ORIGIN_TOKEN,
-      loggerFactory: createContextLogger
+    const contextModule = buildLedgerContextModule({
+      loggerFactory: createContextLogger,
+      isSigningReportAllowed: () => this.#isSigningReportAllowed()
     })
-      .setChain(ContextModuleChainID.Ethereum)
-      .build()
     this.#signerEth = new SignerEthBuilder({ dmk: this.#dmk, sessionId })
       .withContextModule(contextModule)
       .build()
