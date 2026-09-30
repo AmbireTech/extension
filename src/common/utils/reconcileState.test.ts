@@ -244,12 +244,13 @@ describe('reconcileState', () => {
       expect(second.txns).toHaveLength(1)
     })
 
-    it('does not report a change for a NaN that stayed NaN', () => {
+    it('stores a NaN as null and does not report a change while it stays NaN', () => {
       const live = { rate: NaN }
 
       const first = reconcileState(undefined, live)
       const second = reconcileState(first, live)
 
+      expect(first.rate).toBeNull()
       expect(second).toBe(first)
     })
 
@@ -366,9 +367,8 @@ describe('reconcileState', () => {
       const first = reconcileState(undefined, live)
       const second = reconcileState(first, live)
 
-      // A NaN holds the same content as itself without being identical to itself, so an
-      // item kept as it is must never be put through the reference check that decides
-      // whether the array around it has to be opened.
+      // Stored as the null JSON writes for it, which matches itself on every emit.
+      expect(first.rates).toEqual([1, null, 3])
       expect(second).toBe(first)
     })
 
@@ -380,7 +380,7 @@ describe('reconcileState', () => {
       const second = reconcileState(first, live)
 
       expect(second.rates).not.toBe(first.rates)
-      expect(second.rates[0]).toBeNaN()
+      expect(second.rates[0]).toBeNull()
       expect(second.rates[1]).toEqual({ v: 2 })
     })
 
@@ -451,16 +451,23 @@ describe('reconcileState', () => {
       expectMatchesRichJson(live)
     })
 
-    it('rebuilds an Error with its own properties and keeps it an Error', () => {
+    it('turns an Error into a plain object holding all of its own props', () => {
       const err: any = new Error('boom')
       err.code = 'E_BOOM'
 
       const snapshot = reconcileState(undefined, { err })
 
-      expect(snapshot.err).toBeInstanceOf(Error)
-      expect(snapshot.err).not.toBe(err)
-      expect(snapshot.err.message).toBe('boom')
-      expect((snapshot.err as any).code).toBe('E_BOOM')
+      expect(snapshot.err).not.toBeInstanceOf(Error)
+      expect(snapshot.err).toStrictEqual({ message: 'boom', stack: err.stack, code: 'E_BOOM' })
+    })
+
+    it('turns NaN and the infinities into null', () => {
+      const live = { nan: NaN, list: [Infinity, -Infinity, 1] }
+
+      const snapshot = reconcileState(undefined, live)
+
+      expect(snapshot).toEqual({ nan: null, list: [null, null, 1] })
+      expectMatchesRichJson(live)
     })
 
     it('reuses an unchanged Error instead of rebuilding it every emit', () => {
@@ -656,75 +663,73 @@ describe('detachState', () => {
     expect(second.tokens[0]!.amount).toBe(2n)
   })
 
-  it('flattens every error into a plain object with all of its own props when asked to', () => {
+  it('flattens every error into a plain object with all of its own props, which structured clone keeps whole', () => {
     const cause = new TypeError('socket closed')
     const outer: Error & { cause?: unknown; code?: string } = new Error('RPC failed')
     outer.cause = cause
     outer.code = 'E_RPC'
 
-    const copy = detachState({ estimation: { error: outer } }, { flattenErrors: true })
+    const copy = detachState({ estimation: { error: outer } })
 
     const copiedOuter = copy.estimation.error as unknown as Record<string, unknown>
-    console.log('flattened error', copiedOuter)
+    const received = structuredClone(copy).estimation.error
+    console.log('flattened error, and what structured clone delivers of it', copiedOuter, received)
     expect(Object.getPrototypeOf(copiedOuter)).toBe(Object.prototype)
     expect(Object.getPrototypeOf(copiedOuter.cause)).toBe(Object.prototype)
-    expect(copiedOuter).toEqual({
+    const expected = {
       message: 'RPC failed',
       stack: outer.stack,
       code: 'E_RPC',
       cause: { message: 'socket closed', stack: cause.stack }
-    })
+    }
+    expect(copiedOuter).toEqual(expected)
+    expect(received).toEqual(expected)
     expect(Object.keys(copiedOuter).sort()).toEqual(['cause', 'code', 'message', 'stack'])
     // The source error is never touched.
     expect(outer).toBeInstanceOf(Error)
     expect(Object.keys(outer)).toEqual(['cause', 'code'])
   })
 
-  it('keeps errors error-shaped by default', () => {
-    const copy = detachState({ error: new Error('RPC failed') })
+  it('applies the value rules JSON has always applied', () => {
+    const live = {
+      nested: { secret: 'secret', toJSON: () => ({ safe: true }) },
+      array: [undefined, Symbol('ignored'), Number.POSITIVE_INFINITY, -Infinity],
+      objectUndefined: undefined,
+      amount: 1n,
+      notANumber: Number.NaN,
+      date: new Date('2026-09-21T12:00:00.000Z')
+    }
 
-    expect(copy.error).toBeInstanceOf(Error)
-    expect(copy.error.message).toBe('RPC failed')
-    expect(Object.keys(copy.error)).toEqual([])
-  })
+    const copy = detachState(live)
 
-  it('turns NaN and the infinities into null only when asked to, as JSON would', () => {
-    const live = { nan: Number.NaN, list: [Number.POSITIVE_INFINITY, -Infinity, 1] }
-
-    expect(detachState(live, { normalizeNonFiniteNumbers: true })).toEqual({
-      nan: null,
-      list: [null, null, 1]
+    expect(copy).toEqual({
+      nested: { safe: true },
+      array: [null, null, null, null],
+      amount: 1n,
+      notANumber: null,
+      date: '2026-09-21T12:00:00.000Z'
     })
-    expect(detachState(live).nan).toBeNaN()
+    expect('objectUndefined' in copy).toBe(false)
   })
 })
 
 describe('errors in a snapshot', () => {
-  it('is built with the same shape richJson gives it, without capturing a fresh stack', () => {
+  it('holds the very object richJson writes for an error, on every platform alike', () => {
     const err: any = new Error('rpc call failed')
     err.code = 'E_RPC'
     err.request = { method: 'eth_call' }
+    const typeErr = new TypeError('socket closed')
 
-    const ours = (reconcileState(undefined, { err }) as any).err
-    const viaRichJson = (parse(stringify({ err })) as any).err
+    const ours = reconcileState(undefined, { err, typeErr }) as any
+    // Read back without richJson's reviver, which would rebuild the first one into an
+    // `Error` and leave the `TypeError` a plain object.
+    const writtenByRichJson = JSON.parse(stringify({ err, typeErr }))
+    console.log('error snapshot', ours)
 
-    expect(ours).toBeInstanceOf(Error)
-    expect(ours.name).toBe(viaRichJson.name)
-    expect(ours.message).toBe(viaRichJson.message)
+    expect(ours).toStrictEqual(writtenByRichJson)
     // Copied from the source rather than captured, so it points at where the error
     // was actually thrown and not at the snapshot walk.
-    expect(ours.stack).toBe(err.stack)
-    expect(ours.stack).toBe(viaRichJson.stack)
-    // The same properties a key walk and a `getOwnPropertyNames` walk would find on
-    // the error the port-based platforms get.
-    expect(Object.keys(ours).sort()).toEqual(Object.keys(viaRichJson).sort())
-    expect(Object.getOwnPropertyNames(ours).sort()).toEqual(
-      Object.getOwnPropertyNames(viaRichJson).sort()
-    )
-    // `message` and `stack` have to stay off a key walk, or two errors carrying
-    // different messages would be compared by their custom props alone.
-    expect(Object.getOwnPropertyDescriptor(ours, 'message')!.enumerable).toBe(false)
-    expect(Object.getOwnPropertyDescriptor(ours, 'stack')!.enumerable).toBe(false)
+    expect(ours.err.stack).toBe(err.stack)
   })
 
   it('reports a change for two errors carrying the same message from different places', () => {
@@ -732,25 +737,22 @@ describe('errors in a snapshot', () => {
     const other = new Error('rpc call failed')
     const second = reconcileState(first, { err: other })
 
-    // Same message, different stack, which no walk over the enumerable keys reaches.
+    // Same message, different stack, which the snapshot holds as a key like any other.
     expect(second).not.toBe(first)
     expect((second as any).err.stack).toBe(other.stack)
   })
 
-  it('reports a change when an error and a plain object take each other place', () => {
-    const withError = reconcileState(undefined, { err: new Error('boom') }) as any
-    // Neither side has an enumerable key, so nothing but the error check itself
-    // separates the two.
+  it('reports a change when an error and an empty object take each other place', () => {
+    const err = new Error('boom')
+    const withError = reconcileState(undefined, { err }) as any
     const withObject = reconcileState(withError, { err: {} }) as any
-    const backToError = reconcileState(withObject, { err: new Error('boom') }) as any
+    const backToError = reconcileState(withObject, { err }) as any
 
     expect(withObject).not.toBe(withError)
-    expect(withObject.err).not.toBeInstanceOf(Error)
     expect(withObject.err).toEqual({})
 
     expect(backToError).not.toBe(withObject)
-    expect(backToError.err).toBeInstanceOf(Error)
-    expect(backToError.err.message).toBe('boom')
+    expect(backToError.err).toStrictEqual({ message: 'boom', stack: err.stack })
   })
 
   it('reports a change when an error stopped carrying one of its own props', () => {

@@ -24,6 +24,11 @@
  * and never opened at all for a subtree the update did not touch. So an emit that
  * touched one chain allocates along that chain, not across the state.
  *
+ * The snapshot holds what a JSON round trip would, on every platform alike. Every
+ * error becomes a plain object carrying all of its own props, `message` and `stack`
+ * included, and NaN and the infinities become `null`. So the UI reads an error by its
+ * props and never with `instanceof Error`.
+ *
  * `label` names the controller in the error a cycle raises. `detectCycles` is meant
  * to be passed `isDev`: a cycle would otherwise recurse forever, but the check costs
  * a WeakSet write per object node on an emit path that is already hot, so callers
@@ -39,42 +44,21 @@ export function reconcileState<T>(
   return (reconciled === UNCHANGED ? prev : reconciled) as T
 }
 
-/** How a detached copy may differ from the value it was made from. */
-type DetachRules = {
-  /** Turns NaN and the infinities into `null`, as JSON does. */
-  normalizeNonFiniteNumbers: boolean
-  /**
-   * Turns every error into a plain object holding all of its own props, `message` and
-   * `stack` included, as `richJson.stringify` does. Structured clone keeps such an
-   * object whole, while it would drop both props from the error-shaped copy.
-   */
-  flattenErrors: boolean
-}
-
-const DEFAULT_DETACH_RULES: DetachRules = {
-  normalizeNonFiniteNumbers: false,
-  flattenErrors: false
-}
-
 /**
  * Deep copy of a controller's state that shares no object with it, so a later
  * in-place mutation inside the controller cannot reach the copy. Never touches the
- * value it is given.
+ * value it is given. Holds the same values `reconcileState` does, errors as plain
+ * objects and non-finite numbers as `null` included, which also makes it safe to post
+ * with structured clone, since that drops the non-enumerable `message` and `stack` of
+ * anything that is not a real error.
  */
 export function detachState<T>(
   value: T,
-  {
-    label,
-    detectCycles,
-    ...rules
-  }: { label?: string; detectCycles?: boolean } & Partial<DetachRules> = {}
+  { label, detectCycles }: { label?: string; detectCycles?: boolean } = {}
 ): T {
   // With nothing to compare against, every node is rebuilt and `UNCHANGED` can
   // never come back, which is the whole difference from `reconcileState`.
-  return reconcileNode(NO_PREV, value, detectCycles ? new WeakSet<object>() : null, label, {
-    ...DEFAULT_DETACH_RULES,
-    ...rules
-  }) as T
+  return reconcileNode(NO_PREV, value, detectCycles ? new WeakSet<object>() : null, label) as T
 }
 
 /**
@@ -88,18 +72,9 @@ const UNCHANGED = Symbol('unchanged')
  */
 const NO_PREV = Symbol('noPrev')
 
-const hasOwn = (obj: object, key: string) => Object.prototype.hasOwnProperty.call(obj, key)
-
 /** Whether the previous node is one whose keys can be shared into a new object. */
 const isSharableRecord = (value: unknown): value is Record<string, unknown> =>
-  !!value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Error)
-
-/**
- * Whether two snapshot primitives hold the same value. The only pair that is equal
- * without being identical is NaN.
- */
-const isSamePrimitive = (a: unknown, b: unknown): boolean =>
-  a === b || (typeof a === 'number' && typeof b === 'number' && a !== a && b !== b)
+  !!value && typeof value === 'object' && !Array.isArray(value)
 
 /**
  * How many keys a previous snapshot node carries, allocating nothing. Every node a
@@ -124,23 +99,22 @@ function reconcileNode(
   prev: unknown,
   value: unknown,
   seen: WeakSet<object> | null,
-  label?: string,
-  rules: DetachRules = DEFAULT_DETACH_RULES
+  label?: string
 ): unknown {
   if (value === null || typeof value !== 'object') {
     // A snapshot never holds a function or a symbol, so an identity match here is
-    // always between two equal primitives. Every other pair goes the long way, NaN
-    // against itself included.
+    // always between two equal primitives. Every other pair goes the long way, which
+    // is how a NaN is matched against the `null` the snapshot holds for it.
     if (value === prev) return UNCHANGED
 
-    const detached = detachPrimitive(value, rules)
+    const detached = detachPrimitive(value)
 
-    return isSamePrimitive(prev, detached) ? UNCHANGED : detached
+    return detached === prev ? UNCHANGED : detached
   }
 
   // Production never enters the `try` below: the bookkeeping a cycle check needs is
   // what pays for it, and there is none to undo when the check is off.
-  if (!seen) return reconcileObject(prev, value, null, label, rules)
+  if (!seen) return reconcileObject(prev, value, null, label)
 
   if (seen.has(value)) {
     throw new Error(
@@ -150,7 +124,7 @@ function reconcileNode(
   seen.add(value)
 
   try {
-    return reconcileObject(prev, value, seen, label, rules)
+    return reconcileObject(prev, value, seen, label)
   } finally {
     // Dropped on the way back up so the same object appearing in two sibling
     // branches stays legal, exactly as it is for JSON.
@@ -162,40 +136,29 @@ function reconcileObject(
   prev: unknown,
   value: object,
   seen: WeakSet<object> | null,
-  label?: string,
-  rules: DetachRules = DEFAULT_DETACH_RULES
+  label?: string
 ): unknown {
   // Asked in the order that lets the common node - a plain record the state owns -
   // answer on the fewest checks, and each of the three only once. `toJSON` is the
   // expensive one: it is a property the great majority of nodes do not have, looked
   // up across as many shapes as the state holds.
-  if (Array.isArray(value)) {
-    return reconcileArray(prev, value, seen, label, rules)
-  }
-  if (value instanceof Error) {
-    return rules.flattenErrors
-      ? reconcileRecord(prev, ownPropsOf(value), seen, label, rules)
-      : reconcileError(prev, value, seen, label, rules)
-  }
+  if (Array.isArray(value)) return reconcileArray(prev, value, seen, label)
+  if (value instanceof Error) return reconcileRecord(prev, ownPropsOf(value), seen, label)
 
   const source = typeof (value as any).toJSON === 'function' ? (value as any).toJSON() : value
 
-  if (source === value) {
-    return reconcileRecord(prev, value, seen, label, rules)
-  }
+  if (source === value) return reconcileRecord(prev, value, seen, label)
 
   // What `toJSON` handed back stands in for the value itself, so it is asked the same
   // questions - a plain `JSON.stringify` would recurse into it the same way.
-  if (Array.isArray(source)) {
-    return reconcileArray(prev, source, seen, label, rules)
-  }
+  if (Array.isArray(source)) return reconcileArray(prev, source, seen, label)
   if (source !== null && typeof source === 'object') {
-    return reconcileRecord(prev, source, seen, label, rules)
+    return reconcileRecord(prev, source, seen, label)
   }
 
-  const detached = detachPrimitive(source, rules)
+  const detached = detachPrimitive(source)
 
-  return isSamePrimitive(prev, detached) ? UNCHANGED : detached
+  return detached === prev ? UNCHANGED : detached
 }
 
 /** Every own prop of an error on a plain object, the non-enumerable `message` and `stack` included. */
@@ -209,11 +172,9 @@ function ownPropsOf(error: Error): Record<string, unknown> {
   return props
 }
 
-function detachPrimitive(value: unknown, rules: DetachRules): unknown {
+function detachPrimitive(value: unknown): unknown {
   if (typeof value === 'function' || typeof value === 'symbol') return undefined
-  if (rules.normalizeNonFiniteNumbers && typeof value === 'number' && !Number.isFinite(value)) {
-    return null
-  }
+  if (typeof value === 'number' && !Number.isFinite(value)) return null
 
   return value
 }
@@ -222,8 +183,7 @@ function reconcileArray(
   prev: unknown,
   value: unknown[],
   seen: WeakSet<object> | null,
-  label?: string,
-  rules: DetachRules = DEFAULT_DETACH_RULES
+  label?: string
 ): unknown {
   const prevArray = Array.isArray(prev) ? prev : null
   // A previous array of another length shares nothing, so its items are not worth
@@ -234,11 +194,9 @@ function reconcileArray(
   for (let index = 0; index < value.length; index += 1) {
     const hasPrevItem = prevArray !== null && index < prevArray.length
     const prevItem = hasPrevItem ? prevArray[index] : undefined
-    const item = reconcileNode(hasPrevItem ? prevItem : NO_PREV, value[index], seen, label, rules)
+    const item = reconcileNode(hasPrevItem ? prevItem : NO_PREV, value[index], seen, label)
 
-    // Kept as it is, and deliberately not put through the identity check below: the two
-    // are known to hold the same content, which for a NaN is not the same as being
-    // identical.
+    // Kept as it is: the two are known to hold the same content.
     if (item === UNCHANGED) {
       if (out !== null) out[index] = prevItem
       continue
@@ -290,8 +248,7 @@ function reconcileRecord(
   prev: unknown,
   source: object,
   seen: WeakSet<object> | null,
-  label?: string,
-  rules: DetachRules = DEFAULT_DETACH_RULES
+  label?: string
 ): unknown {
   const prevRecord = isSharableRecord(prev) ? prev : null
   // Own enumerable keys, which is the set `JSON.stringify` would walk, without the
@@ -312,8 +269,7 @@ function reconcileRecord(
       prevValue === undefined ? NO_PREV : prevValue,
       (source as any)[key],
       seen,
-      label,
-      rules
+      label
     )
 
     // `UNCHANGED` can only come back when there was a previous value to match,
@@ -344,67 +300,4 @@ function reconcileRecord(
   if (keptKeys === countKeys(prevRecord!)) return UNCHANGED
 
   return openRecord(prevRecord!, keys, keys.length)
-}
-
-/**
- * The descriptor `new Error()` gives `message` and `stack`. Reproduced here because
- * the error below is not built with `new Error()`, and a key walk over the snapshot
- * has to see the same properties as one over an error richJson rebuilt.
- */
-const NON_ENUMERABLE = { writable: true, enumerable: false, configurable: true }
-
-function reconcileError(
-  prev: unknown,
-  value: Error,
-  seen: WeakSet<object> | null,
-  label?: string,
-  rules: DetachRules = DEFAULT_DETACH_RULES
-): unknown {
-  const prevError = prev instanceof Error ? prev : null
-  // Built without `new Error()`, whose stack capture is the expensive part of
-  // rebuilding an error and is thrown away by the copy of `stack` below anyway.
-  const error = Object.create(Error.prototype, {
-    message: { value: value.message, ...NON_ENUMERABLE }
-  }) as Error
-  let isUnchanged = prevError !== null && prevError.message === value.message
-  let keptKeys = 0
-
-  // An error carries whatever the thrower attached to it, so a prop can hold a live
-  // nested object just like a state key can. Detached rather than copied by
-  // reference, or the snapshot would stay attached to it and an in-place mutation
-  // inside it would read as unchanged.
-  Object.getOwnPropertyNames(value).forEach((propName) => {
-    if (propName === 'message') return
-
-    const hasPrevValue = prevError !== null && hasOwn(prevError, propName)
-    const child = reconcileNode(
-      hasPrevValue ? (prevError as any)[propName] : NO_PREV,
-      (value as any)[propName],
-      seen,
-      label,
-      rules
-    )
-
-    if (child === undefined) {
-      if (hasPrevValue) isUnchanged = false
-      return
-    }
-
-    const propValue = child === UNCHANGED ? (prevError as any)[propName] : child
-    if (child !== UNCHANGED) isUnchanged = false
-
-    // `stack` is own but non-enumerable on a real error, so it is defined rather
-    // than assigned and stays off every key walk, `keptKeys` included.
-    if (propName === 'stack') {
-      Object.defineProperty(error, 'stack', { value: propValue, ...NON_ENUMERABLE })
-      return
-    }
-
-    ;(error as any)[propName] = propValue
-    keptKeys += 1
-  })
-
-  if (isUnchanged && keptKeys !== countKeys(prevError!)) isUnchanged = false
-
-  return isUnchanged ? UNCHANGED : error
 }

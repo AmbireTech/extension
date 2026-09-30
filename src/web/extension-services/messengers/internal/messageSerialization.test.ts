@@ -12,7 +12,6 @@ import {
   deserializeMessagePart,
   detectStructuredCloneSupport,
   isStructuredCloneEnabled,
-  prepareMessagePart,
   STRUCTURED_CLONE_PROBE_KEY
 } from './messageSerialization'
 
@@ -80,55 +79,6 @@ describe('isStructuredCloneEnabled', () => {
     expect(isStructuredCloneEnabled({ message_serialization: 'structured_clone' })).toBe(true)
     expect(isStructuredCloneEnabled({})).toBe(false)
     expect(isStructuredCloneEnabled({ message_serialization: 'json' })).toBe(false)
-  })
-})
-
-describe('prepareMessagePart', () => {
-  test('normalizes a detached raw part with the legacy JSON value semantics', () => {
-    const source = {
-      nested: { secret: 'secret', toJSON: () => ({ safe: true }) },
-      array: [undefined, Symbol('ignored')],
-      objectUndefined: undefined,
-      amount: 1n,
-      notANumber: Number.NaN,
-      positiveInfinity: Number.POSITIVE_INFINITY,
-      date: new Date('2026-09-21T12:00:00.000Z')
-    }
-
-    const prepared = prepareMessagePart(source)
-
-    expect(prepared).toEqual({
-      nested: { safe: true },
-      array: [null, null],
-      amount: 1n,
-      notANumber: null,
-      positiveInfinity: null,
-      date: '2026-09-21T12:00:00.000Z'
-    })
-    expect(prepared).not.toBe(source)
-  })
-
-  test('turns every error into a plain object structured clone keeps whole', () => {
-    const cause = new TypeError('socket closed')
-    const error: Error & { code?: string; cause?: unknown } = new Error('RPC failed')
-    error.code = 'E_RPC'
-    error.cause = cause
-    const source = { estimation: { error } }
-
-    const prepared = prepareMessagePart(source)
-    const received = structuredClone(prepared).estimation.error
-    console.log('error as structured clone delivers it', received)
-
-    expect(Object.getPrototypeOf(prepared.estimation.error)).toBe(Object.prototype)
-    expect(received).toEqual({
-      message: 'RPC failed',
-      stack: error.stack,
-      code: 'E_RPC',
-      cause: { message: 'socket closed', stack: cause.stack }
-    })
-    // The source state is never touched.
-    expect(error).toBeInstanceOf(Error)
-    expect(Object.keys(error)).toEqual(['code', 'cause'])
   })
 })
 

@@ -95,19 +95,6 @@ function deliverThroughPort(message: any, meta?: any) {
   return { receivedMessage, receivedMeta, envelope: backgroundPort.messages.at(-1) }
 }
 
-/**
- * The value with every error turned into a plain object of its own props, which is
- * what the structured clone path delivers in place of an error.
- */
-function flattenErrors(value: unknown): unknown {
-  if (value === null || typeof value !== 'object') return value
-  if (Array.isArray(value)) return value.map(flattenErrors)
-
-  const keys = value instanceof Error ? Object.getOwnPropertyNames(value) : Object.keys(value)
-
-  return Object.fromEntries(keys.map((key) => [key, flattenErrors((value as any)[key])]))
-}
-
 /** A controller state holding errors in the fields that really carry them to the UI. */
 function createStateWithErrors() {
   const rpcError: Error & { code?: string; context?: object } = new Error('RPC failed')
@@ -215,7 +202,7 @@ describe('PortMessenger structured clone transport', () => {
     expect(emailVaultStates.errors[1].cause.message).toBe('socket closed')
   })
 
-  test('hands the UI store the same state on both transports, errors aside from their prototype', () => {
+  test('hands the UI store the very same state on both transports, errors included', () => {
     // One state for both, so even the stacks the errors captured are the same.
     const state = createStateWithErrors()
     const send = () => deliverThroughPort({ method: TEST_METHOD, params: state })
@@ -237,7 +224,10 @@ describe('PortMessenger structured clone transport', () => {
     )
     console.dir(storedFromStructuredClone, { depth: null })
 
-    expect(storedFromStructuredClone).toEqual(flattenErrors(storedFromJson))
+    // richJson rebuilds a plain `Error` on the way in, and the store flattens it again.
+    expect(overJson.receivedMessage.params.estimationError).toBeInstanceOf(Error)
+    expect(storedFromJson.estimationError).not.toBeInstanceOf(Error)
+    expect(storedFromStructuredClone).toStrictEqual(storedFromJson)
   })
 
   test('delivers an error travelling in meta with its message', () => {

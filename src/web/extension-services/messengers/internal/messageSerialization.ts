@@ -1,6 +1,5 @@
 import { parse } from '@ambire-common/libs/richJson/richJson'
 import { logInfoWithPrefix, logWarnWithPrefix } from '@common/utils/logger'
-import { detachState } from '@common/utils/reconcileState'
 
 // Chrome 148+ can serialize `chrome.runtime` port messages with the structured
 // clone algorithm instead of JSON when the manifest opts in via
@@ -49,15 +48,6 @@ export function detectStructuredCloneSupport(post: (message: any) => void): Stru
 
   logInfoWithPrefix(LOG_PREFIX, 'structured clone support not detected', bigIntProbeError)
   return 'unsupported'
-}
-
-/**
- * Detaches a message part with the value rules richJson has always applied, so the
- * structured clone path delivers what the JSON path would. Errors arrive as plain
- * objects that keep their `message`, `stack` and every custom prop.
- */
-export function prepareMessagePart(value: any): any {
-  return detachState(value, { normalizeNonFiniteNumbers: true, flattenErrors: true })
 }
 
 /** Gives back a message part as sent, parsing it only when it is a richJson string from the JSON path. */

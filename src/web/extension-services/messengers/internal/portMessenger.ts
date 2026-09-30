@@ -2,13 +2,13 @@
 import { stringify } from '@ambire-common/libs/richJson/richJson'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { Action, MethodAction } from '@common/types/actions'
+import { detachState } from '@common/utils/reconcileState'
 import { browser } from '@web/constants/browserapi'
 
 import {
   deserializeMessagePart,
   detectStructuredCloneSupport,
-  isStructuredCloneEnabled,
-  prepareMessagePart
+  isStructuredCloneEnabled
 } from './messageSerialization'
 
 export type Port = chrome.runtime.Port & {
@@ -188,7 +188,7 @@ export class PortMessenger {
 
   #prepareEnvelope(message: any, meta: MessageMeta): PreparedEnvelope | null {
     try {
-      return { message: prepareMessagePart(message), meta: prepareMessagePart(meta) }
+      return { message: detachState(message), meta: detachState(meta) }
     } catch (error) {
       console.error(
         'Could not prepare a structured clone port message, falling back to richJson',
