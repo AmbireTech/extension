@@ -82,7 +82,7 @@ const AccountPreferencesBottomSheet = ({
       {localPreferences?.enabled ? (
         <>
           <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mb}>
-            {t('Select which accounts you want to connect with the app')}
+            {t('Select accounts to connect')}
           </Text>
 
           <DAppAccountList

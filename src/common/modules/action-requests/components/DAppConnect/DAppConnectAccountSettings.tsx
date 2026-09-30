@@ -82,7 +82,7 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
           closeBottomSheet={() => handleCloseBottomSheet(false)}
           isScrollEnabled={false}
         >
-          <ModalHeader title={t('Select which accounts you want to connect with the app')} />
+          <ModalHeader title={t('Select accounts to connect')} />
           <DAppAccountList
             accounts={orderedAccountList}
             allowedAccounts={localPreferences?.accounts || []}
