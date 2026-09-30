@@ -448,6 +448,7 @@ const SignAccountOpScreen = () => {
           {/* TabLayoutWrapperMainContent supports scroll but the logic that determines the height
           of the content doesn't work with it, so we use a ScrollView here */}
           <ScrollView
+            testID="sign-account-op-scroll-view"
             onScroll={handleScroll}
             onLayout={handleLayout}
             onContentSizeChange={handleContentSizeChange}

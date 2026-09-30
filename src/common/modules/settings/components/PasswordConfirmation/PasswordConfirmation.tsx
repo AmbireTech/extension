@@ -103,20 +103,22 @@ const PasswordConfirmation: React.FC<Props> = ({
 
   const passwordFieldValue = watch('password')
 
-  // The unlock status and error are shared by every surface, so only an unlock this component
-  // dispatched may confirm it. Cleared on the first outcome, as the status sits on SUCCESS for a
-  // moment and a caller that can only run once would otherwise be invoked twice.
+  // The unlock status and error are shared by every surface, so only an unlock (or a custom
+  // submit) this component dispatched may report on it. Cleared on the first outcome, as the status
+  // sits on SUCCESS for a moment and a caller that can only run once would otherwise be invoked twice.
   const isAwaitingUnlockRef = useRef(false)
 
   useEffect(() => {
     if (!isAwaitingUnlockRef.current) return
 
+    // A custom submit that checks the password in the keystore reports a wrong one here as well
     if (keystoreState.errorMessage) {
       isAwaitingUnlockRef.current = false
       setError('password', { message: keystoreState.errorMessage })
       return
     }
 
+    if (mode === 'custom') return
     if (keystoreState.statuses.unlockWithSecret !== 'SUCCESS') return
 
     isAwaitingUnlockRef.current = false
@@ -126,17 +128,19 @@ const PasswordConfirmation: React.FC<Props> = ({
     keystoreState.statuses.unlockWithSecret,
     setError,
     onPasswordConfirmed,
-    passwordFieldValue
+    passwordFieldValue,
+    mode
   ])
 
   const handleUnlock = useCallback(
     (data: { password: string }) => {
+      isAwaitingUnlockRef.current = true
+
       if (onCustomSubmit) {
         onCustomSubmit(data.password)
         return
       }
 
-      isAwaitingUnlockRef.current = true
       keystoreDispatch({
         type: 'method',
         params: {

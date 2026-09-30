@@ -32,6 +32,7 @@ import type { UiController } from '@ambire-common/controllers/ui/ui'
 import type { AutoLockController } from '@common/controllers/auto-lock'
 import type { WalletStateController } from '@common/controllers/wallet-state'
 import type { VerificationController } from '@ambire-common/controllers/verification/verification'
+import type { WalletTokenController } from '@ambire-common/controllers/walletToken/walletToken'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 import { createExhaustiveArray } from '@common/utils/createExhaustiveArray'
 
@@ -67,6 +68,7 @@ export type ControllersNestedInMainMappingType = {
   SafeController: SafeController
   QrHardwareController: QrHardwareController
   ContractInfoController: ContractInfoController
+  WalletTokenController: WalletTokenController
   SurveyController: SurveyController
   DebugController: DebugController
   VerificationController: VerificationController
@@ -107,6 +109,7 @@ export const controllersNestedInMainMapping =
     'SafeController',
     'QrHardwareController',
     'ContractInfoController',
+    'WalletTokenController',
     'SurveyController',
     'DebugController',
     'VerificationController'

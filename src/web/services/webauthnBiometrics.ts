@@ -142,9 +142,8 @@ const getCredentialExtensionResults = (credential: PublicKeyCredential | null) =
 const shouldTryPrfAssertion = (results: any) =>
   results?.prf?.enabled !== false || results?.hmacCreateSecret === true
 
-// The Chrome side panel never settles an assertion the user dismissed, which would leave the
-// ceremony pending forever and make every later one fail with "a request is already pending".
-// Keeping the controller around lets a new attempt abort the stale one.
+// A prompt can be left pending forever (e.g. the side panel of Chromium before 153, which cannot
+// show it), making every later one fail as "already pending" - a new attempt aborts the stale one.
 let pendingAssertionAbortController: AbortController | null = null
 
 const beginAssertion = () => {
