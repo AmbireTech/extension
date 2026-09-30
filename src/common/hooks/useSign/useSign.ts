@@ -316,15 +316,23 @@ const useSign = ({
         return
       }
 
-      const isExternalQr =
-        signAccountOpState?.accountOp.signingKeyType === 'qr' ||
-        signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType === 'qr'
       const isFeePayerSameAsSigner =
         signAccountOpState?.accountOp.signingKeyAddr ===
         signAccountOpState?.accountOp.gasFeePayment?.paidBy
+
+      // The update above is async, so the state may still hold the old key
+      // (the default signer, e.g. Ledger). Prefer the just-chosen type.
+      const chosenKeyType = _chosenSigningKeyTypes?.[0]
+      const effectiveSigningKeyType = chosenKeyType ?? signAccountOpState?.accountOp.signingKeyType
+      // The fee payer follows the signing key when the signer pays the fee
+      // (see update() in SignAccountOpController)
+      const effectiveFeePayerKeyType =
+        chosenKeyType && isFeePayerSameAsSigner ? chosenKeyType : feePayerKeyType
+
+      const isExternalQr = effectiveSigningKeyType === 'qr' || effectiveFeePayerKeyType === 'qr'
       const isLedgerKeyInvolvedInTheJustChosenKeys =
         _chosenSigningKeyTypes && _chosenSigningKeyTypes.length
-          ? _chosenSigningKeyTypes.indexOf('ledger') !== -1 || feePayerKeyType === 'ledger'
+          ? _chosenSigningKeyTypes.indexOf('ledger') !== -1 || effectiveFeePayerKeyType === 'ledger'
           : isAtLeastOneOfTheKeysInvolvedLedger
 
       if (isLedgerKeyInvolvedInTheJustChosenKeys && !isLedgerConnected) {
@@ -355,7 +363,6 @@ const useSign = ({
       signAccountOpState?.feePayerKeyStoreKeys?.length,
       signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signingKeyType,
-      signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType,
       warningToPromptBeforeSign,
       feePayerKeyType,
       isAtLeastOneOfTheKeysInvolvedLedger,
