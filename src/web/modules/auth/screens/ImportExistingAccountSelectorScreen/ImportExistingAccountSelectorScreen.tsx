@@ -3,6 +3,7 @@ import { Animated, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
+import DriveIcon from '@common/assets/svg/DriveIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
@@ -32,6 +33,7 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { isSafari } from '@web/constants/browserapi'
+import { ONEKEY_WEBUSB_FILTERS } from '@web/modules/hardware-wallet/onekey/constants'
 
 import getStyles from './styles'
 
@@ -129,6 +131,47 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(WEB_ROUTES.ledgerConnect)
         },
         icon: LedgerBadgeIcon
+      },
+      {
+        title: 'OneKey',
+        onPress: async () => {
+          const webUsb = (
+            navigator as Navigator & {
+              usb?: {
+                requestDevice: (options: {
+                  filters: typeof ONEKEY_WEBUSB_FILTERS
+                }) => Promise<{ serialNumber?: string | null }>
+              }
+            }
+          ).usb
+          if (isSafari() || !webUsb) {
+            addToast(
+              t(
+                "Your browser doesn't support WebUSB, which is required for the OneKey device. Please try using a different browser."
+              ),
+              { type: 'error' }
+            )
+            return
+          }
+
+          try {
+            // WebUSB requires the permission prompt to start directly from the user gesture.
+            const device = await webUsb.requestDevice({ filters: ONEKEY_WEBUSB_FILTERS })
+            setTriggeredHwWalletFlow('onekey')
+            dispatch({
+              type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY',
+              params: { preferredDeviceId: device.serialNumber || undefined }
+            })
+          } catch (error: any) {
+            if (error?.name !== 'NotFoundError') {
+              addToast(error?.message || t('Could not connect to the OneKey device.'), {
+                type: 'error'
+              })
+            }
+          }
+        },
+        // A dedicated OneKey asset is not present in the shared icon set yet.
+        icon: DriveIcon
       },
       {
         title: 'Grid Plus',

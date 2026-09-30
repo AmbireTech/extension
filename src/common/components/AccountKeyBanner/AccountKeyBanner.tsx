@@ -1,5 +1,6 @@
 import React from 'react'
 
+import DriveIcon from '@common/assets/svg/DriveIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
@@ -33,6 +34,12 @@ const AccountKeyBanner = ({ type }: { type: KeyType }) => {
     return (
       <Wrapper text="Trezor">
         <TrezorBadgeIcon {...iconProps} />
+      </Wrapper>
+    )
+  if (type === 'onekey')
+    return (
+      <Wrapper text="OneKey">
+        <DriveIcon {...iconProps} />
       </Wrapper>
     )
   if (type === 'ledger')

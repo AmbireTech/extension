@@ -27,6 +27,12 @@ import type { EthereumTransaction, EthereumTransactionEIP1559 } from '@trezor/co
 
 const DELAY_BETWEEN_POPUPS = 1000
 const HYPER_EVM_CHAIN_ID = 999n
+const ONEKEY_SAFE_TX_COMPATIBILITY_ERROR = "Cannot read properties of undefined (reading 'length')"
+
+export const isOneKeySafeTxCompatibilityError = (error: unknown, primaryType: string) =>
+  primaryType === 'SafeTx' &&
+  typeof (error as { message?: unknown })?.message === 'string' &&
+  (error as { message: string }).message.includes(ONEKEY_SAFE_TX_COMPATIBILITY_ERROR)
 
 /**
  * This is necessary to avoid popup collision between the unlock & sign Trezor popups.
@@ -146,6 +152,14 @@ class TrezorSigner implements KeystoreSignerInterface {
     }
   }
 
+  async #recoverSafeTxWithOneKey(
+    error: unknown,
+    typedData: TypedMessageUserRequest['meta']['params']
+  ) {
+    if (!isOneKeySafeTxCompatibilityError(error, typedData.primaryType)) return null
+    return this.controller?.recoverSafeTxWithOneKey?.(this.key, typedData) ?? null
+  }
+
   signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (txnRequest) => {
     if (typeof txnRequest.value === 'undefined') {
       throw new ExternalSignerError('trezorSigner: missing value in transaction request', {
@@ -245,6 +259,12 @@ class TrezorSigner implements KeystoreSignerInterface {
     message,
     primaryType: _primaryType
   }: TypedMessageUserRequest['meta']['params']) => {
+    const originalTypedData = {
+      domain: _domain,
+      types: _types,
+      message,
+      primaryType: _primaryType
+    }
     await this.#prepareForSigning()
 
     const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
@@ -270,8 +290,9 @@ class TrezorSigner implements KeystoreSignerInterface {
     )
 
     const { domain_separator_hash, message_hash } = dataWithHashes
-    const res = await this.#withNormalizedError(() =>
-      this.controller!.walletSDK.ethereumSignTypedData({
+    let res
+    try {
+      res = await this.controller!.walletSDK.ethereumSignTypedData({
         path,
         data: { types, message, domain, primaryType },
         metamask_v4_compat: true,
@@ -279,9 +300,17 @@ class TrezorSigner implements KeystoreSignerInterface {
         domain_separator_hash: domain_separator_hash ?? undefined,
         message_hash: message_hash ?? undefined
       })
-    )
+    } catch (error: any) {
+      const recoveredSignature = await this.#recoverSafeTxWithOneKey(error, originalTypedData)
+      if (recoveredSignature) return recoveredSignature
+      throw new ExternalSignerError(normalizeTrezorMessage(error?.message))
+    }
 
-    if (!res.success)
+    if (!res.success) {
+      const rawError = new Error(getTrezorErrorMessageFromPayload(res.payload))
+      const recoveredSignature = await this.#recoverSafeTxWithOneKey(rawError, originalTypedData)
+      if (recoveredSignature) return recoveredSignature
+
       throw new ExternalSignerError(
         // @TODO: Implement a mechanism that reports the error if it's not humanized
         getMessageFromTrezorErrorCode(
@@ -293,6 +322,7 @@ class TrezorSigner implements KeystoreSignerInterface {
           }
         )
       )
+    }
 
     this.#validateSigningKey(res.payload.address)
 

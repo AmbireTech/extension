@@ -1,5 +1,6 @@
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
+import { ExternalKey, ExternalSignerController } from '@ambire-common/interfaces/keystore'
+import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { UiManager } from '@ambire-common/interfaces/ui'
 import {
   getMessageFromTrezorErrorCode,
@@ -35,6 +36,13 @@ class TrezorController implements ExternalSignerController {
   initialLoadPromise
 
   #windowManager: UiManager['window']
+
+  #oneKeySafeTxRecovery:
+    | ((
+        key: ExternalKey,
+        typedData: TypedMessageUserRequest['meta']['params']
+      ) => Promise<string | null>)
+    | null = null
 
   constructor(windowManager: UiManager['window']) {
     this.#windowManager = windowManager
@@ -73,6 +81,24 @@ class TrezorController implements ExternalSignerController {
     } catch (e) {
       console.error('Error while removing Trezor window', e)
     }
+  }
+
+  configureOneKeySafeTxRecovery(
+    recovery: (
+      key: ExternalKey,
+      typedData: TypedMessageUserRequest['meta']['params']
+    ) => Promise<string | null>
+  ) {
+    this.#oneKeySafeTxRecovery = recovery
+  }
+
+  async recoverSafeTxWithOneKey(
+    key: ExternalKey,
+    typedData: TypedMessageUserRequest['meta']['params']
+  ) {
+    if (!this.#oneKeySafeTxRecovery) return null
+    await this.signingCleanup()
+    return this.#oneKeySafeTxRecovery(key, typedData)
   }
 
   isUnlocked(path?: string, expectedKeyOnThisPath?: string) {

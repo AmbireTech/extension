@@ -76,6 +76,10 @@ type MainControllerAccountPickerInitLedgerAction = {
 type MainControllerAccountPickerInitTrezorAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR'
 }
+type MainControllerAccountPickerInitOneKeyAction = {
+  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY'
+  params: { preferredDeviceId?: string }
+}
 type MainControllerAccountPickerInitLatticeAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
 }
@@ -264,6 +268,7 @@ export type Action =
   | MainControllerAccountPickerInitNfcWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
+  | MainControllerAccountPickerInitOneKeyAction
   | MainControllerAccountPickerInitLedgerAction
   | MainControllerAccountPickerInitFromSavedSeedPhraseAction
   | HandshakeAction

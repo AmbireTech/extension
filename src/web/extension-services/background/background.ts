@@ -16,6 +16,7 @@ import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
+import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/rpc'
@@ -81,8 +82,10 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import OneKeyController from '@web/modules/hardware-wallet/controllers/OneKeyController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
+import OneKeySigner from '@web/modules/hardware-wallet/libs/OneKeySigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
@@ -175,6 +178,7 @@ let autoLockCtrl: AutoLockController
 let pm: PortMessenger
 let ledgerCtrl: LedgerController
 let trezorCtrl: TrezorController
+let oneKeyCtrl: OneKeyController
 let qrCtrl: QrHardwareController
 let eventEmitterRegistry: EventEmitterRegistryController
 
@@ -354,6 +358,7 @@ const init = async () => {
   pm = new PortMessenger()
   ledgerCtrl = new LedgerController()
   trezorCtrl = new TrezorController(windowManager as UiManager['window'])
+  oneKeyCtrl = new OneKeyController()
   const latticeCtrl = new LatticeController()
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
@@ -497,12 +502,14 @@ const init = async () => {
       // TODO: there is a mismatch in hw signer types, it's not a big deal
       ledger: LedgerSigner,
       trezor: TrezorSigner,
+      onekey: OneKeySigner,
       lattice: LatticeSigner,
       qr: QrHardwareSigner
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
+      onekey: oneKeyCtrl,
       lattice: latticeCtrl,
       qr: qrCtrl
     } as any,
@@ -555,6 +562,22 @@ const init = async () => {
       },
       resolveViewRoute: (view: View) => resolveViewRoute(mainCtrl, view)
     }
+  })
+
+  trezorCtrl.configureOneKeySafeTxRecovery(async (trezorKey, typedData) => {
+    const path = getHdPathFromTemplate(trezorKey.meta.hdPathTemplate, trezorKey.meta.index)
+    const isOneKey = await oneKeyCtrl.connectFromTrezor(trezorCtrl.deviceId, path, trezorKey.addr)
+    if (!isOneKey) return null
+
+    const migratedKey = await mainCtrl.keystore.migrateExternalKeyType(
+      trezorKey.addr,
+      'trezor',
+      'onekey',
+      { deviceId: oneKeyCtrl.deviceId, deviceModel: oneKeyCtrl.deviceModel }
+    )
+    const signer = new OneKeySigner(migratedKey)
+    signer.init(oneKeyCtrl)
+    return signer.signTypedData(typedData)
   })
 
   // Load them immediately (the optimization is for mobile only)

@@ -1,4 +1,5 @@
-import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
+import { ExternalKey, ExternalSignerController } from '@ambire-common/interfaces/keystore'
+import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import type { TrezorConnect } from '@trezor/connect/lib/types'
 
 // The subset of the Trezor Connect SDK that the shared TrezorSigner and
@@ -23,4 +24,8 @@ export interface TrezorControllerInterface extends ExternalSignerController {
   isInitiated: boolean
   initialLoadPromise: Promise<void>
   signingCleanup: () => Promise<void>
+  recoverSafeTxWithOneKey?: (
+    key: ExternalKey,
+    typedData: TypedMessageUserRequest['meta']['params']
+  ) => Promise<string | null>
 }

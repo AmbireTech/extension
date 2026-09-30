@@ -33,6 +33,7 @@ type Props = {
 
 const iconByKeyType = {
   trezor: TrezorBadgeIcon,
+  onekey: DriveIcon,
   ledger: LedgerBadgeIcon,
   lattice: GridPlusIcon
 }
