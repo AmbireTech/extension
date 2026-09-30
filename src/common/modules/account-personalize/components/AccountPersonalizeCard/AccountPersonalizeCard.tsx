@@ -9,6 +9,7 @@ import AccountKeyIcons from '@common/components/AccountKeyIcons'
 import Avatar from '@common/components/Avatar'
 import Editable from '@common/components/Editable'
 import { isMobile, isWeb } from '@common/config/env'
+import useAccountKeys from '@common/hooks/useAccountKeys'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
@@ -37,6 +38,7 @@ const AccountPersonalizeCard = ({
 }: Props) => {
   const { addr: address, preferences } = account
   const reverseLookup = useReverseLookup({ address })
+  const accountKeys = useAccountKeys(account)
   const { styles } = useTheme(getStyles)
 
   return (
@@ -70,7 +72,7 @@ const AccountPersonalizeCard = ({
                 )}
               />
               {/* On mobile the key icons and badges move to the row below the address */}
-              {isWeb && <AccountBadges accountData={account} />}
+              {isWeb && <AccountBadges accountData={account} accountKeys={accountKeys} />}
             </View>
             <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
               <AccountAddress
@@ -89,8 +91,17 @@ const AccountPersonalizeCard = ({
                   { columnGap: SPACING_TY }
                 ]}
               >
-                <AccountKeyIcons isExtended account={account} withContainerSpacing={false} />
-                <AccountBadges accountData={account} withSpacing={false} />
+                <AccountKeyIcons
+                  isExtended
+                  account={account}
+                  accountKeys={accountKeys}
+                  withContainerSpacing={false}
+                />
+                <AccountBadges
+                  accountData={account}
+                  accountKeys={accountKeys}
+                  withSpacing={false}
+                />
               </View>
             )}
           </View>
