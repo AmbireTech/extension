@@ -9,6 +9,7 @@ import InputPassword from '@common/components/InputPassword'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { NEW_PASSWORD_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { TERMS_VERSION } from '@common/modules/terms/components/TermsComponent'
@@ -82,6 +83,7 @@ const KeyStoreSetupForm = ({
           rules={{ validate: isValidPassword }}
           render={({ field: { onChange, onBlur, value } }) => (
             <InputPassword
+              {...NEW_PASSWORD_AUTOFILL_PROPS}
               backgroundColor={theme.secondaryBackground}
               label={t('Password')}
               testID="enter-pass-field"
@@ -96,6 +98,7 @@ const KeyStoreSetupForm = ({
                 (t('Your password must be unique and at least 8 characters long.') as string)
               }
               containerStyle={spacings.mbXl}
+              preventJumpOnValidationChange
               onSubmitEditing={() => {
                 if (password && confirmPassword) {
                   handleCreateButtonPress()
@@ -114,6 +117,7 @@ const KeyStoreSetupForm = ({
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
+              {...NEW_PASSWORD_AUTOFILL_PROPS}
               setInputRef={(r) => {
                 confirmPasswordRef.current = r
               }}
@@ -129,6 +133,7 @@ const KeyStoreSetupForm = ({
               secureTextEntry
               error={formState.errors.confirmPassword && (t("Passwords don't match.") as string)}
               autoCorrect={false}
+              preventJumpOnValidationChange
               onSubmitEditing={onConfirmAction}
             />
           )}

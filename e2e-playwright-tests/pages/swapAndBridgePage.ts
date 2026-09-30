@@ -1,4 +1,5 @@
 import { typeText } from 'common-helpers/typeText'
+import { KEYSTORE_PASS } from 'constants/env'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
 import { SpeculosDevice } from 'libs/speculos-device/device'
@@ -272,14 +273,19 @@ export class SwapAndBridgePage extends BasePage {
 
     await signButton.click()
 
-    // TODO: check why this is needed
-    // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
+    // checks whether a bottom sheet is currently covering the screen and,
+    // if so, waits up to 20 seconds for it to clear before retrying the click
     await page.waitForTimeout(350)
+    const blockingSheet = page.getByTestId('bottom-sheet').first()
+    if (await blockingSheet.isVisible().catch(() => false)) {
+      await blockingSheet.waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {})
+    }
+
     const shouldRetryClick = await signButton.isVisible().catch(() => false)
     if (shouldRetryClick) {
       const stillEnabled = await signButton.isEnabled().catch(() => false)
       if (stillEnabled) {
-        await signButton.click()
+        await signButton.click({ timeout: 10000 })
       }
     }
 
@@ -543,8 +549,22 @@ export class SwapAndBridgePage extends BasePage {
     // }
     await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap|Execute/)
 
+    // The Sign button only becomes enabled once the transaction details panel (a
+    // react-native-web ScrollView, not the page itself) has been scrolled within 40px of its
+    // bottom - see `isCloseToBottom`/`handleScroll` in SignAccountOpScreen.tsx.
+    const signButton = page.getByTestId(selectors.signTransactionButton)
+    const transactionDetailsPanel = page.getByTestId(selectors.signAccountOpScrollView)
+
+    await expect(async () => {
+      await transactionDetailsPanel.evaluate((el: HTMLElement) => {
+        el.scrollTop = el.scrollHeight
+      })
+      await expect(signButton).not.toHaveAttribute('aria-disabled', 'true')
+    }).toPass({ timeout: 30000 })
+
+    // Signing auth modal; not required in all tests
     // sign transaction
-    await page.getByTestId(selectors.signTransactionButton).click()
+    await signButton.click()
   }
 
   async getCurrentBalance() {

@@ -42,6 +42,7 @@ const TextArea = ({
   leftIcon,
   value,
   autoFocus,
+  style,
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
@@ -91,13 +92,14 @@ const TextArea = ({
             autoFocus={nativeAutoFocus}
             value={value}
             {...rest}
-            style={{
-              textAlignVertical: 'top',
-              ...styles.nativeInput,
+            style={[
+              { textAlignVertical: 'top' },
+              styles.nativeInput,
               // @ts-ignore outline: 'none'
-              outline: 'none',
-              ...nativeInputStyle
-            }}
+              { outline: 'none' },
+              style,
+              nativeInputStyle
+            ]}
           />
         </View>
       </View>

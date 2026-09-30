@@ -42,7 +42,11 @@ const XWalletConversionTooltip = ({ address, chainId, xWalletAmount, tooltipId }
   const tooltipDataSet = useMemo(
     () =>
       tooltipContent
-        ? createGlobalTooltipDataSet({ id: tooltipId, content: tooltipContent })
+        ? createGlobalTooltipDataSet({
+            id: tooltipId,
+            content: tooltipContent,
+            title: tooltipContent
+          })
         : undefined,
     [tooltipContent, tooltipId]
   )

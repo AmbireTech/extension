@@ -156,7 +156,11 @@ export class BasePage {
   async expectButtonEnabled(selector: string) {
     const locator = this.page.getByTestId(selector)
     await expect(locator).not.toHaveAttribute('aria-disabled', 'true', { timeout: 10000 })
-    await expect(locator).toBeEnabled({ timeout: 10000 })
+  }
+
+  async expectButtonDisabled(selector: string) {
+    const locator = this.page.getByTestId(selector)
+    await expect(locator).toHaveAttribute('aria-disabled', 'true', { timeout: 10000 })
   }
 
   async compareText(

@@ -16,6 +16,8 @@ export function GlobalTooltip() {
   const pointerPos = useRef({ x: 0, y: 0 })
   const lastEl = useRef<Element | null>(null)
   const scrollTimeout = useRef<ReturnType<typeof setInterval> | null>(null)
+  const currentId = useRef<string | null>(null)
+  const pointerMoveFrame = useRef<number | null>(null)
 
   useEffect(() => {
     const extractTooltip = (el: Element | null) => {
@@ -29,8 +31,28 @@ export function GlobalTooltip() {
       }
     }
 
-    const applyTooltip = (data: any | null) => {
-      setCurrent(data ? { id: data.id, props: data } : { id: null, props: null })
+    /**
+     * `force` is for the refresh event, which exists to push new content onto the anchor
+     * the pointer is already on - there the id is unchanged by definition.
+     */
+    const applyTooltip = (data: any | null, force = false) => {
+      const id = data?.id ?? null
+
+      // The pointer moves over the same anchor (or over nothing) for most of its events,
+      // and a fresh object here would re-render on every one of them
+      if (!force && id === currentId.current) return
+      currentId.current = id
+
+      if (!data) {
+        setCurrent({ id: null, props: null })
+        return
+      }
+
+      // `title` is for the mobile info modal only. Web tooltips have no header, and react-tooltip
+      // must not receive it
+      const tooltipProps = { ...data }
+      delete tooltipProps.title
+      setCurrent({ id: data.id, props: tooltipProps })
     }
 
     const refreshTooltip = () => {
@@ -40,17 +62,26 @@ export function GlobalTooltip() {
         target = document.elementFromPoint(pointerPos.current.x, pointerPos.current.y)
       }
 
-      applyTooltip(extractTooltip(target))
+      applyTooltip(extractTooltip(target), true)
     }
 
+    // `closest` walks up the tree on every pointer event, so it runs at most once a frame
     const handlePointerMove = (e: PointerEvent) => {
       pointerPos.current.x = e.clientX
       pointerPos.current.y = e.clientY
 
-      const el = (e.target as HTMLElement)?.closest('[data-tooltip]')
-      lastEl.current = el || null
+      const { target } = e
 
-      applyTooltip(extractTooltip(el))
+      if (pointerMoveFrame.current !== null) return
+
+      pointerMoveFrame.current = requestAnimationFrame(() => {
+        pointerMoveFrame.current = null
+
+        const el = (target as HTMLElement)?.closest('[data-tooltip]')
+        lastEl.current = el || null
+
+        applyTooltip(extractTooltip(el))
+      })
     }
 
     const handleScroll = () => {
@@ -89,6 +120,8 @@ export function GlobalTooltip() {
         GLOBAL_TOOLTIP_REFRESH_EVENT,
         handleRefreshTooltip as EventListener
       )
+      !!scrollTimeout.current && clearTimeout(scrollTimeout.current)
+      pointerMoveFrame.current !== null && cancelAnimationFrame(pointerMoveFrame.current)
     }
   }, [])
 

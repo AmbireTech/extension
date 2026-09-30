@@ -25,6 +25,7 @@ import NfcController from '@mobile/modules/hardware-wallet/controllers/NfcContro
 import TrezorController from '@mobile/modules/hardware-wallet/controllers/TrezorController'
 import { bootProfiler } from '@mobile/services/bootProfiler/bootProfiler'
 import { BOOT_MARK } from '@mobile/services/bootProfiler/constants'
+import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 
 import { buildStateForFE, queueCtrlStateIfGated, setCriticalControllers } from './bootPhase'
 import {
@@ -254,6 +255,9 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
     setCriticalControllers(config.criticalControllers)
 
     const ledgerCtrl = new LedgerController()
+    ledgerTransportService.setIsSigningReportAllowed(
+      () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
+    )
     const trezorCtrl = new TrezorController()
     const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
     // NFC cards (Keycard, ...) tap-to-sign: the controller only forwards signing to

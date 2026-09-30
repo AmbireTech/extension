@@ -1,4 +1,4 @@
-import { saParams } from 'constants/env'
+import { KEYSTORE_PASS, saParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import { test } from 'fixtures/pageObjects'
 import { createSiweMessage } from 'viem/siwe'
@@ -90,6 +90,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
 
   test('Disabling auto-login works', async ({ pages }) => {
     const page = pages.basePage.page
+
     // selectors
     const textBox = page.getByRole('textbox', { name: 'Message (Hello world)' })
     const signButton = page.locator(selectors.sigtool.signButton)
@@ -107,6 +108,21 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
         .first()
         .click({ force: true })
       await signMessageWindow.getByTestId(selectors.signMessageButton).click()
+
+      // Signing auth modal; submit button is disabled before entering pass
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
+      await signMessageWindow
+        .getByTestId(selectors.transaction.signPassAuthField)
+        .fill(KEYSTORE_PASS)
+
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
+      await signMessageWindow.getByTestId(selectors.transaction.signConfirmButton).click()
 
       // assert message visible on sigtool
       await expect(page.locator(selectors.sigtool.messageSignatureTitle)).toContainText(
@@ -144,6 +160,22 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
         signMessageWindow.locator(selectors.sigtool.autoLoginSwitch).first()
       ).toBeEnabled()
       await signMessageWindow.getByTestId(selectors.signMessageButton).click()
+
+      // Signing auth modal; submit button is disabled before entering pass
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
+      await signMessageWindow
+        .getByTestId(selectors.transaction.signPassAuthField)
+        .fill(KEYSTORE_PASS)
+
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
+      await signMessageWindow.getByTestId(selectors.transaction.signConfirmButton).click()
+
       await expect(messageSignatureTitle).toContainText('Message signature')
     })
 
@@ -199,6 +231,21 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       await expect(signMessageWindow.locator(selectors.sigtool.signRequestForEVMText)).toBeVisible()
 
       await signMessageWindow.locator(selectors.sigtool.signInSiweButton).click()
+
+      // Signing auth modal; submit button is disabled before entering pass
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
+      await signMessageWindow
+        .getByTestId(selectors.transaction.signPassAuthField)
+        .fill(KEYSTORE_PASS)
+
+      await expect(
+        signMessageWindow.getByTestId(selectors.transaction.signConfirmButton)
+      ).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
+      await signMessageWindow.getByTestId(selectors.transaction.signConfirmButton).click()
     })
 
     await test.step('disconnect account from Ambire extension', async () => {

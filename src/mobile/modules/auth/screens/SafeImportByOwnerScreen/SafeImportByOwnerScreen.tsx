@@ -90,6 +90,7 @@ const SafeImportByOwnerScreen = () => {
                 resolvedAddressType={ownerAddressState.resolvedAddressType}
                 isRecipientDomainResolving={ownerAddressState.isDomainResolving}
                 bottomSheetTitle={t('Add Safe owner')}
+                includeSelectedAccount
                 // The parent has the same color as the default input background, so use the focused
                 // input color to keep the input visible and the same before and after focus
                 inputBackgroundColor={theme.tertiaryBackground}

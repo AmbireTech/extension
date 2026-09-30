@@ -80,6 +80,30 @@ const NetworkAvailableFeatures = ({
   const { addToast } = useToast()
   const [checkedDeployFor, setCheckedDeployFor] = useState<bigint | undefined>()
   const tooltipId = useId()
+  // Titles of the mobile info modal for each feature row, by what the row reports about the network
+  const featureTooltipTitles: Record<
+    string,
+    Partial<Record<NetworkFeature['level'], string>>
+  > = useMemo(
+    () => ({
+      flagged: { danger: t('Network details unavailable') },
+      saSupport: {
+        success: t('Smart accounts supported'),
+        warning: t('Smart accounts not set up'),
+        danger: t('Smart accounts not supported')
+      },
+      simulation: {
+        success: t('Simulation fully supported'),
+        warning: t('Simulation partly supported'),
+        danger: t('Simulation not supported')
+      },
+      prices: {
+        success: t('Token prices available'),
+        danger: t('Token prices not available')
+      }
+    }),
+    [t]
+  )
 
   const selectedNetwork = useMemo(
     () => networks.find((network) => network.chainId === chainId),
@@ -280,7 +304,8 @@ const NetworkAvailableFeatures = ({
                           height={16 * responsiveSizeMultiplier}
                           dataSet={createGlobalTooltipDataSet({
                             id: `feature-message-tooltip-${feature.id}-${tooltipId}`,
-                            content: feature.msg
+                            content: feature.msg,
+                            title: featureTooltipTitles[feature.id]?.[feature.level]
                           })}
                         />
                       </View>

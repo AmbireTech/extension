@@ -1,4 +1,4 @@
-import { StyleSheet, ViewStyle } from 'react-native'
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { isWeb } from '@common/config/env'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
@@ -7,6 +7,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   accountContainer: ViewStyle
+  label: TextStyle
 }
 
 // Every screen stacks name / address / balance+badges on three rows, which need this height.
@@ -27,6 +28,10 @@ const getStyles = () =>
       marginBottom: ACCOUNT_SELECT_ACCOUNT_MB,
       minHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT,
       maxHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT
+    },
+    label: {
+      flexShrink: 1,
+      ...spacings.mrTy
     }
   })
 

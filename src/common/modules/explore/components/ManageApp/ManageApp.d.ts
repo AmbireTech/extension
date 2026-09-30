@@ -10,6 +10,7 @@ export interface ManageAppProps {
   buttonProps?: Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'ref'>
   style?: ViewStyle
   onClosed?: () => void
+  onReloadDapp?: () => void
 }
 
 declare const ManageApp: React.FC<ManageAppProps>

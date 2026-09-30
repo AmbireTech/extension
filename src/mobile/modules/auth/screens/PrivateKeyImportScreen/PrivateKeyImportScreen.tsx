@@ -7,6 +7,7 @@ import Checkbox from '@common/components/Checkbox'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import usePrivateKeyImport from '@common/modules/auth/hooks/usePrivateKeyImport'
@@ -60,6 +61,7 @@ const PrivateKeyImportScreen = () => {
               name="privateKey"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
+                  {...NO_AUTOFILL_PROPS}
                   testID="enter-private-key-field"
                   onBlur={onBlur}
                   autoFocus

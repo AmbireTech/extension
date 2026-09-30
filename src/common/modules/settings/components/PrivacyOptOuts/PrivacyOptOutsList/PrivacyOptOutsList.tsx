@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import EnsIcon from '@common/assets/svg/EnsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import LightningIcon from '@common/assets/svg/LightningIcon'
 import ValueIcon from '@common/assets/svg/ValueIcon'
 import { isWeb } from '@common/config/env'
@@ -70,6 +71,14 @@ const PrivacyOptOutsList = () => {
       />
       <SwapProviderControlOption />
       <CrashAnalyticsControlOption />
+      <OptOutControlOption
+        title={t('Send signing reports to Ledger')}
+        description={t(
+          'To protect your privacy, Ambire disables Ledger’s signing reports by default. The official Ledger integration otherwise sends Ledger a report every time you approve a transaction or signature, including the network, the address you interact with, your device model and software versions, and whether the details were shown in a readable way.'
+        )}
+        icon={<LedgerLetterIcon width={24} height={24} color={theme.iconPrimary} />}
+        flag="ledgerSigningReports"
+      />
     </View>
   )
 }

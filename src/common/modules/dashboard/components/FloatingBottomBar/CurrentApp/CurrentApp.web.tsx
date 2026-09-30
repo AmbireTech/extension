@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
-import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import DappIcon from '@common/modules/explore/components/DappIcon'
@@ -32,7 +31,7 @@ const CurrentApp = () => {
             borderRadius: 20,
             ...spacings.ml,
             ...flexbox.center,
-            ...(isWeb && !currentDapp.isConnected ? ({ cursor: 'default' } as any) : {})
+            ...(isBlacklisted && !currentDapp.isConnected ? ({ cursor: 'default' } as any) : {})
           },
           dataSet: isBlacklisted
             ? createGlobalTooltipDataSet({
