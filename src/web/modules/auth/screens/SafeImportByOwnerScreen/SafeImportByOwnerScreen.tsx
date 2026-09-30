@@ -50,9 +50,10 @@ const SafeImportByOwnerScreen = () => {
           title={t('Import Safe by owner')}
           step={1}
           totalSteps={1}
+          style={flexbox.flex1}
         >
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
-            <View>
+            <View style={flexbox.flex1}>
               <Controller
                 control={control}
                 rules={{ validate: validateOwnerAddress, required: true }}
@@ -68,6 +69,7 @@ const SafeImportByOwnerScreen = () => {
                     bottomSheetTitle={t('Add Safe owner')}
                     // The onboarding panel is too narrow to fit a full address
                     withShortenedAddresses
+                    includeSelectedAccount
                     // The parent has the same color as the default input background, so use the focused
                     // input color to keep the input visible and the same before and after focus
                     inputBackgroundColor={theme.tertiaryBackground}
@@ -76,7 +78,7 @@ const SafeImportByOwnerScreen = () => {
               />
 
               {!!safeAccounts.length && (
-                <View style={[{ height: 220 }, spacings.mt]}>
+                <View style={[flexbox.flex1, spacings.mt]}>
                   <SafeAccountList
                     accounts={safeAccounts}
                     importedAccounts={importedAccounts}
