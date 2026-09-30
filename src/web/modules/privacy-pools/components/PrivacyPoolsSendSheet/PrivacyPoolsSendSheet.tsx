@@ -1,34 +1,27 @@
-import { formatUnits } from 'ethers'
-import React, { FC, useEffect, useMemo, useState } from 'react'
+import React, { FC, useMemo } from 'react'
 import { View } from 'react-native'
 
-import {
-  PrivacyPoolsOperation,
-  PrivacyPoolsOperationPhase
-} from '@ambire-common/interfaces/privacyPools'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import shortenAddress from '@ambire-common/utils/shortenAddress'
+import { PrivacyPoolsOperation } from '@ambire-common/interfaces/privacyPools'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
-import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
-import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
-import Spinner from '@common/components/Spinner'
+import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { formatElapsed } from '@web/modules/privacy-pools/utils/time'
-
-import getStyles from './styles'
+import PrivacyPoolsNetworkFee from '@web/modules/privacy-pools/components/PrivacyPoolsNetworkFee'
 
 interface Props {
   operation: PrivacyPoolsOperation | null
   symbol: string
   decimals: number
-  networkName: string
+  /** USD price of the sent token, or null when it has none. */
+  tokenPrice: number | null
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
   onSend: () => void
@@ -37,26 +30,13 @@ interface Props {
   onClosed: () => void
 }
 
-const STEPS: { phase: PrivacyPoolsOperationPhase; label: string }[] = [
-  { phase: 'proving', label: 'Preparing a transfer that cannot be traced back to you' },
-  { phase: 'ready', label: 'Waiting for you to confirm' },
-  { phase: 'broadcasting', label: 'Sending it' },
-  { phase: 'finalizing', label: 'Checking what you have left' }
-]
-
-const TITLES = {
-  pending: 'Sending',
-  success: 'Sent',
-  failed: 'Transfer failed'
-}
-
 /**
- * What a transfer from a Privacy Pools account is doing, while it does it - and the confirmation in
- * the middle of it. The counterpart of the regular Send's fee sheet.
+ * The confirmation of a transfer from a Privacy Pools account, and what became of it once sent. The
+ * counterpart of the regular Send's fee sheet, laid out like it: the network fee, then Back and Send.
  *
- * The pause on 'ready' is the point of the sheet: the proof takes ten seconds and up and the network
- * fee is not known until the transfer is priced, so committing to both before either was shown
- * would mean paying a fee the user never saw. Nothing is sent until the button here is pressed.
+ * Opened only once the transfer is proved and priced - the Proceed button carries the wait until
+ * then. The network fee is not known before that, and committing to it before it was shown would
+ * mean paying a fee the user never saw. Nothing is sent until Send here is pressed.
  *
  * Always mounted, even with nothing to show: a bottom sheet opened in the same commit it first
  * mounts does not animate in.
@@ -65,130 +45,57 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
   operation,
   symbol,
   decimals,
-  networkName,
+  tokenPrice,
   sheetRef,
   closeBottomSheet,
   onSend,
   onClosed
 }) => {
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
-  // Starts at 0 rather than at the current time, so nothing impure runs during render - the first
-  // tick of the interval below fills it in, and until then the elapsed time reads 0:00.
-  const [now, setNow] = useState(0)
+  const { theme } = useTheme()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
 
-  const isRunning = operation?.status === 'pending'
-  const isReady = isRunning && operation?.phase === 'ready'
+  const isReady = operation?.status === 'pending' && operation.phase === 'ready'
+  const isBroadcasting = operation?.status === 'pending' && operation.phase === 'broadcasting'
+  const isConfirming = isReady || isBroadcasting
+  const isDone = operation?.status === 'success' || operation?.status === 'failed'
 
-  // One clock per run: restarted when a transfer begins, stopped as soon as none is running. It
-  // is paused on 'ready' too - the wait there is the user's own, and a timer on it would read as
-  // a deadline.
-  useEffect(() => {
-    if (!isRunning || isReady) return undefined
-
-    const interval = setInterval(() => setNow(Date.now()), 1000)
-
-    return () => clearInterval(interval)
-  }, [isRunning, isReady])
-
-  const currentStepIndex = STEPS.findIndex((step) => step.phase === operation?.phase)
-
-  const amountText = useMemo(() => {
-    if (!operation) return ''
-
-    return `${formatDecimals(Number(formatUnits(operation.amount, decimals)), 'amount')} ${symbol}`
-  }, [operation, decimals, symbol])
+  const backButton = useMemo(
+    () => (
+      <Button
+        testID="privacy-pools-send-back"
+        type="secondary"
+        text={t('Back')}
+        onPress={closeBottomSheet}
+        hasBottomSpacing={false}
+        disabled={isBroadcasting}
+        style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : { width: 98, ...spacings.mrLg }}
+        size="smaller"
+      />
+    ),
+    [closeBottomSheet, isBroadcasting, isNarrowWebLayout, t]
+  )
 
   return (
     <BottomSheet
       id="privacy-pools-send"
       sheetRef={sheetRef}
-      closeBottomSheet={closeBottomSheet}
+      // Not closable while sending: the transfer goes on either way, and this is where its outcome
+      // is shown once it is known
+      closeBottomSheet={isBroadcasting ? undefined : closeBottomSheet}
       onClosed={onClosed}
       backgroundColor="primaryBackground"
     >
       {!!operation && (
         <>
-          <ModalHeader title={t(TITLES[operation.status])} handleClose={closeBottomSheet} />
-
-          <Text fontSize={16} weight="medium" style={spacings.mbTy}>
-            {t('{{amount}} to {{recipient}}', {
-              amount: amountText,
-              recipient: shortenAddress(operation.recipient, 16)
-            })}
-          </Text>
-          <Text fontSize={12} appearance="secondaryText" style={spacings.mbSm}>
-            {networkName}
-          </Text>
-
-          {isRunning && (
-            <View style={spacings.mbSm}>
-              {STEPS.map(({ phase, label }, index) => {
-                const isDone = index < currentStepIndex
-                const isCurrent = index === currentStepIndex
-                // The confirmation step is the user's own wait, not the wallet's, so it gets no
-                // spinner - nothing is running while it sits there.
-                const isWorking = isCurrent && !isReady
-
-                return (
-                  <View key={phase} style={styles.phaseRow}>
-                    <View style={styles.phaseIcon}>
-                      {isDone && (
-                        <CheckIcon width={16} height={16} color={theme.successDecorative} />
-                      )}
-                      {isWorking && <Spinner style={styles.spinner} />}
-                      {!isDone && !isWorking && <View style={styles.phaseDot} />}
-                    </View>
-                    <Text
-                      fontSize={13}
-                      weight={isCurrent ? 'medium' : 'regular'}
-                      appearance={isCurrent ? 'primaryText' : 'secondaryText'}
-                    >
-                      {t(label)}
-                    </Text>
-                    {isWorking && (
-                      <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
-                        {formatElapsed(now - operation.startedAt)}
-                      </Text>
-                    )}
-                  </View>
-                )
-              })}
-            </View>
-          )}
-
-          {isRunning && operation.phase === 'proving' && (
-            <Alert
-              size="sm"
-              type="info"
-              text={t(
-                'This takes up to half a minute, longer on a slower computer. Nothing has been sent yet.'
-              )}
-              style={spacings.mbSm}
-            />
-          )}
-
-          {/* The whole reason the transfer stops here: what it costs is only known now. */}
-          {isReady && (
-            <Alert
-              size="sm"
-              type="info"
-              title={t('Ready to send')}
-              text={t(
-                'The network fee of {{fee}} {{symbol}} is taken from the amount you send. The address you entered receives {{net}} {{symbol}}.',
-                {
-                  fee: formatDecimals(
-                    Number(formatUnits(operation.quote?.feeAmount ?? 0n, decimals)),
-                    'amount'
-                  ),
-                  net: formatDecimals(
-                    Number(formatUnits(operation.quote?.amountAfterFee ?? 0n, decimals)),
-                    'amount'
-                  ),
-                  symbol
-                }
-              )}
-              style={spacings.mbSm}
+          {isConfirming && !!operation.quote && (
+            <PrivacyPoolsNetworkFee
+              chainId={operation.chainId}
+              tokenAddress={operation.tokenAddress}
+              symbol={symbol}
+              decimals={decimals}
+              quote={operation.quote}
+              tokenPrice={tokenPrice}
             />
           )}
 
@@ -222,25 +129,34 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
             </View>
           )}
 
-          {isReady && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-              <Button
+          {isConfirming && (
+            <FooterGlassView
+              size="sm"
+              absolute={false}
+              isSimpleBlur={false}
+              style={spacings.pt}
+              innerContainerStyle={
+                isNarrowWebLayout
+                  ? { width: '100%', gap: SPACING_TY, alignItems: 'stretch' }
+                  : undefined
+              }
+            >
+              {!isNarrowWebLayout && backButton}
+              <ButtonWithLoader
                 testID="privacy-pools-send-confirm"
                 text={t('Send')}
+                isLoading={isBroadcasting}
+                disabled={isBroadcasting}
                 onPress={onSend}
-                hasBottomSpacing={false}
-                style={spacings.mrTy}
+                size="smaller"
+                style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
               />
-              <Button
-                text={t('Cancel')}
-                type="secondary"
-                onPress={closeBottomSheet}
-                hasBottomSpacing={false}
-              />
-            </View>
+              {/* Narrow layouts stack Back under the primary action, like the regular fee sheet */}
+              {isNarrowWebLayout && backButton}
+            </FooterGlassView>
           )}
 
-          {!isRunning && (
+          {isDone && (
             <View style={spacings.mbSm}>
               <Button text={t('Close')} onPress={closeBottomSheet} hasBottomSpacing={false} />
             </View>

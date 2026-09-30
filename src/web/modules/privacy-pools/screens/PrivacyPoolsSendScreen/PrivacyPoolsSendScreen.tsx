@@ -40,16 +40,16 @@ const NO_AMOUNTS = { amount: '', amountInFiat: '' }
  * Send from a Privacy Pools account - a withdrawal, in the protocol's terms - laid out like the
  * regular Send: a recipient, a token and an amount, typed in the token or in USD.
  *
- * Only what the association set has approved can be sent. Proving, the fee and sending happen in
- * `PrivacyPoolsSendSheet`, the way the regular Send hands over to its fee sheet: the proof takes
- * ten seconds and up, and the fee is known only once it is built.
+ * Only what the association set has approved can be sent. Proceed proves and prices the transfer
+ * - ten seconds and up, shown on the button - and only then hands over to `PrivacyPoolsSendSheet`
+ * for the fee and sending, the way the regular Send hands over to its fee sheet: the fee is known
+ * only once the transfer is built.
  */
 const PrivacyPoolsSendScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const {
     operation,
-    getNetworkName,
     getTokenPrice,
     prepareWithdrawal,
     broadcastWithdrawal,
@@ -167,6 +167,8 @@ const PrivacyPoolsSendScreen = () => {
   }, [maxAmount, parsedAmount, selectedToken, t])
 
   const isTransferInFlight = operation?.status === 'pending'
+  // Proving and pricing it, which is what the Proceed button waits on before the fee sheet opens
+  const isPreparingTransfer = isTransferInFlight && operation?.phase === 'proving'
   const canSend =
     isAvailable &&
     !!selectedToken &&
@@ -179,20 +181,19 @@ const PrivacyPoolsSendScreen = () => {
   const handleSend = useCallback(() => {
     if (!canSend || !selectedToken || parsedAmount === null) return
 
-    // Opened as the transfer is dispatched rather than once the background reports back: proving
-    // takes ten seconds and up, which would otherwise be a closed form and nothing to look at
-    openSheet()
+    // The fee sheet opens only once the transfer is proved and priced - see below. Until then the
+    // Proceed button shows the wait, the way the regular Send's does while it estimates
     prepareWithdrawal({
       chainId: selectedToken.chainId,
       tokenAddress: selectedToken.tokenAddress,
       amount: parsedAmount,
       recipient
     })
-  }, [canSend, openSheet, parsedAmount, prepareWithdrawal, recipient, selectedToken])
+  }, [canSend, parsedAmount, prepareWithdrawal, recipient, selectedToken])
 
-  // Brings the sheet back for the confirmation, should it have been closed while proving: closing
-  // it cancels nothing, and a proved transfer would otherwise wait on a confirmation nowhere on
-  // screen
+  // Opens the sheet for the confirmation once the transfer is ready to send - also on coming back to
+  // the screen while one waits, since a proved transfer would otherwise wait on a confirmation
+  // nowhere on screen
   const operationPhase = operation?.phase
   const operationStatus = operation?.status
   useEffect(() => {
@@ -219,6 +220,12 @@ const PrivacyPoolsSendScreen = () => {
     [operation]
   )
 
+  // The operation's own token, which is not necessarily the one picked in the form by now
+  const operationTokenPrice = useMemo(
+    () => (operation ? getTokenPrice(operation.chainId, operation.tokenAddress) : null),
+    [getTokenPrice, operation]
+  )
+
   // Priced by the Privacy Pools controller - the pooled tokens are not the selected account's
   // portfolio
   const selectedTokenForField = useMemo(
@@ -241,7 +248,7 @@ const PrivacyPoolsSendScreen = () => {
             text={t('Proceed')}
             onPress={handleSend}
             disabled={!canSend}
-            isLoading={isTransferInFlight}
+            isLoading={isPreparingTransfer}
             size={isWeb ? 'smaller' : 'regular'}
           />
         }
@@ -302,7 +309,7 @@ const PrivacyPoolsSendScreen = () => {
         operation={operation}
         symbol={operationAsset?.symbol || ''}
         decimals={operationAsset?.decimals ?? 18}
-        networkName={operation ? getNetworkName(operation.chainId) : ''}
+        tokenPrice={operationTokenPrice}
         sheetRef={sheetRef}
         closeBottomSheet={closeSheet}
         onSend={broadcastWithdrawal}
