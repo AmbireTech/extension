@@ -30,13 +30,7 @@ const RpcCard = ({
   const sizingStyle = isTwoColumnLayout ? flexbox.flex1 : { flexShrink: 1 }
 
   return (
-    <View
-      style={[
-        !!children && sizingStyle,
-        common.borderRadiusPrimary,
-        isTwoColumnLayout && { maxHeight: 308 }
-      ]}
-    >
+    <View style={[!!children && sizingStyle, common.borderRadiusPrimary]}>
       <View
         style={[
           flexbox.directionRow,
