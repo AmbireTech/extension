@@ -4,7 +4,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 
 import { NavigateOptions } from '@ambire-common/interfaces/ui'
 import wait from '@ambire-common/utils/wait'
-import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
+import { captureException, captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
@@ -24,6 +24,7 @@ import { isExtension } from '@web/constants/browserapi'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import { PortMessenger } from '@web/extension-services/messengers'
+import { openFirefoxSidebarFromUserGesture } from '@web/utils/sidePanel'
 import useAutoLockControllerHelpers from '@web/hooks/useAutoLockControllerHelpers'
 import useDappsControllerHelpers from '@web/hooks/useDappsControllerHelpers'
 import useKeystoreControllerHelpers from '@web/hooks/useKeystoreControllerHelpers'
@@ -264,9 +265,19 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
 
   const dispatch = useCallback(
     (action: MethodAction | Action) => {
+      if (
+        action.type === 'OPEN_EXTENSION_POPUP' &&
+        controllerStore.getSnapshot('WalletStateController').isSidePanelModeEnabled
+      ) {
+        openFirefoxSidebarFromUserGesture().catch((error) => {
+          console.error('Failed to open the Firefox sidebar', error)
+          captureException(error)
+        })
+      }
+
       globalDispatch(action, windowId)
     },
-    [windowId]
+    [windowId, controllerStore]
   )
 
   const requestViewRouteSync = useCallback(() => {

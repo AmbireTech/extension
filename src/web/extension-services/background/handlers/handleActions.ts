@@ -9,7 +9,7 @@ import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator/q
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
-import { browser } from '@web/constants/browserapi'
+import { browser, engine } from '@web/constants/browserapi'
 import { openPanel } from '@web/extension-services/background/webapi/panel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
@@ -265,6 +265,10 @@ export const handleActions = async (
 
       const focusOverlay = async () => {
         if (isSidePanelModeEnabled) {
+          // Firefox rejects sidebarAction.open() outside a user gesture, which doesn't survive the
+          // message to the background - the UI opens the sidebar itself before dispatching this.
+          if (engine === 'gecko') return
+
           await openPanel(targetWindowId)
           return
         }

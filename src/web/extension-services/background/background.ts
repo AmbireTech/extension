@@ -57,7 +57,7 @@ import {
   VELCRO_URL
 } from '@env'
 import * as Sentry from '@sentry/browser'
-import { browser, platform } from '@web/constants/browserapi'
+import { browser, engine, platform } from '@web/constants/browserapi'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
@@ -70,7 +70,8 @@ import {
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import {
   getDappTabFocusDispatcher,
-  getPanelManager
+  getPanelManager,
+  handleFirefoxActionClicked
 } from '@web/extension-services/background/webapi/panel'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -813,6 +814,16 @@ browser.runtime.onConnect.addListener(async (port: Port) => {
     })
   })
 })
+
+// Firefox has no `sidePanel.setPanelBehavior({ openPanelOnActionClick })` equivalent, so the
+// toolbar click has to be handled manually. Registered here (background.ts is never bundled into
+// any UI page) rather than in webapi/panel.ts, which - unlike this file - is also imported by UI
+// code (e.g. wallet-state.web.ts, pulled in by the Avatar components); registering this
+// browser-chrome-level listener from a non-background page context as well corrupts the
+// extension's WebExtension IPC state in Firefox and hangs every subsequent `browser.*` call.
+if (engine === 'gecko') {
+  browser.action?.onClicked?.addListener(handleFirefoxActionClicked)
+}
 
 // Ensures controllers are initialized when the browser starts.
 browser.runtime.onStartup.addListener(() => {
