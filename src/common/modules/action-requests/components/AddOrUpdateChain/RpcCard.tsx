@@ -70,7 +70,7 @@ const RpcCard = ({
             style={[
               spacings.mtTy,
               isWeb && {
-                // @ts-ignore web-only style for wrapping long URLs without spaces
+                // @ts-expect-error web-only style for wrapping long URLs without spaces
                 wordBreak: 'break-all'
               }
             ]}
