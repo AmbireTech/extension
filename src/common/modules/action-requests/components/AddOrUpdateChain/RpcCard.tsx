@@ -24,9 +24,17 @@ const RpcCard = ({
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { isTwoColumnLayout } = useCompactLayout()
+  // In a single column the card fits its content and shrinks (scrolling the features) only
+  // when there is not enough space, instead of stretching to the bottom of the screen
+  const sizingStyle = isTwoColumnLayout ? flexbox.flex1 : { flexShrink: 1 }
+
   return (
     <View
-      style={[flexbox.flex1, common.borderRadiusPrimary, isTwoColumnLayout && { maxHeight: 308 }]}
+      style={[
+        !!children && sizingStyle,
+        common.borderRadiusPrimary,
+        isTwoColumnLayout && { maxHeight: 308 }
+      ]}
     >
       <View
         style={[
@@ -71,7 +79,7 @@ const RpcCard = ({
           style={[
             spacings.phSm,
             spacings.pvMd,
-            flexbox.flex1,
+            sizingStyle,
             {
               backgroundColor: isNew ? theme.success100 : theme.secondaryBackground,
               borderBottomLeftRadius: BORDER_RADIUS_PRIMARY,

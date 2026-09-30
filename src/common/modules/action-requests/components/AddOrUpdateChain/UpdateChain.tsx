@@ -118,8 +118,7 @@ const UpdateChain = ({
         <>
           <View
             style={[
-              isTwoColumnLayout && flexbox.directionRow,
-              flexbox.flex1,
+              isTwoColumnLayout ? flexbox.directionRow : flexbox.flex1,
               isTwoColumnLayout && flexbox.justifySpaceBetween,
               {
                 marginBottom: SPACING_SM * responsiveSizeMultiplier,
