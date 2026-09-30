@@ -120,10 +120,7 @@ function processManifest(content, mode) {
   }
   manifest.permissions = permissions
 
-  // Opt into structured clone serialization for every chrome.runtime and
-  // chrome.tabs message (Chrome 148+).
-  // PortMessenger sends BigInt natively and skips richJson once its probe
-  // confirms support, but still flattens errors into plain objects.
+  // Use the faster structured_clone serialization for messages (only if supported by the installed browser)
   if (isWebkit && !isSafari) manifest.message_serialization = 'structured_clone'
 
   if (isSafari) {
