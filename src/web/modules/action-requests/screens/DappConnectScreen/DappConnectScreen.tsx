@@ -27,7 +27,12 @@ const DappConnectScreen = () => {
     handleDenyButtonPress,
     handleAuthorizeButtonPress,
     shouldHoldToProceed,
-    resolveButtonText
+    resolveButtonText,
+    isTrustedByUser,
+    canBeTrustedByUser,
+    isScamCheckerEnabled,
+    handleEnableScamChecker,
+    toggleTrust
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
   const { minHeightSize } = useWindowSize()
@@ -40,6 +45,9 @@ const DappConnectScreen = () => {
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
+          withRejectOptions
+          rejectOptionsTitle={t('Cancel connection')}
+          rejectOptionText={t('Cancel this connection')}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
           resolveNode={
             shouldHoldToProceed ? (
@@ -88,10 +96,18 @@ const DappConnectScreen = () => {
                 id={dappToConnect.id}
                 icon={dappToConnect.icon!}
                 securityCheck={dappToConnect.blacklisted}
+                isTrustedByUser={isTrustedByUser}
+                isScamCheckerEnabled={isScamCheckerEnabled}
+                isInAppCatalog={!dappToConnect.isCustom}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
               <DAppConnectBody
                 securityCheck={dappToConnect.blacklisted}
+                isTrustedByUser={isTrustedByUser}
+                canBeTrustedByUser={canBeTrustedByUser}
+                onToggleTrust={toggleTrust}
+                onEnableScamChecker={handleEnableScamChecker}
+                isScamCheckerEnabled={isScamCheckerEnabled}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>

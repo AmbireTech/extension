@@ -3,7 +3,6 @@ import { ColorValue, View } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -31,21 +30,23 @@ const AccountKeyIconOrBanner = ({
 
 const AccountKeyIcons = ({
   account,
+  accountKeys,
   isExtended,
   // When false, drops the leading left margin so a parent columnGap can space it
   withContainerSpacing = true
 }: {
   account: AccountInterface
+  /** The account's own keystore keys, so a list of rows subscribes to them only once */
+  accountKeys: Key[]
   isExtended: boolean
   withContainerSpacing?: boolean
 }) => {
-  const { state: keys } = useController('KeystoreController', 'keys')
   const { theme } = useTheme()
-  const associatedKeys = account?.associatedKeys || []
-  const importedKeyTypes = Array.from(
-    new Set(keys.filter(({ addr }) => associatedKeys.includes(addr)).map((key) => key.type))
+  const importedKeyTypes = React.useMemo(
+    () => Array.from(new Set(accountKeys.map((key) => key.type))),
+    [accountKeys]
   )
-  const hasKeys = React.useMemo(() => importedKeyTypes.length > 0, [importedKeyTypes])
+  const hasKeys = importedKeyTypes.length > 0
 
   if (account.safeCreation)
     return (

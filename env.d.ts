@@ -9,10 +9,12 @@ declare module '@env' {
     VELCRO_URL: string
     BUNGEE_API_KEY: string
     LI_FI_API_KEY: string
+    COWSWAP_API_KEY: string
     UNISWAP_API_KEY: string
     SENTRY_DSN?: string
     ENVIRONMENT: string
     DEFAULT_KEYSTORE_PASSWORD_DEV: string
+    DEFAULT_INVITE_CODE_DEV: string
     NFT_CDN_URL: string
     LEGENDS_NFT_ADDRESS: string
     SENTRY_DSN_LEGENDS?: string
@@ -76,6 +78,11 @@ declare module '@env' {
   export const DEFAULT_KEYSTORE_PASSWORD_DEV: EnvTypes['DEFAULT_KEYSTORE_PASSWORD_DEV']
 
   /**
+   * Auto-Fill the mobile invite code during development
+   */
+  export const DEFAULT_INVITE_CODE_DEV: EnvTypes['DEFAULT_INVITE_CODE_DEV']
+
+  /**
    * Are we running the E2E tests?
    * The accepted value is 'true'.
    * Note that we don't have a dedicated testing environment (APP_ENV).
@@ -98,6 +105,11 @@ declare module '@env' {
    * across multiple blockchains. Access is restricted and requires an API key.
    */
   export const LI_FI_API_KEY: EnvTypes['LI_FI_API_KEY']
+
+  /**
+   * CoW Swap Partner API key. Required for routes through CoW Swap.
+   */
+  export const COWSWAP_API_KEY: EnvTypes['COWSWAP_API_KEY']
 
   /**
    * Uniswap Trading API key. Required by the Uniswap router.

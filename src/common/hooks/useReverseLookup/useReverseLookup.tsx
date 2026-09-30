@@ -1,9 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { ReverseLookupOptions } from '@ambire-common/interfaces/domains'
 import { getPrimaryName, NameServiceId } from '@ambire-common/services/nameResolvers'
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import useController from '@common/hooks/useController'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   address: string
@@ -30,17 +32,23 @@ const useReverseLookup = ({
   address,
   privacyUpdateMode = 'whenStale'
 }: Props): ReverseLookupResult => {
-  const checksummedAddress = getAddressCaught(address)
+  const checksummedAddress = useMemo(() => getAddressCaught(address), [address])
 
-  const {
-    state: { domains, loadingAddresses },
-    dispatch
-  } = useController('DomainsController')
-  const isLoading = loadingAddresses.includes(checksummedAddress)
-  const addressInDomains = domains[checksummedAddress]
+  const selectAddressInDomains = useMemo(
+    () => (state: AllControllersMappingType['DomainsController']) =>
+      state.domains[checksummedAddress],
+    [checksummedAddress]
+  )
+  const selectIsLoading = useMemo(
+    () => (state: AllControllersMappingType['DomainsController']) =>
+      state.loadingAddresses.includes(checksummedAddress),
+    [checksummedAddress]
+  )
+  const { state: addressInDomains } = useController('DomainsController', selectAddressInDomains)
+  const { state: isLoading, dispatch } = useController('DomainsController', selectIsLoading)
 
   useEffect(() => {
-    if (!checksummedAddress || isLoading) return
+    if (!checksummedAddress || isLoading || privacyUpdateMode === 'never') return
 
     dispatch({
       type: 'method',

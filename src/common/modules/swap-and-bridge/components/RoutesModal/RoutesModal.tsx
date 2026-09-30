@@ -19,6 +19,7 @@ import RouteStepsPreview from '@common/modules/swap-and-bridge/components/RouteS
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 import RetryButton from '@web/components/RetryButton'
 import { TRANSACTION_FORM_WIDTH } from '@web/components/TransactionsScreen/styles'
@@ -29,7 +30,7 @@ import getStyles from './styles'
 
 const FLAT_LIST_ITEM_HEIGHT = 138.5
 
-const { isPopup, isSidePanel } = getUiType()
+const { isPopup } = getUiType()
 
 const selectDisabledSwapProviderIds = (
   state: AllControllersMappingType['SwapAndBridgeController']
@@ -45,6 +46,7 @@ const RoutesModal = ({
   openProviderSettingsBottomSheet: () => void
 }) => {
   const { t } = useTranslation()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { styles, theme } = useTheme(getStyles)
   const { quote, signAccountOpController, updateQuoteStatus } =
     useController('SwapAndBridgeController').state
@@ -308,7 +310,7 @@ const RoutesModal = ({
       customRenderer={undefined}
       style={{
         overflow: 'hidden',
-        width: isMobile ? 'auto' : isPopup || isSidePanel ? '100%' : TRANSACTION_FORM_WIDTH,
+        width: isMobile ? 'auto' : isPopup || isNarrowWebLayout ? '100%' : TRANSACTION_FORM_WIDTH,
         minHeight: isMobile ? undefined : height * 0.7
       }}
       scrollViewProps={{

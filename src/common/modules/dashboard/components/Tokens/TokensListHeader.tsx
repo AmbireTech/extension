@@ -17,12 +17,7 @@ const TokensListHeader = ({ openTab, setOpenTab, sessionId }: Props) => {
 
   return (
     <View style={{ backgroundColor: theme.primaryBackground }}>
-      <TabsAndSearch
-        openTab={openTab}
-        setOpenTab={setOpenTab}
-        currentTab="tokens"
-        sessionId={sessionId}
-      />
+      <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
     </View>
   )
 }

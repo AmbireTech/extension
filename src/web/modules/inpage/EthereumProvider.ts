@@ -1,14 +1,10 @@
 import { EthereumProvider as CommonEthereumProvider } from '@common/modules/inpage/EthereumProvider'
-import { logInfoWithPrefix, logWarnWithPrefix } from '@common/utils/logger'
+import { logInfoWithPrefix } from '@common/utils/logger'
 import { initializeMessenger } from '@web/extension-services/messengers/initializeMessenger'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 
 export class EthereumProvider extends CommonEthereumProvider {
-  constructor(
-    forwardRpcRequests?: (url: string, method: any, params: any) => Promise<any>,
-    getFoundRpcUrls?: () => string[],
-    options?: { deferInitialization?: boolean }
-  ) {
+  constructor(options?: { deferInitialization?: boolean }) {
     const backgroundMessenger = initializeMessenger({ connect: 'background' })
     const externalHandlers = {
       sendRequest: (params: any) => {
@@ -17,10 +13,9 @@ export class EthereumProvider extends CommonEthereumProvider {
       onBackgroundMessage: (callback: (msg: any) => Promise<void>) => {
         backgroundMessenger.reply(globalIsAmbireNext ? 'broadcast-next' : 'broadcast', callback)
       },
-      logInfo: logInfoWithPrefix,
-      logWarn: logWarnWithPrefix
+      logInfo: logInfoWithPrefix
     }
 
-    super(externalHandlers, forwardRpcRequests, getFoundRpcUrls, options)
+    super(externalHandlers, options)
   }
 }

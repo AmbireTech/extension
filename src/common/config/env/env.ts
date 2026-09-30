@@ -3,6 +3,8 @@ import { Platform } from 'react-native'
 
 import {
   BUNGEE_API_KEY,
+  COWSWAP_API_KEY,
+  DEFAULT_KEYSTORE_PASSWORD_DEV,
   EnvTypes,
   LI_FI_API_KEY,
   NFT_CDN_URL,
@@ -24,6 +26,12 @@ export const isStaging = runtimeAppEnv === 'staging'
 export const isBenzin = process.env.BENZIN === 'true'
 export const isLegends = process.env.LEGENDS === 'true'
 export const isLedgerEmulator = process.env.IS_LEDGER_EMULATOR === 'true'
+/**
+ * Prefilled into the keystore password fields in dev, so they need not be typed every time.
+ * Empty in every other build and in tests, which must start from an empty field.
+ */
+export const DEV_PREFILLED_PASSWORD =
+  isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
 /**
  * Ambire Next is a separate production build variant used for beta testing and preview
  * before releasing features to the main production build. It allows us to have two
@@ -68,12 +76,14 @@ const CONFIG: Config = {
   NFT_CDN_URL: NFT_CDN_URL || 'https://nftcdn.ambire.com',
   ENVIRONMENT: process.env.ENVIRONMENT || 'development',
   DEFAULT_KEYSTORE_PASSWORD_DEV: process.env.DEFAULT_KEYSTORE_PASSWORD_DEV || '',
+  DEFAULT_INVITE_CODE_DEV: process.env.DEFAULT_INVITE_CODE_DEV || '',
   LEGENDS_NFT_ADDRESS:
     process.env.LEGENDS_NFT_ADDRESS || '0xF51dF52d0a9BEeB7b6E4B6451e729108a115B863',
   SENTRY_DSN_LEGENDS: process.env.SENTRY_DSN_LEGENDS || '',
   SENTRY_DSN_BROWSER_EXTENSION: process.env.SENTRY_DSN_BROWSER_EXTENSION || '',
   BUNGEE_API_KEY,
   LI_FI_API_KEY,
+  COWSWAP_API_KEY,
   UNISWAP_API_KEY: UNISWAP_API_KEY || '',
   WALLETCONNECT_PROJECT_ID
 }

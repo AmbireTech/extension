@@ -18,19 +18,18 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import useReceive from '@common/modules/receive/hooks/useReceive'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import getStyles from './styles'
 
-const { isSidePanel } = getUiType()
-
 const ReceiveScreen: FC = () => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
   const {
     account,
-    isViewOnly,
+    warningMessage,
     label,
     pfp,
     isEOA,
@@ -54,7 +53,7 @@ const ReceiveScreen: FC = () => {
       <HeaderWithTitle />
 
       <ScrollableWrapper showsVerticalScrollIndicator={false}>
-        <View style={[isEOA ? spacings.pt3Xl : spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
+        <View style={[isEOA ? spacings.pt3Xl : spacings.ptTy, spacings.mb, flexbox.alignCenter]}>
           <Avatar
             size={40}
             pfp={pfp}
@@ -86,11 +85,18 @@ const ReceiveScreen: FC = () => {
           )}
         </View>
         <View style={spacings.phSm}>
-          <View style={[styles.accountAddressWrapper]}>
+          <View
+            style={[
+              styles.accountAddressWrapper,
+              isNarrowWebLayout
+                ? styles.accountAddressWrapperNarrow
+                : styles.accountAddressWrapperWide
+            ]}
+          >
             <View
               style={[
                 flexbox.directionRow,
-                isSidePanel
+                isNarrowWebLayout
                   ? [flexbox.alignCenter, { width: '100%' }]
                   : [flexbox.center, { flexShrink: 1, minWidth: 0, maxWidth: '100%' }]
               ]}
@@ -105,7 +111,7 @@ const ReceiveScreen: FC = () => {
               />
             </View>
           </View>
-          {isViewOnly ? (
+          {warningMessage ? (
             <View
               style={[
                 spacings.mbSm,
@@ -115,7 +121,7 @@ const ReceiveScreen: FC = () => {
                 }
               ]}
             >
-              <Alert size="sm" type="warning" title={t('The account is view-only.')} />
+              <Alert size="sm" type="warning" title={warningMessage} />
             </View>
           ) : (
             <View style={spacings.mb2Xl} />

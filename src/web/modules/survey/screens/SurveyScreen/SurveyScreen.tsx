@@ -13,11 +13,18 @@ import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getAppInstanceId } from '@common/utils/analytics'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
-import { getExtensionInstanceId } from '@web/utils/analytics'
 
 import ProgressBar from './ProgressBar'
 import SurveyInnerState from './SurveyInnerState'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectKeyStoreUid = (state: AllControllersMappingType['KeystoreController']) =>
+  state.keyStoreUid
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const SurveyScreen = () => {
   const { addToast } = useToast()
@@ -26,9 +33,9 @@ const SurveyScreen = () => {
     state: { status, questions, answers, currentQuestion, errorMessage, surveyId, bannerId }
   } = useController('SurveyController')
 
-  const { state: keyStoreUid } = useController('KeystoreController', 'keyStoreUid')
+  const { state: keyStoreUid } = useController('KeystoreController', selectKeyStoreUid)
 
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
 
   const { navigate } = useNavigation()
 
@@ -65,7 +72,7 @@ const SurveyScreen = () => {
     // we do not care about the invite code part of the  instanceId IN THIS CASE
     // because not having it will make it easier to export all responses
     // + it is not part of our other analytics
-    const instanceId = getExtensionInstanceId(keyStoreUid, null)
+    const instanceId = getAppInstanceId(keyStoreUid, null)
 
     if (status === 'loading-fetching' || status === 'loading-sending') return { text: 'Loading' }
 
@@ -224,7 +231,7 @@ const SurveyScreen = () => {
       <Content buttons={buttons}>
         <View>
           <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={[flexbox.flex1]}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
               <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
               <PanelTitle title={'Survey'} style={spacings.pr2Xl} />
             </View>

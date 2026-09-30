@@ -13,6 +13,10 @@ import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+const selectAllNetworks = (state: NetworksController) => state.allNetworks
+
 export type NetworkIconIdType = string | 'gasTank' | 'rewards'
 
 type Props = {
@@ -43,7 +47,7 @@ const NetworkIcon = ({
   name,
   ...rest
 }: Props) => {
-  const { state: allNetworks } = useController('NetworksController', (state) => state.allNetworks)
+  const { state: allNetworks } = useController('NetworksController', selectAllNetworks)
 
   const network = useMemo(() => {
     return benzinNetwork ?? allNetworks.find((n) => n.chainId.toString() === id)

@@ -18,6 +18,7 @@ import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
@@ -25,6 +26,8 @@ import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const GAS_TANK_HELP_URL = 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
 
@@ -35,21 +38,25 @@ type Props = {
   account: Account | null
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const { isPopup } = getUiType()
   const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const {
     dispatch: featureFlagsDispatch,
     state: { flags }
   } = useController('FeatureFlagsController')
   const { canUseGasTank, disabledReason, requiresEip7702 } = useHasGasTank({ account })
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const isErc4337Enabled = flags.erc4337
   const isEip7702Enabled = flags.eip7702
-  const isGasTankEnabled = isErc4337Enabled && (!requiresEip7702 || isEip7702Enabled)
+  const isGasTankEnabled =
+    isErc4337Enabled && flags.gasTank && flags.tokenPrices && (!requiresEip7702 || isEip7702Enabled)
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -70,8 +77,8 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
       featureFlagsDispatch({
         type: 'method',
         params: {
-          method: 'setFeatureFlag',
-          args: ['erc4337', true]
+          method: 'setFeatureFlags',
+          args: [{ erc4337: true, gasTank: true, tokenPrices: true }]
         }
       })
     }
@@ -80,8 +87,8 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
       featureFlagsDispatch({
         type: 'method',
         params: {
-          method: 'setFeatureFlag',
-          args: ['eip7702', true]
+          method: 'setFeatureFlags',
+          args: [{ eip7702: true, erc4337: true, gasTank: true, tokenPrices: true }]
         }
       })
     }
@@ -152,14 +159,25 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           size="sm"
           style={{ ...flexbox.flex1, alignItems: 'stretch' }}
           mobileStyle={{ flexDirection: 'column' }}
-          innerContainerStyle={{
-            ...flexbox.justifySpaceBetween,
-            ...flexbox.alignCenter,
-            ...flexbox.flex1
-          }}
+          innerContainerStyle={
+            isNarrowWebLayout
+              ? undefined
+              : {
+                  ...flexbox.justifySpaceBetween,
+                  ...flexbox.alignCenter,
+                  ...flexbox.flex1
+                }
+          }
           absolute={false}
+          fullWidth={isNarrowWebLayout}
         >
-          <View style={[flexbox.directionRow, flexbox.alignCenter, isMobile && spacings.mbLg]}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              (isMobile || isNarrowWebLayout) && spacings.mbLg
+            ]}
+          >
             <TokenIcon
               withContainer
               address={token?.address || ''}
@@ -185,7 +203,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             testID="top-up-gas-tank-modal-button"
             type="primary"
             text={t('Top up')}
-            size={isMobile ? 'regular' : 'smaller'}
+            size={isMobile || isNarrowWebLayout ? 'regular' : 'smaller'}
             hasBottomSpacing={false}
             style={{
               minWidth: 128

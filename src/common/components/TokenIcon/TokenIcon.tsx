@@ -12,6 +12,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
 import { getHardcodedCitreaIcons } from '@common/utils/getHardcodedCitreaIcons'
 
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import SkeletonLoader from '../SkeletonLoader'
 import { SkeletonLoaderProps } from '../SkeletonLoader/types'
 import getStyles from './styles'
@@ -40,6 +41,9 @@ enum UriStatus {
   IMAGE_EXISTS = 'IMAGE_EXISTS'
 }
 
+const selectAreTokenIconsEnabled = (state: IFeatureFlagsController) =>
+  state.flags?.tokenAndDefiAutoDiscovery
+
 const TokenIcon: React.FC<Props> = ({
   chainId,
   address = '',
@@ -61,6 +65,10 @@ const TokenIcon: React.FC<Props> = ({
   const [uriStatus, setUriStatus] = useState<UriStatus>(UriStatus.UNKNOWN)
   const [imageUrl, setImageUrl] = useState<string | undefined>()
   const { state: ctrlNetworks } = useController('NetworksController', (state) => state.networks)
+  const { state: areTokenIconsEnabled } = useController(
+    'FeatureFlagsController',
+    selectAreTokenIconsEnabled
+  )
   const { benzinNetworks } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = ctrlNetworks ?? benzinNetworks
@@ -72,6 +80,8 @@ const TokenIcon: React.FC<Props> = ({
 
   const handleImageLoaded = useCallback(() => setUriStatus(UriStatus.IMAGE_EXISTS), [])
   const attemptToLoadFallbackImage = useCallback(async () => {
+    if (!areTokenIconsEnabled) return
+
     if (fallbackUri) {
       const doesFallbackUriImageExists = await checkIfImageExists(fallbackUri)
       if (doesFallbackUriImageExists) {
@@ -94,9 +104,13 @@ const TokenIcon: React.FC<Props> = ({
 
     setUriStatus(UriStatus.IMAGE_MISSING)
     setImageUrl(undefined)
-  }, [fallbackUri, address, network?.chainId])
+  }, [areTokenIconsEnabled, fallbackUri, address, network?.chainId])
 
   useEffect(() => {
+    if (!areTokenIconsEnabled) {
+      return
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ;(async () => {
       const hasAmbireUriRequiredData = !!(network?.platformId && address)
@@ -113,7 +127,14 @@ const TokenIcon: React.FC<Props> = ({
 
       await attemptToLoadFallbackImage()
     })()
-  }, [address, network?.platformId, fallbackUri, attemptToLoadFallbackImage, network])
+  }, [
+    address,
+    network?.platformId,
+    fallbackUri,
+    attemptToLoadFallbackImage,
+    network,
+    areTokenIconsEnabled
+  ])
 
   const memoizedContainerStyle = useMemo(
     () => [
@@ -135,18 +156,19 @@ const TokenIcon: React.FC<Props> = ({
     ]
   )
 
+  const effectiveUriStatus = areTokenIconsEnabled ? uriStatus : UriStatus.IMAGE_MISSING
   const shouldDisplayNetworkIcon = withNetworkIcon && !!network && !onGasTank
 
   return (
     <View style={memoizedContainerStyle}>
-      {uriStatus === UriStatus.UNKNOWN ? (
+      {effectiveUriStatus === UriStatus.UNKNOWN ? (
         <SkeletonLoader
           width={width}
           height={height}
           style={styles.loader}
           appearance={skeletonAppearance}
         />
-      ) : uriStatus === UriStatus.IMAGE_MISSING ? (
+      ) : effectiveUriStatus === UriStatus.IMAGE_MISSING ? (
         <MissingTokenIcon
           width={withContainer ? containerWidth : width}
           height={withContainer ? containerHeight : height}

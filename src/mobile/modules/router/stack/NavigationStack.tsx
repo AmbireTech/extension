@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { KeyboardController } from 'react-native-keyboard-controller'
 import { ScreenStack } from 'react-native-screens'
 
 import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
-import useNavigation from '@common/hooks/useNavigation'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
+import useRouterHistory from '@common/hooks/useRouterHistory'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { useCanGoBackInWebViewHistory } from '@common/services/webview/webViewBackNavigation'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,6 +25,13 @@ import useStackEntries from './useStackEntries'
 const SETTLE_FALLBACK_MS = 800
 
 /**
+ * How long the controllers are told a transition may be running for, when the platform
+ * reports no end to it. Shorter than the settle fallback on purpose: holding an update
+ * back is only worth it for as long as a transition actually lasts.
+ */
+const TRANSITION_FALLBACK_MS = 400
+
+/**
  * Renders the router's history as a native stack: one platform screen per history
  * entry, so pushes, pops and the back swipe are run by UINavigationController on iOS
  * and by fragment transactions on Android. The router stays the source of truth - the
@@ -32,7 +40,7 @@ const SETTLE_FALLBACK_MS = 800
  */
 const NavigationStack = () => {
   const entries = useStackEntries()
-  const { navigate } = useNavigation()
+  const history = useRouterHistory()
   const isSheetOpen = useOpenBottomSheetsCount() > 0
   const canGoBackInWebViewHistory = useCanGoBackInWebViewHistory()
 
@@ -50,11 +58,24 @@ const NavigationStack = () => {
    * this, so a screen coming back does not hold up the transition that brings it.
    */
   const [settledCardKey, setSettledCardKey] = useState('')
+  const controllersMiddleware = useContext(ControllersMiddlewareContext)
 
-  const handleFinishTransitioning = useCallback(
-    () => setSettledCardKey(topCardKey ?? ''),
-    [topCardKey]
+  /**
+   * The stack is the only place that knows a screen is being animated. The controllers
+   * are told, so an update of theirs does not land in that window: the animation is
+   * native, but everything it needs mounted goes through the JS thread, and a touch
+   * during it waits behind whatever is running there.
+   */
+  const reportTransitionState = useCallback(
+    (isInFlight: boolean) =>
+      controllersMiddleware?.dispatch({ type: 'SET_TRANSITION_STATE', params: { isInFlight } }),
+    [controllersMiddleware]
   )
+
+  const handleFinishTransitioning = useCallback(() => {
+    reportTransitionState(false)
+    setSettledCardKey(topCardKey ?? '')
+  }, [topCardKey, reportTransitionState])
 
   // The platform reports no transition where it ran none - a card put up without
   // animating, a navigation the stack collapsed - and the wait would never end.
@@ -64,19 +85,31 @@ const NavigationStack = () => {
     return () => clearTimeout(timer)
   }, [topCardKey])
 
+  // Told at the start of every navigation, and released either by the platform
+  // reporting the transition finished or by the fallback below.
+  useEffect(() => {
+    reportTransitionState(true)
+
+    const timer = setTimeout(() => reportTransitionState(false), TRANSITION_FALLBACK_MS)
+
+    return () => clearTimeout(timer)
+  }, [topCardKey, reportTransitionState])
+
   // The screen left behind stays mounted, so its focused input would hold the keyboard
   // up over the screen coming in.
   useEffect(() => {
     void KeyboardController.dismiss()
   }, [topCardKey])
 
+  // Goes through the history rather than `navigate`, whose identity changes with the
+  // location - which would re-render every card on every navigation.
   const handleDismissed = useCallback(
     (dismissCount: number) => {
       // The platform has already taken the screen off and the router only catches up:
       // the entries this drops are gone, so nothing is animated a second time.
-      navigate(-Math.max(dismissCount, 1))
+      history.go(-Math.max(dismissCount, 1))
     },
-    [navigate]
+    [history]
   )
 
   return (
@@ -87,6 +120,7 @@ const NavigationStack = () => {
           entry={entry}
           isFocused={entry.cardKey === topCardKey}
           isSettled={entry.cardKey === settledCardKey}
+          canGoBack={index > 0}
           gestureEnabled={index > 0 && !isSheetOpen && !isBrowserWalkingItsOwnHistory}
           onDismissed={handleDismissed}
         />
@@ -95,4 +129,7 @@ const NavigationStack = () => {
   )
 }
 
-export default NavigationStack
+// Memoized because it hangs off the component that holds the app's bottom sheets and
+// reads the keystore and the dapp requests whole: an update of either re-renders it,
+// and re-rendering the stack reaches every screen the user came through.
+export default React.memo(NavigationStack)

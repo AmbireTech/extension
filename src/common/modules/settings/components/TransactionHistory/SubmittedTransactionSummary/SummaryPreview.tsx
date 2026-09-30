@@ -19,7 +19,7 @@ import {
   getVisibleSummaryBalanceChanges,
   MAX_VISIBLE_BALANCE_CHANGES
 } from './helpers'
-import { getDappInteractions } from './humanizedHelpers'
+import { useDappInteractions } from './humanizedCallsHooks'
 import InteractionAddress from './InteractionAddress'
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
@@ -28,7 +28,7 @@ import { SubmittedAccountOpLike } from './types'
 const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedAccountOpLike }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
 
   const orderedBalanceChanges = useMemo(
     () => getSummaryBalanceChanges(submittedAccountOp),
@@ -43,18 +43,15 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
     0
   )
   const shouldShowBalanceChangesSummary = orderedBalanceChanges.length > 0
-  const dappInteractions = useMemo(
-    () => getDappInteractions(submittedAccountOp),
-    [submittedAccountOp]
-  )
+  const dappInteractions = useDappInteractions(submittedAccountOp)
 
   return (
-    <View style={[styles.contentContainer, isCompactSidePanelLayout && { minWidth: 0 }]}>
+    <View style={[styles.contentContainer, isNarrowWebLayout && { minWidth: 0 }]}>
       <View
         style={[
           styles.dappInteractionsColumn,
           shouldShowBalanceChangesSummary ? spacings.mrSm : undefined,
-          isCompactSidePanelLayout && { minWidth: 0, flexShrink: 1 }
+          isNarrowWebLayout && { minWidth: 0, flexShrink: 1 }
         ]}
       >
         {dappInteractions.length ? (
@@ -65,15 +62,15 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 style={[
                   styles.dappInteractionRow,
                   index < dappInteractions.length - 1 ? spacings.mbTy : undefined,
-                  isCompactSidePanelLayout && { minWidth: 0, maxWidth: '100%' }
+                  isNarrowWebLayout && { minWidth: 0, maxWidth: '100%' }
                 ]}
               >
                 <DappInteractionIcon interaction={interaction} />
-                <View style={isCompactSidePanelLayout ? { flexShrink: 1, minWidth: 0 } : undefined}>
+                <View style={isNarrowWebLayout ? { flexShrink: 1, minWidth: 0 } : undefined}>
                   <Text
                     fontSize={14}
                     weight="semiBold"
-                    numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
+                    numberOfLines={isNarrowWebLayout ? 1 : undefined}
                   >
                     {interaction.id === 'fallback:cancel' ? t('Cancel') : interaction.name}
                   </Text>
@@ -89,13 +86,13 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                       style={[
                         flexbox.alignCenter,
                         flexbox.directionRow,
-                        isCompactSidePanelLayout && { minWidth: 0 }
+                        isNarrowWebLayout && { minWidth: 0 }
                       ]}
                     >
                       <Text
                         fontSize={12}
                         appearance="secondaryText"
-                        style={isCompactSidePanelLayout ? { lineHeight: 16 } : undefined}
+                        style={isNarrowWebLayout ? { lineHeight: 16 } : undefined}
                       >
                         {t('to ')}
                       </Text>
@@ -106,10 +103,8 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                         <Text
                           fontSize={12}
                           appearance="secondaryText"
-                          numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
-                          style={
-                            isCompactSidePanelLayout ? { flexShrink: 1, lineHeight: 16 } : undefined
-                          }
+                          numberOfLines={isNarrowWebLayout ? 1 : undefined}
+                          style={isNarrowWebLayout ? { flexShrink: 1, lineHeight: 16 } : undefined}
                         >
                           {interaction.description}
                         </Text>
@@ -145,7 +140,7 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
         <View
           style={[
             styles.balanceChangesRightColumn,
-            isCompactSidePanelLayout && { flexShrink: 0, ...spacings.mlTy }
+            isNarrowWebLayout && { flexShrink: 0, ...spacings.mlTy }
           ]}
         >
           {visibleBalanceChanges.map((change, index) => (
@@ -157,17 +152,16 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                   ? spacings.mbTy
                   : null,
                 // Custom fontSize clears Text lineHeight; keep row height stable so amounts don't overlap.
-                isCompactSidePanelLayout && { minHeight: 18 }
+                isNarrowWebLayout && { minHeight: 18 }
               ]}
             >
               <Text
                 fontSize={12}
                 weight="medium"
                 appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                // @ts-ignore
                 style={{
                   cursor: 'pointer',
-                  ...(isCompactSidePanelLayout ? { lineHeight: 16 } : {})
+                  ...(isNarrowWebLayout ? { lineHeight: 16 } : {})
                 }}
                 dataSet={createGlobalTooltipDataSet({
                   id: getBalanceChangeTooltipId(change, submittedAccountOp),
@@ -180,7 +174,7 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 fontSize={12}
                 weight="medium"
                 appearance="secondaryText"
-                style={[spacings.mlTy, isCompactSidePanelLayout && { lineHeight: 16 }]}
+                style={[spacings.mlTy, isNarrowWebLayout && { lineHeight: 16 }]}
               >
                 {change.symbol}
               </Text>

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -20,15 +19,23 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
 import { privateValue } from '@common/utils/ui'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const SAFE_GAS_TANK_BANNER_DISMISSED_STORAGE_KEY_PREFIX = 'safeGasTankDashboardBannerDismissed'
 
 interface Props {
   onPress: () => void
-  portfolio: SelectedAccountPortfolio
   account: Account | null
 }
 
-const GasTankButton = ({ onPress, portfolio, account }: Props) => {
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
+const GasTankButton = ({ onPress, account }: Props) => {
+  // Subscribed to here rather than handed down, so a chain finishing its portfolio
+  // update re-renders this button alone and not the whole dashboard overview above it.
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const [isHovered, setIsHovered] = useState(false)
@@ -42,9 +49,10 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   } = useController('FeatureFlagsController')
   const isErc4337Enabled = flags.erc4337
   const isEip7702Enabled = flags.eip7702
-  const isGasTankEnabled = isErc4337Enabled && (!requiresEip7702 || isEip7702Enabled)
+  const isGasTankEnabled =
+    isErc4337Enabled && flags.gasTank && flags.tokenPrices && (!requiresEip7702 || isEip7702Enabled)
 
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const totalBalanceGasTankDetails = useMemo(
     () => getGasTankTokenDetails(portfolio, account, networks),
@@ -241,7 +249,6 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   return (
     <Pressable
       onPress={handleOnPress}
-      // @ts-ignore
       style={buttonStyle}
       onHoverIn={handleHoverIn}
       onHoverOut={handleHoverOut}

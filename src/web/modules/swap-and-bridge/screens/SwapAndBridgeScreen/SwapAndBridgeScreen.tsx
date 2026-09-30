@@ -255,25 +255,25 @@ const SwapAndBridgeScreen = () => {
           />
         )}
         <View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
             <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
             <PanelTitle title={t('Swap & Bridge')} />
             <ProviderSettingsButton onPress={openProviderSettingsModal} />
           </View>
-          <View style={spacings.mbTy}>
-            <FromToken
-              fromTokenOptions={fromTokenOptions}
-              fromTokenValue={fromTokenValue}
-              fromAmountValue={fromAmountValue}
-              fromTokenAmountSelectDisabled={
-                areAllProvidersDisabled || fromTokenAmountSelectDisabled
-              }
-              onFromAmountChange={onFromAmountChange}
-              simulationFailed={!!fromChainSimulationError}
-              isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
-            />
-          </View>
-          <ToToken simulationFailed={!!toChainSimulationError} disabled={areAllProvidersDisabled} />
+          <FromToken
+            fromTokenOptions={fromTokenOptions}
+            fromTokenValue={fromTokenValue}
+            fromAmountValue={fromAmountValue}
+            fromTokenAmountSelectDisabled={areAllProvidersDisabled || fromTokenAmountSelectDisabled}
+            onFromAmountChange={onFromAmountChange}
+            simulationFailed={!!fromChainSimulationError}
+            isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
+          />
+          <ToToken
+            simulationFailed={!!toChainSimulationError}
+            disabled={areAllProvidersDisabled}
+            openProviderSettingsModal={openProviderSettingsModal}
+          />
         </View>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}

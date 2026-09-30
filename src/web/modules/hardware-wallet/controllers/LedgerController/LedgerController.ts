@@ -1,6 +1,7 @@
 import { Observable, Subscription } from 'rxjs'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import { Hex } from '@ambire-common/interfaces/hex'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
@@ -8,7 +9,7 @@ import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/util
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { isLedgerEmulator, isProd, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
 import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
-import { ContextModuleBuilder } from '@ledgerhq/context-module'
+import { buildLedgerContextModule } from '@common/modules/hardware-wallet/libs/buildLedgerContextModule'
 import {
   DeviceManagementKitBuilder,
   DeviceModelId as LedgerDeviceModels,
@@ -45,7 +46,10 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
   #rejectSigningSubscription: (() => void) | null = null
 
-  constructor() {
+  #isSigningReportAllowed: () => boolean
+
+  constructor(isSigningReportAllowed: () => boolean) {
+    this.#isSigningReportAllowed = isSigningReportAllowed
     // When the `cleanUpListener` method gets passed to the navigator.hid listeners
     // the `this` context gets lost, so we need to bind it here. The `this` context
     // in the `cleanUp` method should be the `LedgerController` instance.
@@ -229,10 +233,10 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       this.deviceModel = connectedDevice.modelId
       this.deviceId = connectedDevice.id
 
-      const contextModule = new ContextModuleBuilder({
-        originToken: 'ambire',
-        loggerFactory: this.#createContextLogger
-      }).build()
+      const contextModule = buildLedgerContextModule({
+        loggerFactory: this.#createContextLogger,
+        isSigningReportAllowed: this.#isSigningReportAllowed
+      })
       this.signerEth = new SignerEthBuilder({ dmk: this.walletSDK, sessionId })
         .withContextModule(contextModule)
         .build()
@@ -318,13 +322,15 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       subscription = observable.subscribe({
         next: (response: any) => {
           if (isCancelled) return
-          // TODO: If we communicate this to the user in the UI better, we can
-          // wait for the user to do all required interactions instead of rejecting.
+          // Only a locked device blocks us here. When the device needs to open
+          // the target app (ConfirmOpenApp), let the DMK device action open it
+          // and wait for the user to confirm on-device — this covers both the
+          // official Ethereum app and the sideloaded "Ambire Signer" app used for
+          // the 7702 authorization, instead of erroring that no app is open.
           const missingRequiredUserInteraction =
             response.status === 'pending' &&
-            [UserInteractionRequired.UnlockDevice, UserInteractionRequired.ConfirmOpenApp].includes(
-              response.intermediateValue.requiredUserInteraction
-            )
+            response.intermediateValue.requiredUserInteraction ===
+              UserInteractionRequired.UnlockDevice
 
           if (missingRequiredUserInteraction) {
             subscription?.unsubscribe()
@@ -509,6 +515,30 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       {
         onCompleted: (output) => output,
         errorMessage: 'Failed to sign typed data with Ledger device',
+        isSign: true
+      }
+    )
+  }
+
+  async sign7702(derivationPath: string, chainId: bigint, delegationAddr: Hex, nonce: bigint) {
+    // Init the session WITHOUT unlocking via getAddress: unlock would open the
+    // official Ethereum app, but the 7702 delegation must be signed by the
+    // sideloaded "Ambire Signer" app. signDelegationAuthorization (patched to
+    // target "Ambire Signer") opens the right app itself.
+    await this.#initSDKSessionIfNeeded()
+
+    if (!this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage())
+
+    return this.#handleLedgerSubscription<LedgerSignature>(
+      this.signerEth.signDelegationAuthorization(
+        getHdPathWithoutRoot(derivationPath),
+        Number(chainId),
+        delegationAddr,
+        Number(nonce)
+      ).observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign message with Ledger device',
         isSign: true
       }
     )

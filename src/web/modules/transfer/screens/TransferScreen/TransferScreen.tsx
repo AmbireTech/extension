@@ -47,7 +47,16 @@ import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isRequestWindow, isPopup } = getUiType()
+
+const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.visibleUserRequests
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+const selectAccountsOps = (state: AllControllersMappingType['ActivityController']) =>
+  state.accountsOps
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
@@ -86,18 +95,21 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { navigate } = useNavigation()
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const { t } = useTranslation()
-  const { state: visibleUserRequests } = useController('RequestsController', 'visibleUserRequests')
+  const { state: visibleUserRequests } = useController(
+    'RequestsController',
+    selectVisibleUserRequests
+  )
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
-  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { state: accountsOps } = useController('ActivityController', 'accountsOps')
+  const { state: accountsOps } = useController('ActivityController', selectAccountsOps)
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
@@ -639,7 +651,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 isTopUp ? { maxWidth: '100%', width: '100%' } : {}
               ]}
             >
-              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
                 <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
                 <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
                 <View style={{ width: 40 }} />
@@ -647,16 +659,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               <SendForm
                 addressInputState={addressInputState}
                 canUseGasTank={canUseGasTank}
-                amountErrorMessage={
-                  validationFormMsgs.amount.message ||
-                  transferState.amountAdjustmentWarning?.message ||
-                  ''
-                }
-                amountErrorSeverity={
-                  validationFormMsgs.amount.message
-                    ? validationFormMsgs.amount.severity
-                    : transferState.amountAdjustmentWarning?.severity
-                }
+                amountErrorMessage={validationFormMsgs.amount.message || ''}
+                amountErrorSeverity={validationFormMsgs.amount.severity}
+                amountAdjustmentInfo={transferState.amountAdjustmentInfo}
                 isRecipientAddressUnknown={isRecipientAddressUnknown}
                 isRecipientHumanizerKnownTokenOrSmartContract={
                   isRecipientHumanizerKnownTokenOrSmartContract

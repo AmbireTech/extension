@@ -26,3 +26,7 @@ fi
 yarn install
 yarn allow-scripts
 yarn patch-package
+
+# The inpage bundles are build output and gitignored, so a fresh clone has none.
+# DappWebViewScreen require()s them, which throws when they are missing.
+yarn build:webview

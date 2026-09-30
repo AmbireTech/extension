@@ -24,6 +24,7 @@ export interface Erc7730StructuredVisualizationProps {
   hideMobileSummaryTitle?: boolean
   isTransactionSummaryLayout?: boolean
   hasTransactionSummaryHeaderRightControl?: boolean
+  dappIconSize?: number
   /**
    * Lets the transaction summary render the title and the rows into separate slots,
    * so the title stays on the dropdown arrow's line while the rows sit below it.
@@ -39,4 +40,4 @@ export interface Erc7730StructuredVisualizationProps {
   nestingDepth?: number
 }
 
-export type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
+export type Erc7730Row = HumanizerErc7730Visualization['fields'][number]

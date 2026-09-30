@@ -322,8 +322,15 @@ export const handleActions = async (
     }
 
     default:
-      return console.error(
+      console.error(
         `Dispatched ${type} action, but handler in the extension background process not found!`
       )
+      // The only realistic way a running view dispatches an action type this background build
+      // doesn't recognize is version skew - e.g. the extension auto-updated the background while
+      // a long-lived view (like the side panel) kept running the JS bundle it had already loaded.
+      // Retrying won't help since the view is asking for something that no longer exists, so tell
+      // it to reload the same way an actual background restart would.
+      if (pm && port) pm.sendToPort(port, '> ui', { method: 'staleViewBundle', params: {} })
+      return
   }
 }

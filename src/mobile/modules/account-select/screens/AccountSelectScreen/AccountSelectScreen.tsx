@@ -30,6 +30,8 @@ import ExportAccountsToExtensionSheet from '@mobile/modules/accounts-sync/compon
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean | null => {
   if (!search) return null
 
@@ -52,15 +54,27 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
   return null
 }
 
+const ACCOUNT_OPTIONS = { markSelected: true }
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
   const flatlistRef = useRef(null)
-  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
-    { flatlistRef }
-  )
+  const {
+    accounts,
+    control,
+    keyExtractor,
+    getItemLayout,
+    onListContentSizeChange,
+    initialScrollIndex,
+    shouldDisplayAccounts,
+    isReadyToRender
+  } = useAccountsList({ flatlistRef })
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const {
     ref: syncSheetRef,
@@ -91,19 +105,22 @@ const AccountSelectScreen = () => {
     []
   )
 
-  const renderItem = ({ item: acc }: { item: AccountType }) => {
-    return (
-      <Account
-        onSelect={onAccountSelect}
-        account={acc}
-        withSettings={false}
-        options={{ markSelected: true }}
-        withReceive
-        withCopy={false}
-        maxAccountAddrLength={32}
-      />
-    )
-  }
+  const renderItem = useCallback(
+    ({ item: acc }: { item: AccountType }) => {
+      return (
+        <Account
+          onSelect={onAccountSelect}
+          account={acc}
+          withSettings={false}
+          options={ACCOUNT_OPTIONS}
+          withReceive
+          withCopy={false}
+          maxAccountAddrLength={32}
+        />
+      )
+    },
+    [onAccountSelect]
+  )
 
   useEffect(() => {
     // Navigate to the dashboard after the account is selected to avoid showing the dashboard
@@ -160,25 +177,26 @@ const AccountSelectScreen = () => {
           style={styles.searchBar}
           containerStyle={spacings.mbTy}
         />
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.FLAT_LIST}
-          style={[
-            styles.container,
-            {
-              opacity: shouldDisplayAccounts ? 1 : 0
-            }
-          ]}
-          wrapperRef={flatlistRef}
-          data={accounts}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          keyExtractor={keyExtractor}
-          ListEmptyComponent={
-            <View style={[flexbox.flex1, flexbox.center]}>
-              <Text>{t('No accounts found')}</Text>
-            </View>
-          }
-        />
+        <View style={flexbox.flex1}>
+          {isReadyToRender && (
+            <ScrollableWrapper
+              type={WRAPPER_TYPES.FLAT_LIST}
+              style={[styles.container, { opacity: shouldDisplayAccounts ? 1 : 0 }]}
+              wrapperRef={flatlistRef}
+              data={accounts}
+              renderItem={renderItem}
+              getItemLayout={getItemLayout}
+              keyExtractor={keyExtractor}
+              onContentSizeChange={onListContentSizeChange}
+              initialScrollIndex={initialScrollIndex}
+              ListEmptyComponent={
+                <View style={[flexbox.flex1, flexbox.center]}>
+                  <Text>{t('No accounts found')}</Text>
+                </View>
+              }
+            />
+          )}
+        </View>
       </View>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
       <SyncBottomSheet

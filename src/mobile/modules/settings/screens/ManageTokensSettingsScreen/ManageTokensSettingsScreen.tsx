@@ -16,10 +16,14 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import AddNftBottomSheet from '@common/modules/settings/components/AddNftBottomSheet'
 import AddTokenBottomSheet from '@common/modules/settings/components/AddTokenBottomSheet'
-import useManageTokens, {
+import AssetTabs, { AssetTab } from '@common/modules/settings/components/AssetTabs'
+import { ASSET_COPY } from '@common/modules/settings/constants/assetCopy'
+import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import useManageAssets, {
   ALL_NETWORKS_FILTER
-} from '@common/modules/settings/hooks/useManageTokens'
+} from '@common/modules/settings/hooks/useManageAssets'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -28,7 +32,11 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
-import TokenSection from './TokenSection'
+import AssetSection from './AssetSection'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const FILTERS_HEIGHT = 40
 
@@ -40,12 +48,28 @@ const ManageTokensSettingsScreen = () => {
     open: openAddTokenBottomSheet,
     close: closeAddTokenBottomSheet
   } = useModalize()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const {
+    ref: addNftBottomSheetRef,
+    open: openAddNftBottomSheet,
+    close: closeAddNftBottomSheet
+  } = useModalize()
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)
+  const [activeTab, setActiveTab] = useState<AssetTab>('tokens')
   const search = watch('search')
-  const { customTokens, hiddenTokens, isLoading, onTokenPreferenceOrCustomTokenChange } =
-    useManageTokens({ search, networkFilter })
+  const {
+    customAssets: customTokens,
+    hiddenAssets: hiddenTokens,
+    isLoading
+  } = useManageAssets<TokenResult>({ search, networkFilter, standard: 'ERC20' })
+  const {
+    customAssets: customCollections,
+    hiddenAssets: hiddenCollections,
+    isLoading: areNftsLoading
+  } = useManageAssets<CollectionResult>({ search, networkFilter, standard: 'ERC721' })
+  const isNftsTab = activeTab === 'nfts'
+  const copy = ASSET_COPY[isNftsTab ? 'ERC721' : 'ERC20']
 
   const allNetworksOption: SelectValue = useMemo(
     () => ({
@@ -87,15 +111,16 @@ const ManageTokensSettingsScreen = () => {
   const clearNetworkFilter = useCallback(() => setNetworkFilter(ALL_NETWORKS_FILTER), [])
 
   const hasNoTokens = !isLoading && !customTokens.length && !hiddenTokens.length
+  const hasNoNfts = !areNftsLoading && !customCollections.length && !hiddenCollections.length
 
   return (
     <MobileLayoutContainer
       footer={
         <Button
-          testID="add-custom-token-button"
-          text={t('Add custom token')}
+          testID={isNftsTab ? 'add-custom-nft-button' : 'add-custom-token-button'}
+          text={t(copy.addButton)}
           size="regular"
-          onPress={openAddTokenBottomSheet as any}
+          onPress={(isNftsTab ? openAddNftBottomSheet : openAddTokenBottomSheet) as any}
           childrenPosition="left"
           hasBottomSpacing={false}
           style={{ ...flexbox.alignSelfCenter, width: '100%' }}
@@ -104,10 +129,11 @@ const ManageTokensSettingsScreen = () => {
         </Button>
       }
     >
-      <MobileLayoutWrapperMainContent withBackButton title={t('Custom and hidden tokens')}>
+      <MobileLayoutWrapperMainContent withBackButton title={t('Custom and hidden assets')}>
+        <AssetTabs activeTab={activeTab} setActiveTab={setActiveTab} />
         <Search
-          testID="search-tokens-input"
-          placeholder={t('Search tokens')}
+          testID={isNftsTab ? 'search-nfts-input' : 'search-tokens-input'}
+          placeholder={t(copy.searchPlaceholder)}
           control={control}
           height={FILTERS_HEIGHT}
           containerStyle={spacings.mbTy}
@@ -138,23 +164,39 @@ const ManageTokensSettingsScreen = () => {
           />
         </View>
         <ScrollableWrapper style={flexbox.flex1}>
-          {(isLoading || !!customTokens.length) && (
-            <TokenSection
+          {!isNftsTab && (isLoading || !!customTokens.length) && (
+            <AssetSection
+              standard="ERC20"
               variant="custom"
               isLoading={isLoading}
               data={customTokens}
-              onTokenPreferenceOrCustomTokenChange={onTokenPreferenceOrCustomTokenChange}
             />
           )}
-          {(isLoading || !!hiddenTokens.length) && (
-            <TokenSection
+          {!isNftsTab && (isLoading || !!hiddenTokens.length) && (
+            <AssetSection
+              standard="ERC20"
               variant="hidden"
               isLoading={isLoading}
               data={hiddenTokens}
-              onTokenPreferenceOrCustomTokenChange={onTokenPreferenceOrCustomTokenChange}
             />
           )}
-          {hasNoTokens && (
+          {isNftsTab && (areNftsLoading || !!customCollections.length) && (
+            <AssetSection
+              standard="ERC721"
+              variant="custom"
+              isLoading={areNftsLoading}
+              data={customCollections}
+            />
+          )}
+          {isNftsTab && (areNftsLoading || !!hiddenCollections.length) && (
+            <AssetSection
+              standard="ERC721"
+              variant="hidden"
+              isLoading={areNftsLoading}
+              data={hiddenCollections}
+            />
+          )}
+          {!isNftsTab && hasNoTokens && (
             <Text
               testID="you-dont-have-any-text"
               appearance="secondaryText"
@@ -166,11 +208,24 @@ const ManageTokensSettingsScreen = () => {
                 : t("You don't have any custom or hidden tokens")}
             </Text>
           )}
+          {isNftsTab && hasNoNfts && (
+            <Text
+              testID="you-dont-have-any-text"
+              appearance="secondaryText"
+              fontSize={14}
+              style={[spacings.pvXl, text.center]}
+            >
+              {search || networkFilter !== ALL_NETWORKS_FILTER
+                ? t('No custom or hidden NFTs found')
+                : t("You don't have any custom or hidden NFTs")}
+            </Text>
+          )}
         </ScrollableWrapper>
         <AddTokenBottomSheet
           sheetRef={addTokenBottomSheetRef}
           handleClose={closeAddTokenBottomSheet}
         />
+        <AddNftBottomSheet sheetRef={addNftBottomSheetRef} handleClose={closeAddNftBottomSheet} />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

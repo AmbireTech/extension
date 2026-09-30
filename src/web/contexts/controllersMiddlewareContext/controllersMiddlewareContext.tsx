@@ -48,13 +48,16 @@ let connectPort: () => Promise<void> = () => Promise.resolve()
 // broadcast the fresh background sends is a single, unacknowledged best-effort send with no
 // retry, or because this view's own Port silently stops delivering. Both cases are handled the
 // same way: treat it like the background told us it restarted.
-const handleBackgroundDisconnected = () => {
+// `reason` drives the toast copy shown after reload - 'restarted' (the default) covers the
+// service worker being suspended/killed, 'updated' covers this view's bundle going stale because
+// the extension auto-updated the background while the view was still open.
+const handleBackgroundDisconnected = (reason: 'restarted' | 'updated' = 'restarted') => {
   // if the sw restarts and the current window is an action window then close it
   // because the actions state has been lost after the sw restart
   if (getUiType().isRequestWindow) {
     closeCurrentWindow()
   } else {
-    sessionStorage.setItem('backgroundState', 'restarted')
+    sessionStorage.setItem('backgroundState', reason)
     window.location.reload()
   }
 }
@@ -80,7 +83,7 @@ if (isExtension) {
     pm = new PortMessenger()
     // A failed send means this port is already dead - don't wait on the async `onDisconnect`
     // event (below) to notice, which can lag behind on a throttled/backgrounded tab.
-    pm.onSendError = handleBackgroundDisconnected
+    pm.onSendError = () => handleBackgroundDisconnected()
     backgroundReady = false
 
     let portName = 'popup'
@@ -94,13 +97,15 @@ if (isExtension) {
     pm.addConnectListener(pm.ports[0].id, (messageType, { method, params, forceEmit }) => {
       if (method === 'portReady' && !backgroundReady) {
         backgroundReady = true
+        // Connected, so a later retries exhaustion is a new failure that deserves its own reload
+        sessionStorage.removeItem('connectRetriesExhaustedReloaded')
         // The 'sw-started' broadcast that normally triggers recovery is a single best-effort
         // message the fresh background sends once - if this view misses it, nothing else would
         // ever tell it the port died. onDisconnect is a browser-level event fired reliably on
         // this end when the other end (the background) goes away, so it's a second, independent
         // way to catch the exact same situation.
         // @ts-expect-error - id is set right after connect() in `connectPort`
-        pm.addDisconnectListener(pm.ports[0].id, handleBackgroundDisconnected)
+        pm.addDisconnectListener(pm.ports[0].id, () => handleBackgroundDisconnected())
         ;(async () => {
           while (!controllerReady) {
             eventBus.emit('onReady')
@@ -119,6 +124,24 @@ if (isExtension) {
       if (method === 'navigate') {
         lastReceivedNavigate = { route: params.route, options: params.options }
         eventBus.emit('navigate', lastReceivedNavigate)
+        return
+      }
+      // The background didn't recognize an action this view sent - almost certainly because the
+      // extension auto-updated the background while this view kept running its already-loaded,
+      // now-outdated JS bundle. No amount of retrying fixes that; recover the same way a dead
+      // port does. Reload at most once per session for this reason: if the reloaded (now current)
+      // bundle hits this again, it's not version skew but a genuinely unhandled action type in the
+      // background, and reloading on repeat would otherwise loop forever without fixing anything.
+      if (method === 'staleViewBundle') {
+        if (sessionStorage.getItem('staleViewBundleReloaded')) {
+          captureMessage(
+            `staleViewBundle received again after already reloading once this session - the background is missing a handler for an action this bundle sends`,
+            { level: 'error' }
+          )
+          return
+        }
+        sessionStorage.setItem('staleViewBundleReloaded', 'true')
+        handleBackgroundDisconnected('updated')
         return
       }
       if (messageType === '> ui') {
@@ -153,14 +176,22 @@ if (isExtension) {
 
     // Use at least 1000ms; on slower PCs, background responses can be slightly delayed,
     // causing multiple recursive connectPort calls and slowing down window initialization.
-    // Once MAX_RETRIES is reached, it will stop retrying and wait indefinitely for the background to send 'portReady'
-    // because if the 'portReady' res from the background is delayed more than 1000ms the connection will never resolve calling the recursion forever
+    // Once MAX_RETRIES is reached, it stops retrying. Recovering from there (below) reloads at
+    // most once per failure (the flag is cleared on 'portReady'), the same way
+    // handleBackgroundDisconnected does for a dead port - if the reloaded view hits this again,
+    // retrying further wouldn't fix a problem that survived a fresh reload, so it's left to the
+    // fatal Sentry capture to surface instead.
     setTimeout(() => {
       if (!backgroundReady && retries === MAX_RETRIES) {
         captureMessage(
           `Error: Failed to connect with the service worker after maximum retries. Window type: ${portName}`,
           { level: 'fatal' }
         )
+
+        if (!sessionStorage.getItem('connectRetriesExhaustedReloaded')) {
+          sessionStorage.setItem('connectRetriesExhaustedReloaded', 'true')
+          handleBackgroundDisconnected()
+        }
       }
 
       if (!backgroundReady && retries < MAX_RETRIES) {
@@ -473,6 +504,13 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     if (backgroundState === 'restarted') {
       addToast(
         'Page was restarted because the browser put Ambire to sleep. Any transactions or operations you have started have been cleared.',
+        { type: 'info', sticky: true }
+      )
+      sessionStorage.removeItem('backgroundState')
+    }
+    if (backgroundState === 'updated') {
+      addToast(
+        'Ambire was updated, so this window reloaded. Any transactions or operations you have started have been cleared.',
         { type: 'info', sticky: true }
       )
       sessionStorage.removeItem('backgroundState')

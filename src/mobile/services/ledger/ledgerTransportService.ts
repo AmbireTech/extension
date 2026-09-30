@@ -8,7 +8,7 @@ import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/util
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import wait from '@ambire-common/utils/wait'
 import { isProd } from '@common/config/env'
-import { ContextModuleBuilder } from '@ledgerhq/context-module'
+import { buildLedgerContextModule } from '@common/modules/hardware-wallet/libs/buildLedgerContextModule'
 import {
   DeviceActionStatus,
   DeviceManagementKitBuilder,
@@ -23,13 +23,11 @@ import { RNHidTransportFactory } from '@ledgerhq/device-transport-kit-react-nati
 // All Ledger device communication on mobile happens HERE, in the React Native
 // native JS context, using Ledger's Device Management Kit (DMK) — the same
 // stack the extension uses (see src/web/.../LedgerController.ts), but with the
-// React Native BLE/USB transports. The WebView worker (where the controllers
-// live) has no access to Bluetooth/USB or native modules, so the worker-side
-// LedgerController forwards every operation to this singleton over the message
-// bridge (see WebViewWorker.tsx `ledger.*` cases).
+// React Native BLE/USB transports. The mobile LedgerController is a thin wrapper
+// around this singleton.
 //
 // This service throws RAW device messages / status codes (never normalized):
-// both call sites — the worker LedgerController (bridge) and the connect UI —
+// both call sites — the LedgerController and the connect UI —
 // run the result through `normalizeLedgerMessage`, so normalizing here would
 // double-map and mangle the text.
 
@@ -128,6 +126,16 @@ class LedgerTransportService {
 
   /** Lazily-created BLE manager, used only to observe the adapter state. */
   #bleManager: BleManager | null = null
+
+  /**
+   * Whether the user allows Ledger's signing reports (see buildLedgerContextModule).
+   * Denied until the controller host wires the real setting in.
+   */
+  #isSigningReportAllowed: () => boolean = () => false
+
+  setIsSigningReportAllowed = (isSigningReportAllowed: () => boolean) => {
+    this.#isSigningReportAllowed = isSigningReportAllowed
+  }
 
   /**
    * Connection-state subscribers (e.g. the useLedger hook), so the UI can react
@@ -303,10 +311,10 @@ class LedgerTransportService {
     this.#sessionId = sessionId
     this.#lastDevice = device
 
-    const contextModule = new ContextModuleBuilder({
-      originToken: 'ambire',
-      loggerFactory: createContextLogger
-    }).build()
+    const contextModule = buildLedgerContextModule({
+      loggerFactory: createContextLogger,
+      isSigningReportAllowed: () => this.#isSigningReportAllowed()
+    })
     this.#signerEth = new SignerEthBuilder({ dmk: this.#dmk, sessionId })
       .withContextModule(contextModule)
       .build()

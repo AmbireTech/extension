@@ -619,7 +619,7 @@
       "packages": {
         "$root$": true,
         "@ledgerhq/device-management-kit": true,
-        "@ledgerhq/context-module>axios": true,
+        "@ledgerhq/context-module>bs58": true,
         "crypto-js": true,
         "ethers": true,
         "@ledgerhq/context-module>inversify": true,
@@ -628,11 +628,16 @@
     },
     "@ledgerhq/device-management-kit": {
       "globals": {
+        "AbortController": true,
         "Blob": true,
-        "Buffer.from": true,
+        "Buffer": true,
+        "FormData": true,
+        "ReadableStream": true,
         "TextEncoder": true,
         "URL.createObjectURL": true,
+        "URLSearchParams": true,
         "atob": true,
+        "btoa": true,
         "clearTimeout": true,
         "console.debug": true,
         "console.error": true,
@@ -640,21 +645,19 @@
         "console.log": true,
         "console.warn": true,
         "document.createElement": true,
+        "fetch": true,
         "setTimeout": true,
         "vi.fn": true
       },
       "packages": {
         "$root$": true,
         "@noble/hashes": true,
-        "@ledgerhq/context-module>axios": true,
-        "buffer": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "@ledgerhq/context-module>inversify": true,
         "@ledgerhq/device-management-kit>isomorphic-ws": true,
         "purify-ts": true,
         "rxjs": true,
         "@ledgerhq/device-management-kit>semver": true,
-        "@ledgerhq/device-management-kit>url": true,
         "@ledgerhq/device-management-kit>uuid": true,
         "@ledgerhq/device-management-kit>xstate": true
       }
@@ -684,7 +687,6 @@
       },
       "packages": {
         "@ledgerhq/device-management-kit": true,
-        "@ledgerhq/context-module>axios": true,
         "purify-ts": true,
         "rxjs": true
       }
@@ -1145,36 +1147,6 @@
         "eslint-plugin-react>array-includes>es-abstract>typed-array-length>possible-typed-array-names": true
       }
     },
-    "@ledgerhq/context-module>axios": {
-      "globals": {
-        "AbortController": true,
-        "Blob": true,
-        "Buffer.from": true,
-        "FormData": true,
-        "ReadableStream": true,
-        "URL": true,
-        "URLSearchParams": true,
-        "WorkerGlobalScope": true,
-        "XMLHttpRequest": true,
-        "btoa": true,
-        "clearTimeout": true,
-        "console.warn": true,
-        "document": true,
-        "fetch": true,
-        "importScripts": true,
-        "location.href": true,
-        "navigator": true,
-        "process": true,
-        "queueMicrotask": true,
-        "setImmediate": true,
-        "setTimeout": true
-      },
-      "packages": {
-        "buffer": true,
-        "node-polyfill-webpack-plugin>console-browserify": true,
-        "process": true
-      }
-    },
     "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check>bs58>base-x": {
       "packages": {
         "react-native-quick-crypto>safe-buffer": true
@@ -1309,14 +1281,14 @@
         "util": true
       }
     },
+    "@ledgerhq/context-module>bs58": {
+      "packages": {
+        "@ledgerhq/context-module>bs58>base-x": true
+      }
+    },
     "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check>bs58": {
       "packages": {
         "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check>bs58>base-x": true
-      }
-    },
-    "gridplus-sdk>bs58check>bs58": {
-      "packages": {
-        "gridplus-sdk>bs58check>bs58>base-x": true
       }
     },
     "@keystonehq/bc-ur-registry-eth>hdkey>bs58check>bs58": {
@@ -1334,7 +1306,7 @@
     "gridplus-sdk>bs58check": {
       "packages": {
         "@noble/hashes": true,
-        "gridplus-sdk>bs58check>bs58": true
+        "@ledgerhq/context-module>bs58": true
       }
     },
     "@keystonehq/bc-ur-registry-eth>hdkey>bs58check": {
@@ -2221,12 +2193,6 @@
         "stream-browserify": true
       }
     },
-    "@ambire/signature-validator>tape>object-inspect": {
-      "globals": {
-        "HTMLElement": true,
-        "WeakRef": true
-      }
-    },
     "@ngraveio/bc-ur>assert>object-is": {
       "packages": {
         "patch-package>json-stable-stringify>call-bind": true,
@@ -2340,11 +2306,6 @@
         "define": true
       }
     },
-    "@ledgerhq/device-management-kit>url>punycode": {
-      "globals": {
-        "define": true
-      }
-    },
     "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": {
       "globals": {
         "Buffer.from": true,
@@ -2408,11 +2369,6 @@
       },
       "packages": {
         "react-native-qrcode-svg>qrcode>dijkstrajs": true
-      }
-    },
-    "@ledgerhq/device-management-kit>url>qs": {
-      "packages": {
-        "eslint-plugin-react>string.prototype.matchall>side-channel": true
       }
     },
     "crypto-browserify>randombytes": {
@@ -2632,6 +2588,7 @@
         "_notifyAboutProgress": true,
         "_tagToJSPropNamesMapping": "write",
         "_updateProps": true,
+        "clearInterval": true,
         "console.error": true,
         "console.warn": true,
         "document.body": true,
@@ -2648,6 +2605,7 @@
         "queueMicrotask": true,
         "requestAnimationFrame": true,
         "require": true,
+        "setInterval": true,
         "setTimeout": true,
         "structuredClone": true
       },
@@ -2746,55 +2704,16 @@
     },
     "react-native-worklets": {
       "globals": {
-        "ErrorUtils.reportFatalError": true,
-        "WorkletsError": "write",
         "_ALWAYS_FALSE": true,
         "_WORKLET": "write",
-        "_WORKLETS_BUNDLE_MODE": "write",
         "__RUNTIME_KIND": "write",
-        "__callGuardDEV": "write",
-        "__callMicrotasks": "write",
-        "__flushAnimationFrame": "write",
-        "__flushMicrotasks": "write",
-        "__frameTimestamp": "write",
-        "__r": true,
-        "__reportFatalRemoteError": "write",
-        "__runTimeoutCallback": "write",
-        "__synchronizableUnpacker": "write",
-        "__valueUnpacker": "write",
-        "__workletsModuleProxy": true,
-        "_createSerializable": true,
-        "_createSerializableArray": true,
-        "_createSerializableBigInt": true,
-        "_createSerializableBoolean": true,
-        "_createSerializableHostObject": true,
-        "_createSerializableNull": true,
-        "_createSerializableNumber": true,
-        "_createSerializableString": true,
-        "_createSerializableSynchronizable": true,
-        "_createSerializableUndefined": true,
         "_getAnimationTimestamp": "write",
         "_log": "write",
-        "_microtaskQueueFinalizers": "write",
-        "_scheduleHostFunctionOnJS": true,
-        "_scheduleOnRuntime": true,
-        "_scheduleRemoteFunctionOnJS": true,
-        "_scheduleTimeoutCallback": true,
-        "_taskQueue": "write",
-        "_toString": true,
-        "cancelAnimationFrame": "write",
-        "clearImmediate": "write",
-        "clearInterval": "write",
-        "clearTimeout": "write",
-        "console": "write",
+        "console.log": true,
         "performance.now": true,
-        "queueMicrotask": "write",
+        "queueMicrotask": true,
         "requestAnimationFrame": "write",
-        "require.getModules": true,
-        "require.resolveWeak": true,
-        "setImmediate": "write",
-        "setInterval": "write",
-        "setTimeout": "write"
+        "setTimeout": true
       },
       "packages": {
         "node-polyfill-webpack-plugin>console-browserify": true,
@@ -3104,38 +3023,6 @@
         "@ngraveio/bc-ur>sha.js>to-buffer": true
       }
     },
-    "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-list": {
-      "packages": {
-        "eslint-plugin-react>es-iterator-helpers>es-errors": true,
-        "@ambire/signature-validator>tape>object-inspect": true
-      }
-    },
-    "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-map": {
-      "packages": {
-        "patch-package>json-stable-stringify>call-bound": true,
-        "eslint-plugin-react>es-iterator-helpers>es-errors": true,
-        "eslint-plugin-react>array-includes>get-intrinsic": true,
-        "@ambire/signature-validator>tape>object-inspect": true
-      }
-    },
-    "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-weakmap": {
-      "packages": {
-        "patch-package>json-stable-stringify>call-bound": true,
-        "eslint-plugin-react>es-iterator-helpers>es-errors": true,
-        "eslint-plugin-react>array-includes>get-intrinsic": true,
-        "@ambire/signature-validator>tape>object-inspect": true,
-        "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-map": true
-      }
-    },
-    "eslint-plugin-react>string.prototype.matchall>side-channel": {
-      "packages": {
-        "eslint-plugin-react>es-iterator-helpers>es-errors": true,
-        "@ambire/signature-validator>tape>object-inspect": true,
-        "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-list": true,
-        "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-map": true,
-        "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-weakmap": true
-      }
-    },
     "@raugfer/jazzicon>color>color-string>simple-swizzle": {
       "packages": {
         "@raugfer/jazzicon>color>color-string>simple-swizzle>is-arrayish": true
@@ -3250,12 +3137,6 @@
       "packages": {
         "url>punycode": true,
         "url>querystring": true
-      }
-    },
-    "@ledgerhq/device-management-kit>url": {
-      "packages": {
-        "@ledgerhq/device-management-kit>url>punycode": true,
-        "@ledgerhq/device-management-kit>url>qs": true
       }
     },
     "util": {

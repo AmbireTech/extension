@@ -2,7 +2,9 @@ import { memo, RefObject, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
+import CowSwapIcon from '@common/assets/svg/CowSwapIcon'
 import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
+import SecurityIcon from '@common/assets/svg/SecurityIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UniswapIcon from '@common/assets/svg/UniswapIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -15,6 +17,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import type { SwapProviderInfo } from '@ambire-common/interfaces/swapAndBridge'
@@ -27,6 +30,7 @@ const PROVIDER_ICON_STYLE = { width: PROVIDER_ICON_WIDTH }
 const SETTINGS_BUTTON_STYLE = { width: 40, height: 40 }
 const COMPACT_SETTINGS_BUTTON_STYLE = { width: 28, height: 28 }
 const SHEET_STYLE = isWeb ? { width: '100%' as const, maxWidth: 480 } : undefined
+const COW_SWAP_PROVIDER_ID = 'cowswap'
 
 const selectSwapProviders = (state: AllControllersMappingType['SwapAndBridgeController']) =>
   state.swapProviders
@@ -40,6 +44,7 @@ const ProviderIconComponent = ({ providerId }: { providerId: SwapProviderInfo['i
   }
   if (providerId === 'uniswap') return <UniswapIcon width={24} height={24} />
   if (providerId === 'lifi') return <LiFiIcon width={45} height={16} />
+  if (providerId === 'cowswap') return <CowSwapIcon width={24} height={24} />
 
   return null
 }
@@ -55,6 +60,8 @@ const ProviderRowComponent = ({
   isEnabled: boolean
   setProviderEnabled: (providerId: SwapProviderInfo['id'], isEnabled: boolean) => void
 }) => {
+  const { t } = useTranslation()
+  const { theme } = useTheme()
   const onValueChange = useCallback(
     (nextIsEnabled: boolean) => setProviderEnabled(provider.id, nextIsEnabled),
     [provider.id, setProviderEnabled]
@@ -65,9 +72,39 @@ const ProviderRowComponent = ({
       <View style={[PROVIDER_ICON_STYLE]}>
         <ProviderIcon providerId={provider.id} />
       </View>
-      <Text fontSize={16} weight="medium" style={flexbox.flex1}>
-        {provider.name}
-      </Text>
+      <View style={flexbox.flex1}>
+        <Text fontSize={16} weight="medium">
+          {provider.name}
+        </Text>
+        {provider.id !== COW_SWAP_PROVIDER_ID && (
+          <Text fontSize={12} appearance="tertiaryText" style={spacings.mtMi}>
+            {t('No MEV protection')}
+          </Text>
+        )}
+        {provider.id === COW_SWAP_PROVIDER_ID && (
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.alignSelfStart,
+              spacings.mtMi,
+              spacings.phTy,
+              spacings.pvMi,
+              common.borderRadiusSecondary,
+              {
+                backgroundColor: theme.primaryAccent100,
+                borderColor: theme.primaryAccent200,
+                borderWidth: 1
+              }
+            ]}
+          >
+            <SecurityIcon width={10} height={12} color={theme.primaryAccent} />
+            <Text fontSize={12} weight="medium" color={theme.primaryAccent} style={spacings.mlMi}>
+              {t('MEV protected')}
+            </Text>
+          </View>
+        )}
+      </View>
       <FatToggle
         testID={`swap-provider-${provider.id}-toggle`}
         isOn={isEnabled}
@@ -175,7 +212,6 @@ const ProviderSettingsBottomSheet = ({
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       adjustToContentHeight
-      type="bottom-sheet"
       HeaderComponent={headerComponent}
       style={SHEET_STYLE}
     >

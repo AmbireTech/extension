@@ -23,6 +23,7 @@ import { OverviewBackground } from './OverviewBackground'
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 export const OVERVIEW_CONTENT_MAX_HEIGHT = 162
 
 interface Props {
@@ -34,6 +35,8 @@ interface Props {
   }
   setDashboardOverviewSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
 }
+
+const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
 
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
@@ -47,6 +50,11 @@ const DashboardOverview: FC<Props> = ({
     'NetworksController',
     'areNetworksFetchingFromRelayer'
   )
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectTokenPricesEnabled
+  )
+
   const {
     state: { isPrivacyModeEnabled },
     dispatch: walletStateDispatch
@@ -166,6 +174,7 @@ const DashboardOverview: FC<Props> = ({
                         : 'ready'
                     }
                     totalAmount={totalPortfolioAmount}
+                    isTokenPricesEnabled={isTokenPricesEnabled}
                     color={totalPortfolioAmountColor}
                     isPrivacyModeEnabled={isPrivacyModeEnabled}
                     onPress={togglePrivacyMode}
@@ -208,11 +217,7 @@ const DashboardOverview: FC<Props> = ({
                 }
               </View>
               <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
-                <GasTankButton
-                  onPress={() => openGasTankModal?.()}
-                  portfolio={portfolio}
-                  account={account}
-                />
+                <GasTankButton onPress={() => openGasTankModal?.()} account={account} />
                 {/* NOTE: this is commented out instead of deleted because we might wat to return it */}
                 {/* <RewardsButton /> */}
               </View>

@@ -1,3 +1,4 @@
+import { KEYSTORE_PASS } from 'constants/env'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { SpeculosDevice } from 'libs/speculos-device/device'
@@ -43,8 +44,9 @@ export async function runSimpleTransferFlow({
     await pages.transfer.fillRecipient(recipientAddress)
   })
 
+  let signed = false
   await test.step('send transaction', async () => {
-    await pages.transfer.signSlowSpeedTransaction({
+    signed = await pages.transfer.signSlowSpeedTransaction({
       feeToken,
       payWithGasTank,
       sendToken,
@@ -52,6 +54,10 @@ export async function runSimpleTransferFlow({
       ledgerSimulatorControls
     })
   })
+
+  // When the fee is above the $0.10 test limit, `signSlowSpeedTransaction` skips signing on purpose.
+  // Nothing was broadcasted, so skip the test instead of failing the assertions below.
+  test.skip(!signed, 'Transaction fee exceeded the $0.10 limit; signing was skipped.')
 
   await test.step('assert new transaction on Activity tab', async () => {
     await pages.transfer.checkSendTransactionOnActivityTab()
@@ -66,7 +72,7 @@ export async function runSimpleTransferFlow({
 
     if (sendToken == tokens.usdc.optimism) {
       expect(viewTransactionTab.url()).toContain('optimistic.etherscan.io')
-// TODO: add assertions on optimism exploreer
+      // TODO: add assertions on optimism exploreer
     } else {
       expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
 
@@ -129,7 +135,46 @@ export async function runBatchTransferFlow({
 
     const actionWindow = await actionWindowPromise
     await page.waitForTimeout(10000) // wait for the AccountOp details to be displayed on the Ledger simulator
-    await actionWindow.getByTestId(selectors.signTransactionButton).click()
+
+    // A brand-new recipient address makes the app show a warning banner on this screen, which
+    // turns the sign button into a hold-to-sign button (testID `proceed-btn`, see Footer.web.tsx)
+    // instead of the regular one-click button (testID `transaction-button-sign`). In CI this test
+    // runs after another test in the same suite already sent to `recipientAddress`, so the address
+    // is already known and the regular button shows up; running this test in isolation against a
+    // fresh recipient shows the hold-to-sign variant instead, so both need to be handled here.
+    await expect(async () => {
+      const holdToSignButton = actionWindow.getByTestId(selectors.transaction.proceedBtn)
+      if (await holdToSignButton.isVisible()) {
+        // Hold for the same required duration as TransferPage.holdToProceedForUnknownAddress
+        await holdToSignButton.hover()
+        await actionWindow.mouse.down()
+        await actionWindow.waitForTimeout(2000)
+        await actionWindow.mouse.up()
+      } else {
+        await expect(actionWindow.getByTestId(selectors.signTransactionButton)).toBeVisible()
+        await actionWindow.getByTestId(selectors.signTransactionButton).click()
+      }
+    }).toPass({ timeout: 30000 })
+
+    // TODO: in CI we dont need sign because this test run after test that does signing
+    const signConfirmButton = actionWindow.getByTestId(selectors.transaction.signConfirmButton)
+    const signingAuthRequired = await signConfirmButton
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .then(() => true)
+      .catch(() => false)
+
+    if (signingAuthRequired) {
+      // submit button is disabled before entering pass
+      await expect(signConfirmButton).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
+
+      await actionWindow.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
+
+      await expect(signConfirmButton).not.toHaveAttribute('aria-disabled', 'true', {
+        timeout: 30000
+      })
+
+      await signConfirmButton.click()
+    }
 
     if (ledgerSimulatorControls) {
       await page.waitForTimeout(2000) // wait for the transaction details to be displayed on the Ledger simulator

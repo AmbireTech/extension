@@ -2,7 +2,9 @@ import { memo, useMemo } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { toPersonalSignHex } from '@ambire-common/libs/signMessage/utils'
-import HumanizedVisualization, { shouldUseErc7730DetailedLayout } from '@common/components/HumanizedVisualization'
+import HumanizedVisualization, {
+  shouldUseErc7730DetailedLayout
+} from '@common/components/HumanizedVisualization'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -49,11 +51,7 @@ const CompactMessagePreview = ({ request, humanizedMessage, style }: Props) => {
     }
   }, [request])
   const visualization =
-    humanizedMessage?.fromRequestId === request.id
-      ? humanizedMessage.fullVisualization
-      : request.kind === 'typedMessage'
-        ? request.humanization
-        : undefined
+    humanizedMessage?.fromRequestId === request.id ? humanizedMessage.fullVisualization : undefined
   const shouldUseDetailedErc7730Layout = useMemo(
     () =>
       visualization?.some(

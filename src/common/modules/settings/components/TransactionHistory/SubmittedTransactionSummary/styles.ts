@@ -10,6 +10,8 @@ interface Style {
   container: ViewStyle
   header: ViewStyle
   headerMeta: ViewStyle
+  headerMetaText: ViewStyle
+  networkIcon: ViewStyle
   sheetHeader: ViewStyle
   sheetScrollContent: ViewStyle
   modalSection: ViewStyle
@@ -48,7 +50,17 @@ const getStyles = (theme: ThemeProps) =>
     },
     headerMeta: {
       ...flexbox.directionRow,
-      ...flexbox.alignCenter
+      ...flexbox.alignCenter,
+      // Lets the date/network text truncate instead of overflowing past the
+      // status badge or overlapping the network icon on narrow widths.
+      flexShrink: 1,
+      minWidth: 0
+    },
+    headerMetaText: {
+      flexShrink: 1
+    },
+    networkIcon: {
+      flexShrink: 0
     },
     sheetHeader: {
       ...spacings.phSm,
@@ -153,7 +165,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     footerButton: {
       ...spacings.mb0,
-      ...(isMobile ? { ...spacings.phSm, height: 46 } : { ...spacings.pl, ...spacings.prLg })
+      ...(isMobile ? { ...spacings.phSm } : { ...spacings.pl, ...spacings.prLg })
     }
   })
 

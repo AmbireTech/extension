@@ -27,6 +27,8 @@ import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   network: Network
   size: 'sm' | 'md' | 'lg'
@@ -53,6 +55,9 @@ const canBuildSpeedUpAccountOp = (
   submittedAccountOp.gasLimit !== undefined &&
   submittedAccountOp.signature !== undefined
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const Footer: FC<Props> = ({
   network,
   txnId,
@@ -66,8 +71,8 @@ const Footer: FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
 
@@ -241,7 +246,8 @@ const Footer: FC<Props> = ({
         hasBottomSpacing={false}
         style={[
           styles.footerButton,
-          isCompactSidePanelLayout && {
+          isMobile && { height: 46 },
+          isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
             ...spacings.prTy,
@@ -251,7 +257,7 @@ const Footer: FC<Props> = ({
         childrenPosition="left"
         testID="view-transaction-link"
       >
-        <OpenIcon style={spacings.mrMi} width={16} height={16} />
+        <OpenIcon style={spacings.mrMi} width={20} height={20} />
       </Button>
     </View>
   )
@@ -276,8 +282,9 @@ const Footer: FC<Props> = ({
         disabled={!canRepeatTransaction}
         style={[
           styles.footerButton,
-          !isMobile && !isCompactSidePanelLayout && spacings.mrTy,
-          isCompactSidePanelLayout && {
+          isMobile && { height: 46 },
+          !isMobile && !isNarrowWebLayout && spacings.mrTy,
+          isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
             ...spacings.prTy,
@@ -287,9 +294,9 @@ const Footer: FC<Props> = ({
         childrenPosition="left"
       >
         {shouldShowSpeedUp ? (
-          <SpeedUpIcon style={spacings.mrMi} width={16} height={16} />
+          <SpeedUpIcon style={spacings.mrMi} width={20} height={20} />
         ) : (
-          <RefreshIcon style={spacings.mrMi} width={16} height={16} />
+          <RefreshIcon style={spacings.mrMi} width={20} height={20} strokeWidth="2" />
         )}
       </Button>
     </View>
@@ -312,7 +319,7 @@ const Footer: FC<Props> = ({
         hasBottomSpacing={false}
         style={[
           styles.footerButton,
-          isCompactSidePanelLayout && {
+          isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
             ...spacings.prTy,
@@ -321,7 +328,7 @@ const Footer: FC<Props> = ({
         ]}
         childrenPosition="left"
       >
-        <CopyIcon style={spacings.mrMi} width={16} height={16} />
+        <CopyIcon style={spacings.mrMi} width={20} height={20} />
       </Button>
     </View>
   )
@@ -338,11 +345,11 @@ const Footer: FC<Props> = ({
     )
 
   return (
-    <View style={[styles.footer, isCompactSidePanelLayout && spacings.phSm]}>
+    <View style={[styles.footer, isNarrowWebLayout && spacings.phSm]}>
       <View
         style={[
           styles.footerButtonsRow,
-          isCompactSidePanelLayout && {
+          isNarrowWebLayout && {
             flexDirection: 'column',
             alignItems: 'stretch',
             gap: SPACING_TY
@@ -353,7 +360,7 @@ const Footer: FC<Props> = ({
         <View
           style={[
             styles.footerRightButtonsGroup,
-            isCompactSidePanelLayout && {
+            isNarrowWebLayout && {
               flexDirection: 'column',
               alignItems: 'stretch',
               width: '100%',

@@ -62,6 +62,9 @@ export type CommonSelectProps = {
     isMenuOpen,
     selectRef
   }: RenderSelectedOptionParams) => ReactNode
+  onBottomSheetClosed?: () => void
+  // Opens the bottom sheet at full height (perfect for autoFocus to prevent layout shifts)
+  isBottomSheetFullHeight?: boolean
   attemptToFetchMoreOptions?: (search: string) => void
   onSearch?: (search: string) => void
   renderSelectedOption?: ({

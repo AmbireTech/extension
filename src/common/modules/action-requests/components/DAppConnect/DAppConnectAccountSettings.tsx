@@ -14,13 +14,12 @@ import ToggleDAppScopedAccounts from '@common/modules/dapp-catalog/components/To
 import useDAppAccountPreferences from '@common/modules/dapp-catalog/hooks/useDAppAccountPreferences'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 type Props = Pick<Dapp, 'id' | 'accountPreferences'>
 
 const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
+  const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { ref, open, close } = useModalize()
   const { t } = useTranslation()
   const {
@@ -89,7 +88,7 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
             allowedAccounts={localPreferences?.accounts || []}
             onToggleAccount={toggleSelectAccount}
           />
-          <FooterGlassView absolute={isSidePanel} preferGlassFooter={isSidePanel}>
+          <FooterGlassView absolute={isNarrowWebLayout} preferGlassFooter={isNarrowWebLayout}>
             <Button
               type="secondary"
               text={t('Cancel')}
