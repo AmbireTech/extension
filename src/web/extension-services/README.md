@@ -61,7 +61,7 @@ The dApp channel is request and response, built on the messengers in [`messenger
 
 The provider hands the call to the content script, which passes it to the background. There a dApp session is resolved from the tab, window and frame the browser reports, and `handleProviderRequests` (in `src/common/modules/provider/`) either answers it outright or sends it through `rpcFlow`, which checks permission, unlocks the wallet and opens a request window when the user has to approve something.
 
-Not every call gets that far. The provider answers `eth_chainId` from its own cache because dApps poll it constantly, and forwards plain read calls to the dApp's own RPC endpoint once it has found one, falling back to the wallet's provider.
+Not every call gets that far: the provider answers `eth_chainId` from its own cache because dApps poll it constantly. Every other read (an `eth_*` method with no handler of its own) reaches `ProviderController.ethRpc`, which passes it unchanged to the RPC of the network the dApp is on. Until the dApp is connected, only the methods in `SAFE_RPC_METHODS` are allowed.
 
 ## Wallet events
 

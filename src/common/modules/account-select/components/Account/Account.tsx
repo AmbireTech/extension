@@ -294,6 +294,7 @@ const Account = ({
             setExternalPosition={setDropdownPosition}
             onSelect={onDropdownSelect}
             kebabIconProps={{ width: 28, height: 28 }}
+            testID={`account-options-${addr}`}
           />
         )}
       </View>

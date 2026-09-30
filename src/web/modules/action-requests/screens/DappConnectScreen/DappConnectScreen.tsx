@@ -107,6 +107,7 @@ const DappConnectScreen = () => {
                 securityCheck={dappToConnect.blacklisted}
                 isTrustedByUser={isTrustedByUser}
                 isScamCheckerEnabled={isScamCheckerEnabled}
+                isInAppCatalog={!dappToConnect.isCustom}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
               <DAppConnectBody

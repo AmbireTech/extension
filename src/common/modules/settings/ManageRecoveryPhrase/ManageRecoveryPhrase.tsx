@@ -157,7 +157,10 @@ const ManageRecoveryPhrase = ({
   return (
     <>
       <View style={flexbox.flex1}>
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+        <View
+          testID="manage-recovery-phrase-header"
+          style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}
+        >
           {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
           <PanelTitle title={t('Manage recovery phrase')} style={isWeb ? text.left : text.center} />
         </View>

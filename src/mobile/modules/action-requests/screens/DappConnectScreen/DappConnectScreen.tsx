@@ -84,6 +84,7 @@ const DappConnectScreen = () => {
               securityCheck={dappToConnect.blacklisted}
               isTrustedByUser={isTrustedByUser}
               isScamCheckerEnabled={isScamCheckerEnabled}
+              isInAppCatalog={!dappToConnect.isCustom}
             />
             <DAppConnectBody
               securityCheck={dappToConnect.blacklisted}

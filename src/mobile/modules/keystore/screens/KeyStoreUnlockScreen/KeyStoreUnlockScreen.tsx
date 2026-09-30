@@ -10,6 +10,7 @@ import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { CURRENT_PASSWORD_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
@@ -18,6 +19,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import useKeyStoreUnlock from '@common/modules/keystore/hooks/useKeyStoreUnlock'
 import backgroundImage from '@common/modules/keystore/images/background.png'
 import alert from '@common/services/alert'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -26,6 +28,7 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
+import { REVEAL_UNLOCK_SCREEN_EVENT } from '@mobile/constants/splashScreen'
 
 const KeyStoreUnlockScreen = () => {
   const { control, handleSubmit, errors, passwordFieldError, disableSubmit, handleUnlock } =
@@ -86,6 +89,15 @@ const KeyStoreUnlockScreen = () => {
       setUnlockMethod('password')
     }
   }, [canUseBiometrics, isLoading])
+
+  // On open, the biometric prompt is shown over the splash. Once it has not worked out -
+  // cancelled, failed, or the unlock itself threw - the user needs this screen to try again
+  // or to switch to the password. `ERROR` covers the throws that set no `errorMessage`.
+  const hasUnlockFailed = statuses.unlockWithSecret === 'ERROR' || !!errorMessage
+
+  useEffect(() => {
+    if (unlockMethod === 'password' || hasUnlockFailed) eventBus.emit(REVEAL_UNLOCK_SCREEN_EVENT)
+  }, [unlockMethod, hasUnlockFailed])
 
   useEffect(() => {
     if (!isLoading && !initialCheckDone) {
@@ -161,6 +173,7 @@ const KeyStoreUnlockScreen = () => {
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
                 <InputPassword
+                  {...CURRENT_PASSWORD_AUTOFILL_PROPS}
                   testID="passphrase-field"
                   onBlur={onBlur}
                   placeholder={t('Enter your password')}

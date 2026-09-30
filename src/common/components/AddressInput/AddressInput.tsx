@@ -17,6 +17,7 @@ import AddressScanButton from '@common/components/AddressInput/AddressScanButton
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -123,6 +124,7 @@ const AddressInput: React.FC<Props> = ({
         </Text>
       )}
       <Input
+        {...NO_AUTOFILL_PROPS}
         // Purposefully spread props here, so that we don't override AddressInput's props
         {...rest}
         value={value}

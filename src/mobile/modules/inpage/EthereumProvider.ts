@@ -3,11 +3,7 @@ import { EthereumProvider as CommonEthereumProvider } from '@common/modules/inpa
 const pendingRequests: Record<number, { resolve: (v: any) => void; reject: (e: any) => void }> = {}
 
 export class EthereumProvider extends CommonEthereumProvider {
-  constructor(
-    forwardRpcRequests?: (url: string, method: any, params: any) => Promise<any>,
-    getFoundRpcUrls?: () => string[],
-    options?: { deferInitialization?: boolean }
-  ) {
+  constructor(options?: { deferInitialization?: boolean }) {
     const externalHandlers = {
       sendRequest: (data: any) => {
         return new Promise((resolve, reject) => {
@@ -26,13 +22,10 @@ export class EthereumProvider extends CommonEthereumProvider {
       },
       logInfo: (prefix: string, ...args: any[]) => {
         console.log(`[Ambire] ${prefix}`, ...args)
-      },
-      logWarn: (prefix: string, ...args: any[]) => {
-        console.warn(`[Ambire] ${prefix}`, ...args)
       }
     }
 
-    super(externalHandlers, forwardRpcRequests, getFoundRpcUrls, options)
+    super(externalHandlers, options)
 
     // Listen for responses via window.postMessage (sent back from RN bridge)
     window.addEventListener('message', (event) => {
