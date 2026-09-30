@@ -8,6 +8,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   container: ViewStyle
+  contentWrapper: ViewStyle
   header: ViewStyle
   headerText: TextStyle
   tabHeader: ViewStyle
@@ -28,6 +29,13 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       minHeight: 200,
       ...spacings.pvSm,
       ...(isMobile ? spacings.phSm : spacings.ph)
+    },
+    // Without flex/minHeight of its own, the ScrollView sizes itself to its content and
+    // ignores the container's maxHeight - this is what actually lets it fill (and clip to)
+    // the bounded space instead of just growing past it.
+    contentWrapper: {
+      flex: 1,
+      minHeight: 0
     },
     header: {
       ...spacings.mb,
