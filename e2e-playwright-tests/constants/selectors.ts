@@ -102,8 +102,11 @@ const selectors = {
     unhideTokenButton: 'unhide-button',
     youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page,
     manageAccountTreeDotsButton: 'account', // on accounts page, has multiple sam IDs,
+    accountOptionsButton: (addr: string) => `account-options-${addr}`, // kebab menu on an account row, unique per address
     removeAccountButton: '//div[contains(text(),"Remove account")]',
     confirmRemoveAccountButton: 'confirm-remove-account-button',
+    confirmExtensionPassField: 'passphrase-field',
+    confirmExtensionButton: 'button-submit',
     customTokens: {
       addCustomTokenButton: 'add-custom-token-button',
       addTokenModalTitle: 'add-token-modal-title-text',
@@ -145,7 +148,9 @@ const selectors = {
     dualChoiceModalAcceptButton: 'dual-choice-modal-primary-button',
     dualChoiceModalTitle: 'dual-choice-modal-title-text',
     previousFeeAmountText: 'previous-fee-amount',
-    updatedFeeAmountText: 'updated-fee-amount'
+    updatedFeeAmountText: 'updated-fee-amount',
+    signPassAuthField: 'signing-auth-password-field',
+    signConfirmButton: 'signing-auth-confirm-button'
   },
   // TODO: update selectors wiyh testID
   ambireRewards: {
@@ -299,6 +304,7 @@ const selectors = {
   confirmFollowUpTxn: 'confirm-follow-up-txns-checkbox',
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',
+  signAccountOpScrollView: 'sign-account-op-scroll-view',
   maxAvailableAmount: 'max-available-amount',
   // Swap & Bridge selectors
   selectRouteButton: 'select-route',
@@ -364,6 +370,7 @@ const selectors = {
   keystoreMigration: {
     recoveryPhraseRow: (id: string) => `recovery-phrase-row-${id}`,
     manageRecoveryPhrase: (id: string) => `manage-recovery-phrase-${id}`,
+    manageRecoveryPhraseHeader: 'manage-recovery-phrase-header',
     recoveryPhraseValue: 'recovery-phrase-value',
     recoveryPhrasePassphraseValue: 'recovery-phrase-passphrase-value',
     revealRecoveryPhraseButton: 'reveal-recovery-phrase-button',
