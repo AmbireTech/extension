@@ -1,3 +1,11 @@
+const mockLogInfoWithPrefix = jest.fn()
+const mockLogWarnWithPrefix = jest.fn()
+
+jest.mock('@common/utils/logger', () => ({
+  logInfoWithPrefix: mockLogInfoWithPrefix,
+  logWarnWithPrefix: mockLogWarnWithPrefix
+}))
+
 import { stringify } from '@ambire-common/libs/richJson/richJson'
 
 import {
@@ -9,6 +17,11 @@ import {
 } from './messageSerialization'
 
 describe('detectStructuredCloneSupport', () => {
+  beforeEach(() => {
+    mockLogInfoWithPrefix.mockClear()
+    mockLogWarnWithPrefix.mockClear()
+  })
+
   test('reports supported when the port accepts a BigInt (structured clone)', () => {
     // A structured-clone channel serializes BigInt without throwing.
     const received: any[] = []
@@ -19,6 +32,11 @@ describe('detectStructuredCloneSupport', () => {
     expect(received).toHaveLength(1)
     expect(received[0][STRUCTURED_CLONE_PROBE_KEY]).toBe(BigInt(1))
     expect(received[0].messageType).toBeUndefined()
+    expect(mockLogInfoWithPrefix).toHaveBeenCalledWith(
+      'portMessenger',
+      'structured clone support detected'
+    )
+    expect(mockLogWarnWithPrefix).not.toHaveBeenCalled()
   })
 
   test('reports unsupported when only the BigInt probe is rejected (JSON serialization)', () => {
@@ -32,6 +50,13 @@ describe('detectStructuredCloneSupport', () => {
     expect(detectStructuredCloneSupport(post)).toBe('unsupported')
     // The follow-up probe is inert as well, so a UI listener ignores it.
     expect(received).toEqual([{ [STRUCTURED_CLONE_PROBE_KEY]: 1 }])
+    console.log('logged for an unsupported port', mockLogInfoWithPrefix.mock.calls)
+    expect(mockLogInfoWithPrefix).toHaveBeenCalledWith(
+      'portMessenger',
+      'structured clone support not detected',
+      expect.any(TypeError)
+    )
+    expect(mockLogWarnWithPrefix).not.toHaveBeenCalled()
   })
 
   test('reports portFailed when the port throws on any message, as a disconnected one does', () => {
@@ -40,6 +65,13 @@ describe('detectStructuredCloneSupport', () => {
     }
 
     expect(detectStructuredCloneSupport(post)).toBe('portFailed')
+    console.log('logged for a failed port', mockLogWarnWithPrefix.mock.calls)
+    expect(mockLogWarnWithPrefix).toHaveBeenCalledWith(
+      'portMessenger',
+      'could not probe structured clone support, the port failed to send',
+      expect.objectContaining({ message: 'Attempting to use a disconnected port object' })
+    )
+    expect(mockLogInfoWithPrefix).not.toHaveBeenCalled()
   })
 })
 

@@ -12,6 +12,11 @@ jest.mock('@common/config/analytics/CrashAnalytics', () => ({
   captureException: mockCaptureException
 }))
 
+jest.mock('@common/utils/logger', () => ({
+  logInfoWithPrefix: jest.fn(),
+  logWarnWithPrefix: jest.fn()
+}))
+
 import { stringify } from '@ambire-common/libs/richJson/richJson'
 import { reconcileState } from '@common/utils/reconcileState'
 
