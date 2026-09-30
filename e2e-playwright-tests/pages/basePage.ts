@@ -40,12 +40,13 @@ export class BasePage {
   }
 
   async clickOnMenuToken(token: Token, menuSelector: string = selectors.tokensSelect) {
-    // Retry the click until the BottomSheet
-    // actually shows up instead of assuming a single click always works.
+    //  The BottomSheet only carries testID while isOpen is true
     const bottomSheet = this.page.getByTestId(selectors.bottomSheet)
     await expect(async () => {
-      await this.click(menuSelector)
-      await expect(bottomSheet).toBeVisible({ timeout: 2000 })
+      if ((await bottomSheet.count()) === 0) {
+        await this.click(menuSelector)
+      }
+      await expect(bottomSheet).toBeVisible({ timeout: 5000 })
     }).toPass({ timeout: 30000 })
 
     // If the token is outside the viewport, we ensure it becomes visible by searching for its symbol

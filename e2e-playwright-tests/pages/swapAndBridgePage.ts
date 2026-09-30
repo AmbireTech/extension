@@ -271,23 +271,17 @@ export class SwapAndBridgePage extends BasePage {
     await expect(signButton).toBeVisible({ timeout: 5000 })
     await expect(signButton).toBeEnabled({ timeout: 5000 })
 
-    await signButton.click()
-
-    // checks whether a bottom sheet is currently covering the screen and,
-    // if so, waits up to 20 seconds for it to clear before retrying the click
-    await page.waitForTimeout(350)
+    // Clicking Sign can be intercepted by a transient BottomSheet/overlay (e.g. a warning
+    // or loading state) that briefly covers the button, silently swallowing the click.
+    // Retry the whole click-and-check cycle until it actually lands, instead of a single
+    // fixed-delay wait followed by one last attempt that can still fail the same way.
     const blockingSheet = page.getByTestId('bottom-sheet').first()
-    if (await blockingSheet.isVisible().catch(() => false)) {
-      await blockingSheet.waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {})
-    }
-
-    const shouldRetryClick = await signButton.isVisible().catch(() => false)
-    if (shouldRetryClick) {
-      const stillEnabled = await signButton.isEnabled().catch(() => false)
-      if (stillEnabled) {
-        await signButton.click({ timeout: 10000 })
+    await expect(async () => {
+      if (await blockingSheet.isVisible().catch(() => false)) {
+        await blockingSheet.waitFor({ state: 'hidden', timeout: 5000 })
       }
-    }
+      await signButton.click({ timeout: 5000 })
+    }).toPass({ timeout: 30000 })
 
     if (ledgerSimulatorControls) {
       await ledgerSimulatorControls.signSmartAccountTransaction()
