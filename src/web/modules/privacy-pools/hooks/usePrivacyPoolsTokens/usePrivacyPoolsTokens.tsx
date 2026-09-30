@@ -22,6 +22,8 @@ export type PrivacyPoolsTokenOption = SelectValue & {
   // Raw units, so the form can validate what was typed against what is actually there: the
   // approved private balance.
   availableAmount: bigint
+  // The most one transfer can send: the largest approved deposit, since a transfer spends only one
+  maxWithdrawAmount: bigint
 }
 
 /**
@@ -39,7 +41,8 @@ const getTokenOption = ({
   decimals,
   note,
   networkName,
-  availableAmount
+  availableAmount,
+  maxWithdrawAmount
 }: {
   chainId: string
   tokenAddress: string
@@ -50,6 +53,7 @@ const getTokenOption = ({
   note: string
   networkName: string
   availableAmount: bigint
+  maxWithdrawAmount: bigint
 }): PrivacyPoolsTokenOption => ({
   value: getTokenOptionValue(chainId, tokenAddress),
   chainId,
@@ -58,6 +62,7 @@ const getTokenOption = ({
   symbol,
   decimals,
   availableAmount,
+  maxWithdrawAmount,
   extraSearchProps: { symbol, address: tokenAddress, network: networkName },
   icon: (
     <TokenIcon
@@ -118,7 +123,8 @@ const usePrivacyPoolsTokens = () => {
             decimals: balance.decimals,
             networkName: getNetworkName(chainId),
             note: t('ready to send'),
-            availableAmount: balance.approvedAmount
+            availableAmount: balance.approvedAmount,
+            maxWithdrawAmount: balance.maxWithdrawAmount
           })
         ),
     [tokenBalances, getNetworkName, t]
