@@ -303,8 +303,10 @@ apksigner verify --print-certs ./Ambire-v6.22.0.apk
 The `Signer #1 certificate SHA-256 digest` line must be exactly:
 
 ```
-TODO: the certificate SHA-256 fingerprint, added once the sideload keystore is generated
+b3f8d89ae9ab240ed7cf79a98e1eaa23094f089bfc42c2a5ef322581f8f2111e
 ```
+
+Other tools may show the same fingerprint in uppercase with colons: `B3:F8:D8:9A:E9:AB:24:0E:D7:CF:79:A9:8E:1E:AA:23:09:4F:08:9B:FC:42:C2:A5:EF:32:25:81:F8:F2:11:1E`.
 
 Anything else means the APK was not signed by us - do not install it. The key is the same for every release, so an APK that passes this check can only ever be updated by another one from us.
 
