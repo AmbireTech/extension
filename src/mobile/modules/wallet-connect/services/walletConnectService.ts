@@ -246,7 +246,10 @@ export const initWalletConnect = async (
               native: 'ambire://wc',
               universal: 'https://ambire.com/wc'
             }
-          }
+          },
+          // The SDK otherwise holds every request until the previous one is answered,
+          // so a second dapp request can't reach the wallet while the first is pending
+          signConfig: { disableRequestQueue: true }
         }),
         new Promise<WalletKitType>((_, reject) =>
           setTimeout(() => reject(new Error('WalletKit initialization timed out (15s)')), 15000)
