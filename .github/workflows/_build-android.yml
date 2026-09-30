@@ -23,11 +23,6 @@ on:
         required: false
         default: arm64-v8a
         type: string
-      enable_signing:
-        description: Whether Play Store signing (release keystore) is required
-        required: false
-        default: false
-        type: boolean
 
 jobs:
   build-android:
@@ -106,7 +101,6 @@ jobs:
       # so it carries its own long-lived key - and because that key differs from Play's, the
       # sideloaded app can never be installed over a Play install (and vice versa).
       - name: Prepare Android signing config
-        if: inputs.enable_signing
         env:
           PLAY_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           PLAY_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}

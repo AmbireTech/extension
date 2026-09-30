@@ -19,11 +19,10 @@ jobs:
     with:
       build_command: yarn build:android:production:apk
       artifact_suffix: apk
+      # Signed with the dedicated sideload keystore, not the Play upload key. See the signing
+      # step in _build-android.yml for why the two are deliberately different.
       package_mode: apk
       # This APK is what users sideload, so it has to cover the same devices the Play build
       # does - an arm64-only APK simply fails to install on older 32-bit ARM phones.
       architectures: armeabi-v7a,arm64-v8a
-      # Signed with the dedicated sideload keystore, not the Play upload key. See the signing
-      # step in _build-android.yml for why the two are deliberately different.
-      enable_signing: true
     secrets: inherit

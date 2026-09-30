@@ -147,7 +147,7 @@ android {
             // release build must fail loudly instead of quietly falling back to it.
             def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
             if (isCi && isReleaseTask && !project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
-                throw new GradleException('Release build in CI without a signing keystore. The workflow writes MYAPP_UPLOAD_* only when enable_signing is true.')
+                throw new GradleException('Release build in CI without a signing keystore. The workflow writes MYAPP_UPLOAD_* in its "Prepare Android signing config" step.')
             }
 
             storeFile releaseStoreFile
