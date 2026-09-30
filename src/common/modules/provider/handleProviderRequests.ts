@@ -116,7 +116,8 @@ const handleProviderRequests = async ({
       isUnlocked,
       accounts: isUnlocked ? await providerController.ethAccounts(request) : [],
       networkVersion,
-      logLevel: walletStateCtrl.logLevel
+      logLevel: walletStateCtrl.logLevel,
+      isDisguisedAsMetaMask: mainCtrl.dapps.isDappDisguisedAsMetaMask(session.id)
     }
   }
 

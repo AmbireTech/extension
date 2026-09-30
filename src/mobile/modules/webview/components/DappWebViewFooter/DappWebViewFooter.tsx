@@ -172,7 +172,7 @@ const DappWebViewFooter: React.FC<Props> = ({
             </>
           )}
           {!!currentDapp && (
-            <ManageApp dapp={currentDapp} onClosed={onManageAppClosed}>
+            <ManageApp dapp={currentDapp} onClosed={onManageAppClosed} onReloadDapp={handleRefresh}>
               <Avatar
                 pfp={account.preferences.pfp}
                 address={account.addr}
