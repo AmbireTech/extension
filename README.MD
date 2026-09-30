@@ -279,6 +279,35 @@ Every file must print `OK`. This catches a corrupted or swapped download, but on
 
 Releases before v6.19.2 have neither a signature nor a `SHA256SUMS` file.
 
+#### Android APK (sideload)
+
+Some releases also carry an `Ambire-v<VERSION>.apk`, for installing the Android app without Google Play. [Google Play](https://play.google.com/store/apps/details?id=com.ambire.wallet) remains the recommended way, because it installs updates for you.
+
+Before installing, know that:
+
+- The APK and the Google Play app cannot be installed over one another. To switch between them you have to uninstall the other one first, which deletes your accounts from the phone - make sure you have your recovery phrase or another backup before you do.
+- The APK does not update by itself. Newer APKs from this releases page install over it and keep your data.
+
+It is not in `SHA256SUMS`. Check the release signature the same way as the `.zip` files:
+
+```bash
+gh release verify-asset v6.22.0 ./Ambire-v6.22.0.apk -R AmbireTech/extension
+```
+
+Then check that it was signed by our key. Android refuses to update an app with an APK signed by anyone else, so this key is what keeps every future update genuine. Run `apksigner` from the Android SDK build-tools:
+
+```bash
+apksigner verify --print-certs ./Ambire-v6.22.0.apk
+```
+
+The `Signer #1 certificate SHA-256 digest` line must be exactly:
+
+```
+TODO: the certificate SHA-256 fingerprint, added once the sideload keystore is generated
+```
+
+Anything else means the APK was not signed by us - do not install it. The key is the same for every release, so an APK that passes this check can only ever be updated by another one from us.
+
 ## Mobile Apps
 
 The mobile apps share the same codebase. The business logic (the `background`) runs in the React Native realm (`src/mobile/services/controllerHost/`), in the same JS context as the UI. The WebView worker (`src/mobile/modules/webview/services/`) is still mounted and its bridge is live, so a controller can be moved back into it, but it hosts none today.
@@ -387,14 +416,14 @@ Local production builds are normally **not** OTA-capable: without the `STALLION_
 
 Store-ready artifacts are built in CI, so nobody has to keep signing material locally. All four are manually triggered (`workflow_dispatch`) and upload a zipped artifact named `ambire-<platform>-v<VERSION>-<TYPE>`, where the version is read from "app.json":
 
-| Workflow                      | Yarn command                        | Artifact                     | Signed |
-| ----------------------------- | ----------------------------------- | ---------------------------- | ------ |
-| 🍎 Build · iOS Simulator      | `yarn build:ios:simulator`          | `Ambire.app`                 | No     |
-| 🍎 Build · iOS App Store      | `yarn build:ios:production`         | `Ambire.ipa`                 | Yes    |
-| 🤖 Build · Android APK        | `yarn build:android:production:apk` | `Ambire.apk` (arm64-v8a)     | No     |
-| 🤖 Build · Android Play Store | `yarn build:android:production:aab` | `Ambire.aab` (+ armeabi-v7a) | Yes    |
+| Workflow                      | Yarn command                        | Artifact                                | Signed            |
+| ----------------------------- | ----------------------------------- | --------------------------------------- | ----------------- |
+| 🍎 Build · iOS Simulator      | `yarn build:ios:simulator`          | `Ambire.app`                            | No                |
+| 🍎 Build · iOS App Store      | `yarn build:ios:production`         | `Ambire.ipa`                            | Yes               |
+| 🤖 Build · Android APK        | `yarn build:android:production:apk` | `Ambire-v<VERSION>.apk` (+ armeabi-v7a) | Yes, sideload key |
+| 🤖 Build · Android Play Store | `yarn build:android:production:aab` | `Ambire.aab` (+ armeabi-v7a)            | Yes               |
 
-The shared steps live in `.github/workflows/_build-ios.yml` and `.github/workflows/_build-android.yml`. The signing material (Apple certificate and provisioning profile, Android upload keystore), the Stallion OTA credentials and all API keys come from the GitHub environment.
+The shared steps live in `.github/workflows/_build-ios.yml` and `.github/workflows/_build-android.yml`. The signing material (Apple certificate and provisioning profile, Android upload keystore for Play and the separate sideload keystore for the APK), the Stallion OTA credentials and all API keys come from the GitHub environment.
 
 ### Over-the-Air (OTA) Updates
 
