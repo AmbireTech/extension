@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useModalize } from 'react-native-modalize'
 
 import { SigningAuthRequirement } from '@ambire-common/interfaces/signingAuth'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useSecretConfirmation from '@common/hooks/useSecretConfirmation'
@@ -18,7 +19,7 @@ type Props = {
 
 /**
  * Asks the user to confirm their password or biometrics before a first time signing request goes
- * through, and remembers the dapps they confirmed for.
+ * through, and remembers the dapps they confirmed for. Mobile only - elsewhere it never prompts.
  */
 const useSigningAuth = ({ requirement, requestId }: Props) => {
   const { t } = useTranslation()
@@ -131,7 +132,7 @@ const useSigningAuth = ({ requirement, requestId }: Props) => {
       const isAlreadyAuthenticated =
         !!authenticatedFor.current && authenticatedFor.current.requestId === requestId
 
-      if (!requirement || isAlreadyAuthenticated) return false
+      if (!isMobile || !requirement || isAlreadyAuthenticated) return false
 
       onAuthenticated.current = onConfirmed
       shownRequest.current = { requirement, requestId }
