@@ -198,6 +198,10 @@ export class EthereumProvider extends EventEmitter {
 
   #providerId: number
 
+  #isDisguisedAsMetaMask = false
+
+  #onDisguiseAsMetaMask?: () => void
+
   get providerId() {
     return this.#providerId
   }
@@ -279,10 +283,17 @@ export class EthereumProvider extends EventEmitter {
     })
 
     try {
-      const { chainId, accounts, networkVersion, isUnlocked, logLevel }: any =
-        await this.requestInternalMethods({ method: 'getProviderState' })
+      const {
+        chainId,
+        accounts,
+        networkVersion,
+        isUnlocked,
+        logLevel,
+        isDisguisedAsMetaMask
+      }: any = await this.requestInternalMethods({ method: 'getProviderState' })
 
       this.setLogLevel(logLevel)
+      this.#applyDisguiseAsMetaMask(isDisguisedAsMetaMask)
       if (isUnlocked) {
         this._isUnlocked = true
         this._state.isUnlocked = true
@@ -518,5 +529,22 @@ export class EthereumProvider extends EventEmitter {
     if (rank !== undefined) this.#logLevelRank = rank
 
     this.logInfo('[setLogLevel]', nextLogLevel)
+  }
+
+  /**
+   * Registers what to run once the wallet learns this app has the MetaMask disguise turned on.
+   * Set it right after construction - the answer arrives with the first provider state, and it may
+   * already have arrived by the time this is called.
+   */
+  setOnDisguiseAsMetaMask = (callback: () => void) => {
+    this.#onDisguiseAsMetaMask = callback
+    if (this.#isDisguisedAsMetaMask) callback()
+  }
+
+  #applyDisguiseAsMetaMask = (isDisguised?: boolean) => {
+    if (!isDisguised || this.#isDisguisedAsMetaMask) return
+
+    this.#isDisguisedAsMetaMask = true
+    this.#onDisguiseAsMetaMask?.()
   }
 }
