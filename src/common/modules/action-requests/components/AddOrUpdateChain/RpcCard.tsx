@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -65,9 +66,14 @@ const RpcCard = ({
             fontSize={14}
             weight="semiBold"
             color={isNew ? theme.neutral100 : theme.primaryText}
-            style={[spacings.mtTy, isTwoColumnLayout && { maxWidth: 250 }]}
-            numberOfLines={1}
-            ellipsizeMode="tail"
+            // Wrap the full URL instead of truncating it, so the user sees exactly what they approve
+            style={[
+              spacings.mtTy,
+              isWeb && {
+                // @ts-ignore web-only style for wrapping long URLs without spaces
+                wordBreak: 'break-all'
+              }
+            ]}
           >
             {url}
           </Text>
