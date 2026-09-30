@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -24,10 +25,12 @@ const RpcCard = ({
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { isTwoColumnLayout } = useCompactLayout()
+  // In a single column the card fits its content and shrinks (scrolling the features) only
+  // when there is not enough space, instead of stretching to the bottom of the screen
+  const sizingStyle = isTwoColumnLayout ? flexbox.flex1 : { flexShrink: 1 }
+
   return (
-    <View
-      style={[flexbox.flex1, common.borderRadiusPrimary, isTwoColumnLayout && { maxHeight: 308 }]}
-    >
+    <View style={[!!children && sizingStyle, common.borderRadiusPrimary]}>
       <View
         style={[
           flexbox.directionRow,
@@ -57,9 +60,14 @@ const RpcCard = ({
             fontSize={14}
             weight="semiBold"
             color={isNew ? theme.neutral100 : theme.primaryText}
-            style={[spacings.mtTy, isTwoColumnLayout && { maxWidth: 250 }]}
-            numberOfLines={1}
-            ellipsizeMode="tail"
+            // Wrap the full URL instead of truncating it, so the user sees exactly what they approve
+            style={[
+              spacings.mtTy,
+              isWeb && {
+                // @ts-expect-error web-only style for wrapping long URLs without spaces
+                wordBreak: 'break-all'
+              }
+            ]}
           >
             {url}
           </Text>
@@ -71,7 +79,7 @@ const RpcCard = ({
           style={[
             spacings.phSm,
             spacings.pvMd,
-            flexbox.flex1,
+            sizingStyle,
             {
               backgroundColor: isNew ? theme.success100 : theme.secondaryBackground,
               borderBottomLeftRadius: BORDER_RADIUS_PRIMARY,
