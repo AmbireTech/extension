@@ -3,37 +3,100 @@ import { stringify } from '@ambire-common/libs/richJson/richJson'
 import {
   deserializeMessagePart,
   detectStructuredCloneSupport,
+  isStructuredCloneEnabled,
+  prepareMessagePart,
   STRUCTURED_CLONE_PROBE_KEY
 } from './messageSerialization'
 
 describe('detectStructuredCloneSupport', () => {
-  test('reports true when the port accepts a BigInt (structured clone)', () => {
+  test('reports supported when the port accepts a BigInt (structured clone)', () => {
     // A structured-clone channel serializes BigInt without throwing.
     const received: any[] = []
     const post = (msg: any) => received.push(msg)
 
-    expect(detectStructuredCloneSupport(post)).toBe(true)
+    expect(detectStructuredCloneSupport(post)).toBe('supported')
     // The probe carries a BigInt under the inert probe key and no messageType.
     expect(received).toHaveLength(1)
     expect(received[0][STRUCTURED_CLONE_PROBE_KEY]).toBe(BigInt(1))
     expect(received[0].messageType).toBeUndefined()
   })
 
-  test('reports false when the port rejects a BigInt (JSON serialization)', () => {
+  test('reports unsupported when only the BigInt probe is rejected (JSON serialization)', () => {
     // Mimics chrome.runtime JSON serialization, which throws on BigInt.
+    const received: any[] = []
     const post = (msg: any) => {
       JSON.stringify(msg)
+      received.push(msg)
     }
 
-    expect(detectStructuredCloneSupport(post)).toBe(false)
+    expect(detectStructuredCloneSupport(post)).toBe('unsupported')
+    // The follow-up probe is inert as well, so a UI listener ignores it.
+    expect(received).toEqual([{ [STRUCTURED_CLONE_PROBE_KEY]: 1 }])
   })
 
-  test('reports false when the port throws for any reason', () => {
+  test('reports portFailed when the port throws on any message, as a disconnected one does', () => {
     const post = () => {
-      throw new Error('Could not serialize message')
+      throw new Error('Attempting to use a disconnected port object')
     }
 
-    expect(detectStructuredCloneSupport(post)).toBe(false)
+    expect(detectStructuredCloneSupport(post)).toBe('portFailed')
+  })
+})
+
+describe('isStructuredCloneEnabled', () => {
+  test('requires the generated manifest opt-in', () => {
+    expect(isStructuredCloneEnabled({ message_serialization: 'structured_clone' })).toBe(true)
+    expect(isStructuredCloneEnabled({})).toBe(false)
+    expect(isStructuredCloneEnabled({ message_serialization: 'json' })).toBe(false)
+  })
+})
+
+describe('prepareMessagePart', () => {
+  test('normalizes a detached raw part with the legacy JSON value semantics', () => {
+    const source = {
+      nested: { secret: 'secret', toJSON: () => ({ safe: true }) },
+      array: [undefined, Symbol('ignored')],
+      objectUndefined: undefined,
+      amount: 1n,
+      notANumber: Number.NaN,
+      positiveInfinity: Number.POSITIVE_INFINITY,
+      date: new Date('2026-09-21T12:00:00.000Z')
+    }
+
+    const prepared = prepareMessagePart(source)
+
+    expect(prepared).toEqual({
+      nested: { safe: true },
+      array: [null, null],
+      amount: 1n,
+      notANumber: null,
+      positiveInfinity: null,
+      date: '2026-09-21T12:00:00.000Z'
+    })
+    expect(prepared).not.toBe(source)
+  })
+
+  test('turns every error into a plain object structured clone keeps whole', () => {
+    const cause = new TypeError('socket closed')
+    const error: Error & { code?: string; cause?: unknown } = new Error('RPC failed')
+    error.code = 'E_RPC'
+    error.cause = cause
+    const source = { estimation: { error } }
+
+    const prepared = prepareMessagePart(source)
+    const received = structuredClone(prepared).estimation.error
+    console.log('error as structured clone delivers it', received)
+
+    expect(Object.getPrototypeOf(prepared.estimation.error)).toBe(Object.prototype)
+    expect(received).toEqual({
+      message: 'RPC failed',
+      stack: error.stack,
+      code: 'E_RPC',
+      cause: { message: 'socket closed', stack: cause.stack }
+    })
+    // The source state is never touched.
+    expect(error).toBeInstanceOf(Error)
+    expect(Object.keys(error)).toEqual(['code', 'cause'])
   })
 })
 

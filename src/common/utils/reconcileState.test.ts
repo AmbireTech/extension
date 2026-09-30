@@ -655,6 +655,48 @@ describe('detachState', () => {
     expect(first.tokens[0]!.amount).toBe(1n)
     expect(second.tokens[0]!.amount).toBe(2n)
   })
+
+  it('flattens every error into a plain object with all of its own props when asked to', () => {
+    const cause = new TypeError('socket closed')
+    const outer: Error & { cause?: unknown; code?: string } = new Error('RPC failed')
+    outer.cause = cause
+    outer.code = 'E_RPC'
+
+    const copy = detachState({ estimation: { error: outer } }, { flattenErrors: true })
+
+    const copiedOuter = copy.estimation.error as unknown as Record<string, unknown>
+    console.log('flattened error', copiedOuter)
+    expect(Object.getPrototypeOf(copiedOuter)).toBe(Object.prototype)
+    expect(Object.getPrototypeOf(copiedOuter.cause)).toBe(Object.prototype)
+    expect(copiedOuter).toEqual({
+      message: 'RPC failed',
+      stack: outer.stack,
+      code: 'E_RPC',
+      cause: { message: 'socket closed', stack: cause.stack }
+    })
+    expect(Object.keys(copiedOuter).sort()).toEqual(['cause', 'code', 'message', 'stack'])
+    // The source error is never touched.
+    expect(outer).toBeInstanceOf(Error)
+    expect(Object.keys(outer)).toEqual(['cause', 'code'])
+  })
+
+  it('keeps errors error-shaped by default', () => {
+    const copy = detachState({ error: new Error('RPC failed') })
+
+    expect(copy.error).toBeInstanceOf(Error)
+    expect(copy.error.message).toBe('RPC failed')
+    expect(Object.keys(copy.error)).toEqual([])
+  })
+
+  it('turns NaN and the infinities into null only when asked to, as JSON would', () => {
+    const live = { nan: Number.NaN, list: [Number.POSITIVE_INFINITY, -Infinity, 1] }
+
+    expect(detachState(live, { normalizeNonFiniteNumbers: true })).toEqual({
+      nan: null,
+      list: [null, null, 1]
+    })
+    expect(detachState(live).nan).toBeNaN()
+  })
 })
 
 describe('errors in a snapshot', () => {

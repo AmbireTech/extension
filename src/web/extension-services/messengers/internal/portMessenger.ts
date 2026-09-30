@@ -1,9 +1,15 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { stringify } from '@ambire-common/libs/richJson/richJson'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { Action, MethodAction } from '@common/types/actions'
 import { browser } from '@web/constants/browserapi'
 
-import { deserializeMessagePart, detectStructuredCloneSupport } from './messageSerialization'
+import {
+  deserializeMessagePart,
+  detectStructuredCloneSupport,
+  isStructuredCloneEnabled,
+  prepareMessagePart
+} from './messageSerialization'
 
 export type Port = chrome.runtime.Port & {
   id: string
@@ -39,9 +45,15 @@ export type PortMessageType = {
   forceEmit?: boolean
 }
 
-// Whether the browser supports structured clone for port messages. This is probed once on the first message
-// send and cached for subsequent sends.
+// Whether the browser supports structured clone for port messages. The manifest opt-in and the probe are
+// checked on the first message send and cached for subsequent sends. A probe that failed on a broken port
+// caches nothing and is retried.
 let structuredCloneSupport: boolean | null = null
+
+type PreparedEnvelope = {
+  message: any
+  meta: any
+}
 
 /**
  * Creates a "port messenger" that can be used for communication between ui <-> background.
@@ -141,38 +153,67 @@ export class PortMessenger {
     if (!probePort) return
 
     const useStructuredClone = this.#supportsStructuredClone(probePort)
+    const preparedEnvelope = useStructuredClone ? this.#prepareEnvelope(message, meta) : null
     this.ports.forEach((port) => {
-      this.#postMessage(port, useStructuredClone, type, message, meta)
+      this.#postMessage(port, preparedEnvelope, type, message, meta)
     })
   }
 
   // sends a message to a specific port
   sendToPort: SendPortType = (port, type, message, meta = {}) => {
-    this.#postMessage(port, this.#supportsStructuredClone(port), type, message, meta)
+    const useStructuredClone = this.#supportsStructuredClone(port)
+    const preparedEnvelope = useStructuredClone ? this.#prepareEnvelope(message, meta) : null
+
+    this.#postMessage(port, preparedEnvelope, type, message, meta)
   }
 
   // Probes structured clone support once (see messageSerialization.ts) and
   // caches it. The probe posts an inert message on the given port.
   #supportsStructuredClone(probePort: chrome.runtime.Port): boolean {
-    if (structuredCloneSupport === null) {
-      structuredCloneSupport = detectStructuredCloneSupport((msg) => probePort.postMessage(msg))
+    if (structuredCloneSupport !== null) return structuredCloneSupport
+
+    // The manifest cannot change while the extension runs, so a missing opt-in is cached too.
+    const manifest = browser?.runtime?.getManifest?.() as Record<string, unknown> | undefined
+    if (!manifest || !isStructuredCloneEnabled(manifest)) {
+      structuredCloneSupport = false
+      return false
     }
+
+    const support = detectStructuredCloneSupport((msg) => probePort.postMessage(msg))
+    if (support === 'portFailed') return false
+
+    structuredCloneSupport = support === 'supported'
     return structuredCloneSupport
+  }
+
+  #prepareEnvelope(message: any, meta: MessageMeta): PreparedEnvelope | null {
+    try {
+      return { message: prepareMessagePart(message), meta: prepareMessagePart(meta) }
+    } catch (error) {
+      console.error(
+        'Could not prepare a structured clone port message, falling back to richJson',
+        error
+      )
+      captureException(error)
+      return null
+    }
   }
 
   #postMessage(
     port: chrome.runtime.Port,
-    useStructuredClone: boolean,
+    preparedEnvelope: PreparedEnvelope | null,
     type: MessageType,
     message: any,
     meta: MessageMeta
   ) {
-    if (useStructuredClone) {
+    let structuredCloneError: unknown
+    if (preparedEnvelope) {
       try {
-        port.postMessage({ messageType: type, message, meta })
+        port.postMessage({ messageType: type, ...preparedEnvelope })
         return
       } catch (error) {
-        console.error('Structured clone postMessage failed, falling back to richJson', error)
+        console.warn('Structured clone port message failed, falling back to richJson', error)
+        structuredCloneError = error
       }
     }
 
@@ -181,7 +222,11 @@ export class PortMessenger {
     } catch (error) {
       console.error('Error in port.postMessage', error)
       this.onSendError?.(error)
+      return
     }
+
+    // The port still works, so the structured clone failure came from the message itself.
+    if (structuredCloneError) captureException(structuredCloneError)
   }
 
   #removePort(port: Port) {
