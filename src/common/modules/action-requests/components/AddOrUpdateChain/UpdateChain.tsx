@@ -1,25 +1,22 @@
 import React from 'react'
-import { Trans, useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import Banner from '@common/components/Banner'
-import ManifestImage from '@common/components/ManifestImage'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
+import RequestingDappInfo from '@common/components/RequestingDappInfo'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
-import getStyles from '@common/modules/action-requests/styles/styles'
 import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
 
 import RpcCard from './RpcCard'
 
@@ -46,7 +43,7 @@ const UpdateChain = ({
   rpcUrls,
   rpcUrlIndex
 }: UpdateChainProps) => {
-  const { styles, theme } = useTheme(getStyles)
+  const { theme } = useTheme()
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
@@ -58,56 +55,22 @@ const UpdateChain = ({
         <Text
           weight="medium"
           fontSize={20 * responsiveSizeMultiplier}
-          style={{
-            marginBottom: isCompactLayout ? SPACING : SPACING_MD * responsiveSizeMultiplier,
-            textAlign: isCompactLayout ? 'center' : 'left'
-          }}
+          style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}
         >
           {t('Update network')}
         </Text>
-
-        <View
-          style={[
-            styles.dappInfoContainer,
-            {
-              marginBottom: isCompactLayout ? SPACING : SPACING_MD * responsiveSizeMultiplier
-            }
-          ]}
-        >
-          <ManifestImage
-            uri={icon}
-            size={50 * responsiveSizeMultiplier}
-            fallback={() => <ManifestFallbackIcon />}
-            containerStyle={
-              isCompactLayout
-                ? spacings.mbSm
-                : {
-                    marginRight: SPACING_MD * responsiveSizeMultiplier
-                  }
-            }
-          />
-
-          <Trans values={{ name: name || 'The App' }}>
-            <Text style={isCompactLayout ? text.center : {}}>
-              <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
-                {t('Allow ')}
-              </Text>
-              <Text fontSize={20 * responsiveSizeMultiplier} weight="semiBold">
-                {'{{name}} '}
-              </Text>
-              <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
-                {t(`to update ${networkAlreadyAdded.name}`)}
-              </Text>
-            </Text>
-          </Trans>
-        </View>
+        <RequestingDappInfo
+          name={name}
+          icon={icon}
+          intentText={t('wants to update {{network}}', { network: networkAlreadyAdded.name })}
+        />
         <Text
           fontSize={16 * responsiveSizeMultiplier}
           weight="medium"
           appearance="secondaryText"
           style={{
-            marginBottom: SPACING * responsiveSizeMultiplier,
-            textAlign: isCompactLayout ? 'center' : 'left'
+            marginTop: SPACING_MD * responsiveSizeMultiplier,
+            marginBottom: SPACING * responsiveSizeMultiplier
           }}
         >
           {t('This site is requesting to update your default RPC')}
