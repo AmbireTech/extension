@@ -4,13 +4,12 @@ description: >
   Generates public GitHub release changelogs from merge commits. Compares the release branch/tag
   against main by default, extracts merged PRs, links every entry to its GitHub PR, pulls PR details
   when merge metadata is unclear, marks marketing-worthy changes with 📣, and always appends a Full
-  Changelog compare link.
+  Changelog compare link. Use when the user asks to create, update, or review a changelog for a release.
 ---
 
 # Changelogger
 
 Generate a public GitHub Release changelog from git history.
-Use this skill when the user asks to create, update, or review a changelog for a release.
 
 Default assumption:
 
@@ -166,7 +165,7 @@ Alternatively use a loop:
 
 ```bash
 for n in 1234 1235 1236; do
-  gh pr view $n --json number,title,body,labels,url &
+  gh pr view $n --json number,title,body,labels,url,files > "$TMPDIR/pr-$n.json" &
 done
 wait
 ```
@@ -318,7 +317,7 @@ Good:
 * 📣 Added: dApp verification banners to signing screens [#7052](https://github.com/AmbireTech/ambire-app/pull/7052)
   * Shows verification status on SignMessage and SignAccountOp screens.
   * Requires Hold to Proceed when risk-related banners are present.
-* Changed: QA workflow — separate HTML reports per test group [#7119](https://github.com/AmbireTech/ambire-app/pull/7119)
+* Changed: QA workflow: separate HTML reports per test group [#7119](https://github.com/AmbireTech/ambire-app/pull/7119)
 * Fixed: TypeScript errors from dApp interface changes [#7163](https://github.com/AmbireTech/ambire-app/pull/7163)
 ```
 
