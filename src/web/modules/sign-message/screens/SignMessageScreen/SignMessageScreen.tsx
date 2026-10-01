@@ -4,14 +4,10 @@ import { StyleSheet, View } from 'react-native'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
-<<<<<<< HEAD
-import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useCompactLayout from '@common/hooks/useCompactLayout'
-=======
->>>>>>> v2
+import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
-import useTheme from '@common/hooks/useTheme'
 import Main from '@common/modules/sign-message/components/Contents/main'
 import SignInWithEthereum from '@common/modules/sign-message/components/Contents/signInWithEthereum'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'

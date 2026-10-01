@@ -8,11 +8,7 @@ import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
-<<<<<<< HEAD
-import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useCompactLayout from '@common/hooks/useCompactLayout'
-=======
->>>>>>> v2
 import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
