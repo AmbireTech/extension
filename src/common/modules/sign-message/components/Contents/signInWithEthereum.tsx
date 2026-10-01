@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/consts/autoLogin'
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
+import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Alert from '@common/components/Alert'
 import FatToggle from '@common/components/FatToggle'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -348,15 +349,17 @@ const SignInWithEthereum = ({
                     />
                   </>
                 )}
-                {row.label !== 'Resources' && row.label !== 'Nonce' && (
-                  <Value
-                    responsiveSizeMultiplier={responsiveSizeMultiplier}
-                    // The address must stay fully readable, so it wraps onto a second line
-                    // instead of being cut off at the end
-                    withWrap={row.label === 'Account'}
-                  >
-                    {row.value}
-                  </Value>
+                {row.label === 'Account' && typeof row.value === 'string' && (
+                  <>
+                    {/* Truncated in the middle so both ends stay visible; the full address is in the tooltip */}
+                    <Value responsiveSizeMultiplier={responsiveSizeMultiplier} tooltipId="account">
+                      {shortenAddress(row.value, 18)}
+                    </Value>
+                    <Tooltip content={row.value} id="account" />
+                  </>
+                )}
+                {row.label !== 'Resources' && row.label !== 'Nonce' && row.label !== 'Account' && (
+                  <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>{row.value}</Value>
                 )}
               </Row>
             ))}
