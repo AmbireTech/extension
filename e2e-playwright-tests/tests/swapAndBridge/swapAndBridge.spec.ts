@@ -111,8 +111,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
       sendToken: tokens.usdc.base,
       receiveToken: tokens.usdc.optimism,
       bridgeAmount: 0.01,
-      assertNoInitialTx: true,
-      signAuth: false
+      assertNoInitialTx: true
     })
   })
 
