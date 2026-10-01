@@ -70,7 +70,8 @@ export class RecoveryPhrasesPage extends BasePage {
     const passphraseEl = this.page.getByTestId(
       selectors.keystoreMigration.recoveryPhrasePassphraseValue
     )
-    const passphrase = (await passphraseEl.isVisible()) ? await passphraseEl.innerText() : null
+    // Read raw text so passphrase checks do not depend on layout whitespace.
+    const passphrase = (await passphraseEl.isVisible()) ? await passphraseEl.textContent() : null
 
     // Close the manage-phrase sheet and wait for the visible count to drop by 1.
     // Using count-1 (not 0) is correct because other hidden-but-DOM-present sheets in

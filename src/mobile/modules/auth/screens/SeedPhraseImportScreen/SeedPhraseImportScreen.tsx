@@ -13,6 +13,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
+import normalizeSeedPhrase from '@common/modules/auth/hooks/useSeedPhraseImport/normalizeSeedPhrase'
 import getStyles from '@common/modules/auth/styles/seedPhraseImportScreenStyles'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -68,7 +69,7 @@ const SeedPhraseImportScreen = () => {
               <View style={[styles.overlay, { paddingVertical: 16, paddingHorizontal: 13 }]}>
                 {words.map((word, index) => {
                   const isWhitespace = /^\s+$/.test(word)
-                  const cleanWord = word.trim().toLowerCase()
+                  const cleanWord = normalizeSeedPhrase(word)
                   const isValidWord = isWhitespace || wordlists.english?.includes(cleanWord)
 
                   if (isWhitespace) {
