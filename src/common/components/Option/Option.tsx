@@ -65,6 +65,7 @@ const Option = ({
       {...bindAnim}
       testID={testID}
       disabled={disabled}
+      accessibilityRole="button"
       ref={ref}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
