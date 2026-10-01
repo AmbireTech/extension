@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Dimensions,
+  StyleSheet,
   InteractionManager,
   LayoutChangeEvent,
   GestureResponderEvent,
@@ -15,6 +16,7 @@ import Reanimated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming
 } from 'react-native-reanimated'
 
@@ -24,6 +26,7 @@ import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
+import useCollapseOnScroll from '@common/modules/dashboard/hooks/useCollapseOnScroll'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -60,6 +63,9 @@ const PULL_RESISTANCE = 0.5
 
 // The gap the pages are held open by while the refresh runs, sized to the spinner
 const PULL_SPINNER_HEIGHT = 56
+
+// Same as the floating bar, which hides and shows together with the overview
+const OVERVIEW_SPRING_CONFIG = { damping: 20, stiffness: 90, overshootClamping: true }
 
 /**
  * The work the carousel may only do while the dashboard is the screen the user is on.
@@ -134,6 +140,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   initAllTabs,
   onRefresh,
   refreshing,
+  overviewExpansion,
+  overviewHeight = 0,
   children
 }) => {
   const { styles } = useTheme(getStyles)
@@ -144,6 +152,40 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const [pageSize, setPageSize] = useState({ width: Dimensions.get('window').width, height: 0 })
   const [bannersHeight, setBannersHeight] = useState(0)
   const [tabsHeight, setTabsHeight] = useState(0)
+
+  // The page grows by the overview's height once it is collapsed, as it does on web
+  const {
+    isOverviewCollapsed,
+    onScroll: onPageScroll,
+    reset: expandOverview
+  } = useCollapseOnScroll(overviewHeight, overviewHeight)
+
+  // The open overview pushes the pages down by a transform, so a collapse resizes nothing
+  // while it animates. The pages are only shortened to fit below it once it is fully open,
+  // which leaves their end reachable, and they are made tall again before it collapses.
+  const [isPagerShortened, setIsPagerShortened] = useState(true)
+
+  useEffect(() => {
+    if (!overviewExpansion) return
+
+    if (isOverviewCollapsed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsPagerShortened(false)
+      overviewExpansion.set(withSpring(0, OVERVIEW_SPRING_CONFIG))
+
+      return
+    }
+
+    overviewExpansion.set(
+      withSpring(1, OVERVIEW_SPRING_CONFIG, (finished) => {
+        if (finished) runOnJS(setIsPagerShortened)(true)
+      })
+    )
+  }, [isOverviewCollapsed, overviewExpansion])
+
+  const overviewPushStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: (overviewExpansion ? overviewExpansion.value : 0) * overviewHeight }]
+  }))
   const [renderedTabs, setRenderedTabs] = useState<Partial<Record<TabType, boolean>>>(() => ({
     [openTab]: true
   }))
@@ -280,10 +322,13 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     // pages to the top when it started
     if (isPagerDrivenRef.current) return
 
-    if (hasTabChanged) takePagesToTop()
+    if (hasTabChanged) {
+      takePagesToTop()
+      expandOverview()
+    }
 
     scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated: hasTabChanged })
-  }, [openTab, openTabIndex, pageSize.width, takePagesToTop])
+  }, [expandOverview, openTab, openTabIndex, pageSize.width, takePagesToTop])
 
   // Only the banners scroll out of view; the tabs row stays. With no banners it maps to a
   // constant 0; never a static 0, or the native view keeps the last banner collapse.
@@ -304,8 +349,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const onScrollBeginDrag = useCallback(() => {
     isPagerDrivenRef.current = true
     takePagesToTop()
+    expandOverview()
     renderTabs([TABS[openTabIndex - 1], TABS[openTabIndex + 1]])
-  }, [openTabIndex, renderTabs, takePagesToTop])
+  }, [expandOverview, openTabIndex, renderTabs, takePagesToTop])
 
   // The open tab follows the pager past the halfway point, so the tabs row does not wait
   // for the swipe to settle. Only under a gesture: scrolling to a pressed tab reports
@@ -344,10 +390,12 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       pageHeight: pageSize.height,
       registerPage,
       reportScrollOffset,
+      onPageScroll,
       registerFloatingBar
     }),
     [
       bannersHeight,
+      onPageScroll,
       pageSize.height,
       registerFloatingBar,
       registerPage,
@@ -538,58 +586,68 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   return (
     <View style={styles.container}>
       <WhileFocused openTabIndex={openTabIndex} renderTabs={renderTabs} initAllTabs={initAllTabs} />
-      <View style={flexbox.flex1} onLayout={onLayout}>
-        <DashboardCarouselContext.Provider value={carousel}>
-          {(isPulling || !!refreshing) && (
-            <Reanimated.View
-              pointerEvents="none"
-              style={[styles.pullSpinner, { top: bannersHeight + tabsHeight }, spinnerStyle]}
-            >
-              <Spinner style={styles.pullSpinnerIcon} />
-            </Reanimated.View>
-          )}
-          <GestureDetector gesture={pullGesture}>
-            <Reanimated.View style={[flexbox.flex1, pagerStyle]}>
-              <ScrollView
-                ref={scrollRef}
-                horizontal
-                pagingEnabled
-                directionalLockEnabled
-                showsHorizontalScrollIndicator={false}
-                decelerationRate="fast"
-                scrollEventThrottle={16}
-                onScroll={onPagerScroll}
-                onScrollBeginDrag={onScrollBeginDrag}
-                onMomentumScrollEnd={onMomentumScrollEnd}
+      <Reanimated.View
+        style={[
+          StyleSheet.absoluteFill,
+          { bottom: isPagerShortened ? overviewHeight : 0 },
+          overviewPushStyle
+        ]}
+      >
+        <View style={flexbox.flex1} onLayout={onLayout}>
+          <DashboardCarouselContext.Provider value={carousel}>
+            {(isPulling || !!refreshing) && (
+              <Reanimated.View
+                pointerEvents="none"
+                style={[styles.pullSpinner, { top: bannersHeight + tabsHeight }, spinnerStyle]}
               >
-                {pages}
-              </ScrollView>
-            </Reanimated.View>
-          </GestureDetector>
-        </DashboardCarouselContext.Provider>
-      </View>
-      {/* The banners and the tabs row are account wide, so they are laid over the
+                <Spinner style={styles.pullSpinnerIcon} />
+              </Reanimated.View>
+            )}
+            <GestureDetector gesture={pullGesture}>
+              <Reanimated.View style={[flexbox.flex1, pagerStyle]}>
+                <ScrollView
+                  ref={scrollRef}
+                  horizontal
+                  pagingEnabled
+                  directionalLockEnabled
+                  showsHorizontalScrollIndicator={false}
+                  decelerationRate="fast"
+                  scrollEventThrottle={16}
+                  onScroll={onPagerScroll}
+                  onScrollBeginDrag={onScrollBeginDrag}
+                  onMomentumScrollEnd={onMomentumScrollEnd}
+                >
+                  {pages}
+                </ScrollView>
+              </Reanimated.View>
+            </GestureDetector>
+          </DashboardCarouselContext.Provider>
+        </View>
+        {/* The banners and the tabs row are account wide, so they are laid over the
       pager instead of moving with it. Rendered after it, because zIndex alone is
       not enough to keep them on top on Android. The pages used to render them
       inside a list that adds this padding on top of the one the tabs row has */}
-      <Animated.View
-        onStartShouldSetResponderCapture={onHeaderTouchStart}
-        onMoveShouldSetResponderCapture={onHeaderTouchMove}
-        onResponderMove={onHeaderDrag}
-        onResponderRelease={endHeaderPull}
-        onResponderTerminate={endHeaderPull}
-        style={[styles.header, spacings.phSm, { transform: [{ translateY: headerTranslateY }] }]}
-      >
-        <View onLayout={onBannersLayout}>
-          <DashboardBanners />
-        </View>
-        <View onLayout={onTabsLayout}>
-          <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
-        </View>
-      </Animated.View>
+        <Animated.View
+          onStartShouldSetResponderCapture={onHeaderTouchStart}
+          onMoveShouldSetResponderCapture={onHeaderTouchMove}
+          onResponderMove={onHeaderDrag}
+          onResponderRelease={endHeaderPull}
+          onResponderTerminate={endHeaderPull}
+          style={[styles.header, spacings.phSm, { transform: [{ translateY: headerTranslateY }] }]}
+        >
+          <View onLayout={onBannersLayout}>
+            <DashboardBanners />
+          </View>
+          <View onLayout={onTabsLayout}>
+            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
+          </View>
+        </Animated.View>
+      </Reanimated.View>
       {/* Outside the pager, so a swipe doesn't carry it along, and only what the open
-      tab put in it changes */}
-      {!!openTabFloatingBar && <FloatingBottomBar {...openTabFloatingBar} isHidden={false} />}
+      tab put in it changes. Hidden together with the overview */}
+      {!!openTabFloatingBar && (
+        <FloatingBottomBar {...openTabFloatingBar} isHidden={isOverviewCollapsed} />
+      )}
     </View>
   )
 }

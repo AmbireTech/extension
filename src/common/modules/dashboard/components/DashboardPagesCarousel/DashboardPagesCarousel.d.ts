@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react'
+import type { SharedValue } from 'react-native-reanimated'
 
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 
@@ -15,6 +16,13 @@ export interface DashboardPagesCarouselProps {
   onRefresh?: () => void
   /** Holds the pages open on the spinner for as long as the refresh runs. */
   refreshing?: boolean
+  /**
+   * How far the overview laid over the pager is open, 1 fully. Driven by the carousel, which
+   * collapses it while the open page is scrolled down.
+   */
+  overviewExpansion?: SharedValue<number>
+  /** How far the open overview pushes the pager down. */
+  overviewHeight?: number
   children: ReactNode
 }
 

@@ -19,13 +19,20 @@ import SessionIdInUrl from './SessionIdInUrl'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
+import type { DashboardPagesCarouselProps } from '../DashboardPagesCarousel/DashboardPagesCarousel'
+
 interface Props {
-  /** Only web collapses the overview and hides the search on scroll. */
+  /** Collapses the overview and hides the floating bar on scroll. The mobile carousel does it itself. */
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   animatedOverviewHeight: Animated.Value
   isSearchHidden?: boolean
+  /** Called whenever another tab is opened, as its page starts at the top. */
+  onTabChange?: () => void
   refreshing?: boolean
   onRefresh?: () => void
+  /** Mobile only, where the carousel collapses the overview laid over it. */
+  overviewExpansion?: DashboardPagesCarouselProps['overviewExpansion']
+  overviewHeight?: number
 }
 
 const selectDashboardNetworkFilter = (
@@ -38,7 +45,10 @@ const DashboardPages = ({
   isSearchHidden,
   animatedOverviewHeight,
   refreshing,
-  onRefresh
+  onRefresh,
+  onTabChange,
+  overviewExpansion,
+  overviewHeight
 }: Props) => {
   const { t } = useTranslation()
   const route = useRoute()
@@ -108,6 +118,10 @@ const DashboardPages = ({
     }
   }, [openTab, prevOpenTab, initTab])
 
+  useEffect(() => {
+    onTabChange?.()
+  }, [onTabChange, openTab])
+
   return (
     <>
       <SessionIdInUrl sessionId={sessionId} />
@@ -118,6 +132,8 @@ const DashboardPages = ({
         initAllTabs={initAllTabs}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        overviewExpansion={overviewExpansion}
+        overviewHeight={overviewHeight}
       >
         <Tokens
           openTab={pagesOpenTab}

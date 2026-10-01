@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import { Animated } from 'react-native'
+import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import { NativeGesture } from 'react-native-gesture-handler'
 
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
@@ -43,6 +43,8 @@ export interface DashboardCarouselContextValue {
    * tell a drag from the page being scrolled.
    */
   reportScrollOffset: (offset: number) => void
+  /** The open page's scroll, which collapses the overview and hides the floating bar. */
+  onPageScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   /**
    * The bar belongs to the dashboard rather than to a page, so it is rendered above
    * the pager and stays put through a swipe. A page registers what it wants in it,

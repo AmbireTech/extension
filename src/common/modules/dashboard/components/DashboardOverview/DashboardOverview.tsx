@@ -11,7 +11,7 @@ import DashboardHeader from '@common/modules/dashboard/components/DashboardHeade
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
-import spacings, { SPACING, SPACING_SM, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
@@ -20,6 +20,8 @@ import BalanceAffectingErrors from './BalanceAffectingErrors'
 import ColibriVerificationBadge from './ColibriVerificationBadge'
 import GasTankButton from './GasTankButton'
 import { OverviewBackground } from './OverviewBackground'
+import OverviewCollapsible from './OverviewCollapsible'
+import type { OverviewCollapsibleProps } from './OverviewCollapsible/OverviewCollapsible'
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
@@ -34,6 +36,9 @@ interface Props {
     height: number
   }
   setDashboardOverviewSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
+  /** Mobile only, web is collapsed through `animatedOverviewHeight`. */
+  expansion?: OverviewCollapsibleProps['expansion']
+  onCollapsibleLayoutChange?: OverviewCollapsibleProps['onLayoutChange']
 }
 
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
@@ -41,7 +46,9 @@ const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
   animatedOverviewHeight,
-  setDashboardOverviewSize
+  setDashboardOverviewSize,
+  expansion,
+  onCollapsibleLayoutChange
 }) => {
   const { theme } = useTheme(getStyles)
   const { state: isOffline } = useController('MainController', 'isOffline')
@@ -100,8 +107,9 @@ const DashboardOverview: FC<Props> = ({
           isWeb && spacings.phSm,
           isMobile && spacings.phTy,
           {
+            // The rest of the open padding collapses with the content on mobile
             paddingBottom: isMobile
-              ? SPACING_SM
+              ? SPACING_TY
               : animatedOverviewHeight.interpolate({
                   inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
                   outputRange: [SPACING_TY, SPACING],
@@ -120,17 +128,10 @@ const DashboardOverview: FC<Props> = ({
         <OverviewBackground address={account?.addr || ''} />
         <View style={{ zIndex: 2 }}>
           <DashboardHeader />
-          <Animated.View
-            style={{
-              ...flexbox.alignCenter,
-              paddingTop: animatedOverviewHeight.interpolate({
-                inputRange: [0, SPACING_XL],
-                outputRange: [0, isMobile ? SPACING_SM : SPACING],
-                extrapolate: 'clamp'
-              }),
-              maxHeight: animatedOverviewHeight,
-              overflow: isWeb ? 'hidden' : 'visible'
-            }}
+          <OverviewCollapsible
+            animatedOverviewHeight={animatedOverviewHeight}
+            expansion={expansion}
+            onLayoutChange={onCollapsibleLayoutChange}
           >
             {/* These width: 100%s are needed to make sure that hovering the entire row of the balance
             displays the refresh button */}
@@ -223,7 +224,7 @@ const DashboardOverview: FC<Props> = ({
               </View>
             </View>
             <Routes />
-          </Animated.View>
+          </OverviewCollapsible>
         </View>
       </Animated.View>
     </View>

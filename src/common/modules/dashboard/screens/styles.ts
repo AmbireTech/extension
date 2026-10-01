@@ -6,6 +6,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   container: ViewStyle
+  overviewOverlay: ViewStyle
 }
 
 export const NEUTRAL_BACKGROUND = '#1418333D'
@@ -20,6 +21,14 @@ const getStyles = (theme: ThemeProps) =>
       // Anchors MobileAppPromoBanner's `position: 'absolute'`, so it floats within
       // this popup/side-panel/tab content box instead of an unrelated ancestor.
       position: 'relative',
+      backgroundColor: theme.primaryBackground
+    },
+    // Opaque, so the pages scrolled under it don't show around the overview card
+    overviewOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
       backgroundColor: theme.primaryBackground
     }
   })

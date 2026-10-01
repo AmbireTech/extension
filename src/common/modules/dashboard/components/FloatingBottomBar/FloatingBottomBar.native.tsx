@@ -6,7 +6,7 @@ import {
 } from 'react-native-keyboard-controller'
 import Animated, {
   useAnimatedStyle,
-  useDerivedValue,
+  useAnimatedReaction,
   useSharedValue,
   withSpring
 } from 'react-native-reanimated'
@@ -63,14 +63,28 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     navigate(ROUTES.qrReader)
   }, [navigate])
 
-  const animatedBottom = useDerivedValue(() => {
-    const toValue = isHidden ? -60 - safeBottom : SPACING + safeBottom
-    return withSpring(toValue, {
-      damping: 20,
-      stiffness: 90,
-      overshootClamping: true
-    })
-  }, [isHidden, safeBottom])
+  const animatedBottom = useSharedValue(SPACING + safeBottom)
+
+  // Kept visible while the keyboard is open, so the search being typed into stays on screen.
+  // Reacting only to a change keeps the keyboard's per-frame height from restarting the spring.
+  useAnimatedReaction(
+    () => {
+      const isKeyboardOpen = !isKeyboardHeightStale.value && Math.abs(height.value) > 0
+
+      return isHidden && !isKeyboardOpen
+    },
+    (shouldHide, wasHidden) => {
+      if (shouldHide === wasHidden) return
+
+      const toValue = shouldHide ? -60 - safeBottom : SPACING + safeBottom
+      animatedBottom.value = withSpring(toValue, {
+        damping: 20,
+        stiffness: 90,
+        overshootClamping: true
+      })
+    },
+    [isHidden, safeBottom]
+  )
 
   const animatedStyle = useAnimatedStyle(() => {
     const keyboardOffset = isKeyboardHeightStale.value ? 0 : Math.abs(height.value)
