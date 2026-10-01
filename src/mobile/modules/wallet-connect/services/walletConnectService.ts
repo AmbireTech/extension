@@ -90,6 +90,17 @@ function parseEip155ChainIds(chains?: string[]): number[] {
     .filter((chainId) => Number.isFinite(chainId))
 }
 
+/**
+ * The CAIP-2 chains a session approved. Sessions settled before we started setting
+ * `chains` only carry them in their CAIP-10 `accounts` (`eip155:<chainId>:<address>`).
+ */
+function getSessionChains(namespace: SessionTypes.Namespace): string[] {
+  if (namespace.chains?.length) return [...namespace.chains]
+
+  const chains = namespace.accounts.map((account) => account.split(':').slice(0, 2).join(':'))
+  return [...new Set(chains)]
+}
+
 function guessDappName(rawName: string, url: string) {
   try {
     const host = new URL(url).hostname.replace(/^www\./, '')
@@ -235,7 +246,10 @@ export const initWalletConnect = async (
               native: 'ambire://wc',
               universal: 'https://ambire.com/wc'
             }
-          }
+          },
+          // The SDK otherwise holds every request until the previous one is answered,
+          // so a second dapp request can't reach the wallet while the first is pending
+          signConfig: { disableRequestQueue: true }
         }),
         new Promise<WalletKitType>((_, reject) =>
           setTimeout(() => reject(new Error('WalletKit initialization timed out (15s)')), 15000)
@@ -351,7 +365,8 @@ export const initWalletConnect = async (
                 providerId: 1,
                 topic,
                 tabId: getWcTabIdFromTopic(topic),
-                isWalletConnect: true
+                isWalletConnect: true,
+                chainId: parseEip155ChainIds([params.chainId])[0]
               }
             },
             undefined,
@@ -606,7 +621,8 @@ export const respondToWalletConnectRequest = async (topic: string, response: any
 export const approveWalletConnectSession = async (
   proposalId: number,
   accounts: string[],
-  dispatch: DispatchFn
+  dispatch: DispatchFn,
+  enabledChainIds?: number[]
 ) => {
   if (!walletKit) return
 
@@ -625,19 +641,37 @@ export const approveWalletConnectSession = async (
 
   const namespaces: any = {}
 
-  const allNamespaces = { ...requiredNamespaces, ...optionalNamespaces }
-  if (allNamespaces.eip155) {
+  const required = requiredNamespaces?.eip155
+  const optional = optionalNamespaces?.eip155
+  if (required || optional) {
+    const requiredChains = required?.chains ?? []
+    const optionalChains = (optional?.chains ?? []).filter((c) => !requiredChains.includes(c))
+    // Chains left out of the session make the dapp ask us to switch (and then add) them, like
+    // an injected wallet. Required ones must stay, or the session won't settle.
+    const enabledOptionalChains = enabledChainIds
+      ? optionalChains.filter((c) => enabledChainIds.includes(parseEip155ChainIds([c])[0]!))
+      : optionalChains
+    const approvedChains = [...requiredChains, ...enabledOptionalChains]
+    // A session needs at least one chain - it gets rejected per request if not enabled by then
+    const chains = approvedChains.length ? approvedChains : [optionalChains[0] ?? 'eip155:1']
+
+    const methods = [...(required?.methods ?? []), ...(optional?.methods ?? [])]
+    const events = [...(required?.events ?? []), ...(optional?.events ?? [])]
+
     namespaces.eip155 = {
-      accounts:
-        allNamespaces.eip155.chains?.map((c: string) => accounts.map((a) => `${c}:${a}`)).flat() ||
-        accounts.map((a: string) => `eip155:1:${a}`),
-      methods: allNamespaces.eip155.methods || [
-        'personal_sign',
-        'eth_sendTransaction',
-        'eth_signTypedData_v4',
-        'wallet_switchEthereumChain'
+      chains,
+      accounts: chains.flatMap((c) => accounts.map((a) => `${c}:${a}`)),
+      // The switch/add methods must be approved, or the dapp can't reach us for left-out chains
+      methods: [
+        ...new Set([
+          ...(methods.length
+            ? methods
+            : ['personal_sign', 'eth_sendTransaction', 'eth_signTypedData_v4']),
+          'wallet_switchEthereumChain',
+          'wallet_addEthereumChain'
+        ])
       ],
-      events: allNamespaces.eip155.events || ['accountsChanged', 'chainChanged']
+      events: [...new Set(events.length ? events : ['accountsChanged', 'chainChanged'])]
     }
   }
 
@@ -726,7 +760,8 @@ export const handleWcSessionBroadcast = async (payload: {
           let newAccounts = namespaces.eip155.accounts
 
           if (payload.event === 'accountsChanged') {
-            const chains = namespaces.eip155.chains || [`eip155:${payload.chainId}`]
+            const sessionChains = getSessionChains(namespaces.eip155)
+            const chains = sessionChains.length ? sessionChains : [`eip155:${payload.chainId}`]
             newAccounts = chains
               .map((c: string) => payload.data.map((a: string) => `${c}:${a}`))
               .flat()
@@ -743,7 +778,7 @@ export const handleWcSessionBroadcast = async (payload: {
               .filter((addr: string | undefined): addr is string => !!addr)
             const uniqueAddresses = [...new Set(currentAddresses)]
 
-            const chains = namespaces.eip155.chains || []
+            const chains = getSessionChains(namespaces.eip155)
             if (!chains.includes(`eip155:${newChain}`)) {
               chains.push(`eip155:${newChain}`)
             }
