@@ -863,7 +863,7 @@ const DappWebViewScreen = () => {
             >
               <GlobeIcon />
             </View>
-            <Text weight="medium" appearance="secondaryText">
+            <Text weight="medium" appearance="secondaryText" style={flexbox.flex1}>
               Open "{item.query}"
             </Text>
           </AnimatedPressable>
@@ -894,7 +894,7 @@ const DappWebViewScreen = () => {
             >
               <GoogleIcon />
             </View>
-            <Text weight="medium" appearance="secondaryText">
+            <Text weight="medium" appearance="secondaryText" style={flexbox.flex1}>
               Search Google for "{item.query}"
             </Text>
           </AnimatedPressable>
@@ -1283,6 +1283,9 @@ const DappWebViewScreen = () => {
         onRenderProcessGone={handleRenderProcessGone}
         onContentProcessDidTerminate={handleRenderProcessGone}
         webviewDebuggingEnabled={__DEV__}
+        // If not set, on the newer Fabric architecture iOS scrolling loses its momentum
+        // almost immediately and feels choppy instead of smooth like in Safari.
+        decelerationRate="normal"
         nestedScrollEnabled={true}
         pullToRefreshEnabled={!isAndroid}
         onScroll={isAndroid ? handleWebViewScroll : undefined}

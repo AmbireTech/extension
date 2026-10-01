@@ -438,9 +438,7 @@ const init = async () => {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
               } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
                 autoLockCtrl.setLastActiveTime()
-                await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
-                  mainCtrl.selectedAccount.account?.addr
-                ])
+                await mainCtrl.dapps.broadcastUnlock()
               }
               backgroundState.isUnlocked = keystoreCtrl.isUnlocked
             }

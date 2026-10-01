@@ -6,9 +6,9 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -52,7 +52,7 @@ const CollectibleModal = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
   // No actions on a collectible that is only being previewed (in a simulation)
   const shouldDisplayHideCollectionAction = !hideSendNft && !!canHideCollectible

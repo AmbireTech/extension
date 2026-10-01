@@ -6,10 +6,10 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import NoEntryIcon from '@common/assets/svg/NoEntryIcon/NoEntryIcon'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { default as flexbox } from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import ButtonWithLoader from '../ButtonWithLoader/ButtonWithLoader'
 import getStyles from './styles'
@@ -62,7 +62,7 @@ const SafeKeyWrapper = ({
 }: Props) => {
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout: withMobileLayout } = useCompactLayout()
 
   return (
     <View style={style}>

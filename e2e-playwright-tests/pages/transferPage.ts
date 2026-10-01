@@ -1,4 +1,4 @@
-import { baParams, KEYSTORE_PASS } from 'constants/env'
+import { baParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import Token from 'interfaces/token'
 import { SpeculosDevice } from 'libs/speculos-device/device'
@@ -123,8 +123,7 @@ export class TransferPage extends BasePage {
     ledgerSimulatorControls,
     holdProceedButton = true,
     awaitConfirmation = true,
-    assertPortfolioRefreshScopedToSendNetwork = true,
-    signAuth = true
+    assertPortfolioRefreshScopedToSendNetwork = true
   }: {
     sendToken: Token
     feeToken?: Token
@@ -140,7 +139,6 @@ export class TransferPage extends BasePage {
     // session the app's periodic (every 2 min) all-network portfolio refresh can land inside that
     // window and fail the check, so shared-state callers must set this to false.
     assertPortfolioRefreshScopedToSendNetwork?: boolean
-    signAuth?: boolean
   }): Promise<boolean> {
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
@@ -181,29 +179,9 @@ export class TransferPage extends BasePage {
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
 
-
-      if (signAuth) {
-        const signConfirmButton = this.page.getByTestId(selectors.transaction.signConfirmButton)
-        const signingAuthRequired = await signConfirmButton
-          .waitFor({ state: 'visible', timeout: 5000 })
-          .then(() => true)
-          .catch(() => false)
-
-        if (signingAuthRequired) {
-          // submit button is disabled before entering pass
-          await expect(signConfirmButton).toHaveAttribute('aria-disabled', 'true', {
-            timeout: 60000
-          })
-
-          await this.page.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
-
-          await expect(signConfirmButton).not.toHaveAttribute('aria-disabled', 'true', {
-            timeout: 60000
-          })
-
-          await signConfirmButton.click()
-        }
-      }
+      // The signing authentication (password/biometrics re-confirmation) modal is mobile-only -
+      // on web the keystore signs directly once signButton is clicked, with nothing further to
+      // confirm here.
 
       // Accept dual choice modal if fee difference is below 0.1$
       const modalTitle = this.page.getByTestId(selectors.transaction.dualChoiceModalTitle)
