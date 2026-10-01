@@ -16,7 +16,6 @@ import { MainController } from '@ambire-common/controllers/main/main'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
-import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/rpc'
@@ -564,22 +563,6 @@ const init = async () => {
       },
       resolveViewRoute: (view: View) => resolveViewRoute(mainCtrl, view)
     }
-  })
-
-  trezorCtrl.configureOneKeySafeTxRecovery(async (trezorKey, typedData) => {
-    const path = getHdPathFromTemplate(trezorKey.meta.hdPathTemplate, trezorKey.meta.index)
-    const isOneKey = await oneKeyCtrl.connectFromTrezor(trezorCtrl.deviceId, path, trezorKey.addr)
-    if (!isOneKey) return null
-
-    const migratedKey = await mainCtrl.keystore.migrateExternalKeyType(
-      trezorKey.addr,
-      'trezor',
-      'onekey',
-      { deviceId: oneKeyCtrl.deviceId, deviceModel: oneKeyCtrl.deviceModel }
-    )
-    const signer = new OneKeySigner(migratedKey)
-    signer.init(oneKeyCtrl)
-    return signer.signTypedData(typedData)
   })
 
   // Load them immediately (the optimization is for mobile only)

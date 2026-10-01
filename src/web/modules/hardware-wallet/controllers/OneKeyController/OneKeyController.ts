@@ -99,53 +99,6 @@ class OneKeyController implements ExternalSignerController {
     await this.#setConnectedDevice(this.#selectDevice(devices, preferredDeviceId))
   }
 
-  /**
-   * Detection for the Trezor compatibility recovery path. A successful proprietary
-   * getOnekeyFeatures call is required before this method identifies the device as OneKey.
-   */
-  async connectFromTrezor(
-    trezorDeviceId: string,
-    path: string,
-    expectedAddress: string
-  ): Promise<boolean> {
-    try {
-      await this.#ensureInitialized()
-
-      const devicesResponse = await this.walletSDK.searchDevices()
-      if (!devicesResponse.success) return false
-      const device = this.#selectDevice(devicesResponse.payload, trezorDeviceId)
-      if (!device.connectId || !device.deviceId) return false
-
-      // This proprietary request is the positive OneKey identification signal.
-      const features = await this.walletSDK.getOnekeyFeatures(device.connectId)
-      if (!features.success) return false
-
-      const passphraseStateResponse = await this.walletSDK.getPassphraseState(device.connectId)
-      if (!passphraseStateResponse.success) return false
-      const addressResponse = await this.walletSDK.evmGetAddress(
-        device.connectId,
-        device.deviceId,
-        {
-          path,
-          passphraseState: passphraseStateResponse.payload,
-          showOnOneKey: false
-        }
-      )
-      if (!addressResponse.success || Array.isArray(addressResponse.payload)) return false
-      if (getAddress(addressResponse.payload.address) !== getAddress(expectedAddress)) return false
-
-      this.passphraseState = passphraseStateResponse.payload || ''
-      this.connectId = device.connectId
-      this.deviceId = device.deviceId
-      this.deviceModel = device.name || device.deviceType || 'OneKey'
-      this.unlockedPath = path
-      this.unlockedPathKeyAddr = getAddress(addressResponse.payload.address)
-      return true
-    } catch {
-      return false
-    }
-  }
-
   isUnlocked(path?: string, expectedAddress?: string) {
     if (!path || !expectedAddress) return !!this.unlockedPathKeyAddr
     return this.unlockedPath === path && this.unlockedPathKeyAddr === getAddress(expectedAddress)
