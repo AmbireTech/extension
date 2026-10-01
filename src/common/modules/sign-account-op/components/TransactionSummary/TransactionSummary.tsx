@@ -32,7 +32,6 @@ import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -65,7 +64,6 @@ interface Props {
   onRightIconPress?: () => void
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
-  disableSelectorFetching?: boolean
 }
 
 export { sizeMultiplier }
@@ -162,8 +160,7 @@ const TransactionSummary = ({
   rightIcon,
   onRightIconPress,
   hideDeleteIcon,
-  hasCallFailed,
-  disableSelectorFetching
+  hasCallFailed
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
@@ -175,10 +172,7 @@ const TransactionSummary = ({
   const { addToast } = useToast()
   const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
   const { t } = useTranslation()
-  const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(
-    call,
-    !!disableSelectorFetching
-  )
+  const { decodedCall } = call
 
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
@@ -558,9 +552,9 @@ const TransactionSummary = ({
     if (!call.isFallback) return call.fullVisualization
     if (!call.to) return call.fullVisualization
     if (!call.data || call.data === '0x' || call.data.length < 10) return call.fullVisualization
-    if (isDecodedFunctionLoading) return [getLabel('Loading...')]
-    if (!decodedFunction) return call.fullVisualization
-    const functionName = decodedFunction.signature.split('(')[0]
+    if (call.isDecodingCall) return [getLabel('Loading...')]
+    if (!decodedCall) return call.fullVisualization
+    const functionName = decodedCall.signature.split('(')[0]
     if (!functionName || !functionName[0]) return call.fullVisualization
 
     const capitalizedFunction = functionName[0].toUpperCase() + functionName.slice(1)
@@ -579,11 +573,11 @@ const TransactionSummary = ({
   }, [
     call.data,
     call.fullVisualization,
+    call.isDecodingCall,
     call.isFallback,
     call.to,
     call.value,
-    decodedFunction,
-    isDecodedFunctionLoading
+    decodedCall
   ])
   const shouldShowDeleteControl = !!call.id && type === 'default' && !rightIcon && !hideDeleteIcon
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
@@ -751,11 +745,11 @@ const TransactionSummary = ({
   const tabOptions = useMemo(() => {
     let tabs: ([Tab, string] | null)[] = [
       ['raw', t('Raw data')],
-      decodedFunction ? ['parsed', t('Parsed data')] : null
+      decodedCall ? ['parsed', t('Parsed data')] : null
     ]
 
     return tabs.filter((x) => !!x)
-  }, [decodedFunction, t])
+  }, [decodedCall, t])
   const shouldAlignContentStart = useMemo(() => {
     if (shouldUseErc7730TransactionSummaryLayout) return true
     if (type !== 'default') return false
@@ -985,16 +979,16 @@ const TransactionSummary = ({
               sizeMultiplier={sizeMultiplier}
               styles={styles}
             />
-          ) : decodedFunction ? (
+          ) : decodedCall ? (
             <View style={styles.bodyText}>
               <Text selectable style={{ color: theme.secondaryText }} fontSize={12}>
                 {t('Function to call: ')}
-                {decodedFunction.signature}
+                {decodedCall.signature}
               </Text>
               <Text style={{ color: theme.secondaryText }} fontSize={12}>
                 {t('Decoded function arguments:')}
               </Text>
-              <DataArgs decodedArgs={decodedFunction.args} key="" />
+              <DataArgs decodedArgs={decodedCall.args} key="" />
             </View>
           ) : null}
         </View>

@@ -12,6 +12,7 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useCallsWithDecodedData from '@common/hooks/useCallsWithDecodedData'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
@@ -57,7 +58,7 @@ const SummaryDetails = ({
     () => getFormattedSubmittedDate(submittedAccountOp.timestamp),
     [submittedAccountOp.timestamp]
   )
-  const humanizedCalls = useHumanizedCalls(submittedAccountOp)
+  const humanizedCalls = useCallsWithDecodedData(useHumanizedCalls(submittedAccountOp))
   const summaryBalanceChanges = useMemo(
     () => getSummaryBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
@@ -180,7 +181,6 @@ const SummaryDetails = ({
                     }
                   : undefined
               }
-              disableSelectorFetching
             />
           ))}
         {!isDelegationTxn && !humanizedCalls.length && <SkeletonLoader width="100%" height={112} />}
