@@ -39,8 +39,7 @@ describe('requestOneKeyDevicePermission', () => {
         { vendorId: 0x1209, productId: 0x53c0 },
         { vendorId: 0x1209, productId: 0x53c1 },
         { vendorId: 0x1209, productId: 0x4f4a },
-        { vendorId: 0x1209, productId: 0x4f4b },
-        { vendorId: 0x1209, productId: 0x4f4c }
+        { vendorId: 0x1209, productId: 0x4f4b }
       ]
     })
   })

@@ -1,4 +1,4 @@
-import { isKnownTrezorWebUsbDevice, ONEKEY_WEBUSB_FILTER } from '@onekeyfe/hd-shared'
+import { ONEKEY_WEBUSB_FILTER } from '@onekeyfe/hd-shared'
 
 type WebUsbDevice = {
   vendorId: number
@@ -14,11 +14,14 @@ type WebUsbNavigator = Navigator & {
   }
 }
 
-// Same check the OneKey SDK uses, as Trezor devices share some of the OneKey USB ids
+// Trezor devices share some of the OneKey USB ids. Newer OneKey SDK versions export this
+// check as `isKnownTrezorWebUsbDevice`, but the SDK version Ambire uses doesn't have it yet.
+const TREZOR_MANUFACTURER_NAMES = new Set(['trezor', 'trezor company', 'satoshilabs'])
+
 const isOneKeyDevice = (device: WebUsbDevice) =>
   ONEKEY_WEBUSB_FILTER.some(
     (filter) => filter.vendorId === device.vendorId && filter.productId === device.productId
-  ) && !isKnownTrezorWebUsbDevice(device)
+  ) && !TREZOR_MANUFACTURER_NAMES.has(device.manufacturerName?.trim().toLowerCase() || '')
 
 export const isOneKeyWebUsbSupported = () => !!(navigator as WebUsbNavigator).usb
 

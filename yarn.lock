@@ -3471,7 +3471,7 @@
   resolved "https://registry.yarnpkg.com/@onekeyfe/cross-inpage-provider-types/-/cross-inpage-provider-types-0.0.17.tgz#0c88c1a2febac44ec1600e0e59da732579cbd045"
   integrity sha512-QqjIPXQHb3UG9w79ujjL5L5Qd6oCrymQ/x2J2rYICtr56G6shHTmUvRZxAvne0ZsLv8UBGqZWbepVdnPipehYQ==
 
-"@onekeyfe/hd-core@1.1.0":
+"@onekeyfe/hd-core@1.1.0", "@onekeyfe/hd-core@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@onekeyfe/hd-core/-/hd-core-1.1.0.tgz#83a9e3d715942eb48587a0b882fbe04f3bb71f3e"
   integrity sha512-/lL5e2ZCK/ghMkSIjgrAawYQj57NM1uQz5WdwmULBY6o4OoPgeZ/A7z8/6rSnbXC/zQidjIa4lsuNibytB5FZw==
@@ -3485,49 +3485,33 @@
     parse-uri "^1.0.7"
     semver "^7.3.7"
 
-"@onekeyfe/hd-core@^1.1.0":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-core/-/hd-core-1.2.5.tgz#53366683bbc48ef2b4926cea74d3d0d6ebaa885e"
-  integrity sha512-bXNjnqWv7Qv9fOk35yPYC3lYlQS6efaJOfQ2wTtS7GZcOUkipCMr4twRBDusulKJ2pnldUDRe9tbYdCvP0XwGw==
-  dependencies:
-    "@onekeyfe/hd-shared" "1.2.5"
-    "@onekeyfe/hd-transport" "1.2.5"
-    axios "1.15.2"
-    bignumber.js "^9.0.2"
-    buffer "^6.0.3"
-    bytebuffer "^5.0.1"
-    jpeg-js "^0.4.4"
-    jszip "^3.10.1"
-    parse-uri "^1.0.7"
-    semver "^7.3.7"
+"@onekeyfe/hd-shared@1.1.0", "@onekeyfe/hd-shared@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-shared/-/hd-shared-1.1.0.tgz#c91b787cf6096a243750def6f0f242475b15b958"
+  integrity sha512-blmTue2MJTGlhAppYL+63Zk07wK19TXirHOJCnEgbQktfDbFD8EBt1Wx5MRie7Htq4J4N36IAjo7t0gLdagTVA==
 
-"@onekeyfe/hd-shared@1.2.5", "@onekeyfe/hd-shared@^1.1.0":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-shared/-/hd-shared-1.2.5.tgz#20a4c02c56836ccf114ee199b21af73bef0d7cfd"
-  integrity sha512-g6iTLzj3rrryzPx2syu4eQlPOjg5zhoMS/eSxNZmZXkpcOVUbuSn4lKdf2q745Ms8Y9l/hDdMTOtd5us2jCmxA==
-
-"@onekeyfe/hd-transport-http@^1.1.0":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport-http/-/hd-transport-http-1.2.5.tgz#8038f3b29c33e96953327b8f55de4029e4071739"
-  integrity sha512-p9tfvbeiflJ/AcZEyIPcvYRNuD46sNY2xkMma+IA6CCTzXTdzcm3vatnfJaxtKUlqO+vHHQLKKbPPBnFP0502A==
+"@onekeyfe/hd-transport-http@1.1.0", "@onekeyfe/hd-transport-http@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport-http/-/hd-transport-http-1.1.0.tgz#414a60321ea58581b908fe4e22b9f46dde738576"
+  integrity sha512-VE5zf7bpJDvgGwQaGpB4nZH1U0+X+RXTpdDosI1c6qnTRwJ7RkwdLgtExyHOFcaShVlBbALICfPjhOyareBggg==
   dependencies:
-    "@onekeyfe/hd-shared" "1.2.5"
-    "@onekeyfe/hd-transport" "1.2.5"
-    axios "1.15.2"
+    "@onekeyfe/hd-shared" "^1.1.0"
+    "@onekeyfe/hd-transport" "^1.1.0"
+    axios "^0.27.2"
     secure-json-parse "^4.0.0"
 
-"@onekeyfe/hd-transport-web-device@^1.1.0":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport-web-device/-/hd-transport-web-device-1.2.5.tgz#c3c689e533b36f0a7f70ff04ec6b492b8ce69bbd"
-  integrity sha512-wsHtDVIkbZpeEXrHt5df6kooKJW067pqTHYqGyjwUqXJMSeTm8FvPIBH8VDvr9ODHACt2T/Ote9zWL8tbKWd8Q==
+"@onekeyfe/hd-transport-web-device@1.1.0", "@onekeyfe/hd-transport-web-device@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport-web-device/-/hd-transport-web-device-1.1.0.tgz#e6618bfab1cea66c5f4f7ee1664a43733e0746f1"
+  integrity sha512-nB/N1SYNeutXTFWlcWc0SEi6gREcE6dDJywsvvMhrY4VJb1mwpD1bUUMxwrkRAVXLjc1E+cN0Ja2EsnDgF38oA==
   dependencies:
-    "@onekeyfe/hd-shared" "1.2.5"
-    "@onekeyfe/hd-transport" "1.2.5"
+    "@onekeyfe/hd-shared" "^1.1.0"
+    "@onekeyfe/hd-transport" "^1.1.0"
 
-"@onekeyfe/hd-transport@1.2.5", "@onekeyfe/hd-transport@^1.1.0":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport/-/hd-transport-1.2.5.tgz#f83c14a7167989c0088ee60bb78a733c20f687e4"
-  integrity sha512-CAJewTW367/a1Ui/xpuLQMcSYuWobIU1Y/Elvk7gFMQY7xCly965UDuWvGpzOpZgp/4T22kU1eSCOXsZsPQbsA==
+"@onekeyfe/hd-transport@1.1.0", "@onekeyfe/hd-transport@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/hd-transport/-/hd-transport-1.1.0.tgz#46470f886d3f8feae8a24aa219a3e1fc7395f990"
+  integrity sha512-dkEQa9pzP9bqiZdU6vYWACLLOjDyMCNNeZTUo6/rKzy4+Dk4u/eZ38gGRuKuYzu6p1ISYc0ZwuMcsgSiGUDL3g==
   dependencies:
     bytebuffer "^5.0.1"
     long "^4.0.0"
@@ -6684,15 +6668,6 @@ available-typed-arrays@^1.0.7:
   integrity sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==
   dependencies:
     possible-typed-array-names "^1.0.0"
-
-axios@1.15.2:
-  version "1.15.2"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.15.2.tgz#eb8fb6d30349abace6ade5b4cb4d9e8a0dc23e5b"
-  integrity sha512-wLrXxPtcrPTsNlJmKjkPnNPK2Ihe0hn0wGSaTEiHRPxwjvJwT3hKmXF4dpqxmPO9SoNb2FsYXj/xEo0gHN+D5A==
-  dependencies:
-    follow-redirects "^1.15.11"
-    form-data "^4.0.5"
-    proxy-from-env "^2.1.0"
 
 axios@^0.27.2:
   version "0.27.2"
@@ -10195,7 +10170,7 @@ flow-enums-runtime@^0.0.6:
   resolved "https://registry.yarnpkg.com/flow-enums-runtime/-/flow-enums-runtime-0.0.6.tgz#5bb0cd1b0a3e471330f4d109039b7eba5cb3e787"
   integrity sha512-3PYnM29RFXwvAN6Pc/scUfkI7RwhQ/xqyLUyPNlXUp9S40zI8nup9tUSrTLSVnWGBN38FNiGWbwZOB6uR4OGdw==
 
-follow-redirects@^1.0.0, follow-redirects@^1.12.1, follow-redirects@^1.14.9, follow-redirects@^1.15.11, follow-redirects@^1.16.0:
+follow-redirects@^1.0.0, follow-redirects@^1.12.1, follow-redirects@^1.14.9, follow-redirects@^1.16.0:
   version "1.16.0"
   resolved "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.16.0.tgz#28474a159d3b9d11ef62050a14ed60e4df6d61bc"
   integrity sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==
@@ -12175,11 +12150,6 @@ jimp-compact@0.16.1:
   version "0.16.1"
   resolved "https://registry.npmjs.org/jimp-compact/-/jimp-compact-0.16.1.tgz"
   integrity sha512-dZ6Ra7u1G8c4Letq/B5EzAxj4tLFHL+cGtdpR+PVm4yzPDj+lCk+AbivWt1eOM+ikzkowtyV7qSqX6qr3t71Ww==
-
-jpeg-js@^0.4.4:
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/jpeg-js/-/jpeg-js-0.4.4.tgz#a9f1c6f1f9f0fa80cdb3484ed9635054d28936aa"
-  integrity sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg==
 
 js-base64@^3.7.8:
   version "3.8.0"
