@@ -39,12 +39,15 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
   const isInitialAnimationDone = useRef(false)
   const prevForceHoveredStyle = usePrevious(forceHoveredStyle)
   const [isHovered, setIsHovered] = useState(false)
+  const [isPressed, setIsPressed] = useState(false)
 
   // Nothing hovers on the mobile app: `animate` returns early there, so the press opacity
   // is the only channel that ever moves. A value is still created for every property the
   // caller asked for, so that what it reads back lines up with what it passed in - what
   // mobile skips is animating them, and the interpolation node per color that the style
-  // would otherwise build.
+  // would otherwise build. The style it returns holds no `Animated.Value` either, so a
+  // screen that mounts this per row does not build a native animated node per row for
+  // properties that can never move on a touch screen.
   const isMobileApp = getUiType().isMobileApp
 
   // Initialize the values that will be animated
@@ -164,27 +167,39 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
         animate(true)
       },
       onPressIn: () => {
+        if (isMobileApp) {
+          setIsPressed(true)
+          return
+        }
+
         setPressOpacity(PRESSED_OPACITY)
       },
       onPressOut: (_event?: GestureResponderEvent) => {
+        if (isMobileApp) {
+          setIsPressed(false)
+          return
+        }
+
         setPressOpacity(1)
       }
     }),
-    [animate, setPressOpacity, forceHoveredStyle, onHoverIn]
+    [animate, setPressOpacity, forceHoveredStyle, onHoverIn, isMobileApp]
   )
 
   const style = useMemo(() => {
     // Pointer hovering never happens on the mobile app, so the properties snap between
     // the value they start from and the one `forceHoveredStyle` asks for, instead of
-    // being animated - only the opacity has to stay animated.
+    // being animated. The press feedback snaps too, off plain state, so the whole style
+    // stays free of animated values.
     if (isMobileApp) {
-      const staticStyle = memoizedValues.reduce(
+      const staticStyle: ViewStyle = memoizedValues.reduce(
         (acc, { property, from, to }) => ({ ...acc, [property]: forceHoveredStyle ? to : from }),
         {}
       )
-      const opacity = animatedValues.find(({ property }) => property === 'opacity')
 
-      return { ...staticStyle, opacity: opacity?.value }
+      if (isPressed) return { ...staticStyle, opacity: PRESSED_OPACITY }
+
+      return staticStyle.opacity === undefined ? { ...staticStyle, opacity: 1 } : staticStyle
     }
 
     if (animatedValues)
@@ -201,7 +216,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
 
     // Prevents the hook from returning an empty style object on the first render
     return memoizedValues.reduce((acc, { property, from }) => ({ ...acc, [property]: from }), {})
-  }, [animatedValues, isMobileApp, memoizedValues, forceHoveredStyle])
+  }, [animatedValues, isMobileApp, memoizedValues, forceHoveredStyle, isPressed])
 
   return [bind, style, isHovered || forceHoveredStyle, onHoverIn, animatedValues] as [
     {

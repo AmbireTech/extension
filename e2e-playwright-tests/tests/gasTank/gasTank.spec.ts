@@ -27,7 +27,8 @@ test.describe('gasTank - Smart Account', { tag: '@gasTank' }, () => {
       await pages.transfer.signSlowSpeedTransaction({
         sendToken,
         message,
-        holdProceedButton: false
+        holdProceedButton: false,
+        signAuth: false
       })
     })
 
