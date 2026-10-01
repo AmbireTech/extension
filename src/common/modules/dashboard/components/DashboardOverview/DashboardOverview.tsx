@@ -30,13 +30,10 @@ export const OVERVIEW_CONTENT_MAX_HEIGHT = 162
 
 interface Props {
   openGasTankModal?: () => void
-  animatedOverviewHeight: Animated.Value
-  dashboardOverviewSize: {
-    width: number
-    height: number
-  }
-  setDashboardOverviewSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
-  /** Mobile only, web is collapsed through `animatedOverviewHeight`. */
+  /** Web only, which collapses the overview by animating its height. */
+  animatedOverviewHeight?: Animated.Value
+  setDashboardOverviewSize?: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
+  /** Mobile only, where the pages slide over the collapsing part instead. */
   onCollapsibleHeightChange?: OverviewCollapsibleProps['onHeightChange']
 }
 
@@ -106,7 +103,7 @@ const DashboardOverview: FC<Props> = ({
           isMobile && spacings.phTy,
           {
             // The rest of the open padding is covered together with the content on mobile
-            paddingBottom: isMobile
+            paddingBottom: !animatedOverviewHeight
               ? SPACING_TY
               : animatedOverviewHeight.interpolate({
                   inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
@@ -116,12 +113,15 @@ const DashboardOverview: FC<Props> = ({
             overflow: 'hidden'
           }
         ]}
-        onLayout={(e) => {
-          setDashboardOverviewSize({
-            width: e.nativeEvent.layout.width,
-            height: e.nativeEvent.layout.height
+        onLayout={
+          setDashboardOverviewSize &&
+          ((e) => {
+            setDashboardOverviewSize({
+              width: e.nativeEvent.layout.width,
+              height: e.nativeEvent.layout.height
+            })
           })
-        }}
+        }
       >
         <OverviewBackground address={account?.addr || ''} />
         <View style={{ zIndex: 2 }}>

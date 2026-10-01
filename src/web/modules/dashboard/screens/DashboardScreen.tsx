@@ -6,7 +6,6 @@ import GasTankModal from '@common/components/GasTankModal'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
-import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
@@ -25,7 +24,6 @@ const DashboardScreen = () => {
     width: 0,
     height: 0
   })
-  const debouncedDashboardOverviewSize = useDebounce({ value: dashboardOverviewSize, delay: 100 })
   const animatedOverviewHeight = useRef(new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT)).current
 
   const {
@@ -72,12 +70,10 @@ const DashboardScreen = () => {
             <DashboardOverview
               openGasTankModal={openGasTankModal}
               animatedOverviewHeight={animatedOverviewHeight}
-              dashboardOverviewSize={debouncedDashboardOverviewSize}
               setDashboardOverviewSize={setDashboardOverviewSize}
             />
             <DashboardPages
               onScroll={onScroll}
-              animatedOverviewHeight={animatedOverviewHeight}
               isSearchHidden={isFloatingBarHidden}
               onTabChange={reset}
             />

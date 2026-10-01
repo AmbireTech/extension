@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 
-import getNextCollapseState, { INITIAL_COLLAPSE_STATE } from './getNextCollapseState'
+import getNextCollapseState, {
+  getIsFloatingBarHidden,
+  INITIAL_COLLAPSE_STATE
+} from './getNextCollapseState'
 
 /**
  * Tracks the scroll direction of the open dashboard page. Re-renders only when the overview
@@ -35,7 +38,7 @@ const useCollapseOnScroll = (overviewHeight: number, collapsibleHeight: number) 
 
     stateRef.current = next
     setIsOverviewCollapsed(next.isOverviewCollapsed)
-    setIsFloatingBarHidden(next.isFloatingBarHidden)
+    setIsFloatingBarHidden(getIsFloatingBarHidden(next))
   }, [])
 
   /** Expands the overview and shows the bar, e.g. when another page is opened. */

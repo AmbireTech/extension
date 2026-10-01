@@ -3,7 +3,7 @@ import { Animated } from 'react-native'
 
 export interface OverviewCollapsibleProps {
   /** Drives the collapse on web. */
-  animatedOverviewHeight: Animated.Value
+  animatedOverviewHeight?: Animated.Value
   /**
    * Mobile only, where the overview is never resized: the pages slide over the collapsible
    * part instead, as resizing it would redraw the filtered background every frame.

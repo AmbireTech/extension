@@ -3,7 +3,6 @@ export interface CollapseState {
   /** Where the current scroll up began, 0 while scrolling down. */
   scrollUpStartedAt: number
   isOverviewCollapsed: boolean
-  isFloatingBarHidden: boolean
 }
 
 export interface ScrollSample {
@@ -24,8 +23,7 @@ export interface ScrollSample {
 export const INITIAL_COLLAPSE_STATE: CollapseState = {
   lastOffsetY: 0,
   scrollUpStartedAt: 0,
-  isOverviewCollapsed: false,
-  isFloatingBarHidden: false
+  isOverviewCollapsed: false
 }
 
 // Must be a constant value and not dependent on the height of the overview,
@@ -33,9 +31,16 @@ export const INITIAL_COLLAPSE_STATE: CollapseState = {
 const SCROLL_UP_THRESHOLD = 200
 const FLOATING_BAR_HIDE_OFFSET = 50
 
+const isPastScrollUp = (offsetY: number, scrollUpStartedAt: number) =>
+  offsetY > scrollUpStartedAt - SCROLL_UP_THRESHOLD
+
+/** Web hides the floating bar sooner than it collapses the overview, mobile hides it with it. */
+export const getIsFloatingBarHidden = ({ lastOffsetY, scrollUpStartedAt }: CollapseState) =>
+  lastOffsetY > FLOATING_BAR_HIDE_OFFSET && isPastScrollUp(lastOffsetY, scrollUpStartedAt)
+
 /**
- * Collapses the dashboard overview and hides the floating bar while the list is scrolled
- * down, and brings them back once it is scrolled up far enough.
+ * Collapses the dashboard overview while the list is scrolled down, and brings it back once
+ * it is scrolled up far enough.
  */
 const getNextCollapseState = (prev: CollapseState, sample: ScrollSample): CollapseState => {
   const { offsetY, contentHeight, layoutHeight, scrollDownThreshold, collapsibleHeight } = sample
@@ -48,8 +53,8 @@ const getNextCollapseState = (prev: CollapseState, sample: ScrollSample): Collap
     scrollUpStartedAt = 0
   }
 
-  const isPastScrollUp = offsetY > scrollUpStartedAt - SCROLL_UP_THRESHOLD
-  const isScrolledPastOverview = offsetY >= scrollDownThreshold && isPastScrollUp
+  const isScrolledPastOverview =
+    offsetY >= scrollDownThreshold && isPastScrollUp(offsetY, scrollUpStartedAt)
   // Only checked before collapsing: the list loses `collapsibleHeight` of scroll room once
   // collapsed, and it must still be able to stay past the threshold, or it would flicker.
   const canStayCollapsed = contentHeight - layoutHeight >= scrollDownThreshold + collapsibleHeight
@@ -57,8 +62,7 @@ const getNextCollapseState = (prev: CollapseState, sample: ScrollSample): Collap
   return {
     lastOffsetY: offsetY,
     scrollUpStartedAt,
-    isOverviewCollapsed: isScrolledPastOverview && (prev.isOverviewCollapsed || canStayCollapsed),
-    isFloatingBarHidden: offsetY > FLOATING_BAR_HIDE_OFFSET && isPastScrollUp
+    isOverviewCollapsed: isScrolledPastOverview && (prev.isOverviewCollapsed || canStayCollapsed)
   }
 }
 

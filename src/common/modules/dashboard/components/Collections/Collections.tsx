@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, View } from 'react-native'
+import { FlatListProps, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
@@ -37,7 +37,6 @@ interface Props {
   onScroll?: FlatListProps<any>['onScroll']
   networks: Network[]
   dashboardNetworkFilterName: string | null
-  animatedOverviewHeight: Animated.Value
   isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
@@ -68,7 +67,6 @@ const Collections: FC<Props> = ({
   onScroll,
   networks,
   dashboardNetworkFilterName,
-  animatedOverviewHeight,
   isSearchHidden,
   refreshing,
   onRefresh
@@ -257,7 +255,6 @@ const Collections: FC<Props> = ({
         keyExtractor={keyExtractor}
         initialNumToRender={isPopup ? 4 : 10}
         windowSize={15}
-        animatedOverviewHeight={animatedOverviewHeight}
         onScroll={onScroll}
         scrollEventThrottle={16}
         refreshing={refreshing}

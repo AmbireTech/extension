@@ -1,6 +1,6 @@
 import React, { FC, Suspense, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, View } from 'react-native'
+import { FlatListProps, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { Network } from '@ambire-common/interfaces/network'
@@ -40,7 +40,6 @@ interface Props {
   initTab?: { [key: string]: boolean }
   sessionId: string
   onScroll?: FlatListProps<any>['onScroll']
-  animatedOverviewHeight: Animated.Value
   network: Network | null
   isSearchHidden?: boolean
   refreshing?: boolean
@@ -83,7 +82,6 @@ const ActivityPositions: FC<Props> = ({
   setOpenTab,
   initTab,
   onScroll,
-  animatedOverviewHeight,
   network,
   isSearchHidden,
   refreshing,
@@ -361,7 +359,6 @@ const ActivityPositions: FC<Props> = ({
         scrollEventThrottle={16}
         refreshing={refreshing}
         onRefresh={onRefresh}
-        animatedOverviewHeight={animatedOverviewHeight}
       />
       {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
       {!isMobile && openTab === 'activity' && (

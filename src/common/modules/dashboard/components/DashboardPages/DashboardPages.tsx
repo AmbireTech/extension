@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid'
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+import { NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -22,7 +22,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 interface Props {
   /** Collapses the overview and hides the floating bar on scroll. The mobile carousel does it itself. */
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
-  animatedOverviewHeight: Animated.Value
   isSearchHidden?: boolean
   /** Called whenever another tab is opened, as its page starts at the top. */
   onTabChange?: () => void
@@ -40,7 +39,6 @@ const selectNetworks = (state: AllControllersMappingType['NetworksController']) 
 const DashboardPages = ({
   onScroll,
   isSearchHidden,
-  animatedOverviewHeight,
   refreshing,
   onRefresh,
   onTabChange,
@@ -137,7 +135,6 @@ const DashboardPages = ({
           onScroll={onScroll}
           initTab={initTab}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
-          animatedOverviewHeight={animatedOverviewHeight}
           isSearchHidden={isSearchHidden}
           onRefresh={onRefresh}
           refreshing={refreshing}
@@ -150,7 +147,6 @@ const DashboardPages = ({
             onScroll={onScroll}
             initTab={initTab}
             dashboardNetworkFilterName={dashboardNetworkFilterName}
-            animatedOverviewHeight={animatedOverviewHeight}
             isSearchHidden={isSearchHidden}
             onRefresh={onRefresh}
             refreshing={refreshing}
@@ -166,7 +162,6 @@ const DashboardPages = ({
             onScroll={onScroll}
             networks={networks}
             dashboardNetworkFilterName={dashboardNetworkFilterName}
-            animatedOverviewHeight={animatedOverviewHeight}
             isSearchHidden={isSearchHidden}
             onRefresh={onRefresh}
             refreshing={refreshing}
@@ -180,7 +175,6 @@ const DashboardPages = ({
             setOpenTab={setOpenTab}
             onScroll={onScroll}
             initTab={initTab}
-            animatedOverviewHeight={animatedOverviewHeight}
             network={network}
             isSearchHidden={isSearchHidden}
             onRefresh={onRefresh}

@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
+import { FlatListProps, TouchableOpacity, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import {
@@ -44,7 +44,6 @@ interface Props {
   sessionId: string
   onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
-  animatedOverviewHeight: Animated.Value
   isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
@@ -77,7 +76,6 @@ const DeFiPositions: FC<Props> = ({
   sessionId,
   onScroll,
   dashboardNetworkFilterName,
-  animatedOverviewHeight,
   isSearchHidden,
   refreshing,
   onRefresh
@@ -362,7 +360,6 @@ const DeFiPositions: FC<Props> = ({
         windowSize={9} // Larger values can cause performance issues.
         onScroll={onScroll}
         scrollEventThrottle={16}
-        animatedOverviewHeight={animatedOverviewHeight}
         refreshing={refreshing}
         onRefresh={onRefresh}
       />

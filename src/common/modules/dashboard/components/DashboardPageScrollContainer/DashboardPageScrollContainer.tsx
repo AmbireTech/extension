@@ -15,10 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
 import DashboardCarouselContext, {
   DashboardFloatingBarProps
 } from '../DashboardPagesCarousel/context'
@@ -28,7 +27,6 @@ import useListTopSpacing from './useListTopSpacing'
 interface Props extends FlatListProps<any> {
   tab: TabType
   openTab: TabType
-  animatedOverviewHeight: Animated.Value
   refreshing?: boolean
   onRefresh?: () => void
   /** What the page wants in the bar the carousel renders above the pager. */
@@ -66,13 +64,16 @@ const CAROUSEL_VIRTUALIZATION = {
 
 const NO_PROPS = {}
 
+// The floating bar's 40px controls plus its vertical padding, and the SPACING it floats
+// above the safe area at the bottom
+const FLOATING_BAR_REACH = 40 + SPACING_TY * 2 + SPACING
+
 // Stretches the footer over whatever the items leave of the content's min height
 const FOOTER_STYLE: ViewStyle = { flexGrow: 1 }
 
 const DashboardPageScrollContainer: FC<Props> = ({
   tab,
   openTab,
-  animatedOverviewHeight,
   refreshing,
   onRefresh,
   onScroll,
@@ -145,10 +146,15 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const listHeight = carousel ? carousel.pageHeight - stickyHeaderHeight : 0
   const overviewHeight = carousel?.overviewHeight || 0
   const naturalContentHeight = contentHeight - footerHeight
-  const isEndHiddenByOverview =
-    !!overviewHeight && naturalContentHeight > listHeight - overviewHeight
-  const collapseRoom = isEndHiddenByOverview
-    ? Math.max(listHeight + overviewHeight - naturalContentHeight, 0)
+  // The bar only hides with the overview, so items ending under it count as hidden too
+  const visibleItemsEnd =
+    listHeight - overviewHeight - (floatingBar ? FLOATING_BAR_REACH + bottom : 0)
+  const isEndHidden =
+    !!overviewHeight && naturalContentHeight - contentPaddingBottom > visibleItemsEnd
+  // 1px over, as Android reports scroll offsets in whole pixels, which can round down to
+  // just short of the overview's height and never collapse it
+  const collapseRoom = isEndHidden
+    ? Math.max(listHeight + overviewHeight + 1 - naturalContentHeight, 0)
     : 0
 
   const listFooter = useMemo(
@@ -205,20 +211,9 @@ const DashboardPageScrollContainer: FC<Props> = ({
   useEffect(() => {
     if (!flatlistRef.current || carousel) return
 
-    if (openTab === tab) {
-      // Scroll to top
-      flatlistRef.current?.scrollToOffset({ offset: 0, animated: false })
-
-      // Expand overview
-      Animated.spring(animatedOverviewHeight, {
-        toValue: OVERVIEW_CONTENT_MAX_HEIGHT,
-        bounciness: 0,
-        speed: 2.8,
-        overshootClamping: true,
-        useNativeDriver: false
-      }).start()
-    }
-  }, [animatedOverviewHeight, carousel, openTab, tab])
+    // The dashboard expands the overview itself once another tab is opened
+    if (openTab === tab) flatlistRef.current?.scrollToOffset({ offset: 0, animated: false })
+  }, [carousel, openTab, tab])
 
   // Lets the header and a swipe scroll this page: a drag on the header never reaches the
   // list under it, and a swipe has to take every page to the top.

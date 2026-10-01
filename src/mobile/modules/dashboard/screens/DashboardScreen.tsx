@@ -1,5 +1,5 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { Animated, LayoutChangeEvent, View } from 'react-native'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
+import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -10,7 +10,6 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
-import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import DashboardShell from '@common/modules/dashboard/components/DashboardShell'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
@@ -20,16 +19,9 @@ import { SPACING_MI, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
-const UNMEASURED_OVERVIEW_SIZE = { width: 0, height: 0 }
-const NOOP = () => {}
-
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
   const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useModalize()
-  // Only web collapses the overview through this, so it stays at its max on mobile.
-  // It is still needed, as the pages animate it back open when a tab is opened.
-  const animatedOverviewHeight = useRef(new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT)).current
-
   // The pager starts where the collapsed overview ends and slides over the part that
   // collapses, so a collapse never resizes or redraws anything. Both heights are static.
   const [overviewHeight, setOverviewHeight] = useState(0)
@@ -38,6 +30,8 @@ const DashboardScreen = () => {
   const onOverviewLayout = useCallback(({ nativeEvent }: LayoutChangeEvent) => {
     setOverviewHeight(nativeEvent.layout.height)
   }, [])
+  // Until then the pager doesn't know where to start, and would be drawn over the overview
+  const isOverviewMeasured = !!overviewHeight && !!collapsibleOverviewHeight
 
   const {
     state: { account, portfolio }
@@ -95,19 +89,20 @@ const DashboardScreen = () => {
               >
                 <DashboardOverview
                   openGasTankModal={openGasTankModal}
-                  animatedOverviewHeight={animatedOverviewHeight}
-                  // Read only on web
-                  dashboardOverviewSize={UNMEASURED_OVERVIEW_SIZE}
-                  setDashboardOverviewSize={NOOP}
                   onCollapsibleHeightChange={setCollapsibleOverviewHeight}
                 />
               </View>
               <View
-                style={[flexbox.flex1, { marginTop: overviewHeight - collapsibleOverviewHeight }]}
+                style={[
+                  flexbox.flex1,
+                  {
+                    marginTop: overviewHeight - collapsibleOverviewHeight,
+                    opacity: isOverviewMeasured ? 1 : 0
+                  }
+                ]}
                 pointerEvents="box-none"
               >
                 <DashboardPages
-                  animatedOverviewHeight={animatedOverviewHeight}
                   onRefresh={reloadAccount}
                   refreshing={isManuallyRefreshing}
                   overviewHeight={collapsibleOverviewHeight}

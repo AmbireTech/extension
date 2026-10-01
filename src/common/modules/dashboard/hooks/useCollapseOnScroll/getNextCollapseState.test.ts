@@ -1,4 +1,8 @@
-import getNextCollapseState, { CollapseState, INITIAL_COLLAPSE_STATE } from './getNextCollapseState'
+import getNextCollapseState, {
+  CollapseState,
+  getIsFloatingBarHidden,
+  INITIAL_COLLAPSE_STATE
+} from './getNextCollapseState'
 
 const LONG_LIST = { contentHeight: 3000, layoutHeight: 500 }
 const SHORT_LIST = { contentHeight: 900, layoutHeight: 500 }
@@ -20,49 +24,49 @@ describe('getNextCollapseState', () => {
     const state = scrollThrough([0, 20, 40])
 
     expect(state.isOverviewCollapsed).toBe(false)
-    expect(state.isFloatingBarHidden).toBe(false)
+    expect(getIsFloatingBarHidden(state)).toBe(false)
   })
 
   it('hides the bar before collapsing the overview', () => {
     const state = scrollThrough([0, 100, 200])
 
     expect(state.isOverviewCollapsed).toBe(false)
-    expect(state.isFloatingBarHidden).toBe(true)
+    expect(getIsFloatingBarHidden(state)).toBe(true)
   })
 
   it('collapses and hides once scrolled down past the overview', () => {
     const state = scrollThrough([0, 200, 400, 600])
 
     expect(state.isOverviewCollapsed).toBe(true)
-    expect(state.isFloatingBarHidden).toBe(true)
+    expect(getIsFloatingBarHidden(state)).toBe(true)
   })
 
   it('stays collapsed on a short scroll up', () => {
     const state = scrollThrough([0, 600, 1000, 900])
 
     expect(state.isOverviewCollapsed).toBe(true)
-    expect(state.isFloatingBarHidden).toBe(true)
+    expect(getIsFloatingBarHidden(state)).toBe(true)
   })
 
   it('expands and shows the bar once scrolled up far enough', () => {
     const state = scrollThrough([0, 600, 1000, 900, 690])
 
     expect(state.isOverviewCollapsed).toBe(false)
-    expect(state.isFloatingBarHidden).toBe(false)
+    expect(getIsFloatingBarHidden(state)).toBe(false)
   })
 
   it('collapses again when scrolling down after a scroll up', () => {
     const state = scrollThrough([0, 600, 1000, 700, 750])
 
     expect(state.isOverviewCollapsed).toBe(true)
-    expect(state.isFloatingBarHidden).toBe(true)
+    expect(getIsFloatingBarHidden(state)).toBe(true)
   })
 
   it('never collapses a list without enough room to stay collapsed', () => {
     const state = scrollThrough([0, 200, 400], SHORT_LIST)
 
     expect(state.isOverviewCollapsed).toBe(false)
-    expect(state.isFloatingBarHidden).toBe(true)
+    expect(getIsFloatingBarHidden(state)).toBe(true)
   })
 
   it('stays collapsed when the list loses scroll room after collapsing', () => {

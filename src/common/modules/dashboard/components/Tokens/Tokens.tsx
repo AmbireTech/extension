@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Animated, FlatListProps, View } from 'react-native'
+import { FlatListProps, View } from 'react-native'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
 import { Network } from '@ambire-common/interfaces/network'
@@ -49,7 +49,6 @@ interface Props {
   }
   onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
-  animatedOverviewHeight: Animated.Value
   isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
@@ -130,7 +129,6 @@ const Tokens = ({
   initTab,
   sessionId,
   onScroll,
-  animatedOverviewHeight,
   dashboardNetworkFilterName,
   isSearchHidden,
   refreshing,
@@ -469,7 +467,6 @@ const Tokens = ({
         tab="tokens"
         openTab={openTab}
         ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
-        animatedOverviewHeight={animatedOverviewHeight}
         data={listData}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
