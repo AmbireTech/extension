@@ -1,0 +1,155 @@
+name: 🍎 Mobilewright · iOS
+
+# Manual trigger. Installs an already-built iOS simulator .app — the artifact from a
+# "🍎 Build · iOS Simulator" (build-ios-simulator.yml) run — on a booted simulator and runs
+# the Mobilewright iOS suite against it. Build that workflow first, or leave the input
+# blank to use its most recent successful run.
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: 'Run ID of a "🍎 Build · iOS Simulator" run to test (blank = latest successful)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  IS_TESTING: 'true'
+  RELAYER_URL: ${{ vars.RELAYER_URL }}
+  VELCRO_URL: ${{ vars.VELCRO_URL }}
+  BA_ACCOUNTS: ${{ vars.BA_ACCOUNTS }}
+  BA_KEYSTORE_UID: ${{ vars.BA_KEYSTORE_UID }}
+  BA_KEYS: ${{ vars.BA_KEYS }}
+  BA_SEEDS: ${{ vars.BA_SEEDS }}
+  BA_LEARNED_ASSETS: ${{ vars.BA_LEARNED_ASSETS }}
+  BA_SELECTED_ACCOUNT: ${{ vars.BA_SELECTED_ACCOUNT }}
+  SA_ACCOUNTS: ${{ vars.SA_ACCOUNTS }}
+  SA_KEYSTORE_UID: ${{ vars.SA_KEYSTORE_UID }}
+  SA_KEYS: ${{ vars.SA_KEYS }}
+  SA_SEEDS: ${{ vars.SA_SEEDS }}
+  SA_LEARNED_ASSETS: ${{ vars.SA_LEARNED_ASSETS }}
+  SA_SELECTED_ACCOUNT: ${{ vars.SA_SELECTED_ACCOUNT }}
+  DEFAULT_INVITATION_CODE_DEV: ${{ vars.DEFAULT_INVITATION_CODE_DEV }}
+
+jobs:
+  ios-tests:
+    # NOTE: macos-15 runners are Apple Silicon (arm64) — must match the runner
+    # build-ios-simulator.yml used, since the .app is built arm64 and only boots there.
+    runs-on: macos-15
+    environment: testing
+    env:
+      KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+      # Unlocks the mobile app's invite gate (useMobileInviteGate) — required on every
+      # fresh install, both platforms. See auth.spec.ts's beforeEach.
+      IOS_MOBILE_INVITE_CODE: ${{ secrets.IOS_MOBILE_INVITE_CODE }}
+      SEED: ${{ secrets.SEED }}
+      SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      BA_SECRETS: ${{ secrets.BA_SECRETS }}
+      SA_SECRETS: ${{ secrets.SA_SECRETS }}
+      SA_ACCOUNT_JSON: ${{ secrets.SA_ACCOUNT_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+          cache-dependency-path: e2e-playwright-tests/yarn.lock
+
+      - name: Install shared e2e dependencies
+        working-directory: ./e2e-playwright-tests
+        run: yarn install --frozen-lockfile && yarn postinstall
+
+      - name: Install Mobilewright test dependencies
+        working-directory: ./e2e-playwright-tests/e2e-mobile-tests
+        run: npm ci
+
+      - name: Download iOS build (simulator .app)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID="$BUILD_RUN_ID"
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh run list --workflow build-ios-simulator.yml --status success \
+              --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo "::error::No successful '🍎 Build · iOS Simulator' run found. Run that workflow first."
+            exit 1
+          fi
+          echo "Using iOS build from run $RUN_ID"
+          mkdir -p ios-build
+          gh run download "$RUN_ID" --pattern 'ambire-ios-v*-simulator' --dir ios-build
+
+      - name: Stage iOS build
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP_PATH=$(find ./ios-build -type f -name '*.zip' | head -n1)
+          if [ -z "$ZIP_PATH" ]; then
+            echo "No iOS build zip found in ./ios-build"
+            find ./ios-build || true
+            exit 1
+          fi
+          # mobilecli installs onto a simulator from a .zip of the .app bundle, so keep
+          # the zip as-is — do NOT unzip. Path matches IOS_SIM_ZIP (Ambire-sim.zip,
+          # resolved relative to the config file) in mobilewright.config.ts.
+          cp "$ZIP_PATH" ./e2e-playwright-tests/e2e-mobile-tests/Ambire-sim.zip
+
+      - name: Read Xcode version from .xcode-version
+        id: xcode_version
+        run: echo "XCODE_VERSION=$(cat .xcode-version | tr -d ' \n')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # Match the Xcode/simulator runtime the build used, so the .app is compatible
+      # with the simulator we boot below.
+      - name: Select Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ steps.xcode_version.outputs.XCODE_VERSION }}
+
+      - name: Boot iOS Simulator
+        id: simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          UDID=$(xcrun simctl list devices available -j \
+            | jq -r '.devices | to_entries[] | .value[] | select(.name | test("iPhone")) | .udid' \
+            | head -n1)
+          if [ -z "$UDID" ]; then
+            echo "No available iPhone simulator found on this runner image"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "UDID=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Run Mobilewright iOS tests
+        working-directory: ./e2e-playwright-tests/e2e-mobile-tests
+        run: npx mobilewright test --project=ios --reporter html
+
+      - name: Shutdown simulator
+        if: always()
+        shell: bash
+        run: xcrun simctl shutdown "${{ steps.simulator.outputs.UDID }}" || true
+
+      - name: Upload iOS report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: mobilewright-report-ios
+          path: ./e2e-playwright-tests/e2e-mobile-tests/mobilewright-report/
+          retention-days: 14
