@@ -13,9 +13,9 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useCallsWithDecodedData from '@common/hooks/useCallsWithDecodedData'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import TransactionSummary, {
   sizeMultiplier
@@ -50,7 +50,7 @@ const SummaryDetails = ({
   size: 'sm' | 'md' | 'lg'
   defaultType: Props['defaultType']
 }) => {
-  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { addToast } = useToast()

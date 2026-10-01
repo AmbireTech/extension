@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/consts/autoLogin'
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
+import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Alert from '@common/components/Alert'
 import FatToggle from '@common/components/FatToggle'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -13,6 +14,7 @@ import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
@@ -30,7 +32,6 @@ import spacings, {
 } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import MessageContentLayout from './MessageContentLayout'
 import getStyles from './styles'
@@ -154,7 +155,7 @@ const SignInWithEthereum = ({
   handleQrSigningFlowOnRejectPressed,
   handleQrSigningFlowOnBackPressed
 }: Props) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
@@ -257,47 +258,33 @@ const SignInWithEthereum = ({
 
   return (
     <Container>
-      {isNarrowWebLayout ? (
-        <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
-          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
+          {
+            marginBottom: SPACING_MD * responsiveSizeMultiplier
+          }
+        ]}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <Text
+            weight="medium"
+            // In a narrow view the same size as the titles of the other request screens
+            fontSize={isMobile ? 20 : (isNarrowWebLayout ? 20 : 24) * responsiveSizeMultiplier}
+            style={spacings.mrSm}
+          >
             {t('Sign-in request')}
           </Text>
-          <View style={[flexbox.alignStart, spacings.mtTy]}>
-            <NetworkBadge
-              chainId={signMessageState.messageToSign?.chainId}
-              responsiveSizeMultiplier={responsiveSizeMultiplier}
-              withOnPrefix
-            />
-          </View>
         </View>
-      ) : (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            {
-              marginBottom: SPACING_MD * responsiveSizeMultiplier
-            }
-          ]}
-        >
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text
-              weight="medium"
-              fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
-              style={spacings.mrSm}
-            >
-              {t('Sign-in request')}
-            </Text>
-          </View>
-          <NetworkBadge
-            chainId={signMessageState.messageToSign?.chainId}
-            responsiveSizeMultiplier={responsiveSizeMultiplier}
-            withOnPrefix
-          />
-          {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
-        </View>
-      )}
+        <NetworkBadge
+          chainId={signMessageState.messageToSign?.chainId}
+          responsiveSizeMultiplier={responsiveSizeMultiplier}
+          withOnPrefix
+        />
+        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
+      </View>
       <View style={styles.container}>
         <View
           style={{
@@ -362,15 +349,17 @@ const SignInWithEthereum = ({
                     />
                   </>
                 )}
-                {row.label !== 'Resources' && row.label !== 'Nonce' && (
-                  <Value
-                    responsiveSizeMultiplier={responsiveSizeMultiplier}
-                    // The address must stay fully readable, so it wraps onto a second line
-                    // instead of being cut off at the end
-                    withWrap={row.label === 'Account'}
-                  >
-                    {row.value}
-                  </Value>
+                {row.label === 'Account' && typeof row.value === 'string' && (
+                  <>
+                    {/* Truncated in the middle so both ends stay visible; the full address is in the tooltip */}
+                    <Value responsiveSizeMultiplier={responsiveSizeMultiplier} tooltipId="account">
+                      {shortenAddress(row.value, 18)}
+                    </Value>
+                    <Tooltip content={row.value} id="account" />
+                  </>
+                )}
+                {row.label !== 'Resources' && row.label !== 'Nonce' && row.label !== 'Account' && (
+                  <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>{row.value}</Value>
                 )}
               </Row>
             ))}
