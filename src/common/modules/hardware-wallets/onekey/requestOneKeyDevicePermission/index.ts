@@ -1,6 +1,7 @@
 import requestOneKeyDevicePermission, {
+  hasAuthorizedOneKeyDevice,
   isOneKeyWebUsbSupported
 } from './requestOneKeyDevicePermission'
 
-export { isOneKeyWebUsbSupported }
+export { hasAuthorizedOneKeyDevice, isOneKeyWebUsbSupported }
 export default requestOneKeyDevicePermission

@@ -13,6 +13,7 @@ import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
 import useSigningAuth from '@common/hooks/useSigningAuth'
 import useToast from '@common/hooks/useToast'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
+import useOneKey from '@common/modules/hardware-wallets/hooks/useOneKey'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 
@@ -41,6 +42,7 @@ const useSignMessage = () => {
   >(undefined)
   const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
+  const { isOneKeyConnected, openOneKeyAuthorization } = useOneKey()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const {
@@ -260,12 +262,29 @@ const useSignMessage = () => {
         return
       }
 
+      // The OneKey is unplugged or the browser no longer lets Ambire use it, and the browser
+      // asks for access to a device only from a tab
+      const isOneKeyKeyChosen = chosenSigners.some((s) => s.type === 'onekey')
+      if (isOneKeyKeyChosen && !isOneKeyConnected) {
+        void openOneKeyAuthorization()
+        return
+      }
+
       dispatch({
         type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
         params: { signers: chosenSigners }
       })
     },
-    [isLedgerConnected, dispatch, addToast, t, signMessageState.signers, requestSigningAuth]
+    [
+      isLedgerConnected,
+      isOneKeyConnected,
+      openOneKeyAuthorization,
+      dispatch,
+      addToast,
+      t,
+      signMessageState.signers,
+      requestSigningAuth
+    ]
   )
 
   useEffect(() => {

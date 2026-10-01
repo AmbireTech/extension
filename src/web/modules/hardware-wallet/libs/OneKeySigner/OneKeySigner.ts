@@ -69,10 +69,12 @@ class OneKeySigner implements KeystoreSignerInterface {
       data: txnRequest.data,
       chainId: Number(txnRequest.chainId)
     }
-    const response = await this.controller!.walletSDK.evmSignTransaction(
-      this.controller!.connectId,
-      this.controller!.deviceId,
-      { path, passphraseState: this.controller!.passphraseState, transaction }
+    const response = await this.controller!.callDevice(() =>
+      this.controller!.walletSDK.evmSignTransaction(
+        this.controller!.connectId,
+        this.controller!.deviceId,
+        { path, passphraseState: this.controller!.passphraseState, transaction }
+      )
     )
     const payload = getResponsePayload(response, 'transaction signing')
     const signature = Signature.from({
@@ -115,18 +117,20 @@ class OneKeySigner implements KeystoreSignerInterface {
       primaryType: primaryType as keyof typeof types
     }
     const hashes = transformTypedData(data, true)
-    const response = await this.controller!.walletSDK.evmSignTypedData(
-      this.controller!.connectId,
-      this.controller!.deviceId,
-      {
-        path,
-        passphraseState: this.controller!.passphraseState,
-        data,
-        metamaskV4Compat: true,
-        domainHash: hashes.domain_separator_hash ?? undefined,
-        messageHash: hashes.message_hash ?? undefined,
-        chainId: domain.chainId
-      }
+    const response = await this.controller!.callDevice(() =>
+      this.controller!.walletSDK.evmSignTypedData(
+        this.controller!.connectId,
+        this.controller!.deviceId,
+        {
+          path,
+          passphraseState: this.controller!.passphraseState,
+          data,
+          metamaskV4Compat: true,
+          domainHash: hashes.domain_separator_hash ?? undefined,
+          messageHash: hashes.message_hash ?? undefined,
+          chainId: domain.chainId
+        }
+      )
     )
     const payload = getResponsePayload(response, 'typed message signing')
     this.#validateAddress(payload.address)
@@ -135,18 +139,24 @@ class OneKeySigner implements KeystoreSignerInterface {
 
   signMessage: KeystoreSignerInterface['signMessage'] = async (hex) => {
     const path = await this.#prepareForSigning()
-    const response = await this.controller!.walletSDK.evmSignMessage(
-      this.controller!.connectId,
-      this.controller!.deviceId,
-      {
-        path,
-        passphraseState: this.controller!.passphraseState,
-        messageHex: stripHexPrefix(hex)
-      }
+    const response = await this.controller!.callDevice(() =>
+      this.controller!.walletSDK.evmSignMessage(
+        this.controller!.connectId,
+        this.controller!.deviceId,
+        {
+          path,
+          passphraseState: this.controller!.passphraseState,
+          messageHex: stripHexPrefix(hex)
+        }
+      )
     )
     const payload = getResponsePayload(response, 'message signing')
     this.#validateAddress(payload.address)
     return addHexPrefix(payload.signature)
+  }
+
+  async signingCleanup() {
+    await this.controller?.signingCleanup()
   }
 
   sign7702: KeystoreSignerInterface['sign7702'] = ({ contract }) => {

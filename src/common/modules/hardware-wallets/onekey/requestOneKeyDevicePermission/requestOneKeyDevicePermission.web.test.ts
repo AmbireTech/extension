@@ -1,7 +1,9 @@
 /**
  * @jest-environment jsdom
  */
-import requestOneKeyDevicePermission from './requestOneKeyDevicePermission.web'
+import requestOneKeyDevicePermission, {
+  hasAuthorizedOneKeyDevice
+} from './requestOneKeyDevicePermission.web'
 
 const oneKeyPro = {
   vendorId: 0x1209,
@@ -54,5 +56,18 @@ describe('requestOneKeyDevicePermission', () => {
 
     await expect(requestOneKeyDevicePermission()).resolves.toBe('onekey-serial')
     expect(requestDevice).toHaveBeenCalled()
+  })
+
+  test('reports an authorized OneKey only when one is plugged in', async () => {
+    setUsb({ getDevices: jest.fn(async () => [oneKeyPro]) })
+    await expect(hasAuthorizedOneKeyDevice()).resolves.toBe(true)
+
+    setUsb({
+      getDevices: jest.fn(async () => [{ ...oneKeyPro, manufacturerName: 'SatoshiLabs' }])
+    })
+    await expect(hasAuthorizedOneKeyDevice()).resolves.toBe(false)
+
+    setUsb(undefined)
+    await expect(hasAuthorizedOneKeyDevice()).resolves.toBe(false)
   })
 })

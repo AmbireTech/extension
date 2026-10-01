@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 
 import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import Button from '@common/components/Button'
@@ -7,6 +7,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -19,6 +20,7 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { isSafari } from '@web/constants/browserapi'
+import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -32,6 +34,16 @@ const OneKeyConnectScreen = () => {
   const { dispatch } = useControllersMiddleware()
   const { goToPrevRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
   const { state: oneKeyInitStatus } = useController('MainController', selectOneKeyInitStatus)
+  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { search } = useRoute()
+  // Opened from a signing flow that couldn't reach the device, rather than to import accounts
+  const { isReauthorization, requestId } = useMemo(() => {
+    const params = new URLSearchParams(search)
+    return {
+      isReauthorization: params.get('isReauthorization') === 'true',
+      requestId: params.get('requestId')
+    }
+  }, [search])
 
   const onPressConnect = useCallback(async () => {
     if (isSafari() || !isOneKeyWebUsbSupported()) {
@@ -48,6 +60,19 @@ const OneKeyConnectScreen = () => {
       // WebUSB requires the permission prompt to start directly from the user gesture,
       // so it must happen before any state updates.
       const preferredDeviceId = await requestOneKeyDevicePermission()
+
+      if (isReauthorization) {
+        // Bring the user back to the request that needs the device
+        if (requestId) {
+          requestsDispatch({
+            type: 'method',
+            params: { method: 'setCurrentUserRequestById', args: [requestId] }
+          })
+        }
+        await closeCurrentWindow()
+        return
+      }
+
       // The onboarding navigation moves to the next screen once the account picker is ready
       setTriggeredHwWalletFlow('onekey')
       dispatch({
@@ -61,7 +86,15 @@ const OneKeyConnectScreen = () => {
           : error?.message || t('Could not connect to the OneKey device.')
       addToast(message, { type: error?.name === 'NotFoundError' ? 'warning' : 'error' })
     }
-  }, [addToast, dispatch, setTriggeredHwWalletFlow, t])
+  }, [
+    addToast,
+    dispatch,
+    isReauthorization,
+    requestId,
+    requestsDispatch,
+    setTriggeredHwWalletFlow,
+    t
+  ])
 
   const isLoading = oneKeyInitStatus === 'LOADING'
 

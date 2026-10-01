@@ -41,3 +41,46 @@ describe('OneKeyController connection', () => {
     expect(controller.deviceId).toBe('seed-id')
   })
 })
+
+describe('OneKeyController stale connection recovery', () => {
+  test('connects again and retries once when the device behind the connection changed', async () => {
+    const evmGetAddress = jest
+      .fn<OneKeyBridgeInterface['evmGetAddress']>()
+      .mockResolvedValueOnce({
+        success: false,
+        payload: { error: 'Device not found', code: 105 }
+      })
+      .mockResolvedValueOnce({ success: true, payload: { path: "m/44'/60'/0'/0/0", address } })
+    const bridge = makeBridge({ evmGetAddress })
+    const controller = new OneKeyController(bridge)
+    controller.connectId = 'stale-connect-id'
+    controller.deviceId = 'stale-device-id'
+
+    await expect(controller.unlock("m/44'/60'/0'/0/0", address)).resolves.toBe('JUST_UNLOCKED')
+    expect(bridge.searchDevices).toHaveBeenCalledTimes(1)
+    expect(evmGetAddress).toHaveBeenNthCalledWith(
+      1,
+      'stale-connect-id',
+      'stale-device-id',
+      expect.anything()
+    )
+    expect(evmGetAddress).toHaveBeenNthCalledWith(2, 'connect-id', 'seed-id', expect.anything())
+  })
+
+  test('does not retry other failures', async () => {
+    const evmGetAddress = jest.fn<OneKeyBridgeInterface['evmGetAddress']>().mockResolvedValue({
+      success: false,
+      payload: { error: 'Action cancelled by user', code: 803 }
+    })
+    const bridge = makeBridge({ evmGetAddress })
+    const controller = new OneKeyController(bridge)
+    controller.connectId = 'connect-id'
+    controller.deviceId = 'seed-id'
+
+    await expect(controller.unlock("m/44'/60'/0'/0/0", address)).rejects.toThrow(
+      'Action cancelled by user'
+    )
+    expect(evmGetAddress).toHaveBeenCalledTimes(1)
+    expect(bridge.searchDevices).not.toHaveBeenCalled()
+  })
+})

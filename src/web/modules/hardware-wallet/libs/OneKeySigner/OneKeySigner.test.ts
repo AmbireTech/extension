@@ -77,3 +77,15 @@ test('signs SafeTx typed data through the native OneKey SDK', async () => {
     })
   )
 })
+
+test('cancels the request on the device when signing is aborted', async () => {
+  const bridge = makeBridge()
+  const controller = new OneKeyController(bridge)
+  controller.connectId = 'connect-id'
+
+  const signer = new OneKeySigner(key)
+  signer.init(controller)
+  await signer.signingCleanup()
+
+  expect(bridge.cancel).toHaveBeenCalledWith('connect-id')
+})

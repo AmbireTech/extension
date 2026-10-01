@@ -8,26 +8,29 @@ const { HardwareWebSdk } = HardwareSDK
 class OneKeySdkBridge implements OneKeyBridgeInterface {
   #initPromise: Promise<void> | null = null
 
+  constructor() {
+    // Registered once, so retrying a failed init doesn't answer every device prompt twice
+    HardwareWebSdk.on(UI_EVENT, (event: { type: string }) => {
+      if (event.type === UI_REQUEST.REQUEST_PIN) {
+        HardwareWebSdk.uiResponse({
+          type: UI_RESPONSE.RECEIVE_PIN,
+          payload: '@@ONEKEY_INPUT_PIN_IN_DEVICE'
+        })
+      }
+
+      if (event.type === UI_REQUEST.REQUEST_PASSPHRASE) {
+        HardwareWebSdk.uiResponse({
+          type: UI_RESPONSE.RECEIVE_PASSPHRASE,
+          payload: { value: '', passphraseOnDevice: true, save: true }
+        })
+      }
+    })
+  }
+
   async init() {
     if (this.#initPromise) return this.#initPromise
 
     this.#initPromise = (async () => {
-      HardwareWebSdk.on(UI_EVENT, (event: { type: string }) => {
-        if (event.type === UI_REQUEST.REQUEST_PIN) {
-          HardwareWebSdk.uiResponse({
-            type: UI_RESPONSE.RECEIVE_PIN,
-            payload: '@@ONEKEY_INPUT_PIN_IN_DEVICE'
-          })
-        }
-
-        if (event.type === UI_REQUEST.REQUEST_PASSPHRASE) {
-          HardwareWebSdk.uiResponse({
-            type: UI_RESPONSE.RECEIVE_PASSPHRASE,
-            payload: { value: '', passphraseOnDevice: true, save: true }
-          })
-        }
-      })
-
       const isInitialized = await HardwareWebSdk.init({
         debug: false,
         connectSrc: 'https://jssdk.onekey.so/1.1.0/',
@@ -35,7 +38,12 @@ class OneKeySdkBridge implements OneKeyBridgeInterface {
       })
       if (!isInitialized)
         throw new Error('Could not start the OneKey connection. Please try again.')
-    })()
+    })().catch((error) => {
+      // Let the next request try again (the SDK removes its iframe after a failed init),
+      // instead of failing until the extension restarts
+      this.#initPromise = null
+      throw error
+    })
 
     return this.#initPromise
   }

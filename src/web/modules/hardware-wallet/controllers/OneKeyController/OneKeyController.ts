@@ -9,6 +9,20 @@ import {
   OneKeyResponse
 } from '@web/modules/hardware-wallet/onekey/types'
 
+/**
+ * OneKey SDK error codes (`HardwareErrorCode` in `@onekeyfe/hd-shared`) meaning the cached
+ * connection no longer matches the plugged in device, so the device has to be looked up again.
+ */
+const STALE_CONNECTION_ERROR_CODES = new Set([
+  105, // DeviceNotFound
+  110, // DeviceCheckDeviceIdError
+  112, // DeviceCheckPassphraseStateError
+  901 // WebDeviceNotFoundOrNeedsPermission
+])
+
+const getIsStaleConnectionResponse = (response: OneKeyResponse<unknown>) =>
+  !response.success && STALE_CONNECTION_ERROR_CODES.has(Number(response.payload.code))
+
 const getResponsePayload = <T>(response: OneKeyResponse<T>, operation: string): T => {
   if (response.success) return response.payload
   throw new ExternalSignerError(response.payload.error || `The OneKey ${operation} request failed.`)
@@ -93,6 +107,30 @@ class OneKeyController implements ExternalSignerController {
     this.deviceModel = device.name || device.deviceType || 'OneKey'
   }
 
+  #resetConnection() {
+    this.connectId = ''
+    this.deviceId = ''
+    this.passphraseState = ''
+    this.cleanUp()
+  }
+
+  /**
+   * Sends a request to the connected device. If the device was unplugged, swapped or its
+   * passphrase changed since the connection was made, connects again and retries once.
+   * The request reads `connectId`, `deviceId` and `passphraseState` when called, so it
+   * picks up the new connection.
+   */
+  async callDevice<T>(request: () => Promise<OneKeyResponse<T>>): Promise<OneKeyResponse<T>> {
+    if (!this.connectId || !this.deviceId) await this.connect()
+
+    const response = await request()
+    if (!getIsStaleConnectionResponse(response)) return response
+
+    this.#resetConnection()
+    await this.connect()
+    return request()
+  }
+
   async connect(preferredDeviceId?: string) {
     await this.#ensureInitialized()
     const devices = getResponsePayload(await this.walletSDK.searchDevices(), 'device search')
@@ -108,11 +146,13 @@ class OneKeyController implements ExternalSignerController {
     if (!this.connectId || !this.deviceId) await this.connect()
     if (this.isUnlocked(path, expectedAddress)) return 'ALREADY_UNLOCKED' as const
 
-    const response = await this.walletSDK.evmGetAddress(this.connectId, this.deviceId, {
-      path,
-      passphraseState: this.passphraseState,
-      showOnOneKey: false
-    })
+    const response = await this.callDevice(() =>
+      this.walletSDK.evmGetAddress(this.connectId, this.deviceId, {
+        path,
+        passphraseState: this.passphraseState,
+        showOnOneKey: false
+      })
+    )
     const payload = getResponsePayload(response, 'address')
     if (Array.isArray(payload)) throw new Error('The OneKey device returned an invalid address.')
 
@@ -128,15 +168,15 @@ class OneKeyController implements ExternalSignerController {
   }
 
   async retrieveAddresses(paths: string[]) {
-    if (!this.connectId || !this.deviceId) await this.connect()
-
-    const response = await this.walletSDK.evmGetAddress(this.connectId, this.deviceId, {
-      bundle: paths.map((path) => ({
-        path,
-        passphraseState: this.passphraseState,
-        showOnOneKey: false
-      }))
-    })
+    const response = await this.callDevice(() =>
+      this.walletSDK.evmGetAddress(this.connectId, this.deviceId, {
+        bundle: paths.map((path) => ({
+          path,
+          passphraseState: this.passphraseState,
+          showOnOneKey: false
+        }))
+      })
+    )
     const payload = getResponsePayload(response, 'address')
     const addresses = Array.isArray(payload) ? payload : [payload]
     if (addresses.length !== paths.length) {
