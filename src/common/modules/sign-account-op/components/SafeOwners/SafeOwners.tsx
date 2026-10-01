@@ -87,6 +87,7 @@ const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
           address={address}
           chainId={chainId}
           fontSize={15}
+          numberOfLines={1}
           hideActions
           actionsMode="inline"
           shouldWrapInlineActions={false}
