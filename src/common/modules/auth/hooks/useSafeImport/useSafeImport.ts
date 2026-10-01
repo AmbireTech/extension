@@ -61,8 +61,7 @@ const useSafeImport = () => {
                   factoryAddr: safeInfo.factoryAddr,
                   singleton: safeInfo.singleton,
                   setupData: safeInfo.setupData,
-                  saltNonce: safeInfo.saltNonce,
-                  version: safeInfo.version
+                  saltNonce: safeInfo.saltNonce
                 },
                 preferences: {
                   label: 'Safe',
