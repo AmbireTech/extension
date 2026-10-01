@@ -14,10 +14,12 @@ import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import AccountPreferences from '@common/modules/explore/components/ManageApp/AccountPreferences'
 import AccountPreferencesBottomSheet from '@common/modules/explore/components/ManageApp/AccountPreferencesBottomSheet'
+import DisguiseAsMetaMask from '@common/modules/explore/components/ManageApp/DisguiseAsMetaMask'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { Portal } from '@gorhom/portal'
+import { reloadCurrentTab } from '@web/extension-services/background/webapi/tab'
 
 import useManageApp from '../../hooks/useManageApp'
 import DappIcon from '../DappIcon'
@@ -105,8 +107,9 @@ const ManageApp = ({
     bottom?: number
     left: number
     isAbove: boolean
-    isAlignedRight: boolean
-  }>({ left: 0, isAbove: false, isAlignedRight: false })
+    // Horizontal offset of the trigger's center within the menu, used as the scale origin
+    originX: number
+  }>({ left: 0, isAbove: false, originX: 0 })
   const [isPositioned, setIsPositioned] = useState(false)
   const scaleAnim = useRef(new Animated.Value(0)).current
   const opacityAnim = useRef(new Animated.Value(0)).current
@@ -139,17 +142,18 @@ const ManageApp = ({
         : { top: pageY + height + GAP }
 
       let left = pageX - SPACING_SM
-      let alignedRight = false
-      if (menuWidth > 0 && left + menuWidth > screenWidth) {
-        left = pageX + width - menuWidth
-        alignedRight = true
+      // Doesn't fit to the right of the trigger, so push it as far right as the viewport allows
+      // instead of aligning it to the trigger, which would leave it floating mid-screen
+      if (menuWidth > 0 && left + menuWidth > screenWidth - GAP) {
+        left = screenWidth - GAP - menuWidth
       }
+      left = Math.max(GAP, left)
 
       setPosition({
         ...verticalPos,
-        left: Math.max(GAP, left),
+        left,
         isAbove: positionAbove,
-        isAlignedRight: alignedRight
+        originX: Math.min(Math.max(pageX + width / 2 - left, 0), menuWidth)
       })
       setIsPositioned(true)
     },
@@ -221,10 +225,15 @@ const ManageApp = ({
     }
   }, [isOpen, scaleAnim, opacityAnim, prevIsOpen])
 
+  const isBlacklisted = dapp.blacklisted === 'BLACKLISTED'
+
   const handlePress = useCallback(() => {
-    if (!dapp.isConnected) return
+    // A blacklisted app gets the menu only so the user can disconnect from it. Opening it while
+    // disconnected would offer nothing but the disguise, which must never help reach a phishing app.
+    if (isBlacklisted && !dapp.isConnected) return
+
     setIsOpen((prev) => !prev)
-  }, [dapp.isConnected])
+  }, [isBlacklisted, dapp.isConnected])
 
   const showChildren = isParentHovered === undefined || isParentHovered || isSelfHovered
 
@@ -264,15 +273,9 @@ const ManageApp = ({
                     outputRange: [position.isAbove ? 20 : -20, 0]
                   })
                 },
-                { scale: scaleAnim },
-                {
-                  translateX: scaleAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [position.isAlignedRight ? 20 : -20, 0]
-                  })
-                }
+                { scale: scaleAnim }
               ],
-              transformOrigin: `${position.isAbove ? 'bottom' : 'top'} ${position.isAlignedRight ? 'right' : 'left'}`,
+              transformOrigin: `${position.originX}px ${position.isAbove ? 'bottom' : 'top'}`,
               minWidth: 216,
               opacity: isPositioned ? opacityAnim : 0,
               ...spacings.phTy,
@@ -282,47 +285,62 @@ const ManageApp = ({
               ...style
             }}
           >
-            <NetworkSelector
-              dapp={dapp}
-              isAbove={position.isAbove}
-              isExpanded={isNetworkSelectorExpanded}
-              setIsExpanded={setIsNetworkSelectorExpanded}
-            />
-            {!!withCurrentAccount && !!account && (
-              <View
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  flexbox.justifySpaceBetween,
-                  spacings.phTy,
-                  spacings.pvTy,
-                  { borderRadius: 8 }
-                ]}
-              >
-                <Text fontSize={14} weight="medium" appearance="tertiaryText">
-                  Connect Wallet
-                </Text>
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <Avatar
-                    pfp={account.preferences.pfp}
-                    address={account.addr}
-                    size={20}
-                    style={spacings.mr0}
-                  />
-                  <Text fontSize={12} weight="medium" style={spacings.mlTy}>
-                    {shortenAddress(account.addr, 13)}
-                  </Text>
-                </View>
+            {!!dapp.isConnected && (
+              <>
+                <NetworkSelector
+                  dapp={dapp}
+                  isAbove={position.isAbove}
+                  isExpanded={isNetworkSelectorExpanded}
+                  setIsExpanded={setIsNetworkSelectorExpanded}
+                />
+                {!!withCurrentAccount && !!account && (
+                  <View
+                    style={[
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      flexbox.justifySpaceBetween,
+                      spacings.phTy,
+                      spacings.pvTy,
+                      { borderRadius: 8 }
+                    ]}
+                  >
+                    <Text fontSize={14} weight="medium" appearance="tertiaryText">
+                      Connect Wallet
+                    </Text>
+                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                      <Avatar
+                        pfp={account.preferences.pfp}
+                        address={account.addr}
+                        size={20}
+                        style={spacings.mr0}
+                      />
+                      <Text fontSize={12} weight="medium" style={spacings.mlTy}>
+                        {shortenAddress(account.addr, 13)}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+                <AccountPreferences
+                  dapp={dapp}
+                  onManageAccountsPress={() => {
+                    setIsOpen(false)
+                    openAccountPreferences()
+                  }}
+                  closeMenu={() => setIsOpen(false)}
+                />
+              </>
+            )}
+            {!isBlacklisted && !dapp.isConnected && (
+              <View style={spacings.mbTy}>
+                <DisguiseAsMetaMask
+                  dapp={dapp}
+                  onToggled={() => {
+                    setIsOpen(false)
+                    void reloadCurrentTab()
+                  }}
+                />
               </View>
             )}
-            <AccountPreferences
-              dapp={dapp}
-              onManageAccountsPress={() => {
-                setIsOpen(false)
-                openAccountPreferences()
-              }}
-              closeMenu={() => setIsOpen(false)}
-            />
             {!!dapp.isConnected && <DisconnectButton dapp={dapp} setIsOpen={setIsOpen} />}
             <AppData dapp={dapp} />
           </Animated.View>

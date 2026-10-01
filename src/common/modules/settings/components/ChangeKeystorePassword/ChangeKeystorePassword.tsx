@@ -13,6 +13,7 @@ import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { NEW_PASSWORD_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import { UseChangeKeystorePasswordReturn } from '@common/modules/settings/hooks/useChangeKeystorePassword'
@@ -96,6 +97,7 @@ const ChangeKeystorePassword: React.FC<Props> = ({
           rules={{ validate: isValidPassword }}
           render={({ field: { onChange, onBlur, value } }) => (
             <InputPassword
+              {...NEW_PASSWORD_AUTOFILL_PROPS}
               testID="enter-new-pass-field"
               onBlur={onBlur}
               placeholder={t('Enter new password')}
@@ -120,6 +122,7 @@ const ChangeKeystorePassword: React.FC<Props> = ({
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
+              {...NEW_PASSWORD_AUTOFILL_PROPS}
               testID="repeat-new-pass-field"
               onBlur={onBlur}
               placeholder={t('Repeat new password')}
