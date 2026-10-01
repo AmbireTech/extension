@@ -11,7 +11,10 @@ import {
   SIDE_PANEL_WIDTH
 } from '@web/constants/spacings'
 import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
-import { isSidePanelModeEnabled } from '@web/extension-services/background/webapi/panel'
+import {
+  isSidePanelModeEnabled,
+  isSidePanelOnLeft
+} from '@web/extension-services/background/webapi/panel'
 import { PortMessenger } from '@web/extension-services/messengers'
 import { isExtensionOverlayPort, SIDE_PANEL_WIDTH_STORAGE_KEY } from '@web/utils/sidePanel'
 
@@ -198,7 +201,9 @@ const calculateWindowSizeAndPosition = async (
     ? [(baseWindow.tabs || []).find((t) => t.active)]
     : await chrome.tabs.query({ active: true, windowId: baseWindow.id })
 
-  const width = isSidePanelMode ? await getSidePanelWidth() : POPUP_WIDTH
+  const [width, isOnLeft] = isSidePanelMode
+    ? await Promise.all([getSidePanelWidth(), isSidePanelOnLeft()])
+    : [POPUP_WIDTH, false]
   const baseLeft = baseWindow.left ?? 0
   const baseTop = baseWindow.top ?? 0
   const baseWidth = baseWindow.width || width
@@ -215,7 +220,9 @@ const calculateWindowSizeAndPosition = async (
 
   if (workArea) height = Math.min(height, workArea.height)
 
-  const leftPosition = baseLeft + baseWidth - webContentsInset - width
+  const leftPosition = isOnLeft
+    ? baseLeft + webContentsInset
+    : baseLeft + baseWidth - webContentsInset - width
   const topPosition = baseTop + browserChromeHeight
 
   // The browser rejects fractional sizes

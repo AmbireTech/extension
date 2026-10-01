@@ -1,6 +1,8 @@
 type ChromeSidePanelApi = {
   setPanelBehavior: (options: { openPanelOnActionClick: boolean }) => Promise<void>
   getPanelBehavior?: () => Promise<{ openPanelOnActionClick: boolean }>
+  // Chrome 140+
+  getLayout?: () => Promise<{ side: 'left' | 'right' }>
   open: (options: { windowId: number }) => Promise<void>
 }
 

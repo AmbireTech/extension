@@ -1,6 +1,7 @@
 const SMALL_WORK_AREA = { left: 0, top: 0, width: 1366, height: 767 }
 
 const mockIsSidePanelModeEnabled = jest.fn(async () => false)
+const mockIsSidePanelOnLeft = jest.fn(async () => false)
 const mockStorageLocalGet = jest.fn(async (): Promise<Record<string, unknown>> => ({}))
 
 jest.mock(
@@ -29,7 +30,10 @@ jest.mock('@web/constants/spacings', () => jest.requireActual('../../../constant
 jest.mock('@web/extension-services/messengers', () => ({}), { virtual: true })
 jest.mock(
   '@web/extension-services/background/webapi/panel',
-  () => ({ isSidePanelModeEnabled: () => mockIsSidePanelModeEnabled() }),
+  () => ({
+    isSidePanelModeEnabled: () => mockIsSidePanelModeEnabled(),
+    isSidePanelOnLeft: () => mockIsSidePanelOnLeft()
+  }),
   { virtual: true }
 )
 jest.mock(
@@ -111,6 +115,7 @@ describe('side panel mode', () => {
   afterEach(() => {
     delete (global as any).chrome
     mockIsSidePanelModeEnabled.mockResolvedValue(false)
+    mockIsSidePanelOnLeft.mockResolvedValue(false)
     mockStorageLocalGet.mockResolvedValue({})
     if (originalIsTesting !== undefined) process.env.IS_TESTING = originalIsTesting
   })
@@ -127,5 +132,13 @@ describe('side panel mode', () => {
     const createWindow = await openInSidePanelMode()
 
     expect(createWindow).toHaveBeenCalledWith(expect.objectContaining({ width: 400, left: 880 }))
+  })
+
+  it('opens the window along the left edge when the side panel is on the left', async () => {
+    mockIsSidePanelOnLeft.mockResolvedValue(true)
+
+    const createWindow = await openInSidePanelMode()
+
+    expect(createWindow).toHaveBeenCalledWith(expect.objectContaining({ width: 400, left: 0 }))
   })
 })
