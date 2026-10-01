@@ -29,6 +29,26 @@ import {
   setTransitionInFlight
 } from '@mobile/services/controllerHost/bootPhase'
 import { emitCtrlUpdate, emitToDappWebView } from '@mobile/services/controllerHost/uiEvents'
+import { ethErrors } from 'eth-rpc-errors'
+
+/**
+ * WC dapps switch between the session's approved chains locally and only stamp the target chain
+ * on each request, so align the dapp's chain with it - otherwise the request lands on the old one.
+ */
+const syncWcDappChainId = (mainCtrl: MainController, dappId: string, chainId: number) => {
+  const dapp = mainCtrl.dapps.getDapp(dappId)
+  if (!dapp || dapp.chainId === chainId) return
+
+  const isNetworkEnabled = mainCtrl.networks.networks.some((n) => Number(n.chainId) === chainId)
+  if (!isNetworkEnabled) {
+    throw ethErrors.provider.custom({
+      code: 4902,
+      message: 'This network is not enabled in Ambire. Enable it in the wallet and try again.'
+    })
+  }
+
+  mainCtrl.dapps.updateDapp(dappId, { chainId })
+}
 
 export const handleActions = async (
   action: MethodAction | Action,
@@ -299,6 +319,10 @@ export const handleActions = async (
           mainCtrl.dapps.setSessionMessenger(session.sessionId, mobileMessenger, false)
         }
 
+        if (isWalletConnect && params.chainId !== undefined) {
+          syncWcDappChainId(mainCtrl, session.id, params.chainId)
+        }
+
         const result = await handleProviderRequests({
           request: { ...params.request, session },
           mainCtrl,
@@ -316,7 +340,12 @@ export const handleActions = async (
                 // Account selected — format the SIWE message and dispatch personal_sign
                 await prepareWcAuthenticate(params.requestId, result[0], dispatch)
               } else {
-                await approveWalletConnectSession(params.requestId, result, dispatch)
+                await approveWalletConnectSession(
+                  params.requestId,
+                  result,
+                  dispatch,
+                  mainCtrl.networks.networks.map((n) => Number(n.chainId))
+                )
               }
             }
           } else if (isWcAuthenticate && request.method === 'personal_sign') {

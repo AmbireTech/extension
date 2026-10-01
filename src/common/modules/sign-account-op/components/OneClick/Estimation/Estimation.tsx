@@ -357,11 +357,13 @@ const OneClickEstimation = ({
           </View>
         )}
       </BottomSheet>
-      <SigningAuthBottomSheet
-        sheetRef={signingAuthSheetRef}
-        onCancel={cancelSigningAuth}
-        {...signingAuthProps}
-      />
+      {isMobile && (
+        <SigningAuthBottomSheet
+          sheetRef={signingAuthSheetRef}
+          onCancel={cancelSigningAuth}
+          {...signingAuthProps}
+        />
+      )}
       <Modals
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpController}

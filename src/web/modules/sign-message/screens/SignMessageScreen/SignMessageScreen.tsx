@@ -4,8 +4,11 @@ import { StyleSheet, View } from 'react-native'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
+<<<<<<< HEAD
 import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useCompactLayout from '@common/hooks/useCompactLayout'
+=======
+>>>>>>> v2
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import useTheme from '@common/hooks/useTheme'
@@ -61,10 +64,7 @@ const SignMessageScreen = () => {
     holdToProceedCompleteText,
     hasSafetyBanners,
     holdToProceedButtonType,
-    isResolveActionDisabled,
-    signingAuthSheetRef,
-    cancelSigningAuth,
-    signingAuthProps
+    isResolveActionDisabled
   } = useSignMessage()
 
   // In the split second when the request window opens, but the state is not yet
@@ -217,11 +217,6 @@ const SignMessageScreen = () => {
             handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
           />
         )}
-        <SigningAuthBottomSheet
-          sheetRef={signingAuthSheetRef}
-          onCancel={cancelSigningAuth}
-          {...signingAuthProps}
-        />
       </TabLayoutContainer>
     </SmallNotificationWindowWrapper>
   )

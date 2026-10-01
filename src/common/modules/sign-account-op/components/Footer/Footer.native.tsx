@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import BatchIcon from '@common/assets/svg/BatchIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -131,7 +130,6 @@ const Footer = ({
             <Button
               testID="queue-and-sign-later-button"
               type="secondary"
-              childrenPosition="left"
               text={batchBtnText}
               onPress={onAddToCart}
               disabled={isAddToCartDisabled}
@@ -143,9 +141,7 @@ const Footer = ({
                   content: startBatchingInfo
                 })
               })}
-            >
-              {!isMultisigSigned && <BatchIcon style={spacings.mrTy} />}
-            </Button>
+            />
           </View>
         )}
       </View>
