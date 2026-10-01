@@ -19,3 +19,8 @@ export const KEYSTORE_PASS = envVariables.KEYSTORE_PASS
 export const SEED = envVariables.SEED
 export const SEED24 = envVariables.SEED_24_WORDS
 export const PRIVATE_KEY = envVariables.PRIVATE_KEY
+// The mobile app gates fresh installs behind an invite code (useMobileInviteGate).
+// This is the e2e suite's own code to unlock it, entered through the UI on every
+// test run — distinct from the app's DEFAULT_INVITE_CODE_DEV dev auto-fill, which
+// is intentionally disabled whenever IS_TESTING is set.
+export const IOS_MOBILE_INVITE_CODE = envVariables.IOS_MOBILE_INVITE_CODE
