@@ -13,12 +13,12 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
@@ -52,7 +52,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     state: { flags }
   } = useController('FeatureFlagsController')
   const { canUseGasTank, disabledReason, requiresEip7702 } = useHasGasTank({ account })
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const isErc4337Enabled = flags.erc4337
   const isEip7702Enabled = flags.eip7702
   const isGasTankEnabled =

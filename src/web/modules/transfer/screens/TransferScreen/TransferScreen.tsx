@@ -648,6 +648,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               style={flexbox.flex1}
               contentContainerStyle={[
                 flexbox.flex1,
+                // The outer Content scroll already pads both sides, so the inner scrollbar
+                // gutter would only narrow the form on the right
+                spacings.pr0,
                 isTopUp ? { maxWidth: '100%', width: '100%' } : {}
               ]}
             >

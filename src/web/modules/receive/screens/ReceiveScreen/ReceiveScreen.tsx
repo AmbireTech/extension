@@ -12,18 +12,18 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import useReceive from '@common/modules/receive/hooks/useReceive'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import getStyles from './styles'
 
 const ReceiveScreen: FC = () => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 

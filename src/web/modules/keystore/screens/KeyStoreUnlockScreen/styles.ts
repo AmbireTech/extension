@@ -11,6 +11,7 @@ interface Style {
   panel: ViewStyle
   hero: ViewStyle
   container: ViewStyle
+  narrowContainer: ViewStyle
   biometricsContainer: ViewStyle
   biometricsIconButton: ViewStyle
   switchButton: ViewStyle
@@ -44,6 +45,12 @@ const getStyles = () =>
       width: '100%',
       marginHorizontal: 'auto',
       ...flexbox.alignCenter
+    },
+    narrowContainer: {
+      width: '100%',
+      ...flexbox.flex1,
+      ...flexbox.alignCenter,
+      ...spacings.phSm
     },
     biometricsContainer: {
       width: '100%',

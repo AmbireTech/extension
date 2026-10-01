@@ -6,13 +6,13 @@ import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -63,7 +63,7 @@ const AddressBookContact: FC<Props> = ({
   height = 20,
   isActive = false
 }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const ContainerElement = onPress ? AnimatedPressable : View
 
   const { t } = useTranslation()

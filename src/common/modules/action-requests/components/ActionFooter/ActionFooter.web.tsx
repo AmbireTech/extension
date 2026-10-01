@@ -4,8 +4,8 @@ import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -48,7 +48,7 @@ const ActionFooter = ({
   children
 }: Props) => {
   const { t } = useTranslation()
-  const { isWideFooterLayout } = useCompactActionRequestLayout()
+  const { isWideFooterLayout } = useCompactLayout()
 
   const handleOnResolve = useCallback(() => onResolve(), [onResolve])
 
@@ -85,7 +85,7 @@ const ActionFooter = ({
 
   if (!isWideFooterLayout) {
     return (
-      <View style={[spacings.ptSm, spacings.phSm, spacings.pbMd, { width: '100%' }]}>
+      <View style={[spacings.ptSm, spacings.phSm, spacings.pbSm, { width: '100%' }]}>
         {children}
         <View style={[flexbox.directionRow, { width: '100%', gap: SPACING_TY }]}>
           {rejectButton}

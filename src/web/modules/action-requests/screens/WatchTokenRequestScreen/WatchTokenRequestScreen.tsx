@@ -11,6 +11,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
@@ -32,6 +33,7 @@ export type TokenData = {
 const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
+  const { isNarrowWebLayout } = useCompactLayout()
   const {
     tokenData,
     tokenNetwork,
@@ -79,7 +81,8 @@ const WatchTokenRequestScreen = () => {
           }
         />
       )}
-      style={spacings.mt}
+      // In a narrow view the header already spaces the content like on mobile
+      style={isNarrowWebLayout ? undefined : spacings.mt}
     >
       <View style={[styles.container]}>
         <View style={styles.content}>

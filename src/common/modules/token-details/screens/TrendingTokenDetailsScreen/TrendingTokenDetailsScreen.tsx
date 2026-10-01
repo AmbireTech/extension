@@ -11,11 +11,11 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import Header from '@common/modules/header/components/Header/Header'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
@@ -74,7 +74,7 @@ const TrendingTokenDetailsScreen = () => {
   const { state: dappsState } = useController('DappsController')
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const token: TrendingToken | undefined = useMemo(
     () =>
@@ -154,7 +154,11 @@ const TrendingTokenDetailsScreen = () => {
       ) : (
         <ScrollableWrapper
           // The bottom padding is because of the footer, to make sure the content is not hidden behind it.
-          contentContainerStyle={[spacings.phSm, isWeb && { paddingBottom: 124 }]}
+          // In a narrow view the footer sits under the content, so no space has to be reserved for it
+          contentContainerStyle={[
+            spacings.phSm,
+            isWeb && !isNarrowWebLayout && { paddingBottom: 124 }
+          ]}
         >
           <HideTokenModal
             modalRef={hideTokenModalRef}
@@ -269,14 +273,13 @@ const TrendingTokenDetailsScreen = () => {
         ) : (
           <FooterGlassView
             size="sm"
-            style={isNarrowWebLayout ? spacings.phSm : undefined}
-            glassViewProps={
-              isNarrowWebLayout ? { cssStyle: { width: '100%', alignSelf: 'stretch' } } : undefined
-            }
+            // In a narrow view the footer is a flat panel under the content like on mobile,
+            // instead of a glass pill floating over it
+            absolute={!isNarrowWebLayout}
+            fullWidth={isNarrowWebLayout}
+            style={isNarrowWebLayout ? { backgroundColor: theme.primaryBackground } : undefined}
             innerContainerStyle={
-              isNarrowWebLayout
-                ? { gap: SPACING_MI, width: '100%', alignItems: 'stretch' }
-                : undefined
+              isNarrowWebLayout ? { flexDirection: 'row', gap: SPACING_MI } : undefined
             }
           >
             {actions.map((action, index) => (

@@ -1,6 +1,6 @@
 import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useWindowSize from '@common/hooks/useWindowSize'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 export const NARROW_LAYOUT_ADDRESS_MAX_LENGTH = 16
 
@@ -8,7 +8,7 @@ export const NARROW_LAYOUT_ADDRESS_MAX_LENGTH = 16
 export const FULL_ADDRESS_MIN_CONTAINER_WIDTH = 330
 
 const useShouldShowFullAddressOnWeb = (maxLength: number, containerWidth?: number | null) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { minWidthSize } = useWindowSize()
   // Below `m` a shortened address wastes the room a wrapped full one would use
   const isNarrowSurface = isWeb && minWidthSize('m')

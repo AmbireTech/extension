@@ -15,6 +15,7 @@ import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableW
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
@@ -22,11 +23,10 @@ import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -62,7 +62,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const flatlistRef = useRef(null)
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
@@ -77,7 +77,7 @@ const AccountSelectScreen = () => {
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
   // Reserves exactly as much scroll space as the floating footer occupies, so the last
-  // account in the list is never covered by it (the footer grows taller on narrow side panels).
+  // account in the list is never covered by it. The narrow view footer doesn't float.
   const [footerHeight, setFooterHeight] = useState(0)
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
@@ -197,13 +197,17 @@ const AccountSelectScreen = () => {
         </View>
         <FooterGlassView
           isSimpleBlur={false}
+          // In a narrow view the footer sits under the list like on mobile, instead of floating over it
+          absolute={!isNarrowWebLayout}
           fullWidth={isNarrowWebLayout}
+          size={isNarrowWebLayout ? 'sm' : 'md'}
+          innerContainerStyle={isNarrowWebLayout ? spacings.ph0 : undefined}
           onLayout={handleFooterLayout}
         >
           <View
             style={
               isNarrowWebLayout
-                ? { width: '100%', gap: SPACING_TY }
+                ? { width: '100%', gap: SPACING_SM }
                 : [flexbox.directionRow, flexbox.alignCenter]
             }
           >

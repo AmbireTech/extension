@@ -7,6 +7,7 @@ import Alert from '@common/components/Alert'
 import ManifestImage from '@common/components/ManifestImage'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
@@ -15,13 +16,12 @@ import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAcc
 import spacings, { SPACING, SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
 import getStyles from './styles'
 
 const SwitchAccountScreen = () => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const {
     t,
     account,
@@ -57,7 +57,8 @@ const SwitchAccountScreen = () => {
         style={[
           styles.container,
           {
-            paddingVertical: SPACING_LG * responsiveSizeMultiplier,
+            // In a narrow view the header and the footer already space the content like on mobile
+            paddingVertical: isNarrowWebLayout ? 0 : SPACING_LG * responsiveSizeMultiplier,
             width: contentWidth,
             ...(isNarrowWebLayout ? { maxWidth: '100%' } : {})
           }

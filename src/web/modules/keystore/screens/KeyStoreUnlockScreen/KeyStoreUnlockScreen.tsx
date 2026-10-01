@@ -22,6 +22,7 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { SHOULD_USE_TAB_FOR_BIOMETRICS } from '@common/hooks/useSecretConfirmation'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -30,12 +31,11 @@ import useKeyStoreUnlock from '@common/modules/keystore/hooks/useKeyStoreUnlock'
 import backgroundImage from '@common/modules/keystore/images/background.png'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { syncSessionStorage } from '@common/services/storage'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInternalPageInTab } from '@common/utils/links/links'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
 
@@ -54,7 +54,7 @@ const KeyStoreUnlockScreen = () => {
     useKeyStoreUnlock()
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { styles } = useTheme(getStyles)
   const {
     state: { isPrivacyModeEnabled },
@@ -185,11 +185,13 @@ const KeyStoreUnlockScreen = () => {
             marginBottom:
               isExtensionUpdateAvailable && !isPasswordUnlockRequired
                 ? SPACING_TY
-                : canUseBiometrics
-                  ? 42
-                  : isPasswordUnlockRequired
-                    ? 24
-                    : 56
+                : isNarrowWebLayout
+                  ? SPACING_SM
+                  : canUseBiometrics
+                    ? 42
+                    : isPasswordUnlockRequired
+                      ? 24
+                      : 56
           }
         ]}
       >
@@ -271,28 +273,32 @@ const KeyStoreUnlockScreen = () => {
           <UpdateAvailableBanner />
         </View>
       )}
-      {/* A narrow layout's width can match the container maxWidth, so keep the form inset */}
-      <View style={[styles.container, isNarrowWebLayout && spacings.phSm]}>
+      {/* A narrow layout fills the width and spreads the form vertically like on mobile */}
+      <View style={isNarrowWebLayout ? styles.narrowContainer : styles.container}>
         {unlockMethod === 'biometrics' && canUseBiometrics && (
-          <View style={styles.biometricsContainer}>
-            <TouchableOpacity
-              testID="button-unlock-biometrics-icon"
-              activeOpacity={0.85}
-              style={styles.biometricsIconButton}
-              disabled={isBiometricsUnlockInProgress}
-              onPress={() => {
-                handleBiometricsPrompt().catch((e) => {
-                  addToast(`failed to open biometrics prompt`)
-                  console.log('failed to open biometrics prompt', e)
-                })
-              }}
-            >
-              {isBiometricsUnlockInProgress ? (
-                <Spinner variant="black" style={{ width: 64, height: 64 }} />
-              ) : (
-                <FingerprintIcon width={64} height={64} color={theme.iconPrimary} />
-              )}
-            </TouchableOpacity>
+          <View style={[styles.biometricsContainer, isNarrowWebLayout && flexbox.flex1]}>
+            {isNarrowWebLayout && <View style={flexbox.flex1} />}
+            <View style={isNarrowWebLayout && [flexbox.flex1, flexbox.center]}>
+              <TouchableOpacity
+                testID="button-unlock-biometrics-icon"
+                activeOpacity={0.85}
+                style={[styles.biometricsIconButton, isNarrowWebLayout && spacings.mb0]}
+                disabled={isBiometricsUnlockInProgress}
+                onPress={() => {
+                  handleBiometricsPrompt().catch((e) => {
+                    addToast(`failed to open biometrics prompt`)
+                    console.log('failed to open biometrics prompt', e)
+                  })
+                }}
+              >
+                {isBiometricsUnlockInProgress ? (
+                  <Spinner variant="black" style={{ width: 64, height: 64 }} />
+                ) : (
+                  <FingerprintIcon width={64} height={64} color={theme.iconPrimary} />
+                )}
+              </TouchableOpacity>
+            </View>
+            {isNarrowWebLayout && <View style={flexbox.flex1} />}
             <Button
               type="secondary"
               style={styles.switchButton}
@@ -306,6 +312,7 @@ const KeyStoreUnlockScreen = () => {
 
         {unlockMethod === 'password' && (
           <>
+            {isNarrowWebLayout && <View style={flexbox.flex1} />}
             {!!isPasswordUnlockRequired && (
               <Text
                 fontSize={12}
@@ -356,6 +363,7 @@ const KeyStoreUnlockScreen = () => {
               text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
               onPress={handleSubmit((data) => handleUnlock(data))}
             />
+            {isNarrowWebLayout && <View style={flexbox.flex1} />}
 
             {canUseBiometrics && (
               <Button
@@ -392,7 +400,13 @@ const KeyStoreUnlockScreen = () => {
                     windowId: requestWindow?.windowProps?.createdFromWindowId
                   })
                 }
-                style={isPasswordUnlockRequired ? spacings.mtLg : spacings.mtXl}
+                style={
+                  isNarrowWebLayout
+                    ? spacings.mtSm
+                    : isPasswordUnlockRequired
+                      ? spacings.mtLg
+                      : spacings.mtXl
+                }
                 hitSlop={FOOTER_BUTTON_HIT_SLOP}
               >
                 <Text weight="medium" appearance="secondaryText" fontSize={14} underline>

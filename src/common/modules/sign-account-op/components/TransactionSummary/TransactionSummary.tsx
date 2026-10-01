@@ -31,6 +31,7 @@ import Label from '@common/components/Label'
 import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
@@ -40,7 +41,6 @@ import ExpandedContent from '@common/modules/sign-account-op/components/Transact
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
@@ -173,7 +173,7 @@ const TransactionSummary = ({
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout: withMobileLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(
     call,
@@ -607,7 +607,7 @@ const TransactionSummary = ({
             {...bindDeleteIconAnim}
             testID={`delete-txn-call-${index}`}
           >
-            <DeleteIcon width={withMobileLayout ? 26 : 28} height={withMobileLayout ? 26 : 28} />
+            <DeleteIcon width={withMobileLayout ? 24 : 26} height={withMobileLayout ? 24 : 26} />
           </AnimatedPressable>
         )}
         {shouldShowRightControl && (
@@ -730,7 +730,7 @@ const TransactionSummary = ({
         hasPadding={false}
         style={{ width: '100%', alignContent: 'flex-start' }}
         disableFlex
-        inlineDappIcon={isMobile}
+        inlineDappIcon
         editApprovalCallInfo={editApprovalCallInfo}
         dapp={call.dapp}
       />
@@ -1030,9 +1030,7 @@ const TransactionSummary = ({
       <View
         style={{
           paddingHorizontal:
-            (shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout) &&
-            isWeb &&
-            !withMobileLayout
+            shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout
               ? SPACING_SM
               : 42 * sizeMultiplier[size] // magic number
         }}

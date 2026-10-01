@@ -166,7 +166,7 @@ const AccountKey: React.FC<Props> = ({
             <View
               style={singleLineLabel && { flex: 1, minWidth: 0 }}
               dataSet={createGlobalTooltipDataSet({
-                id: `key-${addr}-tooltip`,
+                id: `key-${addr}-${type}-tooltip`,
                 content: tooltipContent ?? addr
               })}
             >
@@ -222,7 +222,7 @@ const AccountKey: React.FC<Props> = ({
               */}
                   <View
                     dataSet={createGlobalTooltipDataSet({
-                      id: `export-${addr}-tooltip`,
+                      id: `export-${addr}-${type}-tooltip`,
                       content: t('Export unavailable as this is a hardware wallet key'),
                       hidden: canExportKey
                     })}

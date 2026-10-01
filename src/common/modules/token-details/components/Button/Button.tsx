@@ -4,9 +4,9 @@ import { Animated, Pressable } from 'react-native'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -60,7 +60,7 @@ const TokenDetailsButton: FC<Props> = ({
 }) => {
   const { styles, theme } = useTheme(getStyles)
   // Compact = mobile or narrow side panel — both use the original mobile button styles.
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
   const shouldUseCompactLayout = isCompactLayout || forceCompact
   const shouldUseSmallLayout = !shouldUseCompactLayout && !!small
   const shouldUseNarrowText = shouldUseCompactLayout || shouldUseSmallLayout

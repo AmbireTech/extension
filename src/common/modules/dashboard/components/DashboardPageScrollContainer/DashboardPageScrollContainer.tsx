@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
@@ -64,6 +64,11 @@ const CAROUSEL_VIRTUALIZATION = {
 
 const NO_PROPS = {}
 
+// The floating bar's 40px controls plus its vertical padding, and the SPACING it floats
+// above the bottom edge (both on top of the safe area inset)
+const FLOATING_BAR_HEIGHT = 40 + SPACING_TY * 2
+const FLOATING_BAR_BOTTOM_OFFSET = SPACING
+
 const DashboardPageScrollContainer: FC<Props> = ({
   tab,
   openTab,
@@ -97,6 +102,10 @@ const DashboardPageScrollContainer: FC<Props> = ({
       topSpacing,
       { flexGrow: 1 },
       isMobile && { paddingBottom: bottom || SPACING_SM },
+      // Lets the last item scroll above the floating bar instead of ending up under it
+      !!floatingBar && {
+        paddingBottom: FLOATING_BAR_HEIGHT + FLOATING_BAR_BOTTOM_OFFSET + bottom + SPACING_SM
+      },
       // A page with less content cannot scroll far enough to hold the header collapsed.
       // Padding would not do: flexGrow stretches the content box to the page anyway.
       !!carousel &&
@@ -107,7 +116,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
       // the collapsing part of the header is padded for, the rest is above the list
       !!carousel && { paddingTop: carousel.collapsibleHeight }
     ]
-  }, [bottom, carousel, stickyHeaderHeight, topSpacing])
+  }, [bottom, carousel, floatingBar, stickyHeaderHeight, topSpacing])
 
   // iOS draws the scroll indicator against the frame, not the content, so padding the
   // content away from the banners leaves the indicator under them. Inset separately.

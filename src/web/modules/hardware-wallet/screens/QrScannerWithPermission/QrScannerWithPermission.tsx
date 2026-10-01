@@ -6,11 +6,11 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 import { browser, engine, isSafari } from '@web/constants/browserapi'
 import QrScanner from '@web/modules/hardware-wallet/screens/QrScannerWithPermission/QrScanner'
@@ -69,7 +69,7 @@ const QrScannerWithPermission = ({
   onProgress
 }: Props) => {
   const { isPopup } = getUiType()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const needsFullScreenCameraFallback = isPopup || isNarrowWebLayout
   const { t } = useTranslation()
   const { theme } = useTheme()

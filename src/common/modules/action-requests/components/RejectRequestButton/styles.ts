@@ -1,6 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -10,6 +10,7 @@ interface Styles {
   sheetTitle: TextStyle
   sheetSubtitle: TextStyle
   closeButton: ViewStyle
+  options: ViewStyle
   option: ViewStyle
 }
 
@@ -38,12 +39,14 @@ const getStyles = (theme: ThemeProps) =>
       right: 0,
       top: 0
     },
+    options: {
+      gap: SPACING_SM
+    },
     option: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...common.borderRadiusPrimary,
       ...spacings.ph,
-      ...spacings.mbSm,
       minHeight: 50,
       backgroundColor: theme.primaryBackground
     }
