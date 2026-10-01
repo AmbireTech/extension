@@ -24,13 +24,9 @@ import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useToast from '@common/hooks/useToast'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import requestOneKeyDevicePermission, {
-  isOneKeyWebUsbSupported
-} from '@common/modules/hardware-wallets/onekey/requestOneKeyDevicePermission'
 import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
 import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import { NfcWalletIcons } from '@common/modules/hardware-wallets/nfc/wallets/icons'
@@ -54,7 +50,6 @@ const AddAccount = ({
 }) => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const { addToast } = useToast()
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
   const { createNewSeedAccount, isCreating: isCreatingNewSeedAccount } = useCreateNewSeedAccount()
   const { scanCard } = useNfcAccountImport()
@@ -127,31 +122,8 @@ const AddAccount = ({
         key: 'onekey',
         text: t('OneKey'),
         icon: OneKeyIcon,
-        onPress: async () => {
-          if (!isOneKeyWebUsbSupported()) {
-            addToast(
-              t(
-                "Your browser doesn't support WebUSB, which is required for the OneKey device. Please try using a different browser."
-              ),
-              { type: 'error' }
-            )
-            return
-          }
-
-          try {
-            const preferredDeviceId = await requestOneKeyDevicePermission()
-            setTriggeredHwWalletFlow('onekey')
-            dispatch({
-              type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY',
-              params: { preferredDeviceId }
-            })
-          } catch (error: any) {
-            const message =
-              error?.name === 'NotFoundError'
-                ? t('No OneKey device was selected. Connect and unlock it, then try again.')
-                : error?.message || t('Could not connect to the OneKey device.')
-            addToast(message, { type: error?.name === 'NotFoundError' ? 'warning' : 'error' })
-          }
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.oneKeyConnect)
         },
         testID: 'onekey-option'
       },
@@ -175,7 +147,7 @@ const AddAccount = ({
         testID: 'qr-option'
       }
     ]
-  }, [addToast, dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
+  }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
 
   const optionsNfc = useMemo(() => {
     if (!isMobile) return []

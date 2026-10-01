@@ -176,6 +176,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             new RouteNode(WEB_ROUTES.importSeedPhrase, common, false, false),
             new RouteNode(WEB_ROUTES.ledgerConnect, common, false, false),
             new RouteNode(WEB_ROUTES.trezorConnect, common, false, false),
+            new RouteNode(WEB_ROUTES.oneKeyConnect, common, false, false),
             new RouteNode(
               WEB_ROUTES.safeImport,
               [

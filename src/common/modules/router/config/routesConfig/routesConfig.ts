@@ -88,6 +88,11 @@ const routesConfig: RouteConfig = {
       web: i18n.t('Connect Trezor')
     })
   },
+  [ROUTES.oneKeyConnect]: {
+    route: ROUTES.oneKeyConnect,
+    title: Platform.select({ default: i18n.t('Welcome to Ambire Wallet') }),
+    name: Platform.select({ default: i18n.t('Connect OneKey') })
+  },
   [ROUTES.authEmailAccount]: {
     route: ROUTES.authEmailAccount,
     title: Platform.select({

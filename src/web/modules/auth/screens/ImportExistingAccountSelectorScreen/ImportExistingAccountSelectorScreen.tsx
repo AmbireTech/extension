@@ -22,9 +22,6 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import requestOneKeyDevicePermission, {
-  isOneKeyWebUsbSupported
-} from '@common/modules/hardware-wallets/onekey/requestOneKeyDevicePermission'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -136,32 +133,8 @@ const ImportExistingAccountSelectorScreen = () => {
       },
       {
         title: t('OneKey'),
-        onPress: async () => {
-          if (isSafari() || !isOneKeyWebUsbSupported()) {
-            addToast(
-              t(
-                "Your browser doesn't support WebUSB, which is required for the OneKey device. Please try using a different browser."
-              ),
-              { type: 'error' }
-            )
-            return
-          }
-
-          try {
-            // WebUSB requires the permission prompt to start directly from the user gesture.
-            const preferredDeviceId = await requestOneKeyDevicePermission()
-            setTriggeredHwWalletFlow('onekey')
-            dispatch({
-              type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY',
-              params: { preferredDeviceId }
-            })
-          } catch (error: any) {
-            const message =
-              error?.name === 'NotFoundError'
-                ? t('No OneKey device was selected. Connect and unlock it, then try again.')
-                : error?.message || t('Could not connect to the OneKey device.')
-            addToast(message, { type: error?.name === 'NotFoundError' ? 'warning' : 'error' })
-          }
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.oneKeyConnect)
         },
         icon: OneKeyIcon
       },

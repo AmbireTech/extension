@@ -15,15 +15,7 @@ const allowedMethods = new Set([
   'cancel'
 ])
 
-browser.runtime.onMessage.addListener(async (request: OneKeyBridgeRequest, sender: any) => {
-  if (
-    request?.target !== 'ambire-onekey-offscreen' ||
-    sender?.id !== browser.runtime.id ||
-    sender?.tab ||
-    !allowedMethods.has(request.method)
-  )
-    return undefined
-
+const handleBridgeRequest = async (request: OneKeyBridgeRequest) => {
   try {
     await bridge.init()
     const method = bridge[request.method] as (...args: unknown[]) => Promise<unknown>
@@ -32,4 +24,18 @@ browser.runtime.onMessage.addListener(async (request: OneKeyBridgeRequest, sende
   } catch (error: any) {
     return { error: error?.message || 'The OneKey request failed.' }
   }
+}
+
+// The listener must not be `async`: returning a promise answers the message, so this document
+// would answer every other runtime message (like the UI ping to the background) with `undefined`.
+browser.runtime.onMessage.addListener((request: OneKeyBridgeRequest, sender: any) => {
+  if (
+    request?.target !== 'ambire-onekey-offscreen' ||
+    sender?.id !== browser.runtime.id ||
+    sender?.tab ||
+    !allowedMethods.has(request.method)
+  )
+    return undefined
+
+  return handleBridgeRequest(request)
 })

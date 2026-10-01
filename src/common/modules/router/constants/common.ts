@@ -86,6 +86,7 @@ const WEB_ROUTES = {
   qrPermission: 'qr-permission',
   exportAccountsToMobile: 'export-accounts-to-mobile',
   importAccountsFromMobile: 'import-accounts-from-mobile',
+  oneKeyConnect: 'onekey-connect',
   // INTERNAL ROUTES
   internalLogs: 'internal/logs'
 }
@@ -144,6 +145,7 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.viewOnlyAccountAdder,
   COMMON_ROUTES.ledgerConnect,
   COMMON_ROUTES.trezorConnect,
+  WEB_ROUTES.oneKeyConnect,
   COMMON_ROUTES.keyStoreSetup,
   COMMON_ROUTES.accountPersonalize,
   COMMON_ROUTES.accountPicker,

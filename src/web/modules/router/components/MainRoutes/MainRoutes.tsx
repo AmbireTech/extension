@@ -110,6 +110,10 @@ const MainRoutes = () => {
               element={<AuthGroupScreen pick={(m) => m.LedgerConnectScreen} />}
             />
             <Route
+              path={WEB_ROUTES.oneKeyConnect}
+              element={<AuthGroupScreen pick={(m) => m.OneKeyConnectScreen} />}
+            />
+            <Route
               path={WEB_ROUTES.safeImport}
               element={<AuthGroupScreen pick={(m) => m.SafeImportMethodScreen} />}
             />

@@ -484,7 +484,10 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     if (!isExtension) return
 
     try {
-      chrome.runtime.onMessage.addListener(async (message: any) => {
+      // Must stay synchronous: a listener that returns a promise (like an `async` one) answers
+      // every runtime message with `undefined` before its real recipient can (e.g. the OneKey
+      // offscreen document), because the browser takes the first answer it gets.
+      chrome.runtime.onMessage.addListener((message: any) => {
         if (!hasConnectedToTheBackground.current) return
 
         if (message.action === 'sw-started') {
