@@ -4,6 +4,12 @@ export const POPUP_WIDTH = 480
 // Chrome doesn't expose the width the user gave the side panel, so the request window opens at
 // the width Chrome opens the panel with.
 export const SIDE_PANEL_WIDTH = 400
+/**
+ * The narrowest side panel the layout supports - Chrome never makes the side panel narrower than
+ * this, but Firefox lets the sidebar be dragged narrower. Keep in sync with the media query in
+ * side-panel.html, which keeps the content at this width there and lets it scroll sideways.
+ */
+export const SIDE_PANEL_MIN_WIDTH = 360
 export const TAB_CONTENT_WIDTH = 990
 export const TAB_WIDE_CONTENT_WIDTH = 1320
 
