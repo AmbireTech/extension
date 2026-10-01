@@ -49,10 +49,10 @@ export interface DashboardCarouselContextValue {
    */
   reportScrollOffset: (offset: number) => void
   /**
-   * The open page's scroll, which collapses the overview and hides the floating bar.
-   * `contentHeight` leaves out the room a page is given only to collapse the banners.
+   * The open page's scroll, which collapses the overview and hides the floating bar once
+   * past `collapseThreshold`: how far that page can be scrolled to collapse it, if at all.
    */
-  onPageScroll: (event: NativeSyntheticEvent<NativeScrollEvent>, contentHeight: number) => void
+  onPageScroll: (event: NativeSyntheticEvent<NativeScrollEvent>, collapseThreshold: number) => void
   /**
    * The bar belongs to the dashboard rather than to a page, so it is rendered above
    * the pager and stays put through a swipe. A page registers what it wants in it,

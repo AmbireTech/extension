@@ -146,16 +146,22 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const listHeight = carousel ? carousel.pageHeight - stickyHeaderHeight : 0
   const overviewHeight = carousel?.overviewHeight || 0
   const naturalContentHeight = contentHeight - footerHeight
-  // The bar only hides with the overview, so items ending under it count as hidden too
-  const visibleItemsEnd =
-    listHeight - overviewHeight - (floatingBar ? FLOATING_BAR_REACH + bottom : 0)
+  const itemsEnd = naturalContentHeight - contentPaddingBottom
+  const minContentHeight = carousel?.pageHeight ? listHeight + carousel.collapsibleHeight : 0
+  // How far the page scrolls anyway, e.g. to collapse the banners
+  const baseScrollRange = Math.max(minContentHeight, naturalContentHeight, listHeight) - listHeight
+  // Whether the last item stays hidden under the open overview or the bar, which only hides
+  // with the overview, even with the page scrolled as far as it goes
+  const barReach = floatingBar ? FLOATING_BAR_REACH + bottom : 0
   const isEndHidden =
-    !!overviewHeight && naturalContentHeight - contentPaddingBottom > visibleItemsEnd
-  // 1px over, as Android reports scroll offsets in whole pixels, which can round down to
-  // just short of the overview's height and never collapse it
-  const collapseRoom = isEndHidden
-    ? Math.max(listHeight + overviewHeight + 1 - naturalContentHeight, 0)
-    : 0
+    !!overviewHeight && itemsEnd - baseScrollRange > listHeight - overviewHeight - barReach
+  // Collapsing shows the end and hides the bar, so a page only needs to be able to scroll
+  // at all: 2px, as Android reports offsets in whole pixels, which can round down short of 1px
+  const collapseRoom = isEndHidden ? Math.max(listHeight + 2 - naturalContentHeight, 0) : 0
+  const scrollRange = Math.max(baseScrollRange, naturalContentHeight + collapseRoom - listHeight)
+  // Collapses at the overview's height, or at the end of a page that can't scroll that far.
+  // A page whose end shows without collapsing never collapses it.
+  const collapseThreshold = isEndHidden ? Math.min(overviewHeight, scrollRange - 1) : Infinity
 
   const listFooter = useMemo(
     () =>
@@ -165,14 +171,12 @@ const DashboardPageScrollContainer: FC<Props> = ({
     [carousel, collapseRoom, onFooterLayout]
   )
 
-  // A page that fits below the open overview reports a content height too short to collapse
-  // it, whatever the min height for the banners adds. Read from a ref, so the native scroll
-  // listener isn't detached whenever the content changes.
-  const overviewContentHeight = useRef(0)
+  // Read from a ref, so the native scroll listener isn't detached whenever the content changes
+  const collapseThresholdRef = useRef(collapseThreshold)
 
   useEffect(() => {
-    overviewContentHeight.current = naturalContentHeight + collapseRoom
-  }, [collapseRoom, naturalContentHeight])
+    collapseThresholdRef.current = collapseThreshold
+  }, [collapseThreshold])
 
   const reportScrollOffset = carousel?.reportScrollOffset
   const onPageScroll = carousel?.onPageScroll
@@ -184,7 +188,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const handleScrollListener = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       reportScrollOffset?.(event.nativeEvent.contentOffset.y)
-      onPageScroll?.(event, overviewContentHeight.current)
+      onPageScroll?.(event, collapseThresholdRef.current)
       onScroll?.(event)
     },
     [onPageScroll, onScroll, reportScrollOffset]
@@ -198,7 +202,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const handleScroll = useMemo(() => {
     if (!carouselScrollY || openTab !== tab) return onScroll
 
-    // The listener reads `overviewContentHeight` only when a scroll event arrives
+    // The listener reads `collapseThresholdRef` only when a scroll event arrives
     // eslint-disable-next-line react-hooks/refs
     return Animated.event([{ nativeEvent: { contentOffset: { y: carouselScrollY } } }], {
       useNativeDriver: true,

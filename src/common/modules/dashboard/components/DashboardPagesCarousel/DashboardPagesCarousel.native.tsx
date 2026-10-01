@@ -160,11 +160,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const overviewExpansion = useSharedValue(1)
   const isOverviewCollapsed = useSharedValue(false)
   const collapseState = useRef(INITIAL_COLLAPSE_STATE)
-  const overviewHeightRef = useRef(overviewHeight)
-
-  useEffect(() => {
-    overviewHeightRef.current = overviewHeight
-  }, [overviewHeight])
 
   const applyCollapseState = useCallback((next: CollapseState) => {
     const wasCollapsed = collapseState.current.isOverviewCollapsed
@@ -179,15 +174,13 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
   // The pages are never resized, so collapsing doesn't change how far they can scroll
   const onPageScroll = useCallback(
-    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>, contentHeight: number) => {
-      if (!overviewHeightRef.current) return
-
+    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>, collapseThreshold: number) => {
       applyCollapseState(
         getNextCollapseState(collapseState.current, {
           offsetY: nativeEvent.contentOffset.y,
-          contentHeight,
+          contentHeight: nativeEvent.contentSize.height,
           layoutHeight: nativeEvent.layoutMeasurement.height,
-          scrollDownThreshold: overviewHeightRef.current,
+          scrollDownThreshold: collapseThreshold,
           collapsibleHeight: 0
         })
       )
