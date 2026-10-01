@@ -30,8 +30,8 @@ export interface DashboardCarouselContextValue {
    */
   collapsibleHeight: number
   /**
-   * How far the open overview pushes the pages down. They are never resized for it, so
-   * every page must be able to scroll this far to collapse it and show its end.
+   * How far the open overview pushes the pages down. They are never resized for it, so a
+   * page whose end it hides must be able to scroll this far to collapse it.
    */
   overviewHeight: number
   /** Height of a page, which its content has to exceed to be scrollable at all. */
@@ -48,8 +48,11 @@ export interface DashboardCarouselContextValue {
    * tell a drag from the page being scrolled.
    */
   reportScrollOffset: (offset: number) => void
-  /** The open page's scroll, which collapses the overview and hides the floating bar. */
-  onPageScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  /**
+   * The open page's scroll, which collapses the overview and hides the floating bar.
+   * `contentHeight` leaves out the room a page is given only to collapse the banners.
+   */
+  onPageScroll: (event: NativeSyntheticEvent<NativeScrollEvent>, contentHeight: number) => void
   /**
    * The bar belongs to the dashboard rather than to a page, so it is rendered above
    * the pager and stays put through a swipe. A page registers what it wants in it,

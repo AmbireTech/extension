@@ -1,11 +1,13 @@
-import React, { FC, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import React, { FC, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   FlatList,
   FlatListProps,
+  LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
+  View,
   ViewStyle
 } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -64,6 +66,9 @@ const CAROUSEL_VIRTUALIZATION = {
 
 const NO_PROPS = {}
 
+// Stretches the footer over whatever the items leave of the content's min height
+const FOOTER_STYLE: ViewStyle = { flexGrow: 1 }
+
 const DashboardPageScrollContainer: FC<Props> = ({
   tab,
   openTab,
@@ -92,26 +97,24 @@ const DashboardPageScrollContainer: FC<Props> = ({
     [carousel, stickyHeaderHeight]
   )
 
+  const contentPaddingBottom = isMobile ? bottom || SPACING_SM : 0
+
   const contentContainerStyle = useMemo(() => {
     return [
       topSpacing,
       { flexGrow: 1 },
-      isMobile && { paddingBottom: bottom || SPACING_SM },
-      // A page with less content cannot scroll far enough to hold the header and the overview
-      // collapsed. Padding would not do: flexGrow stretches the content box to the page anyway.
+      isMobile && { paddingBottom: contentPaddingBottom },
+      // A page with less content cannot scroll far enough to hold the header collapsed.
+      // Padding would not do: flexGrow stretches the content box to the page anyway.
       !!carousel &&
         !!carousel.pageHeight && {
-          minHeight:
-            carousel.pageHeight -
-            stickyHeaderHeight +
-            carousel.collapsibleHeight +
-            carousel.overviewHeight
+          minHeight: carousel.pageHeight - stickyHeaderHeight + carousel.collapsibleHeight
         },
       // Must come last, as it overrides the padding of the non-carousel layout. Only
       // the collapsing part of the header is padded for, the rest is above the list
       !!carousel && { paddingTop: carousel.collapsibleHeight }
     ]
-  }, [bottom, carousel, stickyHeaderHeight, topSpacing])
+  }, [carousel, contentPaddingBottom, stickyHeaderHeight, topSpacing])
 
   // iOS draws the scroll indicator against the frame, not the content, so padding the
   // content away from the banners leaves the indicator under them. Inset separately.
@@ -125,6 +128,46 @@ const DashboardPageScrollContainer: FC<Props> = ({
     }
   }, [carousel])
 
+  // How tall the content is without the min height above, which the footer takes up by
+  // stretching over whatever the items leave. The pages are pushed down by the open overview
+  // rather than resized, so a page whose end that hides must scroll far enough to collapse it.
+  const [contentHeight, setContentHeight] = useState(0)
+  const [footerHeight, setFooterHeight] = useState(0)
+
+  const onContentSizeChange = useCallback((_width: number, height: number) => {
+    setContentHeight(height)
+  }, [])
+
+  const onFooterLayout = useCallback(({ nativeEvent }: LayoutChangeEvent) => {
+    setFooterHeight(nativeEvent.layout.height)
+  }, [])
+
+  const listHeight = carousel ? carousel.pageHeight - stickyHeaderHeight : 0
+  const overviewHeight = carousel?.overviewHeight || 0
+  const naturalContentHeight = contentHeight - footerHeight
+  const isEndHiddenByOverview =
+    !!overviewHeight && naturalContentHeight > listHeight - overviewHeight
+  const collapseRoom = isEndHiddenByOverview
+    ? Math.max(listHeight + overviewHeight - naturalContentHeight, 0)
+    : 0
+
+  const listFooter = useMemo(
+    () =>
+      carousel ? (
+        <View style={{ flexGrow: 1, minHeight: collapseRoom }} onLayout={onFooterLayout} />
+      ) : undefined,
+    [carousel, collapseRoom, onFooterLayout]
+  )
+
+  // A page that fits below the open overview reports a content height too short to collapse
+  // it, whatever the min height for the banners adds. Read from a ref, so the native scroll
+  // listener isn't detached whenever the content changes.
+  const overviewContentHeight = useRef(0)
+
+  useEffect(() => {
+    overviewContentHeight.current = naturalContentHeight + collapseRoom
+  }, [collapseRoom, naturalContentHeight])
+
   const reportScrollOffset = carousel?.reportScrollOffset
   const onPageScroll = carousel?.onPageScroll
 
@@ -135,7 +178,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const handleScrollListener = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       reportScrollOffset?.(event.nativeEvent.contentOffset.y)
-      onPageScroll?.(event)
+      onPageScroll?.(event, overviewContentHeight.current)
       onScroll?.(event)
     },
     [onPageScroll, onScroll, reportScrollOffset]
@@ -149,6 +192,8 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const handleScroll = useMemo(() => {
     if (!carouselScrollY || openTab !== tab) return onScroll
 
+    // The listener reads `overviewContentHeight` only when a scroll event arrives
+    // eslint-disable-next-line react-hooks/refs
     return Animated.event([{ nativeEvent: { contentOffset: { y: carouselScrollY } } }], {
       useNativeDriver: true,
       listener: handleScrollListener
@@ -228,6 +273,9 @@ const DashboardPageScrollContainer: FC<Props> = ({
           />
         ) : undefined
       }
+      ListFooterComponent={listFooter}
+      ListFooterComponentStyle={carousel ? FOOTER_STYLE : undefined}
+      onContentSizeChange={carousel ? onContentSizeChange : undefined}
       {...rest}
       {...(carousel ? CAROUSEL_VIRTUALIZATION : NO_PROPS)}
       {...carouselIndicatorProps}

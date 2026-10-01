@@ -179,13 +179,13 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
   // The pages are never resized, so collapsing doesn't change how far they can scroll
   const onPageScroll = useCallback(
-    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>, contentHeight: number) => {
       if (!overviewHeightRef.current) return
 
       applyCollapseState(
         getNextCollapseState(collapseState.current, {
           offsetY: nativeEvent.contentOffset.y,
-          contentHeight: nativeEvent.contentSize.height,
+          contentHeight,
           layoutHeight: nativeEvent.layoutMeasurement.height,
           scrollDownThreshold: overviewHeightRef.current,
           collapsibleHeight: 0
