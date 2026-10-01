@@ -10,6 +10,9 @@ const getChromeSidePanelApi = (): ChromeSidePanelApi | undefined => {
   return (chrome as typeof chrome & { sidePanel?: ChromeSidePanelApi }).sidePanel
 }
 
+/** The `chrome.storage.local` key holding the last width of the side panel, as the user sized it. */
+export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'sidePanelWidth'
+
 export const isSidePanelSupported = () => !!getChromeSidePanelApi()
 
 export const EXTENSION_OVERLAY_PORT_NAMES = ['popup', 'side-panel'] as const

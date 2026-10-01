@@ -10,9 +10,10 @@ import {
   POPUP_WIDTH,
   SIDE_PANEL_WIDTH
 } from '@web/constants/spacings'
+import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
 import { isSidePanelModeEnabled } from '@web/extension-services/background/webapi/panel'
 import { PortMessenger } from '@web/extension-services/messengers'
-import { isExtensionOverlayPort } from '@web/utils/sidePanel'
+import { isExtensionOverlayPort, SIDE_PANEL_WIDTH_STORAGE_KEY } from '@web/utils/sidePanel'
 
 /**
  * The usable area of a single display, positioned in the desktop coordinate space. A display
@@ -53,6 +54,30 @@ if (isExtension) {
 export const WINDOW_SIZE = {
   width: NOTIFICATION_WINDOW_WIDTH + (IS_WINDOWS ? 14 : 0), // idk why windows cut the width.
   height: NOTIFICATION_WINDOW_HEIGHT
+}
+
+/**
+ * The width the user last gave the side panel, as stored by the panel itself, or the width Chrome
+ * opens the panel with when nothing valid is stored.
+ */
+const getSidePanelWidth = async (): Promise<number> => {
+  try {
+    const { [SIDE_PANEL_WIDTH_STORAGE_KEY]: storedWidth } = await browser.storage.local.get(
+      SIDE_PANEL_WIDTH_STORAGE_KEY
+    )
+
+    if (typeof storedWidth !== 'number' || !Number.isFinite(storedWidth) || storedWidth <= 0) {
+      return SIDE_PANEL_WIDTH
+    }
+
+    // The browser rejects fractional sizes
+    return Math.round(storedWidth)
+  } catch (error) {
+    console.error('Failed to read the side panel width', error)
+    captureBackgroundException(error)
+
+    return SIDE_PANEL_WIDTH
+  }
 }
 
 const isPointInWorkArea = (workArea: WorkArea, x: number, y: number) =>
@@ -146,7 +171,8 @@ const getWebContentsInset = (
  * Sizes and places the request window so a request shows up beside the page instead of covering
  * it: spanning the page area along its right edge, at the width of the surface the user picked
  * for the extension - the popup or the side panel. Chrome exposes neither the popup's anchor nor
- * the width the user gave the panel, so everything is derived from the browser window.
+ * the width the user gave the panel, so the position is derived from the browser window and the
+ * panel width is the one the panel stored.
  */
 const calculateWindowSizeAndPosition = async (
   baseWindow: chrome.windows.Window
@@ -172,7 +198,7 @@ const calculateWindowSizeAndPosition = async (
     ? [(baseWindow.tabs || []).find((t) => t.active)]
     : await chrome.tabs.query({ active: true, windowId: baseWindow.id })
 
-  const width = isSidePanelMode ? SIDE_PANEL_WIDTH : POPUP_WIDTH
+  const width = isSidePanelMode ? await getSidePanelWidth() : POPUP_WIDTH
   const baseLeft = baseWindow.left ?? 0
   const baseTop = baseWindow.top ?? 0
   const baseWidth = baseWindow.width || width
