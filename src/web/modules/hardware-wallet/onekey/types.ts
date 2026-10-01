@@ -57,3 +57,12 @@ export type OneKeyBridgeRequest = {
   method: OneKeyBridgeMethod
   args: unknown[]
 }
+
+/**
+ * What the offscreen document replies to a bridge request. `error` is set when the request
+ * threw, which the SDK never does for device errors (those come back as unsuccessful
+ * responses), so it always means something unexpected went wrong.
+ */
+export type OneKeyBridgeResponse =
+  | { result: unknown }
+  | { error: { message: string; name?: string; stack?: string } }

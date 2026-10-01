@@ -26,7 +26,7 @@ class OneKeySigner implements KeystoreSignerInterface {
 
   init(externalDeviceController?: ExternalSignerController) {
     if (!externalDeviceController) {
-      throw new ExternalSignerError('The OneKey connection is not initialized.', {
+      throw new ExternalSignerError("Ambire couldn't connect to your OneKey. Please try again.", {
         sendCrashReport: true
       })
     }
@@ -35,7 +35,8 @@ class OneKeySigner implements KeystoreSignerInterface {
   }
 
   async #prepareForSigning() {
-    if (!this.controller) throw new ExternalSignerError('The OneKey connection is not initialized.')
+    if (!this.controller)
+      throw new ExternalSignerError("Ambire couldn't connect to your OneKey. Please try again.")
 
     await this.controller.initialLoadPromise
     const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
@@ -46,14 +47,17 @@ class OneKeySigner implements KeystoreSignerInterface {
   #validateAddress(address: string) {
     if (getAddress(address) !== getAddress(this.key.addr)) {
       throw new ExternalSignerError(
-        'The connected OneKey device or passphrase does not match the key selected for signing.'
+        "This OneKey, or the passphrase entered on it, doesn't hold the key for this account. Connect the right device or passphrase and try again."
       )
     }
   }
 
   signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (txnRequest) => {
     if (typeof txnRequest.value === 'undefined') {
-      throw new ExternalSignerError('The transaction value is missing.', { sendCrashReport: true })
+      throw new ExternalSignerError(
+        "Ambire couldn't prepare this transaction for your OneKey. Please try again.",
+        { sendCrashReport: true }
+      )
     }
 
     const path = await this.#prepareForSigning()
@@ -89,7 +93,8 @@ class OneKeySigner implements KeystoreSignerInterface {
       type: isEip1559 ? 2 : 0,
       signature
     })
-    if (!signedTransaction.from) throw new Error('The OneKey signature could not be validated.')
+    if (!signedTransaction.from)
+      throw new Error("Ambire couldn't verify the signature from your OneKey. Please try again.")
     this.#validateAddress(signedTransaction.from)
 
     return signedTransaction.serialized
@@ -160,13 +165,13 @@ class OneKeySigner implements KeystoreSignerInterface {
   }
 
   sign7702: KeystoreSignerInterface['sign7702'] = ({ contract }) => {
-    throw new Error('OneKey does not support EIP-7702 signing.', { cause: contract })
+    throw new Error("Your OneKey doesn't support this type of signature.", { cause: contract })
   }
 
   signTransactionTypeFour: KeystoreSignerInterface['signTransactionTypeFour'] = ({
     eip7702Auth
   }) => {
-    throw new Error('OneKey does not support type-four transaction signing.', {
+    throw new Error("Your OneKey doesn't support this type of transaction.", {
       cause: eip7702Auth
     })
   }

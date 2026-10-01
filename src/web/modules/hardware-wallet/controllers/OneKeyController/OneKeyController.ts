@@ -23,9 +23,46 @@ const STALE_CONNECTION_ERROR_CODES = new Set([
 const getIsStaleConnectionResponse = (response: OneKeyResponse<unknown>) =>
   !response.success && STALE_CONNECTION_ERROR_CODES.has(Number(response.payload.code))
 
+const NOT_CONNECTED_MESSAGE =
+  "Your OneKey isn't connected, or Ambire isn't allowed to use it. Plug it in, unlock it and try again."
+const REJECTED_MESSAGE = 'The request was rejected on your OneKey.'
+
+/**
+ * Plain-language messages for the OneKey SDK error codes (`HardwareErrorCode` in
+ * `@onekeyfe/hd-shared`) users run into, instead of the technical messages the SDK returns.
+ */
+const ERROR_MESSAGES_BY_CODE: Record<number, string> = {
+  102: 'Your OneKey is in the wrong mode. Restart it and try again.', // DeviceUnexpectedMode
+  105: NOT_CONNECTED_MESSAGE, // DeviceNotFound
+  107: 'Your OneKey is busy with another request. Finish or cancel it on the device and try again.', // DeviceInterruptedFromOutside
+  108: 'Your OneKey is in the wrong mode. Restart it and try again.', // RequiredButInBootloaderMode
+  109: REJECTED_MESSAGE, // DeviceInterruptedFromUser
+  110: NOT_CONNECTED_MESSAGE, // DeviceCheckDeviceIdError
+  112: "The passphrase on your OneKey doesn't match this account. Enter the right passphrase and try again.", // DeviceCheckPassphraseStateError
+  117: 'Your OneKey is busy with another request. Finish or cancel it on the device and try again.', // DeviceBusy
+  302: "Ambire couldn't reach the OneKey service. Check your internet connection and try again.", // IFrameLoadFail
+  303: "Ambire couldn't reach the OneKey service. Check your internet connection and try again.", // IframeTimeout
+  407: 'Your OneKey needs a firmware update. Update it with the OneKey app and try again.', // CallMethodNeedUpgradeFirmware
+  801: 'The PIN entered on your OneKey was wrong. Please try again.', // PinInvalid
+  802: REJECTED_MESSAGE, // PinCancelled
+  803: REJECTED_MESSAGE, // ActionCancelled
+  811: 'Blind signing is turned off on your OneKey. Turn it on in the device settings to sign this request.', // BlindSignDisabled
+  812: "The passphrase on your OneKey doesn't match this account. Enter the right passphrase and try again.", // UnexpectPassphrase
+  822: REJECTED_MESSAGE, // CallQueueActionCancelled
+  901: NOT_CONNECTED_MESSAGE // WebDeviceNotFoundOrNeedsPermission
+}
+
 const getResponsePayload = <T>(response: OneKeyResponse<T>, operation: string): T => {
   if (response.success) return response.payload
-  throw new ExternalSignerError(response.payload.error || `The OneKey ${operation} request failed.`)
+
+  const knownErrorMessage = ERROR_MESSAGES_BY_CODE[Number(response.payload.code)]
+  if (knownErrorMessage) throw new ExternalSignerError(knownErrorMessage)
+
+  // Not one of the errors users are expected to run into, so it's reported too
+  throw new ExternalSignerError(
+    response.payload.error || `Your OneKey couldn't complete the ${operation}. Please try again.`,
+    { sendCrashReport: true }
+  )
 }
 
 class OneKeyController implements ExternalSignerController {
@@ -94,7 +131,9 @@ class OneKeyController implements ExternalSignerController {
 
   async #setConnectedDevice(device: OneKeyDevice) {
     if (!device.connectId || !device.deviceId) {
-      throw new Error('The OneKey device did not provide a valid connection identity.')
+      throw new Error(
+        "Ambire couldn't identify your OneKey. Unplug it, plug it back in and try again."
+      )
     }
 
     const features = await this.walletSDK.getOnekeyFeatures(device.connectId)
@@ -154,11 +193,12 @@ class OneKeyController implements ExternalSignerController {
       })
     )
     const payload = getResponsePayload(response, 'address')
-    if (Array.isArray(payload)) throw new Error('The OneKey device returned an invalid address.')
+    if (Array.isArray(payload))
+      throw new Error("Your OneKey didn't return a valid address. Please try again.")
 
     if (expectedAddress && getAddress(payload.address) !== getAddress(expectedAddress)) {
       throw new ExternalSignerError(
-        'The connected OneKey device or passphrase does not match the key selected for signing.'
+        "This OneKey, or the passphrase entered on it, doesn't hold the key for this account. Connect the right device or passphrase and try again."
       )
     }
 
@@ -180,7 +220,7 @@ class OneKeyController implements ExternalSignerController {
     const payload = getResponsePayload(response, 'address')
     const addresses = Array.isArray(payload) ? payload : [payload]
     if (addresses.length !== paths.length) {
-      throw new Error('The OneKey device returned an unexpected number of addresses.')
+      throw new Error("Your OneKey didn't return all the requested addresses. Please try again.")
     }
 
     return addresses.map(({ address }) => getAddress(address))

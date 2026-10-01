@@ -1,5 +1,8 @@
 import { browser } from '@web/constants/browserapi'
-import { OneKeyBridgeRequest } from '@web/modules/hardware-wallet/onekey/types'
+import {
+  OneKeyBridgeRequest,
+  OneKeyBridgeResponse
+} from '@web/modules/hardware-wallet/onekey/types'
 
 import OneKeySdkBridge from './oneKeySdkBridge'
 
@@ -15,14 +18,22 @@ const allowedMethods = new Set([
   'cancel'
 ])
 
-const handleBridgeRequest = async (request: OneKeyBridgeRequest) => {
+const handleBridgeRequest = async (request: OneKeyBridgeRequest): Promise<OneKeyBridgeResponse> => {
   try {
     await bridge.init()
     const method = bridge[request.method] as (...args: unknown[]) => Promise<unknown>
     const result = await method(...request.args)
     return { result }
   } catch (error: any) {
-    return { error: error?.message || 'The OneKey request failed.' }
+    // Sentry isn't set up in this document, so the background reports the error it gets back
+    console.error(`OneKey bridge: ${request.method} failed`, error)
+    return {
+      error: {
+        message: error?.message || 'The OneKey request failed.',
+        name: error?.name,
+        stack: error?.stack
+      }
+    }
   }
 }
 

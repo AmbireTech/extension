@@ -4,6 +4,11 @@ import { OneKeyBridgeInterface } from '@web/modules/hardware-wallet/onekey/types
 
 import OneKeyController from './OneKeyController'
 
+// The default bridge reports errors through the background's Sentry, which isn't needed here
+jest.mock('@web/extension-services/background/CrashAnalytics', () => ({
+  captureBackgroundException: jest.fn()
+}))
+
 const address = '0x1111111111111111111111111111111111111111'
 const device = {
   connectId: 'connect-id',
@@ -78,7 +83,7 @@ describe('OneKeyController stale connection recovery', () => {
     controller.deviceId = 'seed-id'
 
     await expect(controller.unlock("m/44'/60'/0'/0/0", address)).rejects.toThrow(
-      'Action cancelled by user'
+      'The request was rejected on your OneKey.'
     )
     expect(evmGetAddress).toHaveBeenCalledTimes(1)
     expect(bridge.searchDevices).not.toHaveBeenCalled()

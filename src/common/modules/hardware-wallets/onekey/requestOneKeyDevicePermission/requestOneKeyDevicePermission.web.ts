@@ -1,10 +1,4 @@
-const ONEKEY_WEBUSB_FILTERS = [
-  { vendorId: 0x1209, productId: 0x53c0 },
-  { vendorId: 0x1209, productId: 0x53c1 },
-  { vendorId: 0x1209, productId: 0x4f4a },
-  { vendorId: 0x1209, productId: 0x4f4b },
-  { vendorId: 0x1209, productId: 0x4f4c }
-]
+import { isKnownTrezorWebUsbDevice, ONEKEY_WEBUSB_FILTER } from '@onekeyfe/hd-shared'
 
 type WebUsbDevice = {
   vendorId: number
@@ -16,16 +10,15 @@ type WebUsbDevice = {
 type WebUsbNavigator = Navigator & {
   usb?: {
     getDevices: () => Promise<WebUsbDevice[]>
-    requestDevice: (options: { filters: typeof ONEKEY_WEBUSB_FILTERS }) => Promise<WebUsbDevice>
+    requestDevice: (options: { filters: typeof ONEKEY_WEBUSB_FILTER }) => Promise<WebUsbDevice>
   }
 }
 
-const TREZOR_MANUFACTURER_NAMES = new Set(['trezor', 'trezor company', 'satoshilabs'])
-
-const isOneKeyDevice = ({ vendorId, productId, manufacturerName }: WebUsbDevice) =>
-  ONEKEY_WEBUSB_FILTERS.some(
-    (filter) => filter.vendorId === vendorId && filter.productId === productId
-  ) && !TREZOR_MANUFACTURER_NAMES.has(manufacturerName?.trim().toLowerCase() || '')
+// Same check the OneKey SDK uses, as Trezor devices share some of the OneKey USB ids
+const isOneKeyDevice = (device: WebUsbDevice) =>
+  ONEKEY_WEBUSB_FILTER.some(
+    (filter) => filter.vendorId === device.vendorId && filter.productId === device.productId
+  ) && !isKnownTrezorWebUsbDevice(device)
 
 export const isOneKeyWebUsbSupported = () => !!(navigator as WebUsbNavigator).usb
 
@@ -48,7 +41,7 @@ const requestOneKeyDevicePermission = async () => {
   const device =
     authorizedOneKeyDevice ||
     (await usb.requestDevice({
-      filters: ONEKEY_WEBUSB_FILTERS
+      filters: ONEKEY_WEBUSB_FILTER
     }))
 
   return device.serialNumber || undefined

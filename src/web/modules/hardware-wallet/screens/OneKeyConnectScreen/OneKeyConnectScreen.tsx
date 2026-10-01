@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 
 import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import Button from '@common/components/Button'
@@ -44,8 +44,20 @@ const OneKeyConnectScreen = () => {
       requestId: params.get('requestId')
     }
   }, [search])
+  // Blocks a second press while the first one is still running, without a re-render that
+  // could happen before the browser's device prompt opens
+  const isPressInProgressRef = useRef(false)
+  // Covers the moment between dispatching the init and the controller reporting it's loading
+  const [isWaitingForInit, setIsWaitingForInit] = useState(false)
+  const [prevOneKeyInitStatus, setPrevOneKeyInitStatus] = useState(oneKeyInitStatus)
+  if (oneKeyInitStatus !== prevOneKeyInitStatus) {
+    setPrevOneKeyInitStatus(oneKeyInitStatus)
+    if (oneKeyInitStatus !== 'INITIAL') setIsWaitingForInit(false)
+  }
 
   const onPressConnect = useCallback(async () => {
+    if (isPressInProgressRef.current) return
+
     if (isSafari() || !isOneKeyWebUsbSupported()) {
       addToast(
         t(
@@ -56,6 +68,7 @@ const OneKeyConnectScreen = () => {
       return
     }
 
+    isPressInProgressRef.current = true
     try {
       // WebUSB requires the permission prompt to start directly from the user gesture,
       // so it must happen before any state updates.
@@ -75,6 +88,7 @@ const OneKeyConnectScreen = () => {
 
       // The onboarding navigation moves to the next screen once the account picker is ready
       setTriggeredHwWalletFlow('onekey')
+      setIsWaitingForInit(true)
       dispatch({
         type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY',
         params: { preferredDeviceId }
@@ -85,6 +99,8 @@ const OneKeyConnectScreen = () => {
           ? t('No OneKey device was selected. Connect and unlock it, then try again.')
           : error?.message || t('Could not connect to the OneKey device.')
       addToast(message, { type: error?.name === 'NotFoundError' ? 'warning' : 'error' })
+    } finally {
+      isPressInProgressRef.current = false
     }
   }, [
     addToast,
@@ -96,7 +112,7 @@ const OneKeyConnectScreen = () => {
     t
   ])
 
-  const isLoading = oneKeyInitStatus === 'LOADING'
+  const isLoading = isWaitingForInit || oneKeyInitStatus === 'LOADING'
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>

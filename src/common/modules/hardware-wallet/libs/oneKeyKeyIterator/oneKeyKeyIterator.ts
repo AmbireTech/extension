@@ -16,7 +16,7 @@ class OneKeyKeyIterator implements KeyIteratorInterface {
 
   constructor({ controller }: KeyIteratorProps) {
     if (!controller?.retrieveAddresses) {
-      throw new Error('OneKey connection is not initialized.')
+      throw new Error("Ambire couldn't connect to your OneKey. Please try again.")
     }
 
     this.controller = controller
@@ -27,13 +27,13 @@ class OneKeyKeyIterator implements KeyIteratorInterface {
     hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
   ) {
     if (!hdPathTemplate || !this.controller.retrieveAddresses) {
-      throw new Error('Unable to retrieve keys from the OneKey device.')
+      throw new Error("Ambire couldn't load accounts from your OneKey. Please try again.")
     }
 
     const paths: string[] = []
     for (const { from, to } of fromToArr) {
       if ((!from && from !== 0) || (!to && to !== 0)) {
-        throw new Error('Unable to retrieve keys because the requested range is invalid.')
+        throw new Error("Ambire couldn't load accounts from your OneKey. Please try again.")
       }
 
       for (let index = from; index <= to; index++) {

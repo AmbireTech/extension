@@ -98,6 +98,7 @@
     "@ngraveio/bc-ur": "1.1.13",
     "@noble/hashes": "1.8.0",
     "@onekeyfe/hd-core": "1.1.0",
+    "@onekeyfe/hd-shared": "1.2.5",
     "@onekeyfe/hd-web-sdk": "1.1.0",
     "@raugfer/jazzicon": "1.0.6",
     "@react-native-async-storage/async-storage": "3.0.2",

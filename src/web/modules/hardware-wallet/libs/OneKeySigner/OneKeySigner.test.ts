@@ -7,6 +7,11 @@ import { OneKeyBridgeInterface } from '@web/modules/hardware-wallet/onekey/types
 
 import OneKeySigner from './OneKeySigner'
 
+// The default bridge reports errors through the background's Sentry, which isn't needed here
+jest.mock('@web/extension-services/background/CrashAnalytics', () => ({
+  captureBackgroundException: jest.fn()
+}))
+
 jest.mock('@trezor/connect-plugin-ethereum', () => ({
   __esModule: true,
   default: () => ({ domain_separator_hash: '0x01', message_hash: '0x02' })
