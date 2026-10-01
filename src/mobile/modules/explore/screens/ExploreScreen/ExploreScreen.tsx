@@ -275,7 +275,8 @@ const ExploreScreen = () => {
           <View style={flexbox.flex1}>
             <View style={[spacings.mbSm]}>
               <Search
-                placeholder={t('Search apps, tokens or URLs')}
+                placeholder={t('Search apps, tokens or browse the web')}
+                nativeInputStyle={{ fontSize: 14 }}
                 control={control}
                 // @ts-ignore
                 setValue={setValue}

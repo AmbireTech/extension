@@ -31,6 +31,11 @@ const SETTLE_FALLBACK_MS = 800
  */
 const TRANSITION_FALLBACK_MS = 400
 
+type Props = {
+  /** Called with the pathname of the screen the platform has finished transitioning to. */
+  onScreenSettled?: (pathname: string) => void
+}
+
 /**
  * Renders the router's history as a native stack: one platform screen per history
  * entry, so pushes, pops and the back swipe are run by UINavigationController on iOS
@@ -38,7 +43,7 @@ const TRANSITION_FALLBACK_MS = 400
  * stack is derived from its history, and the one case where the platform acts first
  * (a swipe, the native back button) is reconciled in `onDismissed`.
  */
-const NavigationStack = () => {
+const NavigationStack = ({ onScreenSettled }: Props) => {
   const entries = useStackEntries()
   const history = useRouterHistory()
   const isSheetOpen = useOpenBottomSheetsCount() > 0
@@ -84,6 +89,13 @@ const NavigationStack = () => {
 
     return () => clearTimeout(timer)
   }, [topCardKey])
+
+  const settledPathname = entries.find((entry) => entry.cardKey === settledCardKey)?.location
+    .pathname
+
+  useEffect(() => {
+    if (settledPathname) onScreenSettled?.(settledPathname)
+  }, [settledPathname, onScreenSettled])
 
   // Told at the start of every navigation, and released either by the platform
   // reporting the transition finished or by the fallback below.

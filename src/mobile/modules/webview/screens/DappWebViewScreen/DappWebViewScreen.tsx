@@ -67,6 +67,29 @@ const ethereumInpageBundle = require('../../services/ethereum-inpage-bundle.json
 const DESKTOP_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
 
+const GOOGLE_SEARCH_PATHS = new Set(['/', '/search', '/webhp', '/url'])
+
+/**
+ * Matches Google Search pages (google.com, www.google.co.uk, ...), which should
+ * keep the default mobile UA so they render their mobile layout.
+ */
+const isGoogleSearchUrl = (url: string) => {
+  try {
+    const { protocol, hostname, pathname } = new URL(url)
+    if (protocol !== 'https:' || !GOOGLE_SEARCH_PATHS.has(pathname)) return false
+
+    const domainLabels = hostname.split('.')
+    if (domainLabels[0] === 'www') domainLabels.shift()
+    return domainLabels[0] === 'google' && domainLabels.length >= 2 && domainLabels.length <= 3
+  } catch {
+    return false
+  }
+}
+
+/** `undefined` makes the WebView fall back to its default (mobile) user agent. */
+const getUserAgentForUrl = (url: string) =>
+  isGoogleSearchUrl(url) ? undefined : DESKTOP_USER_AGENT
+
 // SECURITY: Stash native references before any page JS can overwrite them.
 // injectJavaScript (used for responses/broadcasts) runs AFTER page JS, so
 // downstream injections must reach these pre-captured refs rather than the
@@ -335,9 +358,22 @@ const DappWebViewScreen = () => {
   // ScrollView with a RefreshControl. That control must only engage while the page
   // itself is scrolled to the very top, otherwise it steals mid-page scroll gestures.
   const [isPageScrolledToTop, setIsPageScrolledToTop] = useState(true)
-  // Drives WebView source; set at mount + only by user address-bar nav. Never
-  // from nav callbacks, else source.uri re-feeds → RNW reloads → snaps back.
+  // Drives WebView source; set at mount, by user address-bar nav and by the UA
+  // switch reload. Never from nav callbacks, else source.uri re-feeds → snaps back.
   const [sourceUri, setSourceUri] = useState<string>(initialUrl)
+  // Flipped to force a reload when the target URL equals `sourceUri` (RNW skips
+  // identical sources). An explicit GET is equivalent to omitting the method.
+  const [isSourceMethodExplicit, setIsSourceMethodExplicit] = useState(false)
+  // A UA change only applies to requests started after it, so the ref mirrors the
+  // UA the WebView currently sends and navigations are checked against it.
+  const [userAgent, setUserAgent] = useState(() => getUserAgentForUrl(initialUrl))
+  const userAgentRef = useRef(userAgent)
+
+  const applyUserAgentForUrl = useCallback((url: string) => {
+    const nextUserAgent = getUserAgentForUrl(url)
+    userAgentRef.current = nextUserAgent
+    setUserAgent(nextUserAgent)
+  }, [])
 
   // Atomic setter used by every WebView load callback so `progress` and
   // `isLoading` always stay in sync. Mirrors Rabby's `updateProgressState`.
@@ -352,6 +388,7 @@ const DappWebViewScreen = () => {
   // Load the nav-state URL on mount and when a new dapp opens in the mounted
   // browser. Keyed on initialUrl only so in-dapp nav can't retrigger a reload.
   useEffect(() => {
+    applyUserAgentForUrl(initialUrl)
     setSourceUri(initialUrl)
     setDappUrl?.(initialUrl)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -462,11 +499,26 @@ const DappWebViewScreen = () => {
   }, [hostname, setHeaderValue])
 
   const handleShouldStartLoadWithRequest = useCallback(
-    (event: { url: string; navigationType: string }) => {
-      const { url } = event
+    (event: { url: string; navigationType: string; isTopFrame?: boolean }) => {
+      const { url, navigationType, isTopFrame } = event
       try {
         const parsed = new URL(url)
         const protocol = parsed.protocol.replace(':', '')
+
+        // Crossing between Google Search and a site needs the other UA, which only
+        // applies to new requests: cancel and reload the URL via `source` with it.
+        // Back/forward is skipped to keep history intact; the next crossing corrects it.
+        const isUserAgentMismatch =
+          protocol === 'https' &&
+          isTopFrame !== false &&
+          navigationType !== 'backforward' &&
+          getUserAgentForUrl(url) !== userAgentRef.current
+        if (isUserAgentMismatch) {
+          applyUserAgentForUrl(url)
+          setSourceUri(url)
+          setIsSourceMethodExplicit((prev) => !prev)
+          return false
+        }
 
         // Allow HTTPS and about: (blank pages, error pages).
         // Also allow blob: — chart/visualization libraries (and the web workers
@@ -506,7 +558,7 @@ const DappWebViewScreen = () => {
         return true
       }
     },
-    []
+    [applyUserAgentForUrl]
   )
 
   const updateCurrentOriginRef = useCallback(
@@ -780,11 +832,12 @@ const DappWebViewScreen = () => {
 
   const handleNavigateToUrl = useCallback(
     (url: string) => {
+      applyUserAgentForUrl(url)
       setSourceUri(url)
       setDappUrl?.(url)
       closeSearchModal()
     },
-    [closeSearchModal, setDappUrl]
+    [applyUserAgentForUrl, closeSearchModal, setDappUrl]
   )
 
   const renderSearchItem = useCallback(
@@ -1211,8 +1264,8 @@ const DappWebViewScreen = () => {
     () => (
       <WebView
         ref={webviewRef}
-        source={{ uri: sourceUri }}
-        userAgent={DESKTOP_USER_AGENT}
+        source={{ uri: sourceUri, ...(isSourceMethodExplicit && { method: 'GET' }) }}
+        userAgent={userAgent}
         onNavigationStateChange={handleNavigationStateChange}
         injectedJavaScriptBeforeContentLoaded={injectionScript}
         onMessage={handleMessage}
@@ -1237,6 +1290,8 @@ const DappWebViewScreen = () => {
     ),
     [
       sourceUri,
+      isSourceMethodExplicit,
+      userAgent,
       handleNavigationStateChange,
       injectionScript,
       handleMessage,

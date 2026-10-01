@@ -10,7 +10,7 @@ import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
 import { isAndroid } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import { NO_KEYBOARD_LEARNING_PROPS } from '@common/constants/textInput'
+import { NO_AUTOFILL_PROPS, NO_KEYBOARD_LEARNING_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
@@ -155,6 +155,7 @@ const SeedPhraseImportScreen = () => {
               rules={{ required: enablePassphrase }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <InputPassword
+                  {...NO_AUTOFILL_PROPS}
                   testID="input-passphrase"
                   onBlur={onBlur}
                   backgroundColor={theme.secondaryBackground}
