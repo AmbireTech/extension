@@ -3,10 +3,10 @@ import { Animated, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
-import DriveIcon from '@common/assets/svg/DriveIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -22,6 +22,9 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import requestOneKeyDevicePermission, {
+  isOneKeyWebUsbSupported
+} from '@common/modules/hardware-wallets/onekey/requestOneKeyDevicePermission'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -33,7 +36,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { isSafari } from '@web/constants/browserapi'
-import { ONEKEY_WEBUSB_FILTERS } from '@web/modules/hardware-wallet/onekey/constants'
 
 import getStyles from './styles'
 
@@ -133,18 +135,9 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: LedgerBadgeIcon
       },
       {
-        title: 'OneKey',
+        title: t('OneKey'),
         onPress: async () => {
-          const webUsb = (
-            navigator as Navigator & {
-              usb?: {
-                requestDevice: (options: {
-                  filters: typeof ONEKEY_WEBUSB_FILTERS
-                }) => Promise<{ serialNumber?: string | null }>
-              }
-            }
-          ).usb
-          if (isSafari() || !webUsb) {
+          if (isSafari() || !isOneKeyWebUsbSupported()) {
             addToast(
               t(
                 "Your browser doesn't support WebUSB, which is required for the OneKey device. Please try using a different browser."
@@ -156,11 +149,11 @@ const ImportExistingAccountSelectorScreen = () => {
 
           try {
             // WebUSB requires the permission prompt to start directly from the user gesture.
-            const device = await webUsb.requestDevice({ filters: ONEKEY_WEBUSB_FILTERS })
+            const preferredDeviceId = await requestOneKeyDevicePermission()
             setTriggeredHwWalletFlow('onekey')
             dispatch({
               type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY',
-              params: { preferredDeviceId: device.serialNumber || undefined }
+              params: { preferredDeviceId }
             })
           } catch (error: any) {
             if (error?.name !== 'NotFoundError') {
@@ -170,8 +163,7 @@ const ImportExistingAccountSelectorScreen = () => {
             }
           }
         },
-        // A dedicated OneKey asset is not present in the shared icon set yet.
-        icon: DriveIcon
+        icon: OneKeyIcon
       },
       {
         title: 'Grid Plus',

@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -10,6 +9,7 @@ import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
@@ -21,11 +21,16 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
 import { isMobile, isWeb } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useToast from '@common/hooks/useToast'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import requestOneKeyDevicePermission, {
+  isOneKeyWebUsbSupported
+} from '@common/modules/hardware-wallets/onekey/requestOneKeyDevicePermission'
 import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
 import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import { NfcWalletIcons } from '@common/modules/hardware-wallets/nfc/wallets/icons'
@@ -49,6 +54,7 @@ const AddAccount = ({
 }) => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
+  const { addToast } = useToast()
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
   const { createNewSeedAccount, isCreating: isCreatingNewSeedAccount } = useCreateNewSeedAccount()
   const { scanCard } = useNfcAccountImport()
@@ -118,6 +124,38 @@ const AddAccount = ({
         testID: 'ledger-option'
       },
       {
+        key: 'onekey',
+        text: t('OneKey'),
+        icon: OneKeyIcon,
+        onPress: async () => {
+          if (!isOneKeyWebUsbSupported()) {
+            addToast(
+              t(
+                "Your browser doesn't support WebUSB, which is required for the OneKey device. Please try using a different browser."
+              ),
+              { type: 'error' }
+            )
+            return
+          }
+
+          try {
+            const preferredDeviceId = await requestOneKeyDevicePermission()
+            setTriggeredHwWalletFlow('onekey')
+            dispatch({
+              type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY',
+              params: { preferredDeviceId }
+            })
+          } catch (error: any) {
+            if (error?.name !== 'NotFoundError') {
+              addToast(error?.message || t('Could not connect to the OneKey device.'), {
+                type: 'error'
+              })
+            }
+          }
+        },
+        testID: 'onekey-option'
+      },
+      {
         key: 'lattice',
         text: t('GridPlus'),
         icon: GridPlusIcon,
@@ -137,7 +175,7 @@ const AddAccount = ({
         testID: 'qr-option'
       }
     ]
-  }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
+  }, [addToast, dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
 
   const optionsNfc = useMemo(() => {
     if (!isMobile) return []
