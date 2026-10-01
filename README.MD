@@ -19,20 +19,20 @@
 
   <p>
     💻 <strong>Browser extension:</strong>
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Chrome</a> ·
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Brave</a> ·
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_chrome" target="_blank">Chrome</a> ·
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_brave" target="_blank">Brave</a> ·
     <a href="https://addons.mozilla.org/en-US/firefox/addon/ambire-web3-wallet/" target="_blank">Firefox</a> ·
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Edge</a> ·
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Opera</a> ·
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Arc</a>
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_edge" target="_blank">Edge</a> ·
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_opera" target="_blank">Opera</a> ·
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_arc" target="_blank">Arc</a>
     <br />
     📱 <strong>Mobile app:</strong>
-    <a href="https://apps.apple.com/app/ambire-web3-wallet/id6444863857" target="_blank">iOS</a> ·
-    <a href="https://play.google.com/store/apps/details?id=com.ambire.wallet" target="_blank">Android</a>
+    <a href="https://apps.apple.com/app/apple-store/id6444863857?pt=125821868&ct=github-readme&mt=8" target="_blank">iOS</a> ·
+    <a href="https://play.google.com/store/apps/details?id=com.ambire.wallet&referrer=utm_source%3Dgithub%26utm_medium%3Dreferral%26utm_campaign%3Dreadme_android" target="_blank">Android</a>
     <br /><br />
     👥 Join the community:
     <a href="https://x.com/ambire" target="_blank">X (Twitter)</a> |
-    <a href="https://discord.com/invite/Ambire" target="_blank">Discord</a> |
+    <a href="https://discord.com/invite/ambire" target="_blank">Discord</a> |
     <a href="https://t.me/AmbireOfficial" target="_blank">Telegram</a>
     <br />
     🐞
