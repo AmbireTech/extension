@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Dimensions,
-  StyleSheet,
   InteractionManager,
   LayoutChangeEvent,
   GestureResponderEvent,
@@ -24,9 +23,13 @@ import Spinner from '@common/components/Spinner'
 import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
+import OverviewCollapseCover from '@common/modules/dashboard/components/DashboardOverview/OverviewCollapseCover'
 import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
-import useCollapseOnScroll from '@common/modules/dashboard/hooks/useCollapseOnScroll'
+import getNextCollapseState, {
+  CollapseState,
+  INITIAL_COLLAPSE_STATE
+} from '@common/modules/dashboard/hooks/useCollapseOnScroll/getNextCollapseState'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -140,7 +143,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   initAllTabs,
   onRefresh,
   refreshing,
-  overviewExpansion,
   overviewHeight = 0,
   children
 }) => {
@@ -153,39 +155,56 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const [bannersHeight, setBannersHeight] = useState(0)
   const [tabsHeight, setTabsHeight] = useState(0)
 
-  // The page grows by the overview's height once it is collapsed, as it does on web
-  const {
-    isOverviewCollapsed,
-    onScroll: onPageScroll,
-    reset: expandOverview
-  } = useCollapseOnScroll(overviewHeight, overviewHeight)
-
-  // The open overview pushes the pages down by a transform, so a collapse resizes nothing
-  // while it animates. The pages are only shortened to fit below it once it is fully open,
-  // which leaves their end reachable, and they are made tall again before it collapses.
-  const [isPagerShortened, setIsPagerShortened] = useState(true)
+  // How far the overview is open (1 fully), and whether the floating bar hides with it.
+  // Decided from refs and handed to the UI thread, so a collapse costs no render.
+  const overviewExpansion = useSharedValue(1)
+  const isOverviewCollapsed = useSharedValue(false)
+  const collapseState = useRef(INITIAL_COLLAPSE_STATE)
+  const overviewHeightRef = useRef(overviewHeight)
 
   useEffect(() => {
-    if (!overviewExpansion) return
+    overviewHeightRef.current = overviewHeight
+  }, [overviewHeight])
 
-    if (isOverviewCollapsed) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsPagerShortened(false)
-      overviewExpansion.set(withSpring(0, OVERVIEW_SPRING_CONFIG))
+  const applyCollapseState = useCallback((next: CollapseState) => {
+    const wasCollapsed = collapseState.current.isOverviewCollapsed
+    collapseState.current = next
 
-      return
-    }
+    if (next.isOverviewCollapsed === wasCollapsed) return
 
-    overviewExpansion.set(
-      withSpring(1, OVERVIEW_SPRING_CONFIG, (finished) => {
-        if (finished) runOnJS(setIsPagerShortened)(true)
-      })
-    )
-  }, [isOverviewCollapsed, overviewExpansion])
+    isOverviewCollapsed.set(next.isOverviewCollapsed)
+    overviewExpansion.set(withSpring(next.isOverviewCollapsed ? 0 : 1, OVERVIEW_SPRING_CONFIG))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
+  // The pages are never resized, so collapsing doesn't change how far they can scroll
+  const onPageScroll = useCallback(
+    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (!overviewHeightRef.current) return
+
+      applyCollapseState(
+        getNextCollapseState(collapseState.current, {
+          offsetY: nativeEvent.contentOffset.y,
+          contentHeight: nativeEvent.contentSize.height,
+          layoutHeight: nativeEvent.layoutMeasurement.height,
+          scrollDownThreshold: overviewHeightRef.current,
+          collapsibleHeight: 0
+        })
+      )
+    },
+    [applyCollapseState]
+  )
+
+  const expandOverview = useCallback(
+    () => applyCollapseState(INITIAL_COLLAPSE_STATE),
+    [applyCollapseState]
+  )
+
+  // The open overview pushes the pages down, by a transform so nothing is laid out again
   const overviewPushStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: (overviewExpansion ? overviewExpansion.value : 0) * overviewHeight }]
+    transform: [{ translateY: overviewExpansion.value * overviewHeight }]
   }))
+
   const [renderedTabs, setRenderedTabs] = useState<Partial<Record<TabType, boolean>>>(() => ({
     [openTab]: true
   }))
@@ -387,6 +406,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       scrollY,
       headerHeight: bannersHeight + tabsHeight,
       collapsibleHeight: bannersHeight,
+      overviewHeight,
       pageHeight: pageSize.height,
       registerPage,
       reportScrollOffset,
@@ -396,6 +416,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     [
       bannersHeight,
       onPageScroll,
+      overviewHeight,
       pageSize.height,
       registerFloatingBar,
       registerPage,
@@ -584,15 +605,11 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   )
 
   return (
-    <View style={styles.container}>
+    // Lets a touch through to the overview where the pages have slid away from it
+    <View style={styles.container} pointerEvents="box-none">
       <WhileFocused openTabIndex={openTabIndex} renderTabs={renderTabs} initAllTabs={initAllTabs} />
-      <Reanimated.View
-        style={[
-          StyleSheet.absoluteFill,
-          { bottom: isPagerShortened ? overviewHeight : 0 },
-          overviewPushStyle
-        ]}
-      >
+      {/* Opaque, as it slides over the part of the overview that collapses */}
+      <Reanimated.View style={[styles.slider, overviewPushStyle]}>
         <View style={flexbox.flex1} onLayout={onLayout}>
           <DashboardCarouselContext.Provider value={carousel}>
             {(isPulling || !!refreshing) && (
@@ -643,10 +660,19 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
           </View>
         </Animated.View>
       </Reanimated.View>
+      {!!overviewHeight && (
+        <Reanimated.View pointerEvents="none" style={[styles.collapseCover, overviewPushStyle]}>
+          <OverviewCollapseCover />
+        </Reanimated.View>
+      )}
       {/* Outside the pager, so a swipe doesn't carry it along, and only what the open
       tab put in it changes. Hidden together with the overview */}
       {!!openTabFloatingBar && (
-        <FloatingBottomBar {...openTabFloatingBar} isHidden={isOverviewCollapsed} />
+        <FloatingBottomBar
+          {...openTabFloatingBar}
+          isHidden={false}
+          isHiddenValue={isOverviewCollapsed}
+        />
       )}
     </View>
   )

@@ -28,6 +28,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
   networkFilterTab,
   isHidden,
+  isHiddenValue,
   searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
@@ -63,7 +64,9 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     navigate(ROUTES.qrReader)
   }, [navigate])
 
-  const animatedBottom = useSharedValue(SPACING + safeBottom)
+  // Moved by a transform rather than by `bottom`, so hiding it and following the keyboard
+  // never relayout anything
+  const hiddenOffset = useSharedValue(0)
 
   // Kept visible while the keyboard is open, so the search being typed into stays on screen.
   // Reacting only to a change keeps the keyboard's per-frame height from restarting the spring.
@@ -71,25 +74,26 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     () => {
       const isKeyboardOpen = !isKeyboardHeightStale.value && Math.abs(height.value) > 0
 
-      return isHidden && !isKeyboardOpen
+      return (isHidden || !!isHiddenValue?.value) && !isKeyboardOpen
     },
     (shouldHide, wasHidden) => {
       if (shouldHide === wasHidden) return
 
-      const toValue = shouldHide ? -60 - safeBottom : SPACING + safeBottom
-      animatedBottom.value = withSpring(toValue, {
+      // From its place above the safe area to fully below the screen edge
+      const toValue = shouldHide ? 60 + SPACING + safeBottom * 2 : 0
+      hiddenOffset.value = withSpring(toValue, {
         damping: 20,
         stiffness: 90,
         overshootClamping: true
       })
     },
-    [isHidden, safeBottom]
+    [isHidden, isHiddenValue, safeBottom]
   )
 
   const animatedStyle = useAnimatedStyle(() => {
     const keyboardOffset = isKeyboardHeightStale.value ? 0 : Math.abs(height.value)
     return {
-      bottom: animatedBottom.value + keyboardOffset
+      transform: [{ translateY: hiddenOffset.value - keyboardOffset }]
     }
   }, [height, isKeyboardHeightStale])
 
@@ -98,6 +102,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
       style={[
         {
           position: 'absolute',
+          bottom: SPACING + safeBottom,
           zIndex: 3,
           ...flexbox.center,
           ...flexbox.alignSelfCenter,

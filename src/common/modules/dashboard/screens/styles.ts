@@ -23,7 +23,7 @@ const getStyles = (theme: ThemeProps) =>
       position: 'relative',
       backgroundColor: theme.primaryBackground
     },
-    // Opaque, so the pages scrolled under it don't show around the overview card
+    // Laid under the pager, which slides over the part of the overview that collapses
     overviewOverlay: {
       position: 'absolute',
       top: 0,

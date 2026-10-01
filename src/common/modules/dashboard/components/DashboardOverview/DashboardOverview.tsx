@@ -37,8 +37,7 @@ interface Props {
   }
   setDashboardOverviewSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
   /** Mobile only, web is collapsed through `animatedOverviewHeight`. */
-  expansion?: OverviewCollapsibleProps['expansion']
-  onCollapsibleLayoutChange?: OverviewCollapsibleProps['onLayoutChange']
+  onCollapsibleHeightChange?: OverviewCollapsibleProps['onHeightChange']
 }
 
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
@@ -47,8 +46,7 @@ const DashboardOverview: FC<Props> = ({
   openGasTankModal,
   animatedOverviewHeight,
   setDashboardOverviewSize,
-  expansion,
-  onCollapsibleLayoutChange
+  onCollapsibleHeightChange
 }) => {
   const { theme } = useTheme(getStyles)
   const { state: isOffline } = useController('MainController', 'isOffline')
@@ -107,7 +105,7 @@ const DashboardOverview: FC<Props> = ({
           isWeb && spacings.phSm,
           isMobile && spacings.phTy,
           {
-            // The rest of the open padding collapses with the content on mobile
+            // The rest of the open padding is covered together with the content on mobile
             paddingBottom: isMobile
               ? SPACING_TY
               : animatedOverviewHeight.interpolate({
@@ -130,8 +128,7 @@ const DashboardOverview: FC<Props> = ({
           <DashboardHeader />
           <OverviewCollapsible
             animatedOverviewHeight={animatedOverviewHeight}
-            expansion={expansion}
-            onLayoutChange={onCollapsibleLayoutChange}
+            onHeightChange={onCollapsibleHeightChange}
           >
             {/* These width: 100%s are needed to make sure that hovering the entire row of the balance
             displays the refresh button */}

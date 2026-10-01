@@ -97,11 +97,15 @@ const DashboardPageScrollContainer: FC<Props> = ({
       topSpacing,
       { flexGrow: 1 },
       isMobile && { paddingBottom: bottom || SPACING_SM },
-      // A page with less content cannot scroll far enough to hold the header collapsed.
-      // Padding would not do: flexGrow stretches the content box to the page anyway.
+      // A page with less content cannot scroll far enough to hold the header and the overview
+      // collapsed. Padding would not do: flexGrow stretches the content box to the page anyway.
       !!carousel &&
         !!carousel.pageHeight && {
-          minHeight: carousel.pageHeight - stickyHeaderHeight + carousel.collapsibleHeight
+          minHeight:
+            carousel.pageHeight -
+            stickyHeaderHeight +
+            carousel.collapsibleHeight +
+            carousel.overviewHeight
         },
       // Must come last, as it overrides the padding of the non-carousel layout. Only
       // the collapsing part of the header is padded for, the rest is above the list

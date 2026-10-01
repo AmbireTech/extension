@@ -19,8 +19,6 @@ import SessionIdInUrl from './SessionIdInUrl'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-import type { DashboardPagesCarouselProps } from '../DashboardPagesCarousel/DashboardPagesCarousel'
-
 interface Props {
   /** Collapses the overview and hides the floating bar on scroll. The mobile carousel does it itself. */
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
@@ -30,8 +28,7 @@ interface Props {
   onTabChange?: () => void
   refreshing?: boolean
   onRefresh?: () => void
-  /** Mobile only, where the carousel collapses the overview laid over it. */
-  overviewExpansion?: DashboardPagesCarouselProps['overviewExpansion']
+  /** Mobile only, where the carousel slides over the collapsing part of the overview. */
   overviewHeight?: number
 }
 
@@ -47,7 +44,6 @@ const DashboardPages = ({
   refreshing,
   onRefresh,
   onTabChange,
-  overviewExpansion,
   overviewHeight
 }: Props) => {
   const { t } = useTranslation()
@@ -132,7 +128,6 @@ const DashboardPages = ({
         initAllTabs={initAllTabs}
         onRefresh={onRefresh}
         refreshing={refreshing}
-        overviewExpansion={overviewExpansion}
         overviewHeight={overviewHeight}
       >
         <Tokens

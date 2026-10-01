@@ -1,7 +1,6 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { Animated, LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
-import { useSharedValue } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GasTankModal from '@common/components/GasTankModal'
@@ -12,7 +11,6 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
-import type { OverviewCollapsibleLayout } from '@common/modules/dashboard/components/DashboardOverview/OverviewCollapsible/OverviewCollapsible'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import DashboardShell from '@common/modules/dashboard/components/DashboardShell'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
@@ -32,37 +30,14 @@ const DashboardScreen = () => {
   // It is still needed, as the pages animate it back open when a tab is opened.
   const animatedOverviewHeight = useRef(new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT)).current
 
-  // The overview is laid over the pager, which starts where the collapsed overview ends and
-  // is pushed down by the open one with a transform, so a collapse doesn't resize the pages.
-  const overviewExpansion = useSharedValue(1)
+  // The pager starts where the collapsed overview ends and slides over the part that
+  // collapses, so a collapse never resizes or redraws anything. Both heights are static.
   const [overviewHeight, setOverviewHeight] = useState(0)
-  const [collapsedOverviewHeight, setCollapsedOverviewHeight] = useState(0)
-  const overviewLayout = useRef({ overlayHeight: 0, collapsibleHeight: 0 })
+  const [collapsibleOverviewHeight, setCollapsibleOverviewHeight] = useState(0)
 
-  // Both heights change every frame of a collapse, but their difference doesn't, so this
-  // only re-renders when the part that never collapses changes
-  const updateCollapsedOverviewHeight = useCallback(() => {
-    const { overlayHeight, collapsibleHeight } = overviewLayout.current
-
-    setCollapsedOverviewHeight(Math.round(overlayHeight - collapsibleHeight))
+  const onOverviewLayout = useCallback(({ nativeEvent }: LayoutChangeEvent) => {
+    setOverviewHeight(nativeEvent.layout.height)
   }, [])
-
-  const onOverviewLayout = useCallback(
-    ({ nativeEvent }: LayoutChangeEvent) => {
-      overviewLayout.current.overlayHeight = nativeEvent.layout.height
-      updateCollapsedOverviewHeight()
-    },
-    [updateCollapsedOverviewHeight]
-  )
-
-  const onCollapsibleLayoutChange = useCallback(
-    ({ height, expandedHeight }: OverviewCollapsibleLayout) => {
-      overviewLayout.current.collapsibleHeight = height
-      setOverviewHeight(Math.round(expandedHeight))
-      updateCollapsedOverviewHeight()
-    },
-    [updateCollapsedOverviewHeight]
-  )
 
   const {
     state: { account, portfolio }
@@ -113,16 +88,7 @@ const DashboardScreen = () => {
                 account={account}
               />
               <PendingActionWindowModal />
-              <View style={[flexbox.flex1, { marginTop: collapsedOverviewHeight }]}>
-                <DashboardPages
-                  animatedOverviewHeight={animatedOverviewHeight}
-                  onRefresh={reloadAccount}
-                  refreshing={isManuallyRefreshing}
-                  overviewExpansion={overviewExpansion}
-                  overviewHeight={overviewHeight}
-                />
-              </View>
-              {/* Rendered after the pager, because zIndex alone is not enough to keep it on top on Android */}
+              {/* Rendered before the pager, which has to be drawn over it */}
               <View
                 style={[styles.overviewOverlay, { paddingTop: overviewPaddingTop }]}
                 onLayout={onOverviewLayout}
@@ -130,11 +96,21 @@ const DashboardScreen = () => {
                 <DashboardOverview
                   openGasTankModal={openGasTankModal}
                   animatedOverviewHeight={animatedOverviewHeight}
-                  // Read only on web, and measuring it would re-render this every collapse frame
+                  // Read only on web
                   dashboardOverviewSize={UNMEASURED_OVERVIEW_SIZE}
                   setDashboardOverviewSize={NOOP}
-                  expansion={overviewExpansion}
-                  onCollapsibleLayoutChange={onCollapsibleLayoutChange}
+                  onCollapsibleHeightChange={setCollapsibleOverviewHeight}
+                />
+              </View>
+              <View
+                style={[flexbox.flex1, { marginTop: overviewHeight - collapsibleOverviewHeight }]}
+                pointerEvents="box-none"
+              >
+                <DashboardPages
+                  animatedOverviewHeight={animatedOverviewHeight}
+                  onRefresh={reloadAccount}
+                  refreshing={isManuallyRefreshing}
+                  overviewHeight={collapsibleOverviewHeight}
                 />
               </View>
             </>

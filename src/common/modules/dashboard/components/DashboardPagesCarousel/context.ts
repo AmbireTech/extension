@@ -29,6 +29,11 @@ export interface DashboardCarouselContextValue {
    * least this far, or it cannot put the header in the state the others left it in.
    */
   collapsibleHeight: number
+  /**
+   * How far the open overview pushes the pages down. They are never resized for it, so
+   * every page must be able to scroll this far to collapse it and show its end.
+   */
+  overviewHeight: number
   /** Height of a page, which its content has to exceed to be scrollable at all. */
   pageHeight: number
   /**
