@@ -17,12 +17,10 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 
 import getStyles from './styles'
 
 const SignMessageScreen = () => {
-  const closeActionWindow = useCloseActionWindow()
   const { isWideFooterLayout } = useCompactLayout()
   const { styles } = useTheme(getStyles)
   const {
@@ -93,7 +91,6 @@ const SignMessageScreen = () => {
                 // the first signer from the array is the current one
                 signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
                 onReject={handleReject}
-                onSignLater={closeActionWindow}
               />
             )
           }
