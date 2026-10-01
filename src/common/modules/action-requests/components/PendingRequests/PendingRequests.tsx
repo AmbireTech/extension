@@ -112,7 +112,9 @@ const RequestCard = React.memo(function RequestCard({
       requestChainId: getRequestChainId(request)
     }
   }, [networks, request, t])
-  const account = accounts.find(({ addr }) => addr === request.meta.accountAddr)
+  const account = accounts.find(
+    ({ addr }) => addr.toLowerCase() === request.meta.accountAddr.toLowerCase()
+  )
   const accountState = accountStates[account?.addr || '']?.[requestChainId || '']
   const isOpenDisabled =
     !!account?.safeCreation &&
