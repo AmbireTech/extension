@@ -10,6 +10,7 @@ import DriveIcon from '@common/assets/svg/DriveIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
+import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -33,7 +34,7 @@ type Props = {
 
 const iconByKeyType = {
   trezor: TrezorBadgeIcon,
-  onekey: DriveIcon,
+  onekey: OneKeyIcon,
   ledger: LedgerBadgeIcon,
   lattice: GridPlusIcon
 }

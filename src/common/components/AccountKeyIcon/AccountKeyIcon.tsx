@@ -1,11 +1,11 @@
 import React from 'react'
 import { ColorValue } from 'react-native'
 
-import DriveIcon from '@common/assets/svg/DriveIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import NoKeysIcon from '@common/assets/svg/NoKeysIcon'
+import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
@@ -29,7 +29,7 @@ const AccountKeyIcon = ({
 
   if (type === 'lattice') return <GridPlusIcon {...props} />
   if (type === 'trezor') return <TrezorBadgeIcon {...props} />
-  if (type === 'onekey') return <DriveIcon {...props} />
+  if (type === 'onekey') return <OneKeyIcon {...props} />
   if (type === 'ledger') return <LedgerBadgeIcon {...props} />
   if (type === 'none') return <NoKeysIcon {...props} />
   if (type === 'safe') {

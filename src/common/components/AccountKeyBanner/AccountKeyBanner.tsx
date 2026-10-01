@@ -1,9 +1,9 @@
 import React from 'react'
 
-import DriveIcon from '@common/assets/svg/DriveIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
+import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
@@ -39,7 +39,7 @@ const AccountKeyBanner = ({ type }: { type: KeyType }) => {
   if (type === 'onekey')
     return (
       <Wrapper text="OneKey">
-        <DriveIcon {...iconProps} />
+        <OneKeyIcon {...iconProps} />
       </Wrapper>
     )
   if (type === 'ledger')
