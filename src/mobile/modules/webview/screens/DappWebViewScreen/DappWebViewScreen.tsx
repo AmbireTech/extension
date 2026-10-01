@@ -863,7 +863,7 @@ const DappWebViewScreen = () => {
             >
               <GlobeIcon />
             </View>
-            <Text weight="medium" appearance="secondaryText">
+            <Text weight="medium" appearance="secondaryText" style={flexbox.flex1}>
               Open "{item.query}"
             </Text>
           </AnimatedPressable>
@@ -894,7 +894,7 @@ const DappWebViewScreen = () => {
             >
               <GoogleIcon />
             </View>
-            <Text weight="medium" appearance="secondaryText">
+            <Text weight="medium" appearance="secondaryText" style={flexbox.flex1}>
               Search Google for "{item.query}"
             </Text>
           </AnimatedPressable>

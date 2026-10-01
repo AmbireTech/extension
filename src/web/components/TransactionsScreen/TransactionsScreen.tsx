@@ -3,8 +3,8 @@ import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
@@ -68,29 +68,32 @@ const Wrapper: FC<WrapperProps> = ({ children }) => {
 }
 
 const Content: FC<ContentProps> = ({ children, buttons }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
-  // Reserves exactly as much scroll space as the floating footer occupies, so content only
-  // becomes scrollable once it would otherwise be covered by the footer, not before
+  const { isNarrowWebLayout } = useCompactLayout()
+  // Reserves exactly as much scroll space as the floating (wide view) footer occupies, so content
+  // only becomes scrollable once it would otherwise be covered by the footer, not before
   const [footerHeight, setFooterHeight] = useState(0)
   const handleFooterLayout = (event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
   }
 
   return (
-    <View style={[flexbox.flex1, spacings.pvSm]}>
+    // In a narrow view the header already spaces the content and the footer pads its own bottom edge
+    <View style={[flexbox.flex1, spacings.pvSm, isNarrowWebLayout && spacings.pv0]}>
       <ScrollableWrapper
         contentContainerStyle={[
           flexbox.flex1,
           spacings.phSm,
-          { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 0 }
+          !isNarrowWebLayout && { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 0 }
         ]}
       >
         {children}
       </ScrollableWrapper>
       <FooterGlassView
         size="sm"
+        // In a narrow view the footer sits under the content like on mobile, instead of floating over it
+        absolute={!isNarrowWebLayout}
         fullWidth={isNarrowWebLayout}
-        style={isRequestWindow ? { bottom: SPACING } : {}}
+        style={isRequestWindow && !isNarrowWebLayout ? { bottom: SPACING } : {}}
         onLayout={handleFooterLayout}
       >
         {isNarrowWebLayout ? (

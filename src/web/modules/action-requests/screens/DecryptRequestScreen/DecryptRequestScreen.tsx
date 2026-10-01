@@ -6,6 +6,7 @@ import ExpandableCard from '@common/components/ExpandableCard'
 import RequestingDappInfo from '@common/components/RequestingDappInfo'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import useDecryptRequest from '@common/modules/action-requests/hooks/useDecryptRequest'
@@ -29,6 +30,7 @@ const DecryptRequestScreen = () => {
     handleDecrypt,
     handleDeny
   } = useDecryptRequest()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   return (
     <SmallNotificationWindowWrapper>
@@ -46,7 +48,9 @@ const DecryptRequestScreen = () => {
           />
         )}
       >
-        <TabLayoutWrapperMainContent>
+        <TabLayoutWrapperMainContent
+          contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pbSm] : undefined}
+        >
           <RequestingDappInfo
             name={name}
             icon={icon}
