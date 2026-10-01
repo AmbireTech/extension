@@ -1,4 +1,3 @@
-import { KEYSTORE_PASS } from 'constants/env'
 import selectors from 'constants/selectors'
 import tokens from 'constants/tokens'
 import { SpeculosDevice } from 'libs/speculos-device/device'
@@ -155,26 +154,6 @@ export async function runBatchTransferFlow({
         await actionWindow.getByTestId(selectors.signTransactionButton).click()
       }
     }).toPass({ timeout: 30000 })
-
-    // TODO: in CI we dont need sign because this test run after test that does signing
-    const signConfirmButton = actionWindow.getByTestId(selectors.transaction.signConfirmButton)
-    const signingAuthRequired = await signConfirmButton
-      .waitFor({ state: 'visible', timeout: 5000 })
-      .then(() => true)
-      .catch(() => false)
-
-    if (signingAuthRequired) {
-      // submit button is disabled before entering pass
-      await expect(signConfirmButton).toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
-
-      await actionWindow.getByTestId(selectors.transaction.signPassAuthField).fill(KEYSTORE_PASS)
-
-      await expect(signConfirmButton).not.toHaveAttribute('aria-disabled', 'true', {
-        timeout: 30000
-      })
-
-      await signConfirmButton.click()
-    }
 
     if (ledgerSimulatorControls) {
       await page.waitForTimeout(2000) // wait for the transaction details to be displayed on the Ledger simulator
