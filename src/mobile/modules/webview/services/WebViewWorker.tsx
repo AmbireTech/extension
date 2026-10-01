@@ -617,9 +617,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
             sendResponse(data.id, null, err.message)
           }
           break
-        case 'trezor.getPublicKey':
+        case 'trezor.ethereumGetPublicKey':
           try {
-            sendResponse(data.id, await trezorDeeplinkService.getPublicKey(data.payload))
+            sendResponse(data.id, await trezorDeeplinkService.ethereumGetPublicKey(data.payload))
           } catch (err: any) {
             sendResponse(data.id, null, err.message)
           }

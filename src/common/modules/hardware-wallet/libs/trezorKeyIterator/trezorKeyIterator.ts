@@ -163,9 +163,8 @@ class TrezorKeyIterator implements KeyIteratorInterface {
     // concrete path from the device and then compute the Ethereum address from it.
     if (hdPathTemplate === BIP44_LEDGER_DERIVATION_TEMPLATE && ledgerBundleToFetch.length) {
       try {
-        const res = await this.#walletSDK.getPublicKey({
+        const res = await this.#walletSDK.ethereumGetPublicKey({
           bundle: ledgerBundleToFetch.map(({ path }) => ({
-            coin: 'ETH',
             path,
             showOnTrezor: false
           }))
@@ -217,8 +216,7 @@ class TrezorKeyIterator implements KeyIteratorInterface {
           )
 
         try {
-          const res = await this.#walletSDK.getPublicKey({
-            coin: 'ETH',
+          const res = await this.#walletSDK.ethereumGetPublicKey({
             path: parentPath,
             showOnTrezor: false
           })
