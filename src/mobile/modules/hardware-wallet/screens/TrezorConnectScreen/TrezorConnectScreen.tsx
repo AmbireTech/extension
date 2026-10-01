@@ -41,7 +41,7 @@ const TrezorConnectScreen = () => {
   const hasNavigatedRef = useRef(false)
 
   const startImport = useCallback(() => {
-    // Retrieving the accounts triggers a getPublicKey call that deep-links into
+    // Retrieving the accounts triggers an ethereumGetPublicKey call that deep-links into
     // Trezor Suite app; the user approves there and Suite returns the result.
     setImportStarted(true)
     dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })

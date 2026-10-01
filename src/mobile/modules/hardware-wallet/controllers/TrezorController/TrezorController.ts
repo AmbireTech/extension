@@ -53,7 +53,7 @@ class TrezorController implements ExternalSignerController, TrezorControllerInte
    */
   walletSDK: TrezorWalletSDK = {
     ethereumGetAddress: (params: any) => callNative('trezor.ethereumGetAddress', params),
-    getPublicKey: (params: any) => callNative('trezor.getPublicKey', params),
+    ethereumGetPublicKey: (params: any) => callNative('trezor.ethereumGetPublicKey', params),
     ethereumSignTransaction: (params: any) => callNative('trezor.ethereumSignTransaction', params),
     ethereumSignTypedData: (params: any) => callNative('trezor.ethereumSignTypedData', params),
     ethereumSignMessage: (params: any) => callNative('trezor.ethereumSignMessage', params)

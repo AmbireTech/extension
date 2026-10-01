@@ -77,7 +77,7 @@ class TrezorDeeplinkService {
 
   /**
    * Pure passthroughs: the params/response cross the worker bridge as JSON, and
-   * the SDK methods are overloaded (e.g. getPublicKey has single/bundle forms)
+   * the SDK methods are overloaded (e.g. ethereumGetPublicKey has single/bundle forms)
    * which a single arrow can't satisfy — so these are typed loosely here. The
    * real argument/response typing is enforced where the shared TrezorSigner /
    * TrezorKeyIterator call `controller.walletSDK.*` (typed via TrezorWalletSDK).
@@ -87,9 +87,9 @@ class TrezorDeeplinkService {
     return this.#normalizeDeeplinkFailure(await TrezorConnect.ethereumGetAddress(params))
   }
 
-  getPublicKey = async (params: any): Promise<any> => {
+  ethereumGetPublicKey = async (params: any): Promise<any> => {
     await this.#ensureInit()
-    return this.#normalizeDeeplinkFailure(await TrezorConnect.getPublicKey(params))
+    return this.#normalizeDeeplinkFailure(await TrezorConnect.ethereumGetPublicKey(params))
   }
 
   ethereumSignTransaction = async (params: any): Promise<any> => {
