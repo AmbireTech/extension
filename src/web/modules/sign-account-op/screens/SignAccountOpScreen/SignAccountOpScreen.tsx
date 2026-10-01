@@ -8,7 +8,6 @@ import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
-import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
@@ -134,10 +133,7 @@ const SignAccountOpScreen = () => {
     currentRequest,
     signingStep,
     disabledReason,
-    showSafeSigners,
-    signingAuthSheetRef,
-    cancelSigningAuth,
-    signingAuthProps
+    showSafeSigners
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -282,11 +278,6 @@ const SignAccountOpScreen = () => {
         shouldBeVisible={
           !signAccountOpState?.isInitialized || !!signAccountOpState.safetyChecksLoading
         }
-      />
-      <SigningAuthBottomSheet
-        sheetRef={signingAuthSheetRef}
-        onCancel={cancelSigningAuth}
-        {...signingAuthProps}
       />
       <Modals
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
