@@ -28,11 +28,13 @@ class OneKeySdkBridge implements OneKeyBridgeInterface {
         }
       })
 
-      await HardwareWebSdk.init({
+      const isInitialized = await HardwareWebSdk.init({
         debug: false,
         connectSrc: 'https://jssdk.onekey.so/1.1.0/',
         env: 'webusb'
       })
+      if (!isInitialized)
+        throw new Error('Could not start the OneKey connection. Please try again.')
     })()
 
     return this.#initPromise

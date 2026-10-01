@@ -9,7 +9,8 @@ const device = {
   connectId: 'connect-id',
   deviceId: 'seed-id',
   deviceType: 'pro',
-  name: 'OneKey Pro'
+  name: 'OneKey Pro',
+  path: 'usb-serial-number'
 }
 
 const makeBridge = (overrides: Partial<OneKeyBridgeInterface> = {}) =>
@@ -28,6 +29,18 @@ const makeBridge = (overrides: Partial<OneKeyBridgeInterface> = {}) =>
     cancel: jest.fn(async () => {}),
     ...overrides
   }) as unknown as OneKeyBridgeInterface
+
+describe('OneKeyController connection', () => {
+  test('selects the device authorized by the browser from the OneKey SDK results', async () => {
+    const bridge = makeBridge()
+    const controller = new OneKeyController(bridge)
+
+    await controller.connect('usb-serial-number')
+
+    expect(bridge.searchDevices).toHaveBeenCalled()
+    expect(controller.deviceId).toBe('seed-id')
+  })
+})
 
 describe('OneKeyController compatibility detection', () => {
   test('identifies OneKey only after the proprietary feature request and address verification', async () => {

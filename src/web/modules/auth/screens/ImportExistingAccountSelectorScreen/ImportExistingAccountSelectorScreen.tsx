@@ -156,11 +156,11 @@ const ImportExistingAccountSelectorScreen = () => {
               params: { preferredDeviceId }
             })
           } catch (error: any) {
-            if (error?.name !== 'NotFoundError') {
-              addToast(error?.message || t('Could not connect to the OneKey device.'), {
-                type: 'error'
-              })
-            }
+            const message =
+              error?.name === 'NotFoundError'
+                ? t('No OneKey device was selected. Connect and unlock it, then try again.')
+                : error?.message || t('Could not connect to the OneKey device.')
+            addToast(message, { type: error?.name === 'NotFoundError' ? 'warning' : 'error' })
           }
         },
         icon: OneKeyIcon

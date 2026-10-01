@@ -62,8 +62,10 @@ class OneKeyController implements ExternalSignerController {
   #selectDevice(devices: OneKeyDevice[], preferredDeviceId?: string): OneKeyDevice {
     const matchingDevice = preferredDeviceId
       ? devices.find(
-          ({ connectId, deviceId }) =>
-            connectId === preferredDeviceId || deviceId === preferredDeviceId
+          ({ connectId, deviceId, path }) =>
+            connectId === preferredDeviceId ||
+            deviceId === preferredDeviceId ||
+            path === preferredDeviceId
         )
       : undefined
 
@@ -93,7 +95,6 @@ class OneKeyController implements ExternalSignerController {
 
   async connect(preferredDeviceId?: string) {
     await this.#ensureInitialized()
-
     const devices = getResponsePayload(await this.walletSDK.searchDevices(), 'device search')
     await this.#setConnectedDevice(this.#selectDevice(devices, preferredDeviceId))
   }

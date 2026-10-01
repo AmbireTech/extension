@@ -7,6 +7,7 @@ export type OneKeyDevice = {
   deviceId: string | null
   deviceType: string | null
   name: string
+  path?: string
 }
 
 export type OneKeyAddress = { path: string; address: string }
