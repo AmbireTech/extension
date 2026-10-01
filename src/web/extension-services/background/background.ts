@@ -179,6 +179,9 @@ let trezorCtrl: TrezorController
 let qrCtrl: QrHardwareController
 let eventEmitterRegistry: EventEmitterRegistryController
 
+// A getter because the UI manager (which needs it) is created before walletStateCtrl
+const getIsSidePanelModeEnabled = () => !!walletStateCtrl?.isSidePanelModeEnabled
+
 // Initialize Sentry early to set up global error handlers during initial script evaluation
 if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
   Sentry.init({
@@ -535,8 +538,8 @@ const init = async () => {
           await windowManager.remove(winId, pm)
         }
       },
-      panel: getPanelManager(pm),
-      dispatchDappTabFocus: getDappTabFocusDispatcher(pm),
+      panel: getPanelManager(pm, getIsSidePanelModeEnabled),
+      dispatchDappTabFocus: getDappTabFocusDispatcher(pm, getIsSidePanelModeEnabled),
       notification: notificationManager,
       message: {
         sendToastMessage: (text, options) => {

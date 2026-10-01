@@ -151,11 +151,22 @@ export const openPanel = async (windowId?: number) => {
  * the panel is showing, since Chrome exposes no way to query its state. The panel is deliberately
  * not openable or closable from here - the user owns its lifecycle - so requests fall back to a
  * request window whenever it isn't open.
+ * On Firefox the sidebar can also be opened from the browser's sidebar switcher while panel mode is
+ * off, and it then shows a "turn on side panel mode" notice instead of the wallet - so it only
+ * counts as open in panel mode, otherwise requests would be routed to a view that can't show them.
  */
-const isPanelOpen = (pm: PortMessenger) => pm.ports.some((port) => port.name === PANEL_PORT_NAME)
+const isPanelOpen = (pm: PortMessenger, getIsPanelModeEnabled: () => boolean) => {
+  const isPanelPortConnected = pm.ports.some((port) => port.name === PANEL_PORT_NAME)
+  if (!isPanelPortConnected) return false
 
-export const getPanelManager = (pm: PortMessenger): PanelManager => ({
-  isOpen: () => isPanelOpen(pm)
+  return !isGecko || getIsPanelModeEnabled()
+}
+
+export const getPanelManager = (
+  pm: PortMessenger,
+  getIsPanelModeEnabled: () => boolean
+): PanelManager => ({
+  isOpen: () => isPanelOpen(pm, getIsPanelModeEnabled)
 })
 
 /**
@@ -164,9 +175,12 @@ export const getPanelManager = (pm: PortMessenger): PanelManager => ({
  * request window doesn't need this - the tab regains focus on its own once the window closes.
  */
 export const getDappTabFocusDispatcher =
-  (pm: PortMessenger): NonNullable<UiManager['dispatchDappTabFocus']> =>
+  (
+    pm: PortMessenger,
+    getIsPanelModeEnabled: () => boolean
+  ): NonNullable<UiManager['dispatchDappTabFocus']> =>
   (targets: DappTabTarget[]) => {
-    if (!isPanelOpen(pm)) return
+    if (!isPanelOpen(pm, getIsPanelModeEnabled)) return
 
     scheduleDappTabFocusDispatch(targets)
   }
