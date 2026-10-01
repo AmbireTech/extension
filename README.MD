@@ -1,24 +1,37 @@
-# Ambire Wallet
-
 <div align="center">
-  <a href="https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">
+  <a href="https://www.ambire.com/" target="_blank">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-dashboard-dark-v6.png">
-      <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-dashboard-light-v6.png">
-      <img src="./mockups/mockup-dashboard-light-v6.png" alt="Ambire Wallet Dashboard" width="528" height="648" />
+      <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-extension-and-mobile-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-extension-and-mobile-light.png">
+      <img src="./mockups/mockup-extension-and-mobile-light.png" alt="Ambire Wallet browser extension and mobile app" width="640" height="469" />
     </picture>
   </a>
 
+  <h1>Ambire Wallet</h1>
+
   <p>
-    Your Web3 wallet that just works. EIP-7702 ready.<br>
-    <em>A self-custodial browser wallet extension built for Ethereum and EVM networks.</em><br />
-    <a href="https://www.ambire.com/get-extension" target="_blank">
-      <strong>Download Ambire extension 🔥</strong>
-    </a>
+    Your Web3 wallet that just works, on browser and mobile.
+    <br /><br />
+    <em>A self-custody wallet for Ethereum and EVM networks, with EIP-7702 smart accounts, Safe multisig, and hardware wallet support. The browser extension and mobile app are built from this one codebase.</em>
+  </p>
+
+  <h3>Downloads</h3>
+
+  <p>
+    💻 <strong>Browser extension:</strong>
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Chrome</a> ·
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Brave</a> ·
+    <a href="https://addons.mozilla.org/en-US/firefox/addon/ambire-web3-wallet/" target="_blank">Firefox</a> ·
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Edge</a> ·
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Opera</a> ·
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">Arc</a>
     <br />
-    <em>(Chrome, Firefox, Brave, Opera, Edge, Arc)</em>
+    📱 <strong>Mobile app:</strong>
+    <a href="https://apps.apple.com/app/ambire-web3-wallet/id6444863857" target="_blank">iOS</a> ·
+    <a href="https://play.google.com/store/apps/details?id=com.ambire.wallet" target="_blank">Android</a>
     <br /><br />
     👥 Join the community:
+    <a href="https://x.com/ambire" target="_blank">X (Twitter)</a> |
     <a href="https://discord.com/invite/Ambire" target="_blank">Discord</a> |
     <a href="https://t.me/AmbireOfficial" target="_blank">Telegram</a>
     <br />
