@@ -3,7 +3,7 @@
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-extension-and-mobile-dark.png">
       <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-extension-and-mobile-light.png">
-      <img src="./mockups/mockup-extension-and-mobile-light.png" alt="Ambire Wallet browser extension and mobile app" width="830" height="608" />
+      <img src="./mockups/mockup-extension-and-mobile-light.png" alt="Ambire Wallet browser extension and mobile app" width="640" height="469" />
     </picture>
   </a>
 
