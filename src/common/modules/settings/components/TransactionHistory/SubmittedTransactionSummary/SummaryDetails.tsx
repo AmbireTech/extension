@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -58,7 +58,8 @@ const SummaryDetails = ({
     () => getFormattedSubmittedDate(submittedAccountOp.timestamp),
     [submittedAccountOp.timestamp]
   )
-  const humanizedCalls = useCallsWithDecodedData(useHumanizedCalls(submittedAccountOp))
+  const callsWithoutDecodedData = useHumanizedCalls(submittedAccountOp)
+  const humanizedCalls = useCallsWithDecodedData(callsWithoutDecodedData)
   const summaryBalanceChanges = useMemo(
     () => getSummaryBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
