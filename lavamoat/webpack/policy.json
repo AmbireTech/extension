@@ -5,6 +5,22 @@
         "@ambire/signature-validator>ethers": true
       }
     },
+    "@anon-rpc/browser-extension-harness": {
+      "globals": {
+        "DOMException": true,
+        "Headers": true,
+        "Request": true,
+        "Response": true,
+        "atob": true,
+        "btoa": true,
+        "chrome": true,
+        "console": true,
+        "fetch": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
     "@corpus-core/colibri-stateless": {
       "globals": {
         "Buffer": true,

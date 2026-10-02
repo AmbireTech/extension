@@ -26,6 +26,21 @@
     tap-spec "^5.0.0"
     tape "^5.5.3"
 
+"@anon-rpc/browser-extension-harness@0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@anon-rpc/browser-extension-harness/-/browser-extension-harness-0.3.2.tgz#7c61cb8ab54478b42e1788e81a7c7733bda690a3"
+  integrity sha512-dTC3OWC0pX6nski39QHCQ6NtZlLq01BPC/ATuXfNsQlRLkb/qC8vVrow/Jk5RETngPVgm6/MZpAAeUQfbrw+Jg==
+  dependencies:
+    "@anon-rpc/browser-harness" "0.3.2"
+
+"@anon-rpc/browser-harness@0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@anon-rpc/browser-harness/-/browser-harness-0.3.2.tgz#2d29b4440ef4fb8fb15d2afd40f3dcf537562dcf"
+  integrity sha512-W7Z4bRoHvEFVmSmdpyJM3Z+tV0VdS74bc/lMgTYAcikkI2mt74PAo/PR49xIHRfZA8HqNbW3l6O2O40wQhSV/Q==
+  dependencies:
+    "@kpstreams/webrtc-client" "^0.2.1"
+    "@noble/hashes" "^1.5.0"
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.20.0", "@babel/code-frame@^7.24.7", "@babel/code-frame@^7.27.1", "@babel/code-frame@^7.28.6", "@babel/code-frame@^7.29.0":
   version "7.29.0"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.29.0.tgz#7cd7a59f15b3cc0dcd803038f7792712a7d0b15c"
@@ -2822,6 +2837,18 @@
     bs58check "^2.1.2"
     tslib "^2.3.0"
 
+"@kpstreams/core@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@kpstreams/core/-/core-0.2.1.tgz#d483cc0264792d718d0aa9c985ca7d459e93a900"
+  integrity sha512-cx82IpcAG2OoteTrUbHECIm2jc5rJ0+O8qB7cKAXdvkN5oje4aOIiF8nb7nEk+LSMISz8Zz7znrj+gzSXEBKuw==
+
+"@kpstreams/webrtc-client@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@kpstreams/webrtc-client/-/webrtc-client-0.2.1.tgz#a2ab01e56b36220cb0a838a93865f71143d1c088"
+  integrity sha512-B4o0mN6QmSblhfaKy74xezV82LaIqp6tdZ05HBAuBV2sSw9wFsT3TY6xmMJeHOECWVwFJGnSit9k0RV6HnPPBw==
+  dependencies:
+    "@kpstreams/core" "^0.2.1"
+
 "@lavamoat/aa@^4.3.5", "@lavamoat/aa@^4.3.6":
   version "4.3.6"
   resolved "https://registry.yarnpkg.com/@lavamoat/aa/-/aa-4.3.6.tgz#e0b4e0ac4cffafcc716b9da62faf331357221e6f"
@@ -3156,7 +3183,7 @@
   resolved "https://registry.npmjs.org/@noble/hashes/-/hashes-1.7.2.tgz#d53c65a21658fb02f3303e7ee3ba89d6754c64b4"
   integrity sha512-biZ0NUSxyjLLqo6KxEJ1b+C2NAx0wtDoFvCaXHGgUkeHzf3Xc1xKumFKREuT7f7DARNZ/slvYUwFG6B0f2b6hQ==
 
-"@noble/hashes@1.8.0", "@noble/hashes@^1.0.0", "@noble/hashes@^1.2.0", "@noble/hashes@^1.3.1", "@noble/hashes@^1.6.1", "@noble/hashes@^1.7.0", "@noble/hashes@^1.8.0", "@noble/hashes@~1.8.0":
+"@noble/hashes@1.8.0", "@noble/hashes@^1.0.0", "@noble/hashes@^1.2.0", "@noble/hashes@^1.3.1", "@noble/hashes@^1.5.0", "@noble/hashes@^1.6.1", "@noble/hashes@^1.7.0", "@noble/hashes@^1.8.0", "@noble/hashes@~1.8.0":
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.8.0.tgz#cee43d801fcef9644b11b8194857695acd5f815a"
   integrity sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==

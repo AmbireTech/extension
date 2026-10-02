@@ -1,0 +1,3 @@
+import PrivacyNetworkSettingsScreen from './PrivacyNetworkSettingsScreen'
+
+export default PrivacyNetworkSettingsScreen

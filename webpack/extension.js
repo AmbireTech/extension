@@ -13,7 +13,7 @@ const AssetReplacePlugin = require('../plugins/AssetReplacePlugin')
 const createLavamoatUnsafeLayerPlugin = require('../lavamoat/plugins/lavamoat-unsafe-layer-plugin')
 const createLavamoatUnsafePackagesPlugin = require('../lavamoat/plugins/lavamoat-unsafe-packages-plugin')
 const LavamoatIgnoredModulesVerifyPlugin = require('../lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
-const { isWebkit, isGecko, isSafari, isAmbireNext } = require('./env')
+const { isWebkit, isGecko, isSafari, isAnonRpcSupported, isAmbireNext } = require('./env')
 const { CJS_RULE, hardenTerser, ROOT_DIR } = require('./shared')
 
 // Entries that run outside LavaMoat protection.
@@ -125,6 +125,19 @@ function processManifest(content, mode) {
   }
 
   manifest.content_security_policy = { extension_pages: csp }
+
+  // anon-rpc (opt-in at runtime): the harness runs a hash-pinned anon-client in a
+  // null-origin sandboxed page inside an offscreen document. The sandbox page is
+  // the only place an extension may relax its CSP: `blob:` in script-src is needed
+  // because the worker bundle is importScripts'd from a blob URL. The `*` keeps the
+  // entry stable across harness upgrades, which change the versioned asset folder.
+  // {@link https://github.com/ethereum/anon-rpc/tree/main/impl/browser-extension-harness#manifest}
+  if (isAnonRpcSupported) {
+    manifest.permissions = [...manifest.permissions, 'offscreen']
+    manifest.sandbox = { pages: ['anon-rpc/*/sandbox.html'] }
+    manifest.content_security_policy.sandbox =
+      "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; child-src 'self' blob:; worker-src 'self' blob:; connect-src *;"
+  }
 
   // This value can be used to control the unique ID of an extension,
   // when it is loaded during development. In prod, the ID is generated
@@ -330,7 +343,19 @@ module.exports = async function buildExtension(
         // are still escaped. Unescape them so the emitted file is valid JavaScript.
         return match[1].replace(/\\`/g, '`').replace(/\\\$/g, '$')
       }
-    }
+    },
+    // anon-rpc's prebuilt offscreen document and sandboxed page. They are the far
+    // half of a protocol whose near half is bundled into background.js from
+    // node_modules, so they must be copied on every build: the versioned folder
+    // name turns a stale copy into a missing file (a clear error) instead of a hang.
+    ...(isAnonRpcSupported
+      ? [
+          {
+            from: './node_modules/@anon-rpc/browser-extension-harness/dist/static/anon-rpc',
+            to: 'anon-rpc'
+          }
+        ]
+      : [])
   ]
 
   config.plugins = [
@@ -487,6 +512,13 @@ module.exports = async function buildExtension(
     }
 
     hardenTerser(config)
+
+    // Local testing only: skips Terser, which needs ~1.5GB per worker for the
+    // unsplit background chunk. The output is ~1.4x larger but otherwise
+    // equivalent, because hardenTerser already disables mangling.
+    if (process.env.DISABLE_MINIFICATION === 'true') {
+      config.optimization.minimize = false
+    }
 
     if (process.env.ANALYZE === 'true') {
       const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')

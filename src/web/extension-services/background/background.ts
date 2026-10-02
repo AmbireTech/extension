@@ -51,6 +51,10 @@ import {
 } from '@env'
 import * as Sentry from '@sentry/browser'
 import { browser, platform } from '@web/constants/browserapi'
+import {
+  AnonRpcController,
+  routeEthersRequestsThroughAnonRpc
+} from '@web/extension-services/background/controllers/anon-rpc'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
@@ -200,6 +204,7 @@ const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
 let mainCtrl: MainController
 let walletStateCtrl: WalletStateController
 let autoLockCtrl: AutoLockController
+let anonRpcCtrl: AnonRpcController
 // Hoisted so the `onConnect` listener below (which must be registered synchronously at the
 // top level of the script - see the comment above it) can close over them once `init()` has
 // assigned them, instead of the listener itself living inside `init()`'s local scope.
@@ -391,12 +396,14 @@ const init = async () => {
   const latticeCtrl = new LatticeController()
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
-  // (only internal Ambire APIs need the x-app-* headers and tracking params)
+  // (only internal Ambire APIs need the x-app-* headers and tracking params).
+  // Both kinds go through anonRpcCtrl, which is the native fetch unless the user
+  // turned on routing through a privacy network (anon-rpc).
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
     if (!isAmbireApiUrl(url.toString())) {
       // @ts-ignore
-      return fetch(url, init)
+      return anonRpcCtrl.fetch(url, init)
     }
 
     // As of v4.26.0, custom internal headers. The mobile app sends the same ones from
@@ -448,8 +455,9 @@ const init = async () => {
     // Use the native fetch (instead of node-fetch or whatever else) since
     // browser extensions are designed to run within the web environment,
     // which already provides a native and well-optimized fetch API.
+    // anonRpcCtrl.fetch is exactly that unless anon-rpc routing is turned on.
     // @ts-ignore
-    return fetch(url, initWithCustomHeaders)
+    return anonRpcCtrl.fetch(url, initWithCustomHeaders)
   }
 
   eventEmitterRegistry = new EventEmitterRegistryController(() => {
@@ -512,6 +520,11 @@ const init = async () => {
   })
 
   qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+
+  // Constructed before MainController, which starts making requests right away:
+  // fetchWithAnalytics and every ethers provider depend on it being set.
+  anonRpcCtrl = new AnonRpcController({ eventEmitterRegistry, storage })
+  if (anonRpcCtrl.isSupported) routeEthersRequestsThroughAnonRpc(anonRpcCtrl)
 
   mainCtrl = new MainController({
     eventEmitterRegistry,
