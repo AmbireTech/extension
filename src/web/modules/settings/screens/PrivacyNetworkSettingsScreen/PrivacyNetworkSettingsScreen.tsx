@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
-import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
+import PrivacyNetworkIcon from '@common/assets/svg/PrivacyNetworkIcon'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
@@ -82,7 +82,7 @@ const PrivacyNetworkSettingsScreen = () => {
             description={t(
               'Send the wallet’s network requests through a privacy network, so the services that provide balances and blockchain data can’t see your IP address. Loading will be slower. While this is on, the wallet won’t fall back to a direct connection: if the privacy network is unavailable, data stops loading until it’s back or you turn this off.'
             )}
-            renderIcon={<ShieldInvisibilityIcon width={24} height={24} />}
+            renderIcon={<PrivacyNetworkIcon />}
           >
             <FatToggle
               isOn={isEnabled}

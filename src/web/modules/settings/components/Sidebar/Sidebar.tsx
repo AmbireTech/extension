@@ -13,7 +13,7 @@ import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
-import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
+import PrivacyNetworkIcon from '@common/assets/svg/PrivacyNetworkIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
@@ -97,7 +97,7 @@ export const SETTINGS_LINKS = [
   },
   {
     key: 'privacy-network',
-    Icon: ShieldInvisibilityIcon,
+    Icon: PrivacyNetworkIcon,
     label: 'Privacy network',
     path: ROUTES.privacyNetwork
   },
