@@ -18,6 +18,12 @@ describe('getSliderAmountFieldValue', () => {
   it('keeps an amount the cut would wipe out', () => {
     expect(getSliderAmountFieldValue(parseUnits('0.0004', 18), max, 18)).toBe('0.0004')
   })
+  it('keeps more decimals on a balance too small for 2 to slide smoothly', () => {
+    const smallMax = parseUnits('0.0372', 18)
+    expect(getSliderAmountFieldValue((smallMax * 50n) / 100n, smallMax, 18)).toBe('0.0186')
+    expect(getSliderAmountFieldValue((smallMax * 75n) / 100n, smallMax, 18)).toBe('0.0279')
+    expect(getSliderAmountFieldValue((smallMax * 333n) / 1000n, smallMax, 18)).toBe('0.01238')
+  })
   it('leaves units with 2 decimals or fewer alone', () => {
     expect(getSliderAmountFieldValue(56935n, 100000n, 2)).toBe('569.35')
     expect(getSliderAmountFieldValue(7n, 100n, 0)).toBe('7')
