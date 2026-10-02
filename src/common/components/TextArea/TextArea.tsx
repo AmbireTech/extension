@@ -1,5 +1,5 @@
-import React, { ReactNode, useState } from 'react'
-import { BlurEvent, TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native'
+import React, { ReactNode } from 'react'
+import { TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -21,6 +21,11 @@ export interface InputProps extends TextInputProps {
   bottomLabelStyle?: TextStyle | TextStyle[]
   nativeInputStyle?: TextStyle
   leftIcon?: () => ReactNode
+  /**
+   * Rendered inside the input box, right before the native input. Useful for
+   * absolutely positioned layers that should match the native input's box.
+   */
+  customInputContent?: ReactNode
   value?: string
 }
 
@@ -39,20 +44,11 @@ const TextArea = ({
   bottomLabelStyle,
   nativeInputStyle,
   leftIcon,
+  customInputContent,
   value,
   ...rest
 }: InputProps) => {
-  const [isFocused, setIsFocused] = useState<boolean>(false)
   const { theme, styles } = useTheme(getStyles)
-
-  const handleOnFocus = (e: BlurEvent) => {
-    setIsFocused(true)
-    return onFocus(e)
-  }
-  const handleOnBlur = (e: BlurEvent) => {
-    setIsFocused(false)
-    return onBlur(e)
-  }
 
   const inputWrapperStyles = [
     styles.inputWrapper,
@@ -77,13 +73,14 @@ const TextArea = ({
         {!!leftIcon && <View style={styles.leftIcon}>{leftIcon()}</View>}
         {/* TextInput doesn't support border styles so we wrap it in a View */}
         <View style={[styles.input, { height: '100%' }, inputStyle]}>
+          {customInputContent}
           <TextInput
             placeholderTextColor={theme.secondaryText}
             autoCapitalize="none"
             autoCorrect={false}
             editable={!disabled}
-            onBlur={handleOnBlur}
-            onFocus={handleOnFocus}
+            onBlur={onBlur}
+            onFocus={onFocus}
             value={value}
             {...rest}
             style={{

@@ -1,4 +1,3 @@
-import { wordlists } from 'bip39'
 import React from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
@@ -13,6 +12,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
+import { getSeedPhraseTokens } from '@common/modules/auth/utils/seedPhrase'
 import getStyles from '@common/modules/auth/styles/seedPhraseImportScreenStyles'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -28,7 +28,7 @@ const SeedPhraseImportScreen = () => {
     setEnablePassphrase,
     seedPhraseStatus,
     handleFormSubmit,
-    validateSeedPhraseWord
+    validateSeedPhrase
   } = useSeedPhraseImport()
   const { goToPrevRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
@@ -44,7 +44,7 @@ const SeedPhraseImportScreen = () => {
           text={t('Confirm')}
           hasBottomSpacing={false}
           onPress={handleFormSubmit}
-          disabled={!isValid || seedPhraseStatus === 'invalid'}
+          disabled={!isValid}
         />
       }
     >
@@ -58,42 +58,38 @@ const SeedPhraseImportScreen = () => {
           control={control}
           rules={{
             required: true,
-            validate: validateSeedPhraseWord
+            validate: validateSeedPhrase
           }}
           name="seed"
           render={({ field: { onChange, onBlur, value } }) => {
-            const words = value.split(/(\s+)/)
+            const tokens = getSeedPhraseTokens(value)
 
             const styledOverlay = (
               <View style={[styles.overlay, { paddingVertical: 16, paddingHorizontal: 13 }]}>
-                {words.map((word, index) => {
-                  const isWhitespace = /^\s+$/.test(word)
-                  const cleanWord = word.trim().toLowerCase()
-                  const isValidWord = isWhitespace || wordlists.english?.includes(cleanWord)
-
-                  if (isWhitespace) {
+                {tokens.map((token) => {
+                  if (token.isWhitespace) {
                     return (
                       <Text
-                        key={`space-${String(index)}`}
+                        key={token.startIndex}
                         fontSize={14}
                         style={{ letterSpacing: -0.1, lineHeight: 21 }}
                       >
-                        {word}
+                        {token.value}
                       </Text>
                     )
                   }
 
                   return (
                     <Text
-                      key={`${word}-${String(index)}`}
+                      key={token.startIndex}
                       fontSize={14}
                       weight="light"
                       style={{
-                        color: isValidWord ? theme.primaryText : theme.errorText,
-                        textDecorationLine: isValidWord ? 'none' : 'underline'
+                        color: token.isInvalidWord ? theme.errorText : theme.primaryText,
+                        textDecorationLine: token.isInvalidWord ? 'underline' : 'none'
                       }}
                     >
-                      {word}
+                      {token.value}
                     </Text>
                   )
                 })}
