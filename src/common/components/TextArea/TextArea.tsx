@@ -4,6 +4,7 @@ import { BlurEvent, TextInput, TextInputProps, TextStyle, View, ViewStyle } from
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useAutoFocus from '@common/hooks/useAutoFocus'
+import useTextInputRemountKey from '@common/hooks/useTextInputRemountKey'
 import useTheme from '@common/hooks/useTheme'
 
 import getStyles from './styles'
@@ -48,6 +49,7 @@ const TextArea = ({
   const [isFocused, setIsFocused] = useState<boolean>(false)
   const { theme, styles } = useTheme(getStyles)
   const { autoFocus: nativeAutoFocus, setInputRef } = useAutoFocus(autoFocus)
+  const textInputRemountKey = useTextInputRemountKey(value, isFocused)
 
   const handleOnFocus = (e: BlurEvent) => {
     setIsFocused(true)
@@ -82,6 +84,7 @@ const TextArea = ({
         {/* TextInput doesn't support border styles so we wrap it in a View */}
         <View style={[styles.input, { height: '100%' }, inputStyle]}>
           <TextInput
+            key={textInputRemountKey}
             placeholderTextColor={theme.secondaryText}
             autoCapitalize="none"
             autoCorrect={false}
