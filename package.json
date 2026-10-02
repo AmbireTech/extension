@@ -172,6 +172,7 @@
     "jest-environment-jsdom": "29.7.0",
     "jest-expo": "54.0.16",
     "js-yaml": "4.1.0",
+    "json5": "2.2.3",
     "keycard-sdk": "4.0.0",
     "koa-compose": "4.1.0",
     "lodash": "4.18.1",

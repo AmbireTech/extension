@@ -5,13 +5,21 @@ import type { storage as extensionStorage } from '@common/services/storage'
 import { browser } from '@web/constants/browserapi'
 
 import { createBootstrapProvider } from './bootstrapProvider'
+import {
+  CUSTOM_NETWORK_ID,
+  CustomNetwork,
+  isCustomNetwork,
+  parseCustomNetwork
+} from './customNetwork'
 import { AnonRpcPreset, parseAnonRpcPresets } from './presets'
 
 export type AnonRpcStatus = 'off' | 'connecting' | 'connected' | 'failed'
 
 type AnonRpcSettings = {
   isEnabled: boolean
+  /** A preset id, or CUSTOM_NETWORK_ID for the user's own network */
   presetId: string | null
+  customNetwork?: CustomNetwork | null
 }
 
 // The extension's storage rather than ambire-common's `Storage`, whose keys are a
@@ -19,7 +27,7 @@ type AnonRpcSettings = {
 type ExtensionStorage = typeof extensionStorage
 
 const SETTINGS_STORAGE_KEY = 'anonRpcSettings'
-const DEFAULT_SETTINGS: AnonRpcSettings = { isEnabled: false, presetId: null }
+const DEFAULT_SETTINGS: AnonRpcSettings = { isEnabled: false, presetId: null, customNetwork: null }
 
 /**
  * While the privacy network keeps failing, requests fail straight away with the
@@ -57,9 +65,13 @@ export class AnonRpcController extends EventEmitter {
 
   isEnabled: boolean = DEFAULT_SETTINGS.isEnabled
 
+  /** A preset id, or CUSTOM_NETWORK_ID when the user's own network is selected */
   selectedPresetId: string | null = DEFAULT_SETTINGS.presetId
 
   presets: AnonRpcPreset[]
+
+  /** The network the user set up themselves, if any; selectable as CUSTOM_NETWORK_ID */
+  customNetwork: CustomNetwork | null = null
 
   /** Set when some of the env-configured presets could not be used. */
   presetsError: string | null
@@ -107,11 +119,12 @@ export class AnonRpcController extends EventEmitter {
         SETTINGS_STORAGE_KEY,
         DEFAULT_SETTINGS
       )
+      this.customNetwork = isCustomNetwork(stored.customNetwork) ? stored.customNetwork : null
       // A preset saved on a build whose presets no longer include it is not swapped for
       // another one (which could be less private): no preset is selected, so while the
       // option is on requests fail closed and settings asks the user to choose again.
       this.selectedPresetId = stored.presetId
-        ? (this.#findPreset(stored.presetId)?.id ?? null)
+        ? (this.#findNetwork(stored.presetId)?.id ?? null)
         : (this.presets[0]?.id ?? null)
       this.isEnabled = this.isSupported && stored.isEnabled
     } catch (error) {
@@ -130,19 +143,26 @@ export class AnonRpcController extends EventEmitter {
     this.emitUpdate()
   }
 
-  get selectedPreset(): AnonRpcPreset | null {
-    return this.#findPreset(this.selectedPresetId)
+  /** The network requests go through while enabled: a preset or the user's own network. */
+  get selectedNetwork(): AnonRpcPreset | null {
+    return this.#findNetwork(this.selectedPresetId)
   }
 
-  #findPreset(presetId: string | null): AnonRpcPreset | null {
-    if (!presetId) return null
-    return this.presets.find((preset) => preset.id === presetId) ?? null
+  #findNetwork(networkId: string | null): AnonRpcPreset | null {
+    if (!networkId) return null
+    if (networkId === CUSTOM_NETWORK_ID) {
+      return this.customNetwork
+        ? { id: CUSTOM_NETWORK_ID, label: 'Custom network', ...this.customNetwork }
+        : null
+    }
+    return this.presets.find((preset) => preset.id === networkId) ?? null
   }
 
   async #saveSettings() {
     const settings: AnonRpcSettings = {
       isEnabled: this.isEnabled,
-      presetId: this.selectedPresetId
+      presetId: this.selectedPresetId,
+      customNetwork: this.customNetwork
     }
     await this.#storage.set(SETTINGS_STORAGE_KEY, settings)
   }
@@ -160,10 +180,35 @@ export class AnonRpcController extends EventEmitter {
 
   async selectPreset(presetId: string) {
     await this.initialLoadPromise
-    if (!this.#findPreset(presetId) || presetId === this.selectedPresetId) return
+    if (!this.#findNetwork(presetId) || presetId === this.selectedPresetId) return
 
     this.selectedPresetId = presetId
     await this.#saveSettings()
+    if (this.isEnabled) this.#bootWorker()
+    this.emitUpdate()
+  }
+
+  /**
+   * Saves the user's own network and switches to it. `configText` is free-form
+   * JSON (or empty), passed to the network as its config.
+   */
+  async setCustomNetwork(specifier: string, configText: string) {
+    await this.initialLoadPromise
+    const { network, errors } = parseCustomNetwork(specifier, configText)
+    if (!network) {
+      // The settings form validates the same way before saving, so this is a safety net
+      this.emitError({
+        level: 'expected',
+        message: `Your custom privacy network was not saved. ${Object.values(errors).join(' ')}`,
+        error: new Error('Invalid custom privacy network')
+      })
+      return
+    }
+
+    this.customNetwork = network
+    this.selectedPresetId = CUSTOM_NETWORK_ID
+    await this.#saveSettings()
+    // Reconnect even when this network was already selected, so edits take effect
     if (this.isEnabled) this.#bootWorker()
     this.emitUpdate()
   }
@@ -216,12 +261,11 @@ export class AnonRpcController extends EventEmitter {
     this.#stopWorker()
     this.#lastBootAt = Date.now()
 
-    const preset = this.selectedPreset
+    const preset = this.selectedNetwork
     if (!preset) {
       this.status = 'failed'
-      this.statusError = this.presets.length
-        ? 'Choose a privacy network in settings to keep using the wallet with this option on.'
-        : 'No privacy networks are set up in this build of the extension, so requests are blocked. Turn this option off to continue.'
+      this.statusError =
+        'Choose a privacy network in settings to keep using the wallet with this option on.'
       this.emitUpdate()
       return
     }
@@ -277,7 +321,7 @@ export class AnonRpcController extends EventEmitter {
     return {
       ...this,
       ...super.toJSON(),
-      selectedPreset: this.selectedPreset
+      selectedNetwork: this.selectedNetwork
     }
   }
 }

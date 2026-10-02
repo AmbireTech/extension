@@ -2123,6 +2123,14 @@
         "define": true
       }
     },
+    "json5": {
+      "globals": {
+        "console.warn": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
     "hardhat>keccak": {
       "globals": {
         "Buffer.alloc": true,

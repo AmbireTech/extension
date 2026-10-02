@@ -1,5 +1,7 @@
 import { isAddress } from 'ethers'
 
+import { CUSTOM_NETWORK_ID } from './customNetwork'
+
 /**
  * A privacy network the user can pick in settings. `specifier` is the on-chain
  * IWorkerSpecifier contract (Ethereum mainnet) that pins the network's
@@ -27,6 +29,8 @@ const toPreset = (entry: unknown): AnonRpcPreset | string => {
 
   const { id, label, specifier, config } = entry as Record<string, unknown>
   if (!isNonEmptyString(id)) return 'a preset is missing its "id"'
+  if (id === CUSTOM_NETWORK_ID)
+    return `"${CUSTOM_NETWORK_ID}" is reserved for the user's own network`
   if (!isNonEmptyString(label)) return `preset "${id}" is missing its "label"`
   if (!isNonEmptyString(specifier) || !isAddress(specifier))
     return `preset "${id}" has an invalid "specifier" address`

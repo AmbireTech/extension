@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
@@ -13,7 +13,16 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import type { AnonRpcStatus } from '@web/extension-services/background/controllers/anon-rpc'
+import type {
+  AnonRpcPreset,
+  AnonRpcStatus
+} from '@web/extension-services/background/controllers/anon-rpc'
+import {
+  CUSTOM_NETWORK_ID,
+  formatNetworkConfig
+} from '@web/extension-services/background/controllers/anon-rpc/customNetwork'
+import CustomNetworkForm from '@web/modules/settings/components/PrivacyNetwork/CustomNetworkForm'
+import NetworkDetails from '@web/modules/settings/components/PrivacyNetwork/NetworkDetails'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
@@ -24,26 +33,67 @@ const STATUS_LABELS: Record<AnonRpcStatus, string> = {
   failed: 'Not connected'
 }
 
+type CustomNetworkDraft = {
+  specifier: string
+  configText: string
+  /** Changes whenever the draft is replaced, to remount the form with it */
+  version: number
+}
+
 const PrivacyNetworkSettingsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const {
-    state: { isSupported, isEnabled, presets, presetsError, selectedPresetId, status, statusError },
+    state: {
+      isSupported,
+      isEnabled,
+      presets,
+      presetsError,
+      selectedPresetId,
+      customNetwork,
+      status,
+      statusError
+    },
     dispatch
   } = useController('AnonRpcController')
+  // Which network's details are shown below the picker. Follows the network in use,
+  // except while the user is looking at (or preparing) a custom network not saved yet.
+  const [viewedNetworkOverride, setViewedNetworkOverride] = useState<string | null>(null)
+  const [customDraft, setCustomDraft] = useState<CustomNetworkDraft | null>(null)
+  const viewedNetworkId = viewedNetworkOverride ?? selectedPresetId
 
   useEffect(() => {
     setCurrentSettingsPage('privacy-network')
   }, [setCurrentSettingsPage])
 
-  const presetOptions = useMemo(
-    () => presets.map((preset) => ({ value: preset.id, label: preset.label })),
-    [presets]
+  const networkOptions = useMemo(
+    () => [
+      ...presets.map((preset) => ({ value: preset.id, label: preset.label })),
+      { value: CUSTOM_NETWORK_ID, label: t('Custom network') }
+    ],
+    [presets, t]
   )
   const selectedOption = useMemo(
-    () => presetOptions.find((option) => option.value === selectedPresetId) || null,
-    [presetOptions, selectedPresetId]
+    () => networkOptions.find((option) => option.value === viewedNetworkId) || null,
+    [networkOptions, viewedNetworkId]
+  )
+  const viewedPreset = useMemo(
+    () => presets.find((preset) => preset.id === viewedNetworkId) || null,
+    [presets, viewedNetworkId]
+  )
+  const inUseLabel = useMemo(
+    () => presets.find((preset) => preset.id === selectedPresetId)?.label || null,
+    [presets, selectedPresetId]
+  )
+  const customFormValues = useMemo(
+    () =>
+      customDraft || {
+        specifier: customNetwork?.specifier || '',
+        configText: customNetwork?.configText ?? formatNetworkConfig(customNetwork?.config),
+        version: 0
+      },
+    [customDraft, customNetwork]
   )
 
   const statusColor = useMemo(() => {
@@ -56,9 +106,38 @@ const PrivacyNetworkSettingsScreen = () => {
     dispatch({ type: 'method', params: { method: 'setEnabled', args: [!isEnabled] } })
   }, [dispatch, isEnabled])
 
-  const handleSelectPreset = useCallback(
+  const handleSelectNetwork = useCallback(
     (option: { value: string | number }) => {
-      dispatch({ type: 'method', params: { method: 'selectPreset', args: [String(option.value)] } })
+      const networkId = String(option.value)
+      // A custom network that was never saved can't be used yet: show its form instead
+      if (networkId === CUSTOM_NETWORK_ID && !customNetwork) {
+        setViewedNetworkOverride(CUSTOM_NETWORK_ID)
+        return
+      }
+      setViewedNetworkOverride(null)
+      dispatch({ type: 'method', params: { method: 'selectPreset', args: [networkId] } })
+    },
+    [customNetwork, dispatch]
+  )
+
+  const handleCopyToCustom = useCallback((preset: AnonRpcPreset) => {
+    setCustomDraft((prev) => ({
+      specifier: preset.specifier,
+      configText: formatNetworkConfig(preset.config),
+      version: (prev?.version ?? 0) + 1
+    }))
+    setViewedNetworkOverride(CUSTOM_NETWORK_ID)
+  }, [])
+
+  const handleSaveCustomNetwork = useCallback(
+    (specifier: string, configText: string) => {
+      dispatch({
+        type: 'method',
+        params: { method: 'setCustomNetwork', args: [specifier, configText] }
+      })
+      // The controller selects the custom network, so the view can follow it again
+      setViewedNetworkOverride(null)
+      setCustomDraft(null)
     },
     [dispatch]
   )
@@ -88,7 +167,7 @@ const PrivacyNetworkSettingsScreen = () => {
               isOn={isEnabled}
               onToggle={handleToggle}
               trackStyle={spacings.mr0}
-              disabled={!presets.length && !isEnabled}
+              disabled={!presets.length && !customNetwork && !isEnabled}
             />
           </ControlOption>
           <ControlOption
@@ -98,11 +177,10 @@ const PrivacyNetworkSettingsScreen = () => {
             renderIcon={<GlobeIcon width={24} height={24} />}
           >
             <Select
-              setValue={handleSelectPreset}
+              setValue={handleSelectNetwork}
               withSearch={false}
-              options={presetOptions}
+              options={networkOptions}
               value={selectedOption}
-              disabled={!presetOptions.length}
               containerStyle={{ width: 220, ...spacings.mb0 }}
               size="sm"
             />
@@ -127,9 +205,25 @@ const PrivacyNetworkSettingsScreen = () => {
               {statusError}
             </Text>
           )}
+          {viewedNetworkId === CUSTOM_NETWORK_ID ? (
+            <CustomNetworkForm
+              key={customFormValues.version}
+              initialSpecifier={customFormValues.specifier}
+              initialConfigText={customFormValues.configText}
+              isInUse={selectedPresetId === CUSTOM_NETWORK_ID}
+              inUseLabel={inUseLabel}
+              onSave={handleSaveCustomNetwork}
+            />
+          ) : (
+            !!viewedPreset && (
+              <NetworkDetails network={viewedPreset} onCopyToCustom={handleCopyToCustom} />
+            )
+          )}
           {!presets.length && (
             <Text fontSize={14} appearance="secondaryText" style={spacings.mtTy}>
-              {t('No privacy networks are set up in this build of the extension.')}
+              {t(
+                'This build of the extension has no preset privacy networks. You can still set up your own as a custom network.'
+              )}
             </Text>
           )}
           {!!presetsError && (
