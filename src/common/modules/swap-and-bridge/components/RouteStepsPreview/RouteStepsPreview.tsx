@@ -29,6 +29,25 @@ import { RouteStepsTokenAmount, RouteStepsTokenIcon } from '../RouteStepsToken'
 import { getLastRouteStepType } from './helpers'
 import styles, { TOKEN_LABEL_RESERVED_HEIGHT } from './styles'
 
+const MAX_AMOUNT_LABEL_LENGTH = 10
+
+/**
+ * Formats a step amount precisely enough to tell similar routes apart. When the formatted
+ * value doesn't fit the label, it's cut with an ellipsis and `fullAmount` holds the
+ * unrounded value, so it can be shown in a tooltip.
+ */
+const getStepAmountLabel = (
+  rawAmount: string,
+  decimals: number
+): { amount: string; fullAmount?: string } => {
+  const fullAmount = formatUnits(rawAmount, decimals)
+  const formattedAmount = formatDecimals(Number(fullAmount), 'precise')
+
+  if (formattedAmount.length <= MAX_AMOUNT_LABEL_LENGTH) return { amount: formattedAmount }
+
+  return { amount: `${formattedAmount.slice(0, MAX_AMOUNT_LABEL_LENGTH)}...`, fullAmount }
+}
+
 /**
  * Icon with its amount/symbol label pinned directly underneath it. The label is
  * absolutely positioned (anchored to this icon's own box) instead of taking part
@@ -42,6 +61,7 @@ const StepToken = ({
   uri,
   symbol,
   amount,
+  fullAmount,
   amountInUsd,
   align = 'center'
 }: {
@@ -50,6 +70,7 @@ const StepToken = ({
   uri?: string
   symbol: string
   amount: string
+  fullAmount?: string
   amountInUsd?: number
   align?: 'left' | 'right' | 'center'
 }) => (
@@ -66,6 +87,7 @@ const StepToken = ({
       <RouteStepsTokenAmount
         symbol={symbol}
         amount={amount}
+        fullAmount={fullAmount}
         amountInUsd={amountInUsd}
         align={align}
       />
@@ -121,20 +143,11 @@ const RouteStepsPreview = ({
     return estimationInSeconds > 3600 // 1 hour in seconds
   }, [estimationInSeconds])
 
-  const formattedFromAmount = useMemo(() => {
+  const fromAmountLabel = useMemo(() => {
     const fromStep = steps?.[0]
-    if (!fromStep) return ''
+    if (!fromStep) return { amount: '' }
 
-    const fromAmount = `${formatDecimals(
-      Number(formatUnits(fromStep.fromAmount, fromStep.fromAsset.decimals)),
-      'precise'
-    )}`
-
-    if (fromAmount.length > 10) {
-      return `${fromAmount.slice(0, 10)}...`
-    }
-
-    return fromAmount
+    return getStepAmountLabel(fromStep.fromAmount, fromStep.fromAsset.decimals)
   }, [steps])
 
   const formattedRefundedAmount = useMemo(() => {
@@ -151,20 +164,11 @@ const RouteStepsPreview = ({
     return toAmount
   }, [steps, routeStatus])
 
-  const formattedToAmount = useMemo(() => {
+  const toAmountLabel = useMemo(() => {
     const toStep = steps?.[steps.length - 1]
-    if (!toStep) return ''
+    if (!toStep) return { amount: '' }
 
-    const toAmount = `${formatDecimals(
-      Number(formatUnits(toStep.toAmount, toStep.toAsset.decimals)),
-      'amount'
-    )}`
-
-    if (toAmount.length > 10) {
-      return `${toAmount.slice(0, 10)}...`
-    }
-
-    return toAmount
+    return getStepAmountLabel(toStep.toAmount, toStep.toAsset.decimals)
   }, [steps])
 
   const resolvedCurrentStep = currentStep ?? 0
@@ -214,7 +218,8 @@ const RouteStepsPreview = ({
                       chainId={BigInt(step.fromAsset.chainId)}
                       address={step.fromAsset.address}
                       symbol={step.fromAsset.symbol}
-                      amount={isOnlyOneStep ? formattedFromAmount : formattedRefundedAmount}
+                      amount={isOnlyOneStep ? fromAmountLabel.amount : formattedRefundedAmount}
+                      fullAmount={isOnlyOneStep ? fromAmountLabel.fullAmount : undefined}
                       amountInUsd={inputValueInUsd}
                       align={isOnlyOneStep ? 'left' : 'center'}
                     />
@@ -236,7 +241,8 @@ const RouteStepsPreview = ({
                     chainId={BigInt(step.toAsset.chainId)}
                     uri={step.toAsset.icon}
                     symbol={step.toAsset.symbol}
-                    amount={formattedToAmount}
+                    amount={toAmountLabel.amount}
+                    fullAmount={toAmountLabel.fullAmount}
                     amountInUsd={outputValueInUsd}
                     align="right"
                   />
@@ -254,7 +260,8 @@ const RouteStepsPreview = ({
                   chainId={BigInt(step.fromAsset.chainId)}
                   uri={step.fromAsset.icon}
                   symbol={step.fromAsset.symbol}
-                  amount={isFirst ? formattedFromAmount : ''}
+                  amount={isFirst ? fromAmountLabel.amount : ''}
+                  fullAmount={isFirst ? fromAmountLabel.fullAmount : undefined}
                   align={isFirst ? 'left' : 'center'}
                 />
                 <RouteStepsArrow

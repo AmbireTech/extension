@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useId } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile } from '@common/config/env'
@@ -15,6 +16,8 @@ interface Props {
   uri?: string
   isLast?: boolean
   amount?: string
+  /** Unrounded amount, shown in a tooltip when `amount` is shortened to fit the label */
+  fullAmount?: string
   amountInUsd?: number
   wrapperStyle?: ViewStyle
   align?: 'left' | 'right' | 'center'
@@ -23,7 +26,7 @@ interface Props {
 type RouteStepsTokenIconProps = Pick<Props, 'address' | 'chainId' | 'uri'>
 type RouteStepsTokenAmountProps = Pick<
   Props,
-  'symbol' | 'amount' | 'amountInUsd' | 'wrapperStyle' | 'align'
+  'symbol' | 'amount' | 'fullAmount' | 'amountInUsd' | 'wrapperStyle' | 'align'
 >
 type RouteStepsTokenWrapperProps = {
   wrapperStyle?: ViewStyle
@@ -60,10 +63,13 @@ export const RouteStepsTokenIcon: React.FC<RouteStepsTokenIconProps> = ({
 export const RouteStepsTokenAmount: React.FC<RouteStepsTokenAmountProps> = ({
   symbol,
   amount = '',
+  fullAmount,
   amountInUsd,
   wrapperStyle,
   align = 'center'
 }) => {
+  const fullAmountTooltipId = useId()
+
   return (
     <View
       style={[
@@ -72,7 +78,19 @@ export const RouteStepsTokenAmount: React.FC<RouteStepsTokenAmountProps> = ({
         { alignItems: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center' }
       ]}
     >
-      <Text fontSize={isMobile ? 12 : 14} weight="medium" style={styles.text}>
+      <Text
+        fontSize={isMobile ? 12 : 14}
+        weight="medium"
+        style={styles.text}
+        dataSet={
+          fullAmount
+            ? createGlobalTooltipDataSet({
+                id: fullAmountTooltipId,
+                content: `${fullAmount} ${symbol}`
+              })
+            : undefined
+        }
+      >
         {amount ? `${amount} ` : ''}
         {symbol}
       </Text>
