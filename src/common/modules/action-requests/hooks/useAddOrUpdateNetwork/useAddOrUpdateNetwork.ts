@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
+import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import {
   getFeatures,
   getLoadingFeatures,
@@ -29,6 +30,8 @@ const useAddOrUpdateNetwork = () => {
   // The screens render from this flag (button label, disabled state, invalid params alert), so it
   // has to be state - a ref wouldn't re-render them
   const [isActionButtonPressed, setIsActionButtonPressed] = useState(false)
+  // Kept per request, as the screen stays mounted when the next request is of the same kind
+  const [closePressedRequestId, setClosePressedRequestId] = useState<UserRequest['id'] | null>(null)
   const [successStateText, setSuccessStateText] = useState<string>(
     t('already added to your wallet.')
   )
@@ -192,6 +195,7 @@ const useAddOrUpdateNetwork = () => {
     if (!userRequest) return
 
     setIsActionButtonPressed(true)
+    setClosePressedRequestId(userRequest.id)
     requestsDispatch({
       type: 'method',
       params: {
@@ -285,6 +289,14 @@ const useAddOrUpdateNetwork = () => {
     return existingNetwork ? t('Enable network') : t('Add network')
   }, [existingNetwork, isActionButtonPressed, statuses.addNetwork, statuses.updateNetwork, t])
 
+  const isCloseButtonPressed = !!userRequest && closePressedRequestId === userRequest.id
+
+  const closeButtonText = useMemo(() => {
+    if (!userRequest?.meta.hasNextRequest) return t('Close')
+
+    return isCloseButtonPressed ? t('Opening next request...') : t('Next request')
+  }, [t, userRequest?.meta.hasNextRequest, isCloseButtonPressed])
+
   const view: 'loading' | 'add' | 'update' | 'alreadyAdded' = useMemo(() => {
     if (!userRequest) return 'loading'
     if (networkAlreadyAdded) {
@@ -317,6 +329,8 @@ const useAddOrUpdateNetwork = () => {
     handlePrimaryButtonPress,
     handleRetryWithDifferentRpcUrl,
     resolveButtonText,
+    closeButtonText,
+    isCloseButtonPressed,
     view
   }
 }
