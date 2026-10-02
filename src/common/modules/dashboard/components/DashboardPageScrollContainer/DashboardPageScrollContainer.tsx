@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import getCollapseThreshold from '@common/modules/dashboard/hooks/useCollapseOnScroll/getCollapseThreshold'
 import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -130,10 +131,8 @@ const DashboardPageScrollContainer: FC<Props> = ({
   }, [carousel])
 
   // How tall the content is without the min height above, which the footer takes up by
-  // stretching over whatever the items leave. The pages are pushed down by the open overview
-  // rather than resized, so a page whose end that hides must scroll far enough to collapse it.
-  // Kept in refs, as the content grows with every batch the list renders while scrolled, and
-  // only `collapseRoom` changing is worth a render.
+  // stretching over whatever the items leave. Kept in refs, as the content grows with every
+  // batch the list renders while scrolled, and only `collapseRoom` changing is worth a render.
   const contentHeightRef = useRef(0)
   const footerHeightRef = useRef(0)
   const [collapseRoom, setCollapseRoom] = useState(0)
@@ -146,28 +145,17 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const barReach = floatingBar ? FLOATING_BAR_REACH + bottom : 0
 
   const updateCollapseRoom = useCallback(() => {
-    const naturalContentHeight = contentHeightRef.current - footerHeightRef.current
-    const itemsEnd = naturalContentHeight - contentPaddingBottom
-    // How far the page scrolls anyway, e.g. to collapse the banners
-    const baseScrollRange =
-      Math.max(minContentHeight, naturalContentHeight, listHeight) - listHeight
-    // Whether the last item stays hidden under the open overview or the bar, which only hides
-    // with the overview, even with the page scrolled as far as it goes
-    const isEndHidden =
-      !!overviewHeight && itemsEnd - baseScrollRange > listHeight - overviewHeight - barReach
-    // Collapsing shows the end and hides the bar, so a page only needs to be able to scroll
-    // at all: 2px, as Android reports offsets in whole pixels, which can round down short of 1px
-    const nextCollapseRoom = isEndHidden ? Math.max(listHeight + 2 - naturalContentHeight, 0) : 0
-    const scrollRange = Math.max(
-      baseScrollRange,
-      naturalContentHeight + nextCollapseRoom - listHeight
-    )
-    // Collapses at the overview's height, or at the end of a page that can't scroll that far.
-    // A page whose end shows without collapsing never collapses it.
-    collapseThresholdRef.current = isEndHidden
-      ? Math.min(overviewHeight, scrollRange - 1)
-      : Infinity
-    setCollapseRoom(nextCollapseRoom)
+    const next = getCollapseThreshold({
+      contentHeight: contentHeightRef.current - footerHeightRef.current,
+      paddingBottom: contentPaddingBottom,
+      listHeight,
+      minContentHeight,
+      overviewHeight,
+      barReach
+    })
+
+    collapseThresholdRef.current = next.collapseThreshold
+    setCollapseRoom(next.collapseRoom)
   }, [barReach, contentPaddingBottom, listHeight, minContentHeight, overviewHeight])
 
   useEffect(() => {
