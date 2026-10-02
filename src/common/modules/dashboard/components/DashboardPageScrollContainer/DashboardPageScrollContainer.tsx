@@ -132,36 +132,63 @@ const DashboardPageScrollContainer: FC<Props> = ({
   // How tall the content is without the min height above, which the footer takes up by
   // stretching over whatever the items leave. The pages are pushed down by the open overview
   // rather than resized, so a page whose end that hides must scroll far enough to collapse it.
-  const [contentHeight, setContentHeight] = useState(0)
-  const [footerHeight, setFooterHeight] = useState(0)
-
-  const onContentSizeChange = useCallback((_width: number, height: number) => {
-    setContentHeight(height)
-  }, [])
-
-  const onFooterLayout = useCallback(({ nativeEvent }: LayoutChangeEvent) => {
-    setFooterHeight(nativeEvent.layout.height)
-  }, [])
+  // Kept in refs, as the content grows with every batch the list renders while scrolled, and
+  // only `collapseRoom` changing is worth a render.
+  const contentHeightRef = useRef(0)
+  const footerHeightRef = useRef(0)
+  const [collapseRoom, setCollapseRoom] = useState(0)
+  // Read by the native scroll listener, so it isn't detached whenever the content changes
+  const collapseThresholdRef = useRef(Infinity)
 
   const listHeight = carousel ? carousel.pageHeight - stickyHeaderHeight : 0
   const overviewHeight = carousel?.overviewHeight || 0
-  const naturalContentHeight = contentHeight - footerHeight
-  const itemsEnd = naturalContentHeight - contentPaddingBottom
   const minContentHeight = carousel?.pageHeight ? listHeight + carousel.collapsibleHeight : 0
-  // How far the page scrolls anyway, e.g. to collapse the banners
-  const baseScrollRange = Math.max(minContentHeight, naturalContentHeight, listHeight) - listHeight
-  // Whether the last item stays hidden under the open overview or the bar, which only hides
-  // with the overview, even with the page scrolled as far as it goes
   const barReach = floatingBar ? FLOATING_BAR_REACH + bottom : 0
-  const isEndHidden =
-    !!overviewHeight && itemsEnd - baseScrollRange > listHeight - overviewHeight - barReach
-  // Collapsing shows the end and hides the bar, so a page only needs to be able to scroll
-  // at all: 2px, as Android reports offsets in whole pixels, which can round down short of 1px
-  const collapseRoom = isEndHidden ? Math.max(listHeight + 2 - naturalContentHeight, 0) : 0
-  const scrollRange = Math.max(baseScrollRange, naturalContentHeight + collapseRoom - listHeight)
-  // Collapses at the overview's height, or at the end of a page that can't scroll that far.
-  // A page whose end shows without collapsing never collapses it.
-  const collapseThreshold = isEndHidden ? Math.min(overviewHeight, scrollRange - 1) : Infinity
+
+  const updateCollapseRoom = useCallback(() => {
+    const naturalContentHeight = contentHeightRef.current - footerHeightRef.current
+    const itemsEnd = naturalContentHeight - contentPaddingBottom
+    // How far the page scrolls anyway, e.g. to collapse the banners
+    const baseScrollRange =
+      Math.max(minContentHeight, naturalContentHeight, listHeight) - listHeight
+    // Whether the last item stays hidden under the open overview or the bar, which only hides
+    // with the overview, even with the page scrolled as far as it goes
+    const isEndHidden =
+      !!overviewHeight && itemsEnd - baseScrollRange > listHeight - overviewHeight - barReach
+    // Collapsing shows the end and hides the bar, so a page only needs to be able to scroll
+    // at all: 2px, as Android reports offsets in whole pixels, which can round down short of 1px
+    const nextCollapseRoom = isEndHidden ? Math.max(listHeight + 2 - naturalContentHeight, 0) : 0
+    const scrollRange = Math.max(
+      baseScrollRange,
+      naturalContentHeight + nextCollapseRoom - listHeight
+    )
+    // Collapses at the overview's height, or at the end of a page that can't scroll that far.
+    // A page whose end shows without collapsing never collapses it.
+    collapseThresholdRef.current = isEndHidden
+      ? Math.min(overviewHeight, scrollRange - 1)
+      : Infinity
+    setCollapseRoom(nextCollapseRoom)
+  }, [barReach, contentPaddingBottom, listHeight, minContentHeight, overviewHeight])
+
+  useEffect(() => {
+    updateCollapseRoom()
+  }, [updateCollapseRoom])
+
+  const onContentSizeChange = useCallback(
+    (_width: number, height: number) => {
+      contentHeightRef.current = height
+      updateCollapseRoom()
+    },
+    [updateCollapseRoom]
+  )
+
+  const onFooterLayout = useCallback(
+    ({ nativeEvent }: LayoutChangeEvent) => {
+      footerHeightRef.current = nativeEvent.layout.height
+      updateCollapseRoom()
+    },
+    [updateCollapseRoom]
+  )
 
   const listFooter = useMemo(
     () =>
@@ -170,13 +197,6 @@ const DashboardPageScrollContainer: FC<Props> = ({
       ) : undefined,
     [carousel, collapseRoom, onFooterLayout]
   )
-
-  // Read from a ref, so the native scroll listener isn't detached whenever the content changes
-  const collapseThresholdRef = useRef(collapseThreshold)
-
-  useEffect(() => {
-    collapseThresholdRef.current = collapseThreshold
-  }, [collapseThreshold])
 
   const reportScrollOffset = carousel?.reportScrollOffset
   const onPageScroll = carousel?.onPageScroll
