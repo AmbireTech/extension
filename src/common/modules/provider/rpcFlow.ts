@@ -3,7 +3,13 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { Network } from '@ambire-common/interfaces/network'
 import { UiManager } from '@ambire-common/interfaces/ui'
+import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
+import {
+  dappRequestMethodToRequestKind,
+  isSignRequest
+} from '@ambire-common/libs/requests/requests'
 import { getMetadata } from '@common/modules/provider/metadata'
 import { ProviderController } from '@common/modules/provider/ProviderController'
 import { RequestRes } from '@common/modules/provider/types'
@@ -12,6 +18,7 @@ import underline2Camelcase from '@common/utils/underline2Camelcase'
 
 const lockedOrigins: { [key: string]: Promise<any> } = {}
 const connectOrigins: { [key: string]: Promise<any> } = {}
+const enablingNetworks: { [chainId: string]: Promise<unknown> } = {}
 
 const flow = new PromiseFlow<{
   request: DappProviderRequest
@@ -126,6 +133,58 @@ const flowContext = flow
 
     return next()
   })
+  // if the request targets a disabled network - prompt to enable it first
+  .use(async ({ request, mainCtrl }, next) => {
+    const { method, params, session } = request
+    const isChainSwitch = method === 'wallet_switchEthereumChain'
+    if (!isChainSwitch && !isSignRequest(dappRequestMethodToRequestKind(method))) return next()
+
+    const chainIdParam =
+      isChainSwitch || method === 'wallet_sendCalls' ? params?.[0]?.chainId : undefined
+    const requestChainId = chainIdParam ?? mainCtrl.dapps.getDapp(session.id)?.chainId
+    const disabledNetwork = mainCtrl.networks.disabledNetworks.find(
+      (n: Network) => Number(n.chainId) === Number(requestChainId)
+    )
+    if (!disabledNetwork) return next()
+
+    // Requests arriving at once for the same network all wait on one prompt instead of each
+    // opening their own
+    const chainIdKey = disabledNetwork.chainId.toString()
+    if (enablingNetworks[chainIdKey] === undefined) {
+      enablingNetworks[chainIdKey] = new Promise((resolve, reject) => {
+        mainCtrl.requests
+          .build({
+            type: 'dappRequest',
+            params: {
+              request: {
+                ...request,
+                method: 'wallet_addEthereumChain',
+                // Nothing opens after a network switch, so only the other requests wait on this one
+                meta: { hasNextRequest: !isChainSwitch },
+                params: [
+                  {
+                    chainId: networkChainIdToHex(disabledNetwork.chainId),
+                    chainName: disabledNetwork.name,
+                    rpcUrls: disabledNetwork.rpcUrls,
+                    nativeCurrency: {
+                      name: disabledNetwork.nativeAssetName,
+                      symbol: disabledNetwork.nativeAssetSymbol
+                    }
+                  }
+                ]
+              },
+              dappPromise: { id: uuidv4(), resolve, reject, session }
+            }
+          })
+          .catch(reject)
+      }).finally(() => {
+        delete enablingNetworks[chainIdKey]
+      })
+    }
+    await enablingNetworks[chainIdKey]
+
+    return next()
+  })
   // add the dapp request as a userRequest
   .use(async (props, next) => {
     const { request, mainCtrl, notificationManager, mapMethod } = props
@@ -162,7 +221,9 @@ export default (
   notificationManager: UiManager['notification']
 ) => {
   return flowContext({
-    request,
+    // Apps can send anything along with a request, so their `meta` never reaches the wallet's
+    // own request handling - only the wallet sets it
+    request: { ...request, meta: undefined },
     mainCtrl,
     notificationManager,
     mapMethod: underline2Camelcase(request.method)
