@@ -4,6 +4,8 @@ type ChromeSidePanelApi = {
   setPanelBehavior: (options: { openPanelOnActionClick: boolean }) => Promise<void>
   getPanelBehavior?: () => Promise<{ openPanelOnActionClick: boolean }>
   open: (options: { windowId: number }) => Promise<void>
+  // Optional because not every Chromium browser that exposes `sidePanel` implements it
+  setOptions?: (options: { enabled?: boolean; path?: string; tabId?: number }) => Promise<void>
 }
 
 const getChromeSidePanelApi = (): ChromeSidePanelApi | undefined => {

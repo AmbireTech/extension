@@ -41,6 +41,9 @@ export const handleFirefoxActionClicked = async () => {
 
 /**
  * Routes the toolbar action to the side panel instead of the extension popup (or back).
+ * On Chrome the side panel is also disabled while the mode is off, which removes the wallet from
+ * Chrome's own side panel menu and closes a panel that is open - otherwise the wallet could still
+ * be opened there, and dapp requests would be routed to it instead of a request window.
  */
 export const applyPanelMode = async (enabled: boolean) => {
   if (isGecko) {
@@ -61,6 +64,9 @@ export const applyPanelMode = async (enabled: boolean) => {
   if (!sidePanelApi) return
 
   try {
+    // Enabled before the toolbar action starts opening it, so a click in between doesn't land on
+    // a disabled panel
+    await sidePanelApi.setOptions?.({ enabled })
     await sidePanelApi.setPanelBehavior({ openPanelOnActionClick: enabled })
     await chrome.action.setPopup({ popup: enabled ? '' : POPUP_PATH })
   } catch (error) {
