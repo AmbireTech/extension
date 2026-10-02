@@ -1285,7 +1285,9 @@ const DappWebViewScreen = () => {
         webviewDebuggingEnabled={__DEV__}
         // If not set, on the newer Fabric architecture iOS scrolling loses its momentum
         // almost immediately and feels choppy instead of smooth like in Safari.
-        decelerationRate="normal"
+        // iOS-only: on Android the string is passed raw to the native Double prop
+        // (only WebView.ios.tsx converts it to a number) and crashes the app.
+        decelerationRate={isiOS ? 'normal' : undefined}
         nestedScrollEnabled={true}
         pullToRefreshEnabled={!isAndroid}
         onScroll={isAndroid ? handleWebViewScroll : undefined}
