@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -17,7 +17,7 @@ import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import SigningKeySelect from '@common/modules/sign-message/components/SignKeySelect'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -111,6 +111,13 @@ const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
   )
 })
 
+/** Up to this many owners are shown in full; any more and the list becomes scrollable */
+const MAX_OWNERS_WITHOUT_SCROLL = 5
+const ESTIMATED_OWNER_ROW_HEIGHT = 40
+// Used only until the last fully visible owner row is measured
+const FALLBACK_OWNERS_LIST_MAX_HEIGHT =
+  MAX_OWNERS_WITHOUT_SCROLL * (ESTIMATED_OWNER_ROW_HEIGHT + SPACING_TY) - SPACING_TY
+
 const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
   state.accountStates
 
@@ -140,6 +147,7 @@ const SafeOwners = ({
   const { t } = useTranslation()
   const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const [ownerAddrToChooseKeyFor, setOwnerAddrToChooseKeyFor] = useState<Key['addr'] | null>(null)
+  const [ownersListMaxHeight, setOwnersListMaxHeight] = useState<number | null>(null)
 
   const owners = useMemo(() => {
     const state = accountStates[account.addr]?.[chainId]
@@ -178,6 +186,15 @@ const SafeOwners = ({
     () => getSignAndCloseOwnerAddr(owners, threshold),
     [owners, threshold]
   )
+
+  const isOwnersListScrollable = owners.length > MAX_OWNERS_WITHOUT_SCROLL
+
+  // The bottom edge of the last fully visible owner row is the list height cap,
+  // so exactly MAX_OWNERS_WITHOUT_SCROLL rows fit regardless of the row height
+  const handleLastFullyVisibleOwnerLayout = useCallback((e: LayoutChangeEvent) => {
+    const { y, height } = e.nativeEvent.layout
+    setOwnersListMaxHeight(y + height)
+  }, [])
 
   const ownerToChooseKeyFor = useMemo(
     () => owners.find((o) => o.addr === ownerAddrToChooseKeyFor) || null,
@@ -219,9 +236,14 @@ const SafeOwners = ({
         {t(`${threshold} out of ${owners.length} signatures required:`)}
       </Text>
       <ScrollableWrapper
-        // Web (incl. side panel) needs maxHeight so the list keeps intrinsic height;
+        // Web (incl. side panel) needs flexShrink: 0 so the list keeps intrinsic height;
         // `{ flex: 0 }` alone collapses the rows on RN web.
-        style={isWeb ? { maxHeight: 120, flexShrink: 0 } : { flex: 0 }}
+        style={[
+          isWeb ? { flexShrink: 0 } : { flex: 0 },
+          isOwnersListScrollable && {
+            maxHeight: ownersListMaxHeight ?? FALLBACK_OWNERS_LIST_MAX_HEIGHT
+          }
+        ]}
         contentContainerStyle={{ flexGrow: 0 }}
       >
         {owners.map((o, i) => (
@@ -235,6 +257,11 @@ const SafeOwners = ({
             style={[i === owners.length - 1 ? spacings.mb0 : spacings.mbTy, { width: '100%' }]}
             onSign={getOwnerSignHandler(o)}
             isSignLoading={isSignLoading && signingKeyAddr === o.addr}
+            onLayout={
+              isOwnersListScrollable && i === MAX_OWNERS_WITHOUT_SCROLL - 1
+                ? handleLastFullyVisibleOwnerLayout
+                : undefined
+            }
           >
             <SafeOwnerAddress
               address={o.addr}

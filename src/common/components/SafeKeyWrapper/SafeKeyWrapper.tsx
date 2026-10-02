@@ -40,6 +40,7 @@ const SafeGlobalLagWarning = React.memo(function SafeGlobalLagWarning() {
 interface Props {
   children?: any
   style?: ViewProps['style']
+  onLayout?: ViewProps['onLayout']
   isDisabled?: boolean
   hasSigned?: boolean
   isSignLoading?: boolean
@@ -58,14 +59,15 @@ const SafeKeyWrapper = ({
   onSign,
   addr,
   type,
-  shouldSignAndClose
+  shouldSignAndClose,
+  onLayout
 }: Props) => {
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { isCompactLayout: withMobileLayout } = useCompactLayout()
 
   return (
-    <View style={style}>
+    <View style={style} onLayout={onLayout}>
       <View style={[flexbox.directionRow, flexbox.alignCenter, isDisabled && { opacity: 0.6 }]}>
         <View style={[flexbox.flex1, { minWidth: 0 }]}>{children}</View>
         {hasSigned && (
