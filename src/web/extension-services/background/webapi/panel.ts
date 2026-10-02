@@ -152,6 +152,20 @@ export const openPanel = async (windowId?: number) => {
   }
 }
 
+// The browser window each connected panel is in, reported by the panel itself, because a panel's
+// port carries no tab and so no window. Entries are removed when the panel's port disconnects.
+const panelWindowIdByPortId = new Map<string, number>()
+
+/** Records the browser window a side panel is in (see SET_SIDE_PANEL_WINDOW_ID). */
+export const setPanelWindowId = (portId: string, windowId: number) => {
+  panelWindowIdByPortId.set(portId, windowId)
+}
+
+/** Forgets the window of a side panel whose port disconnected. */
+export const forgetPanelWindowId = (portId: string) => {
+  panelWindowIdByPortId.delete(portId)
+}
+
 /**
  * The panel part of the UI manager. A connected side-panel port is the only reliable signal that
  * the panel is showing, since Chrome exposes no way to query its state. The panel is deliberately
@@ -160,19 +174,31 @@ export const openPanel = async (windowId?: number) => {
  * On Firefox the sidebar can also be opened from the browser's sidebar switcher while panel mode is
  * off, and it then shows a "turn on side panel mode" notice instead of the wallet - so it only
  * counts as open in panel mode, otherwise requests would be routed to a view that can't show them.
+ * Each browser window has its own panel, so with a `windowId` only a panel in that window counts.
+ * A panel that hasn't reported its window yet still counts, as it did before windows were tracked.
  */
-const isPanelOpen = (pm: PortMessenger, getIsPanelModeEnabled: () => boolean) => {
-  const isPanelPortConnected = pm.ports.some((port) => port.name === PANEL_PORT_NAME)
-  if (!isPanelPortConnected) return false
+const isPanelOpen = (
+  pm: PortMessenger,
+  getIsPanelModeEnabled: () => boolean,
+  windowId?: number
+) => {
+  const panelPorts = pm.ports.filter((port) => port.name === PANEL_PORT_NAME)
+  if (!panelPorts.length) return false
+  if (isGecko && !getIsPanelModeEnabled()) return false
+  if (windowId === undefined) return true
 
-  return !isGecko || getIsPanelModeEnabled()
+  return panelPorts.some((port) => {
+    const panelWindowId = panelWindowIdByPortId.get(port.id)
+
+    return panelWindowId === undefined || panelWindowId === windowId
+  })
 }
 
 export const getPanelManager = (
   pm: PortMessenger,
   getIsPanelModeEnabled: () => boolean
 ): PanelManager => ({
-  isOpen: () => isPanelOpen(pm, getIsPanelModeEnabled)
+  isOpen: (windowId?: number) => isPanelOpen(pm, getIsPanelModeEnabled, windowId)
 })
 
 /**
@@ -186,7 +212,7 @@ export const getDappTabFocusDispatcher =
     getIsPanelModeEnabled: () => boolean
   ): NonNullable<UiManager['dispatchDappTabFocus']> =>
   (targets: DappTabTarget[]) => {
-    if (!isPanelOpen(pm, getIsPanelModeEnabled)) return
+    if (!targets.some(({ windowId }) => isPanelOpen(pm, getIsPanelModeEnabled, windowId))) return
 
     scheduleDappTabFocusDispatch(targets)
   }
