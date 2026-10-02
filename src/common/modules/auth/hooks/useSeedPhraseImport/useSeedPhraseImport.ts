@@ -2,12 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { getSeedPhraseStatus, normalizeSeedPhrase } from '@common/modules/auth/utils/seedPhrase'
+import {
+  getSeedPhraseValidation,
+  normalizeSeedPhrase,
+  SeedPhraseError
+} from '@common/modules/auth/utils/seedPhrase'
 
 export default function useSeedPhraseImport() {
   const { goToNextRoute } = useOnboardingNavigation()
+  const { t } = useTranslation()
 
   const { initParams, subType } = useController('AccountPickerController').state
   const { dispatch: keystoreDispatch } = useController('KeystoreController')
@@ -27,7 +33,28 @@ export default function useSeedPhraseImport() {
 
   const [enablePassphrase, setEnablePassphrase] = useState(false)
   const seedValue = useWatch({ control, name: 'seed' })
-  const seedPhraseStatus = useMemo(() => getSeedPhraseStatus(seedValue), [seedValue])
+  // `null` while the seed input is not focused
+  const [seedCaretPosition, setSeedCaretPosition] = useState<number | null>(null)
+  const { status: seedPhraseStatus, error } = useMemo(
+    () => getSeedPhraseValidation(seedValue, seedCaretPosition),
+    [seedValue, seedCaretPosition]
+  )
+
+  const seedPhraseError = useMemo(() => {
+    if (!error) return undefined
+
+    const errorMessages: { [key in SeedPhraseError]: string } = {
+      'unknown-words': t(
+        'Some words are not valid recovery phrase words. Check the underlined ones.'
+      ),
+      'wrong-word-count': t('A recovery phrase has 12, 15, 18, 21 or 24 words.'),
+      'invalid-phrase': t(
+        'Invalid recovery phrase. Check that the words are spelled correctly and in the right order.'
+      )
+    }
+
+    return errorMessages[error]
+  }, [error, t])
 
   const handleFormSubmit = useCallback(async () => {
     await handleSubmit(({ seed, passphrase }) => {
@@ -72,7 +99,7 @@ export default function useSeedPhraseImport() {
   }, [enablePassphrase, setValue, unregister])
 
   const validateSeedPhrase = useCallback(
-    (value: string) => getSeedPhraseStatus(value) === 'valid',
+    (value: string) => getSeedPhraseValidation(value).status === 'valid',
     []
   )
 
@@ -82,6 +109,9 @@ export default function useSeedPhraseImport() {
     enablePassphrase,
     setEnablePassphrase,
     seedPhraseStatus,
+    seedPhraseError,
+    seedCaretPosition,
+    setSeedCaretPosition,
     importButtonPressed,
     setImportButtonPressed,
     handleFormSubmit,

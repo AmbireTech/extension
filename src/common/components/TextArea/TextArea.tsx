@@ -26,6 +26,14 @@ export interface InputProps extends TextInputProps {
    * absolutely positioned layers that should match the native input's box.
    */
   customInputContent?: ReactNode
+  /**
+   * Forwarded to the native input (`ref` is a regular prop since React 19)
+   */
+  ref?: React.Ref<TextInput>
+  /**
+   * Rendered as `data-*` attributes of the native input on web
+   */
+  dataSet?: { [key: string]: string }
   value?: string
 }
 

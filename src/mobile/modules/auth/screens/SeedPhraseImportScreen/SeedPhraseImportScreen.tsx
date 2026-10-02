@@ -27,6 +27,9 @@ const SeedPhraseImportScreen = () => {
     enablePassphrase,
     setEnablePassphrase,
     seedPhraseStatus,
+    seedPhraseError,
+    seedCaretPosition,
+    setSeedCaretPosition,
     handleFormSubmit,
     validateSeedPhrase
   } = useSeedPhraseImport()
@@ -62,7 +65,7 @@ const SeedPhraseImportScreen = () => {
           }}
           name="seed"
           render={({ field: { onChange, onBlur, value } }) => {
-            const tokens = getSeedPhraseTokens(value)
+            const tokens = getSeedPhraseTokens(value, seedCaretPosition)
 
             const styledOverlay = (
               <View style={[styles.overlay, { paddingVertical: 16, paddingHorizontal: 13 }]}>
@@ -107,7 +110,12 @@ const SeedPhraseImportScreen = () => {
                   numberOfLines={4}
                   autoFocus
                   onChangeText={onChange}
-                  onBlur={onBlur}
+                  onFocus={() => setSeedCaretPosition(value.length)}
+                  onSelectionChange={(e) => setSeedCaretPosition(e.nativeEvent.selection.end)}
+                  onBlur={() => {
+                    setSeedCaretPosition(null)
+                    onBlur()
+                  }}
                   inputWrapperStyle={{
                     position: 'relative',
                     backgroundColor: 'transparent',
@@ -118,7 +126,7 @@ const SeedPhraseImportScreen = () => {
                   style={{ fontSize: 20 }}
                   placeholder={t('Write or paste your recovery phrase')}
                   isValid={seedPhraseStatus === 'valid'}
-                  error={seedPhraseStatus === 'invalid' && t('Invalid recovery phrase.')}
+                  error={seedPhraseError}
                   placeholderTextColor={theme.secondaryText}
                   onSubmitEditing={handleFormSubmit}
                   nativeInputStyle={{

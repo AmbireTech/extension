@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useRef } from 'react'
-import { NativeSyntheticEvent, TextInputScrollEventData, View } from 'react-native'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { TextInput, View } from 'react-native'
 
 import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
@@ -12,32 +12,92 @@ import getStyles from './styles'
 type Props = {
   value: string
   status: SeedPhraseStatus
+  error?: string
+  /**
+   * `null` while the input is not focused
+   */
+  caretPosition: number | null
   onChangeText: (value: string) => void
+  onCaretPositionChange: (caretPosition: number | null) => void
   onBlur: () => void
   onSubmitEditing: () => void
 }
+
+/**
+ * Data attribute used to style the selection of the native input in `style.css`
+ */
+const SELECTION_DATA_SET = { seedPhraseInput: 'true' }
 
 /**
  * Lets the user type their recovery phrase and underlines the words that are not
  * valid recovery phrase words. The typed text itself is transparent and a backdrop
  * with the same typography, rendered behind it, displays the colored words.
  */
-const SeedPhraseInput = ({ value, status, onChangeText, onBlur, onSubmitEditing }: Props) => {
+const SeedPhraseInput = ({
+  value,
+  status,
+  error,
+  caretPosition,
+  onChangeText,
+  onCaretPositionChange,
+  onBlur,
+  onSubmitEditing
+}: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
+  const nativeInputRef = useRef<TextInput>(null)
   const backdropRef = useRef<View>(null)
 
-  const tokens = useMemo(() => getSeedPhraseTokens(value), [value])
+  const tokens = useMemo(() => getSeedPhraseTokens(value, caretPosition), [value, caretPosition])
+
+  const updateCaretPosition = useCallback(() => {
+    const nativeInput = nativeInputRef.current as unknown as HTMLTextAreaElement | null
+    if (!nativeInput) return
+
+    onCaretPositionChange(nativeInput.selectionEnd)
+  }, [onCaretPositionChange])
+
+  // Caret moves (clicks, arrow keys) don't trigger `onSelectionChange` on web,
+  // because it relies on the `select` event, which fires only for text selections.
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      if (document.activeElement !== (nativeInputRef.current as unknown as Element)) return
+
+      updateCaretPosition()
+    }
+
+    document.addEventListener('selectionchange', handleSelectionChange)
+    return () => document.removeEventListener('selectionchange', handleSelectionChange)
+  }, [updateCaretPosition])
+
+  const handleChangeText = useCallback(
+    (text: string) => {
+      onChangeText(text)
+      // Updated in the same event as the value, so the word being typed is never
+      // validated against a stale caret position
+      updateCaretPosition()
+    },
+    [onChangeText, updateCaretPosition]
+  )
+
+  const handleBlur = useCallback(() => {
+    onCaretPositionChange(null)
+    onBlur()
+  }, [onCaretPositionChange, onBlur])
 
   // The text in the native input may overflow and become scrollable,
   // so the backdrop must follow its scroll position.
-  const handleScroll = useCallback((e: NativeSyntheticEvent<TextInputScrollEventData>) => {
+  const syncBackdropScroll = useCallback(() => {
+    const nativeInput = nativeInputRef.current as unknown as HTMLElement | null
     const backdrop = backdropRef.current as unknown as HTMLElement | null
-    const nativeInput = e.target as unknown as HTMLElement
-    if (!backdrop) return
+    if (!nativeInput || !backdrop) return
 
     backdrop.scrollTop = nativeInput.scrollTop
   }, [])
+
+  // Scroll events don't fire for every change of the content (e.g. when the
+  // backdrop grows after the native input has already scrolled), so sync after each render too
+  useLayoutEffect(syncBackdropScroll, [tokens, syncBackdropScroll])
 
   const backdrop = useMemo(
     () => (
@@ -54,11 +114,11 @@ const SeedPhraseInput = ({ value, status, onChangeText, onBlur, onSubmitEditing 
             </Text>
           ))}
           {/* Keeps a trailing new line visible, like in the native input */}
-          {'\u200b'}
+          {value.endsWith('\n') && '​'}
         </Text>
       </View>
     ),
-    [tokens, styles, theme]
+    [tokens, value, styles, theme]
   )
 
   const nativeInputStyle = useMemo(
@@ -77,16 +137,19 @@ const SeedPhraseInput = ({ value, status, onChangeText, onBlur, onSubmitEditing 
 
   return (
     <TextArea
+      ref={nativeInputRef}
       testID="enter-seed-phrase-field"
+      dataSet={SELECTION_DATA_SET}
       value={value}
       editable
       multiline
       numberOfLines={4}
       autoFocus
       spellCheck={false}
-      onChangeText={onChangeText}
-      onBlur={onBlur}
-      onScroll={handleScroll}
+      onChangeText={handleChangeText}
+      onFocus={updateCaretPosition}
+      onBlur={handleBlur}
+      onScroll={syncBackdropScroll}
       customInputContent={backdrop}
       inputStyle={styles.inputBox}
       inputWrapperStyle={inputWrapperStyle}
@@ -94,7 +157,7 @@ const SeedPhraseInput = ({ value, status, onChangeText, onBlur, onSubmitEditing 
       placeholder={t('Write or paste your recovery phrase')}
       placeholderTextColor={theme.secondaryText}
       isValid={status === 'valid'}
-      error={status === 'invalid' && t('Invalid recovery phrase.')}
+      error={error}
       onSubmitEditing={onSubmitEditing}
     />
   )

@@ -30,6 +30,9 @@ const SeedPhraseImportScreen = () => {
     enablePassphrase,
     setEnablePassphrase,
     seedPhraseStatus,
+    seedPhraseError,
+    seedCaretPosition,
+    setSeedCaretPosition,
     handleFormSubmit,
     validateSeedPhrase
   } = useSeedPhraseImport()
@@ -64,6 +67,9 @@ const SeedPhraseImportScreen = () => {
                     <SeedPhraseInput
                       value={value}
                       status={seedPhraseStatus}
+                      error={seedPhraseError}
+                      caretPosition={seedCaretPosition}
+                      onCaretPositionChange={setSeedCaretPosition}
                       onChangeText={onChange}
                       onBlur={onBlur}
                       onSubmitEditing={handleFormSubmit}
