@@ -126,7 +126,7 @@ const RequestCard = React.memo(function RequestCard({
       request.kind === 'message' ||
       request.kind === 'typedMessage') &&
     !request.meta.isSafeDeploy
-  const disabledOpenTooltip = t('You have to first deploy the Safe account')
+  const disabledOpenTooltip = t('Activate your Safe account on this network first')
   const disabledOpenTooltipDataSet = useMemo(
     () =>
       isOpenDisabled

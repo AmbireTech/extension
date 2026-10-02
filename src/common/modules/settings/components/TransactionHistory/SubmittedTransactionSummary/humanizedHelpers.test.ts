@@ -68,7 +68,7 @@ describe('getDappInteractions Safe deployment', () => {
     expect(interactions).toEqual([
       {
         id: 'fallback:safeDeploy',
-        name: 'Deploy Safe account',
+        name: 'Activate Safe account',
         iconType: 'safe'
       }
     ])

@@ -81,7 +81,7 @@ export const getDappInteractionsFromHumanizedCalls = (
     return [
       {
         id: 'fallback:safeDeploy',
-        name: 'Deploy Safe account',
+        name: 'Activate Safe account',
         iconType: 'safe'
       }
     ]

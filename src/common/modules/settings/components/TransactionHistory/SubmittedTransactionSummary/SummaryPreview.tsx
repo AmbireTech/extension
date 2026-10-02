@@ -75,7 +75,7 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                     {interaction.id === 'fallback:cancel'
                       ? t('Cancel')
                       : interaction.id === 'fallback:safeDeploy'
-                        ? t('Deploy Safe account')
+                        ? t('Activate Safe account')
                         : interaction.name}
                   </Text>
                   {interaction.safeNonce !== undefined && (
