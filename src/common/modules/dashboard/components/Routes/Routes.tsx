@@ -7,7 +7,7 @@ import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -16,7 +16,7 @@ import { RouteItemType } from './RouteItem/RouteItem'
 
 const Routes = () => {
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const routeItems: RouteItemType[] = [
     {

@@ -6,8 +6,8 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -28,7 +28,7 @@ import { SubmittedAccountOpLike } from './types'
 const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedAccountOpLike }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const orderedBalanceChanges = useMemo(
     () => getSummaryBalanceChanges(submittedAccountOp),
@@ -72,7 +72,11 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                     weight="semiBold"
                     numberOfLines={isNarrowWebLayout ? 1 : undefined}
                   >
-                    {interaction.id === 'fallback:cancel' ? t('Cancel') : interaction.name}
+                    {interaction.id === 'fallback:cancel'
+                      ? t('Cancel')
+                      : interaction.id === 'fallback:safeDeploy'
+                        ? t('Activate Safe account')
+                        : interaction.name}
                   </Text>
                   {interaction.safeNonce !== undefined && (
                     <Text fontSize={12} appearance="secondaryText">

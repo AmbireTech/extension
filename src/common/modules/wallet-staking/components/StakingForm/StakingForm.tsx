@@ -32,6 +32,13 @@ const StakingForm = ({ form }: Props) => {
     mode,
     onSelectMode,
     isMissingWithdrawalDetails,
+    isWithdrawalsLookupEnabled,
+    onEnableWithdrawalsLookup,
+    withdrawalTxnId,
+    onWithdrawalTxnIdChange,
+    onFindWithdrawalByTxnId,
+    txnIdLookupError,
+    isTxnIdLookupLoading,
     isPendingWithdrawalMode,
     isWithdrawalReady,
     pendingWithdrawalAmount,
@@ -58,7 +65,17 @@ const StakingForm = ({ form }: Props) => {
         </View>
       ) : (
         <View style={styles.stakingFormContainer}>
-          {isMissingWithdrawalDetails && <MissingWithdrawalDetails />}
+          {isMissingWithdrawalDetails && (
+            <MissingWithdrawalDetails
+              isWithdrawalsLookupEnabled={isWithdrawalsLookupEnabled}
+              txnId={withdrawalTxnId}
+              onTxnIdChange={onWithdrawalTxnIdChange}
+              onFindByTxnId={onFindWithdrawalByTxnId}
+              txnIdLookupError={txnIdLookupError}
+              isTxnIdLookupLoading={isTxnIdLookupLoading}
+              onEnableWithdrawalsLookup={onEnableWithdrawalsLookup}
+            />
+          )}
 
           {isPendingWithdrawalMode && (
             <PendingWithdrawalCard

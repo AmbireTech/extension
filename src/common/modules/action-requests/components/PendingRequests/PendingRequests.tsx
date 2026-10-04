@@ -3,22 +3,23 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import ManifestImage from '@common/components/ManifestImage'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls/lazyCompactHumanizedCalls'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 import CompactMessagePreview from './lazyCompactMessagePreview'
 import {
@@ -33,6 +34,7 @@ import {
 } from './requestInfo'
 import getStyles from './styles'
 
+import type { Account, AccountStates } from '@ambire-common/interfaces/account'
 import type { Network } from '@ambire-common/interfaces/network'
 import type { UserRequest } from '@ambire-common/interfaces/userRequest'
 import type { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
@@ -48,6 +50,11 @@ const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsCon
   state.visibleUserRequests
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
 
 const selectHumanizedMessage = (state: AllControllersMappingType['SignMessageController']) =>
   state.humanizedMessage
@@ -81,15 +88,21 @@ const RequestIcon = React.memo(function RequestIcon({
 const RequestCard = React.memo(function RequestCard({
   request,
   networks,
+  accounts,
+  accountStates,
   onOpen,
   shouldRenderHumanization,
-  humanizedMessage
+  humanizedMessage,
+  isLast
 }: {
   request: UserRequest
   networks: Network[]
+  accounts: Account[]
+  accountStates: AccountStates
   onOpen: (requestId: UserRequest['id']) => void
   shouldRenderHumanization: boolean
   humanizedMessage?: IrMessage
+  isLast: boolean
 }) {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -101,10 +114,33 @@ const RequestCard = React.memo(function RequestCard({
       requestChainId: getRequestChainId(request)
     }
   }, [networks, request, t])
+  const account = accounts.find(
+    ({ addr }) => addr.toLowerCase() === request.meta.accountAddr.toLowerCase()
+  )
+  const accountState = accountStates[account?.addr || '']?.[requestChainId || '']
+  const isOpenDisabled =
+    !!account?.safeCreation &&
+    !accountState?.isDeployed &&
+    (request.kind === 'calls' ||
+      request.kind === 'siwe' ||
+      request.kind === 'message' ||
+      request.kind === 'typedMessage') &&
+    !request.meta.isSafeDeploy
+  const disabledOpenTooltip = t('Activate your Safe account on this network first')
+  const disabledOpenTooltipDataSet = useMemo(
+    () =>
+      isOpenDisabled
+        ? createGlobalTooltipDataSet({
+            id: `pending-request-open-${request.id}`,
+            content: disabledOpenTooltip
+          })
+        : undefined,
+    [disabledOpenTooltip, isOpenDisabled, request.id]
+  )
   const handleOpen = useCallback(() => onOpen(request.id), [onOpen, request.id])
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isLast && spacings.mb0]}>
       <View style={styles.cardHeader}>
         <View style={styles.cardHeaderLeft}>
           <View style={styles.cardIcon}>
@@ -114,16 +150,21 @@ const RequestCard = React.memo(function RequestCard({
             {title}
           </Text>
         </View>
-        <HoverablePressable
-          onPress={handleOpen}
-          style={styles.openButton}
-          accessibilityRole="button"
-          accessibilityLabel={t('Open {{requestTitle}}', { requestTitle: title })}
-        >
-          <Text appearance="linkText" weight="medium">
-            {t('Open')}
-          </Text>
-        </HoverablePressable>
+        <View dataSet={disabledOpenTooltipDataSet}>
+          <HoverablePressable
+            onPress={handleOpen}
+            disabled={isOpenDisabled}
+            style={[styles.openButton, isOpenDisabled && styles.openButtonDisabled]}
+            accessibilityRole="button"
+            accessibilityLabel={t('Open {{requestTitle}}', { requestTitle: title })}
+            accessibilityHint={isOpenDisabled ? disabledOpenTooltip : undefined}
+            accessibilityState={{ disabled: isOpenDisabled }}
+          >
+            <Text appearance="linkText" weight="medium">
+              {t('Open')}
+            </Text>
+          </HoverablePressable>
+        </View>
       </View>
       <Text appearance="secondaryText" fontSize={14} style={styles.cardDescription}>
         {description}
@@ -175,8 +216,8 @@ type Props = {
 
 const PendingRequests = ({ style }: Props) => {
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { styles } = useTheme(getStyles)
+  const { isCompactLayout } = useCompactLayout()
   const [shouldRenderHumanization, setShouldRenderHumanization] = useState(false)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { state: currentUserRequest, dispatch: requestsDispatch } = useController(
@@ -188,6 +229,8 @@ const PendingRequests = ({ style }: Props) => {
     selectVisibleUserRequests
   )
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const { state: humanizedMessage } = useController('SignMessageController', selectHumanizedMessage)
   const otherRequests = useMemo(() => {
     if (!currentUserRequest) return []
@@ -221,25 +264,19 @@ const PendingRequests = ({ style }: Props) => {
   const handleSummaryPress = useCallback(() => openBottomSheet(), [openBottomSheet])
   const sheetHeader = useMemo(
     () => (
+      // Centered title on mobile, and a back arrow with the title next to it on web
       <View style={styles.sheetHeader}>
-        <View style={[flexbox.flex1, spacings.mrSm]}>
-          <Text fontSize={20} weight="semiBold" style={spacings.mbMi}>
-            {t('Pending requests')}
-          </Text>
-          <Text appearance="secondaryText">{t('Open any request to review it.')}</Text>
-        </View>
-        <HoverablePressable
-          onPress={handleClose}
-          hitSlop={8}
-          style={styles.closeButton}
-          accessibilityRole="button"
-          accessibilityLabel={t('Close pending requests')}
-        >
-          <CloseIcon color={theme.iconPrimary} width={14} height={14} />
-        </HoverablePressable>
+        <ModalHeader
+          title={t('Pending requests')}
+          handleClose={handleClose}
+          style={spacings.mbMi}
+        />
+        <Text appearance="secondaryText" style={isMobile ? text.center : undefined}>
+          {t('Open any request to review it.')}
+        </Text>
       </View>
     ),
-    [handleClose, styles.closeButton, styles.sheetHeader, t, theme.iconPrimary]
+    [handleClose, styles.sheetHeader, t]
   )
   const previewIcons = useMemo(
     () => (
@@ -296,14 +333,17 @@ const PendingRequests = ({ style }: Props) => {
         backgroundColor="secondaryBackground"
         HeaderComponent={sheetHeader}
       >
-        {visibleUserRequests.map((request) => (
+        {visibleUserRequests.map((request, index) => (
           <RequestCard
             key={String(request.id)}
             request={request}
             networks={networks}
+            accounts={accounts}
+            accountStates={accountStates}
             onOpen={openRequest}
             shouldRenderHumanization={shouldRenderHumanization}
             humanizedMessage={humanizedMessage}
+            isLast={index === visibleUserRequests.length - 1}
           />
         ))}
       </BottomSheet>

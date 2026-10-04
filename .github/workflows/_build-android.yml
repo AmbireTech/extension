@@ -23,11 +23,6 @@ on:
         required: false
         default: arm64-v8a
         type: string
-      enable_signing:
-        description: Whether Play Store signing (release keystore) is required
-        required: false
-        default: false
-        type: boolean
 
 jobs:
   build-android:
@@ -100,30 +95,57 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      # The AAB and the APK are signed with different keys on purpose. The AAB goes to Play,
+      # which re-signs it with the app signing key Google holds and never releases, so our
+      # keystore there is only an upload identity. A sideloaded APK gets no such re-signing,
+      # so it carries its own long-lived key - and because that key differs from Play's, the
+      # sideloaded app can never be installed over a Play install (and vice versa).
       - name: Prepare Android signing config
-        if: inputs.enable_signing
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_ALIAS_PASSWORD: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
+          PLAY_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          PLAY_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          PLAY_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          PLAY_KEY_ALIAS_PASSWORD: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
+          SIDELOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIDELOAD_KEYSTORE_BASE64 }}
+          SIDELOAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIDELOAD_KEYSTORE_PASSWORD }}
+          SIDELOAD_KEY_ALIAS: ${{ secrets.ANDROID_SIDELOAD_KEY_ALIAS }}
+          SIDELOAD_KEY_ALIAS_PASSWORD: ${{ secrets.ANDROID_SIDELOAD_KEY_ALIAS_PASSWORD }}
         run: |
           set -euo pipefail
-          if [[ -z "${ANDROID_KEYSTORE_BASE64:-}" || -z "${ANDROID_KEYSTORE_PASSWORD:-}" || -z "${ANDROID_KEY_ALIAS:-}" || -z "${ANDROID_KEY_ALIAS_PASSWORD:-}" ]]; then
-            echo "Android signing secrets are missing. Required: ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_ALIAS_PASSWORD"
+
+          # The keystore is picked in bash rather than in a GitHub expression because an unset
+          # secret is an empty string: a `package_mode == 'apk' && A || B` expression would
+          # resolve to B when A is missing, silently signing the sideload APK with the Play
+          # upload key - the exact mix-up this split exists to prevent.
+          if [ "${{ inputs.package_mode }}" = "apk" ]; then
+            KEYSTORE_BASE64="${SIDELOAD_KEYSTORE_BASE64:-}"
+            KEYSTORE_PASSWORD="${SIDELOAD_KEYSTORE_PASSWORD:-}"
+            KEY_ALIAS="${SIDELOAD_KEY_ALIAS:-}"
+            KEY_ALIAS_PASSWORD="${SIDELOAD_KEY_ALIAS_PASSWORD:-}"
+            REQUIRED_SECRETS="ANDROID_SIDELOAD_KEYSTORE_BASE64, ANDROID_SIDELOAD_KEYSTORE_PASSWORD, ANDROID_SIDELOAD_KEY_ALIAS, ANDROID_SIDELOAD_KEY_ALIAS_PASSWORD"
+          else
+            KEYSTORE_BASE64="${PLAY_KEYSTORE_BASE64:-}"
+            KEYSTORE_PASSWORD="${PLAY_KEYSTORE_PASSWORD:-}"
+            KEY_ALIAS="${PLAY_KEY_ALIAS:-}"
+            KEY_ALIAS_PASSWORD="${PLAY_KEY_ALIAS_PASSWORD:-}"
+            REQUIRED_SECRETS="ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_ALIAS_PASSWORD"
+          fi
+
+          if [[ -z "$KEYSTORE_BASE64" || -z "$KEYSTORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_ALIAS_PASSWORD" ]]; then
+            echo "::error::Android signing secrets are missing for package_mode=${{ inputs.package_mode }}. Required: $REQUIRED_SECRETS"
             exit 1
           fi
 
           KEYSTORE_PATH="$RUNNER_TEMP/android-release.keystore"
-          (echo -n "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH") || \
-          (echo -n "$ANDROID_KEYSTORE_BASE64" | base64 -D > "$KEYSTORE_PATH")
+          (echo -n "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH") || \
+          (echo -n "$KEYSTORE_BASE64" | base64 -D > "$KEYSTORE_PATH")
 
           mkdir -p "$HOME/.gradle"
           {
             echo "MYAPP_UPLOAD_STORE_FILE=$KEYSTORE_PATH"
-            echo "MYAPP_UPLOAD_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
-            echo "MYAPP_UPLOAD_KEY_ALIAS=$ANDROID_KEY_ALIAS"
-            echo "MYAPP_UPLOAD_KEY_PASSWORD=$ANDROID_KEY_ALIAS_PASSWORD"
+            echo "MYAPP_UPLOAD_STORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "MYAPP_UPLOAD_KEY_ALIAS=$KEY_ALIAS"
+            echo "MYAPP_UPLOAD_KEY_PASSWORD=$KEY_ALIAS_PASSWORD"
           } >> "$HOME/.gradle/gradle.properties"
 
       - name: Build Android app
@@ -159,12 +181,14 @@ jobs:
         run: ${{ inputs.build_command }}
         shell: bash
 
+      # Published as a bare .apk rather than a .zip: it is what users tap to install, and what
+      # updaters that watch the releases page (Obtainium) expect to find. Its integrity proof is
+      # the signature below, not a checksum - Android refuses any APK whose signer changed.
       - name: Package Android APK
         if: inputs.package_mode == 'apk'
         run: |
           set -euo pipefail
           APK_DIR="android/app/build/outputs/apk/release"
-          OUTPUT_ZIP="ambire-android-v${{ steps.version.outputs.VERSION }}-apk.zip"
 
           if [ ! -d "$APK_DIR" ]; then
             echo "Expected APK output dir not found at $APK_DIR"
@@ -179,14 +203,51 @@ jobs:
             exit 1
           fi
 
-          ZIP_PATH="$(pwd)/$OUTPUT_ZIP"
-          TEMP_DIR="$RUNNER_TEMP/android-apk-package"
-          rm -rf "$TEMP_DIR"
-          mkdir -p "$TEMP_DIR"
-          cp "$APK_PATH" "$TEMP_DIR/Ambire.apk"
-          cd "$TEMP_DIR"
-          zip -r "$ZIP_PATH" "Ambire.apk"
-          echo "PACKAGE_PATH=$ZIP_PATH" >> $GITHUB_ENV
+          OUTPUT_APK="$(pwd)/Ambire-v${{ steps.version.outputs.VERSION }}.apk"
+          cp "$APK_PATH" "$OUTPUT_APK"
+          echo "PACKAGE_PATH=$OUTPUT_APK" >> $GITHUB_ENV
+        shell: bash
+
+      # Guards against the APK going out signed by anything other than the sideload key -
+      # a stale gradle.properties, a swapped secret, or the debug keystore fallback. The
+      # expected value is a repository variable so that changing it is a reviewable commit
+      # in the repo settings, not something a workflow edit can quietly redefine.
+      - name: Verify APK signature
+        if: inputs.package_mode == 'apk'
+        env:
+          EXPECTED_CERT_SHA256: ${{ vars.ANDROID_SIDELOAD_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${EXPECTED_CERT_SHA256:-}" ]; then
+            echo "::error::Repository variable ANDROID_SIDELOAD_CERT_SHA256 is not set, so the signer cannot be verified"
+            exit 1
+          fi
+
+          SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          APKSIGNER=$(find "$SDK_DIR/build-tools" -maxdepth 2 -name apksigner 2>/dev/null | sort -V | tail -n1)
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::apksigner not found under $SDK_DIR/build-tools"
+            exit 1
+          fi
+          "$APKSIGNER" verify --verbose --print-certs "$PACKAGE_PATH" | tee apksigner-output.txt
+
+          # apksigner prints lowercase hex without separators; keytool and the Play Console
+          # print uppercase colon-separated, so both sides are normalised before comparing.
+          ACTUAL=$(grep -m1 'certificate SHA-256 digest' apksigner-output.txt | awk '{print $NF}' | tr 'A-Z' 'a-z')
+          EXPECTED=$(echo "$EXPECTED_CERT_SHA256" | tr -d ': ' | tr 'A-Z' 'a-z')
+
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::APK is signed by the wrong key. Expected $EXPECTED, got $ACTUAL"
+            exit 1
+          fi
+
+          # Signature Scheme v2 is mandatory for targetSdk 30+ and is what protects the whole
+          # file rather than just its entries, so a v1-only APK must not ship.
+          grep -q 'Verified using v2 scheme (APK Signature Scheme v2): true' apksigner-output.txt || {
+            echo "::error::APK is not signed with APK Signature Scheme v2"
+            exit 1
+          }
         shell: bash
 
       - name: Package Android AAB
@@ -224,3 +285,56 @@ jobs:
         with:
           name: ambire-android-v${{ steps.version.outputs.VERSION }}-${{ inputs.artifact_suffix }}
           path: ${{ env.PACKAGE_PATH }}
+
+      # Only when run from a tag, which is how a release build is started - a run from a branch
+      # is a test build and has no release to attach to. Only the APK: the .aab is submitted to
+      # Play by hand and must never be a public download, since Play re-signs it and as
+      # downloaded here it cannot be installed on a device at all.
+      #
+      # Only a build that bumped versionCode gets attached. versionCode is bumped by hand with
+      # every native build, while app.json's version moves with every release, so a later tag
+      # like v6.22.1 or v6.23.0 run just for a test build would otherwise attach an APK nobody
+      # asked for. The same rule means an APK already on a release is never replaced, so a test
+      # run cannot swap out the one that ships. To replace it on purpose, delete the asset from
+      # the release first, then re-run.
+      #
+      # Failing here loses nothing - the APK is already up as a workflow artifact by this point.
+      - name: Attach the APK to the release
+        if: inputs.package_mode == 'apk' && startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::No release exists for tag $TAG. Cut the release first, then re-run this workflow - the APK is available as a workflow artifact in the meantime."
+            exit 1
+          fi
+
+          VERSION_CODE=$(grep -m1 'versionCode ' android/app/build.gradle | awk '{print $2}')
+
+          # Releases come newest first, so the first tag listed is the latest one with an APK.
+          # Captured whole and split in bash, because piping a paginated call into `head` would
+          # cut it off mid-output and fail the step under pipefail.
+          TAGS_WITH_APK=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
+            --jq '.[] | select(any(.assets[]; .name | endswith(".apk"))) | .tag_name')
+          LAST_APK_TAG="${TAGS_WITH_APK%%$'\n'*}"
+
+          if [ -n "$LAST_APK_TAG" ]; then
+            LAST_GRADLE=$(gh api -H "Accept: application/vnd.github.raw" \
+              "repos/$GITHUB_REPOSITORY/contents/android/app/build.gradle?ref=$LAST_APK_TAG")
+            LAST_VERSION_CODE=$(grep -m1 'versionCode ' <<< "$LAST_GRADLE" | awk '{print $2}')
+
+            if [ -z "$LAST_VERSION_CODE" ]; then
+              echo "::error::Could not read versionCode from build.gradle at $LAST_APK_TAG, so it is unclear whether this build is new"
+              exit 1
+            fi
+
+            if [ "$VERSION_CODE" -le "$LAST_VERSION_CODE" ]; then
+              echo "::notice::versionCode $VERSION_CODE was not bumped since $LAST_APK_TAG (versionCode $LAST_VERSION_CODE), so this is not a new native build - skipped attaching. The APK is still available as a workflow artifact."
+              exit 0
+            fi
+          fi
+
+          gh release upload "$TAG" "$PACKAGE_PATH" --repo "$GITHUB_REPOSITORY"
+        shell: bash

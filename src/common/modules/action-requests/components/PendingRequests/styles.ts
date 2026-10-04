@@ -20,8 +20,8 @@ interface Styles {
   cardHumanization: ViewStyle
   cardNetwork: ViewStyle
   sheetHeader: ViewStyle
-  closeButton: ViewStyle
   openButton: ViewStyle
+  openButtonDisabled: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -113,16 +113,7 @@ const getStyles = (theme: ThemeProps) =>
       width: '100%'
     },
     sheetHeader: {
-      ...flexbox.directionRow,
-      ...flexbox.alignStart,
-      ...flexbox.justifySpaceBetween,
       ...spacings.mbLg
-    },
-    closeButton: {
-      ...flexbox.center,
-      width: 32,
-      height: 32,
-      flexShrink: 0
     },
     openButton: {
       ...flexbox.center,
@@ -130,6 +121,9 @@ const getStyles = (theme: ThemeProps) =>
       minHeight: 44,
       ...spacings.mlTy,
       flexShrink: 0
+    },
+    openButtonDisabled: {
+      opacity: 0.5
     }
   })
 

@@ -48,6 +48,26 @@ export const isSidePanelModeEnabled = async () => {
 }
 
 /**
+ * Whether the user placed the side panel on the left of the browser window. Chrome versions
+ * that can't report the side only support the default right side.
+ */
+export const isSidePanelOnLeft = async () => {
+  const sidePanelApi = getChromeSidePanelApi()
+  if (!sidePanelApi?.getLayout) return false
+
+  try {
+    const layout = await sidePanelApi.getLayout()
+
+    return layout?.side === 'left'
+  } catch (error) {
+    console.error('Failed to read the side panel side', error)
+    captureBackgroundException(error)
+
+    return false
+  }
+}
+
+/**
  * Opens the side panel for the given window (the active window when omitted). Chrome only allows
  * this while handling a user gesture, so it must never be called on behalf of a dapp request -
  * those are handled in the panel when it is already open and in a request window otherwise.

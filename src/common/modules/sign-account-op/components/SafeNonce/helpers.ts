@@ -25,7 +25,7 @@ const getQueuedSafeNonces = (
     if (
       request.kind !== 'calls' ||
       request.id === currentRequestId ||
-      request.meta.isSafeDeploy ||
+      !!request.meta?.isSafeDeploy ||
       !request.signAccountOp.account.safeCreation ||
       request.signAccountOp.accountOp.accountAddr !== accountAddr ||
       request.signAccountOp.accountOp.chainId !== chainId

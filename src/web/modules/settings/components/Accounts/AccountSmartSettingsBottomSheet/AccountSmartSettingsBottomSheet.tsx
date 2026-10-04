@@ -181,6 +181,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
           {
             type: 'calls',
             params: {
+              allowAccountSwitch: true,
               userRequestParams: {
                 calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
                 meta: {

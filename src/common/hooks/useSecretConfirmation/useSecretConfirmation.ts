@@ -14,11 +14,26 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const { isPopup, isTab, isSidePanel } = getUiType()
 
+const FIRST_CHROMIUM_VERSION_WITH_SIDE_PANEL_WEBAUTHN_DIALOG = 153
+
+const chromiumBrand = (
+  navigator as Navigator & { userAgentData?: { brands: { brand: string; version: string }[] } }
+).userAgentData?.brands.find(({ brand }) => brand === 'Chromium')
+
+// Before Chromium 153 the side panel could not host the browser's own passkey dialog, so a
+// prompt that needs it never shows and hangs until it times out (crbug.com/513847620)
+const IS_SIDE_PANEL_WITHOUT_WEBAUTHN_DIALOG =
+  isSidePanel &&
+  !!chromiumBrand &&
+  Number(chromiumBrand.version) < FIRST_CHROMIUM_VERSION_WITH_SIDE_PANEL_WEBAUTHN_DIALOG
+
 /**
  * WebAuthn cannot prompt inside the Firefox popup: the browser's modal takes focus and the popup
- * closes with it. There the screen is reopened in a tab, the only context it survives in.
+ * closes with it. Nor in the side panel of Chromium before 153, where the prompt never shows.
+ * There the screen is reopened in a tab, the only context it works in.
  */
-export const SHOULD_USE_TAB_FOR_BIOMETRICS = IS_FIREFOX && isPopup
+export const SHOULD_USE_TAB_FOR_BIOMETRICS =
+  (IS_FIREFOX && isPopup) || IS_SIDE_PANEL_WITHOUT_WEBAUTHN_DIALOG
 
 /**
  * How long a screen is left alone before the ceremony starts on its own, so the user can read

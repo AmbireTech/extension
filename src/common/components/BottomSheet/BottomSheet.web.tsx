@@ -3,6 +3,7 @@ import { FlatList, ScrollView, SectionList, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -51,6 +52,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   } = props
 
   const { styles, theme } = useTheme(getStyles)
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const {
     isScrollable,
@@ -148,7 +150,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         {/* from losing track of its subtree during React reconciliation and re-renders. */}
         {/* Without this, the backdrop stays, but Modalize could disappear */}
         {/* without even triggering `onClose` or (this) component unmount */}
-        <View key={`portal-host-${id}`} style={[styles.portalHost, { zIndex: computedZIndex }]}>
+        {/* Modalize mounts the sheet translated below the viewport, which makes the page taller. */}
+        {/* A focus inside it then scrolls the whole app up; `clip` cuts that overflow off unscrollably. */}
+        <View
+          key={`portal-host-${id}`}
+          // @ts-expect-error `clip` is supported by react-native-web, but missing in types
+          style={[styles.portalHost, { zIndex: computedZIndex, overflow: 'clip' }]}
+        >
           {!!isBackdropVisible && (
             <Backdrop
               isVisible={isBackdropVisible}
@@ -179,7 +187,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 paddingHorizontal: isWeb ? (isModal ? SPACING_MD : SPACING_SM) : SPACING,
                 backgroundColor: theme[backgroundColor]
               },
-              style
+              style,
+              // In a narrow view the bottom spacing matches the side one, whatever the call site sets
+              isNarrowWebLayout && !isModal ? { paddingBottom: SPACING_SM } : {}
             ]}
             rootStyle={[isPopup && isModal ? spacings.phSm : {}]}
             handleStyle={[

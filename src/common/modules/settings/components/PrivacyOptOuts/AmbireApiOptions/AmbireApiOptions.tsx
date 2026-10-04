@@ -7,6 +7,7 @@ import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
+import UnstakeIcon from '@common/assets/svg/UnstakeIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -89,6 +90,14 @@ const AmbireApiOptions = () => {
             )}
             icon={<SwapAndBridgeIcon width={24} height={24} color={theme.iconPrimary} />}
             flag="swapAndBridgeTokenInfo"
+          />
+          <OptOutControlOption
+            title={t('Find pending $WALLET withdrawals')}
+            description={t(
+              'Automatically find your unstaked $WALLET that is waiting to be withdrawn. This sends your account address to Ambire. If you turn this off, we only check the transactions made from this device, and you can enter the transaction ID of an unstake yourself.'
+            )}
+            icon={<UnstakeIcon width={24} height={24} color={theme.iconPrimary} />}
+            flag="walletStakingWithdrawalsLookup"
           />
         </View>
       }

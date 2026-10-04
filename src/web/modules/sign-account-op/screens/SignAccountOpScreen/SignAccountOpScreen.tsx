@@ -8,16 +8,16 @@ import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
-import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
@@ -35,12 +35,13 @@ import {
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
-import SafeAccountTabs from '@web/modules/sign-account-op/components/SafeAccountTabs'
+
+import getStyles from './styles'
 
 import type { Key } from '@ambire-common/interfaces/keystore'
 import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import type { SafeAccountTab } from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
-import type { SafeAccountTab } from '@web/modules/sign-account-op/components/SafeAccountTabs'
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
@@ -49,7 +50,7 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 }
 
 const SignAccountOpScreen = () => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const {
     state: { currentUserRequest, visibleUserRequests },
     dispatch: requestsDispatch
@@ -57,7 +58,7 @@ const SignAccountOpScreen = () => {
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, styles } = useTheme(getStyles)
   const closeActionWindow = useCloseActionWindow()
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
@@ -134,10 +135,7 @@ const SignAccountOpScreen = () => {
     currentRequest,
     signingStep,
     disabledReason,
-    showSafeSigners,
-    signingAuthSheetRef,
-    cancelSigningAuth,
-    signingAuthProps
+    showSafeSigners
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -159,7 +157,8 @@ const SignAccountOpScreen = () => {
     safeAccountTabState.requestId === accountOpRequest?.id
       ? safeAccountTabState.activeTab
       : 'overview'
-  const shouldUseSafeAccountTabs = !!signAccountOpState?.account.safeCreation && !isNarrowWebLayout
+  const shouldUseSafeAccountTabs =
+    !!signAccountOpState?.account.safeCreation && !signAccountOpState.accountOp.meta?.isSafeDeploy
   const isOverviewTabActive = !shouldUseSafeAccountTabs || activeSafeAccountTab === 'overview'
 
   const handleSafeAccountTabChange = useCallback(
@@ -276,17 +275,80 @@ const SignAccountOpScreen = () => {
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
   const holdToProceedButtonType = useDappVerificationHoldButtonType(signAccountOpState?.banners)
 
+  const footerContent = (
+    <>
+      {!estimationFailed &&
+      signAccountOpState?.canBroadcast &&
+      signAccountOpState?.status?.type !== SigningStatus.Queued ? (
+        // Like on mobile, the top spacing comes from the fee header in Estimation
+        <View style={isNarrowWebLayout ? spacings.mbTy : spacings.mb}>
+          <Estimation
+            signAccountOpState={signAccountOpState}
+            disabled={isSignLoading}
+            hasEstimation={!!hasEstimation}
+            slowRequest={slowRequest}
+            isViewOnly={isViewOnly}
+            isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
+            sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
+            updateType="Requests"
+            bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+          />
+        </View>
+      ) : null}
+
+      {!isViewOnly &&
+        signAccountOpState &&
+        signAccountOpState?.errors.length === 0 &&
+        !signAccountOpState.canBroadcast &&
+        !!signAccountOpState.account.safeCreation &&
+        showSafeSigners && (
+          <SafeOwners
+            account={signAccountOpState.account}
+            onSign={handleChangeSigningKey}
+            onSignAndClose={handleChangeSigningKeyAndClose}
+            isSignLoading={isSignLoading}
+            signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
+            chainId={signAccountOpState.accountOp.chainId.toString()}
+            signed={signAccountOpState.accountOp.signed || []}
+            importedKeys={signAccountOpState.accountKeyStoreKeys}
+            threshold={signAccountOpState.threshold}
+            style={isNarrowWebLayout ? { ...spacings.ptSm, ...spacings.mbMd } : spacings.mb}
+          />
+        )}
+
+      <Footer
+        key={accountOpRequest?.id}
+        onReject={handleRejectAccountOp}
+        onAddToCart={handleAddToCart}
+        isAddToCartDisplayed={
+          !!signAccountOpState &&
+          !!network &&
+          signAccountOpState.accountOp.meta?.setDelegation === undefined
+        }
+        isSignLoading={isSignLoading}
+        isSignDisabled={isSignDisabled || !hasReachedBottom}
+        buttonTooltipText={disabledReason}
+        // Allow view only accounts or if no funds for gas to add to cart even if the txn is not ready to sign
+        // because they can't sign it anyway
+        isAddToCartDisabled={isAddToCartDisabled}
+        onSign={onSignButtonClick}
+        inProgressButtonText={primaryButtonText}
+        buttonText={signButtonText}
+        shouldHoldToProceed={shouldHoldToProceed}
+        shouldRejectOnchain={shouldRejectOnchain}
+        isRejectDisabled={isCancelDisabled}
+        holdToProceedButtonType={holdToProceedButtonType}
+        signButtonType={extremeGasFeeSignButtonType}
+      />
+    </>
+  )
+
   return (
     <SmallNotificationWindowWrapper>
       <SafetyChecksOverlay
         shouldBeVisible={
           !signAccountOpState?.isInitialized || !!signAccountOpState.safetyChecksLoading
         }
-      />
-      <SigningAuthBottomSheet
-        sheetRef={signingAuthSheetRef}
-        onCancel={cancelSigningAuth}
-        {...signingAuthProps}
       />
       <Modals
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
@@ -320,79 +382,19 @@ const SignAccountOpScreen = () => {
       <TabLayoutContainer
         width="full"
         backgroundColor={theme.primaryBackground}
-        withHorizontalPadding={false}
-        style={spacings.ph}
         header={<ActionHeader />}
-        renderDirectChildren={() => (
-          <View style={[spacings.mh, spacings.mv]}>
-            <GlassView>
-              <View style={[spacings.ph, spacings.pvSm, flexbox.flex1]}>
-                {!estimationFailed &&
-                signAccountOpState?.canBroadcast &&
-                signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-                  <View style={spacings.mb}>
-                    <Estimation
-                      signAccountOpState={signAccountOpState}
-                      disabled={isSignLoading}
-                      hasEstimation={!!hasEstimation}
-                      slowRequest={slowRequest}
-                      isViewOnly={isViewOnly}
-                      isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
-                      sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
-                      updateType="Requests"
-                      bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
-                    />
-                  </View>
-                ) : null}
-
-                {!isViewOnly &&
-                  signAccountOpState &&
-                  signAccountOpState?.errors.length === 0 &&
-                  !signAccountOpState.canBroadcast &&
-                  !!signAccountOpState.account.safeCreation &&
-                  showSafeSigners && (
-                    <SafeOwners
-                      account={signAccountOpState.account}
-                      onSign={handleChangeSigningKey}
-                      onSignAndClose={handleChangeSigningKeyAndClose}
-                      isSignLoading={isSignLoading}
-                      signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
-                      chainId={signAccountOpState.accountOp.chainId.toString()}
-                      signed={signAccountOpState.accountOp.signed || []}
-                      importedKeys={signAccountOpState.accountKeyStoreKeys}
-                      threshold={signAccountOpState.threshold}
-                      style={spacings.mb}
-                    />
-                  )}
-
-                <Footer
-                  key={accountOpRequest?.id}
-                  onReject={handleRejectAccountOp}
-                  onAddToCart={handleAddToCart}
-                  isAddToCartDisplayed={
-                    !!signAccountOpState &&
-                    !!network &&
-                    signAccountOpState.accountOp.meta?.setDelegation === undefined
-                  }
-                  isSignLoading={isSignLoading}
-                  isSignDisabled={isSignDisabled || !hasReachedBottom}
-                  buttonTooltipText={disabledReason}
-                  // Allow view only accounts or if no funds for gas to add to cart even if the txn is not ready to sign
-                  // because they can't sign it anyway
-                  isAddToCartDisabled={isAddToCartDisabled}
-                  onSign={onSignButtonClick}
-                  inProgressButtonText={primaryButtonText}
-                  buttonText={signButtonText}
-                  shouldHoldToProceed={shouldHoldToProceed}
-                  shouldRejectOnchain={shouldRejectOnchain}
-                  isRejectDisabled={isCancelDisabled}
-                  holdToProceedButtonType={holdToProceedButtonType}
-                  signButtonType={extremeGasFeeSignButtonType}
-                />
-              </View>
-            </GlassView>
-          </View>
-        )}
+        renderDirectChildren={() =>
+          isNarrowWebLayout ? (
+            // Same as the mobile footer - a flat panel with an accent top border
+            <View style={styles.compactFooterContainer}>{footerContent}</View>
+          ) : (
+            <View style={[spacings.mhSm, spacings.mv]}>
+              <GlassView>
+                <View style={[spacings.ph, spacings.pvSm, flexbox.flex1]}>{footerContent}</View>
+              </GlassView>
+            </View>
+          )
+        }
       >
         {signAccountOpState && (
           <KeySelect
@@ -414,24 +416,28 @@ const SignAccountOpScreen = () => {
             }}
           />
         )}
-        <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={spacings.mtSm}>
+        <TabLayoutWrapperMainContent
+          withScroll={false}
+          // In a narrow view the header already spaces the content like on mobile
+          contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pb0] : spacings.mtSm}
+        >
           {shouldUseSafeAccountTabs ? (
-            <SafeAccountTabs
-              activeTab={activeSafeAccountTab}
-              networkChainId={network?.chainId}
-              onTabChange={handleSafeAccountTabChange}
-            />
-          ) : isNarrowWebLayout &&
-            signAccountOpState?.account.safeCreation &&
-            !signAccountOpState?.accountOp.meta?.isSafeDeploy ? (
-            <SafeNonce withNetwork />
+            <>
+              {isNarrowWebLayout && <SafeNonce withNetwork />}
+              <SafeAccountTabs
+                activeTab={activeSafeAccountTab}
+                networkChainId={network?.chainId}
+                onTabChange={handleSafeAccountTabChange}
+                variant={isNarrowWebLayout ? 'segmented' : 'underlined'}
+              />
+            </>
           ) : (
             <View
               style={[
                 flexbox.directionRow,
                 flexbox.alignStart,
                 flexbox.justifySpaceBetween,
-                spacings.mb
+                isNarrowWebLayout ? spacings.mbSm : spacings.mb
               ]}
             >
               <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
@@ -448,6 +454,7 @@ const SignAccountOpScreen = () => {
           {/* TabLayoutWrapperMainContent supports scroll but the logic that determines the height
           of the content doesn't work with it, so we use a ScrollView here */}
           <ScrollView
+            testID="sign-account-op-scroll-view"
             onScroll={handleScroll}
             onLayout={handleLayout}
             onContentSizeChange={handleContentSizeChange}
@@ -456,6 +463,7 @@ const SignAccountOpScreen = () => {
             // boundary is (https://reactnative.dev/docs/scrollview) - without it, content
             // that doesn't fit can get clipped by an ancestor instead of being scrollable
             style={[flexbox.flex1, contentHeight > containerHeight ? spacings.prMi : {}]}
+            contentContainerStyle={isNarrowWebLayout ? spacings.pbSm : undefined}
           >
             {isOverviewTabActive ? (
               <>

@@ -96,9 +96,9 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         // targetSdkVersion is also provided by the React Native Gradle plugin; for React Native 0.81.x the default is 36 (Android 16).
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 72
+        versionCode 73
         // This is planned to be in sync with app.json 's "version" two components, e.g. 5.39
-        versionName "6.21"
+        versionName "6.22"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -140,6 +140,14 @@ android {
                 releaseStorePassword = MYAPP_UPLOAD_STORE_PASSWORD
                 releaseKeyAlias = MYAPP_UPLOAD_KEY_ALIAS
                 releaseKeyPassword = MYAPP_UPLOAD_KEY_PASSWORD
+            }
+
+            // The debug keystore is the one shipped with the Android SDK - its key is public
+            // knowledge. A release artifact signed with it can be re-signed by anyone, so a CI
+            // release build must fail loudly instead of quietly falling back to it.
+            def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+            if (isCi && isReleaseTask && !project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+                throw new GradleException('Release build in CI without a signing keystore. The workflow writes MYAPP_UPLOAD_* in its "Prepare Android signing config" step.')
             }
 
             storeFile releaseStoreFile

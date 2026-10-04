@@ -16,6 +16,7 @@ import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useAccountKeys from '@common/hooks/useAccountKeys'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -30,10 +31,10 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
 
-const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
+const selectSelectAccountStatus = (state: AllControllersMappingType['MainController']) =>
+  state.statuses.selectAccount
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
-const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 
 const Account = ({
   account,
@@ -82,23 +83,23 @@ const Account = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { state: mainStatuses, dispatch: mainDispatch } = useController(
+  const { state: selectAccountStatus, dispatch: mainDispatch } = useController(
     'MainController',
-    selectMainStatuses
+    selectSelectAccountStatus
   )
   const { state: selectedAccount } = useController(
     'SelectedAccountController',
     selectSelectedAccount
   )
-  const selectBalance = useCallback(
-    (state: AllControllersMappingType['SelectedAccountController']) =>
+  const selectBalance = useMemo(
+    () => (state: AllControllersMappingType['SelectedAccountController']) =>
       state.balanceByAccounts[addr] ?? null,
     [addr]
   )
   const { state: balance } = useController('SelectedAccountController', selectBalance)
   const { dispatch: accountsDispatch } = useController('AccountsController')
   const reverseLookup = useReverseLookup({ address: addr, privacyUpdateMode: 'never' })
-  const { state: keys } = useController('KeystoreController', selectKeys)
+  const accountKeys = useAccountKeys(account)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -172,17 +173,10 @@ const Account = ({
     }
   }
 
-  const getAccKeys = useCallback(
-    (acc: any) => {
-      return keys.filter((key) => acc?.associatedKeys.includes(key.addr))
-    },
-    [keys]
-  )
-
   const submenu = useMemo(() => {
     if (!options.withOptionsButton) return []
 
-    const add7702Option = canBecomeSmarter(account, getAccKeys(account))
+    const add7702Option = canBecomeSmarter(account, accountKeys)
     const commonSubmenuOptions = [
       { label: account.safeCreation ? t('Manage owners') : t('Manage keys'), value: 'keys' },
       { label: t('Remove account'), value: 'remove', style: { color: theme.errorDecorative } }
@@ -194,7 +188,7 @@ const Account = ({
         : []
 
     return [...settingsOption, ...commonSubmenuOptions]
-  }, [account, getAccKeys, options.withOptionsButton, t, theme.errorDecorative])
+  }, [account, accountKeys, options.withOptionsButton, t, theme.errorDecorative])
 
   const handleCopy = async () => {
     try {
@@ -207,7 +201,7 @@ const Account = ({
 
   return (
     <AnimatedPressable
-      disabled={mainStatuses.selectAccount !== 'INITIAL'}
+      disabled={selectAccountStatus !== 'INITIAL'}
       onPress={selectAccount}
       {...(isSelectable ? bindAnim : {})}
       testID="account"
@@ -234,21 +228,18 @@ const Account = ({
           showTooltip
         />
         <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-            {!withSettings ? (
-              <Text
-                fontSize={withSettings ? 16 : 14}
-                weight="medium"
-                numberOfLines={1}
-                style={{ flexShrink: 1 }}
-              >
-                {account.preferences.label}
-              </Text>
-            ) : (
+          {!withSettings ? (
+            // A read-only label needs no row around it, and this screen mounts one of
+            // these per account
+            <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
+              {account.preferences.label}
+            </Text>
+          ) : (
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
               <Editable
                 initialValue={account.preferences.label}
                 onSave={onSave}
-                fontSize={withSettings ? 16 : 14}
+                fontSize={16}
                 height={isMobile ? 24 : 20}
                 textProps={{
                   weight: 'medium'
@@ -256,8 +247,8 @@ const Account = ({
                 minWidth={120}
                 maxLength={40}
               />
-            )}
-          </View>
+            </View>
+          )}
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <AccountAddress
               {...reverseLookup}
@@ -286,9 +277,14 @@ const Account = ({
               </Text>
             )}
             {!!withKeyType && (
-              <AccountKeyIcons isExtended account={account} withContainerSpacing={false} />
+              <AccountKeyIcons
+                isExtended
+                account={account}
+                accountKeys={accountKeys}
+                withContainerSpacing={false}
+              />
             )}
-            <AccountBadges accountData={account} withSpacing={false} />
+            <AccountBadges accountData={account} accountKeys={accountKeys} withSpacing={false} />
           </View>
         </View>
       </View>
@@ -307,6 +303,7 @@ const Account = ({
             setExternalPosition={setDropdownPosition}
             onSelect={onDropdownSelect}
             kebabIconProps={{ width: 28, height: 28 }}
+            testID={`account-options-${addr}`}
           />
         )}
       </View>
