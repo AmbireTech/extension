@@ -112,10 +112,9 @@ const PrivacyPoolsSendScreen = () => {
     []
   )
 
-  // What one transfer can send, not the whole approved balance: a transfer spends a single deposit
   const maxAmount = useMemo(
     () =>
-      selectedToken ? formatUnits(selectedToken.maxWithdrawAmount, selectedToken.decimals) : '0',
+      selectedToken ? formatUnits(selectedToken.availableAmount, selectedToken.decimals) : '0',
     [selectedToken]
   )
   const setMaxAmount = useCallback(
@@ -159,18 +158,9 @@ const PrivacyPoolsSendScreen = () => {
         success: false,
         severity: 'error' as const,
         message: t('You can send at most {{max}} {{symbol}}.', {
-          max: formatUnits(selectedToken.availableAmount, selectedToken.decimals),
+          max: maxAmount,
           symbol: selectedToken.symbol
         })
-      }
-    if (parsedAmount > selectedToken.maxWithdrawAmount)
-      return {
-        success: false,
-        severity: 'error' as const,
-        message: t(
-          'You can send at most {{max}} {{symbol}} in one transfer. Your balance is made up of separate deposits, and each transfer can only use one of them.',
-          { max: maxAmount, symbol: selectedToken.symbol }
-        )
       }
 
     return { success: true }
