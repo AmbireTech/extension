@@ -23,6 +23,7 @@ import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAc
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/rpc'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
+import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
@@ -71,6 +72,10 @@ import {
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
+import {
+  canUseOffscreenProver,
+  createOffscreenProverFactory
+} from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
 import {
   getDappTabFocusDispatcher,
   getPanelManager
@@ -473,15 +478,25 @@ const init = async () => {
 
   const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
+  // Copied next to the bundle at build time (see webpack/extension.js) and served same-origin,
+  // so proving needs no network and no CSP entry for a third-party host.
+  const privacyPoolsCircuitsBaseUrl = browser.runtime.getURL('privacy-pools-circuits/')
+
   mainCtrl = new MainController({
     eventEmitterRegistry,
     appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,
-    // Copied next to the bundle at build time (see webpack/extension.js) and served same-origin,
-    // so proving needs no network and no CSP entry for a third-party host.
-    privacyPoolsCircuitsBaseUrl: browser.runtime.getURL('privacy-pools-circuits/'),
+    privacyPoolsCircuitsBaseUrl,
+    // On Chrome, proofs run in an offscreen document, which unlike this service worker can use
+    // every core. Elsewhere - and on Chrome if that document cannot start - they run right here.
+    privacyPoolsProverFactory: canUseOffscreenProver()
+      ? createOffscreenProverFactory({
+          fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
+          onError: (error) => captureBackgroundException(error)
+        })
+      : undefined,
     // Shipped beside the bundle like the circuits above, and read only when a chain has no stored
     // history of its own - which is what saves a first sync from walking Ethereum block by block.
     // Left out while the snapshots are off, so the controller falls through to the CDN instead.

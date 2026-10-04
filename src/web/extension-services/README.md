@@ -69,9 +69,16 @@ Every dApp connection is a `Session` in the DappsController, holding the messeng
 
 A broadcast lands in the whole tab, so the session's origin travels with it and the provider drops anything that doesn't match the page it is running in.
 
+## The Privacy Pools prover
+
+On Chrome, Privacy Pools proofs are generated in an offscreen document (`privacy-pools-prover/`) rather than the background. The service worker has no `Worker`, so snarkjs proves on a single thread there, while the offscreen document can use every core. The background opens the document for the first proof and closes it once it has been idle for a while. If the document cannot start, the background proves by itself for the rest of its life. Firefox and Safari have no offscreen documents, so they always prove in the background.
+
+Proving inputs include a deposit's secret and nullifier, which are enough to spend it. They go over a dedicated port that the document opens itself, never `runtime.sendMessage`, which every extension page receives. Before sending any inputs, the background checks that the port comes from the prover page by its extension id and exact URL, with no tab. The document is bundled under LavaMoat like the background, has no Sentry, and keeps errors in its own console, because an error from the circuit can describe the inputs.
+
 ## Things not to break
 
 - Only extension pages may open a UI port. A port can call any controller method, including key and seed export, so the background verifies the sender.
+- Proving inputs only go to a port the background has checked comes from the prover document, and nothing in that document reports errors anywhere else.
 - A reply goes to the one frame that asked, not to the tab. Otherwise an answer meant for a dApp in an iframe lands in every other frame of the page.
 - Where a dApp sits, meaning its frame and the tab's top-level document, always comes from the browser and never from the page.
 - Page scripts do as little as possible in cross-origin and deeply nested frames, which is where ads and third-party widgets live.

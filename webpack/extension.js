@@ -115,7 +115,9 @@ function processManifest(content, mode) {
 
   const permissions = [...manifest.permissions, 'scripting', 'alarms']
   if (isWebkit && !isSafari) {
-    permissions.push('system.display', 'sidePanel')
+    // 'offscreen' hosts the Privacy Pools prover, which needs `Worker` to run on several threads -
+    // something the service worker does not have
+    permissions.push('system.display', 'sidePanel', 'offscreen')
     manifest.side_panel = { default_path: 'side-panel.html' }
   }
   manifest.permissions = permissions
@@ -267,6 +269,12 @@ module.exports = async function buildExtension(
         './src/web/extension-services/content-script/content-script-messenger-bridge.ts',
       'ambire-inpage': './src/web/modules/inpage/ambire-inpage.ts',
       'ethereum-inpage': './src/web/modules/inpage/ethereum-inpage.ts',
+      // The Privacy Pools prover's offscreen document. Chrome only: Firefox and Safari have no
+      // offscreen documents, so they prove in the background itself.
+      ...(isWebkit &&
+        !isSafari && {
+          'privacy-pools-prover': './src/web/extension-services/privacy-pools-prover/offscreen.ts'
+        }),
       ...(isGecko && {
         'content-script-ambire-injection':
           './src/web/extension-services/content-script/content-script-ambire-injection.ts',
@@ -392,6 +400,12 @@ module.exports = async function buildExtension(
             filename: 'side-panel.html',
             inject: 'body',
             chunks: ['runtime', 'rootTheme', 'main']
+          }),
+          new HtmlWebpackPlugin({
+            template: './src/web/public/privacy-pools-prover.html',
+            filename: 'privacy-pools-prover.html',
+            inject: 'body',
+            chunks: ['runtime', 'privacy-pools-prover']
           })
         ]
       : []),
