@@ -152,7 +152,7 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
           <PanelBackButton onPress={closeBottomSheet} style={spacings.mrTy} />
           {account ? (
             <PanelTitle
-              title={t('{{label}} deploy settings', { label: account.preferences.label })}
+              title={t('{{label}} activation settings', { label: account.preferences.label })}
               style={text.left}
             />
           ) : (
@@ -162,7 +162,7 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
 
         <Text fontSize={14} style={spacings.mbMd} appearance="secondaryText">
           {t(
-            'Deploy your Safe account on the networks where you want to use it. Deployment is a one-time action for each network.'
+            'Activate your Safe account on the networks where you want to use it. Activation is a one-time action for each network.'
           )}
         </Text>
 
@@ -212,7 +212,7 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
                 </View>
                 <View style={[flexbox.flex1, flexbox.alignEnd]}>
                   {state?.isDeployed ? (
-                    <Badge type="success" text={t('Deployed')} />
+                    <Badge type="success" text={t('Active')} />
                   ) : (
                     <Button
                       type="primary"
@@ -220,7 +220,7 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
                       style={[spacings.mb0, { minWidth: 78, height: 32 }]}
                       disabled={rowState?.isLoading}
                       onPress={() => deploy(network.chainId)}
-                      text={rowState?.isLoading ? t('Preparing...') : t('Deploy')}
+                      text={rowState?.isLoading ? t('Preparing...') : t('Activate')}
                     />
                   )}
                 </View>

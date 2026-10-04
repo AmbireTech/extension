@@ -182,7 +182,7 @@ const Account = ({
       { label: t('Remove account'), value: 'remove', style: { color: theme.errorDecorative } }
     ]
     const settingsOption = account.safeCreation
-      ? [{ label: t('Deploy settings'), value: 'deploySettings' }]
+      ? [{ label: t('Activation settings'), value: 'deploySettings' }]
       : add7702Option && isWeb
         ? [{ label: t('Smart settings'), value: 'toSmarter' }]
         : []
