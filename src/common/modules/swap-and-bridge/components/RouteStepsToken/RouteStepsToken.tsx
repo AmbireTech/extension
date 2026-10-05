@@ -82,6 +82,7 @@ export const RouteStepsTokenAmount: React.FC<RouteStepsTokenAmountProps> = ({
         fontSize={isMobile ? 12 : 14}
         weight="medium"
         style={styles.text}
+        numberOfLines={isMobile ? 1 : undefined}
         dataSet={
           fullAmount
             ? createGlobalTooltipDataSet({
@@ -95,7 +96,13 @@ export const RouteStepsTokenAmount: React.FC<RouteStepsTokenAmountProps> = ({
         {symbol}
       </Text>
       {!!amountInUsd && (
-        <Text style={styles.text} fontSize={12} appearance="secondaryText" weight="medium">
+        <Text
+          style={styles.text}
+          fontSize={12}
+          appearance="secondaryText"
+          weight="medium"
+          numberOfLines={isMobile ? 1 : undefined}
+        >
           {formatDecimals(amountInUsd, 'price')}
         </Text>
       )}
