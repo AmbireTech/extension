@@ -10,7 +10,7 @@ import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { browser, engine } from '@web/constants/browserapi'
-import { openPanel } from '@web/extension-services/background/webapi/panel'
+import { openPanel, setPanelWindowId } from '@web/extension-services/background/webapi/panel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 
@@ -317,6 +317,13 @@ export const handleActions = async (
         }
       }
       await sessionStorage.set('isOpenExtensionPopupLoading', false)
+      break
+    }
+
+    case 'SET_SIDE_PANEL_WINDOW_ID': {
+      if (port?.name !== 'side-panel') return
+
+      setPanelWindowId(port.id, params.windowId)
       break
     }
 

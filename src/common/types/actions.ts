@@ -153,6 +153,12 @@ type OpenExtensionPopupAction = {
   type: 'OPEN_EXTENSION_POPUP'
 }
 
+// Sent once by a side panel, so app requests can be shown in the panel of the app's own window
+type SetSidePanelWindowIdAction = {
+  type: 'SET_SIDE_PANEL_WINDOW_ID'
+  params: { windowId: number }
+}
+
 type WindowRemovedAction = {
   type: 'WINDOW_REMOVED'
   params: { id: number }
@@ -276,6 +282,7 @@ export type Action =
   | ChangeCurrentDappNetworkAction
   | ImportSmartAccountJson
   | OpenExtensionPopupAction
+  | SetSidePanelWindowIdAction
   | InitAllControllersAction
   | WindowRemovedAction
   | GetAllControllerNamesAction
