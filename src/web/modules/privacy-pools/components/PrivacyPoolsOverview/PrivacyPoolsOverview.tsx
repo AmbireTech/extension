@@ -106,7 +106,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
     const labels: { [reason in PrivacyPoolsUnavailableReason]: string } = {
       'no-account': t('Select a Privacy Pools account to see what it holds.'),
       'unsupported-network': t(
-        'Privacy Pools is not available on any of the networks you have added. It runs on Ethereum and on the Sepolia test network.'
+        'Privacy Pools is not available on any of the networks you have added. It runs on Ethereum.'
       ),
       locked: t('Unlock your wallet to see what you have in Privacy Pools.')
     }
