@@ -10,9 +10,12 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import type { WalletStateController } from '@common/controllers/wallet-state'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { privateValue } from '@common/utils/ui'
 import { PrivacyPoolsActivityDisplay } from '@web/modules/privacy-pools/hooks/usePrivacyPools/usePrivacyPools'
 
 import getStyles from './styles'
@@ -20,6 +23,8 @@ import getStyles from './styles'
 interface Props {
   activity: PrivacyPoolsActivityDisplay[]
 }
+
+const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
 
 // In the words the wallet uses for them: funds sent to the account, and funds it sent on
 const TYPE_LABEL: { [type in PrivacyPoolsActivityType]: string } = {
@@ -44,6 +49,10 @@ const STATUS_LABEL: { [status in PrivacyPoolsActivityStatus]: string } = {
 const PrivacyPoolsActivity: FC<Props> = ({ activity }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  const { state: isPrivacyModeEnabled } = useController(
+    'WalletStateController',
+    selectIsPrivacyModeEnabled
+  )
 
   const getStatusColor = (status: PrivacyPoolsActivityStatus) => {
     if (status === 'pending') return theme.warningText
@@ -95,7 +104,10 @@ const PrivacyPoolsActivity: FC<Props> = ({ activity }) => {
           </View>
           <View style={[flexbox.alignEnd, spacings.mlSm]}>
             <Text fontSize={14} weight="number_regular" numberOfLines={1}>
-              {`${formatDecimals(Number(entry.amount), 'amount')} ${entry.symbol}`}
+              {`${privateValue(
+                formatDecimals(Number(entry.amount), 'amount'),
+                isPrivacyModeEnabled
+              )} ${entry.symbol}`}
             </Text>
             <Text fontSize={12} color={getStatusColor(entry.status)} numberOfLines={1}>
               {t(STATUS_LABEL[entry.status])}

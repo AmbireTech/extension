@@ -7,9 +7,12 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import type { WalletStateController } from '@common/controllers/wallet-state'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { privateValue } from '@common/utils/ui'
 import {
   PrivacyPoolsBalanceDisplay,
   PrivacyPoolsBalancesState
@@ -22,9 +25,15 @@ interface Props {
   state: PrivacyPoolsBalancesState
 }
 
+const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
+
 const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  const { state: isPrivacyModeEnabled } = useController(
+    'WalletStateController',
+    selectIsPrivacyModeEnabled
+  )
 
   const renderNotice = (title: string, text: string) => (
     <View style={styles.container}>
@@ -126,7 +135,10 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
           </View>
           <View style={[flexbox.alignEnd, spacings.mlSm]}>
             <Text fontSize={14} weight="number_regular" numberOfLines={1}>
-              {formatDecimals(Number(balance.approvedAmount), 'amount')}
+              {privateValue(
+                formatDecimals(Number(balance.approvedAmount), 'amount'),
+                isPrivacyModeEnabled
+              )}
             </Text>
             {balance.value !== null && (
               <Text
@@ -135,7 +147,7 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
                 color={theme.secondaryText}
                 numberOfLines={1}
               >
-                {formatDecimals(balance.value, 'value')}
+                {privateValue(formatDecimals(balance.value, 'value'), isPrivacyModeEnabled, 8)}
               </Text>
             )}
             {/* Not added to the amount above: until the association set approves a deposit it can
@@ -144,7 +156,10 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
             {!!balance.pendingAmount && (
               <Text fontSize={12} color={theme.warningText} numberOfLines={1}>
                 {t('+{{amount}} waiting for approval', {
-                  amount: formatDecimals(Number(balance.pendingAmount), 'amount')
+                  amount: privateValue(
+                    formatDecimals(Number(balance.pendingAmount), 'amount'),
+                    isPrivacyModeEnabled
+                  )
                 })}
               </Text>
             )}
