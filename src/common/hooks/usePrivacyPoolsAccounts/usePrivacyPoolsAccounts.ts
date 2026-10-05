@@ -5,26 +5,20 @@ import useController from '@common/hooks/useController'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-/** A Privacy Pools account as the UI shows it, resolved against the recovery phrase it is from. */
+/** A Privacy Pools account resolved against its recovery phrase, for display. */
 export type PrivacyPoolsAccountDisplay = {
   seedId: string
-  /**
-   * The label of its recovery phrase: the account has no name or address of its own, and the
-   * phrase is what tells two of them apart.
-   */
+  /** Its recovery phrase's label - the account has no name or address of its own. */
   label: string
-  /** Whether its recovery phrase has been written down - the only way to recover the account. */
+  /** Whether its recovery phrase is backed up - the only way to recover the account. */
   isBackedUp: boolean
 }
 
-/**
- * The accounts a search matches. They are matched on their name and on what they are, since that
- * is all they have - there is no address or key to search by.
- */
+/** Filters accounts by label and kind - they have no address or key to search by. */
 export const filterPrivacyPoolsAccountsBySearch = (
   accounts: PrivacyPoolsAccountDisplay[],
   search: string,
-  /** How the kind of account reads in the user's language, e.g. "Privacy Pools". */
+  /** Translated account kind, e.g. "Privacy Pools". */
   kindLabel: string
 ) => {
   const query = search.trim().toLowerCase()
@@ -41,10 +35,8 @@ const selectPrivacyPoolsAccountId = (
 ) => state.privacyPoolsAccountId
 
 /**
- * The wallet's Privacy Pools accounts and the selected one, ready to render.
- *
- * Neither controller they come from is needed before the first paint, so both can still be empty
- * here - the selected id is always known, as it comes with the selected account.
+ * The wallet's Privacy Pools accounts and the selected one. The accounts may still be empty on
+ * first paint; the selected id is always known.
  */
 const usePrivacyPoolsAccounts = () => {
   const { t } = useTranslation()

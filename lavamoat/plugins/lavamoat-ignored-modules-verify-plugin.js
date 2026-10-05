@@ -57,8 +57,7 @@ class LavamoatIgnoredModulesVerifyPlugin {
 
   apply(compiler) {
     compiler.hooks.done.tap('LavamoatIgnoredModulesVerifyPlugin', (stats) => {
-      // A failed compilation emits nothing, so there are no bundles to scan - and throwing on the
-      // missing output dir here would hide the compilation errors that actually explain the failure.
+      // A failed compilation emits nothing; throwing on the missing output dir would hide its errors
       if (stats.hasErrors() || !fs.existsSync(this.outputDir)) return
 
       const compilation = stats.compilation

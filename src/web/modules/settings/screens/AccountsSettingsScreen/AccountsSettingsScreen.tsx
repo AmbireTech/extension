@@ -179,8 +179,8 @@ const AccountsSettingsScreen = () => {
     cancelRemovePrivacyPoolsAccount()
   }, [cancelRemovePrivacyPoolsAccount, privacyPoolsAccountToRemove, privacyPoolsDispatch])
 
-  // Below the regular accounts and not draggable among them: their order is not stored, and they
-  // have no address for the list to key them by
+  // Below the regular accounts, not draggable: their order is not stored and they have no address
+  // to key them by
   const privacyPoolsAccountRows = useMemo(
     () =>
       filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')).map(

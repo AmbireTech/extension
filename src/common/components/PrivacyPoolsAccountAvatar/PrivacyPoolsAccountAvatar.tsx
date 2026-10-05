@@ -10,10 +10,7 @@ type Props = {
   style?: ViewStyle
 }
 
-/**
- * Stands in for the address-based avatar of a regular account: a Privacy Pools account has no
- * address to draw one from.
- */
+/** Avatar of a Privacy Pools account, which has no address to draw a regular one from. */
 const PrivacyPoolsAccountAvatar: FC<Props> = ({ size = 40, style }) => {
   const { theme } = useTheme()
   const iconSize = Math.round(size * 0.55)

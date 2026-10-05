@@ -27,8 +27,7 @@ interface Props {
  * with a breakdown of the time taken for discovery, price updates, and deployless calls.
  *
  * It's not displayed in production and can be used to monitor the performance of the portfolio.
- * A Privacy Pools account gets its own table instead, shown in production too - see
- * `PrivacyPoolsNetworkStatuses`.
+ * A Privacy Pools account gets `PrivacyPoolsNetworkStatuses` instead, shown in production too.
  */
 const selectPortfolioState = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio?.portfolioState

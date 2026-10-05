@@ -50,8 +50,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { isStoreReady } = useControllerStore()
 
   const { state: account } = useController('SelectedAccountController', selectAccount)
-  // Selected in place of a regular account, so it is shown the same way - with what it has in
-  // place of an address, which is nothing to copy
+  // Shown in place of a regular account, with no address to copy
   const { selectedAccount: privacyPoolsAccount } = usePrivacyPoolsAccounts()
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',

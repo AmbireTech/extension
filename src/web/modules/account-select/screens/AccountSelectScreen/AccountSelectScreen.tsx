@@ -147,7 +147,7 @@ const AccountSelectScreen = () => {
     }
   }, [account, navigate, pendingToBeSetSelectedAccount])
 
-  // The same for a Privacy Pools account, which is selected by its recovery phrase instead
+  // The same for a Privacy Pools account, selected by its recovery phrase id
   useEffect(() => {
     if (!pendingToBeSetSelectedPrivacyPoolsAccount) return
 
@@ -156,8 +156,8 @@ const AccountSelectScreen = () => {
     }
   }, [navigate, pendingToBeSetSelectedPrivacyPoolsAccount, privacyPoolsAccountId])
 
-  // Below the regular accounts rather than among them: they have no address to be ordered or
-  // scrolled to by, and the list's fixed row layout stays exact for the rows above
+  // Below the regular accounts: they have no address to order or scroll to by, and the list's fixed
+  // row layout stays exact for the rows above
   const privacyPoolsAccountRows = useMemo(
     () =>
       filteredPrivacyPoolsAccounts.map((privacyPoolsAccount) => (

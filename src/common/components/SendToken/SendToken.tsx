@@ -36,7 +36,7 @@ type Props = {
   fromAmountValue: string
   fromTokenAmountSelectDisabled: boolean
   handleChangeFromToken: (value: SelectValue) => void
-  // Only what the field shows of the token, so a token that is not a portfolio one can be sent too
+  // Narrowed so non-portfolio tokens can be passed too
   fromSelectedToken: Pick<TokenResult, 'symbol' | 'priceIn'> | null
   fromAmount?: string
   fromAmountInFiat?: string
@@ -57,10 +57,7 @@ type Props = {
   amountAdjustmentInfo?: AmountAdjustmentInfo | null
   sections?: SectionedSelectProps['sections']
   renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
-  /**
-   * Whether the maximum is still being worked out. Defaults to the selected account's portfolio,
-   * where the maximum usually comes from - pass it when it comes from somewhere else.
-   */
+  /** Whether the max amount is loading. Defaults to the selected account's portfolio state. */
   isMaxAmountLoading?: boolean
 }
 

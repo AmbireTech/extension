@@ -129,11 +129,7 @@ const AccountDashboardScreen = () => {
   )
 }
 
-/**
- * The dashboard of whichever kind of account is selected. A Privacy Pools account gets its own:
- * nothing on the regular one - the portfolio, apps, gas tank - applies to an account with no
- * address.
- */
+/** The regular dashboard, or the Privacy Pools one when such an account (no address) is selected. */
 const DashboardScreen = () => {
   const { state: privacyPoolsAccountId } = useController(
     'SelectedAccountController',
@@ -141,9 +137,8 @@ const DashboardScreen = () => {
   )
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
-  // Its state is not among the few pushed before the first paint, so until everything is here
-  // the regular dashboard's shell holds the place - its header already shows the Privacy Pools
-  // account
+  // Privacy Pools state is not pushed before the first paint, so the regular dashboard's shell
+  // holds the place until it arrives - its header already shows the Privacy Pools account
   if (!privacyPoolsAccountId || !areAllControllerStatesLoaded) return <AccountDashboardScreen />
 
   return <PrivacyPoolsDashboardScreen />

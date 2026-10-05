@@ -37,13 +37,9 @@ const DEFAULT_ADDRESS_STATE: AddressState = {
 const NO_AMOUNTS = { amount: '', amountInFiat: '' }
 
 /**
- * Send from a Privacy Pools account - a withdrawal, in the protocol's terms - laid out like the
- * regular Send: a recipient, a token and an amount, typed in the token or in USD.
- *
- * Only what the association set has approved can be sent. Proceed proves and prices the transfer
- * - ten seconds and up, shown on the button - and only then hands over to `PrivacyPoolsSendSheet`
- * for the fee and sending, the way the regular Send hands over to its fee sheet: the fee is known
- * only once the transfer is built.
+ * Send (a withdrawal, in protocol terms) from a Privacy Pools account, laid out like the regular
+ * Send. Only approved funds can be sent. Proceed proves and prices the transfer (10s and up), then
+ * `PrivacyPoolsSendSheet` shows the fee, which is known only once the transfer is built.
  */
 const PrivacyPoolsSendScreen = () => {
   const { t } = useTranslation()
@@ -63,8 +59,7 @@ const PrivacyPoolsSendScreen = () => {
 
   const [addressState, setAddressState] = useState<AddressState>(DEFAULT_ADDRESS_STATE)
   const [selectedTokenValue, setSelectedTokenValue] = useState('')
-  // Both sides of the amount are kept, like the regular Send's, so switching what it is typed in
-  // shows the other side instead of starting over
+  // Both token and USD amounts are kept, so switching the field mode does not clear the input
   const [amounts, setAmounts] = useState(NO_AMOUNTS)
   const [amountFieldMode, setAmountFieldMode] = useState<AmountFieldMode>('token')
 
@@ -78,7 +73,7 @@ const PrivacyPoolsSendScreen = () => {
   const addressInputState = useAddressInput({ addressState, setAddressState: updateAddressState })
   const recipient = getAddressFromAddressState(addressState)
 
-  // The first token until one is picked, and again if the picked one runs out
+  // Falls back to the first token if none is picked or the picked one runs out
   const selectedToken = useMemo(
     () =>
       withdrawTokens.find(({ value }) => value === selectedTokenValue) || withdrawTokens[0] || null,
@@ -94,7 +89,7 @@ const PrivacyPoolsSendScreen = () => {
     () => (selectedToken ? getTokenPrice(selectedToken.chainId, selectedToken.tokenAddress) : null),
     [getTokenPrice, selectedToken]
   )
-  // There is nothing to type a USD amount against without a price
+  // No USD input without a price
   const fieldMode: AmountFieldMode = tokenPrice === null ? 'token' : amountFieldMode
 
   const setAmountFieldValue = useCallback(
@@ -142,7 +137,7 @@ const PrivacyPoolsSendScreen = () => {
         selectedToken.decimals
       )
     } catch {
-      // An in-progress entry like "0." is not an error worth showing; the button stays disabled
+      // An in-progress entry like "0." is not shown as an error; the button stays disabled
       return null
     }
   }, [amount, selectedToken])
@@ -169,7 +164,7 @@ const PrivacyPoolsSendScreen = () => {
   }, [maxAmount, parsedAmount, selectedToken, t])
 
   const isTransferInFlight = operation?.status === 'pending'
-  // Proving and pricing it, which is what the Proceed button waits on before the fee sheet opens
+  // Proving and pricing, before the fee sheet opens
   const isPreparingTransfer = isTransferInFlight && operation?.phase === 'proving'
   const canSend =
     isAvailable &&
@@ -183,8 +178,7 @@ const PrivacyPoolsSendScreen = () => {
   const handleSend = useCallback(() => {
     if (!canSend || !selectedToken || parsedAmount === null) return
 
-    // The fee sheet opens only once the transfer is proved and priced - see below. Until then the
-    // Proceed button shows the wait, the way the regular Send's does while it estimates
+    // The fee sheet opens once the transfer is proved and priced - see the effect below
     prepareWithdrawal({
       chainId: selectedToken.chainId,
       tokenAddress: selectedToken.tokenAddress,
@@ -193,9 +187,7 @@ const PrivacyPoolsSendScreen = () => {
     })
   }, [canSend, parsedAmount, prepareWithdrawal, recipient, selectedToken])
 
-  // Opens the sheet for the confirmation once the transfer is ready to send - also on coming back to
-  // the screen while one waits, since a proved transfer would otherwise wait on a confirmation
-  // nowhere on screen
+  // Opens the sheet when the transfer is ready, also on coming back to the screen while one waits
   const operationPhase = operation?.phase
   const operationStatus = operation?.status
   useEffect(() => {
@@ -214,22 +206,20 @@ const PrivacyPoolsSendScreen = () => {
     navigate(ROUTES.dashboard)
   }, [dismissOperation, navigate, operation?.status])
 
-  // Described in the token's own units, which only the pool's asset config knows - the operation
-  // itself carries raw amounts
+  // The operation carries raw amounts; the token's symbol and decimals come from the asset config
   const operationAsset = useMemo(
     () =>
       operation ? getPrivacyPoolsAsset(BigInt(operation.chainId), operation.tokenAddress) : null,
     [operation]
   )
 
-  // The operation's own token, which is not necessarily the one picked in the form by now
+  // The operation's token may differ from the one now picked in the form
   const operationTokenPrice = useMemo(
     () => (operation ? getTokenPrice(operation.chainId, operation.tokenAddress) : null),
     [getTokenPrice, operation]
   )
 
-  // Priced by the Privacy Pools controller - the pooled tokens are not the selected account's
-  // portfolio
+  // Priced by the Privacy Pools controller, as the account has no portfolio
   const selectedTokenForField = useMemo(
     () =>
       selectedToken

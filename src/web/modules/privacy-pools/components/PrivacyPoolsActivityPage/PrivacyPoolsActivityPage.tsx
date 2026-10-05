@@ -22,15 +22,12 @@ interface Props {
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   sessionId: string
   animatedOverviewHeight: Animated.Value
-  /** Shown above the tabs, where the regular dashboard shows its banners. */
+  /** Shown above the tabs, like the regular dashboard's banners. */
   banners: ReactElement
   activity: PrivacyPoolsActivityDisplay[]
 }
 
-/**
- * The Activity page of a Privacy Pools account, laid out like the regular dashboard's. Like it, the
- * floating bar carries the network picker alone: the entries are not searchable.
- */
+/** The Activity page of a Privacy Pools account, laid out like the regular dashboard's. */
 const PrivacyPoolsActivityPage: FC<Props> = ({
   openTab,
   setOpenTab,

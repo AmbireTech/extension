@@ -24,14 +24,11 @@ const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => 
 type Props = {
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
-  /** Called once the new account is added and selected, i.e. its dashboard can be shown. */
+  /** Called once the new account is added and selected. */
   onAdded: () => void
 }
 
-/**
- * Adds a Privacy Pools account - from one of the stored recovery phrases, at most one per phrase,
- * or from a new phrase created for it.
- */
+/** Adds a Privacy Pools account from a stored recovery phrase (one per phrase) or a new one. */
 const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()

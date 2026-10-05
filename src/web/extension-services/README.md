@@ -71,14 +71,14 @@ A broadcast lands in the whole tab, so the session's origin travels with it and 
 
 ## The Privacy Pools prover
 
-On Chrome, Privacy Pools proofs are generated in an offscreen document (`privacy-pools-prover/`) rather than the background. The service worker has no `Worker`, so snarkjs proves on a single thread there, while the offscreen document can use every core. The background opens the document for the first proof and closes it once it has been idle for a while. If the document cannot start, the background proves by itself for the rest of its life. Firefox and Safari have no offscreen documents, so they always prove in the background.
+On Chrome, Privacy Pools proofs run in an offscreen document (`privacy-pools-prover/`) on every core, since the service worker has no `Worker` and would prove on one thread. The background opens it on the first proof and closes it when idle. If it cannot start, the background proves by itself from then on. Firefox and Safari always prove in the background.
 
-Proving inputs include a deposit's secret and nullifier, which are enough to spend it. They go over a dedicated port that the document opens itself, never `runtime.sendMessage`, which every extension page receives. Before sending any inputs, the background checks that the port comes from the prover page by its extension id and exact URL, with no tab. The document is bundled under LavaMoat like the background, has no Sentry, and keeps errors in its own console, because an error from the circuit can describe the inputs.
+Proving inputs include a deposit's secret and nullifier, enough to spend it. They go only over a port the document opens, never `runtime.sendMessage` (which every extension page receives), after the background checks the port's extension id, exact URL and lack of a tab. The document is bundled under LavaMoat, has no Sentry and logs only to its own console, because a circuit error can reveal the inputs.
 
 ## Things not to break
 
 - Only extension pages may open a UI port. A port can call any controller method, including key and seed export, so the background verifies the sender.
-- Proving inputs only go to a port the background has checked comes from the prover document, and nothing in that document reports errors anywhere else.
+- Proving inputs only go to a port verified as the prover document's, and that document reports errors nowhere else.
 - A reply goes to the one frame that asked, not to the tab. Otherwise an answer meant for a dApp in an iframe lands in every other frame of the page.
 - Where a dApp sits, meaning its frame and the tab's top-level document, always comes from the browser and never from the page.
 - Page scripts do as little as possible in cross-origin and deeply nested frames, which is where ads and third-party widgets live.

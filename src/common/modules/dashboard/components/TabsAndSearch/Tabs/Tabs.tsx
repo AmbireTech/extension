@@ -32,7 +32,7 @@ interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   handleChangeQuery: (openTab: string) => void
-  /** The tabs to show, in their usual order. All of them when left out. */
+  /** The tabs to show, in their usual order. All by default. */
   tabs?: TabType[]
 }
 

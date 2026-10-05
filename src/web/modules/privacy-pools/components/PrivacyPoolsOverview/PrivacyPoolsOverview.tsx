@@ -25,25 +25,16 @@ import type { WalletStateController } from '@common/controllers/wallet-state'
 
 interface Props {
   unavailableReason: PrivacyPoolsUnavailableReason | null
-  /**
-   * Whether any network has been read for this recovery phrase. Distinct from being able to use
-   * Privacy Pools at all: reading a network is asked for per network and can take a long time on
-   * Ethereum, so the card is on screen well before there is a balance to put in it.
-   */
+  /** Whether any network has been read. A first read can take long, so the card shows before it. */
   hasSyncedAnyChain: boolean
   isSyncing: boolean
-  /** Whether a network could not be read, which leaves the balance short of what it may be. */
+  /** Whether a network could not be read, so the balance may be incomplete. */
   hasSyncError: boolean
-  /** Whether nothing is read yet because the recovery phrase is not backed up - see `syncIfStale`. */
+  /** Whether reading waits for the recovery phrase backup - see `syncIfStale`. */
   isWaitingForBackup: boolean
-  /**
-   * The pooled balance in USD - the part the association set has approved, matching the rows below.
-   * Kept apart from the public portfolio's total on purpose: the pooled side is read on demand, so
-   * merging the two would make the headline balance depend on whether this screen was opened.
-   */
+  /** USD value of the approved part, matching the rows below. */
   totalPrivateBalance: number
-  // Value still waiting on the association set, so excluded from the total above. Surfaced rather
-  // than folded in, because it genuinely cannot be withdrawn privately yet.
+  // USD value still waiting on the association set, excluded from the total above
   pendingPrivateBalance: number
   canSend: boolean
   onRefresh: () => void
@@ -53,17 +44,13 @@ interface Props {
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
 const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
 
-// The card's contents sit on the dark OverviewBackground, so they use the fixed light colors the
-// dashboard overview uses rather than theme ones
+// Fixed light colors, not theme ones: the card sits on the dark OverviewBackground
 const PRIMARY_TEXT_COLOR = '#FFFFFF'
 const SECONDARY_TEXT_COLOR = '#F2F4F7'
 const ICON_COLOR = '#E3E6EB'
 const REFRESH_BUTTON_SIZE = 28
 
-/**
- * The Privacy Pools account's counterpart of `DashboardOverview`: the same card, header, balance
- * and route buttons, with what a Privacy Pools account has in them.
- */
+/** `DashboardOverview` for a Privacy Pools account. */
 const PrivacyPoolsOverview: FC<Props> = ({
   unavailableReason,
   hasSyncedAnyChain,
@@ -86,8 +73,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
     'FeatureFlagsController',
     selectTokenPricesEnabled
   )
-  // The gradient is seeded with the selected Privacy Pools account, so each one keeps a card of
-  // its own the way each regular account does.
+  // Seeded per account, so each one has its own gradient like regular accounts
   const backgroundColorSeed = useSelectedAccountColorSeed()
   const [isBalanceHovered, setIsBalanceHovered] = useState(false)
 
@@ -95,12 +81,9 @@ const PrivacyPoolsOverview: FC<Props> = ({
     walletStateDispatch({ type: 'method', params: { method: 'togglePrivacyMode', args: [] } })
   }, [walletStateDispatch])
 
-  // The reasons Privacy Pools can't be used are structural (no Privacy Pools account selected, no
-  // supported network) or temporary (locked), so each gets its own explanation rather than a disabled button
-  // with no hint.
+  // Each reason gets its own explanation rather than a disabled button with no hint
   const unavailableLabel = useMemo(() => {
-    // Said in place of a balance that would otherwise be a placeholder for good - the banner
-    // under the card is where the backup is made
+    // Otherwise the balance would stay a placeholder; the banner under the card does the backup
     if (!unavailableReason && isWaitingForBackup)
       return t('Back up the recovery phrase to load this account.')
     if (!unavailableReason) return ''
@@ -116,9 +99,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
     return labels[unavailableReason]
   }, [unavailableReason, isWaitingForBackup, t])
 
-  // Shown on hover, like the dashboard's, and while reading - the balance is not final until then -
-  // or when a read failed, to try again. Reads every supported network again, the same as opening
-  // the account does.
+  // On hover like the dashboard's, while reading (the balance is not final) and after a failed read
   const shouldShowRefreshButton =
     hasSyncedAnyChain && (isBalanceHovered || isSyncing || hasSyncError)
 
@@ -190,9 +171,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
                     />
                   </Pressable>
                 </View>
-                {/* Qualifies the figure above rather than adding to it: part of the balance cannot
-                be withdrawn privately yet. Without it a total that silently omits money reads as a
-                complete one. */}
+                {/* Otherwise the total, which omits this part, reads as complete */}
                 {!isPrivacyModeEnabled && pendingPrivateBalance > 0 && (
                   <Text fontSize={12} color={SECONDARY_TEXT_COLOR} numberOfLines={1}>
                     {t('+{{value}} waiting to be approved', {
@@ -202,8 +181,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
                 )}
               </View>
             )}
-            {/* Sending needs the notes read first: without them there is nothing to send, and the
-            form would have an empty dropdown. */}
+            {/* Disabled until the notes are read, or the form would have an empty dropdown */}
             <PrivacyPoolsActions onSend={onSend} isSendDisabled={!canSend} />
           </View>
         </View>

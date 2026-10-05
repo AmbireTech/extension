@@ -115,8 +115,7 @@ function processManifest(content, mode) {
 
   const permissions = [...manifest.permissions, 'scripting', 'alarms']
   if (isWebkit && !isSafari) {
-    // 'offscreen' hosts the Privacy Pools prover, which needs `Worker` to run on several threads -
-    // something the service worker does not have
+    // 'offscreen' hosts the Privacy Pools prover, which needs `Worker` (missing in service workers)
     permissions.push('system.display', 'sidePanel', 'offscreen')
     manifest.side_panel = { default_path: 'side-panel.html' }
   }
@@ -269,8 +268,7 @@ module.exports = async function buildExtension(
         './src/web/extension-services/content-script/content-script-messenger-bridge.ts',
       'ambire-inpage': './src/web/modules/inpage/ambire-inpage.ts',
       'ethereum-inpage': './src/web/modules/inpage/ethereum-inpage.ts',
-      // The Privacy Pools prover's offscreen document. Chrome only: Firefox and Safari have no
-      // offscreen documents, so they prove in the background itself.
+      // Privacy Pools prover's offscreen document. Firefox and Safari prove in the background.
       ...(isWebkit &&
         !isSafari && {
           'privacy-pools-prover': './src/web/extension-services/privacy-pools-prover/offscreen.ts'
@@ -317,12 +315,10 @@ module.exports = async function buildExtension(
       from: './node_modules/webextension-polyfill/dist/browser-polyfill.min.js',
       to: 'browser-polyfill.min.js'
     },
-    // Privacy Pools proving keys and witness generators (~23 MB). Copied as build assets and
-    // served same-origin via `browser.runtime.getURL`, because the SDK's default base URL points
-    // at a pinned commit on raw.githubusercontent.com - a third-party host in the path of a
-    // withdrawal, needing a CSP entry and re-downloaded per prover instance. Bundling them also
-    // means proving works offline. See PRIVACY_POOLS_CIRCUIT_PATHS for the filenames the SDK asks
-    // for; they must match what lands here.
+    // Privacy Pools proving keys and witness generators (~23 MB), served same-origin instead of the
+    // SDK's default raw.githubusercontent.com (a third party in the withdrawal path, needing a CSP
+    // entry, re-downloaded per prover). Also works offline. Filenames must match
+    // PRIVACY_POOLS_CIRCUIT_PATHS.
     {
       from: './node_modules/@fatsolutions/privacy-pools-core-circuits/artifacts',
       to: 'privacy-pools-circuits'

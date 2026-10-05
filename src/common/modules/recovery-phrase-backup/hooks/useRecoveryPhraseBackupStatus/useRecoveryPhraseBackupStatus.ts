@@ -8,8 +8,8 @@ import useController from '@common/hooks/useController'
  * The settings screen lists every phrase that was never backed up, so the user always has
  * a way in. The dashboard banner is stricter and only appears once the account holds funds -
  * there is nothing to lose before that, and nagging users with empty accounts defeats the
- * point of the simplified onboarding. A Privacy Pools account is the exception: the phrase is
- * all there is to it, so it is asked for from the start.
+ * point of the simplified onboarding. A Privacy Pools account is asked from the start, as the
+ * phrase is all there is to it.
  */
 export default function useRecoveryPhraseBackupStatus() {
   const { seeds, keys } = useController('KeystoreController').state
@@ -30,7 +30,7 @@ export default function useRecoveryPhraseBackupStatus() {
   )
 
   const seedIdOfSelectedAccountNeedingBackup = useMemo(() => {
-    // Identified by its recovery phrase, so it is that phrase
+    // A Privacy Pools account's id is its recovery phrase id
     if (privacyPoolsAccountId)
       return notBackedUpSeedIds.includes(privacyPoolsAccountId) ? privacyPoolsAccountId : null
 

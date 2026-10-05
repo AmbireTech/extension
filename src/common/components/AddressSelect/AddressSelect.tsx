@@ -72,15 +72,12 @@ export interface AddressSelectProps extends InputProps {
   isRecipientHumanizerKnownTokenOrSmartContract?: boolean
   isRecipientAddressUnknown?: boolean
   addressPoisoningMatch?: AddressPoisoningMatch | null
-  /**
-   * The wallet's Privacy Pools accounts, listed as recipients of their own. They have no address,
-   * so picking one goes to `onSelectPrivacyPoolsAccount` instead of filling the field.
-   */
+  /** Listed as recipients. Having no address, picking one calls `onSelectPrivacyPoolsAccount`. */
   privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
   onSelectPrivacyPoolsAccount?: (seedId: string) => void
 }
 
-// Marks a list option as a Privacy Pools account rather than an address - see `setAddressWrapped`
+// Marks a Privacy Pools account option - see `setAddressWrapped`
 const PRIVACY_POOLS_OPTION_VALUE_PREFIX = 'privacy-pools-account:'
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
@@ -346,8 +343,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, actualAddress, t]
   )
 
-  // A Privacy Pools account's option value is not an address, so it is looked up rather than
-  // parsed back into the account it stands for
+  // Looked up rather than parsed back from the option value
   const privacyPoolsSeedIdByOptionValue = useMemo(
     () =>
       new Map(

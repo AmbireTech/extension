@@ -20,10 +20,10 @@ import {
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-/** The tabs a Privacy Pools account has: it holds no NFTs and no DeFi positions. */
+/** A Privacy Pools account has no NFTs or DeFi positions. */
 export const PRIVACY_POOLS_TABS: TabType[] = ['tokens', 'activity']
 
-// The same delay the regular token list searches with
+// Same as the regular token list
 const SEARCH_DEBOUNCE_MS = 200
 const SEARCH_KEYS = ['symbol', 'tokenAddress']
 const NO_NETWORKS: never[] = []
@@ -37,18 +37,15 @@ interface Props {
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   sessionId: string
   animatedOverviewHeight: Animated.Value
-  /** Shown above the tabs, where the regular dashboard shows its banners. */
+  /** Shown above the tabs, like the regular dashboard's banners. */
   banners: ReactElement
   balances: PrivacyPoolsBalanceDisplay[]
   state: PrivacyPoolsBalancesState
-  /** The name of the network the dashboard is filtered by, if it is. */
+  /** The dashboard's network filter name, if any. */
   networkFilterName: string | null
 }
 
-/**
- * The Tokens page of a Privacy Pools account, laid out like the regular dashboard's: the banners,
- * the tabs, the list, and the floating bar with the search and the network picker.
- */
+/** The Tokens page of a Privacy Pools account, laid out like the regular dashboard's. */
 const PrivacyPoolsTokensPage: FC<Props> = ({
   openTab,
   setOpenTab,
@@ -69,8 +66,7 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
   const inputSearchValue = useWatch({ control, name: 'search' })
   const searchValue = useDebounce({ value: inputSearchValue, delay: SEARCH_DEBOUNCE_MS })
 
-  // Searched the way the regular token list is: by symbol and address, not by network - the
-  // network picker is there for that
+  // By symbol and address like the regular token list; the network picker filters by network
   const filteredBalances = useMemo(
     () =>
       searchWithNetworkName({
@@ -100,7 +96,7 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
           </View>
         )
 
-      // What the account holds is on screen, but none of it matches - said the regular list's way
+      // Has balances, but none match the filters
       if (state === 'ready' && isFiltered && !filteredBalances.length && balances.length)
         return (
           <TokensEmptyState

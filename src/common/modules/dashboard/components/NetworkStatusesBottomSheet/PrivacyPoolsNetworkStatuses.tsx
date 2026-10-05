@@ -25,8 +25,8 @@ const isSyncing = (chain?: PrivacyPoolsChainState) =>
   chain?.syncStatus === 'syncing' || chain?.syncStatus === 'initializing'
 
 /**
- * The statuses table of a Privacy Pools account: when each network was last read for it, whether
- * the network's one-time first read is done, and how long that and the latest read took.
+ * A Privacy Pools account's statuses table: each network's last read, whether its first read is
+ * done, and how long the first and latest reads took.
  */
 const PrivacyPoolsNetworkStatuses = () => {
   const { t } = useTranslation()

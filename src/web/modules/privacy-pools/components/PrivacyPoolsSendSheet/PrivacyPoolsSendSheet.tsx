@@ -20,26 +20,20 @@ interface Props {
   operation: PrivacyPoolsOperation | null
   symbol: string
   decimals: number
-  /** USD price of the sent token, or null when it has none. */
+  /** USD price of the sent token, or null when unknown. */
   tokenPrice: number | null
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
   onSend: () => void
-  // Fires once the sheet has actually left the screen, dragging it down included - which the close
-  // handler above does not cover, and which is where a finished transfer is dismissed
+  // Fires once the sheet has left the screen, also when dragged down (unlike `closeBottomSheet`)
   onClosed: () => void
 }
 
 /**
- * The confirmation of a transfer from a Privacy Pools account, and what became of it once sent. The
- * counterpart of the regular Send's fee sheet, laid out like it: the network fee, then Back and Send.
+ * Confirmation and outcome of a Privacy Pools transfer, like the regular Send's fee sheet. Opened
+ * once the transfer is proved and priced, so the user sees the fee before Send.
  *
- * Opened only once the transfer is proved and priced - the Proceed button carries the wait until
- * then. The network fee is not known before that, and committing to it before it was shown would
- * mean paying a fee the user never saw. Nothing is sent until Send here is pressed.
- *
- * Always mounted, even with nothing to show: a bottom sheet opened in the same commit it first
- * mounts does not animate in.
+ * Always mounted: a bottom sheet opened in the same commit it mounts does not animate in.
  */
 const PrivacyPoolsSendSheet: FC<Props> = ({
   operation,
@@ -80,8 +74,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
     <BottomSheet
       id="privacy-pools-send"
       sheetRef={sheetRef}
-      // Not closable while sending: the transfer goes on either way, and this is where its outcome
-      // is shown once it is known
+      // Not closable while sending: the transfer goes on anyway and its outcome is shown here
       closeBottomSheet={isBroadcasting ? undefined : closeBottomSheet}
       onClosed={onClosed}
       backgroundColor="primaryBackground"
@@ -117,9 +110,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                 </Text>
               </View>
               <Text fontSize={12} appearance="secondaryText">
-                {/* What can honestly be said about the money follows from how far it got: a failure
-                before it was sent spent nothing, while one during sending may have gone through
-                already - which the refreshed balance settles. */}
+                {/* A failure while sending may still have gone through */}
                 {operation.phase === 'broadcasting' || operation.phase === 'finalizing'
                   ? t(
                       'Your balance has just been refreshed - check it to see whether the transfer went through.'
@@ -151,7 +142,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                 size="smaller"
                 style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
               />
-              {/* Narrow layouts stack Back under the primary action, like the regular fee sheet */}
+              {/* Back after Send on narrow layouts, like the regular fee sheet */}
               {isNarrowWebLayout && backButton}
             </FooterGlassView>
           )}

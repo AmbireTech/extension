@@ -19,7 +19,7 @@ const AvatarOption: FC<{ type: AvatarType }> = ({ type }) => {
     state: { avatarType },
     dispatch: walletStateDispatch
   } = useController('WalletStateController')
-  // Previewed on the selected account, which may be a Privacy Pools one - it has no address
+  // The selected account may be a Privacy Pools one, which has no address
   const previewAddress = useSelectedAccountColorSeed()
   const { theme } = useTheme()
   const { t } = useTranslation()

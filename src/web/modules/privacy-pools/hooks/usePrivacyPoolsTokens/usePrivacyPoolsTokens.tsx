@@ -12,22 +12,17 @@ import flexbox from '@common/styles/utils/flexbox'
 import type usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 
 export type PrivacyPoolsTokenOption = SelectValue & {
-  // The pool the option belongs to. Every action is scoped to it, since each chain has its own
-  // pools and its own entrypoint.
+  // Each chain has its own pools and entrypoint
   chainId: string
   tokenAddress: string
   isNative: boolean
   symbol: string
   decimals: number
-  // Raw units, so the form can validate what was typed against what is actually there: the
-  // approved private balance.
+  // The approved balance in raw units, for validating the typed amount
   availableAmount: bigint
 }
 
-/**
- * Options span every supported chain at once, so the same token on two chains would collide on a
- * plain address key - and picking the wrong one would prove against the wrong pool. The chain is therefore part of an option's identity, not just a label on it.
- */
+/** Includes the chain: the same token on two chains must not collide (it would prove the wrong pool). */
 const getTokenOptionValue = (chainId: string, tokenAddress: string) =>
   `${chainId}:${tokenAddress.toLowerCase()}`
 
@@ -46,7 +41,7 @@ const getTokenOption = ({
   isNative: boolean
   symbol: string
   decimals: number
-  // Already translated by the caller, since this is not a component
+  // Translated by the caller
   note: string
   networkName: string
   availableAmount: bigint
@@ -64,8 +59,7 @@ const getTokenOption = ({
       chainId={BigInt(chainId)}
       address={tokenAddress}
       withContainer
-      // The list spans every supported network, so the badge is what tells two same-symbol entries
-      // apart at a glance.
+      // Tells same-symbol entries on different networks apart
       withNetworkIcon
       containerWidth={32}
       containerHeight={32}
@@ -96,11 +90,7 @@ const getTokenOption = ({
   )
 })
 
-/**
- * The token dropdown of the Send form: what the pools hold for this recovery phrase and the
- * association set has approved. Pending notes are deliberately absent: they cannot be withdrawn
- * privately at all.
- */
+/** Send form token options: approved balances only, as pending ones cannot be withdrawn. */
 const usePrivacyPoolsTokens = ({
   tokenBalances,
   getNetworkName

@@ -41,7 +41,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const DashboardShell = ({ contentContainerStyle }: Props) => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
-  // A Privacy Pools account is shown in this shell too, while its own dashboard loads
+  // Also used for a Privacy Pools account while its dashboard loads
   const backgroundColorSeed = useSelectedAccountColorSeed()
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const { state: isTokenPricesEnabled } = useController(

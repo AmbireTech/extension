@@ -50,10 +50,7 @@ const formatResultTime = (timeInMs: number) => {
   return `${timeInMs}ms`
 }
 
-/**
- * A read that may take anything from a moment to minutes, in the unit that suits it: `840ms`,
- * `12.4s` or `3m 05s`.
- */
+/** Formats a duration as `840ms`, `12.4s` or `3m 05s`. */
 const formatSyncDuration = (timeInMs: number) => {
   if (timeInMs < 1000) return `${timeInMs}ms`
   if (timeInMs < 60_000) return `${(timeInMs / 1000).toFixed(1)}s`

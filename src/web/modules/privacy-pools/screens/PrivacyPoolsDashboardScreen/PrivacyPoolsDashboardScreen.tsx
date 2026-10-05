@@ -28,10 +28,7 @@ const selectDashboardNetworkFilter = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.dashboardNetworkFilter
 
-/**
- * The dashboard of a Privacy Pools account, shown on the dashboard route in place of the regular
- * one while a Privacy Pools account is selected.
- */
+/** Replaces the regular dashboard while a Privacy Pools account is selected. */
 const PrivacyPoolsDashboardScreen = () => {
   const { styles } = useTheme(getDashboardStyles)
   const {
@@ -57,11 +54,11 @@ const PrivacyPoolsDashboardScreen = () => {
   const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
 
   const route = useRoute()
-  // Back on the tab it was left on, the way the regular dashboard comes back
+  // Reopens on the tab it was left on, like the regular dashboard
   const [openTab, setOpenTab] = useState<TabType>(() =>
     new URLSearchParams(route?.search).get('tab') === 'activity' ? 'activity' : 'tokens'
   )
-  // Nothing on this dashboard collapses, but the dashboard's page lists expect one to expand
+  // Nothing collapses here, but the dashboard's page lists expect this value
   const animatedOverviewHeight = useMemo(() => new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT), [])
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
@@ -74,11 +71,8 @@ const PrivacyPoolsDashboardScreen = () => {
   const { navigate } = useNavigation()
 
   /**
-   * Reads the networks when the account is opened - and for another account selected while the
-   * screen is up, and once the recovery phrase is backed up - so its balances are current without
-   * asking. Only those not read in the last 10 minutes, and only once the phrase is backed up: see
-   * the controller's `syncIfStale`. Syncs run one after the other, so opening a second account
-   * while the first still syncs only queues it.
+   * Reads stale networks on open, on switching accounts and once the phrase is backed up (hence
+   * `isBackedUp` in the deps). Syncs are queued, so a second account waits for the first.
    */
   useEffect(() => {
     if (!isAvailable || !selectedAccountId) return
@@ -86,7 +80,7 @@ const PrivacyPoolsDashboardScreen = () => {
     syncIfStale()
   }, [isAvailable, isBackedUp, selectedAccountId, syncIfStale])
 
-  // Including those still waiting their turn, so the banner names every network in for it at once
+  // Includes queued networks, so the banner names them all at once
   const firstSyncNetworkNames = useMemo(
     () =>
       networkRows
@@ -99,15 +93,13 @@ const PrivacyPoolsDashboardScreen = () => {
     [networkRows]
   )
 
-  // Above the tabs of both pages, where the regular dashboard shows its banners
+  // Above the tabs of both pages, like the regular dashboard's banners
   const banners = useMemo(
     () => (
       <View>
-        {/* Under the overview card, where the regular dashboard shows it */}
+        {/* Under the overview card, like on the regular dashboard */}
         <RecoveryPhraseBackupBanner />
-        {/* The one wait worth explaining: a network read for the first time takes minutes, not
-        seconds, and nothing else on screen says why the balance is not there yet. Locking the
-        wallet skips the networks still waiting their turn, hence asking to keep it unlocked. */}
+        {/* A first read takes minutes. Locking skips queued networks, hence "keep unlocked". */}
         {!!firstSyncNetworkNames.length && (
           <Banner
             type="info"
@@ -123,12 +115,12 @@ const PrivacyPoolsDashboardScreen = () => {
     [firstSyncNetworkNames, t]
   )
 
-  // Sending is a screen of its own, laid out like the regular Send - see PrivacyPoolsSendScreen
+  // See PrivacyPoolsSendScreen
   const openSend = useCallback(() => navigate(WEB_ROUTES.privacyPoolsSend), [navigate])
 
   return (
     <LayoutWrapper>
-      {/* Laid out like the regular dashboard: the overview card on top, the lists under it */}
+      {/* Laid out like the regular dashboard */}
       <View style={styles.container}>
         <PrivacyPoolsOverview
           unavailableReason={unavailableReason}

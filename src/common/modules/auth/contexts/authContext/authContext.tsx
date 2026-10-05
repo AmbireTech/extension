@@ -35,8 +35,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const authStatus = useMemo(() => {
     if (!accounts || !isReady) return AUTH_STATUS.LOADING
 
-    // A Privacy Pools account is selected in place of a regular one, which leaves `account` null -
-    // and it can be the only kind of account in the wallet
+    // `account` is null while a Privacy Pools account is selected, which may be the only account
     if (privacyPoolsAccountId) return AUTH_STATUS.AUTHENTICATED
 
     if (!accounts?.length || !account) {

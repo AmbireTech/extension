@@ -5,8 +5,7 @@
 // It is imported in background for development builds, and injected via Webpack
 // plugin for production where LavaMoat + SES isolate modules and harden intrinsics.
 import 'setimmediate'
-// Must stay above every other import: it patches a global that `@kohaku-eth/privacy-pools` needs
-// at module-evaluation time, and ES modules evaluate imports in order. See the file for why.
+// Must stay the first import: it patches a global needed at module-evaluation time - see the file
 import './kohakuShims'
 
 import { nanoid } from 'nanoid'
@@ -474,8 +473,7 @@ const init = async () => {
 
   const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
-  // Copied next to the bundle at build time (see webpack/extension.js) and served same-origin,
-  // so proving needs no network and no CSP entry for a third-party host.
+  // Copied at build time and served same-origin - see webpack/extension.js
   const privacyPoolsCircuitsBaseUrl = browser.runtime.getURL('privacy-pools-circuits/')
 
   mainCtrl = new MainController({
@@ -486,8 +484,7 @@ const init = async () => {
     fetch: fetchWithAnalytics,
     privacyPoolsFetch: fetch.bind(globalThis) as unknown as Fetch,
     privacyPoolsCircuitsBaseUrl,
-    // On Chrome, proofs run in an offscreen document, which unlike this service worker can use
-    // every core. Elsewhere - and on Chrome if that document cannot start - they run right here.
+    // On Chrome, in an offscreen document using every core; elsewhere or if it fails, right here
     privacyPoolsProverFactory: canUseOffscreenProver()
       ? createOffscreenProverFactory({
           fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),

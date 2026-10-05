@@ -39,7 +39,7 @@ const LastUpdatedAtElapsed: FC<{ lastUpdatedAt?: number }> = ({ lastUpdatedAt })
   )
 }
 
-/** One value of a network's row, as a pill. `label` is shown in place of a time when given. */
+/** A pill in a network's row. `label`, when given, replaces the time. */
 export const Cell: FC<{
   backgroundColor: ColorValue
   time?: number
@@ -65,10 +65,7 @@ export const Cell: FC<{
   </View>
 )
 
-/**
- * A network's row of the statuses table - its icon, name and when it was last read, pulsing while
- * it loads - with the values it is measured by as the children.
- */
+/** A statuses table row: network icon, name and last read time (pulsing while loading). */
 export const NetworkStatusRowShell: FC<{
   networkKey: string
   name: string

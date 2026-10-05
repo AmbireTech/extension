@@ -8,17 +8,14 @@ import {
   safeTokenAmountAndNumberMultiplication
 } from '@ambire-common/utils/numbers/formatters'
 
-// How precisely a typed USD amount is taken, before it is converted to the token
+// Precision of a typed USD amount before conversion
 const FIAT_DECIMALS = 10
 
 type AmountFieldMode = 'token' | 'fiat'
 
 /**
- * Both sides of what is typed in a Send amount field - the token amount and its USD value -
- * whichever of the two it is typed in. The same conversion the regular Send does in
- * `TransferController`, so the two forms agree on what an amount is worth.
- *
- * With no price, what is typed is the token amount and there is no USD value.
+ * Token and USD amounts of a Send amount field, typed in either. Same conversion as
+ * `TransferController`. With no price, the input is the token amount and there is no USD value.
  */
 const getAmountsFromFieldValue = ({
   fieldValue,
@@ -40,7 +37,7 @@ const getAmountsFromFieldValue = ({
     const fiatAmount = sanitizedFiat ? parseUnits(sanitizedFiat, FIAT_DECIMALS) : 0n
 
     return {
-      // Cut to the token's decimals, since a USD figure rarely divides into it evenly
+      // Cut to the token's decimals
       amount: getSanitizedAmount(
         formatUnits(
           (fiatAmount * CONVERSION_PRECISION_POW) / tokenPriceBigInt,
@@ -63,7 +60,7 @@ const getAmountsFromFieldValue = ({
       )
     }
   } catch {
-    // An entry that is not a number yet has no USD value; the form does not accept it either
+    // Not a number yet (the form rejects it too)
     return { amount: fieldValue, amountInFiat: '' }
   }
 }

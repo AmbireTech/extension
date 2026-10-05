@@ -268,9 +268,8 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
       platform: isAndroid ? 'mobile-android' : 'mobile-ios',
       fetch: fetchWithAnalytics as any,
       privacyPoolsFetch: fetch.bind(globalThis) as any,
-      // Privacy Pools proving is not wired on mobile yet - the ~23 MB circuit artifacts are not
-      // bundled here. Empty on purpose: the prover refuses to start rather than failing later with
-      // an unexplained fetch error.
+      // Not bundled on mobile (~23 MB). Empty, so the prover refuses to start instead of failing
+      // later with an unclear fetch error.
       privacyPoolsCircuitsBaseUrl: '',
       relayerUrl: config.RELAYER_URL,
       velcroUrl: config.VELCRO_URL,

@@ -44,7 +44,7 @@ const RecoveryPhraseBackupBanner = () => {
         type="warning"
         title={t('Phrase not backed up!')}
         text={
-          // Not read until the phrase is backed up, so the backup is also what loads the account
+          // A Privacy Pools account is not read until its phrase is backed up
           privacyPoolsAccountId
             ? t(
                 'Back up this recovery phrase to start using the account. It is the only way to recover it.'

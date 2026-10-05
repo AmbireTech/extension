@@ -64,7 +64,7 @@ const ManageRecoveryPhrase = ({
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
-  // Removed along with the phrase, which is the only way to recover what it holds
+  // Removed along with the phrase, the only way to recover it
   const hasPrivacyPoolsAccount = useMemo(
     () => privacyPoolsAccounts.some(({ seedId }) => seedId === recoveryPhrase.id),
     [privacyPoolsAccounts, recoveryPhrase.id]

@@ -1,15 +1,13 @@
 /**
- * The messages between the background and the Privacy Pools prover's offscreen document.
+ * Messages between the background and the Privacy Pools prover's offscreen document.
  *
- * Proving inputs carry a note's secret and nullifier - enough to spend it - so they only ever
- * travel over a dedicated port between those two contexts, never `runtime.sendMessage`, which every
- * extension page receives. They only go one way, from the background, and only once it has checked
- * the port was opened by the offscreen document (`isFromProverDocument`). What comes back - proofs
- * and their public signals - ends up on chain anyway.
+ * Proving inputs hold a note's secret and nullifier (enough to spend it), so they go only from the
+ * background over a dedicated port checked by `isFromProverDocument` - never `runtime.sendMessage`,
+ * which every extension page receives. Proofs and public signals coming back end up on chain anyway.
  */
 import type { PrivacyPoolsProver } from '@ambire-common/libs/privacyPools/prover'
 
-/** The name of the one port the offscreen document opens to the background. */
+/** Name of the port the offscreen document opens to the background. */
 export const PRIVACY_POOLS_PROVER_PORT_NAME = 'privacy-pools-prover'
 
 /** The offscreen document's page, relative to the extension root. */
@@ -19,10 +17,7 @@ export type PrivacyPoolsCircuit = Parameters<PrivacyPoolsProver['prove']>[0]
 
 type ProveResult = Awaited<ReturnType<PrivacyPoolsProver['prove']>>
 
-/**
- * Proving inputs with every bigint as a decimal string: extension messaging serializes as JSON,
- * which has no bigint.
- */
+/** Proving inputs with bigints as decimal strings - extension messaging is JSON. */
 export type EncodedSignals = Record<string, string | string[]>
 
 /** Background → offscreen document. */
@@ -35,12 +30,12 @@ export type ProveRequest = {
 
 /** Offscreen document → background. */
 export type ProverMessage =
-  /** Artifacts loaded and worker threads running: proofs can be asked for. */
+  /** Artifacts loaded and worker threads running. */
   | { type: 'ready' }
-  /** The document could not get ready. Nothing more about why: its own console has the details. */
+  /** Details are only in the document's console. */
   | { type: 'startup-failed' }
   | { type: 'proved'; id: number; proof: ProveResult['proof']; publicSignals: string[] }
-  /** Carries no message: one from the circuit could describe the inputs. */
+  /** No message: one from the circuit could reveal the inputs. */
   | { type: 'prove-failed'; id: number }
 
 const CIRCUITS: readonly PrivacyPoolsCircuit[] = ['withdraw', 'commitment']
@@ -56,7 +51,7 @@ const encodeSignal = (value: unknown): string | string[] => {
   throw new Error('privacyPools: a proving input is neither a number nor a list of numbers')
 }
 
-/** Turns proving inputs into something extension messaging can carry - see `EncodedSignals`. */
+/** Encodes proving inputs for extension messaging - see `EncodedSignals`. */
 export const encodeSignals = (signals: object): EncodedSignals =>
   Object.fromEntries(Object.entries(signals).map(([name, value]) => [name, encodeSignal(value)]))
 
@@ -79,12 +74,11 @@ export const decodeSignals = (signals: unknown): Record<string, bigint | bigint[
 }
 
 /**
- * Whether a port was opened by this extension's own prover document.
+ * Whether a port was opened by this extension's prover document.
  *
- * `onConnect` also fires for this extension's content scripts, which run inside websites, so the
- * extension id alone is not enough: the exact URL is checked too, and a sender with a tab - which
- * a content script always has - is refused. Other extensions only ever reach `onConnectExternal`,
- * which nothing here listens to.
+ * `onConnect` also fires for this extension's content scripts (inside websites), so the extension
+ * id is not enough: the exact URL is checked and a sender with a tab (as content scripts always
+ * have) is refused. Other extensions only reach `onConnectExternal`, which is not listened to.
  */
 export const isFromProverDocument = (port: chrome.runtime.Port): boolean =>
   port.name === PRIVACY_POOLS_PROVER_PORT_NAME &&

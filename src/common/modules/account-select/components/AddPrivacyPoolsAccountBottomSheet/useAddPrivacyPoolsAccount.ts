@@ -11,21 +11,16 @@ const selectPrivacyPoolsAccountId = (
 ) => state.privacyPoolsAccountId
 
 /**
- * What is being added: the account of a stored recovery phrase, or of a new one - whose id is not
- * known until it exists, so that one is recognised as whichever account gets selected instead of
- * the one selected before.
+ * The account being added. A new seed's id is unknown in advance, so it is recognised as any
+ * newly selected account.
  */
 type PendingAddition =
   | { kind: 'stored-seed'; seedId: string }
   | { kind: 'new-seed'; selectedAccountIdBefore: string | null }
 
 /**
- * Adds a Privacy Pools account and reports when it is on screen.
- *
- * Adding one also selects it, so it is done only once both have reached the UI: the background's
- * status says the work is over, the selection says it is safe to show the new account's dashboard
- * rather than a flash of the previous one. A failure is shown by the background as a toast, so
- * this only has to stop waiting.
+ * Adds and selects a Privacy Pools account. `onAdded` fires once both the status and the selection
+ * reach the UI, so the previous account's dashboard does not flash. The background toasts failures.
  */
 const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
   const { state: statuses, dispatch: mainDispatch } = useController(
@@ -38,8 +33,7 @@ const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
   )
   const { getExtraEntropy } = useExtraEntropy()
   const [pending, setPending] = useState<PendingAddition | null>(null)
-  // The status may still be settling from an earlier selection, so it only counts once this
-  // addition has been seen loading
+  // The status may be left from an earlier selection, so it counts only after this one loads
   const hasSeenLoading = useRef(false)
 
   const addFromStoredSeed = useCallback(
@@ -76,16 +70,14 @@ const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
       pending.kind === 'stored-seed'
         ? privacyPoolsAccountId === pending.seedId
         : !!privacyPoolsAccountId && privacyPoolsAccountId !== pending.selectedAccountIdBefore
-    // A failure, or a run that settled without selecting anything, leaves nothing to wait for.
-    // A success does not settle it on its own: the selection may reach the UI a moment later.
+    // On success, wait for the selection too: it may reach the UI a moment after the status
     const isOver =
       isAddedAccountSelected ||
       statuses.selectAccount === 'ERROR' ||
       statuses.selectAccount === 'INITIAL'
     if (!isOver) return
 
-    // Follows the background, which only reports back through state - there is no event to
-    // react to instead
+    // The background reports only through state, there is no event to react to
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPending(null)
     if (isAddedAccountSelected) onAdded()

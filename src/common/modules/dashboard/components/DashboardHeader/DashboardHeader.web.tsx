@@ -33,7 +33,7 @@ const selectPrivacyPoolsAccountId = (
 
 const DashboardHeader = () => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
-  // Selected in place of a regular account, so `account` is null while it is
+  // `account` is null while a Privacy Pools account is selected
   const { state: privacyPoolsAccountId } = useController(
     'SelectedAccountController',
     selectPrivacyPoolsAccountId
@@ -52,8 +52,7 @@ const DashboardHeader = () => {
     close: closeNetworkStatusesSheet
   } = useModalize()
 
-  // A Privacy Pools account's networks are read on demand and take long the first time, so its
-  // statuses are what tells how far along that is - shown in production too
+  // Shown in production for Privacy Pools: its first network reads take long
   const shouldDisplayNetworkStatuses = SHOULD_DISPLAY_NETWORK_STATUSES || !!privacyPoolsAccountId
 
   if (!account && !privacyPoolsAccountId) return null
@@ -67,7 +66,7 @@ const DashboardHeader = () => {
         />
       )}
       <View style={[flexbox.directionRow, flexbox.flex1, flexbox.justifySpaceBetween]}>
-        {/* Shows a Privacy Pools account too, selected in place of a regular one */}
+        {/* Also shows a Privacy Pools account */}
         <AccountButton />
         <View style={[flexbox.directionRow, flexbox.alignStart]}>
           {shouldDisplayNetworkStatuses && (

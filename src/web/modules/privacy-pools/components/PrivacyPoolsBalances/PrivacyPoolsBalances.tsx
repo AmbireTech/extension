@@ -60,8 +60,7 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
       t('Once a network is checked, what this account holds on it shows up here.')
     )
 
-  // Placeholders rather than an empty list, and only while nothing has been read yet: once there
-  // are rows, a later refresh keeps them on screen instead of swapping content in and out.
+  // Only while there are no rows: a later refresh keeps them on screen
   if (state === 'loading' && !balances.length) {
     return (
       <View style={styles.container}>
@@ -89,8 +88,7 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
           style={[styles.row, index === balances.length - 1 && { borderBottomWidth: 0 }]}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-            {/* The network badge is what identifies the pool a balance sits in, now that the list
-            spans every supported network - same as the dashboard's token list. */}
+            {/* The network badge identifies the pool, like on the dashboard's token list */}
             <TokenIcon
               chainId={BigInt(balance.chainId)}
               address={balance.tokenAddress}
@@ -106,8 +104,7 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
                 <Text fontSize={12} color={theme.secondaryText} numberOfLines={1}>
                   {balance.networkName}
                 </Text>
-                {/* What can be done with the funds, the way the regular dashboard marks a pending
-                balance: sent on, or still waiting for Privacy Pools to approve them */}
+                {/* Like the regular dashboard's pending balance badge */}
                 {balance.isReadyToSend && (
                   <Badge
                     text={t('Ready to send')}
@@ -150,9 +147,8 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
                 {privateValue(formatDecimals(balance.value, 'value'), isPrivacyModeEnabled, 8)}
               </Text>
             )}
-            {/* Not added to the amount above: until the association set approves a deposit it can
-            only be taken back publicly, to the address that made it - which is not a private
-            balance in any useful sense. */}
+            {/* Not in the amount above: until approved, a deposit can only be taken back
+            publicly by its depositor */}
             {!!balance.pendingAmount && (
               <Text fontSize={12} color={theme.warningText} numberOfLines={1}>
                 {t('+{{amount}} waiting for approval', {

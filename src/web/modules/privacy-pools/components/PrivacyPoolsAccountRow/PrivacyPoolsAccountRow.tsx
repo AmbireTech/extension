@@ -21,7 +21,7 @@ const selectMainStatuses = (state: AllControllersMappingType['MainController']) 
 type Props = {
   account: PrivacyPoolsAccountDisplay
   isSelected?: boolean
-  /** Makes the row select the account when pressed. Left out, the row is only informative. */
+  /** Selects the account on press. Without it the row is display-only. */
   onSelect?: (seedId: string) => void
   /** Adds a "Remove account" option to the row's menu. */
   onRemove?: (account: PrivacyPoolsAccountDisplay) => void
@@ -31,11 +31,8 @@ type Props = {
 const REMOVE_OPTION_VALUE = 'remove'
 
 /**
- * A Privacy Pools account in the account list - the counterpart of `Account`, with the same
- * height so the two sit in one list.
- *
- * The balance is a dash: it is only known once the account is opened and synced, and a stale or
- * guessed figure next to real ones would be misleading.
+ * `Account` for a Privacy Pools account, with the same height so both fit one list. The balance
+ * is a dash: it is known only once the account is opened and synced.
  */
 const PrivacyPoolsAccountRow = ({
   account,

@@ -1,27 +1,18 @@
 /**
- * Makes `snarkjs` importable in a Manifest V3 service worker, which is where Privacy Pools
- * generates its withdrawal proofs.
+ * Makes `snarkjs` importable in a Manifest V3 service worker.
  *
- * `ffjavascript` - reached through snarkjs, reached through the circuits package - builds its
- * worker blob at module scope:
+ * `ffjavascript` (via snarkjs) builds its worker blob at module scope:
  *
  *   if (globalThis?.Blob) { ... workerSource = URL.createObjectURL(workerBlob) }
  *
- * A `ServiceWorkerGlobalScope` has `Blob` but not `URL.createObjectURL`, so that branch is entered
- * and throws `TypeError: URL.createObjectURL is not a function` before any of our code runs. The
- * worker registration then fails outright with "script evaluation failed", which names neither the
- * module nor the reason.
+ * A service worker has `Blob` but not `URL.createObjectURL`, so this throws on import and the
+ * worker registration fails with an unhelpful "script evaluation failed".
  *
- * The stub is harmless because the URL it returns is never loaded: a service worker also has no
- * `Worker`, which is what ffjavascript checks to force its single-threaded path - the one that
- * ignores `workerSource` entirely. Measured at about 9.5s for a withdrawal proof that way, against
- * 3s with threads.
+ * The stubbed URL is never loaded: with no `Worker`, ffjavascript takes its single-threaded path,
+ * which ignores `workerSource` (about 9.5s per withdrawal proof, against 3s with threads).
  *
- * Imported for its side effect and it must come first: ES modules evaluate imports before any
- * statement in the importing file, so a stub installed further down would arrive too late.
- *
- * A no-op anywhere `URL.createObjectURL` already exists - extension pages, the Firefox background
- * page - so this stays a single unconditional import rather than a platform branch.
+ * Must be the first import: ES modules evaluate imports before the importing file's statements.
+ * A no-op where `URL.createObjectURL` exists (extension pages, the Firefox background page).
  */
 if (typeof URL.createObjectURL !== 'function') {
   URL.createObjectURL = () => 'data:application/javascript,'

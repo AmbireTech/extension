@@ -27,21 +27,18 @@ export type PrivacyPoolsNetworkRow = {
 }
 
 export type PrivacyPoolsBalanceDisplay = {
-  // Unique per (chain, token): the same token has a separate pool on every chain
+  // Per (chain, token): each chain has its own pool for a token
   id: string
   chainId: string
   networkName: string
   tokenAddress: string
   symbol: string
   decimals: number
-  /** Formatted with the token's own decimals - the part that can be sent on privately. */
+  /** The privately spendable part, formatted with the token's decimals. */
   approvedAmount: string
-  /** Whether any of it is approved, i.e. can be sent on - kept apart from the formatted amount. */
+  /** Whether any of it is approved, i.e. can be sent. */
   isReadyToSend: boolean
-  /**
-   * The part still waiting on the association set, formatted the same way, or null when there is
-   * none. Not spendable privately, so it is shown apart rather than added in.
-   */
+  /** The part still waiting on the association set, or null. Not spendable, so shown apart. */
   pendingAmount: string | null
   /** USD value of the approved part, or null when the token has no known price. */
   value: number | null
@@ -62,13 +59,11 @@ export type PrivacyPoolsActivityDisplay = {
 }
 
 /**
- * Which of the balance list's mutually exclusive states to render. The list is always on screen, so
- * each one has to say something of its own:
- * - 'unavailable' - the account cannot use Privacy Pools at all; the card above carries the reason
- * - 'not-loaded' - no network has been read yet, so nothing has been looked at. Not the same as an
- *   empty pool, which is a statement about the user's funds
- * - 'loading' - a first read is running and there is nothing to show yet
- * - 'ready' - at least one network has been read; rows stay put through later refreshes
+ * State of the balance list:
+ * - 'unavailable' - the account cannot use Privacy Pools; the card above shows why
+ * - 'not-loaded' - no network read yet (not the same as an empty pool)
+ * - 'loading' - a first read is running, nothing to show yet
+ * - 'ready' - at least one network read; rows stay through later refreshes
  */
 export type PrivacyPoolsBalancesState = 'unavailable' | 'not-loaded' | 'loading' | 'ready'
 
@@ -89,11 +84,8 @@ const selectPrices = (state: PrivacyPoolsState) => state.prices
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 /**
- * Everything the Privacy Pools screen renders, resolved in one place.
- *
- * The controller deals in raw amounts and chain ids; the views need names, decimals and prices.
- * Assembling that once here keeps a token from being described one way in the balance list and
- * another in the forms.
+ * Privacy Pools state resolved for display (network names, decimals, prices), in one place so the
+ * balance list and the forms describe a token the same way.
  */
 const usePrivacyPools = () => {
   const { state: supportedChainIds = NO_CHAIN_IDS, dispatch } = useController(
@@ -119,9 +111,7 @@ const usePrivacyPools = () => {
   const { state: prices } = useController('PrivacyPoolsController', selectPrices)
   const { state: networks } = useController('NetworksController', selectNetworks)
 
-  // Falls back to the raw chain id rather than to a translated "Unknown network": the chains here
-  // are already narrowed to the user's own networks, so a miss means something is off - and the id
-  // is what identifies it.
+  // Falls back to the chain id, not "Unknown network": a miss is a bug and the id identifies it
   const getNetworkName = useCallback(
     (chainId: string) =>
       networks?.find((network) => network.chainId.toString() === chainId)?.name || chainId,
@@ -129,11 +119,8 @@ const usePrivacyPools = () => {
   )
 
   /**
-   * USD price of a pooled token, as the Privacy Pools controller priced it - there is no selected
-   * account's portfolio to take it from while a Privacy Pools account is selected.
-   *
-   * Null rather than 0 when the token has no known price: a balance with no price is not a balance
-   * worth nothing, and the difference decides whether a row shows a value at all.
+   * USD price from the Privacy Pools controller (a Privacy Pools account has no portfolio).
+   * Null, not 0, when unknown: then the row shows no value at all.
    */
   const getTokenPrice = useCallback(
     (chainId: string, tokenAddress: string) =>
@@ -165,8 +152,7 @@ const usePrivacyPools = () => {
     [networkRows]
   )
 
-  // Shown on the balance the way the regular dashboard shows a network that failed to load; which
-  // network it is, is in the network statuses
+  // Flagged on the balance like a failed network on the regular dashboard
   const hasSyncError = useMemo(() => networkRows.some((row) => !!row.error), [networkRows])
 
   const tokenBalances = useMemo(
@@ -203,8 +189,7 @@ const usePrivacyPools = () => {
     [tokenBalances, getNetworkName, getTokenPrice]
   )
 
-  // Only the approved part, matching the rows below it. What is still waiting on the association
-  // set is counted separately, because it genuinely cannot be withdrawn yet.
+  // Approved part only, like the rows. The pending part cannot be withdrawn yet, so it is separate.
   const totalPrivateBalance = useMemo(
     () =>
       Object.values(getPrivacyPoolsValuePerChain(balancesByChain || {}, prices || {})).reduce(
@@ -255,22 +240,12 @@ const usePrivacyPools = () => {
     [activity, getNetworkName]
   )
 
-  /**
-   * Reads every supported network for the account on screen, one after the other, however recently
-   * they were read - what the refresh button does.
-   *
-   * Every network, including one never read on this device: its first read is the long one, but
-   * the pools' history comes from the published copy where there is one, and the account is not
-   * usable on a network until it has been read. The screen says when a first read is under way.
-   */
+  /** Reads every supported network, however recently read - the refresh button. */
   const syncAllChains = useCallback(() => {
     dispatch({ type: 'method', params: { method: 'sync', args: [] } })
   }, [dispatch])
 
-  /**
-   * What opening the account does: reads the networks not read in the last 10 minutes, once its
-   * recovery phrase is backed up - see the controller's `syncIfStale`.
-   */
+  /** On open: reads networks not read in 10 minutes, once the phrase is backed up. */
   const syncIfStale = useCallback(() => {
     dispatch({ type: 'method', params: { method: 'syncIfStale', args: [] } })
   }, [dispatch])

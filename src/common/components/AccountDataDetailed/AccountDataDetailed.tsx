@@ -25,7 +25,7 @@ const AccountDataDetailed = () => {
   const { t } = useTranslation()
   const { isNarrowWebLayout } = useCompactActionRequestLayout()
   const { state: account } = useController('SelectedAccountController', selectAccount)
-  // Selected in place of a regular account, and shown the way the account lists show it
+  // Shown in place of a regular account, like in the account lists
   const { selectedAccount: privacyPoolsAccount } = usePrivacyPoolsAccounts()
   const reverseLookup = useReverseLookup({
     address: account?.addr || ''

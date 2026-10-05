@@ -95,7 +95,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
         >
           {networkName}
         </Text>
-        {/* An explorer shows an address, and a Privacy Pools account has none */}
+        {/* A Privacy Pools account has no address to show in an explorer */}
         {!isPrivacyPoolsAccount && (
           <AnimatedPressable
             // Bind the parent animation so its hover state doesn't get lost

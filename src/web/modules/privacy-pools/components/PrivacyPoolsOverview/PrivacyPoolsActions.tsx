@@ -13,9 +13,7 @@ interface Props {
   isSendDisabled: boolean
 }
 
-// Reuses the dashboard's glass route buttons (Send/Swap/Explore) so the privacy card speaks the
-// same visual language as the dashboard overview. There is nothing to add funds with here: they
-// are sent to the account from another of the wallet's accounts.
+// The dashboard's route buttons. No receive button: funds are sent here from other accounts.
 const PrivacyPoolsActions: FC<Props> = ({ onSend, isSendDisabled }) => {
   const { t } = useTranslation()
   const { isNarrowWebLayout } = useCompactActionRequestLayout()

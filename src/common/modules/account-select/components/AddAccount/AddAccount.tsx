@@ -249,7 +249,7 @@ const AddAccount = ({
             disabled={isCreatingNewSeedAccount}
           />
         )}
-        {/* Extension only for now, and never where only importing is offered */}
+        {/* Extension only for now */}
         {isWeb && !showImportOnly && (
           <Option
             text={t('Add a Privacy Pools account')}

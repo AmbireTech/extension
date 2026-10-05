@@ -24,34 +24,26 @@ interface Props {
   symbol: string
   decimals: number
   quote: PrivacyPoolsQuote
-  /** USD price of the sent token, or null when it has none. */
+  /** USD price of the sent token, or null when unknown. */
   tokenPrice: number | null
 }
 
-/** The speeds the regular fee selector offers, in its order. */
+/** The regular fee selector's speeds, in its order. */
 const FEE_SPEEDS = [FeeSpeed.Slow, FeeSpeed.Medium, FeeSpeed.Fast, FeeSpeed.Ape]
 
-/**
- * The speed a transfer from a Privacy Pools account actually goes out at: the SDK always prices it
- * at Pimlico's "standard" gas price, which the regular fee selector calls Medium. Preselected.
- */
+/** The SDK always prices at Pimlico's "standard" gas price, which the fee selector calls Medium. */
 const PRIVACY_POOLS_FEE_SPEED = FeeSpeed.Medium
 
 const getFeeSpeedLabelText = (speed: FeeSpeed) => speed.charAt(0).toUpperCase() + speed.slice(1)
 
 /**
- * The network fee of a transfer from a Privacy Pools account, laid out like the regular fee
- * selector: what it costs in USD and in the token that pays it, then the speed.
+ * Network fee of a Privacy Pools transfer, laid out like the regular fee selector. Read-only: the
+ * fee comes out of the sent amount (paying it from anything else would link it to the transfer)
+ * and is locked into the proof with the speed. The speed select lists every speed only to look
+ * like the regular one; each shows the same fee and the pick changes nothing.
  *
- * Neither can be changed. The fee is taken out of the amount being sent, since nothing else the
- * user owns can pay it without being tied to the transfer. The speed is the gas price the SDK priced
- * the transfer at - Pimlico's "standard", which the regular fee selector calls Medium - and it is
- * locked into the proof along with the fee. The speed select still lists every speed, so it looks
- * like the regular one, and each shows the same fee - which is what the transfer costs whichever is
- * picked. The pick changes nothing that is sent.
- *
- * Shows what the transfer is expected to cost when it could be run first, and the most it can cost
- * otherwise. The difference is refunded to the recipient in the same transaction.
+ * Shows the expected fee when the transfer could be simulated, otherwise the maximum. The
+ * difference is refunded to the recipient in the same transaction.
  */
 const PrivacyPoolsNetworkFee: FC<Props> = ({
   chainId,
@@ -192,7 +184,7 @@ const PrivacyPoolsNetworkFee: FC<Props> = ({
         <Text fontSize={14} appearance="secondaryText">
           {t('Speed')}
         </Text>
-        {/* Mirrors the regular fee selector's speed select, down to its menu placement */}
+        {/* Mirrors the regular fee selector's speed select */}
         <Select
           value={selectedSpeedOption}
           setValue={selectSpeed}

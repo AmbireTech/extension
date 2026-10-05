@@ -67,9 +67,9 @@ const SendForm = ({
   addressStateFieldValue: string
   setAddressStateFieldValue: (value: string) => void
   amountAdjustmentInfo?: AmountAdjustmentInfo | null
-  /** Offered as recipients where Privacy Pools is available - left out, only addresses are. */
+  /** Offered as recipients where Privacy Pools is available. */
   privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
-  /** Sends to a Privacy Pools account by its recovery phrase id, or back to an address with null. */
+  /** Picks a Privacy Pools account by its recovery phrase id, or null to go back to an address. */
   onSelectPrivacyPoolsRecipient?: (seedId: string | null) => void
 }) => {
   const { validation } = addressInputState

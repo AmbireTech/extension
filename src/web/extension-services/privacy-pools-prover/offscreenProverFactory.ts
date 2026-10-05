@@ -19,19 +19,16 @@ import {
   ProverMessage
 } from './protocol'
 
-/** How long the document gets to load the artifacts and start its threads before it is given up. */
+/** Time for the document to load the artifacts and start its threads. */
 const STARTUP_TIMEOUT_MS = 30 * 1000
 
 /**
- * A proof taking longer than this is taken as stuck. Several times what one takes on a single
- * thread, so a slow machine is not cut off - but a worker that died mid-task never answers at all.
+ * A proof taking longer is taken as stuck (a worker that died mid-task never answers). Several
+ * times a single-thread proof, so a slow machine is not cut off.
  */
 const PROOF_TIMEOUT_MS = 3 * 60 * 1000
 
-/**
- * How long the document stays open after its last proof. Long enough to cover the gaps between the
- * proofs of one withdrawal; closing it then frees the artifacts and the threads.
- */
+/** Idle time before closing the document. Covers the gaps between the proofs of one withdrawal. */
 const IDLE_CLOSE_MS = 2 * 60 * 1000
 
 // Not in this version of `@types/chrome`
@@ -55,24 +52,20 @@ const SIGNAL_MAPPERS = {
 } as const
 
 const mapPublicSignals = <C extends CircuitName>(circuit: C, publicSignals: string[]) =>
-  // Each mapper returns the signals of its own circuit, which TypeScript cannot follow through
-  // the lookup
+  // TypeScript cannot narrow the mapper's return type through the lookup
   SIGNAL_MAPPERS[circuit](publicSignals) as CircuitPublicSignalsMap[C]
 
-/** Whether this browser can host the prover document - Chrome, not Firefox or Safari. */
+/** Whether the browser supports offscreen documents (Chrome, not Firefox or Safari). */
 export const canUseOffscreenProver = () =>
   typeof chrome !== 'undefined' && typeof chrome.offscreen?.createDocument === 'function'
 
 /**
- * A prover that generates proofs in an offscreen document, where they run on every core instead of
- * the service worker's single thread - see `offscreen.ts`.
+ * Proves in an offscreen document on every core instead of the service worker's single thread.
+ * The document opens on the first proof and closes when idle. If it fails to open or start, all
+ * later proofs use `fallback` (the in-process prover) and `onError` is called once.
  *
- * The document is opened on the first proof and closed once idle. If it cannot be opened or does
- * not start, proofs fall back to `fallback` - the in-process prover - for the rest of this
- * background's life, and `onError` is told once: slower, but a withdrawal still goes through.
- *
- * The proving inputs only ever reach a port opened by the document itself, checked by
- * `isFromProverDocument`. Anything else that connects under its name is disconnected.
+ * Proving inputs are sent only to a port the document opened (`isFromProverDocument`); any other
+ * port connecting under its name is disconnected.
  */
 export const createOffscreenProverFactory = ({
   fallback,
@@ -89,9 +82,9 @@ export const createOffscreenProverFactory = ({
   let closing: Promise<void> = Promise.resolve()
   let idleTimeout: ReturnType<typeof setTimeout> | null = null
   let isUnavailable = false
-  /** Whether this background created a document it has not closed since. */
+  /** Whether this background created a document and has not closed it. */
   let isDocumentOpen = false
-  /** Set only while a document is starting, to hand it the port that document opens. */
+  /** Set only while a document is starting, to receive the port it opens. */
   let acceptPort: ((port: chrome.runtime.Port) => void) | null = null
 
   chrome.runtime.onConnect.addListener((port) => {
@@ -110,7 +103,7 @@ export const createOffscreenProverFactory = ({
     idleTimeout = null
   }
 
-  /** Whether a document is open - this background's, or one left over from before it restarted. */
+  /** Whether a document is open, including one left over from before a restart. */
   const hasDocument = async () => {
     const runtime: ChromeRuntimeWithContexts = chrome.runtime
     // Chrome 116+. Before it, a leftover document makes `createDocument` fail, which falls back.
@@ -189,7 +182,7 @@ export const createOffscreenProverFactory = ({
     })
   }
 
-  /** Resolves with the document's port once it reports it is ready to prove. */
+  /** Resolves with the document's port once it reports ready. */
   const waitForReadyDocument = () => {
     let cancel: (error: Error) => void = () => {}
 
@@ -283,7 +276,7 @@ export const createOffscreenProverFactory = ({
       const timeout = setTimeout(() => {
         pendingProofs.delete(request.id)
         reject(new Error('privacyPools: generating the proof took too long'))
-        // Most likely stuck rather than slow, so the next proof starts from a fresh document
+        // Likely stuck, so the next proof starts from a fresh document
         closeDocument().catch((error) => console.error(error))
       }, PROOF_TIMEOUT_MS)
 

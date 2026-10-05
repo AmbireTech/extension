@@ -19,10 +19,7 @@ type Props = {
   onClear: () => void
 }
 
-/**
- * The recipient field once a Privacy Pools account is picked - in place of the address field,
- * since there is no address to show or edit. Laid out like `Recipient`, so the form keeps its shape.
- */
+/** Replaces the address field once a Privacy Pools account is picked. Laid out like `Recipient`. */
 const PrivacyPoolsRecipient = ({ label, disabled, onClear }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()

@@ -12,7 +12,7 @@ interface Style {
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
-    // Sized like the regular fee selector's token select, so the two read as the same control
+    // Sized like the regular fee selector's token select
     payWith: {
       height: SELECT_SIZE_TO_HEIGHT.md,
       ...common.borderRadiusPrimary,

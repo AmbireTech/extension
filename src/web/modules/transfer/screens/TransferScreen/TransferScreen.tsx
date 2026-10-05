@@ -354,7 +354,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
   const isTransferFormValid = useMemo(() => {
-    // No address to validate, but its calls have to be ready, and they can take a while
+    // No address to validate, but the deposit calls must be prepared, which takes a while
     if (privacyPoolsRecipient)
       return !!isFormValid && !isPreparingPrivacyPoolsDeposit && !privacyPoolsDepositError
 
@@ -517,7 +517,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
         isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
-        // The calls into a Privacy Pools account take a moment to prepare - see `isTransferFormValid`
+        // See `isTransferFormValid`
         isLoading={!!privacyPoolsRecipient && isPreparingPrivacyPoolsDeposit}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
@@ -598,7 +598,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     )
   }
 
-  // Known from what was sent, since the form - and its recipient - is reset once it is
+  // Read from the sent op, as the form and its recipient are reset after sending
   const privacyPoolsEntrypoint = latestBroadcastedAccountOp
     ? getPrivacyPoolsChainConfig(latestBroadcastedAccountOp.chainId)?.entrypointAddress
     : undefined

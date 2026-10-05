@@ -6,7 +6,7 @@ import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
-/** The header of the statuses table: the network column, then one per value, sized like the row. */
+/** The statuses table header, with columns sized like the rows. */
 const NetworkStatusesHeader: FC<{
   networkLabel: string
   columns: { label: string; flex: number }[]

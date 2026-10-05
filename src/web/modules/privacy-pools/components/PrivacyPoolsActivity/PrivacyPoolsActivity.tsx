@@ -26,7 +26,7 @@ interface Props {
 
 const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
 
-// In the words the wallet uses for them: funds sent to the account, and funds it sent on
+// In wallet terms rather than protocol ones
 const TYPE_LABEL: { [type in PrivacyPoolsActivityType]: string } = {
   deposit: 'Received',
   withdraw: 'Sent'
@@ -39,11 +39,8 @@ const STATUS_LABEL: { [status in PrivacyPoolsActivityStatus]: string } = {
 }
 
 /**
- * What this wallet has done with the pools.
- *
- * Kept locally rather than read back from the chain, because the pool exposes no history a wallet
- * could reconstruct: notes carry no timestamp and no transaction id, and a change note left by a
- * withdrawal is indistinguishable from a fresh deposit.
+ * This wallet's Privacy Pools activity, kept locally: the chain cannot reconstruct it, as notes
+ * have no timestamp or transaction id and a withdrawal's change note looks like a deposit.
  */
 const PrivacyPoolsActivity: FC<Props> = ({ activity }) => {
   const { t } = useTranslation()

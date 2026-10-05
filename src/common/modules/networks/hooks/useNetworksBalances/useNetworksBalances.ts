@@ -22,9 +22,8 @@ const selectPrivacyPoolsChainIds = (state: AllControllersMappingType['PrivacyPoo
 const NO_VALUES: { [chainId: string]: number } = {}
 
 /**
- * What the networks screen lists, and the balance it shows for each network and in total, for
- * whichever kind of account is selected: the portfolio's networks for a regular account, and the
- * networks Privacy Pools runs on for a Privacy Pools account - valued the way its dashboard is.
+ * The networks screen's networks and balances: the portfolio's for a regular account, or the
+ * Privacy Pools networks for a Privacy Pools account (valued like its dashboard).
  */
 const useNetworksBalances = () => {
   const { state: privacyPoolsAccountId } = useController(
