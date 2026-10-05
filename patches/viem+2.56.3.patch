@@ -1,5 +1,5 @@
 diff --git a/node_modules/viem/_cjs/actions/token/approve.js b/node_modules/viem/_cjs/actions/token/approve.js
-index 726bd09..23c4785 100644
+index 726bd09cb3..23c4785ddd 100644
 --- a/node_modules/viem/_cjs/actions/token/approve.js
 +++ b/node_modules/viem/_cjs/actions/token/approve.js
 @@ -21,7 +21,8 @@ async function approve(client, parameters) {
@@ -13,7 +13,7 @@ index 726bd09..23c4785 100644
          return (0, estimateContractGas_js_1.estimateContractGas)(client, {
              ...(0, internal_js_1.pickWriteParameters)(parameters),
 diff --git a/node_modules/viem/_cjs/actions/token/getAllowance.js b/node_modules/viem/_cjs/actions/token/getAllowance.js
-index 8660140..8be0a7d 100644
+index 8660140149..8be0a7d5d0 100644
 --- a/node_modules/viem/_cjs/actions/token/getAllowance.js
 +++ b/node_modules/viem/_cjs/actions/token/getAllowance.js
 @@ -27,6 +27,7 @@ async function getAllowance(client, parameters) {
@@ -27,7 +27,7 @@ index 8660140..8be0a7d 100644
  //# sourceMappingURL=getAllowance.js.map
 \ No newline at end of file
 diff --git a/node_modules/viem/_cjs/actions/token/getBalance.js b/node_modules/viem/_cjs/actions/token/getBalance.js
-index 95e8a35..8ae0443 100644
+index 95e8a35472..8ae04437dd 100644
 --- a/node_modules/viem/_cjs/actions/token/getBalance.js
 +++ b/node_modules/viem/_cjs/actions/token/getBalance.js
 @@ -36,6 +36,7 @@ async function getBalance(client, parameters) {
@@ -41,7 +41,7 @@ index 95e8a35..8ae0443 100644
  //# sourceMappingURL=getBalance.js.map
 \ No newline at end of file
 diff --git a/node_modules/viem/_cjs/actions/token/getTotalSupply.js b/node_modules/viem/_cjs/actions/token/getTotalSupply.js
-index fc6ad09..4071adc 100644
+index fc6ad09ddd..4071adc8f3 100644
 --- a/node_modules/viem/_cjs/actions/token/getTotalSupply.js
 +++ b/node_modules/viem/_cjs/actions/token/getTotalSupply.js
 @@ -27,6 +27,7 @@ async function getTotalSupply(client, parameters) {
@@ -55,7 +55,7 @@ index fc6ad09..4071adc 100644
  //# sourceMappingURL=getTotalSupply.js.map
 \ No newline at end of file
 diff --git a/node_modules/viem/_cjs/actions/token/transfer.js b/node_modules/viem/_cjs/actions/token/transfer.js
-index 9105404..3a39e66 100644
+index 9105404dac..3a39e665a4 100644
 --- a/node_modules/viem/_cjs/actions/token/transfer.js
 +++ b/node_modules/viem/_cjs/actions/token/transfer.js
 @@ -21,7 +21,8 @@ async function transfer(client, parameters) {
@@ -68,8 +68,27 @@ index 9105404..3a39e66 100644
      async function estimateGas(client, parameters) {
          return (0, estimateContractGas_js_1.estimateContractGas)(client, {
              ...(0, internal_js_1.pickWriteParameters)(parameters),
+diff --git a/node_modules/viem/_cjs/clients/createClient.js b/node_modules/viem/_cjs/clients/createClient.js
+index f5d616584f..770e26c8c2 100644
+--- a/node_modules/viem/_cjs/clients/createClient.js
++++ b/node_modules/viem/_cjs/clients/createClient.js
+@@ -78,11 +78,12 @@ function bindActionDecorators(client, action) {
+     ])
+         if (Object.hasOwn(action, key)) {
+             const helper = action[key];
+-            wrapped[key] = (args = {}) => {
++            // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++            Object.defineProperty(wrapped, key, { writable: true, enumerable: true, configurable: true, value: (args = {}) => {
+                 if (helper.length === 1)
+                     return helper(args);
+                 return helper(client, args);
+-            };
++            } });
+         }
+     for (const key of ['extractEvent', 'extractEvents'])
+         if (Object.hasOwn(action, key))
 diff --git a/node_modules/viem/_cjs/tempo/actions/accessKey.js b/node_modules/viem/_cjs/tempo/actions/accessKey.js
-index a3973fa..30911ef 100644
+index a3973fad15..30911efd57 100644
 --- a/node_modules/viem/_cjs/tempo/actions/accessKey.js
 +++ b/node_modules/viem/_cjs/tempo/actions/accessKey.js
 @@ -119,7 +119,8 @@ async function burnWitness(client, parameters) {
@@ -153,7 +172,7 @@ index a3973fa..30911ef 100644
  function resolveAccessKeyAddress(accessKey) {
      if (typeof accessKey === 'string')
 diff --git a/node_modules/viem/_cjs/tempo/actions/amm.js b/node_modules/viem/_cjs/tempo/actions/amm.js
-index a25d479..c7c1359 100644
+index a25d47984d..c7c1359f16 100644
 --- a/node_modules/viem/_cjs/tempo/actions/amm.js
 +++ b/node_modules/viem/_cjs/tempo/actions/amm.js
 @@ -87,7 +87,8 @@ async function getLiquidityBalance(client, parameters) {
@@ -197,7 +216,7 @@ index a25d479..c7c1359 100644
          const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
              abi: Abis.feeAmm,
 diff --git a/node_modules/viem/_cjs/tempo/actions/channel.js b/node_modules/viem/_cjs/tempo/actions/channel.js
-index 34db47b..1f1cce4 100644
+index 34db47ba34..1f1cce43c0 100644
 --- a/node_modules/viem/_cjs/tempo/actions/channel.js
 +++ b/node_modules/viem/_cjs/tempo/actions/channel.js
 @@ -57,7 +57,8 @@ async function close(client, parameters) {
@@ -271,7 +290,7 @@ index 34db47b..1f1cce4 100644
          const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
              abi: Abis.tip20ChannelReserve,
 diff --git a/node_modules/viem/_cjs/tempo/actions/dex.js b/node_modules/viem/_cjs/tempo/actions/dex.js
-index ceb0c3d..16cfa15 100644
+index ceb0c3d14e..16cfa15e75 100644
 --- a/node_modules/viem/_cjs/tempo/actions/dex.js
 +++ b/node_modules/viem/_cjs/tempo/actions/dex.js
 @@ -59,7 +59,8 @@ async function buy(client, parameters) {
@@ -415,7 +434,7 @@ index ceb0c3d..16cfa15 100644
  async function withdrawSync(client, parameters) {
      const { throwOnReceiptRevert = true, ...rest } = parameters;
 diff --git a/node_modules/viem/_cjs/tempo/actions/earn/deployment.js b/node_modules/viem/_cjs/tempo/actions/earn/deployment.js
-index b2ee337..a0fe2a8 100644
+index b2ee337ca7..a0fe2a8c92 100644
 --- a/node_modules/viem/_cjs/tempo/actions/earn/deployment.js
 +++ b/node_modules/viem/_cjs/tempo/actions/earn/deployment.js
 @@ -93,7 +93,8 @@ async function createErc4626Engine(client, parameters) {
@@ -449,7 +468,7 @@ index b2ee337..a0fe2a8 100644
          const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
              abi: engineBindingAbi,
 diff --git a/node_modules/viem/_cjs/tempo/actions/earn.js b/node_modules/viem/_cjs/tempo/actions/earn.js
-index 4e7faf7..6efc727 100644
+index 4e7faf703e..6efc727075 100644
 --- a/node_modules/viem/_cjs/tempo/actions/earn.js
 +++ b/node_modules/viem/_cjs/tempo/actions/earn.js
 @@ -238,7 +238,8 @@ async function deposit(client, parameters) {
@@ -513,7 +532,7 @@ index 4e7faf7..6efc727 100644
          const { shareToken, vault } = args;
          const assetAmount = internal_Token.toBaseUnits(args.assetAmount, undefined);
 diff --git a/node_modules/viem/_cjs/tempo/actions/fee.js b/node_modules/viem/_cjs/tempo/actions/fee.js
-index 1350dce..4504d6e 100644
+index 1350dcefaf..4504d6e88f 100644
 --- a/node_modules/viem/_cjs/tempo/actions/fee.js
 +++ b/node_modules/viem/_cjs/tempo/actions/fee.js
 @@ -106,7 +106,8 @@ async function getUserToken(client, ...parameters) {
@@ -557,7 +576,7 @@ index 1350dce..4504d6e 100644
          const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
              abi: Abis.feeManager,
 diff --git a/node_modules/viem/_cjs/tempo/actions/multisig.js b/node_modules/viem/_cjs/tempo/actions/multisig.js
-index 47ea69d..eb1c22f 100644
+index 47ea69df46..eb1c22f1bb 100644
 --- a/node_modules/viem/_cjs/tempo/actions/multisig.js
 +++ b/node_modules/viem/_cjs/tempo/actions/multisig.js
 @@ -37,7 +37,8 @@ async function getConfigCommitment(client, parameters) {
@@ -581,7 +600,7 @@ index 47ea69d..eb1c22f 100644
          const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
              abi: Abis.nativeMultisig,
 diff --git a/node_modules/viem/_cjs/tempo/actions/nonce.js b/node_modules/viem/_cjs/tempo/actions/nonce.js
-index f0ee3a7..a4fcfd0 100644
+index f0ee3a73de..a4fcfd0a0c 100644
 --- a/node_modules/viem/_cjs/tempo/actions/nonce.js
 +++ b/node_modules/viem/_cjs/tempo/actions/nonce.js
 @@ -24,7 +24,8 @@ async function getNonce(client, parameters) {
@@ -595,7 +614,7 @@ index f0ee3a7..a4fcfd0 100644
  function watchNonceIncremented(client, parameters) {
      const { onNonceIncremented, ...rest } = parameters;
 diff --git a/node_modules/viem/_cjs/tempo/actions/policy.js b/node_modules/viem/_cjs/tempo/actions/policy.js
-index bface4d..3828841 100644
+index bface4d996..3828841417 100644
 --- a/node_modules/viem/_cjs/tempo/actions/policy.js
 +++ b/node_modules/viem/_cjs/tempo/actions/policy.js
 @@ -64,7 +64,8 @@ async function create(client, parameters) {
@@ -659,7 +678,7 @@ index bface4d..3828841 100644
  function watchCreate(client, parameters) {
      const { onPolicyCreated, ...rest } = parameters;
 diff --git a/node_modules/viem/_cjs/tempo/actions/receivePolicy.js b/node_modules/viem/_cjs/tempo/actions/receivePolicy.js
-index 3ea7c2e..1b13adc 100644
+index 3ea7c2e6eb..1b13adc42b 100644
 --- a/node_modules/viem/_cjs/tempo/actions/receivePolicy.js
 +++ b/node_modules/viem/_cjs/tempo/actions/receivePolicy.js
 @@ -70,7 +70,8 @@ async function burn(client, parameters) {
@@ -723,7 +742,7 @@ index 3ea7c2e..1b13adc 100644
  function watchBlocked(client, parameters) {
      const { onBlocked, ...rest } = parameters;
 diff --git a/node_modules/viem/_cjs/tempo/actions/reward.js b/node_modules/viem/_cjs/tempo/actions/reward.js
-index f85222c..7e9afe9 100644
+index f85222c157..7e9afe976d 100644
 --- a/node_modules/viem/_cjs/tempo/actions/reward.js
 +++ b/node_modules/viem/_cjs/tempo/actions/reward.js
 @@ -40,7 +40,8 @@ async function claim(client, parameters) {
@@ -787,7 +806,7 @@ index f85222c..7e9afe9 100644
          const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
              abi: Abis.tip20,
 diff --git a/node_modules/viem/_cjs/tempo/actions/token.js b/node_modules/viem/_cjs/tempo/actions/token.js
-index 9b9edcf..8e2348b 100644
+index 9b9edcffc4..8e2348b6ac 100644
 --- a/node_modules/viem/_cjs/tempo/actions/token.js
 +++ b/node_modules/viem/_cjs/tempo/actions/token.js
 @@ -88,7 +88,8 @@ async function approve(client, parameters) {
@@ -1001,7 +1020,7 @@ index 9b9edcf..8e2348b 100644
          const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
              abi: Abis.tip20,
 diff --git a/node_modules/viem/_cjs/tempo/actions/validator.js b/node_modules/viem/_cjs/tempo/actions/validator.js
-index 65044b9..2ae10fa 100644
+index 65044b924e..2ae10fa623 100644
 --- a/node_modules/viem/_cjs/tempo/actions/validator.js
 +++ b/node_modules/viem/_cjs/tempo/actions/validator.js
 @@ -56,7 +56,8 @@ async function add(client, parameters) {
@@ -1115,7 +1134,7 @@ index 65044b9..2ae10fa 100644
  async function updateSync(client, parameters) {
      const { throwOnReceiptRevert = true, ...rest } = parameters;
 diff --git a/node_modules/viem/_cjs/tempo/actions/virtualAddress.js b/node_modules/viem/_cjs/tempo/actions/virtualAddress.js
-index 7610d90..2540b0f 100644
+index 7610d90247..2540b0fd3f 100644
 --- a/node_modules/viem/_cjs/tempo/actions/virtualAddress.js
 +++ b/node_modules/viem/_cjs/tempo/actions/virtualAddress.js
 @@ -33,7 +33,8 @@ async function getMasterAddress(client, parameters) {
@@ -1139,7 +1158,7 @@ index 7610d90..2540b0f 100644
          const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
              abi: Abis.addressRegistry,
 diff --git a/node_modules/viem/_esm/actions/token/approve.js b/node_modules/viem/_esm/actions/token/approve.js
-index 1c2847f..7e0fd04 100644
+index 1c2847fcfe..7e0fd04ebe 100644
 --- a/node_modules/viem/_esm/actions/token/approve.js
 +++ b/node_modules/viem/_esm/actions/token/approve.js
 @@ -59,7 +59,8 @@ export async function approve(client, parameters) {
@@ -1153,7 +1172,7 @@ index 1c2847f..7e0fd04 100644
       * Estimates the gas required to approve a spender. `amount.decimals` is
       * inferred from declared client tokens when omitted.
 diff --git a/node_modules/viem/_esm/actions/token/getAllowance.js b/node_modules/viem/_esm/actions/token/getAllowance.js
-index 5327d08..6333e6f 100644
+index 5327d0884d..6333e6fe3f 100644
 --- a/node_modules/viem/_esm/actions/token/getAllowance.js
 +++ b/node_modules/viem/_esm/actions/token/getAllowance.js
 @@ -57,6 +57,7 @@ export async function getAllowance(client, parameters) {
@@ -1167,7 +1186,7 @@ index 5327d08..6333e6f 100644
  //# sourceMappingURL=getAllowance.js.map
 \ No newline at end of file
 diff --git a/node_modules/viem/_esm/actions/token/getBalance.js b/node_modules/viem/_esm/actions/token/getBalance.js
-index 360c297..c4e05b9 100644
+index 360c29703f..c4e05b9074 100644
 --- a/node_modules/viem/_esm/actions/token/getBalance.js
 +++ b/node_modules/viem/_esm/actions/token/getBalance.js
 @@ -65,6 +65,7 @@ export async function getBalance(client, parameters) {
@@ -1181,7 +1200,7 @@ index 360c297..c4e05b9 100644
  //# sourceMappingURL=getBalance.js.map
 \ No newline at end of file
 diff --git a/node_modules/viem/_esm/actions/token/getTotalSupply.js b/node_modules/viem/_esm/actions/token/getTotalSupply.js
-index 10ce858..85f388c 100644
+index 10ce8580b0..85f388cb33 100644
 --- a/node_modules/viem/_esm/actions/token/getTotalSupply.js
 +++ b/node_modules/viem/_esm/actions/token/getTotalSupply.js
 @@ -55,6 +55,7 @@ export async function getTotalSupply(client, parameters) {
@@ -1195,7 +1214,7 @@ index 10ce858..85f388c 100644
  //# sourceMappingURL=getTotalSupply.js.map
 \ No newline at end of file
 diff --git a/node_modules/viem/_esm/actions/token/transfer.js b/node_modules/viem/_esm/actions/token/transfer.js
-index d6e94a4..e0a9b90 100644
+index d6e94a4c47..e0a9b90884 100644
 --- a/node_modules/viem/_esm/actions/token/transfer.js
 +++ b/node_modules/viem/_esm/actions/token/transfer.js
 @@ -75,7 +75,8 @@ export async function transfer(client, parameters) {
@@ -1208,8 +1227,31 @@ index d6e94a4..e0a9b90 100644
      /**
       * Estimates the gas required to transfer ERC-20 tokens. `amount.decimals` is
       * inferred from declared client tokens when omitted.
+diff --git a/node_modules/viem/_esm/clients/createClient.js b/node_modules/viem/_esm/clients/createClient.js
+index 28a62583b4..dfb9ca4ca7 100644
+--- a/node_modules/viem/_esm/clients/createClient.js
++++ b/node_modules/viem/_esm/clients/createClient.js
+@@ -89,7 +89,8 @@ export function bindActionDecorators(client, action) {
+     ])
+         if (Object.hasOwn(action, key)) {
+             const helper = action[key];
+-            wrapped[key] = (args = {}) => {
++            // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++            Object.defineProperty(wrapped, key, { writable: true, enumerable: true, configurable: true, value: (args = {}) => {
+                 // Single-parameter helpers are client-less (e.g. `dex.buy.call(args)`).
+                 // Everything else is called with `(client, args)`: two-parameter
+                 // helpers, rest-parameter helpers that accept `(client, args)` or
+@@ -98,7 +99,7 @@ export function bindActionDecorators(client, action) {
+                 if (helper.length === 1)
+                     return helper(args);
+                 return helper(client, args);
+-            };
++            } });
+         }
+     for (const key of ['extractEvent', 'extractEvents'])
+         if (Object.hasOwn(action, key))
 diff --git a/node_modules/viem/_esm/tempo/actions/accessKey.js b/node_modules/viem/_esm/tempo/actions/accessKey.js
-index e552f1f..797b3be 100644
+index e552f1f3c6..797b3bee38 100644
 --- a/node_modules/viem/_esm/tempo/actions/accessKey.js
 +++ b/node_modules/viem/_esm/tempo/actions/accessKey.js
 @@ -226,7 +226,8 @@ export async function burnWitness(client, parameters) {
@@ -1293,7 +1335,7 @@ index e552f1f..797b3be 100644
  /** @internal */
  function resolveAccessKeyAddress(accessKey) {
 diff --git a/node_modules/viem/_esm/tempo/actions/amm.js b/node_modules/viem/_esm/tempo/actions/amm.js
-index ad4481e..3f444d9 100644
+index ad4481ea9d..3f444d9e57 100644
 --- a/node_modules/viem/_esm/tempo/actions/amm.js
 +++ b/node_modules/viem/_esm/tempo/actions/amm.js
 @@ -139,7 +139,8 @@ export async function getLiquidityBalance(client, parameters) {
@@ -1337,7 +1379,7 @@ index ad4481e..3f444d9 100644
       * Extracts the `Burn` event from logs.
       *
 diff --git a/node_modules/viem/_esm/tempo/actions/channel.js b/node_modules/viem/_esm/tempo/actions/channel.js
-index a91dc60..997d7dd 100644
+index a91dc60baa..997d7ddfd2 100644
 --- a/node_modules/viem/_esm/tempo/actions/channel.js
 +++ b/node_modules/viem/_esm/tempo/actions/channel.js
 @@ -67,7 +67,8 @@ export async function close(client, parameters) {
@@ -1411,7 +1453,7 @@ index a91dc60..997d7dd 100644
       * Extracts the `ChannelClosed` event from logs.
       *
 diff --git a/node_modules/viem/_esm/tempo/actions/dex.js b/node_modules/viem/_esm/tempo/actions/dex.js
-index 8545ea3..6f9da66 100644
+index 8545ea3c00..6f9da66ef1 100644
 --- a/node_modules/viem/_esm/tempo/actions/dex.js
 +++ b/node_modules/viem/_esm/tempo/actions/dex.js
 @@ -94,7 +94,8 @@ export async function buy(client, parameters) {
@@ -1555,7 +1597,7 @@ index 8545ea3..6f9da66 100644
  /**
   * Withdraws tokens from the DEX to the caller's wallet.
 diff --git a/node_modules/viem/_esm/tempo/actions/earn/deployment.js b/node_modules/viem/_esm/tempo/actions/earn/deployment.js
-index 054119e..ee7d40e 100644
+index 054119e656..ee7d40e9fe 100644
 --- a/node_modules/viem/_esm/tempo/actions/earn/deployment.js
 +++ b/node_modules/viem/_esm/tempo/actions/earn/deployment.js
 @@ -142,7 +142,8 @@ export async function createErc4626Engine(client, parameters) {
@@ -1589,7 +1631,7 @@ index 054119e..ee7d40e 100644
       * Extracts the `EarnVaultInitialized` event from engine logs.
       *
 diff --git a/node_modules/viem/_esm/tempo/actions/earn.js b/node_modules/viem/_esm/tempo/actions/earn.js
-index 6328954..985ea0d 100644
+index 6328954310..985ea0d705 100644
 --- a/node_modules/viem/_esm/tempo/actions/earn.js
 +++ b/node_modules/viem/_esm/tempo/actions/earn.js
 @@ -305,7 +305,8 @@ export async function deposit(client, parameters) {
@@ -1653,7 +1695,7 @@ index 6328954..985ea0d 100644
       * Defines the Earn share approval and withdrawal calls for atomic
       * execution. Pass `shareToken` explicitly because this builder performs no reads.
 diff --git a/node_modules/viem/_esm/tempo/actions/fee.js b/node_modules/viem/_esm/tempo/actions/fee.js
-index 9e54e11..ca9f249 100644
+index 9e54e1130b..ca9f249465 100644
 --- a/node_modules/viem/_esm/tempo/actions/fee.js
 +++ b/node_modules/viem/_esm/tempo/actions/fee.js
 @@ -147,7 +147,8 @@ export async function getUserToken(client, ...parameters) {
@@ -1697,7 +1739,7 @@ index 9e54e11..ca9f249 100644
          const [log] = parseEventLogs({
              abi: Abis.feeManager,
 diff --git a/node_modules/viem/_esm/tempo/actions/multisig.js b/node_modules/viem/_esm/tempo/actions/multisig.js
-index 7c712af..f7968ee 100644
+index 7c712afba2..f7968ee191 100644
 --- a/node_modules/viem/_esm/tempo/actions/multisig.js
 +++ b/node_modules/viem/_esm/tempo/actions/multisig.js
 @@ -80,7 +80,8 @@ export async function getConfigCommitment(client, parameters) {
@@ -1721,7 +1763,7 @@ index 7c712af..f7968ee 100644
       * Extracts the `MultisigConfigUpdated` event from logs.
       *
 diff --git a/node_modules/viem/_esm/tempo/actions/nonce.js b/node_modules/viem/_esm/tempo/actions/nonce.js
-index c4ee88f..d6c8394 100644
+index c4ee88fa35..d6c8394c61 100644
 --- a/node_modules/viem/_esm/tempo/actions/nonce.js
 +++ b/node_modules/viem/_esm/tempo/actions/nonce.js
 @@ -74,7 +74,8 @@ export async function getNonce(client, parameters) {
@@ -1735,7 +1777,7 @@ index c4ee88f..d6c8394 100644
  export function watchNonceIncremented(client, parameters) {
      const { onNonceIncremented, ...rest } = parameters;
 diff --git a/node_modules/viem/_esm/tempo/actions/policy.js b/node_modules/viem/_esm/tempo/actions/policy.js
-index cdad827..ac1b8e1 100644
+index cdad8272e1..ac1b8e16e6 100644
 --- a/node_modules/viem/_esm/tempo/actions/policy.js
 +++ b/node_modules/viem/_esm/tempo/actions/policy.js
 @@ -112,7 +112,8 @@ export async function create(client, parameters) {
@@ -1799,7 +1841,7 @@ index cdad827..ac1b8e1 100644
  /**
   * Watches for policy creation events.
 diff --git a/node_modules/viem/_esm/tempo/actions/receivePolicy.js b/node_modules/viem/_esm/tempo/actions/receivePolicy.js
-index e6f932f..33fe5e2 100644
+index e6f932fca0..33fe5e2755 100644
 --- a/node_modules/viem/_esm/tempo/actions/receivePolicy.js
 +++ b/node_modules/viem/_esm/tempo/actions/receivePolicy.js
 @@ -97,7 +97,8 @@ export async function burn(client, parameters) {
@@ -1863,7 +1905,7 @@ index e6f932f..33fe5e2 100644
  /**
   * Watches for blocked transfer events.
 diff --git a/node_modules/viem/_esm/tempo/actions/reward.js b/node_modules/viem/_esm/tempo/actions/reward.js
-index cca6360..2952fb4 100644
+index cca6360937..2952fb40a6 100644
 --- a/node_modules/viem/_esm/tempo/actions/reward.js
 +++ b/node_modules/viem/_esm/tempo/actions/reward.js
 @@ -96,7 +96,8 @@ export async function claim(client, parameters) {
@@ -1927,7 +1969,7 @@ index cca6360..2952fb4 100644
       * Extracts the `RewardRecipientSet` event from logs.
       *
 diff --git a/node_modules/viem/_esm/tempo/actions/token.js b/node_modules/viem/_esm/tempo/actions/token.js
-index dbd75ef..54ecd85 100644
+index dbd75ef3ca..54ecd85306 100644
 --- a/node_modules/viem/_esm/tempo/actions/token.js
 +++ b/node_modules/viem/_esm/tempo/actions/token.js
 @@ -79,7 +79,8 @@ export async function approve(client, parameters) {
@@ -2141,7 +2183,7 @@ index dbd75ef..54ecd85 100644
       * Extracts the event from the logs.
       *
 diff --git a/node_modules/viem/_esm/tempo/actions/validator.js b/node_modules/viem/_esm/tempo/actions/validator.js
-index f3c0b93..f572e95 100644
+index f3c0b9311c..f572e9577d 100644
 --- a/node_modules/viem/_esm/tempo/actions/validator.js
 +++ b/node_modules/viem/_esm/tempo/actions/validator.js
 @@ -103,7 +103,8 @@ export async function add(client, parameters) {
@@ -2255,7 +2297,7 @@ index f3c0b93..f572e95 100644
  /**
   * Updates validator information and waits for the transaction receipt.
 diff --git a/node_modules/viem/_esm/tempo/actions/virtualAddress.js b/node_modules/viem/_esm/tempo/actions/virtualAddress.js
-index ff31184..b1d580b 100644
+index ff311844da..b1d580bfca 100644
 --- a/node_modules/viem/_esm/tempo/actions/virtualAddress.js
 +++ b/node_modules/viem/_esm/tempo/actions/virtualAddress.js
 @@ -56,7 +56,8 @@ export async function getMasterAddress(client, parameters) {
