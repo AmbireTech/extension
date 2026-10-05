@@ -14,20 +14,6 @@
     <meta name="apple-mobile-web-app-title" content="ambire-mobile-wallet" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Ambire Extension</title>
-    <style>
-      /* Chrome never makes the side panel narrower than 360px and the layout is built for that.
-      Firefox lets the sidebar be dragged narrower - keep the content at 360px there and let it
-      scroll sideways instead of breaking. Keep in sync with SIDE_PANEL_MIN_WIDTH. */
-      @media (max-width: 359px) {
-        body {
-          overflow-x: auto;
-        }
-
-        #root {
-          min-width: 360px;
-        }
-      }
-    </style>
   </head>
   <body>
     <div id="root"></div>

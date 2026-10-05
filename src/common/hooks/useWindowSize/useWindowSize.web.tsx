@@ -1,19 +1,14 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 
 import { getUiType } from '@common/utils/uiType'
-import { SIDE_PANEL_MIN_WIDTH } from '@web/constants/spacings'
 
 import { breakpointsByWindowHeight, breakpointsByWindowWidth } from './breakpoints'
 import { WindowSizeProps } from './types'
 
 const { isSidePanel } = getUiType()
 
-// A Firefox sidebar can be narrower than the layout supports; the content is then kept at
-// SIDE_PANEL_MIN_WIDTH by side-panel.html, so the layout must be computed for that width too.
 const getViewportWidth = () =>
-  isSidePanel
-    ? Math.max(document.documentElement.clientWidth, SIDE_PANEL_MIN_WIDTH)
-    : window.innerWidth
+  isSidePanel ? document.documentElement.clientWidth : window.innerWidth
 
 const getViewportHeight = () =>
   isSidePanel ? document.documentElement.clientHeight : window.innerHeight
