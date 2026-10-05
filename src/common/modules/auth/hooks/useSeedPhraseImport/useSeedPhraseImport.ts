@@ -44,9 +44,7 @@ export default function useSeedPhraseImport() {
     if (!error) return undefined
 
     const errorMessages: { [key in SeedPhraseError]: string } = {
-      'unknown-words': t(
-        'Some words are not valid recovery phrase words. Check the underlined ones.'
-      ),
+      'unknown-words': t('Some words are not valid recovery phrase words.'),
       'wrong-word-count': t('A recovery phrase has 12, 15, 18, 21 or 24 words.'),
       'invalid-phrase': t(
         'Invalid recovery phrase. Check that the words are spelled correctly and in the right order.'

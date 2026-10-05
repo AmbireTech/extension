@@ -5,20 +5,18 @@ import { View } from 'react-native'
 import Button from '@common/components/Button'
 import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
-import Text from '@common/components/Text'
-import TextArea from '@common/components/TextArea'
-import { isAndroid } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
-import { getSeedPhraseTokens } from '@common/modules/auth/utils/seedPhrase'
 import getStyles from '@common/modules/auth/styles/seedPhraseImportScreenStyles'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
+
+import SeedPhraseInput from './SeedPhraseInput'
 
 const SeedPhraseImportScreen = () => {
   const {
@@ -64,83 +62,20 @@ const SeedPhraseImportScreen = () => {
             validate: validateSeedPhrase
           }}
           name="seed"
-          render={({ field: { onChange, onBlur, value } }) => {
-            const tokens = getSeedPhraseTokens(value, seedCaretPosition)
-
-            const styledOverlay = (
-              <View style={[styles.overlay, { paddingVertical: 16, paddingHorizontal: 13 }]}>
-                {tokens.map((token) => {
-                  if (token.isWhitespace) {
-                    return (
-                      <Text
-                        key={token.startIndex}
-                        fontSize={14}
-                        style={{ letterSpacing: -0.1, lineHeight: 21 }}
-                      >
-                        {token.value}
-                      </Text>
-                    )
-                  }
-
-                  return (
-                    <Text
-                      key={token.startIndex}
-                      fontSize={14}
-                      weight="light"
-                      style={{
-                        color: token.isInvalidWord ? theme.errorText : theme.primaryText,
-                        textDecorationLine: token.isInvalidWord ? 'underline' : 'none'
-                      }}
-                    >
-                      {token.value}
-                    </Text>
-                  )
-                })}
-              </View>
-            )
-
-            return (
-              <View style={styles.textAreaWrapper}>
-                {!isAndroid && styledOverlay}
-                <TextArea
-                  testID="enter-seed-phrase-field"
-                  value={value}
-                  editable
-                  multiline
-                  numberOfLines={4}
-                  autoFocus
-                  onChangeText={onChange}
-                  onFocus={() => setSeedCaretPosition(value.length)}
-                  onSelectionChange={(e) => setSeedCaretPosition(e.nativeEvent.selection.end)}
-                  onBlur={() => {
-                    setSeedCaretPosition(null)
-                    onBlur()
-                  }}
-                  inputWrapperStyle={{
-                    position: 'relative',
-                    backgroundColor: 'transparent',
-                    borderColor: theme.neutral600,
-                    zIndex: 2,
-                    maxHeight: 150
-                  }}
-                  style={{ fontSize: 20 }}
-                  placeholder={t('Write or paste your recovery phrase')}
-                  isValid={seedPhraseStatus === 'valid'}
-                  error={seedPhraseError}
-                  placeholderTextColor={theme.secondaryText}
-                  onSubmitEditing={handleFormSubmit}
-                  nativeInputStyle={{
-                    ...(isAndroid ? {} : { color: 'rgba(0, 0, 0, 0)' }),
-                    // @ts-ignore caretColor: theme.primaryText
-                    caretColor: theme.primaryText,
-                    fontSize: 14,
-                    padding: 0,
-                    border: 0
-                  }}
-                />
-              </View>
-            )
-          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <View style={styles.textAreaWrapper}>
+              <SeedPhraseInput
+                value={value}
+                status={seedPhraseStatus}
+                error={seedPhraseError}
+                caretPosition={seedCaretPosition}
+                onCaretPositionChange={setSeedCaretPosition}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                onSubmitEditing={handleFormSubmit}
+              />
+            </View>
+          )}
         />
         <FatToggle
           testID="enable-passphrase-toggle"
