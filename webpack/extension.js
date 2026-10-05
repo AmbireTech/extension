@@ -327,15 +327,6 @@ module.exports = async function buildExtension(
       from: './node_modules/@fatsolutions/privacy-pools-core-circuits/artifacts',
       to: 'privacy-pools-circuits'
     },
-    // Privacy Pools pool history, so a first sync does not have to walk the chain for it (~8 MB).
-    // Copied rather than imported for the same reason as the circuits: webpack would otherwise
-    // parse it into the bundle, and it is only ever read once, on a cold chain. Refresh with
-    // `node scripts/build-privacy-pools-snapshot.mjs`.
-    {
-      from: './src/web/public/privacy-pools-snapshots',
-      to: 'privacy-pools-snapshots',
-      noErrorOnMissing: true
-    },
     // qr-scanner ships its decoder worker inlined inside a `new Worker(URL.createObjectURL(new Blob([...])))`
     // call. Firefox MV3 extension pages reject blob: workers under the default `script-src 'self'` CSP,
     // so we extract the worker source once at build time and serve it as a real same-origin file.

@@ -523,8 +523,3 @@ js-profile-*.json
 .claude/*.local.*
 .agents/*.local.*
 AGENTS.local.md
-
-# Privacy Pools state snapshots, built locally with `node scripts/build-privacy-pools-snapshot.mjs`.
-# Several megabytes of public pool history that would bloat the repo on every refresh, and the
-# build copies them only if present - without them a first sync just walks the chain itself.
-/src/web/public/privacy-pools-snapshots/
