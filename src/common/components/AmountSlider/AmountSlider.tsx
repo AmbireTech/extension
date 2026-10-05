@@ -12,12 +12,12 @@ import useTheme from '@common/hooks/useTheme'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
 import { THEME_TYPES } from '@common/styles/theme/types'
 
+import { getSliderMarks, Mark, SLIDER_STEPS } from './getSliderMarks'
 import getStyles, { MARK_SIZE } from './styles'
 
 const THUMB_SIZE = 20
 // How far a dot at either end of the track sits from that end - see the edge alignment in markers.
 const EDGE_MARK_INSET = 1
-const SLIDER_STEPS = 10000n
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
 // How close (in px, from either side) the pointer needs to be, while dragging, to a dot or to
@@ -34,11 +34,6 @@ const PRESS_SNAP_RADIUS = 24
 // mouse click jitters by a pixel or two, which is movement enough to start reporting updates, and
 // without this the drag's tight radius would immediately undo the press's snap.
 const PRESS_MAX_TRAVEL = 8
-// The marks a caller that passes none of its own gets: the slider divided into quarters, each
-// marked by a dot the drag snaps onto, so round 0/25/50/75/100% amounts are reachable without
-// having to land on them pixel by pixel.
-const QUARTERS = [0n, 1n, 2n, 3n, 4n]
-const QUARTER_COUNT = 4n
 const parseHexChannels = (hex: string) => {
   const cleanHex = hex.replace('#', '')
   return [
@@ -83,14 +78,6 @@ const buildGradient = (fromHex: string, toHex: string, steps: number) =>
 // One color per fee tier, plus one more for the very start (5 for the 4 tiers in
 // SWAP_AND_BRIDGE_FEE_TIERS), from light purple to Ambire's primary brand purple.
 const PROGRESS_TIER_COLORS = buildGradient(GRADIENT_START_HEX, GRADIENT_END_HEX, 5)
-
-interface Mark {
-  /** The absolute amount, on the same axis as `tierOffset`, at which the dot sits. */
-  value: bigint
-  /** Optional tooltip shown on the dot. */
-  tooltipContent?: string
-  tooltipId?: string
-}
 
 interface Props {
   value: bigint
@@ -189,23 +176,8 @@ const AmountSlider = ({
   const progressWidth = Math.max(fractionOfWidth(sliderStep), 0)
   // Every dot on the track, on the slider's own axis - the same list the drag snaps onto.
   const markers = useMemo(() => {
-    const amounts = marks
-      ? marks
-          .map(({ value: markValue, tooltipContent, tooltipId }) => ({
-            amount: markValue - tierOffset,
-            tooltipContent,
-            tooltipId
-          }))
-          .filter(({ amount }) => amount >= 0n && amount <= maximumValue)
-      : QUARTERS.map((quarter) => ({
-          amount: (maximumValue * quarter) / QUARTER_COUNT,
-          tooltipContent: undefined,
-          tooltipId: undefined
-        }))
-
-    return amounts.map((mark) => {
-      const steps = maximumValue > 0n ? (mark.amount * SLIDER_STEPS) / maximumValue : 0n
-      const position = fractionOfWidth(steps)
+    return getSliderMarks({ marks, maximumValue, tierOffset }).map((mark) => {
+      const position = fractionOfWidth(mark.steps)
       // Every dot but one sitting at either end of the track is centered on its own position.
       // Those are pulled fully inside the track instead, so they sit flush with its rounded caps
       // rather than hanging half a dot over the end.
@@ -218,7 +190,6 @@ const AmountSlider = ({
 
       return {
         ...mark,
-        key: mark.tooltipId || `${mark.amount}`,
         position,
         left: position + edgeOffset
       }
