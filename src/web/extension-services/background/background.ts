@@ -488,6 +488,7 @@ const init = async () => {
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,
+    privacyPoolsFetch: fetch.bind(globalThis) as unknown as Fetch,
     privacyPoolsCircuitsBaseUrl,
     // On Chrome, proofs run in an offscreen document, which unlike this service worker can use
     // every core. Elsewhere - and on Chrome if that document cannot start - they run right here.
