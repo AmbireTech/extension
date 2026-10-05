@@ -29,8 +29,7 @@ const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPri
 // In the words the wallet uses for them: funds sent to the account, and funds it sent on
 const TYPE_LABEL: { [type in PrivacyPoolsActivityType]: string } = {
   deposit: 'Received',
-  withdraw: 'Sent',
-  reclaim: 'Taken back'
+  withdraw: 'Sent'
 }
 
 const STATUS_LABEL: { [status in PrivacyPoolsActivityStatus]: string } = {
