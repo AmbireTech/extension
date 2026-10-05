@@ -9,7 +9,7 @@ import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
+import type usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 
 export type PrivacyPoolsTokenOption = SelectValue & {
   // The pool the option belongs to. Every action is scoped to it, since each chain has its own
@@ -101,9 +101,11 @@ const getTokenOption = ({
  * association set has approved. Pending notes are deliberately absent: they cannot be withdrawn
  * privately at all.
  */
-const usePrivacyPoolsTokens = () => {
+const usePrivacyPoolsTokens = ({
+  tokenBalances,
+  getNetworkName
+}: Pick<ReturnType<typeof usePrivacyPools>, 'tokenBalances' | 'getNetworkName'>) => {
   const { t } = useTranslation()
-  const { tokenBalances, getNetworkName } = usePrivacyPools()
 
   const withdrawTokens: PrivacyPoolsTokenOption[] = useMemo(
     () =>

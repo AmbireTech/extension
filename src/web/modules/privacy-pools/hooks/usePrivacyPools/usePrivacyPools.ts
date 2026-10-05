@@ -13,6 +13,8 @@ import {
 } from '@ambire-common/interfaces/privacyPools'
 import useController from '@common/hooks/useController'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export type PrivacyPoolsNetworkRow = {
   chainId: string
   networkName: string
@@ -70,6 +72,22 @@ export type PrivacyPoolsActivityDisplay = {
  */
 export type PrivacyPoolsBalancesState = 'unavailable' | 'not-loaded' | 'loading' | 'ready'
 
+type PrivacyPoolsState = AllControllersMappingType['PrivacyPoolsController']
+
+const NO_CHAIN_IDS: string[] = []
+const NO_ACTIVITY: PrivacyPoolsActivityEntry[] = []
+
+const selectSupportedChainIds = (state: PrivacyPoolsState) => state.supportedChainIds
+const selectChains = (state: PrivacyPoolsState) => state.chains
+const selectBalances = (state: PrivacyPoolsState) => state.balances
+const selectActivity = (state: PrivacyPoolsState) => state.activity
+const selectOperation = (state: PrivacyPoolsState) => state.operation
+const selectUnavailableReason = (state: PrivacyPoolsState) => state.unavailableReason
+const selectIsAvailable = (state: PrivacyPoolsState) => state.isAvailableForSelectedAccount
+const selectHasSyncedAnyChain = (state: PrivacyPoolsState) => state.hasSyncedAnyChain
+const selectPrices = (state: PrivacyPoolsState) => state.prices
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 /**
  * Everything the Privacy Pools screen renders, resolved in one place.
  *
@@ -78,27 +96,35 @@ export type PrivacyPoolsBalancesState = 'unavailable' | 'not-loaded' | 'loading'
  * another in the forms.
  */
 const usePrivacyPools = () => {
-  const { state, dispatch } = useController('PrivacyPoolsController')
-  const { state: { networks = [] } = {} } = useController('NetworksController')
-
-  const {
-    supportedChainIds = [],
-    chains = {},
-    balances: balancesByChain = {},
-    activity = [],
-    operation = null,
-    unavailableReason = null,
-    isAvailableForSelectedAccount = false,
-    hasSyncedAnyChain = false,
-    prices = {}
-  } = state
+  const { state: supportedChainIds = NO_CHAIN_IDS, dispatch } = useController(
+    'PrivacyPoolsController',
+    selectSupportedChainIds
+  )
+  const { state: chains } = useController('PrivacyPoolsController', selectChains)
+  const { state: balancesByChain } = useController('PrivacyPoolsController', selectBalances)
+  const { state: activity = NO_ACTIVITY } = useController('PrivacyPoolsController', selectActivity)
+  const { state: operation = null } = useController('PrivacyPoolsController', selectOperation)
+  const { state: unavailableReason = null } = useController(
+    'PrivacyPoolsController',
+    selectUnavailableReason
+  )
+  const { state: isAvailableForSelectedAccount = false } = useController(
+    'PrivacyPoolsController',
+    selectIsAvailable
+  )
+  const { state: hasSyncedAnyChain = false } = useController(
+    'PrivacyPoolsController',
+    selectHasSyncedAnyChain
+  )
+  const { state: prices } = useController('PrivacyPoolsController', selectPrices)
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   // Falls back to the raw chain id rather than to a translated "Unknown network": the chains here
   // are already narrowed to the user's own networks, so a miss means something is off - and the id
   // is what identifies it.
   const getNetworkName = useCallback(
     (chainId: string) =>
-      networks.find((network) => network.chainId.toString() === chainId)?.name || chainId,
+      networks?.find((network) => network.chainId.toString() === chainId)?.name || chainId,
     [networks]
   )
 
@@ -111,14 +137,14 @@ const usePrivacyPools = () => {
    */
   const getTokenPrice = useCallback(
     (chainId: string, tokenAddress: string) =>
-      prices[getPrivacyPoolsPriceKey(chainId, tokenAddress)] ?? null,
+      prices?.[getPrivacyPoolsPriceKey(chainId, tokenAddress)] ?? null,
     [prices]
   )
 
   const networkRows: PrivacyPoolsNetworkRow[] = useMemo(
     () =>
       supportedChainIds.map((chainId) => {
-        const chain = chains[chainId]
+        const chain = chains?.[chainId]
 
         return {
           chainId,
@@ -145,7 +171,7 @@ const usePrivacyPools = () => {
 
   const tokenBalances = useMemo(
     () =>
-      Object.entries(balancesByChain).flatMap(([chainId, chainBalances]) =>
+      Object.entries(balancesByChain || {}).flatMap(([chainId, chainBalances]) =>
         (chainBalances as PrivacyPoolsTokenBalance[]).map((balance) => ({ chainId, balance }))
       ),
     [balancesByChain]
@@ -181,7 +207,7 @@ const usePrivacyPools = () => {
   // set is counted separately, because it genuinely cannot be withdrawn yet.
   const totalPrivateBalance = useMemo(
     () =>
-      Object.values(getPrivacyPoolsValuePerChain(balancesByChain, prices)).reduce(
+      Object.values(getPrivacyPoolsValuePerChain(balancesByChain || {}, prices || {})).reduce(
         (total, value) => total + value,
         0
       ),

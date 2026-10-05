@@ -21,6 +21,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import PrivacyPoolsActions from './PrivacyPoolsActions'
 
 import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
+import type { WalletStateController } from '@common/controllers/wallet-state'
 
 interface Props {
   unavailableReason: PrivacyPoolsUnavailableReason | null
@@ -50,6 +51,7 @@ interface Props {
 }
 
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
+const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
 
 // The card's contents sit on the dark OverviewBackground, so they use the fixed light colors the
 // dashboard overview uses rather than theme ones
@@ -76,10 +78,10 @@ const PrivacyPoolsOverview: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const {
-    state: { isPrivacyModeEnabled },
-    dispatch: walletStateDispatch
-  } = useController('WalletStateController')
+  const { state: isPrivacyModeEnabled, dispatch: walletStateDispatch } = useController(
+    'WalletStateController',
+    selectIsPrivacyModeEnabled
+  )
   const { state: isTokenPricesEnabled } = useController(
     'FeatureFlagsController',
     selectTokenPricesEnabled

@@ -50,13 +50,15 @@ const PrivacyPoolsSendScreen = () => {
   const { navigate } = useNavigation()
   const {
     operation,
+    tokenBalances,
+    getNetworkName,
     getTokenPrice,
     prepareWithdrawal,
     broadcastWithdrawal,
     dismissOperation,
     isAvailable
   } = usePrivacyPools()
-  const { withdrawTokens } = usePrivacyPoolsTokens()
+  const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
 
   const [addressState, setAddressState] = useState<AddressState>(DEFAULT_ADDRESS_STATE)

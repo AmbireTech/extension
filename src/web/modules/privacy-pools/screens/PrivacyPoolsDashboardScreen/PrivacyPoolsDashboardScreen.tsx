@@ -46,6 +46,7 @@ const PrivacyPoolsDashboardScreen = () => {
     totalPrivateBalance,
     pendingPrivateBalance,
     activity,
+    tokenBalances,
     getNetworkName,
     syncAllChains,
     syncIfStale
@@ -53,7 +54,7 @@ const PrivacyPoolsDashboardScreen = () => {
   const { selectedAccountId, selectedAccount } = usePrivacyPoolsAccounts()
   const isBackedUp = !!selectedAccount?.isBackedUp
   const { t } = useTranslation()
-  const { withdrawTokens } = usePrivacyPoolsTokens()
+  const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
 
   const route = useRoute()
   // Back on the tab it was left on, the way the regular dashboard comes back
