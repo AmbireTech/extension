@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { AccessibilityActionEvent, LayoutChangeEvent, View } from 'react-native'
+import { AccessibilityActionEvent, Keyboard, LayoutChangeEvent, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
@@ -306,6 +307,9 @@ const AmountSlider = ({
         .failOffsetY([-12, 12])
         .runOnJS(true)
         .onBegin(({ x }) => {
+          // Grabbing the slider ends typing: the screen keeps the keyboard up on taps, and an amount
+          // field left focused is never remounted (see useTextInputRemountKey), so a drag could crash
+          if (!isWeb) Keyboard.dismiss()
           updateValue(x, PRESS_SNAP_RADIUS)
         })
         .onUpdate(({ x, translationX }) => {

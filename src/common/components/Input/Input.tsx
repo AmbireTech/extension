@@ -111,8 +111,9 @@ const Input = ({
     return onFocus(e)
   }
   const handleOnBlur = (e: BlurEvent) => {
-    if (disabled) return
+    // Always cleared, or a field disabled while focused stays "focused" and is never remounted
     setIsFocused(false)
+    if (disabled) return
     return onBlur(e)
   }
 
