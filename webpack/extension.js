@@ -453,6 +453,15 @@ module.exports = async function buildExtension(
 
   config.module.rules.push(CJS_RULE)
 
+  if (enableLavaMoat) {
+    // See lavamoat/loaders/noble-frost-stub-loader.js
+    config.module.rules.push({
+      test: /[\\/]@noble[\\/]curves[\\/]abstract[\\/]frost\.js$/,
+      enforce: 'pre',
+      use: [path.resolve(ROOT_DIR, 'lavamoat/loaders/noble-frost-stub-loader.js')]
+    })
+  }
+
   // Allow @expo-google-fonts assets (TTF/WOFF/etc) to be emitted explicitly instead of
   // relying on Webpack's "ambient" asset behavior. LavaMoat treats ambient assets from
   // node_modules (type === 'asset/resource' with no loaders) as suspicious and blocks
