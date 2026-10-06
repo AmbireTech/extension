@@ -3,7 +3,7 @@ import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import Button from '@common/components/Button'
+import Button, { COMPACT_LAYOUT_BUTTON_HEIGHT } from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -25,8 +25,8 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 // An exception to the `size="large"` height (56). The sign screen is dense and the
 // footer is always visible, so all of its buttons are slightly shorter in order to
 // free up vertical space for the transaction details above. Keep every button in
-// the footer on this height, otherwise they won't line up.
-const FOOTER_BUTTON_HEIGHT = 52
+// the footer on this height, otherwise they won't line up. Same as the compact layout's buttons.
+const FOOTER_BUTTON_HEIGHT = COMPACT_LAYOUT_BUTTON_HEIGHT
 
 const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
   state.userRequests
