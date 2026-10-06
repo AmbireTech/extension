@@ -95,7 +95,7 @@ const FromToken: FC<Props> = ({
     // The gap the switch tokens button centres itself on - see its own styles. While the amount
     // shows a message, that message sits where the button reaches up to, so the panel is lifted
     // above the button (zIndex 10) for the message to read over it rather than under it
-    <View style={[spacings.mbSm, !!validateFromAmount?.message && { zIndex: 11 }]}>
+    <View style={[spacings.mbTy, !!validateFromAmount?.message && { zIndex: 11 }]}>
       {!isLoading ? (
         <SendToken
           label={t('You send')}

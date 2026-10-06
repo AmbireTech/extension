@@ -58,6 +58,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     closeGasTankInfoBottomSheet,
     estimationModalRef,
     closeEstimationModalAndDispatch,
+    handleEstimationModalClosed,
     updateController,
     handleUpdateStatus,
     portfolio,
@@ -240,6 +241,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           updateType="Transfer&TopUp"
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalAndDispatch}
+          onEstimationModalClosed={handleEstimationModalClosed}
           updateController={updateController}
           handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}

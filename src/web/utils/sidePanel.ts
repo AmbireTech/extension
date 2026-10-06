@@ -3,6 +3,8 @@ import { browser, engine } from '@web/constants/browserapi'
 type ChromeSidePanelApi = {
   setPanelBehavior: (options: { openPanelOnActionClick: boolean }) => Promise<void>
   getPanelBehavior?: () => Promise<{ openPanelOnActionClick: boolean }>
+  // Chrome 140+
+  getLayout?: () => Promise<{ side: 'left' | 'right' }>
   open: (options: { windowId: number }) => Promise<void>
   // Optional because not every Chromium browser that exposes `sidePanel` implements it
   setOptions?: (options: { enabled?: boolean; path?: string; tabId?: number }) => Promise<void>
@@ -27,6 +29,9 @@ const getFirefoxSidebarApi = (): FirefoxSidebarApi | undefined => {
 
   return browser?.sidebarAction
 }
+
+/** The `chrome.storage.local` key holding the last width of the side panel, as the user sized it. */
+export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'sidePanelWidth'
 
 export const isSidePanelSupported = () => !!getChromeSidePanelApi() || !!getFirefoxSidebarApi()
 

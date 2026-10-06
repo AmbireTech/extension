@@ -9,6 +9,7 @@ import Avatar from '@common/components/Avatar'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -18,7 +19,6 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
@@ -44,7 +44,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const { isPopup } = getUiType()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { isStoreReady } = useControllerStore()
 
   const { state: account } = useController('SelectedAccountController', selectAccount)

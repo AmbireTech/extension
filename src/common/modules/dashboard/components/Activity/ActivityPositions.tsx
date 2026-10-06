@@ -364,7 +364,9 @@ const ActivityPositions: FC<Props> = ({
         animatedOverviewHeight={animatedOverviewHeight}
       />
       {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
-      {openTab === 'activity' && <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />}
+      {!isMobile && openTab === 'activity' && (
+        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
+      )}
     </>
   )
 }

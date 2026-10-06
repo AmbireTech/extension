@@ -15,8 +15,7 @@ export async function runSwapFlow({
   message = 'Mission accomplished.',
   assertNoInitialTx = false,
   assertPortfolioRefreshScopedToSendNetwork = true,
-  ledgerSimulatorControls,
-  signAuth = true
+  ledgerSimulatorControls
 }: {
   pages: PageManager
   sendToken: Token
@@ -28,7 +27,6 @@ export async function runSwapFlow({
   // post-broadcast guard unreliable (see signSlowSpeedTransaction for the full explanation).
   assertPortfolioRefreshScopedToSendNetwork?: boolean
   ledgerSimulatorControls?: SpeculosDevice
-  signAuth?: boolean
 }) {
   if (assertNoInitialTx) {
     await test.step('assert no transaction on Activity tab', async () => {
@@ -47,8 +45,7 @@ export async function runSwapFlow({
       message,
       ledgerSimulatorControls,
       awaitConfirmation: false,
-      assertPortfolioRefreshScopedToSendNetwork,
-      signAuth: signAuth
+      assertPortfolioRefreshScopedToSendNetwork
     })
   })
 
