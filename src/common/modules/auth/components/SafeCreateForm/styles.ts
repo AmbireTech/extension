@@ -23,7 +23,6 @@ const getStyles = (theme: ThemeProps) =>
     ownerRow: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      ...spacings.phSm,
       ...spacings.pvTy,
       ...common.borderRadiusPrimary,
       borderWidth: 1,

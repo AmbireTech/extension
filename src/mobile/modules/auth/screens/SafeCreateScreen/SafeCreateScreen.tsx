@@ -5,6 +5,7 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import SafeCreateForm from '@common/modules/auth/components/SafeCreateForm'
+import SafeCreateInfo from '@common/modules/auth/components/SafeCreateInfo'
 import useSafeCreate from '@common/modules/auth/hooks/useSafeCreate'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -39,9 +40,10 @@ const SafeCreateScreen = () => {
       >
         {/* Tapping anywhere outside the input (or another touchable) hides the keyboard */}
         <Pressable style={flexbox.flex1} onPress={Keyboard.dismiss}>
-          <Text fontSize={14} appearance="secondaryText" style={spacings.mbLg}>
+          <Text fontSize={14} appearance="secondaryText" style={spacings.mbTy}>
             {t('Choose owners and required confirmations')}
           </Text>
+          <SafeCreateInfo style={[flexbox.alignSelfStart, spacings.mbLg]} />
           <SafeCreateForm {...formProps} />
         </Pressable>
       </MobileLayoutWrapperMainContent>
