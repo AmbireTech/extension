@@ -38,10 +38,10 @@ import EstimationSkeleton from '@common/modules/sign-account-op/components/Estim
 import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
 import FeePayerStrip from '@common/modules/sign-account-op/components/Estimation/components/FeePayerStrip'
 import FeeSelectTrigger from '@common/modules/sign-account-op/components/Estimation/components/FeeSelectTrigger'
-import useFooterRowSplit from '@common/modules/sign-account-op/hooks/useFooterRowSplit'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
+import useFooterRowSplit from '@common/modules/sign-account-op/hooks/useFooterRowSplit'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -64,6 +64,8 @@ const PROPORTIONAL_FEE_ROW_MIN_WINDOW_WIDTH = 400
 const PROPORTIONAL_FEE_ROW_SPLIT = { leftFlex: 11, rightFlex: 9 }
 // The wide layout (beyond the narrow threshold) always splits the fee row in half
 const WIDE_LAYOUT_FEE_ROW_SPLIT = { leftFlex: 1, rightFlex: 1 }
+// Above this window width the fee selects have room for their arrows centered at the end
+const CENTERED_FEE_SELECT_ARROW_MIN_WINDOW_WIDTH = 410
 // Up to this window width the fee token menu spans the whole window, so long options stay readable
 const FULL_WIDTH_FEE_TOKEN_MENU_MAX_WINDOW_WIDTH = 480
 
@@ -542,6 +544,7 @@ const Estimation = ({
         ? PROPORTIONAL_FEE_ROW_SPLIT
         : null
   const isFeeRowProportional = !!feeRowSplit
+  const isFeeSelectArrowCentered = windowWidth >= CENTERED_FEE_SELECT_ARROW_MIN_WINDOW_WIDTH
   const feeTokenMenuStyle = useMemo(
     () =>
       windowWidth <= FULL_WIDTH_FEE_TOKEN_MENU_MAX_WINDOW_WIDTH
@@ -645,6 +648,7 @@ const Estimation = ({
           backgroundColor={selectBackgroundColor}
           disabled={isFeeTokenSelectDisabled}
           isAttachedBelow={isFeePaidByAnotherAccount}
+          isArrowCentered={isFeeSelectArrowCentered}
           toggleMenu={toggleMenu}
           isMenuOpen={isMenuOpen}
           selectRef={selectRef}
@@ -656,6 +660,7 @@ const Estimation = ({
       estimationTitle,
       feeOptionWarning,
       isFeePaidByAnotherAccount,
+      isFeeSelectArrowCentered,
       isFeeTokenSelectDisabled,
       payValue,
       selectBackgroundColor,
@@ -688,11 +693,12 @@ const Estimation = ({
           toggleMenu={toggleMenu}
           isMenuOpen={isMenuOpen}
           selectRef={selectRef}
+          isArrowCentered={isFeeSelectArrowCentered}
           testID="fee-speed-select-trigger"
         />
       )
     },
-    [disabled, selectBackgroundColor, selectedFee, t]
+    [disabled, isFeeSelectArrowCentered, selectBackgroundColor, selectedFee, t]
   )
 
   const renderFeeSpeedSelect = useCallback(() => {
