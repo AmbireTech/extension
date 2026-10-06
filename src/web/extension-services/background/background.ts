@@ -179,9 +179,6 @@ let trezorCtrl: TrezorController
 let qrCtrl: QrHardwareController
 let eventEmitterRegistry: EventEmitterRegistryController
 
-// A getter because the UI manager (which needs it) is created before walletStateCtrl
-const getIsSidePanelModeEnabled = () => !!walletStateCtrl?.isSidePanelModeEnabled
-
 // Initialize Sentry early to set up global error handlers during initial script evaluation
 if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
   Sentry.init({
@@ -485,6 +482,17 @@ const init = async () => {
 
   qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
+  // Created before mainCtrl, whose UI manager reads the side panel mode. It doesn't need mainCtrl
+  // itself - the log level callback only runs on a log level change, long after both exist.
+  walletStateCtrl = new WalletStateController({
+    eventEmitterRegistry,
+    onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
+      await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
+    },
+    storage
+  })
+  const getIsSidePanelModeEnabled = () => walletStateCtrl.isSidePanelModeEnabled
+
   mainCtrl = new MainController({
     eventEmitterRegistry,
     appVersion: APP_VERSION,
@@ -567,13 +575,6 @@ const init = async () => {
   void mainCtrl.phishing.init()
   void mainCtrl.dapps.init()
 
-  walletStateCtrl = new WalletStateController({
-    eventEmitterRegistry,
-    onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
-      await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
-    },
-    storage
-  })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
   autoLockCtrl = new AutoLockController(
