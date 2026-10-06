@@ -52,6 +52,8 @@ export type OneClickEstimationProps = {
 }
 
 const { isRequestWindow, isTab, isSidePanel } = getUiType()
+// A full tab shows the estimation in a centered modal, everywhere else it's a bottom sheet with a dragger
+const isEstimationSheetModal = isTab && !isSidePanel
 
 // The footer takes over the bottom inset, so the scroll content doesn't pad above it too
 const MOBILE_SCROLL_VIEW_PROPS = { contentContainerStyle: { paddingBottom: 0 } }
@@ -183,9 +185,13 @@ const OneClickEstimation = ({
       )
 
     return (
-      // A bit more room above the home indicator, if the phone has one
       <View
-        style={isMobile ? { paddingBottom: bottom ? bottom + SPACING_TY : SPACING_SM } : undefined}
+        style={[
+          // Keeps the fee selects off the bottom sheet's dragger
+          !isEstimationSheetModal && spacings.ptTy,
+          // A bit more room above the home indicator, if the phone has one
+          isMobile && { paddingBottom: bottom ? bottom + SPACING_TY : SPACING_SM }
+        ]}
       >
         <KeySelect
           isSigning={isSignLoading || !signAccountOpController.readyToSign}
@@ -305,7 +311,7 @@ const OneClickEstimation = ({
       <BottomSheet
         id="estimation-modal"
         sheetRef={estimationModalRef}
-        type={isTab && !isSidePanel ? 'modal' : 'bottom-sheet'}
+        type={isEstimationSheetModal ? 'modal' : 'bottom-sheet'}
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
         style={spacings.pb}
