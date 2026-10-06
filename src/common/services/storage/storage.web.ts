@@ -1,5 +1,5 @@
 import { Storage, StorageProps } from '@ambire-common/interfaces/storage'
-import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { parseStorageValue, stringifyStorageValue } from '@ambire-common/libs/storage/serialization'
 import { browser, isExtension } from '@web/constants/browserapi'
 
 import { SerializedStorageSnapshot } from './types'
@@ -18,14 +18,14 @@ function commonGet<K extends keyof StorageProps>(
   defaultValue?: StorageProps[K] | null
 ): Promise<StorageProps[K] | null | undefined> {
   const serialized = typeof localStorage !== 'undefined' ? localStorage.getItem(String(key)) : null
-  return Promise.resolve(serialized ? parse(serialized) : defaultValue)
+  return Promise.resolve(serialized ? parseStorageValue(String(key), serialized) : defaultValue)
 }
 
 const commonAsyncStorage: Storage = {
   get: commonGet,
   set: (key: string, value: any) => {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(key, stringify(value))
+      localStorage.setItem(key, stringifyStorageValue(key, value))
     }
     return Promise.resolve(null)
   },
@@ -37,9 +37,9 @@ const commonAsyncStorage: Storage = {
   }
 }
 
-const formatValue = (value: any, defaultValue?: any) => {
+const formatValue = (key: string, value: any, defaultValue?: any) => {
   try {
-    return typeof value === 'string' ? parse(value) : value
+    return typeof value === 'string' ? parseStorageValue(key, value) : value
   } catch (error) {
     return typeof value === 'string' ? value : defaultValue
   }
@@ -62,12 +62,12 @@ async function get<K extends keyof StorageProps>(
 
   if (!res[String(key)]) return defaultValue
 
-  return formatValue(res[String(key)])
+  return formatValue(String(key), res[String(key)])
 }
 
 const set = async (key: string, value: any): Promise<null> => {
   await browser.storage.local.set({
-    [key]: typeof value === 'string' ? value : stringify(value)
+    [key]: typeof value === 'string' ? value : stringifyStorageValue(key, value)
   })
   return null
 }
