@@ -77,7 +77,6 @@ const getAndFormatTokenDetails = (
 ) => {
   const isRewards = rewardsType === 'wallet-rewards'
   const isVesting = rewardsType === 'wallet-vesting'
-  const isProjectedRewards = rewardsType === 'wallet-projected-rewards'
 
   const networkData = networks?.find(({ chainId: nChainId }) => chainId === nChainId)
   const amountish = BigInt(amount)
@@ -123,7 +122,6 @@ const getAndFormatTokenDetails = (
     networkData,
     isRewards,
     isVesting,
-    isProjectedRewards,
     change24hFormatted: `${(usdMarketData?.change24h || 0) >= 0 ? '+' : ''}${(usdMarketData?.change24h || 0).toFixed(2)}%`,
     ...usdMarketData,
     ...pendingAmountsFormatted
