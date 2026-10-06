@@ -1,12 +1,13 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
+import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   ownerRow: ViewStyle
+  ownerRowDivider: ViewStyle
   removeOwnerButton: ViewStyle
   confirmationsSection: ViewStyle
   stepperButton: ViewStyle
@@ -18,15 +19,17 @@ interface Style {
 const STEPPER_BUTTON_SIZE = 32
 const REMOVE_OWNER_BUTTON_SIZE = 32
 
-const getStyles = (theme: ThemeProps) =>
+const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     ownerRow: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      ...spacings.pvTy,
-      ...common.borderRadiusPrimary,
-      borderWidth: 1,
-      borderColor: theme.secondaryBorder
+      ...spacings.pvSm
+    },
+    ownerRowDivider: {
+      borderBottomWidth: 1,
+      // neutral900 is white in the dark theme
+      borderBottomColor: themeType === THEME_TYPES.DARK ? theme.neutral900 : theme.secondaryBorder
     },
     removeOwnerButton: {
       ...flexbox.center,
@@ -37,10 +40,8 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.secondaryBackground
     },
     confirmationsSection: {
-      // No left padding, so the title lines up with the rest of the form
-      ...spacings.prSm,
       ...spacings.pvSm,
-      ...spacings.mtLg,
+      ...spacings.mtSm,
       ...common.borderRadiusPrimary,
       borderWidth: 1,
       borderColor: theme.secondaryBorder

@@ -32,10 +32,13 @@ const OwnerRow = React.memo(
   ({
     owner,
     withShortenedAddresses,
+    withDivider,
     onRemove
   }: {
     owner: SafeCreateOwner
     withShortenedAddresses?: boolean
+    /** Draws a line below the row, to separate it from the next owner */
+    withDivider: boolean
     onRemove: (address: Hex) => void
   }) => {
     const { t } = useTranslation()
@@ -44,7 +47,7 @@ const OwnerRow = React.memo(
     const handleRemove = useCallback(() => onRemove(owner.address), [onRemove, owner.address])
 
     return (
-      <View style={styles.ownerRow}>
+      <View style={[styles.ownerRow, withDivider && styles.ownerRowDivider]}>
         <AddressBookContact
           address={owner.address}
           name={owner.name}
@@ -142,11 +145,12 @@ const SafeCreateForm = ({
         {t('Owners')}
       </Text>
       {owners.length ? (
-        owners.map((owner) => (
+        owners.map((owner, index) => (
           <OwnerRow
             key={owner.address}
             owner={owner}
             withShortenedAddresses={withShortenedAddresses}
+            withDivider={index < owners.length - 1}
             onRemove={handleRemoveOwner}
           />
         ))
