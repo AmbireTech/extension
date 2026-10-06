@@ -113,27 +113,14 @@ export const isSidePanelModeEnabled = async () => {
 }
 
 /**
- * Opens the side panel for the given window (the active window when omitted; Firefox's
- * sidebarAction API always targets the current window and takes no windowId). Chrome and Firefox
- * both only allow this while handling a user gesture, so it must never be called on behalf of a
- * dapp request - those are handled in the panel when it is already open and in a request window
- * otherwise.
+ * Opens the Chrome side panel for the given window (the active window when omitted). Chrome only
+ * allows this while handling a user gesture, so it must never be called on behalf of a dapp
+ * request - those are handled in the panel when it is already open and in a request window
+ * otherwise. Firefox's sidebar isn't opened from here: the gesture doesn't survive a message to
+ * the background, so it's opened by the UI (openFirefoxSidebarFromUserGesture) and toggled by the
+ * toolbar action (handleFirefoxActionClicked).
  */
 export const openPanel = async (windowId?: number) => {
-  if (isGecko) {
-    const sidebarApi = getFirefoxSidebarApi()
-    if (!sidebarApi) return
-
-    try {
-      await sidebarApi.open()
-    } catch (error) {
-      console.error('Failed to open side panel', error)
-      captureBackgroundException(error)
-    }
-
-    return
-  }
-
   const sidePanelApi = getChromeSidePanelApi()
   if (!sidePanelApi) return
 
