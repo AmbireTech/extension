@@ -8,7 +8,7 @@ import Button, { Props as ButtonProps } from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const SafeFooter = ({
@@ -20,8 +20,7 @@ const SafeFooter = ({
   signed = [],
   importedKeys,
   threshold,
-  onReject,
-  onSignLater
+  onReject
 }: {
   account: Account
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
@@ -32,9 +31,6 @@ const SafeFooter = ({
   importedKeys: Key[]
   threshold: number
   onReject: () => void
-  // closes the signing UI while keeping the request pending with the collected
-  // signatures already pushed to Safe Global (dismisses the sheet)
-  onSignLater: () => void
 }) => {
   const { t } = useTranslation()
   const [showSafeSigners, setShowSafeSigners] = useState(false)
@@ -109,19 +105,7 @@ const SafeFooter = ({
                 text={!showSafeSigners ? 'Begin signing' : 'Close signing'}
               />
             </View>
-            <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
-              <View style={flexbox.flex1}>{rejectButton({ style: { height: 50 } })}</View>
-              <View style={flexbox.flex1}>
-                <Button
-                  type="secondary"
-                  hasBottomSpacing={false}
-                  onPress={onSignLater}
-                  text={t('Sign later')}
-                  disabled={signed.length === 0}
-                  style={{ height: 50 }}
-                />
-              </View>
-            </View>
+            {rejectButton({ size: 'large' })}
           </>
         ) : (
           <View style={flexbox.center}>

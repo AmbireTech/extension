@@ -122,7 +122,8 @@ const BaseAddress: FC<Props> = ({
         flexbox.directionRow,
         flexbox.wrap,
         isWeb && !isInlineMode && flexbox.flex1,
-        isInlineMode && { maxWidth: '100%' }
+        // Shrinks so it stays within the row when it shares it with the inline avatar
+        isInlineMode && { maxWidth: '100%', flexShrink: 1, minWidth: 0 }
       ]}
     >
       {showInlineActions && !!network?.explorerUrl ? (

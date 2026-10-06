@@ -3,9 +3,9 @@ import { View } from 'react-native'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -15,7 +15,7 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 const InteractionAddress = ({ address }: { address: string }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const reverseLookup = useReverseLookup({ address })
   const { contacts = [] } = useController('AddressBookController').state
   const { state: accounts = [] } = useController('AccountsController', selectAccounts)

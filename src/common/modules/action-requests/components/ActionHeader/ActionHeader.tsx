@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import { isMobile, isWeb } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
@@ -15,19 +16,23 @@ const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsCon
 
 const ActionHeader = () => {
   const { theme } = useTheme()
+  const { isNarrowWebLayout } = useCompactLayout()
+  // In a narrow view the header is inset like the content below it, so all edge spacings are equal
+  const webMarginHorizontal = isNarrowWebLayout ? spacings.mhSm : spacings.mhMi
   const { state: visibleUserRequests } = useController(
     'RequestsController',
     selectVisibleUserRequests
   )
   return (
-    <View>
+    // Like on mobile, the bottom spacing matches the side one, so screens add no top spacing
+    <View style={isNarrowWebLayout && spacings.mbSm}>
       <View
         style={[
           flexbox.directionRow,
           flexbox.justifySpaceBetween,
           flexbox.alignCenter,
-          isWeb && spacings.mhMi,
-          isWeb && spacings.mtMi,
+          isWeb && webMarginHorizontal,
+          isWeb && (isNarrowWebLayout ? spacings.mtSm : spacings.mtMi),
           isMobile ? spacings.phSm : spacings.ph,
           {
             borderRadius: 12,
@@ -40,7 +45,7 @@ const ActionHeader = () => {
       >
         <Header.AccountDataDetailed />
       </View>
-      <PendingRequests style={[isWeb && spacings.mhMi]} />
+      <PendingRequests style={[isWeb && webMarginHorizontal]} />
     </View>
   )
 }

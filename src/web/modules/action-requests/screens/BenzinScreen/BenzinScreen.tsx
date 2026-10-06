@@ -11,10 +11,10 @@ import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useWindowSize from '@common/hooks/useWindowSize'
 import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,13 +22,13 @@ import { isExtension } from '@web/constants/browserapi'
 
 const pendingRequestsTopContent = isExtension ? (
   <PendingRequests
-    style={[common.borderRadiusPrimary, spacings.mbSm, { borderTopWidth: 1, marginTop: -12 }]}
+    style={[common.borderRadiusPrimary, spacings.mtTy, spacings.mbSm, { borderTopWidth: 1 }]}
   />
 ) : undefined
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { maxWidthSize } = useWindowSize()
 
   const {
@@ -75,7 +75,7 @@ const BenzinScreen = () => {
           : { minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }
       }
       hasBottomSpacing={false}
-      size={isNarrowWebLayout ? 'smaller' : 'large'}
+      size={isNarrowWebLayout ? 'regular' : 'large'}
       text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
     >
       {!!pendingRequests.length && (

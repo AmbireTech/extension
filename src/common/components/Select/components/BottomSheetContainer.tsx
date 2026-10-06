@@ -3,8 +3,8 @@ import { FlatListProps, ScrollView, SectionListProps } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 
 import { RenderSelectedOptionParams } from '../types'
@@ -42,7 +42,7 @@ const BottomSheetContainer: FC<Props> = ({
   isFullHeight
 }) => {
   const { theme } = useTheme()
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
   const bottomSheetWidth = isPopup || isCompactLayout ? ('100%' as const) : 450
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
 

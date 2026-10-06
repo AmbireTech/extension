@@ -220,7 +220,8 @@ const useTransfer = (isTopUpScreen: boolean) => {
     close: closeEstimationModal
   } = useModalize()
 
-  const closeEstimationModalAndDispatch = useCallback(() => {
+  // Resets the proceeded state without closing the sheet, so the sheet can call it once it closed
+  const handleEstimationModalClosed = useCallback(() => {
     transferDispatch({
       type: 'method',
       params: {
@@ -228,8 +229,12 @@ const useTransfer = (isTopUpScreen: boolean) => {
         args: [false]
       }
     })
+  }, [transferDispatch])
+
+  const closeEstimationModalAndDispatch = useCallback(() => {
+    handleEstimationModalClosed()
     closeEstimationModal()
-  }, [closeEstimationModal, transferDispatch])
+  }, [closeEstimationModal, handleEstimationModalClosed])
 
   const openEstimationModalAndDispatch = useCallback(() => {
     transferDispatch({
@@ -573,6 +578,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     closeGasTankInfoBottomSheet,
     estimationModalRef,
     closeEstimationModalAndDispatch,
+    handleEstimationModalClosed,
     updateController,
     handleUpdateStatus,
     portfolio,

@@ -29,12 +29,11 @@ const getStyles = (theme: ThemeProps) =>
         },
     content: isMobile
       ? {
-          // Fixes the handle of the bottom sheet having a white background
-          marginTop: -21,
           ...common.fullWidth,
+          borderRadius: BORDER_RADIUS_PRIMARY,
           overflow: 'hidden',
-          ...flexbox.flex1,
-          ...spacings.mbLg
+          // Grows instead of flex: 1, so on short screens it keeps its height and scrolls
+          flexGrow: 1
         }
       : {
           ...common.fullWidth,
@@ -49,7 +48,7 @@ const getStyles = (theme: ThemeProps) =>
         },
     contentBody: {
       backgroundColor: theme.secondaryBackground,
-      ...(isMobile && flexbox.flex1)
+      ...(isMobile && { flexGrow: 1 })
     },
     securityChecksContainer: {
       backgroundColor: theme.primaryBackground,
