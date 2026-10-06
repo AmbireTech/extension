@@ -155,8 +155,9 @@ const PayOption = ({
         )}
       </View>
       {isPaidByAnotherAccount && (
-        <View style={[flexbox.alignEnd]}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        // Capped at half the row, so a long account name is cut instead of pushing the amount out
+        <View style={[flexbox.alignEnd, { flexShrink: 1, minWidth: 0, maxWidth: '50%' }]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
             <Avatar
               size={16}
               address={feeOption.paidBy}
@@ -164,7 +165,7 @@ const PayOption = ({
               style={spacings.prTy}
               displayTypeBadge={false}
             />
-            <Text fontSize={12} weight="semiBold" numberOfLines={1}>
+            <Text fontSize={12} weight="semiBold" numberOfLines={1} style={{ flexShrink: 1 }}>
               {paidByAccountLabel}
             </Text>
           </View>

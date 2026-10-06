@@ -30,6 +30,7 @@ import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
@@ -40,7 +41,7 @@ import FeeSelectTrigger from '@common/modules/sign-account-op/components/Estimat
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
-import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { NO_FEE_OPTIONS } from './consts'
@@ -56,6 +57,8 @@ const FEE_SPEED_SELECT_WIDTH = 92
 const FEE_TOKEN_ICON_SIZE = 28
 // The web menu opens under the speed select, but needs the room of "Medium <$0.01"
 const FEE_SPEED_MENU_WIDTH = 156
+// Up to this window width the fee token menu spans the whole window, so long options stay readable
+const FULL_WIDTH_FEE_TOKEN_MENU_MAX_WINDOW_WIDTH = 480
 
 export const SPEED_TEST_IDS = {
   slow: 'option-slow',
@@ -130,6 +133,7 @@ const Estimation = ({
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
+  const { width: windowWidth } = useWindowSize()
   const {
     ref: customGasPriceSheetRef,
     open: openCustomGasPriceSheet,
@@ -516,6 +520,14 @@ const Estimation = ({
   const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
+  const feeTokenMenuStyle = useMemo(
+    () =>
+      windowWidth <= FULL_WIDTH_FEE_TOKEN_MENU_MAX_WINDOW_WIDTH
+        ? { left: SPACING_SM, width: windowWidth - SPACING_SM * 2 }
+        : undefined,
+    [windowWidth]
+  )
+
   // The selects need the opposite fill of what they sit on to stay visible
   const selectBackgroundColor =
     isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground
@@ -805,6 +817,7 @@ const Estimation = ({
             renderSectionHeader={renderFeeOptionSectionHeader}
             renderSelectedOption={renderFeeTokenSelectedOption}
             containerStyle={spacings.mb0}
+            menuStyle={feeTokenMenuStyle}
             value={payValue || NO_FEE_OPTIONS}
             disabled={isFeeTokenSelectDisabled}
             defaultValue={payValue ?? undefined}

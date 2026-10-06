@@ -187,7 +187,6 @@ const Footer = ({
                 isSignLater={isMultisigSigned}
                 onPress={onAddToCart}
                 disabled={isAddToCartDisabled}
-                tooltipText={startBatchingInfo}
               />
             )}
           </>

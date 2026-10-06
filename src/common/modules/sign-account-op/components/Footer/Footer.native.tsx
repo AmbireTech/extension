@@ -52,14 +52,6 @@ const Footer = ({
     return getCallsCount(requests)
   }, [account?.addr, userRequests, chainId])
 
-  const startBatchingInfo = useMemo(
-    () =>
-      t(
-        'Start a batch and sign later. This feature allows you to add more actions to this transaction and sign them all together later.'
-      ),
-    [t]
-  )
-
   const signature = accountOp?.signature
   const isMultisigSigned = useMemo(() => {
     // '0x' is a placeholder used by self-broadcast account ops, not a real signature.
@@ -86,7 +78,6 @@ const Footer = ({
               isSignLater={isMultisigSigned}
               onPress={onAddToCart}
               disabled={isAddToCartDisabled}
-              tooltipText={startBatchingInfo}
             />
           )}
         </>

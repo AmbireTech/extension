@@ -4,7 +4,6 @@ import { View } from 'react-native'
 
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Button from '@common/components/Button'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import flexbox from '@common/styles/utils/flexbox'
@@ -19,14 +18,13 @@ type Props = {
   isSignLater: boolean
   onPress: () => void
   disabled: boolean
-  tooltipText?: string
 }
 
 /**
  * The batch button of the compact footer. The label stays short and the number of calls
  * already in the batch is a badge on the icon, so it fits next to Reject
  */
-const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled, tooltipText }: Props) => {
+const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const hasPendingBatch = batchCount > 1
@@ -47,13 +45,6 @@ const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled, toolti
       hasBottomSpacing={false}
       childrenPosition="left"
       style={{ flexGrow: 1, paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING }}
-      {...(!isSignLater &&
-        !!tooltipText && {
-          tooltipDataSet: createGlobalTooltipDataSet({
-            id: 'start-batch-info-tooltip',
-            content: tooltipText
-          })
-        })}
     >
       {!isSignLater && (
         <View style={{ marginRight: hasPendingBatch ? 12 : 10 }}>
