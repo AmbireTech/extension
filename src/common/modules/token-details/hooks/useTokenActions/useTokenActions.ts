@@ -1,6 +1,5 @@
 import { getAddress } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR } from '@ambire-common/consts/addresses'
@@ -15,6 +14,7 @@ import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import UnstakeIcon from '@common/assets/svg/UnstakeIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
@@ -24,8 +24,14 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 
+import type { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
-import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
+import type { WalletStakingMode } from '@common/modules/wallet-staking/constants/staking'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectSupportedChainIds = (state: SwapAndBridgeController) => state.supportedChainIds
+
 type UseTokenActionsOptions = {
   /**
    * When set, a zero-balance token keeps Send disabled but shows this tooltip explaining why
@@ -73,6 +79,11 @@ const WALLET_STAKING_ACTIONS: Record<
  * Extracted from useTokenDetails so both the portfolio token details and the trending token
  * details screens can share the exact same footer.
  */
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectTokenPreferences = (state: AllControllersMappingType['PortfolioController']) =>
+  state.tokenPreferences
+
 const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOptions = {}) => {
   const { noBalanceSendTooltip, enableSwapToBuy, isNotInPortfolio, enableWalletStakingAction } =
     options
@@ -84,7 +95,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   } = useModalize()
   const { addToast } = useToast()
   const { t } = useTranslation()
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: lockedShares } = useController(
     'SelectedAccountController',
     selectXWalletLockedShares
@@ -95,15 +106,23 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const isErc4337Enabled = flags.erc4337
   const { state: supportedChainIds } = useController(
     'SwapAndBridgeController',
-    (state) => state.supportedChainIds
+    selectSupportedChainIds
+  )
+  const { state: disabledSwapProviderIds } = useController(
+    'SwapAndBridgeController',
+    (state) => state.disabledSwapProviderIds
   )
   const { dispatch: portfolioDispatch } = useController('PortfolioController')
-  const { state: tokenPreferences } = useController('PortfolioController', 'tokenPreferences')
+  const { state: tokenPreferences } = useController('PortfolioController', selectTokenPreferences)
   const networks = useNetworks({
     acc: account,
     additionalCheck: {
       chainIds: supportedChainIds,
-      reason: 'Network is not supported by our service provider.'
+      reason: t(
+        disabledSwapProviderIds.length
+          ? 'Network is not supported by the enabled service providers. Enable more providers for wider support'
+          : 'Network is not supported by our service provider.'
+      )
     }
   })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
@@ -129,8 +148,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const isGasTankOrRewardsToken = isGasTankToken || isRewardsToken
   const isAmountZero = token && getTokenAmount(token) === 0n
   const canToToppedUp = token?.flags.canTopUpGasTank
-  const shouldDisableSwapAndBridge =
-    network?.isNotSupported || isGasTankOrRewardsToken || isAmountZero
+  const shouldDisableSwapAndBridge = isGasTankOrRewardsToken || isAmountZero
   const stakingAction =
     enableWalletStakingAction && token?.chainId === ETHEREUM_CHAIN_ID
       ? WALLET_STAKING_ACTIONS[token.address.toLowerCase()]

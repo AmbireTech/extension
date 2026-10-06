@@ -12,7 +12,6 @@ import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomS
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -43,16 +42,19 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   const isSheetOpen = openBottomSheetsCount > 0
 
   const [keepSuppressedUntilKeyboardHidden, setKeepSuppressedUntilKeyboardHidden] = useState(false)
+  const [isKeyboardUp, setIsKeyboardUp] = useState(false)
   const isSheetOpenRef = useRef(isSheetOpen)
   isSheetOpenRef.current = isSheetOpen
 
   useEffect(() => {
     const willShowSub = KeyboardEvents.addListener('keyboardWillShow', () => {
+      setIsKeyboardUp(true)
       // If the keyboard comes up while a sheet is open, remember that we must
       // keep avoidance suppressed through the keyboard's hide animation later.
       if (isSheetOpenRef.current) setKeepSuppressedUntilKeyboardHidden(true)
     })
     const didHideSub = KeyboardEvents.addListener('keyboardDidHide', () => {
+      setIsKeyboardUp(false)
       setKeepSuppressedUntilKeyboardHidden(false)
     })
 
@@ -64,8 +66,10 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
 
   const paddingTop = isInsideBottomSheet ? 0 : insets.top + (withTopPadding ? SPACING_SM : 0)
 
+  // A sheet opening turns the avoidance off mid keyboard-hide animation, leaving the content
+  // sized for a keyboard that has gone. It stays on until the keyboard is actually down.
   const isKeyboardAvoidingEnabled =
-    keyboardAwareFooter && !isSheetOpen && !keepSuppressedUntilKeyboardHidden
+    keyboardAwareFooter && (!isSheetOpen || isKeyboardUp) && !keepSuppressedUntilKeyboardHidden
 
   return (
     // `behavior="height"` shrinks the whole container by the keyboard's overlap,
@@ -130,7 +134,6 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   title,
   ...rest
 }) => {
-  const { isOnboardingRoute } = useOnboardingNavigation()
   const { goBack } = useNavigation()
   const insets = useSafeAreaInsets()
   const isInsideKeyboardAwareContainer = useContext(KeyboardAwareContainerContext)

@@ -12,6 +12,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -29,7 +30,7 @@ import getStyles from './styles'
 
 const FLAT_LIST_ITEM_HEIGHT = 138.5
 
-const { isPopup, isSidePanel } = getUiType()
+const { isPopup } = getUiType()
 
 const selectDisabledSwapProviderIds = (
   state: AllControllersMappingType['SwapAndBridgeController']
@@ -45,6 +46,7 @@ const RoutesModal = ({
   openProviderSettingsBottomSheet: () => void
 }) => {
   const { t } = useTranslation()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { styles, theme } = useTheme(getStyles)
   const { quote, signAccountOpController, updateQuoteStatus } =
     useController('SwapAndBridgeController').state
@@ -308,7 +310,7 @@ const RoutesModal = ({
       customRenderer={undefined}
       style={{
         overflow: 'hidden',
-        width: isMobile ? 'auto' : isPopup || isSidePanel ? '100%' : TRANSACTION_FORM_WIDTH,
+        width: isMobile ? 'auto' : isPopup || isNarrowWebLayout ? '100%' : TRANSACTION_FORM_WIDTH,
         minHeight: isMobile ? undefined : height * 0.7
       }}
       scrollViewProps={{

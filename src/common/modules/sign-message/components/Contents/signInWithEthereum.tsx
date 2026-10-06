@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/consts/autoLogin'
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
+import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Alert from '@common/components/Alert'
 import FatToggle from '@common/components/FatToggle'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -13,6 +14,7 @@ import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
@@ -30,12 +32,11 @@ import spacings, {
 } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import MessageContentLayout from './MessageContentLayout'
 import getStyles from './styles'
 
-const { isSidePanel } = getUiType()
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -124,7 +125,7 @@ const Row = ({
         isWeb && flexbox.justifySpaceBetween,
         isWeb && flexbox.alignCenter,
         // Without a gap the label and the value touch each other once the value grows wide
-        // enough to fill the row, which happens on the narrow side panel
+        // enough to fill the row, which happens on a narrow view
         isWeb && { columnGap: SPACING_TY * responsiveSizeMultiplier },
         {
           marginBottom: SPACING_SM * responsiveSizeMultiplier
@@ -140,6 +141,8 @@ const Container = ({ children }: { children: React.ReactNode }) => (
   <MessageContentLayout webStyle={spacings.mbLg}>{children}</MessageContentLayout>
 )
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
@@ -152,13 +155,14 @@ const SignInWithEthereum = ({
   handleQrSigningFlowOnRejectPressed,
   handleQrSigningFlowOnBackPressed
 }: Props) => {
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
   const siweMessageToSign = useMemo(() => {
@@ -254,47 +258,33 @@ const SignInWithEthereum = ({
 
   return (
     <Container>
-      {isSidePanel ? (
-        <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
-          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
+          {
+            marginBottom: SPACING_MD * responsiveSizeMultiplier
+          }
+        ]}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <Text
+            weight="medium"
+            // In a narrow view the same size as the titles of the other request screens
+            fontSize={isMobile ? 20 : (isNarrowWebLayout ? 20 : 24) * responsiveSizeMultiplier}
+            style={spacings.mrSm}
+          >
             {t('Sign-in request')}
           </Text>
-          <View style={[flexbox.alignStart, spacings.mtTy]}>
-            <NetworkBadge
-              chainId={signMessageState.messageToSign?.chainId}
-              responsiveSizeMultiplier={responsiveSizeMultiplier}
-              withOnPrefix
-            />
-          </View>
         </View>
-      ) : (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            {
-              marginBottom: SPACING_MD * responsiveSizeMultiplier
-            }
-          ]}
-        >
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text
-              weight="medium"
-              fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
-              style={spacings.mrSm}
-            >
-              {t('Sign-in request')}
-            </Text>
-          </View>
-          <NetworkBadge
-            chainId={signMessageState.messageToSign?.chainId}
-            responsiveSizeMultiplier={responsiveSizeMultiplier}
-            withOnPrefix
-          />
-          {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
-        </View>
-      )}
+        <NetworkBadge
+          chainId={signMessageState.messageToSign?.chainId}
+          responsiveSizeMultiplier={responsiveSizeMultiplier}
+          withOnPrefix
+        />
+        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
+      </View>
       <View style={styles.container}>
         <View
           style={{
@@ -359,15 +349,17 @@ const SignInWithEthereum = ({
                     />
                   </>
                 )}
-                {row.label !== 'Resources' && row.label !== 'Nonce' && (
-                  <Value
-                    responsiveSizeMultiplier={responsiveSizeMultiplier}
-                    // The address must stay fully readable, so it wraps onto a second line
-                    // instead of being cut off at the end
-                    withWrap={row.label === 'Account'}
-                  >
-                    {row.value}
-                  </Value>
+                {row.label === 'Account' && typeof row.value === 'string' && (
+                  <>
+                    {/* Truncated in the middle so both ends stay visible; the full address is in the tooltip */}
+                    <Value responsiveSizeMultiplier={responsiveSizeMultiplier} tooltipId="account">
+                      {shortenAddress(row.value, 18)}
+                    </Value>
+                    <Tooltip content={row.value} id="account" />
+                  </>
+                )}
+                {row.label !== 'Resources' && row.label !== 'Nonce' && row.label !== 'Account' && (
+                  <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>{row.value}</Value>
                 )}
               </Row>
             ))}
@@ -388,6 +380,9 @@ const SignInWithEthereum = ({
                   flexbox.directionRow,
                   flexbox.alignCenter,
                   isWeb && flexbox.justifyEnd,
+                  // In the narrow side panel the label must wrap instead of pushing
+                  // the toggle out of the viewport
+                  isWeb && { flexShrink: 1 },
                   isMobile && spacings.mbSm
                 ]}
               >
@@ -401,7 +396,7 @@ const SignInWithEthereum = ({
                 <Text
                   fontSize={14 * responsiveSizeMultiplier}
                   appearance="secondaryText"
-                  style={spacings.mrSm}
+                  style={[spacings.mrSm, isWeb && { flexShrink: 1 }]}
                 >
                   {t('Auto-login on this network for the next')}
                 </Text>

@@ -15,6 +15,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import { isValidSafeNonce } from './helpers'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const getNonce = (safeTxNonce: string | undefined, accountOpNonce: bigint | null) =>
   safeTxNonce === undefined ? (accountOpNonce ?? 0n) : BigInt(safeTxNonce)
 
@@ -22,13 +24,19 @@ interface Props {
   withNetwork?: boolean
 }
 
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+
 const SafeNonce = ({ withNetwork = false }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state: signAccountOpState, dispatch } = useController('SignAccountOpController')
-  const { state: accountStates } = useController('AccountsController', 'accountStates')
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
   const fromRequestId = signAccountOpState?.fromRequestId
 
   // Nonces already used by every OTHER queued Safe request for this account/chain. Computed

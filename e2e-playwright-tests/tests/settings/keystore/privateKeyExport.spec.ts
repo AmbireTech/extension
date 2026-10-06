@@ -24,6 +24,6 @@ test.describe('private key export', { tag: '@keystore' }, () => {
     await pages.auth.importExistingAccount()
 
     const keyAddress = ethers.computeAddress(PRIVATE_KEY)
-    await pages.accountKeys.exportPrivateKey(keyAddress, keyAddress)
+    await pages.accountKeys.exportPrivateKey({ keyAddr: keyAddress, accountAddr: keyAddress })
   })
 })

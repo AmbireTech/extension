@@ -7,6 +7,7 @@ import Alert from '@common/components/Alert'
 import ManifestImage from '@common/components/ManifestImage'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
@@ -15,14 +16,12 @@ import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAcc
 import spacings, { SPACING, SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { getUiType } from '@common/utils/uiType'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
 import getStyles from './styles'
 
-const { isSidePanel } = getUiType()
-
 const SwitchAccountScreen = () => {
+  const { isNarrowWebLayout } = useCompactLayout()
   const {
     t,
     account,
@@ -37,7 +36,7 @@ const SwitchAccountScreen = () => {
     responsiveSizeMultiplier
   } = useSwitchAccount()
   const { theme, styles } = useTheme(getStyles)
-  const contentWidth = isSidePanel ? '100%' : responsiveSizeMultiplier * 530
+  const contentWidth = isNarrowWebLayout ? '100%' : responsiveSizeMultiplier * 530
 
   return (
     <TabLayoutContainer
@@ -58,9 +57,10 @@ const SwitchAccountScreen = () => {
         style={[
           styles.container,
           {
-            paddingVertical: SPACING_LG * responsiveSizeMultiplier,
+            // In a narrow view the header and the footer already space the content like on mobile
+            paddingVertical: isNarrowWebLayout ? 0 : SPACING_LG * responsiveSizeMultiplier,
             width: contentWidth,
-            ...(isSidePanel ? { maxWidth: '100%' } : {})
+            ...(isNarrowWebLayout ? { maxWidth: '100%' } : {})
           }
         ]}
       >
@@ -79,7 +79,7 @@ const SwitchAccountScreen = () => {
                 weight="medium"
                 style={{
                   marginBottom: SPACING * responsiveSizeMultiplier,
-                  ...(isSidePanel ? { textAlign: 'center' as const } : {})
+                  ...(isNarrowWebLayout ? { textAlign: 'center' as const } : {})
                 }}
               >
                 {t('Switch Account Request')}
@@ -178,9 +178,9 @@ const SwitchAccountScreen = () => {
             style={{
               ...styles.container,
               paddingVertical: SPACING_LG * responsiveSizeMultiplier,
-              ...(isSidePanel ? { width: '100%', maxWidth: '100%' } : {})
+              ...(isNarrowWebLayout ? { width: '100%', maxWidth: '100%' } : {})
             }}
-            width={isSidePanel ? '100%' : responsiveSizeMultiplier * 450}
+            width={isNarrowWebLayout ? '100%' : responsiveSizeMultiplier * 450}
             height={responsiveSizeMultiplier * 450}
             appearance="primaryBackground"
           />

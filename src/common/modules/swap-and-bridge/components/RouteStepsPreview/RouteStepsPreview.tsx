@@ -1,6 +1,5 @@
 import { formatUnits } from 'ethers'
-import React, { Fragment, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { Fragment, useId, useMemo } from 'react'
 import { View } from 'react-native'
 
 import {
@@ -9,12 +8,17 @@ import {
 } from '@ambire-common/interfaces/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
+import CowSwapIcon from '@common/assets/svg/CowSwapIcon'
 import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
+import SecurityIcon from '@common/assets/svg/SecurityIcon'
 import UniswapIcon from '@common/assets/svg/UniswapIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,7 +26,74 @@ import formatTime from '@common/utils/formatTime'
 
 import RouteStepsArrow from '../RouteStepsArrow'
 import { RouteStepsTokenAmount, RouteStepsTokenIcon } from '../RouteStepsToken'
-import styles from './styles'
+import { getLastRouteStepType } from './helpers'
+import styles, { TOKEN_LABEL_RESERVED_HEIGHT } from './styles'
+
+const MAX_AMOUNT_LABEL_LENGTH = 10
+
+/**
+ * Formats a step amount precisely enough to tell similar routes apart. When the formatted
+ * value doesn't fit the label, it's cut with an ellipsis and `fullAmount` holds the
+ * unrounded value, so it can be shown in a tooltip.
+ */
+const getStepAmountLabel = (
+  rawAmount: string,
+  decimals: number
+): { amount: string; fullAmount?: string } => {
+  const fullAmount = formatUnits(rawAmount, decimals)
+  const formattedAmount = formatDecimals(Number(fullAmount), 'precise')
+
+  if (formattedAmount.length <= MAX_AMOUNT_LABEL_LENGTH) return { amount: formattedAmount }
+
+  return { amount: `${formattedAmount.slice(0, MAX_AMOUNT_LABEL_LENGTH)}...`, fullAmount }
+}
+
+/**
+ * Icon with its amount/symbol label pinned directly underneath it. The label is
+ * absolutely positioned (anchored to this icon's own box) instead of taking part
+ * in normal flow, so a long label (e.g. "2,647.71 USDC") never widens this step's
+ * layout slot and steals space from the arrow/badge next to it - it just overflows
+ * visually while staying centered (or edge-aligned) on the icon that owns it.
+ */
+const StepToken = ({
+  address,
+  chainId,
+  uri,
+  symbol,
+  amount,
+  fullAmount,
+  amountInUsd,
+  align = 'center'
+}: {
+  address: string
+  chainId: bigint
+  uri?: string
+  symbol: string
+  amount: string
+  fullAmount?: string
+  amountInUsd?: number
+  align?: 'left' | 'right' | 'center'
+}) => (
+  <View>
+    <RouteStepsTokenIcon address={address} chainId={chainId} uri={uri} />
+    <View
+      style={[
+        styles.labelAnchor,
+        align === 'left' && styles.labelAnchorLeft,
+        align === 'right' && styles.labelAnchorRight,
+        align === 'center' && styles.labelAnchorCenter
+      ]}
+    >
+      <RouteStepsTokenAmount
+        symbol={symbol}
+        amount={amount}
+        fullAmount={fullAmount}
+        amountInUsd={amountInUsd}
+        align={align}
+      />
+    </View>
+  </View>
+)
 
 const RouteStepsPreview = ({
   steps,
@@ -54,26 +125,29 @@ const RouteStepsPreview = ({
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
+  const mevProtectedTooltipId = useId()
+  const isMevProtected = providerId === 'cowswap'
+  const hasBottomLeftContent = !!bottomLeftSlot || (isBridge && !!estimationInSeconds)
+  const mevProtectedTooltipText = t(
+    'CoW Swap is designed to protect your swap from bots that manipulate the price before it executes.'
+  )
+  const { maxWidthSize } = useWindowSize()
+
+  // On a narrow window, a multi-hop route already has little room per step (icon +
+  // arrow + badge), so the protocol badge gets a tighter cap to avoid crowding/overlap
+  const isMultiStep = steps.length > 1
+  const badgeStyle = isMultiStep && maxWidthSize('xs') ? { maxWidth: 60 } : undefined
 
   const shouldWarnForLongEstimation = useMemo(() => {
     if (!estimationInSeconds) return false
     return estimationInSeconds > 3600 // 1 hour in seconds
   }, [estimationInSeconds])
 
-  const formattedFromAmount = useMemo(() => {
+  const fromAmountLabel = useMemo(() => {
     const fromStep = steps?.[0]
-    if (!fromStep) return ''
+    if (!fromStep) return { amount: '' }
 
-    const fromAmount = `${formatDecimals(
-      Number(formatUnits(fromStep.fromAmount, fromStep.fromAsset.decimals)),
-      'precise'
-    )}`
-
-    if (fromAmount.length > 10) {
-      return `${fromAmount.slice(0, 10)}...`
-    }
-
-    return fromAmount
+    return getStepAmountLabel(fromStep.fromAmount, fromStep.fromAsset.decimals)
   }, [steps])
 
   const formattedRefundedAmount = useMemo(() => {
@@ -90,35 +164,14 @@ const RouteStepsPreview = ({
     return toAmount
   }, [steps, routeStatus])
 
-  const formattedToAmount = useMemo(() => {
+  const toAmountLabel = useMemo(() => {
     const toStep = steps?.[steps.length - 1]
-    if (!toStep) return ''
+    if (!toStep) return { amount: '' }
 
-    const toAmount = `${formatDecimals(
-      Number(formatUnits(toStep.toAmount, toStep.toAsset.decimals)),
-      'amount'
-    )}`
-
-    if (toAmount.length > 10) {
-      return `${toAmount.slice(0, 10)}...`
-    }
-
-    return toAmount
+    return getStepAmountLabel(toStep.toAmount, toStep.toAsset.decimals)
   }, [steps])
 
   const resolvedCurrentStep = currentStep ?? 0
-
-  const getLastStepType = (step: SwapAndBridgeStep) => {
-    if (routeStatus === 'completed') return 'success'
-
-    const userTxIndex = step.userTxIndex ?? 0
-
-    if (userTxIndex < resolvedCurrentStep) {
-      return routeStatus === 'refunded' ? 'warning' : 'success'
-    }
-
-    return 'default'
-  }
 
   const getIntermediateStepType = (userTxIndex: number) => {
     if (routeStatus === 'completed') return 'success'
@@ -129,6 +182,8 @@ const RouteStepsPreview = ({
     <>
       {step.protocol.name.startsWith('Uniswap') ? (
         <UniswapIcon width={16} height={16} />
+      ) : step.protocol.name === 'CoW Swap' ? (
+        <CowSwapIcon width={16} height={16} />
       ) : (
         <TokenIcon uri={step.protocol.icon} width={16} height={16} />
       )}
@@ -137,7 +192,7 @@ const RouteStepsPreview = ({
         weight="medium"
         appearance="secondaryText"
         numberOfLines={1}
-        style={spacings.mlMi}
+        style={[spacings.mlMi, badgeStyle]}
       >
         {step.protocol.displayName}
       </Text>
@@ -146,9 +201,10 @@ const RouteStepsPreview = ({
 
   return (
     <View style={[flexbox.flex1, common.fullWidth]}>
-      <View style={[styles.container, spacings.mb]}>
+      <View style={[styles.container, spacings.mb, { paddingBottom: TOKEN_LABEL_RESERVED_HEIGHT }]}>
         <View style={styles.iconsRow}>
           {steps.map((step, i) => {
+            const isFirst = i === 0
             const isOnlyOneStep = steps.length === 1
             const isLast = i === steps.length - 1
             const userTxIndex = step.userTxIndex ?? 0
@@ -157,23 +213,38 @@ const RouteStepsPreview = ({
               return (
                 <Fragment key={`${step.type}-${i}`}>
                   <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-                    <RouteStepsTokenIcon
+                    <StepToken
                       uri={step.fromAsset.icon}
                       chainId={BigInt(step.fromAsset.chainId)}
                       address={step.fromAsset.address}
+                      symbol={step.fromAsset.symbol}
+                      amount={isOnlyOneStep ? fromAmountLabel.amount : formattedRefundedAmount}
+                      fullAmount={isOnlyOneStep ? fromAmountLabel.fullAmount : undefined}
+                      amountInUsd={inputValueInUsd}
+                      align={isOnlyOneStep ? 'left' : 'center'}
                     />
                     <RouteStepsArrow
                       containerStyle={flexbox.flex1}
-                      type={getLastStepType(step)}
+                      type={getLastRouteStepType({
+                        routeStatus,
+                        userTxIndex,
+                        currentStep: resolvedCurrentStep,
+                        isOnlyOneStep
+                      })}
                       badge={renderStepBadge(step)}
                       isLoading={loadingEnabled && (userTxIndex === currentStep || isOnlyOneStep)}
                       badgePosition="top"
                     />
                   </View>
-                  <RouteStepsTokenIcon
+                  <StepToken
                     address={step.toAsset.address}
                     chainId={BigInt(step.toAsset.chainId)}
                     uri={step.toAsset.icon}
+                    symbol={step.toAsset.symbol}
+                    amount={toAmountLabel.amount}
+                    fullAmount={toAmountLabel.fullAmount}
+                    amountInUsd={outputValueInUsd}
+                    align="right"
                   />
                 </Fragment>
               )
@@ -184,10 +255,14 @@ const RouteStepsPreview = ({
                 key={`${step.type}-${i}`}
                 style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}
               >
-                <RouteStepsTokenIcon
+                <StepToken
                   address={step.fromAsset.address}
                   chainId={BigInt(step.fromAsset.chainId)}
                   uri={step.fromAsset.icon}
+                  symbol={step.fromAsset.symbol}
+                  amount={isFirst ? fromAmountLabel.amount : ''}
+                  fullAmount={isFirst ? fromAmountLabel.fullAmount : undefined}
+                  align={isFirst ? 'left' : 'center'}
                 />
                 <RouteStepsArrow
                   containerStyle={flexbox.flex1}
@@ -200,51 +275,12 @@ const RouteStepsPreview = ({
             )
           })}
         </View>
-
-        <View style={styles.amountsRow}>
-          {steps.map((step, i) => {
-            const isFirst = i === 0
-            const isOnlyOneStep = steps.length === 1
-            const isLast = i === steps.length - 1
-
-            if (isLast) {
-              return (
-                <Fragment key={`amount-${step.type}-${i}`}>
-                  <RouteStepsTokenAmount
-                    symbol={step.fromAsset.symbol}
-                    amount={isOnlyOneStep ? formattedFromAmount : formattedRefundedAmount}
-                    amountInUsd={inputValueInUsd}
-                    align={isOnlyOneStep ? 'left' : 'center'}
-                  />
-                  <View style={flexbox.flex1} />
-                  <RouteStepsTokenAmount
-                    amountInUsd={outputValueInUsd}
-                    symbol={step.toAsset.symbol}
-                    amount={formattedToAmount}
-                    align="right"
-                  />
-                </Fragment>
-              )
-            }
-
-            return (
-              <Fragment key={`amount-${step.type}-${i}`}>
-                <RouteStepsTokenAmount
-                  symbol={step.fromAsset.symbol}
-                  amount={isFirst ? formattedFromAmount : ''}
-                  align="left"
-                />
-                <View style={flexbox.flex1} />
-              </Fragment>
-            )
-          })}
-        </View>
       </View>
 
       <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
         {!isDisabled ? (
           <>
-            <View>
+            <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
               {bottomLeftSlot || (
                 <>
                   {!!shouldWarnForLongEstimation && (
@@ -269,12 +305,49 @@ const RouteStepsPreview = ({
                   </Text>
                 </>
               )}
+              {isMevProtected && (
+                <View
+                  accessible
+                  accessibilityLabel={t('MEV protected')}
+                  accessibilityHint={mevProtectedTooltipText}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: mevProtectedTooltipId,
+                    content: mevProtectedTooltipText
+                  })}
+                  testID="mev-protected-badge"
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.phTy,
+                    spacings.pvMi,
+                    hasBottomLeftContent && spacings.mlSm,
+                    common.borderRadiusSecondary,
+                    {
+                      backgroundColor: theme.primaryAccent100,
+                      borderColor: theme.primaryAccent200,
+                      borderWidth: 1
+                    }
+                  ]}
+                >
+                  <SecurityIcon width={12} height={15} color={theme.primaryAccent} />
+                  <Text
+                    fontSize={12}
+                    weight="medium"
+                    color={theme.primaryAccent}
+                    style={spacings.mlMi}
+                  >
+                    {t('MEV protected')}
+                  </Text>
+                </View>
+              )}
             </View>
 
             {providerId === 'socket' || providerId === 'socketv3' ? (
               <BungeeIcon width={56.7} height={11.2} />
             ) : providerId === 'uniswap' ? (
               <UniswapIcon width={28} height={28} />
+            ) : providerId === 'cowswap' ? (
+              <CowSwapIcon width={28} height={28} />
             ) : (
               <LiFiIcon width={39.75} height={14} />
             )}

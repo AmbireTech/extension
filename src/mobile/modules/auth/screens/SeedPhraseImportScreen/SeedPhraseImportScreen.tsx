@@ -6,6 +6,7 @@ import Button from '@common/components/Button'
 import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import { useTranslation } from '@common/config/localization'
+import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
@@ -93,6 +94,7 @@ const SeedPhraseImportScreen = () => {
               rules={{ required: enablePassphrase }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <InputPassword
+                  {...NO_AUTOFILL_PROPS}
                   testID="input-passphrase"
                   onBlur={onBlur}
                   backgroundColor={theme.secondaryBackground}

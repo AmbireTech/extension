@@ -23,6 +23,14 @@ import TrustedIcon from './TrustedIcon'
 type Props = Partial<DappProviderRequest['session']> & {
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
+  isTrustedByUser?: boolean
+  isScamCheckerEnabled?: boolean
+  /**
+   * Whether the app is part of the default Ambire app catalog (not added or connected by the user).
+   * Only catalog apps get the "Verified app" badge - passing the security checks alone means
+   * the app isn't known to be malicious, not that it's verified.
+   */
+  isInAppCatalog?: boolean
 }
 
 const DAppConnectHeader: FC<Props> = ({
@@ -30,10 +38,20 @@ const DAppConnectHeader: FC<Props> = ({
   name = 'Unknown App',
   icon,
   responsiveSizeMultiplier = 1,
-  securityCheck
+  securityCheck,
+  isTrustedByUser = false,
+  isScamCheckerEnabled = true,
+  isInAppCatalog
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+
+  // When the checker is enabled, a user-trusted app is no longer flagged for its hosting. It still
+  // shows no verified mark - the app did not pass our checks, the user simply trusts it.
+  const isSuspiciousHosting =
+    isScamCheckerEnabled && securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+  const isBlacklisted = isScamCheckerEnabled && securityCheck === 'BLACKLISTED'
+  const hasFailedToGet = isScamCheckerEnabled && securityCheck === 'FAILED_TO_GET'
 
   const { minHeightSize } = useWindowSize()
 
@@ -50,12 +68,11 @@ const DAppConnectHeader: FC<Props> = ({
       style={[
         styles.contentHeader,
         {
-          backgroundColor:
-            securityCheck === 'BLACKLISTED'
-              ? theme.errorBackground
-              : securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET'
-                ? theme.warningBackground
-                : theme.tertiaryBackground
+          backgroundColor: isBlacklisted
+            ? theme.errorBackground
+            : isSuspiciousHosting || hasFailedToGet
+              ? theme.warningBackground
+              : theme.tertiaryBackground
         },
         spacingsStyle
       ]}
@@ -87,7 +104,7 @@ const DAppConnectHeader: FC<Props> = ({
             )}
           />
 
-          {securityCheck === 'VERIFIED' && (
+          {isScamCheckerEnabled && securityCheck === 'VERIFIED' && !!isInAppCatalog && (
             <View
               style={{
                 position: 'absolute',
@@ -110,7 +127,7 @@ const DAppConnectHeader: FC<Props> = ({
               <TrustedIcon />
             </View>
           )}
-          {securityCheck === 'BLACKLISTED' && (
+          {isBlacklisted && (
             <View
               style={{
                 position: 'absolute',
@@ -121,7 +138,7 @@ const DAppConnectHeader: FC<Props> = ({
               <ErrorFilledIcon width={18} height={18} />
             </View>
           )}
-          {(securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET') && (
+          {(isSuspiciousHosting || hasFailedToGet) && (
             <View
               style={{
                 position: 'absolute',

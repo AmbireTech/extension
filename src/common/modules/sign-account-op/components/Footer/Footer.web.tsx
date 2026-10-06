@@ -9,9 +9,9 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -19,11 +19,18 @@ import { Props } from './Footer'
 import RejectButton from './RejectButton'
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 // An exception to the `size="large"` height (56). The sign screen is dense and the
 // footer is always visible, so all of its buttons are slightly shorter in order to
 // free up vertical space for the transaction details above. Keep every button in
 // the footer on this height, otherwise they won't line up.
 const FOOTER_BUTTON_HEIGHT = 52
+
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const Footer = ({
   onReject,
@@ -44,9 +51,9 @@ const Footer = ({
 }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-  const { isCompactLayout } = useCompactActionRequestLayout()
-  const { state: userRequests } = useController('RequestsController', 'userRequests')
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { isCompactLayout } = useCompactLayout()
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 

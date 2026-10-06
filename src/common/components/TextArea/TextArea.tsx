@@ -3,6 +3,8 @@ import { TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-nat
 
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useAutoFocus from '@common/hooks/useAutoFocus'
+import useTextInputRemountKey from '@common/hooks/useTextInputRemountKey'
 import useTheme from '@common/hooks/useTheme'
 
 import getStyles from './styles'
@@ -54,9 +56,13 @@ const TextArea = ({
   leftIcon,
   customInputContent,
   value,
+  autoFocus,
+  style,
   ...rest
 }: InputProps) => {
   const { theme, styles } = useTheme(getStyles)
+  const { autoFocus: nativeAutoFocus, setInputRef } = useAutoFocus(autoFocus)
+  const textInputRemountKey = useTextInputRemountKey(value, isFocused)
 
   const inputWrapperStyles = [
     styles.inputWrapper,
@@ -83,21 +89,25 @@ const TextArea = ({
         <View style={[styles.input, { height: '100%' }, inputStyle]}>
           {customInputContent}
           <TextInput
+            key={textInputRemountKey}
             placeholderTextColor={theme.secondaryText}
             autoCapitalize="none"
             autoCorrect={false}
             editable={!disabled}
             onBlur={onBlur}
             onFocus={onFocus}
+            ref={setInputRef}
+            autoFocus={nativeAutoFocus}
             value={value}
             {...rest}
-            style={{
-              textAlignVertical: 'top',
-              ...styles.nativeInput,
+            style={[
+              { textAlignVertical: 'top' },
+              styles.nativeInput,
               // @ts-ignore outline: 'none'
-              outline: 'none',
-              ...nativeInputStyle
-            }}
+              { outline: 'none' },
+              style,
+              nativeInputStyle
+            ]}
           />
         </View>
       </View>

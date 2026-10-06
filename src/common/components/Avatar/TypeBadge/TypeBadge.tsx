@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid'
 import React, { FC } from 'react'
 import { View } from 'react-native'
 
@@ -14,15 +13,17 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 const SAFE_BADGE_ICON_SIZE = 16
 
 interface Props {
+  /** The account the badge sits on, which is what makes its tooltip anchor unique */
+  address: string
   smartAccountType?: 'Ambire' | 'Safe'
   size?: 'big' | 'small'
   showTooltip?: boolean
 }
 
-const TypeBadge: FC<Props> = ({ smartAccountType, size, showTooltip = false }) => {
+const TypeBadge: FC<Props> = ({ address, smartAccountType, size, showTooltip = false }) => {
   const { theme, themeType } = useTheme()
   const badgePreset = BADGE_PRESETS['smart-account']
-  const tooltipId = nanoid(6)
+  const tooltipId = `account-type-badge-${address}`
 
   if (!smartAccountType) return null
 

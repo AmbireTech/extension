@@ -11,6 +11,11 @@ export function createGlobalTooltipDataSet(
   props: Omit<ITooltip, 'render' | 'html' | 'children' | 'wrapper' | 'id'> & {
     // The implementation doesn't work without id
     id: string
+    /**
+     * Title of the info modal that opens when the user taps an `InfoIcon` on mobile.
+     * The modal has no title when this is not set. Web tooltips have no title, so web ignores it.
+     */
+    title?: string
   }
 ) {
   return { tooltip: JSON.stringify(props) }

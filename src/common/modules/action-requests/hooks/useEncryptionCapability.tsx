@@ -10,6 +10,8 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   requestType?: 'encrypt' | 'decrypt'
 }
@@ -18,9 +20,12 @@ interface Props {
  * Hook that provides encryption capability validation logic.
  * Used for screens that require internal keys for encryption/decryption operations.
  */
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 export const useEncryptionCapability = ({ requestType }: Props = { requestType: 'encrypt' }) => {
   const { t } = useTranslation()
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const keystoreState = useController('KeystoreController').state
 
   const isViewOnly = getIsViewOnly(keystoreState.keys, account?.associatedKeys || [])

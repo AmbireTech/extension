@@ -9,6 +9,7 @@ declare module '@env' {
     VELCRO_URL: string
     BUNGEE_API_KEY: string
     LI_FI_API_KEY: string
+    COWSWAP_API_KEY: string
     UNISWAP_API_KEY: string
     SENTRY_DSN?: string
     ENVIRONMENT: string
@@ -104,6 +105,11 @@ declare module '@env' {
    * across multiple blockchains. Access is restricted and requires an API key.
    */
   export const LI_FI_API_KEY: EnvTypes['LI_FI_API_KEY']
+
+  /**
+   * CoW Swap Partner API key. Required for routes through CoW Swap.
+   */
+  export const COWSWAP_API_KEY: EnvTypes['COWSWAP_API_KEY']
 
   /**
    * Uniswap Trading API key. Required by the Uniswap router.

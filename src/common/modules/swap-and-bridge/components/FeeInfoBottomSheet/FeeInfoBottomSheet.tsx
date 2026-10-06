@@ -8,8 +8,8 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
-import GlassView from '@common/components/GlassView'
-import HoverablePressable from '@common/components/HoverablePressable'
+import FooterGlassView from '@common/components/FooterGlassView'
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -20,6 +20,7 @@ import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
@@ -38,7 +39,6 @@ type Props = {
   feePercent: number
   feeExemptionReason?: FeeExemptionReason
   withActions?: boolean
-  withCloseAction?: boolean
 }
 
 const FeeInfoBottomSheet = ({
@@ -46,8 +46,7 @@ const FeeInfoBottomSheet = ({
   closeBottomSheet,
   feePercent,
   feeExemptionReason,
-  withActions = true,
-  withCloseAction = false
+  withActions = true
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -144,9 +143,14 @@ const FeeInfoBottomSheet = ({
         </View>
       ) : (
         <>
-          <Text fontSize={18} weight="semiBold" style={[styles.centeredText, spacings.mtMi]}>
-            {t('Stake $WALLET, pay less in trading fees')}
-          </Text>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi, spacings.mbTy]}>
+            {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
+            <PanelTitle
+              title={t('Stake $WALLET, pay less in fees')}
+              size={18}
+              style={isWeb ? text.left : text.center}
+            />
+          </View>
           <View
             style={[
               flexbox.directionRow,
@@ -228,7 +232,7 @@ const FeeInfoBottomSheet = ({
                     </View>
                   </View>
 
-                  {index < feeTiers.length - 1 && <View style={spacings.mtMi} />}
+                  {index < feeTiers.length - 1 && <View style={spacings.mtTy} />}
                 </React.Fragment>
               )
             })}
@@ -237,59 +241,28 @@ const FeeInfoBottomSheet = ({
           <Text
             appearance="secondaryText"
             fontSize={11}
-            style={[styles.centeredText, spacings.mtSm, spacings.mbSm]}
+            style={[styles.centeredText, spacings.mtSm]}
           >
             {t('100% of accrued fees are used for $WALLET buybacks.')}
           </Text>
 
           {withActions && (
-            <GlassView
-              borderRadius={30}
-              cssStyle={{
-                maxWidth: 300,
-                alignSelf: 'center',
-                paddingLeft: 12,
-                paddingRight: 12,
-                paddingTop: 12,
-                paddingBottom: 12
-              }}
+            <FooterGlassView
+              size="sm"
+              absolute={false}
+              style={spacings.mtSm}
+              mobileStyle={spacings.mtSm}
             >
-              <Button
-                type="secondary"
-                size="regular"
-                text={t('Cancel')}
-                onPress={closeBottomSheet}
-                hasBottomSpacing={false}
-                submitOnEnter={false}
-                style={styles.cancelButton}
-                textStyle={styles.actionButtonText}
-                testID="swap-and-bridge-fee-info-not-now"
-              />
               <Button
                 size="regular"
                 text={t('Stake $WALLET')}
                 onPress={handleStakePress}
                 hasBottomSpacing={false}
-                style={styles.stakeButton}
+                style={isWeb ? styles.stakeButton : undefined}
                 textStyle={styles.actionButtonText}
                 testID="swap-and-bridge-stake-wallet-button"
               />
-            </GlassView>
-          )}
-
-          {withCloseAction && !withActions && (
-            <View style={[flexbox.alignCenter, spacings.mtSm]}>
-              <HoverablePressable
-                onPress={closeBottomSheet}
-                hitSlop={8}
-                accessibilityRole="button"
-                testID="wallet-staking-fee-info-close"
-              >
-                <Text appearance="primary" fontSize={14} weight="medium">
-                  {t('Close')}
-                </Text>
-              </HoverablePressable>
-            </View>
+            </FooterGlassView>
           )}
         </>
       )}

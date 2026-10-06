@@ -1,6 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
@@ -32,6 +31,12 @@ import Modals from '@mobile/modules/sign-account-op/components/Modals'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 
 import type { Key } from '@ambire-common/interfaces/keystore'
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectIsPortfolioReadyToVisualize = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio.isReadyToVisualize
+
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -58,6 +63,7 @@ const SwapAndBridgeScreen = () => {
     setActiveRoute,
     displayedView,
     closeEstimationModalWrapped,
+    handleEstimationModalClosed,
     isBridge,
     setShowAddedToBatch,
     batchNetworkUserRequestsCount,
@@ -85,12 +91,12 @@ const SwapAndBridgeScreen = () => {
     },
     dispatch: swapAndBridgeDispatch
   } = useController('SwapAndBridgeController')
-  const {
-    state: { portfolio, account }
-  } = useController('SelectedAccountController')
+  const { state: isPortfolioReadyToVisualize } = useController(
+    'SelectedAccountController',
+    selectIsPortfolioReadyToVisualize
+  )
 
   const {
-    dispatch: requestsCtrlDispatch,
     state: { statuses: requestsCtrlStatuses }
   } = useController('RequestsController')
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
@@ -154,7 +160,7 @@ const SwapAndBridgeScreen = () => {
     })
 
     navigate(ROUTES.dashboard)
-  }, [requestsCtrlDispatch, account, navigate, sessionId, swapAndBridgeDispatch])
+  }, [navigate, sessionId, swapAndBridgeDispatch])
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
@@ -250,18 +256,20 @@ const SwapAndBridgeScreen = () => {
           />
         )}
 
-        <View style={spacings.mbSm}>
-          <FromToken
-            fromTokenOptions={fromTokenOptions}
-            fromTokenValue={fromTokenValue}
-            fromAmountValue={fromAmountValue}
-            fromTokenAmountSelectDisabled={areAllProvidersDisabled || fromTokenAmountSelectDisabled}
-            onFromAmountChange={onFromAmountChange}
-            simulationFailed={!!fromChainSimulationError}
-            isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
-          />
-        </View>
-        <ToToken simulationFailed={!!toChainSimulationError} disabled={areAllProvidersDisabled} />
+        <FromToken
+          fromTokenOptions={fromTokenOptions}
+          fromTokenValue={fromTokenValue}
+          fromAmountValue={fromAmountValue}
+          fromTokenAmountSelectDisabled={areAllProvidersDisabled || fromTokenAmountSelectDisabled}
+          onFromAmountChange={onFromAmountChange}
+          simulationFailed={!!fromChainSimulationError}
+          isLoading={!sessionIds.includes(sessionId) || !isPortfolioReadyToVisualize}
+        />
+        <ToToken
+          simulationFailed={!!toChainSimulationError}
+          disabled={areAllProvidersDisabled}
+          openProviderSettingsModal={openProviderSettingsModal}
+        />
 
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
@@ -284,11 +292,13 @@ const SwapAndBridgeScreen = () => {
           updateType="Swap&Bridge"
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalWrapped}
+          onEstimationModalClosed={handleEstimationModalClosed}
           updateController={updateController}
           handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           serviceFee={quote?.selectedRoute?.serviceFee}
+          shouldShowTxnDetails
           Modals={Modals}
         />
         <PriceImpactWarningModal

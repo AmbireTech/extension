@@ -2,6 +2,7 @@ import React from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import Spinner from '@common/components/Spinner'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
@@ -9,7 +10,6 @@ import AddChain from '@common/modules/action-requests/components/AddOrUpdateChai
 import AlreadyAddedChain from '@common/modules/action-requests/components/AddOrUpdateChain/AlreadyAddedChain'
 import UpdateChain from '@common/modules/action-requests/components/AddOrUpdateChain/UpdateChain'
 import useAddOrUpdateNetwork from '@common/modules/action-requests/hooks/useAddOrUpdateNetwork'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -34,6 +34,7 @@ const AddOrUpdateNetworkScreen = () => {
     userRequest,
     statuses,
     features,
+    isCheckingNetwork,
     existingNetwork,
     isActionButtonPressed,
     successStateText,
@@ -51,7 +52,7 @@ const AddOrUpdateNetworkScreen = () => {
     view
   } = useAddOrUpdateNetwork()
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
 
   if (view === 'loading') {
     return (
@@ -76,9 +77,8 @@ const AddOrUpdateNetworkScreen = () => {
               !areParamsValid ||
               statuses.addNetwork === 'LOADING' ||
               statuses.updateNetwork === 'LOADING' ||
-              (features &&
-                (features.some((f) => f.level === 'loading') ||
-                  !!features.find((f) => f.id === 'flagged'))) ||
+              isCheckingNetwork ||
+              !!features.find((f) => f.id === 'flagged') ||
               isActionButtonPressed
             }
           />
@@ -86,9 +86,10 @@ const AddOrUpdateNetworkScreen = () => {
       >
         <TabLayoutWrapperMainContent
           style={{
-            marginBottom: SPACING_LG * responsiveSizeMultiplier
+            marginBottom: isNarrowWebLayout ? 0 : SPACING_LG * responsiveSizeMultiplier
           }}
           withScroll={isCompactLayout}
+          contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pbSm] : undefined}
         >
           <UpdateChain
             handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
@@ -123,7 +124,11 @@ const AddOrUpdateNetworkScreen = () => {
           />
         )}
       >
-        <TabLayoutWrapperMainContent style={spacings.mbLg} withScroll={false}>
+        <TabLayoutWrapperMainContent
+          style={spacings.mbLg}
+          withScroll={false}
+          contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pbSm] : undefined}
+        >
           <AlreadyAddedChain
             networkAlreadyAdded={networkAlreadyAdded}
             successStateText={successStateText}
@@ -146,9 +151,8 @@ const AddOrUpdateNetworkScreen = () => {
             !areParamsValid ||
             statuses.addNetwork === 'LOADING' ||
             statuses.updateNetwork === 'LOADING' ||
-            (features &&
-              (features.some((f) => f.level === 'loading') ||
-                !!features.filter((f) => f.id === 'flagged')[0])) ||
+            isCheckingNetwork ||
+            !!features.find((f) => f.id === 'flagged') ||
             isActionButtonPressed
           }
         />
@@ -156,10 +160,14 @@ const AddOrUpdateNetworkScreen = () => {
     >
       <TabLayoutWrapperMainContent
         style={{
-          marginBottom: SPACING_LG * responsiveSizeMultiplier
+          marginBottom: isNarrowWebLayout ? 0 : SPACING_LG * responsiveSizeMultiplier
         }}
         withScroll={isCompactLayout}
-        contentContainerStyle={isCompactLayout ? GROWING_CONTENT_CONTAINER_STYLE : undefined}
+        contentContainerStyle={
+          isCompactLayout
+            ? [GROWING_CONTENT_CONTAINER_STYLE, spacings.mt0, spacings.pbSm]
+            : undefined
+        }
       >
         <AddChain
           handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}

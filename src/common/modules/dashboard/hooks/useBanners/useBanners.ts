@@ -8,6 +8,8 @@ import useController from '@common/hooks/useController'
 import useOtaUpdateBanner from '@common/modules/dashboard/hooks/useOtaUpdateBanner'
 
 import type { Banner as BannerInterface } from '@ambire-common/interfaces/banner'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 const OFFLINE_BANNER: BannerInterface = {
   id: 'offline-banner',
   type: 'error',
@@ -21,23 +23,64 @@ const OFFLINE_BANNER: BannerInterface = {
   ]
 }
 
-export default function useBanners(): [BannerInterface[], BannerInterface[]] {
-  const { state: isOffline } = useController('MainController', 'isOffline')
-  const { bannersData: marketingBannersData } = useController('BannerController').state
-  const {
-    state: {
-      account,
-      portfolio,
-      deprecatedSmartAccountBanner,
-      banners: selectedAccountBanners = []
-    }
-  } = useController('SelectedAccountController')
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
 
-  const { banners: emailVaultBanners = [] } = useController('EmailVaultController').state
-  const { banners: requestBanners = [] } = useController('RequestsController').state
-  const { banners: swapAndBridgeBanners = [] } = useController('SwapAndBridgeController').state
-  const { extensionUpdateBanner } = useController('ExtensionUpdateController').state
-  const { state: hasFundedHotAccount } = useController('PortfolioController', 'hasFundedHotAccount')
+const selectIsOffline = (state: AllControllersMappingType['MainController']) => state.isOffline
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectDeprecatedSmartAccountBanner = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.deprecatedSmartAccountBanner
+const selectSelectedAccountBanners = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.banners
+const selectEmailVaultBanners = (state: AllControllersMappingType['EmailVaultController']) =>
+  state.banners
+const selectRequestsBanners = (state: AllControllersMappingType['RequestsController']) =>
+  state.banners
+const selectSwapAndBridgeBanners = (state: AllControllersMappingType['SwapAndBridgeController']) =>
+  state.banners
+const selectExtensionUpdateBanner = (
+  state: AllControllersMappingType['ExtensionUpdateController']
+) => state.extensionUpdateBanner
+const selectHasFundedHotAccount = (state: AllControllersMappingType['PortfolioController']) =>
+  state.hasFundedHotAccount
+
+export default function useBanners(): [BannerInterface[], BannerInterface[]] {
+  const { state: isOffline } = useController('MainController', selectIsOffline)
+  const { bannersData: marketingBannersData } = useController('BannerController').state
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
+  const { state: deprecatedSmartAccountBanner } = useController(
+    'SelectedAccountController',
+    selectDeprecatedSmartAccountBanner
+  )
+  const { state: selectedAccountBanners = [] } = useController(
+    'SelectedAccountController',
+    selectSelectedAccountBanners
+  )
+
+  const { state: emailVaultBanners = [] } = useController(
+    'EmailVaultController',
+    selectEmailVaultBanners
+  )
+  const { state: requestBanners = [] } = useController('RequestsController', selectRequestsBanners)
+  const { state: swapAndBridgeBanners = [] } = useController(
+    'SwapAndBridgeController',
+    selectSwapAndBridgeBanners
+  )
+  const { state: extensionUpdateBanner } = useController(
+    'ExtensionUpdateController',
+    selectExtensionUpdateBanner
+  )
+  const { state: hasFundedHotAccount } = useController(
+    'PortfolioController',
+    selectHasFundedHotAccount
+  )
   const otaUpdateBanner = useOtaUpdateBanner()
 
   const marketingBanners = useMemo(() => {
@@ -57,7 +100,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
       [
         ...(deprecatedSmartAccountBanner || []),
         ...(requestBanners || []),
-        ...(isOffline && portfolio.isAllReady ? [OFFLINE_BANNER] : []),
+        ...(isOffline && isPortfolioAllReady ? [OFFLINE_BANNER] : []),
         ...(isOffline ? [] : swapAndBridgeBanners || []),
         ...(hasFundedHotAccount ? emailVaultBanners || [] : []),
         // The defi-positions banner renders inside the DeFi tab, not the general dashboard.
@@ -73,7 +116,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     deprecatedSmartAccountBanner,
     requestBanners,
     isOffline,
-    portfolio.isAllReady,
+    isPortfolioAllReady,
     swapAndBridgeBanners,
     hasFundedHotAccount,
     emailVaultBanners,

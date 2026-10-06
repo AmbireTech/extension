@@ -7,7 +7,7 @@ import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -16,7 +16,7 @@ import { RouteItemType } from './RouteItem/RouteItem'
 
 const Routes = () => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const routeItems: RouteItemType[] = [
     {
@@ -61,7 +61,7 @@ const Routes = () => {
     <View
       style={[
         flexbox.directionRow,
-        isCompactSidePanelLayout && [flexbox.justifyCenter, { width: '100%' }]
+        isNarrowWebLayout && [flexbox.justifyCenter, { width: '100%' }]
       ]}
     >
       {routeItems.map((routeItem, index) => (
@@ -70,7 +70,7 @@ const Routes = () => {
           routeItem={routeItem}
           index={index}
           routeItemsLength={routeItems.length}
-          isCompactSidePanelLayout={isCompactSidePanelLayout}
+          isNarrowWebLayout={isNarrowWebLayout}
         />
       ))}
     </View>

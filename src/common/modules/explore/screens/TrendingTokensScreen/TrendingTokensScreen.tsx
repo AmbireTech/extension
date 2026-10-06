@@ -13,9 +13,15 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectTrendingTokens = (state: AllControllersMappingType['DappsController']) =>
+  state.trendingTokens
+
 const TrendingTokensScreen = () => {
   const { t } = useTranslation()
-  const { state } = useController('DappsController')
+  // A slice rather than the whole state, which carries the entire dapp catalog
+  const { state: trendingTokens } = useController('DappsController', selectTrendingTokens)
 
   const renderItem = useCallback(
     ({ item }: { item: TrendingToken }) => <TrendingTokenItem token={item} />,
@@ -27,7 +33,7 @@ const TrendingTokensScreen = () => {
       <HeaderWithTitle title={t('Trending')} />
       <ScrollableWrapper
         type={WRAPPER_TYPES.FLAT_LIST}
-        data={(state.trendingTokens || []) as TrendingToken[]}
+        data={(trendingTokens || []) as TrendingToken[]}
         renderItem={renderItem as any}
         keyExtractor={(item: TrendingToken) => item.id}
         style={spacings.phSm}

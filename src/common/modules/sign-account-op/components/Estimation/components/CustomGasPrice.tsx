@@ -14,14 +14,14 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
-import { getUiType } from '@common/utils/uiType/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import {
   CustomGasPriceErrors,
@@ -140,7 +140,7 @@ const CustomGasPrice = ({
   sheetRef
 }: Props) => {
   const { t } = useTranslation()
-  const { isNarrowSidePanel, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { theme } = useTheme()
   const [customGasPriceErrors, setCustomGasPriceErrors] = useState<CustomGasPriceErrors>({})
   const gasRef = useRef('')
@@ -263,7 +263,7 @@ const CustomGasPrice = ({
       onOpen={resetState}
       shouldBeClosableOnDrag={isMobile}
       backgroundColor="primaryBackground"
-      style={{ ...spacings.pbLg, ...(isNarrowSidePanel ? { width: '100%' } : null) }}
+      style={{ ...spacings.pbLg, ...(isNarrowWebLayout ? { width: '100%' } : null) }}
     >
       {isMobile ? (
         <>
@@ -319,38 +319,32 @@ const CustomGasPrice = ({
       </View>
       <FooterGlassView
         absolute={false}
-        isSimpleBlur={isNarrowSidePanel}
+        isSimpleBlur={isNarrowWebLayout}
         size="sm"
         style={spacings.mt}
         mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
-        innerContainerStyle={
-          isNarrowSidePanel
-            ? // The buttons stack here, and the primary one goes on top. Reversing the direction
-              // keeps the same child order as the row layouts, where the primary one goes last
-              { width: '100%', flexDirection: 'column-reverse' }
-            : undefined
-        }
+        innerContainerStyle={isNarrowWebLayout ? { width: '100%' } : undefined}
       >
-        <Button
-          type="secondary"
-          text={t('Cancel')}
-          onPress={closeBottomSheet}
-          hasBottomSpacing={false}
-          style={[
-            // Stacked buttons are spaced by the footer's gap, and a right margin would make this
-            // one narrower than the primary button
-            !isNarrowSidePanel && spacings.mrTy,
-            isCompactLayout ? flexbox.flex1 : { width: 100 }
-          ]}
-          size="smaller"
-        />
+        {/* On web the header's back arrow already closes the sheet */}
+        {isMobile && (
+          <Button
+            type="secondary"
+            text={t('Cancel')}
+            onPress={closeBottomSheet}
+            hasBottomSpacing={false}
+            style={[spacings.mrTy, flexbox.flex1]}
+            size="smaller"
+          />
+        )}
         <Button
           type="primary"
           text={t('Save')}
           onPress={saveCustomGasPrice}
           hasBottomSpacing={false}
-          style={isCompactLayout ? flexbox.flex1 : { width: 100 }}
-          size="smaller"
+          style={
+            isNarrowWebLayout ? { width: '100%' } : isCompactLayout ? flexbox.flex1 : { width: 100 }
+          }
+          size={isNarrowWebLayout ? 'regular' : 'smaller'}
         />
       </FooterGlassView>
     </BottomSheet>

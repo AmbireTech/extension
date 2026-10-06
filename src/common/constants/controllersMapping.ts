@@ -10,6 +10,7 @@ import type { DappsController } from '@ambire-common/controllers/dapps/dapps'
 import type { DebugController } from '@ambire-common/controllers/debug/debug'
 import type { DomainsController } from '@ambire-common/controllers/domains/domains'
 import type { EmailVaultController } from '@ambire-common/controllers/emailVault/emailVault'
+import type { Erc7730Controller } from '@ambire-common/controllers/erc7730/erc7730'
 import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import type { InviteController } from '@ambire-common/controllers/invite/invite'
 import type { KeystoreController } from '@ambire-common/controllers/keystore/keystore'
@@ -31,6 +32,7 @@ import type { UiController } from '@ambire-common/controllers/ui/ui'
 import type { AutoLockController } from '@common/controllers/auto-lock'
 import type { WalletStateController } from '@common/controllers/wallet-state'
 import type { VerificationController } from '@ambire-common/controllers/verification/verification'
+import type { WalletTokenController } from '@ambire-common/controllers/walletToken/walletToken'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 import { createExhaustiveArray } from '@common/utils/createExhaustiveArray'
 
@@ -55,6 +57,7 @@ export type ControllersNestedInMainMappingType = {
   RequestsController: RequestsController
   AddressBookController: AddressBookController
   DomainsController: DomainsController
+  Erc7730Controller: Erc7730Controller
   ContractNamesController: ContractNamesController
   InviteController: InviteController
   SwapAndBridgeController: SwapAndBridgeController
@@ -65,6 +68,7 @@ export type ControllersNestedInMainMappingType = {
   SafeController: SafeController
   QrHardwareController: QrHardwareController
   ContractInfoController: ContractInfoController
+  WalletTokenController: WalletTokenController
   SurveyController: SurveyController
   DebugController: DebugController
   VerificationController: VerificationController
@@ -94,6 +98,7 @@ export const controllersNestedInMainMapping =
     'RequestsController',
     'AddressBookController',
     'DomainsController',
+    'Erc7730Controller',
     'ContractNamesController',
     'InviteController',
     'SwapAndBridgeController',
@@ -104,6 +109,7 @@ export const controllersNestedInMainMapping =
     'SafeController',
     'QrHardwareController',
     'ContractInfoController',
+    'WalletTokenController',
     'SurveyController',
     'DebugController',
     'VerificationController'

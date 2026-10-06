@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { CHROME_WEB_STORE_URL } from '@common/constants/stores'
 import OverachieverBanner from '@legends/components/OverachieverBanner'
 import V1AccountBanner from '@legends/components/V1AccountBanner'
 import useAccountContext from '@legends/hooks/useAccountContext'
@@ -24,9 +25,6 @@ function formatMarketCap(value: number): string {
   return value.toLocaleString('en-US')
 }
 
-const AMBIRE_EXTENSION_URL =
-  'https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea'
-
 const Home = () => {
   const { connectProvider, hasAnyAmbireExtensionInstalled } = useProviderContext()
   const { connectedAccount } = useAccountContext()
@@ -35,7 +33,7 @@ const Home = () => {
     if (hasAnyAmbireExtensionInstalled) {
       await connectProvider()
     } else {
-      window.open(AMBIRE_EXTENSION_URL, '_blank', 'noopener,noreferrer')
+      window.open(CHROME_WEB_STORE_URL, '_blank', 'noopener,noreferrer')
     }
   }, [connectProvider, hasAnyAmbireExtensionInstalled])
 

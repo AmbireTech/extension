@@ -16,10 +16,12 @@ import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
+import StarFilledIcon from '@common/assets/svg/StarFilledIcon'
 import TransactionHistoryIcon from '@common/assets/svg/TransactionHistoryIcon'
 import GlassView from '@common/components/GlassView'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import { EXTENSION_STORE_REVIEWS_URL } from '@common/constants/stores'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
@@ -27,7 +29,6 @@ import useTheme from '@common/hooks/useTheme'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import SettingsLink from '@common/modules/settings/components/SettingsLink'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -105,7 +106,7 @@ export const SETTINGS_LINKS = [
   {
     key: 'manage-tokens',
     Icon: CustomTokensIcon,
-    label: 'Custom tokens',
+    label: 'Custom assets',
     path: ROUTES.manageTokens
   }
 ]
@@ -116,6 +117,14 @@ const OTHER_LINKS = [
     Icon: AmbireLogoSquare,
     label: 'About Ambire',
     path: ROUTES.settingsAbout
+  },
+  {
+    key: 'rate-us',
+    Icon: StarFilledIcon,
+    iconSize: 18,
+    label: 'Rate us',
+    path: EXTENSION_STORE_REVIEWS_URL,
+    isExternal: true
   },
   {
     key: 'help-center',

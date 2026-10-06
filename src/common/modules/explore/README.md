@@ -71,12 +71,20 @@ Every listing's domain is checked against Ambire's scam and phishing service (`h
 | Status               | Meaning                                                                                                       | Effect                                                                                                                                                |
 | -------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `BLACKLISTED`        | The domain is in a phishing database                                                                          | Removed from Explore; if the site is reached anyway, the browser marks it as unsafe and every connection or signing request from it carries a warning |
-| `SUSPICIOUS_HOSTING` | The site is hosted on a shared user-content platform that legitimate protocols do not use as a primary domain | Listed, but a warning banner is shown before signing anything                                                                                         |
+| `SUSPICIOUS_HOSTING` | The site is hosted on a shared user-content platform that legitimate protocols do not use as a primary domain | Listed, but a warning is shown before connecting or signing; the user may silence that warning for a single such site (see below)                     |
 | `VERIFIED`           | Neither of the above                                                                                          | Listed normally; a milder notice still appears for sites Ambire does not list in Explore                                                              |
 
 Because this check is served from Ambire's backend, a domain that turns malicious can be blocked and taken out of Explore on every installed copy of the app **without an app update**.
 
 A site loaded as an iframe inside a page on a suspicious domain inherits the warning, since the top-level origin is reported by the browser and cannot be forged by the page.
+
+### Trusting a site on shared hosting
+
+The shared hosting warning is about where a site is published, not about the site itself, so it also fires on legitimate projects that publish there. A user who knows the site can mark it as trusted, and Ambire stops showing that one warning for that one site. The action appears on the connection request, on the signing screen, and on the site's entry in Explore, where it can be taken back at any time.
+
+The trust covers a single site, identified by its own address under the platform, and reaches nothing else published on that platform. It is therefore offered only where the platform gives each site an address of its own (`my-app.example-host.app`); where every site sits on one shared address and they differ only by the path, the action is neither offered nor accepted, because nothing would keep the trust to one site. It never silences a site found in a phishing database, nor the warning a site inherits from the page embedding it - both stay in force for a trusted site.
+
+Trust is not a permission and grants nothing: connections, signatures and transactions are still requested and approved one by one. It is stored on the device together with the site's own entry, Ambire's servers are not told about it, and removing the site removes the trust with it. A trusted site is labelled "Trusted by you" - it is not shown as verified and it is not endorsed by Ambire; the user vouches for it, Ambire does not.
 
 ## Connections and permissions
 

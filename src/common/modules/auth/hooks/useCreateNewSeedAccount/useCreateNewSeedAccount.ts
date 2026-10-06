@@ -5,18 +5,23 @@ import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 /**
  * Creates a brand new recovery phrase in the background and takes the user straight to
  * the account personalize step. The phrase is not revealed at this point - the user is
  * asked to write it down later, once the account holds funds.
  */
+const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
+  state.hasPasswordSecret
+
 export default function useCreateNewSeedAccount() {
   const { goToNextRoute } = useOnboardingNavigation()
   const {
     state: { statuses },
     dispatch: mainDispatch
   } = useController('MainController')
-  const { state: hasPasswordSecret } = useController('KeystoreController', 'hasPasswordSecret')
+  const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { getExtraEntropy } = useExtraEntropy()
   const [isCreating, setIsCreating] = useState(false)
   // The account picker may already hold init params from an abandoned flow, so waiting

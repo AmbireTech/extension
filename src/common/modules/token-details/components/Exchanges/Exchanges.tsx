@@ -15,6 +15,10 @@ import { getExchangesWithData } from '@common/utils/exchanges'
 
 import ExchangesBottomSheet from '../ExchangesBottomSheet'
 
+import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
+
+const selectExchanges = (state: PortfolioController) => state.exchangeState.exchanges
+
 type Props = {
   exchanges: string[]
 }
@@ -22,10 +26,7 @@ type Props = {
 const Exchanges: FC<Props> = ({ exchanges }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { state: exchangeData } = useController(
-    'PortfolioController',
-    (state) => state.exchangeState.exchanges
-  )
+  const { state: exchangeData } = useController('PortfolioController', selectExchanges)
   const { ref: sheetRef, open, close } = useModalize()
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',

@@ -1,10 +1,9 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import { StyleSheet, View } from 'react-native'
 
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
-import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import Spinner from '@common/components/Spinner'
-import useController from '@common/hooks/useController'
+import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
@@ -20,15 +19,8 @@ import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import getStyles from './styles'
 
 const SignMessageScreen = () => {
-  const isInsideBottomSheet = useIsInsideBottomSheet()
-  const { closeRequestModal } = useController('RequestsController')
-  const handleSignLater = useCallback(() => {
-    if (isInsideBottomSheet && closeRequestModal) {
-      closeRequestModal()
-    }
-  }, [closeRequestModal, isInsideBottomSheet])
-
   const {
+    t,
     signMessageState,
     signStatus,
     humanizedMessage,
@@ -60,7 +52,10 @@ const SignMessageScreen = () => {
     view,
     threshold,
     isSafeNotDeployed,
-    isLoading
+    isLoading,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   } = useSignMessage()
   const { styles } = useTheme(getStyles)
 
@@ -91,7 +86,6 @@ const SignMessageScreen = () => {
               // the first signer from the array is the current one
               signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
               onReject={handleReject}
-              onSignLater={handleSignLater}
             />
           ) : (
             <ActionFooter
@@ -107,6 +101,9 @@ const SignMessageScreen = () => {
               }
               resolveButtonTestID="button-sign"
               rejectButtonText="Reject"
+              withRejectOptions
+              rejectOptionsTitle={t('Reject request')}
+              rejectOptionText={t('Reject this request')}
             >
               {isViewOnly && (
                 <View style={[spacings.mbSm]}>
@@ -122,6 +119,11 @@ const SignMessageScreen = () => {
         </View>
       }
     >
+      <SigningAuthBottomSheet
+        sheetRef={signingAuthSheetRef}
+        onCancel={cancelSigningAuth}
+        {...signingAuthProps}
+      />
       <KeySelect
         isSigning={signStatus === 'LOADING'}
         handleChooseKey={setSigner}

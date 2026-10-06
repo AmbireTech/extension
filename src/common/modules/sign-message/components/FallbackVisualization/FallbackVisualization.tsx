@@ -22,6 +22,8 @@ import CopyText from '@common/components/CopyText'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import AnimatedDownArrow from '@common/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow'
@@ -29,7 +31,6 @@ import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
-import { getUiType } from '@common/utils/uiType'
 
 import {
   getEip712IntegerFieldNames,
@@ -37,8 +38,6 @@ import {
   isParsedMessageValueShortened
 } from './helpers'
 import getStyles from './styles'
-
-const { isSidePanel } = getUiType()
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -176,6 +175,7 @@ const FallbackVisualization: FC<{
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  const { isNarrowWebLayout } = useCompactLayout()
   const { maxWidthSize, height: windowHeight } = useWindowSize()
   const outerViewRef = useRef<View>(null)
   const scrollViewRef = useRef<ScrollView>(null)
@@ -193,11 +193,11 @@ const FallbackVisualization: FC<{
   const chainId = messageToSign?.chainId || 1n
   const isTypedMessage = content?.kind === 'typedMessage'
   // Stack label above value so long hashes don't collide with labels in narrow UIs
-  // (side panel / Safe EIP-712 compact embedding / mobile).
+  // (narrow view / Safe EIP-712 compact embedding / mobile).
   // In some web fullscreen layouts the container ends up narrow too; stack in
   // that case as well to avoid overlapping text.
   const withStackedParsedRows =
-    !withTwoColumnDataRow && (withCompactDataRow || isSidePanel || maxWidthSize('m'))
+    !withTwoColumnDataRow && (withCompactDataRow || isNarrowWebLayout || maxWidthSize('m'))
   const erc7730Visualizations = useMemo(
     () => humanizedMessage?.fullVisualization?.filter(isErc7730Visualization) || [],
     [humanizedMessage?.fullVisualization]
@@ -289,6 +289,9 @@ const FallbackVisualization: FC<{
       style={[
         styles.container,
         fillAvailableHeight ? { maxHeight: availableHeight ?? FILL_AVAILABLE_HEIGHT_MIN } : null,
+        // On web the card hugs a short message (up to the cap) instead of growing into a tall empty
+        // box. Native keeps flex: Yoga collapses the flexed ScrollView in an auto-height parent
+        fillAvailableHeight && isWeb ? { flexGrow: 0, flexBasis: 'auto', minHeight: 0 } : null,
         containerStyle
       ]}
     >
@@ -321,7 +324,11 @@ const FallbackVisualization: FC<{
         </View>
       )}
       <ContentWrapper
-        style={styles.contentWrapper}
+        style={[
+          styles.contentWrapper,
+          // A 0 flex-basis would collapse the rows once the container stops stretching
+          fillAvailableHeight && isWeb && { flexGrow: 0, flexBasis: 'auto' }
+        ]}
         {...(!disableScroll
           ? {
               ref: scrollViewRef,

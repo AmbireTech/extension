@@ -16,7 +16,7 @@ const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, .
     if (rest.dataSet && rest.dataSet.tooltip) {
       try {
         const data = JSON.parse(rest.dataSet.tooltip)
-        return { id: data.id, content: data.content || data.children }
+        return { id: data.id, content: data.content || data.children, title: data.title }
       } catch (e) {
         return null
       }
@@ -38,7 +38,9 @@ const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, .
 
   if (isMobile && tooltipData?.id) {
     return (
-      <Pressable onPress={() => tooltipManager.show(tooltipData.id, tooltipData.content)}>
+      <Pressable
+        onPress={() => tooltipManager.show(tooltipData.id, tooltipData.content, tooltipData.title)}
+      >
         {icon}
       </Pressable>
     )

@@ -4,12 +4,9 @@ import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import GlassView from '@common/components/GlassView'
 import { isMobile } from '@common/config/env'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { SPACING, SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
 
 const params: {
   [key in 'sm' | 'md']: ViewStyle
@@ -34,11 +31,11 @@ const FooterGlassView: FC<{
   size?: 'sm' | 'md'
   absolute?: boolean
   isSimpleBlur?: boolean
-  /** Side-panel bottom sheets: use centered glass pill footer instead of flat full-width buttons. */
+  /** Narrow-view bottom sheets: use centered glass pill footer instead of flat full-width buttons. */
   preferGlassFooter?: boolean
   /**
    * When false, keeps the glass pill sized to its content (centered).
-   * Defaults to stretching full-width on compact side-panel layouts.
+   * Defaults to stretching full-width on compact narrow-view layouts.
    */
   fullWidth?: boolean
   glassViewProps?: Partial<React.ComponentProps<typeof GlassView>>
@@ -59,13 +56,13 @@ const FooterGlassView: FC<{
   onLayout
 }) => {
   const isInsideBottomSheet = useIsInsideBottomSheet()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   // preferGlassFooter keeps the glass pill path by skipping the flat footer branch.
   const shouldUseCompactFlatFooter =
-    isCompactSidePanelLayout && !preferGlassFooter && (isInsideBottomSheet || fullWidth === true)
+    isNarrowWebLayout && !preferGlassFooter && (isInsideBottomSheet || fullWidth === true)
   const shouldStretchFooter = shouldUseCompactFlatFooter || fullWidth === true
   // Only stretch the glass pill when the call site opts in (e.g. TokenDetails).
-  // Do not change the default centered side-panel pill for other screens.
+  // Do not change the default centered narrow-view pill for other screens.
   const shouldStretchGlass = Boolean(
     glassViewProps?.cssStyle &&
       ((glassViewProps.cssStyle as ViewStyle).width === '100%' ||
@@ -81,6 +78,8 @@ const FooterGlassView: FC<{
         // make the buttons narrower than everything above them
         paddingHorizontal: isInsideBottomSheet ? 0 : params[size].paddingHorizontal,
         paddingVertical: params[size].paddingVertical,
+        // The bottom sheet already pads its bottom edge
+        ...(isInsideBottomSheet ? { paddingBottom: 0 } : {}),
         pointerEvents: 'auto'
       }
     : undefined
@@ -107,7 +106,8 @@ const FooterGlassView: FC<{
               ? {
                   position: 'absolute',
                   left: 0,
-                  bottom: SPACING_SM,
+                  // Flush with the edge, so the inner padding makes the bottom spacing match the side one
+                  bottom: 0,
                   zIndex: 3,
                   pointerEvents: 'none'
                 }
@@ -163,9 +163,9 @@ const FooterGlassView: FC<{
         borderRadius={Number(params[size].borderRadius)}
         cssStyle={{
           pointerEvents: 'all',
-          // Side panel glass pills stay content-sized/centered unless the call site opts into stretch.
+          // Narrow view glass pills stay content-sized/centered unless the call site opts into stretch.
           // Popup keeps v2 intrinsic sizing.
-          ...(isSidePanel && !shouldStretchGlass
+          ...(isNarrowWebLayout && !shouldStretchGlass
             ? { width: 'fit-content', alignSelf: 'center' }
             : {}),
           ...(glassViewProps?.cssStyle || {})
