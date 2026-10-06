@@ -93,11 +93,14 @@ const PlainAddressWithCopy: FC<Props> = ({
 
   const plainAddressStyle = useMemo(() => {
     if (!isNarrowWebLayout) {
-      // Keep popup / tab layout identical to v2.
+      // Keep popup / tab layout identical to v2, except for an address that doesn't fit its row.
       return {
         ...style,
         ...(maxLength === 42 ? { flexShrink: 1 } : {}),
-        ...(isWeb ? { flexShrink: 0 } : {}),
+        // A single-line address takes the full row width on web, which pushed the copy icon
+        // past the row (e.g. under the clear button of an address input). Letting it shrink
+        // only kicks in when the row is too narrow, where it ellipsizes to make room for the icon.
+        ...(isWeb ? { flexShrink: 1, minWidth: 0 } : {}),
         ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
       }
     }
@@ -129,7 +132,8 @@ const PlainAddressWithCopy: FC<Props> = ({
       />
       <AnimatedPressable
         onPress={handleCopy}
-        style={[animStyle, isNarrowWebLayout && [spacings.mlMi, { flexShrink: 0 }]]}
+        // The icon must never shrink, so the address gives way instead of the icon overflowing
+        style={[animStyle, { flexShrink: 0 }, isNarrowWebLayout && spacings.mlMi]}
         {...bindAnim}
       >
         {/* The icon is as small as the address next to it, so the default stroke reads as too thick */}
