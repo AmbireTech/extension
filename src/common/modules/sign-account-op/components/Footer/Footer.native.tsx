@@ -68,7 +68,7 @@ const Footer = ({
             isSignLoading={isSignLoading}
             shouldRejectOnchain={shouldRejectOnchain}
             isRejectDisabled={isRejectDisabled}
-            size="smaller"
+            size="regular"
             containerStyle={{ flexGrow: 1 }}
             style={{ paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING }}
           />
@@ -103,7 +103,7 @@ const Footer = ({
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
-              size="smaller"
+              size="regular"
               style={{ width: '100%' }}
             />
           )}
@@ -115,7 +115,7 @@ const Footer = ({
               isLoading={isSignLoading}
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
-              size="smaller"
+              size="regular"
               style={{ width: '100%' }}
             />
           )}

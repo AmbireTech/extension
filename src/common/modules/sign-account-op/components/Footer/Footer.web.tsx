@@ -144,7 +144,7 @@ const Footer = ({
           onHoldComplete={onSign}
           testID="proceed-btn"
           style={isCompact ? { width: '100%' } : [spacings.ml, { height: FOOTER_BUTTON_HEIGHT }]}
-          size={isCompact ? 'smaller' : 'large'}
+          size={isCompact ? 'regular' : 'large'}
         />
       )}
       {!shouldHoldToProceed && (
@@ -155,7 +155,7 @@ const Footer = ({
           isLoading={isSignLoading}
           text={isSignLoading ? inProgressButtonText : buttonText}
           onPress={onSign}
-          size={isCompact ? 'smaller' : 'large'}
+          size={isCompact ? 'regular' : 'large'}
           style={
             isCompact
               ? { width: '100%' }
@@ -177,7 +177,7 @@ const Footer = ({
               isSignLoading={isSignLoading}
               shouldRejectOnchain={shouldRejectOnchain}
               isRejectDisabled={isRejectDisabled}
-              size="smaller"
+              size="regular"
               containerStyle={{ flexGrow: 1 }}
               style={{ paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING }}
             />

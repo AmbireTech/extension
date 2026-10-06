@@ -33,7 +33,7 @@ const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled }: Prop
     <Button
       testID="queue-and-sign-later-button"
       type="secondary"
-      size="smaller"
+      size="regular"
       text={isSignLater ? t('Sign later') : t('Batch')}
       accessibilityLabel={
         hasPendingBatch && !isSignLater

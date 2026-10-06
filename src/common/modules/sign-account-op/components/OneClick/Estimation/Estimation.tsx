@@ -165,7 +165,7 @@ const OneClickEstimation = ({
           disabled={isSignDisabled || signingErrors.length > 0}
           onPressIn={markFreshActionPress}
           onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
-          size="smaller"
+          size={isCompactLayout ? 'regular' : 'smaller'}
           style={signButtonStyle}
         />
       ) : (
@@ -177,7 +177,7 @@ const OneClickEstimation = ({
           disabled={isSignDisabled || signingErrors.length > 0}
           onPressIn={markFreshActionPress}
           onPress={() => runWithFreshActionPress(onSignButtonClick)}
-          size="smaller"
+          size={isCompactLayout ? 'regular' : 'smaller'}
           style={signButtonStyle}
         />
       )
@@ -245,7 +245,7 @@ const OneClickEstimation = ({
                   onPress={closeEstimationModal}
                   hasBottomSpacing={false}
                   disabled={isSignLoading}
-                  size="smaller"
+                  size="regular"
                   style={flexbox.flex1}
                 />
               }
