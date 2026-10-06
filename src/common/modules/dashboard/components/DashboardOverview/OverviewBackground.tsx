@@ -5,8 +5,18 @@ import { Defs, FeBlend, FeColorMatrix, Filter, Image as SvgImage, Svg } from 're
 import useControllerState from '@common/hooks/useControllerState'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { getAvatarColors } from '@common/utils/avatars'
+import { engine } from '@web/constants/browserapi'
 
 import backgroundImage from './background.png'
+
+type BackgroundSize = { width: number | string; height: number | string }
+
+const FULL_SIZE: BackgroundSize = { width: '100%', height: '100%' }
+
+// Firefox doesn't reliably repaint a percentage-sized filtered SVG image when its container
+// resizes (e.g. when the sidebar is widened) - it renders it clipped first and then not at all.
+// So there it's sized in pixels from the container's layout instead.
+const shouldSizeInPixels = engine === 'gecko'
 
 /** Parse a hex color to normalized [r, g, b] values (0–1) */
 function hexToRgbNorm(hex: string): [number, number, number] {
@@ -47,13 +57,16 @@ export function OverviewBackground({ address }: { address: string }) {
     recolorFilterIdCounter += 1
     return `overview-recolor-${recolorFilterIdCounter}`
   })
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null)
+  const [pixelSize, setPixelSize] = useState<BackgroundSize | null>(null)
+  const size = shouldSizeInPixels ? pixelSize : FULL_SIZE
 
   const handleLayout = useCallback((e: LayoutChangeEvent) => {
     const width = Math.round(e.nativeEvent.layout.width)
     const height = Math.round(e.nativeEvent.layout.height)
 
-    setSize((prev) => (prev?.width === width && prev?.height === height ? prev : { width, height }))
+    setPixelSize((prev) =>
+      prev?.width === width && prev?.height === height ? prev : { width, height }
+    )
   }, [])
   const colors = getAvatarColors(state.avatarType, address)
 
@@ -83,13 +96,11 @@ export function OverviewBackground({ address }: { address: string }) {
           overflow: 'hidden'
         }
       ]}
-      onLayout={handleLayout}
+      onLayout={shouldSizeInPixels ? handleLayout : undefined}
     >
-      {/* Explicit pixel sizes and a remount (via `key`) on every size change, because Firefox
-      doesn't reliably repaint a percentage-sized filtered SVG image when its container resizes
-      (e.g. when the sidebar is widened) - it renders it clipped first and then not at all. */}
+      {/* In Firefox nothing is rendered until the container's first layout gives it a size */}
       {!!size && (
-        <Svg key={`${size.width}x${size.height}`} width={size.width} height={size.height}>
+        <Svg width={size.width} height={size.height}>
           <Defs>
             <Filter id={recolorFilterId} x="0%" y="0%" width="100%" height="100%">
               <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
