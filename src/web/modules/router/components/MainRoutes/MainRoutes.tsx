@@ -20,7 +20,6 @@ import SidePanelModeDisabledScreen from '@web/modules/auth/screens/SidePanelMode
 import SidePanelNoAccountsScreen from '@web/modules/auth/screens/SidePanelNoAccountsScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
-import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import NetworksScreen from '@web/modules/networks/screens'
 import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
@@ -311,7 +310,6 @@ const MainRoutes = () => {
               element={<TrendingTokenDetailsScreen />}
             />
             <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
-            <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
             <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
           </Route>
         </Route>

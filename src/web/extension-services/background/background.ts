@@ -22,6 +22,8 @@ import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
+import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import wait from '@ambire-common/utils/wait'
 import { applyCrashReportPolicy } from '@common/config/analytics/applyCrashReportPolicy'
 import { logSentryDeliveryWhenTesting } from '@common/config/analytics/CrashAnalytics.web'
@@ -164,6 +166,13 @@ function captureBackgroundExceptionFromControllerError(error: ErrorRef, controll
     }
   })
 }
+
+/**
+ * How many times the background tries to open IndexedDB before settling for the key-value
+ * fallback. Two, not more: a second attempt covers a slow open, and every further one only
+ * adds its own deadline to the boot for a failure that is not going to clear.
+ */
+const IDB_OPEN_ATTEMPTS = 2
 
 let isInitialized = false
 const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
@@ -489,7 +498,51 @@ const init = async () => {
     },
     storage
   })
+
   const getIsSidePanelModeEnabled = () => walletStateCtrl.isSidePanelModeEnabled
+
+  // Retried once, because openAmbireIdb() gives up after a second so a blocked upgrade cannot
+  // hang the boot — and this is the only call, so a merely slow open (cold browser start, busy
+  // disk) would otherwise put the whole service-worker lifetime on key-value, where history
+  // renders from the blob frozen at migration time.
+  //
+  // Reported after the last attempt, not the first: this is the only signal that a user has
+  // landed on the key-value fallback. The wallet stays usable — history renders from the
+  // retained legacy blob — so nothing surfaces in the UI, which means without this the
+  // fallback is invisible in aggregate and we could not tell whether it affects one user or
+  // many. Reporting a failure the retry went on to recover from would make it useless.
+  const openIdbWithRetry = async () => {
+    let lastError: any
+    let attempts = 0
+
+    while (attempts < IDB_OPEN_ATTEMPTS) {
+      attempts += 1
+      try {
+        return await openAmbireIdb()
+      } catch (error: any) {
+        lastError = error
+
+        // VersionError means a database newer than this build's dbVersion, i.e. a downgrade.
+        // That is not transient — a retry fails identically and only delays the boot. Any
+        // other name points at the open itself failing, which a retry can still win.
+        if (error?.name === 'VersionError') break
+      }
+    }
+
+    console.error('[background] Failed to open IDB, activity will fall back to storage', lastError)
+    captureBackgroundException(lastError, {
+      extra: {
+        errorName: lastError?.name,
+        expectedDbVersion: AMBIRE_IDB_SCHEMA.dbVersion,
+        // Fewer than IDB_OPEN_ATTEMPTS means the loop broke early on a downgrade.
+        attempts
+      }
+    })
+
+    return undefined
+  }
+
+  const idb = await openIdbWithRetry()
 
   mainCtrl = new MainController({
     eventEmitterRegistry,
@@ -504,6 +557,7 @@ const init = async () => {
     bungeeApiKey: BUNGEE_API_KEY,
     uniswapApiKey: UNISWAP_API_KEY,
     featureFlags: {},
+    idb,
     keystoreSigners: {
       internal: KeystoreSigner,
       // TODO: there is a mismatch in hw signer types, it's not a big deal
