@@ -1,5 +1,12 @@
 name: 🤖 Build · Android APK
 
+# Manual on purpose, unlike the extension builds. Most releases ship to mobile over the air
+# (Stallion), so they need no new native build - and versionCode is bumped by hand, so an
+# automatic run would produce APKs that share a versionCode and match no Play release.
+#
+# Run it from a release tag when the release does include native changes. It attaches the
+# .apk to that release; publish-public-release.yml then copies it into the public draft, and
+# re-running that workflow picks up an APK that landed after the draft was created.
 on:
   workflow_dispatch: # Manual trigger
 
@@ -7,10 +14,15 @@ jobs:
   build-android-apk:
     name: Build Android APK and upload artifact
     uses: ./.github/workflows/_build-android.yml
+    permissions:
+      contents: write # Needed to attach the APK to this repo's release
     with:
       build_command: yarn build:android:production:apk
       artifact_suffix: apk
+      # Signed with the dedicated sideload keystore, not the Play upload key. See the signing
+      # step in _build-android.yml for why the two are deliberately different.
       package_mode: apk
-      # APK build is for testing, so we target only modern devices (arm64-v8a) for faster builds and smaller artifacts.
-      architectures: arm64-v8a
+      # This APK is what users sideload, so it has to cover the same devices the Play build
+      # does - an arm64-only APK simply fails to install on older 32-bit ARM phones.
+      architectures: armeabi-v7a,arm64-v8a
     secrets: inherit

@@ -7,10 +7,10 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import Spinner from '@common/components/Spinner'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
-import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const SafeFooter = ({
@@ -22,8 +22,7 @@ const SafeFooter = ({
   signed = [],
   importedKeys,
   threshold,
-  onReject,
-  onSignLater
+  onReject
 }: {
   account: Account
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
@@ -34,12 +33,9 @@ const SafeFooter = ({
   importedKeys: Key[]
   threshold: number
   onReject: () => void
-  // closes the signing UI while keeping the txn pending with the collected
-  // signatures already pushed to Safe Global (web: close popup; mobile: dismiss sheet)
-  onSignLater: () => void
 }) => {
   const { t } = useTranslation()
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
   const [showSafeSigners, setShowSafeSigners] = useState(false)
 
   const isSingle = useMemo(() => {
@@ -109,19 +105,7 @@ const SafeFooter = ({
                   text={!showSafeSigners ? 'Begin signing' : 'Close signing'}
                 />
               </View>
-              <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
-                <View style={flexbox.flex1}>{rejectButton({ style: { height: 50 } })}</View>
-                <View style={flexbox.flex1}>
-                  <Button
-                    type="secondary"
-                    hasBottomSpacing={false}
-                    onPress={onSignLater}
-                    text={t('Sign later')}
-                    disabled={signed.length === 0}
-                    style={{ height: 50 }}
-                  />
-                </View>
-              </View>
+              {rejectButton({ size: 'large' })}
             </>
           ) : (
             <View style={flexbox.center}>
@@ -140,7 +124,9 @@ const SafeFooter = ({
   }
 
   return (
-    <View style={[isSingle ? flexbox.alignCenter : '', spacings.pb, spacings.ph]}>
+    <View
+      style={[isSingle || threshold === 0 ? flexbox.alignCenter : '', spacings.pb, spacings.ph]}
+    >
       <GlassView borderRadius={28} cssStyle={{ flexDirection: 'column', paddingBottom: SPACING }}>
         {showSafeSigners && (
           <SafeOwners
@@ -179,25 +165,14 @@ const SafeFooter = ({
             {threshold > signed.length ? (
               <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, { width: '100%' }]}>
                 {rejectButton({ size: 'large', style: [{ maxWidth: 'auto' }] })}
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <Button
-                    size="large"
-                    type="secondary"
-                    hasBottomSpacing={false}
-                    onPress={onSignLater}
-                    text={'Sign later'}
-                    disabled={signed.length === 0}
-                    style={[{ maxWidth: 'auto' }]}
-                  />
-                  <Button
-                    size="large"
-                    type="primary"
-                    hasBottomSpacing={false}
-                    onPress={() => setShowSafeSigners((prev) => !prev)}
-                    text={!showSafeSigners ? 'Begin signing' : 'Close signing'}
-                    style={[{ maxWidth: 'auto' }, spacings.ml]}
-                  />
-                </View>
+                <Button
+                  size="large"
+                  type="primary"
+                  hasBottomSpacing={false}
+                  onPress={() => setShowSafeSigners((prev) => !prev)}
+                  text={!showSafeSigners ? 'Begin signing' : 'Close signing'}
+                  style={[{ maxWidth: 'auto' }]}
+                />
               </View>
             ) : (
               <Spinner

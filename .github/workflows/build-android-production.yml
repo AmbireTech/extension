@@ -13,5 +13,4 @@ jobs:
       package_mode: aab
       # Play Store bundle should support both modern (arm64-v8a) and older 32-bit ARM (armeabi-v7a) devices for wider device coverage.
       architectures: armeabi-v7a,arm64-v8a
-      enable_signing: true
     secrets: inherit

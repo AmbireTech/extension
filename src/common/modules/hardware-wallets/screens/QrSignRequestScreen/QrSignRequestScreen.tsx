@@ -7,13 +7,13 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 type Props = {
   onContinue: () => void
@@ -43,7 +43,7 @@ const QrSignRequestScreen = ({
   transactionProgress = null,
   signingRequest = null
 }: Props) => {
-  const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { themeType } = useTheme()
   const { width: windowWidth } = useWindowDimensions()

@@ -2,6 +2,11 @@ import { buildSelector } from '@helpers/buildSelector'
 
 // TODO: this should be refactored; we should have single file with selector IDs
 const selectors = {
+  invite: {
+    codeInput: 'invite-code-input',
+    pasteBtn: 'paste-invite-code-btn',
+    verifyBtn: 'verify-invite-code-btn'
+  },
   getStarted: {
     createNewAccountButton: 'create-new-account-btn',
     importAccountButton: 'button-import-account',
@@ -35,7 +40,8 @@ const selectors = {
     changeHDPathButton: 'change-hd-path-btn',
     hdPathConfirmButton: 'hd-path-confirm-btn',
     hdPathLegerLegacy: 'hd-path-option-ledger-legacy',
-    smartAccountPicker: 'add-account-' // need add index 5
+    smartAccountPicker: 'add-account-', // need add index 5
+    viewOnlyInputAddressField: 'view-only-address-field-0'
   },
   dashboard: {
     dashboardGasTankBalance: 'dashboard-gas-tank-balance',

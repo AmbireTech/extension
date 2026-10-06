@@ -145,7 +145,7 @@ const ExploreScreen = () => {
             >
               <GlobeIcon />
             </View>
-            <Text weight="medium" appearance="secondaryText">
+            <Text weight="medium" appearance="secondaryText" style={flexbox.flex1}>
               {t('Open "{{query}}"', { query: item.query })}
             </Text>
           </AnimatedPressable>
@@ -175,7 +175,7 @@ const ExploreScreen = () => {
             >
               <GoogleIcon />
             </View>
-            <Text weight="medium" appearance="secondaryText">
+            <Text weight="medium" appearance="secondaryText" style={flexbox.flex1}>
               {t('Search Google for "{{query}}"', { query: item.query })}
             </Text>
           </AnimatedPressable>
@@ -275,7 +275,8 @@ const ExploreScreen = () => {
           <View style={flexbox.flex1}>
             <View style={[spacings.mbSm]}>
               <Search
-                placeholder={t('Search apps, tokens or URLs')}
+                placeholder={t('Search apps, tokens or browse the web')}
+                nativeInputStyle={{ fontSize: 14 }}
                 control={control}
                 // @ts-ignore
                 setValue={setValue}

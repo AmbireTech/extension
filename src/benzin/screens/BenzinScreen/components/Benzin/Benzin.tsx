@@ -19,6 +19,7 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -26,7 +27,6 @@ import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnim
 import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { DEVICE_HEIGHT, DEVICE_WIDTH, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { isExtension } from '@web/constants/browserapi'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
@@ -41,7 +41,7 @@ const Benzin = ({
   children?: ReactNode
   topContent?: ReactNode
 }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const { isStoreReady } = useControllerStore()

@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import usePrevious from '@common/hooks/usePrevious'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
 import { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
@@ -28,7 +28,7 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
   } = props
   const { closeBottomSheet: _closeBottomSheet = () => {} } = props
   const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const defaultType = isPopup || isMobileApp || isNarrowWebLayout ? 'bottom-sheet' : 'modal'
   const resolvedType = _type || defaultType
   const type = (() => {

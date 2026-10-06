@@ -85,13 +85,13 @@
     "@gorhom/portal": "1.0.14",
     "@keystonehq/animated-qr": "0.10.0",
     "@keystonehq/bc-ur-registry-eth": "0.22.1",
-    "@ledgerhq/context-module": "1.15.0",
-    "@ledgerhq/device-management-kit": "1.2.0",
-    "@ledgerhq/device-signer-kit-ethereum": "1.12.0",
+    "@ledgerhq/context-module": "2.5.0",
+    "@ledgerhq/device-management-kit": "1.8.0",
+    "@ledgerhq/device-signer-kit-ethereum": "1.17.0",
     "@ledgerhq/device-transport-kit-react-native-ble": "1.3.2",
-    "@ledgerhq/device-transport-kit-react-native-hid": "1.0.3",
-    "@ledgerhq/device-transport-kit-speculos": "1.2.0",
-    "@ledgerhq/device-transport-kit-web-hid": "1.2.3",
+    "@ledgerhq/device-transport-kit-react-native-hid": "1.0.4",
+    "@ledgerhq/device-transport-kit-speculos": "1.2.1",
+    "@ledgerhq/device-transport-kit-web-hid": "1.2.4",
     "@lottiefiles/dotlottie-react": "0.18.3",
     "@metamask/eth-sig-util": "8.2.0",
     "@metamask/obs-store": "6.0.2",
@@ -102,7 +102,7 @@
     "@react-native-community/netinfo": "12.0.1",
     "@react-native-masked-view/masked-view": "0.3.2",
     "@reown/walletkit": "1.5.5",
-    "@safe-global/api-kit": "4.2.0",
+    "@safe-global/api-kit": "5.0.3",
     "@sentry/browser": "10.37.0",
     "@sentry/react": "10.37.0",
     "@signinwithethereum/siwe": "4.2.0",
@@ -247,7 +247,7 @@
     "util": "0.10.4",
     "uuid": "9.0.0",
     "validator": "13.7.0",
-    "viem": "2.45.2",
+    "viem": "2.56.3",
     "vm-browserify": "0.0.4",
     "webextension-polyfill": "0.10.0"
   },
@@ -331,9 +331,7 @@
   "resolutions": {
     "elliptic": "^6.6.1",
     "browserslist": "^4.23.0",
-    "cipher-base": "^1.0.6",
-    "@safe-global/safe-deployments": "1.37.56",
-    "@safe-global/safe-modules-deployments": "3.0.4"
+    "cipher-base": "^1.0.6"
   },
   "private": true,
   "lavamoat": {

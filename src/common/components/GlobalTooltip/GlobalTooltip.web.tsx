@@ -41,9 +41,18 @@ export function GlobalTooltip() {
       // The pointer moves over the same anchor (or over nothing) for most of its events,
       // and a fresh object here would re-render on every one of them
       if (!force && id === currentId.current) return
-
       currentId.current = id
-      setCurrent(data ? { id: data.id, props: data } : { id: null, props: null })
+
+      if (!data) {
+        setCurrent({ id: null, props: null })
+        return
+      }
+
+      // `title` is for the mobile info modal only. Web tooltips have no header, and react-tooltip
+      // must not receive it
+      const tooltipProps = { ...data }
+      delete tooltipProps.title
+      setCurrent({ id: data.id, props: tooltipProps })
     }
 
     const refreshTooltip = () => {

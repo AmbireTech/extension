@@ -1,5 +1,15 @@
-import { expect, test } from '@playwright/test'
 import { baParams, ledgerSaParams, saParams } from 'constants/env'
+import { formatUnits } from 'ethers'
+
+import { expect, test } from '@playwright/test'
+
+// format raw token amounts received from relayer for better readability
+const NATIVE_GAS_TANK_TOKEN_DECIMALS = 6
+
+const formatTokenAmount = (token: string, raw: bigint) =>
+  token === 'native'
+    ? `${formatUnits(raw, NATIVE_GAS_TANK_TOKEN_DECIMALS)} (raw: ${raw.toString()})`
+    : raw.toString()
 
 type InsufficientToken = {
   chain: string
@@ -42,10 +52,16 @@ test.describe('Tokens balance check', { tag: '@balanceCheck' }, () => {
       const insufficientTokens = tokens.filter((token) => token.insufficient)
 
       const report = insufficientTokens
-        .map(
-          ({ chain, token, minValue, currentBalance }) =>
-            `  - ${chain} ${token}: has ${currentBalance}, needs ${minValue}`
-        )
+        .map(({ chain, token, minValue, currentBalance }) => {
+          const min = BigInt(minValue)
+          const current = BigInt(currentBalance)
+          const missing = min - current
+
+          return `  - ${chain} ${token}: has ${formatTokenAmount(
+            token,
+            current
+          )}, needs ${formatTokenAmount(token, min)}, missing ${formatTokenAmount(token, missing)}`
+        })
         .join('\n')
 
       expect(
