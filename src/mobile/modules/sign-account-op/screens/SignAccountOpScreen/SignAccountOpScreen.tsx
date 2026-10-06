@@ -57,12 +57,12 @@ const SignAccountOpScreen = () => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { bottom: bottomInset } = useSafeAreaInsets()
-  // The footer pads itself horizontally and keeps a bit more room above the home indicator
+  // The footer pads itself horizontally and keeps a bit more room above the home indicator, if any
   const footerStyle = useMemo(
     () => ({
       ...spacings.ph0,
       ...spacings.pt0,
-      paddingBottom: (bottomInset || SPACING_SM) + SPACING_TY
+      paddingBottom: bottomInset ? bottomInset + SPACING_TY : SPACING_SM
     }),
     [bottomInset]
   )

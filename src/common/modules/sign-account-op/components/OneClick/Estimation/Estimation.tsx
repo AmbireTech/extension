@@ -183,7 +183,10 @@ const OneClickEstimation = ({
       )
 
     return (
-      <View style={isMobile ? { paddingBottom: (bottom || SPACING_SM) + SPACING_TY } : undefined}>
+      // A bit more room above the home indicator, if the phone has one
+      <View
+        style={isMobile ? { paddingBottom: bottom ? bottom + SPACING_TY : SPACING_SM } : undefined}
+      >
         <KeySelect
           isSigning={isSignLoading || !signAccountOpController.readyToSign}
           isChooseSignerShown={isChooseSignerShown}
