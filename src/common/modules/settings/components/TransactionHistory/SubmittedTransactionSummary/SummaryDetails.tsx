@@ -3,7 +3,6 @@ import { Pressable, View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -11,6 +10,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import TokenOrNft from '@common/components/TokenOrNft'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
@@ -32,12 +32,14 @@ import {
   getPresentationalStatus,
   getSummaryBalanceChanges,
   getTruncatedNetworkName,
-  getTruncatedTxnHash
+  getTruncatedTxnHash,
+  isNftBalanceChange
 } from './helpers'
 import { useHumanizedCalls } from './humanizedCallsHooks'
 import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
 
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 const SummaryDetails = ({
   submittedAccountOp,
   network,
@@ -103,17 +105,42 @@ const SummaryDetails = ({
         </Text>
       </View>
       <View style={styles.modalSimulationBody}>
-        {changes.map((change, index) => (
-          <PendingTokenSummary
-            key={`${change.address}-${change.balanceChange.toString()}`}
-            token={{
-              ...change,
-              simulationAmount: change.balanceChange
-            }}
-            chainId={change.chainId}
-            hasBottomSpacing={index < changes.length - 1}
-          />
-        ))}
+        {changes.map((change, index) => {
+          if (isNftBalanceChange(change)) {
+            return (
+              <View
+                key={`${change.address}-${change.tokenId.toString()}`}
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifySpaceBetween,
+                  index < changes.length - 1 ? spacings.mbSm : undefined
+                ]}
+              >
+                <TokenOrNft
+                  value={change.tokenId}
+                  address={change.address}
+                  chainId={change.chainId}
+                  tokenMarginRight={0}
+                  textSize={12}
+                  tokenIconContainerSize={16}
+                />
+              </View>
+            )
+          }
+
+          return (
+            <PendingTokenSummary
+              key={`${change.address}-${change.balanceChange.toString()}`}
+              token={{
+                ...change,
+                simulationAmount: change.balanceChange
+              }}
+              chainId={change.chainId}
+              hasBottomSpacing={index < changes.length - 1}
+            />
+          )
+        })}
       </View>
     </View>
   )
