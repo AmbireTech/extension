@@ -34,6 +34,9 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
+  // On web secondary is primaryBackground, which vanishes on the flat narrow footer - tertiary is
+  // the mobile secondary fill
+  const secondaryButtonType = isNarrowWebLayout ? 'tertiary' : 'secondary'
 
   const buttonsContent = (
     <View
@@ -50,7 +53,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
           onPress={handleClose}
           hasBottomSpacing={false}
           size={isCompactLayout ? 'regular' : 'smaller'}
-          type={routeStatus !== 'failed' ? 'secondary' : 'primary'}
+          type={routeStatus !== 'failed' ? secondaryButtonType : 'primary'}
           text={secondaryButtonText}
           testID="track-progress-secondary-button"
           style={
@@ -69,7 +72,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
         style={isCompactLayout ? flexbox.flex1 : { width: isRequestWindow ? 160 : 104 }}
         text={t('Close')}
         size={isCompactLayout ? 'regular' : 'smaller'}
-        type={routeStatus !== 'failed' ? 'primary' : 'secondary'}
+        type={routeStatus !== 'failed' ? 'primary' : secondaryButtonType}
         testID="track-progress-primary-button"
       />
     </View>
