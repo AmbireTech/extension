@@ -60,6 +60,8 @@ export interface Props extends PressableProps {
   testID?: string
   submitOnEnter?: boolean
   tooltipDataSet?: ReturnType<typeof createGlobalTooltipDataSet>
+  /** Overrides the style of the info icon that `tooltipDataSet` adds, e.g. to center it */
+  tooltipIconStyle?: ViewStyle
 }
 
 const OPACITY_ANIMATION = {
@@ -173,6 +175,7 @@ const Button = ({
   testID,
   submitOnEnter: _submitOnEnter,
   tooltipDataSet,
+  tooltipIconStyle,
   onPress,
   ...rest
 }: Props) => {
@@ -576,7 +579,8 @@ const Button = ({
             height={16}
             style={{
               ...flexbox.alignSelfStart,
-              ...spacings.mlMi
+              ...spacings.mlMi,
+              ...tooltipIconStyle
             }}
             dataSet={tooltipDataSet}
           />

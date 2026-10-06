@@ -2,8 +2,7 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import BatchIcon from '@common/assets/svg/BatchIcon'
-import Button, { COMPACT_LAYOUT_BUTTON_HEIGHT } from '@common/components/Button'
+import { COMPACT_LAYOUT_BUTTON_HEIGHT } from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -14,7 +13,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import CompactBatchButton, { COMPACT_SECONDARY_BUTTON_PADDING } from './CompactBatchButton'
+import BatchButton, { COMPACT_SECONDARY_BUTTON_PADDING } from './BatchButton'
 import CompactFooterButtons from './CompactFooterButtons'
 import { Props } from './Footer'
 import RejectButton from './RejectButton'
@@ -80,14 +79,7 @@ const Footer = ({
     return !!account?.safeCreation && !!accountOp?.signature && accountOp?.signature !== '0x'
   }, [accountOp?.signature, account?.safeCreation])
 
-  const batchBtnText = useMemo(() => {
-    if (isMultisigSigned) return t('Sign later')
-    return batchCount > 1
-      ? t('Add to batch ({{batchCount}})', {
-          batchCount
-        })
-      : t('Start a batch')
-  }, [isMultisigSigned, batchCount, t])
+  const batchBadgeCount = batchCount > 1 ? batchCount : 0
 
   const rejectButton = (
     <RejectButton
@@ -101,25 +93,16 @@ const Footer = ({
   )
 
   const batchButton = (
-    <Button
+    <BatchButton
       testID="queue-and-sign-later-button"
-      type="secondary"
-      childrenPosition="left"
-      text={batchBtnText}
+      size="large"
+      badgeCount={batchBadgeCount}
+      isSignLater={isMultisigSigned}
+      infoTooltip={startBatchingInfo}
       onPress={onAddToCart}
       disabled={isAddToCartDisabled}
-      hasBottomSpacing={false}
       style={{ minWidth: 160, height: FOOTER_BUTTON_HEIGHT, ...spacings.ph }}
-      size="large"
-      {...(!isMultisigSigned && {
-        tooltipDataSet: createGlobalTooltipDataSet({
-          id: 'start-batch-info-tooltip',
-          content: startBatchingInfo
-        })
-      })}
-    >
-      {!isMultisigSigned && <BatchIcon style={spacings.mlTy} />}
-    </Button>
+    />
   )
 
   const signButton = (isCompact: boolean) => (
@@ -182,8 +165,9 @@ const Footer = ({
               style={{ paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING }}
             />
             {isAddToCartDisplayed && (
-              <CompactBatchButton
-                batchCount={batchCount}
+              <BatchButton
+                testID="queue-and-sign-later-button"
+                badgeCount={batchBadgeCount}
                 isSignLater={isMultisigSigned}
                 onPress={onAddToCart}
                 disabled={isAddToCartDisabled}

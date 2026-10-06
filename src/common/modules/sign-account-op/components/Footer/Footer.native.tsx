@@ -8,7 +8,7 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 
-import CompactBatchButton, { COMPACT_SECONDARY_BUTTON_PADDING } from './CompactBatchButton'
+import BatchButton, { COMPACT_SECONDARY_BUTTON_PADDING } from './BatchButton'
 import CompactFooterButtons from './CompactFooterButtons'
 import { Props } from './Footer'
 import RejectButton from './RejectButton'
@@ -73,8 +73,9 @@ const Footer = ({
             style={{ paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING }}
           />
           {isAddToCartDisplayed && (
-            <CompactBatchButton
-              batchCount={batchCount}
+            <BatchButton
+              testID="queue-and-sign-later-button"
+              badgeCount={batchCount > 1 ? batchCount : 0}
               isSignLater={isMultisigSigned}
               onPress={onAddToCart}
               disabled={isAddToCartDisabled}

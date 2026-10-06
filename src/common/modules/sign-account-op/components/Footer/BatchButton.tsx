@@ -1,9 +1,10 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -16,39 +17,61 @@ const BATCH_ICON_GLYPH_VIEW_BOX = '4.25 3.25 15.5 17.5'
 export const COMPACT_SECONDARY_BUTTON_PADDING = 10
 
 type Props = {
-  /** Calls already in the batch for this account and network, the current one included */
-  batchCount: number
+  /** The number on the icon's badge, e.g. the calls already in the batch. 0 hides the badge */
+  badgeCount: number
   /** A signed Safe transaction can only be postponed, there is nothing to batch it with */
-  isSignLater: boolean
+  isSignLater?: boolean
+  /** Explains batching in a tooltip on an info icon next to the label (web only) */
+  infoTooltip?: string
   onPress: () => void
   disabled: boolean
+  type?: 'secondary' | 'tertiary'
+  size?: 'regular' | 'smaller' | 'large'
+  style?: ViewStyle
+  testID: string
 }
 
 /**
- * The batch button of the compact footer. The label stays short and the number of calls
- * already in the batch is a badge on the icon, so it fits next to Reject
+ * The batch button of the sign and one-click footers. The label stays short and the number
+ * on the badge of the icon replaces the count in the label, so it fits next to another button
  */
-const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled }: Props) => {
+const BatchButton = ({
+  badgeCount,
+  isSignLater,
+  infoTooltip,
+  onPress,
+  disabled,
+  type = 'secondary',
+  size = 'regular',
+  style,
+  testID
+}: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const hasPendingBatch = batchCount > 1
+  const hasBadge = badgeCount > 0 && !isSignLater
 
   return (
     <Button
-      testID="queue-and-sign-later-button"
-      type="secondary"
-      size="regular"
+      testID={testID}
+      type={type}
+      size={size}
       text={isSignLater ? t('Sign later') : t('Batch')}
       accessibilityLabel={
-        hasPendingBatch && !isSignLater
-          ? t('Add to batch ({{batchCount}})', { batchCount })
-          : undefined
+        hasBadge ? t('Add to batch ({{batchCount}})', { batchCount: badgeCount }) : undefined
       }
       onPress={onPress}
       disabled={disabled}
       hasBottomSpacing={false}
       childrenPosition="left"
-      style={{ flexGrow: 1, paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING }}
+      style={{ flexGrow: 1, paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING, ...style }}
+      {...(!!infoTooltip &&
+        !isSignLater && {
+          tooltipDataSet: createGlobalTooltipDataSet({
+            id: 'start-batch-info-tooltip',
+            content: infoTooltip
+          }),
+          tooltipIconStyle: flexbox.alignSelfCenter
+        })}
     >
       {!isSignLater && (
         <View
@@ -67,7 +90,7 @@ const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled }: Prop
             preserveAspectRatio="none"
             color={theme.primary}
           />
-          {hasPendingBatch && (
+          {hasBadge && (
             <View
               style={[
                 flexbox.alignCenter,
@@ -85,7 +108,7 @@ const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled }: Prop
               ]}
             >
               <Text fontSize={10} weight="semiBold" color={theme.primaryBackground}>
-                {batchCount}
+                {badgeCount}
               </Text>
             </View>
           )}
@@ -95,4 +118,4 @@ const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled }: Prop
   )
 }
 
-export default React.memo(CompactBatchButton)
+export default React.memo(BatchButton)
