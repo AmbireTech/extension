@@ -12,7 +12,8 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
+import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import PrivacyPoolsNetworkFee from '@web/modules/privacy-pools/components/PrivacyPoolsNetworkFee'
 
@@ -29,9 +30,11 @@ interface Props {
   onClosed: () => void
 }
 
+const transactionSummaryStyle = { marginBottom: SPACING_MD }
+
 /**
  * Confirmation and outcome of a Privacy Pools transfer, like the regular Send's fee sheet. Opened
- * once the transfer is proved and priced, so the user sees the fee before Send.
+ * once the transfer is proved and priced, so the user sees what it does and its fee before Send.
  *
  * Always mounted: a bottom sheet opened in the same commit it mounts does not animate in.
  */
@@ -81,6 +84,20 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
     >
       {!!operation && (
         <>
+          {/* Like the transaction details of the one-click Swap & Bridge sheet. Not expandable:
+              there is no raw call of the user's account to show */}
+          {isConfirming && !!operation.humanization && (
+            <TransactionSummary
+              style={transactionSummaryStyle}
+              call={operation.humanization}
+              chainId={BigInt(operation.chainId)}
+              index={0}
+              size="md"
+              enableExpand={false}
+              hideDeleteIcon
+            />
+          )}
+
           {isConfirming && !!operation.quote && (
             <PrivacyPoolsNetworkFee
               chainId={operation.chainId}
