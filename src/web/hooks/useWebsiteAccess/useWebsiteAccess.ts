@@ -9,6 +9,15 @@ import { browser, isExtension, isSafari } from '@web/constants/browserapi'
  */
 const WEBSITE_ORIGINS = ['http://*/*', 'https://*/*']
 
+const WEBSITE_ORIGIN_PREFIXES = ['http://', 'https://', '*://']
+
+/**
+ * Whether a granted host permission covers at least one website - either all of them (e.g.
+ * `<all_urls>` or WEBSITE_ORIGINS) or only the ones the user picked (e.g. `https://app.uniswap.org/*`).
+ */
+const isWebsiteOrigin = (origin: string) =>
+  origin === '<all_urls>' || WEBSITE_ORIGIN_PREFIXES.some((prefix) => origin.startsWith(prefix))
+
 // The user can refuse or revoke host permissions at any time - in Firefox via "Access your data
 // for all websites", in Chromium browsers via the extension's "Site access" setting (e.g. "On
 // click"). Safari is excluded until verified: its site access is per-site and often defaults to
@@ -16,7 +25,8 @@ const WEBSITE_ORIGINS = ['http://*/*', 'https://*/*']
 const canWebsiteAccessBeRevoked = isExtension && !isSafari()
 
 /**
- * Tracks whether the extension may access websites, and lets the user grant it again.
+ * Tracks whether the extension may access any website, and lets the user grant access to all of
+ * them again.
  * `hasWebsiteAccess` is `null` while unknown and on browsers where access can't be revoked.
  */
 const useWebsiteAccess = () => {
@@ -27,10 +37,12 @@ const useWebsiteAccess = () => {
 
     let isMounted = true
 
+    // Access to only some websites is a deliberate choice by the user, so it counts as granted -
+    // only access to no website at all hides the wallet from every app
     const checkWebsiteAccess = async () => {
       try {
-        const isGranted: boolean = await browser.permissions.contains({ origins: WEBSITE_ORIGINS })
-        if (isMounted) setHasWebsiteAccess(isGranted)
+        const { origins = [] }: { origins?: string[] } = await browser.permissions.getAll()
+        if (isMounted) setHasWebsiteAccess(origins.some(isWebsiteOrigin))
       } catch (error) {
         console.error('Failed to check the website access permission', error)
         captureException(error)
