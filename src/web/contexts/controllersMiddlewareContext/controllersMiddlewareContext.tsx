@@ -20,7 +20,7 @@ import { toAbsoluteRoute } from '@common/modules/router/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
 import { getUiType } from '@common/utils/uiType'
-import { isExtension } from '@web/constants/browserapi'
+import { engine, isExtension } from '@web/constants/browserapi'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import { PortMessenger } from '@web/extension-services/messengers'
@@ -265,19 +265,29 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
 
   const dispatch = useCallback(
     (action: MethodAction | Action) => {
-      if (
+      const shouldOpenFirefoxSidebar =
+        engine === 'gecko' &&
         action.type === 'OPEN_EXTENSION_POPUP' &&
         controllerStore.getSnapshot('WalletStateController').isSidePanelModeEnabled
-      ) {
-        openFirefoxSidebarFromUserGesture().catch((error) => {
-          console.error('Failed to open the Firefox sidebar', error)
-          captureException(error)
-        })
+
+      if (!shouldOpenFirefoxSidebar) {
+        globalDispatch(action, windowId)
+        return
       }
 
-      globalDispatch(action, windowId)
+      // The background can't open the Firefox sidebar (see handleActions.ts), so it's opened here
+      // and the action is dispatched only once it is open. The gesture is lost when the action is
+      // dispatched after an await (e.g. goToNextRoute after saving the account names) - open() then
+      // rejects and the dashboard is shown in this tab instead, as when the popup fails to open.
+      openFirefoxSidebarFromUserGesture()
+        .then(() => globalDispatch(action, windowId))
+        .catch((error) => {
+          // Expected when there is no user gesture, so it isn't reported
+          console.warn('Failed to open the Firefox sidebar, opening the dashboard here', error)
+          navigate('/')
+        })
     },
-    [windowId, controllerStore]
+    [windowId, controllerStore, navigate]
   )
 
   const requestViewRouteSync = useCallback(() => {
