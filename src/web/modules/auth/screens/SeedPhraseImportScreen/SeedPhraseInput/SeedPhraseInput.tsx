@@ -50,6 +50,10 @@ const SeedPhraseInput = ({
 
   const tokens = useMemo(() => getSeedPhraseTokens(value, caretPosition), [value, caretPosition])
 
+  const setNativeInputRef = useCallback((nativeInput: TextInput | null) => {
+    nativeInputRef.current = nativeInput
+  }, [])
+
   const updateCaretPosition = useCallback(() => {
     const nativeInput = nativeInputRef.current as unknown as HTMLTextAreaElement | null
     if (!nativeInput) return
@@ -137,7 +141,7 @@ const SeedPhraseInput = ({
 
   return (
     <TextArea
-      ref={nativeInputRef}
+      setInputRef={setNativeInputRef}
       testID="enter-seed-phrase-field"
       dataSet={SELECTION_DATA_SET}
       value={value}

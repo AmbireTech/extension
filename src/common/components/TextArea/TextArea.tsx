@@ -1,5 +1,5 @@
-import React, { ReactNode } from 'react'
-import { TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native'
+import React, { ReactNode, useState } from 'react'
+import { BlurEvent, TextInput, TextInputProps, TextStyle, View, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -29,9 +29,9 @@ export interface InputProps extends TextInputProps {
    */
   customInputContent?: ReactNode
   /**
-   * Forwarded to the native input (`ref` is a regular prop since React 19)
+   * Receives the native input, also when its `autoFocus` is deferred
    */
-  ref?: React.Ref<TextInput>
+  setInputRef?: (ref: TextInput | null) => void
   /**
    * Rendered as `data-*` attributes of the native input on web
    */
@@ -58,11 +58,25 @@ const TextArea = ({
   value,
   autoFocus,
   style,
+  setInputRef,
   ...rest
 }: InputProps) => {
+  const [isFocused, setIsFocused] = useState<boolean>(false)
   const { theme, styles } = useTheme(getStyles)
-  const { autoFocus: nativeAutoFocus, setInputRef } = useAutoFocus(autoFocus)
+  const { autoFocus: nativeAutoFocus, setInputRef: setAutoFocusInputRef } = useAutoFocus(
+    autoFocus,
+    setInputRef
+  )
   const textInputRemountKey = useTextInputRemountKey(value, isFocused)
+
+  const handleOnFocus = (e: BlurEvent) => {
+    setIsFocused(true)
+    return onFocus(e)
+  }
+  const handleOnBlur = (e: BlurEvent) => {
+    setIsFocused(false)
+    return onBlur(e)
+  }
 
   const inputWrapperStyles = [
     styles.inputWrapper,
@@ -94,9 +108,9 @@ const TextArea = ({
             autoCapitalize="none"
             autoCorrect={false}
             editable={!disabled}
-            onBlur={onBlur}
-            onFocus={onFocus}
-            ref={setInputRef}
+            onBlur={handleOnBlur}
+            onFocus={handleOnFocus}
+            ref={setAutoFocusInputRef}
             autoFocus={nativeAutoFocus}
             value={value}
             {...rest}

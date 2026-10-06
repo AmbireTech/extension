@@ -4,6 +4,7 @@ import { NativeSyntheticEvent, TextInputSelectionChangeEventData } from 'react-n
 import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
 import { useTranslation } from '@common/config/localization'
+import { NO_KEYBOARD_LEARNING_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
 import { getSeedPhraseTokens, SeedPhraseStatus } from '@common/modules/auth/utils/seedPhrase'
 
@@ -68,16 +69,15 @@ const SeedPhraseInput = ({
 
   return (
     <TextArea
+      {...NO_KEYBOARD_LEARNING_PROPS}
       testID="enter-seed-phrase-field"
       editable
       multiline
       numberOfLines={4}
       autoFocus
-      // Keeps the recovery phrase away from the keyboard's suggestions, learned words and autofill
-      spellCheck={false}
-      autoComplete="off"
+      // Together with `NO_KEYBOARD_LEARNING_PROPS`, keeps the recovery phrase away from
+      // the keyboard's suggestions, learned words and autofill
       textContentType="none"
-      importantForAutofill="no"
       onChangeText={onChangeText}
       onFocus={handleFocus}
       onSelectionChange={handleSelectionChange}
