@@ -1,0 +1,19 @@
+import useWindowSize from '@common/hooks/useWindowSize'
+
+/** Up to this window width the left part of a footer row gets 55%, above it - half */
+const NARROWEST_LAYOUT_MAX_WIDTH = 400
+const NARROWEST_LAYOUT_SPLIT = { leftFlex: 11, rightFlex: 9 }
+const EVEN_SPLIT = { leftFlex: 1, rightFlex: 1 }
+
+/**
+ * How the sign footer rows split between their left part (fee token / Reject + Batch) and the
+ * right one (speed + settings / Sign). With Reject, Batch and Sign the fee row shares it, so they line up
+ */
+const useFooterRowSplit = (isEvenSplit?: boolean) => {
+  const { maxWidthSize } = useWindowSize()
+  const isNarrowestLayout = !isEvenSplit && !maxWidthSize(NARROWEST_LAYOUT_MAX_WIDTH + 1)
+
+  return isNarrowestLayout ? NARROWEST_LAYOUT_SPLIT : EVEN_SPLIT
+}
+
+export default useFooterRowSplit

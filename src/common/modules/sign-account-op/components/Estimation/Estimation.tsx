@@ -38,6 +38,7 @@ import EstimationSkeleton from '@common/modules/sign-account-op/components/Estim
 import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
 import FeePayerStrip from '@common/modules/sign-account-op/components/Estimation/components/FeePayerStrip'
 import FeeSelectTrigger from '@common/modules/sign-account-op/components/Estimation/components/FeeSelectTrigger'
+import useFooterRowSplit from '@common/modules/sign-account-op/hooks/useFooterRowSplit'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
@@ -53,15 +54,18 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const FEE_SECTION_LIST_MENU_HEADER_HEIGHT = 34
 const ADVANCED_OPTIONS_TOOLTIP_ID = 'sign-account-op-advanced-options-tooltip'
-const FEE_SPEED_SELECT_WIDTH = 92
 const FEE_TOKEN_ICON_SIZE = 28
-// The web menu opens under the speed select, but needs the room of "Medium <$0.01"
-const FEE_SPEED_MENU_WIDTH = 156
+// The web menu opens under the speed select, but needs extra room for "Medium <$0.01"
+const FEE_SPEED_MENU_EXTRA_WIDTH = 64
+// Below the proportional width the speed select keeps this width and the fee token gets the rest
+const FEE_SPEED_SELECT_WIDTH = 92
+// From this window width the fee row splits 55:45 on its own, when it isn't following the buttons
+const PROPORTIONAL_FEE_ROW_MIN_WINDOW_WIDTH = 400
+const PROPORTIONAL_FEE_ROW_SPLIT = { leftFlex: 11, rightFlex: 9 }
+// The wide layout (beyond the narrow threshold) always splits the fee row in half
+const WIDE_LAYOUT_FEE_ROW_SPLIT = { leftFlex: 1, rightFlex: 1 }
 // Up to this window width the fee token menu spans the whole window, so long options stay readable
 const FULL_WIDTH_FEE_TOKEN_MENU_MAX_WINDOW_WIDTH = 480
-// From this window width the fee row splits 60:40 between the fee token and speed + settings.
-// Narrower, the speed select keeps a fixed width so the fee token gets all the rest
-const PROPORTIONAL_FEE_ROW_MIN_WINDOW_WIDTH = 400
 
 export const SPEED_TEST_IDS = {
   slow: 'option-slow',
@@ -137,6 +141,7 @@ const Estimation = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { width: windowWidth } = useWindowSize()
+  const { isCompactLayout } = useCompactLayout()
   const {
     ref: customGasPriceSheetRef,
     open: openCustomGasPriceSheet,
@@ -523,7 +528,20 @@ const Estimation = ({
   const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
-  const isFeeRowProportional = windowWidth >= PROPORTIONAL_FEE_ROW_MIN_WINDOW_WIDTH
+  // With Reject, Batch and Sign in a row the fee row follows their split, so the fee token select
+  // lines up with Reject + Batch. With two buttons it keeps its own, which leaves the fee token more room
+  const isFeeRowFollowingButtons =
+    !isOneClick && signAccountOpState?.accountOp.meta?.setDelegation === undefined
+  const buttonsRowSplit = useFooterRowSplit()
+  // null means the speed select has a fixed width
+  const feeRowSplit = !isCompactLayout
+    ? WIDE_LAYOUT_FEE_ROW_SPLIT
+    : isFeeRowFollowingButtons
+      ? buttonsRowSplit
+      : windowWidth >= PROPORTIONAL_FEE_ROW_MIN_WINDOW_WIDTH
+        ? PROPORTIONAL_FEE_ROW_SPLIT
+        : null
+  const isFeeRowProportional = !!feeRowSplit
   const feeTokenMenuStyle = useMemo(
     () =>
       windowWidth <= FULL_WIDTH_FEE_TOKEN_MENU_MAX_WINDOW_WIDTH
@@ -691,7 +709,7 @@ const Estimation = ({
         // Grows the menu to the left, as the select sits at the right of the row.
         // Wider still if the fee token price is unavailable as the token amount takes up more space
         menuLeftHorizontalOffset={
-          FEE_SPEED_MENU_WIDTH - FEE_SPEED_SELECT_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
+          FEE_SPEED_MENU_EXTRA_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
         }
         menuPosition="top"
         bottomSheetTitle={t('Network fee')}
@@ -817,7 +835,9 @@ const Estimation = ({
         {enableErc4337Prompt}
       </View>
       <View style={[flexbox.directionRow, flexbox.alignStart, { gap: SPACING_TY }]}>
-        <View style={[isFeeRowProportional ? { flex: 3 } : flexbox.flex1, { minWidth: 0 }]}>
+        <View
+          style={[feeRowSplit ? { flex: feeRowSplit.leftFlex } : flexbox.flex1, { minWidth: 0 }]}
+        >
           <SectionedSelect
             setValue={setFeeOption}
             testID="fee-option-select"
@@ -843,7 +863,7 @@ const Estimation = ({
           style={[
             flexbox.directionRow,
             { gap: SPACING_TY },
-            isFeeRowProportional && { flex: 2, minWidth: 0 }
+            !!feeRowSplit && { flex: feeRowSplit.rightFlex, minWidth: 0 }
           ]}
         >
           {renderFeeSpeedSelect()}

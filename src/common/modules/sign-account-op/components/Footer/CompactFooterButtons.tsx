@@ -1,12 +1,9 @@
 import React, { ReactNode } from 'react'
 import { View } from 'react-native'
 
-import useWindowSize from '@common/hooks/useWindowSize'
+import useFooterRowSplit from '@common/modules/sign-account-op/hooks/useFooterRowSplit'
 import { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-
-/** Up to this window width the secondary actions get 55% of the row, above it - half */
-const NARROWEST_LAYOUT_MAX_WIDTH = 400
 
 type Props = {
   /** Reject/Back and Batch. Each should grow (`flexGrow: 1`) to share the leftover space */
@@ -22,15 +19,14 @@ type Props = {
  * of them still fit side by side with readable labels
  */
 const CompactFooterButtons = ({ secondaryActions, primaryAction, isEvenSplit }: Props) => {
-  const { maxWidthSize } = useWindowSize()
-  const isNarrowestLayout = !isEvenSplit && !maxWidthSize(NARROWEST_LAYOUT_MAX_WIDTH + 1)
+  const { leftFlex, rightFlex } = useFooterRowSplit(isEvenSplit)
 
   return (
     <View style={[flexbox.directionRow, { gap: SPACING_TY }]}>
-      <View style={[flexbox.directionRow, { flex: isNarrowestLayout ? 11 : 1, gap: SPACING_TY }]}>
+      <View style={[flexbox.directionRow, { flex: leftFlex, gap: SPACING_TY }]}>
         {secondaryActions}
       </View>
-      <View style={{ flex: isNarrowestLayout ? 9 : 1, minWidth: 0 }}>{primaryAction}</View>
+      <View style={{ flex: rightFlex, minWidth: 0 }}>{primaryAction}</View>
     </View>
   )
 }
