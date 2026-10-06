@@ -59,6 +59,9 @@ const FEE_TOKEN_ICON_SIZE = 28
 const FEE_SPEED_MENU_WIDTH = 156
 // Up to this window width the fee token menu spans the whole window, so long options stay readable
 const FULL_WIDTH_FEE_TOKEN_MENU_MAX_WINDOW_WIDTH = 480
+// From this window width the fee row splits 60:40 between the fee token and speed + settings.
+// Narrower, the speed select keeps a fixed width so the fee token gets all the rest
+const PROPORTIONAL_FEE_ROW_MIN_WINDOW_WIDTH = 400
 
 export const SPEED_TEST_IDS = {
   slow: 'option-slow',
@@ -520,6 +523,7 @@ const Estimation = ({
   const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
+  const isFeeRowProportional = windowWidth >= PROPORTIONAL_FEE_ROW_MIN_WINDOW_WIDTH
   const feeTokenMenuStyle = useMemo(
     () =>
       windowWidth <= FULL_WIDTH_FEE_TOKEN_MENU_MAX_WINDOW_WIDTH
@@ -692,7 +696,11 @@ const Estimation = ({
         menuPosition="top"
         bottomSheetTitle={t('Network fee')}
         withSearch={false}
-        containerStyle={{ ...spacings.mb0, width: FEE_SPEED_SELECT_WIDTH }}
+        containerStyle={
+          isFeeRowProportional
+            ? { ...spacings.mb0, ...flexbox.flex1, width: 'auto', minWidth: 0 }
+            : { ...spacings.mb0, width: FEE_SPEED_SELECT_WIDTH }
+        }
         disabled={disabled}
         testID="fee-speed-select"
       />
@@ -701,6 +709,7 @@ const Estimation = ({
     disabled,
     feeSpeedOptions,
     feeTokenPriceUnavailableWarning,
+    isFeeRowProportional,
     onFeeSelect,
     renderFeeSpeedSelectedOption,
     selectedFee,
@@ -808,7 +817,7 @@ const Estimation = ({
         {enableErc4337Prompt}
       </View>
       <View style={[flexbox.directionRow, flexbox.alignStart, { gap: SPACING_TY }]}>
-        <View style={[flexbox.flex1, { minWidth: 0 }]}>
+        <View style={[isFeeRowProportional ? { flex: 3 } : flexbox.flex1, { minWidth: 0 }]}>
           <SectionedSelect
             setValue={setFeeOption}
             testID="fee-option-select"
@@ -830,35 +839,43 @@ const Estimation = ({
             <FeePayerStrip address={payValue.paidBy} accountLabel={payValue.paidByAccountLabel} />
           )}
         </View>
-        {renderFeeSpeedSelect()}
-        {signAccountOpState.canAccountBroadcastByItself && (
-          <View
-            dataSet={
-              advancedOptionsTooltip
-                ? createGlobalTooltipDataSet({
-                    id: ADVANCED_OPTIONS_TOOLTIP_ID,
-                    content: advancedOptionsTooltip
-                  })
-                : undefined
-            }
-          >
-            <HoverablePressable
-              disabled={!canSetCustomGasPrices}
-              onPress={openAdvancedOptions}
-              style={[styles.advancedOptionsButton, { backgroundColor: selectBackgroundColor }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('Advanced fee settings')}
-              testID="advanced-options-button"
+        <View
+          style={[
+            flexbox.directionRow,
+            { gap: SPACING_TY },
+            isFeeRowProportional && { flex: 2, minWidth: 0 }
+          ]}
+        >
+          {renderFeeSpeedSelect()}
+          {signAccountOpState.canAccountBroadcastByItself && (
+            <View
+              dataSet={
+                advancedOptionsTooltip
+                  ? createGlobalTooltipDataSet({
+                      id: ADVANCED_OPTIONS_TOOLTIP_ID,
+                      content: advancedOptionsTooltip
+                    })
+                  : undefined
+              }
             >
-              <SettingsIcon
-                width={20}
-                height={20}
-                color={theme.secondaryText}
-                style={!canSetCustomGasPrices && { opacity: 0.3 }}
-              />
-            </HoverablePressable>
-          </View>
-        )}
+              <HoverablePressable
+                disabled={!canSetCustomGasPrices}
+                onPress={openAdvancedOptions}
+                style={[styles.advancedOptionsButton, { backgroundColor: selectBackgroundColor }]}
+                accessibilityRole="button"
+                accessibilityLabel={t('Advanced fee settings')}
+                testID="advanced-options-button"
+              >
+                <SettingsIcon
+                  width={20}
+                  height={20}
+                  color={theme.secondaryText}
+                  style={!canSetCustomGasPrices && { opacity: 0.3 }}
+                />
+              </HoverablePressable>
+            </View>
+          )}
+        </View>
       </View>
       <DefaultFeeSelector
         networkName={network?.name}
