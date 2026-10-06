@@ -17,10 +17,10 @@
   resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.11.1.tgz#6c2d657d4b2dfb37f8ea811dcb3e60843d4ac24a"
   integrity sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==
 
-"@ambire/react-native-crypto@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@ambire/react-native-crypto/-/react-native-crypto-1.0.0.tgz#07f3d2bc869721d8a63c2fcaa848efece6c9d5c2"
-  integrity sha512-dpPXBzzJ1HCbXYoe4OqAeuTq7cUBbkUCIiVR/rsMuX1nKzVdy/APSgdpkxBSn80V6klRydJLzMzyM29mOUBR+g==
+"@ambire/react-native-crypto@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@ambire/react-native-crypto/-/react-native-crypto-1.0.1.tgz#00eef019b2154973e72665df00fe3c64a4fff399"
+  integrity sha512-K8DmaMazp5ODlGu9yIxLjpJFWLWZxC9u0ZnpY0PXz+S7/2ZvD9CQbbBljeHo1MYZvN8hsduL3OvWdHp593rF7A==
   dependencies:
     "@ubjs/core" "0.31.0-3"
     uniffi-bindgen-react-native "0.31.0-3"
@@ -9809,6 +9809,11 @@ express@^4.17.3:
     type-is "~1.6.18"
     utils-merge "1.0.1"
     vary "~1.1.2"
+
+fake-indexeddb@6.2.5:
+  version "6.2.5"
+  resolved "https://registry.yarnpkg.com/fake-indexeddb/-/fake-indexeddb-6.2.5.tgz#74285b6821467d6c102af092f0a4517ad5521613"
+  integrity sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w==
 
 fast-base64-decode@^1.0.0:
   version "1.0.0"
