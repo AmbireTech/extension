@@ -9,6 +9,7 @@ interface Styles {
   footerButtonsCompact: ViewStyle
   footerButtonsMobile: ViewStyle
   footerButton: ViewStyle
+  footerButtonCompact: ViewStyle
 }
 
 const getStyles = () =>
@@ -34,6 +35,10 @@ const getStyles = () =>
       ...(isWeb ? spacings.phLg : {}),
       height: isWeb ? 48 : 56,
       borderRadius: 18
+    },
+    // Matches the height of the regular size buttons in the other narrow view footers
+    footerButtonCompact: {
+      height: 56
     }
   })
 
