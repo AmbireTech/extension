@@ -160,7 +160,18 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 isNarrowWebLayout && { minHeight: 18 }
               ]}
             >
-              {!isNftBalanceChange(change) && (
+              {isNftBalanceChange(change) ? (
+                // NFTs are unique so the amount is always 1. Show only the sign
+                // to keep the direction visible (e.g. in NFT-for-token swaps)
+                <Text
+                  fontSize={12}
+                  weight="medium"
+                  appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
+                  style={isNarrowWebLayout ? { lineHeight: 16 } : undefined}
+                >
+                  {change.balanceChange > 0n ? '+' : '-'}
+                </Text>
+              ) : (
                 <Text
                   fontSize={12}
                   weight="medium"
