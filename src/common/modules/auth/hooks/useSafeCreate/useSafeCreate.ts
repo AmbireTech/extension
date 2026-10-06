@@ -1,5 +1,5 @@
 import { getAddress, isAddress } from 'ethers'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
@@ -27,14 +27,20 @@ type FormValues = {
 const MIN_REQUIRED_CONFIRMATIONS = 1
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
-const selectContacts = (state: AllControllersMappingType['AddressBookController']) =>
-  state.contacts
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
+const selectCreateSafeAccountStatus = (state: AllControllersMappingType['SafeController']) =>
+  state.statuses.createSafeAccount
 
 const useSafeCreate = () => {
   const { t } = useTranslation()
-  const { goToPrevRoute } = useOnboardingNavigation()
+  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: contacts } = useController('AddressBookController', selectContacts)
+  const { state: createSafeAccountStatus, dispatch: safeDispatch } = useController(
+    'SafeController',
+    selectCreateSafeAccountStatus
+  )
+  const isCreateRequested = useRef(false)
   const [ownerAddresses, setOwnerAddresses] = useState<Hex[]>([])
   const [selectedRequiredConfirmations, setSelectedRequiredConfirmations] = useState(
     MIN_REQUIRED_CONFIRMATIONS
@@ -171,14 +177,29 @@ const useSafeCreate = () => {
     )
   }, [])
 
-  const isCreateButtonDisabled = !owners.length
+  const isCreating = createSafeAccountStatus === 'LOADING'
+  const isCreateButtonDisabled = !owners.length || isCreating
 
   const handleCreate = useCallback(() => {
     if (isCreateButtonDisabled) return
 
-    // TODO: deploy the Safe with `owners` and `requiredConfirmations` once the
-    // creation logic is available in ambire-common
-  }, [isCreateButtonDisabled])
+    isCreateRequested.current = true
+    safeDispatch({
+      type: 'method',
+      params: { method: 'createSafeAccount', args: [ownerAddresses, requiredConfirmations] }
+    })
+  }, [isCreateButtonDisabled, ownerAddresses, requiredConfirmations, safeDispatch])
+
+  // Proceed to the account personalization once the Safe is added to the wallet.
+  // On error, the controller shows the error and the user stays on the form
+  useEffect(() => {
+    if (!isCreateRequested.current) return
+    if (createSafeAccountStatus === 'ERROR') isCreateRequested.current = false
+    if (createSafeAccountStatus !== 'SUCCESS') return
+
+    isCreateRequested.current = false
+    goToNextRoute()
+  }, [createSafeAccountStatus, goToNextRoute])
 
   return {
     control,
