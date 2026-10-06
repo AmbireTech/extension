@@ -6,7 +6,11 @@ import BatchIcon from '@common/assets/svg/BatchIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+
+/** The area of `BatchIcon`'s 24x24 canvas its layers take, strokes included */
+const BATCH_ICON_GLYPH_VIEW_BOX = '4.25 3.25 15.5 17.5'
 
 /** Narrower than the default button padding, so Reject and Batch fit next to each other */
 export const COMPACT_SECONDARY_BUTTON_PADDING = 10
@@ -47,8 +51,22 @@ const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled }: Prop
       style={{ flexGrow: 1, paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING }}
     >
       {!isSignLater && (
-        <View style={{ marginRight: hasPendingBatch ? 12 : 10 }}>
-          <BatchIcon width={20} height={20} color={theme.primary} />
+        <View
+          style={[
+            flexbox.alignCenter,
+            flexbox.justifyCenter,
+            spacings.mrTy,
+            { width: 18, height: 18 }
+          ]}
+        >
+          <BatchIcon
+            width={15}
+            height={15}
+            // Crops the icon's padding and fills a square, so the layers read wider and flatter
+            viewBox={BATCH_ICON_GLYPH_VIEW_BOX}
+            preserveAspectRatio="none"
+            color={theme.primary}
+          />
           {hasPendingBatch && (
             <View
               style={[
@@ -56,8 +74,8 @@ const CompactBatchButton = ({ batchCount, isSignLater, onPress, disabled }: Prop
                 flexbox.justifyCenter,
                 {
                   position: 'absolute',
-                  top: -7,
-                  right: -9,
+                  top: -10,
+                  right: -7,
                   minWidth: 16,
                   height: 16,
                   paddingHorizontal: 4,
