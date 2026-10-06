@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers'
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import {
@@ -14,19 +14,18 @@ import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
-import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
-import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
-import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
-import { PanelBackButton } from '@common/components/Panel/Panel'
+import HoverablePressable from '@common/components/HoverablePressable'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { RenderSelectedOptionParams, SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import TokenIcon from '@common/components/TokenIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -36,12 +35,13 @@ import CustomGasPrice from '@common/modules/sign-account-op/components/Estimatio
 import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
 import EstimationSkeleton from '@common/modules/sign-account-op/components/Estimation/components/EstimationSkeleton'
 import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
+import FeePayerStrip from '@common/modules/sign-account-op/components/Estimation/components/FeePayerStrip'
+import FeeSelectTrigger from '@common/modules/sign-account-op/components/Estimation/components/FeeSelectTrigger'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import { NO_FEE_OPTIONS } from './consts'
 import { getFeeOptionValue, mapFeeOptions, sortFeeOptions } from './helpers'
@@ -50,10 +50,12 @@ import { DispatchUpdate, Props } from './types'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const { isPopup } = getUiType()
-
 const FEE_SECTION_LIST_MENU_HEADER_HEIGHT = 34
 const ADVANCED_OPTIONS_TOOLTIP_ID = 'sign-account-op-advanced-options-tooltip'
+const FEE_SPEED_SELECT_WIDTH = 92
+const FEE_TOKEN_ICON_SIZE = 28
+// The web menu opens under the speed select, but needs the room of "Medium <$0.01"
+const FEE_SPEED_MENU_WIDTH = 156
 
 export const SPEED_TEST_IDS = {
   slow: 'option-slow',
@@ -68,24 +70,14 @@ const getFeeSpeedLabelText = (speed: SpeedCalc) =>
 const FeeSpeedLabel = ({
   speed,
   feeTokenPriceUnavailableWarning,
-  payValue,
-  isValue
+  payValue
 }: {
   speed: SpeedCalc
   feeTokenPriceUnavailableWarning?: Warning
   payValue?: SelectValue
-  isValue?: boolean
 }) => {
   const { t } = useTranslation()
   const { isCompactLayout } = useCompactLayout()
-
-  if (isValue) {
-    return (
-      <Text fontSize={14} appearance="secondaryText" testID={SPEED_TEST_IDS[speed.type]}>
-        {t(getFeeSpeedLabelText(speed))}
-      </Text>
-    )
-  }
 
   return (
     <View
@@ -129,9 +121,7 @@ const Estimation = ({
   bundlerNonceDiscrepancy,
   serviceFee,
   isOneClick,
-  isViewOnly,
-  onBackPress,
-  onFeeHeaderVisibilityChange
+  isViewOnly
 }: Props) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -139,8 +129,7 @@ const Estimation = ({
   const { state } = useController('AddressBookController')
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { t } = useTranslation()
-  const { theme } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactLayout()
+  const { theme, styles } = useTheme(getStyles)
   const {
     ref: customGasPriceSheetRef,
     open: openCustomGasPriceSheet,
@@ -395,30 +384,30 @@ const Estimation = ({
     }))
   }, [feeSpeeds, feeTokenPriceUnavailableWarning, payValue])
 
-  const selectedFee = useMemo(() => {
-    const selectedOption =
+  const selectedFee = useMemo(
+    () =>
       feeSpeedOptions.find(({ value }) => value === signAccountOpState?.selectedFeeSpeed) ||
-      feeSpeedOptions[0]
+      feeSpeedOptions[0] ||
+      null,
+    [feeSpeedOptions, signAccountOpState?.selectedFeeSpeed]
+  )
 
-    if (!selectedOption) return null
+  // Shown in the fee token select. The price can be missing, then the fee is in the token itself
+  const selectedFeeAmountText = useMemo(() => {
+    if (!selectedFee) return ''
 
-    return {
-      ...selectedOption,
-      label: (
-        <FeeSpeedLabel
-          speed={selectedOption.speed}
-          feeTokenPriceUnavailableWarning={feeTokenPriceUnavailableWarning}
-          payValue={payValue}
-          isValue
-        />
-      )
-    }
-  }, [
-    feeSpeedOptions,
-    feeTokenPriceUnavailableWarning,
-    payValue,
-    signAccountOpState?.selectedFeeSpeed
-  ])
+    return feeTokenPriceUnavailableWarning
+      ? formatDecimals(Number(selectedFee.speed.amountFormatted), 'precise')
+      : formatDecimals(Number(selectedFee.speed.amountUsd), 'value')
+  }, [feeTokenPriceUnavailableWarning, selectedFee])
+
+  const feeOptionWarning = useMemo(
+    () =>
+      signAccountOpState?.warnings.find(
+        ({ id }) => id === 'estimation-retry' || id === 'feeTokenPriceUnavailable'
+      ),
+    [signAccountOpState?.warnings]
+  )
 
   const onFeeSelect = useCallback(
     ({ value }: { value: string }) => {
@@ -527,10 +516,15 @@ const Estimation = ({
   const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
-  const isNarrowLayout = isNarrowWebLayout
-  // The narrow side panel and the popup reuse the mobile fee header: a short label with the settings
-  // icon instead of the wider "Advanced" button, which leaves room for the fee speed on the same row
-  const withCompactFeeHeader = isMobile || isNarrowLayout || isPopup
+  // The selects need the opposite fill of what they sit on to stay visible
+  const selectBackgroundColor =
+    isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground
+  const isFeeTokenSelectDisabled =
+    disabled ||
+    (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
+    !signAccountOpState?.selectedOption
+  const isFeePaidByAnotherAccount =
+    !!payValue && payValue.paidBy !== signAccountOpState?.accountOp.accountAddr
 
   const advancedOptionsTooltip = useMemo(() => {
     if (canSetCustomGasPrices) return undefined
@@ -556,104 +550,119 @@ const Estimation = ({
     return t('Network fee')
   }, [signAccountOpState?.canAccountBroadcastByItself, t])
 
-  const renderAdvancedButton = useCallback(() => {
-    const advancedButtonContent = (
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <SettingsIcon width={16} height={16} color={theme.secondaryText} />
-        <Text fontSize={14} appearance="secondaryText" style={[spacings.mlTy, spacings.mrMi]}>
-          {t('Advanced')}
-        </Text>
-        <RightArrowIcon width={6} height={12} color={theme.secondaryText} weight="2" />
-      </View>
-    )
+  const renderFeeTokenSelectedOption = useCallback(
+    ({ toggleMenu, isMenuOpen, selectRef }: RenderSelectedOptionParams) => {
+      if (!payValue) return null
 
-    if (withCompactFeeHeader) {
-      return (
-        <Pressable
-          disabled={!canSetCustomGasPrices}
-          onPress={openAdvancedOptions}
-          style={!canSetCustomGasPrices && { opacity: 0.3 }}
-          testID="advanced-options-button"
-        >
-          <SettingsIcon width={24} height={24} color={theme.secondaryText} />
-        </Pressable>
+      const feeTokenIcon = payValue.token.flags.onGasTank ? (
+        <View style={styles.feeTokenGasTankIcon}>
+          <GasTankIcon width={20} height={20} color={theme.primaryAccent} />
+        </View>
+      ) : (
+        <TokenIcon
+          containerStyle={{ width: FEE_TOKEN_ICON_SIZE, height: FEE_TOKEN_ICON_SIZE }}
+          withContainer
+          width={24}
+          height={24}
+          networkSize={12}
+          address={payValue.token.address}
+          chainId={payValue.token.chainId}
+          skeletonAppearance="secondaryBackground"
+        />
       )
-    }
 
-    return (
-      <Button
-        type="ghost"
-        size="tiny"
-        disabled={!canSetCustomGasPrices}
-        onPress={openAdvancedOptions}
-        hasBottomSpacing={false}
-        shouldScaleChildrenOnHover={false}
-        testID="advanced-options-button"
-        style={{
-          alignSelf: 'flex-end',
-          paddingHorizontal: 0,
-          minHeight: 0
-        }}
-      >
-        {advancedButtonContent}
-      </Button>
-    )
-  }, [canSetCustomGasPrices, openAdvancedOptions, t, theme.secondaryText, withCompactFeeHeader])
+      return (
+        <FeeSelectTrigger
+          label={estimationTitle}
+          labelAccessory={
+            !!feeOptionWarning && (
+              <WarningIcon
+                width={16}
+                height={16}
+                color={theme.warningText}
+                dataSet={createGlobalTooltipDataSet({
+                  id: 'estimation-warning',
+                  content: feeOptionWarning.title
+                })}
+              />
+            )
+          }
+          icon={feeTokenIcon}
+          value={
+            // The amount always stays whole, only a long token symbol is cut
+            <View style={[flexbox.directionRow, { alignItems: 'baseline', gap: SPACING_MI }]}>
+              <Text
+                fontSize={15}
+                weight="semiBold"
+                appearance={payValue.shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
+              >
+                {selectedFeeAmountText}
+              </Text>
+              <Text
+                fontSize={13}
+                appearance="secondaryText"
+                numberOfLines={1}
+                style={flexbox.flex1}
+              >
+                {payValue.token.symbol}
+              </Text>
+            </View>
+          }
+          backgroundColor={selectBackgroundColor}
+          disabled={isFeeTokenSelectDisabled}
+          isAttachedBelow={isFeePaidByAnotherAccount}
+          toggleMenu={toggleMenu}
+          isMenuOpen={isMenuOpen}
+          selectRef={selectRef}
+          testID="fee-option-select-trigger"
+        />
+      )
+    },
+    [
+      estimationTitle,
+      feeOptionWarning,
+      isFeePaidByAnotherAccount,
+      isFeeTokenSelectDisabled,
+      payValue,
+      selectBackgroundColor,
+      selectedFeeAmountText,
+      styles.feeTokenGasTankIcon,
+      theme.primaryAccent,
+      theme.warningText
+    ]
+  )
 
   const renderFeeSpeedSelectedOption = useCallback(
     ({ toggleMenu, isMenuOpen, selectRef }: RenderSelectedOptionParams) => {
       if (!selectedFee) return null
 
       return (
-        <Pressable
-          onPress={toggleMenu}
+        <FeeSelectTrigger
+          label={t('Speed')}
+          value={
+            <Text
+              fontSize={15}
+              weight="medium"
+              numberOfLines={1}
+              testID={SPEED_TEST_IDS[selectedFee.speed.type]}
+            >
+              {t(getFeeSpeedLabelText(selectedFee.speed))}
+            </Text>
+          }
+          backgroundColor={selectBackgroundColor}
           disabled={disabled}
-          style={[flexbox.directionRow, flexbox.alignCenter, disabled && { opacity: 0.6 }]}
+          toggleMenu={toggleMenu}
+          isMenuOpen={isMenuOpen}
+          selectRef={selectRef}
           testID="fee-speed-select-trigger"
-        >
-          <View ref={selectRef} style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {selectedFee.label}
-            <View style={spacings.mlMi}>
-              {isMenuOpen ? (
-                <UpArrowIcon width={12} height={7} />
-              ) : (
-                <DownArrowIcon width={12} height={7} />
-              )}
-            </View>
-          </View>
-        </Pressable>
+        />
       )
     },
-    [disabled, selectedFee]
+    [disabled, selectBackgroundColor, selectedFee, t]
   )
 
   const renderFeeSpeedSelect = useCallback(() => {
     if (!selectedFee) return null
-
-    // On mobile and the narrow side panel the select sits next to the title, so it keeps its own
-    // boxed appearance. It needs the opposite fill of what it sits on to stay visible
-    if (withCompactFeeHeader) {
-      return (
-        <Select
-          value={selectedFee}
-          // @ts-expect-error TODO: types mismatch
-          setValue={onFeeSelect}
-          options={feeSpeedOptions}
-          selectStyle={{
-            height: 40,
-            backgroundColor:
-              isMobile || isOneClick ? theme.secondaryBackground : theme.primaryBackground
-          }}
-          menuPosition="top"
-          bottomSheetTitle={t('Network fee')}
-          withSearch={false}
-          // The web menu matches the select's width, so it needs extra room for "Medium <$0.01"
-          containerStyle={{ ...spacings.mb0, width: isMobile ? 126 : 156 }}
-          disabled={disabled}
-          testID="fee-speed-select"
-        />
-      )
-    }
 
     return (
       <Select
@@ -663,18 +672,15 @@ const Estimation = ({
         options={feeSpeedOptions}
         renderSelectedOption={renderFeeSpeedSelectedOption}
         menuOptionHeight={isWeb ? 40 : undefined}
-        // Display a wider menu if the fee token price is unavailable
-        // as the native amount takes up more space
-        menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 160 : 100}
+        // Grows the menu to the left, as the select sits at the right of the row.
+        // Wider still if the fee token price is unavailable as the token amount takes up more space
+        menuLeftHorizontalOffset={
+          FEE_SPEED_MENU_WIDTH - FEE_SPEED_SELECT_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
+        }
         menuPosition="top"
         bottomSheetTitle={t('Network fee')}
         withSearch={false}
-        containerStyle={{
-          ...spacings.mb0,
-          ...spacings.mrTy,
-          width: 'auto',
-          alignSelf: 'flex-end'
-        }}
+        containerStyle={{ ...spacings.mb0, width: FEE_SPEED_SELECT_WIDTH }}
         disabled={disabled}
         testID="fee-speed-select"
       />
@@ -686,11 +692,7 @@ const Estimation = ({
     onFeeSelect,
     renderFeeSpeedSelectedOption,
     selectedFee,
-    t,
-    theme.primaryBackground,
-    theme.secondaryBackground,
-    withCompactFeeHeader,
-    isOneClick
+    t
   ])
 
   const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
@@ -698,26 +700,6 @@ const Estimation = ({
 
     return <TitleAndIcon icon={section.title.icon} title={section.title.text} />
   }, [])
-
-  // Mirrors the early returns below, which all render without the "Network fee" title
-  const isFeeHeaderVisible =
-    !!signAccountOpState &&
-    !(signAccountOpState.estimation.status === EstimationStatus.Error && !isRetryingEstimation) &&
-    !(!hasEstimation && (!!slowRequest || isRetryingEstimation)) &&
-    !!payValue &&
-    !isSponsored &&
-    !isGaslessTransaction
-
-  useEffect(() => {
-    if (!onFeeHeaderVisibilityChange) return
-    onFeeHeaderVisibilityChange(isFeeHeaderVisible)
-    return () => onFeeHeaderVisibilityChange(false)
-  }, [isFeeHeaderVisible, onFeeHeaderVisibilityChange])
-
-  const backButton = onBackPress ? (
-    // Same test ID as the Back button it replaces, the two are never shown together
-    <PanelBackButton testID="back-button" onPress={onBackPress} style={spacings.mrSm} />
-  ) : null
 
   // A failure the estimation is still retrying keeps the "longer than usual"
   // warning below. Anything else is a dead end and is rendered elsewhere
@@ -813,142 +795,67 @@ const Estimation = ({
         />
         {enableErc4337Prompt}
       </View>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          spacings.mbTy,
-          withCompactFeeHeader && spacings.ptSm
-        ]}
-      >
-        {withCompactFeeHeader ? (
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-            {backButton}
-            <Text fontSize={18} weight="medium">
-              {estimationTitle}
-            </Text>
-            {signAccountOpState.canAccountBroadcastByItself && (
-              <View
-                style={spacings.mlTy}
-                dataSet={
-                  advancedOptionsTooltip
-                    ? createGlobalTooltipDataSet({
-                        id: ADVANCED_OPTIONS_TOOLTIP_ID,
-                        content: advancedOptionsTooltip
-                      })
-                    : undefined
-                }
-              >
-                {renderAdvancedButton()}
-              </View>
-            )}
-          </View>
-        ) : (
-          <>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              {backButton}
-              <Text fontSize={18} weight="medium">
-                {estimationTitle}
-              </Text>
-            </View>
-            {signAccountOpState.canAccountBroadcastByItself && (
-              <View
-                dataSet={
-                  advancedOptionsTooltip
-                    ? createGlobalTooltipDataSet({
-                        id: ADVANCED_OPTIONS_TOOLTIP_ID,
-                        content: advancedOptionsTooltip
-                      })
-                    : undefined
-                }
-              >
-                {renderAdvancedButton()}
-              </View>
-            )}
-          </>
-        )}
-        {withCompactFeeHeader && renderFeeSpeedSelect()}
-      </View>
-      <View>
-        {!withCompactFeeHeader && (
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifySpaceBetween,
-              spacings.mbTy
-            ]}
-          >
-            <Text fontSize={14} appearance="secondaryText">
-              {t('Pay with')}
-            </Text>
-            <DefaultFeeSelector
-              networkName={network?.name}
-              payValue={payValue}
-              signAccountOpState={signAccountOpState}
-              dispatchUpdate={dispatchUpdate}
-              hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
-              baselineFeeOption={baselineFeeOption}
-              style={[flexbox.alignCenter, spacings.mb0]}
-            />
-          </View>
-        )}
-        <SectionedSelect
-          setValue={setFeeOption}
-          testID="fee-option-select"
-          headerHeight={FEE_SECTION_LIST_MENU_HEADER_HEIGHT}
-          sections={feeOptionSelectSections}
-          renderSectionHeader={renderFeeOptionSectionHeader}
-          containerStyle={spacings.mb0}
-          value={payValue || NO_FEE_OPTIONS}
-          disabled={
-            disabled ||
-            (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
-            !signAccountOpState.selectedOption
-          }
-          selectStyle={{
-            backgroundColor:
-              isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground,
-            ...spacings.phSm
-          }}
-          defaultValue={payValue ?? undefined}
-          withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
-          stickySectionHeadersEnabled
-          menuPosition="top"
-          bottomSheetTitle={t('Network fee')}
-        />
-        {withCompactFeeHeader && (
-          <DefaultFeeSelector
-            networkName={network?.name}
-            payValue={payValue}
-            signAccountOpState={signAccountOpState}
-            dispatchUpdate={dispatchUpdate}
-            hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
-            baselineFeeOption={baselineFeeOption}
-            style={[flexbox.alignCenter, spacings.mtSm, spacings.mb0]}
+      <View style={[flexbox.directionRow, flexbox.alignStart, { gap: SPACING_TY }]}>
+        <View style={[flexbox.flex1, { minWidth: 0 }]}>
+          <SectionedSelect
+            setValue={setFeeOption}
+            testID="fee-option-select"
+            headerHeight={FEE_SECTION_LIST_MENU_HEADER_HEIGHT}
+            sections={feeOptionSelectSections}
+            renderSectionHeader={renderFeeOptionSectionHeader}
+            renderSelectedOption={renderFeeTokenSelectedOption}
+            containerStyle={spacings.mb0}
+            value={payValue || NO_FEE_OPTIONS}
+            disabled={isFeeTokenSelectDisabled}
+            defaultValue={payValue ?? undefined}
+            withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
+            stickySectionHeadersEnabled
+            menuPosition="top"
+            bottomSheetTitle={t('Network fee')}
           />
+          {isFeePaidByAnotherAccount && (
+            <FeePayerStrip address={payValue.paidBy} accountLabel={payValue.paidByAccountLabel} />
+          )}
+        </View>
+        {renderFeeSpeedSelect()}
+        {signAccountOpState.canAccountBroadcastByItself && (
+          <View
+            dataSet={
+              advancedOptionsTooltip
+                ? createGlobalTooltipDataSet({
+                    id: ADVANCED_OPTIONS_TOOLTIP_ID,
+                    content: advancedOptionsTooltip
+                  })
+                : undefined
+            }
+          >
+            <HoverablePressable
+              disabled={!canSetCustomGasPrices}
+              onPress={openAdvancedOptions}
+              style={[styles.advancedOptionsButton, { backgroundColor: selectBackgroundColor }]}
+              accessibilityRole="button"
+              accessibilityLabel={t('Advanced fee settings')}
+              testID="advanced-options-button"
+            >
+              <SettingsIcon
+                width={20}
+                height={20}
+                color={theme.secondaryText}
+                style={!canSetCustomGasPrices && { opacity: 0.3 }}
+              />
+            </HoverablePressable>
+          </View>
         )}
       </View>
-      {!withCompactFeeHeader && (
-        <>
-          {!!selectedFee && (
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifySpaceBetween,
-                spacings.mtSm
-              ]}
-            >
-              <Text fontSize={14} appearance="secondaryText">
-                {t('Speed')}
-              </Text>
-              {renderFeeSpeedSelect()}
-            </View>
-          )}
-        </>
-      )}
+      <DefaultFeeSelector
+        networkName={network?.name}
+        payValue={payValue}
+        signAccountOpState={signAccountOpState}
+        dispatchUpdate={dispatchUpdate}
+        hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
+        baselineFeeOption={baselineFeeOption}
+        style={[flexbox.alignCenter, spacings.mtSm, spacings.mb0]}
+      />
       <ServiceFee
         serviceFee={serviceFee}
         paidByNativeValue={paidByNativeValue}

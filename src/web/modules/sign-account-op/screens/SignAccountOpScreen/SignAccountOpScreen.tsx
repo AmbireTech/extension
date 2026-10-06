@@ -279,8 +279,8 @@ const SignAccountOpScreen = () => {
       {!estimationFailed &&
       signAccountOpState?.canBroadcast &&
       signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-        // Like on mobile, the top spacing comes from the fee header in Estimation
-        <View style={isNarrowWebLayout ? spacings.mbTy : spacings.mb}>
+        // Like on mobile, the compact layout keeps a wider gap between the fee and the buttons
+        <View style={isNarrowWebLayout ? spacings.mbXl : spacings.mb}>
           <Estimation
             signAccountOpState={signAccountOpState}
             disabled={isSignLoading}
@@ -311,7 +311,7 @@ const SignAccountOpScreen = () => {
             signed={signAccountOpState.accountOp.signed || []}
             importedKeys={signAccountOpState.accountKeyStoreKeys}
             threshold={signAccountOpState.threshold}
-            style={isNarrowWebLayout ? { ...spacings.ptSm, ...spacings.mbMd } : spacings.mb}
+            style={isNarrowWebLayout ? spacings.mbXl : spacings.mb}
           />
         )}
 

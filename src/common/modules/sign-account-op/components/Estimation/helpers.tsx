@@ -185,7 +185,8 @@ const mapFeeOptions = (
     paidBy: feeOption.paidBy,
     token: feeOption.token,
     disabled: !!disabledReason,
-    speedCoverage
+    speedCoverage,
+    shouldHighlightExtremeGasFee
   }
 }
 

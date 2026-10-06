@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -24,11 +24,13 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
+import CompactFooterButtons from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -49,7 +51,7 @@ export type OneClickEstimationProps = {
   Modals: React.ComponentType<ModalsProps>
 }
 
-const { isRequestWindow, isTab, isSidePanel, isPopup } = getUiType()
+const { isRequestWindow, isTab, isSidePanel } = getUiType()
 
 // The footer takes over the bottom inset, so the scroll content doesn't pad above it too
 const MOBILE_SCROLL_VIEW_PROPS = { contentContainerStyle: { paddingBottom: 0 } }
@@ -72,16 +74,11 @@ const OneClickEstimation = ({
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
   const { bottom } = useSafeAreaInsets()
-  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
+  const { isCompactLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const chainId = signAccountOpController?.accountOp.chainId
   const network = useMemo(() => networks.find((n) => n.chainId === chainId), [networks, chainId])
   const hasFreshActionPressRef = useRef(false)
-  // On web the back arrow next to "Network fee" replaces the Back button, which stays only as a
-  // fallback while that title isn't shown, since the sheet can't be closed any other way there
-  const [isFeeHeaderVisible, setIsFeeHeaderVisible] = useState(false)
-  // The popup keeps its original Back button instead of the back arrow next to "Network fee"
-  const shouldShowBackButton = !isMobile && (isPopup || !isFeeHeaderVisible)
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -136,15 +133,6 @@ const OneClickEstimation = ({
   })
   const { banners } = signAccountOpController || {}
 
-  // Disabled while signing, like the Back button
-  const handleBackPress = useCallback(() => {
-    if (isSignLoading) return
-    closeEstimationModal()
-  }, [closeEstimationModal, isSignLoading])
-
-  // The narrow side panel stacks full-width buttons in a plain view like mobile
-  const ButtonsWrapper = isCompactLayout ? View : FooterGlassView
-
   useEffect(() => {
     // Require a fresh click/press for each newly opened estimation flow.
     hasFreshActionPressRef.current = false
@@ -167,8 +155,35 @@ const OneClickEstimation = ({
   const footerComponent = useMemo(() => {
     if (!signAccountOpController) return null
 
+    const signButtonStyle = isCompactLayout ? { width: '100%' as const } : undefined
+    const signButton =
+      !!banners && !!banners.length ? (
+        <HoldToProceedButton
+          testID="sign-proceed-btn"
+          text={t('Hold to sign')}
+          buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
+          disabled={isSignDisabled || signingErrors.length > 0}
+          onPressIn={markFreshActionPress}
+          onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
+          size="smaller"
+          style={signButtonStyle}
+        />
+      ) : (
+        <ButtonWithLoader
+          testID="sign-button"
+          text={signButtonText}
+          type={extremeGasFeeSignButtonType}
+          isLoading={isSignLoading}
+          disabled={isSignDisabled || signingErrors.length > 0}
+          onPressIn={markFreshActionPress}
+          onPress={() => runWithFreshActionPress(onSignButtonClick)}
+          size="smaller"
+          style={signButtonStyle}
+        />
+      )
+
     return (
-      <View style={isMobile ? { paddingBottom: bottom || SPACING_SM } : undefined}>
+      <View style={isMobile ? { paddingBottom: (bottom || SPACING_SM) + SPACING_TY } : undefined}>
         <KeySelect
           isSigning={isSignLoading || !signAccountOpController.readyToSign}
           isChooseSignerShown={isChooseSignerShown}
@@ -201,8 +216,6 @@ const OneClickEstimation = ({
             sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
             serviceFee={serviceFee}
             isOneClick
-            onBackPress={isWeb && !isPopup ? handleBackPress : undefined}
-            onFeeHeaderVisibilityChange={setIsFeeHeaderVisible}
           />
         )}
         {isViewOnly && (
@@ -219,13 +232,28 @@ const OneClickEstimation = ({
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
           hasMarginTop
         />
-        <ButtonsWrapper
-          size="sm"
-          absolute={false}
-          isSimpleBlur={false}
-          style={isCompactLayout ? { ...spacings.ptLg, gap: SPACING_TY } : spacings.pt}
-        >
-          {shouldShowBackButton && !isNarrowWebLayout && (
+        {isCompactLayout ? (
+          <View style={spacings.ptXl}>
+            <CompactFooterButtons
+              isEvenSplit
+              secondaryActions={
+                <Button
+                  testID="back-button"
+                  // The web secondary background matches the sheet, tertiary keeps it visible
+                  type={isWeb ? 'tertiary' : 'secondary'}
+                  text={t('Back')}
+                  onPress={closeEstimationModal}
+                  hasBottomSpacing={false}
+                  disabled={isSignLoading}
+                  size="smaller"
+                  style={flexbox.flex1}
+                />
+              }
+              primaryAction={signButton}
+            />
+          </View>
+        ) : (
+          <FooterGlassView size="sm" absolute={false} isSimpleBlur={false} style={spacings.pt}>
             <Button
               testID="back-button"
               type="secondary"
@@ -236,68 +264,28 @@ const OneClickEstimation = ({
               style={{ width: 98, ...spacings.mrLg }}
               size="smaller"
             />
-          )}
-
-          {!!banners && !!banners.length ? (
-            <HoldToProceedButton
-              testID="sign-proceed-btn"
-              text={t('Hold to sign')}
-              buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
-              disabled={isSignDisabled || signingErrors.length > 0}
-              onPressIn={markFreshActionPress}
-              onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
-              size={isCompactLayout ? 'regular' : 'smaller'}
-            />
-          ) : (
-            <ButtonWithLoader
-              testID="sign-button"
-              text={signButtonText}
-              type={extremeGasFeeSignButtonType}
-              isLoading={isSignLoading}
-              disabled={isSignDisabled || signingErrors.length > 0}
-              onPressIn={markFreshActionPress}
-              onPress={() => runWithFreshActionPress(onSignButtonClick)}
-              size={isCompactLayout ? 'regular' : 'smaller'}
-            />
-          )}
-
-          {/* Side panel only: stack Back under the primary action */}
-          {shouldShowBackButton && isNarrowWebLayout && (
-            <Button
-              testID="back-button"
-              // The web secondary background matches the sheet, tertiary keeps it visible
-              type="tertiary"
-              text={t('Back')}
-              onPress={closeEstimationModal}
-              hasBottomSpacing={false}
-              disabled={isSignLoading}
-              size="regular"
-            />
-          )}
-        </ButtonsWrapper>
+            {signButton}
+          </FooterGlassView>
+        )}
       </View>
     )
   }, [
     signAccountOpController,
     bottom,
-    ButtonsWrapper,
     banners,
     bundlerNonceDiscrepancy,
     closeEstimationModal,
     extremeGasFeeSignButtonType,
     handleChangeFeePayerKeyType,
-    handleBackPress,
     handleChangeSigningKey,
     hasEstimation,
     isChooseFeePayerKeyShown,
     isChooseSignerShown,
     isCompactLayout,
-    isNarrowWebLayout,
     isSignDisabled,
     isSignLoading,
     isViewOnly,
     markFreshActionPress,
-    shouldShowBackButton,
     onSignButtonClick,
     runWithFreshActionPress,
     serviceFee,
