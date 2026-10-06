@@ -42,6 +42,7 @@ import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/type
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { generateUuid } from '@ambire-common/utils/uuid'
+import { waitWithAbort } from '@ambire-common/utils/wait'
 import {
   handleOps060,
   handleOps070
@@ -56,6 +57,10 @@ import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils
 
 const REFETCH_TIME = 3000 // 3 seconds
 const REFETCH_TIME_ETHEREUM = 12000 // 12 seconds
+// Reading the balances on the receipt block right after confirmation may fail
+// if the RPC node hasn't synced that block yet, so retry before giving up
+const BALANCE_CHANGES_MAX_ATTEMPTS = 3
+const BALANCE_CHANGES_RETRY_DELAY = 3000 // 3 seconds
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) =>
   state.flags?.tokenPrices === true
 
@@ -1039,18 +1044,35 @@ const useSteps = ({
       return
 
     let isMounted = true
+    let retryDelay: ReturnType<typeof waitWithAbort> | null = null
 
     void (async () => {
+      let foundTokens: string[]
+      let foundNftBalanceChanges: NftBalanceChange[]
+
       try {
-        const [foundTokens, foundNfts] = await Promise.all([
+        const [transferLogTokens, foundNfts] = await Promise.all([
           getTransferLogTokens(receiptLogs, from),
           getTransferLogNfts(receiptLogs, from)
         ])
-        const foundNftBalanceChanges = foundNfts.map((change) => ({
+        foundTokens = transferLogTokens
+        foundNftBalanceChanges = foundNfts.map((change) => ({
           ...change,
           chainId: network.chainId
         }))
+      } catch (error) {
+        if (!isMounted) return
 
+        logWarnWithPrefix(
+          'balance changes',
+          `Reading the transferred tokens on chain ${network.chainId.toString()} failed`,
+          error
+        )
+        setHasBalanceChangesFailed(true)
+        return
+      }
+
+      const getBalanceChanges = () =>
         dispatchAndWait({
           type: 'method',
           params: {
@@ -1078,39 +1100,43 @@ const useSteps = ({
             ]
           }
         })
-          .then((res) => {
-            if (!isMounted) return
 
-            setHasBalanceChangesFailed(false)
-            setBalanceChanges(res)
-            setNftBalanceChanges(foundNftBalanceChanges)
-          })
-          .catch((error) => {
-            if (!isMounted) return
+      const fetchBalanceChanges = async (attempt: number): Promise<void> => {
+        try {
+          const res = await getBalanceChanges()
+          if (!isMounted) return
 
-            logWarnWithPrefix(
-              'balance changes',
-              `Reading the balances on chain ${network.chainId.toString()} failed`,
-              error
-            )
+          setHasBalanceChangesFailed(false)
+          setBalanceChanges(res)
+          setNftBalanceChanges(foundNftBalanceChanges)
+        } catch (error) {
+          if (!isMounted) return
+
+          logWarnWithPrefix(
+            'balance changes',
+            `Reading the balances on chain ${network.chainId.toString()} failed (attempt ${attempt}/${BALANCE_CHANGES_MAX_ATTEMPTS})`,
+            error
+          )
+
+          if (attempt >= BALANCE_CHANGES_MAX_ATTEMPTS) {
             setHasBalanceChangesFailed(true)
-          })
+            return
+          }
 
-        if (!isMounted) return
-      } catch (error) {
-        if (!isMounted) return
+          retryDelay = waitWithAbort(BALANCE_CHANGES_RETRY_DELAY)
+          await retryDelay.promise
+          if (!isMounted) return
 
-        logWarnWithPrefix(
-          'balance changes',
-          `Reading the transferred tokens on chain ${network.chainId.toString()} failed`,
-          error
-        )
-        setHasBalanceChangesFailed(true)
+          await fetchBalanceChanges(attempt + 1)
+        }
       }
+
+      await fetchBalanceChanges(1)
     })()
 
     return () => {
       isMounted = false
+      retryDelay?.abort()
     }
   }, [
     activityAccOp,
