@@ -13,6 +13,7 @@ import ImportExistingAccountSelectorScreen from '@mobile/modules/auth/screens/Im
 import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSmartAccountJson'
 import MigrationOnboardingScreen from '@mobile/modules/auth/screens/MigrationOnboardingScreen'
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
+import SafeCreateScreen from '@mobile/modules/auth/screens/SafeCreateScreen'
 import SafeImportScreen from '@mobile/modules/auth/screens/SafeImportScreen'
 import SafeImportByOwnerScreen from '@mobile/modules/auth/screens/SafeImportByOwnerScreen'
 import SafeImportMethodScreen from '@mobile/modules/auth/screens/SafeImportMethodScreen'
@@ -80,6 +81,7 @@ const MainRoutes = () => {
         <Route path={ROUTES.safeImport} element={<SafeImportMethodScreen />} />
         <Route path={ROUTES.safeImportAddress} element={<SafeImportScreen />} />
         <Route path={ROUTES.safeImportByOwner} element={<SafeImportByOwnerScreen />} />
+        <Route path={ROUTES.safeCreate} element={<SafeCreateScreen />} />
 
         <Route path={ROUTES.accountPicker} element={<AccountPickerScreen />} />
         <Route path={ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />

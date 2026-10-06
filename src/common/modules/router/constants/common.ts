@@ -22,6 +22,7 @@ const COMMON_ROUTES = {
   safeImport: 'safe-import',
   safeImportAddress: 'safe-import-address',
   safeImportByOwner: 'safe-import-by-owner',
+  safeCreate: 'safe-create',
   qrConnect: 'qr-connect',
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
@@ -151,6 +152,7 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.safeImport,
   COMMON_ROUTES.safeImportAddress,
   COMMON_ROUTES.safeImportByOwner,
+  COMMON_ROUTES.safeCreate,
   COMMON_ROUTES.qrConnect,
   WEB_ROUTES.importAccountsFromMobile,
   MOBILE_ROUTES.importAccountsFromExtension

@@ -19,6 +19,7 @@ export { default as QrConnectScreen } from '@web/modules/hardware-wallet/screens
 export { default as SafeImportScreen } from '@web/modules/auth/screens/SafeImportScreen'
 export { default as SafeImportByOwnerScreen } from '@web/modules/auth/screens/SafeImportByOwnerScreen'
 export { default as SafeImportMethodScreen } from '@web/modules/auth/screens/SafeImportMethodScreen'
+export { default as SafeCreateScreen } from '@web/modules/auth/screens/SafeCreateScreen'
 export { default as SeedPhraseImportScreen } from '@web/modules/auth/screens/SeedPhraseImportScreen'
 export { default as ImportAccountsFromMobileScreen } from '@web/modules/accounts-sync/screens/ImportAccountsFromMobileScreen'
 export { default as ExportAccountsToMobileScreen } from '@web/modules/accounts-sync/screens/ExportAccountsToMobileScreen'

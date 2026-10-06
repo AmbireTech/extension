@@ -13,7 +13,7 @@ import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
-import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
+import SafeBadgeIcon, { SAFE_BRAND_GREEN } from '@common/assets/svg/SafeBadgeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
@@ -36,6 +36,8 @@ import ExpandableOptionSection from './ExpandableOptionSection'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
+const SAFE_DROPDOWN_ICON_PROPS = { color: SAFE_BRAND_GREEN }
+
 const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
 
 const AddAccount = ({
@@ -55,7 +57,7 @@ const AddAccount = ({
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
   const [expandedDropdown, setExpandedDropdown] = useState<
-    'import-acc' | 'connect-hw' | 'connect-nfc' | null
+    'import-acc' | 'connect-hw' | 'safe' | 'connect-nfc' | null
   >(null)
 
   const {
@@ -154,6 +156,30 @@ const AddAccount = ({
     }))
   }, [closeBottomSheet, scanCard, t])
 
+  const optionsSafe = useMemo(
+    () => [
+      ...(!showImportOnly
+        ? [
+            {
+              key: 'create-safe',
+              text: t('Create'),
+              icon: AddCircularIcon,
+              onPress: () => goToNextRoute(ROUTES.safeCreate),
+              testID: 'create-safe'
+            }
+          ]
+        : []),
+      {
+        key: 'import-safe',
+        text: t('Import'),
+        icon: ImportAccountIcon,
+        onPress: () => goToNextRoute(ROUTES.safeImport),
+        testID: 'import-safe'
+      }
+    ],
+    [goToNextRoute, showImportOnly, t]
+  )
+
   const optionsImportAccount = useMemo(() => {
     return [
       {
@@ -169,13 +195,6 @@ const AddAccount = ({
         icon: PrivateKeyIcon,
         onPress: () => goToNextRoute(ROUTES.importPrivateKey),
         testID: 'import-private-key'
-      },
-      {
-        key: 'import-safe',
-        text: t('Safe account'),
-        icon: SafeBadgeIcon,
-        onPress: () => goToNextRoute(ROUTES.safeImport),
-        testID: 'import-safe'
       },
       ...(!isMobile
         ? [
@@ -254,6 +273,17 @@ const AddAccount = ({
             setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'connect-hw' : null)}
           />
         )}
+        <ExpandableOptionSection
+          dropdownText={t('Safe accounts')}
+          dropdownIcon={SafeBadgeIcon}
+          // Keeps the Safe logo green instead of the generic icon and hover colors
+          dropdownIconProps={SAFE_DROPDOWN_ICON_PROPS}
+          dropdownTestID="safe-accounts"
+          options={optionsSafe}
+          scrollViewRef={scrollViewRef}
+          isExpanded={expandedDropdown === 'safe'}
+          setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'safe' : null)}
+        />
         {!!optionsNfc.length && (
           <ExpandableOptionSection
             dropdownText={t('Connect an NFC card')}
