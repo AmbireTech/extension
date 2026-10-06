@@ -1,13 +1,11 @@
 import { formatUnits } from 'ethers'
 import { useCallback, useMemo } from 'react'
 
-import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
 import {
   getPrivacyPoolsPriceKey,
   getPrivacyPoolsValuePerChain
 } from '@ambire-common/libs/privacyPools/prices'
 import {
-  PrivacyPoolsActivityEntry,
   PrivacyPoolsChainState,
   PrivacyPoolsTokenBalance
 } from '@ambire-common/interfaces/privacyPools'
@@ -44,20 +42,6 @@ export type PrivacyPoolsBalanceDisplay = {
   value: number | null
 }
 
-export type PrivacyPoolsActivityDisplay = {
-  id: string
-  chainId: string
-  networkName: string
-  type: PrivacyPoolsActivityEntry['type']
-  status: PrivacyPoolsActivityEntry['status']
-  tokenAddress: string
-  symbol: string
-  amount: string
-  recipient: string | null
-  createdAt: number
-  error?: string
-}
-
 /**
  * State of the balance list:
  * - 'unavailable' - the account cannot use Privacy Pools; the card above shows why
@@ -70,12 +54,10 @@ export type PrivacyPoolsBalancesState = 'unavailable' | 'not-loaded' | 'loading'
 type PrivacyPoolsState = AllControllersMappingType['PrivacyPoolsController']
 
 const NO_CHAIN_IDS: string[] = []
-const NO_ACTIVITY: PrivacyPoolsActivityEntry[] = []
 
 const selectSupportedChainIds = (state: PrivacyPoolsState) => state.supportedChainIds
 const selectChains = (state: PrivacyPoolsState) => state.chains
 const selectBalances = (state: PrivacyPoolsState) => state.balances
-const selectActivity = (state: PrivacyPoolsState) => state.activity
 const selectOperation = (state: PrivacyPoolsState) => state.operation
 const selectUnavailableReason = (state: PrivacyPoolsState) => state.unavailableReason
 const selectIsAvailable = (state: PrivacyPoolsState) => state.isAvailableForSelectedAccount
@@ -94,7 +76,6 @@ const usePrivacyPools = () => {
   )
   const { state: chains } = useController('PrivacyPoolsController', selectChains)
   const { state: balancesByChain } = useController('PrivacyPoolsController', selectBalances)
-  const { state: activity = NO_ACTIVITY } = useController('PrivacyPoolsController', selectActivity)
   const { state: operation = null } = useController('PrivacyPoolsController', selectOperation)
   const { state: unavailableReason = null } = useController(
     'PrivacyPoolsController',
@@ -218,28 +199,6 @@ const usePrivacyPools = () => {
     return 'not-loaded'
   }, [isAvailableForSelectedAccount, hasSyncedAnyChain, isSyncingAnyChain])
 
-  const activityDisplay: PrivacyPoolsActivityDisplay[] = useMemo(
-    () =>
-      activity.map((entry) => {
-        const asset = getPrivacyPoolsAsset(BigInt(entry.chainId), entry.tokenAddress)
-
-        return {
-          id: entry.id,
-          chainId: entry.chainId,
-          networkName: getNetworkName(entry.chainId),
-          type: entry.type,
-          status: entry.status,
-          tokenAddress: entry.tokenAddress,
-          symbol: asset?.symbol || '',
-          amount: formatUnits(entry.amount, asset?.decimals ?? 18),
-          recipient: entry.recipient,
-          createdAt: entry.createdAt,
-          error: entry.error
-        }
-      }),
-    [activity, getNetworkName]
-  )
-
   /** Reads every supported network, however recently read - the refresh button. */
   const syncAllChains = useCallback(() => {
     dispatch({ type: 'method', params: { method: 'sync', args: [] } })
@@ -276,7 +235,6 @@ const usePrivacyPools = () => {
     balancesState,
     totalPrivateBalance,
     pendingPrivateBalance,
-    activity: activityDisplay,
     operation,
     tokenBalances,
     getNetworkName,

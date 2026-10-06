@@ -8,7 +8,6 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   centeredText: TextStyle
   container: ViewStyle
-  row: ViewStyle
   emptyContainer: ViewStyle
 }
 
@@ -19,14 +18,6 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phSm,
       backgroundColor: theme.secondaryBackground,
       overflow: 'hidden'
-    },
-    row: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...flexbox.justifySpaceBetween,
-      ...spacings.pvSm,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.secondaryBorder
     },
     emptyContainer: {
       ...flexbox.alignCenter,

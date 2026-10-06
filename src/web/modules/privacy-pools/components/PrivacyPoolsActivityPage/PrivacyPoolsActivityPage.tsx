@@ -1,7 +1,6 @@
 import React, { FC, ReactElement, useCallback, useMemo } from 'react'
 import { Animated, View } from 'react-native'
 
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
@@ -9,13 +8,6 @@ import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import PrivacyPoolsActivity from '@web/modules/privacy-pools/components/PrivacyPoolsActivity'
 import { PRIVACY_POOLS_TABS } from '@web/modules/privacy-pools/components/PrivacyPoolsTokensPage'
-import { PrivacyPoolsActivityDisplay } from '@web/modules/privacy-pools/hooks/usePrivacyPools/usePrivacyPools'
-
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const selectDashboardNetworkFilter = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => state.dashboardNetworkFilter
 
 interface Props {
   openTab: TabType
@@ -24,7 +16,6 @@ interface Props {
   animatedOverviewHeight: Animated.Value
   /** Shown above the tabs, like the regular dashboard's banners. */
   banners: ReactElement
-  activity: PrivacyPoolsActivityDisplay[]
 }
 
 /** The Activity page of a Privacy Pools account, laid out like the regular dashboard's. */
@@ -33,22 +24,9 @@ const PrivacyPoolsActivityPage: FC<Props> = ({
   setOpenTab,
   sessionId,
   animatedOverviewHeight,
-  banners,
-  activity
+  banners
 }) => {
   const { theme } = useTheme()
-  const { state: dashboardNetworkFilter } = useController(
-    'SelectedAccountController',
-    selectDashboardNetworkFilter
-  )
-
-  const filteredActivity = useMemo(
-    () =>
-      activity.filter(
-        ({ chainId }) => !dashboardNetworkFilter || chainId === String(dashboardNetworkFilter)
-      ),
-    [activity, dashboardNetworkFilter]
-  )
 
   const renderItem = useCallback(
     ({ item }: { item: string }) => {
@@ -64,9 +42,9 @@ const PrivacyPoolsActivityPage: FC<Props> = ({
           </View>
         )
 
-      return <PrivacyPoolsActivity activity={filteredActivity} />
+      return <PrivacyPoolsActivity />
     },
-    [filteredActivity, openTab, sessionId, setOpenTab, theme.primaryBackground]
+    [openTab, sessionId, setOpenTab, theme.primaryBackground]
   )
 
   const keyExtractor = useCallback((item: string) => item, [])

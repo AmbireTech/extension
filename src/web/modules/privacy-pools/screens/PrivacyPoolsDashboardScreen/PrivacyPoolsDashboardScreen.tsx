@@ -42,7 +42,6 @@ const PrivacyPoolsDashboardScreen = () => {
     balancesState,
     totalPrivateBalance,
     pendingPrivateBalance,
-    activity,
     tokenBalances,
     getNetworkName,
     syncAllChains,
@@ -150,7 +149,6 @@ const PrivacyPoolsDashboardScreen = () => {
           sessionId={SESSION_ID}
           animatedOverviewHeight={animatedOverviewHeight}
           banners={banners}
-          activity={activity}
         />
       </View>
     </LayoutWrapper>
