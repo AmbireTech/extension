@@ -4,6 +4,7 @@ import { ColorValue, View, ViewStyle } from 'react-native'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
+import { DEFAULT_SELECT_SIZE, SELECT_SIZE_TO_HEIGHT } from '@common/components/Select/styles'
 import { RenderSelectedOptionParams } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
@@ -11,7 +12,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 /** Height of the fee row - the selects and the advanced settings button share it */
-const FEE_ROW_HEIGHT = 52
+const FEE_ROW_HEIGHT = SELECT_SIZE_TO_HEIGHT[DEFAULT_SELECT_SIZE]
 /** Gap between an icon and its text, shared with the fee payer strip so their icons line up */
 export const FEE_ICON_GAP = 10
 

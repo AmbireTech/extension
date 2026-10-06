@@ -58,7 +58,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     advancedOptionsButton: {
       width: 50,
-      height: 52,
+      height: SELECT_SIZE_TO_HEIGHT[DEFAULT_SELECT_SIZE],
       ...common.borderRadiusPrimary,
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter
