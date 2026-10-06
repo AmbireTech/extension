@@ -18,9 +18,11 @@ const isGecko = engine === 'gecko'
  * Firefox has no `sidePanel.setPanelBehavior({ openPanelOnActionClick })` equivalent: unlike
  * Chrome, clicking the toolbar action only dispatches `onClicked` when no popup is set (see
  * applyPanelMode, which clears it when panel mode is on), so the sidebar has to be opened here.
+ * It is toggled rather than opened, so a click while the sidebar is open closes it instead of
+ * reloading it.
  * Because `onClicked` only fires in panel mode, no mode check is needed - and it must not read
  * wallet state, since the click can wake a suspended background before the controllers load.
- * `open()` is called synchronously so it stays within the user gesture Firefox requires.
+ * `toggle()` is called synchronously so it stays within the user gesture Firefox requires.
  *
  * This module is imported by UI code too (e.g. wallet-state.web.ts is pulled in by the Avatar
  * components), so the listener itself must be registered from background.ts - a real
@@ -32,9 +34,9 @@ const isGecko = engine === 'gecko'
  */
 export const handleFirefoxActionClicked = async () => {
   try {
-    await getFirefoxSidebarApi()?.open()
+    await getFirefoxSidebarApi()?.toggle()
   } catch (error) {
-    console.error('Failed to open the Firefox sidebar', error)
+    console.error('Failed to toggle the Firefox sidebar', error)
     captureBackgroundException(error)
   }
 }
