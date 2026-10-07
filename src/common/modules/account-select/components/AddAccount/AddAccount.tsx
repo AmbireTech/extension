@@ -21,7 +21,7 @@ import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
@@ -250,7 +250,7 @@ const AddAccount = ({
           />
         )}
         {/* Extension only for now */}
-        {isWeb && !showImportOnly && (
+        {isPrivacyPoolsEnabled && !showImportOnly && (
           <Option
             text={t('Add a Privacy Pools account')}
             icon={ShieldInvisibilityIcon}
@@ -302,7 +302,7 @@ const AddAccount = ({
         )}
       </View>
 
-      {isWeb && !showImportOnly && (
+      {isPrivacyPoolsEnabled && !showImportOnly && (
         <AddPrivacyPoolsAccountBottomSheet
           sheetRef={privacyPoolsSheetRef}
           closeBottomSheet={closePrivacyPoolsBottomSheet}
