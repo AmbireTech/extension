@@ -26,8 +26,8 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import DisconnectAllBottomSheet, {
   DisconnectAllBottomSheetHandle
 } from '@common/modules/explore/components/DisconnectAllBottomSheet'
-import WalletStaking from '@common/modules/explore/components/WalletStaking'
-import { shouldShowWalletStaking } from '@common/modules/explore/helpers/shouldShowWalletStaking'
+import WalletStakingCard from '@common/modules/wallet-staking/components/WalletStakingCard'
+import { shouldShowWalletStaking } from '@common/modules/wallet-staking/helpers/shouldShowWalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -279,7 +279,7 @@ const ExploreSectionScreen = () => {
             renderItem={renderItem}
             keyExtractor={(item: Dapp) => item.id}
             ListHeaderComponent={
-              sectionType === 'apps' && isWalletStakingVisible ? WalletStaking : undefined
+              sectionType === 'apps' && isWalletStakingVisible ? WalletStakingCard : undefined
             }
             ListEmptyComponent={
               sectionType === 'apps' ? null : (

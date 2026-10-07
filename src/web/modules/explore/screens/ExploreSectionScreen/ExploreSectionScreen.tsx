@@ -18,8 +18,8 @@ import useDebounce from '@common/hooks/useDebounce'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
-import WalletStaking from '@common/modules/explore/components/WalletStaking'
-import { shouldShowWalletStaking } from '@common/modules/explore/helpers/shouldShowWalletStaking'
+import WalletStakingCard from '@common/modules/wallet-staking/components/WalletStakingCard'
+import { shouldShowWalletStaking } from '@common/modules/wallet-staking/helpers/shouldShowWalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -226,7 +226,7 @@ const ExploreSectionScreen = () => {
           renderItem={renderItem}
           keyExtractor={(item: Dapp) => item.id}
           ListHeaderComponent={
-            sectionType === 'apps' && isWalletStakingVisible ? WalletStaking : undefined
+            sectionType === 'apps' && isWalletStakingVisible ? WalletStakingCard : undefined
           }
           style={spacings.phSm}
           contentContainerStyle={spacings.pr0}

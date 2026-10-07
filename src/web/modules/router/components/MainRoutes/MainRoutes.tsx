@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
-import WalletStakingScreen from '@common/modules/explore/components/WalletStaking/WalletStakingScreen'
+import WalletStakingScreen from '@web/modules/wallet-staking/screens/WalletStakingScreen'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
@@ -15,7 +15,6 @@ import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/sc
 import SidePanelNoAccountsScreen from '@web/modules/auth/screens/SidePanelNoAccountsScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
-import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import NetworksScreen from '@web/modules/networks/screens'
 import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
@@ -291,7 +290,6 @@ const MainRoutes = () => {
               element={<TrendingTokenDetailsScreen />}
             />
             <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
-            <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
             <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
           </Route>
         </Route>

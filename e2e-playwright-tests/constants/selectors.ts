@@ -2,6 +2,11 @@ import { buildSelector } from '@helpers/buildSelector'
 
 // TODO: this should be refactored; we should have single file with selector IDs
 const selectors = {
+  invite: {
+    codeInput: 'invite-code-input',
+    pasteBtn: 'paste-invite-code-btn',
+    verifyBtn: 'verify-invite-code-btn'
+  },
   getStarted: {
     createNewAccountButton: 'create-new-account-btn',
     importAccountButton: 'button-import-account',
@@ -35,7 +40,8 @@ const selectors = {
     changeHDPathButton: 'change-hd-path-btn',
     hdPathConfirmButton: 'hd-path-confirm-btn',
     hdPathLegerLegacy: 'hd-path-option-ledger-legacy',
-    smartAccountPicker: 'add-account-' // need add index 5
+    smartAccountPicker: 'add-account-', // need add index 5
+    viewOnlyInputAddressField: 'view-only-address-field-0'
   },
   dashboard: {
     dashboardGasTankBalance: 'dashboard-gas-tank-balance',
@@ -78,10 +84,7 @@ const selectors = {
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
-    rewardsButton: 'dashboard-button-rewards',
     rewardsForClaimingButton: 'marketing-banner-button',
-    rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
-    projectedRewardsClaimButton: 'projected-rewards-claim-button',
     searchInputPlaceholder: 'search-input-placeholder',
     searchInputField: 'search-input-field'
   },
@@ -102,8 +105,11 @@ const selectors = {
     unhideTokenButton: 'unhide-button',
     youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page,
     manageAccountTreeDotsButton: 'account', // on accounts page, has multiple sam IDs,
+    accountOptionsButton: (addr: string) => `account-options-${addr}`, // kebab menu on an account row, unique per address
     removeAccountButton: '//div[contains(text(),"Remove account")]',
     confirmRemoveAccountButton: 'confirm-remove-account-button',
+    confirmExtensionPassField: 'passphrase-field',
+    confirmExtensionButton: 'button-submit',
     customTokens: {
       addCustomTokenButton: 'add-custom-token-button',
       addTokenModalTitle: 'add-token-modal-title-text',
@@ -145,38 +151,9 @@ const selectors = {
     dualChoiceModalAcceptButton: 'dual-choice-modal-primary-button',
     dualChoiceModalTitle: 'dual-choice-modal-title-text',
     previousFeeAmountText: 'previous-fee-amount',
-    updatedFeeAmountText: 'updated-fee-amount'
-  },
-  // TODO: update selectors wiyh testID
-  ambireRewards: {
-    connectAmbireButton: '//button[contains(text(),"Connect Ambire")]',
-    claimRewardButton: '//button[contains(text(),"Claim")]',
-    readAnnouncementHyperlink: '//a[contains(@href, "rewards-enters")]',
-    faqFirstQuestion: '//span[contains(text(),"What is Ambire")]',
-    faqFirstAnswer: '(//div/p)[2]',
-    faqSecondQuestion: '//span[contains(text(),"Is Ambire")]',
-    faqSecondAnswer: '(//div/p)[3]',
-    faqThirdQuestion: '//span[contains(text(),"Can I participate with a wallet")]',
-    faqThirdAnswer: '(//div/p)[4]',
-    faqFourthQuestion: '//span[contains(text(),"Which tokens")]',
-    faqFourthAnswer: '(//div/p)[5]',
-    faqFifthQuestion: '//span[contains(text(),"How is Swap&Bridge")]',
-    faqFifthAnswer: '(//div/p)[6]',
-    faqSixthQuestion: '//span[contains(text(),"Can I use my")]',
-    faqSixthAnswer: '(//div/p)[7]',
-    faqSeventhQuestion: '//span[contains(text(),"Can I participate with multiple")]',
-    faqSeventhAnswer: '(//div/p)[8]',
-    faqEightQuestion: '//span[contains(text(),"How long is the current")]',
-    faqEightAnswer: '(//div/p)[9]',
-    faqNinthQuestion: '//span[contains(text(),"What are projected")]',
-    faqNinthAnswer: '(//div/p)[10]',
-    pageTitle: '//h1',
-    pageDescription: '//p',
-    homePage: '//span[contains(text(),"Home")]',
-    leaderboardPage: '//span[contains(text(),"Rewards")]',
-    rewardsPoolPage: '//span[contains(text(),"Rewards Pool")]',
-    walletPage: '//span[contains(text(),"$Wallet")]',
-    faqPage: '//span[contains(text(),"FAQ")]'
+    updatedFeeAmountText: 'updated-fee-amount',
+    signPassAuthField: 'signing-auth-password-field',
+    signConfirmButton: 'signing-auth-confirm-button'
   },
   sigtool: {
     connectWalletButton: '.button-connect',
@@ -299,6 +276,7 @@ const selectors = {
   confirmFollowUpTxn: 'confirm-follow-up-txns-checkbox',
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',
+  signAccountOpScrollView: 'sign-account-op-scroll-view',
   maxAvailableAmount: 'max-available-amount',
   // Swap & Bridge selectors
   selectRouteButton: 'select-route',
@@ -364,6 +342,7 @@ const selectors = {
   keystoreMigration: {
     recoveryPhraseRow: (id: string) => `recovery-phrase-row-${id}`,
     manageRecoveryPhrase: (id: string) => `manage-recovery-phrase-${id}`,
+    manageRecoveryPhraseHeader: 'manage-recovery-phrase-header',
     recoveryPhraseValue: 'recovery-phrase-value',
     recoveryPhrasePassphraseValue: 'recovery-phrase-passphrase-value',
     revealRecoveryPhraseButton: 'reveal-recovery-phrase-button',

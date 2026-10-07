@@ -32,6 +32,7 @@ import {
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
@@ -41,7 +42,6 @@ import {
 } from '@common/hooks/usePrivacyPoolsAccounts'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -60,6 +60,8 @@ export interface AddressSelectProps extends InputProps {
   bottomSheetTitle?: string
   // Shortens the addresses in the list, for a container too narrow to fit a full one.
   withShortenedAddresses?: boolean
+  /** Includes the active wallet account, which is normally omitted to prevent self-transfers. */
+  includeSelectedAccount?: boolean
   /**
    * Background color of the idle input. Set it when the parent has the same color as the
    * default input background, so the input stays visible.
@@ -212,18 +214,12 @@ const SelectedMenuOption: React.FC<{
         button={
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
-        buttonProps={{
-          onPress: () => {
-            if (!address || filteredContacts.length) {
-              setIsMenuOpen(true)
-            }
-          }
-        }}
+        buttonProps={{ onPress: () => setIsMenuOpen(true) }}
         inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
         buttonStyle={{
           ...spacings.pv0,
-          ...spacings.pl,
-          ...spacings.prTy,
+          // Even padding keeps the clear button's press area centered on its icon
+          ...(address ? spacings.phTy : { ...spacings.pl, ...spacings.prTy }),
           ...spacings.mr0,
           ...spacings.ml0
         }}
@@ -275,11 +271,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   addressPoisoningMatch,
   bottomSheetTitle,
   withShortenedAddresses,
+  includeSelectedAccount = false,
   inputBackgroundColor,
   privacyPoolsAccounts,
   onSelectPrivacyPoolsAccount
 }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
   const actualAddress = getAddressFromAddressState({
     resolvedAddress,
@@ -298,23 +295,40 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     preset: 'opacityInverted'
   })
 
+  const selectableContacts = useMemo<Contact[]>(() => {
+    if (!includeSelectedAccount || !account) return contacts
+    const isSelectedAccountIncluded = contacts.some(
+      ({ address: contactAddress }) => contactAddress.toLowerCase() === account.addr.toLowerCase()
+    )
+    if (isSelectedAccountIncluded) return contacts
+
+    return [
+      {
+        name: account.preferences.label,
+        address: account.addr,
+        isWalletAccount: true
+      },
+      ...contacts
+    ]
+  }, [account, contacts, includeSelectedAccount])
+
   const onManagePress = useCallback(() => {
     navigate(ROUTES.addressBook)
   }, [navigate])
 
   const searchableContacts = useMemo(
     () =>
-      contacts.map((contact) => ({
+      selectableContacts.map((contact) => ({
         contact,
         name: contact.name.toLowerCase(),
         address: contact.address.toLowerCase(),
         domain: getSearchableNames(domains[contact.address]?.names)
       })),
-    [contacts, domains]
+    [selectableContacts, domains]
   )
 
   const filteredContacts = useMemo(() => {
-    if (!actualAddress) return contacts
+    if (!actualAddress) return selectableContacts
 
     const fuse = new Fuse(searchableContacts, {
       keys: [
@@ -329,7 +343,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
     const results = fuse.search(actualAddress)
     return results.map((result) => result.item.contact)
-  }, [contacts, actualAddress, searchableContacts])
+  }, [selectableContacts, actualAddress, searchableContacts])
 
   const filteredPrivacyPoolsAccounts = useMemo(
     () =>
@@ -396,7 +410,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      (isMobile ? contacts : filteredContacts)
+      (isMobile ? selectableContacts : filteredContacts)
         .filter((contact) => contact.isWalletAccount)
         .map((contact, index) => ({
           value: contact.address,
@@ -418,12 +432,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             />
           )
         })),
-    [contacts, filteredContacts, contactAddressMaxLength]
+    [selectableContacts, filteredContacts, contactAddressMaxLength]
   )
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      (isMobile ? contacts : filteredContacts)
+      (isMobile ? selectableContacts : filteredContacts)
         .filter((contact) => !contact.isWalletAccount)
         .map((contact) => ({
           value: contact.address,
@@ -443,7 +457,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             />
           )
         })),
-    [contacts, filteredContacts, contactAddressMaxLength]
+    [selectableContacts, filteredContacts, contactAddressMaxLength]
   )
 
   const selectedOption = useMemo(

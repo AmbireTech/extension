@@ -225,6 +225,7 @@ const PrivacyPoolsSendScreen = () => {
       selectedToken
         ? {
             symbol: selectedToken.symbol,
+            decimals: selectedToken.decimals,
             priceIn: tokenPrice === null ? [] : [{ baseCurrency: 'usd', price: tokenPrice }]
           }
         : null,

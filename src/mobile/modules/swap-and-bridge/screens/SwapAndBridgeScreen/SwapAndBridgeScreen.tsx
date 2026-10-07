@@ -1,6 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
@@ -64,6 +63,7 @@ const SwapAndBridgeScreen = () => {
     setActiveRoute,
     displayedView,
     closeEstimationModalWrapped,
+    handleEstimationModalClosed,
     isBridge,
     setShowAddedToBatch,
     batchNetworkUserRequestsCount,
@@ -256,17 +256,15 @@ const SwapAndBridgeScreen = () => {
           />
         )}
 
-        <View style={spacings.mbSm}>
-          <FromToken
-            fromTokenOptions={fromTokenOptions}
-            fromTokenValue={fromTokenValue}
-            fromAmountValue={fromAmountValue}
-            fromTokenAmountSelectDisabled={areAllProvidersDisabled || fromTokenAmountSelectDisabled}
-            onFromAmountChange={onFromAmountChange}
-            simulationFailed={!!fromChainSimulationError}
-            isLoading={!sessionIds.includes(sessionId) || !isPortfolioReadyToVisualize}
-          />
-        </View>
+        <FromToken
+          fromTokenOptions={fromTokenOptions}
+          fromTokenValue={fromTokenValue}
+          fromAmountValue={fromAmountValue}
+          fromTokenAmountSelectDisabled={areAllProvidersDisabled || fromTokenAmountSelectDisabled}
+          onFromAmountChange={onFromAmountChange}
+          simulationFailed={!!fromChainSimulationError}
+          isLoading={!sessionIds.includes(sessionId) || !isPortfolioReadyToVisualize}
+        />
         <ToToken
           simulationFailed={!!toChainSimulationError}
           disabled={areAllProvidersDisabled}
@@ -294,11 +292,13 @@ const SwapAndBridgeScreen = () => {
           updateType="Swap&Bridge"
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalWrapped}
+          onEstimationModalClosed={handleEstimationModalClosed}
           updateController={updateController}
           handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           serviceFee={quote?.selectedRoute?.serviceFee}
+          shouldShowTxnDetails
           Modals={Modals}
         />
         <PriceImpactWarningModal

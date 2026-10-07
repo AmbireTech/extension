@@ -3,6 +3,8 @@ import React from 'react'
 type TooltipData = {
   id: string
   children: React.ReactNode
+  /** Title of the mobile info modal. The modal has no title when this is not set. */
+  title?: string
 }
 
 type Listener = (id: string | null) => void
@@ -20,9 +22,9 @@ class TooltipManager {
     delete this.tooltips[id]
   }
 
-  show(id: string, children?: React.ReactNode) {
+  show(id: string, children?: React.ReactNode, title?: string) {
     if (children) {
-      this.tooltips[id] = { id, children }
+      this.tooltips[id] = { id, children, title }
     }
     if (this.tooltips[id]) {
       this.activeTooltipId = id

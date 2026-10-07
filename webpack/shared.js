@@ -132,6 +132,24 @@ async function createBaseConfig(env, argv) {
       const moduleId = warning.module?.readableIdentifier?.(requestShortener) ?? ''
       const file = warning.file || warning.module?.resource || ''
       return moduleId.includes('react-native-worklets') || file.includes('react-native-worklets')
+    },
+    // ox (viem dep) hides `import('node:worker_threads')` behind a variable on purpose, so
+    // bundlers skip it. It only runs in Node (`process.versions.node`), which the `process`
+    // polyfill doesn't define, so browser builds always take the `Worker` path instead.
+    (warning, compilation) => {
+      if (
+        typeof warning.message !== 'string' ||
+        !warning.message.includes(
+          'Critical dependency: the request of a dependency is an expression'
+        )
+      ) {
+        return false
+      }
+      const requestShortener = compilation?.requestShortener
+      const moduleId = warning.module?.readableIdentifier?.(requestShortener) ?? ''
+      const file = warning.file || warning.module?.resource || ''
+      const oxVirtualMasterPoolPath = 'ox/_esm/tempo/internal/virtualMasterPool'
+      return moduleId.includes(oxVirtualMasterPoolPath) || file.includes(oxVirtualMasterPoolPath)
     }
   ]
 

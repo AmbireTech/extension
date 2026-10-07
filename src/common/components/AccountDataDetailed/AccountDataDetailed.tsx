@@ -9,10 +9,11 @@ import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAva
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useAccountKeys from '@common/hooks/useAccountKeys'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useReverseLookup from '@common/hooks/useReverseLookup'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -23,13 +24,14 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const AccountDataDetailed = () => {
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', selectAccount)
   // Shown in place of a regular account, like in the account lists
   const { selectedAccount: privacyPoolsAccount } = usePrivacyPoolsAccounts()
   const reverseLookup = useReverseLookup({
     address: account?.addr || ''
   })
+  const accountKeys = useAccountKeys(account)
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
@@ -114,7 +116,7 @@ const AccountDataDetailed = () => {
           >
             {account.preferences.label}
           </Text>
-          <AccountBadges accountData={account} />
+          <AccountBadges accountData={account} accountKeys={accountKeys} />
         </View>
         <View
           style={[flexbox.directionRow, flexbox.alignCenter, isNarrowWebLayout && { minWidth: 0 }]}

@@ -26,7 +26,7 @@ import { RELAYER_URL } from '@env'
 
 import type { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
-import type { WalletStakingMode } from '@common/modules/explore/constants/walletStaking'
+import type { WalletStakingMode } from '@common/modules/wallet-staking/constants/staking'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 

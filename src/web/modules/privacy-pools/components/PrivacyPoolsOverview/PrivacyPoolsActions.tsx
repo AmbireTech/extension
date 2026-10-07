@@ -3,7 +3,7 @@ import { View } from 'react-native'
 
 import SendIcon from '@common/assets/svg/SendIcon'
 import { useTranslation } from '@common/config/localization'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import RouteItem from '@common/modules/dashboard/components/Routes/RouteItem'
 import { RouteItemType } from '@common/modules/dashboard/components/Routes/RouteItem/RouteItem'
 import flexbox from '@common/styles/utils/flexbox'
@@ -16,7 +16,7 @@ interface Props {
 // The dashboard's route buttons. No receive button: funds are sent here from other accounts.
 const PrivacyPoolsActions: FC<Props> = ({ onSend, isSendDisabled }) => {
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const routeItems: RouteItemType[] = useMemo(
     () => [
