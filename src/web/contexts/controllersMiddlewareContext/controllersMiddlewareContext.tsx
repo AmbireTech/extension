@@ -254,6 +254,14 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   const hasConnectedToTheBackground = useRef(false)
   const { controllerStore } = useContext(ControllerStoreContext)
   const { navigate } = useNavigation()
+  // `navigate` changes with every location change, so `dispatch` reads it through a ref - otherwise
+  // `dispatch` would change on every navigation too, re-running every effect that depends on it
+  // (e.g. the swap screen's cleanup, which would unload the session it just created)
+  const navigateRef = useRef(navigate)
+
+  useEffect(() => {
+    navigateRef.current = navigate
+  }, [navigate])
   const isOnRootRoute = !route.pathname || route.pathname === '/'
 
   // The controller names and the route to navigate to arrive in separate messages, in
@@ -284,10 +292,10 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
         .catch((error) => {
           // Expected when there is no user gesture, so it isn't reported
           console.warn('Failed to open the Firefox sidebar, opening the dashboard here', error)
-          navigate('/')
+          navigateRef.current('/')
         })
     },
-    [windowId, controllerStore, navigate]
+    [windowId, controllerStore]
   )
 
   const requestViewRouteSync = useCallback(() => {

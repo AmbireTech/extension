@@ -9,7 +9,7 @@ export const SIDE_PANEL_WIDTH = 400
  * this, but Firefox lets the sidebar be dragged narrower. Below it SidePanelTooNarrowOverlay asks
  * the user to widen the sidebar.
  */
-export const SIDE_PANEL_MIN_WIDTH = 360
+export const SIDE_PANEL_MIN_WIDTH = 375
 export const TAB_CONTENT_WIDTH = 990
 export const TAB_WIDE_CONTENT_WIDTH = 1320
 
