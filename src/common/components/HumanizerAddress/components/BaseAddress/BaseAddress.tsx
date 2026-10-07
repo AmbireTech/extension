@@ -1,30 +1,18 @@
-import { ZeroAddress } from 'ethers'
 import { nanoid } from 'nanoid'
 import React, { FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GestureResponderEvent, Linking, Pressable, View } from 'react-native'
+import { GestureResponderEvent, Pressable, View } from 'react-native'
 
-import { getCoinGeckoTokenUrl } from '@ambire-common/consts/coingecko'
 import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
-import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
-// import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
-import CopyIcon from '@common/assets/svg/CopyIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text, { Props as TextProps } from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { setStringAsync } from '@common/utils/clipboard'
 
-import Option from './BaseAddressOption'
-
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import { AddressActionsInfoIcon, AddressActionsTooltip } from './AddressActions'
+import useAddressActions from './useAddressActions'
 
 interface Props extends TextProps {
   address: string
@@ -36,8 +24,6 @@ interface Props extends TextProps {
   isDisplayingPlainAddress?: boolean
   isToken?: boolean
 }
-
-const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const BaseAddress: FC<Props> = ({
   children,
@@ -53,45 +39,7 @@ const BaseAddress: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { addToast } = useToast()
-  const { benzinNetworks } = useBenzinNetworksContext()
-  // Standalone Benzin doesn't have access to controllers
-  const { state: networks } = useController('NetworksController', selectNetworks)
-
-  const actualNetworks = networks ?? benzinNetworks
-  const network = actualNetworks?.find((n) => n.chainId === chainId)
-
-  const handleCopyAddress = useCallback(async () => {
-    try {
-      await setStringAsync(address)
-      addToast(t('Address copied to clipboard'))
-    } catch {
-      addToast(t('Failed to copy address'), {
-        type: 'error'
-      })
-    }
-  }, [addToast, address, t])
-
-  const handleOpenExplorer = useCallback(async () => {
-    if (!network) return
-
-    try {
-      const targetUrl =
-        address === ZeroAddress
-          ? // Exception for native tokens, they don't have a block explorer URLs
-            getCoinGeckoTokenUrl(network.nativeAssetId)
-          : `${network.explorerUrl}/${isToken ? 'token' : 'address'}/${address}`
-
-      // use Linking instead of openInTab as openInTab may trigger
-      // a close of the action window. We don't want to close it, we
-      // want to minimize it on the side
-      await Linking.openURL(targetUrl)
-    } catch {
-      addToast(t('Failed to open explorer'), {
-        type: 'error'
-      })
-    }
-  }, [addToast, address, network, isToken, t])
+  const { network, handleOpenExplorer } = useAddressActions({ address, chainId, isToken })
 
   // The uuid must be unique for each tooltip, otherwise multiple tooltips
   // will be show at the same time. We cannot use a shared tooltip as the content
@@ -122,7 +70,8 @@ const BaseAddress: FC<Props> = ({
         flexbox.directionRow,
         flexbox.wrap,
         isWeb && !isInlineMode && flexbox.flex1,
-        isInlineMode && { maxWidth: '100%' }
+        // Shrinks so it stays within the row when it shares it with the inline avatar
+        isInlineMode && { maxWidth: '100%', flexShrink: 1, minWidth: 0 }
       ]}
     >
       {showInlineActions && !!network?.explorerUrl ? (
@@ -174,48 +123,17 @@ const BaseAddress: FC<Props> = ({
         >
           {displayValue}
           {isWeb && !isInlineMode && !hideActions && (
-            <Pressable style={spacings.mlMi}>
-              {({ hovered }: any) => (
-                <InfoIcon
-                  data-tooltip-id={tooltipId}
-                  color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={14}
-                  height={14}
-                />
-              )}
-            </Pressable>
+            <AddressActionsInfoIcon tooltipId={tooltipId} />
           )}
         </Text>
       )}
       {!isInlineMode && !hideActions && (
-        <Tooltip
-          id={tooltipId}
-          style={{ padding: 0, overflow: 'hidden' }}
-          clickable
-          noArrow
-          place="bottom-end"
-        >
-          {network?.explorerUrl && (
-            <Option
-              title={t('View in Explorer')}
-              renderIcon={() => <OpenIcon color={theme.secondaryText} width={14} height={14} />}
-              onPress={handleOpenExplorer}
-            />
-          )}
-          {/* @TODO: Uncomment when we have the feature
-          <Option
-            title={t('Add to Address Book')}
-            renderIcon={() => <AddressBookIcon color={theme.secondaryText} width={18} height={18} />}
-            onPress={() => {}}
-          /> */}
-          <Option
-            title={t('Copy Address')}
-            isAddress
-            text={shortenAddress(address, 15)}
-            renderIcon={() => <CopyIcon color={theme.secondaryText} width={16} height={16} />}
-            onPress={handleCopyAddress}
-          />
-        </Tooltip>
+        <AddressActionsTooltip
+          tooltipId={tooltipId}
+          address={address}
+          chainId={chainId}
+          isToken={isToken}
+        />
       )}
     </View>
   )

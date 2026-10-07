@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 
 import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeToToken } from '@ambire-common/interfaces/swapAndBridge'
+import { ExchangeInfoMap } from '@ambire-common/libs/portfolio/interfaces'
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -69,13 +70,15 @@ const useGetTokenSelectProps = ({
   token,
   networks,
   isLoading,
-  isToToken: _isToToken = false
+  isToToken: _isToToken = false,
+  exchangesInfo
 }: {
   tokens: (SwapAndBridgeToToken | TokenResult)[]
   token: string
   networks: SupportedNetworks[]
   isLoading?: boolean
   isToToken?: boolean
+  exchangesInfo?: ExchangeInfoMap
 }) => {
   const { state: portfolioTokens } = useController(
     'SelectedAccountController',
@@ -208,6 +211,7 @@ const useGetTokenSelectProps = ({
             isToToken={_isToToken}
             isSelected={isSelected}
             getFormattedDetails={getFormattedDetails}
+            exchangesInfo={exchangesInfo}
           />
         ),
         icon: (
@@ -243,7 +247,8 @@ const useGetTokenSelectProps = ({
     isLoading,
     _isToToken,
     portfolioTokensToIndex,
-    networkSimulatedAccountOp
+    networkSimulatedAccountOp,
+    exchangesInfo
   ])
 }
 

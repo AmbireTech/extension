@@ -23,6 +23,7 @@ interface Props {
   chainId: bigint
   tokenMarginRight?: number
   tokenIconContainerSize?: number
+  nftIconPosition?: 'left' | 'right'
 }
 
 const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -38,7 +39,8 @@ const TokenOrNft: FC<Props> = ({
   chainId,
   sizeMultiplierSize = 1,
   tokenMarginRight,
-  tokenIconContainerSize
+  tokenIconContainerSize,
+  nftIconPosition
 }) => {
   const marginRight =
     tokenMarginRight !== undefined ? tokenMarginRight : SPACING_TY * sizeMultiplierSize
@@ -173,6 +175,9 @@ const TokenOrNft: FC<Props> = ({
         networks={networks}
         tokenId={value}
         nftInfo={assetInfo.nftInfo}
+        textSize={textSize}
+        iconSize={tokenIconContainerSize}
+        iconPosition={nftIconPosition}
         hideSendNft
       />
     )

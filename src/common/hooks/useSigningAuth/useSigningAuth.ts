@@ -18,7 +18,8 @@ type Props = {
 
 /**
  * Asks the user to confirm their password or biometrics before a first time signing request goes
- * through, and remembers the dapps they confirmed for.
+ * through, and remembers the dapps they confirmed for. Mobile only - elsewhere the controllers
+ * report no requirement, so it never prompts.
  */
 const useSigningAuth = ({ requirement, requestId }: Props) => {
   const { t } = useTranslation()

@@ -6,13 +6,13 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 type Props = {
   onSignatureScanned: (payload: Uint8Array) => void
@@ -22,7 +22,7 @@ type Props = {
 const SCANNER_SIZE = 280
 
 const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
-  const { isCompactLayout: withMobileLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout: withMobileLayout } = useCompactLayout()
   const { t } = useTranslation()
   const [isCameraTornDown, setIsCameraTornDown] = useState(false)
 

@@ -2,21 +2,17 @@ import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { ExchangeInfoMap } from '@ambire-common/libs/portfolio/interfaces'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getExchangesWithData } from '@common/utils/exchanges'
 
 import useTokenExchanges from './useTokenExchanges'
-
-import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
-
-const selectExchanges = (state: PortfolioController) => state.exchangeState.exchanges
 
 const LOGO_SIZE = 16
 // Each logo is pulled onto the previous one, so that they read as a single stack
@@ -29,17 +25,18 @@ const MAX_EXCHANGES_IN_TOOLTIP = 10
 type Props = {
   chainId: number
   address: string
+  /** Looked up once for the whole list, see `useExchangesInfo` */
+  exchangesInfo?: ExchangeInfoMap
 }
 
-const TokenExchanges: FC<Props> = ({ chainId, address }) => {
+const TokenExchanges: FC<Props> = ({ chainId, address, exchangesInfo }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const marketData = useTokenExchanges(chainId, address)
-  const { state: exchangeData } = useController('PortfolioController', selectExchanges)
 
   const exchangesWithData = useMemo(
-    () => getExchangesWithData(marketData?.exchanges || [], exchangeData),
-    [marketData?.exchanges, exchangeData]
+    () => getExchangesWithData(marketData?.exchanges || [], exchangesInfo || null),
+    [marketData?.exchanges, exchangesInfo]
   )
 
   // Shown in place of a logo that failed to load, instead of leaving an empty circle

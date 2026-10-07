@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { WordToConfirm } from '@common/modules/recovery-phrase-backup/hooks/useRecoveryPhraseBackup/useRecoveryPhraseBackup'
@@ -86,15 +87,18 @@ const BackupConfirmStep = ({
       </View>
 
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <Button
-          testID="go-back-to-recovery-phrase-button"
-          type="secondary"
-          text={t('Go back')}
-          size="large"
-          hasBottomSpacing={false}
-          style={[flexbox.flex1, spacings.mrTy]}
-          onPress={onGoBackPress}
-        />
+        {/* On web the header's back arrow already goes back */}
+        {isMobile && (
+          <Button
+            testID="go-back-to-recovery-phrase-button"
+            type="secondary"
+            text={t('Go back')}
+            size="large"
+            hasBottomSpacing={false}
+            style={[flexbox.flex1, spacings.mrTy]}
+            onPress={onGoBackPress}
+          />
+        )}
         <Button
           testID="finish-recovery-phrase-backup-button"
           text={t('Finish')}

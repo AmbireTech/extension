@@ -28,7 +28,10 @@ type Props = {
   serviceFee?: SwapAndBridgeRoute['serviceFee']
   withTitle?: boolean
   isOneClick?: boolean
-  shouldShowTxnDetails?: boolean
+  /** Shows a back arrow before the "Network fee" title that calls this */
+  onBackPress?: () => void
+  /** Reports whether the "Network fee" title (and so the back arrow) is currently rendered */
+  onFeeHeaderVisibilityChange?: (isVisible: boolean) => void
 }
 
 type DispatchUpdate = (update: {

@@ -21,7 +21,6 @@
     "stability": "npx playwright test -g @stability",
     "swap:and:bridge": "npx playwright test -g @swapAndBridge",
     "transfer": "npx playwright test -g @transfer",
-    "ambire:rewards": "npx playwright test -g @rewards",
     "auto:login": "npx playwright test -g @autoLogin",
     "security": "npx playwright test -g @security",
     "relayer": "npx playwright test -g @relayer",

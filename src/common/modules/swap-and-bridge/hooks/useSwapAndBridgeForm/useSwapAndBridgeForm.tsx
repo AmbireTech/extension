@@ -464,7 +464,8 @@ const useSwapAndBridgeForm = () => {
     ]
   )
 
-  const closeEstimationModalWrapped = useCallback(() => {
+  // Resets the proceeded state without closing the sheet, so the sheet can call it once it closed
+  const handleEstimationModalClosed = useCallback(() => {
     // Destroy the existing signAccountOp if the form was cleared
     // Example: The user clicks on sign and is using a hardware wallet
     // The form is cleared and the user decides to reject the txn.
@@ -486,8 +487,12 @@ const useSwapAndBridgeForm = () => {
         }
       })
     }
+  }, [swapAndBridgeDispatch, formStatus])
+
+  const closeEstimationModalWrapped = useCallback(() => {
+    handleEstimationModalClosed()
     closeEstimationModal()
-  }, [closeEstimationModal, swapAndBridgeDispatch, formStatus])
+  }, [closeEstimationModal, handleEstimationModalClosed])
   const selectedAccActiveRoutes = useMemo(() => {
     return (
       (activeRoutes || [])
@@ -563,6 +568,7 @@ const useSwapAndBridgeForm = () => {
     fromTokenOptions,
     fromTokenValue,
     closeEstimationModalWrapped,
+    handleEstimationModalClosed,
     handleSubmitForm,
     highPriceImpactOrSlippageWarning,
     frozenPriceImpactWarning,

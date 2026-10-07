@@ -1,22 +1,21 @@
 import React from 'react'
-import { Trans, useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
-import ManifestImage from '@common/components/ManifestImage'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import NetworkDetails from '@common/components/NetworkDetails'
 import NetworkIcon from '@common/components/NetworkIcon'
+import RequestingDappInfo from '@common/components/RequestingDappInfo'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getStyles from '@common/modules/action-requests/styles/styles'
 import spacings, { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -61,7 +60,7 @@ const AddChain = ({
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
-  const { isCompactLayout, isTwoColumnLayout, isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout, isTwoColumnLayout, isNarrowWebLayout } = useCompactLayout()
 
   return (
     <>
@@ -84,29 +83,8 @@ const AddChain = ({
         ]}
       >
         {!existingNetwork ? (
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-            <ManifestImage
-              uri={icon}
-              size={50 * responsiveSizeMultiplier}
-              fallback={() => <ManifestFallbackIcon />}
-              containerStyle={{
-                marginRight: SPACING_MD * responsiveSizeMultiplier
-              }}
-            />
-
-            <Trans values={{ name: name || 'The App' }}>
-              <Text style={flexbox.flex1}>
-                <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
-                  {t('Allow ')}
-                </Text>
-                <Text fontSize={20 * responsiveSizeMultiplier} weight="semiBold">
-                  {'{{name}} '}
-                </Text>
-                <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
-                  {t('to add a network')}
-                </Text>
-              </Text>
-            </Trans>
+          <View style={flexbox.flex1}>
+            <RequestingDappInfo name={name} icon={icon} intentText={t('wants to add a network')} />
           </View>
         ) : (
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>

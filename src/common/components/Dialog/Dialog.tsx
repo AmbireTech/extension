@@ -4,8 +4,8 @@ import BottomSheet from '@common/components/BottomSheet'
 import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import spacings from '@common/styles/spacings'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 interface Props {
   id: string
@@ -17,7 +17,7 @@ interface Props {
 }
 
 const Dialog: FC<Props> = ({ id, dialogRef, closeDialog, title, text, children }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   return (
     <BottomSheet
       id={id}

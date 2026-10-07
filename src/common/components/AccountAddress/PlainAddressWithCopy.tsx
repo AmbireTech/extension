@@ -5,13 +5,13 @@ import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import useShouldShowFullAddressOnWeb from '@common/components/AccountAddress/useShouldShowFullAddressOnWeb'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import PlainAddress from './PlainAddress'
 
@@ -40,7 +40,7 @@ const PlainAddressWithCopy: FC<Props> = ({
   withWrap = false,
   highlight
 }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { theme } = useTheme()

@@ -4,9 +4,9 @@ import { View, ViewStyle } from 'react-native'
 
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text, { TextWeight } from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -39,7 +39,7 @@ const NetworkBadge: FC<Props> = ({
   responsiveSizeMultiplier = 1,
   iconStyle = {}
 }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state: networks } = useController('NetworksController', selectNetworks)

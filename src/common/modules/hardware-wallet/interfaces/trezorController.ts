@@ -9,7 +9,7 @@ import type { TrezorConnect } from '@trezor/connect/lib/types'
 export type TrezorWalletSDK = Pick<
   TrezorConnect,
   | 'ethereumGetAddress'
-  | 'getPublicKey'
+  | 'ethereumGetPublicKey'
   | 'ethereumSignTransaction'
   | 'ethereumSignTypedData'
   | 'ethereumSignMessage'

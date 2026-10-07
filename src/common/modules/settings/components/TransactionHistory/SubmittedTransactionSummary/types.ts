@@ -2,6 +2,7 @@ import { ViewStyle } from 'react-native'
 
 import {
   BalanceChange,
+  NftBalanceChange,
   SubmittedAccountOpLike
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 
@@ -27,6 +28,10 @@ export type DappInteraction = {
   amount?: bigint
 }
 
-export type DisplayBalanceChange = BalanceChange & {
-  iconType?: 'gasTank'
-}
+export type DisplayBalanceChange =
+  | (BalanceChange & {
+      iconType?: 'gasTank'
+    })
+  | (NftBalanceChange & {
+      iconType?: never
+    })

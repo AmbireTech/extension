@@ -5,8 +5,8 @@ import { SvgProps } from 'react-native-svg'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 
 import getStyles from './styles'
@@ -45,7 +45,7 @@ const DualChoiceModal: FC<Props> = ({
   primaryButtonDisabled
 }) => {
   const { styles, theme } = useTheme(getStyles)
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
 
   return (
     <View>

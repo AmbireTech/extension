@@ -177,6 +177,8 @@ type HandleProviderRequestAction = {
     isWalletConnect?: boolean
     isWcAuthenticate?: boolean
     tabId?: number
+    /** The chain a WalletConnect request targets - WC dapps switch chains without telling the wallet */
+    chainId?: number
   }
 }
 

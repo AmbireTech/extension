@@ -1,6 +1,6 @@
-import React, { Dispatch, SetStateAction, useMemo } from 'react'
+import React, { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
@@ -13,6 +13,7 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
@@ -29,8 +30,8 @@ import Info from '@common/modules/sign-message/components/Info'
 import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
+import type { MessageContentLayoutProps } from './MessageContentLayout'
 import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -55,15 +56,30 @@ interface Props {
 
 const Container = ({
   children,
-  withScroll
+  withScroll,
+  nativeScrollViewProps
 }: {
   children: React.ReactNode
   withScroll?: boolean
+  nativeScrollViewProps?: MessageContentLayoutProps['nativeScrollViewProps']
 }) => (
-  <MessageContentLayout webStyle={spacings.mbLg} withScroll={withScroll}>
+  <MessageContentLayout
+    webStyle={spacings.mbLg}
+    withScroll={withScroll}
+    nativeScrollViewProps={nativeScrollViewProps}
+  >
     {children}
   </MessageContentLayout>
 )
+
+const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
+  const paddingToBottom = 40
+  return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
+}
+
+// On mobile the message box doesn't scroll by itself (no nested scrolls), so the screen's
+// scroll view drives the "read to the bottom" gate instead
+const noopSetHasReachedBottom = () => {}
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
@@ -84,7 +100,7 @@ const Main = ({
   humanizedMessage,
   isHumanizing
 }: Props) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
@@ -126,6 +142,34 @@ const Main = ({
       : 'fallback'
   const messageVisualizationKey = `${signMessageState.messageToSign?.fromRequestId}-${messageVisualizationMode}`
 
+  const [scrollViewHeight, setScrollViewHeight] = useState(0)
+  const [scrollContentHeight, setScrollContentHeight] = useState(0)
+
+  useEffect(() => {
+    if (!isMobile || hasReachedBottom || !scrollViewHeight || !scrollContentHeight) return
+    setHasReachedBottom(scrollContentHeight <= scrollViewHeight)
+  }, [hasReachedBottom, scrollViewHeight, scrollContentHeight, setHasReachedBottom])
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (hasReachedBottom || !isCloseToBottom(event.nativeEvent)) return
+      setHasReachedBottom(true)
+    },
+    [hasReachedBottom, setHasReachedBottom]
+  )
+  const nativeScrollViewProps = useMemo(
+    () =>
+      isMobile
+        ? {
+            onScroll: handleScroll,
+            onLayout: (event: LayoutChangeEvent) =>
+              setScrollViewHeight(event.nativeEvent.layout.height),
+            onContentSizeChange: (_: number, height: number) => setScrollContentHeight(height)
+          }
+        : undefined,
+    [handleScroll]
+  )
+
   const messageTypeBadge = isWeb ? (
     <View style={styles.kindOfMessage}>
       <Text fontSize={12} color={theme.infoText} numberOfLines={1}>
@@ -139,28 +183,25 @@ const Main = ({
   ) : null
 
   return (
-    <Container withScroll={shouldUseErc7730TypedMessageCard || isMobile}>
+    <Container
+      withScroll={shouldUseErc7730TypedMessageCard || isMobile}
+      nativeScrollViewProps={nativeScrollViewProps}
+    >
       {isNarrowWebLayout ? (
+        // Like on mobile - the network next to the title and the message type below them
         <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
-          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
-            {t('Sign message')}
-          </Text>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.wrap,
-              spacings.mtTy,
-              { minWidth: 0, rowGap: SPACING_TY, columnGap: SPACING_TY }
-            ]}
-          >
-            {messageTypeBadge}
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
+            {/* Same size as the titles of the other request screens */}
+            <Text weight="medium" fontSize={20 * responsiveSizeMultiplier} style={spacings.mrSm}>
+              {t('Sign message')}
+            </Text>
             <NetworkBadge
               chainId={signMessageState.messageToSign?.chainId}
               responsiveSizeMultiplier={responsiveSizeMultiplier}
               withOnPrefix
             />
           </View>
+          <View style={[flexbox.alignStart, spacings.mtTy]}>{messageTypeBadge}</View>
         </View>
       ) : (
         <View
@@ -256,6 +297,8 @@ const Main = ({
             style={{
               marginBottom: SPACING_TY * responsiveSizeMultiplier,
               backgroundColor: theme.secondaryBackground,
+              // The compact layout would otherwise stretch the expanded card to the footer
+              flexGrow: 0,
               ...(humanizedMessage?.warnings?.length ? styles.warningContainer : {})
             }}
             content={() =>
@@ -313,15 +356,18 @@ const Main = ({
             expandedContent={
               shouldUseErc7730TypedMessageCard ? undefined : (
                 <FallbackVisualization
-                  setHasReachedBottom={setHasReachedBottom}
+                  setHasReachedBottom={isMobile ? noopSetHasReachedBottom : setHasReachedBottom}
                   hasReachedBottom={!!hasReachedBottom}
                   messageToSign={signMessageState.messageToSign}
                   humanizedMessage={humanizedMessage}
                   responsiveSizeMultiplier={responsiveSizeMultiplier}
-                  withScrollDownArrow
+                  withScrollDownArrow={!isMobile}
+                  disableScroll={isMobile}
                   // ExpandableCard's expanded slot has no height of its own, so without a cap the
                   // ScrollView just grows to fit the message instead of scrolling internally.
-                  fillAvailableHeight
+                  fillAvailableHeight={!isMobile}
+                  // The screen scrolls on mobile, so the box just fits the message
+                  containerStyle={isMobile ? { minHeight: 0 } : undefined}
                 />
               )
             }

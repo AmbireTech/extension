@@ -1,11 +1,11 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 import getStyles from './styles'
 
@@ -19,8 +19,13 @@ interface Props {
 const StakingFooter = ({ form }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { submitButtonText, isSubmitDisabled, onSubmit, onCancel } = form
+  const footerButtonStyle = useMemo(
+    () =>
+      isNarrowWebLayout ? [styles.footerButton, styles.footerButtonCompact] : styles.footerButton,
+    [isNarrowWebLayout, styles.footerButton, styles.footerButtonCompact]
+  )
 
   return (
     <View style={styles.footerRow}>
@@ -36,7 +41,7 @@ const StakingFooter = ({ form }: Props) => {
           text={t('Cancel')}
           onPress={onCancel}
           hasBottomSpacing={false}
-          style={styles.footerButton}
+          style={footerButtonStyle}
         />
         <Button
           type="primary"
@@ -44,7 +49,7 @@ const StakingFooter = ({ form }: Props) => {
           onPress={onSubmit}
           disabled={isSubmitDisabled}
           hasBottomSpacing={false}
-          style={styles.footerButton}
+          style={footerButtonStyle}
         />
       </FooterGlassView>
     </View>

@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import Alert from '@common/components/Alert'
 import RequestingDappInfo from '@common/components/RequestingDappInfo'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import useGetEncryptionPublicKeyRequest from '@common/modules/action-requests/hooks/useGetEncryptionPublicKeyRequest'
@@ -21,6 +22,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
     handleAccept,
     handleDeny
   } = useGetEncryptionPublicKeyRequest()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   return (
     <SmallNotificationWindowWrapper>
@@ -38,7 +40,9 @@ const GetEncryptionPublicKeyRequestScreen = () => {
           />
         )}
       >
-        <TabLayoutWrapperMainContent>
+        <TabLayoutWrapperMainContent
+          contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pbSm] : undefined}
+        >
           <RequestingDappInfo
             name={name}
             icon={icon}

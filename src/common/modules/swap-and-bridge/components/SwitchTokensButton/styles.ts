@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import { isMobile } from '@common/config/env'
-import { SPACING_SM } from '@common/styles/spacings'
+import { SPACING_TY } from '@common/styles/spacings'
 import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -26,7 +26,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       position: 'absolute',
       // Up by half the gap the two panels leave between them, and by half of itself again, so it
       // comes to rest centred on that gap
-      top: -(SPACING_SM / 2) - WRAPPER_SIZE / 2,
+      top: -(SPACING_TY / 2) - WRAPPER_SIZE / 2,
       left: '50%',
       // On the web `left` wins over alignSelf and puts the wrapper's own left edge on the seam
       // between the two panels, so it has to come back by half of itself to sit on it. Native

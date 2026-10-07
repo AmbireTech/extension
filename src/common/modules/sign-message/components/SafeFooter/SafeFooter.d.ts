@@ -13,7 +13,6 @@ type Props = {
   importedKeys: Key[]
   threshold: number
   onReject: (event: GestureResponderEvent) => void
-  onSignLater: () => void
 }
 
 declare const SafeFooter: React.FC<Props>

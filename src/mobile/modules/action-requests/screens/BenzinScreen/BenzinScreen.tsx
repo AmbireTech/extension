@@ -22,7 +22,7 @@ import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 const pendingRequestsTopContent = isMobile ? (
   <PendingRequests
-    style={[common.borderRadiusPrimary, spacings.mbSm, { borderTopWidth: 1, marginTop: -12 }]}
+    style={[common.borderRadiusPrimary, spacings.mtTy, spacings.mbSm, { borderTopWidth: 1 }]}
   />
 ) : undefined
 

@@ -7,19 +7,26 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isBenzin, isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
 import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
 import { isExtension } from '@web/constants/browserapi'
 
 const useIsCompactBenzinButtonsLayout = () => {
   const { maxWidthSize } = useWindowSize()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   // Standalone Benzin website uses viewport width only; extension uses the shared side-panel rule.
   return (isBenzin && !maxWidthSize('m')) || (isExtension && isNarrowWebLayout)
+}
+
+const getButtonSize = (isCompactLayout: boolean) => {
+  if (isMobile) return 'regular'
+  if (!isCompactLayout) return 'large'
+  // The standalone website stacks the buttons, while the extension puts them on one row
+  return isBenzin ? 'regular' : 'smaller'
 }
 
 interface Props {
@@ -45,7 +52,7 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer' | 'disableOpenExpl
       text="Open explorer"
       childrenPosition="left"
       hasBottomSpacing={isMobile}
-      size={isMobile ? 'regular' : isCompactLayout ? 'smaller' : 'large'}
+      size={getButtonSize(isCompactLayout)}
       disabled={disableOpenExplorerBtn}
       style={
         isWeb
@@ -96,7 +103,7 @@ const CopyButton: FC<Pick<Props, 'handleCopyText'>> = ({ handleCopyText }) => {
       hasBottomSpacing={isMobile}
       type={isExtension || isMobile ? 'secondary' : 'primary'}
       childrenPosition="left"
-      size={isMobile ? 'regular' : isCompactLayout ? 'smaller' : 'large'}
+      size={getButtonSize(isCompactLayout)}
     >
       <CopyIcon style={spacings.mrMi} />
     </Button>

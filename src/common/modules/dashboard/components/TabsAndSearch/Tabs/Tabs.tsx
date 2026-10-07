@@ -7,7 +7,7 @@ import {
 } from '@ambire-common/libs/banners/banners'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -190,7 +190,12 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                     spacings.phMi
                   ]}
                 >
-                  <Text fontSize={10} color={theme.primaryAccent} style={{ lineHeight: 12 }}>
+                  <Text
+                    fontSize={10}
+                    color={theme.primaryAccent}
+                    // Same nudge as the badge above: the font sits the digits above the center
+                    style={[{ lineHeight: 12 }, isMobile && { marginTop: 2 }]}
+                  >
                     {totalPendingCount}
                   </Text>
                 </View>

@@ -7,11 +7,11 @@ import FatToggle from '@common/components/FatToggle'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 type Props = {
   enabled: boolean
@@ -33,7 +33,7 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
   disabled,
   disabledTooltip
 }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
   // A narrow view has no room for toggle + account badge on one row.

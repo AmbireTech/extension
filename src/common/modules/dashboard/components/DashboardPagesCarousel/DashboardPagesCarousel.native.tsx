@@ -285,17 +285,18 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated: hasTabChanged })
   }, [openTab, openTabIndex, pageSize.width, takePagesToTop])
 
-  // Only the banners scroll out of view; the tabs row stays. With no banners there is
-  // nothing to collapse, and a zero range would shift the tabs row on the first pixel.
-  const headerTranslateY = useMemo(() => {
-    if (!bannersHeight) return 0
-
-    return scrollY.interpolate({
-      inputRange: [0, bannersHeight],
-      outputRange: [0, -bannersHeight],
-      extrapolate: 'clamp'
-    })
-  }, [bannersHeight, scrollY])
+  // Only the banners scroll out of view; the tabs row stays. With no banners it maps to a
+  // constant 0; never a static 0, or the native view keeps the last banner collapse.
+  const headerTranslateY = useMemo(
+    () =>
+      scrollY.interpolate({
+        // A zero range would shift the tabs row on the first pixel
+        inputRange: [0, Math.max(bannersHeight, 1)],
+        outputRange: [0, -bannersHeight],
+        extrapolate: 'clamp'
+      }),
+    [bannersHeight, scrollY]
+  )
 
   // The header is shared, so it would have to jump to match the page a swipe lands on:
   // taking every page to the top mid-swipe keeps that in line with pressing a tab. The

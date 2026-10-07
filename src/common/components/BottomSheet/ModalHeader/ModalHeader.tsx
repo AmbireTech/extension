@@ -3,10 +3,10 @@ import { View, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 
 interface Props {
   handleClose?: () => void
@@ -24,15 +24,18 @@ const BACK_BUTTON_BALANCE_WIDTH = 40
 const ModalHeader: FC<Props> = ({
   handleClose,
   title,
-  titlePosition = 'center',
+  titlePosition: titlePositionProp = 'center',
   style,
   children,
   forceBackButtonOnMobile,
   headerTestID
 }) => {
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const withSideContainers = !!handleClose || !!children
   const showBackButton = ((handleClose && !isMobile) || forceBackButtonOnMobile) && !!handleClose
+  // On web the title sits next to the back arrow instead of being centered
+  const isWebTitleNextToBackButton = showBackButton && !isMobile
+  const titlePosition = isWebTitleNextToBackButton ? 'left' : titlePositionProp
   const shouldBalanceCenteredTitle = titlePosition === 'center' && showBackButton && !children
 
   const wrapperStyle = {
@@ -41,7 +44,9 @@ const ModalHeader: FC<Props> = ({
     minHeight: 28
   }
 
-  if (isNarrowWebLayout) {
+  // The row layout places the title right after the arrow. The one below overlays the title
+  // across the full width, so a left aligned one would end up under the arrow
+  if (isNarrowWebLayout || isWebTitleNextToBackButton) {
     return (
       <Header.Wrapper
         containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0, ...spacings.mb0 }}

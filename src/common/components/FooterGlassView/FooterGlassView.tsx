@@ -4,7 +4,7 @@ import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import GlassView from '@common/components/GlassView'
 import { isMobile } from '@common/config/env'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { SPACING, SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -56,7 +56,7 @@ const FooterGlassView: FC<{
   onLayout
 }) => {
   const isInsideBottomSheet = useIsInsideBottomSheet()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   // preferGlassFooter keeps the glass pill path by skipping the flat footer branch.
   const shouldUseCompactFlatFooter =
     isNarrowWebLayout && !preferGlassFooter && (isInsideBottomSheet || fullWidth === true)
@@ -78,6 +78,8 @@ const FooterGlassView: FC<{
         // make the buttons narrower than everything above them
         paddingHorizontal: isInsideBottomSheet ? 0 : params[size].paddingHorizontal,
         paddingVertical: params[size].paddingVertical,
+        // The bottom sheet already pads its bottom edge
+        ...(isInsideBottomSheet ? { paddingBottom: 0 } : {}),
         pointerEvents: 'auto'
       }
     : undefined
@@ -104,7 +106,8 @@ const FooterGlassView: FC<{
               ? {
                   position: 'absolute',
                   left: 0,
-                  bottom: SPACING_SM,
+                  // Flush with the edge, so the inner padding makes the bottom spacing match the side one
+                  bottom: 0,
                   zIndex: 3,
                   pointerEvents: 'none'
                 }

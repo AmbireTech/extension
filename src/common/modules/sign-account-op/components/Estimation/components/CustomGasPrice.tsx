@@ -14,8 +14,8 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -140,7 +140,7 @@ const CustomGasPrice = ({
   sheetRef
 }: Props) => {
   const { t } = useTranslation()
-  const { isNarrowWebLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { theme } = useTheme()
   const [customGasPriceErrors, setCustomGasPriceErrors] = useState<CustomGasPriceErrors>({})
   const gasRef = useRef('')
@@ -323,34 +323,28 @@ const CustomGasPrice = ({
         size="sm"
         style={spacings.mt}
         mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
-        innerContainerStyle={
-          isNarrowWebLayout
-            ? // The buttons stack here, and the primary one goes on top. Reversing the direction
-              // keeps the same child order as the row layouts, where the primary one goes last
-              { width: '100%', flexDirection: 'column-reverse' }
-            : undefined
-        }
+        innerContainerStyle={isNarrowWebLayout ? { width: '100%' } : undefined}
       >
-        <Button
-          type="secondary"
-          text={t('Cancel')}
-          onPress={closeBottomSheet}
-          hasBottomSpacing={false}
-          style={[
-            // Stacked buttons are spaced by the footer's gap, and a right margin would make this
-            // one narrower than the primary button
-            !isNarrowWebLayout && spacings.mrTy,
-            isCompactLayout ? flexbox.flex1 : { width: 100 }
-          ]}
-          size="smaller"
-        />
+        {/* On web the header's back arrow already closes the sheet */}
+        {isMobile && (
+          <Button
+            type="secondary"
+            text={t('Cancel')}
+            onPress={closeBottomSheet}
+            hasBottomSpacing={false}
+            style={[spacings.mrTy, flexbox.flex1]}
+            size="smaller"
+          />
+        )}
         <Button
           type="primary"
           text={t('Save')}
           onPress={saveCustomGasPrice}
           hasBottomSpacing={false}
-          style={isCompactLayout ? flexbox.flex1 : { width: 100 }}
-          size="smaller"
+          style={
+            isNarrowWebLayout ? { width: '100%' } : isCompactLayout ? flexbox.flex1 : { width: 100 }
+          }
+          size={isNarrowWebLayout ? 'regular' : 'smaller'}
         />
       </FooterGlassView>
     </BottomSheet>

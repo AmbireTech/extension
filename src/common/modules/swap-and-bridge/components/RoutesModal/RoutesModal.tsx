@@ -12,6 +12,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -19,7 +20,6 @@ import RouteStepsPreview from '@common/modules/swap-and-bridge/components/RouteS
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { getUiType } from '@common/utils/uiType'
 import RetryButton from '@web/components/RetryButton'
 import { TRANSACTION_FORM_WIDTH } from '@web/components/TransactionsScreen/styles'
@@ -46,7 +46,7 @@ const RoutesModal = ({
   openProviderSettingsBottomSheet: () => void
 }) => {
   const { t } = useTranslation()
-  const { isNarrowWebLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { styles, theme } = useTheme(getStyles)
   const { quote, signAccountOpController, updateQuoteStatus } =
     useController('SwapAndBridgeController').state
