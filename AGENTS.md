@@ -51,7 +51,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 ### Security:
 
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
-- The extension uses LavaMoat with SES for the background. If you add/remove dependencies or change import patterns, regenerate the policy with `yarn build:extensions:generate-policy` and review the changes
+- The extension uses LavaMoat with SES for the background. If you add/remove dependencies or change import patterns, regenerate the policy with `yarn build:web:webkit:generate-policy` and review the changes
 
 ### Code quality:
 
@@ -69,7 +69,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 
 ## Controller state update lifecycle
 
-1. The UI calls `dispatch` from `useController` to invoke a controller method. This is **fire-and-forget** — `dispatch` does NOT return a response or the new state
+1. The UI calls `dispatch` from `useController` to invoke a controller method. This is **fire-and-forget** — `dispatch` does NOT return a response or the new state. When data is too heavy for public state and the UI needs only a subset of it, or needs it only conditionally, use `dispatchAndWait` instead, which returns a promise with the result
 2. The action travels to the background (via `PortMessenger` in the extension, a direct call into the in-process controller host on mobile) where `handleActions` finds the controller and calls the requested method
 3. The controller method updates its internal state and calls `this.emitUpdate()`
 4. The `background` has an `onUpdate` listener for every registered controller that serializes the controller state and sends it back to the UI

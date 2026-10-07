@@ -915,6 +915,19 @@
         "TextEncoder": true
       }
     },
+    "ox>@scure/bip32": {
+      "packages": {
+        "ox>@noble/curves": true,
+        "@noble/hashes": true,
+        "@walletconnect/utils>@scure/base": true
+      }
+    },
+    "ox>@scure/bip39": {
+      "packages": {
+        "@noble/hashes": true,
+        "@walletconnect/utils>@scure/base": true
+      }
+    },
     "@sentry/browser>@sentry-internal/browser-utils": {
       "globals": {
         "URL": true,
@@ -2004,6 +2017,19 @@
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
+    "idb": {
+      "globals": {
+        "DOMException": true,
+        "IDBCursor": true,
+        "IDBDatabase": true,
+        "IDBIndex": true,
+        "IDBObjectStore": true,
+        "IDBRequest": true,
+        "IDBTransaction": true,
+        "indexedDB.deleteDatabase": true,
+        "indexedDB.open": true
+      }
+    },
     "react-native-web>inline-style-prefixer": {
       "packages": {
         "react-native-web>inline-style-prefixer>css-in-js-utils": true
@@ -2232,17 +2258,24 @@
         "TextDecoder": true,
         "TextEncoder": true,
         "crypto.getRandomValues": true,
+        "crypto.subtle.deriveBits": true,
         "crypto.subtle.exportKey": true,
+        "crypto.subtle.generateKey": true,
         "crypto.subtle.importKey": true,
+        "crypto.subtle.sign": true,
+        "crypto.subtle.verify": true,
         "document.title": true,
         "location.hostname": true,
         "location.origin": true,
-        "navigator.credentials": true
+        "navigator.credentials.create": true,
+        "navigator.credentials.get": true
       },
       "packages": {
         "ox>@adraffy/ens-normalize": true,
         "viem>@noble/curves": true,
         "@noble/hashes": true,
+        "ox>@scure/bip32": true,
+        "ox>@scure/bip39": true,
         "ox>abitype": true
       }
     },
@@ -3214,6 +3247,7 @@
     "viem": {
       "globals": {
         "AbortController": true,
+        "DOMException": true,
         "Image": true,
         "Request": true,
         "TextDecoder": true,
@@ -3227,7 +3261,8 @@
         "fetch": true,
         "queueMicrotask": true,
         "setInterval": true,
-        "setTimeout": true
+        "setTimeout": true,
+        "structuredClone": true
       },
       "packages": {
         "viem>@noble/curves": true,
