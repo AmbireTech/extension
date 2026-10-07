@@ -24,7 +24,9 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
-import CompactFooterButtons from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
+import CompactFooterButtons, {
+  COMPACT_FEE_TO_BUTTONS_SPACING
+} from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
@@ -245,7 +247,7 @@ const OneClickEstimation = ({
           hasMarginTop
         />
         {isCompactLayout ? (
-          <View style={spacings.ptXl}>
+          <View style={{ paddingTop: COMPACT_FEE_TO_BUTTONS_SPACING }}>
             <CompactFooterButtons
               isEvenSplit
               secondaryActions={

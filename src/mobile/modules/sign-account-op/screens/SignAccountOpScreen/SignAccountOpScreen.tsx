@@ -21,6 +21,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
+import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
@@ -337,7 +338,7 @@ const SignAccountOpScreen = () => {
             {!estimationFailed &&
             signAccountOpState?.canBroadcast &&
             signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-              <View style={spacings.mbXl}>
+              <View style={{ marginBottom: COMPACT_FEE_TO_BUTTONS_SPACING }}>
                 <Estimation
                   signAccountOpState={signAccountOpState}
                   disabled={isSignLoading}

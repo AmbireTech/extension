@@ -16,6 +16,7 @@ import ActionHeader from '@common/modules/action-requests/components/ActionHeade
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
+import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
@@ -280,7 +281,9 @@ const SignAccountOpScreen = () => {
       signAccountOpState?.canBroadcast &&
       signAccountOpState?.status?.type !== SigningStatus.Queued ? (
         // Like on mobile, the compact layout keeps a wider gap between the fee and the buttons
-        <View style={isNarrowWebLayout ? spacings.mbXl : spacings.mb}>
+        <View
+          style={isNarrowWebLayout ? { marginBottom: COMPACT_FEE_TO_BUTTONS_SPACING } : spacings.mb}
+        >
           <Estimation
             signAccountOpState={signAccountOpState}
             disabled={isSignLoading}

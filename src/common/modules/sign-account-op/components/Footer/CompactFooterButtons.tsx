@@ -2,8 +2,11 @@ import React, { ReactNode } from 'react'
 import { View } from 'react-native'
 
 import useFooterRowSplit from '@common/modules/sign-account-op/hooks/useFooterRowSplit'
-import { SPACING_TY } from '@common/styles/spacings'
+import { SPACING_MI, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+
+/** Space between the fee selects and the compact row of buttons under them */
+export const COMPACT_FEE_TO_BUTTONS_SPACING = SPACING_XL - SPACING_MI
 
 type Props = {
   /** Reject/Back and Batch. Each should grow (`flexGrow: 1`) to share the leftover space */
