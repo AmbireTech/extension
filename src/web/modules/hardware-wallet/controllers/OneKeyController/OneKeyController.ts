@@ -88,8 +88,10 @@ class OneKeyController implements ExternalSignerController {
 
   #initializationPromise: Promise<void> | null = null
 
-  constructor(bridge: OneKeyBridgeInterface = new OneKeyOffscreenBridge()) {
-    this.walletSDK = bridge
+  constructor(bridge?: OneKeyBridgeInterface) {
+    // The SDK forgets the device when the bridge closes it after being idle, so the next request connects again
+    this.walletSDK =
+      bridge || new OneKeyOffscreenBridge({ onDocumentClosed: () => this.#resetConnection() })
     this.initialLoadPromise = Promise.resolve()
   }
 

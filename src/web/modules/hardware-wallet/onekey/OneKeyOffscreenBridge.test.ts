@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals'
 
 import OneKeyOffscreenBridge from './OneKeyOffscreenBridge'
 
@@ -22,22 +22,31 @@ const setChrome = ({ hasOneKeyDocument }: { hasOneKeyDocument: boolean }) => {
   const createDocument = jest.fn(async () => {
     // The browser allows a single offscreen document
     if (isCreated) throw new Error('Only a single offscreen document may be created.')
-    await new Promise((resolve) => {
-      setTimeout(resolve, 0)
-    })
+    await Promise.resolve()
     isCreated = true
   })
+  const closeDocument = jest.fn(async () => {
+    if (!isCreated) throw new Error('No current offscreen document.')
+    isCreated = false
+  })
   ;(globalThis as any).chrome = {
-    offscreen: { createDocument, hasDocument: jest.fn(async () => isCreated) },
+    offscreen: { createDocument, closeDocument, hasDocument: jest.fn(async () => isCreated) },
     runtime: { getContexts: jest.fn(async () => (isCreated ? [{}] : [])) }
   }
-  return { createDocument }
+  return { createDocument, closeDocument }
 }
+
+const IDLE_CLOSE_DELAY_MS = 2 * 60 * 1000
 
 describe('OneKeyOffscreenBridge', () => {
   beforeEach(() => {
+    jest.useFakeTimers()
     sendMessage.mockReset()
     captureBackgroundException.mockReset()
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
   })
 
   test('creates the offscreen document once when requests start together', async () => {
@@ -72,5 +81,71 @@ describe('OneKeyOffscreenBridge', () => {
       "Ambire couldn't reach your OneKey. Reconnect it and try again."
     )
     expect(captureBackgroundException).toHaveBeenCalledTimes(1)
+  })
+
+  test('closes the document once OneKey is idle and tells the controller', async () => {
+    const { closeDocument } = setChrome({ hasOneKeyDocument: false })
+    sendMessage.mockResolvedValue({ result: { success: true, payload: [] } })
+    const onDocumentClosed = jest.fn()
+    const bridge = new OneKeyOffscreenBridge({ onDocumentClosed })
+
+    await bridge.searchDevices()
+    await jest.advanceTimersByTimeAsync(IDLE_CLOSE_DELAY_MS - 1)
+    expect(closeDocument).not.toHaveBeenCalled()
+
+    await jest.advanceTimersByTimeAsync(1)
+    expect(closeDocument).toHaveBeenCalledTimes(1)
+    expect(onDocumentClosed).toHaveBeenCalledTimes(1)
+  })
+
+  test('keeps the document open while a request is waiting on the device', async () => {
+    const { closeDocument } = setChrome({ hasOneKeyDocument: false })
+    let answerRequest: (response: unknown) => void = () => {}
+    sendMessage.mockReturnValue(
+      new Promise((resolve) => {
+        answerRequest = resolve
+      })
+    )
+    const bridge = new OneKeyOffscreenBridge()
+
+    const signing = bridge.evmSignMessage('connect-id', 'device-id', {})
+    await jest.advanceTimersByTimeAsync(IDLE_CLOSE_DELAY_MS * 2)
+    expect(closeDocument).not.toHaveBeenCalled()
+
+    answerRequest({ result: { success: true, payload: { address: '0x', signature: '0x' } } })
+    await signing
+    await jest.advanceTimersByTimeAsync(IDLE_CLOSE_DELAY_MS)
+    expect(closeDocument).toHaveBeenCalledTimes(1)
+  })
+
+  test('opens the document again for a request after it was closed', async () => {
+    const { createDocument } = setChrome({ hasOneKeyDocument: false })
+    sendMessage.mockResolvedValue({ result: { success: true, payload: [] } })
+    const bridge = new OneKeyOffscreenBridge()
+
+    await bridge.searchDevices()
+    await jest.advanceTimersByTimeAsync(IDLE_CLOSE_DELAY_MS)
+    await bridge.searchDevices()
+
+    expect(createDocument).toHaveBeenCalledTimes(2)
+  })
+
+  test('closes a document left open from before the background restarted', async () => {
+    const { closeDocument } = setChrome({ hasOneKeyDocument: true })
+
+    new OneKeyOffscreenBridge()
+
+    await jest.advanceTimersByTimeAsync(IDLE_CLOSE_DELAY_MS)
+    expect(closeDocument).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not open the document just to cancel', async () => {
+    const { createDocument } = setChrome({ hasOneKeyDocument: false })
+    const bridge = new OneKeyOffscreenBridge()
+
+    await bridge.cancel('connect-id')
+
+    expect(createDocument).not.toHaveBeenCalled()
+    expect(sendMessage).not.toHaveBeenCalled()
   })
 })
