@@ -13,8 +13,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 /** Height of the fee row - the selects and the advanced settings button share it */
 const FEE_ROW_HEIGHT = SELECT_SIZE_TO_HEIGHT[DEFAULT_SELECT_SIZE]
-/** Gap between an icon and its text, shared with the fee payer strip so their icons line up */
-export const FEE_ICON_GAP = 10
+/** Gap between an icon and its text */
+const FEE_ICON_GAP = 10
 
 type Props = Pick<RenderSelectedOptionParams, 'toggleMenu' | 'isMenuOpen' | 'selectRef'> & {
   label: string

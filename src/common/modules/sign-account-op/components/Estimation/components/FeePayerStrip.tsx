@@ -6,14 +6,12 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { FEE_ICON_GAP } from './FeeSelectTrigger'
-
-const FEE_PAYER_STRIP_HEIGHT = 44
-const FEE_PAYER_AVATAR_SIZE = 28
+const FEE_PAYER_STRIP_HEIGHT = 28
+const FEE_PAYER_AVATAR_SIZE = 14
 
 type Props = {
   address: string
@@ -21,8 +19,9 @@ type Props = {
 }
 
 /**
- * Attached below the network fee select when another account pays the fee. It only informs,
- * so it has no arrow and a different fill than the select above it
+ * Attached below the network fee select when another account pays the fee - "Paid by", the
+ * account's avatar and its name on one row. It only informs, so it has no arrow and a different
+ * fill than the select above it
  */
 const FeePayerStrip = ({ address, accountLabel }: Props) => {
   const { t } = useTranslation()
@@ -36,7 +35,7 @@ const FeePayerStrip = ({ address, accountLabel }: Props) => {
         spacings.phSm,
         {
           height: FEE_PAYER_STRIP_HEIGHT,
-          gap: FEE_ICON_GAP,
+          gap: SPACING_MI,
           backgroundColor: theme.tertiaryBackground,
           borderBottomLeftRadius: BORDER_RADIUS_PRIMARY,
           borderBottomRightRadius: BORDER_RADIUS_PRIMARY
@@ -44,6 +43,9 @@ const FeePayerStrip = ({ address, accountLabel }: Props) => {
       ]}
       testID="fee-payer-strip"
     >
+      <Text fontSize={12} appearance="secondaryText">
+        {t('Paid by')}
+      </Text>
       <Avatar
         size={FEE_PAYER_AVATAR_SIZE}
         address={address}
@@ -51,14 +53,14 @@ const FeePayerStrip = ({ address, accountLabel }: Props) => {
         displayTypeBadge={false}
         style={spacings.pr0}
       />
-      <View style={[flexbox.flex1, { minWidth: 0 }]}>
-        <Text fontSize={12} weight="semiBold" numberOfLines={1}>
-          {accountLabel || shortenAddress(address, 13)}
-        </Text>
-        <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-          {t('is paying the fee')}
-        </Text>
-      </View>
+      <Text
+        fontSize={12}
+        weight="semiBold"
+        numberOfLines={1}
+        style={[flexbox.flex1, { minWidth: 0 }]}
+      >
+        {accountLabel || shortenAddress(address, 13)}
+      </Text>
     </View>
   )
 }
