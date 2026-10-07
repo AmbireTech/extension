@@ -5,7 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
-import useController from '@common/hooks/useController'
+import useExchangesInfo from '@common/hooks/useExchangesInfo'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -15,10 +15,6 @@ import { getExchangesWithData } from '@common/utils/exchanges'
 
 import ExchangesBottomSheet from '../ExchangesBottomSheet'
 
-import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
-
-const selectExchanges = (state: PortfolioController) => state.exchangeState.exchanges
-
 type Props = {
   exchanges: string[]
 }
@@ -26,7 +22,7 @@ type Props = {
 const Exchanges: FC<Props> = ({ exchanges }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { state: exchangeData } = useController('PortfolioController', selectExchanges)
+  const exchangesInfo = useExchangesInfo(exchanges)
   const { ref: sheetRef, open, close } = useModalize()
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -38,8 +34,8 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
 
   // Resolved before slicing, to ensure we have data for the exchanges we render
   const exchangesWithData = useMemo(
-    () => getExchangesWithData(exchanges, exchangeData),
-    [exchangeData, exchanges]
+    () => getExchangesWithData(exchanges, exchangesInfo),
+    [exchangesInfo, exchanges]
   )
 
   if (exchangesWithData.length === 0) return null
