@@ -12,7 +12,6 @@ import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
 import { getUiType } from '@common/utils/uiType'
-import SidePanelTooNarrowOverlay from '@web/components/SidePanelTooNarrowOverlay'
 import { engine } from '@web/constants/browserapi'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
@@ -314,7 +313,6 @@ const MainRoutes = () => {
           </Route>
         </Route>
       </Routes>
-      <SidePanelTooNarrowOverlay />
     </Suspense>
   )
 }
