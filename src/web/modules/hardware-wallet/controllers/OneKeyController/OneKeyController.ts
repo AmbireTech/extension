@@ -156,13 +156,24 @@ class OneKeyController implements ExternalSignerController {
   }
 
   /**
+   * Connects to the device unless already connected. The bridge is awaited first because it
+   * forgets the connection when it closes after being idle: a connection read while that close
+   * is still running would be sent to the new SDK, which has never seen the device. Once the
+   * bridge is ready it stays open for its idle delay, so the connection read after it holds.
+   */
+  async #ensureConnected() {
+    await this.walletSDK.init()
+    if (!this.connectId || !this.deviceId) await this.connect()
+  }
+
+  /**
    * Sends a request to the connected device. If the device was unplugged, swapped or its
    * passphrase changed since the connection was made, connects again and retries once.
    * The request reads `connectId`, `deviceId` and `passphraseState` when called, so it
    * picks up the new connection.
    */
   async callDevice<T>(request: () => Promise<OneKeyResponse<T>>): Promise<OneKeyResponse<T>> {
-    if (!this.connectId || !this.deviceId) await this.connect()
+    await this.#ensureConnected()
 
     const response = await request()
     if (!getIsStaleConnectionResponse(response)) return response
@@ -184,7 +195,8 @@ class OneKeyController implements ExternalSignerController {
   }
 
   async unlock(path: string, expectedAddress?: string) {
-    if (!this.connectId || !this.deviceId) await this.connect()
+    // Waits out an idle close in progress, which clears the unlocked path, so it's looked up again
+    await this.#ensureConnected()
     if (this.isUnlocked(path, expectedAddress)) return 'ALREADY_UNLOCKED' as const
 
     const response = await this.callDevice(() =>

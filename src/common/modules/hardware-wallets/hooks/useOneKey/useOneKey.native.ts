@@ -1,7 +1,6 @@
 // OneKey is supported in the browser extension only
 const useOneKey = () => ({
-  isOneKeyConnected: false,
-  openOneKeyAuthorization: async () => {}
+  ensureOneKeyAccess: async () => false
 })
 
 export default useOneKey

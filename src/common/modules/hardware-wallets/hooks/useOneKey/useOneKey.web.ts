@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
 
 import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useToast from '@common/hooks/useToast'
 import { hasAuthorizedOneKeyDevice } from '@common/modules/hardware-wallets/onekey/requestOneKeyDevicePermission'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import { openInternalPageInTab } from '@common/utils/links/links'
-import { browser } from '@web/constants/browserapi'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -15,38 +16,13 @@ const selectRequestWindow = (state: AllControllersMappingType['RequestsControlle
   state.requestWindow
 
 const useOneKey = () => {
-  const [isOneKeyConnected, setIsOneKeyConnected] = useState(false)
+  const { t } = useTranslation()
+  const { addToast } = useToast()
   const { state: currentUserRequest } = useController(
     'RequestsController',
     selectCurrentUserRequest
   )
   const { state: requestWindow } = useController('RequestsController', selectRequestWindow)
-
-  useEffect(() => {
-    const usb = (navigator as Navigator & { usb?: EventTarget }).usb
-    if (!usb) return
-
-    const detectDevice = () => {
-      hasAuthorizedOneKeyDevice()
-        .then(setIsOneKeyConnected)
-        .catch((error) => {
-          console.error(error)
-          captureException(error)
-        })
-    }
-
-    detectDevice()
-    // The browser fires these only for devices Ambire is allowed to use
-    usb.addEventListener('connect', detectDevice)
-    usb.addEventListener('disconnect', detectDevice)
-    browser.windows.onFocusChanged.addListener(detectDevice)
-
-    return () => {
-      usb.removeEventListener('connect', detectDevice)
-      usb.removeEventListener('disconnect', detectDevice)
-      browser.windows.onFocusChanged.removeListener(detectDevice)
-    }
-  }, [])
 
   const requestId = currentUserRequest?.id
   const requestKind = currentUserRequest?.kind
@@ -64,7 +40,25 @@ const useOneKey = () => {
     })
   }, [requestId, requestKind, createdFromWindowId])
 
-  return { isOneKeyConnected, openOneKeyAuthorization }
+  // Checked on every sign rather than kept in state, so a check that hasn't finished yet,
+  // or a device unplugged since the last one, can't decide whether the authorization opens
+  const ensureOneKeyAccess = useCallback(async () => {
+    try {
+      if (await hasAuthorizedOneKeyDevice()) return true
+
+      await openOneKeyAuthorization()
+    } catch (error: any) {
+      console.error(error)
+      captureException(error)
+      addToast(t("Ambire couldn't reach your OneKey. Reconnect it and try again."), {
+        type: 'error'
+      })
+    }
+
+    return false
+  }, [openOneKeyAuthorization, addToast, t])
+
+  return { ensureOneKeyAccess }
 }
 
 export default useOneKey

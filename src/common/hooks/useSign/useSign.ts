@@ -6,6 +6,7 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import useController from '@common/hooks/useController'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
@@ -89,7 +90,7 @@ const useSign = ({
   } | null>(null)
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
   const { isLedgerConnected } = useLedger()
-  const { isOneKeyConnected, openOneKeyAuthorization } = useOneKey()
+  const { ensureOneKeyAccess } = useOneKey()
   const {
     currentRequest,
     signingStep,
@@ -396,29 +397,40 @@ const useSign = ({
         isAtLeastOneOfTheKeysInvolvedOneKey
       )
 
-      // The OneKey is unplugged or the browser no longer lets Ambire use it, and the browser
-      // asks for access to a device only from a tab
-      if (isOneKeyKeyInvolvedInTheJustChosenKeys && !isOneKeyConnected) {
-        void openOneKeyAuthorization()
+      const continueSigning = () => {
+        if (
+          !signAccountOpState?.account.safeCreation &&
+          (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
+          !isFeePayerSameAsSigner
+        ) {
+          setIsChooseFeePayerKeyShown(true)
+          return
+        }
+
+        if (isExternalQr) {
+          // don't return here — QR flow is part of the signing itself,
+          // unlike Ledger where we need to stop and wait for connection
+          setShouldDisplayQrSigningModal(true)
+        }
+
+        handleBroadcast()
+      }
+
+      if (!isOneKeyKeyInvolvedInTheJustChosenKeys) {
+        continueSigning()
         return
       }
 
-      if (
-        !signAccountOpState?.account.safeCreation &&
-        (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
-        !isFeePayerSameAsSigner
-      ) {
-        setIsChooseFeePayerKeyShown(true)
-        return
-      }
-
-      if (isExternalQr) {
-        // don't return here — QR flow is part of the signing itself,
-        // unlike Ledger where we need to stop and wait for connection
-        setShouldDisplayQrSigningModal(true)
-      }
-
-      handleBroadcast()
+      // When the OneKey is unplugged or the browser no longer lets Ambire use it, this opens
+      // the tab the browser asks for access to a device from, instead of signing
+      ensureOneKeyAccess()
+        .then((hasOneKeyAccess) => {
+          if (hasOneKeyAccess) continueSigning()
+        })
+        .catch((error) => {
+          console.error(error)
+          captureException(error)
+        })
     },
     [
       signAccountOpState?.accountOp.signingKeyAddr,
@@ -432,8 +444,7 @@ const useSign = ({
       isAtLeastOneOfTheKeysInvolvedLedger,
       isLedgerConnected,
       isAtLeastOneOfTheKeysInvolvedOneKey,
-      isOneKeyConnected,
-      openOneKeyAuthorization,
+      ensureOneKeyAccess,
       handleBroadcast,
       openWarningModal,
       handleUpdateStatus,

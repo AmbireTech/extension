@@ -7,6 +7,7 @@ import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { getDappIconFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
 import { EIP_1271_NOT_SUPPORTED_BY, toPersonalSignHex } from '@ambire-common/libs/signMessage/utils'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
@@ -42,7 +43,7 @@ const useSignMessage = () => {
   >(undefined)
   const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
-  const { isOneKeyConnected, openOneKeyAuthorization } = useOneKey()
+  const { ensureOneKeyAccess } = useOneKey()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const {
@@ -262,23 +263,33 @@ const useSignMessage = () => {
         return
       }
 
-      // The OneKey is unplugged or the browser no longer lets Ambire use it, and the browser
-      // asks for access to a device only from a tab
+      const signWithChosenSigners = () => {
+        dispatch({
+          type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
+          params: { signers: chosenSigners }
+        })
+      }
+
       const isOneKeyKeyChosen = chosenSigners.some((s) => s.type === 'onekey')
-      if (isOneKeyKeyChosen && !isOneKeyConnected) {
-        void openOneKeyAuthorization()
+      if (!isOneKeyKeyChosen) {
+        signWithChosenSigners()
         return
       }
 
-      dispatch({
-        type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
-        params: { signers: chosenSigners }
-      })
+      // When the OneKey is unplugged or the browser no longer lets Ambire use it, this opens
+      // the tab the browser asks for access to a device from, instead of signing
+      ensureOneKeyAccess()
+        .then((hasOneKeyAccess) => {
+          if (hasOneKeyAccess) signWithChosenSigners()
+        })
+        .catch((error) => {
+          console.error(error)
+          captureException(error)
+        })
     },
     [
       isLedgerConnected,
-      isOneKeyConnected,
-      openOneKeyAuthorization,
+      ensureOneKeyAccess,
       dispatch,
       addToast,
       t,

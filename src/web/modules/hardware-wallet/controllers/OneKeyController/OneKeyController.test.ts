@@ -88,4 +88,31 @@ describe('OneKeyController stale connection recovery', () => {
     expect(evmGetAddress).toHaveBeenCalledTimes(1)
     expect(bridge.searchDevices).not.toHaveBeenCalled()
   })
+
+  test('reads the connection only after an idle close of the bridge has finished', async () => {
+    let controller: OneKeyController
+    // Closing the idle bridge resets the connection before `init` resolves
+    const init = jest
+      .fn<OneKeyBridgeInterface['init']>(async () => {})
+      .mockImplementationOnce(async () => {
+        controller.connectId = ''
+        controller.deviceId = ''
+        controller.cleanUp()
+      })
+    const bridge = makeBridge({ init })
+    controller = new OneKeyController(bridge)
+    controller.connectId = 'stale-connect-id'
+    controller.deviceId = 'stale-device-id'
+    controller.unlockedPath = "m/44'/60'/0'/0/0"
+    controller.unlockedPathKeyAddr = address
+
+    await expect(controller.unlock("m/44'/60'/0'/0/0", address)).resolves.toBe('JUST_UNLOCKED')
+    expect(bridge.searchDevices).toHaveBeenCalledTimes(1)
+    expect(bridge.evmGetAddress).toHaveBeenCalledWith('connect-id', 'seed-id', expect.anything())
+    expect(bridge.evmGetAddress).not.toHaveBeenCalledWith(
+      'stale-connect-id',
+      expect.anything(),
+      expect.anything()
+    )
+  })
 })
