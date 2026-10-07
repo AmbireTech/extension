@@ -63,7 +63,7 @@
   },
   "packageManager": "yarn@1.22.22",
   "dependencies": {
-    "@ambire/react-native-crypto": "1.0.0",
+    "@ambire/react-native-crypto": "1.0.1",
     "@ambire/signature-validator": "1.5.0",
     "@corpus-core/colibri-stateless": "1.1.30",
     "@dnd-kit/core": "6.3.1",
