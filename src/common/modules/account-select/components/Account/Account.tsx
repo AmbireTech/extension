@@ -12,7 +12,7 @@ import AccountBadges from '@common/components/AccountBadges'
 import AccountKeyIcons from '@common/components/AccountKeyIcons'
 import Avatar from '@common/components/Avatar'
 import Dropdown from '@common/components/Dropdown'
-import Editable from '@common/components/Editable'
+import EditableAccountName from '@common/components/EditableAccountName'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -30,6 +30,7 @@ import getStyles from './styles'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
+const NAME_TEXT_PROPS = { weight: 'medium' } as const
 
 const selectSelectAccountStatus = (state: AllControllersMappingType['MainController']) =>
   state.statuses.selectAccount
@@ -147,9 +148,8 @@ const Account = ({
           args: [[{ addr, preferences: { label: value, pfp: preferences.pfp } }]]
         }
       })
-      addToast(t('Account label updated.'))
     },
-    [addToast, addr, accountsDispatch, preferences.pfp, t]
+    [addr, accountsDispatch, preferences.pfp]
   )
 
   const onDropdownSelect = (item: { label: string; value: string }) => {
@@ -227,16 +227,11 @@ const Account = ({
             </Text>
           ) : (
             <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-              <Editable
-                initialValue={account.preferences.label}
+              <EditableAccountName
+                account={account}
+                name={account.preferences.label}
                 onSave={onSave}
-                fontSize={16}
-                height={isMobile ? 24 : 20}
-                textProps={{
-                  weight: 'medium'
-                }}
-                minWidth={120}
-                maxLength={40}
+                textProps={NAME_TEXT_PROPS}
               />
             </View>
           )}

@@ -119,10 +119,10 @@ export class AuthPage extends BasePage {
   }
 
   async personalizeAccountName(name: string): Promise<void> {
-    // clear field input first
+    // opens the edit account name modal
     await this.click(selectors.getStarted.editFirstAccNameButton)
     await this.entertext(selectors.getStarted.editAccountNameInputField, name)
-    await this.compareText(selectors.getStarted.editFirstAccNameButton, 'Save')
+    await this.click(selectors.getStarted.saveFirstAccNameButton)
   }
 
   // TODO: imporove method assertions

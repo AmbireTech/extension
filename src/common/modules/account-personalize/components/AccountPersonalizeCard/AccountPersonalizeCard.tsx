@@ -7,7 +7,7 @@ import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import AccountKeyIcons from '@common/components/AccountKeyIcons'
 import Avatar from '@common/components/Avatar'
-import Editable from '@common/components/Editable'
+import EditableAccountName from '@common/components/EditableAccountName'
 import { isMobile, isWeb } from '@common/config/env'
 import useAccountKeys from '@common/hooks/useAccountKeys'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -16,6 +16,8 @@ import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
+
+const NAME_TEXT_PROPS = { weight: 'medium' } as const
 
 type Props = {
   account: Account
@@ -59,15 +61,17 @@ const AccountPersonalizeCard = ({
                 control={control}
                 name={`accounts.${index}.preferences.label`}
                 render={({ field: { onChange, value } }) => (
-                  <Editable
-                    setCustomValue={onChange}
-                    customValue={value}
-                    initialValue={preferences.label}
+                  <EditableAccountName
+                    account={account}
+                    name={value}
+                    // The form is updated first, as `onSave` saves the names from it
+                    onSave={(name) => {
+                      onChange(name)
+                      onSave(name)
+                    }}
                     testID={`edit-name-field-${index}`}
-                    height={24}
-                    textProps={{ weight: 'medium' }}
+                    textProps={NAME_TEXT_PROPS}
                     disabled={disableEdit}
-                    onSave={onSave}
                   />
                 )}
               />
