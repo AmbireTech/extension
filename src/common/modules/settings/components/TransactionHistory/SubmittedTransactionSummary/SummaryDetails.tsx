@@ -12,6 +12,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { useTranslation } from '@common/config/localization'
+import useCallsWithDecodedData from '@common/hooks/useCallsWithDecodedData'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -40,6 +41,7 @@ import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
 
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+
 const SummaryDetails = ({
   submittedAccountOp,
   network,
@@ -59,7 +61,8 @@ const SummaryDetails = ({
     () => getFormattedSubmittedDate(submittedAccountOp.timestamp),
     [submittedAccountOp.timestamp]
   )
-  const humanizedCalls = useHumanizedCalls(submittedAccountOp)
+  const callsWithoutDecodedData = useHumanizedCalls(submittedAccountOp)
+  const humanizedCalls = useCallsWithDecodedData(callsWithoutDecodedData)
   const summaryBalanceChanges = useMemo(
     () => getSummaryBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
@@ -207,7 +210,6 @@ const SummaryDetails = ({
                     }
                   : undefined
               }
-              disableSelectorFetching
             />
           ))}
         {!isDelegationTxn && !humanizedCalls.length && <SkeletonLoader width="100%" height={112} />}
