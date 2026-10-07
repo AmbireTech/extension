@@ -1283,6 +1283,9 @@ const DappWebViewScreen = () => {
         onRenderProcessGone={handleRenderProcessGone}
         onContentProcessDidTerminate={handleRenderProcessGone}
         webviewDebuggingEnabled={__DEV__}
+        // If not set, on the newer Fabric architecture iOS scrolling loses its momentum
+        // almost immediately and feels choppy instead of smooth like in Safari.
+        decelerationRate="normal"
         nestedScrollEnabled={true}
         pullToRefreshEnabled={!isAndroid}
         onScroll={isAndroid ? handleWebViewScroll : undefined}
