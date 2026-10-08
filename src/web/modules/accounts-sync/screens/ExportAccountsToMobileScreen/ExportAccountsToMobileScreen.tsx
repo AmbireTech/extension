@@ -59,6 +59,7 @@ const ExportAccountsToMobileScreen = () => {
     accounts,
     selectedAddrs,
     areAllSelected,
+    hasSelection,
     selectedSeedsCount,
     includeSeeds,
     toggleIncludeSeeds,
@@ -224,7 +225,7 @@ const ExportAccountsToMobileScreen = () => {
                   >
                     {t('{{count}} account{{s}} selected.', {
                       count: selectedAddrs.length,
-                      s: selectedAddrs.length > 1 ? 's' : ''
+                      s: selectedAddrs.length !== 1 ? 's' : ''
                     })}{' '}
                     <Text
                       fontSize={14}
@@ -303,6 +304,7 @@ const ExportAccountsToMobileScreen = () => {
         accounts={accounts}
         selectedAddrs={selectedAddrs}
         areAllSelected={areAllSelected}
+        hasSelection={hasSelection}
         selectedSeedsCount={selectedSeedsCount}
         includeSeeds={includeSeeds}
         onToggleIncludeSeeds={toggleIncludeSeeds}

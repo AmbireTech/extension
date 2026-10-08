@@ -55,7 +55,7 @@ const SyncScanFeedbackAlert = ({ progress, hasScannedPayload, scannedAccountsCou
             count: scannedAccountsCount,
             s: scannedAccountsCount > 1 ? 's' : ''
           })
-        : t('All accounts received.')
+        : t('Everything received.')
 
     switch (feedback) {
       case 'hold-still':

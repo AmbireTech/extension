@@ -23,6 +23,7 @@ import SyncImportSteps, {
 import SyncPasswordOptions from '@common/modules/accounts-sync/components/SyncPasswordOptions'
 import SyncScanFeedbackAlert from '@common/modules/accounts-sync/components/SyncScanFeedbackAlert'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
+import type { AccountsSyncImportResult } from '@common/modules/accounts-sync/hooks/useAccountsSyncImport/useAccountsSyncImport'
 import useSyncedPasswordSetup from '@common/modules/accounts-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
@@ -153,12 +154,33 @@ const ImportAccountsFromExtensionScreen = () => {
     onPasswordSet: handlePasswordSet
   })
 
+  const leaveScreen = useCallback(() => {
+    // Without accounts this is the onboarding flow, which came from the get started screen
+    if (!accountsCount) return goToPrevRoute()
+
+    // Going back instead of navigating, so the screen the user came from doesn't end up
+    // with this one still ahead of it in the history
+    if (canGoBack) return goBack()
+
+    navigate(ROUTES.accountSelect)
+  }, [accountsCount, canGoBack, goBack, goToPrevRoute, navigate])
+
   const handleImported = useCallback(
-    async (password: string) => {
+    async ({ password, importedAccountsCount, syncedExtrasLabel }: AccountsSyncImportResult) => {
+      // Only the settings, networks or Address Book came over, so there are no accounts to
+      // set up or name. Onboarding stays on the get started screen, as there is still no
+      // account to go on with.
+      if (!importedAccountsCount) {
+        closePasswordSheet()
+        addToast(t('Synced: {{items}}.', { items: syncedExtrasLabel }), { type: 'success' })
+        leaveScreen()
+        return
+      }
+
       // During onboarding the accounts arrive before this device has a password of its
       // own. Reusing the extension's one sets it (and biometrics) right here, so the
       // keystore setup screen is skipped and the sheet stays up until it lands.
-      if (!hasPasswordSecret && isPasswordReused) {
+      if (!hasPasswordSecret && isPasswordReused && password) {
         // A refused biometric prompt returns no secret. The accounts are already
         // imported and the password still has to be set, so the flow goes on without
         // biometrics and only says so.
@@ -184,6 +206,7 @@ const ImportAccountsFromExtensionScreen = () => {
       hasPasswordSecret,
       isBiometricsEnabled,
       isPasswordReused,
+      leaveScreen,
       navigate,
       saveBiometricsSecret,
       setPasswordFromSync,
@@ -195,15 +218,24 @@ const ImportAccountsFromExtensionScreen = () => {
     handleScanComplete,
     hasScannedPayload,
     scannedAccounts,
+    isPasswordRequired,
     scanError,
     retryScan,
     importScannedAccounts,
     isImporting
   } = useAccountsSyncImport({ onImported: handleImported })
 
+  // Without private keys or recovery phrases in the scanned data the import starts on its
+  // own, as there is no password to ask for
   useEffect(() => {
-    if (hasScannedPayload) openPasswordSheet()
-  }, [hasScannedPayload, openPasswordSheet])
+    if (hasScannedPayload && isPasswordRequired) openPasswordSheet()
+  }, [hasScannedPayload, isPasswordRequired, openPasswordSheet])
+
+  const handleContinue = useCallback(() => {
+    if (isPasswordRequired) return openPasswordSheet()
+
+    void importScannedAccounts()
+  }, [importScannedAccounts, isPasswordRequired, openPasswordSheet])
 
   // Closing the sheet keeps the scanned accounts, so that the user can pick the password
   // step back up from the alert instead of scanning all the codes again
@@ -232,25 +264,8 @@ const ImportAccountsFromExtensionScreen = () => {
     // Same for the instructions themselves, which are a couple of steps
     if (stepIndex) return handleStepIndexChange(stepIndex - 1)
 
-    // Without accounts this is the onboarding flow, which came from the get started screen
-    if (!accountsCount) return goToPrevRoute()
-
-    // Going back instead of navigating, so the screen the user came from doesn't end up
-    // with this one still ahead of it in the history
-    if (canGoBack) return goBack()
-
-    navigate(ROUTES.accountSelect)
-  }, [
-    accountsCount,
-    canGoBack,
-    goBack,
-    goToPrevRoute,
-    handleStepIndexChange,
-    isScanning,
-    navigate,
-    retryScan,
-    stepIndex
-  ])
+    leaveScreen()
+  }, [handleStepIndexChange, isScanning, leaveScreen, retryScan, stepIndex])
 
   const handleStartScanning = useCallback(() => {
     setScanProgress(null)
@@ -277,13 +292,15 @@ const ImportAccountsFromExtensionScreen = () => {
               scannedAccountsCount={scannedAccounts.length}
             />
             {/* The password prompt opens on its own, so this is how the user gets back to
-            it after dismissing it, without having to scan everything again */}
+            it after dismissing it (or retries an import that needs no password), without
+            having to scan everything again */}
             {!!hasScannedPayload && (
               <Button
                 testID="continue-after-sync-scan"
                 type="primary"
                 text={t('Continue')}
-                onPress={openPasswordSheet as () => void}
+                disabled={isImporting}
+                onPress={handleContinue}
                 hasBottomSpacing={false}
                 style={spacings.mtMd}
               />

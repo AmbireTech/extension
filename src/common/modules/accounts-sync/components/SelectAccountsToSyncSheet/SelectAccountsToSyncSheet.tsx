@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -43,6 +43,7 @@ interface Props {
   accounts: Account[]
   selectedAddrs: Account['addr'][]
   areAllSelected: boolean
+  hasSelection: boolean
   /** How many stored recovery phrases the selected accounts were derived from */
   selectedSeedsCount: number
   includeSeeds: boolean
@@ -68,6 +69,7 @@ const SelectAccountsToSyncSheet = ({
   accounts,
   selectedAddrs,
   areAllSelected,
+  hasSelection,
   selectedSeedsCount,
   includeSeeds,
   onToggleIncludeSeeds,
@@ -102,23 +104,6 @@ const SelectAccountsToSyncSheet = ({
     ),
     [onToggleAccount, selectedAddrs]
   )
-
-  // Confirm stays enabled without a selected account, so pressing it can explain why
-  // nothing gets exported. The message goes away as soon as an account is selected.
-  const [hasConfirmedWithoutAccounts, setHasConfirmedWithoutAccounts] = useState(false)
-  const shouldShowNoAccountsError = hasConfirmedWithoutAccounts && !selectedAddrs.length
-
-  const handleConfirm = useCallback(() => {
-    if (!selectedAddrs.length) {
-      setHasConfirmedWithoutAccounts(true)
-      return
-    }
-
-    setHasConfirmedWithoutAccounts(false)
-    onConfirm()
-  }, [onConfirm, selectedAddrs.length])
-
-  const resetNoAccountsError = useCallback(() => setHasConfirmedWithoutAccounts(false), [])
 
   const syncOptionRows = useMemo(
     () => (
@@ -181,7 +166,6 @@ const SelectAccountsToSyncSheet = ({
       id="select-accounts-to-sync"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      onClosed={resetNoAccountsError}
       style={SHEET_STYLE}
       HeaderComponent={
         <View
@@ -226,21 +210,12 @@ const SelectAccountsToSyncSheet = ({
               style={spacings.mbMd}
             />
           )}
-          {shouldShowNoAccountsError && (
-            <Text
-              testID="no-accounts-to-sync-error"
-              fontSize={14}
-              appearance="errorText"
-              style={spacings.mbSm}
-            >
-              {t('Select at least one account to export.')}
-            </Text>
-          )}
           <Button
             testID="confirm-accounts-to-sync"
             text={t('Confirm')}
-            disabled={isConfirmDisabled}
-            onPress={handleConfirm}
+            // An account or any of the settings, networks and Address Book is enough
+            disabled={isConfirmDisabled || !hasSelection}
+            onPress={onConfirm}
             hasBottomSpacing={false}
           />
         </View>

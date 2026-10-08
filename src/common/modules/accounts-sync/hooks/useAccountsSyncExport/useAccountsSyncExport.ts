@@ -62,6 +62,12 @@ const useAccountsSyncExport = () => {
     [accounts.length, selectedAddrs.length, syncOptions]
   )
 
+  /** Whether there is anything at all to export: an account or one of the options */
+  const hasSelection = useMemo(
+    () => !!selectedAddrs.length || Object.values(syncOptions).some(Boolean),
+    [selectedAddrs.length, syncOptions]
+  )
+
   const seedIdByKeyAddr = useMemo(
     () =>
       new Map(
@@ -130,7 +136,7 @@ const useAccountsSyncExport = () => {
   }, [accounts, areAllSelected, discardPayload])
 
   const prepareExport = useCallback(async () => {
-    if (!selectedAddrs.length || isPreparing) return
+    if (!hasSelection || isPreparing) return
 
     const resetCountAtStart = resetCount.current
     setIsPreparing(true)
@@ -163,6 +169,7 @@ const useAccountsSyncExport = () => {
     avatarType,
     crashAnalyticsEnabled,
     dispatchAndWait,
+    hasSelection,
     includeSeeds,
     isPreparing,
     selectedAddrs,
@@ -174,6 +181,7 @@ const useAccountsSyncExport = () => {
     accounts,
     selectedAddrs,
     areAllSelected,
+    hasSelection,
     selectedSeedsCount,
     includeSeeds,
     toggleIncludeSeeds,

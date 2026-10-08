@@ -53,6 +53,7 @@ const ExportAccountsToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) =
     accounts,
     selectedAddrs,
     areAllSelected,
+    hasSelection,
     selectedSeedsCount,
     includeSeeds,
     toggleIncludeSeeds,
@@ -148,7 +149,7 @@ const ExportAccountsToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) =
             <Text fontSize={14} appearance="secondaryText" style={spacings.mtSm}>
               {t('{{count}} account{{s}} selected.', {
                 count: selectedAddrs.length,
-                s: selectedAddrs.length > 1 ? 's' : ''
+                s: selectedAddrs.length !== 1 ? 's' : ''
               })}{' '}
               <Text
                 fontSize={14}
@@ -216,6 +217,7 @@ const ExportAccountsToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) =
         accounts={accounts}
         selectedAddrs={selectedAddrs}
         areAllSelected={areAllSelected}
+        hasSelection={hasSelection}
         selectedSeedsCount={selectedSeedsCount}
         includeSeeds={includeSeeds}
         onToggleIncludeSeeds={toggleIncludeSeeds}
