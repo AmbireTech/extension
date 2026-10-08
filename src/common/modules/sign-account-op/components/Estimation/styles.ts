@@ -13,8 +13,7 @@ interface Style {
   estimationScrollView: ViewStyle
   spinner: ViewStyle
   nativeBridgeFeeContainer: ViewStyle
-  feeTokenGasTankIcon: ViewStyle
-  advancedOptionsButton: ViewStyle
+  feeHeaderDivider: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
@@ -48,20 +47,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       height: SELECT_SIZE_TO_HEIGHT[DEFAULT_SELECT_SIZE],
       backgroundColor: theme.secondaryBackground
     },
-    feeTokenGasTankIcon: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: theme.neutral200,
-      ...flexbox.alignCenter,
-      ...flexbox.justifyCenter
-    },
-    advancedOptionsButton: {
-      width: 50,
-      height: SELECT_SIZE_TO_HEIGHT[DEFAULT_SELECT_SIZE],
-      ...common.borderRadiusPrimary,
-      ...flexbox.alignCenter,
-      ...flexbox.justifyCenter
+    feeHeaderDivider: {
+      width: 1,
+      height: 20,
+      // The border tokens are white or near-white in the light theme, so they vanish on the footer
+      backgroundColor: theme.tertiaryBackground
     }
   })
 

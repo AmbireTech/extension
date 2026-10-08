@@ -5,7 +5,7 @@ import useFooterRowSplit from '@common/modules/sign-account-op/hooks/useFooterRo
 import { SPACING_MI, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-/** Space between the fee selects and the compact row of buttons under them */
+/** Space between the fee token select and the compact row of buttons under them */
 export const COMPACT_FEE_TO_BUTTONS_SPACING = SPACING_XL - SPACING_MI
 
 type Props = {

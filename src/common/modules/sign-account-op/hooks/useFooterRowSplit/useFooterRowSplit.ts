@@ -6,8 +6,8 @@ const NARROWEST_LAYOUT_SPLIT = { leftFlex: 11, rightFlex: 9 }
 const EVEN_SPLIT = { leftFlex: 1, rightFlex: 1 }
 
 /**
- * How the sign footer rows split between their left part (fee token / Reject + Batch) and the
- * right one (speed + settings / Sign). With Reject, Batch and Sign the fee row shares it, so they line up
+ * How the compact sign footer buttons split between their left part (Reject + Batch) and the
+ * right one (Sign)
  */
 const useFooterRowSplit = (isEvenSplit?: boolean) => {
   const { maxWidthSize } = useWindowSize()

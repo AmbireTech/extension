@@ -192,7 +192,7 @@ const OneClickEstimation = ({
     return (
       <View
         style={[
-          // Keeps the fee selects off the bottom sheet's dragger
+          // Keeps the fee header off the bottom sheet's dragger
           !isEstimationSheetModal && spacings.ptTy,
           // A bit more room above the home indicator, if the phone has one
           isMobile && { paddingBottom: bottom ? bottom + SPACING_TY : SPACING_SM }
