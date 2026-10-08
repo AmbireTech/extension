@@ -90,19 +90,23 @@ jobs:
           mkdir -p android-build
           gh run download "$RUN_ID" --pattern 'ambire-android-v*-apk' --dir android-build
 
-      - name: Unpack Android build
+      - name: Stage Android build
         shell: bash
         run: |
           set -euo pipefail
-          ZIP_PATH=$(find ./android-build -type f -name '*.zip' | head -n1)
-          if [ -z "$ZIP_PATH" ]; then
-            echo "No Android build zip found in ./android-build"
+          APK_PATH=$(find ./android-build -type f -name '*.apk' | head -n1)
+          if [ -z "$APK_PATH" ]; then
+            echo "No Android build APK found in ./android-build"
             find ./android-build || true
             exit 1
           fi
-          # Inner zip holds Ambire.apk at its root — matches installApps: './Ambire.apk'
-          # in mobilewright.config.ts.
-          unzip -o "$ZIP_PATH" -d ./e2e-playwright-tests/e2e-mobile-tests
+          # _build-android.yml's "Package Android APK" step uploads a bare .apk, not a
+          # .zip (so users and Obtainium can install it directly) - actions/upload-artifact
+          # still wraps it in a zip for transport, but `gh run download` already unwraps
+          # that transparently, leaving just the .apk here. Stage it under the name
+          # mobilewright.config.ts expects (ANDROID_APK, resolved relative to the config
+          # file), matching installApps: './Ambire.apk'.
+          cp "$APK_PATH" ./e2e-playwright-tests/e2e-mobile-tests/Ambire.apk
 
       # Standard workaround so the Android emulator gets hardware acceleration (KVM)
       # on GitHub-hosted Linux runners. See reactivecircus/android-emulator-runner docs.
