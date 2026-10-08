@@ -5,6 +5,11 @@ import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
 import * as richJson from '@ambire-common/libs/richJson/richJson'
+import {
+  captureWebViewException,
+  captureWebViewMessage
+} from '@common/config/analytics/CrashAnalytics'
+import { CRASH_REPORT_CONTENT } from '@common/constants/crashAnalytics'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
 import { getAllSerialized, storage } from '@common/services/storage'
@@ -75,11 +80,26 @@ const getDevServerUrl = () => {
   return `http://${WEBVIEW_DEV_HOST}:${WEBVIEW_DEV_SERVER_PORT}`
 }
 
+type WorkerErrorPayload = { message?: string; stack?: string; url?: string; lineNo?: number }
+
+// The worker sends plain objects, not Errors, so each one is rebuilt here. Its own stack and
+// location go in extra, because they point into the worker bundle, not the RN one. The rebuilt
+// errors all share this function's stack, so they're grouped by message instead.
+const reportWorkerErrors = (ctrlName: string, errors: WorkerErrorPayload[]) => {
+  errors.forEach(({ message = '', ...location }) => {
+    captureWebViewException(new Error(message), {
+      extra: { ctrlName, ...location },
+      fingerprint: [CRASH_REPORT_CONTENT.WEBVIEW, ctrlName, message]
+    })
+  })
+}
+
 // Global error handler injected into the WebView HTML
 const globalErrorHandler = `
   window.onerror = function(msg, url, lineNo, columnNo, error) {
-    var errMessage = error ? error.stack || error.message : msg;
-    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ message: errMessage, url: url, lineNo: lineNo }] } }));
+    var errMessage = error ? error.message : msg;
+    var errStack = error ? error.stack : undefined;
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ message: errMessage, stack: errStack, url: url, lineNo: lineNo }] } }));
     return false;
   };
 `
@@ -388,6 +408,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
         case 'ctrl.error':
           eventBus.emit('error', { errors: data.payload.errors, controller: data.payload.ctrlName })
+          reportWorkerErrors(data.payload.ctrlName, data.payload.errors)
           break
 
         case 'ctrl.debug':
@@ -746,6 +767,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   const handleRenderProcessGone = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent || {}
     console.warn('[WebViewWorker] WebView process terminated, remounting worker...', nativeEvent)
+    captureWebViewMessage('The WebView worker process was terminated and is being remounted', {
+      level: 'warning',
+      extra: { didCrash: nativeEvent?.didCrash }
+    })
     isReadyRef.current = false
     setIsReady(false)
     setIsLoaded(false)
