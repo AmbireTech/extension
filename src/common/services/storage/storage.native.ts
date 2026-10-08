@@ -24,6 +24,11 @@ const clearAllStorages = () => {
 
 // clearAllStorages()
 
+const readStoredValue = (key: string, defaultValue: unknown) => {
+  const serialized = asyncStorageInstance.getString(key)
+  return serialized ? parse(serialized) : defaultValue
+}
+
 function get<K extends keyof StorageProps>(key: K): Promise<StorageProps[K] | undefined>
 function get<K extends keyof StorageProps>(
   key: K,
@@ -37,9 +42,18 @@ function get<K extends keyof StorageProps>(
   key: K,
   defaultValue?: StorageProps[K] | null
 ): Promise<StorageProps[K] | null | undefined> {
-  const serialized = asyncStorageInstance.getString(String(key))
-  return Promise.resolve(serialized ? parse(serialized) : defaultValue)
+  return Promise.resolve(readStoredValue(String(key), defaultValue))
 }
+
+/**
+ * Reads a value from the same storage as `storage.get`, but synchronously, for code that has to
+ * decide something before any promise can settle, like starting the crash reporter at launch.
+ * Gives back `defaultValue` when the key was never stored.
+ */
+const getStorageValueSync = <K extends keyof StorageProps>(
+  key: K,
+  defaultValue: StorageProps[K]
+): StorageProps[K] => readStoredValue(String(key), defaultValue)
 
 const storage: Storage = {
   get,
@@ -107,4 +121,11 @@ const secureStorage = {
   }
 }
 
-export { storage, syncStorage, syncSessionStorage, secureStorage, getAllSerialized }
+export {
+  storage,
+  syncStorage,
+  syncSessionStorage,
+  secureStorage,
+  getAllSerialized,
+  getStorageValueSync
+}
