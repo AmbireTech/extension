@@ -243,13 +243,15 @@ const SwapAndBridgeScreen = () => {
         onBackButtonPress={onBackButtonPress}
         title={t('Swap & Bridge')}
         rightIcon={<ProviderSettingsButton compact onPress={openProviderSettingsModal} />}
+        headerOverlay={
+          <CowSwapAnnouncement
+            openProviderSettingsModal={openProviderSettingsModal}
+            isSettingsButtonCompact
+          />
+        }
         withScroll
         keyboardAwareScrollViewProps={{ bottomOffset: 250 }}
       >
-        <CowSwapAnnouncement
-          openProviderSettingsModal={openProviderSettingsModal}
-          isSettingsButtonCompact
-        />
         {isHealthy === false && (
           <Alert
             type="error"

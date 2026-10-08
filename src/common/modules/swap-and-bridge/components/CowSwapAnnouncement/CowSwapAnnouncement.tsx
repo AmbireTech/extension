@@ -12,19 +12,25 @@ import {
 } from '@common/modules/swap-and-bridge/components/ProviderSettingsBottomSheet'
 import useCowSwapAnnouncement from '@common/modules/swap-and-bridge/hooks/useCowSwapAnnouncement'
 import spacings from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 const CARET_SIZE = 10
-// Floats on top of the form without pushing it down. Offset by the caret's overhang,
-// so the caret isn't clipped by a parent scroll view.
+// The caret is a rotated square, so it's as wide as its diagonal
+const CARET_HALF_WIDTH = Math.ceil((CARET_SIZE * Math.SQRT2) / 2)
+const CARET_OVERHANG = CARET_SIZE / 2 + 1
+// Floats on top of the form without pushing it down. Pulled up by the caret's
+// overhang, so the caret tip sits right under the header.
 const CARD_POSITION_STYLE = {
   position: 'absolute' as const,
-  top: CARET_SIZE / 2 + 1,
-  left: 0,
+  top: -CARET_OVERHANG,
   right: 0,
   zIndex: 10
 }
+// The compact settings button is used on mobile, where the card is rendered as the
+// layout's `headerOverlay`, which starts right at the header's bottom edge. Pushed down
+// by the caret's overhang, so the caret tip sits right under the header (same as web).
+const COMPACT_CARD_POSITION_STYLE = { ...CARD_POSITION_STYLE, top: CARET_OVERHANG }
 
 type Props = {
   openProviderSettingsModal: () => void
@@ -38,9 +44,10 @@ type Props = {
  * is shown on mount (not on hover like a tooltip), so it works the same on mobile
  * and web. Its caret points to the settings (gear) button.
  *
- * Render it as the first child of a parent that starts right under the header and
- * is taller than the card, because Android doesn't deliver touches to children
- * that overflow their parent.
+ * On web, render it as the first child of a parent that starts right under the
+ * header and is taller than the card. On mobile, pass it as the layout's
+ * `headerOverlay`. In both cases the parent covers the card, because Android
+ * doesn't deliver touches to children that overflow their parent.
  */
 const CowSwapAnnouncement = ({
   openProviderSettingsModal,
@@ -60,6 +67,13 @@ const CowSwapAnnouncement = ({
   const settingsButtonSize = isSettingsButtonCompact
     ? COMPACT_SETTINGS_BUTTON_SIZE
     : SETTINGS_BUTTON_SIZE
+  // The card is aligned to the right edge of the header, same as the settings button
+  const caretCenterFromRight = settingsButtonSize / 2
+  // Keeps the caret on the straight part of the top border instead of the rounded corner
+  const topRightRadius = Math.min(
+    BORDER_RADIUS_PRIMARY,
+    caretCenterFromRight - CARET_HALF_WIDTH - 1
+  )
 
   return (
     <View
@@ -68,20 +82,22 @@ const CowSwapAnnouncement = ({
         common.borderRadiusPrimary,
         common.shadowPrimary,
         spacings.ph,
-        spacings.pvSm,
-        CARD_POSITION_STYLE,
+        spacings.pv,
+        isSettingsButtonCompact ? COMPACT_CARD_POSITION_STYLE : CARD_POSITION_STYLE,
         {
           backgroundColor: theme.secondaryBackground,
           borderWidth: 1,
-          borderColor: theme.primaryAccent
+          borderColor: theme.primaryAccent,
+          borderTopRightRadius: topRightRadius,
+          width: '90%'
         }
       ]}
     >
       <View
         style={{
           position: 'absolute',
-          top: -CARET_SIZE / 2 - 1,
-          right: settingsButtonSize / 2 - CARET_SIZE / 2,
+          top: -CARET_OVERHANG,
+          right: caretCenterFromRight - CARET_SIZE / 2,
           width: CARET_SIZE,
           height: CARET_SIZE,
           backgroundColor: theme.secondaryBackground,
