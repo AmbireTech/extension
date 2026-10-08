@@ -288,7 +288,7 @@ const ExportAccountsToMobileScreen = () => {
                     >
                       {isPreparing
                         ? t('Preparing the QR codes...')
-                        : t('Click to select accounts and show QR codes')}
+                        : t('Click to select what to export and show the QR codes')}
                     </Text>
                   </View>
                 </AnimatedPressable>

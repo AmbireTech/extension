@@ -103,7 +103,7 @@ const ExportAccountsToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) =
         closeBottomSheet={closeBottomSheet}
         onClosed={handleClosed}
       >
-        <ModalHeader handleClose={closeBottomSheet} title={t('Export accounts')} />
+        <ModalHeader handleClose={closeBottomSheet} title={t('Export to extension')} />
         <Text fontSize={16} weight="medium" style={spacings.mbTy}>
           {t('1. Download the Ambire Extension on your browser.')}
         </Text>
@@ -205,7 +205,7 @@ const ExportAccountsToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) =
             >
               {isPreparing
                 ? t('Preparing the QR codes...')
-                : t('Tap to select accounts and show QR codes')}
+                : t('Tap to select what to export and show the QR codes')}
             </Text>
           </AnimatedPressable>
         )}
