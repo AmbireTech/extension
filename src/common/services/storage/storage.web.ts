@@ -40,7 +40,9 @@ const commonAsyncStorage: Storage = {
 const formatValue = (key: string, value: any, defaultValue?: any) => {
   try {
     return typeof value === 'string' ? parseStorageValue(key, value) : value
-  } catch (error) {
+  } catch (error: any) {
+    // Only the key and the error type: the parse error message can quote the stored value
+    console.error(`Failed to parse the stored value of "${key}" (${error?.name})`)
     return typeof value === 'string' ? value : defaultValue
   }
 }
