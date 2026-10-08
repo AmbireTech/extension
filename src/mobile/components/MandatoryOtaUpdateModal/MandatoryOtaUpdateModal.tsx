@@ -48,8 +48,12 @@ const MandatoryOtaUpdateModal = () => {
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [hasDownloadFailed, setHasDownloadFailed] = useState(false)
   const [isRetrying, setIsRetrying] = useState(false)
+  // Not persisted on purpose - the next app start checks for the release again and,
+  // if it is still required, brings the modal back
+  const [hasSkippedUpdate, setHasSkippedUpdate] = useState(false)
 
   const isMandatory = !!newReleaseBundle?.isMandatory
+  const isVisible = isMandatory && !hasSkippedUpdate
 
   useEffect(() => {
     // Listens regardless of the flag, because the flag arrives only after the download
@@ -93,9 +97,9 @@ const MandatoryOtaUpdateModal = () => {
   }, [isRetrying])
 
   useEffect(() => {
-    if (isMandatory) open()
+    if (isVisible) open()
     else close()
-  }, [isMandatory, open, close])
+  }, [isVisible, open, close])
 
   // Asks Stallion for the release again, which downloads it anew (on Android it picks up
   // where the failed download stopped)
@@ -103,6 +107,8 @@ const MandatoryOtaUpdateModal = () => {
     setIsRetrying(true)
     sync()
   }, [])
+
+  const handleSkipUpdate = useCallback(() => setHasSkippedUpdate(true), [])
 
   if (!isMandatory) return null
 
@@ -119,7 +125,8 @@ const MandatoryOtaUpdateModal = () => {
     }
 
     // The modal stays up after a failed download, so the user retries instead of being
-    // left on the outdated version
+    // left on the outdated version. Continuing without the update is still allowed, so an
+    // outage on Stallion's side doesn't lock the user out of the app.
     if (hasDownloadFailed) {
       return (
         <View style={spacings.mbLg}>
@@ -129,6 +136,14 @@ const MandatoryOtaUpdateModal = () => {
           <Button
             text={isRetrying ? t('Trying again...') : t('Try again')}
             onPress={handleRetry}
+            disabled={isRetrying}
+            style={spacings.mbSm}
+            hasBottomSpacing={false}
+          />
+          <Button
+            type="secondary"
+            text={t('Continue without updating')}
+            onPress={handleSkipUpdate}
             disabled={isRetrying}
             hasBottomSpacing={false}
           />
