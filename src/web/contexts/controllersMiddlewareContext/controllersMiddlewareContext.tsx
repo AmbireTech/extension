@@ -288,7 +288,12 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
       // dispatched after an await (e.g. goToNextRoute after saving the account names) - open() then
       // rejects and the dashboard is shown in this tab instead, as when the popup fails to open.
       openFirefoxSidebarFromUserGesture()
-        .then(() => globalDispatch(action, windowId))
+        .then(() =>
+          globalDispatch(
+            { type: 'OPEN_EXTENSION_POPUP', params: { hasOpenedFirefoxSidebar: true } },
+            windowId
+          )
+        )
         .catch((error) => {
           // Expected when there is no user gesture, so it isn't reported
           console.warn('Failed to open the Firefox sidebar, opening the dashboard here', error)

@@ -257,16 +257,34 @@ export const handleActions = async (
     case 'OPEN_EXTENSION_POPUP': {
       if (!pm) return
 
-      const isSidePanelModeEnabled = await storage.get('isSidePanelModeEnabled', false)
+      const isStoredSidePanelModeEnabled = await storage.get('isSidePanelModeEnabled', false)
+      const hasOpenedFirefoxSidebar = !!params?.hasOpenedFirefoxSidebar
+      // Firefox rejects sidebarAction.open() outside a user gesture, which doesn't survive the
+      // message to the background - so the UI opens the sidebar itself, and what it did decides
+      // here instead of the stored mode, which the UI's copy of the state can disagree with
+      const isSidePanelModeEnabled =
+        engine === 'gecko' ? hasOpenedFirefoxSidebar : isStoredSidePanelModeEnabled
       const overlayPortName = isSidePanelModeEnabled ? 'side-panel' : 'popup'
       const targetWindowId = meta?.windowId ?? port?.sender?.tab?.windowId
 
       const getOverlayPort = () => pm!.ports.find((p) => p.name === overlayPortName)
 
+      // Shows the dashboard in the views that are already open (e.g. the tab the action came from)
+      // when neither the popup nor the side panel can be opened
+      const navigateViewsToDashboard = () => {
+        pm!.send('> ui', { method: 'navigate', params: { route: '/', options: {} } })
+      }
+
+      // The UI didn't open the Firefox sidebar, but panel mode is on, so the action has no popup to
+      // open. Waiting for one would leave the user on a button that does nothing.
+      if (engine === 'gecko' && !hasOpenedFirefoxSidebar && isStoredSidePanelModeEnabled) {
+        navigateViewsToDashboard()
+        return
+      }
+
       const focusOverlay = async () => {
         if (isSidePanelModeEnabled) {
-          // Firefox rejects sidebarAction.open() outside a user gesture, which doesn't survive the
-          // message to the background - the UI opens the sidebar itself before dispatching this.
+          // Already opened by the UI (see above)
           if (engine === 'gecko') return
 
           await openPanel(targetWindowId)
@@ -308,12 +326,15 @@ export const handleActions = async (
         await sessionStorage.set('isOpenExtensionPopupLoading', true)
         await focusOverlay()
         await waitForOverlayOpen()
+        // Opening can "succeed" without anything showing up - don't leave the user waiting then
+        if (!getOverlayPort()) navigateViewsToDashboard()
       } catch {
         try {
           await focusOverlay()
           await waitForOverlayOpen()
+          if (!getOverlayPort()) navigateViewsToDashboard()
         } catch {
-          pm.send('> ui', { method: 'navigate', params: { route: '/', options: {} } })
+          navigateViewsToDashboard()
         }
       }
       await sessionStorage.set('isOpenExtensionPopupLoading', false)

@@ -151,6 +151,14 @@ type ImportSmartAccountJson = {
 
 type OpenExtensionPopupAction = {
   type: 'OPEN_EXTENSION_POPUP'
+  params?: {
+    /**
+     * Set by the UI on Firefox once it has opened the sidebar itself (only the UI can - see
+     * `dispatch` in controllersMiddlewareContext). On Firefox the background trusts this over its
+     * stored side panel mode, so the two can never disagree about what was opened.
+     */
+    hasOpenedFirefoxSidebar?: boolean
+  }
 }
 
 // Sent once by a side panel, so app requests can be shown in the panel of the app's own window

@@ -27,7 +27,7 @@ const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
   const {
-    state: { isPinned },
+    state: { isPinned, isSidePanelModeEnabled },
     dispatch: walletStateDispatch
   } = useController('WalletStateController')
 
@@ -86,7 +86,9 @@ const OnboardingCompletedScreen = () => {
                   {t('You can access your accounts from the dashboard via the extension icon.')}
                 </Text>
               )}
-              {engine !== 'gecko' && (
+              {/* Firefox can't open the popup from here, but it can open the sidebar from this
+              click (see `dispatch` in controllersMiddlewareContext) */}
+              {(engine !== 'gecko' || isSidePanelModeEnabled) && (
                 <View style={{ ...flexbox.flex1, width: '100%', ...flexbox.justifyEnd }}>
                   <Button
                     testID="onboarding-completed-open-dashboard-btn"
