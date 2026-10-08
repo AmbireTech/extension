@@ -33,8 +33,8 @@ const SidePanelModeDisabledScreen = () => {
 
   return (
     <LayoutWrapper>
-      {/* Sized to its content instead of filling the panel, so the notice stays compact */}
-      <View style={[flexbox.alignCenter, spacings.ph, spacings.pt2Xl]}>
+      {/* Centered in the panel, like the "make the sidebar wider" notice (SidePanelTooNarrowOverlay) */}
+      <View style={[flexbox.flex1, flexbox.center, spacings.ph]}>
         <SidePanelIcon width={48} height={48} color={theme.primaryText} />
         <Text fontSize={20} weight="medium" style={[spacings.mtMd, text.center]}>
           {t('Side panel mode is off')}
