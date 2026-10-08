@@ -12,7 +12,13 @@ import {
   shouldInitCrashAnalytics,
   withContentTag
 } from '@common/config/analytics/mobileCrashReportHooks'
-import CONFIG, { APP_VERSION, BUILD_NUMBER, isDev, isTesting } from '@common/config/env'
+import CONFIG, {
+  APP_VERSION,
+  BUILD_NUMBER,
+  isDebugBuild,
+  isDev,
+  isTesting
+} from '@common/config/env'
 import {
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
   CRASH_REPORT_CONTENT,
@@ -22,11 +28,15 @@ import {
 import { getStorageValueSync } from '@common/services/storage/storage.native'
 import * as Sentry from '@sentry/react-native'
 
+// `APP_ENV` alone isn't enough, because `yarn start:production` runs a debug build with it set to
+// production, and its reports would mix with real users' crashes.
+const isDevBuild = isDev || isDebugBuild
+
 /**
  * Anonymous crash reporting is on by default outside development, the same privacy policy as
  * the extension. The Firefox first-run opt-in doesn't apply on mobile.
  */
-export const CRASH_ANALYTICS_ENABLED_DEFAULT = !isDev
+export const CRASH_ANALYTICS_ENABLED_DEFAULT = !isDevBuild
 
 // Read before init, because native crashes and the fatal JS errors stored for the next launch
 // can't be held back from JS once the SDK runs.
@@ -38,7 +48,7 @@ let isCrashAnalyticsEnabled = getStorageValueSync(
 if (
   shouldInitCrashAnalytics({
     dsn: CONFIG.SENTRY_DSN_MOBILE,
-    isDevBuild: isDev,
+    isDevBuild,
     isConsentGiven: isCrashAnalyticsEnabled
   })
 ) {

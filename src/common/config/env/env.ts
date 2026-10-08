@@ -18,8 +18,13 @@ import {
 import appJSON from '../../../../app.json'
 
 export const isTesting = process.env.IS_TESTING === 'true'
-const runtimeAppEnv =
-  process.env.APP_ENV || (typeof __DEV__ !== 'undefined' && __DEV__ ? 'development' : 'production')
+/**
+ * Whether the JS runs as a debug build, whatever `APP_ENV` says. A dev-client session started with
+ * `APP_ENV=production` is still a debug build. Always false where `__DEV__` doesn't exist, like
+ * the extension and the websites.
+ */
+export const isDebugBuild = typeof __DEV__ !== 'undefined' && __DEV__
+const runtimeAppEnv = process.env.APP_ENV || (isDebugBuild ? 'development' : 'production')
 export const isDev = runtimeAppEnv === 'development'
 export const isProd = runtimeAppEnv === 'production'
 export const isStaging = runtimeAppEnv === 'staging'
