@@ -59,7 +59,7 @@ The app reports to its own Sentry project, `mobile`. The same stripping and nois
 | `webview` | The WebView worker, its errors and its process being killed |
 | `unhandled` | Anything that reached the global error handlers. Filter by `stack.filename` to split controllers from UI. |
 
-The `otaVersion` tag says which OTA update the app was running, or `default` for the bundle the store build shipped with.
+The `otaVersion` tag says which OTA update the app was running. It is `unknown` until Stallion's server returns the running version, which never happens on the store bundle, offline, or when that request fails.
 
 **Turning it off.** The setting is read when the app starts, before Sentry starts, so with it off nothing is sent, native crashes included. Turning it off while the app runs stops JS reports right away. Turning it back on applies from the next launch, and a toast tells the user so.
 

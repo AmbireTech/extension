@@ -31,5 +31,8 @@ export const CULTURE_CONTEXT_INTEGRATION_NAME = 'CultureContext'
 /** Tag that tells which OTA update a crash happened on. */
 export const OTA_VERSION_TAG = 'otaVersion'
 
-/** The `otaVersion` tag of the bundle that shipped with the store build, before any OTA update. */
-export const OTA_VERSION_DEFAULT = 'default'
+/**
+ * The `otaVersion` tag until Stallion's server returns the running bundle's version. It stays for
+ * the whole session on the store bundle, offline, or when that request fails.
+ */
+export const OTA_VERSION_UNKNOWN = 'unknown'
