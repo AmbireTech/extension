@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { AccessibilityActionEvent, Keyboard, LayoutChangeEvent, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 
@@ -20,20 +20,18 @@ const THUMB_SIZE = 20
 const EDGE_MARK_INSET = 1
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
-// How close (in px, from either side) the pointer needs to be, while dragging, to a dot or to
-// either end of the track, for the value to magnetically snap onto it instead of the raw pointer
-// position. The track ends are checked first (see updateValue), so a mark that happens to sit
-// within the radius of an end loses to that end. Deliberately tiny: a mark holds
-// the value for as long as the pointer is within its radius, so a wider one makes dragging off it
-// jump by that whole radius - several percent of the range, which reads as skipped values.
-const SNAP_RADIUS = 3
-// A press is a deliberate "give me that mark" rather than a fine adjustment, so it snaps from
-// much further out than a drag does - tapping near a dot should land on it, not a few percent off.
+// A press is a deliberate "give me that mark", so pressing within this many px of a dot (or of
+// either end of the track) lands exactly on it. A drag never snaps - it is a fine adjustment.
 const PRESS_SNAP_RADIUS = 24
-// How far the pointer may travel before what started as a press counts as a drag. On the web a
-// mouse click jitters by a pixel or two, which is movement enough to start reporting updates, and
-// without this the drag's tight radius would immediately undo the press's snap.
-const PRESS_MAX_TRAVEL = 8
+// Linearly maps x from [fromStart, fromEnd] onto [toStart, toEnd].
+const interpolate = (
+  x: number,
+  [fromStart, fromEnd]: [number, number],
+  [toStart, toEnd]: [number, number]
+) =>
+  fromEnd === fromStart
+    ? toStart
+    : toStart + ((x - fromStart) * (toEnd - toStart)) / (fromEnd - fromStart)
 const parseHexChannels = (hex: string) => {
   const cleanHex = hex.replace('#', '')
   return [
@@ -224,20 +222,49 @@ const AmountSlider = ({
     [clampedValue, onValueChange]
   )
 
-  const updateValue = useCallback(
-    (locationX: number, snapRadius: number) => {
-      if (!width || maximumValue <= 0n) return
-      // Guards every calculation below, but the BigInt conversion at the end above all - it
-      // throws on anything that isn't a whole, finite number.
-      if (!Number.isFinite(locationX)) return
+  // Where on the track the value sat once the press was handled - the drag moves it from there
+  // instead of jumping it under the pointer (see handleDrag).
+  const dragStartPositionRef = useRef(0)
+  // The pointer's x when the press turned into a drag, i.e. already past activeOffsetX's slop.
+  const dragAnchorXRef = useRef(0)
 
-      const position = Math.min(Math.max(locationX, 0), width)
+  // Guards every calculation it feeds, but the BigInt conversion in emitPosition above all - it
+  // throws on anything that isn't a whole, finite number.
+  const getTrackPosition = useCallback(
+    (locationX: number) => {
+      if (!width || maximumValue <= 0n || !Number.isFinite(locationX)) return null
 
-      // Magnetic snap: land exactly on a mark's own value (not just its nearest slider step)
-      // whenever the pointer is close to its dot, from either side. The track's own two ends snap
-      // the same way and, listed first, win a tie - but only a tie: a mark sitting closer to the
-      // pointer than an end beats it, or one that happens to sit within the press radius of an
-      // end would never be reachable by pressing on it.
+      return Math.min(Math.max(locationX, 0), width)
+    },
+    [maximumValue, width]
+  )
+
+  const emitPosition = useCallback(
+    (position: number) => {
+      const rawStep = Math.round((position / width) * Number(SLIDER_STEPS))
+      const nextStep = BigInt(Math.min(Math.max(rawStep, 0), Number(SLIDER_STEPS)))
+      emitValueChange((maximumValue * nextStep) / SLIDER_STEPS)
+    },
+    [emitValueChange, maximumValue, width]
+  )
+
+  const handlePress = useCallback(
+    (locationX: number) => {
+      const position = getTrackPosition(locationX)
+      if (position === null) return
+
+      // Grabbing the thumb itself only starts a drag. Moving the value to the exact pointer
+      // position would shift it by up to half a thumb before the drag has even started.
+      if (position >= thumbPosition && position <= thumbPosition + THUMB_SIZE) {
+        dragStartPositionRef.current = fractionOfWidth(sliderStep)
+        return
+      }
+
+      // Snap: land exactly on a mark's own value (not just its nearest slider step) whenever the
+      // press is close to its dot, from either side. The track's own two ends snap the same way
+      // and, listed first, win a tie - but only a tie: a mark sitting closer to the pointer than
+      // an end beats it, or one that happens to sit within the press radius of an end would never
+      // be reachable by pressing on it.
       const snapPoints: { amount: bigint; position: number }[] = [
         { amount: 0n, position: 0 },
         { amount: maximumValue, position: width },
@@ -249,24 +276,67 @@ const AmountSlider = ({
       const nearestSnapPoint = snapPoints.reduce<(typeof snapPoints)[number] | null>(
         (nearest, snapPoint) => {
           const distance = Math.abs(snapPoint.position - position)
-          if (distance > snapRadius) return nearest
+          if (distance > PRESS_SNAP_RADIUS) return nearest
 
           return !nearest || distance < Math.abs(nearest.position - position) ? snapPoint : nearest
         },
         null
       )
-      if (nearestSnapPoint) {
+      // Already on that mark, a press nearby is a fine adjustment, so it lands where pressed.
+      if (nearestSnapPoint && nearestSnapPoint.amount !== clampedValue) {
+        dragStartPositionRef.current = nearestSnapPoint.position
         emitValueChange(nearestSnapPoint.amount)
         return
       }
 
-      const rawStep = Math.round((position / width) * Number(SLIDER_STEPS))
-      const nextStep = BigInt(Math.min(Math.max(rawStep, 0), Number(SLIDER_STEPS)))
-      emitValueChange((maximumValue * nextStep) / SLIDER_STEPS)
+      dragStartPositionRef.current = position
+      emitPosition(position)
     },
-    [emitValueChange, markers, maximumValue, width]
+    [
+      clampedValue,
+      emitPosition,
+      emitValueChange,
+      fractionOfWidth,
+      getTrackPosition,
+      markers,
+      maximumValue,
+      sliderStep,
+      thumbPosition,
+      width
+    ]
   )
 
+  const handleDragStart = useCallback(
+    (locationX: number) => {
+      const position = getTrackPosition(locationX)
+      if (position === null) return
+
+      dragAnchorXRef.current = position
+    },
+    [getTrackPosition]
+  )
+
+  // Moves the value relative to where the drag started, so it doesn't skip the activation slop and
+  // the grab offset. The pointer's way to each end maps onto the value's, so both stay reachable.
+  const handleDrag = useCallback(
+    (locationX: number) => {
+      const position = getTrackPosition(locationX)
+      if (position === null) return
+
+      const anchorX = dragAnchorXRef.current
+      const startPosition = dragStartPositionRef.current
+      emitPosition(
+        position >= anchorX
+          ? interpolate(position, [anchorX, width], [startPosition, width])
+          : interpolate(position, [0, anchorX], [0, startPosition])
+      )
+    },
+    [emitPosition, getTrackPosition, width]
+  )
+
+  // The builder only stores these callbacks for later gesture events, it never invokes them
+  // during render, so the refs they touch are only ever read inside those events
+  /* eslint-disable react-hooks/refs */
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -281,16 +351,13 @@ const AmountSlider = ({
           // Grabbing the slider ends typing: the screen keeps the keyboard up on taps, and an amount
           // field left focused is never remounted (see useTextInputRemountKey), so a drag could crash
           if (!isWeb) Keyboard.dismiss()
-          updateValue(x, PRESS_SNAP_RADIUS)
+          handlePress(x)
         })
-        .onUpdate(({ x, translationX }) => {
-          updateValue(
-            x,
-            Math.abs(translationX) < PRESS_MAX_TRAVEL ? PRESS_SNAP_RADIUS : SNAP_RADIUS
-          )
-        }),
-    [maximumValue, updateValue]
+        .onStart(({ x }) => handleDragStart(x))
+        .onUpdate(({ x }) => handleDrag(x)),
+    [handleDrag, handleDragStart, handlePress, maximumValue]
   )
+  /* eslint-enable react-hooks/refs */
   const handleAccessibilityAction = useCallback(
     (event: AccessibilityActionEvent) => {
       const direction = event.nativeEvent.actionName === 'increment' ? 1n : -1n

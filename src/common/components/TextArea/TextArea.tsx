@@ -23,6 +23,19 @@ export interface InputProps extends TextInputProps {
   bottomLabelStyle?: TextStyle | TextStyle[]
   nativeInputStyle?: TextStyle
   leftIcon?: () => ReactNode
+  /**
+   * Rendered inside the input box, right before the native input. Useful for
+   * absolutely positioned layers that should match the native input's box.
+   */
+  customInputContent?: ReactNode
+  /**
+   * Receives the native input, also when its `autoFocus` is deferred
+   */
+  setInputRef?: (ref: TextInput | null) => void
+  /**
+   * Rendered as `data-*` attributes of the native input on web
+   */
+  dataSet?: { [key: string]: string }
   value?: string
 }
 
@@ -41,14 +54,19 @@ const TextArea = ({
   bottomLabelStyle,
   nativeInputStyle,
   leftIcon,
+  customInputContent,
   value,
   autoFocus,
   style,
+  setInputRef,
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
   const { theme, styles } = useTheme(getStyles)
-  const { autoFocus: nativeAutoFocus, setInputRef } = useAutoFocus(autoFocus)
+  const { autoFocus: nativeAutoFocus, setInputRef: setAutoFocusInputRef } = useAutoFocus(
+    autoFocus,
+    setInputRef
+  )
   const textInputRemountKey = useTextInputRemountKey(value, isFocused)
 
   const handleOnFocus = (e: BlurEvent) => {
@@ -83,6 +101,7 @@ const TextArea = ({
         {!!leftIcon && <View style={styles.leftIcon}>{leftIcon()}</View>}
         {/* TextInput doesn't support border styles so we wrap it in a View */}
         <View style={[styles.input, { height: '100%' }, inputStyle]}>
+          {customInputContent}
           <TextInput
             key={textInputRemountKey}
             placeholderTextColor={theme.secondaryText}
@@ -91,7 +110,7 @@ const TextArea = ({
             editable={!disabled}
             onBlur={handleOnBlur}
             onFocus={handleOnFocus}
-            ref={setInputRef}
+            ref={setAutoFocusInputRef}
             autoFocus={nativeAutoFocus}
             value={value}
             {...rest}
