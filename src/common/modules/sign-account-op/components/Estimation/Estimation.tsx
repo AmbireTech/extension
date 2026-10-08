@@ -701,10 +701,10 @@ const Estimation = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          spacings.mbTy
+          spacings.mbSm
         ]}
       >
-        <Text fontSize={16} weight="semiBold" numberOfLines={1} style={flexbox.flex1}>
+        <Text fontSize={16} weight="medium" numberOfLines={1} style={flexbox.flex1}>
           {estimationTitle}
         </Text>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
