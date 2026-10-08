@@ -2,6 +2,7 @@ import { useContext, useEffect } from 'react'
 
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
+import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { getUiType } from '@common/utils/uiType'
@@ -17,6 +18,7 @@ const useCurrentActionSideEffects = () => {
     dispatch: requestsDispatch
   } = useController('RequestsController')
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
 
   useEffect(() => {
     if (!areAllControllerStatesLoaded) return
@@ -27,7 +29,12 @@ const useCurrentActionSideEffects = () => {
     )
       return
 
-    if (isRequestWindow && currentUserRequest) {
+    // The view that renders requests resolves the unlock request once the wallet is unlocked - the
+    // request window, or the side panel when it is open, as then no request window is opened.
+    // Otherwise the request stays pending, with no screen to open it on.
+    const isRequestSurface = isRequestWindow || shouldRenderRequestInPanel
+
+    if (isRequestSurface && currentUserRequest) {
       if (currentUserRequest.kind === 'unlock') {
         requestsDispatch({
           type: 'method',
@@ -44,7 +51,8 @@ const useCurrentActionSideEffects = () => {
     authStatus,
     requestsDispatch,
     keystoreState.isReadyToStoreKeys,
-    keystoreState.isUnlocked
+    keystoreState.isUnlocked,
+    shouldRenderRequestInPanel
   ])
 
   useEffect(() => {

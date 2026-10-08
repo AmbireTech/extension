@@ -2,7 +2,6 @@ import React, { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
-import useController from '@common/hooks/useController'
 import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
 import WalletStakingScreen from '@web/modules/wallet-staking/screens/WalletStakingScreen'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
@@ -11,11 +10,8 @@ import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnl
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
-import { getUiType } from '@common/utils/uiType'
-import { engine } from '@web/constants/browserapi'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
-import SidePanelModeDisabledScreen from '@web/modules/auth/screens/SidePanelModeDisabledScreen'
 import SidePanelNoAccountsScreen from '@web/modules/auth/screens/SidePanelNoAccountsScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
@@ -34,21 +30,9 @@ import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBri
 import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const isFirefoxSidebar = engine === 'gecko' && getUiType().isSidePanel
-
-const selectIsSidePanelModeEnabled = (state: AllControllersMappingType['WalletStateController']) =>
-  state.isSidePanelModeEnabled
-
 const MainRoutes = () => {
   const location = useLocation()
   const { t } = useTranslation()
-
-  const { state: isSidePanelModeEnabled } = useController(
-    'WalletStateController',
-    selectIsSidePanelModeEnabled
-  )
 
   useEffect(() => {
     const trimmedPathName = location.pathname.replace(/^\/|\/$/g, '')
@@ -58,11 +42,6 @@ const MainRoutes = () => {
 
     document.title = title
   }, [location.pathname, t])
-
-  // Firefox can't hide the extension's sidebar from its sidebar switcher, so it can be opened
-  // while the wallet is set to open as a popup - show a notice there instead of a second wallet UI.
-  // Strict `false` so nothing flashes before the WalletStateController state arrives.
-  if (isFirefoxSidebar && isSidePanelModeEnabled === false) return <SidePanelModeDisabledScreen />
 
   return (
     // Rendering null instead of another Splash screen as before rendering this component, the Router component already renders a Splash screen while the controllers are loading.

@@ -280,6 +280,15 @@ handleKeepAlive()
 providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) => {
   // wait for mainCtrl to be initialized before handling dapp requests
   while (!mainCtrl || !walletStateCtrl) await wait(200)
+  // ...and for the stored settings, as the side panel mode decides whether a request is shown in an
+  // open side panel - until it loads it reads as off (e.g. right after a browser restart)
+  try {
+    await walletStateCtrl.initialLoadPromise
+  } catch (error) {
+    // The defaults still let the request be handled, in a request window
+    console.error('Failed to load the wallet settings before handling a dapp request', error)
+    captureBackgroundException(error)
+  }
 
   const senderTab = meta.sender?.tab
   const tabId = senderTab?.id
