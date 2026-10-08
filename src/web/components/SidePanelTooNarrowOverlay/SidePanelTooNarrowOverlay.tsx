@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 
-import SidePanelIcon from '@common/assets/svg/SidePanelIcon'
+import SidePanelOpenIcon from '@common/assets/svg/SidePanelOpenIcon'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -36,7 +36,7 @@ const SidePanelTooNarrowOverlay = () => {
         { zIndex: 1000, backgroundColor: theme.primaryBackground }
       ]}
     >
-      <SidePanelIcon width={48} height={48} color={theme.primaryText} />
+      <SidePanelOpenIcon width={48} height={48} color={theme.primaryText} />
       <Text fontSize={20} weight="medium" style={[spacings.mtMd, text.center]}>
         {t('Make the sidebar wider')}
       </Text>
