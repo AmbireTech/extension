@@ -4,11 +4,13 @@ import { Platform } from 'react-native'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
+import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import {
   captureWebViewException,
   captureWebViewMessage
 } from '@common/config/analytics/CrashAnalytics'
+import { shouldReportControllerError } from '@common/config/analytics/crashReportHelpers'
 import { CRASH_REPORT_CONTENT } from '@common/constants/crashAnalytics'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
@@ -80,13 +82,23 @@ const getDevServerUrl = () => {
   return `http://${WEBVIEW_DEV_HOST}:${WEBVIEW_DEV_SERVER_PORT}`
 }
 
-type WorkerErrorPayload = { message?: string; stack?: string; url?: string; lineNo?: number }
+type WorkerErrorPayload = {
+  message?: string
+  stack?: string
+  url?: string
+  lineNo?: number
+  // Set only for controller errors, the global handlers report every error
+  level?: ErrorRef['level']
+  sendCrashReport?: boolean
+}
 
 // The worker sends plain objects, not Errors, so each one is rebuilt here. Its own stack and
 // location go in extra, because they point into the worker bundle, not the RN one. The rebuilt
 // errors all share this function's stack, so they're grouped by message instead.
 const reportWorkerErrors = (ctrlName: string, errors: WorkerErrorPayload[]) => {
-  errors.forEach(({ message = '', ...location }) => {
+  errors.forEach(({ message = '', level, sendCrashReport, ...location }) => {
+    if (!shouldReportControllerError({ level, sendCrashReport })) return
+
     captureWebViewException(new Error(message), {
       extra: { ctrlName, ...location },
       fingerprint: [CRASH_REPORT_CONTENT.WEBVIEW, ctrlName, message]

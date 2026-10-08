@@ -71,6 +71,8 @@ export const getReportableAction = (
  * Whether a controller error should become a crash report. Gives false when the controller
  * opted out with `sendCrashReport: false` or marked the error as `expected`.
  */
-export const shouldReportControllerError = (errorRef: ErrorRef): boolean =>
+export const shouldReportControllerError = (
+  errorRef: Partial<Pick<ErrorRef, 'level' | 'sendCrashReport'>>
+): boolean =>
   !(typeof errorRef.sendCrashReport === 'boolean' && !errorRef.sendCrashReport) &&
   errorRef.level !== 'expected'
