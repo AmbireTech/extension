@@ -56,28 +56,6 @@ const getRequiredEnvVariables = (envSampleContent, target) => {
   return requiredVars
 }
 
-const parseEnvFileContent = (envFileContent) =>
-  envFileContent
-    .split('\n')
-    .filter((line) => line.trim() && !line.trim().startsWith('#'))
-    .reduce((acc, line) => {
-      // Use regex to properly handle quoted values
-      const match = line.match(/^([^=]+)=(.*)$/)
-      if (match) {
-        const key = match[1].trim()
-        let value = match[2].trim()
-        // Remove surrounding quotes if they exist
-        if (
-          (value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))
-        ) {
-          value = value.slice(1, -1)
-        }
-        acc[key] = value
-      }
-      return acc
-    }, {})
-
 /**
  * Throws when a required variable is missing or empty, or when a production build points
  * an important variable anywhere but production.
@@ -100,22 +78,15 @@ const validateEnvValues = (envValues, requiredVariables, environment) => {
 }
 
 /**
- * Validates the env a build inlines, which is `.env` overridden by the process env, the same
- * way react-native-dotenv merges them. CI passes its values through the process env, so a
- * `.env` file is optional. Throws on the first problem found.
+ * Validates the env a build inlines. Reads only the process env, because the callers load the
+ * `.env` files into it first. Expo CLI does that before metro reads its config, and the webpack
+ * config through `dotenv`. CI passes its values through the process env, so a `.env` file is
+ * optional. Throws on the first problem found.
  */
 const validateEnvVariables = (environment, target) => {
   const envSampleContent = fs.readFileSync(path.join(ROOT_DIR, '.env-sample'), 'utf8')
-  const envPath = path.join(ROOT_DIR, '.env')
-  const envFileValues = fs.existsSync(envPath)
-    ? parseEnvFileContent(fs.readFileSync(envPath, 'utf8'))
-    : {}
 
-  validateEnvValues(
-    { ...envFileValues, ...process.env },
-    getRequiredEnvVariables(envSampleContent, target),
-    environment
-  )
+  validateEnvValues(process.env, getRequiredEnvVariables(envSampleContent, target), environment)
 }
 
 module.exports = {
