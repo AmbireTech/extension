@@ -2011,6 +2011,19 @@
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
+    "idb": {
+      "globals": {
+        "DOMException": true,
+        "IDBCursor": true,
+        "IDBDatabase": true,
+        "IDBIndex": true,
+        "IDBObjectStore": true,
+        "IDBRequest": true,
+        "IDBTransaction": true,
+        "indexedDB.deleteDatabase": true,
+        "indexedDB.open": true
+      }
+    },
     "react-native-web>inline-style-prefixer": {
       "packages": {
         "react-native-web>inline-style-prefixer>css-in-js-utils": true
