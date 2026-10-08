@@ -12,9 +12,10 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -44,6 +45,7 @@ const PayOption = ({
   shouldHighlightExtremeGasFee?: boolean
   // showAccountBalanceBadge?: boolean // Note: Under discussion
 }) => {
+  const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: account } = useController('SelectedAccountController', selectAccount)
@@ -134,6 +136,17 @@ const PayOption = ({
               >
                 {formatDecimals(Number(amountUsd), 'value')}
               </Text>
+              {isPaidByAnotherAccount && (
+                <Text
+                  appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
+                  weight="medium"
+                  fontSize={12}
+                  numberOfLines={1}
+                  style={[spacings.mlTy, { flexShrink: 1 }]}
+                >
+                  {formattedAmount} {feeOption.token.symbol}
+                </Text>
+              )}
               {/* Note: Under discussion */}
               {/* {showWalletBalanceBadge && (
                 <View style={styles.walletBalanceBadge}>
@@ -143,37 +156,56 @@ const PayOption = ({
                 </View>
               )} */}
             </View>
-            <Text
-              appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
-              weight="medium"
-              fontSize={12}
-              numberOfLines={1}
-            >
-              {formattedAmount} {feeOption.token.symbol}
-            </Text>
+            {isPaidByAnotherAccount ? (
+              // Only a long account name is cut, "Paid by" and the address always stay whole
+              <View style={[flexbox.directionRow, flexbox.alignCenter, { gap: SPACING_MI }]}>
+                <Text
+                  fontSize={12}
+                  appearance="secondaryText"
+                  numberOfLines={1}
+                  style={{ flexShrink: 0 }}
+                >
+                  {t('Paid by')}
+                </Text>
+                <Avatar
+                  size={16}
+                  address={feeOption.paidBy}
+                  pfp={feeOption.paidBy}
+                  style={spacings.pr0}
+                  displayTypeBadge={false}
+                />
+                <Text
+                  fontSize={12}
+                  weight="semiBold"
+                  numberOfLines={1}
+                  style={{ flexShrink: 1, minWidth: 0 }}
+                >
+                  {paidByAccountLabel || shortenAddress(feeOption.paidBy, 13)}
+                </Text>
+                {!!paidByAccountLabel && (
+                  <Text
+                    fontSize={12}
+                    appearance="secondaryText"
+                    numberOfLines={1}
+                    style={{ flexShrink: 0 }}
+                  >
+                    ({shortenAddress(feeOption.paidBy, 13)})
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <Text
+                appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
+                weight="medium"
+                fontSize={12}
+                numberOfLines={1}
+              >
+                {formattedAmount} {feeOption.token.symbol}
+              </Text>
+            )}
           </View>
         )}
       </View>
-      {isPaidByAnotherAccount && (
-        // Capped at half the row, so a long account name is cut instead of pushing the amount out
-        <View style={[flexbox.alignEnd, { flexShrink: 1, minWidth: 0, maxWidth: '50%' }]}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
-            <Avatar
-              size={16}
-              address={feeOption.paidBy}
-              pfp={feeOption.paidBy}
-              style={spacings.prTy}
-              displayTypeBadge={false}
-            />
-            <Text fontSize={12} weight="semiBold" numberOfLines={1} style={{ flexShrink: 1 }}>
-              {paidByAccountLabel}
-            </Text>
-          </View>
-          <Text fontSize={10} weight="medium">
-            {shortenAddress(feeOption.paidBy, 13)}
-          </Text>
-        </View>
-      )}
       {warning && (
         <WarningIcon
           width={20}
