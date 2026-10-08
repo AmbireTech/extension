@@ -724,7 +724,8 @@ const Estimation = ({
           {renderFeeSpeedSelect()}
           {signAccountOpState.canAccountBroadcastByItself && (
             <>
-              <View style={[styles.feeHeaderDivider, spacings.mhSm]} />
+              {/* Only separates the speed select from the gear, so it goes away with the select */}
+              {!!selectedFee && <View style={[styles.feeHeaderDivider, spacings.mhSm]} />}
               <HoverablePressable
                 onPress={openAdvancedOptions}
                 hitSlop={8}
