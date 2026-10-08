@@ -114,6 +114,9 @@ jobs:
           UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
           SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
           WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
+          SENTRY_DSN_MOBILE: ${{ vars.SENTRY_DSN_MOBILE }}
+          # Lets the script upload the OTA bundle's source map
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_MOBILE }}
           # Stallion CI auth - there is no interactive `stallion login` in CI.
           STALLION_CI_TOKEN: ${{ secrets.STALLION_CI_TOKEN }}
           # Private signing key (base64 secret) - signs the OTA so signed app builds accept it.
