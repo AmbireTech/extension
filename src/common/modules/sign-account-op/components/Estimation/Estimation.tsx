@@ -550,9 +550,9 @@ const Estimation = ({
             </Text>
             <View style={spacings.mlTy}>
               {isMenuOpen ? (
-                <UpArrowIcon width={12} height={7} />
+                <UpArrowIcon width={12} height={7} strokeWidth="1.8" />
               ) : (
-                <DownArrowIcon width={12} height={7} />
+                <DownArrowIcon width={12} height={7} strokeWidth="1.8" />
               )}
             </View>
           </View>
