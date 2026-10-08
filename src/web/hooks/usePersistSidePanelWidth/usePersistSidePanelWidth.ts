@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import { getUiType } from '@common/utils/uiType'
 import { browser, engine } from '@web/constants/browserapi'
+import { SIDE_PANEL_MIN_WIDTH } from '@web/constants/spacings'
 import {
   FIREFOX_SIDEBAR_IS_ON_LEFT_STORAGE_KEY,
   SIDE_PANEL_WIDTH_STORAGE_KEY
@@ -42,9 +43,12 @@ const getIsFirefoxSidebarOnLeft = async (): Promise<boolean | undefined> => {
 const saveSidePanelLayout = async () => {
   try {
     const isFirefoxSidebarOnLeft = await getIsFirefoxSidebarOnLeft()
+    // A Firefox sidebar can be dragged narrower than the layout supports - such a width isn't saved,
+    // so the request window keeps opening at the last width it renders correctly at
+    const isWidthSupported = window.innerWidth >= SIDE_PANEL_MIN_WIDTH
 
     await browser.storage.local.set({
-      [SIDE_PANEL_WIDTH_STORAGE_KEY]: window.innerWidth,
+      ...(isWidthSupported && { [SIDE_PANEL_WIDTH_STORAGE_KEY]: window.innerWidth }),
       ...(isFirefoxSidebarOnLeft !== undefined && {
         [FIREFOX_SIDEBAR_IS_ON_LEFT_STORAGE_KEY]: isFirefoxSidebarOnLeft
       })
