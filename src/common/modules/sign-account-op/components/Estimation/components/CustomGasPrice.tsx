@@ -341,8 +341,8 @@ const CustomGasPrice = ({
           />
         </View>
       )}
-      {/* On web the header's back arrow already closes the sheet, so nothing is left to show */}
-      {(isMobile || !unavailableReason) && (
+      {/* Nothing to save when the fee can't be set. The sheet closes on drag, backdrop or back arrow */}
+      {!unavailableReason && (
         <FooterGlassView
           absolute={false}
           isSimpleBlur={isNarrowWebLayout}
@@ -355,29 +355,27 @@ const CustomGasPrice = ({
           {isMobile && (
             <Button
               type="secondary"
-              text={unavailableReason ? t('Close') : t('Cancel')}
+              text={t('Cancel')}
               onPress={closeBottomSheet}
               hasBottomSpacing={false}
-              style={[!unavailableReason && spacings.mrTy, flexbox.flex1]}
+              style={[spacings.mrTy, flexbox.flex1]}
               size="smaller"
             />
           )}
-          {!unavailableReason && (
-            <Button
-              type="primary"
-              text={t('Save')}
-              onPress={saveCustomGasPrice}
-              hasBottomSpacing={false}
-              style={
-                isNarrowWebLayout
-                  ? { width: '100%' }
-                  : isCompactLayout
-                    ? flexbox.flex1
-                    : { width: 100 }
-              }
-              size={isNarrowWebLayout ? 'regular' : 'smaller'}
-            />
-          )}
+          <Button
+            type="primary"
+            text={t('Save')}
+            onPress={saveCustomGasPrice}
+            hasBottomSpacing={false}
+            style={
+              isNarrowWebLayout
+                ? { width: '100%' }
+                : isCompactLayout
+                  ? flexbox.flex1
+                  : { width: 100 }
+            }
+            size={isNarrowWebLayout ? 'regular' : 'smaller'}
+          />
         </FooterGlassView>
       )}
     </BottomSheet>
