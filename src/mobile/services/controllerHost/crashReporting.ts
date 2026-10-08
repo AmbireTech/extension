@@ -9,12 +9,13 @@ import {
   syncCrashAnalyticsConsent
 } from '@common/config/analytics/CrashAnalytics'
 import {
+  getCrashReportAccountAddr,
+  getCrashReportUserId,
   getReportableAction,
   shouldReportControllerError
 } from '@common/config/analytics/crashReportHelpers'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { Action, MethodAction } from '@common/types/actions'
-import { getAppInstanceId } from '@common/utils/analytics'
 
 import type { MainController } from '@ambire-common/controllers/main/main'
 
@@ -51,11 +52,11 @@ export const reportFailedAction = (action: MethodAction | Action, error: unknown
  */
 export const syncCrashReportContext = (ctrl: { name: string }, mainCtrl: MainController) => {
   if (ctrl.name === 'KeystoreController') {
-    const keystoreCtrl = ctrl as unknown as IKeystoreController
-    if (!keystoreCtrl.isReadyToStoreKeys) return
-
-    const userId = getAppInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
-    if (userId === lastReportedUserId) return
+    const userId = getCrashReportUserId(
+      ctrl as unknown as IKeystoreController,
+      mainCtrl.invite.verifiedCode
+    )
+    if (userId === undefined || userId === lastReportedUserId) return
 
     lastReportedUserId = userId
     setUserContext({ id: userId })
@@ -63,7 +64,7 @@ export const syncCrashReportContext = (ctrl: { name: string }, mainCtrl: MainCon
   }
 
   if (ctrl.name === 'SelectedAccountController') {
-    const accountAddr = (ctrl as unknown as ISelectedAccountController).account?.addr
+    const accountAddr = getCrashReportAccountAddr(ctrl as unknown as ISelectedAccountController)
     if (!accountAddr || accountAddr === lastReportedAccountAddr) return
 
     lastReportedAccountAddr = accountAddr

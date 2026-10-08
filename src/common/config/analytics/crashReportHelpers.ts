@@ -1,6 +1,9 @@
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
+import { IKeystoreController } from '@ambire-common/interfaces/keystore'
+import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { isTesting } from '@common/config/env'
 import { Action, MethodAction } from '@common/types/actions'
+import { getAppInstanceId } from '@common/utils/analytics'
 
 /**
  * Gives back the Sentry integrations without the ones named in `excludedNames`. Meant for the
@@ -76,3 +79,23 @@ export const shouldReportControllerError = (
 ): boolean =>
   !(typeof errorRef.sendCrashReport === 'boolean' && !errorRef.sendCrashReport) &&
   errorRef.level !== 'expected'
+
+/**
+ * The anonymous user ID that crash reports carry, shared by the extension background and the
+ * mobile app. Gives undefined until the keystore is ready to store keys.
+ */
+export const getCrashReportUserId = (
+  keystoreCtrl: Pick<IKeystoreController, 'isReadyToStoreKeys' | 'keyStoreUid'>,
+  verifiedInviteCode: string | null
+): string | undefined =>
+  keystoreCtrl.isReadyToStoreKeys
+    ? getAppInstanceId(keystoreCtrl.keyStoreUid, verifiedInviteCode)
+    : undefined
+
+/**
+ * The selected account address that crash reports carry, shared by the extension background and
+ * the mobile app. Gives undefined when no account is selected.
+ */
+export const getCrashReportAccountAddr = (
+  selectedAccountCtrl: Pick<ISelectedAccountController, 'account'>
+): string | undefined => selectedAccountCtrl.account?.addr

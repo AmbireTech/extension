@@ -26,6 +26,8 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import {
   excludeIntegrationsByName,
+  getCrashReportAccountAddr,
+  getCrashReportUserId,
   getReportableAction,
   logSentryDeliveryWhenTesting,
   shouldReportControllerError
@@ -377,7 +379,7 @@ const init = async () => {
             const keystoreCtrl = ctrl as IKeystoreController
             if (keystoreCtrl.isReadyToStoreKeys) {
               setBackgroundUserContext({
-                id: getAppInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
+                id: getCrashReportUserId(keystoreCtrl, mainCtrl.invite.verifiedCode)
               })
               if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
@@ -390,10 +392,10 @@ const init = async () => {
           }
 
           if (ctrl.name === 'SelectedAccountController') {
-            const selectedAccountCtrl = ctrl as ISelectedAccountController
+            const accountAddr = getCrashReportAccountAddr(ctrl as ISelectedAccountController)
 
-            if (selectedAccountCtrl?.account?.addr) {
-              setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
+            if (accountAddr) {
+              setBackgroundExtraContext('account', accountAddr)
             }
           }
         }, 'background')
