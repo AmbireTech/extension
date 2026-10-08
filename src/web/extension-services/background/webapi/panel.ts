@@ -6,7 +6,11 @@ import {
   scheduleDappTabFocusDispatch
 } from '@web/extension-services/background/handlers/dispatchDappTabFocus'
 import { PortMessenger } from '@web/extension-services/messengers'
-import { getChromeSidePanelApi, getFirefoxSidebarApi } from '@web/utils/sidePanel'
+import {
+  FIREFOX_SIDEBAR_IS_ON_LEFT_STORAGE_KEY,
+  getChromeSidePanelApi,
+  getFirefoxSidebarApi
+} from '@web/utils/sidePanel'
 
 const POPUP_PATH = 'index.html'
 
@@ -114,9 +118,24 @@ export const isSidePanelModeEnabled = async () => {
 
 /**
  * Whether the user placed the side panel on the left of the browser window. Chrome versions
- * that can't report the side only support the default right side.
+ * that can't report the side only support the default right side. Firefox can't report it at all,
+ * so there the side the sidebar last measured itself on is used, or Firefox's default left side.
  */
 export const isSidePanelOnLeft = async () => {
+  if (isGecko) {
+    try {
+      const { [FIREFOX_SIDEBAR_IS_ON_LEFT_STORAGE_KEY]: isOnLeft } =
+        await browser.storage.local.get(FIREFOX_SIDEBAR_IS_ON_LEFT_STORAGE_KEY)
+
+      return typeof isOnLeft === 'boolean' ? isOnLeft : true
+    } catch (error) {
+      console.error('Failed to read the Firefox sidebar side', error)
+      captureBackgroundException(error)
+
+      return true
+    }
+  }
+
   const sidePanelApi = getChromeSidePanelApi()
   if (!sidePanelApi?.getLayout) return false
 

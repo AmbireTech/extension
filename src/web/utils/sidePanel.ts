@@ -33,6 +33,13 @@ const getFirefoxSidebarApi = (): FirefoxSidebarApi | undefined => {
 /** The `chrome.storage.local` key holding the last width of the side panel, as the user sized it. */
 export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'sidePanelWidth'
 
+/**
+ * The `chrome.storage.local` key holding whether the Firefox sidebar was last seen on the left of
+ * the browser window. Firefox has no API that reports the side, so the sidebar measures and
+ * stores it itself.
+ */
+export const FIREFOX_SIDEBAR_IS_ON_LEFT_STORAGE_KEY = 'isFirefoxSidebarOnLeft'
+
 export const isSidePanelSupported = () => !!getChromeSidePanelApi() || !!getFirefoxSidebarApi()
 
 /**
