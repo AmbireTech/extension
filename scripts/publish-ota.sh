@@ -15,7 +15,8 @@ set -euo pipefail
 #      runs its own (incompatible) bundler.
 #
 # The source map goes to Sentry before publishing. It's written outside --custom-bundle-path so
-# Stallion never ships it. SENTRY_AUTH_TOKEN is required in CI and optional locally.
+# Stallion never ships it, and left in build/ so CI can keep a copy. SENTRY_AUTH_TOKEN is required
+# in CI and optional locally.
 #
 # Usage: sh ./scripts/publish-ota.sh <ios|android> "<release note>"
 
@@ -39,22 +40,12 @@ cd "$ROOT_DIR"
 UPLOAD_PATH="ambire/mobile/main"
 
 OUT_DIR="$ROOT_DIR/build/ota-$PLATFORM"
-SOURCEMAP_DIR="$ROOT_DIR/build/ota-sourcemaps/$PLATFORM"
+SOURCEMAP_DIR="$ROOT_DIR/build/ota-$PLATFORM-sourcemap"
 if [ "$PLATFORM" = "ios" ]; then
   BUNDLE_NAME="main.jsbundle"
 else
   BUNDLE_NAME="index.android.bundle"
 fi
-
-# Set when CI passes the signing key, which is decoded into a temp file.
-TEMP_PRIVATE_KEY_PATH=""
-cleanup() {
-  rm -rf "$SOURCEMAP_DIR"
-  if [ -n "$TEMP_PRIVATE_KEY_PATH" ]; then
-    rm -f "$TEMP_PRIVATE_KEY_PATH"
-  fi
-}
-trap cleanup EXIT
 
 # 1. Rebuild the webview/inpage bundles (see header).
 yarn build:webview
@@ -128,8 +119,8 @@ fi
 # locally it lives at stallion/secret-keys/private-key.pem (from `stallion generate-key-pair`).
 PRIVATE_KEY_PATH=""
 if [ -n "${STALLION_PRIVATE_SIGNING_KEY_BASE_64:-}" ]; then
-  TEMP_PRIVATE_KEY_PATH="$(mktemp)"
-  PRIVATE_KEY_PATH="$TEMP_PRIVATE_KEY_PATH"
+  PRIVATE_KEY_PATH="$(mktemp)"
+  trap 'rm -f "$PRIVATE_KEY_PATH"' EXIT
   printf '%s' "$STALLION_PRIVATE_SIGNING_KEY_BASE_64" | base64 --decode > "$PRIVATE_KEY_PATH" 2>/dev/null ||
     printf '%s' "$STALLION_PRIVATE_SIGNING_KEY_BASE_64" | base64 -D > "$PRIVATE_KEY_PATH"
 elif [ -f "$ROOT_DIR/stallion/secret-keys/private-key.pem" ]; then
@@ -158,3 +149,4 @@ publish_args+=(--private-key="$PRIVATE_KEY_PATH")
 npx stallion publish-bundle "${publish_args[@]}"
 
 echo "OTA bundle published to $UPLOAD_PATH ($PLATFORM)."
+echo "Source map for this bundle: $SOURCEMAP_DIR/$BUNDLE_NAME.map"

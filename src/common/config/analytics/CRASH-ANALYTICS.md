@@ -63,7 +63,7 @@ The `otaVersion` tag says which OTA update the app was running, or `default` for
 
 **Turning it off.** The setting is read when the app starts, before Sentry starts, so with it off nothing is sent, native crashes included. Turning it off while the app runs stops JS reports right away. Turning it back on applies from the next launch, and a toast tells the user so.
 
-**Readable stack traces.** Release builds upload their JS source maps and native debug symbols when `SENTRY_AUTH_TOKEN` is set, and CI requires it. Android does it in `android/app/build.gradle`. Each OTA update uploads its own source map in [`publish-ota.sh`](../../../../scripts/publish-ota.sh), because the map has to match the exact bundle. Sentry matches them by the debug ID the bundle and its map share, under the release `mobile-<platform>@<app version>`.
+**Readable stack traces.** Release builds upload their JS source maps and native debug symbols when `SENTRY_AUTH_TOKEN` is set, and CI requires it. Android does it in `android/app/build.gradle`, and iOS in the Xcode build phases. Each OTA update uploads its own source map in [`publish-ota.sh`](../../../../scripts/publish-ota.sh), because the map has to match the exact bundle. CI also attaches the OTA map to this repo's release, like the extension's source maps. Sentry matches them by the debug ID the bundle and its map share, under the release `mobile-<platform>@<app version>`.
 
 ## Our Sentry scrubbing rules
 
