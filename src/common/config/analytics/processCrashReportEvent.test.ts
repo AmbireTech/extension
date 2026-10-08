@@ -83,6 +83,20 @@ describe('processCrashReportEvent', () => {
     expect(handled.level).toBe('warning')
   })
 
+  it('keeps the level the capture site set unless a policy rule claims the error', () => {
+    const unclassified = processCrashReportEvent(
+      { ...buildEvent(), level: 'warning' },
+      new Error('The WebView worker process was terminated')
+    )
+    const matchedByRule = processCrashReportEvent(
+      { ...buildEvent(), level: 'info' },
+      new Error('invalid BytesLike value')
+    )
+
+    expect(unclassified.level).toBe('warning')
+    expect(matchedByRule.level).toBe('warning')
+  })
+
   it('sends only the marked fallback event when scrubbing throws, never the unscrubbed content', () => {
     const event = buildEvent()
     Object.defineProperty(event.extra, 'unreadable', {

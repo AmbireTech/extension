@@ -49,15 +49,16 @@ export const isJsonSyntaxError = (error: unknown): boolean =>
   error.message.toLowerCase().includes(JSON_MESSAGE_SUBSTRING)
 
 /**
- * Filters and scrubs a Sentry event for the extension background and the mobile app. Gives back
- * the event ready to send, or null when it must be dropped. Doesn't check the user's opt-out.
+ * Filters and scrubs a Sentry event for the extension UI, the extension background and the mobile
+ * app. Gives back the event ready to send, or null when it must be dropped. Doesn't check the
+ * user's opt-out.
  */
 export const processCrashReportEvent = <T extends SentryEvent>(
   event: T,
   originalException: unknown
 ): T | null => {
   // Whether this shape of error is worth sending, how loud it is and which issue it
-  // joins all live in one place, shared with the UI's own beforeSend.
+  // joins all live in one place.
   if (!applyCrashReportPolicy(event, originalException)) return null
 
   // Our services return HTML error pages during outages. The callers already retry, and

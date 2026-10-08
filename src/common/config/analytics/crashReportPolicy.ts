@@ -322,21 +322,23 @@ export const classifyCrashReport = (error: unknown): CrashReportDecision => {
  * Applies the crash report policy to a Sentry event, in place. Returns false when a rule
  * drops that error shape and the event must not be sent.
  *
- * Both `beforeSend` hooks call this first, before scrubbing - there is no point scrubbing
- * an event that is about to be discarded. The UI and the background each pass their own
- * `beforeSend` to `Sentry.init`, so this is the only piece they share.
+ * `processCrashReportEvent` calls this first, before scrubbing - there is no point scrubbing
+ * an event that is about to be discarded. The extension UI, the extension background and the
+ * mobile app all run their `beforeSend` through `processCrashReportEvent`.
  */
 export const applyCrashReportPolicy = (event: SentryEvent, originalException: unknown): boolean => {
   const decision = classifyCrashReport(originalException)
 
   if (!decision.shouldSend) return false
 
-  // A crash stays a crash, whatever level the policy gives its error
-  if (event.level !== FATAL_LEVEL) event.level = decision.level
+  // A matched rule always decides the level and the issue. Otherwise the level and the
+  // fingerprint the capture site chose are kept.
+  const isUnclassified = decision === UNCLASSIFIED_CRASH_REPORT_DECISION
+  const keepsCaptureLevel = isUnclassified && !!event.level
+  const keepsCaptureFingerprint = isUnclassified && !!event.fingerprint?.length
 
-  // A matched rule always decides the issue. Otherwise a fingerprint the capture site chose is kept.
-  const keepsCaptureFingerprint =
-    decision === UNCLASSIFIED_CRASH_REPORT_DECISION && !!event.fingerprint?.length
+  // A crash stays a crash, whatever level the policy gives its error
+  if (event.level !== FATAL_LEVEL && !keepsCaptureLevel) event.level = decision.level
   if (!keepsCaptureFingerprint) event.fingerprint = decision.fingerprint
 
   return true
