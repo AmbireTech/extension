@@ -24,6 +24,13 @@ export const CONSOLE_BREADCRUMB_CATEGORY = 'console'
 /** Console breadcrumb messages are cut to this many characters before they leave the device. */
 export const CONSOLE_BREADCRUMB_MESSAGE_MAX_LENGTH = 500
 
+/**
+ * How far past the length cut a console breadcrumb is still scrubbed, so a secret that starts
+ * before the cut is found in full. Well above the longest secret the scrub finds, a 24-word seed
+ * phrase of about 215 characters.
+ */
+export const CONSOLE_BREADCRUMB_SCRUB_MARGIN = 500
+
 export const TURBO_MODULE_CONTEXT_INTEGRATION_NAME = 'TurboModuleContext'
 
 export const CULTURE_CONTEXT_INTEGRATION_NAME = 'CultureContext'

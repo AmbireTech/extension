@@ -53,6 +53,20 @@ describe('filterCrashReportBreadcrumb', () => {
     expect(result?.message?.length).toBeLessThanOrEqual(CONSOLE_BREADCRUMB_MESSAGE_MAX_LENGTH)
   })
 
+  it('redacts a 24-word seed phrase that straddles the length cut of a very long message', () => {
+    const padding = 'x'.repeat(CONSOLE_BREADCRUMB_MESSAGE_MAX_LENGTH - 1)
+    const tail = 'y'.repeat(100_000)
+    const breadcrumb = {
+      category: CONSOLE_BREADCRUMB_CATEGORY,
+      message: `${padding} ${SEED_PHRASE} ${SEED_PHRASE} ${tail}`
+    }
+
+    const result = filterCrashReportBreadcrumb(breadcrumb)
+
+    expect(result?.message).not.toContain('abandon')
+    expect(result?.message?.length).toBeLessThanOrEqual(CONSOLE_BREADCRUMB_MESSAGE_MAX_LENGTH)
+  })
+
   it('drops a breadcrumb whose scrub throws, instead of sending it unscrubbed', () => {
     const breadcrumb = {
       category: 'navigation',

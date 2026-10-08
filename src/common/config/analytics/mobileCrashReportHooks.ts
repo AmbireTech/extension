@@ -3,6 +3,7 @@ import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScru
 import {
   CONSOLE_BREADCRUMB_CATEGORY,
   CONSOLE_BREADCRUMB_MESSAGE_MAX_LENGTH,
+  CONSOLE_BREADCRUMB_SCRUB_MARGIN,
   CRASH_REPORT_CONTENT,
   CrashReportContent,
   TOUCH_BREADCRUMB_CATEGORY
@@ -41,12 +42,18 @@ export const getMobileCrashReportRelease = (platformOS: string, appVersion: stri
 
 // The raw logged objects can be large and hold anything, while the message already has their
 // text. Dropping them before the scrub also spares it a deep walk on every console call.
-const withoutConsoleArguments = (breadcrumb: Breadcrumb): Breadcrumb => {
-  if (!breadcrumb.data) return breadcrumb
+// The message is cut short for the same reason, but past the final cut by a margin, so a secret
+// split at the final cut is still recognized in full.
+const prepareConsoleBreadcrumbForScrub = (breadcrumb: Breadcrumb): Breadcrumb => {
+  const message = breadcrumb.message?.slice(
+    0,
+    CONSOLE_BREADCRUMB_MESSAGE_MAX_LENGTH + CONSOLE_BREADCRUMB_SCRUB_MARGIN
+  )
+  if (!breadcrumb.data) return { ...breadcrumb, message }
 
   const data = { ...breadcrumb.data }
   delete data.arguments
-  return { ...breadcrumb, data }
+  return { ...breadcrumb, message, data }
 }
 
 /**
@@ -63,7 +70,7 @@ export const filterCrashReportBreadcrumb = (breadcrumb: Breadcrumb): Breadcrumb 
   let scrubbedBreadcrumb: Breadcrumb
   try {
     scrubbedBreadcrumb = scrubSentryEventSecrets(
-      isConsoleBreadcrumb ? withoutConsoleArguments(breadcrumb) : breadcrumb
+      isConsoleBreadcrumb ? prepareConsoleBreadcrumbForScrub(breadcrumb) : breadcrumb
     )
   } catch {
     // An unscrubbed breadcrumb can't be trusted, so it's dropped. Logging the failure would
