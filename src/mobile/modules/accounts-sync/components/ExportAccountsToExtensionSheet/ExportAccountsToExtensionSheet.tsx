@@ -56,8 +56,10 @@ const ExportAccountsToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) =
     selectedSeedsCount,
     includeSeeds,
     toggleIncludeSeeds,
+    syncOptions,
+    toggleSyncOption,
     toggleAccount,
-    toggleAllAccounts,
+    toggleAll,
     prepareExport,
     isPreparing,
     reset,
@@ -217,8 +219,10 @@ const ExportAccountsToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) =
         selectedSeedsCount={selectedSeedsCount}
         includeSeeds={includeSeeds}
         onToggleIncludeSeeds={toggleIncludeSeeds}
+        syncOptions={syncOptions}
+        onToggleSyncOption={toggleSyncOption}
         onToggleAccount={toggleAccount}
-        onToggleAllAccounts={toggleAllAccounts}
+        onToggleAll={toggleAll}
         onConfirm={handleConfirmSelection}
         isConfirmDisabled={isPreparing}
       />

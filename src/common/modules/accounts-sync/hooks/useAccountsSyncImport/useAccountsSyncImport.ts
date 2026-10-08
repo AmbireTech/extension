@@ -1,15 +1,29 @@
 import { hexlify } from 'ethers'
 import { useCallback, useState } from 'react'
 
-import { parseAccountsSyncPayload } from '@ambire-common/libs/accountsSync/accountsSync'
+import {
+  AccountsSyncSettings,
+  parseAccountsSyncPayload
+} from '@ambire-common/libs/accountsSync/accountsSync'
 import { useTranslation } from '@common/config/localization'
+import type { AvatarType } from '@common/controllers/wallet-state'
 import useController from '@common/hooks/useController'
 import { ACCOUNTS_SYNC_IMPORT_TIMEOUT } from '@common/modules/accounts-sync/consts'
+import { THEME_TYPES, ThemeType } from '@common/styles/theme/types'
 
 import type { Account } from '@ambire-common/interfaces/account'
+
+const SYNCABLE_THEME_TYPES: string[] = Object.values(THEME_TYPES)
+const SYNCABLE_AVATAR_TYPES: string[] = ['blockies', 'jazzicons', 'polycons', 'ens']
+
+const isThemeType = (value: unknown): value is ThemeType =>
+  typeof value === 'string' && SYNCABLE_THEME_TYPES.includes(value)
+const isAvatarType = (value: unknown): value is AvatarType =>
+  typeof value === 'string' && SYNCABLE_AVATAR_TYPES.includes(value)
 /**
  * Owns the import side of the accounts sync: validating what the camera scanned and
- * handing it to the background together with the password of the exporting device.
+ * handing it to the background together with the password of the exporting device
+ * (and applying the synced settings that the app keeps itself).
  *
  * The scanned data is parsed here as well, so that a QR code from somewhere else is
  * rejected before the user is asked for a password (and so the UI can tell how many
@@ -23,22 +37,26 @@ const useAccountsSyncImport = ({
 }) => {
   const { t } = useTranslation()
   const { dispatchAndWait } = useController('MainController')
+  const { dispatch: walletStateDispatch } = useController('WalletStateController')
 
   const [payload, setPayload] = useState<string | null>(null)
   const [scannedAccounts, setScannedAccounts] = useState<Account[]>([])
+  const [scannedAppSettings, setScannedAppSettings] = useState<AccountsSyncSettings['app']>()
   const [scanError, setScanError] = useState<string | null>(null)
   const [isImporting, setIsImporting] = useState(false)
 
   const handleScanComplete = useCallback(
     (scannedBytes: Uint8Array) => {
       try {
-        const { accounts } = parseAccountsSyncPayload(scannedBytes)
+        const { accounts, settings } = parseAccountsSyncPayload(scannedBytes)
 
         setScannedAccounts(accounts)
+        setScannedAppSettings(settings?.app)
         setPayload(hexlify(scannedBytes))
         setScanError(null)
       } catch {
         setScannedAccounts([])
+        setScannedAppSettings(undefined)
         setPayload(null)
         setScanError(
           t(
@@ -52,9 +70,32 @@ const useAccountsSyncImport = ({
 
   const retryScan = useCallback(() => {
     setScannedAccounts([])
+    setScannedAppSettings(undefined)
     setPayload(null)
     setScanError(null)
   }, [])
+
+  /**
+   * The background merges everything else it synced, but these settings are kept by the
+   * app, so they are applied here. Values this app doesn't know are ignored.
+   */
+  const applyScannedAppSettings = useCallback(() => {
+    if (!scannedAppSettings) return
+
+    const { themeType, avatarType, crashAnalyticsEnabled } = scannedAppSettings
+    if (isThemeType(themeType))
+      walletStateDispatch({ type: 'method', params: { method: 'setThemeType', args: [themeType] } })
+    if (isAvatarType(avatarType))
+      walletStateDispatch({
+        type: 'method',
+        params: { method: 'setAvatarType', args: [avatarType] }
+      })
+    if (typeof crashAnalyticsEnabled === 'boolean')
+      walletStateDispatch({
+        type: 'method',
+        params: { method: 'setCrashAnalytics', args: [crashAnalyticsEnabled] }
+      })
+  }, [scannedAppSettings, walletStateDispatch])
 
   const importScannedAccounts = useCallback(
     async (password: string) => {
@@ -74,6 +115,7 @@ const useAccountsSyncImport = ({
         // dropped as soon as the background is done with it (which is before the password
         // of this device gets set, a step the user can spend a while on)
         setPayload(null)
+        applyScannedAppSettings()
 
         await onImported(password)
       } catch {
@@ -83,7 +125,7 @@ const useAccountsSyncImport = ({
         setIsImporting(false)
       }
     },
-    [dispatchAndWait, isImporting, onImported, payload]
+    [applyScannedAppSettings, dispatchAndWait, isImporting, onImported, payload]
   )
 
   return {

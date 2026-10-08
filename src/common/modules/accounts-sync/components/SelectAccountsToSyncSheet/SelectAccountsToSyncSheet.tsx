@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -12,6 +12,8 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import AccountRow from '@common/modules/account-select/components/Account'
+import SyncOptionRow from '@common/modules/accounts-sync/components/SyncOptionRow'
+import type { SyncOption } from '@common/modules/accounts-sync/hooks/useAccountsSyncExport/useAccountsSyncExport'
 import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 
@@ -45,8 +47,11 @@ interface Props {
   selectedSeedsCount: number
   includeSeeds: boolean
   onToggleIncludeSeeds: () => void
+  syncOptions: Record<SyncOption, boolean>
+  onToggleSyncOption: (option: SyncOption) => void
   onToggleAccount: (addr: Account['addr']) => void
-  onToggleAllAccounts: () => void
+  /** Selects (or clears) every account together with the settings, networks and Address Book */
+  onToggleAll: () => void
   onConfirm: () => void
   isConfirmDisabled?: boolean
 }
@@ -54,8 +59,8 @@ interface Props {
 /**
  * The list the user picks the accounts to send to the other Ambire product from. The
  * rows are the account rows of the accounts screen with a checkbox in front, and they go
- * through the sheet's own list, with the select all checkbox in its header and the
- * confirm button in its footer.
+ * through the sheet's own list, after the rows of the settings, networks and Address Book.
+ * The select all checkbox is in the sheet's header and the confirm button in its footer.
  */
 const SelectAccountsToSyncSheet = ({
   sheetRef,
@@ -66,8 +71,10 @@ const SelectAccountsToSyncSheet = ({
   selectedSeedsCount,
   includeSeeds,
   onToggleIncludeSeeds,
+  syncOptions,
+  onToggleSyncOption,
   onToggleAccount,
-  onToggleAllAccounts,
+  onToggleAll,
   onConfirm,
   isConfirmDisabled
 }: Props) => {
@@ -96,6 +103,52 @@ const SelectAccountsToSyncSheet = ({
     [onToggleAccount, selectedAddrs]
   )
 
+  // Confirm stays enabled without a selected account, so pressing it can explain why
+  // nothing gets exported. The message goes away as soon as an account is selected.
+  const [hasConfirmedWithoutAccounts, setHasConfirmedWithoutAccounts] = useState(false)
+  const shouldShowNoAccountsError = hasConfirmedWithoutAccounts && !selectedAddrs.length
+
+  const handleConfirm = useCallback(() => {
+    if (!selectedAddrs.length) {
+      setHasConfirmedWithoutAccounts(true)
+      return
+    }
+
+    setHasConfirmedWithoutAccounts(false)
+    onConfirm()
+  }, [onConfirm, selectedAddrs.length])
+
+  const resetNoAccountsError = useCallback(() => setHasConfirmedWithoutAccounts(false), [])
+
+  const syncOptionRows = useMemo(
+    () => (
+      <>
+        <SyncOptionRow
+          option="settings"
+          title={t('Settings')}
+          subtitle={t('Theme, account icons and privacy opt-outs')}
+          isSelected={syncOptions.settings}
+          onToggle={onToggleSyncOption}
+        />
+        <SyncOptionRow
+          option="networks"
+          title={t('Networks')}
+          subtitle={t('All networks, including the ones you added and their connection settings')}
+          isSelected={syncOptions.networks}
+          onToggle={onToggleSyncOption}
+        />
+        <SyncOptionRow
+          option="addressBook"
+          title={t('Address book')}
+          subtitle={t('The contacts you saved, with their names and addresses')}
+          isSelected={syncOptions.addressBook}
+          onToggle={onToggleSyncOption}
+        />
+      </>
+    ),
+    [onToggleSyncOption, syncOptions, t]
+  )
+
   const includeSeedsLabel = useMemo(() => {
     const s = selectedSeedsCount > 1 ? 's' : ''
 
@@ -109,6 +162,7 @@ const SelectAccountsToSyncSheet = ({
       data: accounts,
       renderItem,
       keyExtractor: (item: Account) => item.addr,
+      ListHeaderComponent: syncOptionRows,
       contentContainerStyle: {
         paddingHorizontal: LIST_HORIZONTAL_PADDING,
         paddingBottom: SPACING_SM
@@ -119,7 +173,7 @@ const SelectAccountsToSyncSheet = ({
         </Text>
       )
     }),
-    [accounts, renderItem, t]
+    [accounts, renderItem, syncOptionRows, t]
   )
 
   return (
@@ -127,6 +181,7 @@ const SelectAccountsToSyncSheet = ({
       id="select-accounts-to-sync"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
+      onClosed={resetNoAccountsError}
       style={SHEET_STYLE}
       HeaderComponent={
         <View
@@ -135,10 +190,10 @@ const SelectAccountsToSyncSheet = ({
             { backgroundColor: theme.primaryBackground }
           ]}
         >
-          <ModalHeader handleClose={closeBottomSheet} title={t('Select accounts to export')} />
+          <ModalHeader handleClose={closeBottomSheet} title={t('Select to export')} />
           <Checkbox
             value={areAllSelected}
-            onValueChange={onToggleAllAccounts}
+            onValueChange={onToggleAll}
             label={t('Select all')}
             labelProps={{ fontSize: 14, appearance: 'primaryText' }}
             style={spacings.mbSm}
@@ -171,11 +226,21 @@ const SelectAccountsToSyncSheet = ({
               style={spacings.mbMd}
             />
           )}
+          {shouldShowNoAccountsError && (
+            <Text
+              testID="no-accounts-to-sync-error"
+              fontSize={14}
+              appearance="errorText"
+              style={spacings.mbSm}
+            >
+              {t('Select at least one account to export.')}
+            </Text>
+          )}
           <Button
             testID="confirm-accounts-to-sync"
             text={t('Confirm')}
-            disabled={isConfirmDisabled || !selectedAddrs.length}
-            onPress={onConfirm}
+            disabled={isConfirmDisabled}
+            onPress={handleConfirm}
             hasBottomSpacing={false}
           />
         </View>
