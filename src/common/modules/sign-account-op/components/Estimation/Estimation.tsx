@@ -10,6 +10,7 @@ import {
 } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SpeedCalc, Warning } from '@ambire-common/interfaces/signAccountOp'
+import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -20,7 +21,6 @@ import GaugeIcon from '@common/assets/svg/GaugeIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Alert from '@common/components/Alert'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { RenderSelectedOptionParams, SelectValue } from '@common/components/Select/types'
@@ -49,7 +49,6 @@ import { DispatchUpdate, Props } from './types'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const FEE_SECTION_LIST_MENU_HEADER_HEIGHT = 34
-const ADVANCED_OPTIONS_TOOLTIP_ID = 'sign-account-op-advanced-options-tooltip'
 // The web menu opens under the speed select, but needs extra room for "Medium <$0.01"
 const FEE_SPEED_MENU_EXTRA_WIDTH = 100
 
@@ -503,23 +502,36 @@ const Estimation = ({
     (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
     !signAccountOpState?.selectedOption
 
-  const advancedOptionsTooltip = useMemo(() => {
-    if (canSetCustomGasPrices) return undefined
+  const hasSelectedFeeOption = !!signAccountOpState?.selectedOption
+  // Shown in the advanced options instead of the fields, so it's clear why they can't be changed
+  const customGasPricesUnavailableReason = useMemo(() => {
+    if (canSetCustomGasPrices || !hasSelectedFeeOption) return undefined
 
-    return `Advanced options are only applicable for EOA accounts broadcasting in ${
-      network?.nativeAssetSymbol || signAccountOpState?.selectedOption?.token.symbol || ''
-    }`
+    const nativeSymbol = network?.nativeAssetSymbol || ''
+    // A smart account pays its own fee through a service that sets it, so only another account can.
+    // An upgraded basic account (7702) can set it when paying in the native token itself
+    if (isSmartAccount(signAccountOpState?.account)) {
+      return t(
+        'This account’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}} from one of your other accounts, listed under "Native tokens from my EOAs".',
+        { nativeSymbol }
+      )
+    }
+
+    return t(
+      'This account’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}}.',
+      { nativeSymbol }
+    )
   }, [
     canSetCustomGasPrices,
     network?.nativeAssetSymbol,
-    signAccountOpState?.selectedOption?.token.symbol
+    signAccountOpState?.account,
+    hasSelectedFeeOption,
+    t
   ])
 
   const openAdvancedOptions = useCallback(() => {
-    if (!canSetCustomGasPrices) return
-
     openCustomGasPriceSheet()
-  }, [canSetCustomGasPrices, openCustomGasPriceSheet])
+  }, [openCustomGasPriceSheet])
 
   const estimationTitle = useMemo(() => {
     if (!signAccountOpState?.canAccountBroadcastByItself) return t('Broadcast from')
@@ -579,7 +591,7 @@ const Estimation = ({
           FEE_SPEED_MENU_EXTRA_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
         }
         menuPosition="top"
-        bottomSheetTitle={t('Network fee')}
+        bottomSheetTitle={t('Transaction speed')}
         withSearch={false}
         containerStyle={{ ...spacings.mb0, width: 'auto' }}
         disabled={disabled}
@@ -673,6 +685,7 @@ const Estimation = ({
         backgroundColor={theme.tertiaryBackground}
         closeBottomSheet={() => closeCustomGasPriceSheet()}
         canSetCustomGas={canSetCustomGas}
+        unavailableReason={customGasPricesUnavailableReason}
         currentGas={currentGas}
         currentMaxFeePerGas={currentGasPrice}
         currentMaxPriorityFeePerGas={currentMaxPriorityFeePerGas}
@@ -712,32 +725,15 @@ const Estimation = ({
           {signAccountOpState.canAccountBroadcastByItself && (
             <>
               <View style={[styles.feeHeaderDivider, spacings.mhSm]} />
-              <View
-                dataSet={
-                  advancedOptionsTooltip
-                    ? createGlobalTooltipDataSet({
-                        id: ADVANCED_OPTIONS_TOOLTIP_ID,
-                        content: advancedOptionsTooltip
-                      })
-                    : undefined
-                }
+              <HoverablePressable
+                onPress={openAdvancedOptions}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={t('Advanced fee settings')}
+                testID="advanced-options-button"
               >
-                <HoverablePressable
-                  disabled={!canSetCustomGasPrices}
-                  onPress={openAdvancedOptions}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('Advanced fee settings')}
-                  testID="advanced-options-button"
-                >
-                  <SettingsIcon
-                    width={20}
-                    height={20}
-                    color={theme.secondaryText}
-                    style={!canSetCustomGasPrices && { opacity: 0.3 }}
-                  />
-                </HoverablePressable>
-              </View>
+                <SettingsIcon width={20} height={20} color={theme.secondaryText} />
+              </HoverablePressable>
             </>
           )}
         </View>

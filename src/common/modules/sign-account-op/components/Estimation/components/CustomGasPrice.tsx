@@ -7,6 +7,7 @@ import { Modalize } from 'react-native-modalize'
 import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
+import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
@@ -119,6 +120,8 @@ type Props = {
   backgroundColor: ColorValue
   closeBottomSheet: () => void
   canSetCustomGas: boolean
+  /** Why the fee can't be set manually. Shown instead of the fields */
+  unavailableReason?: string
   currentGas: string
   currentMaxFeePerGas: string
   currentMaxPriorityFeePerGas: string
@@ -131,6 +134,7 @@ type Props = {
 const CustomGasPrice = ({
   closeBottomSheet,
   canSetCustomGas,
+  unavailableReason,
   currentGas,
   currentMaxFeePerGas,
   currentMaxPriorityFeePerGas,
@@ -267,10 +271,19 @@ const CustomGasPrice = ({
     >
       {isMobile ? (
         <>
-          <ModalHeader title={t('Advanced options')} style={spacings.mbTy} />
-          <Text fontSize={14} appearance="secondaryText" style={[spacings.mbLg, textStyles.center]}>
-            {t('Set gas values manually')}
-          </Text>
+          <ModalHeader
+            title={t('Advanced options')}
+            style={unavailableReason ? spacings.mbLg : spacings.mbTy}
+          />
+          {!unavailableReason && (
+            <Text
+              fontSize={14}
+              appearance="secondaryText"
+              style={[spacings.mbLg, textStyles.center]}
+            >
+              {t('Set gas values manually')}
+            </Text>
+          )}
         </>
       ) : (
         <View style={[flexbox.directionRow, flexbox.alignStart, spacings.mbLg]}>
@@ -279,74 +292,94 @@ const CustomGasPrice = ({
             <Text weight="medium" fontSize={20}>
               {t('Advanced options')}
             </Text>
-            <Text fontSize={14} appearance="secondaryText" style={spacings.mtTy}>
-              {t('Set gas values manually')}
-            </Text>
+            {!unavailableReason && (
+              <Text fontSize={14} appearance="secondaryText" style={spacings.mtTy}>
+                {t('Set gas values manually')}
+              </Text>
+            )}
           </View>
         </View>
       )}
-      <View>
-        <CustomGasPriceInput
-          initialAmount={initialMaxFeePerGas}
-          backgroundColor={theme.secondaryBackground}
-          onSanitizedAmountChange={onMaxFeePerGasChange}
-          inputError={customGasPriceErrorMessages.maxFeePerGas}
-          label={t('Max fee per gas')}
-          unitLabel="GWEI"
-          autoFocus
+      {unavailableReason ? (
+        <Alert
+          type="info"
+          size="sm"
+          title={t('The fee is set automatically')}
+          text={unavailableReason}
         />
-        {!!is1559 && (
+      ) : (
+        <View>
           <CustomGasPriceInput
-            initialAmount={initialMaxPriorityFeePerGas}
+            initialAmount={initialMaxFeePerGas}
             backgroundColor={theme.secondaryBackground}
-            onSanitizedAmountChange={onMaxPriorityFeePerGasChange}
-            inputError={customGasPriceErrorMessages.maxPriorityFeePerGas}
-            label={t('Max priority fee')}
+            onSanitizedAmountChange={onMaxFeePerGasChange}
+            inputError={customGasPriceErrorMessages.maxFeePerGas}
+            label={t('Max fee per gas')}
             unitLabel="GWEI"
+            autoFocus
           />
-        )}
+          {!!is1559 && (
+            <CustomGasPriceInput
+              initialAmount={initialMaxPriorityFeePerGas}
+              backgroundColor={theme.secondaryBackground}
+              onSanitizedAmountChange={onMaxPriorityFeePerGasChange}
+              inputError={customGasPriceErrorMessages.maxPriorityFeePerGas}
+              label={t('Max priority fee')}
+              unitLabel="GWEI"
+            />
+          )}
 
-        <CustomGasPriceInput
-          initialAmount={initialGas}
-          backgroundColor={theme.secondaryBackground}
-          onSanitizedAmountChange={onGasChange}
-          inputError={customGasPriceErrorMessages.gas}
-          label={t('Gas limit')}
-          precision={0}
-          disabled={!canSetCustomGas}
-          disabledReason={t('Custom gas cannot be set for an EOA batch')}
-        />
-      </View>
-      <FooterGlassView
-        absolute={false}
-        isSimpleBlur={isNarrowWebLayout}
-        size="sm"
-        style={spacings.mt}
-        mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
-        innerContainerStyle={isNarrowWebLayout ? { width: '100%' } : undefined}
-      >
-        {/* On web the header's back arrow already closes the sheet */}
-        {isMobile && (
-          <Button
-            type="secondary"
-            text={t('Cancel')}
-            onPress={closeBottomSheet}
-            hasBottomSpacing={false}
-            style={[spacings.mrTy, flexbox.flex1]}
-            size="smaller"
+          <CustomGasPriceInput
+            initialAmount={initialGas}
+            backgroundColor={theme.secondaryBackground}
+            onSanitizedAmountChange={onGasChange}
+            inputError={customGasPriceErrorMessages.gas}
+            label={t('Gas limit')}
+            precision={0}
+            disabled={!canSetCustomGas}
+            disabledReason={t('Custom gas cannot be set for an EOA batch')}
           />
-        )}
-        <Button
-          type="primary"
-          text={t('Save')}
-          onPress={saveCustomGasPrice}
-          hasBottomSpacing={false}
-          style={
-            isNarrowWebLayout ? { width: '100%' } : isCompactLayout ? flexbox.flex1 : { width: 100 }
-          }
-          size={isNarrowWebLayout ? 'regular' : 'smaller'}
-        />
-      </FooterGlassView>
+        </View>
+      )}
+      {/* On web the header's back arrow already closes the sheet, so nothing is left to show */}
+      {(isMobile || !unavailableReason) && (
+        <FooterGlassView
+          absolute={false}
+          isSimpleBlur={isNarrowWebLayout}
+          size="sm"
+          style={spacings.mt}
+          mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
+          innerContainerStyle={isNarrowWebLayout ? { width: '100%' } : undefined}
+        >
+          {/* On web the header's back arrow already closes the sheet */}
+          {isMobile && (
+            <Button
+              type="secondary"
+              text={unavailableReason ? t('Close') : t('Cancel')}
+              onPress={closeBottomSheet}
+              hasBottomSpacing={false}
+              style={[!unavailableReason && spacings.mrTy, flexbox.flex1]}
+              size="smaller"
+            />
+          )}
+          {!unavailableReason && (
+            <Button
+              type="primary"
+              text={t('Save')}
+              onPress={saveCustomGasPrice}
+              hasBottomSpacing={false}
+              style={
+                isNarrowWebLayout
+                  ? { width: '100%' }
+                  : isCompactLayout
+                    ? flexbox.flex1
+                    : { width: 100 }
+              }
+              size={isNarrowWebLayout ? 'regular' : 'smaller'}
+            />
+          )}
+        </FooterGlassView>
+      )}
     </BottomSheet>
   )
 }
