@@ -1,6 +1,6 @@
 import { setStringAsync } from 'expo-clipboard'
-import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
@@ -21,16 +21,28 @@ import useAccountKeys from '@common/hooks/useAccountKeys'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import useSafesSignedFor from '@common/hooks/useSafesSignedFor'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import measureLayoutSync from '@common/utils/measureLayoutSync'
 
 import getStyles, { ACCOUNT_SELECT_ACCOUNT_HEIGHT } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
+
+const EMPTY_BADGES_LAYOUT = {
+  topRowHeight: 0,
+  labelColumnX: 0,
+  labelColumnWidth: 0,
+  labelColumnBottom: 0,
+  keyBadgesWidth: 0,
+  signerBadgesWidth: 0,
+  signerBadgesHeight: 0
+}
 
 const selectSelectAccountStatus = (state: AllControllersMappingType['MainController']) =>
   state.statuses.selectAccount
@@ -121,37 +133,70 @@ const Account = ({
 
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
 
+  const safesSignedFor = useSafesSignedFor(account)
+
   /**
-   * How far the badges reach below their first row when they wrap. The row grows by exactly
-   * that, while the rest of its content keeps the place it has in a row that does not wrap.
+   * The Safe signer badges sit next to the other badges when they fit there. Otherwise they
+   * take a line of their own below the rest of the row, running to its right edge, and the
+   * row grows by that line, while the rest keeps the place it has in any other row.
    */
-  const [badgesOverflow, setBadgesOverflow] = useState(0)
-  const badgesLayoutRef = useRef({ firstRowHeight: 0, height: 0 })
+  const contentRef = useRef<View>(null)
+  const topRowRef = useRef<View>(null)
+  const labelColumnRef = useRef<View>(null)
+  const keyBadgesRef = useRef<View>(null)
+  const signerBadgesRef = useRef<View>(null)
+  const [badgesLayout, setBadgesLayout] = useState(EMPTY_BADGES_LAYOUT)
 
-  const updateBadgesOverflow = useCallback(() => {
-    const { firstRowHeight, height } = badgesLayoutRef.current
-    if (!firstRowHeight || !height) return
+  // Measured the same way on either line, so moving them does not change the outcome
+  const doSignerBadgesFit =
+    badgesLayout.keyBadgesWidth + SPACING_TY + badgesLayout.signerBadgesWidth <=
+    badgesLayout.labelColumnWidth
+  const hasSignerBadgesLine = !!safesSignedFor.length && !doSignerBadgesFit
+  // Right below the badges, instead of below the room the centered content leaves free
+  const signerBadgesMarginTop =
+    SPACING_MI - Math.max(badgesLayout.topRowHeight - badgesLayout.labelColumnBottom, 0)
+  const extraHeight = hasSignerBadgesLine
+    ? badgesLayout.signerBadgesHeight + signerBadgesMarginTop
+    : 0
 
-    const overflow = Math.max(Math.round(height - firstRowHeight), 0)
-    setBadgesOverflow(overflow)
-    onExtraHeightChange?.(addr, overflow)
-  }, [addr, onExtraHeightChange])
+  /**
+   * Measured in a layout effect rather than on layout, so that where the signer badges go
+   * is settled before the row is painted, instead of the row jumping between the two.
+   */
+  const updateBadgesLayout = useCallback(() => {
+    if (!safesSignedFor.length) return
 
-  const onBadgesFirstRowLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      badgesLayoutRef.current.firstRowHeight = event.nativeEvent.layout.height
-      updateBadgesOverflow()
-    },
-    [updateBadgesOverflow]
-  )
+    // Relative to what holds both the top row and the signer badges line, as the native
+    // measuring needs an ancestor. The top row starts at its top left corner.
+    const content = contentRef.current
+    const topRowLayout = measureLayoutSync(topRowRef.current, content)
+    const labelColumn = measureLayoutSync(labelColumnRef.current, content)
+    const keyBadges = measureLayoutSync(keyBadgesRef.current, content)
+    const signerBadges = measureLayoutSync(signerBadgesRef.current, content)
+    if (!topRowLayout || !labelColumn || !keyBadges || !signerBadges) return
 
-  const onBadgesLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      badgesLayoutRef.current.height = event.nativeEvent.layout.height
-      updateBadgesOverflow()
-    },
-    [updateBadgesOverflow]
-  )
+    const next = {
+      topRowHeight: Math.round(topRowLayout.height),
+      labelColumnX: labelColumn.x,
+      labelColumnWidth: Math.floor(labelColumn.width),
+      labelColumnBottom: Math.round(labelColumn.y + labelColumn.height),
+      keyBadgesWidth: Math.ceil(keyBadges.width),
+      signerBadgesWidth: Math.ceil(signerBadges.width),
+      signerBadgesHeight: Math.round(signerBadges.height)
+    }
+    setBadgesLayout((prev) =>
+      (Object.keys(next) as (keyof typeof next)[]).every((key) => prev[key] === next[key])
+        ? prev
+        : next
+    )
+  }, [safesSignedFor.length])
+
+  // On every commit, as whatever the badges show may have changed their width
+  useLayoutEffect(updateBadgesLayout)
+
+  useLayoutEffect(() => {
+    onExtraHeightChange?.(addr, extraHeight)
+  }, [addr, extraHeight, onExtraHeightChange])
 
   const selectAccount = useCallback(() => {
     if (options.setAccountToImportOrExport) {
@@ -247,125 +292,140 @@ const Account = ({
               ? theme.secondaryBackground
               : theme.primaryBackground
           },
-        !!badgesOverflow && {
-          minHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT + badgesOverflow,
-          maxHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT + badgesOverflow
+        !!extraHeight && {
+          minHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT + extraHeight,
+          maxHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT + extraHeight
         }
       ]}
     >
-      {/* Both sides leave the room the row grew by to the wrapped badges, so they stay
-      centered on the same height as in any other row */}
-      <View
-        style={[
-          flexbox.flex1,
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          { marginBottom: badgesOverflow }
-        ]}
-      >
-        {renderLeftChildren && renderLeftChildren()}
-        <Avatar
-          address={account.addr}
-          pfp={account.preferences.pfp}
-          smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
-          showTooltip
-        />
-        <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-          {!withSettings ? (
-            // A read-only label needs no row around it, and this screen mounts one of
-            // these per account
-            <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
-              {account.preferences.label}
-            </Text>
-          ) : (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-              <Editable
-                initialValue={account.preferences.label}
-                onSave={onSave}
-                fontSize={16}
-                height={isMobile ? 24 : 20}
-                textProps={{
-                  weight: 'medium'
-                }}
-                minWidth={120}
-                maxLength={40}
-              />
+      <View ref={contentRef} style={flexbox.flex1}>
+        {/* Takes the height of any other row, whatever is below it */}
+        <View
+          style={[flexbox.flex1, flexbox.directionRow, flexbox.justifySpaceBetween]}
+          ref={topRowRef}
+          // Picks up a change of the row's width, which no commit of its own follows
+          onLayout={updateBadgesLayout}
+        >
+          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+            {renderLeftChildren && renderLeftChildren()}
+            <Avatar
+              address={account.addr}
+              pfp={account.preferences.pfp}
+              smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
+              showTooltip
+            />
+            <View style={[flexbox.flex1, flexbox.justifyCenter]} ref={labelColumnRef}>
+              {!withSettings ? (
+                // A read-only label needs no row around it, and this screen mounts one of
+                // these per account
+                <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
+                  {account.preferences.label}
+                </Text>
+              ) : (
+                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
+                  <Editable
+                    initialValue={account.preferences.label}
+                    onSave={onSave}
+                    fontSize={16}
+                    height={isMobile ? 24 : 20}
+                    textProps={{
+                      weight: 'medium'
+                    }}
+                    minWidth={120}
+                    maxLength={40}
+                  />
+                </View>
+              )}
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <AccountAddress
+                  {...reverseLookup}
+                  containerStyle={spacings.pb0}
+                  address={addr}
+                  plainAddressMaxLength={maxAccountAddrLength}
+                  // On web the copy button fits next to the address, unlike on mobile, where it
+                  // sits next to the account to keep the touch targets apart
+                  withCopy={isWeb && withCopy}
+                  withReceive={false}
+                  withUpdateEnsInTooltip={isSelectable}
+                />
+              </View>
+              {/* The balance, the key icons and the badges share the row below the address */}
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  spacings.mtMi,
+                  { columnGap: SPACING_TY }
+                ]}
+              >
+                <View
+                  ref={keyBadgesRef}
+                  style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_TY }]}
+                >
+                  {balance !== null && withBalance && (
+                    <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
+                      {formatDecimals(balance, 'value')}
+                    </Text>
+                  )}
+                  {!!withKeyType && (
+                    <AccountKeyIcons
+                      isExtended
+                      account={account}
+                      accountKeys={accountKeys}
+                      withContainerSpacing={false}
+                    />
+                  )}
+                  <AccountBadges
+                    accountData={account}
+                    accountKeys={accountKeys}
+                    withSpacing={false}
+                  />
+                </View>
+                {!!safesSignedFor.length && !hasSignerBadgesLine && (
+                  <View
+                    ref={signerBadgesRef}
+                    style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_TY }]}
+                  >
+                    <SafeSignerBadges safes={safesSignedFor} />
+                  </View>
+                )}
+              </View>
             </View>
-          )}
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <AccountAddress
-              {...reverseLookup}
-              containerStyle={spacings.pb0}
-              address={addr}
-              plainAddressMaxLength={maxAccountAddrLength}
-              // On web the copy button fits next to the address, unlike on mobile, where it
-              // sits next to the account to keep the touch targets apart
-              withCopy={isWeb && withCopy}
-              withReceive={false}
-              withUpdateEnsInTooltip={isSelectable}
-            />
           </View>
-          {/* The balance, the key icons and the badges share the row below the address,
-          wrapping onto more rows when they do not fit. The rows past the first one hang
-          below the content instead of being part of it, so they do not move it up */}
-          <View
-            onLayout={onBadgesLayout}
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.wrap,
-              spacings.mtMi,
-              { columnGap: SPACING_TY, rowGap: SPACING_MI, marginBottom: -badgesOverflow }
-            ]}
-          >
-            {/* Stretches to the height of the first row of badges, which is all of them
-            unless they wrap. Takes no room, as the negative margin cancels the column gap */}
-            <View
-              onLayout={onBadgesFirstRowLayout}
-              style={{ alignSelf: 'stretch', width: 0, marginRight: -SPACING_TY }}
-            />
-            {balance !== null && withBalance && (
-              <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
-                {formatDecimals(balance, 'value')}
-              </Text>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
+            {renderRightChildren && renderRightChildren()}
+            {!isWeb && withCopy && (
+              <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
+                <CopyIcon width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} strokeWidth="1" />
+              </AnimatedPressable>
             )}
-            {!!withKeyType && (
-              <AccountKeyIcons
-                isExtended
-                account={account}
-                accountKeys={accountKeys}
-                withContainerSpacing={false}
+            {withReceive && <ReceiveButton address={addr} fontSize={ACTION_ICON_SIZE - 8} />}
+            {!!options.withOptionsButton && (
+              <Dropdown
+                data={submenu}
+                externalPosition={dropdownPosition}
+                setExternalPosition={setDropdownPosition}
+                onSelect={onDropdownSelect}
+                kebabIconProps={{ width: 28, height: 28 }}
+                testID={`account-options-${addr}`}
               />
             )}
-            <AccountBadges accountData={account} accountKeys={accountKeys} withSpacing={false} />
-            <SafeSignerBadges account={account} />
           </View>
         </View>
-      </View>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          spacings.mlTy,
-          { marginBottom: badgesOverflow }
-        ]}
-      >
-        {renderRightChildren && renderRightChildren()}
-        {!isWeb && withCopy && (
-          <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
-            <CopyIcon width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} strokeWidth="1" />
-          </AnimatedPressable>
-        )}
-        {withReceive && <ReceiveButton address={addr} fontSize={ACTION_ICON_SIZE - 8} />}
-        {!!options.withOptionsButton && (
-          <Dropdown
-            data={submenu}
-            externalPosition={dropdownPosition}
-            setExternalPosition={setDropdownPosition}
-            onSelect={onDropdownSelect}
-            kebabIconProps={{ width: 28, height: 28 }}
-            testID={`account-options-${addr}`}
-          />
+        {hasSignerBadgesLine && (
+          <View
+            ref={signerBadgesRef}
+            style={[
+              flexbox.directionRow,
+              flexbox.wrap,
+              // As wide as the badges, so the width tells whether they fit next to the others
+              flexbox.alignSelfStart,
+              { columnGap: SPACING_TY, rowGap: SPACING_MI },
+              { marginLeft: badgesLayout.labelColumnX, marginTop: signerBadgesMarginTop }
+            ]}
+          >
+            <SafeSignerBadges safes={safesSignedFor} />
+          </View>
         )}
       </View>
     </AnimatedPressable>
