@@ -133,7 +133,7 @@ const useAccountsList = ({
 
   const keyExtractor = useCallback((account: AccountType) => account.addr, [])
 
-  /** How much taller than the rest each row got because its badges wrapped */
+  /** How far each row's height is from the default one, mostly because its badges wrapped */
   const [extraHeights, setExtraHeights] = useState<Record<AccountType['addr'], number>>({})
 
   const onAccountExtraHeightChange = useCallback(

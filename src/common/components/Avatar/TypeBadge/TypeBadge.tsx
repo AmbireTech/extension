@@ -49,7 +49,12 @@ const TypeBadge: FC<Props> = ({ address, smartAccountType, size, showTooltip = f
             themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground
         }}
       >
-        <Text color={theme.primaryBackground} weight="semiBold" fontSize={size === 'big' ? 10 : 9}>
+        <Text
+          // Light on the green in both themes, where the primary background would be dark
+          color={themeType === THEME_TYPES.DARK ? theme.primaryText : theme.primaryBackground}
+          weight="semiBold"
+          fontSize={size === 'big' ? 10 : 9}
+        >
           SA
         </Text>
       </View>

@@ -6,11 +6,13 @@ import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import AccountKeyIcons from '@common/components/AccountKeyIcons'
 import Avatar from '@common/components/Avatar'
+import Badge from '@common/components/Badge'
 import Dropdown from '@common/components/Dropdown'
 import Editable from '@common/components/Editable'
 import SafeSignerBadges from '@common/components/SafeSignerBadges'
@@ -33,6 +35,7 @@ import getStyles, { ACCOUNT_SELECT_ACCOUNT_HEIGHT } from './styles'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
+const AVATAR_SIZE = 36
 
 const selectSelectAccountStatus = (state: AllControllersMappingType['MainController']) =>
   state.statuses.selectAccount
@@ -83,8 +86,9 @@ const Account = ({
   switchAccountOnPress?: boolean
   withBalance?: boolean
   /**
-   * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row got because its
-   * badges wrapped, so a list that lays its rows out by height can make room for it
+   * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is (negative when
+   * shorter), mostly because its badges wrapped, so a list that lays its rows out by height
+   * can make room for it
    */
   onExtraHeightChange?: (addr: string, extraHeight: number) => void
 }) => {
@@ -112,8 +116,9 @@ const Account = ({
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: !inverseInteractionColors ? theme.primaryBackground : theme.secondaryBackground,
-      to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
+      // A card in the secondary background, so its edges show on the primary one
+      from: theme.secondaryBackground,
+      to: !inverseInteractionColors ? theme.tertiaryBackground : theme.primaryBackground
     }
   })
 
@@ -126,134 +131,52 @@ const Account = ({
   const safesSignedFor = useSafesSignedFor(account)
 
   /**
-   * The badges wrap one by one onto more lines when they do not fit next to each other.
-   * The lines past the first one hang below the rest of the row, which grows by them while
-   * everything else keeps the place it has in any other row.
+   * The badges wrap one by one onto more lines when they do not fit next to each other, so
+   * the row takes the height its content needs. Lists that lay their rows out by height are
+   * told how far that is from `ACCOUNT_SELECT_ACCOUNT_HEIGHT`.
    */
   const contentRef = useRef<View>(null)
   const contentHeightRef = useRef<View>(null)
-  const labelColumnRef = useRef<View>(null)
-  const badgesRef = useRef<View>(null)
-  const badgesFirstLineRef = useRef<View>(null)
-  const [badgesLayout, setBadgesLayout] = useState<{
-    height: number
-    firstLineHeight: number
-    /** Where the badges end, which is how tall the compact layout needs the row to be */
-    bottom: number
-    /** The height the row's content has without growing, what any other row has */
-    baseContentHeight: number
-    /**
-     * Whether the badges go below the avatar, the label and the actions, at the full width
-     * of the row. Only when they do not fit next to the avatar on one line - otherwise the
-     * row looks like any other
-     */
-    isStacked: boolean
-    /**
-     * What stacked the badges: the label's width and what the badges show at that moment.
-     * They go back next to the avatar only when one of these changes, as only then can they
-     * fit there again. Re-checking that from the stacked layout itself could keep flipping
-     * the row between the two layouts.
-     */
-    stackedFor?: {
-      labelWidth: number | null
-      badgesContent: string
-    }
-  } | null>(null)
-  const isStacked = !!badgesLayout?.isStacked
-  /**
-   * Stacked, the content is no longer centered in the row's height, which is what spaces it
-   * from the row's edges otherwise, so it gets that space from padding - whatever the row
-   * does not have already
-   */
-  const stackedPadding = useMemo(() => {
-    if (!isStacked) return 0
+  const [contentHeight, setContentHeight] = useState<number | null>(null)
+  // What the row adds around its content, which its height is worked out from
+  const containerVerticalInsets = useMemo(() => {
+    const { paddingTop, paddingBottom, paddingVertical, padding, borderWidth } = StyleSheet.flatten(
+      [styles.accountContainer, containerStyle]
+    )
+    const toNumber = (value: unknown) => (typeof value === 'number' ? value : 0)
 
-    const { paddingTop, paddingVertical, padding } = StyleSheet.flatten([
-      styles.accountContainer,
-      containerStyle
-    ])
-    const rowPadding = paddingTop ?? paddingVertical ?? padding ?? 0
-
-    return Math.max(SPACING_TY - (typeof rowPadding === 'number' ? rowPadding : 0), 0)
-  }, [containerStyle, isStacked, styles.accountContainer])
-
-  const getExtraHeight = () => {
-    if (!badgesLayout) return 0
-    // Stacked, the badges are below the rest, so the row takes what it needs
-    if (isStacked) return badgesLayout.bottom + stackedPadding - badgesLayout.baseContentHeight
-
-    return Math.max(badgesLayout.height - badgesLayout.firstLineHeight, 0)
-  }
-  const extraHeight = getExtraHeight()
-
-  /** Changes whenever the badges show something else, which may make them fit again */
-  const badgesContent = [
-    withBalance && balance !== null ? formatDecimals(balance, 'value') : '',
-    withKeyType ? accountKeys.map((key) => key.type).join() : '',
-    safesSignedFor.map((safe) => `${safe.addr}:${safe.preferences.label}`).join()
-  ].join('|')
+    return (
+      toNumber(paddingTop ?? paddingVertical ?? padding) +
+      toNumber(paddingBottom ?? paddingVertical ?? padding) +
+      2 * toNumber(borderWidth)
+    )
+  }, [containerStyle, styles.accountContainer])
 
   /**
-   * Measured in a layout effect rather than on layout, so that the row has its height
-   * before it is painted, instead of jumping to it.
+   * Measured in a layout effect rather than on layout, so that a list that positions its
+   * rows by height has this one's before it is painted, instead of jumping to it.
    */
-  const updateBadgesLayout = useCallback(() => {
+  const updateContentHeight = useCallback(() => {
     // Relative to the row's content, as the native measuring needs an ancestor
-    const badges = measureLayoutSync(badgesRef.current, contentRef.current)
-    const badgesFirstLine = measureLayoutSync(badgesFirstLineRef.current, contentRef.current)
     const content = measureLayoutSync(contentHeightRef.current, contentRef.current)
-    const labelColumn = measureLayoutSync(labelColumnRef.current, contentRef.current)
-    if (!badges || !badgesFirstLine || !content || !labelColumn) return
+    if (!content) return
 
-    const height = Math.round(badges.height)
-    const firstLineHeight = Math.round(badgesFirstLine.height)
-    const labelWidth = Math.round(labelColumn.width)
-    const measured = {
-      height,
-      firstLineHeight,
-      bottom: Math.round(badges.y + badges.height),
-      // Without what the row grew by when it was measured
-      baseContentHeight: Math.round(content.height) - extraHeight
-    }
+    const height = Math.round(content.height)
+    setContentHeight((prev) => (prev === height ? prev : height))
+  }, [])
 
-    setBadgesLayout((prev) => {
-      const getStackedFor = () => {
-        // Next to the avatar, they don't fit there when they wrap. The label's width is
-        // taken once stacked, as it may differ between the two layouts
-        if (!prev?.isStacked)
-          return height > firstLineHeight ? { labelWidth: null, badgesContent } : undefined
-
-        // Stacked, they stay so until the label gets wider or the badges change
-        const { stackedFor } = prev
-        if (!stackedFor || stackedFor.badgesContent !== badgesContent) return undefined
-        if (stackedFor.labelWidth === null) return { ...stackedFor, labelWidth }
-        if (labelWidth > stackedFor.labelWidth) return undefined
-
-        return stackedFor
-      }
-      const stackedFor = getStackedFor()
-      const next = { ...measured, isStacked: !!stackedFor, stackedFor }
-
-      return prev &&
-        prev.height === next.height &&
-        prev.firstLineHeight === next.firstLineHeight &&
-        prev.bottom === next.bottom &&
-        prev.baseContentHeight === next.baseContentHeight &&
-        prev.isStacked === next.isStacked &&
-        prev.stackedFor === next.stackedFor
-        ? prev
-        : next
-    })
-  }, [badgesContent, extraHeight])
-
-  // On every commit, as whatever the badges show may have changed their width
-  useLayoutEffect(updateBadgesLayout)
+  // On every commit, as whatever the badges show may have changed how many lines they take
+  useLayoutEffect(updateContentHeight)
 
   // Only once measured, as a list may remount the row when its height changes
-  const isMeasured = !!badgesLayout
   useLayoutEffect(() => {
-    if (isMeasured) onExtraHeightChange?.(addr, extraHeight)
-  }, [addr, extraHeight, isMeasured, onExtraHeightChange])
+    if (contentHeight === null) return
+
+    onExtraHeightChange?.(
+      addr,
+      contentHeight + containerVerticalInsets - ACCOUNT_SELECT_ACCOUNT_HEIGHT
+    )
+  }, [addr, containerVerticalInsets, contentHeight, onExtraHeightChange])
 
   const selectAccount = useCallback(() => {
     if (options.setAccountToImportOrExport) {
@@ -369,31 +292,35 @@ const Account = ({
     </View>
   )
 
-  // The balance, the key icons and the badges share the row below the address, wrapping one
-  // by one. Unless stacked, the lines past the first one hang below the content instead of
-  // being part of it, so they do not move it up
+  // The balance, the key icons and the badges share the row below the avatar, at the full
+  // width of the row, wrapping one by one
   const badges = (
     <View
-      ref={badgesRef}
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.wrap,
-        spacings.mtMi,
-        { columnGap: SPACING_TY, rowGap: SPACING_MI },
-        !isStacked && { marginBottom: -extraHeight }
+        spacings.mtTy,
+        { columnGap: SPACING_MI, rowGap: SPACING_MI }
       ]}
     >
-      {/* Stretches to the height of the first line, which is all of them unless they
-      wrap. Takes no room, as the negative margin cancels the column gap */}
-      <View
-        ref={badgesFirstLineRef}
-        style={{ alignSelf: 'stretch', width: 0, marginRight: -SPACING_TY }}
-      />
       {balance !== null && withBalance && (
-        <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
-          {formatDecimals(balance, 'value')}
-        </Text>
+        <Badge
+          style={{
+            columnGap: SPACING_MI,
+            // The icon leads, like the avatar on the Safe signer badges
+            paddingLeft: SPACING_MI,
+            // The badge leaves room only for a trailing info icon when it has children
+            paddingRight: SPACING_TY,
+            // Stands out from the card in either theme, as the card is in the secondary one
+            backgroundColor: theme.primaryBackground
+          }}
+        >
+          <WalletIcon width={14} height={14} color={theme.secondaryText} />
+          <Text fontSize={12} weight="semiBold" color={theme.primaryText}>
+            {formatDecimals(balance, 'value')}
+          </Text>
+        </Badge>
       )}
       {!!withKeyType && (
         <AccountKeyIcons
@@ -430,6 +357,8 @@ const Account = ({
     </View>
   )
 
+  const isMarkedSelected = isSelectable && !!options.markSelected && addr === selectedAccount?.addr
+
   return (
     <AnimatedPressable
       disabled={selectAccountStatus !== 'INITIAL'}
@@ -441,62 +370,36 @@ const Account = ({
         containerStyle,
         // @ts-expect-error: Web style
         isSelectable ? animStyle : { cursor: 'default' },
-        isSelectable &&
-          options.markSelected &&
-          addr === selectedAccount?.addr && {
-            backgroundColor: !inverseInteractionColors
-              ? theme.secondaryBackground
-              : theme.primaryBackground
-          },
-        !!extraHeight && {
-          minHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT + extraHeight,
-          maxHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT + extraHeight
-        }
+        isMarkedSelected &&
+          (!inverseInteractionColors
+            ? { backgroundColor: theme.primaryAccent100, borderColor: theme.primaryAccent }
+            : { backgroundColor: theme.primaryBackground })
       ]}
     >
-      <View
-        ref={contentRef}
-        style={[
-          flexbox.flex1,
-          // Leaves the room the row grew by to the badges hanging below, so the rest takes
-          // the height of any other row
-          isStacked ? { paddingTop: stackedPadding } : { paddingBottom: extraHeight }
-        ]}
-      >
+      <View ref={contentRef} onLayout={updateContentHeight}>
         {/* As tall as the content, which the row's height is worked out from */}
         <View
-          ref={contentHeightRef}
           pointerEvents="none"
+          ref={contentHeightRef}
           style={{ position: 'absolute', top: 0, bottom: 0, width: 0 }}
         />
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.justifySpaceBetween,
-            // Stacked, the avatar and the actions are centered on the label and the address,
-            // with the badges below all of them
-            isStacked ? flexbox.alignCenter : flexbox.flex1
-          ]}
-          // Picks up a change of the row's width, which no commit of its own follows
-          onLayout={updateBadgesLayout}
-        >
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-            {renderLeftChildren && renderLeftChildren()}
-            <Avatar
-              address={account.addr}
-              pfp={account.preferences.pfp}
-              smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
-              showTooltip
-            />
-            <View style={[flexbox.flex1, flexbox.justifyCenter]} ref={labelColumnRef}>
-              {label}
-              {address}
-              {!isStacked && badges}
-            </View>
+        {/* The avatar and the actions are centered on the label and the address */}
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          {renderLeftChildren && renderLeftChildren()}
+          <Avatar
+            address={account.addr}
+            pfp={account.preferences.pfp}
+            smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
+            size={AVATAR_SIZE}
+            showTooltip
+          />
+          <View style={[flexbox.flex1, flexbox.justifyCenter]}>
+            {label}
+            {address}
           </View>
           {actions}
         </View>
-        {isStacked && badges}
+        {badges}
       </View>
     </AnimatedPressable>
   )

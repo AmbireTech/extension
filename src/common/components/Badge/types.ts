@@ -29,6 +29,8 @@ type Props = {
   size?: 'sm' | 'md' | 'lg'
   specialType?: SpecialBadgeType
   testId?: string
+  /** Puts the icons (`children` and the tooltip's) before the text instead of after it */
+  isIconLeading?: boolean
 }
 
 export type { BadgeType, Props, SpecialBadgeType }

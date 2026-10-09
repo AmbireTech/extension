@@ -82,7 +82,13 @@ const AccountSelectScreen = () => {
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
   }, [])
-  const listBottomInset = footerHeight ? footerHeight + SPACING_SM : FALLBACK_FOOTER_HEIGHT
+  const getListBottomInset = () => {
+    // Under the list rather than over it, so the list needs no room for it
+    if (isNarrowWebLayout) return 0
+
+    return footerHeight ? footerHeight + SPACING_SM : FALLBACK_FOOTER_HEIGHT
+  }
+  const listBottomInset = getListBottomInset()
   const {
     accounts,
     control,

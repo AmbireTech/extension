@@ -39,6 +39,7 @@ const AccountBadges: FC<Props> = ({ accountData, accountKeys, withSpacing = true
       {!accountKeys.length && !isSafeAccount && (
         <BadgeWithPreset
           preset="view-only"
+          isIconLeading
           style={{
             ...(withSpacing ? spacings.mlTy : {}),
             borderWidth: 1,
@@ -48,7 +49,11 @@ const AccountBadges: FC<Props> = ({ accountData, accountKeys, withSpacing = true
       )}
 
       {isSmartAccount && isAmbireV1LinkedAccount && (
-        <BadgeWithPreset preset="ambire-v1" style={withSpacing ? spacings.mlTy : undefined} />
+        <BadgeWithPreset
+          preset="ambire-v1"
+          isIconLeading
+          style={withSpacing ? spacings.mlTy : undefined}
+        />
       )}
     </>
   )

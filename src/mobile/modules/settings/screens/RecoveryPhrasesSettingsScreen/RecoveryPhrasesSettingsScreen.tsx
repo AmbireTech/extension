@@ -104,9 +104,7 @@ const RecoveryPhrasesSettingsScreen = () => {
               isSelectable={false}
               containerStyle={{
                 marginBottom: 0,
-                paddingHorizontal: 0,
-                minHeight: 82,
-                maxHeight: 82
+                paddingHorizontal: 0
               }}
               withKeyType={false}
               withCopy={false}

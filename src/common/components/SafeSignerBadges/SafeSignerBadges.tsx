@@ -6,10 +6,11 @@ import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 
-const AVATAR_SIZE = 14
+const AVATAR_SIZE = 16
+const SIGNER_OF_COLOR = hexToRgba('#000000', 0.6)
 
 interface Props {
   /** The Safe accounts to tell the user the account is a signer of, see `useSafesSignedFor` */
@@ -22,7 +23,6 @@ interface Props {
  */
 const SafeSignerBadges = ({ safes }: Props) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
 
   return (
     <>
@@ -31,23 +31,14 @@ const SafeSignerBadges = ({ safes }: Props) => {
           key={safe.addr}
           style={{
             columnGap: SPACING_MI,
-            // The badge leaves room only for a trailing info icon when it has children
+            // The avatar leads, so it sits closer to the edge than the text on the other side
+            paddingLeft: SPACING_MI,
             paddingRight: SPACING_TY,
             maxWidth: '100%',
             // In the colors of the Safe icon, so the badge reads as Safe's in either theme
             backgroundColor: SAFE_ICON_BACKGROUND_COLOR
           }}
         >
-          {/* Never shrinks, so that only the Safe's name is cut short when there is no room */}
-          <Text
-            fontSize={12}
-            weight="medium"
-            color={theme.secondaryText}
-            numberOfLines={1}
-            style={{ flexShrink: 0 }}
-          >
-            {t('Signer of')}
-          </Text>
           <Avatar
             address={safe.addr}
             pfp={safe.preferences.pfp}
@@ -56,9 +47,20 @@ const SafeSignerBadges = ({ safes }: Props) => {
             // The badge spaces its content itself
             style={spacings.pr0}
           />
+          {/* Never shrinks, so that only the Safe's name is cut short when there is no room.
+          Dimmed rather than in a theme color, as the badge is equally bright in both themes */}
           <Text
             fontSize={12}
             weight="medium"
+            color={SIGNER_OF_COLOR}
+            numberOfLines={1}
+            style={{ flexShrink: 0 }}
+          >
+            {t('Signer of')}
+          </Text>
+          <Text
+            fontSize={12}
+            weight="semiBold"
             color={SAFE_ICON_SYMBOL_COLOR}
             numberOfLines={1}
             style={{ flexShrink: 1 }}
