@@ -2,6 +2,8 @@ import React, { Suspense, useCallback, useMemo, useState } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
+
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import ClockIcon from '@common/assets/svg/ClockIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
@@ -129,6 +131,10 @@ const RequestCard = React.memo(function RequestCard({
       request.kind === 'message' ||
       request.kind === 'typedMessage') &&
     !request.meta.isSafeDeploy
+  const safeNonce =
+    !!account?.safeCreation && request.kind === 'calls'
+      ? getAccountOpNonce(request.signAccountOp.accountOp)
+      : null
   const handleOpen = useCallback(() => onOpen(request.id), [onOpen, request.id])
 
   return (
@@ -201,6 +207,11 @@ const RequestCard = React.memo(function RequestCard({
         >
           {networkLabel}
         </Text>
+        {safeNonce !== null && (
+          <Text fontSize={isMobile ? 12 : 14} appearance="secondaryText" style={spacings.mlSm}>
+            {t('Nonce: #{{nonce}}', { nonce: safeNonce.toString() })}
+          </Text>
+        )}
       </View>
       {isWaitingForSafeActivation && (
         <View style={styles.waitingNote}>
