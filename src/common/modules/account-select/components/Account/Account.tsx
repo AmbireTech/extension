@@ -1,6 +1,6 @@
 import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { StyleSheet, View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
@@ -18,7 +18,6 @@ import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAccountKeys from '@common/hooks/useAccountKeys'
-import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -131,7 +130,6 @@ const Account = ({
    * The lines past the first one hang below the rest of the row, which grows by them while
    * everything else keeps the place it has in any other row.
    */
-  const { isCompactLayout } = useCompactLayout()
   const contentRef = useRef<View>(null)
   const contentHeightRef = useRef<View>(null)
   const labelColumnRef = useRef<View>(null)
@@ -146,21 +144,54 @@ const Account = ({
     baseContentHeight: number
     /**
      * Whether the badges go below the avatar, the label and the actions, at the full width
-     * of the row. Only in the compact layout, and only when they do not fit next to the
-     * avatar on one line - otherwise the row looks like any other
+     * of the row. Only when they do not fit next to the avatar on one line - otherwise the
+     * row looks like any other
      */
     isStacked: boolean
+    /**
+     * What stacked the badges: the label's width and what the badges show at that moment.
+     * They go back next to the avatar only when one of these changes, as only then can they
+     * fit there again. Re-checking that from the stacked layout itself could keep flipping
+     * the row between the two layouts.
+     */
+    stackedFor?: {
+      labelWidth: number | null
+      badgesContent: string
+    }
   } | null>(null)
   const isStacked = !!badgesLayout?.isStacked
+  /**
+   * Stacked, the content is no longer centered in the row's height, which is what spaces it
+   * from the row's edges otherwise, so it gets that space from padding - whatever the row
+   * does not have already
+   */
+  const stackedPadding = useMemo(() => {
+    if (!isStacked) return 0
+
+    const { paddingTop, paddingVertical, padding } = StyleSheet.flatten([
+      styles.accountContainer,
+      containerStyle
+    ])
+    const rowPadding = paddingTop ?? paddingVertical ?? padding ?? 0
+
+    return Math.max(SPACING_TY - (typeof rowPadding === 'number' ? rowPadding : 0), 0)
+  }, [containerStyle, isStacked, styles.accountContainer])
 
   const getExtraHeight = () => {
     if (!badgesLayout) return 0
     // Stacked, the badges are below the rest, so the row takes what it needs
-    if (isStacked) return badgesLayout.bottom - badgesLayout.baseContentHeight
+    if (isStacked) return badgesLayout.bottom + stackedPadding - badgesLayout.baseContentHeight
 
     return Math.max(badgesLayout.height - badgesLayout.firstLineHeight, 0)
   }
   const extraHeight = getExtraHeight()
+
+  /** Changes whenever the badges show something else, which may make them fit again */
+  const badgesContent = [
+    withBalance && balance !== null ? formatDecimals(balance, 'value') : '',
+    withKeyType ? accountKeys.map((key) => key.type).join() : '',
+    safesSignedFor.map((safe) => `${safe.addr}:${safe.preferences.label}`).join()
+  ].join('|')
 
   /**
    * Measured in a layout effect rather than on layout, so that the row has its height
@@ -176,25 +207,44 @@ const Account = ({
 
     const height = Math.round(badges.height)
     const firstLineHeight = Math.round(badgesFirstLine.height)
-    // Next to the avatar the badges are as wide as the label, so they don't fit there when
-    // they wrap. Stacked, they are only as wide as they need, so they don't fit when that is
-    // wider than the label (or when they wrap even at the full width of the row)
-    const doBadgesFitNextToAvatar =
-      height <= firstLineHeight && Math.round(badges.width) <= Math.round(labelColumn.width)
-    const next = {
+    const labelWidth = Math.round(labelColumn.width)
+    const measured = {
       height,
       firstLineHeight,
       bottom: Math.round(badges.y + badges.height),
       // Without what the row grew by when it was measured
-      baseContentHeight: Math.round(content.height) - extraHeight,
-      isStacked: isCompactLayout && !doBadgesFitNextToAvatar
+      baseContentHeight: Math.round(content.height) - extraHeight
     }
-    setBadgesLayout((prev) =>
-      prev && (Object.keys(next) as (keyof typeof next)[]).every((key) => prev[key] === next[key])
+
+    setBadgesLayout((prev) => {
+      const getStackedFor = () => {
+        // Next to the avatar, they don't fit there when they wrap. The label's width is
+        // taken once stacked, as it may differ between the two layouts
+        if (!prev?.isStacked)
+          return height > firstLineHeight ? { labelWidth: null, badgesContent } : undefined
+
+        // Stacked, they stay so until the label gets wider or the badges change
+        const { stackedFor } = prev
+        if (!stackedFor || stackedFor.badgesContent !== badgesContent) return undefined
+        if (stackedFor.labelWidth === null) return { ...stackedFor, labelWidth }
+        if (labelWidth > stackedFor.labelWidth) return undefined
+
+        return stackedFor
+      }
+      const stackedFor = getStackedFor()
+      const next = { ...measured, isStacked: !!stackedFor, stackedFor }
+
+      return prev &&
+        prev.height === next.height &&
+        prev.firstLineHeight === next.firstLineHeight &&
+        prev.bottom === next.bottom &&
+        prev.baseContentHeight === next.baseContentHeight &&
+        prev.isStacked === next.isStacked &&
+        prev.stackedFor === next.stackedFor
         ? prev
         : next
-    )
-  }, [extraHeight, isCompactLayout])
+    })
+  }, [badgesContent, extraHeight])
 
   // On every commit, as whatever the badges show may have changed their width
   useLayoutEffect(updateBadgesLayout)
@@ -331,8 +381,7 @@ const Account = ({
         flexbox.wrap,
         spacings.mtMi,
         { columnGap: SPACING_TY, rowGap: SPACING_MI },
-        // As wide as the badges need, so the width tells whether they fit next to the avatar
-        isStacked ? flexbox.alignSelfStart : { marginBottom: -extraHeight }
+        !isStacked && { marginBottom: -extraHeight }
       ]}
     >
       {/* Stretches to the height of the first line, which is all of them unless they
@@ -411,7 +460,7 @@ const Account = ({
           flexbox.flex1,
           // Leaves the room the row grew by to the badges hanging below, so the rest takes
           // the height of any other row
-          !isStacked && { paddingBottom: extraHeight }
+          isStacked ? { paddingTop: stackedPadding } : { paddingBottom: extraHeight }
         ]}
       >
         {/* As tall as the content, which the row's height is worked out from */}

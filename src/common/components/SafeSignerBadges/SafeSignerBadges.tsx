@@ -38,7 +38,14 @@ const SafeSignerBadges = ({ safes }: Props) => {
             backgroundColor: SAFE_ICON_BACKGROUND_COLOR
           }}
         >
-          <Text fontSize={12} weight="medium" color={theme.secondaryText}>
+          {/* Never shrinks, so that only the Safe's name is cut short when there is no room */}
+          <Text
+            fontSize={12}
+            weight="medium"
+            color={theme.secondaryText}
+            numberOfLines={1}
+            style={{ flexShrink: 0 }}
+          >
             {t('Signer of')}
           </Text>
           <Avatar
