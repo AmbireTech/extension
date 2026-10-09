@@ -10,8 +10,13 @@ const {
 } = require('./scripts/validateEnv')
 
 // Release bundles, store builds and OTAs alike, inline the env, so a missing value would ship.
-// Dev sessions don't need the production values.
-if (process.env.APP_ENV === PRODUCTION_APP_ENV && process.env.IS_TESTING !== 'true') {
+// Only CI builds what reaches users. Local production builds may point at staging or leave out
+// the crash report DSN, and dev sessions don't need the production values.
+if (
+  process.env.CI &&
+  process.env.APP_ENV === PRODUCTION_APP_ENV &&
+  process.env.IS_TESTING !== 'true'
+) {
   validateEnvVariables(process.env.APP_ENV, ENV_TARGETS.MOBILE)
 }
 
