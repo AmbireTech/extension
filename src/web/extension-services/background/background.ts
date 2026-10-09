@@ -863,7 +863,15 @@ browser.runtime.onConnect.addListener(async (port: Port) => {
 
     pm.addDisconnectListener(port.id, (disconnectedPort) => {
       mainCtrl.ui.removeView(port.id)
-      handleCleanUpOnPortDisconnect({ port, mainCtrl })
+      // Not awaited - nothing below depends on the cleanup finishing
+      handleCleanUpOnPortDisconnect({
+        port,
+        mainCtrl,
+        isSidePanelModeEnabled: walletStateCtrl.isSidePanelModeEnabled
+      }).catch((error) => {
+        console.error('Failed to clean up after a disconnected view', error)
+        captureBackgroundException(error)
+      })
 
       // The selectedAccount portfolio is reset onLoad of the popup
       // (from the background) while the portfolio update is triggered

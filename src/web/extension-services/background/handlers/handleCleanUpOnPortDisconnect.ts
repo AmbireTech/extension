@@ -1,5 +1,4 @@
 import { MainController } from '@ambire-common/controllers/main/main'
-import { isSidePanelView } from '@ambire-common/interfaces/ui'
 import { ONBOARDING_WEB_ROUTES } from '@common/modules/router/constants/common'
 import { IS_FIREFOX } from '@web/constants/common'
 import { forgetPanelWindowId } from '@web/extension-services/background/webapi/panel'
@@ -7,10 +6,12 @@ import { Port } from '@web/extension-services/messengers'
 
 export const handleCleanUpOnPortDisconnect = async ({
   port,
-  mainCtrl
+  mainCtrl,
+  isSidePanelModeEnabled
 }: {
   port: Port
   mainCtrl: MainController
+  isSidePanelModeEnabled: boolean
 }) => {
   if (port.name === 'side-panel') {
     forgetPanelWindowId(port.id)
@@ -18,12 +19,17 @@ export const handleCleanUpOnPortDisconnect = async ({
     // The panel renders action requests inline, so closing it discards their UI. Handle the
     // pending requests like a request window close: transactions stay queued, the rest get
     // rejected. Skipped while another panel or a request window still shows the request.
-    const isAnotherPanelOpen = mainCtrl.ui.views.some(isSidePanelView)
+    // On Firefox the sidebar can be open while panel mode is off, showing the "mode off" notice
+    // instead of the wallet - it never showed the requests, so closing it discards nothing.
+    const wasShowingRequests = !IS_FIREFOX || isSidePanelModeEnabled
+    // The closed panel's port is already gone, so this only counts the panels still open - with
+    // the same checks that decide where requests are shown
+    const isAnotherPanelOpen = !!mainCtrl.ui.panel?.isOpen()
     const isRequestInOwnWindow = !!mainCtrl.requests.requestWindow.windowProps
 
     // Not counted against the apps that were waiting - a port also drops on an extension
     // reload or a service worker restart, which is not the user refusing anything.
-    if (!isAnotherPanelOpen && !isRequestInOwnWindow)
+    if (wasShowingRequests && !isAnotherPanelOpen && !isRequestInOwnWindow)
       await mainCtrl.requests.closeRequestWindow({ isUserInitiated: false })
   }
 
