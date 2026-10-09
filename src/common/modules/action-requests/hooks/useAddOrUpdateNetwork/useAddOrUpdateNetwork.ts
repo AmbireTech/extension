@@ -30,8 +30,7 @@ const useAddOrUpdateNetwork = () => {
   // The screens render from this flag (button label, disabled state, invalid params alert), so it
   // has to be state - a ref wouldn't re-render them
   const [isActionButtonPressed, setIsActionButtonPressed] = useState(false)
-  // Kept per request, as the screen stays mounted when the next request is of the same kind
-  const [closePressedRequestId, setClosePressedRequestId] = useState<UserRequest['id'] | null>(null)
+  const [isCloseButtonPressed, setIsCloseButtonPressed] = useState(false)
   const [successStateText, setSuccessStateText] = useState<string>(
     t('already added to your wallet.')
   )
@@ -42,6 +41,23 @@ const useAddOrUpdateNetwork = () => {
 
     return currentUserRequest
   }, [currentUserRequest])
+
+  // The screen stays mounted when the next request is of the same kind, so what belongs to one
+  // request is reset when another one takes its place
+  const [stateRequestId, setStateRequestId] = useState<UserRequest['id'] | undefined>(
+    userRequest?.id
+  )
+
+  // Set during render, not in an effect, so React re-renders before painting and the previous
+  // request's state is never shown
+  if (userRequest?.id !== stateRequestId) {
+    setStateRequestId(userRequest?.id)
+    setRpcUrlIndex(0)
+    setExistingNetwork(undefined)
+    setIsActionButtonPressed(false)
+    setIsCloseButtonPressed(false)
+    setSuccessStateText(t('already added to your wallet.'))
+  }
 
   const requestData = useMemo(() => userRequest?.meta?.params?.[0], [userRequest])
 
@@ -61,8 +77,8 @@ const useAddOrUpdateNetwork = () => {
   )
 
   // existingNetwork must be set in a useEffect and can't be a useMemo. That is because we must
-  // set its value only once and never change it. Otherwise the screen rerenders when a network is
-  // added/enabled with the wrong state.
+  // set its value only once per request and never change it. Otherwise the screen rerenders when
+  // a network is added/enabled with the wrong state.
   useEffect(() => {
     if (existingNetwork || existingNetwork === null || !requestData?.chainId) return
     const matchingNetwork =
@@ -195,7 +211,7 @@ const useAddOrUpdateNetwork = () => {
     if (!userRequest) return
 
     setIsActionButtonPressed(true)
-    setClosePressedRequestId(userRequest.id)
+    setIsCloseButtonPressed(true)
     requestsDispatch({
       type: 'method',
       params: {
@@ -288,8 +304,6 @@ const useAddOrUpdateNetwork = () => {
 
     return existingNetwork ? t('Enable network') : t('Add network')
   }, [existingNetwork, isActionButtonPressed, statuses.addNetwork, statuses.updateNetwork, t])
-
-  const isCloseButtonPressed = !!userRequest && closePressedRequestId === userRequest.id
 
   const closeButtonText = useMemo(() => {
     if (!userRequest?.meta.hasNextRequest) return t('Close')

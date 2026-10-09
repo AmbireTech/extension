@@ -6,10 +6,6 @@ import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import { UiManager } from '@ambire-common/interfaces/ui'
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
-import {
-  dappRequestMethodToRequestKind,
-  isSignRequest
-} from '@ambire-common/libs/requests/requests'
 import { getMetadata } from '@common/modules/provider/metadata'
 import { ProviderController } from '@common/modules/provider/ProviderController'
 import { RequestRes } from '@common/modules/provider/types'
@@ -133,21 +129,18 @@ const flowContext = flow
 
     return next()
   })
-  // if the request targets a disabled network - prompt to enable it first
+  // if the app switches to a disabled network - prompt to enable it first. Sign requests for a
+  // disabled network are held by the RequestsController instead, until the network is enabled
   .use(async ({ request, mainCtrl }, next) => {
     const { method, params, session } = request
-    const isChainSwitch = method === 'wallet_switchEthereumChain'
-    if (!isChainSwitch && !isSignRequest(dappRequestMethodToRequestKind(method))) return next()
+    if (method !== 'wallet_switchEthereumChain') return next()
 
-    const chainIdParam =
-      isChainSwitch || method === 'wallet_sendCalls' ? params?.[0]?.chainId : undefined
-    const requestChainId = chainIdParam ?? mainCtrl.dapps.getDapp(session.id)?.chainId
     const disabledNetwork = mainCtrl.networks.disabledNetworks.find(
-      (n: Network) => Number(n.chainId) === Number(requestChainId)
+      (n: Network) => Number(n.chainId) === Number(params?.[0]?.chainId)
     )
     if (!disabledNetwork) return next()
 
-    // Requests arriving at once for the same network all wait on one prompt instead of each
+    // Switches arriving at once for the same network all wait on one prompt instead of each
     // opening their own
     const chainIdKey = disabledNetwork.chainId.toString()
     if (enablingNetworks[chainIdKey] === undefined) {
@@ -159,8 +152,6 @@ const flowContext = flow
               request: {
                 ...request,
                 method: 'wallet_addEthereumChain',
-                // Nothing opens after a network switch, so only the other requests wait on this one
-                meta: { hasNextRequest: !isChainSwitch },
                 params: [
                   {
                     chainId: networkChainIdToHex(disabledNetwork.chainId),
@@ -221,9 +212,7 @@ export default (
   notificationManager: UiManager['notification']
 ) => {
   return flowContext({
-    // Apps can send anything along with a request, so their `meta` never reaches the wallet's
-    // own request handling - only the wallet sets it
-    request: { ...request, meta: undefined },
+    request,
     mainCtrl,
     notificationManager,
     mapMethod: underline2Camelcase(request.method)
