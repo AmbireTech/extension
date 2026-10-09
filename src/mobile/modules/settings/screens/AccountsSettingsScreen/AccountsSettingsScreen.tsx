@@ -341,10 +341,7 @@ const AccountsSettingsScreen = () => {
             navigate(ROUTES.importFromExtension)
           }}
         />
-        <ExportToExtensionSheet
-          sheetRef={exportSheetRef}
-          closeBottomSheet={closeExportSheet}
-        />
+        <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

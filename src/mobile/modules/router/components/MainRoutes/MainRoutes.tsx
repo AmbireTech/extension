@@ -69,10 +69,7 @@ const MainRoutes = () => {
         <Route path={ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
         <Route path={ROUTES.trezorConnect} element={<TrezorConnectScreen />} />
         <Route path={ROUTES.qrConnect} element={<QrConnectScreen />} />
-        <Route
-          path={ROUTES.importFromExtension}
-          element={<ImportFromExtensionScreen />}
-        />
+        <Route path={ROUTES.importFromExtension} element={<ImportFromExtensionScreen />} />
 
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />

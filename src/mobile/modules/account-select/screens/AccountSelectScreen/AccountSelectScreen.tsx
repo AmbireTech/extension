@@ -211,10 +211,7 @@ const AccountSelectScreen = () => {
           navigate(ROUTES.importFromExtension)
         }}
       />
-      <ExportToExtensionSheet
-        sheetRef={exportSheetRef}
-        closeBottomSheet={closeExportSheet}
-      />
+      <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
     </MobileLayoutContainer>
   ) : (
     <DashboardSkeleton />
