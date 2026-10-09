@@ -1,6 +1,7 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
@@ -55,7 +56,12 @@ const SignMessageScreen = () => {
     isLoading,
     signingAuthSheetRef,
     cancelSigningAuth,
-    signingAuthProps
+    signingAuthProps,
+    holdToProceedButtonText,
+    holdToProceedCompleteText,
+    hasSafetyBanners,
+    holdToProceedButtonType,
+    isResolveActionDisabled
   } = useSignMessage()
   const { styles } = useTheme(getStyles)
 
@@ -104,6 +110,21 @@ const SignMessageScreen = () => {
               withRejectOptions
               rejectOptionsTitle={t('Reject request')}
               rejectOptionText={t('Reject this request')}
+              resolveNode={
+                hasSafetyBanners && !isViewOnly ? (
+                  <View style={flexbox.flex1}>
+                    <HoldToProceedButton
+                      testID="button-sign"
+                      size="large"
+                      text={holdToProceedButtonText}
+                      completeText={holdToProceedCompleteText}
+                      buttonType={holdToProceedButtonType}
+                      onHoldComplete={signWithDefaultSignerIfPossible}
+                      disabled={isResolveActionDisabled}
+                    />
+                  </View>
+                ) : undefined
+              }
             >
               {isViewOnly && (
                 <View style={[spacings.mbSm]}>

@@ -14,7 +14,7 @@ import useSigningAuth from '@common/hooks/useSigningAuth'
 import useToast from '@common/hooks/useToast'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
-import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
