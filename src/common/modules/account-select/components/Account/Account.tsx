@@ -358,6 +358,17 @@ const Account = ({
 
   const isMarkedSelected = isSelectable && !!options.markSelected && addr === selectedAccount?.addr
 
+  // The background the avatar sits on, so the ring of its badge blends into it
+  const getAvatarBadgeRingColor = () => {
+    if (isMarkedSelected)
+      return !inverseInteractionColors ? theme.primaryAccent100 : theme.primaryBackground
+    // Animated, so that it changes along with the row on hover
+    if (isSelectable) return animStyle.backgroundColor
+
+    // Not interactive, the row has no background of its own and sits on its list's card
+    return theme.secondaryBackground
+  }
+
   return (
     <AnimatedPressable
       disabled={selectAccountStatus !== 'INITIAL'}
@@ -396,6 +407,7 @@ const Account = ({
               pfp={account.preferences.pfp}
               smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
               size={ACCOUNT_AVATAR_SIZE}
+              typeBadgeRingColor={getAvatarBadgeRingColor()}
               showTooltip
             />
             <View style={[flexbox.flex1, flexbox.justifyCenter]}>
