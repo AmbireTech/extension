@@ -126,6 +126,26 @@ const flowContext = flow
 
     return next()
   })
+  // A selected Privacy Pools account has no address to give the app. Apps connected with chosen
+  // accounts still get theirs (and are asked to switch to it), so this stops only the rest.
+  .use(async ({ request, mainCtrl, notificationManager, mapMethod }, next) => {
+    const providerCtrl = new ProviderController(mainCtrl, notificationManager)
+    const isPrivacyPoolsAccountSelected = !!mainCtrl.selectedAccount.privacyPoolsAccountId
+
+    if (
+      getMetadata('SAFE', providerCtrl, mapMethod) ||
+      !isPrivacyPoolsAccountSelected ||
+      providerCtrl._getSelectedAccount(request.session.id)
+    ) {
+      return next()
+    }
+
+    throw ethErrors.provider.custom({
+      code: 4100,
+      message:
+        'Apps can’t use a Privacy Pools account. Switch to another account in Ambire and try again.'
+    })
+  })
   // add the dapp request as a userRequest
   .use(async (props, next) => {
     const { request, mainCtrl, notificationManager, mapMethod } = props
