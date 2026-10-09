@@ -17,7 +17,7 @@ import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import SigningKeySelect from '@common/modules/sign-message/components/SignKeySelect'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -25,6 +25,12 @@ import { setStringAsync } from '@common/utils/clipboard'
 import { getSignAndCloseOwnerAddr } from './helpers'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+/** Up to this many owners are shown in full; any more and the list becomes scrollable */
+const MAX_OWNERS_WITHOUT_SCROLL = 5
+const OWNER_ROW_HEIGHT = 40
+const OWNERS_LIST_MAX_HEIGHT =
+  MAX_OWNERS_WITHOUT_SCROLL * (OWNER_ROW_HEIGHT + SPACING_TY) - SPACING_TY
 
 const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
   address,
@@ -63,7 +69,7 @@ const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
         {
           width: '100%',
           minWidth: 0,
-          minHeight: 38,
+          height: OWNER_ROW_HEIGHT,
           borderRadius: BORDER_RADIUS_PRIMARY,
           backgroundColor: theme.primaryBackground
         }
@@ -219,9 +225,12 @@ const SafeOwners = ({
         {t(`${threshold} out of ${owners.length} signatures required:`)}
       </Text>
       <ScrollableWrapper
-        // Web (incl. side panel) needs maxHeight so the list keeps intrinsic height;
+        // Web (incl. side panel) needs flexShrink: 0 so the list keeps intrinsic height;
         // `{ flex: 0 }` alone collapses the rows on RN web.
-        style={isWeb ? { maxHeight: 120, flexShrink: 0 } : { flex: 0 }}
+        style={[
+          isWeb ? { flexShrink: 0 } : { flex: 0 },
+          owners.length > MAX_OWNERS_WITHOUT_SCROLL && { maxHeight: OWNERS_LIST_MAX_HEIGHT }
+        ]}
         contentContainerStyle={{ flexGrow: 0 }}
       >
         {owners.map((o, i) => (
