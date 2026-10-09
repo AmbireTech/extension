@@ -1,17 +1,18 @@
 import React, { useMemo } from 'react'
 
 import { Account } from '@ambire-common/interfaces/account'
-import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
+import { SAFE_ICON_BACKGROUND_COLOR, SAFE_ICON_SYMBOL_COLOR } from '@common/assets/svg/SafeIcon'
+import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const ICON_SIZE = 12
+const AVATAR_SIZE = 14
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
@@ -44,21 +45,25 @@ const SafeSignerBadges = ({ account }: Props) => {
             // The badge leaves room only for a trailing info icon when it has children
             paddingRight: SPACING_TY,
             maxWidth: '100%',
-            borderWidth: 1,
-            borderColor: theme.neutral600
+            // In the colors of the Safe icon, so the badge reads as Safe's in either theme
+            backgroundColor: SAFE_ICON_BACKGROUND_COLOR
           }}
         >
-          <Text fontSize={12} weight="medium" color={theme.neutral600}>
+          <Text fontSize={12} weight="medium" color={theme.secondaryText}>
             {t('Signer of')}
           </Text>
-          <SafeIcon
-            width={ICON_SIZE * SAFE_ICON_INLINE_SCALE}
-            height={ICON_SIZE * SAFE_ICON_INLINE_SCALE}
+          <Avatar
+            address={safe.addr}
+            pfp={safe.preferences.pfp}
+            size={AVATAR_SIZE}
+            displayTypeBadge={false}
+            // The badge spaces its content itself
+            style={spacings.pr0}
           />
           <Text
             fontSize={12}
             weight="medium"
-            color={theme.neutral600}
+            color={SAFE_ICON_SYMBOL_COLOR}
             numberOfLines={1}
             style={{ flexShrink: 1 }}
           >
