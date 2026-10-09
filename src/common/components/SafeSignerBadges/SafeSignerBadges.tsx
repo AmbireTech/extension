@@ -56,7 +56,7 @@ const SafeSignerBadges = ({ safes }: Props) => {
             numberOfLines={1}
             style={{ flexShrink: 0 }}
           >
-            {t('Signer of')}
+            {t('Owner of')}
           </Text>
           <Text
             fontSize={12}
