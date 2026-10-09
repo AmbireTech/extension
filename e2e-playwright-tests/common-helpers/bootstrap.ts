@@ -23,6 +23,12 @@ const slowMo = Number.isFinite(slowMoFromEnv) ? slowMoFromEnv : DEFAULT_SLOW_MO
 
 let currentContext: BrowserContext | null = null
 
+// Storage flags that hide one-time UI announcements (e.g. the CoW Swap card on Swap & Bridge),
+// so they don't cover the elements the tests interact with
+const DISMISSED_ANNOUNCEMENTS_STORAGE = {
+  cowSwapAnnouncementDismissed: true
+}
+
 const playwrightArgs = [
   `--disable-extensions-except=${extensionPath}/`,
   `--load-extension=${extensionPath}/`,
@@ -155,7 +161,10 @@ export async function bootstrap(namespace: string) {
 
   await waitForStorage(serviceWorker)
 
-  await serviceWorker.evaluate(() => chrome.storage.local.set({ isE2EStorageSet: true }))
+  await serviceWorker.evaluate((params) => chrome.storage.local.set(params), {
+    isE2EStorageSet: true,
+    ...DISMISSED_ANNOUNCEMENTS_STORAGE
+  })
   return { page, context, extensionURL }
 }
 
@@ -194,6 +203,7 @@ export async function bootstrapWithStorage(
     selectedAccount,
     isE2EStorageSet: true,
     isSetupComplete: 'true',
+    ...DISMISSED_ANNOUNCEMENTS_STORAGE,
     ...(!shouldUnlockKeystoreManually && {
       keyStoreUid,
       keystoreKeys,
