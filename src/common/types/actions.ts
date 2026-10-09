@@ -154,8 +154,8 @@ type OpenExtensionPopupAction = {
   params?: {
     /**
      * Set by the UI on Firefox once it has opened the sidebar itself (only the UI can - see
-     * `dispatch` in controllersMiddlewareContext). On Firefox the background trusts this over its
-     * stored side panel mode, so the two can never disagree about what was opened.
+     * useOpenWalletFromClick). On Firefox the background trusts this over its stored side panel
+     * mode, so the two can never disagree about what was opened.
      */
     hasOpenedFirefoxSidebar?: boolean
   }

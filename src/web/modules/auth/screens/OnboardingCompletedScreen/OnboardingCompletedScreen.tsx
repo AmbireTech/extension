@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { View } from 'react-native'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
@@ -7,7 +7,6 @@ import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
 import spacings from '@common/styles/spacings'
@@ -19,13 +18,14 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { engine } from '@web/constants/browserapi'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
+import useOpenWalletFromClick from '@web/hooks/useOpenWalletFromClick'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
 export const CARD_WIDTH = 400
 
 const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
+  const openWalletFromClick = useOpenWalletFromClick()
   const {
     state: { isPinned, isSidePanelModeEnabled },
     dispatch: walletStateDispatch
@@ -42,10 +42,6 @@ const OnboardingCompletedScreen = () => {
       }
     })
   }, [walletStateDispatch])
-
-  const handleOpenDashboardPress = useCallback(async () => {
-    dispatch({ type: 'OPEN_EXTENSION_POPUP' })
-  }, [dispatch])
 
   return (
     <>
@@ -87,7 +83,7 @@ const OnboardingCompletedScreen = () => {
                 </Text>
               )}
               {/* Firefox can't open the popup from here, but it can open the sidebar from this
-              click (see `dispatch` in controllersMiddlewareContext) */}
+              click (see useOpenWalletFromClick) */}
               {(engine !== 'gecko' || isSidePanelModeEnabled) && (
                 <View style={{ ...flexbox.flex1, width: '100%', ...flexbox.justifyEnd }}>
                   <Button
@@ -95,7 +91,7 @@ const OnboardingCompletedScreen = () => {
                     text={t('Open wallet')}
                     hasBottomSpacing={false}
                     style={{ width: '100%' }}
-                    onPress={handleOpenDashboardPress}
+                    onPress={openWalletFromClick}
                   />
                 </View>
               )}

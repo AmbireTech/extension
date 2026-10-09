@@ -20,11 +20,10 @@ import { toAbsoluteRoute } from '@common/modules/router/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
 import { getUiType } from '@common/utils/uiType'
-import { engine, isExtension } from '@web/constants/browserapi'
+import { isExtension } from '@web/constants/browserapi'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import { PortMessenger } from '@web/extension-services/messengers'
-import { openFirefoxSidebarFromUserGesture } from '@web/utils/sidePanel'
 import useAutoLockControllerHelpers from '@web/hooks/useAutoLockControllerHelpers'
 import useDappsControllerHelpers from '@web/hooks/useDappsControllerHelpers'
 import useKeystoreControllerHelpers from '@web/hooks/useKeystoreControllerHelpers'
@@ -254,14 +253,6 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   const hasConnectedToTheBackground = useRef(false)
   const { controllerStore } = useContext(ControllerStoreContext)
   const { navigate } = useNavigation()
-  // `navigate` changes with every location change, so `dispatch` reads it through a ref - otherwise
-  // `dispatch` would change on every navigation too, re-running every effect that depends on it
-  // (e.g. the swap screen's cleanup, which would unload the session it just created)
-  const navigateRef = useRef(navigate)
-
-  useEffect(() => {
-    navigateRef.current = navigate
-  }, [navigate])
   const isOnRootRoute = !route.pathname || route.pathname === '/'
 
   // The controller names and the route to navigate to arrive in separate messages, in
@@ -273,34 +264,9 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
 
   const dispatch = useCallback(
     (action: MethodAction | Action) => {
-      const shouldOpenFirefoxSidebar =
-        engine === 'gecko' &&
-        action.type === 'OPEN_EXTENSION_POPUP' &&
-        controllerStore.getSnapshot('WalletStateController').isSidePanelModeEnabled
-
-      if (!shouldOpenFirefoxSidebar) {
-        globalDispatch(action, windowId)
-        return
-      }
-
-      // The background can't open the Firefox sidebar (see handleActions.ts), so it's opened here
-      // and the action is dispatched only once it is open. The gesture is lost when the action is
-      // dispatched after an await (e.g. goToNextRoute after saving the account names) - open() then
-      // rejects and the dashboard is shown in this tab instead, as when the popup fails to open.
-      openFirefoxSidebarFromUserGesture()
-        .then(() =>
-          globalDispatch(
-            { type: 'OPEN_EXTENSION_POPUP', params: { hasOpenedFirefoxSidebar: true } },
-            windowId
-          )
-        )
-        .catch((error) => {
-          // Expected when there is no user gesture, so it isn't reported
-          console.warn('Failed to open the Firefox sidebar, opening the dashboard here', error)
-          navigateRef.current('/')
-        })
+      globalDispatch(action, windowId)
     },
-    [windowId, controllerStore]
+    [windowId]
   )
 
   const requestViewRouteSync = useCallback(() => {

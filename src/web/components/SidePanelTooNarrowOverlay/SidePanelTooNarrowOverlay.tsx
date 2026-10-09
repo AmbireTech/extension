@@ -1,15 +1,12 @@
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
+import { StyleSheet } from 'react-native'
 
 import SidePanelOpenIcon from '@common/assets/svg/SidePanelOpenIcon'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
+import SidePanelEmptyState from '@web/components/SidePanelEmptyState'
 import { SIDE_PANEL_MIN_WIDTH } from '@web/constants/spacings'
 
 const { isSidePanel } = getUiType()
@@ -28,27 +25,14 @@ const SidePanelTooNarrowOverlay = () => {
   if (!isSidePanel || width >= SIDE_PANEL_MIN_WIDTH) return null
 
   return (
-    <View
-      style={[
-        StyleSheet.absoluteFill,
-        flexbox.center,
-        spacings.ph,
-        { zIndex: 1000, backgroundColor: theme.primaryBackground }
-      ]}
-    >
-      <SidePanelOpenIcon width={48} height={48} color={theme.primaryText} />
-      <Text fontSize={20} weight="medium" style={[spacings.mtMd, text.center]}>
-        {t('Make the sidebar wider')}
-      </Text>
-      <Text
-        fontSize={16}
-        weight="regular"
-        appearance="secondaryText"
-        style={[spacings.mtTy, text.center]}
-      >
-        {t('Ambire needs a bit more room. Drag the edge of the sidebar to make it wider.')}
-      </Text>
-    </View>
+    <SidePanelEmptyState
+      style={[StyleSheet.absoluteFill, { zIndex: 1000, backgroundColor: theme.primaryBackground }]}
+      icon={<SidePanelOpenIcon width={48} height={48} color={theme.primaryText} />}
+      title={t('Make the sidebar wider')}
+      description={t(
+        'Ambire needs a bit more room. Drag the edge of the sidebar to make it wider.'
+      )}
+    />
   )
 }
 
