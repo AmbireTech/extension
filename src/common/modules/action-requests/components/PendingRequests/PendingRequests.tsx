@@ -3,6 +3,8 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
+import ClockIcon from '@common/assets/svg/ClockIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -33,6 +35,7 @@ import {
 } from './requestInfo'
 import getStyles from './styles'
 
+import type { Account, AccountStates } from '@ambire-common/interfaces/account'
 import type { Network } from '@ambire-common/interfaces/network'
 import type { UserRequest } from '@ambire-common/interfaces/userRequest'
 import type { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
@@ -48,6 +51,11 @@ const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsCon
   state.visibleUserRequests
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
 
 const selectHumanizedMessage = (state: AllControllersMappingType['SignMessageController']) =>
   state.humanizedMessage
@@ -81,6 +89,8 @@ const RequestIcon = React.memo(function RequestIcon({
 const RequestCard = React.memo(function RequestCard({
   request,
   networks,
+  accounts,
+  accountStates,
   onOpen,
   shouldRenderHumanization,
   humanizedMessage,
@@ -88,13 +98,15 @@ const RequestCard = React.memo(function RequestCard({
 }: {
   request: UserRequest
   networks: Network[]
+  accounts: Account[]
+  accountStates: AccountStates
   onOpen: (requestId: UserRequest['id']) => void
   shouldRenderHumanization: boolean
   humanizedMessage?: IrMessage
   isLast: boolean
 }) {
   const { t } = useTranslation()
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { title, description, networkLabel, requestChainId } = useMemo(() => {
     return {
       title: getRequestTitle(request, t),
@@ -103,6 +115,20 @@ const RequestCard = React.memo(function RequestCard({
       requestChainId: getRequestChainId(request)
     }
   }, [networks, request, t])
+  const account = accounts.find(
+    ({ addr }) => addr.toLowerCase() === request.meta.accountAddr.toLowerCase()
+  )
+  const accountState = accountStates[account?.addr || '']?.[requestChainId || '']
+  // a Safe can't sign or send anything on a network it isn't active on yet, so the request waits
+  // for the activation request to be confirmed before it can be opened
+  const isWaitingForSafeActivation =
+    !!account?.safeCreation &&
+    !accountState?.isDeployed &&
+    (request.kind === 'calls' ||
+      request.kind === 'siwe' ||
+      request.kind === 'message' ||
+      request.kind === 'typedMessage') &&
+    !request.meta.isSafeDeploy
   const handleOpen = useCallback(() => onOpen(request.id), [onOpen, request.id])
 
   return (
@@ -116,16 +142,25 @@ const RequestCard = React.memo(function RequestCard({
             {title}
           </Text>
         </View>
-        <HoverablePressable
-          onPress={handleOpen}
-          style={styles.openButton}
-          accessibilityRole="button"
-          accessibilityLabel={t('Open {{requestTitle}}', { requestTitle: title })}
-        >
-          <Text appearance="linkText" weight="medium">
-            {t('Open')}
-          </Text>
-        </HoverablePressable>
+        {isWaitingForSafeActivation ? (
+          <View style={styles.waitingPill}>
+            <ClockIcon width={12} height={12} color={theme.warningText} />
+            <Text fontSize={12} weight="medium" color={theme.warningText} style={spacings.mlMi}>
+              {t('Waiting')}
+            </Text>
+          </View>
+        ) : (
+          <HoverablePressable
+            onPress={handleOpen}
+            style={styles.openButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('Open {{requestTitle}}', { requestTitle: title })}
+          >
+            <Text appearance="linkText" weight="medium">
+              {t('Open')}
+            </Text>
+          </HoverablePressable>
+        )}
       </View>
       <Text appearance="secondaryText" fontSize={14} style={styles.cardDescription}>
         {description}
@@ -167,6 +202,20 @@ const RequestCard = React.memo(function RequestCard({
           {networkLabel}
         </Text>
       </View>
+      {isWaitingForSafeActivation && (
+        <View style={styles.waitingNote}>
+          <InfoIcon width={16} height={16} color={theme.warningText} />
+          <Text
+            fontSize={isMobile ? 12 : 14}
+            color={theme.warningText}
+            style={[spacings.mlMi, styles.waitingNoteText]}
+          >
+            {t('Opens once your Safe account is active on {{network}}.', {
+              network: networkLabel
+            })}
+          </Text>
+        </View>
+      )}
     </View>
   )
 })
@@ -190,6 +239,8 @@ const PendingRequests = ({ style }: Props) => {
     selectVisibleUserRequests
   )
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const { state: humanizedMessage } = useController('SignMessageController', selectHumanizedMessage)
   const otherRequests = useMemo(() => {
     if (!currentUserRequest) return []
@@ -297,6 +348,8 @@ const PendingRequests = ({ style }: Props) => {
             key={String(request.id)}
             request={request}
             networks={networks}
+            accounts={accounts}
+            accountStates={accountStates}
             onOpen={openRequest}
             shouldRenderHumanization={shouldRenderHumanization}
             humanizedMessage={humanizedMessage}
