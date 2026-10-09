@@ -11,6 +11,15 @@ import { BrowserContext, chromium, Page } from '@playwright/test'
 const buildDir = process.env.BUILD_DIR || path.resolve(__dirname, '../../build')
 const extensionPath = path.join(buildDir, process.env.WEBPACK_BUILD_OUTPUT_PATH || 'webkit-prod')
 const USER_DATA_DIR = '' // you can set a temp dir if needed
+const DEFAULT_SLOW_MO = 10
+
+// Launching a persistent context ignores `use.headless` from the config, so watching a run
+// locally is opted into here instead
+const isHeaded = process.env.PLAYWRIGHT_HEADED === 'true'
+const slowMoFromEnv = process.env.PLAYWRIGHT_SLOW_MO
+  ? Number.parseInt(process.env.PLAYWRIGHT_SLOW_MO, 10)
+  : NaN
+const slowMo = Number.isFinite(slowMoFromEnv) ? slowMoFromEnv : DEFAULT_SLOW_MO
 
 let currentContext: BrowserContext | null = null
 
@@ -60,7 +69,8 @@ async function initBrowser(namespace: string): Promise<{
   // 1. Launch persistent context with extension
   const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
     channel: 'chromium',
-    slowMo: 10,
+    headless: !isHeaded,
+    slowMo,
     ignoreHTTPSErrors: true,
     args: playwrightArgs,
     env: process.env.DISPLAY ? { DISPLAY: process.env.DISPLAY } : undefined,

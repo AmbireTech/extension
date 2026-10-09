@@ -1,4 +1,3 @@
-import { wordlists } from 'bip39'
 import React from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
@@ -6,11 +5,8 @@ import { View } from 'react-native'
 import Button from '@common/components/Button'
 import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
-import Text from '@common/components/Text'
-import TextArea from '@common/components/TextArea'
-import { isAndroid } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import { NO_AUTOFILL_PROPS, NO_KEYBOARD_LEARNING_PROPS } from '@common/constants/textInput'
+import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
@@ -21,6 +17,8 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
+import SeedPhraseInput from './SeedPhraseInput'
+
 const SeedPhraseImportScreen = () => {
   const {
     control,
@@ -28,8 +26,11 @@ const SeedPhraseImportScreen = () => {
     enablePassphrase,
     setEnablePassphrase,
     seedPhraseStatus,
+    seedPhraseError,
+    seedCaretPosition,
+    setSeedCaretPosition,
     handleFormSubmit,
-    validateSeedPhraseWord
+    validateSeedPhrase
   } = useSeedPhraseImport()
   const { goToPrevRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
@@ -45,7 +46,7 @@ const SeedPhraseImportScreen = () => {
           text={t('Confirm')}
           hasBottomSpacing={false}
           onPress={handleFormSubmit}
-          disabled={!isValid || seedPhraseStatus === 'invalid'}
+          disabled={!isValid}
         />
       }
     >
@@ -59,85 +60,23 @@ const SeedPhraseImportScreen = () => {
           control={control}
           rules={{
             required: true,
-            validate: validateSeedPhraseWord
+            validate: validateSeedPhrase
           }}
           name="seed"
-          render={({ field: { onChange, onBlur, value } }) => {
-            const words = value.split(/(\s+)/)
-
-            const styledOverlay = (
-              <View style={[styles.overlay, { paddingVertical: 16, paddingHorizontal: 13 }]}>
-                {words.map((word, index) => {
-                  const isWhitespace = /^\s+$/.test(word)
-                  const cleanWord = word.trim().toLowerCase()
-                  const isValidWord = isWhitespace || wordlists.english?.includes(cleanWord)
-
-                  if (isWhitespace) {
-                    return (
-                      <Text
-                        key={`space-${String(index)}`}
-                        fontSize={14}
-                        style={{ letterSpacing: -0.1, lineHeight: 21 }}
-                      >
-                        {word}
-                      </Text>
-                    )
-                  }
-
-                  return (
-                    <Text
-                      key={`${word}-${String(index)}`}
-                      fontSize={14}
-                      weight="light"
-                      style={{
-                        color: isValidWord ? theme.primaryText : theme.errorText,
-                        textDecorationLine: isValidWord ? 'none' : 'underline'
-                      }}
-                    >
-                      {word}
-                    </Text>
-                  )
-                })}
-              </View>
-            )
-
-            return (
-              <View style={styles.textAreaWrapper}>
-                {!isAndroid && styledOverlay}
-                <TextArea
-                  {...NO_KEYBOARD_LEARNING_PROPS}
-                  testID="enter-seed-phrase-field"
-                  value={value}
-                  editable
-                  multiline
-                  numberOfLines={4}
-                  autoFocus
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  inputWrapperStyle={{
-                    position: 'relative',
-                    backgroundColor: 'transparent',
-                    borderColor: theme.neutral600,
-                    zIndex: 2,
-                    maxHeight: 150
-                  }}
-                  placeholder={t('Write or paste your recovery phrase')}
-                  isValid={seedPhraseStatus === 'valid'}
-                  error={seedPhraseStatus === 'invalid' && t('Invalid recovery phrase.')}
-                  placeholderTextColor={theme.secondaryText}
-                  onSubmitEditing={handleFormSubmit}
-                  nativeInputStyle={{
-                    ...(isAndroid ? {} : { color: 'rgba(0, 0, 0, 0)' }),
-                    // @ts-ignore caretColor: theme.primaryText
-                    caretColor: theme.primaryText,
-                    fontSize: 14,
-                    padding: 0,
-                    border: 0
-                  }}
-                />
-              </View>
-            )
-          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <View style={styles.textAreaWrapper}>
+              <SeedPhraseInput
+                value={value}
+                status={seedPhraseStatus}
+                error={seedPhraseError}
+                caretPosition={seedCaretPosition}
+                onCaretPositionChange={setSeedCaretPosition}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                onSubmitEditing={handleFormSubmit}
+              />
+            </View>
+          )}
         />
         <FatToggle
           testID="enable-passphrase-toggle"

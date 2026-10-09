@@ -1,0 +1,19 @@
+diff --git a/node_modules/react-native-worklets/android/src/main/java/com/swmansion/worklets/ScriptBufferWrapper.java b/node_modules/react-native-worklets/android/src/main/java/com/swmansion/worklets/ScriptBufferWrapper.java
+index 3114bfe..0059fe6 100644
+--- a/node_modules/react-native-worklets/android/src/main/java/com/swmansion/worklets/ScriptBufferWrapper.java
++++ b/node_modules/react-native-worklets/android/src/main/java/com/swmansion/worklets/ScriptBufferWrapper.java
+@@ -27,6 +27,14 @@ public class ScriptBufferWrapper {
+     } else if (uri.startsWith(assetsPrefix)) {
+       String assetURL = uri.substring(assetsPrefix.length());
+       mHybridData = initHybridFromAssets(assetManager, assetURL);
++    } else if (uri.startsWith("/")) {
++      // Stallion OTA bundles are loaded from a plain absolute path (no `file://` prefix),
++      // which would otherwise fall through to downloadScript() and crash on launch with
++      // `MalformedURLException: no protocol`, making Stallion roll back every Android OTA.
++      // Backport of the upstream fix shipped in react-native-worklets 0.10.2.
++      // Remove this patch once we upgrade to react-native >= 0.83 and
++      // react-native-worklets >= 0.10.2 (with react-native-reanimated >= 4.4.2).
++      mHybridData = initHybridFromFile(uri);
+     } else {
+       String scriptContent;
+       try {

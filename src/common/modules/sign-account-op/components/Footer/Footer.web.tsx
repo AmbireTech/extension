@@ -1,20 +1,20 @@
 import React, { useMemo } from 'react'
-import { TextStyle, View } from 'react-native'
+import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import BatchIcon from '@common/assets/svg/BatchIcon'
-import Button from '@common/components/Button'
+import { COMPACT_LAYOUT_BUTTON_HEIGHT } from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import BatchButton, { COMPACT_SECONDARY_BUTTON_PADDING } from './BatchButton'
+import CompactFooterButtons from './CompactFooterButtons'
 import { Props } from './Footer'
 import RejectButton from './RejectButton'
 import getStyles from './styles'
@@ -24,8 +24,8 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 // An exception to the `size="large"` height (56). The sign screen is dense and the
 // footer is always visible, so all of its buttons are slightly shorter in order to
 // free up vertical space for the transaction details above. Keep every button in
-// the footer on this height, otherwise they won't line up.
-const FOOTER_BUTTON_HEIGHT = 52
+// the footer on this height, otherwise they won't line up. Same as the compact layout's buttons.
+const FOOTER_BUTTON_HEIGHT = COMPACT_LAYOUT_BUTTON_HEIGHT
 
 const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
   state.userRequests
@@ -79,88 +79,33 @@ const Footer = ({
     return !!account?.safeCreation && !!accountOp?.signature && accountOp?.signature !== '0x'
   }, [accountOp?.signature, account?.safeCreation])
 
-  const batchBtnText = useMemo(() => {
-    if (isMultisigSigned) return t('Sign later')
-    return batchCount > 1
-      ? t('Add to batch ({{batchCount}})', {
-          batchCount
-        })
-      : t('Start a batch')
-  }, [isMultisigSigned, batchCount, t])
+  const batchBadgeCount = batchCount > 1 ? batchCount : 0
 
-  const compactBatchBtnText = useMemo(() => {
-    if (isMultisigSigned) return t('Sign later')
-    return batchCount > 1
-      ? t('Batch ({{batchCount}})', {
-          batchCount
-        })
-      : t('Start a batch')
-  }, [isMultisigSigned, batchCount, t])
-
-  const rejectButton = ({
-    fullWidth,
-    compact = false
-  }: {
-    fullWidth: boolean
-    compact?: boolean
-  }) => (
+  const rejectButton = (
     <RejectButton
       onReject={onReject}
       isSignLoading={isSignLoading}
       shouldRejectOnchain={shouldRejectOnchain}
       isRejectDisabled={isRejectDisabled}
-      size={compact ? 'smaller' : 'large'}
-      containerStyle={fullWidth ? { width: '100%' } : undefined}
-      style={
-        fullWidth ? { width: '100%', minWidth: 0 } : { width: 98, height: FOOTER_BUTTON_HEIGHT }
-      }
+      size="large"
+      style={{ width: 98, height: FOOTER_BUTTON_HEIGHT }}
     />
   )
 
-  const batchButton = ({
-    fullWidth,
-    compact = false
-  }: {
-    fullWidth: boolean
-    compact?: boolean
-  }) => (
-    <Button
+  const batchButton = (
+    <BatchButton
       testID="queue-and-sign-later-button"
-      type="secondary"
-      childrenPosition="left"
-      text={compact ? compactBatchBtnText : batchBtnText}
+      size="large"
+      badgeCount={batchBadgeCount}
+      isSignLater={isMultisigSigned}
+      infoTooltip={startBatchingInfo}
       onPress={onAddToCart}
       disabled={isAddToCartDisabled}
-      hasBottomSpacing={false}
-      style={
-        fullWidth
-          ? { width: '100%', minWidth: 0 }
-          : { minWidth: 160, height: FOOTER_BUTTON_HEIGHT, ...spacings.ph }
-      }
-      size={compact ? 'smaller' : 'large'}
-      textStyle={
-        compact && isWeb
-          ? ({
-              flexShrink: 1,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            } as TextStyle)
-          : undefined
-      }
-      {...(!isMultisigSigned &&
-        !compact && {
-          tooltipDataSet: createGlobalTooltipDataSet({
-            id: 'start-batch-info-tooltip',
-            content: startBatchingInfo
-          })
-        })}
-    >
-      {!isMultisigSigned && !compact && <BatchIcon style={spacings.mlTy} />}
-    </Button>
+      style={{ minWidth: 160, height: FOOTER_BUTTON_HEIGHT, ...spacings.ph }}
+    />
   )
 
-  const signButton = (fullWidth: boolean) => (
+  const signButton = (isCompact: boolean) => (
     <View
       dataSet={createGlobalTooltipDataSet({
         id: 'sign-button-tooltip',
@@ -181,8 +126,8 @@ const Footer = ({
           disabled={isSignDisabled}
           onHoldComplete={onSign}
           testID="proceed-btn"
-          style={fullWidth ? { width: '100%' } : [spacings.ml, { height: FOOTER_BUTTON_HEIGHT }]}
-          size="large"
+          style={isCompact ? { width: '100%' } : [spacings.ml, { height: FOOTER_BUTTON_HEIGHT }]}
+          size={isCompact ? 'regular' : 'large'}
         />
       )}
       {!shouldHoldToProceed && (
@@ -193,9 +138,9 @@ const Footer = ({
           isLoading={isSignLoading}
           text={isSignLoading ? inProgressButtonText : buttonText}
           onPress={onSign}
-          size="large"
+          size={isCompact ? 'regular' : 'large'}
           style={
-            fullWidth
+            isCompact
               ? { width: '100%' }
               : [{ minWidth: 128, height: FOOTER_BUTTON_HEIGHT }, spacings.ml]
           }
@@ -206,40 +151,32 @@ const Footer = ({
 
   if (isCompactLayout) {
     return (
-      <View
-        style={[
-          styles.container,
-          {
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            flexGrow: 0,
-            flex: 0,
-            justifyContent: 'flex-start',
-            ...spacings.ptSm
-          }
-        ]}
-      >
-        <View style={{ width: '100%' }}>{signButton(true)}</View>
-        {isAddToCartDisplayed ? (
-          <View
-            style={[
-              flexbox.directionRow,
-              { width: '100%', gap: SPACING_TY, marginTop: SPACING_SM }
-            ]}
-          >
-            <View style={{ flex: 1, minWidth: 0 }}>
-              {rejectButton({ fullWidth: true, compact: true })}
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              {batchButton({ fullWidth: true, compact: true })}
-            </View>
-          </View>
-        ) : (
-          <View style={{ width: '100%', marginTop: SPACING_SM }}>
-            {rejectButton({ fullWidth: true })}
-          </View>
-        )}
-      </View>
+      <CompactFooterButtons
+        isEvenSplit={!isAddToCartDisplayed}
+        secondaryActions={
+          <>
+            <RejectButton
+              onReject={onReject}
+              isSignLoading={isSignLoading}
+              shouldRejectOnchain={shouldRejectOnchain}
+              isRejectDisabled={isRejectDisabled}
+              size="regular"
+              containerStyle={{ flexGrow: 1 }}
+              style={{ paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING }}
+            />
+            {isAddToCartDisplayed && (
+              <BatchButton
+                testID="queue-and-sign-later-button"
+                badgeCount={batchBadgeCount}
+                isSignLater={isMultisigSigned}
+                onPress={onAddToCart}
+                disabled={isAddToCartDisabled}
+              />
+            )}
+          </>
+        }
+        primaryAction={signButton(true)}
+      />
     )
   }
 
@@ -247,12 +184,12 @@ const Footer = ({
     <>
       <View style={styles.container}>
         <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
-          {rejectButton({ fullWidth: false })}
+          {rejectButton}
         </View>
         <View
           style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
         >
-          {isAddToCartDisplayed && batchButton({ fullWidth: false })}
+          {isAddToCartDisplayed && batchButton}
           {signButton(false)}
         </View>
       </View>

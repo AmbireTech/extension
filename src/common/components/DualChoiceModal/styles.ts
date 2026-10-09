@@ -39,21 +39,20 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.justifyEnd,
       ...spacings.phLg
     },
-    // Stacks the buttons full-width instead of a fixed-minWidth row, which overflows on
-    // narrow widths (mobile, narrow side panel). column-reverse (instead of reordering the
-    // children) keeps the primary button on top without touching the JSX/prop order.
+    // One full-width row on narrow widths (mobile, narrow side panel) instead of the fixed-minWidth
+    // row, which overflows there. The buttons grow from the width of their labels (see `buttonCompact`)
     modalButtonsContainerCompact: {
-      flexDirection: 'column-reverse',
-      alignItems: 'stretch',
       justifyContent: 'flex-start',
       gap: SPACING_TY
     },
     button: {
       minWidth: 128
     },
+    // Grows from the label width, so a long primary label still fits next to Cancel
     buttonCompact: {
-      width: '100%',
-      minWidth: 0
+      flexGrow: 1,
+      minWidth: 0,
+      ...spacings.phSm
     }
   })
 

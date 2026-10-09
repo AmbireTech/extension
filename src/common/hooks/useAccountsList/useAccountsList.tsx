@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FlatList } from 'react-native'
+import { FlatList, useWindowDimensions } from 'react-native'
 import { isAddress } from 'viem'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
@@ -13,6 +13,8 @@ import {
   ACCOUNT_SELECT_ACCOUNT_HEIGHT,
   ACCOUNT_SELECT_ACCOUNT_MB
 } from '@common/modules/account-select/components/Account/styles'
+
+import getInitialScrollIndex from './getInitialScrollIndex'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -85,6 +87,7 @@ const useAccountsList = ({
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: keys } = useController('KeystoreController', selectKeys)
   const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
+  const { height: windowHeight } = useWindowDimensions()
   const prevSearchRef = useRef(debouncedSearch)
 
   const searchableAccounts = useMemo(
@@ -157,7 +160,12 @@ const useAccountsList = ({
    * batching scheduler catches up). `getItemLayout` lets the list resolve the offset on
    * its own and clamp it to the content.
    */
-  const initialScrollIndex = selectedAccountIndex > 0 ? selectedAccountIndex : undefined
+  const initialScrollIndex = getInitialScrollIndex({
+    selectedAccountIndex,
+    accountsCount: filteredAccounts.length,
+    itemHeight: ITEM_HEIGHT,
+    windowHeight
+  })
 
   // Scrolls to top on search
   useEffect(() => {

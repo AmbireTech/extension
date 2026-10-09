@@ -84,6 +84,12 @@ textarea {
   outline: none;
 }
 
+/* The seed phrase input text is transparent and the colored words are rendered
+   behind it, so the selection must be translucent to keep the words visible */
+textarea[data-seed-phrase-input='true']::selection {
+  background-color: rgba(128, 128, 255, 0.35);
+}
+
 ::-webkit-scrollbar {
   width: 4px;
 }

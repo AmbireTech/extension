@@ -2,15 +2,14 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 
+import BatchButton, { COMPACT_SECONDARY_BUTTON_PADDING } from './BatchButton'
+import CompactFooterButtons from './CompactFooterButtons'
 import { Props } from './Footer'
 import RejectButton from './RejectButton'
 
@@ -53,99 +52,77 @@ const Footer = ({
     return getCallsCount(requests)
   }, [account?.addr, userRequests, chainId])
 
-  const startBatchingInfo = useMemo(
-    () =>
-      t(
-        'Start a batch and sign later. This feature allows you to add more actions to this transaction and sign them all together later.'
-      ),
-    [t]
-  )
-
   const signature = accountOp?.signature
   const isMultisigSigned = useMemo(() => {
     // '0x' is a placeholder used by self-broadcast account ops, not a real signature.
     return !!signature && signature !== '0x'
   }, [signature])
 
-  const batchBtnText = useMemo(() => {
-    if (isMultisigSigned) return t('Sign later')
-    return batchCount > 1
-      ? t('Add to batch ({{batchCount}})', {
-          batchCount
-        })
-      : t('Start a batch')
-  }, [isMultisigSigned, batchCount, t])
-
   return (
-    <View style={spacings.ptSm}>
-      <View
-        dataSet={createGlobalTooltipDataSet({
-          id: 'sign-button-tooltip',
-          hidden: !buttonTooltipText,
-          content: buttonTooltipText
-        })}
-        style={spacings.mbSm}
-      >
-        {shouldHoldToProceed && (
-          <HoldToProceedButton
-            text={t('Hold to sign')}
-            buttonType={
-              signButtonType === 'dangerFilled'
-                ? 'dangerFilled'
-                : signButtonType === 'warning'
-                  ? 'warning'
-                  : 'primary'
-            }
-            disabled={isSignDisabled}
-            onHoldComplete={onSign}
-            testID="proceed-btn"
-            size="large"
-          />
-        )}
-        {!shouldHoldToProceed && (
-          <ButtonWithLoader
-            testID="transaction-button-sign"
-            type={signButtonType}
-            disabled={isSignDisabled}
-            isLoading={isSignLoading}
-            text={isSignLoading ? inProgressButtonText : buttonText}
-            onPress={onSign}
-            size="large"
-          />
-        )}
-      </View>
-
-      <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
-        <View style={flexbox.flex1}>
+    <CompactFooterButtons
+      isEvenSplit={!isAddToCartDisplayed}
+      secondaryActions={
+        <>
           <RejectButton
             onReject={onReject}
             isSignLoading={isSignLoading}
             shouldRejectOnchain={shouldRejectOnchain}
             isRejectDisabled={isRejectDisabled}
-            style={{ height: 50 }}
+            size="regular"
+            containerStyle={{ flexGrow: 1 }}
+            style={{ paddingHorizontal: COMPACT_SECONDARY_BUTTON_PADDING }}
           />
-        </View>
-        {isAddToCartDisplayed && (
-          <View style={flexbox.flex1}>
-            <Button
+          {isAddToCartDisplayed && (
+            <BatchButton
               testID="queue-and-sign-later-button"
-              type="secondary"
-              text={batchBtnText}
+              badgeCount={batchCount > 1 ? batchCount : 0}
+              isSignLater={isMultisigSigned}
               onPress={onAddToCart}
               disabled={isAddToCartDisabled}
-              style={{ height: 50 }}
-              hasBottomSpacing={false}
-              {...(!isMultisigSigned && {
-                tooltipDataSet: createGlobalTooltipDataSet({
-                  id: 'start-batch-info-tooltip',
-                  content: startBatchingInfo
-                })
-              })}
             />
-          </View>
-        )}
-      </View>
-    </View>
+          )}
+        </>
+      }
+      primaryAction={
+        <View
+          dataSet={createGlobalTooltipDataSet({
+            id: 'sign-button-tooltip',
+            hidden: !buttonTooltipText,
+            content: buttonTooltipText
+          })}
+        >
+          {shouldHoldToProceed && (
+            <HoldToProceedButton
+              text={t('Hold to sign')}
+              buttonType={
+                signButtonType === 'dangerFilled'
+                  ? 'dangerFilled'
+                  : signButtonType === 'warning'
+                    ? 'warning'
+                    : 'primary'
+              }
+              disabled={isSignDisabled}
+              onHoldComplete={onSign}
+              testID="proceed-btn"
+              size="regular"
+              style={{ width: '100%' }}
+            />
+          )}
+          {!shouldHoldToProceed && (
+            <ButtonWithLoader
+              testID="transaction-button-sign"
+              type={signButtonType}
+              disabled={isSignDisabled}
+              isLoading={isSignLoading}
+              text={isSignLoading ? inProgressButtonText : buttonText}
+              onPress={onSign}
+              size="regular"
+              style={{ width: '100%' }}
+            />
+          )}
+        </View>
+      }
+    />
   )
 }
 

@@ -36,6 +36,7 @@ const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount
           }
         ]}
         onPress={() => onToggleAccount(item.addr)}
+        testID={`dapp-account-row-${item.addr}`}
       >
         <FatToggle
           width={44}

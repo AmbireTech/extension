@@ -11,10 +11,12 @@ const OTA_BANNER_ID = 'ota-update-available'
 // marketing path (no action button, dismiss-forever, account gating).
 const useOtaUpdateBanner = (): Banner[] => {
   const { t } = useTranslation()
-  const { isRestartRequired } = useStallionUpdate()
+  const { isRestartRequired, newReleaseBundle } = useStallionUpdate()
+  const isMandatory = !!newReleaseBundle?.isMandatory
 
   return useMemo(() => {
-    if (!isRestartRequired) return []
+    // A required update is applied through MandatoryOtaUpdateModal instead
+    if (!isRestartRequired || isMandatory) return []
 
     return [
       {
@@ -27,7 +29,7 @@ const useOtaUpdateBanner = (): Banner[] => {
         actions: [{ actionName: 'apply-ota-update', label: t('Restart') }]
       }
     ]
-  }, [isRestartRequired, t])
+  }, [isRestartRequired, isMandatory, t])
 }
 
 export default useOtaUpdateBanner
