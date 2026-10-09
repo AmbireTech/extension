@@ -6,7 +6,6 @@ import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
@@ -38,8 +37,7 @@ import getStyles, { ACCOUNT_AVATAR_SIZE, ACCOUNT_SELECT_ACCOUNT_HEIGHT } from '.
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
-/** The icons in the Safe badge, smaller than in the account picker to fit in a badge */
-const SAFE_BADGE_ICON_SIZE = 16 * SAFE_ICON_INLINE_SCALE
+/** The chain icons in the Safe badge, smaller than in the account picker to fit in a badge */
 const SAFE_CHAIN_ICON_SIZE = 14
 const SAFE_CHAIN_ICON_OVERLAP = 5
 const SAFE_CHAIN_ICON_LOGO_SCALE = (SAFE_CHAIN_ICON_SIZE - 2) / SAFE_CHAIN_ICON_SIZE
@@ -342,12 +340,10 @@ const Account = ({
             type="secondaryAccent"
             style={{
               columnGap: SPACING_MI,
-              // The icons on both ends have room around them already
-              paddingLeft: SPACING_MI,
+              // The chain icons at the end have room around them already
               paddingRight: SPACING_MI
             }}
           >
-            <SafeIcon width={SAFE_BADGE_ICON_SIZE} height={SAFE_BADGE_ICON_SIZE} />
             <Text fontSize={12} weight="medium" color={theme.secondaryAccent400} numberOfLines={1}>
               {t('Safe active on')}
             </Text>

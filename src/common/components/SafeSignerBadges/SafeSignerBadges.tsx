@@ -31,22 +31,13 @@ const SafeSignerBadges = ({ safes }: Props) => {
           key={safe.addr}
           style={{
             columnGap: SPACING_MI,
-            // The avatar leads, so it sits closer to the edge than the text on the other side
-            paddingLeft: SPACING_MI,
+            // The badge leaves room only for a trailing info icon when it has children
             paddingRight: SPACING_TY,
             maxWidth: '100%',
             // In the colors of the Safe icon, so the badge reads as Safe's in either theme
             backgroundColor: SAFE_ICON_BACKGROUND_COLOR
           }}
         >
-          <Avatar
-            address={safe.addr}
-            pfp={safe.preferences.pfp}
-            size={AVATAR_SIZE}
-            displayTypeBadge={false}
-            // The badge spaces its content itself
-            style={spacings.pr0}
-          />
           {/* Never shrinks, so that only the Safe's name is cut short when there is no room.
           Dimmed rather than in a theme color, as the badge is equally bright in both themes */}
           <Text
@@ -58,6 +49,14 @@ const SafeSignerBadges = ({ safes }: Props) => {
           >
             {t('Owner of')}
           </Text>
+          <Avatar
+            address={safe.addr}
+            pfp={safe.preferences.pfp}
+            size={AVATAR_SIZE}
+            displayTypeBadge={false}
+            // The badge spaces its content itself
+            style={spacings.pr0}
+          />
           <Text
             fontSize={12}
             weight="semiBold"
