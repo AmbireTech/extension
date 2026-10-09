@@ -1,5 +1,5 @@
 import { toBeHex } from 'ethers'
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, RefObject, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
@@ -24,7 +24,8 @@ import textStyles from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 
 import {
-  CustomGasPriceErrors,
+  CustomGasPriceErrorReason,
+  GWEI_DECIMALS,
   normalizeCustomGasValue,
   validateCustomGasPrice
 } from './customGasPriceValidation'
@@ -39,6 +40,7 @@ type CustomGasPriceInputProps = {
   autoFocus?: boolean
   disabled?: boolean
   disabledReason?: string
+  /** Blocks typing more decimals than this. When not set, any number of decimals can be typed */
   precision?: number
 }
 
@@ -53,7 +55,7 @@ const CustomGasPriceInput = memo(
     autoFocus,
     disabled,
     disabledReason,
-    precision = 9
+    precision
   }: CustomGasPriceInputProps) => {
     const { theme } = useTheme()
     const [draftAmount, setDraftAmount] = useState(initialAmount)
@@ -125,7 +127,7 @@ type Props = {
   is1559?: boolean
   onSaveCustomGasPrices: (gasPrices: GasSpeeds, customGasLimit?: bigint) => void
   selectedOption: ISignAccountOpController['selectedOption']
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: RefObject<Modalize>
 }
 
 const CustomGasPrice = ({
@@ -142,88 +144,73 @@ const CustomGasPrice = ({
   const { t } = useTranslation()
   const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { theme } = useTheme()
-  const [customGasPriceErrors, setCustomGasPriceErrors] = useState<CustomGasPriceErrors>({})
-  const gasRef = useRef('')
-  const maxFeePerGasRef = useRef('')
-  const maxPriorityFeePerGasRef = useRef('')
+  const [gas, setGas] = useState('')
+  const [maxFeePerGas, setMaxFeePerGas] = useState('')
+  const [maxPriorityFeePerGas, setMaxPriorityFeePerGas] = useState('')
   const [initialGas, setInitialGas] = useState('')
   const [initialMaxFeePerGas, setInitialMaxFeePerGas] = useState('')
   const [initialMaxPriorityFeePerGas, setInitialMaxPriorityFeePerGas] = useState('')
   const { isPopup } = getUiType()
 
   const resetState = useCallback(() => {
-    gasRef.current = currentGas
-    maxFeePerGasRef.current = currentMaxFeePerGas
-    maxPriorityFeePerGasRef.current = currentMaxPriorityFeePerGas
+    setGas(currentGas)
+    setMaxFeePerGas(currentMaxFeePerGas)
+    setMaxPriorityFeePerGas(currentMaxPriorityFeePerGas)
     setInitialGas(currentGas)
     setInitialMaxFeePerGas(currentMaxFeePerGas)
     setInitialMaxPriorityFeePerGas(currentMaxPriorityFeePerGas)
-    setCustomGasPriceErrors({})
   }, [currentGas, currentMaxFeePerGas, currentMaxPriorityFeePerGas])
 
-  const onGasChange = useCallback((value: string) => {
-    gasRef.current = value
-    setCustomGasPriceErrors((prevErrors) =>
-      prevErrors.gas ? { ...prevErrors, gas: undefined } : prevErrors
-    )
-  }, [])
-
-  const onMaxFeePerGasChange = useCallback((value: string) => {
-    maxFeePerGasRef.current = value
-    setCustomGasPriceErrors((prevErrors) => {
-      // The priority fee is compared with the max fee, so a new max fee can also fix that error
-      const isPriorityFeeAboveMaxFee = prevErrors.maxPriorityFeePerGas === 'aboveMaxFee'
-      if (!prevErrors.maxFeePerGas && !isPriorityFeeAboveMaxFee) return prevErrors
-
-      return {
-        ...prevErrors,
-        maxFeePerGas: undefined,
-        ...(isPriorityFeeAboveMaxFee && { maxPriorityFeePerGas: undefined })
-      }
-    })
-  }, [])
-
-  const onMaxPriorityFeePerGasChange = useCallback((value: string) => {
-    maxPriorityFeePerGasRef.current = value
-    setCustomGasPriceErrors((prevErrors) =>
-      prevErrors.maxPriorityFeePerGas
-        ? { ...prevErrors, maxPriorityFeePerGas: undefined }
-        : prevErrors
-    )
-  }, [])
-
-  const customGasPriceErrorMessages = useMemo(
-    () => ({
-      maxFeePerGas: !!customGasPriceErrors.maxFeePerGas && t('Enter a max fee greater than 0'),
-      maxPriorityFeePerGas:
-        (customGasPriceErrors.maxPriorityFeePerGas === 'aboveMaxFee' &&
-          t('The max priority fee cannot be higher than the max fee')) ||
-        (customGasPriceErrors.maxPriorityFeePerGas === 'invalid' &&
-          t('Enter a max priority fee greater than 0')),
-      gas:
-        !!customGasPriceErrors.gas && t('Enter a gas limit that is a whole number greater than 0')
-    }),
-    [customGasPriceErrors, t]
+  // Validated on every change, so the user sees what is wrong while typing and cannot save it
+  const { errors: customGasPriceErrors, values: customGasPriceValues } = useMemo(
+    () =>
+      validateCustomGasPrice({
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+        gas,
+        is1559: !!is1559,
+        canSetCustomGas
+      }),
+    [canSetCustomGas, gas, is1559, maxFeePerGas, maxPriorityFeePerGas]
   )
 
-  const saveCustomGasPrice = useCallback(() => {
-    if (!selectedOption) return
+  const customGasPriceErrorMessages = useMemo(() => {
+    const getFeeErrorMessage = (
+      reason: CustomGasPriceErrorReason | undefined,
+      invalidMessage: string
+    ) => {
+      if (reason === 'tooManyDecimals') {
+        return t('Use up to {{decimals}} digits after the decimal point', {
+          decimals: GWEI_DECIMALS
+        })
+      }
+      if (reason === 'aboveMaxFee') {
+        return t('The max priority fee cannot be higher than the max fee')
+      }
+      if (reason === 'invalid') return invalidMessage
 
-    const { errors, values } = validateCustomGasPrice({
-      maxFeePerGas: maxFeePerGasRef.current,
-      maxPriorityFeePerGas: maxPriorityFeePerGasRef.current,
-      gas: gasRef.current,
-      is1559: !!is1559,
-      canSetCustomGas
-    })
-
-    if (!values) {
-      setCustomGasPriceErrors(errors)
-      return
+      return false
     }
 
-    const maxFeePerGasHex = toBeHex(values.maxFeePerGas) as Hex
-    const maxPriorityFeePerGasHex = toBeHex(values.maxPriorityFeePerGas) as Hex
+    return {
+      maxFeePerGas: getFeeErrorMessage(
+        customGasPriceErrors.maxFeePerGas,
+        t('Enter a max fee greater than 0')
+      ),
+      maxPriorityFeePerGas: getFeeErrorMessage(
+        customGasPriceErrors.maxPriorityFeePerGas,
+        t('Enter a max priority fee greater than 0')
+      ),
+      gas:
+        !!customGasPriceErrors.gas && t('Enter a gas limit that is a whole number greater than 0')
+    }
+  }, [customGasPriceErrors, t])
+
+  const saveCustomGasPrice = useCallback(() => {
+    if (!selectedOption || !customGasPriceValues) return
+
+    const maxFeePerGasHex = toBeHex(customGasPriceValues.maxFeePerGas) as Hex
+    const maxPriorityFeePerGasHex = toBeHex(customGasPriceValues.maxPriorityFeePerGas) as Hex
     const customGasPrices: GasSpeeds = {
       slow: {
         maxFeePerGas: maxFeePerGasHex,
@@ -245,12 +232,20 @@ const CustomGasPrice = ({
 
     onSaveCustomGasPrices(
       customGasPrices,
-      canSetCustomGas && normalizeCustomGasValue(gasRef.current) !== currentGas
-        ? values.gas
+      canSetCustomGas && normalizeCustomGasValue(gas) !== currentGas
+        ? customGasPriceValues.gas
         : undefined
     )
     closeBottomSheet()
-  }, [canSetCustomGas, closeBottomSheet, currentGas, is1559, onSaveCustomGasPrices, selectedOption])
+  }, [
+    canSetCustomGas,
+    closeBottomSheet,
+    currentGas,
+    customGasPriceValues,
+    gas,
+    onSaveCustomGasPrices,
+    selectedOption
+  ])
 
   return (
     <BottomSheet
@@ -289,7 +284,7 @@ const CustomGasPrice = ({
         <CustomGasPriceInput
           initialAmount={initialMaxFeePerGas}
           backgroundColor={theme.secondaryBackground}
-          onSanitizedAmountChange={onMaxFeePerGasChange}
+          onSanitizedAmountChange={setMaxFeePerGas}
           inputError={customGasPriceErrorMessages.maxFeePerGas}
           label={t('Max fee per gas')}
           unitLabel="GWEI"
@@ -299,7 +294,7 @@ const CustomGasPrice = ({
           <CustomGasPriceInput
             initialAmount={initialMaxPriorityFeePerGas}
             backgroundColor={theme.secondaryBackground}
-            onSanitizedAmountChange={onMaxPriorityFeePerGasChange}
+            onSanitizedAmountChange={setMaxPriorityFeePerGas}
             inputError={customGasPriceErrorMessages.maxPriorityFeePerGas}
             label={t('Max priority fee')}
             unitLabel="GWEI"
@@ -309,7 +304,7 @@ const CustomGasPrice = ({
         <CustomGasPriceInput
           initialAmount={initialGas}
           backgroundColor={theme.secondaryBackground}
-          onSanitizedAmountChange={onGasChange}
+          onSanitizedAmountChange={setGas}
           inputError={customGasPriceErrorMessages.gas}
           label={t('Gas limit')}
           precision={0}
@@ -340,6 +335,7 @@ const CustomGasPrice = ({
           type="primary"
           text={t('Save')}
           onPress={saveCustomGasPrice}
+          disabled={!customGasPriceValues}
           hasBottomSpacing={false}
           style={
             isNarrowWebLayout ? { width: '100%' } : isCompactLayout ? flexbox.flex1 : { width: 100 }
