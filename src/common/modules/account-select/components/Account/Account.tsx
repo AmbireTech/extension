@@ -194,9 +194,11 @@ const Account = ({
   // On every commit, as whatever the badges show may have changed their width
   useLayoutEffect(updateBadgesLayout)
 
+  // Only once measured, as a list may remount the row when its height changes
+  const isMeasured = !safesSignedFor.length || badgesLayout !== EMPTY_BADGES_LAYOUT
   useLayoutEffect(() => {
-    onExtraHeightChange?.(addr, extraHeight)
-  }, [addr, extraHeight, onExtraHeightChange])
+    if (isMeasured) onExtraHeightChange?.(addr, extraHeight)
+  }, [addr, extraHeight, isMeasured, onExtraHeightChange])
 
   const selectAccount = useCallback(() => {
     if (options.setAccountToImportOrExport) {

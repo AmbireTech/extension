@@ -60,6 +60,24 @@ const DraggableFlatList = forwardRef(
       estimatedItemHeight: 72
     })
 
+    /**
+     * Where each row starts, when the rows differ in height. The library places a row once,
+     * when it mounts, at its position times the height it is given - not at the sum of the
+     * heights above it - and ignores the first update of the heights after that. So each
+     * row is given the height that places it right, and is remounted when its place changes.
+     */
+    const rowLayouts = useMemo(() => {
+      if (typeof itemHeight !== 'function') return null
+
+      let top = 0
+      return sortableData.map((item: any, index: number) => {
+        const height = itemHeight(item, index)
+        const rowLayout = { top, height }
+        top += height
+        return rowLayout
+      })
+    }, [itemHeight, sortableData])
+
     const dataOrderKey = useMemo(
       () => sortableData.map((item: any) => item.id).join('|'),
       [sortableData]
@@ -89,12 +107,18 @@ const DraggableFlatList = forwardRef(
 
     const memoizedRenderItem = useCallback(
       ({ item, index }: { item: any; index: number }) => {
-        const itemProps = getItemProps(item, index)
         const id = item.id
+        const rowLayout = rowLayouts?.[index]
+        const itemProps = {
+          ...getItemProps(item, index),
+          ...(rowLayout && {
+            itemHeight: index ? rowLayout.top / index : rowLayout.height
+          })
+        }
 
         return (
           <DraggableItemInternalContext.Provider value={{ ...itemProps, item, onDrop: handleDrop }}>
-            <DraggableItem key={id} id={id}>
+            <DraggableItem key={rowLayout ? `${id}:${rowLayout.top}` : id} id={id}>
               {(isDragging, listeners, attributes) =>
                 renderItem(item, index, isDragging, listeners, attributes)
               }
@@ -102,7 +126,7 @@ const DraggableFlatList = forwardRef(
           </DraggableItemInternalContext.Provider>
         )
       },
-      [getItemProps, renderItem, handleDrop]
+      [getItemProps, renderItem, handleDrop, rowLayouts]
     )
 
     return (
