@@ -56,11 +56,14 @@ const useAddressInput = ({
     message: ''
   })
 
+  const isControllerFieldValueOutdated =
+    overwriteValidationFieldValue !== undefined && overwriteValidationFieldValue !== fieldValue
+
   const validation = useMemo(
     () =>
       getAddressInputValidation({
-        // Don't wait for the controller when the field is emptied, or the stale message stays
-        address: fieldValue ? (overwriteValidationFieldValue ?? fieldValue) : '',
+        // Skip validation until the controller catches up with the input, or the previous address's message shows
+        address: isControllerFieldValueOutdated ? '' : fieldValue,
         isRecipientDomainResolving: addressState.isDomainResolving,
         resolvedAddressType: addressState.resolvedAddressType,
         isDomainVerifiedByColibri,
@@ -69,7 +72,7 @@ const useAddressInput = ({
         overwriteValidation
       }),
     [
-      overwriteValidationFieldValue,
+      isControllerFieldValueOutdated,
       fieldValue,
       addressState.isDomainResolving,
       addressState.resolvedAddressType,
