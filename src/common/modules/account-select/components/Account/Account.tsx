@@ -34,16 +34,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
 
-const EMPTY_BADGES_LAYOUT = {
-  topRowHeight: 0,
-  labelColumnX: 0,
-  labelColumnWidth: 0,
-  labelColumnBottom: 0,
-  keyBadgesWidth: 0,
-  signerBadgesWidth: 0,
-  signerBadgesHeight: 0
-}
-
 const selectSelectAccountStatus = (state: AllControllersMappingType['MainController']) =>
   state.statuses.selectAccount
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -136,66 +126,45 @@ const Account = ({
   const safesSignedFor = useSafesSignedFor(account)
 
   /**
-   * The Safe signer badges sit next to the other badges when they fit there. Otherwise they
-   * take a line of their own below the rest of the row, running to its right edge, and the
-   * row grows by that line, while the rest keeps the place it has in any other row.
+   * The badges wrap one by one onto more lines when they do not fit next to each other.
+   * The lines past the first one hang below the rest of the row, which grows by them while
+   * everything else keeps the place it has in any other row.
    */
   const contentRef = useRef<View>(null)
-  const topRowRef = useRef<View>(null)
-  const labelColumnRef = useRef<View>(null)
-  const keyBadgesRef = useRef<View>(null)
-  const signerBadgesRef = useRef<View>(null)
-  const [badgesLayout, setBadgesLayout] = useState(EMPTY_BADGES_LAYOUT)
-
-  // Measured the same way on either line, so moving them does not change the outcome
-  const doSignerBadgesFit =
-    badgesLayout.keyBadgesWidth + SPACING_TY + badgesLayout.signerBadgesWidth <=
-    badgesLayout.labelColumnWidth
-  const hasSignerBadgesLine = !!safesSignedFor.length && !doSignerBadgesFit
-  // Right below the badges, instead of below the room the centered content leaves free
-  const signerBadgesMarginTop =
-    SPACING_MI - Math.max(badgesLayout.topRowHeight - badgesLayout.labelColumnBottom, 0)
-  const extraHeight = hasSignerBadgesLine
-    ? badgesLayout.signerBadgesHeight + signerBadgesMarginTop
+  const badgesRef = useRef<View>(null)
+  const badgesFirstLineRef = useRef<View>(null)
+  const [badgesLayout, setBadgesLayout] = useState<{
+    height: number
+    firstLineHeight: number
+  } | null>(null)
+  const extraHeight = badgesLayout
+    ? Math.max(badgesLayout.height - badgesLayout.firstLineHeight, 0)
     : 0
 
   /**
-   * Measured in a layout effect rather than on layout, so that where the signer badges go
-   * is settled before the row is painted, instead of the row jumping between the two.
+   * Measured in a layout effect rather than on layout, so that the row has its height
+   * before it is painted, instead of jumping to it.
    */
   const updateBadgesLayout = useCallback(() => {
-    if (!safesSignedFor.length) return
+    // Relative to the row's content, as the native measuring needs an ancestor
+    const badges = measureLayoutSync(badgesRef.current, contentRef.current)
+    const badgesFirstLine = measureLayoutSync(badgesFirstLineRef.current, contentRef.current)
+    if (!badges || !badgesFirstLine) return
 
-    // Relative to what holds both the top row and the signer badges line, as the native
-    // measuring needs an ancestor. The top row starts at its top left corner.
-    const content = contentRef.current
-    const topRowLayout = measureLayoutSync(topRowRef.current, content)
-    const labelColumn = measureLayoutSync(labelColumnRef.current, content)
-    const keyBadges = measureLayoutSync(keyBadgesRef.current, content)
-    const signerBadges = measureLayoutSync(signerBadgesRef.current, content)
-    if (!topRowLayout || !labelColumn || !keyBadges || !signerBadges) return
-
-    const next = {
-      topRowHeight: Math.round(topRowLayout.height),
-      labelColumnX: labelColumn.x,
-      labelColumnWidth: Math.floor(labelColumn.width),
-      labelColumnBottom: Math.round(labelColumn.y + labelColumn.height),
-      keyBadgesWidth: Math.ceil(keyBadges.width),
-      signerBadgesWidth: Math.ceil(signerBadges.width),
-      signerBadgesHeight: Math.round(signerBadges.height)
-    }
+    const height = Math.round(badges.height)
+    const firstLineHeight = Math.round(badgesFirstLine.height)
     setBadgesLayout((prev) =>
-      (Object.keys(next) as (keyof typeof next)[]).every((key) => prev[key] === next[key])
+      prev?.height === height && prev.firstLineHeight === firstLineHeight
         ? prev
-        : next
+        : { height, firstLineHeight }
     )
-  }, [safesSignedFor.length])
+  }, [])
 
   // On every commit, as whatever the badges show may have changed their width
   useLayoutEffect(updateBadgesLayout)
 
   // Only once measured, as a list may remount the row when its height changes
-  const isMeasured = !safesSignedFor.length || badgesLayout !== EMPTY_BADGES_LAYOUT
+  const isMeasured = !!badgesLayout
   useLayoutEffect(() => {
     if (isMeasured) onExtraHeightChange?.(addr, extraHeight)
   }, [addr, extraHeight, isMeasured, onExtraHeightChange])
@@ -300,11 +269,11 @@ const Account = ({
         }
       ]}
     >
-      <View ref={contentRef} style={flexbox.flex1}>
-        {/* Takes the height of any other row, whatever is below it */}
+      {/* Leaves the room the row grew by to the badges hanging below, so the rest takes the
+      height of any other row */}
+      <View ref={contentRef} style={[flexbox.flex1, { paddingBottom: extraHeight }]}>
         <View
           style={[flexbox.flex1, flexbox.directionRow, flexbox.justifySpaceBetween]}
-          ref={topRowRef}
           // Picks up a change of the row's width, which no commit of its own follows
           onLayout={updateBadgesLayout}
         >
@@ -316,7 +285,7 @@ const Account = ({
               smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
               showTooltip
             />
-            <View style={[flexbox.flex1, flexbox.justifyCenter]} ref={labelColumnRef}>
+            <View style={[flexbox.flex1, flexbox.justifyCenter]}>
               {!withSettings ? (
                 // A read-only label needs no row around it, and this screen mounts one of
                 // these per account
@@ -351,50 +320,48 @@ const Account = ({
                   withUpdateEnsInTooltip={isSelectable}
                 />
               </View>
-              {/* The balance, the key icons and the badges share the row below the address */}
+              {/* The balance, the key icons and the badges share the row below the address,
+              wrapping one by one. The lines past the first one hang below the content instead
+              of being part of it, so they do not move it up */}
               <View
+                ref={badgesRef}
                 style={[
                   flexbox.directionRow,
                   flexbox.alignCenter,
+                  flexbox.wrap,
                   spacings.mtMi,
-                  { columnGap: SPACING_TY }
+                  { columnGap: SPACING_TY, rowGap: SPACING_MI, marginBottom: -extraHeight }
                 ]}
               >
+                {/* Stretches to the height of the first line, which is all of them unless they
+                wrap. Takes no room, as the negative margin cancels the column gap */}
                 <View
-                  ref={keyBadgesRef}
-                  style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_TY }]}
-                >
-                  {balance !== null && withBalance && (
-                    <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
-                      {formatDecimals(balance, 'value')}
-                    </Text>
-                  )}
-                  {!!withKeyType && (
-                    <AccountKeyIcons
-                      isExtended
-                      account={account}
-                      accountKeys={accountKeys}
-                      withContainerSpacing={false}
-                    />
-                  )}
-                  <AccountBadges
-                    accountData={account}
-                    accountKeys={accountKeys}
-                    withSpacing={false}
-                  />
-                </View>
-                {!!safesSignedFor.length && !hasSignerBadgesLine && (
-                  <View
-                    ref={signerBadgesRef}
-                    style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_TY }]}
-                  >
-                    <SafeSignerBadges safes={safesSignedFor} />
-                  </View>
+                  ref={badgesFirstLineRef}
+                  style={{ alignSelf: 'stretch', width: 0, marginRight: -SPACING_TY }}
+                />
+                {balance !== null && withBalance && (
+                  <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
+                    {formatDecimals(balance, 'value')}
+                  </Text>
                 )}
+                {!!withKeyType && (
+                  <AccountKeyIcons
+                    isExtended
+                    account={account}
+                    accountKeys={accountKeys}
+                    withContainer={false}
+                  />
+                )}
+                <AccountBadges
+                  accountData={account}
+                  accountKeys={accountKeys}
+                  withSpacing={false}
+                />
+                <SafeSignerBadges safes={safesSignedFor} />
               </View>
             </View>
           </View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, !isMobile && spacings.mlTy]}>
             {renderRightChildren && renderRightChildren()}
             {!isWeb && withCopy && (
               <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
@@ -414,21 +381,6 @@ const Account = ({
             )}
           </View>
         </View>
-        {hasSignerBadgesLine && (
-          <View
-            ref={signerBadgesRef}
-            style={[
-              flexbox.directionRow,
-              flexbox.wrap,
-              // As wide as the badges, so the width tells whether they fit next to the others
-              flexbox.alignSelfStart,
-              { columnGap: SPACING_TY, rowGap: SPACING_MI },
-              { marginLeft: badgesLayout.labelColumnX, marginTop: signerBadgesMarginTop }
-            ]}
-          >
-            <SafeSignerBadges safes={safesSignedFor} />
-          </View>
-        )}
       </View>
     </AnimatedPressable>
   )

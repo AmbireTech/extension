@@ -33,13 +33,19 @@ const AccountKeyIcons = ({
   accountKeys,
   isExtended,
   // When false, drops the leading left margin so a parent columnGap can space it
-  withContainerSpacing = true
+  withContainerSpacing = true,
+  withContainer = true
 }: {
   account: AccountInterface
   /** The account's own keystore keys, so a list of rows subscribes to them only once */
   accountKeys: Key[]
   isExtended: boolean
   withContainerSpacing?: boolean
+  /**
+   * When false, the key icons are rendered without a container around them, so that a
+   * parent that wraps its children moves them onto a new line one by one
+   */
+  withContainer?: boolean
 }) => {
   const { theme } = useTheme()
   const importedKeyTypes = React.useMemo(
@@ -57,6 +63,24 @@ const AccountKeyIcons = ({
   // wrapper that would still consume a slot in a parent columnGap layout
   if (!hasKeys && isExtended) return null
 
+  const keyIcons = hasKeys ? (
+    importedKeyTypes.map((type) => {
+      return (
+        <View key={type || 'internal'}>
+          <AccountKeyIconOrBanner
+            type={type || 'internal'}
+            isExtended={isExtended}
+            color={theme.primaryBackground}
+          />
+        </View>
+      )
+    })
+  ) : (
+    <AccountKeyIconOrBanner type={'none'} isExtended={isExtended} color={theme.primaryBackground} />
+  )
+
+  if (!withContainer) return <>{keyIcons}</>
+
   return (
     <View
       style={[
@@ -65,25 +89,7 @@ const AccountKeyIcons = ({
         { columnGap: SPACING_TY }
       ]}
     >
-      {hasKeys ? (
-        importedKeyTypes.map((type) => {
-          return (
-            <View key={type || 'internal'}>
-              <AccountKeyIconOrBanner
-                type={type || 'internal'}
-                isExtended={isExtended}
-                color={theme.primaryBackground}
-              />
-            </View>
-          )
-        })
-      ) : (
-        <AccountKeyIconOrBanner
-          type={'none'}
-          isExtended={isExtended}
-          color={theme.primaryBackground}
-        />
-      )}
+      {keyIcons}
     </View>
   )
 }
