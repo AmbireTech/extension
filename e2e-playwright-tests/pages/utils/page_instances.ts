@@ -8,6 +8,7 @@ import { RecoveryPhrasesPage } from 'pages/recoveryPhrasesPage'
 import { SettingsPage } from 'pages/settingsPage'
 import { SignMessagePage } from 'pages/signMessagePage'
 import { StabilityPage } from 'pages/stabilityPage'
+import { StubDappPage } from 'pages/stubDappPage'
 import { SwapAndBridgePage } from 'pages/swapAndBridgePage'
 import { TransferPage } from 'pages/transferPage'
 
@@ -30,6 +31,8 @@ export class PageManager {
 
   stability: StabilityPage
 
+  stubDapp: StubDappPage
+
   transfer: TransferPage
 
   recoveryPhrases: RecoveryPhrasesPage
@@ -50,6 +53,7 @@ export class PageManager {
     this.swapAndBridge = new SwapAndBridgePage(bootstrapContext)
     this.transfer = new TransferPage(bootstrapContext)
     this.stability = new StabilityPage(bootstrapContext)
+    this.stubDapp = new StubDappPage(bootstrapContext)
     this.recoveryPhrases = new RecoveryPhrasesPage(bootstrapContext)
     this.accountKeys = new AccountKeysPage(bootstrapContext)
   }
