@@ -6,6 +6,7 @@ import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
@@ -15,6 +16,7 @@ import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import Dropdown from '@common/components/Dropdown'
 import Editable from '@common/components/Editable'
+import NetworkIcon from '@common/components/NetworkIcon'
 import SafeSignerBadges from '@common/components/SafeSignerBadges'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -23,6 +25,7 @@ import useAccountKeys from '@common/hooks/useAccountKeys'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import useSafeDeployedChainIds from '@common/hooks/useSafeDeployedChainIds'
 import useSafesSignedFor from '@common/hooks/useSafesSignedFor'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -35,6 +38,12 @@ import getStyles, { ACCOUNT_AVATAR_SIZE, ACCOUNT_SELECT_ACCOUNT_HEIGHT } from '.
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
+/** The icons in the Safe badge, smaller than in the account picker to fit in a badge */
+const SAFE_BADGE_ICON_SIZE = 16 * SAFE_ICON_INLINE_SCALE
+const SAFE_CHAIN_ICON_SIZE = 14
+const SAFE_CHAIN_ICON_OVERLAP = 5
+const SAFE_CHAIN_ICON_LOGO_SCALE = (SAFE_CHAIN_ICON_SIZE - 2) / SAFE_CHAIN_ICON_SIZE
+const MAX_SAFE_CHAIN_ICONS = 7
 
 const selectSelectAccountStatus = (state: AllControllersMappingType['MainController']) =>
   state.statuses.selectAccount
@@ -128,6 +137,7 @@ const Account = ({
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
 
   const safesSignedFor = useSafesSignedFor(account)
+  const safeDeployedChainIds = useSafeDeployedChainIds(account)
 
   /**
    * The badges wrap one by one onto more lines when they do not fit next to each other, so
@@ -291,6 +301,10 @@ const Account = ({
     </View>
   )
 
+  const keyIcons = (
+    <AccountKeyIcons isExtended account={account} accountKeys={accountKeys} withContainer={false} />
+  )
+
   // The balance, the key icons and the badges share the row below the avatar, at the full
   // width of the row, wrapping one by one
   const badges = (
@@ -321,14 +335,53 @@ const Account = ({
           </Text>
         </Badge>
       )}
-      {!!withKeyType && (
-        <AccountKeyIcons
-          isExtended
-          account={account}
-          accountKeys={accountKeys}
-          withContainer={false}
-        />
-      )}
+      {!!withKeyType &&
+        (safeDeployedChainIds.length ? (
+          // The Safe key badge, telling also which chains the Safe is deployed on
+          <Badge
+            type="secondaryAccent"
+            style={{
+              columnGap: SPACING_MI,
+              // The icons on both ends have room around them already
+              paddingLeft: SPACING_MI,
+              paddingRight: SPACING_MI
+            }}
+          >
+            <SafeIcon width={SAFE_BADGE_ICON_SIZE} height={SAFE_BADGE_ICON_SIZE} />
+            <Text fontSize={12} weight="medium" color={theme.secondaryAccent400} numberOfLines={1}>
+              {t('Safe active on')}
+            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              {safeDeployedChainIds.slice(0, MAX_SAFE_CHAIN_ICONS).map((chainId, index, arr) => (
+                // Overlapping like the chains an account is used on in the account picker
+                <View
+                  key={chainId}
+                  style={{
+                    marginLeft: index ? -SAFE_CHAIN_ICON_OVERLAP : 0,
+                    zIndex: arr.length - index,
+                    borderRadius: 50,
+                    borderWidth: 1,
+                    // Sets the overlapping icons apart in the color of the badge
+                    borderColor: theme.secondaryAccent100,
+                    // Filled like the ring, so the icon below does not show through where the
+                    // edge of the icon and the ring's inner edge are rounded to different pixels
+                    backgroundColor: theme.secondaryAccent100
+                  }}
+                >
+                  <NetworkIcon
+                    id={chainId}
+                    size={SAFE_CHAIN_ICON_SIZE}
+                    // Leaves 1px of the white circle around the logo, instead of a tenth of it
+                    scale={SAFE_CHAIN_ICON_LOGO_SCALE}
+                    style={{ backgroundColor: '#fff' }}
+                  />
+                </View>
+              ))}
+            </View>
+          </Badge>
+        ) : (
+          keyIcons
+        ))}
       <AccountBadges accountData={account} accountKeys={accountKeys} withSpacing={false} />
       <SafeSignerBadges safes={safesSignedFor} />
     </View>
