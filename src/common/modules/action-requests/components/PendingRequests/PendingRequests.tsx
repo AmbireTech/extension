@@ -209,7 +209,7 @@ const RequestCard = React.memo(function RequestCard({
         </Text>
         {safeNonce !== null && (
           <Text fontSize={isMobile ? 12 : 14} appearance="secondaryText" style={spacings.mlSm}>
-            {t('Nonce {{nonce}}', { nonce: safeNonce.toString() })}
+            {t('Nonce: #{{nonce}}', { nonce: safeNonce.toString() })}
           </Text>
         )}
       </View>
