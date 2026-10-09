@@ -12,6 +12,8 @@ interface Style {
 // are taller, which they report to the list, see `onExtraHeightChange`
 export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = 88
 export const ACCOUNT_SELECT_ACCOUNT_MB = SPACING_TY
+/** Also the size of the icons in place of it in rows like it, see `SyncOptionRow` */
+export const ACCOUNT_AVATAR_SIZE = 36
 
 const getStyles = () =>
   StyleSheet.create<Style>({

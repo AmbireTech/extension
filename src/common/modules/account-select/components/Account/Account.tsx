@@ -30,12 +30,11 @@ import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import measureLayoutSync from '@common/utils/measureLayoutSync'
 
-import getStyles, { ACCOUNT_SELECT_ACCOUNT_HEIGHT } from './styles'
+import getStyles, { ACCOUNT_AVATAR_SIZE, ACCOUNT_SELECT_ACCOUNT_HEIGHT } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
-const AVATAR_SIZE = 36
 
 const selectSelectAccountStatus = (state: AllControllersMappingType['MainController']) =>
   state.statuses.selectAccount
@@ -376,30 +375,37 @@ const Account = ({
             : { backgroundColor: theme.primaryBackground })
       ]}
     >
-      <View ref={contentRef} onLayout={updateContentHeight}>
+      <View
+        ref={contentRef}
+        onLayout={updateContentHeight}
+        style={[flexbox.directionRow, flexbox.alignCenter]}
+      >
         {/* As tall as the content, which the row's height is worked out from */}
         <View
           pointerEvents="none"
           ref={contentHeightRef}
           style={{ position: 'absolute', top: 0, bottom: 0, width: 0 }}
         />
-        {/* The avatar and the actions are centered on the label and the address */}
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          {renderLeftChildren && renderLeftChildren()}
-          <Avatar
-            address={account.addr}
-            pfp={account.preferences.pfp}
-            smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
-            size={AVATAR_SIZE}
-            showTooltip
-          />
-          <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-            {label}
-            {address}
+        {/* Centered on the whole row, with the badges below the avatar rather than below it */}
+        {renderLeftChildren && renderLeftChildren()}
+        <View style={flexbox.flex1}>
+          {/* The avatar and the actions are centered on the label and the address */}
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Avatar
+              address={account.addr}
+              pfp={account.preferences.pfp}
+              smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
+              size={ACCOUNT_AVATAR_SIZE}
+              showTooltip
+            />
+            <View style={[flexbox.flex1, flexbox.justifyCenter]}>
+              {label}
+              {address}
+            </View>
+            {actions}
           </View>
-          {actions}
+          {badges}
         </View>
-        {badges}
       </View>
     </AnimatedPressable>
   )

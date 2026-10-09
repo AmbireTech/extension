@@ -91,7 +91,6 @@ const SelectDataToSyncSheet = ({
         onSelect={onToggleAccount}
         switchAccountOnPress={false}
         withSettings={false}
-        withBalance={false}
         maxAccountAddrLength={SHORTENED_ADDRESS_LENGTH}
         renderLeftChildren={() => (
           <Checkbox
