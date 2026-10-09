@@ -101,7 +101,7 @@ const Badge = ({
       nativeID={nativeID}
       testID={testId}
     >
-      {text && (
+      {!!text && (
         <Text
           weight={weight || 'medium'}
           fontSize={12}

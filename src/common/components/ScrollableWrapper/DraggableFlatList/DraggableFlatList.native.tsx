@@ -38,9 +38,10 @@ const DraggableFlatList = forwardRef(
       [data, keyExtractor]
     )
 
-    // When all rows share a fixed height, use it for deterministic positioning. Dynamic
-    // measurement is unreliable here (heights stay at the estimate), which overlaps taller rows.
-    const hasFixedItemHeight = typeof itemHeight === 'number'
+    // When the row heights are known (one for all of them, or one per row), use them for
+    // deterministic positioning. Dynamic measurement is unreliable here (heights stay at the
+    // estimate), which overlaps taller rows.
+    const hasKnownItemHeight = itemHeight !== undefined
 
     // We use the hook directly to have more control over the FlatList props
     const {
@@ -54,8 +55,8 @@ const DraggableFlatList = forwardRef(
     } = useSortableList({
       data: sortableData as any,
       itemKeyExtractor: (item: any) => item.id,
-      itemHeight: hasFixedItemHeight ? itemHeight : undefined,
-      enableDynamicHeights: !hasFixedItemHeight,
+      itemHeight,
+      enableDynamicHeights: !hasKnownItemHeight,
       estimatedItemHeight: 72
     })
 

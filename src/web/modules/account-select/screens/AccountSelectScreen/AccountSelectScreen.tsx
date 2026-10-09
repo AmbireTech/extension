@@ -88,6 +88,7 @@ const AccountSelectScreen = () => {
     control,
     keyExtractor,
     getItemLayout,
+    onAccountExtraHeightChange,
     onListContentSizeChange,
     initialScrollIndex,
     shouldDisplayAccounts,
@@ -122,11 +123,12 @@ const AccountSelectScreen = () => {
           withSettings={false}
           options={ACCOUNT_OPTIONS}
           maxAccountAddrLength={32}
+          onExtraHeightChange={onAccountExtraHeightChange}
           withReceive
         />
       )
     },
-    [onAccountSelect]
+    [onAccountSelect, onAccountExtraHeightChange]
   )
 
   useEffect(() => {

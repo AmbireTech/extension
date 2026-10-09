@@ -133,14 +133,47 @@ const useAccountsList = ({
 
   const keyExtractor = useCallback((account: AccountType) => account.addr, [])
 
-  const getItemLayout = useCallback(
-    (_: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * index,
-      index
-    }),
+  /** How much taller than the rest each row got because its badges wrapped */
+  const [extraHeights, setExtraHeights] = useState<Record<AccountType['addr'], number>>({})
+
+  const onAccountExtraHeightChange = useCallback(
+    (addr: AccountType['addr'], extraHeight: number) =>
+      setExtraHeights((prev) =>
+        (prev[addr] ?? 0) === extraHeight ? prev : { ...prev, [addr]: extraHeight }
+      ),
     []
   )
+
+  /** The height a row takes in the list, including the gap below it */
+  const getAccountItemHeight = useCallback(
+    (addr: AccountType['addr']) => ITEM_HEIGHT + (extraHeights[addr] ?? 0),
+    [extraHeights]
+  )
+
+  const getItemLayout = useMemo(() => {
+    // The offsets add up the heights of the rows above, so they are worked out once per
+    // list instead of on every call
+    let offsetsFor: ArrayLike<AccountType> | null | undefined
+    let offsets: number[] = []
+
+    return (data: ArrayLike<AccountType> | null | undefined, index: number) => {
+      if (data !== offsetsFor) {
+        offsetsFor = data
+        offsets = []
+        let offset = 0
+        for (let i = 0; i < (data?.length ?? 0); i++) {
+          offsets.push(offset)
+          offset += getAccountItemHeight(data![i]!.addr)
+        }
+      }
+
+      return {
+        length: data?.[index] ? getAccountItemHeight(data[index].addr) : ITEM_HEIGHT,
+        offset: offsets[index] ?? ITEM_HEIGHT * index,
+        index
+      }
+    }
+  }, [getAccountItemHeight])
 
   /**
    * `initialScrollIndex` only fixes which rows are rendered. react-native-web still
@@ -174,6 +207,8 @@ const useAccountsList = ({
     search,
     keyExtractor,
     getItemLayout,
+    getAccountItemHeight,
+    onAccountExtraHeightChange,
     onListContentSizeChange,
     initialScrollIndex,
     // Nothing to hide when the list starts at the top, so it shows right away

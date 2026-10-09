@@ -16,7 +16,8 @@ type BadgeType =
 type SpecialBadgeType = 'metamask' | 'safe'
 
 type Props = {
-  text: string
+  /** Can be left out when `children` render the whole content, e.g. an icon before the text */
+  text?: string
   textStyle?: TextStyle
   weight?: TextWeight
   type?: BadgeType
