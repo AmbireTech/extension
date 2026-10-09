@@ -5,6 +5,7 @@ import SafeIcon from '@common/assets/svg/SafeIcon'
 import BADGE_PRESETS from '@common/components/BadgeWithPreset/presets'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -32,6 +33,7 @@ const TypeBadge: FC<Props> = ({
   showTooltip = false,
   ringColor
 }) => {
+  const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const badgePreset = BADGE_PRESETS['smart-account']
   const tooltipId = `account-type-badge-${address}`
@@ -81,7 +83,9 @@ const TypeBadge: FC<Props> = ({
     <Animated.View
       dataSet={createGlobalTooltipDataSet({
         id: tooltipId,
-        content: badgePreset.tooltipText,
+        content: t(
+          'Gnosis Safe accounts offer a secure way to store your assets on multisig smart contract accounts. You can import and manage Safe accounts on Ambire.'
+        ),
         hidden: !showTooltip
       })}
       style={{
