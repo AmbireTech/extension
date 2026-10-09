@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import type { Account } from '@ambire-common/interfaces/account'
+import { getAppDataSyncKeyAddrs } from '@ambire-common/libs/appDataSync/appDataSync'
 import type { AppDataSyncExportOptions } from '@ambire-common/libs/appDataSync/appDataSync'
 import useController from '@common/hooks/useController'
 
@@ -83,10 +84,10 @@ const useAppDataSyncExport = () => {
    * from. Zero means there is no phrase that could travel along with the export.
    */
   const selectedSeedsCount = useMemo(() => {
+    const selectedAccounts = accounts.filter((account) => selectedAddrs.includes(account.addr))
     const seedIds = new Set(
-      accounts
-        .filter((account) => selectedAddrs.includes(account.addr))
-        .flatMap((account) => account.associatedKeys.map((keyAddr) => seedIdByKeyAddr.get(keyAddr)))
+      getAppDataSyncKeyAddrs(selectedAccounts)
+        .map((keyAddr) => seedIdByKeyAddr.get(keyAddr))
         .filter(Boolean)
     )
 
