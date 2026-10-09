@@ -12,6 +12,7 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
+import CowSwapAnnouncement from '@common/modules/swap-and-bridge/components/CowSwapAnnouncement'
 import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
 import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
 import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
@@ -242,6 +243,12 @@ const SwapAndBridgeScreen = () => {
         onBackButtonPress={onBackButtonPress}
         title={t('Swap & Bridge')}
         rightIcon={<ProviderSettingsButton compact onPress={openProviderSettingsModal} />}
+        headerOverlay={
+          <CowSwapAnnouncement
+            openProviderSettingsModal={openProviderSettingsModal}
+            isSettingsButtonCompact
+          />
+        }
         withScroll
         keyboardAwareScrollViewProps={{ bottomOffset: 250 }}
       >
