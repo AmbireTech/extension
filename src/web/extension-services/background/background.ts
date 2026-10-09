@@ -547,7 +547,6 @@ const init = async () => {
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,
-    privacyPoolsFetch: fetch.bind(globalThis) as unknown as Fetch,
     privacyPoolsCircuitsBaseUrl,
     // On Chrome, in an offscreen document using every core; elsewhere or if it fails, right here
     privacyPoolsProverFactory: canUseOffscreenProver()
