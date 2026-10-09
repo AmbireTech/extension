@@ -25,6 +25,8 @@ export type RouteItemType = {
   scale: number
   scaleOnHover: number
   badge?: number
+  /** Shows a "New" pill on the top-right corner of the button. */
+  isNew?: boolean
 }
 
 interface Props {
@@ -78,52 +80,68 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength, isNarrowWebL
     >
       {({ hovered }: any) => (
         <>
-          <GlassView
-            tintColor1={hovered ? '#fff' : undefined}
-            tintColor2={hovered ? '#fff' : undefined}
-            shineColor="#aaaaaa"
-            testID={routeItem.testID}
-            cssStyle={{
-              marginBottom: 4,
-              height: ITEM_HEIGHT,
-              overflow: 'hidden',
-              width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : 48
-            }}
-          >
-            <View style={[flexbox.center, flexbox.alignCenter, flexbox.flex1]}>
-              <routeItem.icon
-                color={
-                  hovered
-                    ? '#000000'
-                    : routeItem.route === WEB_ROUTES.rewards
-                      ? undefined
-                      : '#FFFFFF'
-                }
-                height={ICON_SIZE}
-                width={ICON_SIZE}
-              />
-              {!!routeItem.badge && (
-                <View
-                  style={[
-                    flexbox.center,
-                    {
-                      position: 'absolute',
-                      top: 3,
-                      right: 3,
-                      minWidth: 14,
-                      height: 14,
-                      borderRadius: 7,
-                      backgroundColor: theme.primaryAccent
-                    }
-                  ]}
-                >
-                  <Text fontSize={9} weight="semiBold" color={theme.neutral100}>
-                    {routeItem.badge}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </GlassView>
+          <View>
+            <GlassView
+              tintColor1={hovered ? '#fff' : undefined}
+              tintColor2={hovered ? '#fff' : undefined}
+              shineColor="#aaaaaa"
+              testID={routeItem.testID}
+              cssStyle={{
+                marginBottom: 4,
+                height: ITEM_HEIGHT,
+                overflow: 'hidden',
+                width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : 48
+              }}
+            >
+              <View style={[flexbox.center, flexbox.alignCenter, flexbox.flex1]}>
+                <routeItem.icon
+                  color={hovered ? '#000000' : '#FFFFFF'}
+                  height={ICON_SIZE}
+                  width={ICON_SIZE}
+                />
+                {!!routeItem.badge && (
+                  <View
+                    style={[
+                      flexbox.center,
+                      {
+                        position: 'absolute',
+                        top: 3,
+                        right: 3,
+                        minWidth: 14,
+                        height: 14,
+                        borderRadius: 7,
+                        backgroundColor: theme.primaryAccent
+                      }
+                    ]}
+                  >
+                    <Text fontSize={9} weight="semiBold" color={theme.neutral100}>
+                      {routeItem.badge}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </GlassView>
+            {!!routeItem.isNew && (
+              <View
+                style={[
+                  flexbox.center,
+                  {
+                    position: 'absolute',
+                    top: -6,
+                    right: -8,
+                    height: 16,
+                    paddingHorizontal: 6,
+                    borderRadius: 8,
+                    backgroundColor: theme.primaryAccent
+                  }
+                ]}
+              >
+                <Text fontSize={10} weight="semiBold" color={theme.neutral100}>
+                  {t('New')}
+                </Text>
+              </View>
+            )}
+          </View>
           <Text
             color="#F2F4F7"
             weight="medium"

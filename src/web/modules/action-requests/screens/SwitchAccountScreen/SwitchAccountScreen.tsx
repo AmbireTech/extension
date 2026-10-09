@@ -50,6 +50,7 @@ const SwitchAccountScreen = () => {
           resolveDisabled={isAuthorizing || isRequestBroken}
           rejectButtonText={t('Deny')}
           resolveButtonTestID="switch-account-button"
+          rejectButtonTestID="switch-account-deny-button"
         />
       )}
     >

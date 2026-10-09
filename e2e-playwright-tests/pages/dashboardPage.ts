@@ -8,6 +8,8 @@ import { expect } from '@playwright/test'
 
 import { BasePage } from './basePage'
 
+const SELECT_ACCOUNT_TIMEOUT = 15000
+
 export class DashboardPage extends BasePage {
   extensionURL: string
 
@@ -18,6 +20,20 @@ export class DashboardPage extends BasePage {
 
   async navigateToDashboard() {
     await this.navigateToURL(`${this.extensionURL}/tab.html#/`)
+  }
+
+  /** Selects the account through the account switcher and waits until the wallet has saved it. */
+  async selectAccount(accountAddr: string) {
+    await this.navigateToDashboard()
+    await this.click(selectors.accountSelectBtn)
+    await this.click(selectors.accountRow(accountAddr))
+
+    await expect
+      .poll(() => this.getSelectedAccount(), {
+        message: `selecting ${accountAddr} in the account switcher`,
+        timeout: SELECT_ACCOUNT_TIMEOUT
+      })
+      .toBe(accountAddr)
   }
 
   // TODO: should be refactored
@@ -273,17 +289,5 @@ export class DashboardPage extends BasePage {
     const newTab = await this.handleNewPage(selector)
 
     expect(newTab.url()).toContain('https://help.ambire.com/en')
-  }
-
-  async checkRewardsPageRedirection(selector: string) {
-    const rewardsButton = this.page.getByTestId(selector)
-    await rewardsButton.click()
-
-    const rewardsLink = this.page.locator(selectors.dashboard.rewardsLink)
-
-    const newTab = await this.handleNewPage(rewardsLink)
-    expect(newTab.url()).toContain('https://rewards.ambire.com/')
-
-    await newTab.close()
   }
 }

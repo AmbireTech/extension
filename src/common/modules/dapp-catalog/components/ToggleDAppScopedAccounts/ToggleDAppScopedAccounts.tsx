@@ -58,6 +58,7 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
         {...(canOpenAccountSelector && {
           onPress: onOpenAccountSelector
         })}
+        testID="dapp-scoped-accounts-selector-button"
       >
         <Text fontSize={12} weight="medium" appearance="primary">
           {t('{{count}} account{{s}} selected', {
@@ -86,6 +87,7 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
       onToggle={onToggle}
       disabled={disabled}
       trackStyle={spacings.mrTy}
+      testID="dapp-scoped-accounts-toggle"
     />
   )
 

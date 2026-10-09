@@ -46,8 +46,8 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifyEnd,
-      ...flexbox.flex1,
-      ...spacings.plTy,
+      ...spacings.mlTy,
+      flexShrink: 1,
       minWidth: 0
     },
     switchAmountFieldModeValue: {

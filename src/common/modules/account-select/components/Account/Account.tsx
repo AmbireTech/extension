@@ -210,7 +210,10 @@ const Account = ({
           }
       ]}
     >
-      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+      <View
+        style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}
+        testID={`account-${addr}`}
+      >
         {renderLeftChildren && renderLeftChildren()}
         <Avatar
           address={account.addr}

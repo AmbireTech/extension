@@ -84,10 +84,7 @@ const selectors = {
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
-    rewardsButton: 'dashboard-button-rewards',
     rewardsForClaimingButton: 'marketing-banner-button',
-    rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
-    projectedRewardsClaimButton: 'projected-rewards-claim-button',
     searchInputPlaceholder: 'search-input-placeholder',
     searchInputField: 'search-input-field'
   },
@@ -158,37 +155,6 @@ const selectors = {
     signPassAuthField: 'signing-auth-password-field',
     signConfirmButton: 'signing-auth-confirm-button'
   },
-  // TODO: update selectors wiyh testID
-  ambireRewards: {
-    connectAmbireButton: '//button[contains(text(),"Connect Ambire")]',
-    claimRewardButton: '//button[contains(text(),"Claim")]',
-    readAnnouncementHyperlink: '//a[contains(@href, "rewards-enters")]',
-    faqFirstQuestion: '//span[contains(text(),"What is Ambire")]',
-    faqFirstAnswer: '(//div/p)[2]',
-    faqSecondQuestion: '//span[contains(text(),"Is Ambire")]',
-    faqSecondAnswer: '(//div/p)[3]',
-    faqThirdQuestion: '//span[contains(text(),"Can I participate with a wallet")]',
-    faqThirdAnswer: '(//div/p)[4]',
-    faqFourthQuestion: '//span[contains(text(),"Which tokens")]',
-    faqFourthAnswer: '(//div/p)[5]',
-    faqFifthQuestion: '//span[contains(text(),"How is Swap&Bridge")]',
-    faqFifthAnswer: '(//div/p)[6]',
-    faqSixthQuestion: '//span[contains(text(),"Can I use my")]',
-    faqSixthAnswer: '(//div/p)[7]',
-    faqSeventhQuestion: '//span[contains(text(),"Can I participate with multiple")]',
-    faqSeventhAnswer: '(//div/p)[8]',
-    faqEightQuestion: '//span[contains(text(),"How long is the current")]',
-    faqEightAnswer: '(//div/p)[9]',
-    faqNinthQuestion: '//span[contains(text(),"What are projected")]',
-    faqNinthAnswer: '(//div/p)[10]',
-    pageTitle: '//h1',
-    pageDescription: '//p',
-    homePage: '//span[contains(text(),"Home")]',
-    leaderboardPage: '//span[contains(text(),"Rewards")]',
-    rewardsPoolPage: '//span[contains(text(),"Rewards Pool")]',
-    walletPage: '//span[contains(text(),"$Wallet")]',
-    faqPage: '//span[contains(text(),"FAQ")]'
-  },
   sigtool: {
     connectWalletButton: '.button-connect',
     metamaskOption: 'div[class*="wallet-button-container"] >> text=MetaMask',
@@ -254,6 +220,7 @@ const selectors = {
   personalizeAccount: 'personalize-account',
   pinExtensionCloseBtn: 'pin-extension-close-btn',
   accountSelectBtn: 'account-select-btn',
+  accountRow: (addr: string) => `account-${addr}`, // unique per address, unlike `account`
   selectSeedPhraseLength: 'select-seed-phrase-length',
   option24WordsSeedPhrase: 'option-i-have-24-word-phrase',
   selectChangeHdPath: 'select-change-hd-path',
@@ -367,6 +334,14 @@ const selectors = {
   dappConnectButton: 'dapp-connect-button',
   dappSecurityCheckPassed: 'dapp-security-check-passed',
   signMessageButton: 'button-sign',
+  switchAccountButton: 'switch-account-button',
+  switchAccountDenyButton: 'switch-account-deny-button',
+  rejectRequestOptionCurrent: 'reject-request-option-current',
+  transactionCallDyn: (index: number) => `recipient-address-${index}`, // one card per call on the sign transaction screen
+  dappScopedAccountsToggle: 'dapp-scoped-accounts-toggle',
+  dappScopedAccountsSelectorButton: 'dapp-scoped-accounts-selector-button',
+  dappScopedAccountsContinueButton: 'dapp-scoped-accounts-continue-button',
+  dappAccountRow: (addr: string) => `dapp-account-row-${addr}`,
   // Notifications
   networkSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE

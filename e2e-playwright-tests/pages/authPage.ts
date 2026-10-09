@@ -98,8 +98,7 @@ export class AuthPage extends BasePage {
     await this.click(selectors.getStarted.importMethodRecoveryPhrase)
     await this.entertext(selectors.getStarted.enterSeedPhraseField, passphrase)
     // enter phrase and recovery phrase
-    // await this.click(selectors.getStarted.advancedPassPhraseSwitch) // TODO: added selector is not working
-    await this.page.locator(locators.recoveryPhraseAdvancedModeToggle).click()
+    await this.click(selectors.getStarted.advancedPassPhraseSwitch)
     await this.entertext(selectors.getStarted.recoveryPhrasePassphraseField, passphrase)
     // import
     await this.click(selectors.getStarted.importBtn)

@@ -1,0 +1,2322 @@
+diff --git a/node_modules/viem/_cjs/actions/token/approve.js b/node_modules/viem/_cjs/actions/token/approve.js
+index 726bd09cb3..23c4785ddd 100644
+--- a/node_modules/viem/_cjs/actions/token/approve.js
++++ b/node_modules/viem/_cjs/actions/token/approve.js
+@@ -21,7 +21,8 @@ async function approve(client, parameters) {
+     function call(client, parameters) {
+         return (0, internal_js_1.defineCall)(getCall(client, parameters));
+     }
+-    approve.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(approve, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     async function estimateGas(client, parameters) {
+         return (0, estimateContractGas_js_1.estimateContractGas)(client, {
+             ...(0, internal_js_1.pickWriteParameters)(parameters),
+diff --git a/node_modules/viem/_cjs/actions/token/getAllowance.js b/node_modules/viem/_cjs/actions/token/getAllowance.js
+index 8660140149..8be0a7d5d0 100644
+--- a/node_modules/viem/_cjs/actions/token/getAllowance.js
++++ b/node_modules/viem/_cjs/actions/token/getAllowance.js
+@@ -27,6 +27,7 @@ async function getAllowance(client, parameters) {
+             args: [args.account, args.spender],
+         });
+     }
+-    getAllowance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getAllowance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getAllowance || (exports.getAllowance = getAllowance = {}));
+ //# sourceMappingURL=getAllowance.js.map
+\ No newline at end of file
+diff --git a/node_modules/viem/_cjs/actions/token/getBalance.js b/node_modules/viem/_cjs/actions/token/getBalance.js
+index 95e8a35472..8ae04437dd 100644
+--- a/node_modules/viem/_cjs/actions/token/getBalance.js
++++ b/node_modules/viem/_cjs/actions/token/getBalance.js
+@@ -36,6 +36,7 @@ async function getBalance(client, parameters) {
+             args: [account],
+         });
+     }
+-    getBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBalance || (exports.getBalance = getBalance = {}));
+ //# sourceMappingURL=getBalance.js.map
+\ No newline at end of file
+diff --git a/node_modules/viem/_cjs/actions/token/getTotalSupply.js b/node_modules/viem/_cjs/actions/token/getTotalSupply.js
+index fc6ad09ddd..4071adc8f3 100644
+--- a/node_modules/viem/_cjs/actions/token/getTotalSupply.js
++++ b/node_modules/viem/_cjs/actions/token/getTotalSupply.js
+@@ -27,6 +27,7 @@ async function getTotalSupply(client, parameters) {
+             functionName: 'totalSupply',
+         });
+     }
+-    getTotalSupply.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getTotalSupply, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getTotalSupply || (exports.getTotalSupply = getTotalSupply = {}));
+ //# sourceMappingURL=getTotalSupply.js.map
+\ No newline at end of file
+diff --git a/node_modules/viem/_cjs/actions/token/transfer.js b/node_modules/viem/_cjs/actions/token/transfer.js
+index 9105404dac..3a39e665a4 100644
+--- a/node_modules/viem/_cjs/actions/token/transfer.js
++++ b/node_modules/viem/_cjs/actions/token/transfer.js
+@@ -21,7 +21,8 @@ async function transfer(client, parameters) {
+     function call(client, parameters) {
+         return (0, internal_js_1.defineCall)(getCall(client, parameters));
+     }
+-    transfer.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(transfer, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     async function estimateGas(client, parameters) {
+         return (0, estimateContractGas_js_1.estimateContractGas)(client, {
+             ...(0, internal_js_1.pickWriteParameters)(parameters),
+diff --git a/node_modules/viem/_cjs/clients/createClient.js b/node_modules/viem/_cjs/clients/createClient.js
+index f5d616584f..770e26c8c2 100644
+--- a/node_modules/viem/_cjs/clients/createClient.js
++++ b/node_modules/viem/_cjs/clients/createClient.js
+@@ -78,11 +78,12 @@ function bindActionDecorators(client, action) {
+     ])
+         if (Object.hasOwn(action, key)) {
+             const helper = action[key];
+-            wrapped[key] = (args = {}) => {
++            // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++            Object.defineProperty(wrapped, key, { writable: true, enumerable: true, configurable: true, value: (args = {}) => {
+                 if (helper.length === 1)
+                     return helper(args);
+                 return helper(client, args);
+-            };
++            } });
+         }
+     for (const key of ['extractEvent', 'extractEvents'])
+         if (Object.hasOwn(action, key))
+diff --git a/node_modules/viem/_cjs/tempo/actions/accessKey.js b/node_modules/viem/_cjs/tempo/actions/accessKey.js
+index a3973fad15..30911efd57 100644
+--- a/node_modules/viem/_cjs/tempo/actions/accessKey.js
++++ b/node_modules/viem/_cjs/tempo/actions/accessKey.js
+@@ -119,7 +119,8 @@ async function burnWitness(client, parameters) {
+             args: [witness],
+         });
+     }
+-    burnWitness.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burnWitness, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.accountKeychain,
+@@ -176,7 +177,8 @@ async function getMetadata(client, parameters) {
+             args: [account, resolveAccessKeyAddress(accessKey)],
+         });
+     }
+-    getMetadata.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getMetadata, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getMetadata || (exports.getMetadata = getMetadata = {}));
+ async function getRemainingLimit(client, parameters) {
+     const { account: account_ = client.account, accessKey, token, ...rest } = parameters;
+@@ -211,7 +213,8 @@ async function getRemainingLimit(client, parameters) {
+             args: [account, resolveAccessKeyAddress(accessKey), token],
+         });
+     }
+-    getRemainingLimit.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getRemainingLimit, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function callWithPeriod(args) {
+         const { account, accessKey, token } = args;
+         return (0, utils_js_1.defineCall)({
+@@ -244,7 +247,8 @@ async function isAdmin(client, parameters) {
+             args: [account, resolveAccessKeyAddress(accessKey)],
+         });
+     }
+-    isAdmin.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(isAdmin, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(isAdmin || (exports.isAdmin = isAdmin = {}));
+ async function isWitnessBurned(client, parameters) {
+     const { account: account_ = client.account, witness, ...rest } = parameters;
+@@ -267,7 +271,8 @@ async function isWitnessBurned(client, parameters) {
+             args: [account, witness],
+         });
+     }
+-    isWitnessBurned.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(isWitnessBurned, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(isWitnessBurned || (exports.isWitnessBurned = isWitnessBurned = {}));
+ async function revoke(client, parameters) {
+     return revoke.inner(writeContract_js_1.writeContract, client, parameters);
+@@ -291,7 +296,8 @@ async function revoke(client, parameters) {
+             args: [resolveAccessKeyAddress(accessKey)],
+         });
+     }
+-    revoke.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(revoke, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.accountKeychain,
+@@ -478,7 +484,8 @@ async function updateLimit(client, parameters) {
+             args: [resolveAccessKeyAddress(accessKey), token, limit],
+         });
+     }
+-    updateLimit.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(updateLimit, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.accountKeychain,
+@@ -568,7 +575,8 @@ async function verifyHash(client, parameters) {
+             args: [account, hash, signature],
+         });
+     }
+-    verifyHash.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(verifyHash, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(verifyHash || (exports.verifyHash = verifyHash = {}));
+ function resolveAccessKeyAddress(accessKey) {
+     if (typeof accessKey === 'string')
+diff --git a/node_modules/viem/_cjs/tempo/actions/amm.js b/node_modules/viem/_cjs/tempo/actions/amm.js
+index a25d47984d..c7c1359f16 100644
+--- a/node_modules/viem/_cjs/tempo/actions/amm.js
++++ b/node_modules/viem/_cjs/tempo/actions/amm.js
+@@ -87,7 +87,8 @@ async function getLiquidityBalance(client, parameters) {
+             functionName: 'liquidityBalances',
+         });
+     }
+-    getLiquidityBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getLiquidityBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getLiquidityBalance || (exports.getLiquidityBalance = getLiquidityBalance = {}));
+ async function rebalanceSwap(client, parameters) {
+     return rebalanceSwap.inner(writeContract_js_1.writeContract, client, parameters);
+@@ -121,7 +122,8 @@ async function rebalanceSwap(client, parameters) {
+             ],
+         });
+     }
+-    rebalanceSwap.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(rebalanceSwap, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.feeAmm,
+@@ -181,7 +183,8 @@ async function mint(client, parameters) {
+             ],
+         });
+     }
+-    mint.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(mint, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.feeAmm,
+@@ -236,7 +239,8 @@ async function burn(client, parameters) {
+             ],
+         });
+     }
+-    burn.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burn, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.feeAmm,
+diff --git a/node_modules/viem/_cjs/tempo/actions/channel.js b/node_modules/viem/_cjs/tempo/actions/channel.js
+index 34db47ba34..1f1cce43c0 100644
+--- a/node_modules/viem/_cjs/tempo/actions/channel.js
++++ b/node_modules/viem/_cjs/tempo/actions/channel.js
+@@ -57,7 +57,8 @@ async function close(client, parameters) {
+             ],
+         });
+     }
+-    close.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(close, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20ChannelReserve,
+@@ -125,7 +126,8 @@ async function getStates(client, parameters) {
+             functionName: 'getChannelState',
+         });
+     }
+-    getStates.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getStates, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getStates || (exports.getStates = getStates = {}));
+ async function open(client, parameters) {
+     return open.inner(writeContract_js_1.writeContract, client, parameters);
+@@ -162,7 +164,8 @@ async function open(client, parameters) {
+             ],
+         });
+     }
+-    open.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(open, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20ChannelReserve,
+@@ -208,7 +211,8 @@ async function requestClose(client, parameters) {
+             args: [tempo_1.Channel.from(channel)],
+         });
+     }
+-    requestClose.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(requestClose, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20ChannelReserve,
+@@ -254,7 +258,8 @@ async function settle(client, parameters) {
+             args: [tempo_1.Channel.from(channel), cumulativeAmount, signature],
+         });
+     }
+-    settle.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(settle, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20ChannelReserve,
+@@ -315,7 +320,8 @@ async function topUp(client, parameters) {
+             args: [tempo_1.Channel.from(channel), additionalDeposit],
+         });
+     }
+-    topUp.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(topUp, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20ChannelReserve,
+@@ -361,7 +367,8 @@ async function withdraw(client, parameters) {
+             args: [tempo_1.Channel.from(channel)],
+         });
+     }
+-    withdraw.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(withdraw, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20ChannelReserve,
+diff --git a/node_modules/viem/_cjs/tempo/actions/dex.js b/node_modules/viem/_cjs/tempo/actions/dex.js
+index ceb0c3d14e..16cfa15e75 100644
+--- a/node_modules/viem/_cjs/tempo/actions/dex.js
++++ b/node_modules/viem/_cjs/tempo/actions/dex.js
+@@ -59,7 +59,8 @@ async function buy(client, parameters) {
+             args: [tokenIn, tokenOut, amountOut, maxAmountIn],
+         });
+     }
+-    buy.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(buy, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(buy || (exports.buy = buy = {}));
+ async function buySync(client, parameters) {
+     const { throwOnReceiptRevert = true, ...rest } = parameters;
+@@ -91,7 +92,8 @@ async function cancel(client, parameters) {
+             args: [orderId],
+         });
+     }
+-    cancel.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(cancel, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.stablecoinDex,
+@@ -141,7 +143,8 @@ async function cancelStale(client, parameters) {
+             args: [orderId],
+         });
+     }
+-    cancelStale.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(cancelStale, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.stablecoinDex,
+@@ -191,7 +194,8 @@ async function createPair(client, parameters) {
+             args: [base],
+         });
+     }
+-    createPair.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(createPair, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.stablecoinDex,
+@@ -239,7 +243,8 @@ async function getBalance(client, parameters) {
+             functionName: 'balanceOf',
+         });
+     }
+-    getBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBalance || (exports.getBalance = getBalance = {}));
+ async function getBuyQuote(client, parameters) {
+     const { tokenIn, tokenOut, amountOut, ...rest } = parameters;
+@@ -258,7 +263,8 @@ async function getBuyQuote(client, parameters) {
+             functionName: 'quoteSwapExactAmountOut',
+         });
+     }
+-    getBuyQuote.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBuyQuote, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBuyQuote || (exports.getBuyQuote = getBuyQuote = {}));
+ async function getOrder(client, parameters) {
+     const { orderId, ...rest } = parameters;
+@@ -277,7 +283,8 @@ async function getOrder(client, parameters) {
+             functionName: 'getOrder',
+         });
+     }
+-    getOrder.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getOrder, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getOrder || (exports.getOrder = getOrder = {}));
+ async function getOrderbook(client, parameters) {
+     const { base, quote, ...rest } = parameters;
+@@ -297,7 +304,8 @@ async function getOrderbook(client, parameters) {
+             functionName: 'books',
+         });
+     }
+-    getOrderbook.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getOrderbook, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getOrderbook || (exports.getOrderbook = getOrderbook = {}));
+ async function getTickLevel(client, parameters) {
+     const { base, tick, isBid, ...rest } = parameters;
+@@ -317,7 +325,8 @@ async function getTickLevel(client, parameters) {
+             functionName: 'getTickLevel',
+         });
+     }
+-    getTickLevel.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getTickLevel, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getTickLevel || (exports.getTickLevel = getTickLevel = {}));
+ async function getSellQuote(client, parameters) {
+     const { tokenIn, tokenOut, amountIn, ...rest } = parameters;
+@@ -336,7 +345,8 @@ async function getSellQuote(client, parameters) {
+             functionName: 'quoteSwapExactAmountIn',
+         });
+     }
+-    getSellQuote.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getSellQuote, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getSellQuote || (exports.getSellQuote = getSellQuote = {}));
+ async function place(client, parameters) {
+     return place.inner(writeContract_js_1.writeContract, client, parameters);
+@@ -361,7 +371,8 @@ async function place(client, parameters) {
+             args: [token, amount, isBid, tick],
+         });
+     }
+-    place.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(place, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.stablecoinDex,
+@@ -398,7 +409,8 @@ async function placeFlip(client, parameters) {
+             args: [token, amount, isBid, tick, flipTick],
+         });
+     }
+-    placeFlip.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(placeFlip, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const parsedLogs = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.stablecoinDex,
+@@ -463,7 +475,8 @@ async function sell(client, parameters) {
+             args: [tokenIn, tokenOut, amountIn, minAmountOut],
+         });
+     }
+-    sell.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(sell, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(sell || (exports.sell = sell = {}));
+ async function sellSync(client, parameters) {
+     const { throwOnReceiptRevert = true, ...rest } = parameters;
+@@ -567,7 +580,8 @@ async function withdraw(client, parameters) {
+             args: [token, amount],
+         });
+     }
+-    withdraw.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(withdraw, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(withdraw || (exports.withdraw = withdraw = {}));
+ async function withdrawSync(client, parameters) {
+     const { throwOnReceiptRevert = true, ...rest } = parameters;
+diff --git a/node_modules/viem/_cjs/tempo/actions/earn/deployment.js b/node_modules/viem/_cjs/tempo/actions/earn/deployment.js
+index b2ee337ca7..a0fe2a8c92 100644
+--- a/node_modules/viem/_cjs/tempo/actions/earn/deployment.js
++++ b/node_modules/viem/_cjs/tempo/actions/earn/deployment.js
+@@ -93,7 +93,8 @@ async function createErc4626Engine(client, parameters) {
+             ],
+         });
+     }
+-    createErc4626Engine.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(createErc4626Engine, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     async function predict(client, args) {
+         validateDeploymentId(args.deploymentId);
+         return (0, readContract_js_1.readContract)(client, {
+@@ -170,7 +171,8 @@ async function createStack(client, parameters) {
+             args: [toDeployParameters(args)],
+         });
+     }
+-    createStack.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(createStack, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     async function predict(client, args) {
+         validateDeploymentId(args.deploymentId);
+         const parameters = toDeployParameters(args);
+@@ -243,7 +245,8 @@ async function bindEngine(client, parameters) {
+             args: [vault],
+         });
+     }
+-    bindEngine.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(bindEngine, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs, parameters) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: engineBindingAbi,
+diff --git a/node_modules/viem/_cjs/tempo/actions/earn.js b/node_modules/viem/_cjs/tempo/actions/earn.js
+index 4e7faf703e..6efc727075 100644
+--- a/node_modules/viem/_cjs/tempo/actions/earn.js
++++ b/node_modules/viem/_cjs/tempo/actions/earn.js
+@@ -238,7 +238,8 @@ async function deposit(client, parameters) {
+             ],
+         });
+     }
+-    deposit.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(deposit, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function calls(args) {
+         const { assetToken, vault } = args;
+         const assetAmount = internal_Token.toBaseUnits(args.assetAmount, undefined);
+@@ -332,7 +333,8 @@ async function depositShares(client, parameters) {
+             args: [venueShareAmount, recipient, earnShareAmountMin],
+         });
+     }
+-    depositShares.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(depositShares, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function calls(args) {
+         const { engine, venueShareAmount, venueShareToken } = args;
+         return [
+@@ -700,7 +702,8 @@ async function getRedeemQuote(client, parameters) {
+             functionName: 'previewRedeem',
+         });
+     }
+-    getRedeemQuote.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getRedeemQuote, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getRedeemQuote || (exports.getRedeemQuote = getRedeemQuote = {}));
+ async function getVault(client, parameters) {
+     const { vault, ...rest } = parameters;
+@@ -872,7 +875,8 @@ async function getWithdrawQuote(client, parameters) {
+             functionName: 'previewWithdraw',
+         });
+     }
+-    getWithdrawQuote.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getWithdrawQuote, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getWithdrawQuote || (exports.getWithdrawQuote = getWithdrawQuote = {}));
+ async function redeem(client, parameters) {
+     return redeem.inner(sendTransaction_js_1.sendTransaction, client, parameters);
+@@ -912,7 +916,8 @@ async function redeem(client, parameters) {
+             ],
+         });
+     }
+-    redeem.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(redeem, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function calls(args) {
+         const { shareToken, vault } = args;
+         const shareAmount = internal_Token.toBaseUnits(args.shareAmount, undefined);
+@@ -1162,7 +1167,8 @@ async function withdrawExact(client, parameters) {
+             ],
+         });
+     }
+-    withdrawExact.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(withdrawExact, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function calls(args) {
+         const { shareToken, vault } = args;
+         const assetAmount = internal_Token.toBaseUnits(args.assetAmount, undefined);
+diff --git a/node_modules/viem/_cjs/tempo/actions/fee.js b/node_modules/viem/_cjs/tempo/actions/fee.js
+index 1350dcefaf..4504d6e88f 100644
+--- a/node_modules/viem/_cjs/tempo/actions/fee.js
++++ b/node_modules/viem/_cjs/tempo/actions/fee.js
+@@ -106,7 +106,8 @@ async function getUserToken(client, ...parameters) {
+             functionName: 'userTokens',
+         });
+     }
+-    getUserToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getUserToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getUserToken || (exports.getUserToken = getUserToken = {}));
+ async function setUserToken(client, parameters) {
+     return setUserToken.inner(writeContract_js_1.writeContract, client, parameters);
+@@ -130,7 +131,8 @@ async function setUserToken(client, parameters) {
+             args: [tempo_1.TokenId.toAddress(token)],
+         });
+     }
+-    setUserToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setUserToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.feeManager,
+@@ -195,7 +197,8 @@ async function getValidatorToken(client, parameters) {
+             functionName: 'validatorTokens',
+         });
+     }
+-    getValidatorToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getValidatorToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getValidatorToken || (exports.getValidatorToken = getValidatorToken = {}));
+ async function setValidatorToken(client, parameters) {
+     return setValidatorToken.inner(writeContract_js_1.writeContract, client, parameters);
+@@ -219,7 +222,8 @@ async function setValidatorToken(client, parameters) {
+             args: [tempo_1.TokenId.toAddress(token)],
+         });
+     }
+-    setValidatorToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setValidatorToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.feeManager,
+diff --git a/node_modules/viem/_cjs/tempo/actions/multisig.js b/node_modules/viem/_cjs/tempo/actions/multisig.js
+index 47ea69df46..eb1c22f1bb 100644
+--- a/node_modules/viem/_cjs/tempo/actions/multisig.js
++++ b/node_modules/viem/_cjs/tempo/actions/multisig.js
+@@ -37,7 +37,8 @@ async function getConfigCommitment(client, parameters) {
+             functionName: 'getConfigCommitment',
+         });
+     }
+-    getConfigCommitment.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getConfigCommitment, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getConfigCommitment || (exports.getConfigCommitment = getConfigCommitment = {}));
+ async function getOperation(client, parameters) {
+     const operation = await client.request({
+@@ -116,7 +117,8 @@ async function updateConfig(client, parameters) {
+             functionName: 'updateConfig',
+         });
+     }
+-    updateConfig.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(updateConfig, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.nativeMultisig,
+diff --git a/node_modules/viem/_cjs/tempo/actions/nonce.js b/node_modules/viem/_cjs/tempo/actions/nonce.js
+index f0ee3a73de..a4fcfd0a0c 100644
+--- a/node_modules/viem/_cjs/tempo/actions/nonce.js
++++ b/node_modules/viem/_cjs/tempo/actions/nonce.js
+@@ -24,7 +24,8 @@ async function getNonce(client, parameters) {
+             functionName: 'getNonce',
+         });
+     }
+-    getNonce.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getNonce, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getNonce || (exports.getNonce = getNonce = {}));
+ function watchNonceIncremented(client, parameters) {
+     const { onNonceIncremented, ...rest } = parameters;
+diff --git a/node_modules/viem/_cjs/tempo/actions/policy.js b/node_modules/viem/_cjs/tempo/actions/policy.js
+index bface4d996..3828841417 100644
+--- a/node_modules/viem/_cjs/tempo/actions/policy.js
++++ b/node_modules/viem/_cjs/tempo/actions/policy.js
+@@ -64,7 +64,8 @@ async function create(client, parameters) {
+             ...config,
+         });
+     }
+-    create.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(create, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip403Registry,
+@@ -114,7 +115,8 @@ async function setAdmin(client, parameters) {
+             args: [policyId, admin],
+         });
+     }
+-    setAdmin.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setAdmin, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip403Registry,
+@@ -168,7 +170,8 @@ async function modifyWhitelist(client, parameters) {
+             args: [policyId, address, allowed],
+         });
+     }
+-    modifyWhitelist.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(modifyWhitelist, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip403Registry,
+@@ -222,7 +225,8 @@ async function modifyBlacklist(client, parameters) {
+             args: [policyId, address, restricted],
+         });
+     }
+-    modifyBlacklist.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(modifyBlacklist, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip403Registry,
+@@ -271,7 +275,8 @@ async function getData(client, parameters) {
+             functionName: 'policyData',
+         });
+     }
+-    getData.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getData, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getData || (exports.getData = getData = {}));
+ async function isAuthorized(client, parameters) {
+     const { policyId, user, ...rest } = parameters;
+@@ -290,7 +295,8 @@ async function isAuthorized(client, parameters) {
+             functionName: 'isAuthorized',
+         });
+     }
+-    isAuthorized.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(isAuthorized, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(isAuthorized || (exports.isAuthorized = isAuthorized = {}));
+ function watchCreate(client, parameters) {
+     const { onPolicyCreated, ...rest } = parameters;
+diff --git a/node_modules/viem/_cjs/tempo/actions/receivePolicy.js b/node_modules/viem/_cjs/tempo/actions/receivePolicy.js
+index 3ea7c2e6eb..1b13adc42b 100644
+--- a/node_modules/viem/_cjs/tempo/actions/receivePolicy.js
++++ b/node_modules/viem/_cjs/tempo/actions/receivePolicy.js
+@@ -70,7 +70,8 @@ async function burn(client, parameters) {
+             args: [receipt],
+         });
+     }
+-    burn.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burn, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.receivePolicyGuard,
+@@ -124,7 +125,8 @@ async function claim(client, parameters) {
+             args: [to, receipt],
+         });
+     }
+-    claim.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(claim, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.receivePolicyGuard,
+@@ -182,7 +184,8 @@ async function get(client, parameters) {
+             args: [account],
+         });
+     }
+-    get.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(get, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(get || (exports.get = get = {}));
+ async function getBlockedBalance(client, parameters) {
+     const { receipt, ...rest } = parameters;
+@@ -201,7 +204,8 @@ async function getBlockedBalance(client, parameters) {
+             args: [receipt],
+         });
+     }
+-    getBlockedBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBlockedBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBlockedBalance || (exports.getBlockedBalance = getBlockedBalance = {}));
+ async function set(client, parameters) {
+     return set.inner(writeContract_js_1.writeContract, client, parameters);
+@@ -235,7 +239,8 @@ async function set(client, parameters) {
+             args: [senderPolicyId, tokenFilterId, recoveryAuthority],
+         });
+     }
+-    set.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(set, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip403Registry,
+@@ -287,7 +292,8 @@ async function validate(client, parameters) {
+             args: [token, sender, receiver],
+         });
+     }
+-    validate.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(validate, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(validate || (exports.validate = validate = {}));
+ function watchBlocked(client, parameters) {
+     const { onBlocked, ...rest } = parameters;
+diff --git a/node_modules/viem/_cjs/tempo/actions/reward.js b/node_modules/viem/_cjs/tempo/actions/reward.js
+index f85222c157..7e9afe976d 100644
+--- a/node_modules/viem/_cjs/tempo/actions/reward.js
++++ b/node_modules/viem/_cjs/tempo/actions/reward.js
+@@ -40,7 +40,8 @@ async function claim(client, parameters) {
+             functionName: 'claimRewards',
+         });
+     }
+-    claim.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(claim, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(claim || (exports.claim = claim = {}));
+ async function claimSync(client, parameters) {
+     const { throwOnReceiptRevert = true, ...rest } = parameters;
+@@ -88,7 +89,8 @@ async function distributeSync(client, parameters) {
+             functionName: 'distributeReward',
+         });
+     }
+-    distribute.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(distribute, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -118,7 +120,8 @@ async function getGlobalRewardPerToken(client, parameters) {
+             functionName: 'globalRewardPerToken',
+         });
+     }
+-    getGlobalRewardPerToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getGlobalRewardPerToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getGlobalRewardPerToken || (exports.getGlobalRewardPerToken = getGlobalRewardPerToken = {}));
+ async function getPendingRewards(client, parameters) {
+     return (0, readContract_js_1.readContract)(client, {
+@@ -136,7 +139,8 @@ async function getPendingRewards(client, parameters) {
+             functionName: 'getPendingRewards',
+         });
+     }
+-    getPendingRewards.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getPendingRewards, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getPendingRewards || (exports.getPendingRewards = getPendingRewards = {}));
+ async function getUserRewardInfo(client, parameters) {
+     return (0, readContract_js_1.readContract)(client, {
+@@ -154,7 +158,8 @@ async function getUserRewardInfo(client, parameters) {
+             functionName: 'userRewardInfo',
+         });
+     }
+-    getUserRewardInfo.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getUserRewardInfo, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getUserRewardInfo || (exports.getUserRewardInfo = getUserRewardInfo = {}));
+ async function setRecipient(client, parameters) {
+     return setRecipient.inner(writeContract_js_1.writeContract, client, parameters);
+@@ -192,7 +197,8 @@ async function setRecipientSync(client, parameters) {
+             functionName: 'setRewardRecipient',
+         });
+     }
+-    setRecipient.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setRecipient, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+diff --git a/node_modules/viem/_cjs/tempo/actions/token.js b/node_modules/viem/_cjs/tempo/actions/token.js
+index 9b9edcffc4..8e2348b6ac 100644
+--- a/node_modules/viem/_cjs/tempo/actions/token.js
++++ b/node_modules/viem/_cjs/tempo/actions/token.js
+@@ -88,7 +88,8 @@ async function approve(client, parameters) {
+             args: [spender, internal_Token.toBaseUnits(amount, decimals)],
+         });
+     }
+-    approve.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(approve, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     async function estimateGas(client, parameters) {
+         return (0, estimateContractGas_js_1.estimateContractGas)(client, {
+             ...(0, utils_js_1.pickWriteParameters)(parameters),
+@@ -158,7 +159,8 @@ async function burnBlocked(client, parameters) {
+             args: [from, internal_Token.toBaseUnits(amount, decimals)],
+         });
+     }
+-    burnBlocked.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burnBlocked, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -218,7 +220,8 @@ async function burn(client, parameters) {
+             ...callArgs,
+         });
+     }
+-    burn.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burn, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -268,7 +271,8 @@ async function changeTransferPolicy(client, parameters) {
+             args: [policyId],
+         });
+     }
+-    changeTransferPolicy.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(changeTransferPolicy, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -340,7 +344,8 @@ async function create(client, parameters) {
+             functionName: 'createToken',
+         });
+     }
+-    create.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(create, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20Factory,
+@@ -394,7 +399,8 @@ async function getAllowance(client, parameters) {
+             args: [args.account, args.spender],
+         });
+     }
+-    getAllowance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getAllowance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getAllowance || (exports.getAllowance = getAllowance = {}));
+ async function getBalance(client, parameters) {
+     const { account: account_ = client.account, decimals, token, ...rest } = parameters;
+@@ -427,7 +433,8 @@ async function getBalance(client, parameters) {
+             args: [account],
+         });
+     }
+-    getBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBalance || (exports.getBalance = getBalance = {}));
+ async function getMetadata(client, parameters) {
+     const { token, ...rest } = parameters;
+@@ -599,7 +606,8 @@ async function getTotalSupply(client, parameters) {
+             functionName: 'totalSupply',
+         });
+     }
+-    getTotalSupply.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getTotalSupply, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getTotalSupply || (exports.getTotalSupply = getTotalSupply = {}));
+ async function getRoleAdmin(client, parameters) {
+     return (0, readContract_js_1.readContract)(client, {
+@@ -618,7 +626,8 @@ async function getRoleAdmin(client, parameters) {
+             args: [tempo_1.TokenRole.serialize(role)],
+         });
+     }
+-    getRoleAdmin.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getRoleAdmin, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getRoleAdmin || (exports.getRoleAdmin = getRoleAdmin = {}));
+ async function hasRole(client, parameters) {
+     const { account = client.account } = parameters;
+@@ -641,7 +650,8 @@ async function hasRole(client, parameters) {
+             args: [account, tempo_1.TokenRole.serialize(role)],
+         });
+     }
+-    hasRole.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(hasRole, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(hasRole || (exports.hasRole = hasRole = {}));
+ async function grantRoles(client, parameters) {
+     return grantRoles.inner(sendTransaction_js_1.sendTransaction, client, parameters);
+@@ -671,7 +681,8 @@ async function grantRoles(client, parameters) {
+             args: [roleHash, to],
+         });
+     }
+-    grantRoles.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(grantRoles, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvents(logs) {
+         const events = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -732,7 +743,8 @@ async function mint(client, parameters) {
+             ...callArgs,
+         });
+     }
+-    mint.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(mint, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -782,7 +794,8 @@ async function pause(client, parameters) {
+             args: [],
+         });
+     }
+-    pause.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(pause, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -837,7 +850,8 @@ async function renounceRoles(client, parameters) {
+             args: [roleHash],
+         });
+     }
+-    renounceRoles.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(renounceRoles, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvents(logs) {
+         const events = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -894,7 +908,8 @@ async function revokeRoles(client, parameters) {
+             args: [roleHash, from],
+         });
+     }
+-    revokeRoles.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(revokeRoles, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvents(logs) {
+         const events = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -945,7 +960,8 @@ async function setSupplyCap(client, parameters) {
+             args: [supplyCap],
+         });
+     }
+-    setSupplyCap.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setSupplyCap, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -997,7 +1013,8 @@ async function setRoleAdmin(client, parameters) {
+             args: [roleHash, adminRoleHash],
+         });
+     }
+-    setRoleAdmin.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setRoleAdmin, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -1067,7 +1084,8 @@ async function transfer(client, parameters) {
+             ...callArgs,
+         });
+     }
+-    transfer.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(transfer, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     async function estimateGas(client, parameters) {
+         return (0, estimateContractGas_js_1.estimateContractGas)(client, {
+             ...(0, utils_js_1.pickWriteParameters)(parameters),
+@@ -1136,7 +1154,8 @@ async function unpause(client, parameters) {
+             args: [],
+         });
+     }
+-    unpause.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(unpause, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -1186,7 +1205,8 @@ async function prepareUpdateQuoteToken(client, parameters) {
+             args: [(0, utils_js_1.resolveToken)(client, { token: quoteToken }).address],
+         });
+     }
+-    prepareUpdateQuoteToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(prepareUpdateQuoteToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+@@ -1232,7 +1252,8 @@ async function updateQuoteToken(client, parameters) {
+             args: [],
+         });
+     }
+-    updateQuoteToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(updateQuoteToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.tip20,
+diff --git a/node_modules/viem/_cjs/tempo/actions/validator.js b/node_modules/viem/_cjs/tempo/actions/validator.js
+index 65044b924e..2ae10fa623 100644
+--- a/node_modules/viem/_cjs/tempo/actions/validator.js
++++ b/node_modules/viem/_cjs/tempo/actions/validator.js
+@@ -56,7 +56,8 @@ async function add(client, parameters) {
+             functionName: 'addValidator',
+         });
+     }
+-    add.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(add, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(add || (exports.add = add = {}));
+ async function addSync(client, parameters) {
+     const { throwOnReceiptRevert = true, ...rest } = parameters;
+@@ -88,7 +89,8 @@ async function changeOwner(client, parameters) {
+             functionName: 'changeOwner',
+         });
+     }
+-    changeOwner.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(changeOwner, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(changeOwner || (exports.changeOwner = changeOwner = {}));
+ async function changeOwnerSync(client, parameters) {
+     const { throwOnReceiptRevert = true, ...rest } = parameters;
+@@ -120,7 +122,8 @@ async function changeStatus(client, parameters) {
+             functionName: 'changeValidatorStatus',
+         });
+     }
+-    changeStatus.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(changeStatus, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(changeStatus || (exports.changeStatus = changeStatus = {}));
+ async function changeStatusSync(client, parameters) {
+     const { throwOnReceiptRevert = true, ...rest } = parameters;
+@@ -145,7 +148,8 @@ async function getNextFullDkgCeremony(client, parameters = {}) {
+             functionName: 'getNextFullDkgCeremony',
+         });
+     }
+-    getNextFullDkgCeremony.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getNextFullDkgCeremony, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getNextFullDkgCeremony || (exports.getNextFullDkgCeremony = getNextFullDkgCeremony = {}));
+ async function getOwner(client, parameters = {}) {
+     return (0, readContract_js_1.readContract)(client, {
+@@ -162,7 +166,8 @@ async function getOwner(client, parameters = {}) {
+             functionName: 'owner',
+         });
+     }
+-    getOwner.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getOwner, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getOwner || (exports.getOwner = getOwner = {}));
+ async function get(client, parameters) {
+     const { validator, ...rest } = parameters;
+@@ -181,7 +186,8 @@ async function get(client, parameters) {
+             functionName: 'validators',
+         });
+     }
+-    get.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(get, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(get || (exports.get = get = {}));
+ async function getByIndex(client, parameters) {
+     const { index, ...rest } = parameters;
+@@ -200,7 +206,8 @@ async function getByIndex(client, parameters) {
+             functionName: 'validatorsArray',
+         });
+     }
+-    getByIndex.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getByIndex, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getByIndex || (exports.getByIndex = getByIndex = {}));
+ async function getCount(client, parameters = {}) {
+     return (0, readContract_js_1.readContract)(client, {
+@@ -217,7 +224,8 @@ async function getCount(client, parameters = {}) {
+             functionName: 'validatorCount',
+         });
+     }
+-    getCount.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getCount, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getCount || (exports.getCount = getCount = {}));
+ async function list(client, parameters = {}) {
+     return (0, readContract_js_1.readContract)(client, {
+@@ -234,7 +242,8 @@ async function list(client, parameters = {}) {
+             functionName: 'getValidators',
+         });
+     }
+-    list.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(list, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(list || (exports.list = list = {}));
+ async function setNextFullDkgCeremony(client, parameters) {
+     return setNextFullDkgCeremony.inner(writeContract_js_1.writeContract, client, parameters);
+@@ -258,7 +267,8 @@ async function setNextFullDkgCeremony(client, parameters) {
+             functionName: 'setNextFullDkgCeremony',
+         });
+     }
+-    setNextFullDkgCeremony.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setNextFullDkgCeremony, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(setNextFullDkgCeremony || (exports.setNextFullDkgCeremony = setNextFullDkgCeremony = {}));
+ async function setNextFullDkgCeremonySync(client, parameters) {
+     const { throwOnReceiptRevert = true, ...rest } = parameters;
+@@ -295,7 +305,8 @@ async function update(client, parameters) {
+             functionName: 'updateValidator',
+         });
+     }
+-    update.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(update, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(update || (exports.update = update = {}));
+ async function updateSync(client, parameters) {
+     const { throwOnReceiptRevert = true, ...rest } = parameters;
+diff --git a/node_modules/viem/_cjs/tempo/actions/virtualAddress.js b/node_modules/viem/_cjs/tempo/actions/virtualAddress.js
+index 7610d90247..2540b0fd3f 100644
+--- a/node_modules/viem/_cjs/tempo/actions/virtualAddress.js
++++ b/node_modules/viem/_cjs/tempo/actions/virtualAddress.js
+@@ -33,7 +33,8 @@ async function getMasterAddress(client, parameters) {
+             functionName: 'getMaster',
+         });
+     }
+-    getMasterAddress.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getMasterAddress, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getMasterAddress || (exports.getMasterAddress = getMasterAddress = {}));
+ async function resolve(client, parameters) {
+     if (!tempo_1.VirtualAddress.isVirtual(parameters.address))
+@@ -63,7 +64,8 @@ async function registerMaster(client, parameters) {
+             args: [salt],
+         });
+     }
+-    registerMaster.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(registerMaster, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = (0, parseEventLogs_js_1.parseEventLogs)({
+             abi: Abis.addressRegistry,
+diff --git a/node_modules/viem/_esm/actions/token/approve.js b/node_modules/viem/_esm/actions/token/approve.js
+index 1c2847fcfe..7e0fd04ebe 100644
+--- a/node_modules/viem/_esm/actions/token/approve.js
++++ b/node_modules/viem/_esm/actions/token/approve.js
+@@ -59,7 +59,8 @@ export async function approve(client, parameters) {
+     function call(client, parameters) {
+         return defineCall(getCall(client, parameters));
+     }
+-    approve.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(approve, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Estimates the gas required to approve a spender. `amount.decimals` is
+      * inferred from declared client tokens when omitted.
+diff --git a/node_modules/viem/_esm/actions/token/getAllowance.js b/node_modules/viem/_esm/actions/token/getAllowance.js
+index 5327d0884d..6333e6fe3f 100644
+--- a/node_modules/viem/_esm/actions/token/getAllowance.js
++++ b/node_modules/viem/_esm/actions/token/getAllowance.js
+@@ -57,6 +57,7 @@ export async function getAllowance(client, parameters) {
+             args: [args.account, args.spender],
+         });
+     }
+-    getAllowance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getAllowance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getAllowance || (getAllowance = {}));
+ //# sourceMappingURL=getAllowance.js.map
+\ No newline at end of file
+diff --git a/node_modules/viem/_esm/actions/token/getBalance.js b/node_modules/viem/_esm/actions/token/getBalance.js
+index 360c29703f..c4e05b9074 100644
+--- a/node_modules/viem/_esm/actions/token/getBalance.js
++++ b/node_modules/viem/_esm/actions/token/getBalance.js
+@@ -65,6 +65,7 @@ export async function getBalance(client, parameters) {
+             args: [account],
+         });
+     }
+-    getBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBalance || (getBalance = {}));
+ //# sourceMappingURL=getBalance.js.map
+\ No newline at end of file
+diff --git a/node_modules/viem/_esm/actions/token/getTotalSupply.js b/node_modules/viem/_esm/actions/token/getTotalSupply.js
+index 10ce8580b0..85f388cb33 100644
+--- a/node_modules/viem/_esm/actions/token/getTotalSupply.js
++++ b/node_modules/viem/_esm/actions/token/getTotalSupply.js
+@@ -55,6 +55,7 @@ export async function getTotalSupply(client, parameters) {
+             functionName: 'totalSupply',
+         });
+     }
+-    getTotalSupply.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getTotalSupply, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getTotalSupply || (getTotalSupply = {}));
+ //# sourceMappingURL=getTotalSupply.js.map
+\ No newline at end of file
+diff --git a/node_modules/viem/_esm/actions/token/transfer.js b/node_modules/viem/_esm/actions/token/transfer.js
+index d6e94a4c47..e0a9b90884 100644
+--- a/node_modules/viem/_esm/actions/token/transfer.js
++++ b/node_modules/viem/_esm/actions/token/transfer.js
+@@ -75,7 +75,8 @@ export async function transfer(client, parameters) {
+     function call(client, parameters) {
+         return defineCall(getCall(client, parameters));
+     }
+-    transfer.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(transfer, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Estimates the gas required to transfer ERC-20 tokens. `amount.decimals` is
+      * inferred from declared client tokens when omitted.
+diff --git a/node_modules/viem/_esm/clients/createClient.js b/node_modules/viem/_esm/clients/createClient.js
+index 28a62583b4..dfb9ca4ca7 100644
+--- a/node_modules/viem/_esm/clients/createClient.js
++++ b/node_modules/viem/_esm/clients/createClient.js
+@@ -89,7 +89,8 @@ export function bindActionDecorators(client, action) {
+     ])
+         if (Object.hasOwn(action, key)) {
+             const helper = action[key];
+-            wrapped[key] = (args = {}) => {
++            // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++            Object.defineProperty(wrapped, key, { writable: true, enumerable: true, configurable: true, value: (args = {}) => {
+                 // Single-parameter helpers are client-less (e.g. `dex.buy.call(args)`).
+                 // Everything else is called with `(client, args)`: two-parameter
+                 // helpers, rest-parameter helpers that accept `(client, args)` or
+@@ -98,7 +99,7 @@ export function bindActionDecorators(client, action) {
+                 if (helper.length === 1)
+                     return helper(args);
+                 return helper(client, args);
+-            };
++            } });
+         }
+     for (const key of ['extractEvent', 'extractEvents'])
+         if (Object.hasOwn(action, key))
+diff --git a/node_modules/viem/_esm/tempo/actions/accessKey.js b/node_modules/viem/_esm/tempo/actions/accessKey.js
+index e552f1f3c6..797b3bee38 100644
+--- a/node_modules/viem/_esm/tempo/actions/accessKey.js
++++ b/node_modules/viem/_esm/tempo/actions/accessKey.js
+@@ -226,7 +226,8 @@ export async function burnWitness(client, parameters) {
+             args: [witness],
+         });
+     }
+-    burnWitness.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burnWitness, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = parseEventLogs({
+             abi: Abis.accountKeychain,
+@@ -338,7 +339,8 @@ export async function getMetadata(client, parameters) {
+             args: [account, resolveAccessKeyAddress(accessKey)],
+         });
+     }
+-    getMetadata.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getMetadata, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getMetadata || (getMetadata = {}));
+ /**
+  * Gets the remaining spending limit for a key-token pair.
+@@ -407,7 +409,8 @@ export async function getRemainingLimit(client, parameters) {
+             args: [account, resolveAccessKeyAddress(accessKey), token],
+         });
+     }
+-    getRemainingLimit.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getRemainingLimit, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Defines a call to the `getRemainingLimitWithPeriod` function (T3+).
+      *
+@@ -481,7 +484,8 @@ export async function isAdmin(client, parameters) {
+             args: [account, resolveAccessKeyAddress(accessKey)],
+         });
+     }
+-    isAdmin.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(isAdmin, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(isAdmin || (isAdmin = {}));
+ /**
+  * Checks whether a key-authorization witness has been burned for an account.
+@@ -534,7 +538,8 @@ export async function isWitnessBurned(client, parameters) {
+             args: [account, witness],
+         });
+     }
+-    isWitnessBurned.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(isWitnessBurned, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(isWitnessBurned || (isWitnessBurned = {}));
+ /**
+  * Revokes an authorized access key.
+@@ -613,7 +618,8 @@ export async function revoke(client, parameters) {
+             args: [resolveAccessKeyAddress(accessKey)],
+         });
+     }
+-    revoke.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(revoke, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = parseEventLogs({
+             abi: Abis.accountKeychain,
+@@ -905,7 +911,8 @@ export async function updateLimit(client, parameters) {
+             args: [resolveAccessKeyAddress(accessKey), token, limit],
+         });
+     }
+-    updateLimit.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(updateLimit, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = parseEventLogs({
+             abi: Abis.accountKeychain,
+@@ -1146,7 +1153,8 @@ export async function verifyHash(client, parameters) {
+             args: [account, hash, signature],
+         });
+     }
+-    verifyHash.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(verifyHash, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(verifyHash || (verifyHash = {}));
+ /** @internal */
+ function resolveAccessKeyAddress(accessKey) {
+diff --git a/node_modules/viem/_esm/tempo/actions/amm.js b/node_modules/viem/_esm/tempo/actions/amm.js
+index ad4481ea9d..3f444d9e57 100644
+--- a/node_modules/viem/_esm/tempo/actions/amm.js
++++ b/node_modules/viem/_esm/tempo/actions/amm.js
+@@ -139,7 +139,8 @@ export async function getLiquidityBalance(client, parameters) {
+             functionName: 'liquidityBalances',
+         });
+     }
+-    getLiquidityBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getLiquidityBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getLiquidityBalance || (getLiquidityBalance = {}));
+ /**
+  * Performs a rebalance swap from validator token to user token.
+@@ -242,7 +243,8 @@ export async function rebalanceSwap(client, parameters) {
+             ],
+         });
+     }
+-    rebalanceSwap.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(rebalanceSwap, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `RebalanceSwap` event from logs.
+      *
+@@ -405,7 +407,8 @@ export async function mint(client, parameters) {
+             ],
+         });
+     }
+-    mint.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(mint, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `Mint` event from logs.
+      *
+@@ -563,7 +566,8 @@ export async function burn(client, parameters) {
+             ],
+         });
+     }
+-    burn.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burn, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `Burn` event from logs.
+      *
+diff --git a/node_modules/viem/_esm/tempo/actions/channel.js b/node_modules/viem/_esm/tempo/actions/channel.js
+index a91dc60baa..997d7ddfd2 100644
+--- a/node_modules/viem/_esm/tempo/actions/channel.js
++++ b/node_modules/viem/_esm/tempo/actions/channel.js
+@@ -67,7 +67,8 @@ export async function close(client, parameters) {
+             ],
+         });
+     }
+-    close.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(close, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `ChannelClosed` event from logs.
+      *
+@@ -208,7 +209,8 @@ export async function getStates(client, parameters) {
+             functionName: 'getChannelState',
+         });
+     }
+-    getStates.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getStates, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getStates || (getStates = {}));
+ /**
+  * Opens and funds a TIP-20 channel reserve channel.
+@@ -279,7 +281,8 @@ export async function open(client, parameters) {
+             ],
+         });
+     }
+-    open.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(open, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `ChannelOpened` event from logs.
+      *
+@@ -382,7 +385,8 @@ export async function requestClose(client, parameters) {
+             args: [ox_Channel.from(channel)],
+         });
+     }
+-    requestClose.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(requestClose, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `CloseRequested` event from logs.
+      *
+@@ -477,7 +481,8 @@ export async function settle(client, parameters) {
+             args: [ox_Channel.from(channel), cumulativeAmount, signature],
+         });
+     }
+-    settle.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(settle, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `Settled` event from logs.
+      *
+@@ -604,7 +609,8 @@ export async function topUp(client, parameters) {
+             args: [ox_Channel.from(channel), additionalDeposit],
+         });
+     }
+-    topUp.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(topUp, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `TopUp` event from logs.
+      *
+@@ -697,7 +703,8 @@ export async function withdraw(client, parameters) {
+             args: [ox_Channel.from(channel)],
+         });
+     }
+-    withdraw.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(withdraw, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `ChannelClosed` event from logs.
+      *
+diff --git a/node_modules/viem/_esm/tempo/actions/dex.js b/node_modules/viem/_esm/tempo/actions/dex.js
+index 8545ea3c00..6f9da66ef1 100644
+--- a/node_modules/viem/_esm/tempo/actions/dex.js
++++ b/node_modules/viem/_esm/tempo/actions/dex.js
+@@ -94,7 +94,8 @@ export async function buy(client, parameters) {
+             args: [tokenIn, tokenOut, amountOut, maxAmountIn],
+         });
+     }
+-    buy.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(buy, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(buy || (buy = {}));
+ /**
+  * Buys a specific amount of tokens.
+@@ -211,7 +212,8 @@ export async function cancel(client, parameters) {
+             args: [orderId],
+         });
+     }
+-    cancel.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(cancel, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `OrderCancelled` event from logs.
+      *
+@@ -352,7 +354,8 @@ export async function cancelStale(client, parameters) {
+             args: [orderId],
+         });
+     }
+-    cancelStale.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(cancelStale, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `OrderCancelled` event from logs.
+      *
+@@ -493,7 +496,8 @@ export async function createPair(client, parameters) {
+             args: [base],
+         });
+     }
+-    createPair.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(createPair, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `PairCreated` event from logs.
+      *
+@@ -602,7 +606,8 @@ export async function getBalance(client, parameters) {
+             functionName: 'balanceOf',
+         });
+     }
+-    getBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBalance || (getBalance = {}));
+ /**
+  * Gets the quote for buying a specific amount of tokens.
+@@ -652,7 +657,8 @@ export async function getBuyQuote(client, parameters) {
+             functionName: 'quoteSwapExactAmountOut',
+         });
+     }
+-    getBuyQuote.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBuyQuote, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBuyQuote || (getBuyQuote = {}));
+ /**
+  * Gets an order's details from the orderbook.
+@@ -700,7 +706,8 @@ export async function getOrder(client, parameters) {
+             functionName: 'getOrder',
+         });
+     }
+-    getOrder.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getOrder, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getOrder || (getOrder = {}));
+ /**
+  * Gets orderbook information for a trading pair.
+@@ -750,7 +757,8 @@ export async function getOrderbook(client, parameters) {
+             functionName: 'books',
+         });
+     }
+-    getOrderbook.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getOrderbook, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getOrderbook || (getOrderbook = {}));
+ /**
+  * Gets the price level information at a specific tick.
+@@ -801,7 +809,8 @@ export async function getTickLevel(client, parameters) {
+             functionName: 'getTickLevel',
+         });
+     }
+-    getTickLevel.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getTickLevel, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getTickLevel || (getTickLevel = {}));
+ /**
+  * Gets the quote for selling a specific amount of tokens.
+@@ -851,7 +860,8 @@ export async function getSellQuote(client, parameters) {
+             functionName: 'quoteSwapExactAmountIn',
+         });
+     }
+-    getSellQuote.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getSellQuote, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getSellQuote || (getSellQuote = {}));
+ /**
+  * Places a limit order on the orderbook.
+@@ -939,7 +949,8 @@ export async function place(client, parameters) {
+             args: [token, amount, isBid, tick],
+         });
+     }
+-    place.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(place, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `OrderPlaced` event from logs.
+      *
+@@ -1047,7 +1058,8 @@ export async function placeFlip(client, parameters) {
+             args: [token, amount, isBid, tick, flipTick],
+         });
+     }
+-    placeFlip.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(placeFlip, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `OrderPlaced` event (with `isFlipOrder: true`) from logs.
+      *
+@@ -1238,7 +1250,8 @@ export async function sell(client, parameters) {
+             args: [tokenIn, tokenOut, amountIn, minAmountOut],
+         });
+     }
+-    sell.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(sell, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(sell || (sell = {}));
+ /**
+  * Sells a specific amount of tokens.
+@@ -1529,7 +1542,8 @@ export async function withdraw(client, parameters) {
+             args: [token, amount],
+         });
+     }
+-    withdraw.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(withdraw, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(withdraw || (withdraw = {}));
+ /**
+  * Withdraws tokens from the DEX to the caller's wallet.
+diff --git a/node_modules/viem/_esm/tempo/actions/earn/deployment.js b/node_modules/viem/_esm/tempo/actions/earn/deployment.js
+index 054119e656..ee7d40e9fe 100644
+--- a/node_modules/viem/_esm/tempo/actions/earn/deployment.js
++++ b/node_modules/viem/_esm/tempo/actions/earn/deployment.js
+@@ -142,7 +142,8 @@ export async function createErc4626Engine(client, parameters) {
+             ],
+         });
+     }
+-    createErc4626Engine.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(createErc4626Engine, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Predicts the deterministic engine address.
+      *
+@@ -319,7 +320,8 @@ export async function createStack(client, parameters) {
+             args: [toDeployParameters(args)],
+         });
+     }
+-    createStack.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(createStack, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Predicts the deterministic EarnShare and EarnFees addresses.
+      *
+@@ -491,7 +493,8 @@ export async function bindEngine(client, parameters) {
+             args: [vault],
+         });
+     }
+-    bindEngine.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(bindEngine, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `EarnVaultInitialized` event from engine logs.
+      *
+diff --git a/node_modules/viem/_esm/tempo/actions/earn.js b/node_modules/viem/_esm/tempo/actions/earn.js
+index 6328954310..985ea0d705 100644
+--- a/node_modules/viem/_esm/tempo/actions/earn.js
++++ b/node_modules/viem/_esm/tempo/actions/earn.js
+@@ -305,7 +305,8 @@ export async function deposit(client, parameters) {
+             ],
+         });
+     }
+-    deposit.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(deposit, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Defines the asset approval and deposit calls for atomic execution. Pass
+      * `assetToken` and token decimals explicitly because this builder performs no reads.
+@@ -494,7 +495,8 @@ export async function depositShares(client, parameters) {
+             args: [venueShareAmount, recipient, earnShareAmountMin],
+         });
+     }
+-    depositShares.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(depositShares, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Defines the venue share approval and deposit calls for atomic execution.
+      * Pass the vault's current `engine` and `venueShareToken` explicitly.
+@@ -1079,7 +1081,8 @@ export async function getRedeemQuote(client, parameters) {
+             functionName: 'previewRedeem',
+         });
+     }
+-    getRedeemQuote.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getRedeemQuote, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getRedeemQuote || (getRedeemQuote = {}));
+ /**
+  * Gets the vault's addresses, configuration, accounting state, and supported
+@@ -1329,7 +1332,8 @@ export async function getWithdrawQuote(client, parameters) {
+             functionName: 'previewWithdraw',
+         });
+     }
+-    getWithdrawQuote.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getWithdrawQuote, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getWithdrawQuote || (getWithdrawQuote = {}));
+ /**
+  * Redeems Earn shares for assets sent to `recipient`. The transaction
+@@ -1405,7 +1409,8 @@ export async function redeem(client, parameters) {
+             ],
+         });
+     }
+-    redeem.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(redeem, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Defines the Earn share approval and redeem calls for atomic execution.
+      * Pass `shareToken` explicitly because this builder performs no reads.
+@@ -1810,7 +1815,8 @@ export async function withdrawExact(client, parameters) {
+             ],
+         });
+     }
+-    withdrawExact.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(withdrawExact, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Defines the Earn share approval and withdrawal calls for atomic
+      * execution. Pass `shareToken` explicitly because this builder performs no reads.
+diff --git a/node_modules/viem/_esm/tempo/actions/fee.js b/node_modules/viem/_esm/tempo/actions/fee.js
+index 9e54e1130b..ca9f249465 100644
+--- a/node_modules/viem/_esm/tempo/actions/fee.js
++++ b/node_modules/viem/_esm/tempo/actions/fee.js
+@@ -147,7 +147,8 @@ export async function getUserToken(client, ...parameters) {
+             functionName: 'userTokens',
+         });
+     }
+-    getUserToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getUserToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getUserToken || (getUserToken = {}));
+ /**
+  * Sets the user's default fee token.
+@@ -231,7 +232,8 @@ export async function setUserToken(client, parameters) {
+             args: [TokenId.toAddress(token)],
+         });
+     }
+-    setUserToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setUserToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = parseEventLogs({
+             abi: Abis.feeManager,
+@@ -375,7 +377,8 @@ export async function getValidatorToken(client, parameters) {
+             functionName: 'validatorTokens',
+         });
+     }
+-    getValidatorToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getValidatorToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getValidatorToken || (getValidatorToken = {}));
+ /**
+  * Sets the validator's preferred fee token.
+@@ -459,7 +462,8 @@ export async function setValidatorToken(client, parameters) {
+             args: [TokenId.toAddress(token)],
+         });
+     }
+-    setValidatorToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setValidatorToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = parseEventLogs({
+             abi: Abis.feeManager,
+diff --git a/node_modules/viem/_esm/tempo/actions/multisig.js b/node_modules/viem/_esm/tempo/actions/multisig.js
+index 7c712afba2..f7968ee191 100644
+--- a/node_modules/viem/_esm/tempo/actions/multisig.js
++++ b/node_modules/viem/_esm/tempo/actions/multisig.js
+@@ -80,7 +80,8 @@ export async function getConfigCommitment(client, parameters) {
+             functionName: 'getConfigCommitment',
+         });
+     }
+-    getConfigCommitment.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getConfigCommitment, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getConfigCommitment || (getConfigCommitment = {}));
+ /**
+  * Gets a coordinated multisig operation by its hash.
+@@ -237,7 +238,8 @@ export async function updateConfig(client, parameters) {
+             functionName: 'updateConfig',
+         });
+     }
+-    updateConfig.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(updateConfig, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `MultisigConfigUpdated` event from logs.
+      *
+diff --git a/node_modules/viem/_esm/tempo/actions/nonce.js b/node_modules/viem/_esm/tempo/actions/nonce.js
+index c4ee88fa35..d6c8394c61 100644
+--- a/node_modules/viem/_esm/tempo/actions/nonce.js
++++ b/node_modules/viem/_esm/tempo/actions/nonce.js
+@@ -74,7 +74,8 @@ export async function getNonce(client, parameters) {
+             functionName: 'getNonce',
+         });
+     }
+-    getNonce.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getNonce, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getNonce || (getNonce = {}));
+ export function watchNonceIncremented(client, parameters) {
+     const { onNonceIncremented, ...rest } = parameters;
+diff --git a/node_modules/viem/_esm/tempo/actions/policy.js b/node_modules/viem/_esm/tempo/actions/policy.js
+index cdad8272e1..ac1b8e16e6 100644
+--- a/node_modules/viem/_esm/tempo/actions/policy.js
++++ b/node_modules/viem/_esm/tempo/actions/policy.js
+@@ -112,7 +112,8 @@ export async function create(client, parameters) {
+             ...config,
+         });
+     }
+-    create.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(create, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `PolicyCreated` event from logs.
+      *
+@@ -257,7 +258,8 @@ export async function setAdmin(client, parameters) {
+             args: [policyId, admin],
+         });
+     }
+-    setAdmin.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setAdmin, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `PolicyAdminUpdated` event from logs.
+      *
+@@ -409,7 +411,8 @@ export async function modifyWhitelist(client, parameters) {
+             args: [policyId, address, allowed],
+         });
+     }
+-    modifyWhitelist.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(modifyWhitelist, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `WhitelistUpdated` event from logs.
+      *
+@@ -562,7 +565,8 @@ export async function modifyBlacklist(client, parameters) {
+             args: [policyId, address, restricted],
+         });
+     }
+-    modifyBlacklist.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(modifyBlacklist, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `BlacklistUpdated` event from logs.
+      *
+@@ -673,7 +677,8 @@ export async function getData(client, parameters) {
+             functionName: 'policyData',
+         });
+     }
+-    getData.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getData, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getData || (getData = {}));
+ /**
+  * Checks if a user is authorized by a policy.
+@@ -722,7 +727,8 @@ export async function isAuthorized(client, parameters) {
+             functionName: 'isAuthorized',
+         });
+     }
+-    isAuthorized.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(isAuthorized, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(isAuthorized || (isAuthorized = {}));
+ /**
+  * Watches for policy creation events.
+diff --git a/node_modules/viem/_esm/tempo/actions/receivePolicy.js b/node_modules/viem/_esm/tempo/actions/receivePolicy.js
+index e6f932fca0..33fe5e2755 100644
+--- a/node_modules/viem/_esm/tempo/actions/receivePolicy.js
++++ b/node_modules/viem/_esm/tempo/actions/receivePolicy.js
+@@ -97,7 +97,8 @@ export async function burn(client, parameters) {
+             args: [receipt],
+         });
+     }
+-    burn.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burn, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `ReceiptBurned` event from logs.
+      *
+@@ -215,7 +216,8 @@ export async function claim(client, parameters) {
+             args: [to, receipt],
+         });
+     }
+-    claim.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(claim, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `ReceiptClaimed` event from logs.
+      *
+@@ -334,7 +336,8 @@ export async function get(client, parameters) {
+             args: [account],
+         });
+     }
+-    get.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(get, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(get || (get = {}));
+ /**
+  * Gets the blocked balance for an encoded receipt.
+@@ -382,7 +385,8 @@ export async function getBlockedBalance(client, parameters) {
+             args: [receipt],
+         });
+     }
+-    getBlockedBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBlockedBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBlockedBalance || (getBlockedBalance = {}));
+ /**
+  * Sets the receive policy for the calling account.
+@@ -455,7 +459,8 @@ export async function set(client, parameters) {
+             args: [senderPolicyId, tokenFilterId, recoveryAuthority],
+         });
+     }
+-    set.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(set, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `ReceivePolicyUpdated` event from logs.
+      *
+@@ -575,7 +580,8 @@ export async function validate(client, parameters) {
+             args: [token, sender, receiver],
+         });
+     }
+-    validate.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(validate, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(validate || (validate = {}));
+ /**
+  * Watches for blocked transfer events.
+diff --git a/node_modules/viem/_esm/tempo/actions/reward.js b/node_modules/viem/_esm/tempo/actions/reward.js
+index cca6360937..2952fb40a6 100644
+--- a/node_modules/viem/_esm/tempo/actions/reward.js
++++ b/node_modules/viem/_esm/tempo/actions/reward.js
+@@ -96,7 +96,8 @@ export async function claim(client, parameters) {
+             functionName: 'claimRewards',
+         });
+     }
+-    claim.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(claim, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(claim || (claim = {}));
+ /**
+  * Claims accumulated rewards for a recipient and waits for confirmation.
+@@ -282,7 +283,8 @@ export async function distributeSync(client, parameters) {
+             functionName: 'distributeReward',
+         });
+     }
+-    distribute.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(distribute, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `RewardDistributed` event from logs.
+      *
+@@ -350,7 +352,8 @@ export async function getGlobalRewardPerToken(client, parameters) {
+             functionName: 'globalRewardPerToken',
+         });
+     }
+-    getGlobalRewardPerToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getGlobalRewardPerToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getGlobalRewardPerToken || (getGlobalRewardPerToken = {}));
+ /**
+  * Calculates the pending claimable rewards for an account without modifying state.
+@@ -400,7 +403,8 @@ export async function getPendingRewards(client, parameters) {
+             functionName: 'getPendingRewards',
+         });
+     }
+-    getPendingRewards.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getPendingRewards, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getPendingRewards || (getPendingRewards = {}));
+ /**
+  * Gets the reward information for a specific account.
+@@ -454,7 +458,8 @@ export async function getUserRewardInfo(client, parameters) {
+             functionName: 'userRewardInfo',
+         });
+     }
+-    getUserRewardInfo.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getUserRewardInfo, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getUserRewardInfo || (getUserRewardInfo = {}));
+ /**
+  * Sets or changes the reward recipient for a token holder.
+@@ -593,7 +598,8 @@ export async function setRecipientSync(client, parameters) {
+             functionName: 'setRewardRecipient',
+         });
+     }
+-    setRecipient.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setRecipient, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `RewardRecipientSet` event from logs.
+      *
+diff --git a/node_modules/viem/_esm/tempo/actions/token.js b/node_modules/viem/_esm/tempo/actions/token.js
+index dbd75ef3ca..54ecd85306 100644
+--- a/node_modules/viem/_esm/tempo/actions/token.js
++++ b/node_modules/viem/_esm/tempo/actions/token.js
+@@ -79,7 +79,8 @@ export async function approve(client, parameters) {
+             args: [spender, internal_Token.toBaseUnits(amount, decimals)],
+         });
+     }
+-    approve.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(approve, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Estimates the gas required to approve a spender. `amount.decimals` is
+      * inferred from the client's declared `tokens` when omitted.
+@@ -260,7 +261,8 @@ export async function burnBlocked(client, parameters) {
+             args: [from, internal_Token.toBaseUnits(amount, decimals)],
+         });
+     }
+-    burnBlocked.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burnBlocked, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+@@ -414,7 +416,8 @@ export async function burn(client, parameters) {
+             ...callArgs,
+         });
+     }
+-    burn.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(burn, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+@@ -555,7 +558,8 @@ export async function changeTransferPolicy(client, parameters) {
+             args: [policyId],
+         });
+     }
+-    changeTransferPolicy.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(changeTransferPolicy, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+@@ -723,7 +727,8 @@ export async function create(client, parameters) {
+             functionName: 'createToken',
+         });
+     }
+-    create.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(create, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the `TokenCreated` event from logs.
+      *
+@@ -848,7 +853,8 @@ export async function getAllowance(client, parameters) {
+             args: [args.account, args.spender],
+         });
+     }
+-    getAllowance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getAllowance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getAllowance || (getAllowance = {}));
+ /**
+  * Gets TIP20 token balance for an address.
+@@ -917,7 +923,8 @@ export async function getBalance(client, parameters) {
+             args: [account],
+         });
+     }
+-    getBalance.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getBalance, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getBalance || (getBalance = {}));
+ /**
+  * Gets TIP20 token metadata including name, symbol, logo URI, currency, decimals, and total supply.
+@@ -1148,7 +1155,8 @@ export async function getTotalSupply(client, parameters) {
+             functionName: 'totalSupply',
+         });
+     }
+-    getTotalSupply.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getTotalSupply, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getTotalSupply || (getTotalSupply = {}));
+ /**
+  * Gets the admin role for a specific role in a TIP20 token.
+@@ -1197,7 +1205,8 @@ export async function getRoleAdmin(client, parameters) {
+             args: [TokenRole.serialize(role)],
+         });
+     }
+-    getRoleAdmin.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getRoleAdmin, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getRoleAdmin || (getRoleAdmin = {}));
+ /**
+  * Checks if an account has a specific role for a TIP20 token.
+@@ -1251,7 +1260,8 @@ export async function hasRole(client, parameters) {
+             args: [account, TokenRole.serialize(role)],
+         });
+     }
+-    hasRole.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(hasRole, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(hasRole || (hasRole = {}));
+ /**
+  * Grants a role for a TIP20 token.
+@@ -1342,7 +1352,8 @@ export async function grantRoles(client, parameters) {
+             args: [roleHash, to],
+         });
+     }
+-    grantRoles.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(grantRoles, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the events from the logs.
+      *
+@@ -1499,7 +1510,8 @@ export async function mint(client, parameters) {
+             ...callArgs,
+         });
+     }
+-    mint.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(mint, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+@@ -1639,7 +1651,8 @@ export async function pause(client, parameters) {
+             args: [],
+         });
+     }
+-    pause.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(pause, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+@@ -1784,7 +1797,8 @@ export async function renounceRoles(client, parameters) {
+             args: [roleHash],
+         });
+     }
+-    renounceRoles.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(renounceRoles, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the events from the logs.
+      *
+@@ -1934,7 +1948,8 @@ export async function revokeRoles(client, parameters) {
+             args: [roleHash, from],
+         });
+     }
+-    revokeRoles.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(revokeRoles, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the events from the logs.
+      *
+@@ -2077,7 +2092,8 @@ export async function setSupplyCap(client, parameters) {
+             args: [supplyCap],
+         });
+     }
+-    setSupplyCap.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setSupplyCap, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+@@ -2222,7 +2238,8 @@ export async function setRoleAdmin(client, parameters) {
+             args: [roleHash, adminRoleHash],
+         });
+     }
+-    setRoleAdmin.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setRoleAdmin, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+@@ -2365,7 +2382,8 @@ export async function transfer(client, parameters) {
+             ...callArgs,
+         });
+     }
+-    transfer.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(transfer, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Estimates the gas required to transfer TIP20 tokens. `amount.decimals` is
+      * inferred from the client's declared `tokens` when omitted.
+@@ -2539,7 +2557,8 @@ export async function unpause(client, parameters) {
+             args: [],
+         });
+     }
+-    unpause.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(unpause, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+@@ -2679,7 +2698,8 @@ export async function prepareUpdateQuoteToken(client, parameters) {
+             args: [resolveToken(client, { token: quoteToken }).address],
+         });
+     }
+-    prepareUpdateQuoteToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(prepareUpdateQuoteToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+@@ -2814,7 +2834,8 @@ export async function updateQuoteToken(client, parameters) {
+             args: [],
+         });
+     }
+-    updateQuoteToken.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(updateQuoteToken, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     /**
+      * Extracts the event from the logs.
+      *
+diff --git a/node_modules/viem/_esm/tempo/actions/validator.js b/node_modules/viem/_esm/tempo/actions/validator.js
+index f3c0b9311c..f572e9577d 100644
+--- a/node_modules/viem/_esm/tempo/actions/validator.js
++++ b/node_modules/viem/_esm/tempo/actions/validator.js
+@@ -103,7 +103,8 @@ export async function add(client, parameters) {
+             functionName: 'addValidator',
+         });
+     }
+-    add.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(add, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(add || (add = {}));
+ /**
+  * Adds a new validator (owner only) and waits for the transaction receipt.
+@@ -221,7 +222,8 @@ export async function changeOwner(client, parameters) {
+             functionName: 'changeOwner',
+         });
+     }
+-    changeOwner.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(changeOwner, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(changeOwner || (changeOwner = {}));
+ /**
+  * Changes the owner and waits for the transaction receipt.
+@@ -337,7 +339,8 @@ export async function changeStatus(client, parameters) {
+             functionName: 'changeValidatorStatus',
+         });
+     }
+-    changeStatus.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(changeStatus, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(changeStatus || (changeStatus = {}));
+ /**
+  * Changes validator active status and waits for the transaction receipt.
+@@ -435,7 +438,8 @@ export async function getNextFullDkgCeremony(client, parameters = {}) {
+             functionName: 'getNextFullDkgCeremony',
+         });
+     }
+-    getNextFullDkgCeremony.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getNextFullDkgCeremony, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getNextFullDkgCeremony || (getNextFullDkgCeremony = {}));
+ /**
+  * Gets the contract owner.
+@@ -499,7 +503,8 @@ export async function getOwner(client, parameters = {}) {
+             functionName: 'owner',
+         });
+     }
+-    getOwner.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getOwner, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getOwner || (getOwner = {}));
+ /**
+  * Gets validator information by address.
+@@ -570,7 +575,8 @@ export async function get(client, parameters) {
+             functionName: 'validators',
+         });
+     }
+-    get.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(get, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(get || (get = {}));
+ /**
+  * Gets validator address by index.
+@@ -642,7 +648,8 @@ export async function getByIndex(client, parameters) {
+             functionName: 'validatorsArray',
+         });
+     }
+-    getByIndex.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getByIndex, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getByIndex || (getByIndex = {}));
+ /**
+  * Gets the total number of validators.
+@@ -706,7 +713,8 @@ export async function getCount(client, parameters = {}) {
+             functionName: 'validatorCount',
+         });
+     }
+-    getCount.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getCount, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getCount || (getCount = {}));
+ /**
+  * Gets the complete set of validators.
+@@ -770,7 +778,8 @@ export async function list(client, parameters = {}) {
+             functionName: 'getValidators',
+         });
+     }
+-    list.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(list, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(list || (list = {}));
+ /**
+  * Sets the next epoch for a full DKG ceremony.
+@@ -851,7 +860,8 @@ export async function setNextFullDkgCeremony(client, parameters) {
+             functionName: 'setNextFullDkgCeremony',
+         });
+     }
+-    setNextFullDkgCeremony.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(setNextFullDkgCeremony, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(setNextFullDkgCeremony || (setNextFullDkgCeremony = {}));
+ /**
+  * Sets the next epoch for a full DKG ceremony and waits for the transaction receipt.
+@@ -976,7 +986,8 @@ export async function update(client, parameters) {
+             functionName: 'updateValidator',
+         });
+     }
+-    update.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(update, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(update || (update = {}));
+ /**
+  * Updates validator information and waits for the transaction receipt.
+diff --git a/node_modules/viem/_esm/tempo/actions/virtualAddress.js b/node_modules/viem/_esm/tempo/actions/virtualAddress.js
+index ff311844da..b1d580bfca 100644
+--- a/node_modules/viem/_esm/tempo/actions/virtualAddress.js
++++ b/node_modules/viem/_esm/tempo/actions/virtualAddress.js
+@@ -56,7 +56,8 @@ export async function getMasterAddress(client, parameters) {
+             functionName: 'getMaster',
+         });
+     }
+-    getMasterAddress.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(getMasterAddress, "call", { value: call, writable: true, enumerable: true, configurable: true });
+ })(getMasterAddress || (getMasterAddress = {}));
+ /**
+  * Resolves a virtual address to its master address.
+@@ -170,7 +171,8 @@ export async function registerMaster(client, parameters) {
+             args: [salt],
+         });
+     }
+-    registerMaster.call = call;
++    // Assigning `.call` directly throws under SES lockdown, as Function.prototype.call is frozen
++    Object.defineProperty(registerMaster, "call", { value: call, writable: true, enumerable: true, configurable: true });
+     function extractEvent(logs) {
+         const [log] = parseEventLogs({
+             abi: Abis.addressRegistry,

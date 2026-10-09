@@ -1,4 +1,3 @@
-import { wordlists } from 'bip39'
 import React from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
@@ -8,8 +7,6 @@ import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
-import Text from '@common/components/Text'
-import TextArea from '@common/components/TextArea'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -22,6 +19,8 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
+import SeedPhraseInput from './SeedPhraseInput'
+
 export const CARD_WIDTH = 400
 
 const SeedPhraseImportScreen = () => {
@@ -31,8 +30,11 @@ const SeedPhraseImportScreen = () => {
     enablePassphrase,
     setEnablePassphrase,
     seedPhraseStatus,
+    seedPhraseError,
+    seedCaretPosition,
+    setSeedCaretPosition,
     handleFormSubmit,
-    validateSeedPhraseWord
+    validateSeedPhrase
   } = useSeedPhraseImport()
   const { goToPrevRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
@@ -57,75 +59,23 @@ const SeedPhraseImportScreen = () => {
                 control={control}
                 rules={{
                   required: true,
-                  validate: validateSeedPhraseWord
+                  validate: validateSeedPhrase
                 }}
                 name="seed"
-                render={({ field: { onChange, onBlur, value } }) => {
-                  const words = value.split(/(\s+)/)
-
-                  const styledOverlay = (
-                    <View style={styles.overlay}>
-                      {words.map((word, index) => {
-                        const isWhitespace = /^\s+$/.test(word)
-                        const cleanWord = word.trim().toLowerCase()
-                        const isValidWord = isWhitespace || wordlists.english?.includes(cleanWord)
-
-                        if (isWhitespace) {
-                          return (
-                            <Text key={`space-${String(index)}`} fontSize={14}>
-                              {word}
-                            </Text>
-                          )
-                        }
-
-                        return (
-                          <Text
-                            key={`${word}-${String(index)}`}
-                            fontSize={14}
-                            style={{
-                              color: isValidWord ? theme.primaryText : theme.errorText,
-                              textDecorationLine: isValidWord ? 'none' : 'underline'
-                            }}
-                          >
-                            {word}
-                          </Text>
-                        )
-                      })}
-                    </View>
-                  )
-
-                  return (
-                    <View style={styles.textAreaWrapper}>
-                      {styledOverlay}
-                      <TextArea
-                        testID="enter-seed-phrase-field"
-                        value={value}
-                        editable
-                        multiline
-                        numberOfLines={4}
-                        autoFocus
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        inputWrapperStyle={{
-                          position: 'relative',
-                          backgroundColor: 'transparent',
-                          borderColor: theme.neutral600,
-                          zIndex: 2
-                        }}
-                        placeholder={t('Write or paste your recovery phrase')}
-                        isValid={seedPhraseStatus === 'valid'}
-                        error={seedPhraseStatus === 'invalid' && t('Invalid recovery phrase.')}
-                        placeholderTextColor={theme.secondaryText}
-                        onSubmitEditing={handleFormSubmit}
-                        nativeInputStyle={{
-                          color: 'rgba(0, 0, 0, 0.01)',
-                          // @ts-ignore caretColor: theme.primaryText
-                          caretColor: theme.primaryText
-                        }}
-                      />
-                    </View>
-                  )
-                }}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <View style={styles.textAreaWrapper}>
+                    <SeedPhraseInput
+                      value={value}
+                      status={seedPhraseStatus}
+                      error={seedPhraseError}
+                      caretPosition={seedCaretPosition}
+                      onCaretPositionChange={setSeedCaretPosition}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      onSubmitEditing={handleFormSubmit}
+                    />
+                  </View>
+                )}
               />
               <FatToggle
                 testID="enable-passphrase-toggle"
@@ -164,7 +114,7 @@ const SeedPhraseImportScreen = () => {
                 text={t('Confirm')}
                 hasBottomSpacing={false}
                 onPress={handleFormSubmit}
-                disabled={!isValid || seedPhraseStatus === 'invalid'}
+                disabled={!isValid}
               />
             </View>
           </View>
