@@ -2,7 +2,11 @@ import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
-import { SAFE_DEPLOYMENT_UNAVAILABLE_MESSAGE } from '@ambire-common/consts/safe'
+import {
+  SAFE_DEPLOYMENT_PREPARATION_FAILED_MESSAGE,
+  SAFE_DEPLOYMENT_UNAVAILABLE_MESSAGE,
+  SAFE_NETWORKS
+} from '@ambire-common/consts/safe'
 import { Account } from '@ambire-common/interfaces/account'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
@@ -30,10 +34,21 @@ interface Props {
 
 type DeploymentRowState = {
   isLoading: boolean
-  hasError?: boolean
+  errorMessage?: string
 }
 
+/**
+ * Errors the RequestsController replies with when it can't prepare the activation. They are
+ * already reported by the controller and are safe to show to the user as they are.
+ */
+const SAFE_DEPLOYMENT_CONTROLLER_ERRORS = new Set([
+  SAFE_DEPLOYMENT_UNAVAILABLE_MESSAGE,
+  SAFE_DEPLOYMENT_PREPARATION_FAILED_MESSAGE
+])
+
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectAreAccountStatesLoading = (state: AllControllersMappingType['AccountsController']) =>
+  state.areAccountStatesLoading
 
 const AccountDeploySettingsBottomSheet: FC<Props> = ({
   sheetRef,
@@ -54,20 +69,39 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
     'AccountsController',
     selectAccountState
   )
+  const { state: areAccountStatesLoading } = useController(
+    'AccountsController',
+    selectAreAccountStatesLoading
+  )
   const { dispatchAndWait: requestsDispatchAndWait } = useController('RequestsController')
   const accountStateCheckedForRef = useRef<string | null>(null)
   const deploymentRowsInProgressRef = useRef(new Set<string>())
-  const isMountedRef = useRef(true)
+  // The account the sheet is open for, so replies arriving after it was closed (or unmounted)
+  // don't bring back rows of a session the user already left
+  const openForAccountAddrRef = useRef<string | null>(null)
   const [deploymentRows, setDeploymentRows] = useState<Record<string, DeploymentRowState>>({})
 
   const networkChainIds = useMemo(() => networks.map(({ chainId }) => chainId), [networks])
   const accountStateCheckKey = `${accountAddr}-${networkChainIds.join('-')}`
+  // Safe can be activated only on the networks it supports. A network it's already active
+  // on is still listed, so the user sees everywhere the account can be used
+  const listedNetworks = useMemo(
+    () =>
+      networks.filter(
+        ({ chainId }) =>
+          SAFE_NETWORKS.includes(Number(chainId)) ||
+          !!accountState?.[chainId.toString()]?.isDeployed
+      ),
+    [networks, accountState]
+  )
 
   useEffect(() => {
-    isMountedRef.current = true
+    openForAccountAddrRef.current = accountAddr ?? null
+  }, [accountAddr])
 
+  useEffect(() => {
     return () => {
-      isMountedRef.current = false
+      openForAccountAddrRef.current = null
     }
   }, [])
 
@@ -108,25 +142,33 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
           },
           30_000
         )
-        if (!isMountedRef.current) return
+        if (openForAccountAddrRef.current !== account.addr) return
         setDeploymentRows((current) => ({
           ...current,
           [rowId]: { isLoading: false }
         }))
       } catch (error) {
-        const deploymentError = new Error(
-          `Failed to prepare Safe deployment for ${account.addr} on chain ${chainId.toString()}.`,
-          { cause: error }
-        )
-        console.error(deploymentError.message, error)
-        captureException(deploymentError)
+        const controllerErrorMessage =
+          error instanceof Error && SAFE_DEPLOYMENT_CONTROLLER_ERRORS.has(error.message)
+            ? error.message
+            : null
 
-        if (!isMountedRef.current) return
+        // Anything else (e.g. no reply in time) is unexpected and not reported yet
+        if (!controllerErrorMessage) {
+          const deploymentError = new Error(
+            `Failed to prepare Safe deployment for ${account.addr} on chain ${chainId.toString()}.`,
+            { cause: error }
+          )
+          console.error(deploymentError.message, error)
+          captureException(deploymentError)
+        }
+
+        if (openForAccountAddrRef.current !== account.addr) return
         setDeploymentRows((current) => ({
           ...current,
           [rowId]: {
             isLoading: false,
-            hasError: true
+            errorMessage: controllerErrorMessage ?? SAFE_DEPLOYMENT_PREPARATION_FAILED_MESSAGE
           }
         }))
       } finally {
@@ -136,6 +178,15 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
     [account, requestsDispatchAndWait]
   )
 
+  const handleClosed = useCallback(() => {
+    // The next time the sheet opens it refreshes the account state and doesn't show
+    // the results of this session
+    openForAccountAddrRef.current = null
+    accountStateCheckedForRef.current = null
+    setDeploymentRows({})
+    onClosed?.()
+  }, [onClosed])
+
   if (account && !account.safeCreation) return null
 
   return (
@@ -143,7 +194,7 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
       id="account-deploy-settings-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      onClosed={onClosed}
+      onClosed={handleClosed}
       scrollViewProps={{ contentContainerStyle: { flexGrow: 1 } }}
       style={{ maxWidth: 840, ...spacings.pvMd }}
     >
@@ -188,16 +239,19 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
           </View>
         </View>
 
-        {networks.map((network, index) => {
+        {listedNetworks.map((network, index) => {
           const chainId = network.chainId.toString()
           const state = accountState?.[chainId]
           const rowState = account ? deploymentRows[`${account.addr}-${chainId}`] : undefined
+          // Until the state is known the user can't tell if the Safe is already active there
+          const isStateLoading = !state && areAccountStatesLoading
+          const canActivate = !state?.isDeployed && !isStateLoading
 
           return (
             <View
               key={chainId}
               style={{
-                borderBottomWidth: index !== networks.length - 1 ? 1 : 0,
+                borderBottomWidth: index !== listedNetworks.length - 1 ? 1 : 0,
                 borderBottomColor: theme.secondaryBorder
               }}
             >
@@ -211,9 +265,9 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
                   </View>
                 </View>
                 <View style={[flexbox.flex1, flexbox.alignEnd]}>
-                  {state?.isDeployed ? (
-                    <Badge type="success" text={t('Active')} />
-                  ) : (
+                  {state?.isDeployed && <Badge type="success" text={t('Active')} />}
+                  {isStateLoading && <SkeletonLoader width={78} height={32} />}
+                  {canActivate && (
                     <Button
                       type="primary"
                       size="tiny"
@@ -225,9 +279,9 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
                   )}
                 </View>
               </View>
-              {!!rowState?.hasError && !state?.isDeployed && (
+              {!!rowState?.errorMessage && !state?.isDeployed && (
                 <Text fontSize={12} appearance="errorText" style={spacings.mbTy}>
-                  {t(SAFE_DEPLOYMENT_UNAVAILABLE_MESSAGE)}
+                  {t(rowState.errorMessage)}
                 </Text>
               )}
             </View>
