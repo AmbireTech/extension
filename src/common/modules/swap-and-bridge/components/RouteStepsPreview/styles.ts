@@ -7,6 +7,11 @@ import flexbox from '@common/styles/utils/flexbox'
 // below the icons row so the label doesn't overlap the provider row underneath it.
 export const TOKEN_LABEL_RESERVED_HEIGHT = 40
 
+// How far the label anchor extends past its icon's box. Without it, the anchor is as
+// narrow as the icon and on native (no `white-space: nowrap`) the label wraps into a
+// column of short lines that overflows the reserved height above
+const LABEL_ANCHOR_OVERFLOW = 120
+
 interface Style {
   container: ViewStyle
   iconsRow: ViewStyle
@@ -30,15 +35,17 @@ const styles = StyleSheet.create<Style>({
   },
   labelAnchorLeft: {
     left: 0,
+    right: -LABEL_ANCHOR_OVERFLOW,
     ...flexbox.alignStart
   },
   labelAnchorRight: {
+    left: -LABEL_ANCHOR_OVERFLOW,
     right: 0,
     ...flexbox.alignEnd
   },
   labelAnchorCenter: {
-    left: 0,
-    right: 0,
+    left: -LABEL_ANCHOR_OVERFLOW / 2,
+    right: -LABEL_ANCHOR_OVERFLOW / 2,
     ...flexbox.alignCenter
   }
 })

@@ -19,7 +19,7 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import backgroundImage from '@common/modules/keystore/images/background.png'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInTab } from '@common/utils/links'
@@ -182,15 +182,23 @@ const MigrationOnboardingScreen = () => {
             ))}
           </View>
           {activeIndex === LAST_STEP_INDEX ? (
-            <>
-              <Button type="primary" text={t('Export backup')} onPress={handleExportBackup} />
+            // One row, each button growing from its label, so the long one still fits
+            <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
               <Button
                 type="secondary"
                 hasBottomSpacing={false}
                 text={t('I already have a backup')}
                 onPress={finishOnboarding}
+                style={{ flexGrow: 1 }}
               />
-            </>
+              <Button
+                type="primary"
+                hasBottomSpacing={false}
+                text={t('Export backup')}
+                onPress={handleExportBackup}
+                style={{ flexGrow: 1 }}
+              />
+            </View>
           ) : (
             <Button
               type="secondary"

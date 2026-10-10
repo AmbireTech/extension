@@ -51,7 +51,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 ### Security:
 
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
-- The extension uses LavaMoat with SES for the background. If you add/remove dependencies or change import patterns, regenerate the policy with `yarn build:extensions:generate-policy` and review the changes
+- The extension uses LavaMoat with SES for the background. If you add/remove dependencies or change import patterns, regenerate the policy with `yarn build:web:webkit:generate-policy` and review the changes
 
 ### Code quality:
 

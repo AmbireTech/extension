@@ -2,12 +2,15 @@ import React, { Suspense, useCallback, useMemo, useState } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
+
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
+import ClockIcon from '@common/assets/svg/ClockIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import ManifestImage from '@common/components/ManifestImage'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -105,7 +108,7 @@ const RequestCard = React.memo(function RequestCard({
   isLast: boolean
 }) {
   const { t } = useTranslation()
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { title, description, networkLabel, requestChainId } = useMemo(() => {
     return {
       title: getRequestTitle(request, t),
@@ -118,7 +121,9 @@ const RequestCard = React.memo(function RequestCard({
     ({ addr }) => addr.toLowerCase() === request.meta.accountAddr.toLowerCase()
   )
   const accountState = accountStates[account?.addr || '']?.[requestChainId || '']
-  const isOpenDisabled =
+  // a Safe can't sign or send anything on a network it isn't active on yet, so the request waits
+  // for the activation request to be confirmed before it can be opened
+  const isWaitingForSafeActivation =
     !!account?.safeCreation &&
     !accountState?.isDeployed &&
     (request.kind === 'calls' ||
@@ -126,17 +131,10 @@ const RequestCard = React.memo(function RequestCard({
       request.kind === 'message' ||
       request.kind === 'typedMessage') &&
     !request.meta.isSafeDeploy
-  const disabledOpenTooltip = t('Activate your Safe account on this network first')
-  const disabledOpenTooltipDataSet = useMemo(
-    () =>
-      isOpenDisabled
-        ? createGlobalTooltipDataSet({
-            id: `pending-request-open-${request.id}`,
-            content: disabledOpenTooltip
-          })
-        : undefined,
-    [disabledOpenTooltip, isOpenDisabled, request.id]
-  )
+  const safeNonce =
+    !!account?.safeCreation && request.kind === 'calls'
+      ? getAccountOpNonce(request.signAccountOp.accountOp)
+      : null
   const handleOpen = useCallback(() => onOpen(request.id), [onOpen, request.id])
 
   return (
@@ -150,21 +148,25 @@ const RequestCard = React.memo(function RequestCard({
             {title}
           </Text>
         </View>
-        <View dataSet={disabledOpenTooltipDataSet}>
+        {isWaitingForSafeActivation ? (
+          <View style={styles.waitingPill}>
+            <ClockIcon width={12} height={12} color={theme.warningText} />
+            <Text fontSize={12} weight="medium" color={theme.warningText} style={spacings.mlMi}>
+              {t('Waiting')}
+            </Text>
+          </View>
+        ) : (
           <HoverablePressable
             onPress={handleOpen}
-            disabled={isOpenDisabled}
-            style={[styles.openButton, isOpenDisabled && styles.openButtonDisabled]}
+            style={styles.openButton}
             accessibilityRole="button"
             accessibilityLabel={t('Open {{requestTitle}}', { requestTitle: title })}
-            accessibilityHint={isOpenDisabled ? disabledOpenTooltip : undefined}
-            accessibilityState={{ disabled: isOpenDisabled }}
           >
             <Text appearance="linkText" weight="medium">
               {t('Open')}
             </Text>
           </HoverablePressable>
-        </View>
+        )}
       </View>
       <Text appearance="secondaryText" fontSize={14} style={styles.cardDescription}>
         {description}
@@ -205,7 +207,26 @@ const RequestCard = React.memo(function RequestCard({
         >
           {networkLabel}
         </Text>
+        {safeNonce !== null && (
+          <Text fontSize={isMobile ? 12 : 14} appearance="secondaryText" style={spacings.mlSm}>
+            {t('Nonce: #{{nonce}}', { nonce: safeNonce.toString() })}
+          </Text>
+        )}
       </View>
+      {isWaitingForSafeActivation && (
+        <View style={styles.waitingNote}>
+          <InfoIcon width={16} height={16} color={theme.warningText} />
+          <Text
+            fontSize={isMobile ? 12 : 14}
+            color={theme.warningText}
+            style={[spacings.mlMi, styles.waitingNoteText]}
+          >
+            {t('Opens once your Safe account is active on {{network}}.', {
+              network: networkLabel
+            })}
+          </Text>
+        </View>
+      )}
     </View>
   )
 })
