@@ -34,12 +34,8 @@ const getFirefoxSidebarApi = (): FirefoxSidebarApi | undefined => {
   return browser?.sidebarAction
 }
 
-/**
- * Whether this view is the Firefox sidebar. Unlike Chrome's side panel, it can be open while side
- * panel mode is off (it then shows a "mode off" notice instead of the wallet), it can be dragged
- * narrower than the layout supports, and it can't report its own side or width.
- */
-export const isFirefoxSidebar = engine === 'gecko' && getUiType().isSidePanel
+/** Whether this view is the Firefox sidebar (see `isFirefoxSidebar` in getUiType). */
+export const { isFirefoxSidebar } = getUiType()
 
 /** The `chrome.storage.local` key holding the last width of the side panel, as the user sized it. */
 export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'sidePanelWidth'

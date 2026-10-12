@@ -500,7 +500,9 @@ const init = async () => {
   walletStateCtrl = new WalletStateController({
     eventEmitterRegistry,
     onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
-      await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
+      // A log level change comes from a view, which can only talk to the controllers once init()
+      // has created mainCtrl - guarded anyway, as no app can be connected before that
+      await mainCtrl?.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
     },
     storage
   })

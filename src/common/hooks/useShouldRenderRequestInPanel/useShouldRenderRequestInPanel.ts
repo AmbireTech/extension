@@ -2,9 +2,8 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { selectIsSidePanelModeEnabled } from '@common/controllers/wallet-state/selectors'
 import useController from '@common/hooks/useController'
 import { getUiType } from '@common/utils/uiType'
-import { isFirefoxSidebar } from '@web/utils/sidePanel'
 
-const { isSidePanel } = getUiType()
+const { isSidePanel, isFirefoxSidebar } = getUiType()
 
 const selectRequestWindow = (state: AllControllersMappingType['RequestsController']) =>
   state.requestWindow
