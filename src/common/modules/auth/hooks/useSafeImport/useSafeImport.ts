@@ -2,6 +2,7 @@ import { getAddress, isAddress } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
+import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
@@ -64,10 +65,7 @@ const useSafeImport = () => {
                   saltNonce: safeInfo.saltNonce,
                   version: safeInfo.version
                 },
-                preferences: {
-                  label: 'Safe',
-                  pfp: safe
-                }
+                preferences: getDefaultAccountPreferences(safe, accounts)
               }
             ]
           ]
@@ -88,7 +86,7 @@ const useSafeImport = () => {
 
       throw e
     }
-  }, [goToNextRoute, addToast, accountsDispatch, t, safe, safeInfo, reset, isLoading])
+  }, [goToNextRoute, addToast, accountsDispatch, t, safe, safeInfo, reset, isLoading, accounts])
 
   const handleFormSubmit = useCallback(() => {
     void handleSubmit(submitSafe)()
