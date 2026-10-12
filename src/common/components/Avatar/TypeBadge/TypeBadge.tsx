@@ -54,14 +54,14 @@ const TypeBadge: FC<Props> = ({
         })}
         style={{
           position: 'absolute',
-          left: size === 'big' ? -SPACING_MI / 2 : -SPACING_MI,
-          top: size === 'big' ? -SPACING_MI / 2 : -SPACING_MI,
+          left: -SPACING_MI,
+          top: -SPACING_MI,
           paddingHorizontal: 3,
           paddingVertical: 2,
           backgroundColor: theme.successDecorative,
           zIndex: 2,
           borderRadius: 50,
-          borderWidth: size === 'big' ? 3 : 2,
+          borderWidth: 2,
           borderColor: badgeRingColor
         }}
       >
@@ -91,11 +91,11 @@ const TypeBadge: FC<Props> = ({
       style={{
         position: 'absolute',
         // Placed and ringed like the smart account badge, so the two read the same size
-        left: size === 'big' ? -SPACING_MI / 2 : -SPACING_MI,
-        top: size === 'big' ? -SPACING_MI / 2 : -SPACING_MI,
+        left: -SPACING_MI,
+        top: -SPACING_MI,
         zIndex: 2,
         borderRadius: 50,
-        borderWidth: size === 'big' ? 3 : 2,
+        borderWidth: 2,
         borderColor: badgeRingColor,
         // Filled like the ring, so the avatar does not show through where the edge of the
         // icon's disc and the ring's inner edge are rounded to different pixels
