@@ -1,3 +1,4 @@
+import { getUiType } from '@common/utils/uiType'
 import { browser, engine } from '@web/constants/browserapi'
 
 type ChromeSidePanelApi = {
@@ -22,13 +23,23 @@ type FirefoxSidebarApi = {
   toggle: () => Promise<void>
 }
 
-// Firefox has no Chromium-style `sidePanel` API - the sidebar is controlled via the
-// Firefox-only `sidebarAction` API instead, which has a different shape (see webapi/panel.ts).
+/**
+ * Firefox has no Chromium-style `sidePanel` API - the sidebar is controlled via the
+ * Firefox-only `sidebarAction` API instead, which has a different shape (see webapi/panel.ts).
+ * Undefined outside Firefox.
+ */
 const getFirefoxSidebarApi = (): FirefoxSidebarApi | undefined => {
   if (engine !== 'gecko') return undefined
 
   return browser?.sidebarAction
 }
+
+/**
+ * Whether this view is the Firefox sidebar. Unlike Chrome's side panel, it can be open while side
+ * panel mode is off (it then shows a "mode off" notice instead of the wallet), it can be dragged
+ * narrower than the layout supports, and it can't report its own side or width.
+ */
+export const isFirefoxSidebar = engine === 'gecko' && getUiType().isSidePanel
 
 /** The `chrome.storage.local` key holding the last width of the side panel, as the user sized it. */
 export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'sidePanelWidth'

@@ -20,6 +20,25 @@ const { isSidePanel } = getUiType()
 const getRoutePathname = (route: string) => (route.split('?')[0] ?? route).replace(/^\//, '')
 
 /**
+ * Whether a request belongs to the panel in the given window: it comes from an app in that window,
+ * or from no app window at all (e.g. a request started in the wallet itself, or over
+ * WalletConnect). Mirrors the background, which shows a request in the panel of the app's own
+ * window, so a request opens on its own in that panel only - not in every open panel. Before the
+ * panel knows its window, only requests without an app window count.
+ */
+const getIsRequestForPanelWindow = (
+  dappTabTargets: ReturnType<typeof getDappTabTargetsFromUserRequest>,
+  panelWindowId: number | undefined
+) => {
+  const requestWindowIds = dappTabTargets
+    .map(({ windowId }) => windowId)
+    .filter((windowId): windowId is number => typeof windowId === 'number')
+  if (!requestWindowIds.length) return true
+
+  return panelWindowId !== undefined && requestWindowIds.includes(panelWindowId)
+}
+
+/**
  * In side-panel mode the action requests (sign transaction/message, dapp connect, switch
  * account, etc.) are rendered inside the always-visible panel instead of a separate
  * request window. The background skips opening the window (see RequestsController), so the
@@ -27,8 +46,9 @@ const getRoutePathname = (route: string) => (route.split('?')[0] ?? route).repla
  * screen when a request appears and back to the dashboard once it is resolved.
  *
  * Auto-navigation to an action screen only happens when a request becomes active (new id
- * or re-activated after dismiss) and when the panel is the surface that owns it (see
- * `useShouldRenderRequestInPanel`). This lets the user dismiss to the dashboard — e.g. via
+ * or re-activated after dismiss), when the panel is the surface that owns it (see
+ * `useShouldRenderRequestInPanel`) and when the request comes from the panel's own window (see
+ * `getIsRequestForPanelWindow`). This lets the user dismiss to the dashboard — e.g. via
  * "Start a batch" — without being pulled back to the sign screen while the request stays
  * queued.
  */
@@ -39,7 +59,7 @@ const useSidePanelActionRequestRouting = () => {
   const { navigate } = useNavigation()
   const { path } = useRoute()
   const { authStatus } = useAuth()
-  const { dispatch } = useContext(ControllersMiddlewareContext)
+  const { dispatch, windowId: panelWindowId } = useContext(ControllersMiddlewareContext)
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const keystoreState = useController('KeystoreController').state
   const { state: currentUserRequest } = useController(
@@ -73,8 +93,16 @@ const useSidePanelActionRequestRouting = () => {
       const currentPath = getRoutePathname(path)
       const requestJustActivated = prevRequestIdRef.current === null
       const isDifferentRequest = activeRequestId !== lastOpenedRequestIdRef.current
+      const isForThisPanel = getIsRequestForPanelWindow(
+        lastDappTabTargetsRef.current,
+        panelWindowId
+      )
 
-      if (shouldRenderRequestInPanel && (requestJustActivated || isDifferentRequest)) {
+      if (
+        shouldRenderRequestInPanel &&
+        isForThisPanel &&
+        (requestJustActivated || isDifferentRequest)
+      ) {
         lastOpenedRequestIdRef.current = activeRequestId
         lastRequestRouteRef.current = targetPath
         if (currentPath !== targetPath) navigate(targetRoute)
@@ -117,7 +145,8 @@ const useSidePanelActionRequestRouting = () => {
     path,
     shouldRenderRequestInPanel,
     transferState,
-    dispatch
+    dispatch,
+    panelWindowId
   ])
 }
 

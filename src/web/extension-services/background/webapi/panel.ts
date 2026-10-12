@@ -189,9 +189,15 @@ export const setPanelWindowId = (portId: string, windowId: number) => {
   panelWindowIdByPortId.set(portId, windowId)
 }
 
-/** Forgets the window of a side panel whose port disconnected. */
-export const forgetPanelWindowId = (portId: string) => {
+/**
+ * Forgets the window of a side panel whose port disconnected, and returns it (undefined when the
+ * panel never reported one).
+ */
+export const forgetPanelWindowId = (portId: string): number | undefined => {
+  const windowId = panelWindowIdByPortId.get(portId)
   panelWindowIdByPortId.delete(portId)
+
+  return windowId
 }
 
 /**
@@ -203,7 +209,9 @@ export const forgetPanelWindowId = (portId: string) => {
  * off, and it then shows a "turn on side panel mode" notice instead of the wallet - so it only
  * counts as open in panel mode, otherwise requests would be routed to a view that can't show them.
  * Each browser window has its own panel, so with a `windowId` only a panel in that window counts.
- * A panel that hasn't reported its window yet still counts, as it did before windows were tracked.
+ * A panel that hasn't reported its window yet (it does so right after connecting) doesn't count
+ * for a specific window - a request then opens in a request window rather than in a panel that may
+ * be in another window, where the user wouldn't see it.
  */
 const isPanelOpen = (
   pm: PortMessenger,
@@ -215,11 +223,7 @@ const isPanelOpen = (
   if (isGecko && !getIsPanelModeEnabled()) return false
   if (windowId === undefined) return true
 
-  return panelPorts.some((port) => {
-    const panelWindowId = panelWindowIdByPortId.get(port.id)
-
-    return panelWindowId === undefined || panelWindowId === windowId
-  })
+  return panelPorts.some((port) => panelWindowIdByPortId.get(port.id) === windowId)
 }
 
 export const getPanelManager = (

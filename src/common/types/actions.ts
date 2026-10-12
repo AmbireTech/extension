@@ -161,7 +161,10 @@ type OpenExtensionPopupAction = {
   }
 }
 
-// Sent once by a side panel, so app requests can be shown in the panel of the app's own window
+/**
+ * Sent once by a side panel, right after it connects, so app requests can be shown in the panel of
+ * the app's own window (until then the panel doesn't count as open for any specific window).
+ */
 type SetSidePanelWindowIdAction = {
   type: 'SET_SIDE_PANEL_WINDOW_ID'
   params: { windowId: number }

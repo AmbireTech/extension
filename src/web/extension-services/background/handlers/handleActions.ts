@@ -269,16 +269,19 @@ export const handleActions = async (
 
       const getOverlayPort = () => pm!.ports.find((p) => p.name === overlayPortName)
 
-      // Shows the dashboard in the views that are already open (e.g. the tab the action came from)
-      // when neither the popup nor the side panel can be opened
-      const navigateViewsToDashboard = () => {
-        pm!.send('> ui', { method: 'navigate', params: { route: '/', options: {} } })
+      // Shows the dashboard in the view the action came from (e.g. the onboarding tab) when neither
+      // the popup nor the side panel can be opened. Only that view - another one may be in the
+      // middle of a request (e.g. a request window on a sign screen) and must not be moved.
+      const navigateSenderToDashboard = () => {
+        if (!port) return
+
+        pm!.sendToPort(port, '> ui', { method: 'navigate', params: { route: '/', options: {} } })
       }
 
       // The UI didn't open the Firefox sidebar, but panel mode is on, so the action has no popup to
       // open. Waiting for one would leave the user on a button that does nothing.
       if (engine === 'gecko' && !hasOpenedFirefoxSidebar && isStoredSidePanelModeEnabled) {
-        navigateViewsToDashboard()
+        navigateSenderToDashboard()
         return
       }
 
@@ -327,14 +330,14 @@ export const handleActions = async (
         await focusOverlay()
         await waitForOverlayOpen()
         // Opening can "succeed" without anything showing up - don't leave the user waiting then
-        if (!getOverlayPort()) navigateViewsToDashboard()
+        if (!getOverlayPort()) navigateSenderToDashboard()
       } catch {
         try {
           await focusOverlay()
           await waitForOverlayOpen()
-          if (!getOverlayPort()) navigateViewsToDashboard()
+          if (!getOverlayPort()) navigateSenderToDashboard()
         } catch {
-          navigateViewsToDashboard()
+          navigateSenderToDashboard()
         }
       }
       await sessionStorage.set('isOpenExtensionPopupLoading', false)

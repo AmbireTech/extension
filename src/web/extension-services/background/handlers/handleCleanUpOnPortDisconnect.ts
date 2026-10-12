@@ -1,5 +1,6 @@
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ONBOARDING_WEB_ROUTES } from '@common/modules/router/constants/common'
+import { engine } from '@web/constants/browserapi'
 import { IS_FIREFOX } from '@web/constants/common'
 import { forgetPanelWindowId } from '@web/extension-services/background/webapi/panel'
 import { Port } from '@web/extension-services/messengers'
@@ -14,17 +15,20 @@ export const handleCleanUpOnPortDisconnect = async ({
   isSidePanelModeEnabled: boolean
 }) => {
   if (port.name === 'side-panel') {
-    forgetPanelWindowId(port.id)
+    const closedPanelWindowId = forgetPanelWindowId(port.id)
 
     // The panel renders action requests inline, so closing it discards their UI. Handle the
     // pending requests like a request window close: transactions stay queued, the rest get
     // rejected. Skipped while another panel or a request window still shows the request.
     // On Firefox the sidebar can be open while panel mode is off, showing the "mode off" notice
     // instead of the wallet - it never showed the requests, so closing it discards nothing.
-    const wasShowingRequests = !IS_FIREFOX || isSidePanelModeEnabled
+    // (Turning the mode off moves a request shown in the sidebar to a request window first.)
+    const wasShowingRequests = engine !== 'gecko' || isSidePanelModeEnabled
     // The closed panel's port is already gone, so this only counts the panels still open - with
-    // the same checks that decide where requests are shown
-    const isAnotherPanelOpen = !!mainCtrl.ui.panel?.isOpen()
+    // the same checks that decide where requests are shown. Only a panel in the closed panel's
+    // window counts: requests are shown in the panel of the app's own window, so a panel in another
+    // window isn't where the user was looking at them.
+    const isAnotherPanelOpen = !!mainCtrl.ui.panel?.isOpen(closedPanelWindowId)
     const isRequestInOwnWindow = !!mainCtrl.requests.requestWindow.windowProps
 
     // Not counted against the apps that were waiting - a port also drops on an extension

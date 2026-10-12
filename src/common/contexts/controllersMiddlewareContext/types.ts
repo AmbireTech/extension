@@ -11,6 +11,11 @@ export type ControllersMiddlewareContextReturnType = {
    * It will only work when called from a focused window!
    */
   dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
+  /**
+   * The browser window this view is in (extension only). Undefined until it's known, and in
+   * environments without browser windows.
+   */
+  windowId?: number
 }
 
 export const controllersMiddlewareContextDefaults: ControllersMiddlewareContextReturnType = {

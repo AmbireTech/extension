@@ -2,24 +2,35 @@ import { useEffect } from 'react'
 
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import { getUiType } from '@common/utils/uiType'
-import { browser, engine } from '@web/constants/browserapi'
+import { browser } from '@web/constants/browserapi'
 import { SIDE_PANEL_MIN_WIDTH } from '@web/constants/spacings'
 import {
   FIREFOX_SIDEBAR_IS_ON_LEFT_STORAGE_KEY,
+  isFirefoxSidebar,
   SIDE_PANEL_WIDTH_STORAGE_KEY
 } from '@web/utils/sidePanel'
 
 const { isSidePanel } = getUiType()
 
-const isFirefoxSidebar = isSidePanel && engine === 'gecko'
-
 const SAVE_DEBOUNCE_MS = 300
 
-// Moving the Firefox sidebar to the other side fires no event, so its position is checked instead
+// Moving the Firefox sidebar to the other side fires no event, and the side can't be measured later
+// (the sidebar is closed when a request window opens), so its position is checked while it's open.
+// The check only reads two numbers and saves nothing unless the sidebar moved within the window.
 const FIREFOX_SIDEBAR_POSITION_CHECK_MS = 1000
 
 /** Where the page's content starts on screen. Firefox-only, so undefined elsewhere. */
 const getPageScreenX = () => (window as Window & { mozInnerScreenX?: number }).mozInnerScreenX
+
+/**
+ * How far the page's content starts from the browser window's left edge. Unlike the position on
+ * screen, it doesn't change when the whole browser window is moved - only when the sidebar is.
+ */
+const getPageOffsetInBrowserWindow = () => {
+  const pageScreenX = getPageScreenX()
+
+  return typeof pageScreenX === 'number' ? pageScreenX - window.screenX : undefined
+}
 
 /**
  * Whether the Firefox sidebar is on the left of the browser window, measured from where its page
@@ -45,7 +56,7 @@ const saveSidePanelLayout = async () => {
     const isFirefoxSidebarOnLeft = await getIsFirefoxSidebarOnLeft()
     // A Firefox sidebar can be dragged narrower than the layout supports - such a width isn't saved,
     // so the request window keeps opening at the last width it renders correctly at
-    const isWidthSupported = window.innerWidth >= SIDE_PANEL_MIN_WIDTH
+    const isWidthSupported = !isFirefoxSidebar || window.innerWidth >= SIDE_PANEL_MIN_WIDTH
 
     await browser.storage.local.set({
       ...(isWidthSupported && { [SIDE_PANEL_WIDTH_STORAGE_KEY]: window.innerWidth }),
@@ -80,13 +91,13 @@ const usePersistSidePanelWidth = () => {
 
     window.addEventListener('resize', scheduleSave)
 
-    let lastPageScreenX = getPageScreenX()
+    let lastPageOffset = getPageOffsetInBrowserWindow()
     const positionCheckIntervalId = isFirefoxSidebar
       ? setInterval(() => {
-          const pageScreenX = getPageScreenX()
-          if (pageScreenX === lastPageScreenX) return
+          const pageOffset = getPageOffsetInBrowserWindow()
+          if (pageOffset === lastPageOffset) return
 
-          lastPageScreenX = pageScreenX
+          lastPageOffset = pageOffset
           scheduleSave()
         }, FIREFOX_SIDEBAR_POSITION_CHECK_MS)
       : undefined

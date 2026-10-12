@@ -74,32 +74,42 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
   }
 
   async #init(): Promise<void> {
-    this.#isSetupComplete = await this.#storage.get('isSetupComplete', false)
-    this.themeType = (await this.#storage.get('themeType', DEFAULT_THEME)) as ThemeType
-    this.avatarType = (await this.#storage.get('avatarType', this.avatarType)) as AvatarType
-    this.isPrivacyModeEnabled = await this.#storage.get(
-      'isPrivacyModeEnabled',
-      this.isPrivacyModeEnabled
-    )
-    this.isSidePanelModeEnabled = await this.#storage.get(
-      'isSidePanelModeEnabled',
-      this.isSidePanelModeEnabled
-    )
-    await applyPanelMode(this.isSidePanelModeEnabled)
+    try {
+      this.#isSetupComplete = await this.#storage.get('isSetupComplete', false)
+      this.themeType = (await this.#storage.get('themeType', DEFAULT_THEME)) as ThemeType
+      this.avatarType = (await this.#storage.get('avatarType', this.avatarType)) as AvatarType
+      this.isPrivacyModeEnabled = await this.#storage.get(
+        'isPrivacyModeEnabled',
+        this.isPrivacyModeEnabled
+      )
+      this.isSidePanelModeEnabled = await this.#storage.get(
+        'isSidePanelModeEnabled',
+        this.isSidePanelModeEnabled
+      )
+      await applyPanelMode(this.isSidePanelModeEnabled)
 
-    this.isPinned = await this.#checkIsPinned()
-    if (!this.isPinned) this.#initContinuousCheckIsPinned()
+      this.isPinned = await this.#checkIsPinned()
+      if (!this.isPinned) this.#initContinuousCheckIsPinned()
 
-    this.logLevel = (await this.#storage.get('logLevel', this.logLevel)) as LOG_LEVELS
-    if (this.logLevel !== DEFAULT_LOG_LEVEL) setLoggerInstanceLogLevel(this.logLevel)
+      this.logLevel = (await this.#storage.get('logLevel', this.logLevel)) as LOG_LEVELS
+      if (this.logLevel !== DEFAULT_LOG_LEVEL) setLoggerInstanceLogLevel(this.logLevel)
 
-    this.crashAnalyticsEnabled = await this.#storage.get(
-      CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
-      this.crashAnalyticsEnabled
-    )
-
-    this.isReady = true
-    this.emitUpdate()
+      this.crashAnalyticsEnabled = await this.#storage.get(
+        CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
+        this.crashAnalyticsEnabled
+      )
+    } catch (error) {
+      // The settings that didn't load keep their defaults. The controller is still marked ready
+      // below, as views wait for that (e.g. the Firefox sidebar shows the splash until then).
+      this.emitError({
+        message: "Some of your settings couldn't be loaded, so their defaults are used for now.",
+        level: 'major',
+        error: error as Error
+      })
+    } finally {
+      this.isReady = true
+      this.emitUpdate()
+    }
   }
 
   async #checkIsPinned() {
