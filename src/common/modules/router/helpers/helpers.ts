@@ -1,4 +1,5 @@
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
+import { IPrivacyPoolsController } from '@ambire-common/interfaces/privacyPools'
 import { IRequestsController } from '@ambire-common/interfaces/requests'
 import { ISurveyController } from '@ambire-common/interfaces/survey'
 import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
@@ -69,6 +70,7 @@ const getInitialRoute = ({
   requestsState,
   swapAndBridgeState,
   transferState,
+  privacyPoolsState,
   surveyState,
   isRequestWindow,
   isSidePanel
@@ -78,6 +80,7 @@ const getInitialRoute = ({
   requestsState: IRequestsController
   swapAndBridgeState: ISwapAndBridgeController
   transferState: ITransferController
+  privacyPoolsState?: IPrivacyPoolsController
   surveyState?: ISurveyController
   isRequestWindow: boolean
   isSidePanel?: boolean
@@ -112,6 +115,8 @@ const getInitialRoute = ({
       }
       return ROUTES.transfer
     }
+    // Cleared on switching accounts, so it is always the selected Privacy Pools account's
+    if (privacyPoolsState?.hasPersistedSendForm) return ROUTES.privacyPoolsSend
     if (surveyState && surveyState.hasPersistentState) return ROUTES.survey
     return ROUTES.dashboard
   }
@@ -130,6 +135,7 @@ const resolveViewRoute = async (mainCtrl: MainController, view: View): Promise<s
     requestsState: mainCtrl.requests,
     swapAndBridgeState: mainCtrl.swapAndBridge,
     transferState: mainCtrl.transfer,
+    privacyPoolsState: mainCtrl.privacyPools,
     surveyState: mainCtrl.survey
   }
 

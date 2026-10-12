@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
+import { PrivacyPoolsSendForm } from '@ambire-common/interfaces/privacyPools'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import Alert from '@common/components/Alert'
@@ -17,7 +18,9 @@ import SendToken from '@common/components/SendToken'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
+import useSyncedState from '@common/hooks/useSyncedState'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -27,8 +30,9 @@ import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
 import { AmountFieldMode, getAmountsFromFieldValue } from '@web/modules/privacy-pools/utils/amount'
 
-const DEFAULT_ADDRESS_STATE: AddressState = {
-  fieldValue: '',
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const NO_ADDRESS_RESOLUTION: Omit<AddressState, 'fieldValue'> = {
   resolvedAddress: '',
   resolvedAddressType: null,
   isDomainResolving: false
@@ -36,10 +40,18 @@ const DEFAULT_ADDRESS_STATE: AddressState = {
 
 const NO_AMOUNTS = { amount: '', amountInFiat: '' }
 
+const selectSendForm = (state: AllControllersMappingType['PrivacyPoolsController']) =>
+  state.sendForm
+const selectSendFormResetCounter = (state: AllControllersMappingType['PrivacyPoolsController']) =>
+  state.sendFormResetCounter
+
 /**
  * Send (a withdrawal, in protocol terms) from a Privacy Pools account, laid out like the regular
  * Send. Only approved funds can be sent. Proceed proves and prices the transfer (10s and up), then
  * `PrivacyPoolsSendSheet` shows the fee, which is known only once the transfer is built.
+ *
+ * What the user enters is kept in the Privacy Pools controller, so a closed popup reopens on it -
+ * see `PrivacyPoolsController.sendForm`.
  */
 const PrivacyPoolsSendScreen = () => {
   const { t } = useTranslation()
@@ -56,21 +68,55 @@ const PrivacyPoolsSendScreen = () => {
   } = usePrivacyPools()
   const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
-
-  const [addressState, setAddressState] = useState<AddressState>(DEFAULT_ADDRESS_STATE)
-  const [selectedTokenValue, setSelectedTokenValue] = useState('')
-  // Both token and USD amounts are kept, so switching the field mode does not clear the input
-  const [amounts, setAmounts] = useState(NO_AMOUNTS)
-  const [amountFieldMode, setAmountFieldMode] = useState<AmountFieldMode>('token')
-
-  const updateAddressState = useCallback((update: AddressStateOptional) => {
-    setAddressState((previous) => ({ ...previous, ...update }))
-  }, [])
-  const setAddressFieldValue = useCallback(
-    (fieldValue: string) => updateAddressState({ fieldValue }),
-    [updateAddressState]
+  const { state: sendForm, dispatch: privacyPoolsDispatch } = useController(
+    'PrivacyPoolsController',
+    selectSendForm
   )
-  const addressInputState = useAddressInput({ addressState, setAddressState: updateAddressState })
+  const { state: sendFormResetCounter } = useController(
+    'PrivacyPoolsController',
+    selectSendFormResetCounter
+  )
+  const { tokenId: selectedTokenValue, amountFieldMode } = sendForm
+
+  const updateSendForm = useCallback(
+    (update: Partial<PrivacyPoolsSendForm>) => {
+      privacyPoolsDispatch({ type: 'method', params: { method: 'updateSendForm', args: [update] } })
+    },
+    [privacyPoolsDispatch]
+  )
+
+  // Typed fields are kept here too, so typing does not wait for the controller
+  const [recipientFieldValue, setRecipientFieldValue] = useSyncedState<string>({
+    backgroundState: sendForm.recipientFieldValue,
+    updateBackgroundState: (fieldValue) => updateSendForm({ recipientFieldValue: fieldValue }),
+    forceUpdateOnChangeList: [sendFormResetCounter]
+  })
+  // Both token and USD amounts are kept, so switching the field mode does not clear the input
+  const controllerAmounts = useMemo(
+    () => ({ amount: sendForm.amount, amountInFiat: sendForm.amountInFiat }),
+    [sendForm.amount, sendForm.amountInFiat]
+  )
+  const [amounts, setAmounts] = useSyncedState<typeof NO_AMOUNTS>({
+    backgroundState: controllerAmounts,
+    updateBackgroundState: updateSendForm,
+    forceUpdateOnChangeList: [sendFormResetCounter]
+  })
+
+  // Not kept: a domain name in the field is resolved again when the screen opens
+  const [addressResolution, setAddressResolution] = useState<AddressStateOptional>({})
+  // The field value is owned by the synced state above; the input only reports it back along
+  // with what it resolved to
+  const addressState: AddressState = useMemo(
+    () => ({ ...NO_ADDRESS_RESOLUTION, ...addressResolution, fieldValue: recipientFieldValue }),
+    [addressResolution, recipientFieldValue]
+  )
+  const updateAddressResolution = useCallback((update: AddressStateOptional) => {
+    setAddressResolution((previous) => ({ ...previous, ...update }))
+  }, [])
+  const addressInputState = useAddressInput({
+    addressState,
+    setAddressState: updateAddressResolution
+  })
   const recipient = getAddressFromAddressState(addressState)
 
   // Falls back to the first token if none is picked or the picked one runs out
@@ -80,10 +126,13 @@ const PrivacyPoolsSendScreen = () => {
     [withdrawTokens, selectedTokenValue]
   )
 
-  const handleChangeToken = useCallback((option: SelectValue) => {
-    setSelectedTokenValue(String(option.value))
-    setAmounts(NO_AMOUNTS)
-  }, [])
+  const handleChangeToken = useCallback(
+    (option: SelectValue) => {
+      updateSendForm({ tokenId: String(option.value) })
+      setAmounts(NO_AMOUNTS)
+    },
+    [setAmounts, updateSendForm]
+  )
 
   const tokenPrice = useMemo(
     () => (selectedToken ? getTokenPrice(selectedToken.chainId, selectedToken.tokenAddress) : null),
@@ -102,11 +151,11 @@ const PrivacyPoolsSendScreen = () => {
           decimals: selectedToken?.decimals ?? 18
         })
       ),
-    [fieldMode, selectedToken?.decimals, tokenPrice]
+    [fieldMode, selectedToken?.decimals, setAmounts, tokenPrice]
   )
   const switchAmountFieldMode = useCallback(
-    () => setAmountFieldMode((mode) => (mode === 'token' ? 'fiat' : 'token')),
-    []
+    () => updateSendForm({ amountFieldMode: amountFieldMode === 'token' ? 'fiat' : 'token' }),
+    [amountFieldMode, updateSendForm]
   )
 
   const maxAmount = useMemo(
@@ -124,7 +173,7 @@ const PrivacyPoolsSendScreen = () => {
           decimals: selectedToken?.decimals ?? 18
         })
       ),
-    [maxAmount, selectedToken?.decimals, tokenPrice]
+    [maxAmount, selectedToken?.decimals, setAmounts, tokenPrice]
   )
 
   const { amount } = amounts
@@ -196,13 +245,12 @@ const PrivacyPoolsSendScreen = () => {
     openSheet()
   }, [operationStatus, operationPhase, openSheet])
 
+  // A sent transfer's form is already cleared by the controller
   const handleSheetClosed = useCallback(() => {
     const wasSent = operation?.status === 'success'
     dismissOperation()
     if (!wasSent) return
 
-    setAddressState(DEFAULT_ADDRESS_STATE)
-    setAmounts(NO_AMOUNTS)
     navigate(ROUTES.dashboard)
   }, [dismissOperation, navigate, operation?.status])
 
@@ -254,8 +302,8 @@ const PrivacyPoolsSendScreen = () => {
           </View>
 
           <Recipient
-            address={addressState.fieldValue}
-            setAddress={setAddressFieldValue}
+            address={recipientFieldValue}
+            setAddress={setRecipientFieldValue}
             validation={addressInputState.validation}
             resolvedAddress={addressState.resolvedAddress}
             resolvedAddressType={addressState.resolvedAddressType}
