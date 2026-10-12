@@ -20,10 +20,10 @@ export const handleCleanUpOnPortDisconnect = async ({
     // The panel renders action requests inline, so closing it discards their UI. Handle the
     // pending requests like a request window close: transactions stay queued, the rest get
     // rejected. Skipped while another panel or a request window still shows the request.
-    // Nothing is discarded while panel mode is off: turning it off moves a request shown in the
-    // panel to a request window instead (see background.ts) - and on Firefox the sidebar can be
-    // open while the mode is off, showing the "mode off" notice, which never showed the requests.
-    const wasShowingRequests = isSidePanelModeEnabled
+    // Nothing is discarded while panel mode is off: turning it off moves a pending app request to a
+    // request window instead and leaves transactions queued (see background.ts) - and on Firefox
+    // the sidebar can be open while the mode is off, showing the "mode off" notice, which never
+    // showed the requests.
     // The closed panel's port is already gone, so this only counts the panels still open - with
     // the same checks that decide where requests are shown: the panel of the request's app window,
     // or any panel for a request without one (e.g. WalletConnect, or started in the wallet).
@@ -35,7 +35,7 @@ export const handleCleanUpOnPortDisconnect = async ({
 
     // Not counted against the apps that were waiting - a port also drops on an extension
     // reload or a service worker restart, which is not the user refusing anything.
-    if (wasShowingRequests && !isAnotherPanelOpen && !isRequestInOwnWindow)
+    if (isSidePanelModeEnabled && !isAnotherPanelOpen && !isRequestInOwnWindow)
       await mainCtrl.requests.closeRequestWindow({ isUserInitiated: false })
   }
 

@@ -7,6 +7,9 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import SidePanelEmptyState from '@web/components/SidePanelEmptyState'
 
+// Only dispatches to the controller, so no state is read and its updates don't re-render this
+const selectNoState = () => null
+
 /**
  * Shown instead of the wallet when the Firefox sidebar is opened (e.g. from Firefox's sidebar
  * switcher, which always lists the extension) while side panel mode is off.
@@ -14,7 +17,7 @@ import SidePanelEmptyState from '@web/components/SidePanelEmptyState'
 const SidePanelModeDisabledScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch: walletStateDispatch } = useController('WalletStateController')
+  const { dispatch: walletStateDispatch } = useController('WalletStateController', selectNoState)
 
   const enableSidePanelMode = useCallback(() => {
     walletStateDispatch({

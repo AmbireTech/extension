@@ -12,8 +12,8 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import { getUiType } from '@common/utils/uiType'
 import {
-  getAppWindowIdsFromUserRequest,
-  getDappTabTargetsFromUserRequest
+  getDappTabTargetsFromUserRequest,
+  getIsUserRequestForPanelWindow
 } from '@web/utils/dispatchDappTabFocus'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -21,21 +21,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const { isSidePanel } = getUiType()
 
 const getRoutePathname = (route: string) => (route.split('?')[0] ?? route).replace(/^\//, '')
-
-/**
- * Whether a request belongs to the panel in the given window: it comes from an app in that window,
- * or from no app window at all. Mirrors the background, which shows a request in the panel of the
- * app's own window, so a request opens on its own in that panel only - not in every open panel.
- * Before the panel knows its window, only requests without an app window count.
- */
-const getIsRequestForPanelWindow = (
-  requestWindowIds: number[],
-  panelWindowId: number | undefined
-) => {
-  if (!requestWindowIds.length) return true
-
-  return panelWindowId !== undefined && requestWindowIds.includes(panelWindowId)
-}
 
 /**
  * In side-panel mode the action requests (sign transaction/message, dapp connect, switch
@@ -47,7 +32,7 @@ const getIsRequestForPanelWindow = (
  * Auto-navigation to an action screen only happens when a request becomes active (new id
  * or re-activated after dismiss), when the panel is the surface that owns it (see
  * `useShouldRenderRequestInPanel`) and when the request comes from the panel's own window (see
- * `getIsRequestForPanelWindow`). This lets the user dismiss to the dashboard — e.g. via
+ * `getIsUserRequestForPanelWindow`). This lets the user dismiss to the dashboard — e.g. via
  * "Start a batch" — without being pulled back to the sign screen while the request stays
  * queued.
  */
@@ -92,10 +77,7 @@ const useSidePanelActionRequestRouting = () => {
       const currentPath = getRoutePathname(path)
       const requestJustActivated = prevRequestIdRef.current === null
       const isDifferentRequest = activeRequestId !== lastOpenedRequestIdRef.current
-      const isForThisPanel = getIsRequestForPanelWindow(
-        getAppWindowIdsFromUserRequest(currentUserRequest),
-        panelWindowId
-      )
+      const isForThisPanel = getIsUserRequestForPanelWindow(currentUserRequest, panelWindowId)
 
       if (
         shouldRenderRequestInPanel &&

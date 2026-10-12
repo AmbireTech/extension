@@ -282,13 +282,8 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   while (!mainCtrl || !walletStateCtrl) await wait(200)
   // ...and for the stored settings, as the side panel mode decides whether a request is shown in an
   // open side panel - until it loads it reads as off (e.g. right after a browser restart)
-  try {
-    await walletStateCtrl.initialLoadPromise
-  } catch (error) {
-    // The defaults still let the request be handled, in a request window
-    console.error('Failed to load the wallet settings before handling a dapp request', error)
-    captureBackgroundException(error)
-  }
+  // (Never rejects - settings that fail to load keep their defaults)
+  await walletStateCtrl.initialLoadPromise
 
   const senderTab = meta.sender?.tab
   const tabId = senderTab?.id
@@ -488,7 +483,8 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
+            // mainCtrl may not exist yet - WalletStateController is created and loads before it
+            params: { errors: ctrl.emittedErrors, controller: mainCtrl?.name }
           })
           captureBackgroundExceptionFromControllerError(error, ctrl.name)
         }, 'background')
@@ -639,8 +635,8 @@ const init = async () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
 
-  // When side panel mode is turned off, a request shown in the panel is moved to a request window,
-  // so it isn't lost or left waiting with nothing showing it: Chrome closes its side panel then (see
+  // When side panel mode is turned off, a pending app request is moved to a request window, so it
+  // isn't lost or left waiting with nothing showing it: Chrome closes its side panel then (see
   // applyPanelMode), and the Firefox sidebar switches to the "mode off" notice, which can't show
   // requests. The panel's disconnect cleanup doesn't reject requests while the mode is off.
   let wasSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
@@ -650,7 +646,14 @@ const init = async () => {
     wasSidePanelModeEnabled = isSidePanelModeEnabled
 
     if (!hasSidePanelModeBeenTurnedOff) return
-    if (!mainCtrl.requests.currentUserRequest || mainCtrl.requests.requestWindow.windowProps) return
+
+    // Only a request an app is waiting on, that closing the panel would otherwise reject.
+    // Transactions stay queued, as when the panel is closed (e.g. one set aside with "Start a
+    // batch"), and are opened from the dashboard - moving them would pop up a request the user may
+    // have set aside long ago. Requests started in the wallet itself have no app waiting.
+    const request = mainCtrl.requests.currentUserRequest
+    if (!request || request.kind === 'calls' || !request.dappPromises?.length) return
+    if (mainCtrl.requests.requestWindow.windowProps) return
 
     mainCtrl.requests.openRequestWindow().catch((error: unknown) => {
       console.error('Failed to move a request out of the side panel', error)

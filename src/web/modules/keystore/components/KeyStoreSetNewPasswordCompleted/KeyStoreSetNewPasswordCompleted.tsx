@@ -10,19 +10,22 @@ import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { engine } from '@web/constants/browserapi'
 import useOpenWalletFromClick from '@web/hooks/useOpenWalletFromClick'
 import PasswordResetCompletedAnimation from '@web/modules/keystore/components/KeyStoreSetNewPasswordCompleted/password-reset-completed-animation.json'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const CARD_WIDTH = 400
+
+const selectIsPinned = (state: AllControllersMappingType['WalletStateController']) => state.isPinned
 
 const KeyStoreSetNewPasswordCompleted = () => {
   const { t } = useTranslation()
-  const openWalletFromClick = useOpenWalletFromClick()
-  const {
-    state: { isPinned, isSidePanelModeEnabled },
-    dispatch: walletStateDispatch
-  } = useController('WalletStateController')
+  const { openWalletFromClick, canOpenWalletFromClick } = useOpenWalletFromClick()
+  const { state: isPinned, dispatch: walletStateDispatch } = useController(
+    'WalletStateController',
+    selectIsPinned
+  )
 
   useEffect(() => {
     walletStateDispatch({
@@ -70,7 +73,7 @@ const KeyStoreSetNewPasswordCompleted = () => {
       )}
       {/* Firefox can't open the popup from here, but it can open the sidebar from this click (see
       useOpenWalletFromClick) */}
-      {(engine !== 'gecko' || isSidePanelModeEnabled) && (
+      {canOpenWalletFromClick && (
         <View style={[flexbox.flex1, flexbox.justifyEnd]}>
           <Button
             testID="onboarding-completed-open-dashboard-btn"

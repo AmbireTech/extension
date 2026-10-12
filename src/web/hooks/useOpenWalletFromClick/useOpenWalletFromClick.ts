@@ -6,7 +6,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import { engine } from '@web/constants/browserapi'
-import { openFirefoxSidebarFromUserGesture } from '@web/utils/sidePanel'
+import { getFirefoxSidebarApi, openFirefoxSidebarFromUserGesture } from '@web/utils/sidePanel'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -15,10 +15,12 @@ const selectIsSidePanelModeEnabled = (state: AllControllersMappingType['WalletSt
 
 /**
  * Opens the wallet - the popup or the side panel, whichever the toolbar action opens.
- * The returned function must be called directly in a click handler, before any await: Firefox
+ * `openWalletFromClick` must be called directly in a click handler, before any await: Firefox
  * only opens its sidebar during a user gesture, which doesn't survive the message to the
  * background, so the sidebar is opened here and the background is told it was (see
  * OPEN_EXTENSION_POPUP in handleActions.ts). Elsewhere the background opens the wallet itself.
+ * `canOpenWalletFromClick` is false where that can't work: Firefox can't open the popup from a
+ * page, so there only the sidebar (side panel mode) can be opened.
  */
 const useOpenWalletFromClick = () => {
   const { dispatch } = useControllersMiddleware()
@@ -28,8 +30,12 @@ const useOpenWalletFromClick = () => {
     selectIsSidePanelModeEnabled
   )
 
-  return useCallback(() => {
-    if (engine !== 'gecko' || !isSidePanelModeEnabled) {
+  const canOpenWalletFromClick =
+    engine !== 'gecko' || (isSidePanelModeEnabled && !!getFirefoxSidebarApi())
+
+  const openWalletFromClick = useCallback(() => {
+    // Without the sidebar API the background is left to show the dashboard in this view instead
+    if (engine !== 'gecko' || !isSidePanelModeEnabled || !getFirefoxSidebarApi()) {
       dispatch({ type: 'OPEN_EXTENSION_POPUP' })
       return
     }
@@ -44,6 +50,8 @@ const useOpenWalletFromClick = () => {
         navigate(WEB_ROUTES.dashboard)
       })
   }, [dispatch, isSidePanelModeEnabled, navigate])
+
+  return { openWalletFromClick, canOpenWalletFromClick }
 }
 
 export default useOpenWalletFromClick

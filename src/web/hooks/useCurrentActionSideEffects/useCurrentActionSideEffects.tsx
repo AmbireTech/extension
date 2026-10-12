@@ -1,5 +1,6 @@
 import { useContext, useEffect } from 'react'
 
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
@@ -7,6 +8,7 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { getUiType } from '@common/utils/uiType'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
+import { getIsUserRequestForPanelWindow } from '@web/utils/dispatchDappTabFocus'
 
 const { isRequestWindow } = getUiType()
 
@@ -19,6 +21,7 @@ const useCurrentActionSideEffects = () => {
   } = useController('RequestsController')
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
+  const { windowId: panelWindowId } = useContext(ControllersMiddlewareContext)
 
   useEffect(() => {
     if (!areAllControllerStatesLoaded) return
@@ -31,8 +34,12 @@ const useCurrentActionSideEffects = () => {
 
     // The view that renders requests resolves the unlock request once the wallet is unlocked - the
     // request window, or the side panel when it is open, as then no request window is opened.
-    // Otherwise the request stays pending, with no screen to open it on.
-    const isRequestSurface = isRequestWindow || shouldRenderRequestInPanel
+    // Otherwise the request stays pending, with no screen to open it on. With panels open in
+    // several windows, only the one of the app's window does it.
+    const isRequestSurface =
+      isRequestWindow ||
+      (shouldRenderRequestInPanel &&
+        getIsUserRequestForPanelWindow(currentUserRequest, panelWindowId))
 
     if (isRequestSurface && currentUserRequest) {
       if (currentUserRequest.kind === 'unlock') {
@@ -52,7 +59,8 @@ const useCurrentActionSideEffects = () => {
     requestsDispatch,
     keystoreState.isReadyToStoreKeys,
     keystoreState.isUnlocked,
-    shouldRenderRequestInPanel
+    shouldRenderRequestInPanel,
+    panelWindowId
   ])
 
   useEffect(() => {

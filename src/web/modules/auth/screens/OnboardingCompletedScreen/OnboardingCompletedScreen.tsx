@@ -16,20 +16,23 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { engine } from '@web/constants/browserapi'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
 import useOpenWalletFromClick from '@web/hooks/useOpenWalletFromClick'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const CARD_WIDTH = 400
+
+const selectIsPinned = (state: AllControllersMappingType['WalletStateController']) => state.isPinned
 
 const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()
-  const openWalletFromClick = useOpenWalletFromClick()
-  const {
-    state: { isPinned, isSidePanelModeEnabled },
-    dispatch: walletStateDispatch
-  } = useController('WalletStateController')
+  const { openWalletFromClick, canOpenWalletFromClick } = useOpenWalletFromClick()
+  const { state: isPinned, dispatch: walletStateDispatch } = useController(
+    'WalletStateController',
+    selectIsPinned
+  )
 
   const { theme } = useTheme()
 
@@ -84,7 +87,7 @@ const OnboardingCompletedScreen = () => {
               )}
               {/* Firefox can't open the popup from here, but it can open the sidebar from this
               click (see useOpenWalletFromClick) */}
-              {(engine !== 'gecko' || isSidePanelModeEnabled) && (
+              {canOpenWalletFromClick && (
                 <View style={{ ...flexbox.flex1, width: '100%', ...flexbox.justifyEnd }}>
                   <Button
                     testID="onboarding-completed-open-dashboard-btn"
