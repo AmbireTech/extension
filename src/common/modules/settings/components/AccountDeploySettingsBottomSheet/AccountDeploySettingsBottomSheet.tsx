@@ -2,12 +2,9 @@ import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
-import {
-  SAFE_DEPLOYMENT_PREPARATION_FAILED_MESSAGE,
-  SAFE_DEPLOYMENT_UNAVAILABLE_MESSAGE,
-  SAFE_NETWORKS
-} from '@ambire-common/consts/safe'
+import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
 import { Account } from '@ambire-common/interfaces/account'
+import { SafeDeploymentRequestError } from '@ambire-common/interfaces/safe'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -34,17 +31,15 @@ interface Props {
 
 type DeploymentRowState = {
   isLoading: boolean
-  errorMessage?: string
+  error?: SafeDeploymentRequestError
 }
 
 /**
- * Errors the RequestsController replies with when it can't prepare the activation. They are
- * already reported by the controller and are safe to show to the user as they are.
+ * Whether the value is one of the error codes the RequestsController replies with when it
+ * can't prepare the activation. They are already reported by the controller.
  */
-const SAFE_DEPLOYMENT_CONTROLLER_ERRORS = new Set([
-  SAFE_DEPLOYMENT_UNAVAILABLE_MESSAGE,
-  SAFE_DEPLOYMENT_PREPARATION_FAILED_MESSAGE
-])
+const isSafeDeploymentRequestError = (value: string): value is SafeDeploymentRequestError =>
+  value === 'unavailable' || value === 'preparation-failed'
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 const selectAreAccountStatesLoading = (state: AllControllersMappingType['AccountsController']) =>
@@ -80,6 +75,17 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
   // don't bring back rows of a session the user already left
   const openForAccountAddrRef = useRef<string | null>(null)
   const [deploymentRows, setDeploymentRows] = useState<Record<string, DeploymentRowState>>({})
+  const deploymentErrorTexts: Record<SafeDeploymentRequestError, string> = useMemo(
+    () => ({
+      unavailable: t(
+        "We can't activate this Safe account on this network. To use it here, activate it in the Safe app first."
+      ),
+      'preparation-failed': t(
+        "We couldn't prepare the activation of your Safe account on this network. Please try again."
+      )
+    }),
+    [t]
+  )
 
   const networkChainIds = useMemo(() => networks.map(({ chainId }) => chainId), [networks])
   const accountStateCheckKey = `${accountAddr}-${networkChainIds.join('-')}`
@@ -148,13 +154,13 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
           [rowId]: { isLoading: false }
         }))
       } catch (error) {
-        const controllerErrorMessage =
-          error instanceof Error && SAFE_DEPLOYMENT_CONTROLLER_ERRORS.has(error.message)
+        const controllerError =
+          error instanceof Error && isSafeDeploymentRequestError(error.message)
             ? error.message
             : null
 
         // Anything else (e.g. no reply in time) is unexpected and not reported yet
-        if (!controllerErrorMessage) {
+        if (!controllerError) {
           const deploymentError = new Error(
             `Failed to prepare Safe deployment for ${account.addr} on chain ${chainId.toString()}.`,
             { cause: error }
@@ -168,7 +174,7 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
           ...current,
           [rowId]: {
             isLoading: false,
-            errorMessage: controllerErrorMessage ?? SAFE_DEPLOYMENT_PREPARATION_FAILED_MESSAGE
+            error: controllerError ?? 'preparation-failed'
           }
         }))
       } finally {
@@ -279,9 +285,9 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
                   )}
                 </View>
               </View>
-              {!!rowState?.errorMessage && !state?.isDeployed && (
+              {!!rowState?.error && !state?.isDeployed && (
                 <Text fontSize={12} appearance="errorText" style={spacings.mbTy}>
-                  {t(rowState.errorMessage)}
+                  {deploymentErrorTexts[rowState.error]}
                 </Text>
               )}
             </View>
