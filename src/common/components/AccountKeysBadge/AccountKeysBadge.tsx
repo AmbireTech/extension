@@ -53,10 +53,12 @@ const AccountKeysBadge = ({ account, accountKeys }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const tooltipId = useMemo(() => nanoid(6), [])
-  const keyTypes = useMemo(
-    () => Array.from(new Set(accountKeys.map((key) => key.type))),
-    [accountKeys]
-  )
+  const keyTypes = useMemo(() => {
+    const types = Array.from(new Set(accountKeys.map((key) => key.type)))
+
+    // A private key can sign for the account on its own, so the other kinds add nothing
+    return types.includes('internal') ? ['internal' as const] : types
+  }, [accountKeys])
 
   if (account.safeCreation) {
     const safeIconSize = LEADING_ICON_SIZE * SAFE_ICON_INLINE_SCALE
