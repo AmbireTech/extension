@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
 import { useModalize } from 'react-native-modalize'
-import { useStallionUpdate } from 'react-native-stallion'
+import { restart, useStallionUpdate } from 'react-native-stallion'
 
 import NewsletterIcon from '@common/assets/svg/NewsletterIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import TosIcon from '@common/assets/svg/TosIcon'
+import Banner from '@common/components/Banner'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
@@ -35,7 +36,7 @@ const AboutSettingsScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { addToast } = useToast()
-  const { currentlyRunningBundle } = useStallionUpdate()
+  const { currentlyRunningBundle, isRestartRequired, newReleaseBundle } = useStallionUpdate()
   const {
     ref: ambireNextSheetRef,
     open: openAmbireNextSheet,
@@ -63,6 +64,11 @@ const AboutSettingsScreen = () => {
   const otaInfo = currentlyRunningBundle
     ? `OTA v${currentlyRunningBundle.version} · ${currentlyRunningBundle.id}`
     : 'default'
+
+  // Mirrors the dashboard's update banner (see useOtaUpdateBanner), so whoever has just
+  // joined Ambire Next can restart into the preview version right here. A required update
+  // is applied through MandatoryOtaUpdateModal instead.
+  const isOtaUpdateReady = isRestartRequired && !newReleaseBundle?.isMandatory
 
   const openTos = () => {
     navigate(ROUTES.settingsTerms)
@@ -105,6 +111,17 @@ const AboutSettingsScreen = () => {
   return (
     <MobileLayoutContainer>
       <MobileLayoutWrapperMainContent withScroll withBackButton title="About">
+        {isOtaUpdateReady && (
+          <Banner
+            type="info"
+            title={t('Update Available')}
+            text={t(
+              'A new version is ready! It will be applied on the next app restart. Restart now to update immediately.'
+            )}
+            buttonText={t('Restart')}
+            onPress={restart}
+          />
+        )}
         <ControlOption
           style={spacings.mbTy}
           title={`v${APP_VERSION}${isDev ? '-dev' : ''} | build ${BUILD_NUMBER} | ${otaInfo}`}
