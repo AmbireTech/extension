@@ -49,6 +49,50 @@ const getStepAmountLabel = (
 }
 
 /**
+ * A label/value row of the route details shown under the token amounts
+ * (network fee, extra bridge fee, arrival time).
+ */
+const RouteDetailsRow = ({
+  label,
+  value,
+  hasWarning,
+  testID
+}: {
+  label: string
+  value: string
+  hasWarning?: boolean
+  testID?: string
+}) => {
+  const { theme } = useTheme()
+
+  return (
+    <View style={styles.routeDetailsRow} testID={testID}>
+      <Text fontSize={12} weight="medium" appearance="secondaryText">
+        {label}
+      </Text>
+      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        {!!hasWarning && (
+          <WarningIcon
+            color={theme.warningDecorative}
+            width={14}
+            height={14}
+            style={spacings.mrMi}
+            strokeWidth={2.2}
+          />
+        )}
+        <Text
+          fontSize={12}
+          weight={hasWarning ? 'semiBold' : 'medium'}
+          appearance={hasWarning ? 'warningText' : 'primaryText'}
+        >
+          {value}
+        </Text>
+      </View>
+    </View>
+  )
+}
+
+/**
  * Icon with its amount/symbol label pinned directly underneath it. The label is
  * absolutely positioned (anchored to this icon's own box) instead of taking part
  * in normal flow, so a long label (e.g. "2,647.71 USDC") never widens this step's
@@ -100,6 +144,8 @@ const RouteStepsPreview = ({
   inputValueInUsd,
   outputValueInUsd,
   estimationInSeconds,
+  networkFeeInUsd,
+  extraBridgeFee,
   currentStep = 0,
   loadingEnabled,
   isDisabled,
@@ -113,6 +159,10 @@ const RouteStepsPreview = ({
   inputValueInUsd?: number
   outputValueInUsd?: number
   estimationInSeconds?: number
+  /** The provider's estimated network fee, shown as a row under the token amounts */
+  networkFeeInUsd?: number
+  /** The extra fee some bridges charge in the source chain's native token */
+  extraBridgeFee?: { amountInUsd: number; nativeSymbol?: string }
   currentStep?: number
   loadingEnabled?: boolean
   isDisabled?: boolean
@@ -120,14 +170,15 @@ const RouteStepsPreview = ({
   disabledReason?: string
   providerId: string
   isBridge: boolean
-  /** Rendered on the left of the provider logo row, replacing the estimation text */
+  /** Rendered on the left of the provider logo row */
   bottomLeftSlot?: React.ReactNode
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const mevProtectedTooltipId = useId()
   const isMevProtected = providerId === 'cowswap'
-  const hasBottomLeftContent = !!bottomLeftSlot || (isBridge && !!estimationInSeconds)
+  const hasRouteDetails =
+    !!networkFeeInUsd || !!extraBridgeFee || (isBridge && !!estimationInSeconds)
   const mevProtectedTooltipText = t(
     'CoW Swap is designed to protect your swap from bots that manipulate the price before it executes.'
   )
@@ -277,34 +328,66 @@ const RouteStepsPreview = ({
         </View>
       </View>
 
-      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
-        {!isDisabled ? (
+      {/* The route details and the provider row share one section, separated from the tokens */}
+      <View
+        style={
+          !isDisabled &&
+          hasRouteDetails && [
+            spacings.ptMi,
+            { borderTopWidth: 1, borderTopColor: theme.secondaryBorder }
+          ]
+        }
+      >
+        {!isDisabled && (
           <>
-            <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
-              {bottomLeftSlot || (
-                <>
-                  {!!shouldWarnForLongEstimation && (
-                    <WarningIcon
-                      color={theme.warningDecorative}
-                      width={14}
-                      height={14}
-                      style={spacings.mrMi}
-                      strokeWidth={2.2}
-                    />
-                  )}
-                  <Text
-                    fontSize={12}
-                    weight={shouldWarnForLongEstimation ? 'semiBold' : 'medium'}
-                    appearance={shouldWarnForLongEstimation ? 'warningText' : 'primaryText'}
-                  >
-                    {isBridge && !!estimationInSeconds
-                      ? t('Estimation: around {{time}}', {
-                          time: formatTime(estimationInSeconds)
-                        })
-                      : ''}
-                  </Text>
-                </>
-              )}
+            {!!networkFeeInUsd && (
+              <RouteDetailsRow
+                label={t('Network fee (est.)')}
+                value={formatDecimals(networkFeeInUsd, 'price')}
+                testID="route-network-fee"
+              />
+            )}
+            {!!extraBridgeFee && (
+              <RouteDetailsRow
+                label={t('Extra bridge fee')}
+                value={
+                  extraBridgeFee.nativeSymbol
+                    ? t('{{amount}} in {{symbol}}', {
+                        amount: formatDecimals(extraBridgeFee.amountInUsd, 'price'),
+                        symbol: extraBridgeFee.nativeSymbol
+                      })
+                    : formatDecimals(extraBridgeFee.amountInUsd, 'price')
+                }
+                testID="route-extra-bridge-fee"
+              />
+            )}
+            {isBridge && !!estimationInSeconds && (
+              <RouteDetailsRow
+                label={t('Arrives in')}
+                value={t('~{{time}}', { time: formatTime(estimationInSeconds) })}
+                hasWarning={shouldWarnForLongEstimation}
+                testID="route-arrival-time"
+              />
+            )}
+          </>
+        )}
+
+        <View
+          style={
+            !isDisabled && hasRouteDetails
+              ? styles.routeDetailsRow
+              : [flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]
+          }
+        >
+          {!isDisabled ? (
+            <>
+              <View
+                style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}
+              >
+                {bottomLeftSlot}
+              </View>
+
+              {/* Next to the provider logo, as the protection comes from the provider */}
               {isMevProtected && (
                 <View
                   accessible
@@ -315,19 +398,7 @@ const RouteStepsPreview = ({
                     content: mevProtectedTooltipText
                   })}
                   testID="mev-protected-badge"
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    spacings.phTy,
-                    spacings.pvMi,
-                    hasBottomLeftContent && spacings.mlSm,
-                    common.borderRadiusSecondary,
-                    {
-                      backgroundColor: theme.primaryAccent100,
-                      borderColor: theme.primaryAccent200,
-                      borderWidth: 1
-                    }
-                  ]}
+                  style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}
                 >
                   <SecurityIcon width={12} height={15} color={theme.primaryAccent} />
                   <Text
@@ -340,37 +411,36 @@ const RouteStepsPreview = ({
                   </Text>
                 </View>
               )}
+              {providerId === 'socket' || providerId === 'socketv3' ? (
+                <BungeeIcon width={56.7} height={11.2} />
+              ) : providerId === 'uniswap' ? (
+                <UniswapIcon width={28} height={28} />
+              ) : providerId === 'cowswap' ? (
+                <CowSwapIcon width={28} height={28} />
+              ) : (
+                <LiFiIcon width={39.75} height={14} />
+              )}
+            </>
+          ) : (
+            <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
+              <Text
+                fontSize={12}
+                weight="medium"
+                color={theme.warningText}
+                style={[
+                  spacings.phSm,
+                  spacings.pvTy,
+                  common.borderRadiusSecondary,
+                  {
+                    backgroundColor: theme.warningBackground
+                  }
+                ]}
+              >
+                {disabledReason}
+              </Text>
             </View>
-
-            {providerId === 'socket' || providerId === 'socketv3' ? (
-              <BungeeIcon width={56.7} height={11.2} />
-            ) : providerId === 'uniswap' ? (
-              <UniswapIcon width={28} height={28} />
-            ) : providerId === 'cowswap' ? (
-              <CowSwapIcon width={28} height={28} />
-            ) : (
-              <LiFiIcon width={39.75} height={14} />
-            )}
-          </>
-        ) : (
-          <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
-            <Text
-              fontSize={12}
-              weight="medium"
-              color={theme.warningText}
-              style={[
-                spacings.phSm,
-                spacings.pvTy,
-                common.borderRadiusSecondary,
-                {
-                  backgroundColor: theme.warningBackground
-                }
-              ]}
-            >
-              {disabledReason}
-            </Text>
-          </View>
-        )}
+          )}
+        </View>
       </View>
     </View>
   )
