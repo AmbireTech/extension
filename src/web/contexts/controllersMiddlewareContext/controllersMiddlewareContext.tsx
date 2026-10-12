@@ -536,9 +536,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   useSelectedAccountControllerHelpers()
 
   return (
-    <ControllersMiddlewareContext.Provider
-      value={useMemo(() => ({ dispatch, windowId }), [dispatch, windowId])}
-    >
+    <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
       {children}
     </ControllersMiddlewareContext.Provider>
   )

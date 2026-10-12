@@ -6,6 +6,7 @@ import Button from '@common/components/Button'
 import LottieView from '@common/components/LottieView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { selectIsPinned } from '@common/controllers/wallet-state/selectors'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -13,11 +14,7 @@ import text from '@common/styles/utils/text'
 import useOpenWalletFromClick from '@web/hooks/useOpenWalletFromClick'
 import PasswordResetCompletedAnimation from '@web/modules/keystore/components/KeyStoreSetNewPasswordCompleted/password-reset-completed-animation.json'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
 export const CARD_WIDTH = 400
-
-const selectIsPinned = (state: AllControllersMappingType['WalletStateController']) => state.isPinned
 
 const KeyStoreSetNewPasswordCompleted = () => {
   const { t } = useTranslation()

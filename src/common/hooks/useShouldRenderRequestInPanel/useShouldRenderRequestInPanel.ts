@@ -1,4 +1,5 @@
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import { selectIsSidePanelModeEnabled } from '@common/controllers/wallet-state/selectors'
 import useController from '@common/hooks/useController'
 import { getUiType } from '@common/utils/uiType'
 import { isFirefoxSidebar } from '@web/utils/sidePanel'
@@ -7,11 +8,6 @@ const { isSidePanel } = getUiType()
 
 const selectRequestWindow = (state: AllControllersMappingType['RequestsController']) =>
   state.requestWindow
-
-// Also runs from the Router, before every controller state has arrived
-const selectIsSidePanelModeEnabled = (
-  state: AllControllersMappingType['WalletStateController'] | undefined
-) => !!state?.isSidePanelModeEnabled
 
 /**
  * Whether an action request should be rendered in the side panel. It is not when a request window

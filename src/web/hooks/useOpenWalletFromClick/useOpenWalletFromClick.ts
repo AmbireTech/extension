@@ -1,17 +1,13 @@
 import { useCallback } from 'react'
 
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
+import { selectIsSidePanelModeEnabled } from '@common/controllers/wallet-state/selectors'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import { engine } from '@web/constants/browserapi'
 import { getFirefoxSidebarApi, openFirefoxSidebarFromUserGesture } from '@web/utils/sidePanel'
-
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const selectIsSidePanelModeEnabled = (state: AllControllersMappingType['WalletStateController']) =>
-  state.isSidePanelModeEnabled
 
 /**
  * Opens the wallet - the popup or the side panel, whichever the toolbar action opens.

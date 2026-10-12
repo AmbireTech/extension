@@ -87,6 +87,7 @@ import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerCon
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
+import { getAppWindowIdsFromUserRequest } from '@web/utils/dispatchDappTabFocus'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
 import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
@@ -647,18 +648,26 @@ const init = async () => {
 
     if (!hasSidePanelModeBeenTurnedOff) return
 
-    // Only a request an app is waiting on, that closing the panel would otherwise reject.
-    // Transactions stay queued, as when the panel is closed (e.g. one set aside with "Start a
-    // batch"), and are opened from the dashboard - moving them would pop up a request the user may
-    // have set aside long ago. Requests started in the wallet itself have no app waiting.
-    const request = mainCtrl.requests.currentUserRequest
-    if (!request || request.kind === 'calls' || !request.dappPromises?.length) return
+    // Only a request an app is waiting on, that closing the panel would otherwise reject - the
+    // first one in the queue, even if a transaction is ahead of it (the request window lists the
+    // rest). Transactions stay queued, as when the panel is closed (e.g. one set aside with "Start
+    // a batch"), and are opened from the dashboard - moving them would pop up a request the user
+    // may have set aside long ago. Requests started in the wallet itself have no app waiting.
     if (mainCtrl.requests.requestWindow.windowProps) return
 
-    mainCtrl.requests.openRequestWindow().catch((error: unknown) => {
-      console.error('Failed to move a request out of the side panel', error)
-      captureBackgroundException(error)
-    })
+    const appRequest = mainCtrl.requests.visibleUserRequests.find(
+      (request) => request.kind !== 'calls' && !!request.dappPromises?.length
+    )
+    if (!appRequest) return
+
+    // Opened next to the app's window, so focus returns to it once the request window closes
+    const [appWindowId] = getAppWindowIdsFromUserRequest(appRequest)
+    mainCtrl.requests
+      .setCurrentUserRequestById(appRequest.id, { baseWindowId: appWindowId })
+      .catch((error: unknown) => {
+        console.error('Failed to move a request out of the side panel', error)
+        captureBackgroundException(error)
+      })
   })
   autoLockCtrl = new AutoLockController(
     eventEmitterRegistry,

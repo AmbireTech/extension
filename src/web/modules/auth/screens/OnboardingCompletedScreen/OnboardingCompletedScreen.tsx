@@ -6,6 +6,7 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { selectIsPinned } from '@common/controllers/wallet-state/selectors'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
@@ -20,11 +21,7 @@ import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
 import useOpenWalletFromClick from '@web/hooks/useOpenWalletFromClick'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
 export const CARD_WIDTH = 400
-
-const selectIsPinned = (state: AllControllersMappingType['WalletStateController']) => state.isPinned
 
 const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()

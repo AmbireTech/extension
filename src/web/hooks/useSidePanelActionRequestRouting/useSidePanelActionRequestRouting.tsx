@@ -11,10 +11,7 @@ import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import { getUiType } from '@common/utils/uiType'
-import {
-  getDappTabTargetsFromUserRequest,
-  getIsUserRequestForPanelWindow
-} from '@web/utils/dispatchDappTabFocus'
+import { getDappTabTargetsFromUserRequest } from '@web/utils/dispatchDappTabFocus'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -30,9 +27,8 @@ const getRoutePathname = (route: string) => (route.split('?')[0] ?? route).repla
  * screen when a request appears and back to the dashboard once it is resolved.
  *
  * Auto-navigation to an action screen only happens when a request becomes active (new id
- * or re-activated after dismiss), when the panel is the surface that owns it (see
- * `useShouldRenderRequestInPanel`) and when the request comes from the panel's own window (see
- * `getIsUserRequestForPanelWindow`). This lets the user dismiss to the dashboard — e.g. via
+ * or re-activated after dismiss) and when the panel is the surface that owns it (see
+ * `useShouldRenderRequestInPanel`). This lets the user dismiss to the dashboard — e.g. via
  * "Start a batch" — without being pulled back to the sign screen while the request stays
  * queued.
  */
@@ -43,7 +39,7 @@ const useSidePanelActionRequestRouting = () => {
   const { navigate } = useNavigation()
   const { path } = useRoute()
   const { authStatus } = useAuth()
-  const { dispatch, windowId: panelWindowId } = useContext(ControllersMiddlewareContext)
+  const { dispatch } = useContext(ControllersMiddlewareContext)
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const keystoreState = useController('KeystoreController').state
   const { state: currentUserRequest } = useController(
@@ -77,13 +73,8 @@ const useSidePanelActionRequestRouting = () => {
       const currentPath = getRoutePathname(path)
       const requestJustActivated = prevRequestIdRef.current === null
       const isDifferentRequest = activeRequestId !== lastOpenedRequestIdRef.current
-      const isForThisPanel = getIsUserRequestForPanelWindow(currentUserRequest, panelWindowId)
 
-      if (
-        shouldRenderRequestInPanel &&
-        isForThisPanel &&
-        (requestJustActivated || isDifferentRequest)
-      ) {
+      if (shouldRenderRequestInPanel && (requestJustActivated || isDifferentRequest)) {
         lastOpenedRequestIdRef.current = activeRequestId
         lastRequestRouteRef.current = targetPath
         if (currentPath !== targetPath) navigate(targetRoute)
@@ -126,8 +117,7 @@ const useSidePanelActionRequestRouting = () => {
     path,
     shouldRenderRequestInPanel,
     transferState,
-    dispatch,
-    panelWindowId
+    dispatch
   ])
 }
 

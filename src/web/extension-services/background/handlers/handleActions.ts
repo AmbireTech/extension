@@ -10,6 +10,7 @@ import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { browser, engine } from '@web/constants/browserapi'
+import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
 import {
   getPanelWindowId,
   openPanel,
@@ -344,12 +345,16 @@ export const handleActions = async (
         await waitForOverlayOpen()
         // Opening can "succeed" without anything showing up - don't leave the user waiting then
         if (!getOverlayPort()) navigateSenderToDashboard()
-      } catch {
+      } catch (error) {
+        // Retried once below, so the first failure isn't reported
+        console.warn('Failed to open the wallet, retrying', error)
         try {
           await focusOverlay()
           await waitForOverlayOpen()
           if (!getOverlayPort()) navigateSenderToDashboard()
-        } catch {
+        } catch (retryError) {
+          console.error('Failed to open the wallet, showing the dashboard instead', retryError)
+          captureBackgroundException(retryError)
           navigateSenderToDashboard()
         }
       }

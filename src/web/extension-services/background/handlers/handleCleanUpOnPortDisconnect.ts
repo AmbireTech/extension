@@ -3,7 +3,6 @@ import { ONBOARDING_WEB_ROUTES } from '@common/modules/router/constants/common'
 import { IS_FIREFOX } from '@web/constants/common'
 import { forgetPanelWindowId } from '@web/extension-services/background/webapi/panel'
 import { Port } from '@web/extension-services/messengers'
-import { getAppWindowIdsFromUserRequest } from '@web/utils/dispatchDappTabFocus'
 
 export const handleCleanUpOnPortDisconnect = async ({
   port,
@@ -24,13 +23,9 @@ export const handleCleanUpOnPortDisconnect = async ({
     // request window instead and leaves transactions queued (see background.ts) - and on Firefox
     // the sidebar can be open while the mode is off, showing the "mode off" notice, which never
     // showed the requests.
-    // The closed panel's port is already gone, so this only counts the panels still open - with
-    // the same checks that decide where requests are shown: the panel of the request's app window,
-    // or any panel for a request without one (e.g. WalletConnect, or started in the wallet).
-    const requestWindowIds = getAppWindowIdsFromUserRequest(mainCtrl.requests.currentUserRequest)
-    const isAnotherPanelOpen = requestWindowIds.length
-      ? requestWindowIds.some((windowId) => !!mainCtrl.ui.panel?.isOpen(windowId))
-      : !!mainCtrl.ui.panel?.isOpen()
+    // The closed panel's port is already gone, so this only counts the panels still open (every
+    // open panel shows the current request), with the same checks that decide where requests go.
+    const isAnotherPanelOpen = !!mainCtrl.ui.panel?.isOpen()
     const isRequestInOwnWindow = !!mainCtrl.requests.requestWindow.windowProps
 
     // Not counted against the apps that were waiting - a port also drops on an extension
