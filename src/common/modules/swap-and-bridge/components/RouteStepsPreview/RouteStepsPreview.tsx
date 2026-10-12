@@ -165,8 +165,8 @@ const RouteStepsPreview = ({
   minReceiveLabel?: string
   /**
    * The network fee taken from the received tokens (CoW Swap), formatted with the receiving
-   * token's symbol. When set, it's shown instead of `networkFeeInUsd`, which is charged
-   * to the account
+   * token's symbol. When set, it's shown instead of the "Network fee" row, with
+   * `networkFeeInUsd` (the same fee in USD) next to it in brackets
    */
   networkFeeInToTokenLabel?: string
   /** The provider's estimated network fee, shown as a row under the token amounts */
@@ -364,7 +364,14 @@ const RouteStepsPreview = ({
             {networkFeeInToTokenLabel ? (
               <RouteDetailsRow
                 label={t('Fee')}
-                value={t('~{{amount}}', { amount: networkFeeInToTokenLabel })}
+                value={
+                  networkFeeInUsd
+                    ? t('~{{amount}} ({{amountInUsd}})', {
+                        amount: networkFeeInToTokenLabel,
+                        amountInUsd: formatDecimals(networkFeeInUsd, 'price')
+                      })
+                    : t('~{{amount}}', { amount: networkFeeInToTokenLabel })
+                }
                 testID="route-fee"
               />
             ) : (

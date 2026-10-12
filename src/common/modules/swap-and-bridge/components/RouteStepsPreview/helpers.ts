@@ -4,7 +4,7 @@ import type {
   SwapAndBridgeActiveRoute,
   SwapAndBridgeRoute
 } from '@ambire-common/interfaces/swapAndBridge'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import formatDecimals, { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 
 export type RouteStepType = 'default' | 'warning' | 'success'
 
@@ -36,12 +36,15 @@ const getPositiveBigInt = (value: string) => {
 }
 
 /**
- * Formats an amount of the route's receiving token, e.g. "0.0091245 WBTC".
+ * Formats an amount of the route's receiving token, e.g. "0.0091245 WBTC". Pass the
+ * `amount` format type to keep only 2 decimals after the first non-zero one, e.g. "1.64 USDC".
  */
 export const formatRouteToTokenAmount = (
   amount: bigint,
-  toToken: Pick<SwapAndBridgeRoute['toToken'], 'decimals' | 'symbol'>
-) => `${formatDecimals(Number(formatUnits(amount, toToken.decimals)), 'precise')} ${toToken.symbol}`
+  toToken: Pick<SwapAndBridgeRoute['toToken'], 'decimals' | 'symbol'>,
+  formatType: Extract<FormatType, 'precise' | 'amount'> = 'precise'
+) =>
+  `${formatDecimals(Number(formatUnits(amount, toToken.decimals)), formatType)} ${toToken.symbol}`
 
 /**
  * The network fee taken from the received tokens, in the receiving token's smallest unit.

@@ -294,7 +294,7 @@ const RoutesModal = ({
             }
             networkFeeInToTokenLabel={
               networkFeeInToToken
-                ? formatRouteToTokenAmount(networkFeeInToToken, item.toToken)
+                ? formatRouteToTokenAmount(networkFeeInToToken, item.toToken, 'amount')
                 : undefined
             }
             networkFeeInUsd={getRouteNetworkFeeInUsd(item)}

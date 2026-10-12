@@ -186,4 +186,13 @@ describe('formatRouteToTokenAmount', () => {
   test('formats the amount with the token decimals and symbol', () => {
     expect(formatRouteToTokenAmount(994000n, { decimals: 6, symbol: 'USDT' })).toBe('0.994 USDT')
   })
+
+  test('keeps 2 decimals after the first non-zero one with the amount format type', () => {
+    expect(formatRouteToTokenAmount(1641329n, { decimals: 6, symbol: 'USDC' }, 'amount')).toBe(
+      '1.64 USDC'
+    )
+    expect(
+      formatRouteToTokenAmount(123456789000000n, { decimals: 18, symbol: 'ETH' }, 'amount')
+    ).toBe('0.00012 ETH')
+  })
 })
