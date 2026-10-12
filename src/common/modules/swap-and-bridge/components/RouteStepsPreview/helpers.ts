@@ -68,16 +68,32 @@ export const getRouteMinReceiveAmount = (
   return getPositiveBigInt(lastUserTx.minAmountOut)
 }
 
+// EVM native assets are always denominated in wei
+const NATIVE_ASSET_DECIMALS = 18
+
 /**
- * The extra fee some bridges charge in the source chain's native token, on top of the
- * sent amount. Routes with this fee are sorted below the ones without it.
+ * Formats the extra fee some bridges charge in the source chain's native token, on top of
+ * the sent amount, e.g. "0.00012 ETH". Routes with this fee are sorted below the ones
+ * without it. Falls back to an explicit USD amount (e.g. "$0.42") when the native token
+ * symbol isn't known, so the fee is never shown as a bare, ambiguous number.
  */
-export const getRouteExtraBridgeFeeInUsd = (
-  route: Pick<SwapAndBridgeRoute, 'serviceFee'>
-): number | undefined => {
+export const getRouteExtraBridgeFeeLabel = (
+  route: Pick<SwapAndBridgeRoute, 'serviceFee'>,
+  nativeSymbol?: string
+): string | undefined => {
   if (!route.serviceFee) return undefined
 
-  return getPositiveFiniteNumber(Number(route.serviceFee.amountUSD))
+  const amount = getPositiveBigInt(route.serviceFee.amount)
+  if (amount && nativeSymbol) {
+    return `${formatDecimals(
+      Number(formatUnits(amount, NATIVE_ASSET_DECIMALS)),
+      'precise'
+    )} ${nativeSymbol}`
+  }
+
+  const amountInUsd = getPositiveFiniteNumber(Number(route.serviceFee.amountUSD))
+
+  return amountInUsd ? formatDecimals(amountInUsd, 'price') : undefined
 }
 
 /** Determines the final arrow state without treating a pending single-step route as completed. */

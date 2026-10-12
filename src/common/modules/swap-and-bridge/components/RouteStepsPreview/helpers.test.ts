@@ -1,7 +1,7 @@
 import {
   formatRouteToTokenAmount,
   getLastRouteStepType,
-  getRouteExtraBridgeFeeInUsd,
+  getRouteExtraBridgeFeeLabel,
   getRouteMinReceiveAmount,
   getRouteNetworkFeeInToToken,
   getRouteNetworkFeeInUsd
@@ -97,26 +97,41 @@ describe('getRouteNetworkFeeInUsd', () => {
   })
 })
 
-describe('getRouteExtraBridgeFeeInUsd', () => {
-  test('returns the extra bridge fee in USD', () => {
+describe('getRouteExtraBridgeFeeLabel', () => {
+  test('returns the extra bridge fee in the native token', () => {
     expect(
-      getRouteExtraBridgeFeeInUsd({ serviceFee: { amount: '100000000000000', amountUSD: '0.42' } })
-    ).toBe(0.42)
+      getRouteExtraBridgeFeeLabel(
+        { serviceFee: { amount: '120000000000000', amountUSD: '0.42' } },
+        'ETH'
+      )
+    ).toBe('0.00012 ETH')
+  })
+
+  test('returns the USD amount with a dollar sign when the native symbol is unknown', () => {
+    expect(
+      getRouteExtraBridgeFeeLabel({ serviceFee: { amount: '120000000000000', amountUSD: '0.42' } })
+    ).toBe('$0.42')
+  })
+
+  test('returns the USD amount when the native amount is invalid', () => {
+    expect(
+      getRouteExtraBridgeFeeLabel({ serviceFee: { amount: 'unknown', amountUSD: '0.42' } }, 'ETH')
+    ).toBe('$0.42')
   })
 
   test('returns undefined when the route has no extra bridge fee', () => {
-    expect(getRouteExtraBridgeFeeInUsd({})).toBeUndefined()
+    expect(getRouteExtraBridgeFeeLabel({}, 'ETH')).toBeUndefined()
   })
 
   test('returns undefined when the extra bridge fee is zero', () => {
     expect(
-      getRouteExtraBridgeFeeInUsd({ serviceFee: { amount: '0', amountUSD: '0' } })
+      getRouteExtraBridgeFeeLabel({ serviceFee: { amount: '0', amountUSD: '0' } }, 'ETH')
     ).toBeUndefined()
   })
 
-  test('returns undefined when the extra bridge fee is not a number', () => {
+  test('returns undefined when neither amount is valid', () => {
     expect(
-      getRouteExtraBridgeFeeInUsd({ serviceFee: { amount: '1', amountUSD: 'unknown' } })
+      getRouteExtraBridgeFeeLabel({ serviceFee: { amount: '1.5', amountUSD: 'unknown' } }, 'ETH')
     ).toBeUndefined()
   })
 })

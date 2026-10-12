@@ -19,7 +19,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import RouteStepsPreview from '@common/modules/swap-and-bridge/components/RouteStepsPreview'
 import {
   formatRouteToTokenAmount,
-  getRouteExtraBridgeFeeInUsd,
+  getRouteExtraBridgeFeeLabel,
   getRouteMinReceiveAmount,
   getRouteNetworkFeeInToToken,
   getRouteNetworkFeeInUsd
@@ -243,7 +243,6 @@ const RoutesModal = ({
       const { steps, inputValueInUsd, outputValueInUsd } = item
       const isEstimatingRoute = isEstimationLoading && item.routeId === userSelectedRoute?.routeId
       const isSelected = item.routeId === userSelectedRoute?.routeId && !isEstimatingRoute
-      const extraBridgeFeeInUsd = getRouteExtraBridgeFeeInUsd(item)
       const minReceiveAmount = getRouteMinReceiveAmount(item)
       const networkFeeInToToken = getRouteNetworkFeeInToToken(item)
 
@@ -299,11 +298,7 @@ const RoutesModal = ({
                 : undefined
             }
             networkFeeInUsd={getRouteNetworkFeeInUsd(item)}
-            extraBridgeFee={
-              extraBridgeFeeInUsd
-                ? { amountInUsd: extraBridgeFeeInUsd, nativeSymbol: fromNetworkNativeSymbol }
-                : undefined
-            }
+            extraBridgeFeeLabel={getRouteExtraBridgeFeeLabel(item, fromNetworkNativeSymbol)}
             isDisabled={item.disabled}
             disabledReason={item.disabledReason}
             providerId={item.providerId}

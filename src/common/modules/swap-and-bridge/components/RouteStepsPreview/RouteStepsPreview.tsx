@@ -147,7 +147,7 @@ const RouteStepsPreview = ({
   minReceiveLabel,
   networkFeeInToTokenLabel,
   networkFeeInUsd,
-  extraBridgeFee,
+  extraBridgeFeeLabel,
   currentStep = 0,
   loadingEnabled,
   isDisabled,
@@ -171,8 +171,8 @@ const RouteStepsPreview = ({
   networkFeeInToTokenLabel?: string
   /** The provider's estimated network fee, shown as a row under the token amounts */
   networkFeeInUsd?: number
-  /** The extra fee some bridges charge in the source chain's native token */
-  extraBridgeFee?: { amountInUsd: number; nativeSymbol?: string }
+  /** The extra fee some bridges charge in the source chain's native token, formatted with its symbol */
+  extraBridgeFeeLabel?: string
   currentStep?: number
   loadingEnabled?: boolean
   isDisabled?: boolean
@@ -191,7 +191,7 @@ const RouteStepsPreview = ({
     !!minReceiveLabel ||
     !!networkFeeInToTokenLabel ||
     !!networkFeeInUsd ||
-    !!extraBridgeFee ||
+    !!extraBridgeFeeLabel ||
     (isBridge && !!estimationInSeconds)
   const mevProtectedTooltipText = t(
     'CoW Swap is designed to protect your swap from bots that manipulate the price before it executes.'
@@ -376,17 +376,10 @@ const RouteStepsPreview = ({
                 />
               )
             )}
-            {!!extraBridgeFee && (
+            {!!extraBridgeFeeLabel && (
               <RouteDetailsRow
                 label={t('Extra bridge fee')}
-                value={
-                  extraBridgeFee.nativeSymbol
-                    ? t('{{amount}} in {{symbol}}', {
-                        amount: formatDecimals(extraBridgeFee.amountInUsd, 'price'),
-                        symbol: extraBridgeFee.nativeSymbol
-                      })
-                    : formatDecimals(extraBridgeFee.amountInUsd, 'price')
-                }
+                value={extraBridgeFeeLabel}
                 testID="route-extra-bridge-fee"
               />
             )}
