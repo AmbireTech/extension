@@ -31,8 +31,6 @@ const SignMessageScreen = () => {
     account,
     selectedAccountKeyStoreKeys,
     isViewOnly,
-    humanizationHasBlockingWarnings,
-    isScrollToBottomForced,
     userRequest,
     isLedgerConnected,
     isChooseSignerShown,
@@ -98,13 +96,7 @@ const SignMessageScreen = () => {
               onReject={handleReject}
               onResolve={signWithDefaultSignerIfPossible}
               resolveButtonText={resolveButtonText}
-              resolveDisabled={
-                signStatus === 'LOADING' ||
-                isScrollToBottomForced ||
-                isViewOnly ||
-                humanizationHasBlockingWarnings ||
-                isSafeNotDeployed
-              }
+              resolveDisabled={isResolveActionDisabled}
               resolveButtonTestID="button-sign"
               rejectButtonText="Reject"
               withRejectOptions
