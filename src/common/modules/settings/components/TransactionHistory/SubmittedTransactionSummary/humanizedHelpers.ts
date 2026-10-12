@@ -77,6 +77,16 @@ export const getDappInteractionsFromHumanizedCalls = (
   submittedAccountOp: SubmittedAccountOpLike,
   humanizedCalls: IrCall[]
 ): DappInteraction[] => {
+  if (submittedAccountOp.meta?.isSafeDeploy) {
+    return [
+      {
+        id: 'fallback:safeDeploy',
+        name: 'Activate Safe account',
+        iconType: 'safe'
+      }
+    ]
+  }
+
   if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
     const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
 

@@ -6,6 +6,7 @@ import { ZeroAddress } from 'ethers'
 
 import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeToToken } from '@ambire-common/interfaces/swapAndBridge'
+import { ExchangeInfoMap } from '@ambire-common/libs/portfolio/interfaces'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
@@ -39,6 +40,8 @@ export type TokenSelectOptionLabelProps = {
    * the list actually mounts.
    */
   getFormattedDetails: () => FormattedTokenDetails
+  /** The exchanges the "to" tokens are traded on, looked up once for the whole list */
+  exchangesInfo?: ExchangeInfoMap
 }
 
 /**
@@ -58,7 +61,8 @@ const TokenSelectOptionLabel = React.memo(
     tokenInPortfolio,
     isToToken,
     isSelected,
-    getFormattedDetails
+    getFormattedDetails,
+    exchangesInfo
   }: TokenSelectOptionLabelProps) => {
     const { t } = useTranslation()
     const { theme } = useTheme()
@@ -181,6 +185,7 @@ const TokenSelectOptionLabel = React.memo(
                 <TokenExchanges
                   chainId={Number(currentToken.chainId)}
                   address={currentToken.address}
+                  exchangesInfo={exchangesInfo}
                 />
               )}
             </View>

@@ -8,7 +8,17 @@ import { DisplayBalanceChange, SubmittedAccountOpLike } from './types'
 
 export const MAX_VISIBLE_BALANCE_CHANGES = 3
 
+export const isNftBalanceChange = (
+  change: DisplayBalanceChange
+): change is Extract<DisplayBalanceChange, { tokenId: bigint }> => 'tokenId' in change
+
 export const formatBalanceChangeAmount = (change: DisplayBalanceChange) => {
+  if (isNftBalanceChange(change)) {
+    return `${change.balanceChange < 0n ? '-' : '+'}${
+      change.balanceChange < 0n ? -change.balanceChange : change.balanceChange
+    }`
+  }
+
   const formattedAmount = formatDecimals(
     parseFloat(
       formatUnits(
@@ -23,16 +33,20 @@ export const formatBalanceChangeAmount = (change: DisplayBalanceChange) => {
 }
 
 export const getFullBalanceChangeAmount = (change: DisplayBalanceChange) =>
-  formatUnits(
-    change.balanceChange < 0n ? -change.balanceChange : change.balanceChange,
-    change.decimals
-  )
+  isNftBalanceChange(change)
+    ? (change.balanceChange < 0n ? -change.balanceChange : change.balanceChange).toString()
+    : formatUnits(
+        change.balanceChange < 0n ? -change.balanceChange : change.balanceChange,
+        change.decimals
+      )
 
 export const getBalanceChangeTooltipId = (
   change: DisplayBalanceChange,
   submittedAccountOp: SubmittedAccountOpLike
 ) =>
-  `balance-change-${submittedAccountOp.id}-${change.chainId}-${change.address}-${change.balanceChange.toString()}`
+  `balance-change-${submittedAccountOp.id}-${change.chainId}-${change.address}-${
+    isNftBalanceChange(change) ? change.tokenId.toString() : change.balanceChange.toString()
+  }`
 
 export const getFormattedSubmittedDate = (timestamp: number) => formatDateTime(timestamp)
 
@@ -72,7 +86,10 @@ export const getModalFinalStatus = (status?: AccountOpStatus) => {
 }
 
 export const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOpLike) => {
-  const balanceChanges = submittedAccountOp.balanceChanges || []
+  const balanceChanges: DisplayBalanceChange[] = [
+    ...(submittedAccountOp.balanceChanges || []),
+    ...(submittedAccountOp.nftBalanceChanges || [])
+  ]
   const positiveChanges = balanceChanges.filter((change) => change.balanceChange > 0n)
   const negativeChanges = balanceChanges.filter((change) => change.balanceChange < 0n)
   const nativeNegativeChanges = negativeChanges.filter(
@@ -87,7 +104,7 @@ export const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOpL
 
 export const getSyntheticGasTankBalanceChange = (
   submittedAccountOp: SubmittedAccountOpLike
-): DisplayBalanceChange | null => {
+): Exclude<DisplayBalanceChange, { tokenId: bigint }> | null => {
   const gasFeePayment = submittedAccountOp.gasFeePayment
 
   if (!gasFeePayment?.isGasTank || gasFeePayment.amount <= 0n) return null
