@@ -1,6 +1,7 @@
 import React from 'react'
 import { ColorValue } from 'react-native'
 
+import { Key } from '@ambire-common/interfaces/keystore'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
@@ -9,7 +10,8 @@ import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
-import { KeyType } from '@common/components/AccountKeyIcons/AccountKeyIcons'
+
+export type KeyType = Key['type'] | 'none' | 'safe'
 
 const AccountKeyIcon = ({
   type,

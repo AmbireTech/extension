@@ -10,7 +10,7 @@ import WalletIcon from '@common/assets/svg/WalletIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
-import AccountKeyIcons from '@common/components/AccountKeyIcons'
+import AccountKeysBadge from '@common/components/AccountKeysBadge'
 import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import Dropdown from '@common/components/Dropdown'
@@ -302,11 +302,7 @@ const Account = ({
     </View>
   )
 
-  const keyIcons = (
-    <AccountKeyIcons isExtended account={account} accountKeys={accountKeys} withContainer={false} />
-  )
-
-  // The balance, the key icons and the badges share the row below the avatar, at the full
+  // The balance, the keys badge and the other badges share the row below the avatar, at the full
   // width of the row, wrapping one by one
   const badges = (
     <View
@@ -379,9 +375,14 @@ const Account = ({
             </View>
           </Badge>
         ) : (
-          keyIcons
+          <AccountKeysBadge account={account} accountKeys={accountKeys} />
         ))}
-      <AccountBadges accountData={account} accountKeys={accountKeys} withSpacing={false} />
+      <AccountBadges
+        accountData={account}
+        accountKeys={accountKeys}
+        withSpacing={false}
+        withViewOnly={!withKeyType}
+      />
       <SafeSignerBadges safes={safesSignedFor} />
     </View>
   )

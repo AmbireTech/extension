@@ -18,9 +18,16 @@ interface Props {
   accountKeys: Key[]
   // When false, badges drop their fixed left margin so a parent columnGap can space them
   withSpacing?: boolean
+  /** When false, the view-only badge is left out, for rows that show it in `AccountKeysBadge` */
+  withViewOnly?: boolean
 }
 
-const AccountBadges: FC<Props> = ({ accountData, accountKeys, withSpacing = true }) => {
+const AccountBadges: FC<Props> = ({
+  accountData,
+  accountKeys,
+  withSpacing = true,
+  withViewOnly = true
+}) => {
   const { theme } = useTheme()
 
   const isSmartAccount = useMemo(
@@ -37,7 +44,7 @@ const AccountBadges: FC<Props> = ({ accountData, accountKeys, withSpacing = true
 
   return (
     <>
-      {!accountKeys.length && !isSafeAccount && (
+      {withViewOnly && !accountKeys.length && !isSafeAccount && (
         <BadgeWithPreset
           preset="view-only"
           isIconLeading
