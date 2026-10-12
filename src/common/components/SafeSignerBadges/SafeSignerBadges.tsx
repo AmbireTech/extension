@@ -6,6 +6,7 @@ import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useSafesSignedFor from '@common/hooks/useSafesSignedFor'
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 
@@ -13,16 +14,18 @@ const AVATAR_SIZE = 16
 const SIGNER_OF_COLOR = hexToRgba('#000000', 0.6)
 
 interface Props {
-  /** The Safe accounts to tell the user the account is a signer of, see `useSafesSignedFor` */
-  safes: Account[]
+  /** The account to tell the user which Safe accounts it is a signer of */
+  account: Account
 }
 
 /**
  * Tells the user which of their Safe accounts the account can sign for. A Safe's signers
  * are accounts of their own, so they are synced to the other device only when picked.
  */
-const SafeSignerBadges = ({ safes }: Props) => {
+const SafeSignerBadges = ({ account }: Props) => {
   const { t } = useTranslation()
+  // Looked up here, so that the rows that do not show the badges do not subscribe to the accounts
+  const safes = useSafesSignedFor(account)
 
   return (
     <>

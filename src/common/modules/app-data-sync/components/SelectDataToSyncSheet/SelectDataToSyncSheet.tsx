@@ -92,6 +92,8 @@ const SelectDataToSyncSheet = ({
         switchAccountOnPress={false}
         withSettings={false}
         maxAccountAddrLength={SHORTENED_ADDRESS_LENGTH}
+        // A Safe's signers are synced only when picked, so the user is told which ones they are
+        withSafeSignerBadges
         renderLeftChildren={() => (
           <Checkbox
             value={selectedAddrs.includes(item.addr)}

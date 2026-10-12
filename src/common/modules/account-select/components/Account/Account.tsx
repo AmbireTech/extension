@@ -27,7 +27,6 @@ import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHo
 import usePendingRequestsCount from '@common/hooks/usePendingRequestsCount'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useSafeDeployedChainIds from '@common/hooks/useSafeDeployedChainIds'
-import useSafesSignedFor from '@common/hooks/useSafesSignedFor'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
@@ -68,6 +67,7 @@ const Account = ({
   withCopy = true,
   switchAccountOnPress = true,
   withBalance = true,
+  withSafeSignerBadges = false,
   onExtraHeightChange
 }: {
   account: AccountInterface
@@ -93,6 +93,8 @@ const Account = ({
   /** Set to false when pressing the row means something else than switching to it */
   switchAccountOnPress?: boolean
   withBalance?: boolean
+  /** Whether to tell which of the user's Safe accounts the account is a signer of */
+  withSafeSignerBadges?: boolean
   /**
    * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is (negative when
    * shorter), mostly because its badges wrapped, so a list that lays its rows out by height
@@ -136,7 +138,6 @@ const Account = ({
 
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
 
-  const safesSignedFor = useSafesSignedFor(account)
   const safeDeployedChainIds = useSafeDeployedChainIds(account)
   const pendingRequestsCount = usePendingRequestsCount(account)
 
@@ -383,7 +384,7 @@ const Account = ({
         withSpacing={false}
         withViewOnly={!withKeyType}
       />
-      <SafeSignerBadges safes={safesSignedFor} />
+      {withSafeSignerBadges && <SafeSignerBadges account={account} />}
     </View>
   )
 
