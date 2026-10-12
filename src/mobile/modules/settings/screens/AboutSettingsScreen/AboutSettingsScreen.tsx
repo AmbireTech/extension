@@ -9,12 +9,10 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import TosIcon from '@common/assets/svg/TosIcon'
 import Banner from '@common/components/Banner'
 import ControlOption from '@common/components/ControlOption'
-import FatToggle from '@common/components/FatToggle'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { APP_VERSION, BUILD_NUMBER, isDev } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { openInTab } from '@common/utils/links'
@@ -23,10 +21,10 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import AmbireNextSheet from '@mobile/modules/settings/components/AmbireNextSheet'
-import { getIsAmbireNextJoined, leaveAmbireNext } from '@mobile/services/ambireNext/ambireNext'
+import { getIsAmbireNextJoined } from '@mobile/services/ambireNext/ambireNext'
 
 // Ambire Next is hidden, like Android's developer options: tapping the version row
-// this many times in a row opens it.
+// this many times in a row opens it. Once joined, a single tap opens it (to leave).
 const AMBIRE_NEXT_SECRET_TAPS = 7
 // A longer pause between two taps starts the count over
 const AMBIRE_NEXT_SECRET_TAPS_MAX_GAP_MS = 1000
@@ -35,7 +33,6 @@ const AboutSettingsScreen = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { addToast } = useToast()
   const { currentlyRunningBundle, isRestartRequired, newReleaseBundle } = useStallionUpdate()
   const {
     ref: ambireNextSheetRef,
@@ -79,7 +76,10 @@ const AboutSettingsScreen = () => {
   }
 
   const handleVersionPress = useCallback(() => {
-    if (isAmbireNextJoined) return
+    if (isAmbireNextJoined) {
+      openAmbireNextSheet()
+      return
+    }
 
     const now = Date.now()
     const taps = versionTapsRef.current
@@ -90,23 +90,6 @@ const AboutSettingsScreen = () => {
     taps.count = 0
     openAmbireNextSheet()
   }, [isAmbireNextJoined, openAmbireNextSheet])
-
-  const handleAmbireNextJoined = useCallback(() => setIsAmbireNextJoined(true), [])
-
-  const handleLeaveAmbireNext = useCallback(async () => {
-    try {
-      await leaveAmbireNext()
-      setIsAmbireNextJoined(false)
-      addToast(
-        t(
-          'You left Ambire Next. The preview version stays on your device until the next update of the main release replaces it.'
-        )
-      )
-    } catch (error) {
-      captureException(error)
-      addToast(t('Leaving Ambire Next failed. Please try again.'), { type: 'error' })
-    }
-  }, [addToast, t])
 
   return (
     <MobileLayoutContainer>
@@ -124,24 +107,11 @@ const AboutSettingsScreen = () => {
         )}
         <ControlOption
           style={spacings.mbTy}
-          title={`v${APP_VERSION}${isDev ? '-dev' : ''} | build ${BUILD_NUMBER} | ${otaInfo}`}
+          title={`v${APP_VERSION}${isAmbireNextJoined ? '-next' : ''}${isDev ? '-dev' : ''} | build ${BUILD_NUMBER} | ${otaInfo}`}
           description={''}
           renderIcon={null}
           onPress={handleVersionPress}
         />
-        {isAmbireNextJoined && (
-          <ControlOption
-            style={spacings.mbTy}
-            title={t('Ambire Next')}
-            description={t(
-              'You get the preview version of Ambire Wallet, intended for early access and testing new features before the main release.'
-            )}
-            forceDescriptionOnMobile
-            renderIcon={null}
-          >
-            <FatToggle isOn onToggle={handleLeaveAmbireNext} style={spacings.mr0} />
-          </ControlOption>
-        )}
         <ControlOption
           style={spacings.mbTy}
           title={t('Terms of Service')}
@@ -170,7 +140,8 @@ const AboutSettingsScreen = () => {
       <AmbireNextSheet
         sheetRef={ambireNextSheetRef}
         closeBottomSheet={closeAmbireNextSheet}
-        onJoined={handleAmbireNextJoined}
+        isJoined={isAmbireNextJoined}
+        onIsJoinedChange={setIsAmbireNextJoined}
       />
     </MobileLayoutContainer>
   )
