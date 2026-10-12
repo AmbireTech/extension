@@ -7,9 +7,11 @@ import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
+import { GEIST_MONO_FONT_FAMILIES } from '@common/hooks/useFonts/constants'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
+import { getStringAsync } from '@common/utils/clipboard'
 import {
   AMBIRE_NEXT_ACCESS_CODE_LENGTH,
   joinAmbireNext,
@@ -44,6 +46,28 @@ const AmbireNextSheet = ({ sheetRef, closeBottomSheet, isJoined, onIsJoinedChang
     setAccessCode(value)
     setErrorMessage('')
   }, [])
+
+  // The code is usually shared in a chat, so offer an explicit paste button instead of
+  // relying on the fiddly long-press OS paste menu. Whitespace copied along is dropped.
+  const handlePaste = useCallback(async () => {
+    try {
+      const pastedAccessCode = (await getStringAsync())
+        .split('')
+        .filter((char) => char.trim() !== '')
+        .slice(0, AMBIRE_NEXT_ACCESS_CODE_LENGTH)
+        .join('')
+
+      if (!pastedAccessCode) {
+        addToast(t('There is no access code copied on your device.'), { type: 'error' })
+        return
+      }
+
+      handleAccessCodeChange(pastedAccessCode)
+    } catch (error) {
+      captureException(error)
+      addToast(t('Pasting the access code failed. Please type it in instead.'), { type: 'error' })
+    }
+  }, [addToast, handleAccessCodeChange, t])
 
   const handleClosed = useCallback(() => {
     // The access code is a team secret, so it is not kept around after the sheet is closed
@@ -135,13 +159,19 @@ const AmbireNextSheet = ({ sheetRef, closeBottomSheet, isJoined, onIsJoinedChang
             onChangeText={handleAccessCodeChange}
             onSubmitEditing={handleJoin}
             editable={!isJoining}
+            button={isJoining ? null : t('Paste')}
+            buttonProps={{ style: spacings.mrMd }}
+            onButtonPress={handlePaste}
             error={errorMessage}
             maxLength={AMBIRE_NEXT_ACCESS_CODE_LENGTH}
             keyboardType="number-pad"
+            nativeInputStyle={{ fontSize: 16, fontFamily: GEIST_MONO_FONT_FAMILIES.REGULAR }}
             containerStyle={spacings.mbLg}
             backgroundColor={theme.secondaryBackground}
-            autoComplete="off"
+            autoCapitalize="none"
             autoCorrect={false}
+            autoComplete="off"
+            spellCheck={false}
             returnKeyType="done"
           />
           <Button
