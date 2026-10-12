@@ -31,6 +31,8 @@ type Props = {
   testId?: string
   /** Puts the icons (`children` and the tooltip's) before the text instead of after it */
   isIconLeading?: boolean
+  /** Shows the tooltip on hover over the whole badge, instead of on an info icon */
+  isTooltipOnBadge?: boolean
 }
 
 export type { BadgeType, Props, SpecialBadgeType }

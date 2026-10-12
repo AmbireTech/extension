@@ -6,6 +6,7 @@ import {
   isAmbireV1LinkedAccount as getIsAmbireV1LinkedAccount,
   isSmartAccount as getIsSmartAccount
 } from '@ambire-common/libs/account/account'
+import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
@@ -40,12 +41,15 @@ const AccountBadges: FC<Props> = ({ accountData, accountKeys, withSpacing = true
         <BadgeWithPreset
           preset="view-only"
           isIconLeading
+          isTooltipOnBadge
           style={{
             ...(withSpacing ? spacings.mlTy : {}),
             borderWidth: 1,
             borderColor: theme.neutral600
           }}
-        />
+        >
+          <ViewOnlyIcon width={14} height={14} color={theme.neutral600} />
+        </BadgeWithPreset>
       )}
 
       {isSmartAccount && isAmbireV1LinkedAccount && (

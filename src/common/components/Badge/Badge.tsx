@@ -73,7 +73,8 @@ const Badge = ({
   size = 'sm',
   specialType,
   testId,
-  isIconLeading = false
+  isIconLeading = false,
+  isTooltipOnBadge = false
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
   const badgeTypes = getBadgeTypes(theme)
@@ -81,12 +82,13 @@ const Badge = ({
   const tooltipId = nanoid(6)
   const sizeMultiplier = SIZES[size]
 
-  const hasIcon = !!tooltipText || !!children
+  const hasInfoIcon = !!tooltipText && !isTooltipOnBadge
+  const hasIcon = hasInfoIcon || !!children
 
   const icons = (
     <>
       {children}
-      {!!tooltipText && !specialType && (
+      {hasInfoIcon && !specialType && (
         <InfoIcon
           dataSet={createGlobalTooltipDataSet({
             id: tooltipId,
@@ -113,6 +115,11 @@ const Badge = ({
 
   return (
     <View
+      dataSet={
+        isTooltipOnBadge && !!tooltipText
+          ? createGlobalTooltipDataSet({ id: tooltipId, content: tooltipText })
+          : undefined
+      }
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
@@ -143,7 +150,7 @@ const Badge = ({
           style={[
             isIconLeading
               ? hasIcon && spacings.mlMi
-              : (!!tooltipText || type === 'new') && spacings.mrMi,
+              : (hasInfoIcon || type === 'new') && spacings.mrMi,
             textStyle
           ]}
         >
