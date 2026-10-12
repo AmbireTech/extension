@@ -23,7 +23,6 @@ const locators = {
   importConfirmButton: 'div[data-testid="import-button"]',
   importFromRecoveryPhraseButton: 'div[data-testid="import-method-recovery-phrase"]',
   inputSeetField: 'textarea[data-testid="enter-seed-phrase-field"]',
-  recoveryPhraseAdvancedModeToggle: 'label[testid="enable-passphrase-toggle"]',
   inputPassphrase: 'input[data-testid="input-passphrase"]',
   editAccountButton: 'div[data-testid="edit-btn-for-edit-name-field-0"]',
   // editAccountNameField: 'input[data-testid="edit-name-field-0"]',

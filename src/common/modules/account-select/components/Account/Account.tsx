@@ -439,6 +439,7 @@ const Account = ({
         ref={contentRef}
         onLayout={updateContentHeight}
         style={[flexbox.directionRow, flexbox.alignCenter]}
+        testID={`account-${addr}`}
       >
         {/* As tall as the content, which the row's height is worked out from */}
         <View
