@@ -311,7 +311,6 @@ const Account = ({
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.wrap,
-        spacings.mtTy,
         { columnGap: SPACING_MI, rowGap: SPACING_MI }
       ]}
     >
@@ -466,6 +465,8 @@ const Account = ({
             </View>
             {actions}
           </View>
+          {/* A view rather than a border, as per-side borders can leave stray lines on native */}
+          <View style={styles.separator} />
           {badges}
         </View>
       </View>
