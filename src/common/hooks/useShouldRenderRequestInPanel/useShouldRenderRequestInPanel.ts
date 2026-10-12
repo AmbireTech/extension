@@ -11,9 +11,9 @@ const selectRequestWindow = (state: AllControllersMappingType['RequestsControlle
 
 /**
  * Whether an action request should be rendered in the side panel. It is not when a request window
- * already owns the request: the window opened before the panel and keeps it until it closes, so
- * the panel would otherwise show the same request a second time. Opening such a request only
- * focuses its window (the background does that on `setCurrentUserRequestById`).
+ * already owns the request: the window opened before the panel, so the panel would otherwise show
+ * the same request a second time. Opening such a request (`setCurrentUserRequestById`) makes the
+ * background close the window and leave the request to the panel.
  * Nor is it in a Firefox sidebar open while side panel mode is off: it shows the "mode off" notice
  * instead of the wallet, and requests go to a request window then.
  */

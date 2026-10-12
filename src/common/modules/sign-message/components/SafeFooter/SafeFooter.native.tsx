@@ -94,8 +94,9 @@ const SafeFooter = ({
       {threshold > 0 &&
         !isSingle &&
         (threshold > signed.length ? (
-          <>
-            <View style={spacings.mbSm}>
+          <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
+            <View style={flexbox.flex1}>{rejectButton({ size: 'large' })}</View>
+            <View style={flexbox.flex1}>
               <Button
                 key={showSafeSigners ? 'close-signing' : 'begin-signing'}
                 size="large"
@@ -105,8 +106,7 @@ const SafeFooter = ({
                 text={!showSafeSigners ? 'Begin signing' : 'Close signing'}
               />
             </View>
-            {rejectButton({ size: 'large' })}
-          </>
+          </View>
         ) : (
           <View style={flexbox.center}>
             <Spinner

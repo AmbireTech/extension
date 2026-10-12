@@ -58,3 +58,19 @@ describe('getDappInteractions Safe cancellation', () => {
     })
   })
 })
+
+describe('getDappInteractions Safe deployment', () => {
+  test('shows a Safe deployment with the Safe account icon', () => {
+    const interactions = getDappInteractions(
+      buildSubmittedAccountOp({ meta: { isSafeDeploy: true } })
+    )
+
+    expect(interactions).toEqual([
+      {
+        id: 'fallback:safeDeploy',
+        name: 'Activate Safe account',
+        iconType: 'safe'
+      }
+    ])
+  })
+})
