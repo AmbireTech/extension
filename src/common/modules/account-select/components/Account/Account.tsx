@@ -16,6 +16,7 @@ import Badge from '@common/components/Badge'
 import Dropdown from '@common/components/Dropdown'
 import Editable from '@common/components/Editable'
 import NetworkIcon from '@common/components/NetworkIcon'
+import PendingRequestsBadge from '@common/components/PendingRequestsBadge'
 import SafeSignerBadges from '@common/components/SafeSignerBadges'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -23,6 +24,7 @@ import { useTranslation } from '@common/config/localization'
 import useAccountKeys from '@common/hooks/useAccountKeys'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import usePendingRequestsCount from '@common/hooks/usePendingRequestsCount'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useSafeDeployedChainIds from '@common/hooks/useSafeDeployedChainIds'
 import useSafesSignedFor from '@common/hooks/useSafesSignedFor'
@@ -136,6 +138,7 @@ const Account = ({
 
   const safesSignedFor = useSafesSignedFor(account)
   const safeDeployedChainIds = useSafeDeployedChainIds(account)
+  const pendingRequestsCount = usePendingRequestsCount(account)
 
   /**
    * The badges wrap one by one onto more lines when they do not fit next to each other, so
@@ -332,6 +335,7 @@ const Account = ({
           </Text>
         </Badge>
       )}
+      {!!pendingRequestsCount && <PendingRequestsBadge count={pendingRequestsCount} />}
       {!!withKeyType &&
         (safeDeployedChainIds.length ? (
           // The Safe key badge, telling also which chains the Safe is deployed on
