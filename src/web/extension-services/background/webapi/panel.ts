@@ -189,15 +189,12 @@ export const setPanelWindowId = (portId: string, windowId: number) => {
   panelWindowIdByPortId.set(portId, windowId)
 }
 
-/**
- * Forgets the window of a side panel whose port disconnected, and returns it (undefined when the
- * panel never reported one).
- */
-export const forgetPanelWindowId = (portId: string): number | undefined => {
-  const windowId = panelWindowIdByPortId.get(portId)
-  panelWindowIdByPortId.delete(portId)
+/** The browser window a side panel is in, or undefined until the panel has reported it. */
+export const getPanelWindowId = (portId: string) => panelWindowIdByPortId.get(portId)
 
-  return windowId
+/** Forgets the window of a side panel whose port disconnected. */
+export const forgetPanelWindowId = (portId: string) => {
+  panelWindowIdByPortId.delete(portId)
 }
 
 /**
@@ -205,9 +202,11 @@ export const forgetPanelWindowId = (portId: string): number | undefined => {
  * the panel is showing, since Chrome exposes no way to query its state. The panel is deliberately
  * not openable or closable from here - the user owns its lifecycle - so requests fall back to a
  * request window whenever it isn't open.
- * On Firefox the sidebar can also be opened from the browser's sidebar switcher while panel mode is
- * off, and it then shows a "turn on side panel mode" notice instead of the wallet - so it only
- * counts as open in panel mode, otherwise requests would be routed to a view that can't show them.
+ * A panel only counts as open in panel mode. On Firefox the sidebar can also be opened from the
+ * browser's sidebar switcher while panel mode is off, and it then shows a "turn on side panel mode"
+ * notice instead of the wallet - requests routed to it couldn't be shown. On Chrome the panel is
+ * closed when the mode is turned off (see applyPanelMode), so a panel still connected then is one
+ * that is closing.
  * Each browser window has its own panel, so with a `windowId` only a panel in that window counts.
  * A panel that hasn't reported its window yet (it does so right after connecting) doesn't count
  * for a specific window - a request then opens in a request window rather than in a panel that may
@@ -220,7 +219,7 @@ const isPanelOpen = (
 ) => {
   const panelPorts = pm.ports.filter((port) => port.name === PANEL_PORT_NAME)
   if (!panelPorts.length) return false
-  if (isGecko && !getIsPanelModeEnabled()) return false
+  if (!getIsPanelModeEnabled()) return false
   if (windowId === undefined) return true
 
   return panelPorts.some((port) => panelWindowIdByPortId.get(port.id) === windowId)

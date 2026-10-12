@@ -10,7 +10,11 @@ import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { browser, engine } from '@web/constants/browserapi'
-import { openPanel, setPanelWindowId } from '@web/extension-services/background/webapi/panel'
+import {
+  getPanelWindowId,
+  openPanel,
+  setPanelWindowId
+} from '@web/extension-services/background/webapi/panel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 
@@ -267,7 +271,16 @@ export const handleActions = async (
       const overlayPortName = isSidePanelModeEnabled ? 'side-panel' : 'popup'
       const targetWindowId = meta?.windowId ?? port?.sender?.tab?.windowId
 
-      const getOverlayPort = () => pm!.ports.find((p) => p.name === overlayPortName)
+      // Each browser window has its own side panel, so only the one in the sender's window counts -
+      // a panel open in another window isn't the one the user asked for. A panel that has just
+      // opened is found once it reports its window, right after connecting.
+      const getOverlayPort = () =>
+        pm!.ports.find((p) => {
+          if (p.name !== overlayPortName) return false
+          if (overlayPortName !== 'side-panel' || targetWindowId === undefined) return true
+
+          return getPanelWindowId(p.id) === targetWindowId
+        })
 
       // Shows the dashboard in the view the action came from (e.g. the onboarding tab) when neither
       // the popup nor the side panel can be opened. Only that view - another one may be in the

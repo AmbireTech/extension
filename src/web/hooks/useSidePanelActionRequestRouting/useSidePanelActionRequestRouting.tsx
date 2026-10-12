@@ -11,7 +11,10 @@ import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import { getUiType } from '@common/utils/uiType'
-import { getDappTabTargetsFromUserRequest } from '@web/utils/dispatchDappTabFocus'
+import {
+  getAppWindowIdsFromUserRequest,
+  getDappTabTargetsFromUserRequest
+} from '@web/utils/dispatchDappTabFocus'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -21,18 +24,14 @@ const getRoutePathname = (route: string) => (route.split('?')[0] ?? route).repla
 
 /**
  * Whether a request belongs to the panel in the given window: it comes from an app in that window,
- * or from no app window at all (e.g. a request started in the wallet itself, or over
- * WalletConnect). Mirrors the background, which shows a request in the panel of the app's own
- * window, so a request opens on its own in that panel only - not in every open panel. Before the
- * panel knows its window, only requests without an app window count.
+ * or from no app window at all. Mirrors the background, which shows a request in the panel of the
+ * app's own window, so a request opens on its own in that panel only - not in every open panel.
+ * Before the panel knows its window, only requests without an app window count.
  */
 const getIsRequestForPanelWindow = (
-  dappTabTargets: ReturnType<typeof getDappTabTargetsFromUserRequest>,
+  requestWindowIds: number[],
   panelWindowId: number | undefined
 ) => {
-  const requestWindowIds = dappTabTargets
-    .map(({ windowId }) => windowId)
-    .filter((windowId): windowId is number => typeof windowId === 'number')
   if (!requestWindowIds.length) return true
 
   return panelWindowId !== undefined && requestWindowIds.includes(panelWindowId)
@@ -94,7 +93,7 @@ const useSidePanelActionRequestRouting = () => {
       const requestJustActivated = prevRequestIdRef.current === null
       const isDifferentRequest = activeRequestId !== lastOpenedRequestIdRef.current
       const isForThisPanel = getIsRequestForPanelWindow(
-        lastDappTabTargetsRef.current,
+        getAppWindowIdsFromUserRequest(currentUserRequest),
         panelWindowId
       )
 

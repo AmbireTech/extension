@@ -639,20 +639,21 @@ const init = async () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
 
-  // Turning side panel mode off closes Chrome's side panel (see applyPanelMode), but the Firefox
-  // sidebar stays open and switches to the "mode off" notice, which can't show requests. A request
-  // it was showing is moved to a request window, so it isn't left waiting with nothing showing it.
+  // When side panel mode is turned off, a request shown in the panel is moved to a request window,
+  // so it isn't lost or left waiting with nothing showing it: Chrome closes its side panel then (see
+  // applyPanelMode), and the Firefox sidebar switches to the "mode off" notice, which can't show
+  // requests. The panel's disconnect cleanup doesn't reject requests while the mode is off.
   let wasSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
   walletStateCtrl.onUpdate(() => {
     const isSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
     const hasSidePanelModeBeenTurnedOff = wasSidePanelModeEnabled && !isSidePanelModeEnabled
     wasSidePanelModeEnabled = isSidePanelModeEnabled
 
-    if (engine !== 'gecko' || !hasSidePanelModeBeenTurnedOff) return
+    if (!hasSidePanelModeBeenTurnedOff) return
     if (!mainCtrl.requests.currentUserRequest || mainCtrl.requests.requestWindow.windowProps) return
 
     mainCtrl.requests.openRequestWindow().catch((error: unknown) => {
-      console.error('Failed to move a request out of the Firefox sidebar', error)
+      console.error('Failed to move a request out of the side panel', error)
       captureBackgroundException(error)
     })
   })

@@ -1,9 +1,9 @@
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ONBOARDING_WEB_ROUTES } from '@common/modules/router/constants/common'
-import { engine } from '@web/constants/browserapi'
 import { IS_FIREFOX } from '@web/constants/common'
 import { forgetPanelWindowId } from '@web/extension-services/background/webapi/panel'
 import { Port } from '@web/extension-services/messengers'
+import { getAppWindowIdsFromUserRequest } from '@web/utils/dispatchDappTabFocus'
 
 export const handleCleanUpOnPortDisconnect = async ({
   port,
@@ -15,20 +15,22 @@ export const handleCleanUpOnPortDisconnect = async ({
   isSidePanelModeEnabled: boolean
 }) => {
   if (port.name === 'side-panel') {
-    const closedPanelWindowId = forgetPanelWindowId(port.id)
+    forgetPanelWindowId(port.id)
 
     // The panel renders action requests inline, so closing it discards their UI. Handle the
     // pending requests like a request window close: transactions stay queued, the rest get
     // rejected. Skipped while another panel or a request window still shows the request.
-    // On Firefox the sidebar can be open while panel mode is off, showing the "mode off" notice
-    // instead of the wallet - it never showed the requests, so closing it discards nothing.
-    // (Turning the mode off moves a request shown in the sidebar to a request window first.)
-    const wasShowingRequests = engine !== 'gecko' || isSidePanelModeEnabled
+    // Nothing is discarded while panel mode is off: turning it off moves a request shown in the
+    // panel to a request window instead (see background.ts) - and on Firefox the sidebar can be
+    // open while the mode is off, showing the "mode off" notice, which never showed the requests.
+    const wasShowingRequests = isSidePanelModeEnabled
     // The closed panel's port is already gone, so this only counts the panels still open - with
-    // the same checks that decide where requests are shown. Only a panel in the closed panel's
-    // window counts: requests are shown in the panel of the app's own window, so a panel in another
-    // window isn't where the user was looking at them.
-    const isAnotherPanelOpen = !!mainCtrl.ui.panel?.isOpen(closedPanelWindowId)
+    // the same checks that decide where requests are shown: the panel of the request's app window,
+    // or any panel for a request without one (e.g. WalletConnect, or started in the wallet).
+    const requestWindowIds = getAppWindowIdsFromUserRequest(mainCtrl.requests.currentUserRequest)
+    const isAnotherPanelOpen = requestWindowIds.length
+      ? requestWindowIds.some((windowId) => !!mainCtrl.ui.panel?.isOpen(windowId))
+      : !!mainCtrl.ui.panel?.isOpen()
     const isRequestInOwnWindow = !!mainCtrl.requests.requestWindow.windowProps
 
     // Not counted against the apps that were waiting - a port also drops on an extension
