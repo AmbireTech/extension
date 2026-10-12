@@ -1,7 +1,10 @@
+import { formatUnits } from 'ethers'
+
 import type {
   SwapAndBridgeActiveRoute,
   SwapAndBridgeRoute
 } from '@ambire-common/interfaces/swapAndBridge'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 
 export type RouteStepType = 'default' | 'warning' | 'success'
 
@@ -20,6 +23,49 @@ export const getRouteNetworkFeeInUsd = (
   if (route.outputValueAfterGasInUsd === undefined) return undefined
 
   return getPositiveFiniteNumber(route.outputValueInUsd - route.outputValueAfterGasInUsd)
+}
+
+const getPositiveBigInt = (value: string) => {
+  try {
+    const parsedValue = BigInt(value)
+
+    return parsedValue > 0n ? parsedValue : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Formats an amount of the route's receiving token, e.g. "0.0091245 WBTC".
+ */
+export const formatRouteToTokenAmount = (
+  amount: bigint,
+  toToken: Pick<SwapAndBridgeRoute['toToken'], 'decimals' | 'symbol'>
+) => `${formatDecimals(Number(formatUnits(amount, toToken.decimals)), 'precise')} ${toToken.symbol}`
+
+/**
+ * The network fee taken from the received tokens, in the receiving token's smallest unit.
+ * Only providers that don't charge the network fee to the account (CoW Swap) set it.
+ */
+export const getRouteNetworkFeeInToToken = (
+  route: Pick<SwapAndBridgeRoute, 'networkFeeInToToken'>
+): bigint | undefined => {
+  if (route.networkFeeInToToken === undefined) return undefined
+
+  return getPositiveBigInt(route.networkFeeInToToken)
+}
+
+/**
+ * The least the user receives, in the receiving token's smallest unit. Read from the last
+ * user tx, the same way the slippage warning reads it.
+ */
+export const getRouteMinReceiveAmount = (
+  route: Pick<SwapAndBridgeRoute, 'userTxs'>
+): bigint | undefined => {
+  const lastUserTx = route.userTxs[route.userTxs.length - 1]
+  if (!lastUserTx) return undefined
+
+  return getPositiveBigInt(lastUserTx.minAmountOut)
 }
 
 /**

@@ -1,6 +1,9 @@
 import {
+  formatRouteToTokenAmount,
   getLastRouteStepType,
   getRouteExtraBridgeFeeInUsd,
+  getRouteMinReceiveAmount,
+  getRouteNetworkFeeInToToken,
   getRouteNetworkFeeInUsd
 } from './helpers'
 
@@ -115,5 +118,57 @@ describe('getRouteExtraBridgeFeeInUsd', () => {
     expect(
       getRouteExtraBridgeFeeInUsd({ serviceFee: { amount: '1', amountUSD: 'unknown' } })
     ).toBeUndefined()
+  })
+})
+
+describe('getRouteNetworkFeeInToToken', () => {
+  test('returns the network fee taken from the received tokens', () => {
+    expect(getRouteNetworkFeeInToToken({ networkFeeInToToken: '720' })).toBe(720n)
+  })
+
+  test('returns undefined for providers that charge the network fee to the account', () => {
+    expect(getRouteNetworkFeeInToToken({})).toBeUndefined()
+  })
+
+  test('returns undefined when the fee is zero', () => {
+    expect(getRouteNetworkFeeInToToken({ networkFeeInToToken: '0' })).toBeUndefined()
+  })
+
+  test('returns undefined when the fee is negative', () => {
+    expect(getRouteNetworkFeeInToToken({ networkFeeInToToken: '-1' })).toBeUndefined()
+  })
+
+  test('returns undefined when the fee is not a whole number', () => {
+    expect(getRouteNetworkFeeInToToken({ networkFeeInToToken: '0.5' })).toBeUndefined()
+    expect(getRouteNetworkFeeInToToken({ networkFeeInToToken: 'unknown' })).toBeUndefined()
+  })
+})
+
+describe('getRouteMinReceiveAmount', () => {
+  const makeUserTx = (minAmountOut: string) => ({ minAmountOut }) as any
+
+  test('returns the min amount out of the last user tx', () => {
+    expect(getRouteMinReceiveAmount({ userTxs: [makeUserTx('5000'), makeUserTx('994000')] })).toBe(
+      994000n
+    )
+  })
+
+  test('returns undefined when the route has no user txs', () => {
+    expect(getRouteMinReceiveAmount({ userTxs: [] })).toBeUndefined()
+  })
+
+  test('returns undefined when the min amount out is zero', () => {
+    expect(getRouteMinReceiveAmount({ userTxs: [makeUserTx('0')] })).toBeUndefined()
+  })
+
+  test('returns undefined when the min amount out is not a whole number', () => {
+    expect(getRouteMinReceiveAmount({ userTxs: [makeUserTx('')] })).toBeUndefined()
+    expect(getRouteMinReceiveAmount({ userTxs: [makeUserTx('1.5')] })).toBeUndefined()
+  })
+})
+
+describe('formatRouteToTokenAmount', () => {
+  test('formats the amount with the token decimals and symbol', () => {
+    expect(formatRouteToTokenAmount(994000n, { decimals: 6, symbol: 'USDT' })).toBe('0.994 USDT')
   })
 })

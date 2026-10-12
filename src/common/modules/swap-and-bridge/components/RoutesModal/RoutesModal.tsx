@@ -18,7 +18,10 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import RouteStepsPreview from '@common/modules/swap-and-bridge/components/RouteStepsPreview'
 import {
+  formatRouteToTokenAmount,
   getRouteExtraBridgeFeeInUsd,
+  getRouteMinReceiveAmount,
+  getRouteNetworkFeeInToToken,
   getRouteNetworkFeeInUsd
 } from '@common/modules/swap-and-bridge/components/RouteStepsPreview/helpers'
 import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
@@ -32,10 +35,10 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 import getStyles from './styles'
 
-// The approximate height of a swap route card with one route details row (network fee),
-// including its bottom margin. Used only for cards that haven't rendered yet, as the
-// rendered cards are measured (bridge cards are taller by 28px per extra row).
-const FLAT_LIST_ITEM_HEIGHT = 171.5
+// The approximate height of a swap route card with two route details rows (min receive and
+// network fee), including its bottom margin. Used only for cards that haven't rendered yet,
+// as the rendered cards are measured (bridge cards are taller by 28px per extra row).
+const FLAT_LIST_ITEM_HEIGHT = 199.5
 
 const { isPopup } = getUiType()
 
@@ -241,6 +244,8 @@ const RoutesModal = ({
       const isEstimatingRoute = isEstimationLoading && item.routeId === userSelectedRoute?.routeId
       const isSelected = item.routeId === userSelectedRoute?.routeId && !isEstimatingRoute
       const extraBridgeFeeInUsd = getRouteExtraBridgeFeeInUsd(item)
+      const minReceiveAmount = getRouteMinReceiveAmount(item)
+      const networkFeeInToToken = getRouteNetworkFeeInToToken(item)
 
       return (
         <Pressable
@@ -283,6 +288,16 @@ const RoutesModal = ({
             inputValueInUsd={inputValueInUsd}
             outputValueInUsd={outputValueInUsd}
             estimationInSeconds={item.serviceTime}
+            minReceiveLabel={
+              minReceiveAmount
+                ? formatRouteToTokenAmount(minReceiveAmount, item.toToken)
+                : undefined
+            }
+            networkFeeInToTokenLabel={
+              networkFeeInToToken
+                ? formatRouteToTokenAmount(networkFeeInToToken, item.toToken)
+                : undefined
+            }
             networkFeeInUsd={getRouteNetworkFeeInUsd(item)}
             extraBridgeFee={
               extraBridgeFeeInUsd

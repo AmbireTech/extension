@@ -144,6 +144,8 @@ const RouteStepsPreview = ({
   inputValueInUsd,
   outputValueInUsd,
   estimationInSeconds,
+  minReceiveLabel,
+  networkFeeInToTokenLabel,
   networkFeeInUsd,
   extraBridgeFee,
   currentStep = 0,
@@ -159,6 +161,14 @@ const RouteStepsPreview = ({
   inputValueInUsd?: number
   outputValueInUsd?: number
   estimationInSeconds?: number
+  /** The least the user receives, formatted with the receiving token's symbol */
+  minReceiveLabel?: string
+  /**
+   * The network fee taken from the received tokens (CoW Swap), formatted with the receiving
+   * token's symbol. When set, it's shown instead of `networkFeeInUsd`, which is charged
+   * to the account
+   */
+  networkFeeInToTokenLabel?: string
   /** The provider's estimated network fee, shown as a row under the token amounts */
   networkFeeInUsd?: number
   /** The extra fee some bridges charge in the source chain's native token */
@@ -178,7 +188,11 @@ const RouteStepsPreview = ({
   const mevProtectedTooltipId = useId()
   const isMevProtected = providerId === 'cowswap'
   const hasRouteDetails =
-    !!networkFeeInUsd || !!extraBridgeFee || (isBridge && !!estimationInSeconds)
+    !!minReceiveLabel ||
+    !!networkFeeInToTokenLabel ||
+    !!networkFeeInUsd ||
+    !!extraBridgeFee ||
+    (isBridge && !!estimationInSeconds)
   const mevProtectedTooltipText = t(
     'CoW Swap is designed to protect your swap from bots that manipulate the price before it executes.'
   )
@@ -340,12 +354,27 @@ const RouteStepsPreview = ({
       >
         {!isDisabled && (
           <>
-            {!!networkFeeInUsd && (
+            {!!minReceiveLabel && (
               <RouteDetailsRow
-                label={t('Network fee (est.)')}
-                value={formatDecimals(networkFeeInUsd, 'price')}
-                testID="route-network-fee"
+                label={t('Min receive')}
+                value={minReceiveLabel}
+                testID="route-min-receive"
               />
+            )}
+            {networkFeeInToTokenLabel ? (
+              <RouteDetailsRow
+                label={t('Fee')}
+                value={t('~{{amount}}', { amount: networkFeeInToTokenLabel })}
+                testID="route-fee"
+              />
+            ) : (
+              !!networkFeeInUsd && (
+                <RouteDetailsRow
+                  label={t('Network fee')}
+                  value={t('~{{amount}}', { amount: formatDecimals(networkFeeInUsd, 'price') })}
+                  testID="route-network-fee"
+                />
+              )
             )}
             {!!extraBridgeFee && (
               <RouteDetailsRow
