@@ -105,6 +105,8 @@ interface Props {
    * draggable range are ignored. Defaults to the quarters (0/25/50/75/100%), which are dots only
    * and leave the filled track a single shade. */
   marks?: Mark[]
+  /** Keeps showing `value`, unlike a zero `maximumValue`, which also empties the track. */
+  disabled?: boolean
 }
 
 const AmountSlider = ({
@@ -113,7 +115,8 @@ const AmountSlider = ({
   onValueChange,
   accessibilityLabel,
   tierOffset = 0n,
-  marks
+  marks,
+  disabled = false
 }: Props) => {
   const { t } = useTranslation()
   const { styles, themeType } = useTheme(getStyles)
@@ -125,7 +128,7 @@ const AmountSlider = ({
     [themeType]
   )
   const [width, setWidth] = useState(0)
-  const isDisabled = maximumValue <= 0n
+  const isDisabled = disabled || maximumValue <= 0n
   const clampedValue = value < 0n ? 0n : value > maximumValue ? maximumValue : value
   const sliderStep = maximumValue > 0n ? (clampedValue * SLIDER_STEPS) / maximumValue : 0n
   // Values live on the track's own axis, edge to edge, so a mark and the thumb picking it out
@@ -298,7 +301,7 @@ const AmountSlider = ({
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
-        .enabled(maximumValue > 0n)
+        .enabled(!isDisabled)
         .minDistance(0)
         // Only claims the gesture once the drag is clearly horizontal, so a vertical swipe that
         // starts on the slider (e.g. to scroll the now-scrollable screen) isn't swallowed by it.
@@ -314,16 +317,18 @@ const AmountSlider = ({
             Math.abs(translationX) < PRESS_MAX_TRAVEL ? PRESS_SNAP_RADIUS : SNAP_RADIUS
           )
         }),
-    [maximumValue, updateValue]
+    [isDisabled, updateValue]
   )
   const handleAccessibilityAction = useCallback(
     (event: AccessibilityActionEvent) => {
+      if (isDisabled) return
+
       const direction = event.nativeEvent.actionName === 'increment' ? 1n : -1n
       const nextStep = sliderStep + ACCESSIBILITY_STEP * direction
       const clampedStep = nextStep < 0n ? 0n : nextStep > SLIDER_STEPS ? SLIDER_STEPS : nextStep
       emitValueChange((maximumValue * clampedStep) / SLIDER_STEPS)
     },
-    [emitValueChange, maximumValue, sliderStep]
+    [emitValueChange, isDisabled, maximumValue, sliderStep]
   )
   const accessibilityValue = useMemo(
     () => ({

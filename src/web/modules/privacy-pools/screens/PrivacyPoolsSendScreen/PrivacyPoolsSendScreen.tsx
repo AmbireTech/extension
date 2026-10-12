@@ -62,6 +62,7 @@ const PrivacyPoolsSendScreen = () => {
     getNetworkName,
     getTokenPrice,
     prepareWithdrawal,
+    recheckWithdrawal,
     broadcastWithdrawal,
     dismissOperation,
     isAvailable
@@ -213,7 +214,8 @@ const PrivacyPoolsSendScreen = () => {
   }, [maxAmount, parsedAmount, selectedToken, t])
 
   const isTransferInFlight = operation?.status === 'pending'
-  // Proving and pricing, before the fee sheet opens
+  // Proving and pricing, before the fee sheet opens. The form is locked meanwhile, as the transfer
+  // is proved for what it held on Proceed; leaving the screen cancels it.
   const isPreparingTransfer = isTransferInFlight && operation?.phase === 'proving'
   const canSend =
     isAvailable &&
@@ -236,7 +238,8 @@ const PrivacyPoolsSendScreen = () => {
     })
   }, [canSend, parsedAmount, prepareWithdrawal, recipient, selectedToken])
 
-  // Opens the sheet when the transfer is ready, also on coming back to the screen while one waits
+  // Opens the sheet when the transfer is ready. One already ready on coming back to the screen is
+  // opened by the sheet itself - see `PrivacyPoolsSendSheet`
   const operationPhase = operation?.phase
   const operationStatus = operation?.status
   useEffect(() => {
@@ -310,6 +313,7 @@ const PrivacyPoolsSendScreen = () => {
             isRecipientDomainResolving={addressState.isDomainResolving}
             addressValidationMsg={addressInputState.validation.message}
             selectedTokenSymbol={selectedToken?.symbol}
+            disabled={isTransferInFlight}
           />
 
           {!withdrawTokens.length && (
@@ -328,7 +332,7 @@ const PrivacyPoolsSendScreen = () => {
             fromTokenOptions={withdrawTokens}
             fromTokenValue={selectedToken || undefined}
             fromAmountValue={fieldMode === 'token' ? amount : amounts.amountInFiat}
-            fromTokenAmountSelectDisabled={!withdrawTokens.length}
+            fromTokenAmountSelectDisabled={!withdrawTokens.length || isTransferInFlight}
             handleChangeFromToken={handleChangeToken}
             fromSelectedToken={selectedTokenForField}
             fromAmount={amount}
@@ -354,6 +358,7 @@ const PrivacyPoolsSendScreen = () => {
         sheetRef={sheetRef}
         closeBottomSheet={closeSheet}
         onSend={broadcastWithdrawal}
+        onRecheck={recheckWithdrawal}
         onClosed={handleSheetClosed}
       />
     </Wrapper>

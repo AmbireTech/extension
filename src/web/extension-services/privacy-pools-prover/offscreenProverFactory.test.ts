@@ -387,6 +387,60 @@ describe('createOffscreenProverFactory', () => {
     })
   })
 
+  describe('a cancelled proof', () => {
+    it('fails at once and closes the document, whose threads cannot drop it midway', async () => {
+      onDocumentCreated = () => {
+        connectDocument().onMessage.dispatch({ type: 'ready' })
+      }
+      const { proverFactory } = prepare()
+      const prover = await proverFactory()
+      const abortController = new AbortController()
+
+      const proving = prover.prove('withdraw', SIGNALS as any, { signal: abortController.signal })
+      await flush()
+      abortController.abort()
+
+      await expect(proving).rejects.toThrow('privacyPools: the proof was cancelled')
+      await flush()
+      expect(closeDocument).toHaveBeenCalledTimes(1)
+
+      // The next proof opens a new document
+      onDocumentCreated = () => {
+        const port = connectDocument()
+        answerProofs(port, proved)
+        port.onMessage.dispatch({ type: 'ready' })
+      }
+      await expect(prover.prove('withdraw', SIGNALS as any)).resolves.toBeDefined()
+      expect(createDocument).toHaveBeenCalledTimes(2)
+    })
+
+    it('never sends the inputs of one cancelled before it was asked, and closes the document when idle', async () => {
+      const { proverFactory } = prepare()
+      const prover = await proverFactory()
+      const abortController = new AbortController()
+      abortController.abort()
+
+      await expect(
+        prover.prove('withdraw', SIGNALS as any, { signal: abortController.signal })
+      ).rejects.toThrow('privacyPools: the proof was cancelled')
+      expect(documentPort!.sent).toEqual([])
+
+      await jest.advanceTimersByTimeAsync(IDLE_CLOSE_MS)
+      expect(closeDocument).toHaveBeenCalledTimes(1)
+    })
+
+    it('leaves the document open when cancelled after the proof came back', async () => {
+      const { proverFactory } = prepare()
+      const prover = await proverFactory()
+      const abortController = new AbortController()
+
+      await prover.prove('withdraw', SIGNALS as any, { signal: abortController.signal })
+      abortController.abort()
+
+      expect(closeDocument).not.toHaveBeenCalled()
+    })
+  })
+
   describe('closing when idle', () => {
     it('closes the document once no proof has been asked for a while', async () => {
       const { proverFactory } = prepare()

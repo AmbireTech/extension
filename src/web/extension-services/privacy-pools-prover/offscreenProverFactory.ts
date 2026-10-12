@@ -5,6 +5,7 @@ import {
   WithdrawSignalMapper
 } from '@fatsolutions/privacy-pools-core-circuits'
 
+import { PRIVACY_POOLS_PROOF_CANCELLED_MESSAGE } from '@ambire-common/libs/privacyPools/prover'
 import type {
   PrivacyPoolsProver,
   PrivacyPoolsProverFactory
@@ -62,7 +63,8 @@ export const canUseOffscreenProver = () =>
 /**
  * Proves in an offscreen document on every core instead of the service worker's single thread.
  * The document opens on the first proof and closes when idle. If it fails to open or start, all
- * later proofs use `fallback` (the in-process prover) and `onError` is called once.
+ * later proofs use `fallback` (the in-process prover) and `onError` is called once. A proof whose
+ * signal aborts fails at once and closes the document, stopping its threads.
  *
  * Proving inputs are sent only to a port the document opened (`isFromProverDocument`); any other
  * port connecting under its name is disconnected.
@@ -271,16 +273,49 @@ export const createOffscreenProverFactory = ({
     return connection
   }
 
-  const requestProof = (port: chrome.runtime.Port, request: ProveRequest) =>
+  const requestProof = (port: chrome.runtime.Port, request: ProveRequest, signal?: AbortSignal) =>
     new Promise<ProvedMessage>((resolve, reject) => {
+      // Cancelled while the document was starting: nothing else will close it
+      if (signal?.aborted) {
+        reject(new Error(PRIVACY_POOLS_PROOF_CANCELLED_MESSAGE))
+        scheduleIdleClose()
+        return
+      }
+
+      const onAbort = () => {
+        const pending = pendingProofs.get(request.id)
+        if (!pending) return
+
+        clearTimeout(pending.timeout)
+        pendingProofs.delete(request.id)
+        pending.reject(new Error(PRIVACY_POOLS_PROOF_CANCELLED_MESSAGE))
+        // The worker threads cannot drop a proof midway, so the document goes with them. Only one
+        // withdrawal proves at a time, so no other operation's proof goes with it.
+        closeDocument().catch((error) => console.error(error))
+      }
+      const stopListening = () => signal?.removeEventListener('abort', onAbort)
+
       const timeout = setTimeout(() => {
         pendingProofs.delete(request.id)
+        stopListening()
         reject(new Error('privacyPools: generating the proof took too long'))
         // Likely stuck, so the next proof starts from a fresh document
         closeDocument().catch((error) => console.error(error))
       }, PROOF_TIMEOUT_MS)
 
-      pendingProofs.set(request.id, { port, resolve, reject, timeout })
+      signal?.addEventListener('abort', onAbort, { once: true })
+      pendingProofs.set(request.id, {
+        port,
+        resolve: (message) => {
+          stopListening()
+          resolve(message)
+        },
+        reject: (error) => {
+          stopListening()
+          reject(error)
+        },
+        timeout
+      })
       port.postMessage(request)
     })
 
@@ -290,7 +325,8 @@ export const createOffscreenProverFactory = ({
     return prover.prove(circuit, signals)
   }
 
-  const prove: PrivacyPoolsProver['prove'] = async (circuit, signals) => {
+  // The fallback cannot stop midway, so it gets no signal - see `withCancellableProving`
+  const prove: PrivacyPoolsProver['prove'] = async (circuit, signals, options) => {
     if (isUnavailable) return proveWithFallback(circuit, signals)
 
     clearIdleTimeout()
@@ -306,12 +342,11 @@ export const createOffscreenProverFactory = ({
     }
 
     nextRequestId += 1
-    const { proof, publicSignals } = await requestProof(port, {
-      type: 'prove',
-      id: nextRequestId,
-      circuit,
-      signals: encodeSignals(signals)
-    })
+    const { proof, publicSignals } = await requestProof(
+      port,
+      { type: 'prove', id: nextRequestId, circuit, signals: encodeSignals(signals) },
+      options?.signal
+    )
 
     return { proof, publicSignals, mappedSignals: mapPublicSignals(circuit, publicSignals) }
   }

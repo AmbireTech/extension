@@ -216,6 +216,11 @@ const usePrivacyPools = () => {
     [dispatch]
   )
 
+  /** Runs a transfer proved a while ago again - see `PrivacyPoolsController.recheckWithdrawal`. */
+  const recheckWithdrawal = useCallback(() => {
+    dispatch({ type: 'method', params: { method: 'recheckWithdrawal', args: [] } })
+  }, [dispatch])
+
   const broadcastWithdrawal = useCallback(() => {
     dispatch({ type: 'method', params: { method: 'broadcastWithdrawal', args: [] } })
   }, [dispatch])
@@ -242,6 +247,7 @@ const usePrivacyPools = () => {
     syncAllChains,
     syncIfStale,
     prepareWithdrawal,
+    recheckWithdrawal,
     broadcastWithdrawal,
     dismissOperation
   }

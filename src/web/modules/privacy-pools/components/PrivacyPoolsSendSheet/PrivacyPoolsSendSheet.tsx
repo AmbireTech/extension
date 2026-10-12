@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react'
+import React, { FC, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { PrivacyPoolsOperation } from '@ambire-common/interfaces/privacyPools'
@@ -26,6 +26,11 @@ interface Props {
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
   onSend: () => void
+  /**
+   * Runs the transfer again if it was proved a while ago, as when a popup reopens on it. Asked on
+   * every open; the controller skips one proved recently.
+   */
+  onRecheck: () => void
   // Fires once the sheet has left the screen, also when dragged down (unlike `closeBottomSheet`)
   onClosed: () => void
 }
@@ -36,7 +41,10 @@ const transactionSummaryStyle = { marginBottom: SPACING_MD }
  * Confirmation and outcome of a Privacy Pools transfer, like the regular Send's fee sheet. Opened
  * once the transfer is proved and priced, so the user sees what it does and its fee before Send.
  *
- * Always mounted: a bottom sheet opened in the same commit it mounts does not animate in.
+ * Always mounted: a bottom sheet opened in the same commit it mounts does not animate in. Opens by
+ * itself when mounted on a transfer to confirm or one that ended (a popup reopened on it), as the
+ * sheet is rendered into a portal the screen cannot open before it is attached - like the regular
+ * Send's estimation.
  */
 const PrivacyPoolsSendSheet: FC<Props> = ({
   operation,
@@ -46,6 +54,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
   sheetRef,
   closeBottomSheet,
   onSend,
+  onRecheck,
   onClosed
 }) => {
   const { t } = useTranslation()
@@ -56,6 +65,18 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
   const isBroadcasting = operation?.status === 'pending' && operation.phase === 'broadcasting'
   const isConfirming = isReady || isBroadcasting
   const isDone = operation?.status === 'success' || operation?.status === 'failed'
+  // A failure while sending may still have gone through
+  const wasNothingSent =
+    operation?.status === 'failed' &&
+    operation.phase !== 'broadcasting' &&
+    operation.phase !== 'finalizing'
+  // Only on mount: later, the screen opens it when a transfer is proved
+  const [shouldOpenOnMount] = useState(isConfirming || isDone)
+
+  // Only a transfer still to confirm: an ended one has nothing left to check
+  const handleOpen = useCallback(() => {
+    if (isReady) onRecheck()
+  }, [isReady, onRecheck])
 
   const backButton = useMemo(
     () => (
@@ -79,7 +100,9 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
       sheetRef={sheetRef}
       // Not closable while sending: the transfer goes on anyway and its outcome is shown here
       closeBottomSheet={isBroadcasting ? undefined : closeBottomSheet}
+      onOpen={handleOpen}
       onClosed={onClosed}
+      autoOpen={shouldOpenOnMount}
       backgroundColor="primaryBackground"
     >
       {!!operation && (
@@ -127,12 +150,11 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                 </Text>
               </View>
               <Text fontSize={12} appearance="secondaryText">
-                {/* A failure while sending may still have gone through */}
-                {operation.phase === 'broadcasting' || operation.phase === 'finalizing'
-                  ? t(
+                {wasNothingSent
+                  ? t('Nothing was sent.')
+                  : t(
                       'Your balance has just been refreshed - check it to see whether the transfer went through.'
-                    )
-                  : t('Nothing was sent.')}
+                    )}
               </Text>
             </View>
           )}
@@ -166,7 +188,14 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
 
           {isDone && (
             <View style={spacings.mbSm}>
-              <Button text={t('Close')} onPress={closeBottomSheet} hasBottomSpacing={false} />
+              {/* Back to the form, which is kept, to prepare it again */}
+              <Button
+                testID="privacy-pools-send-done"
+                type={wasNothingSent ? 'secondary' : 'primary'}
+                text={wasNothingSent ? t('Back') : t('Close')}
+                onPress={closeBottomSheet}
+                hasBottomSpacing={false}
+              />
             </View>
           )}
         </>
