@@ -35,6 +35,19 @@ const getPositiveBigInt = (value: string) => {
   }
 }
 
+// Below this, `formatDecimals(..., 'value')` shows "<$0.01" instead of the amount
+const MIN_DISPLAYED_USD_VALUE = 0.01
+
+/**
+ * Formats a fee in USD to 2 decimals, showing very small fees (common on L2s) as "<$0.01"
+ * instead of e.g. "$0.0012". `isApproximate` is false for those, as "<$0.01" is already
+ * a bound and shouldn't get a "~" prefix.
+ */
+export const formatFeeInUsd = (amountInUsd: number) => ({
+  formattedAmount: formatDecimals(amountInUsd, 'value'),
+  isApproximate: amountInUsd >= MIN_DISPLAYED_USD_VALUE
+})
+
 /**
  * Formats an amount of the route's receiving token, e.g. "0.0091245 WBTC". Pass the
  * `amount` format type to keep only 2 decimals after the first non-zero one, e.g. "1.64 USDC".

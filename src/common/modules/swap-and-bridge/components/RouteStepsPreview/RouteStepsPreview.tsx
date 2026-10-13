@@ -26,7 +26,7 @@ import formatTime from '@common/utils/formatTime'
 
 import RouteStepsArrow from '../RouteStepsArrow'
 import { RouteStepsTokenAmount, RouteStepsTokenIcon } from '../RouteStepsToken'
-import { getLastRouteStepType } from './helpers'
+import { formatFeeInUsd, getLastRouteStepType } from './helpers'
 import styles, { TOKEN_LABEL_RESERVED_HEIGHT } from './styles'
 
 const MAX_AMOUNT_LABEL_LENGTH = 10
@@ -193,6 +193,7 @@ const RouteStepsPreview = ({
     !!networkFeeInUsd ||
     !!extraBridgeFeeLabel ||
     (isBridge && !!estimationInSeconds)
+  const networkFeeInUsdLabel = networkFeeInUsd ? formatFeeInUsd(networkFeeInUsd) : undefined
   const mevProtectedTooltipText = t(
     'CoW Swap is designed to protect your swap from bots that manipulate the price before it executes.'
   )
@@ -365,25 +366,34 @@ const RouteStepsPreview = ({
               <RouteDetailsRow
                 label={t('Fee')}
                 value={
-                  networkFeeInUsd
-                    ? t('~{{amount}} ({{amountInUsd}})', {
-                        amount: networkFeeInToTokenLabel,
-                        amountInUsd: formatDecimals(networkFeeInUsd, 'price')
-                      })
-                    : t('~{{amount}}', { amount: networkFeeInToTokenLabel })
+                  !networkFeeInUsdLabel
+                    ? t('~{{amount}}', { amount: networkFeeInToTokenLabel })
+                    : networkFeeInUsdLabel.isApproximate
+                      ? t('~{{amount}} ({{amountInUsd}})', {
+                          amount: networkFeeInToTokenLabel,
+                          amountInUsd: networkFeeInUsdLabel.formattedAmount
+                        })
+                      : t('{{amount}} ({{amountInUsd}})', {
+                          amount: networkFeeInToTokenLabel,
+                          amountInUsd: networkFeeInUsdLabel.formattedAmount
+                        })
                 }
                 testID="route-fee"
               />
             ) : (
-              !!networkFeeInUsd && (
+              !!networkFeeInUsdLabel && (
                 <RouteDetailsRow
                   label={t('Network fee')}
-                  value={t('~{{amount}}', { amount: formatDecimals(networkFeeInUsd, 'price') })}
+                  value={
+                    networkFeeInUsdLabel.isApproximate
+                      ? t('~{{amount}}', { amount: networkFeeInUsdLabel.formattedAmount })
+                      : networkFeeInUsdLabel.formattedAmount
+                  }
                   testID="route-network-fee"
                 />
               )
             )}
-            {!!extraBridgeFeeLabel && (
+            {!!extraBridgeFeeLabel && isBridge && (
               <RouteDetailsRow
                 label={t('Extra bridge fee')}
                 value={extraBridgeFeeLabel}

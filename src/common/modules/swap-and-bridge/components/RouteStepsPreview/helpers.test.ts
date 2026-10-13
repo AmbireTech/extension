@@ -1,4 +1,5 @@
 import {
+  formatFeeInUsd,
   formatRouteToTokenAmount,
   getLastRouteStepType,
   getRouteExtraBridgeFeeLabel,
@@ -194,5 +195,19 @@ describe('formatRouteToTokenAmount', () => {
     expect(
       formatRouteToTokenAmount(123456789000000n, { decimals: 18, symbol: 'ETH' }, 'amount')
     ).toBe('0.00012 ETH')
+  })
+})
+
+describe('formatFeeInUsd', () => {
+  test('formats the fee to 2 decimals as an approximate amount', () => {
+    expect(formatFeeInUsd(0.4256)).toEqual({ formattedAmount: '$0.42', isApproximate: true })
+  })
+
+  test('formats a one cent fee as an approximate amount', () => {
+    expect(formatFeeInUsd(0.01)).toEqual({ formattedAmount: '$0.01', isApproximate: true })
+  })
+
+  test('shows very small fees as "<$0.01" without marking them as approximate', () => {
+    expect(formatFeeInUsd(0.0012)).toEqual({ formattedAmount: '<$0.01', isApproximate: false })
   })
 })
