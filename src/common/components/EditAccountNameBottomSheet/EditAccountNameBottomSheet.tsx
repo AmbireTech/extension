@@ -14,7 +14,7 @@ import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
@@ -23,6 +23,8 @@ export const ACCOUNT_NAME_MAX_LENGTH = 40
 
 /** How long to wait for a saved name to show up before telling the user it failed */
 const SAVE_TIMEOUT_MS = 10_000
+
+const WIDE_MODAL_STYLE: ViewStyle = { maxWidth: 400, ...spacings.pvLg, ...spacings.phLg }
 
 type Props = {
   account: Account
@@ -68,18 +70,25 @@ const EditAccountNameBottomSheet = ({
     onSave(trimmedName)
   }, [canSave, onSave, trimmedName])
 
-  const renderButtons = (buttonStyle?: ViewStyle) => (
-    <>
+  const renderButtons = ({
+    buttonStyle,
+    isPrimaryFirst = false
+  }: { buttonStyle?: ViewStyle; isPrimaryFirst?: boolean } = {}) => {
+    const cancelButton = (
       <Button
         type="secondary"
+        size="smaller"
         text={t('Cancel')}
         onPress={handleCancel}
         hasBottomSpacing={false}
         style={buttonStyle}
         testID={`${testID}-cancel-button`}
       />
+    )
+    const saveButton = (
       <ButtonWithLoader
         type="primary"
+        size="smaller"
         text={isSaving ? '' : t('Save')}
         onPress={handleSave}
         disabled={!canSave}
@@ -87,8 +96,20 @@ const EditAccountNameBottomSheet = ({
         style={buttonStyle}
         testID={`${testID}-save-button`}
       />
-    </>
-  )
+    )
+
+    return isPrimaryFirst ? (
+      <>
+        {saveButton}
+        {cancelButton}
+      </>
+    ) : (
+      <>
+        {cancelButton}
+        {saveButton}
+      </>
+    )
+  }
 
   useEffect(() => {
     if (pendingName === null) return
@@ -111,22 +132,23 @@ const EditAccountNameBottomSheet = ({
   return (
     <BottomSheet
       id="edit-account-name"
-      type="modal"
+      // Narrow screens (side panel, mobile) get a regular bottom sheet, wide screens a centered modal
+      type={isCompactLayout ? 'bottom-sheet' : 'modal'}
       sheetRef={sheetRef}
       closeBottomSheet={close}
       onClosed={onClosed}
       autoOpen
-      style={{ maxWidth: 432, ...spacings.pvLg }}
+      style={isCompactLayout ? undefined : WIDE_MODAL_STYLE}
     >
-      <Text fontSize={20} weight="medium" style={[text.center, spacings.mbLg]}>
+      <Text fontSize={20} weight="medium" style={[text.center, spacings.mbXl]}>
         {t('Edit account name')}
       </Text>
-      <View style={[flexbox.alignCenter, spacings.mbLg]}>
+      <View style={[flexbox.alignCenter, spacings.mbXl]}>
         <Avatar
           address={account.addr}
           pfp={account.preferences.pfp}
           smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
-          size={64}
+          size={48}
           style={spacings.mbSm}
         />
         <Text fontSize={12} appearance="secondaryText" selectable style={text.center}>
@@ -140,25 +162,26 @@ const EditAccountNameBottomSheet = ({
         maxLength={ACCOUNT_NAME_MAX_LENGTH}
         placeholder={t('Account name')}
         autoFocus
+        containerStyle={spacings.mb0}
         testID={testID}
       />
       {isCompactLayout ? (
-        <View style={[flexbox.directionRow, spacings.ptSm, { columnGap: SPACING_SM }]}>
-          {renderButtons(flexbox.flex1)}
+        <View style={[spacings.ptLg, { rowGap: SPACING_SM }]}>
+          {renderButtons({ isPrimaryFirst: true })}
         </View>
       ) : (
         // On wide screens the buttons sit centered in a glass pill instead of filling the width
-        <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.ptSm]}>
+        <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt2Xl]}>
           <GlassView borderRadius={28}>
             <View
               style={[
                 flexbox.directionRow,
                 spacings.phSm,
                 spacings.pvSm,
-                { columnGap: SPACING_SM }
+                { columnGap: SPACING_LG }
               ]}
             >
-              {renderButtons()}
+              {renderButtons({ buttonStyle: { minWidth: 99 } })}
             </View>
           </GlassView>
         </View>
