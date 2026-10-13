@@ -347,6 +347,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
       renderOption={renderOption}
       renderSectionHeader={dappToConnect ? renderSectionHeader : undefined}
       stickySectionHeadersEnabled={!!dappToConnect}
+      scrollToSelectedOnOpen
       closeMenuOnSelect={!dappToConnect}
       renderHeaderChildren={renderIntro}
       renderBottomSheetFooter={dappToConnect ? renderFooter : undefined}

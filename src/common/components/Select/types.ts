@@ -105,6 +105,8 @@ export type SectionedSelectProps = CommonSelectProps &
     | 'viewabilityConfig'
   > & {
     headerHeight: number
+    /** Opens the list scrolled to the selected option instead of the top */
+    scrollToSelectedOnOpen?: boolean
     /** Use when section headers differ in height. Falls back to `headerHeight` */
     getSectionHeaderHeight?: (section: SectionListData<SelectValue>) => number
   }

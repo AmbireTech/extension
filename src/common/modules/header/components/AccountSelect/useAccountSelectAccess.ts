@@ -28,13 +28,10 @@ const useAccountSelectAccess = ({ accounts, selectedAccountAddr, accountPreferen
     [isLimited, accountAddr, preferences?.accounts]
   )
 
-  const visibleAccounts = useMemo(() => {
-    const visible = accounts.filter((acc) => isVisible(acc.addr))
-    const picked = visible.find((acc) => acc.addr === accountAddr)
-    const others = visible.filter((acc) => acc.addr !== accountAddr)
-
-    return picked ? [picked, ...others] : others
-  }, [accounts, isVisible, accountAddr])
+  const visibleAccounts = useMemo(
+    () => accounts.filter((acc) => isVisible(acc.addr)),
+    [accounts, isVisible]
+  )
 
   const hiddenAccounts = useMemo(
     () => accounts.filter((acc) => !isVisible(acc.addr)),

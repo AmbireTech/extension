@@ -30,6 +30,7 @@ const SectionedSelect = ({
   onViewableItemsChanged,
   viewabilityConfig,
   getSectionHeaderHeight,
+  scrollToSelectedOnOpen,
   ...props
 }: SectionedSelectProps) => {
   const selectData = useSelectInternal({
@@ -100,6 +101,26 @@ const SectionedSelect = ({
   // Memoized for the same reason `Select` memoizes its `flatListProps`: a new object
   // here defeats `React.memo` on the BottomSheet, so every render of the parent
   // re-renders every mounted row of the list.
+  // The list mounts each time the menu opens, and the initial index is read on mount alone.
+  // A SectionList counts each section's header and footer as items, so they are stepped over
+  const initialScrollIndex = useMemo(() => {
+    if (!scrollToSelectedOnOpen || !value) return undefined
+
+    let flatIndex = 0
+    for (const section of filteredData) {
+      const optionIndex = section.data.findIndex((option) => option.value === value.value)
+      if (optionIndex !== -1) {
+        // One item earlier, so a sticky header doesn't cover the selected option
+        const index = flatIndex + 1 + optionIndex - (stickySectionHeadersEnabled ? 1 : 0)
+
+        return index > 0 ? index : undefined
+      }
+      flatIndex += section.data.length + 2
+    }
+
+    return undefined
+  }, [scrollToSelectedOnOpen, value, filteredData, stickySectionHeadersEnabled])
+
   const sectionListProps = useMemo(
     () => ({
       ref: listRef,
@@ -119,7 +140,8 @@ const SectionedSelect = ({
       onScroll: handleScroll,
       scrollEventThrottle: 16,
       onViewableItemsChanged,
-      viewabilityConfig
+      viewabilityConfig,
+      initialScrollIndex
     }),
     [
       listRef,
@@ -136,7 +158,8 @@ const SectionedSelect = ({
       stickySectionHeadersEnabled,
       handleScroll,
       onViewableItemsChanged,
-      viewabilityConfig
+      viewabilityConfig,
+      initialScrollIndex
     ]
   )
 
