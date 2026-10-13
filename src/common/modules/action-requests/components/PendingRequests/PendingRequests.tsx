@@ -118,7 +118,8 @@ const RequestCard = React.memo(function RequestCard({
     }
   }, [networks, request, t])
   const account = accounts.find(
-    ({ addr }) => addr.toLowerCase() === request.meta.accountAddr.toLowerCase()
+    // requests like dappConnect aren't bound to an account and have no accountAddr
+    ({ addr }) => addr.toLowerCase() === request.meta.accountAddr?.toLowerCase()
   )
   const accountState = accountStates[account?.addr || '']?.[requestChainId || '']
   // a Safe can't sign or send anything on a network it isn't active on yet, so the request waits
