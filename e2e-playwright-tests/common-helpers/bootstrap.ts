@@ -29,6 +29,11 @@ const DISMISSED_ANNOUNCEMENTS_STORAGE = {
   cowSwapAnnouncementDismissed: true
 }
 
+// Disables CoW Swap in Swap & Bridge, while keeping every other swap provider enabled
+const SWAP_PROVIDERS_STORAGE = {
+  disabledSwapProviderIds: JSON.stringify(['cowswap'])
+}
+
 const playwrightArgs = [
   `--disable-extensions-except=${extensionPath}/`,
   `--load-extension=${extensionPath}/`,
@@ -163,7 +168,8 @@ export async function bootstrap(namespace: string) {
 
   await serviceWorker.evaluate((params) => chrome.storage.local.set(params), {
     isE2EStorageSet: true,
-    ...DISMISSED_ANNOUNCEMENTS_STORAGE
+    ...DISMISSED_ANNOUNCEMENTS_STORAGE,
+    ...SWAP_PROVIDERS_STORAGE
   })
   return { page, context, extensionURL }
 }
@@ -204,6 +210,7 @@ export async function bootstrapWithStorage(
     isE2EStorageSet: true,
     isSetupComplete: 'true',
     ...DISMISSED_ANNOUNCEMENTS_STORAGE,
+    ...SWAP_PROVIDERS_STORAGE,
     ...(!shouldUnlockKeystoreManually && {
       keyStoreUid,
       keystoreKeys,
