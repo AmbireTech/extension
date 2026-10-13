@@ -85,8 +85,7 @@ const PrivacyPoolsDashboardScreen = () => {
       networkRows
         .filter(
           ({ isInitialSyncDone, syncStatus }) =>
-            isInitialSyncDone === false &&
-            (syncStatus === 'syncing' || syncStatus === 'initializing')
+            isInitialSyncDone === false && syncStatus === 'syncing'
         )
         .map((row) => row.networkName),
     [networkRows]

@@ -128,8 +128,7 @@ const usePrivacyPools = () => {
   )
 
   const isSyncingAnyChain = useMemo(
-    () =>
-      networkRows.some((row) => row.syncStatus === 'syncing' || row.syncStatus === 'initializing'),
+    () => networkRows.some((row) => row.syncStatus === 'syncing'),
     [networkRows]
   )
 

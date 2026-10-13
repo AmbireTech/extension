@@ -21,8 +21,7 @@ const selectChains = (state: AllControllersMappingType['PrivacyPoolsController']
 
 const NO_VALUE = '—'
 
-const isSyncing = (chain?: PrivacyPoolsChainState) =>
-  chain?.syncStatus === 'syncing' || chain?.syncStatus === 'initializing'
+const isSyncing = (chain?: PrivacyPoolsChainState) => chain?.syncStatus === 'syncing'
 
 /**
  * A Privacy Pools account's statuses table: each network's last read, whether its first read is
