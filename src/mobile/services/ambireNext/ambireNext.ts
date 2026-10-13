@@ -38,7 +38,7 @@ export const getIsAmbireNextJoined = async () => {
 
 /**
  * Logs the device into Stallion with the access code (the SDK access PIN).
- * Resolves to `false` when Stallion rejects the code.
+ * Resolves to `false` when Stallion rejects the code, throws when Stallion itself fails.
  */
 export const joinAmbireNext = async (accessCode: string) => {
   const { projectId, appToken } = await getStallionConfig()
@@ -51,8 +51,15 @@ export const joinAmbireNext = async (accessCode: string) => {
     },
     body: JSON.stringify({ pin: accessCode, projectId })
   })
+  // Stallion rejects a request it can't verify with a client error (e.g. 400 for an
+  // unknown project). A server error is Stallion failing, not a wrong code.
+  if (response.status >= 500) {
+    throw new Error(`Stallion PIN verification failed with status ${response.status}`)
+  }
+
   const result = await response.json()
-  const sdkToken = result?.data?.token
+  // A token is trusted only from a successful response
+  const sdkToken = response.ok ? result?.data?.token : undefined
   if (!sdkToken) return false
 
   await StallionNativeModule.updateSdkToken(sdkToken)
