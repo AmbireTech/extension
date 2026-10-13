@@ -43,7 +43,7 @@ const DappConnectScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      header={<ActionHeader />}
+      header={<ActionHeader withAccountSelect />}
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}

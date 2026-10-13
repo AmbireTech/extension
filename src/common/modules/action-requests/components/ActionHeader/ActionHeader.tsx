@@ -7,6 +7,7 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
+import AccountSelect from '@common/modules/header/components/AccountSelect'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -14,7 +15,12 @@ import flexbox from '@common/styles/utils/flexbox'
 const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
   state.visibleUserRequests
 
-const ActionHeader = () => {
+type Props = {
+  /** Lets the user switch the selected account from the header */
+  withAccountSelect?: boolean
+}
+
+const ActionHeader = ({ withAccountSelect }: Props) => {
   const { theme } = useTheme()
   const { isNarrowWebLayout } = useCompactLayout()
   // In a narrow view the header is inset like the content below it, so all edge spacings are equal
@@ -43,7 +49,7 @@ const ActionHeader = () => {
           }
         ]}
       >
-        <Header.AccountDataDetailed />
+        {withAccountSelect ? <AccountSelect /> : <Header.AccountDataDetailed />}
       </View>
       <PendingRequests style={[isWeb && webMarginHorizontal]} />
     </View>

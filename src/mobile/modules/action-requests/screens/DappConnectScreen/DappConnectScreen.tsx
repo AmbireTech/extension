@@ -36,7 +36,7 @@ const DappConnectScreen = () => {
   return (
     <MobileLayoutContainer
       withHorizontalPadding
-      header={<ActionHeader />}
+      header={<ActionHeader withAccountSelect />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter
