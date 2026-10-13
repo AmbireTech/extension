@@ -62,8 +62,9 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
       )}
       <Button
         onPress={onPrimaryButtonPress}
-        hasBottomSpacing={isCompactLayout}
-        style={!isCompactLayout ? { width: isRequestWindow ? 160 : 104 } : {}}
+        // In the request window Close is the only button, so there is nothing below it to space from
+        hasBottomSpacing={isCompactLayout && !isRequestWindow}
+        style={isRequestWindow ? { width: 160 } : !isCompactLayout ? { width: 104 } : {}}
         text={t('Close')}
         size={isCompactLayout ? 'regular' : 'smaller'}
         type={routeStatus !== 'failed' ? 'primary' : 'secondary'}
