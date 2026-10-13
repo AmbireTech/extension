@@ -34,7 +34,7 @@ describe('filterCrashReportBreadcrumb', () => {
     const result = filterCrashReportBreadcrumb(breadcrumb)
 
     expect(result?.message).toContain('[REDACTED_SEED_PHRASE]')
-    expect(result?.message).toContain('[REDACTED_PRIVATE_KEY]')
+    expect(result?.message).toContain('[REDACTED_HEX]')
     expect(result?.data).toEqual({ logger: 'console' })
     expect(JSON.stringify(result)).not.toContain('abandon ability')
     expect(JSON.stringify(result)).not.toContain(PRIVATE_KEY)
@@ -108,5 +108,50 @@ describe('processMobileCrashReportEvent', () => {
     )
 
     expect(result?.tags).toEqual({ content: CRASH_REPORT_CONTENT.CONTROLLERS })
+  })
+
+  const syntheticStacktrace = { frames: [{ function: 'captureMessage', in_app: true }] }
+
+  it('sends the stack of a message as its thread, so Sentry titles the issue with the message', () => {
+    const messageEvent = {
+      ...buildEvent(),
+      exception: {
+        values: [
+          {
+            value: 'something broke',
+            stacktrace: syntheticStacktrace,
+            mechanism: { type: 'generic', synthetic: true }
+          }
+        ]
+      }
+    }
+
+    const result = processMobileCrashReportEvent(messageEvent, 'something broke', true)
+
+    expect(result?.exception).toBeUndefined()
+    expect(result?.message).toBe('something broke')
+    expect(result?.threads).toEqual({
+      values: [{ current: true, crashed: false, stacktrace: syntheticStacktrace }]
+    })
+  })
+
+  it('keeps the exception of a captured value that is not an Error', () => {
+    const exception = {
+      values: [
+        {
+          type: 'Error',
+          value: 'not an error object',
+          stacktrace: syntheticStacktrace,
+          mechanism: { type: 'generic', synthetic: true }
+        }
+      ]
+    }
+
+    const nonErrorEvent: any = { event_id: 'evt-2', exception }
+
+    const result = processMobileCrashReportEvent(nonErrorEvent, 'not an error object', true)
+
+    expect(result?.exception).toEqual(exception)
+    expect(result?.threads).toBeUndefined()
   })
 })

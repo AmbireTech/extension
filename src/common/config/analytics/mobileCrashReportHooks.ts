@@ -89,6 +89,24 @@ export const filterCrashReportBreadcrumb = (breadcrumb: Breadcrumb): Breadcrumb 
   return scrubbedBreadcrumb
 }
 
+// The JS SDK sends a message's stack as a synthetic exception, and Sentry titles such an issue
+// after the top function, like `captureMessage`, instead of the message. The native SDKs send it
+// as the current thread instead, which keeps the stack for grouping and the message as the title.
+const moveMessageStackToThread = <T extends SentryEvent>(event: T): T => {
+  const isMessageEvent = !!event.message || !!event.logentry
+  const syntheticException = event.exception?.values?.[0]
+  if (!isMessageEvent || !syntheticException?.mechanism?.synthetic) return event
+
+  const messageEvent: T = {
+    ...event,
+    threads: {
+      values: [{ current: true, crashed: false, stacktrace: syntheticException.stacktrace }]
+    }
+  }
+  delete messageEvent.exception
+  return messageEvent
+}
+
 /**
  * The mobile `beforeSend`. Gives null when the user turned crash reporting off or the shared
  * pipeline drops the event. Otherwise gives back the scrubbed event, tagged as `unhandled` when
@@ -101,7 +119,7 @@ export const processMobileCrashReportEvent = <T extends SentryEvent>(
 ): T | null => {
   if (!isConsentGiven) return null
 
-  const processedEvent = processCrashReportEvent(event, originalException)
+  const processedEvent = processCrashReportEvent(moveMessageStackToThread(event), originalException)
   if (!processedEvent) return null
 
   processedEvent.tags = {
