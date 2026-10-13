@@ -28,7 +28,7 @@ describe('processCrashReportEvent', () => {
     const result = processCrashReportEvent(event, new Error('unexpected state'))
 
     expect(JSON.stringify(result)).not.toContain(PRIVATE_KEY)
-    expect(result.breadcrumbs[1].message).toContain('[REDACTED_PRIVATE_KEY]')
+    expect(result.breadcrumbs[1].message).toContain('[REDACTED_HEX]')
   })
 
   it('strips breadcrumbs, user, extra and contexts from a non-2xx provider error and tags the provider', () => {

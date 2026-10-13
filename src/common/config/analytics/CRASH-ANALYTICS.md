@@ -24,7 +24,7 @@ Debug data is stripped at multiple points before it's sent, and we don't rely on
 
 **By shape**
 
-- Any 64-character hex value becomes `[REDACTED_PRIVATE_KEY]`, labeled or not.
+- Any 64-character hex value becomes `[REDACTED_HEX]`, labeled or not.
 - Any run of 12 to 24 words that are all in the BIP-39 wordlist becomes `[REDACTED_SEED_PHRASE]`. Labeled or not, capitalized or not, and also when it sits in the middle of a longer sentence.
 
 **By field name**
