@@ -70,7 +70,7 @@ const Account = ({
     withOptionsButton?: boolean
     markSelected?: boolean
     setAccountToImportOrExport?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
-    setSmartSettingsAccount?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
+    setAccountSettingsAccount?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
     setAccountToRemove?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
   }
   containerStyle?: ViewStyle
@@ -164,7 +164,12 @@ const Account = ({
     }
 
     if (item.value === 'toSmarter') {
-      !!options.setSmartSettingsAccount && options.setSmartSettingsAccount(account)
+      !!options.setAccountSettingsAccount && options.setAccountSettingsAccount(account)
+      return
+    }
+
+    if (item.value === 'deploySettings') {
+      !!options.setAccountSettingsAccount && options.setAccountSettingsAccount(account)
     }
   }
 
@@ -172,14 +177,18 @@ const Account = ({
     if (!options.withOptionsButton) return []
 
     const add7702Option = canBecomeSmarter(account, accountKeys)
-    const submenuOptions = [
-      { label: account.safeCreation ? 'Manage owners' : 'Manage keys', value: 'keys' },
-      { label: 'Remove account', value: 'remove', style: { color: theme.errorDecorative } }
+    const commonSubmenuOptions = [
+      { label: account.safeCreation ? t('Manage owners') : t('Manage keys'), value: 'keys' },
+      { label: t('Remove account'), value: 'remove', style: { color: theme.errorDecorative } }
     ]
-    const submenuOptions7702 = [{ label: 'Smart settings', value: 'toSmarter' }]
+    const settingsOption = account.safeCreation
+      ? [{ label: t('Activation settings'), value: 'deploySettings' }]
+      : add7702Option && isWeb
+        ? [{ label: t('Smart settings'), value: 'toSmarter' }]
+        : []
 
-    return add7702Option && isWeb ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
-  }, [account, accountKeys, options.withOptionsButton, theme.errorDecorative])
+    return [...settingsOption, ...commonSubmenuOptions]
+  }, [account, accountKeys, options.withOptionsButton, t, theme.errorDecorative])
 
   const handleCopy = async () => {
     try {
@@ -210,7 +219,10 @@ const Account = ({
           }
       ]}
     >
-      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+      <View
+        style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}
+        testID={`account-${addr}`}
+      >
         {renderLeftChildren && renderLeftChildren()}
         <Avatar
           address={account.addr}

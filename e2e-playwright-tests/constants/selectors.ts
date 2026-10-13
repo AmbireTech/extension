@@ -221,6 +221,7 @@ const selectors = {
   personalizeAccount: 'personalize-account',
   pinExtensionCloseBtn: 'pin-extension-close-btn',
   accountSelectBtn: 'account-select-btn',
+  accountRow: (addr: string) => `account-${addr}`, // unique per address, unlike `account`
   selectSeedPhraseLength: 'select-seed-phrase-length',
   option24WordsSeedPhrase: 'option-i-have-24-word-phrase',
   selectChangeHdPath: 'select-change-hd-path',
@@ -334,6 +335,14 @@ const selectors = {
   dappConnectButton: 'dapp-connect-button',
   dappSecurityCheckPassed: 'dapp-security-check-passed',
   signMessageButton: 'button-sign',
+  switchAccountButton: 'switch-account-button',
+  switchAccountDenyButton: 'switch-account-deny-button',
+  rejectRequestOptionCurrent: 'reject-request-option-current',
+  transactionCallDyn: (index: number) => `recipient-address-${index}`, // one card per call on the sign transaction screen
+  dappScopedAccountsToggle: 'dapp-scoped-accounts-toggle',
+  dappScopedAccountsSelectorButton: 'dapp-scoped-accounts-selector-button',
+  dappScopedAccountsContinueButton: 'dapp-scoped-accounts-continue-button',
+  dappAccountRow: (addr: string) => `dapp-account-row-${addr}`,
   // Notifications
   networkSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
