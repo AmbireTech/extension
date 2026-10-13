@@ -62,8 +62,10 @@ const AccountSelectOption = ({
     >
       <HoverablePressable
         onPress={handlePress}
+        // A hidden account must be shown first, as the selected account is always visible
+        disabled={isHidden}
         accessibilityRole="button"
-        accessibilityState={{ selected: isSelected }}
+        accessibilityState={{ selected: isSelected, disabled: !!isHidden }}
         testID={`account-select-option-${account.addr}`}
       >
         <View

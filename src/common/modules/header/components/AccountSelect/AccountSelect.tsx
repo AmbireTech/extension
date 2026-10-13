@@ -125,6 +125,9 @@ const AccountSelect = ({ dappToConnect }: Props) => {
     ({ value: addr }: SelectValue) => {
       const nextAccountAddr = String(addr)
       if (dappToConnect) {
+        // Also guards keyboard selection - a hidden account has to be shown first
+        if (hiddenAddrs.has(nextAccountAddr)) return
+
         pickAccount(nextAccountAddr)
         return
       }
@@ -132,7 +135,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
 
       mainDispatch({ type: 'method', params: { method: 'selectAccount', args: [nextAccountAddr] } })
     },
-    [dappToConnect, pickAccount, selectedAccount?.addr, mainDispatch]
+    [dappToConnect, hiddenAddrs, pickAccount, selectedAccount?.addr, mainDispatch]
   )
 
   const applyChanges = useCallback(() => {
