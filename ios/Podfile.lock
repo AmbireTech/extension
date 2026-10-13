@@ -1,5 +1,5 @@
 PODS:
-  - AmbireCrypto (1.0.0):
+  - AmbireCrypto (1.0.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2755,7 +2755,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  AmbireCrypto: 1a1df49981c5d70b0753124b8b0843d40b476772
+  AmbireCrypto: 0cc5794aa4277e8cf0379f1dd8fd12be1ad997fb
   AsyncStorage: 2e1d431842588f5af845737e6435c1fcbecdab51
   BVLinearGradient: 7815a70ab485b7b155186dd0cc836363e0288cad
   EXApplication: 1e98d4b1dccdf30627f92917f4b2c5a53c330e5f

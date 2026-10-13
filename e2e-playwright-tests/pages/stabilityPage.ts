@@ -8,15 +8,12 @@ import { categorizeRequests } from '../utils/requests'
 import { BasePage } from './basePage'
 
 export class StabilityPage extends BasePage {
-  serviceWorker: any
-
   extensionURL: string
 
   constructor(opts: BootstrapContext) {
     super(opts)
     this.context = opts.context
     this.extensionURL = opts.extensionURL
-    this.serviceWorker = opts.serviceWorker
   }
 
   collectedRequests: string[] = []
