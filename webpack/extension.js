@@ -127,16 +127,28 @@ function processManifest(content, mode) {
   manifest.content_security_policy = { extension_pages: csp }
 
   // anon-rpc (opt-in at runtime): the harness runs a hash-pinned anon-client in a
-  // null-origin sandboxed page inside an offscreen document. The sandbox page is
-  // the only place an extension may relax its CSP: `blob:` in script-src is needed
-  // because the worker bundle is importScripts'd from a blob URL. The `*` keeps the
-  // entry stable across harness upgrades, which change the versioned asset folder.
+  // null-origin sandboxed page — inside an offscreen document on Chromium, and
+  // directly in the background page on Firefox. The sandbox page is the only place
+  // an extension may relax its CSP: `blob:` in script-src is needed because the
+  // worker bundle is importScripts'd from a blob URL, and Firefox (which refuses
+  // that in an opaque-origin worker) loads it from a `data:` URL instead. The `*`
+  // keeps the entry stable across harness upgrades, which change the versioned
+  // asset folder. Firefox before 154 ignores both keys and keeps the
+  // extension_pages CSP (verified on 140 ESR). On Firefox the iframe's sandbox
+  // attribute is what isolates the frame: Firefox applies no CSP inside an
+  // attributed extension frame, declared or not, so the sandbox policy is
+  // declared for if it starts to.
   // {@link https://github.com/ethereum/anon-rpc/tree/main/impl/browser-extension-harness#manifest}
   if (isAnonRpcSupported) {
-    manifest.permissions = [...manifest.permissions, 'offscreen']
     manifest.sandbox = { pages: ['anon-rpc/*/sandbox.html'] }
-    manifest.content_security_policy.sandbox =
-      "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; child-src 'self' blob:; worker-src 'self' blob:; connect-src *;"
+    if (isGecko) {
+      manifest.content_security_policy.sandbox =
+        "sandbox allow-scripts; script-src 'self' blob: data: 'wasm-unsafe-eval'; worker-src blob:; connect-src *;"
+    } else {
+      manifest.permissions = [...manifest.permissions, 'offscreen']
+      manifest.content_security_policy.sandbox =
+        "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; child-src 'self' blob:; worker-src 'self' blob:; connect-src *;"
+    }
   }
 
   // This value can be used to control the unique ID of an extension,
@@ -352,7 +364,10 @@ module.exports = async function buildExtension(
       ? [
           {
             from: './node_modules/@anon-rpc/browser-extension-harness/dist/static/anon-rpc',
-            to: 'anon-rpc'
+            to: 'anon-rpc',
+            // Firefox has no offscreen documents: it hosts the harness in the
+            // background page and only needs the sandboxed page.
+            ...(isGecko && { globOptions: { ignore: ['**/offscreen.*'] } })
           }
         ]
       : [])

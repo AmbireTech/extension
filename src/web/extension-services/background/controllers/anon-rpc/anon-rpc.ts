@@ -42,6 +42,12 @@ const REBOOT_COOLDOWN_MS = 5000
  */
 const OFFSCREEN_DISCONNECTED_MESSAGE = 'offscreen document disconnected'
 
+/**
+ * The oldest Firefox the harness was measured on (ESR). There the iframe's
+ * sandbox attribute is the isolation boundary, which Firefox has long had.
+ */
+const FIREFOX_MIN_VERSION = 140
+
 const isAbortError = (error: unknown) => error instanceof Error && error.name === 'AbortError'
 
 const toErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error))
@@ -60,8 +66,12 @@ const toErrorMessage = (error: unknown) => (error instanceof Error ? error.messa
 export class AnonRpcController extends EventEmitter {
   isReady: boolean = false
 
-  /** Only Chromium browsers implement the offscreen documents the harness needs. */
-  isSupported: boolean = typeof browser?.offscreen?.createDocument === 'function'
+  /**
+   * Chromium (offscreen documents) and Firefox 140+ (the sandboxed iframe hosted
+   * in the background page). Settled while the saved setting loads, because
+   * Firefox's version is only available asynchronously.
+   */
+  isSupported: boolean = false
 
   isEnabled: boolean = DEFAULT_SETTINGS.isEnabled
 
@@ -113,7 +123,23 @@ export class AnonRpcController extends EventEmitter {
     this.initialLoadPromise = this.#load()
   }
 
+  async #detectSupport(): Promise<boolean> {
+    if (typeof browser?.offscreen?.createDocument === 'function') return true
+    if (typeof document === 'undefined' || typeof browser?.runtime?.getBrowserInfo !== 'function') {
+      return false
+    }
+    const { name, version } = await browser.runtime.getBrowserInfo()
+    return name === 'Firefox' && Number.parseInt(version, 10) >= FIREFOX_MIN_VERSION
+  }
+
   async #load(): Promise<void> {
+    try {
+      this.isSupported = await this.#detectSupport()
+    } catch (error) {
+      console.error('[AnonRpcController] could not detect browser support', error)
+      this.isSupported = false
+    }
+
     try {
       const stored: AnonRpcSettings = await this.#storage.get(
         SETTINGS_STORAGE_KEY,
@@ -270,8 +296,10 @@ export class AnonRpcController extends EventEmitter {
       return
     }
 
-    // The offscreen document keeps booted workers alive across service worker
-    // restarts and hands the same one back (`reuse`), so booting again is cheap.
+    // On Chromium the offscreen document keeps booted workers alive across service
+    // worker restarts and hands the same one back (`reuse`), so booting again is
+    // cheap. On Firefox the worker lives in this background page, so each boot is
+    // fresh (and an event page suspension means booting again on wake).
     const worker = new AnonRpcWorker({
       address: preset.specifier,
       config: preset.config,

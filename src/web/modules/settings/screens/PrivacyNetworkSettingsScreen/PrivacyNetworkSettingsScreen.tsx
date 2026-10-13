@@ -151,7 +151,9 @@ const PrivacyNetworkSettingsScreen = () => {
       <SettingsPageHeader title={t('Privacy network')} />
       {!isSupported ? (
         <Text appearance="secondaryText">
-          {t('This option is only available in Chrome, Brave and other Chromium-based browsers.')}
+          {t(
+            'This option is available in Chrome, Brave and other Chromium-based browsers, and in Firefox 140 or newer.'
+          )}
         </Text>
       ) : (
         <>

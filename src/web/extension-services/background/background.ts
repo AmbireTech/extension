@@ -524,7 +524,10 @@ const init = async () => {
   // Constructed before MainController, which starts making requests right away:
   // fetchWithAnalytics and every ethers provider depend on it being set.
   anonRpcCtrl = new AnonRpcController({ eventEmitterRegistry, storage })
-  if (anonRpcCtrl.isSupported) routeEthersRequestsThroughAnonRpc(anonRpcCtrl)
+  // Registered unconditionally: support is only known once the controller has
+  // loaded (Firefox reports its version asynchronously), and until it routes, the
+  // hook hands every request to ethers' own default request function.
+  routeEthersRequestsThroughAnonRpc(anonRpcCtrl)
 
   mainCtrl = new MainController({
     eventEmitterRegistry,

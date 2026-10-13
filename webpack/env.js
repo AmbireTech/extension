@@ -10,9 +10,11 @@ const ROOT_DIR = path.resolve(__dirname, '..')
 const isWebkit = process.env.WEB_ENGINE?.startsWith('webkit')
 const isGecko = process.env.WEB_ENGINE === 'gecko'
 const isSafari = process.env.WEB_ENGINE === 'webkit-safari'
-// anon-rpc's MV3 harness needs the chrome.offscreen API, which only Chromium
-// browsers implement (not Safari, and Firefox has no offscreen documents).
-const isAnonRpcSupported = isWebkit && !isSafari
+// anon-rpc's MV3 harness runs in an offscreen document on Chromium, and directly
+// in the background page on Firefox (which has a DOM). Safari has neither
+// offscreen documents nor manifest sandbox pages. The Firefox version (140+) is
+// checked at runtime.
+const isAnonRpcSupported = (isWebkit && !isSafari) || isGecko
 const outputPath = process.env.WEBPACK_BUILD_OUTPUT_PATH || ''
 const isExtension =
   outputPath.includes('webkit') || outputPath.includes('gecko') || outputPath.includes('safari')
