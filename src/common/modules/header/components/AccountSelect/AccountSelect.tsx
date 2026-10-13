@@ -1,79 +1,291 @@
-import React, { useCallback, useMemo } from 'react'
-import { View } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { Trans } from 'react-i18next'
+import { SectionListData, View, ViewToken } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
-import shortenAddress from '@ambire-common/utils/shortenAddress'
+import { Dapp } from '@ambire-common/interfaces/dapp'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
-import Avatar from '@common/components/Avatar'
+import Button from '@common/components/Button'
 import HoverablePressable from '@common/components/HoverablePressable'
-import Select from '@common/components/Select'
-import { RenderSelectedOptionParams, SelectValue } from '@common/components/Select/types'
+import { SectionedSelect } from '@common/components/Select'
+import {
+  RenderOptionParams,
+  RenderSelectedOptionParams,
+  SelectValue
+} from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+
+import AccountSelectOption, { ACCOUNT_SELECT_OPTION_HEIGHT } from './AccountSelectOption'
+import AccountSelectSectionHeader, {
+  ACCOUNT_SELECT_SECTION_HEADER_HEIGHT
+} from './AccountSelectSectionHeader'
+import useAccountSelectAccess from './useAccountSelectAccess'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const MENU_OPTION_HEIGHT = 56
+const DEFAULT_SECTION_KEY = 'default'
+const VISIBLE_SECTION_KEY = 'visible'
+const HIDDEN_SECTION_KEY = 'hidden'
+const SELECT_CONTAINER_STYLE = { ...flexbox.flex1, ...spacings.mb0 }
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
 
-const AccountOption = React.memo(({ account }: { account: Account }) => (
-  <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, { minWidth: 0 }]}>
-    <Avatar address={account.addr} pfp={account.preferences.pfp} size={32} />
-    <View style={[flexbox.flex1, { minWidth: 0 }]}>
-      <Text fontSize={14} weight="semiBold" numberOfLines={1}>
-        {account.preferences.label}
-      </Text>
-      <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-        {shortenAddress(account.addr, 23)}
-      </Text>
-    </View>
-  </View>
-))
-
 const toOption = (account: Account): SelectValue => ({
   value: account.addr,
-  label: <AccountOption account={account} />,
-  extraSearchProps: { label: account.preferences.label }
+  label: account.preferences.label,
+  account
 })
 
+type Props = {
+  /** Lets the user also choose which accounts the app that is connecting can see */
+  dappToConnect?: Pick<Dapp, 'id' | 'name' | 'accountPreferences'>
+}
+
 /**
- * Displays the selected account and lets the user switch to another one from a dropdown
- * (or a bottom sheet on mobile and narrow web layouts). Meant to be used as a screen header.
+ * Displays the selected account and lets the user switch to another one from a bottom sheet.
+ * Meant to be used as a screen header.
  */
-const AccountSelect = () => {
+const AccountSelect = ({ dappToConnect }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isNarrowWebLayout } = useCompactLayout()
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: selectedAccount } = useController(
     'SelectedAccountController',
     selectSelectedAccount
   )
   const { dispatch: mainDispatch } = useController('MainController')
-
-  const options = useMemo(() => accounts.map(toOption), [accounts])
-  const value = useMemo(
-    () => options.find((option) => option.value === selectedAccount?.addr) || null,
-    [options, selectedAccount?.addr]
+  const { dispatch: dappsDispatch } = useController('DappsController')
+  const access = useAccountSelectAccess({
+    accounts,
+    selectedAccountAddr: selectedAccount?.addr,
+    accountPreferences: dappToConnect?.accountPreferences
+  })
+  const {
+    accountAddr,
+    isLimited,
+    visibleAccounts,
+    hiddenAccounts,
+    pendingPreferences,
+    hasAccountChanged,
+    isDirty,
+    pickAccount,
+    hideAccount,
+    showAccount,
+    showAllAccounts,
+    limitToPickedAccount,
+    reset
+  } = access
+  const [isHiddenSectionInView, setIsHiddenSectionInView] = useState(true)
+  // The list doesn't support changing this handler once mounted, so it must stay the same
+  const [handleViewableItemsChanged] = useState(
+    () =>
+      ({ viewableItems }: { viewableItems: ViewToken[] }) =>
+        setIsHiddenSectionInView(
+          viewableItems.some((token) => token.section?.key === HIDDEN_SECTION_KEY)
+        )
   )
 
-  const handleSelect = useCallback(
-    ({ value: addr }: SelectValue) => {
-      if (addr === selectedAccount?.addr) return
+  const hiddenAddrs = useMemo(
+    () => new Set(hiddenAccounts.map((acc) => acc.addr)),
+    [hiddenAccounts]
+  )
 
-      mainDispatch({ type: 'method', params: { method: 'selectAccount', args: [String(addr)] } })
+  const sections = useMemo((): SectionListData<SelectValue>[] => {
+    if (!dappToConnect) return [{ key: DEFAULT_SECTION_KEY, data: accounts.map(toOption) }]
+
+    const visibleSection = { key: VISIBLE_SECTION_KEY, data: visibleAccounts.map(toOption) }
+    if (!hiddenAccounts.length) return [visibleSection]
+
+    return [visibleSection, { key: HIDDEN_SECTION_KEY, data: hiddenAccounts.map(toOption) }]
+  }, [dappToConnect, accounts, visibleAccounts, hiddenAccounts])
+
+  const value = useMemo(() => {
+    const account = accounts.find((acc) => acc.addr === accountAddr)
+
+    return account ? toOption(account) : null
+  }, [accounts, accountAddr])
+
+  const handleSetValue = useCallback(
+    ({ value: addr }: SelectValue) => {
+      const nextAccountAddr = String(addr)
+      if (dappToConnect) {
+        pickAccount(nextAccountAddr)
+        return
+      }
+      if (nextAccountAddr === selectedAccount?.addr) return
+
+      mainDispatch({ type: 'method', params: { method: 'selectAccount', args: [nextAccountAddr] } })
     },
-    [mainDispatch, selectedAccount?.addr]
+    [dappToConnect, pickAccount, selectedAccount?.addr, mainDispatch]
+  )
+
+  const applyChanges = useCallback(() => {
+    if (hasAccountChanged) {
+      mainDispatch({ type: 'method', params: { method: 'selectAccount', args: [accountAddr] } })
+    }
+    if (dappToConnect && pendingPreferences) {
+      dappsDispatch({
+        type: 'method',
+        params: {
+          method: 'updateDappToConnect',
+          args: [dappToConnect.id, { accountPreferences: pendingPreferences }]
+        }
+      })
+    }
+  }, [
+    hasAccountChanged,
+    accountAddr,
+    dappToConnect,
+    pendingPreferences,
+    mainDispatch,
+    dappsDispatch
+  ])
+
+  const renderOption = useCallback(
+    ({ item, isSelected, isLast, onPress }: RenderOptionParams) => {
+      const isHidden = hiddenAddrs.has(String(item.value))
+      // The selected account is always visible to the app
+      const canToggleVisibility = !!dappToConnect && !isSelected
+
+      return (
+        <AccountSelectOption
+          account={item.account}
+          isSelected={isSelected}
+          isHidden={isHidden}
+          isLast={isLast}
+          onPress={() => onPress(item)}
+          onToggleVisibility={
+            canToggleVisibility ? (isHidden ? showAccount : hideAccount) : undefined
+          }
+        />
+      )
+    },
+    [hiddenAddrs, dappToConnect, showAccount, hideAccount]
+  )
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: SectionListData<SelectValue> }) => {
+      if (section.key === HIDDEN_SECTION_KEY) {
+        return (
+          <AccountSelectSectionHeader
+            type="hidden"
+            count={hiddenAccounts.length}
+            actionText={t('Show all')}
+            onAction={showAllAccounts}
+          />
+        )
+      }
+
+      return (
+        <AccountSelectSectionHeader
+          type="visible"
+          count={visibleAccounts.length}
+          isAll={!isLimited}
+          actionText={visibleAccounts.length > 1 ? t('Limit to selected only') : undefined}
+          onAction={limitToPickedAccount}
+        />
+      )
+    },
+    [
+      hiddenAccounts.length,
+      visibleAccounts.length,
+      isLimited,
+      showAllAccounts,
+      limitToPickedAccount,
+      t
+    ]
+  )
+
+  const renderIntro = useCallback(() => {
+    if (!dappToConnect) return null
+
+    return (
+      <View
+        style={[
+          spacings.phSm,
+          spacings.pvSm,
+          spacings.mbSm,
+          { borderRadius: BORDER_RADIUS_PRIMARY, backgroundColor: theme.secondaryBackground }
+        ]}
+      >
+        <Text fontSize={13} appearance="secondaryText" style={{ lineHeight: 20 }}>
+          <Trans
+            i18nKey="You can change the selected account or limit which accounts <bold>{{appName}}</bold> can see."
+            values={{ appName: dappToConnect.name }}
+            components={{ bold: <Text fontSize={13} weight="semiBold" /> }}
+          />
+        </Text>
+      </View>
+    )
+  }, [dappToConnect, theme.secondaryBackground])
+
+  const isHiddenHeaderPinned = !!hiddenAccounts.length && !isHiddenSectionInView
+
+  const renderFooter = useCallback(
+    ({ setIsMenuOpen }: RenderSelectedOptionParams) => (
+      <View style={[spacings.ptTy, { backgroundColor: theme.primaryBackground }]}>
+        {isHiddenHeaderPinned && (
+          <AccountSelectSectionHeader
+            type="hidden"
+            count={hiddenAccounts.length}
+            actionText={t('Show all')}
+            onAction={showAllAccounts}
+          />
+        )}
+        <View style={[flexbox.directionRow, spacings.ptTy, { columnGap: SPACING_SM }]}>
+          {isDirty ? (
+            <>
+              <Button
+                type="secondary"
+                text={t('Cancel')}
+                onPress={() => setIsMenuOpen(false)}
+                hasBottomSpacing={false}
+                style={flexbox.flex1}
+                testID="account-select-cancel"
+              />
+              <Button
+                text={t('Done')}
+                onPress={() => {
+                  applyChanges()
+                  setIsMenuOpen(false)
+                }}
+                hasBottomSpacing={false}
+                style={flexbox.flex1}
+                testID="account-select-done"
+              />
+            </>
+          ) : (
+            <Button
+              type="secondary"
+              text={t('Close')}
+              onPress={() => setIsMenuOpen(false)}
+              hasBottomSpacing={false}
+              style={flexbox.flex1}
+              testID="account-select-close"
+            />
+          )}
+        </View>
+      </View>
+    ),
+    [
+      theme.primaryBackground,
+      isHiddenHeaderPinned,
+      hiddenAccounts.length,
+      showAllAccounts,
+      isDirty,
+      applyChanges,
+      t
+    ]
   )
 
   const renderSelectedOption = useCallback(
@@ -81,16 +293,16 @@ const AccountSelect = () => {
       const ArrowIcon = isMenuOpen ? UpArrowIcon : DownArrowIcon
 
       return (
-        <View ref={selectRef} style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-          <AccountDataDetailed />
-          {accounts.length > 1 && (
-            <HoverablePressable
-              onPress={toggleMenu}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={t('Switch account')}
-              testID="account-select-toggle"
-            >
+        <HoverablePressable
+          onPress={toggleMenu}
+          disabled={accounts.length < 2}
+          accessibilityRole="button"
+          accessibilityLabel={t('Select account')}
+          testID="account-select-toggle"
+        >
+          <View ref={selectRef} style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <AccountDataDetailed />
+            {accounts.length > 1 && (
               <View
                 style={[
                   flexbox.center,
@@ -105,28 +317,37 @@ const AccountSelect = () => {
               >
                 <ArrowIcon />
               </View>
-            </HoverablePressable>
-          )}
-        </View>
+            )}
+          </View>
+        </HoverablePressable>
       )
     },
     [accounts.length, t, theme.primaryBackground]
   )
 
   return (
-    <Select
+    <SectionedSelect
       testID="account-select"
       value={value}
-      setValue={handleSelect}
-      options={options}
-      mode={isNarrowWebLayout ? 'bottomSheet' : undefined}
-      menuOptionHeight={MENU_OPTION_HEIGHT}
-      menuPosition="bottom"
+      setValue={handleSetValue}
+      sections={sections}
+      mode="bottomSheet"
+      isBottomSheetFullHeight
       bottomSheetTitle={t('Select account')}
-      searchPlaceholder={t('Search accounts')}
-      withSearch={accounts.length > 5}
+      withBottomSheetBackButton={false}
+      menuOptionHeight={ACCOUNT_SELECT_OPTION_HEIGHT}
+      headerHeight={dappToConnect ? ACCOUNT_SELECT_SECTION_HEADER_HEIGHT : 0}
+      renderOption={renderOption}
+      renderSectionHeader={dappToConnect ? renderSectionHeader : undefined}
+      stickySectionHeadersEnabled={!!dappToConnect}
+      closeMenuOnSelect={!dappToConnect}
+      renderHeaderChildren={renderIntro}
+      renderBottomSheetFooter={dappToConnect ? renderFooter : undefined}
+      onBottomSheetClosed={reset}
+      onViewableItemsChanged={dappToConnect ? handleViewableItemsChanged : undefined}
       renderSelectedOption={renderSelectedOption}
-      containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+      emptyListPlaceholderText={t('No accounts found')}
+      containerStyle={SELECT_CONTAINER_STYLE}
     />
   )
 }

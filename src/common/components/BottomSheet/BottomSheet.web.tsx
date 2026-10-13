@@ -229,7 +229,17 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     ...(scrollViewProps || {})
                   }
                 }
-              : {})}
+              : // A full height sheet's list scrolls itself, so its sticky headers and
+                // scrollbar work - otherwise Modalize's own ScrollView would scroll it whole
+                !isScrollEnabled && !adjustToContentHeight
+                ? {
+                    scrollViewProps: {
+                      scrollEnabled: false,
+                      nestedScrollEnabled: true,
+                      contentContainerStyle: { flex: 1 }
+                    }
+                  }
+                : {})}
             openAnimationConfig={{
               timing: { duration: animationDuration, delay: 0 }
             }}

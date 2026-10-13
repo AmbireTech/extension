@@ -10,7 +10,14 @@ import useSelectKeyboardControl from './useSelectKeyboardControl'
 
 type Props = Pick<
   SelectProps,
-  'menuOptionHeight' | 'setValue' | 'size' | 'attemptToFetchMoreOptions' | 'mode' | 'menuPosition'
+  | 'menuOptionHeight'
+  | 'setValue'
+  | 'size'
+  | 'attemptToFetchMoreOptions'
+  | 'mode'
+  | 'menuPosition'
+  | 'renderOption'
+  | 'closeMenuOnSelect'
 > & {
   value: SelectProps['value']
   data: SectionedSelectProps['sections']
@@ -30,7 +37,9 @@ const useSelectInternal = ({
   attemptToFetchMoreOptions,
   mode = isMobile ? 'bottomSheet' : 'select',
   menuPosition,
-  onSearch
+  onSearch,
+  renderOption,
+  closeMenuOnSelect = true
 }: Props) => {
   const useSelectReturnValue = useSelect({ menuPosition })
   const { search, isMenuOpen, setIsMenuOpen, setSearch } = useSelectReturnValue
@@ -41,10 +50,12 @@ const useSelectInternal = ({
   const handleOptionSelect = useCallback(
     (item: SelectValue) => {
       !!setValue && setValue(item)
+      if (!closeMenuOnSelect) return
+
       setIsMenuOpen(false)
       setSearch('search', '')
     },
-    [setValue, setIsMenuOpen, setSearch]
+    [setValue, closeMenuOnSelect, setIsMenuOpen, setSearch]
   )
 
   const prevIsMenuOpen = usePrevious(isMenuOpen)
@@ -158,7 +169,8 @@ const useSelectInternal = ({
     stickySectionHeadersEnabled,
     setIsMenuOpen,
     handleOptionSelect,
-    mode
+    mode,
+    renderOption
   })
 
   return {

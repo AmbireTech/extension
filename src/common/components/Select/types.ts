@@ -20,6 +20,15 @@ export type RenderSelectedOptionParams = {
   selectRef: any
 }
 
+/** What `renderOption` receives to draw a custom row in place of the default one */
+export type RenderOptionParams = {
+  item: SelectValue
+  isSelected: boolean
+  /** The last row of the whole (filtered) list */
+  isLast: boolean
+  onPress: (item: SelectValue) => void
+}
+
 export type CommonSelectProps = {
   id?: string
   value?: SelectValue | null
@@ -72,6 +81,14 @@ export type CommonSelectProps = {
     isMenuOpen,
     selectRef
   }: RenderSelectedOptionParams) => ReactNode
+  /** Draws each row instead of the default option. It must keep the `menuOptionHeight` height */
+  renderOption?: (params: RenderOptionParams) => ReactNode
+  /** Set to false to keep the menu open after an option is picked. Defaults to true */
+  closeMenuOnSelect?: boolean
+  /** Rendered below the list, pinned to the bottom of the bottom sheet */
+  renderBottomSheetFooter?: (params: RenderSelectedOptionParams) => ReactNode
+  /** Set to false to hide the back arrow next to the bottom sheet title on web. Defaults to true */
+  withBottomSheetBackButton?: boolean
 }
 export type SelectProps = CommonSelectProps & {
   options: SelectValue[]
@@ -80,5 +97,10 @@ export type SelectProps = CommonSelectProps & {
 export type SectionedSelectProps = CommonSelectProps &
   Pick<
     SectionListProps<SelectValue>,
-    'sections' | 'renderSectionHeader' | 'SectionSeparatorComponent' | 'stickySectionHeadersEnabled'
+    | 'sections'
+    | 'renderSectionHeader'
+    | 'SectionSeparatorComponent'
+    | 'stickySectionHeadersEnabled'
+    | 'onViewableItemsChanged'
+    | 'viewabilityConfig'
   > & { headerHeight: number }

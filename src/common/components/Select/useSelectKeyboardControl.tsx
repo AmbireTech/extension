@@ -6,7 +6,7 @@ import usePrevious from '@common/hooks/usePrevious'
 
 import { SectionedSelectProps, SelectProps, SelectValue } from './types'
 
-type Props = Pick<SelectProps, 'size' | 'value' | 'mode'> &
+type Props = Pick<SelectProps, 'size' | 'value' | 'mode' | 'renderOption'> &
   Pick<SectionedSelectProps, 'sections'> & {
     listHeight: number
     optionHeight: number
@@ -28,7 +28,8 @@ const useSelectKeyboardControl = ({
   stickySectionHeadersEnabled,
   setIsMenuOpen,
   handleOptionSelect,
-  mode
+  mode,
+  renderOption
 }: Props) => {
   const listRef: any = useRef(null)
   const highlightedItemOnMouseMoveEnabled = useRef(true)
@@ -269,6 +270,19 @@ const useSelectKeyboardControl = ({
 
   const renderItem = useCallback(
     ({ item, index: optionIndex, section }: { item: SelectValue; index: number; section: any }) => {
+      if (renderOption) {
+        const lastSection = sections[sections.length - 1]
+        const isInLastSection =
+          !section || sections.length === 1 || section?.key === lastSection?.key
+
+        return renderOption({
+          item,
+          isSelected: item.value === value?.value,
+          isLast: isInLastSection && optionIndex === (lastSection?.data.length ?? 0) - 1,
+          onPress: handleOptionSelect
+        })
+      }
+
       let onHoverIn = () => {}
       let isHighlighted = false
 
@@ -317,7 +331,8 @@ const useSelectKeyboardControl = ({
       handleSetHoverIn,
       handleSetHoverOut,
       sections,
-      mode
+      mode,
+      renderOption
     ]
   )
 

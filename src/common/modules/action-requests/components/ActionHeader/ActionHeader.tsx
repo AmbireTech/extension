@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { ComponentProps } from 'react'
 import { View } from 'react-native'
 
 import { isMobile, isWeb } from '@common/config/env'
@@ -17,10 +17,10 @@ const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsCon
 
 type Props = {
   /** Lets the user switch the selected account from the header */
-  withAccountSelect?: boolean
+  accountSelectProps?: ComponentProps<typeof AccountSelect>
 }
 
-const ActionHeader = ({ withAccountSelect }: Props) => {
+const ActionHeader = ({ accountSelectProps }: Props) => {
   const { theme } = useTheme()
   const { isNarrowWebLayout } = useCompactLayout()
   // In a narrow view the header is inset like the content below it, so all edge spacings are equal
@@ -49,7 +49,11 @@ const ActionHeader = ({ withAccountSelect }: Props) => {
           }
         ]}
       >
-        {withAccountSelect ? <AccountSelect /> : <Header.AccountDataDetailed />}
+        {accountSelectProps ? (
+          <AccountSelect {...accountSelectProps} />
+        ) : (
+          <Header.AccountDataDetailed />
+        )}
       </View>
       <PendingRequests style={[isWeb && webMarginHorizontal]} />
     </View>
