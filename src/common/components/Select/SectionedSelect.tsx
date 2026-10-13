@@ -29,6 +29,7 @@ const SectionedSelect = ({
   menuPosition,
   onViewableItemsChanged,
   viewabilityConfig,
+  getSectionHeaderHeight,
   ...props
 }: SectionedSelectProps) => {
   const selectData = useSelectInternal({
@@ -72,8 +73,9 @@ const SectionedSelect = ({
       let remaining = flatIndex
 
       for (const section of filteredData) {
-        if (remaining === 0) return { length: headerHeight, offset, index: flatIndex }
-        offset += headerHeight
+        const sectionHeaderHeight = getSectionHeaderHeight?.(section) ?? headerHeight
+        if (remaining === 0) return { length: sectionHeaderHeight, offset, index: flatIndex }
+        offset += sectionHeaderHeight
         remaining -= 1
 
         if (remaining < section.data.length) {
@@ -92,7 +94,7 @@ const SectionedSelect = ({
 
       return { length: 0, offset, index: flatIndex }
     },
-    [filteredData, headerHeight, optionHeight]
+    [filteredData, headerHeight, getSectionHeaderHeight, optionHeight]
   )
 
   // Memoized for the same reason `Select` memoizes its `flatListProps`: a new object

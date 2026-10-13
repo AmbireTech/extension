@@ -25,7 +25,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import AccountSelectOption, { ACCOUNT_SELECT_OPTION_HEIGHT } from './AccountSelectOption'
 import AccountSelectSectionHeader, {
-  ACCOUNT_SELECT_SECTION_HEADER_HEIGHT
+  ACCOUNT_SELECT_HIDDEN_HEADER_HEIGHT,
+  ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT
 } from './AccountSelectSectionHeader'
 import useAccountSelectAccess from './useAccountSelectAccess'
 
@@ -39,6 +40,11 @@ const SELECT_CONTAINER_STYLE = { ...flexbox.flex1, ...spacings.mb0 }
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
+
+const getSectionHeaderHeight = (section: SectionListData<SelectValue>) =>
+  section.key === HIDDEN_SECTION_KEY
+    ? ACCOUNT_SELECT_HIDDEN_HEADER_HEIGHT
+    : ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT
 
 const toOption = (account: Account): SelectValue => ({
   value: account.addr,
@@ -336,7 +342,8 @@ const AccountSelect = ({ dappToConnect }: Props) => {
       bottomSheetTitle={t('Select account')}
       withBottomSheetBackButton={false}
       menuOptionHeight={ACCOUNT_SELECT_OPTION_HEIGHT}
-      headerHeight={dappToConnect ? ACCOUNT_SELECT_SECTION_HEADER_HEIGHT : 0}
+      headerHeight={dappToConnect ? ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT : 0}
+      getSectionHeaderHeight={dappToConnect ? getSectionHeaderHeight : undefined}
       renderOption={renderOption}
       renderSectionHeader={dappToConnect ? renderSectionHeader : undefined}
       stickySectionHeadersEnabled={!!dappToConnect}

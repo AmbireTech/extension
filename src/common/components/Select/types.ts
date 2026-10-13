@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { SectionListProps, TextStyle, ViewStyle } from 'react-native'
+import { SectionListData, SectionListProps, TextStyle, ViewStyle } from 'react-native'
 
 export type SelectValue = {
   value: string | number
@@ -103,4 +103,8 @@ export type SectionedSelectProps = CommonSelectProps &
     | 'stickySectionHeadersEnabled'
     | 'onViewableItemsChanged'
     | 'viewabilityConfig'
-  > & { headerHeight: number }
+  > & {
+    headerHeight: number
+    /** Use when section headers differ in height. Falls back to `headerHeight` */
+    getSectionHeaderHeight?: (section: SectionListData<SelectValue>) => number
+  }

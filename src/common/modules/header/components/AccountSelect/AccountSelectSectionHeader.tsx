@@ -7,11 +7,14 @@ import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-/** Height of a section header - the list relies on it being fixed */
-export const ACCOUNT_SELECT_SECTION_HEADER_HEIGHT = 52
+const ROW_HEIGHT = 32
+/** Height of the visible section's header - the list relies on it being fixed */
+export const ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT = ROW_HEIGHT + SPACING_TY
+/** Height of the hidden section's header, which has room for a line above it */
+export const ACCOUNT_SELECT_HIDDEN_HEADER_HEIGHT = 52
 // Below this width "All accounts" doesn't fit next to the title and the button
 const MIN_WIDTH_FOR_LONG_ALL_LABEL = 450
 
@@ -43,7 +46,9 @@ const AccountSelectSectionHeader = ({ type, count, isAll, actionText, onAction }
     <View
       onLayout={handleLayout}
       style={{
-        height: ACCOUNT_SELECT_SECTION_HEADER_HEIGHT,
+        height: isVisibleSection
+          ? ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT
+          : ACCOUNT_SELECT_HIDDEN_HEADER_HEIGHT,
         backgroundColor: theme.primaryBackground
       }}
     >
@@ -51,7 +56,15 @@ const AccountSelectSectionHeader = ({ type, count, isAll, actionText, onAction }
       {!isVisibleSection && (
         <View style={{ height: 1, backgroundColor: theme.tertiaryBackground }} />
       )}
-      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, { columnGap: 8 }]}>
+      {/* The first section's header sits right under the search, so it starts at the top */}
+      <View
+        style={[
+          isVisibleSection ? { height: ROW_HEIGHT } : flexbox.flex1,
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          { columnGap: 8 }
+        ]}
+      >
         <View
           style={[
             flexbox.center,
