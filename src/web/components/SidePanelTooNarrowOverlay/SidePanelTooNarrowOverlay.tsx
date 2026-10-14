@@ -6,9 +6,12 @@ import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import { getUiType } from '@common/utils/uiType'
 import SidePanelEmptyState from '@web/components/SidePanelEmptyState'
 import { SIDE_PANEL_MIN_WIDTH } from '@web/constants/spacings'
-import { getIsFirefoxSidebarOnLeft, isFirefoxSidebar } from '@web/utils/sidePanel'
+import { getIsFirefoxSidebarOnLeft } from '@web/utils/sidePanel'
+
+const { isFirefoxSidebar } = getUiType()
 
 // The icon's arrow points left - outwards for a sidebar on the right. A sidebar on the left widens
 // to the right, so there the icon is turned around.

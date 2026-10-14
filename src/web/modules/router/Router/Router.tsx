@@ -20,7 +20,6 @@ import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
 import usePersistSidePanelWidth from '@web/hooks/usePersistSidePanelWidth'
 import useSidePanelActionRequestRouting from '@web/hooks/useSidePanelActionRequestRouting'
 import SidePanelModeDisabledScreen from '@web/modules/auth/screens/SidePanelModeDisabledScreen'
-import { isFirefoxSidebar } from '@web/utils/sidePanel'
 import DashboardScreen from '@web/modules/dashboard/screens/DashboardScreen'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
 
@@ -30,7 +29,7 @@ import getStyles from './styles'
 
 const AsyncMainRoute = lazy(() => import('@web/modules/router/components/MainRoutes'))
 
-const { isPopup } = getUiType()
+const { isPopup, isFirefoxSidebar } = getUiType()
 
 /**
  * The side panel mode, or 'loading' until WalletStateController has loaded the stored settings -

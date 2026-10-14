@@ -34,9 +34,6 @@ const getFirefoxSidebarApi = (): FirefoxSidebarApi | undefined => {
   return browser?.sidebarAction
 }
 
-/** Whether this view is the Firefox sidebar (see `isFirefoxSidebar` in getUiType). */
-export const { isFirefoxSidebar } = getUiType()
-
 /** Where the page's content starts on screen. Firefox-only, so undefined elsewhere. */
 export const getPageScreenX = () =>
   (window as Window & { mozInnerScreenX?: number }).mozInnerScreenX
@@ -47,7 +44,9 @@ export const getPageScreenX = () =>
  * can't be measured.
  */
 export const getIsFirefoxSidebarOnLeft = async (): Promise<boolean | undefined> => {
-  if (!isFirefoxSidebar) return undefined
+  // Read here, not when the module loads: the background imports this module too, and Chrome's
+  // service worker has no `window` for getUiType() to read
+  if (!getUiType().isFirefoxSidebar) return undefined
 
   const pageScreenX = getPageScreenX()
   if (typeof pageScreenX !== 'number') return undefined

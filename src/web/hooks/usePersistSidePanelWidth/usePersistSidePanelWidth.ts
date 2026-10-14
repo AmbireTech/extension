@@ -8,11 +8,10 @@ import {
   FIREFOX_SIDEBAR_IS_ON_LEFT_STORAGE_KEY,
   getIsFirefoxSidebarOnLeft,
   getPageScreenX,
-  isFirefoxSidebar,
   SIDE_PANEL_WIDTH_STORAGE_KEY
 } from '@web/utils/sidePanel'
 
-const { isSidePanel } = getUiType()
+const { isSidePanel, isFirefoxSidebar } = getUiType()
 
 const SAVE_DEBOUNCE_MS = 300
 
