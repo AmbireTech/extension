@@ -26,12 +26,12 @@ const useOpenWalletFromClick = () => {
     selectIsSidePanelModeEnabled
   )
 
-  const canOpenWalletFromClick =
-    engine !== 'gecko' || (isSidePanelModeEnabled && !!getFirefoxSidebarApi())
+  const isFirefox = engine === 'gecko'
+  const shouldOpenFirefoxSidebar = isFirefox && isSidePanelModeEnabled && !!getFirefoxSidebarApi()
+  const canOpenWalletFromClick = !isFirefox || shouldOpenFirefoxSidebar
 
   const openWalletFromClick = useCallback(() => {
-    // Without the sidebar API the background is left to show the dashboard in this view instead
-    if (engine !== 'gecko' || !isSidePanelModeEnabled || !getFirefoxSidebarApi()) {
+    if (!shouldOpenFirefoxSidebar) {
       dispatch({ type: 'OPEN_EXTENSION_POPUP' })
       return
     }
@@ -45,7 +45,7 @@ const useOpenWalletFromClick = () => {
         captureException(error)
         navigate(WEB_ROUTES.dashboard)
       })
-  }, [dispatch, isSidePanelModeEnabled, navigate])
+  }, [dispatch, shouldOpenFirefoxSidebar, navigate])
 
   return { openWalletFromClick, canOpenWalletFromClick }
 }

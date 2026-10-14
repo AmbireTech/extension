@@ -55,7 +55,7 @@ const saveSidePanelLayout = async () => {
  * sidebar is on either, so there the panel stores that too, for the request window to open on the
  * same side.
  */
-const usePersistSidePanelWidth = () => {
+const usePersistSidePanelLayout = () => {
   useEffect(() => {
     if (!isSidePanel) return
 
@@ -89,4 +89,4 @@ const usePersistSidePanelWidth = () => {
   }, [])
 }
 
-export default usePersistSidePanelWidth
+export default usePersistSidePanelLayout

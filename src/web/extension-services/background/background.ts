@@ -64,6 +64,7 @@ import { BadgesController } from '@web/extension-services/background/controllers
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
+import { getRequestToMoveOutOfPanel } from '@web/extension-services/background/handlers/getRequestToMoveOutOfPanel'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
 import {
   handleKeepBridgeContentScriptAcrossSessions,
@@ -87,7 +88,6 @@ import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerCon
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
-import { getAppWindowIdsFromUserRequest } from '@web/utils/dispatchDappTabFocus'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
 import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
@@ -638,34 +638,23 @@ const init = async () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
 
-  // When side panel mode is turned off, a pending app request is moved to a request window, so it
-  // isn't lost or left waiting with nothing showing it: Chrome closes its side panel then (see
-  // applyPanelMode), and the Firefox sidebar switches to the "mode off" notice, which can't show
-  // requests. The panel's disconnect cleanup doesn't reject requests while the mode is off.
+  // Turning side panel mode off leaves nothing to show a pending app request (Chrome closes its
+  // panel, Firefox's sidebar shows the "mode off" notice), so it's moved to a request window
   let wasSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
   walletStateCtrl.onUpdate(() => {
     const isSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
     const hasSidePanelModeBeenTurnedOff = wasSidePanelModeEnabled && !isSidePanelModeEnabled
     wasSidePanelModeEnabled = isSidePanelModeEnabled
 
-    if (!hasSidePanelModeBeenTurnedOff) return
+    if (!hasSidePanelModeBeenTurnedOff || mainCtrl.requests.requestWindow.windowProps) return
 
-    // Only a request an app is waiting on, that closing the panel would otherwise reject - the
-    // first one in the queue, even if a transaction is ahead of it (the request window lists the
-    // rest). Transactions stay queued, as when the panel is closed (e.g. one set aside with "Start
-    // a batch"), and are opened from the dashboard - moving them would pop up a request the user
-    // may have set aside long ago. Requests started in the wallet itself have no app waiting.
-    if (mainCtrl.requests.requestWindow.windowProps) return
+    const requestToMove = getRequestToMoveOutOfPanel(mainCtrl.requests.visibleUserRequests)
+    if (!requestToMove) return
 
-    const appRequest = mainCtrl.requests.visibleUserRequests.find(
-      (request) => request.kind !== 'calls' && !!request.dappPromises?.length
-    )
-    if (!appRequest) return
-
-    // Opened next to the app's window, so focus returns to it once the request window closes
-    const [appWindowId] = getAppWindowIdsFromUserRequest(appRequest)
     mainCtrl.requests
-      .setCurrentUserRequestById(appRequest.id, { baseWindowId: appWindowId })
+      .setCurrentUserRequestById(requestToMove.request.id, {
+        baseWindowId: requestToMove.baseWindowId
+      })
       .catch((error: unknown) => {
         console.error('Failed to move a request out of the side panel', error)
         captureBackgroundException(error)
@@ -923,12 +912,9 @@ browser.runtime.onConnect.addListener(async (port: Port) => {
   })
 })
 
-// Firefox has no `sidePanel.setPanelBehavior({ openPanelOnActionClick })` equivalent, so the
-// toolbar click has to be handled manually. Registered here (background.ts is never bundled into
-// any UI page) rather than in webapi/panel.ts, which - unlike this file - is also imported by UI
-// code (e.g. wallet-state.web.ts, pulled in by the Avatar components); registering this
-// browser-chrome-level listener from a non-background page context as well corrupts the
-// extension's WebExtension IPC state in Firefox and hangs every subsequent `browser.*` call.
+// Firefox's toolbar click (see handleFirefoxActionClicked). Registered here because no UI page
+// bundles background.ts - registering it from a UI page too (panel.ts is also imported by UI code)
+// breaks Firefox's extension messaging: every later `browser.*` call hangs.
 if (engine === 'gecko') {
   browser.action?.onClicked?.addListener(handleFirefoxActionClicked)
 }

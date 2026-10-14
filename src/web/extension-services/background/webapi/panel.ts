@@ -19,22 +19,11 @@ const PANEL_PORT_NAME = 'side-panel'
 const isGecko = engine === 'gecko'
 
 /**
- * Firefox has no `sidePanel.setPanelBehavior({ openPanelOnActionClick })` equivalent: unlike
- * Chrome, clicking the toolbar action only dispatches `onClicked` when no popup is set (see
- * applyPanelMode, which clears it when panel mode is on), so the sidebar has to be opened here.
- * It is toggled rather than opened, so a click while the sidebar is open closes it instead of
- * reloading it.
- * Because `onClicked` only fires in panel mode, no mode check is needed - and it must not read
- * wallet state, since the click can wake a suspended background before the controllers load.
- * `toggle()` is called synchronously so it stays within the user gesture Firefox requires.
- *
- * This module is imported by UI code too (e.g. wallet-state.web.ts is pulled in by the Avatar
- * components), so the listener itself must be registered from background.ts - a real
- * `browser.action.onClicked.addListener` call here would run once per extension page (popup,
- * tab, request-window, side-panel) in addition to the background, since they all bundle this
- * module. Registering the same browser-chrome-level listener from a non-background page context
- * corrupts the extension's WebExtension IPC state in Firefox and hangs every subsequent
- * `browser.*` call.
+ * Opens or closes the Firefox sidebar on a toolbar click (Firefox has no `openPanelOnActionClick`).
+ * `onClicked` only fires when no popup is set, which applyPanelMode ensures in panel mode, so no
+ * mode check is needed - nor wallet state read, as the click can wake the background before the
+ * controllers load. `toggle()` runs before any await, within the user gesture Firefox requires.
+ * Registered from background.ts only (see there).
  */
 export const handleFirefoxActionClicked = async () => {
   try {
@@ -198,19 +187,9 @@ export const forgetPanelWindowId = (portId: string) => {
 }
 
 /**
- * The panel part of the UI manager. A connected side-panel port is the only reliable signal that
- * the panel is showing, since Chrome exposes no way to query its state. The panel is deliberately
- * not openable or closable from here - the user owns its lifecycle - so requests fall back to a
- * request window whenever it isn't open.
- * A panel only counts as open in panel mode. On Firefox the sidebar can also be opened from the
- * browser's sidebar switcher while panel mode is off, and it then shows a "turn on side panel mode"
- * notice instead of the wallet - requests routed to it couldn't be shown. On Chrome the panel is
- * closed when the mode is turned off (see applyPanelMode), so a panel still connected then is one
- * that is closing.
- * Each browser window has its own panel, so with a `windowId` only a panel in that window counts.
- * A panel that hasn't reported its window yet (it does so right after connecting) doesn't count
- * for a specific window - a request then opens in a request window rather than in a panel that may
- * be in another window, where the user wouldn't see it.
+ * Whether a side panel can show requests: a side-panel port is connected (Chrome can't be asked)
+ * and panel mode is on - with the mode off, Firefox's sidebar shows the "mode off" notice and
+ * Chrome's panel is closing. With a `windowId`, only a panel that has reported that window counts.
  */
 const isPanelOpen = (
   pm: PortMessenger,

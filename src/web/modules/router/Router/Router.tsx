@@ -4,6 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 
 import { useTranslation } from '@common/config/localization'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
+import { selectSidePanelModeStatus } from '@common/controllers/wallet-state/selectors'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -17,31 +18,17 @@ import RecoveryScreen from '@web/components/RecoveryScreen'
 import Splash from '@web/components/Splash'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
-import usePersistSidePanelWidth from '@web/hooks/usePersistSidePanelWidth'
+import usePersistSidePanelLayout from '@web/hooks/usePersistSidePanelLayout'
 import useSidePanelActionRequestRouting from '@web/hooks/useSidePanelActionRequestRouting'
 import SidePanelModeDisabledScreen from '@web/modules/auth/screens/SidePanelModeDisabledScreen'
 import DashboardScreen from '@web/modules/dashboard/screens/DashboardScreen'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
-
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 import getStyles from './styles'
 
 const AsyncMainRoute = lazy(() => import('@web/modules/router/components/MainRoutes'))
 
 const { isPopup, isFirefoxSidebar } = getUiType()
-
-/**
- * The side panel mode, or 'loading' until WalletStateController has loaded the stored settings -
- * before that the mode reads as off, whatever it really is.
- */
-const selectSidePanelModeStatus = (
-  state: AllControllersMappingType['WalletStateController'] | undefined
-): 'loading' | 'on' | 'off' => {
-  if (!state?.isReady) return 'loading'
-
-  return state.isSidePanelModeEnabled ? 'on' : 'off'
-}
 
 const TIME_TO_LAND_ON_A_ROUTE = 3000
 
@@ -63,7 +50,7 @@ const Router = () => {
   )
   useCurrentActionSideEffects()
   useSidePanelActionRequestRouting()
-  usePersistSidePanelWidth()
+  usePersistSidePanelLayout()
 
   // Controller state is received but the extension hasn't routed anywhere
   const hasNothingToRender = !pathname && areAllControllerStatesLoaded

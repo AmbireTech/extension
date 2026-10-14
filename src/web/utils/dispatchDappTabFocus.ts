@@ -5,7 +5,9 @@ export type DappTabTarget = {
   windowId?: number
 }
 
-export const getDappTabTargetsFromUserRequest = (userRequest?: UserRequest): DappTabTarget[] => {
+export const getDappTabTargetsFromUserRequest = (
+  userRequest?: UserRequest | null
+): DappTabTarget[] => {
   if (!userRequest?.dappPromises?.length) return []
 
   const targets = new Map<number, DappTabTarget>()
@@ -27,7 +29,7 @@ export const getDappTabTargetsFromUserRequest = (userRequest?: UserRequest): Dap
  * (e.g. started in the wallet itself, or over WalletConnect).
  */
 export const getAppWindowIdsFromUserRequest = (userRequest?: UserRequest | null): number[] =>
-  getDappTabTargetsFromUserRequest(userRequest ?? undefined)
+  getDappTabTargetsFromUserRequest(userRequest)
     .map(({ windowId }) => windowId)
     .filter((windowId): windowId is number => typeof windowId === 'number')
 
