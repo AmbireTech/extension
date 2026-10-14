@@ -12,6 +12,10 @@ export const TOKEN_LABEL_RESERVED_HEIGHT = 40
 // column of short lines that overflows the reserved height above
 const LABEL_ANCHOR_OVERFLOW = 120
 
+// Matches the tallest provider logo (Uniswap and CoW Swap, 28px), so the provider row has
+// the same height as the route details rows above it, whichever logo it shows
+const ROUTE_DETAILS_ROW_HEIGHT = 28
+
 interface Style {
   container: ViewStyle
   iconsRow: ViewStyle
@@ -19,6 +23,7 @@ interface Style {
   labelAnchorLeft: ViewStyle
   labelAnchorRight: ViewStyle
   labelAnchorCenter: ViewStyle
+  routeDetailsRow: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({
@@ -47,6 +52,12 @@ const styles = StyleSheet.create<Style>({
     left: -LABEL_ANCHOR_OVERFLOW / 2,
     right: -LABEL_ANCHOR_OVERFLOW / 2,
     ...flexbox.alignCenter
+  },
+  routeDetailsRow: {
+    ...flexbox.directionRow,
+    ...flexbox.alignCenter,
+    ...flexbox.justifySpaceBetween,
+    minHeight: ROUTE_DETAILS_ROW_HEIGHT
   }
 })
 

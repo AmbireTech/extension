@@ -23,7 +23,7 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -364,11 +364,11 @@ const AccountsSettingsScreen = () => {
         closeBottomSheet={closeSyncBottomSheet}
         onExportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.exportAccountsToMobile)
+          navigate(WEB_ROUTES.exportToMobile)
         }}
         onImportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.importAccountsFromMobile)
+          navigate(WEB_ROUTES.importFromMobile)
         }}
       />
     </>
