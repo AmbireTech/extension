@@ -107,7 +107,7 @@ const AccountSelectScreen = () => {
   )
 
   const renderItem = useCallback(
-    ({ item: acc }: { item: AccountType }) => {
+    ({ item: acc, index }: { item: AccountType; index: number }) => {
       return (
         <Account
           onSelect={onAccountSelect}
@@ -118,10 +118,11 @@ const AccountSelectScreen = () => {
           withCopy={false}
           maxAccountAddrLength={32}
           onExtraHeightChange={onAccountExtraHeightChange}
+          containerStyle={index === accounts.length - 1 ? spacings.mb0 : undefined}
         />
       )
     },
-    [onAccountSelect, onAccountExtraHeightChange]
+    [onAccountSelect, onAccountExtraHeightChange, accounts.length]
   )
 
   useEffect(() => {
