@@ -34,8 +34,7 @@ const Toggle: React.FC<ToggleProps> = ({
     <label
       htmlFor={id}
       onClick={handleClick}
-      // @ts-expect-error it exists for the React Native Web component
-      testID={testID}
+      data-testid={testID}
       style={{
         alignItems: 'center',
         display: 'flex',

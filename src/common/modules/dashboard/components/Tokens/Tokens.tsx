@@ -223,13 +223,11 @@ const Tokens = ({
   const sortedTokens = useMemo(() => {
     const visible = tokens.filter((token) => {
       if (isGasTankTokenOnCustomNetwork(token, networks)) return false
-      if (token?.flags.isHidden || token.flags.rewardsType === 'wallet-projected-rewards')
-        return false
+      if (token?.flags.isHidden) return false
 
       const tokenKey = getTokenId(token)
       // exclude rewards from custom tokens
       const isCustom = customTokenKeys.has(tokenKey) && !token.flags.rewardsType
-      // projected rewards are already filtered out by the guard above
       const isPinned = PINNED_TOKEN_KEYS.has(tokenKey)
 
       return (

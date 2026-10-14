@@ -27,7 +27,8 @@ import {
   ACCOUNT_SELECT_ACCOUNT_MB
 } from '@common/modules/account-select/components/Account/styles'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
+import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -37,7 +38,7 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import ExportAccountsToExtensionSheet from '@mobile/modules/accounts-sync/components/ExportAccountsToExtensionSheet'
+import ExportToExtensionSheet from '@mobile/modules/app-data-sync/components/ExportToExtensionSheet'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 
 const AccountsSettingsScreen = () => {
@@ -71,11 +72,19 @@ const AccountsSettingsScreen = () => {
     open: openAccountSmartSettings,
     close: closeAccountSmartSettings
   } = useModalize()
+  const {
+    ref: sheetRefAccountDeploySettings,
+    open: openAccountDeploySettings,
+    close: closeAccountDeploySettings
+  } = useModalize()
 
   const [exportImportAccount, setExportImportAccount] = useState<AccountInterface | null>(null)
   const [accountToRemove, setAccountToRemove] = useState<AccountInterface | null>(null)
-  const [smartSettingsAccount, setSmartSettingsAccount] = useState<AccountInterface | null>(null)
+  const [accountSettingsAccount, setAccountSettingsAccount] = useState<AccountInterface | null>(
+    null
+  )
   const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
+  const clearAccountSettingsAccount = useCallback(() => setAccountSettingsAccount(null), [])
 
   useEffect(() => {
     setLocalAccounts((prev) => {
@@ -115,8 +124,15 @@ const AccountsSettingsScreen = () => {
   }, [openRemoveAccount, accountToRemove])
 
   useEffect(() => {
-    if (smartSettingsAccount) openAccountSmartSettings()
-  }, [openAccountSmartSettings, smartSettingsAccount])
+    if (!accountSettingsAccount) return
+
+    if (accountSettingsAccount.safeCreation) {
+      openAccountDeploySettings()
+      return
+    }
+
+    openAccountSmartSettings()
+  }, [accountSettingsAccount, openAccountDeploySettings, openAccountSmartSettings])
 
   const shortenAccountAddr = useCallback(() => {
     if (maxElementWidthSize(800)) return undefined
@@ -130,10 +146,10 @@ const AccountsSettingsScreen = () => {
     () => ({
       withOptionsButton: true,
       setAccountToImportOrExport: setExportImportAccount,
-      setSmartSettingsAccount,
+      setAccountSettingsAccount,
       setAccountToRemove
     }),
-    [setExportImportAccount, setSmartSettingsAccount, setAccountToRemove]
+    [setExportImportAccount, setAccountSettingsAccount, setAccountToRemove]
   )
 
   const removeAccount = useCallback(() => {
@@ -261,13 +277,17 @@ const AccountsSettingsScreen = () => {
           />
         </View>
 
+        <AccountDeploySettingsBottomSheet
+          sheetRef={sheetRefAccountDeploySettings}
+          closeBottomSheet={closeAccountDeploySettings}
+          onClosed={clearAccountSettingsAccount}
+          account={accountSettingsAccount?.safeCreation ? accountSettingsAccount : null}
+        />
         <AccountSmartSettingsBottomSheet
           sheetRef={sheetRefAccountSmartSettings}
-          closeBottomSheet={() => {
-            setSmartSettingsAccount(null)
-            closeAccountSmartSettings()
-          }}
-          account={smartSettingsAccount}
+          closeBottomSheet={closeAccountSmartSettings}
+          onClosed={clearAccountSettingsAccount}
+          account={accountSettingsAccount?.safeCreation ? null : accountSettingsAccount}
         />
         <AccountKeysBottomSheet
           sheetRef={sheetRefExportImportKey}
@@ -338,13 +358,10 @@ const AccountsSettingsScreen = () => {
           }}
           onImportPress={() => {
             closeSyncBottomSheet()
-            navigate(ROUTES.importAccountsFromExtension)
+            navigate(ROUTES.importFromExtension)
           }}
         />
-        <ExportAccountsToExtensionSheet
-          sheetRef={exportSheetRef}
-          closeBottomSheet={closeExportSheet}
-        />
+        <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

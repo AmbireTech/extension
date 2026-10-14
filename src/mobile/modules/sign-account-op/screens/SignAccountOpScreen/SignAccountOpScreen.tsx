@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -12,6 +13,7 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useController from '@common/hooks/useController'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useNavigation from '@common/hooks/useNavigation'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
@@ -20,6 +22,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
+import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
@@ -29,7 +32,7 @@ import SafetyChecksOverlay from '@common/modules/sign-account-op/components/Safe
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import Modals from '@mobile/modules/sign-account-op/components/Modals/Modals'
@@ -55,6 +58,16 @@ const SignAccountOpScreen = () => {
     useController('SignAccountOpController')
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
+  const { bottom: bottomInset } = useSafeAreaInsets()
+  // The footer pads itself horizontally and keeps a bit more room above the home indicator, if any
+  const footerStyle = useMemo(
+    () => ({
+      ...spacings.ph0,
+      ...spacings.pt0,
+      paddingBottom: bottomInset ? bottomInset + SPACING_TY : SPACING_SM
+    }),
+    [bottomInset]
+  )
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
@@ -160,7 +173,8 @@ const SignAccountOpScreen = () => {
     safeAccountTabState.requestId === accountOpRequest?.id
       ? safeAccountTabState.activeTab
       : 'overview'
-  const shouldUseSafeAccountTabs = !!signAccountOpState?.account.safeCreation
+  const shouldUseSafeAccountTabs =
+    !!signAccountOpState?.account.safeCreation && !signAccountOpState.accountOp.meta?.isSafeDeploy
   const isOverviewTabActive = !shouldUseSafeAccountTabs || activeSafeAccountTab === 'overview'
 
   const handleSafeAccountTabChange = useCallback(
@@ -275,6 +289,7 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
+  const holdToProceedButtonType = useDappVerificationHoldButtonType(signAccountOpState?.banners)
 
   return (
     <View style={flexbox.flex1}>
@@ -320,13 +335,13 @@ const SignAccountOpScreen = () => {
       <MobileLayoutContainer
         withHorizontalPadding
         header={<ActionHeader />}
-        footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+        footerStyle={footerStyle}
         footer={
           <View style={styles.footerContainer}>
             {!estimationFailed &&
             signAccountOpState?.canBroadcast &&
             signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-              <View style={spacings.mbTy}>
+              <View style={{ marginBottom: COMPACT_FEE_TO_BUTTONS_SPACING }}>
                 <Estimation
                   signAccountOpState={signAccountOpState}
                   disabled={isSignLoading}
@@ -347,7 +362,7 @@ const SignAccountOpScreen = () => {
               !signAccountOpState.canBroadcast &&
               !!signAccountOpState.account.safeCreation &&
               showSafeSigners && (
-                <View style={[spacings.ptSm, spacings.mbMd]}>
+                <View style={spacings.mbXl}>
                   <SafeOwners
                     account={signAccountOpState.account}
                     onSign={handleChangeSigningKey}
@@ -383,6 +398,7 @@ const SignAccountOpScreen = () => {
               shouldHoldToProceed={shouldHoldToProceed}
               shouldRejectOnchain={shouldRejectOnchain}
               isRejectDisabled={isCancelDisabled}
+              holdToProceedButtonType={holdToProceedButtonType}
               signButtonType={extremeGasFeeSignButtonType}
             />
           </View>

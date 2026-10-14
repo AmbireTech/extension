@@ -40,7 +40,7 @@ export const QR_SCAN_FEEDBACK_INTERVAL = 500
 const LAST_READ_TIMEOUT = 1200
 /**
  * The scanned area is downscaled before decoding so a code covering
- * less than this much of it has under 3 pixels per module at the sizes the accounts sync
+ * less than this much of it has under 3 pixels per module at the sizes the app data sync
  * uses - too little for the decoder to tell the modules apart reliably.
  */
 const MIN_COVERAGE = 0.27

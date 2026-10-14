@@ -1,3 +1,0 @@
-import ExportAccountsToExtensionSheet from './ExportAccountsToExtensionSheet'
-
-export default ExportAccountsToExtensionSheet
