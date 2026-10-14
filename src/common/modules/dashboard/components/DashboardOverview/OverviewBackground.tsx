@@ -2,10 +2,10 @@ import { useCallback, useState } from 'react'
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import { Defs, FeBlend, FeColorMatrix, Filter, Image as SvgImage, Svg } from 'react-native-svg'
 
+import { isFirefoxBuild } from '@common/config/env'
 import useControllerState from '@common/hooks/useControllerState'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { getAvatarColors } from '@common/utils/avatars'
-import { engine } from '@web/constants/browserapi'
 
 import backgroundImage from './background.png'
 
@@ -16,7 +16,7 @@ const FULL_SIZE: BackgroundSize = { width: '100%', height: '100%' }
 // Firefox doesn't reliably repaint a percentage-sized filtered SVG image when its container
 // resizes (e.g. when the sidebar is widened) - it renders it clipped first and then not at all.
 // So there it's sized in pixels from the container's layout instead.
-const shouldSizeInPixels = engine === 'gecko'
+const shouldSizeInPixels = isFirefoxBuild
 
 /** Parse a hex color to normalized [r, g, b] values (0–1) */
 function hexToRgbNorm(hex: string): [number, number, number] {

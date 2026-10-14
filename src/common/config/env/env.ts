@@ -38,6 +38,8 @@ export const DEV_PREFILLED_PASSWORD =
  * production webkit builds with different branding for testing purposes.
  */
 export const isAmbireNext = process.env.AMBIRE_NEXT === 'true'
+/** The Firefox build of the extension (popup, tab, request window or sidebar). False on mobile. */
+export const isFirefoxBuild = process.env.WEB_ENGINE === 'gecko'
 
 /** On Android, this is the package name. On iOS, this is the bundle ID. */
 export const APP_ID = Application.applicationId
