@@ -84,7 +84,7 @@ const TypeBadge: FC<Props> = ({
       dataSet={createGlobalTooltipDataSet({
         id: tooltipId,
         content: t(
-          'Gnosis Safe accounts offer a secure way to store your assets on multisig smart contract accounts. You can import and manage Safe accounts on Ambire.'
+          'Safe accounts offer a secure way to store your assets on multisig smart contract accounts. You can import and manage Safe accounts on Ambire.'
         ),
         hidden: !showTooltip
       })}
