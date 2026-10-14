@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { Trans } from 'react-i18next'
 import { LayoutChangeEvent, SectionListData, View, ViewToken } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Dapp } from '@ambire-common/interfaces/dapp'
@@ -16,6 +17,7 @@ import {
   SelectValue
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -61,6 +63,7 @@ type Props = {
 const AccountSelect = ({ dappToConnect }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { bottom } = useSafeAreaInsets()
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: selectedAccount } = useController(
     'SelectedAccountController',
@@ -217,7 +220,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
           type="visible"
           count={visibleAccounts.length}
           isAll={!isLimited}
-          actionText={canLimit ? t('Limit to selected only') : undefined}
+          actionText={canLimit ? t('Limit to selected account only') : undefined}
           onAction={limitToPickedAccount}
           isActionOnOwnRow={isLimitActionOnOwnRow}
           onLayout={handleVisibleHeaderLayout}
@@ -269,7 +272,16 @@ const AccountSelect = ({ dappToConnect }: Props) => {
 
   const renderFooter = useCallback(
     ({ setIsMenuOpen }: RenderSelectedOptionParams) => (
-      <View style={[spacings.ptTy, { backgroundColor: theme.primaryBackground }]}>
+      <View
+        style={[
+          spacings.ptTy,
+          {
+            // Matches the screen footers, which keep clear of the home indicator on mobile
+            paddingBottom: isWeb ? 0 : bottom || SPACING_SM,
+            backgroundColor: theme.primaryBackground
+          }
+        ]}
+      >
         {isHiddenHeaderPinned && (
           <AccountSelectSectionHeader
             type="hidden"
@@ -315,6 +327,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
     ),
     [
       theme.primaryBackground,
+      bottom,
       isHiddenHeaderPinned,
       hiddenAccounts.length,
       showAllAccounts,

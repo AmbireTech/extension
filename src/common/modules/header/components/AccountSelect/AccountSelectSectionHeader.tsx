@@ -21,7 +21,7 @@ export const ACCOUNT_SELECT_HIDDEN_HEADER_HEIGHT =
 /** Height of the visible section's header when its action is on a row of its own */
 export const ACCOUNT_SELECT_VISIBLE_HEADER_WITH_ACTION_ROW_HEIGHT = 2 * (ROW_HEIGHT + SPACING_TY)
 /** Below this header width the section's action doesn't fit next to the title and the count */
-export const ACCOUNT_SELECT_MIN_WIDTH_FOR_INLINE_ACTION = 450
+export const ACCOUNT_SELECT_MIN_WIDTH_FOR_INLINE_ACTION = 500
 
 type ActionProps = {
   type: 'visible' | 'hidden'
