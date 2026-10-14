@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { Trans } from 'react-i18next'
-import { LayoutChangeEvent, SectionListData, View, ViewToken } from 'react-native'
+import { Keyboard, LayoutChangeEvent, SectionListData, View, ViewToken } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Account } from '@ambire-common/interfaces/account'
@@ -17,7 +17,7 @@ import {
   SelectValue
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -44,6 +44,12 @@ const SELECT_CONTAINER_STYLE = { ...flexbox.flex1, ...spacings.mb0 }
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
+
+// The search keeps the keyboard up on mobile, covering the list. It's dismissed once the list
+// scrolls or an action runs, so the same touch still scrolls or presses
+const dismissKeyboard = () => {
+  if (isMobile) Keyboard.dismiss()
+}
 
 const toOption = (account: Account): SelectValue => ({
   value: account.addr,
@@ -85,12 +91,34 @@ const AccountSelect = ({ dappToConnect }: Props) => {
     hasAccountChanged,
     isDirty,
     pickAccount,
-    hideAccount,
-    showAccount,
-    showAllAccounts,
-    limitToPickedAccount,
+    hideAccount: hideAccountAction,
+    showAccount: showAccountAction,
+    showAllAccounts: showAllAccountsAction,
+    limitToPickedAccount: limitToPickedAccountAction,
     reset
   } = access
+  const hideAccount = useCallback(
+    (addr: string) => {
+      dismissKeyboard()
+      hideAccountAction(addr)
+    },
+    [hideAccountAction]
+  )
+  const showAccount = useCallback(
+    (addr: string) => {
+      dismissKeyboard()
+      showAccountAction(addr)
+    },
+    [showAccountAction]
+  )
+  const showAllAccounts = useCallback(() => {
+    dismissKeyboard()
+    showAllAccountsAction()
+  }, [showAllAccountsAction])
+  const limitToPickedAccount = useCallback(() => {
+    dismissKeyboard()
+    limitToPickedAccountAction()
+  }, [limitToPickedAccountAction])
   const [isHiddenSectionInView, setIsHiddenSectionInView] = useState(true)
   // Until it's measured, the button goes on its own row, as the sheet is usually narrow
   const [visibleHeaderWidth, setVisibleHeaderWidth] = useState(0)
@@ -144,6 +172,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
   const handleSetValue = useCallback(
     ({ value: addr }: SelectValue) => {
       const nextAccountAddr = String(addr)
+      dismissKeyboard()
       if (dappToConnect) {
         // Also guards keyboard selection - a hidden account has to be shown first
         if (hiddenAddrs.has(nextAccountAddr)) return
@@ -271,60 +300,67 @@ const AccountSelect = ({ dappToConnect }: Props) => {
   const isHiddenHeaderPinned = !!hiddenAccounts.length && !isHiddenSectionInView
 
   const renderFooter = useCallback(
-    ({ setIsMenuOpen }: RenderSelectedOptionParams) => (
-      <View
-        style={[
-          spacings.ptTy,
-          {
-            // Matches the screen footers, which keep clear of the home indicator on mobile
-            paddingBottom: isWeb ? 0 : bottom || SPACING_SM,
-            backgroundColor: theme.primaryBackground
-          }
-        ]}
-      >
-        {isHiddenHeaderPinned && (
-          <AccountSelectSectionHeader
-            type="hidden"
-            count={hiddenAccounts.length}
-            actionText={t('Show all')}
-            onAction={showAllAccounts}
-          />
-        )}
-        <View style={[flexbox.directionRow, spacings.ptTy, { columnGap: SPACING_SM }]}>
-          {isDirty ? (
-            <>
-              <Button
-                type="secondary"
-                text={t('Cancel')}
-                onPress={() => setIsMenuOpen(false)}
-                hasBottomSpacing={false}
-                style={flexbox.flex1}
-                testID="account-select-cancel"
-              />
-              <Button
-                text={t('Done')}
-                onPress={() => {
-                  applyChanges()
-                  setIsMenuOpen(false)
-                }}
-                hasBottomSpacing={false}
-                style={flexbox.flex1}
-                testID="account-select-done"
-              />
-            </>
-          ) : (
-            <Button
-              type="secondary"
-              text={t('Close')}
-              onPress={() => setIsMenuOpen(false)}
-              hasBottomSpacing={false}
-              style={flexbox.flex1}
-              testID="account-select-close"
+    ({ setIsMenuOpen }: RenderSelectedOptionParams) => {
+      const closeSheet = () => {
+        dismissKeyboard()
+        setIsMenuOpen(false)
+      }
+
+      return (
+        <View
+          style={[
+            spacings.ptTy,
+            {
+              // Matches the screen footers, which keep clear of the home indicator on mobile
+              paddingBottom: isWeb ? 0 : bottom || SPACING_SM,
+              backgroundColor: theme.primaryBackground
+            }
+          ]}
+        >
+          {isHiddenHeaderPinned && (
+            <AccountSelectSectionHeader
+              type="hidden"
+              count={hiddenAccounts.length}
+              actionText={t('Show all')}
+              onAction={showAllAccounts}
             />
           )}
+          <View style={[flexbox.directionRow, spacings.ptTy, { columnGap: SPACING_SM }]}>
+            {isDirty ? (
+              <>
+                <Button
+                  type="secondary"
+                  text={t('Cancel')}
+                  onPress={closeSheet}
+                  hasBottomSpacing={false}
+                  style={flexbox.flex1}
+                  testID="account-select-cancel"
+                />
+                <Button
+                  text={t('Done')}
+                  onPress={() => {
+                    applyChanges()
+                    closeSheet()
+                  }}
+                  hasBottomSpacing={false}
+                  style={flexbox.flex1}
+                  testID="account-select-done"
+                />
+              </>
+            ) : (
+              <Button
+                type="secondary"
+                text={t('Close')}
+                onPress={closeSheet}
+                hasBottomSpacing={false}
+                style={flexbox.flex1}
+                testID="account-select-close"
+              />
+            )}
+          </View>
         </View>
-      </View>
-    ),
+      )
+    },
     [
       theme.primaryBackground,
       bottom,
@@ -396,6 +432,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
       renderBottomSheetFooter={dappToConnect ? renderFooter : undefined}
       onBottomSheetClosed={reset}
       onViewableItemsChanged={dappToConnect ? handleViewableItemsChanged : undefined}
+      onScrollBeginDrag={dismissKeyboard}
       renderSelectedOption={renderSelectedOption}
       emptyListPlaceholderText={t('No accounts found')}
       containerStyle={SELECT_CONTAINER_STYLE}

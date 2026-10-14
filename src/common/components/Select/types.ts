@@ -103,6 +103,7 @@ export type SectionedSelectProps = CommonSelectProps &
     | 'stickySectionHeadersEnabled'
     | 'onViewableItemsChanged'
     | 'viewabilityConfig'
+    | 'onScrollBeginDrag'
   > & {
     headerHeight: number
     /** Opens the list scrolled to the selected option instead of the top */

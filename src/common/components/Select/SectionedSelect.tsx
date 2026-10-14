@@ -29,6 +29,7 @@ const SectionedSelect = ({
   menuPosition,
   onViewableItemsChanged,
   viewabilityConfig,
+  onScrollBeginDrag,
   getSectionHeaderHeight,
   scrollToSelectedOnOpen,
   ...props
@@ -141,6 +142,7 @@ const SectionedSelect = ({
       scrollEventThrottle: 16,
       onViewableItemsChanged,
       viewabilityConfig,
+      onScrollBeginDrag,
       initialScrollIndex
     }),
     [
@@ -159,6 +161,7 @@ const SectionedSelect = ({
       handleScroll,
       onViewableItemsChanged,
       viewabilityConfig,
+      onScrollBeginDrag,
       initialScrollIndex
     ]
   )
