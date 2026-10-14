@@ -139,7 +139,9 @@ const BatchAdded: FC<Props> = ({
           >
             <BatchIcon width={24} height={24} color={theme.primaryAccent300} />
             <Text style={[spacings.mlSm]} color={theme.primaryAccent300}>
-              {t('{{ callsCount }} transactions in batch', { callsCount })}
+              {callsCount === 1
+                ? t('1 transaction in batch')
+                : t('{{ callsCount }} transactions in batch', { callsCount })}
             </Text>
           </View>
           <Text fontSize={12} weight="medium" appearance="tertiaryText" style={text.center}>
