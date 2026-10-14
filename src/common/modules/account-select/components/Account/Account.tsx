@@ -137,7 +137,7 @@ const Account = ({
     values: {
       // A card in the secondary background, so its edges show on the primary one
       from: theme.secondaryBackground,
-      to: !inverseInteractionColors ? theme.tertiaryBackground : theme.primaryBackground
+      to: !inverseInteractionColors ? theme.hoverBackground : theme.primaryBackground
     }
   })
 
