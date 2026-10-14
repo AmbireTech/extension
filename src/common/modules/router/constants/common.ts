@@ -82,6 +82,7 @@ const WEB_ROUTES = {
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   safeImport: 'safe-import',
   optOuts: 'settings/opt-outs',
+  privacyNetwork: 'settings/privacy-network',
   survey: 'survey',
   qrPermission: 'qr-permission',
   exportAccountsToMobile: 'export-accounts-to-mobile',

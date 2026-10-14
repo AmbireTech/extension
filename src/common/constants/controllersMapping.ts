@@ -34,6 +34,7 @@ import type { VerificationController } from '@ambire-common/controllers/verifica
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 import { createExhaustiveArray } from '@common/utils/createExhaustiveArray'
 
+import type { AnonRpcController } from '@web/extension-services/background/controllers/anon-rpc'
 import type { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
 
 export type ControllersNestedInMainMappingType = {
@@ -114,6 +115,7 @@ export type AllControllersMappingType = {
   WalletStateController: WalletStateController
   AutoLockController: AutoLockController
   ExtensionUpdateController: ExtensionUpdateController
+  AnonRpcController: AnonRpcController
 } & ControllersNestedInMainMappingType
 
 export const allControllersMapping = createExhaustiveArray<AllControllersMappingType>()([
@@ -121,5 +123,6 @@ export const allControllersMapping = createExhaustiveArray<AllControllersMapping
   'WalletStateController',
   'AutoLockController',
   'ExtensionUpdateController',
+  'AnonRpcController',
   ...controllersNestedInMainMapping
 ] as const)

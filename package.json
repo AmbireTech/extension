@@ -63,6 +63,7 @@
   "packageManager": "yarn@1.22.22",
   "dependencies": {
     "@ambire/signature-validator": "1.5.0",
+    "@anon-rpc/browser-extension-harness": "0.3.3",
     "@corpus-core/colibri-stateless": "1.1.30",
     "@dnd-kit/core": "6.3.1",
     "@dnd-kit/modifiers": "9.0.0",
@@ -171,6 +172,7 @@
     "jest-environment-jsdom": "29.7.0",
     "jest-expo": "54.0.16",
     "js-yaml": "4.1.0",
+    "json5": "2.2.3",
     "keycard-sdk": "4.0.0",
     "koa-compose": "4.1.0",
     "lodash": "4.18.1",
