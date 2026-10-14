@@ -34,6 +34,7 @@ const Footer = ({
   shouldHoldToProceed,
   shouldRejectOnchain,
   isRejectDisabled,
+  holdToProceedButtonType = 'primary',
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
@@ -99,7 +100,7 @@ const Footer = ({
                   ? 'dangerFilled'
                   : signButtonType === 'warning'
                     ? 'warning'
-                    : 'primary'
+                    : holdToProceedButtonType
               }
               disabled={isSignDisabled}
               onHoldComplete={onSign}
