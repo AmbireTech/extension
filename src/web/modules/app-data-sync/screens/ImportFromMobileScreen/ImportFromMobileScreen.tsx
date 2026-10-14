@@ -181,7 +181,7 @@ const ImportFromMobileScreen = () => {
       // During onboarding the accounts arrive before the extension has a password of its
       // own. Reusing the mobile app's one sets it (and biometrics) right here, so the
       // keystore setup screen is skipped and the modal stays up until it lands.
-      if (!hasPasswordSecret && isPasswordReused && password) {
+      if (!hasPasswordSecret && isPasswordReused) {
         // A cancelled biometrics prompt returns no secret. The accounts are already
         // imported and the password still has to be set, so the flow goes on without
         // biometrics and only says so.
@@ -221,24 +221,19 @@ const ImportFromMobileScreen = () => {
     handleScanComplete,
     hasScannedPayload,
     scannedAccounts,
-    isPasswordRequired,
     scanError,
     retryScan,
     importScannedData,
     isImporting
   } = useAppDataSyncImport({ onImported: handleImported })
 
-  // Without private keys or recovery phrases in the scanned data the import starts on its
-  // own, as there is no password to ask for
+  // The password of the other device confirms every sync, whatever was scanned, so it is
+  // asked for as soon as the scan completes
   useEffect(() => {
-    if (hasScannedPayload && isPasswordRequired) openPasswordSheet()
-  }, [hasScannedPayload, isPasswordRequired, openPasswordSheet])
+    if (hasScannedPayload) openPasswordSheet()
+  }, [hasScannedPayload, openPasswordSheet])
 
-  const handleContinue = useCallback(() => {
-    if (isPasswordRequired) return openPasswordSheet()
-
-    void importScannedData()
-  }, [importScannedData, isPasswordRequired, openPasswordSheet])
+  const handleContinue = useCallback(() => openPasswordSheet(), [openPasswordSheet])
 
   const startScanning = useCallback(() => {
     setScanProgress(null)
@@ -320,8 +315,7 @@ const ImportFromMobileScreen = () => {
                 scannedAccountsCount={scannedAccounts.length}
               />
               {/* The password prompt opens on its own, so this is how the user gets back to
-              it after dismissing it (or retries an import that needs no password), without
-              having to scan everything again */}
+              it after dismissing it, without having to scan everything again */}
               {!!hasScannedPayload && (
                 <Button
                   testID="continue-after-sync-scan"
@@ -377,7 +371,9 @@ const ImportFromMobileScreen = () => {
           title={t('Make sure you are entering the password of your Ambire mobile.')}
         />
 
-        {!hasPasswordSecret && (
+        {/* The password is set up along with the synced accounts, so with none of them
+        (only settings, networks or contacts) there is nothing to set up */}
+        {!hasPasswordSecret && !!scannedAccounts.length && (
           <SyncPasswordOptions
             isPasswordReused={isPasswordReused}
             onTogglePasswordReuse={togglePasswordReuse}

@@ -24,6 +24,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
+import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -65,6 +66,11 @@ const AccountsSettingsScreen = () => {
     open: openAccountSmartSettings,
     close: closeAccountSmartSettings
   } = useModalize()
+  const {
+    ref: sheetRefAccountDeploySettings,
+    open: openAccountDeploySettings,
+    close: closeAccountDeploySettings
+  } = useModalize()
 
   useEffect(() => {
     setCurrentSettingsPage('accounts')
@@ -72,8 +78,11 @@ const AccountsSettingsScreen = () => {
 
   const [exportImportAccount, setExportImportAccount] = useState<AccountInterface | null>(null)
   const [accountToRemove, setAccountToRemove] = useState<AccountInterface | null>(null)
-  const [smartSettingsAccount, setSmartSettingsAccount] = useState<AccountInterface | null>(null)
+  const [accountSettingsAccount, setAccountSettingsAccount] = useState<AccountInterface | null>(
+    null
+  )
   const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
+  const clearAccountSettingsAccount = useCallback(() => setAccountSettingsAccount(null), [])
 
   useEffect(() => {
     setLocalAccounts((prev) => {
@@ -113,8 +122,15 @@ const AccountsSettingsScreen = () => {
   }, [openRemoveAccount, accountToRemove])
 
   useEffect(() => {
-    if (smartSettingsAccount) openAccountSmartSettings()
-  }, [openAccountSmartSettings, smartSettingsAccount])
+    if (!accountSettingsAccount) return
+
+    if (accountSettingsAccount.safeCreation) {
+      openAccountDeploySettings()
+      return
+    }
+
+    openAccountSmartSettings()
+  }, [accountSettingsAccount, openAccountDeploySettings, openAccountSmartSettings])
 
   const shortenAccountAddr = useCallback(() => {
     if (maxElementWidthSize(800)) return undefined
@@ -128,10 +144,10 @@ const AccountsSettingsScreen = () => {
     () => ({
       withOptionsButton: true,
       setAccountToImportOrExport: setExportImportAccount,
-      setSmartSettingsAccount,
+      setAccountSettingsAccount,
       setAccountToRemove
     }),
-    [setExportImportAccount, setSmartSettingsAccount, setAccountToRemove]
+    [setExportImportAccount, setAccountSettingsAccount, setAccountToRemove]
   )
 
   const removeAccount = useCallback(() => {
@@ -277,13 +293,17 @@ const AccountsSettingsScreen = () => {
           ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
         />
       </View>
+      <AccountDeploySettingsBottomSheet
+        sheetRef={sheetRefAccountDeploySettings}
+        closeBottomSheet={closeAccountDeploySettings}
+        onClosed={clearAccountSettingsAccount}
+        account={accountSettingsAccount?.safeCreation ? accountSettingsAccount : null}
+      />
       <AccountSmartSettingsBottomSheet
         sheetRef={sheetRefAccountSmartSettings}
-        closeBottomSheet={() => {
-          setSmartSettingsAccount(null)
-          closeAccountSmartSettings()
-        }}
-        account={smartSettingsAccount}
+        closeBottomSheet={closeAccountSmartSettings}
+        onClosed={clearAccountSettingsAccount}
+        account={accountSettingsAccount?.safeCreation ? null : accountSettingsAccount}
       />
       <AccountKeysBottomSheet
         sheetRef={sheetRefExportImportKey}
