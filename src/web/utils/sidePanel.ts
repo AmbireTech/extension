@@ -37,6 +37,29 @@ const getFirefoxSidebarApi = (): FirefoxSidebarApi | undefined => {
 /** Whether this view is the Firefox sidebar (see `isFirefoxSidebar` in getUiType). */
 export const { isFirefoxSidebar } = getUiType()
 
+/** Where the page's content starts on screen. Firefox-only, so undefined elsewhere. */
+export const getPageScreenX = () =>
+  (window as Window & { mozInnerScreenX?: number }).mozInnerScreenX
+
+/**
+ * Whether the Firefox sidebar is on the left of the browser window, measured from where its page
+ * sits on screen compared to the browser window's bounds. Undefined outside Firefox or when it
+ * can't be measured.
+ */
+export const getIsFirefoxSidebarOnLeft = async (): Promise<boolean | undefined> => {
+  if (!isFirefoxSidebar) return undefined
+
+  const pageScreenX = getPageScreenX()
+  if (typeof pageScreenX !== 'number') return undefined
+
+  const browserWindow = await browser.windows.getCurrent()
+  if (typeof browserWindow?.left !== 'number' || !browserWindow.width) return undefined
+
+  const pageCenterX = pageScreenX + window.innerWidth / 2
+
+  return pageCenterX < browserWindow.left + browserWindow.width / 2
+}
+
 /** The `chrome.storage.local` key holding the last width of the side panel, as the user sized it. */
 export const SIDE_PANEL_WIDTH_STORAGE_KEY = 'sidePanelWidth'
 
