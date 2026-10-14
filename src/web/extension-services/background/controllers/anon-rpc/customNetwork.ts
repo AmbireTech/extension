@@ -3,6 +3,8 @@ import { isAddress } from 'ethers'
 // bundles core-js shims that write globals, which LavaMoat would have to allow.
 import parseJson5 from 'json5/lib/parse'
 
+import { DEFAULT_SPECIFIER_CHAIN_ID, isSupportedSpecifierChainId } from './specifierChains'
+
 /** The id the user's own privacy network is selected by, alongside the preset ids. */
 export const CUSTOM_NETWORK_ID = 'custom'
 
@@ -12,6 +14,8 @@ export const CUSTOM_NETWORK_ID = 'custom'
  */
 export type CustomNetwork = {
   specifier: string
+  /** The chain the specifier contract lives on; Ethereum when absent (older saves). */
+  chainId?: number
   config?: unknown
   /**
    * The config exactly as the user typed it. JSON5 allows comments and loose
@@ -22,6 +26,7 @@ export type CustomNetwork = {
 
 export type CustomNetworkFieldErrors = {
   specifier?: string
+  chainId?: string
   config?: string
 }
 
@@ -35,8 +40,15 @@ type ParsedCustomNetwork =
  * unquoted keys allowed), or empty for no config.
  * Shared by the settings form and the controller, so both reject the same input.
  */
-export const parseCustomNetwork = (specifier: string, configText: string): ParsedCustomNetwork => {
+export const parseCustomNetwork = (
+  specifier: string,
+  configText: string,
+  chainId: number = DEFAULT_SPECIFIER_CHAIN_ID
+): ParsedCustomNetwork => {
   const errors: CustomNetworkFieldErrors = {}
+  if (!isSupportedSpecifierChainId(chainId)) {
+    errors.chainId = 'Choose the blockchain the contract is on.'
+  }
   const trimmedSpecifier = specifier.trim()
   if (!isAddress(trimmedSpecifier)) {
     errors.specifier = 'Enter a contract address: 0x followed by 40 letters and numbers.'
@@ -51,10 +63,11 @@ export const parseCustomNetwork = (specifier: string, configText: string): Parse
     }
   }
 
-  if (errors.specifier || errors.config) return { errors }
+  if (errors.specifier || errors.config || errors.chainId) return { errors }
   return {
     network: {
       specifier: trimmedSpecifier,
+      ...(chainId !== DEFAULT_SPECIFIER_CHAIN_ID && { chainId }),
       ...(config !== undefined && { config, configText })
     }
   }
@@ -65,7 +78,8 @@ export const isCustomNetwork = (value: unknown): value is CustomNetwork =>
   !!value &&
   typeof value === 'object' &&
   typeof (value as CustomNetwork).specifier === 'string' &&
-  isAddress((value as CustomNetwork).specifier)
+  isAddress((value as CustomNetwork).specifier) &&
+  isSupportedSpecifierChainId((value as CustomNetwork).chainId)
 
 /** A network's config as editable text: pretty-printed JSON (valid JSON5), or empty when it has none. */
 export const formatNetworkConfig = (config: unknown): string =>

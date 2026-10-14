@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
+import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
 import { useTranslation } from '@common/config/localization'
@@ -11,18 +12,23 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import type { CustomNetworkFieldErrors } from '@web/extension-services/background/controllers/anon-rpc'
 import { parseCustomNetwork } from '@web/extension-services/background/controllers/anon-rpc/customNetwork'
+import { SPECIFIER_CHAINS } from '@web/extension-services/background/controllers/anon-rpc/specifierChains'
 
 // Addresses and JSON read better in monospace, as in the preset details
 const MONO_INPUT_STYLE = { fontFamily: GEIST_MONO_FONT_FAMILIES.REGULAR, fontSize: 13 }
 
+const CHAIN_OPTIONS = SPECIFIER_CHAINS.map((chain) => ({ value: chain.chainId, label: chain.name }))
+
 type Props = {
   initialSpecifier: string
   initialConfigText: string
+  /** The chain the specifier contract lives on */
+  initialChainId: number
   /** Whether the saved custom network is the one currently in use */
   isInUse: boolean
   /** The label of the network in use while this form is not saved yet */
   inUseLabel: string | null
-  onSave: (specifier: string, configText: string) => void
+  onSave: (specifier: string, configText: string, chainId: number) => void
 }
 
 /**
@@ -32,6 +38,7 @@ type Props = {
 const CustomNetworkForm = ({
   initialSpecifier,
   initialConfigText,
+  initialChainId,
   isInUse,
   inUseLabel,
   onSave
@@ -40,11 +47,22 @@ const CustomNetworkForm = ({
   const { theme } = useTheme()
   const [specifier, setSpecifier] = useState(initialSpecifier)
   const [configText, setConfigText] = useState(initialConfigText)
+  const [chainId, setChainId] = useState(initialChainId)
   const [errors, setErrors] = useState<CustomNetworkFieldErrors>({})
 
   const handleSpecifierChange = useCallback((value: string) => {
     setSpecifier(value)
     setErrors((prev) => ({ ...prev, specifier: undefined }))
+  }, [])
+
+  const selectedChainOption = useMemo(
+    () => CHAIN_OPTIONS.find((option) => option.value === chainId) || null,
+    [chainId]
+  )
+
+  const handleChainChange = useCallback((option: { value: string | number }) => {
+    setChainId(Number(option.value))
+    setErrors((prev) => ({ ...prev, chainId: undefined }))
   }, [])
 
   const handleConfigChange = useCallback((value: string) => {
@@ -53,16 +71,32 @@ const CustomNetworkForm = ({
   }, [])
 
   const handleSave = useCallback(() => {
-    const { errors: validationErrors } = parseCustomNetwork(specifier, configText)
+    const { errors: validationErrors } = parseCustomNetwork(specifier, configText, chainId)
     if (validationErrors) {
       setErrors(validationErrors)
       return
     }
-    onSave(specifier, configText)
-  }, [configText, onSave, specifier])
+    onSave(specifier, configText, chainId)
+  }, [chainId, configText, onSave, specifier])
 
   return (
     <View style={spacings.mtSm}>
+      <Text fontSize={14} weight="medium" style={spacings.mbMi}>
+        {t('Blockchain the contract is on')}
+      </Text>
+      <Select
+        setValue={handleChainChange}
+        withSearch={false}
+        options={CHAIN_OPTIONS}
+        value={selectedChainOption}
+        containerStyle={{ width: 220, ...spacings.mbSm }}
+        size="sm"
+      />
+      {!!errors.chainId && (
+        <Text fontSize={12} appearance="errorText" style={spacings.mbSm}>
+          {t(errors.chainId)}
+        </Text>
+      )}
       <Text fontSize={14} weight="medium" style={spacings.mbMi}>
         {t('Contract address')}
       </Text>

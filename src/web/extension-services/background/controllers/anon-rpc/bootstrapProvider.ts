@@ -1,21 +1,18 @@
 import type { RpcProvider } from '@anon-rpc/browser-extension-harness'
-import { ETHEREUM_CHAIN_ID, networks } from '@ambire-common/consts/networks'
 
 type JsonRpcResponse = {
   result?: unknown
   error?: { code?: number; message?: string }
 }
 
-const MAINNET_RPC_URL = networks.find((network) => network.chainId === ETHEREUM_CHAIN_ID)!
-  .rpcUrls[0]!
-
 /**
  * The provider anon-rpc reads the specifier contract through (two `eth_call`s on
  * boot). It deliberately uses the native fetch rather than ethers: every ethers
  * request is routed through the anon-rpc worker while the feature is on, so
  * going through ethers here would wait on the very worker this is booting.
+ * `rpcUrl` must serve the chain the specifier lives on (see specifierChains).
  */
-export const createBootstrapProvider = (rpcUrl: string = MAINNET_RPC_URL): RpcProvider => {
+export const createBootstrapProvider = (rpcUrl: string): RpcProvider => {
   let nextId = 1
 
   return {

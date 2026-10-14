@@ -1,17 +1,20 @@
 import { isAddress } from 'ethers'
 
 import { CUSTOM_NETWORK_ID } from './customNetwork'
+import { isSupportedSpecifierChainId, SPECIFIER_CHAINS } from './specifierChains'
 
 /**
  * A privacy network the user can pick in settings. `specifier` is the on-chain
- * IWorkerSpecifier contract (Ethereum mainnet) that pins the network's
- * anon-client bundle by hash; `config` is passed to that bundle as-is and its
- * shape is defined by the network, not by anon-rpc.
+ * IWorkerSpecifier contract that pins the network's anon-client bundle by hash,
+ * on the chain `chainId` (Ethereum when absent, as in anon-rpc's adopters list);
+ * `config` is passed to that bundle as-is and its shape is defined by the
+ * network, not by anon-rpc.
  */
 export type AnonRpcPreset = {
   id: string
   label: string
   specifier: string
+  chainId?: number
   config?: unknown
 }
 
@@ -27,15 +30,25 @@ const isNonEmptyString = (value: unknown): value is string =>
 const toPreset = (entry: unknown): AnonRpcPreset | string => {
   if (!entry || typeof entry !== 'object') return 'each preset must be an object'
 
-  const { id, label, specifier, config } = entry as Record<string, unknown>
+  const { id, label, specifier, chainId, config } = entry as Record<string, unknown>
   if (!isNonEmptyString(id)) return 'a preset is missing its "id"'
   if (id === CUSTOM_NETWORK_ID)
     return `"${CUSTOM_NETWORK_ID}" is reserved for the user's own network`
   if (!isNonEmptyString(label)) return `preset "${id}" is missing its "label"`
   if (!isNonEmptyString(specifier) || !isAddress(specifier))
     return `preset "${id}" has an invalid "specifier" address`
+  if (!isSupportedSpecifierChainId(chainId)) {
+    const supported = SPECIFIER_CHAINS.map((chain) => chain.chainId).join(', ')
+    return `preset "${id}" has an unsupported "chainId" (supported: ${supported})`
+  }
 
-  return { id, label, specifier, ...(config !== undefined && { config }) }
+  return {
+    id,
+    label,
+    specifier,
+    ...(chainId !== undefined && { chainId }),
+    ...(config !== undefined && { config })
+  }
 }
 
 /**

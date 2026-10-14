@@ -5,6 +5,7 @@ import type { storage as extensionStorage } from '@common/services/storage'
 import { browser } from '@web/constants/browserapi'
 
 import { createBootstrapProvider } from './bootstrapProvider'
+import { DEFAULT_SPECIFIER_CHAIN_ID, findSpecifierChain } from './specifierChains'
 import {
   CUSTOM_NETWORK_ID,
   CustomNetwork,
@@ -94,7 +95,10 @@ export class AnonRpcController extends EventEmitter {
 
   #storage: ExtensionStorage
 
-  #bootstrapProvider: RpcProvider
+  /** The provider each specifier chain is read through, created on first use. */
+  #bootstrapProviderFor: (chainId: number) => RpcProvider | null
+
+  #bootstrapProviders = new Map<number, RpcProvider>()
 
   #worker: AnonRpcWorker | null = null
 
@@ -104,17 +108,20 @@ export class AnonRpcController extends EventEmitter {
     eventEmitterRegistry,
     storage,
     presetsEnvValue = process.env.ANON_RPC_PRESETS,
-    bootstrapProvider = createBootstrapProvider()
+    bootstrapProviderFor = (chainId: number) => {
+      const chain = findSpecifierChain(chainId)
+      return chain ? createBootstrapProvider(chain.rpcUrl) : null
+    }
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     storage: ExtensionStorage
     presetsEnvValue?: string
-    bootstrapProvider?: RpcProvider
+    bootstrapProviderFor?: (chainId: number) => RpcProvider | null
   }) {
     super(eventEmitterRegistry)
 
     this.#storage = storage
-    this.#bootstrapProvider = bootstrapProvider
+    this.#bootstrapProviderFor = bootstrapProviderFor
     const { presets, error } = parseAnonRpcPresets(presetsEnvValue)
     this.presets = presets
     this.presetsError = error
@@ -216,11 +223,12 @@ export class AnonRpcController extends EventEmitter {
 
   /**
    * Saves the user's own network and switches to it. `configText` is free-form
-   * JSON (or empty), passed to the network as its config.
+   * JSON5 (or empty), passed to the network as its config; `chainId` is the chain
+   * its specifier contract lives on (Ethereum when omitted).
    */
-  async setCustomNetwork(specifier: string, configText: string) {
+  async setCustomNetwork(specifier: string, configText: string, chainId?: number) {
     await this.initialLoadPromise
-    const { network, errors } = parseCustomNetwork(specifier, configText)
+    const { network, errors } = parseCustomNetwork(specifier, configText, chainId)
     if (!network) {
       // The settings form validates the same way before saving, so this is a safety net
       this.emitError({
@@ -296,6 +304,16 @@ export class AnonRpcController extends EventEmitter {
       return
     }
 
+    const rpcProvider = this.#getBootstrapProvider(preset.chainId ?? DEFAULT_SPECIFIER_CHAIN_ID)
+    if (!rpcProvider) {
+      // Presets and the custom form only accept supported chains, so this is a safety net
+      this.status = 'failed'
+      this.statusError =
+        'This privacy network is set up on a blockchain the wallet can’t look it up on. Choose another network.'
+      this.emitUpdate()
+      return
+    }
+
     // On Chromium the offscreen document keeps booted workers alive across service
     // worker restarts and hands the same one back (`reuse`), so booting again is
     // cheap. On Firefox the worker lives in this background page, so each boot is
@@ -303,7 +321,7 @@ export class AnonRpcController extends EventEmitter {
     const worker = new AnonRpcWorker({
       address: preset.specifier,
       config: preset.config,
-      preExisting: { rpcProvider: this.#bootstrapProvider }
+      preExisting: { rpcProvider }
     })
     this.#worker = worker
     this.status = 'connecting'
@@ -318,6 +336,14 @@ export class AnonRpcController extends EventEmitter {
       },
       (error) => this.#onWorkerFailed(worker, error)
     )
+  }
+
+  #getBootstrapProvider(chainId: number): RpcProvider | null {
+    const cached = this.#bootstrapProviders.get(chainId)
+    if (cached) return cached
+    const provider = this.#bootstrapProviderFor(chainId)
+    if (provider) this.#bootstrapProviders.set(chainId, provider)
+    return provider
   }
 
   #stopWorker() {

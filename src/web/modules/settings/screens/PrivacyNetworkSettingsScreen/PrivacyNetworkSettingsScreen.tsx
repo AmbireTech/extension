@@ -21,6 +21,7 @@ import {
   CUSTOM_NETWORK_ID,
   formatNetworkConfig
 } from '@web/extension-services/background/controllers/anon-rpc/customNetwork'
+import { DEFAULT_SPECIFIER_CHAIN_ID } from '@web/extension-services/background/controllers/anon-rpc/specifierChains'
 import CustomNetworkForm from '@web/modules/settings/components/PrivacyNetwork/CustomNetworkForm'
 import NetworkDetails from '@web/modules/settings/components/PrivacyNetwork/NetworkDetails'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
@@ -36,6 +37,7 @@ const STATUS_LABELS: Record<AnonRpcStatus, string> = {
 type CustomNetworkDraft = {
   specifier: string
   configText: string
+  chainId: number
   /** Changes whenever the draft is replaced, to remount the form with it */
   version: number
 }
@@ -91,6 +93,7 @@ const PrivacyNetworkSettingsScreen = () => {
       customDraft || {
         specifier: customNetwork?.specifier || '',
         configText: customNetwork?.configText ?? formatNetworkConfig(customNetwork?.config),
+        chainId: customNetwork?.chainId ?? DEFAULT_SPECIFIER_CHAIN_ID,
         version: 0
       },
     [customDraft, customNetwork]
@@ -124,16 +127,17 @@ const PrivacyNetworkSettingsScreen = () => {
     setCustomDraft((prev) => ({
       specifier: preset.specifier,
       configText: formatNetworkConfig(preset.config),
+      chainId: preset.chainId ?? DEFAULT_SPECIFIER_CHAIN_ID,
       version: (prev?.version ?? 0) + 1
     }))
     setViewedNetworkOverride(CUSTOM_NETWORK_ID)
   }, [])
 
   const handleSaveCustomNetwork = useCallback(
-    (specifier: string, configText: string) => {
+    (specifier: string, configText: string, chainId: number) => {
       dispatch({
         type: 'method',
-        params: { method: 'setCustomNetwork', args: [specifier, configText] }
+        params: { method: 'setCustomNetwork', args: [specifier, configText, chainId] }
       })
       // The controller selects the custom network, so the view can follow it again
       setViewedNetworkOverride(null)
@@ -212,6 +216,7 @@ const PrivacyNetworkSettingsScreen = () => {
               key={customFormValues.version}
               initialSpecifier={customFormValues.specifier}
               initialConfigText={customFormValues.configText}
+              initialChainId={customFormValues.chainId}
               isInUse={selectedPresetId === CUSTOM_NETWORK_ID}
               inUseLabel={inUseLabel}
               onSave={handleSaveCustomNetwork}

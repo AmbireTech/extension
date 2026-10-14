@@ -12,6 +12,10 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import type { AnonRpcPreset } from '@web/extension-services/background/controllers/anon-rpc'
 import { formatNetworkConfig } from '@web/extension-services/background/controllers/anon-rpc/customNetwork'
+import {
+  DEFAULT_SPECIFIER_CHAIN_ID,
+  findSpecifierChain
+} from '@web/extension-services/background/controllers/anon-rpc/specifierChains'
 
 type Props = {
   network: AnonRpcPreset
@@ -24,6 +28,12 @@ const NetworkDetails = ({ network, onCopyToCustom }: Props) => {
   const { theme } = useTheme()
   const { addToast } = useToast()
   const configText = useMemo(() => formatNetworkConfig(network.config), [network.config])
+  const chainName = useMemo(
+    () =>
+      findSpecifierChain(network.chainId ?? DEFAULT_SPECIFIER_CHAIN_ID)?.name ??
+      String(network.chainId),
+    [network.chainId]
+  )
 
   const codeBlockStyle = useMemo(
     () => ({
@@ -50,7 +60,7 @@ const NetworkDetails = ({ network, onCopyToCustom }: Props) => {
   return (
     <View style={spacings.mtSm}>
       <Text fontSize={14} weight="medium" style={spacings.mbMi}>
-        {t('Contract address')}
+        {t('Contract address on {{chain}}', { chain: chainName })}
       </Text>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
         <View style={[codeBlockStyle, flexbox.flex1]}>
