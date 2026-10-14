@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Network } from '@ambire-common/interfaces/network'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
-import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
@@ -19,6 +18,11 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import {
+  canReplacePendingAccountOp,
+  getReplacementBuildRequest,
+  getSpeedUpAccountOp
+} from '@common/modules/sign-account-op/helpers/replacementAccountOps'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
@@ -39,22 +43,6 @@ type Props = {
   'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status'
 >
 
-const increaseByFifteenPercent = (value: bigint) => (value * 115n + 99n) / 100n
-const canBuildSpeedUpAccountOp = (
-  submittedAccountOp: SubmittedAccountOpLike
-): submittedAccountOp is SubmittedAccountOpLike &
-  Required<
-    Pick<
-      SubmittedAccountOpLike,
-      'signingKeyAddr' | 'signingKeyType' | 'nonce' | 'gasLimit' | 'signature'
-    >
-  > =>
-  submittedAccountOp.signingKeyAddr !== undefined &&
-  submittedAccountOp.signingKeyType !== undefined &&
-  submittedAccountOp.nonce !== undefined &&
-  submittedAccountOp.gasLimit !== undefined &&
-  submittedAccountOp.signature !== undefined
-
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
 
@@ -65,7 +53,6 @@ const Footer: FC<Props> = ({
   submittedAccountOp,
   identifiedBy,
   accountAddr,
-  gasFeePayment,
   status
 }) => {
   const { styles } = useTheme(getStyles)
@@ -91,11 +78,7 @@ const Footer: FC<Props> = ({
       ))
   const areExplorerButtonsDisabled =
     submittedAccountOp.identifiedBy.type === 'MultipleTxns' && submittedAccountOp.calls.length > 1
-  const shouldShowSpeedUp =
-    isPendingTransaction &&
-    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
-    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler &&
-    canBuildSpeedUpAccountOp(submittedAccountOp)
+  const shouldShowSpeedUp = isPendingTransaction && canReplacePendingAccountOp(submittedAccountOp)
   const isExternal = submittedAccountOp.activitySource === 'external'
   const canRepeatTransaction =
     !!rawCalls?.length && selectedAccount?.addr === accountAddr && !isExternal
@@ -143,63 +126,13 @@ const Footer: FC<Props> = ({
   }, [rawCalls, requestsDispatch, network.chainId, accountAddr])
 
   const handleSpeedUpTransaction = useCallback(() => {
-    if (!submittedAccountOp.gasFeePayment || !canBuildSpeedUpAccountOp(submittedAccountOp)) return
-
-    const nextGasFeePayment = {
-      ...submittedAccountOp.gasFeePayment,
-      gasPrice: increaseByFifteenPercent(submittedAccountOp.gasFeePayment.gasPrice),
-      maxPriorityFeePerGas:
-        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas &&
-        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas !== 0n
-          ? increaseByFifteenPercent(submittedAccountOp.gasFeePayment.maxPriorityFeePerGas)
-          : submittedAccountOp.gasFeePayment.maxPriorityFeePerGas
-    }
+    if (!canReplacePendingAccountOp(submittedAccountOp)) return
 
     requestsDispatch({
       type: 'method',
       params: {
         method: 'build',
-        args: [
-          {
-            type: 'calls',
-            params: {
-              userRequestParams: {
-                calls: submittedAccountOp.calls,
-                meta: {
-                  chainId: submittedAccountOp.chainId,
-                  accountAddr: submittedAccountOp.accountAddr
-                },
-                accountOp: {
-                  id: submittedAccountOp.id,
-                  accountAddr: submittedAccountOp.accountAddr,
-                  chainId: submittedAccountOp.chainId,
-                  signingKeyAddr: submittedAccountOp.signingKeyAddr,
-                  signingKeyType: submittedAccountOp.signingKeyType,
-                  nonce: submittedAccountOp.nonce,
-                  eoaNonce: submittedAccountOp.eoaNonce,
-                  calls: submittedAccountOp.calls,
-                  feeCall: submittedAccountOp.feeCall,
-                  activatorCall: submittedAccountOp.activatorCall,
-                  gasLimit: submittedAccountOp.gasLimit,
-                  signature: submittedAccountOp.signature,
-                  gasFeePayment: nextGasFeePayment,
-                  txnId: submittedAccountOp.txnId,
-                  asUserOperation: submittedAccountOp.asUserOperation,
-                  signers: submittedAccountOp.signers,
-                  signed: submittedAccountOp.signed,
-                  safeTx: submittedAccountOp.safeTx,
-                  flags: submittedAccountOp.flags,
-                  meta: {
-                    ...submittedAccountOp.meta,
-                    speedUp: {
-                      enabled: true
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
+        args: [getReplacementBuildRequest(getSpeedUpAccountOp(submittedAccountOp))]
       }
     })
   }, [submittedAccountOp, requestsDispatch])

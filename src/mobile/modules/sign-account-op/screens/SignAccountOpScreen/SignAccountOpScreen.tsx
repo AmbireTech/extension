@@ -24,6 +24,7 @@ import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
+import PendingSafeTransaction from '@common/modules/sign-account-op/components/PendingSafeTransaction'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
@@ -481,6 +482,7 @@ const SignAccountOpScreen = () => {
                   chainId={signAccountOpState?.accountOp?.chainId}
                 />
               )}
+              <PendingSafeTransaction style={spacings.mt} />
             </>
           ) : (
             <SafeEip712Data
