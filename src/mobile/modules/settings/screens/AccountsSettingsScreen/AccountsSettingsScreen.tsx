@@ -285,6 +285,7 @@ const AccountsSettingsScreen = () => {
             renderItem={renderItem as any}
             getItemLayout={getItemLayout}
             itemHeight={getDraggableItemHeight}
+            keyboardDismissMode="on-drag"
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />
         </View>

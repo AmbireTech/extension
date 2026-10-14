@@ -291,6 +291,7 @@ const ExploreScreen = () => {
                   item.type === 'dapp' ? item.dapp.id : `${item.type}-${idx}`
                 }
                 contentContainerStyle={spacings.ph0}
+                keyboardDismissMode="on-drag"
               />
             ) : (
               <ScrollableWrapper
@@ -300,6 +301,7 @@ const ExploreScreen = () => {
                 renderSectionHeader={renderSectionHeader as any}
                 keyExtractor={sectionKeyExtractor as any}
                 stickySectionHeadersEnabled={false}
+                keyboardDismissMode="on-drag"
               />
             )}
           </View>
