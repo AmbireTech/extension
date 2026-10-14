@@ -1,9 +1,8 @@
 import { hexlify } from 'ethers'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import {
   AppDataSyncSettings,
-  isSyncPasswordRequired,
   parseAppDataSyncPayload
 } from '@ambire-common/libs/appDataSync/appDataSync'
 import { useTranslation } from '@common/config/localization'
@@ -24,11 +23,8 @@ const isAvatarType = (value: unknown): value is AvatarType =>
 
 /** What the screen needs to know once the scanned data is imported */
 export type AppDataSyncImportResult = {
-  /**
-   * The password of the exporting device, which this one can adopt as its own. Missing
-   * when nothing needed decrypting, so the user wasn't asked for it.
-   */
-  password?: string
+  /** The password of the exporting device, which this one can adopt as its own */
+  password: string
   importedAccountsCount: number
   /** The names of what came along with the accounts, e.g. "Settings, Networks" */
   syncedExtrasLabel: string
@@ -41,8 +37,8 @@ export type AppDataSyncImportResult = {
  *
  * The scanned data is parsed here as well, so that a QR code from somewhere else is
  * rejected before the user is asked for a password (and so the UI can tell how many
- * accounts are about to be imported). Data with nothing encrypted in it (no private keys
- * or recovery phrases) needs no password, so it gets imported right after the scan.
+ * accounts are about to be imported). The password is asked for whatever was synced,
+ * even with nothing encrypted in it, so nothing is taken over without the user's say.
  */
 const useAppDataSyncImport = ({
   onImported
@@ -57,18 +53,13 @@ const useAppDataSyncImport = ({
   const [scannedAccounts, setScannedAccounts] = useState<Account[]>([])
   const [scannedAppSettings, setScannedAppSettings] = useState<AppDataSyncSettings['app']>()
   const [scannedExtrasLabel, setScannedExtrasLabel] = useState('')
-  const [isPasswordRequired, setIsPasswordRequired] = useState(true)
   const [scanError, setScanError] = useState<string | null>(null)
   const [isImporting, setIsImporting] = useState(false)
-  // Imported once per scan without a password, so a failed import is retried by the user
-  // instead of in a loop
-  const autoImportedPayloadRef = useRef<string | null>(null)
 
   const handleScanComplete = useCallback(
     (scannedBytes: Uint8Array) => {
       try {
-        const scannedPayload = parseAppDataSyncPayload(scannedBytes)
-        const { accounts, settings, networks, contacts } = scannedPayload
+        const { accounts, settings, networks, contacts } = parseAppDataSyncPayload(scannedBytes)
         const extras = [
           settings && t('Settings'),
           networks && t('Networks'),
@@ -78,7 +69,6 @@ const useAppDataSyncImport = ({
         setScannedAccounts(accounts)
         setScannedAppSettings(settings?.app)
         setScannedExtrasLabel(extras.join(', '))
-        setIsPasswordRequired(isSyncPasswordRequired(scannedPayload))
         setPayload(hexlify(scannedBytes))
         setScanError(null)
       } catch {
@@ -100,7 +90,6 @@ const useAppDataSyncImport = ({
     setScannedExtrasLabel('')
     setPayload(null)
     setScanError(null)
-    autoImportedPayloadRef.current = null
   }, [])
 
   /**
@@ -126,7 +115,7 @@ const useAppDataSyncImport = ({
   }, [scannedAppSettings, walletStateDispatch])
 
   const importScannedData = useCallback(
-    async (password?: string) => {
+    async (password: string) => {
       if (!payload || isImporting) return
 
       setIsImporting(true)
@@ -168,18 +157,10 @@ const useAppDataSyncImport = ({
     ]
   )
 
-  useEffect(() => {
-    if (!payload || isPasswordRequired || autoImportedPayloadRef.current === payload) return
-
-    autoImportedPayloadRef.current = payload
-    void importScannedData()
-  }, [importScannedData, isPasswordRequired, payload])
-
   return {
     handleScanComplete,
     hasScannedPayload: !!payload,
     scannedAccounts,
-    isPasswordRequired,
     scanError,
     retryScan,
     importScannedData,
