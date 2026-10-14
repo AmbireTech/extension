@@ -189,7 +189,9 @@ const AccountAddress: FC<Props> = ({
           ) : (
             <>
               <PlainAddress
-                maxLength={isMobile ? 13 : 16}
+                // Shortened further next to a resolved name in a narrow view, like with a copy
+                // button, so the name isn't the part that gets truncated
+                maxLength={isMobile ? 13 : showResolvedName && isNarrowWebLayout ? 10 : 16}
                 address={address}
                 // A shortened address already hides its middle, so letting it shrink would add a
                 // trailing ellipsis on top of that and hide the suffix. On a narrow view
