@@ -50,7 +50,7 @@ const PendingRequestsBadge = ({ count }: Props) => {
         </Text>
       </View>
       <Text fontSize={12} weight="medium" color={theme.warningText}>
-        {t('Pending')}
+        {t('pending')}
       </Text>
     </Badge>
   )
