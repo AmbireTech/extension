@@ -68,6 +68,8 @@ const Account = ({
   switchAccountOnPress = true,
   withBalance = true,
   withSafeSignerBadges = false,
+  isOnSecondaryBackground = false,
+  withBadges = true,
   onExtraHeightChange
 }: {
   account: AccountInterface
@@ -95,6 +97,13 @@ const Account = ({
   withBalance?: boolean
   /** Whether to tell which of the user's Safe accounts the account is a signer of */
   withSafeSignerBadges?: boolean
+  /**
+   * For a row that is not selectable and sits on a card in the secondary background, so it
+   * gets a card of its own in the primary one
+   */
+  isOnSecondaryBackground?: boolean
+  /** Set to false to show only the avatar, the label and the address, without the badges row */
+  withBadges?: boolean
   /**
    * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is (negative when
    * shorter), mostly because its badges wrapped, so a list that lays its rows out by height
@@ -428,6 +437,8 @@ const Account = ({
     // Animated, so that it changes along with the row on hover
     if (isSelectable) return animStyle.backgroundColor
 
+    if (isOnSecondaryBackground) return theme.primaryBackground
+
     // Not interactive, the row has no background of its own and sits on its list's card
     return theme.secondaryBackground
   }
@@ -443,6 +454,7 @@ const Account = ({
         containerStyle,
         // @ts-expect-error: Web style
         isSelectable ? animStyle : { cursor: 'default' },
+        isOnSecondaryBackground && { backgroundColor: theme.primaryBackground },
         isMarkedSelected &&
           (!inverseInteractionColors
             ? { backgroundColor: theme.primaryAccent100, borderColor: theme.primaryAccent }
@@ -480,9 +492,13 @@ const Account = ({
             </View>
             {actions}
           </View>
-          {/* A view rather than a border, as per-side borders can leave stray lines on native */}
-          <View style={styles.separator} />
-          {badges}
+          {withBadges && (
+            <>
+              {/* A view rather than a border, as per-side borders can leave stray lines on native */}
+              <View style={styles.separator} />
+              {badges}
+            </>
+          )}
         </View>
       </View>
     </AnimatedPressable>
