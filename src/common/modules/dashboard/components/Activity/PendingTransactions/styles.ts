@@ -18,6 +18,7 @@ interface Styles {
   animatedContentWrapper: ViewStyle
   measuredContent: ViewStyle
   bundle: ViewStyle
+  cancellationRow: ViewStyle
   bundleWithDividerAbove: ViewStyle
   bundleWithDividerBelow: ViewStyle
   divider: ViewStyle
@@ -81,6 +82,13 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.secondaryBackground
     },
     // The halves of the divider the bundles reserve, added on top of their own padding
+    // Sits under an OR divider, below the bundles of the nonce, and shares their color. Half of
+    // the divider height is reserved, the same as the bundles do.
+    cancellationRow: {
+      backgroundColor: theme.secondaryBackground,
+      paddingTop: SPACING_SM + OR_DIVIDER_HEIGHT / 2,
+      paddingBottom: SPACING_SM
+    },
     bundleWithDividerAbove: {
       paddingTop: SPACING_SM + OR_DIVIDER_HEIGHT / 2
     },
