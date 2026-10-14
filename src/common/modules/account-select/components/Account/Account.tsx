@@ -185,8 +185,20 @@ const Account = ({
     setContentHeight((prev) => (prev === height ? prev : height))
   }, [])
 
-  // On every commit, as whatever the badges show may have changed how many lines they take
-  useLayoutEffect(updateContentHeight)
+  // Whenever what the badges show changes, as that may change how many lines they take. Anything
+  // else that resizes the row is caught by the content's `onLayout`, at worst a frame later.
+  useLayoutEffect(updateContentHeight, [
+    updateContentHeight,
+    account,
+    accountKeys,
+    balance,
+    pendingRequestsCount,
+    safeDeployedChainIds,
+    withBadges,
+    withBalance,
+    withKeyType,
+    withSafeSignerBadges
+  ])
 
   // Only once measured, as a list may remount the row when its height changes
   useLayoutEffect(() => {
