@@ -52,6 +52,65 @@ const AccountSelectOption = ({
   const smartAccountType = account.safeCreation ? 'Safe' : account.creation ? 'Ambire' : undefined
   const VisibilityToggleIcon = isHidden ? VisibilityIcon : InvisibilityIcon
 
+  const card = (
+    <View
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        spacings.phSm,
+        {
+          height: ACCOUNT_SELECT_OPTION_HEIGHT - CARD_GAP,
+          borderRadius: BORDER_RADIUS_PRIMARY,
+          borderWidth: 1.5,
+          borderColor: isSelected ? theme.primaryAccent200 : 'transparent',
+          backgroundColor: isSelected ? theme.primaryAccent100 : theme.secondaryBackground
+        }
+      ]}
+    >
+      <View style={isHidden && { opacity: HIDDEN_OPACITY }}>
+        <Avatar
+          address={account.addr}
+          pfp={account.preferences.pfp}
+          smartAccountType={smartAccountType}
+          size={40}
+        />
+      </View>
+      <View style={[flexbox.flex1, { minWidth: 0 }, isHidden && { opacity: HIDDEN_OPACITY }]}>
+        <Text fontSize={15} weight="medium" numberOfLines={1}>
+          {account.preferences.label}
+        </Text>
+        <AccountAddress {...reverseLookup} address={account.addr} fontSize={12} withCopy={false} />
+      </View>
+      {!!onToggleVisibility && (
+        <HoverablePressable
+          onPress={handleToggleVisibility}
+          accessibilityRole="button"
+          testID={`account-select-${isHidden ? 'show' : 'hide'}-${account.addr}`}
+        >
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              spacings.phSm,
+              spacings.mlTy,
+              {
+                height: 32,
+                columnGap: 6,
+                borderRadius: 8,
+                backgroundColor: theme.primaryBackground
+              }
+            ]}
+          >
+            <VisibilityToggleIcon width={16} height={16} color={theme.iconPrimary} />
+            <Text fontSize={13} weight="medium" appearance="secondaryText">
+              {isHidden ? t('Show') : t('Hide')}
+            </Text>
+          </View>
+        </HoverablePressable>
+      )}
+    </View>
+  )
+
   return (
     <View
       style={
@@ -60,76 +119,20 @@ const AccountSelectOption = ({
           : { height: ACCOUNT_SELECT_OPTION_HEIGHT, paddingBottom: CARD_GAP }
       }
     >
-      <HoverablePressable
-        onPress={handlePress}
-        // A hidden account must be shown first, as the selected account is always visible
-        disabled={isHidden}
-        accessibilityRole="button"
-        accessibilityState={{ selected: isSelected, disabled: !!isHidden }}
-        testID={`account-select-option-${account.addr}`}
-      >
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.phSm,
-            {
-              height: ACCOUNT_SELECT_OPTION_HEIGHT - CARD_GAP,
-              borderRadius: BORDER_RADIUS_PRIMARY,
-              borderWidth: 1.5,
-              borderColor: isSelected ? theme.primaryAccent200 : 'transparent',
-              backgroundColor: isSelected ? theme.primaryAccent100 : theme.secondaryBackground
-            }
-          ]}
+      {isHidden ? (
+        // A hidden account must be shown first, as the selected account is always visible.
+        // Not a disabled pressable, as that would also block the Show button inside it
+        card
+      ) : (
+        <HoverablePressable
+          onPress={handlePress}
+          accessibilityRole="button"
+          accessibilityState={{ selected: isSelected }}
+          testID={`account-select-option-${account.addr}`}
         >
-          <View style={isHidden && { opacity: HIDDEN_OPACITY }}>
-            <Avatar
-              address={account.addr}
-              pfp={account.preferences.pfp}
-              smartAccountType={smartAccountType}
-              size={40}
-            />
-          </View>
-          <View style={[flexbox.flex1, { minWidth: 0 }, isHidden && { opacity: HIDDEN_OPACITY }]}>
-            <Text fontSize={15} weight="medium" numberOfLines={1}>
-              {account.preferences.label}
-            </Text>
-            <AccountAddress
-              {...reverseLookup}
-              address={account.addr}
-              fontSize={12}
-              withCopy={false}
-            />
-          </View>
-          {!!onToggleVisibility && (
-            <HoverablePressable
-              onPress={handleToggleVisibility}
-              accessibilityRole="button"
-              testID={`account-select-${isHidden ? 'show' : 'hide'}-${account.addr}`}
-            >
-              <View
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  spacings.phSm,
-                  spacings.mlTy,
-                  {
-                    height: 32,
-                    columnGap: 6,
-                    borderRadius: 8,
-                    backgroundColor: theme.primaryBackground
-                  }
-                ]}
-              >
-                <VisibilityToggleIcon width={16} height={16} color={theme.iconPrimary} />
-                <Text fontSize={13} weight="medium" appearance="secondaryText">
-                  {isHidden ? t('Show') : t('Hide')}
-                </Text>
-              </View>
-            </HoverablePressable>
-          )}
-        </View>
-      </HoverablePressable>
+          {card}
+        </HoverablePressable>
+      )}
     </View>
   )
 }
