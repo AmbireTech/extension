@@ -17,7 +17,8 @@ import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
-const MOBILE_APP_DOWNLOAD_URL = 'https://www.ambire.com/download'
+const MOBILE_APP_DOWNLOAD_URL =
+  'https://www.ambire.com/download?utm_source=ambire_extension&utm_medium=in_app&utm_campaign=mobile_launch_existing_users&utm_content=download_modal#mobile'
 
 // The "Invite code" label sits on the border line itself (fieldset/legend style) - an
 // absolutely-positioned Text whose background matches the sheet's own, so it masks the
