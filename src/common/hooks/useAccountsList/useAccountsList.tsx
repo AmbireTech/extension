@@ -9,6 +9,7 @@ import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
+import { usePendingAccountAddrs } from '@common/hooks/usePendingRequestsCount'
 import {
   ACCOUNT_SELECT_ACCOUNT_HEIGHT,
   ACCOUNT_SELECT_ACCOUNT_MB
@@ -27,7 +28,9 @@ const FUSE_KEYS = [
   { name: 'domainNames', weight: 0.3 },
   { name: 'address', weight: 0.1 },
   { name: 'keyLabels', weight: 0.2 },
-  { name: 'smart', weight: 0.1 }
+  { name: 'smart', weight: 0.1 },
+  // Lets "pending" find the accounts with the pending badge
+  { name: 'pending', weight: 0.1 }
 ]
 
 const FUSE_OPTIONS = {
@@ -91,6 +94,7 @@ const useAccountsList = ({
   const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { height: windowHeight } = useWindowDimensions()
   const prevSearchRef = useRef(debouncedSearch)
+  const pendingAccountAddrs = usePendingAccountAddrs(accounts)
 
   const searchableAccounts = useMemo(
     () =>
@@ -103,9 +107,10 @@ const useAccountsList = ({
           .join(' '),
         domainNames: getSearchableNames(domains[account.addr]?.names),
         address: account.addr.toLowerCase(),
-        smart: isSmartAccount(account) ? 'smart' : ''
+        smart: isSmartAccount(account) ? 'smart' : '',
+        pending: pendingAccountAddrs.has(account.addr) ? 'pending' : ''
       })),
-    [accounts, domains, keys]
+    [accounts, domains, keys, pendingAccountAddrs]
   )
 
   // Indexing is the expensive half of Fuse and depends only on the list, so it is built

@@ -1,7 +1,7 @@
 import React from 'react'
 import TestRenderer, { act } from 'react-test-renderer'
 
-import usePendingRequestsCount from './usePendingRequestsCount'
+import usePendingRequestsCount, { usePendingAccountAddrs } from './usePendingRequestsCount'
 
 let controllerStates: Record<string, any> = {}
 
@@ -134,5 +134,124 @@ describe('usePendingRequestsCount', () => {
     }
 
     expect(renderCount(account(SAFE, true))).toBe(5)
+  })
+})
+
+const renderPendingAddrs = (accounts: any[]) => {
+  let addrs: Set<string> | undefined
+  const Probe = () => {
+    addrs = usePendingAccountAddrs(accounts)
+    return null
+  }
+  act(() => {
+    TestRenderer.create(React.createElement(Probe))
+  })
+  return Array.from(addrs!).sort()
+}
+
+describe('usePendingAccountAddrs', () => {
+  const accounts = [account(SAFE, true), account(OTHER_SAFE, true), account(EOA)]
+
+  /** The accounts the row badge gives a count above zero */
+  const withPendingBadge = () =>
+    accounts
+      .filter((acc) => (renderCount(acc) ?? 0) > 0)
+      .map((acc) => acc.addr)
+      .sort()
+
+  beforeEach(() => {
+    controllerStates = {}
+  })
+
+  it('returns none and does not throw before any controller state has arrived', () => {
+    expect(renderPendingAddrs(accounts)).toEqual([])
+
+    controllerStates = {
+      SelectedAccountController: {},
+      AccountsController: {},
+      SafeController: {},
+      RequestsController: {}
+    }
+    expect(renderPendingAddrs(accounts)).toEqual([])
+  })
+
+  it('returns the accounts with a sign request, but not those with only other requests', () => {
+    controllerStates = {
+      SelectedAccountController: { account: { addr: EOA } },
+      RequestsController: {
+        userRequests: [
+          callsRequest(EOA),
+          { kind: 'dappConnect', meta: { accountAddr: SAFE } },
+          { kind: 'message', meta: { accountAddr: OTHER_SAFE, pendingToRemove: true } }
+        ]
+      }
+    }
+
+    expect(renderPendingAddrs(accounts)).toEqual([EOA])
+    expect(renderPendingAddrs(accounts)).toEqual(withPendingBadge())
+  })
+
+  it('leaves out the selected Safe when all its txns have their nonce used already', () => {
+    controllerStates = {
+      SelectedAccountController: { account: { addr: SAFE } },
+      AccountsController: {
+        accountStates: { [SAFE]: { '1': { nonce: 5n } }, [EOA]: { '1': { nonce: 9n } } }
+      },
+      RequestsController: {
+        userRequests: [
+          callsRequest(SAFE, { txnId: '0x1', nonce: 4n }),
+          // The selected Safe's nonces do not apply to the other accounts
+          callsRequest(EOA, { txnId: '0x2', nonce: 1n })
+        ]
+      }
+    }
+
+    expect(renderPendingAddrs(accounts)).toEqual([EOA])
+    expect(renderPendingAddrs(accounts)).toEqual(withPendingBadge())
+  })
+
+  it('takes a Safe that is not selected from its fetched counts, not its requests on Safe servers', () => {
+    controllerStates = {
+      SelectedAccountController: { account: { addr: EOA } },
+      SafeController: { pendingCountBySafe: { [SAFE]: { '1': 2 }, [OTHER_SAFE]: { '1': 0 } } },
+      RequestsController: {
+        userRequests: [
+          callsRequest(OTHER_SAFE, { txnId: '0x1', nonce: 1n }),
+          { kind: 'message', meta: { accountAddr: OTHER_SAFE, hash: '0xabc' } }
+        ]
+      }
+    }
+
+    expect(renderPendingAddrs(accounts)).toEqual([SAFE])
+    expect(renderPendingAddrs(accounts)).toEqual(withPendingBadge())
+  })
+
+  it('ignores the fetched counts of the selected Safe, as its own requests are what counts', () => {
+    controllerStates = {
+      SelectedAccountController: { account: { addr: SAFE } },
+      SafeController: { pendingCountBySafe: { [SAFE]: { '1': 3 } } }
+    }
+
+    expect(renderPendingAddrs(accounts)).toEqual([])
+    expect(renderPendingAddrs(accounts)).toEqual(withPendingBadge())
+  })
+
+  it('skips malformed requests and counts instead of throwing', () => {
+    controllerStates = {
+      SelectedAccountController: { account: { addr: SAFE } },
+      AccountsController: { accountStates: { [SAFE]: { '1': null, '137': { nonce: 5n } } } },
+      SafeController: { pendingCountBySafe: { [OTHER_SAFE]: { '1': NaN, '10': 'x' } } },
+      RequestsController: {
+        userRequests: [
+          null,
+          { kind: 'message' },
+          { kind: 'calls', meta: {} },
+          callsRequest(SAFE, { txnId: '0x1', nonce: 'not a bigint' })
+        ]
+      }
+    }
+
+    expect(renderPendingAddrs(accounts)).toEqual([SAFE])
+    expect(renderPendingAddrs(accounts)).toEqual(withPendingBadge())
   })
 })
