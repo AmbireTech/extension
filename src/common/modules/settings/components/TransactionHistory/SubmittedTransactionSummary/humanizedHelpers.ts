@@ -77,14 +77,17 @@ export const getDappInteractionsFromHumanizedCalls = (
   submittedAccountOp: SubmittedAccountOpLike,
   humanizedCalls: IrCall[]
 ): DappInteraction[] => {
-  // Enabling or revoking an EIP-7702 delegation is an empty, 0-value call too, so it must not
-  // be mistaken for a Safe cancellation
-  const isDelegationChange = !!submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta
+  // Must come before the Safe cancellation check: a delegation change is also an empty,
+  // 0-value call and would otherwise be mistaken for a cancellation
+  if (submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta) {
+    return [
+      submittedAccountOp.meta.setDelegation === false
+        ? { id: 'fallback:revoke', name: 'Revoke delegation', iconType: 'ambire' }
+        : { id: 'fallback:delegation', name: 'Enable smart settings', iconType: 'ambire' }
+    ]
+  }
 
-  if (
-    !isDelegationChange &&
-    isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)
-  ) {
+  if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
     const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
 
     return [
@@ -154,22 +157,6 @@ export const getDappInteractionsFromHumanizedCalls = (
         ? { token: gasTankToken.address, amount: gasTankToken.value }
         : {})
     })
-  }
-
-  if (submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta) {
-    if (submittedAccountOp.meta.setDelegation === false) {
-      addInteraction({
-        id: 'fallback:revoke',
-        name: 'Revoke delegation',
-        iconType: 'ambire'
-      })
-    } else {
-      addInteraction({
-        id: 'fallback:delegation',
-        name: 'Enable smart settings',
-        iconType: 'ambire'
-      })
-    }
   }
 
   if (!interactions.length) {
