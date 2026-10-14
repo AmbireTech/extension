@@ -105,9 +105,9 @@ const Account = ({
   /** Set to false to show only the avatar, the label and the address, without the badges row */
   withBadges?: boolean
   /**
-   * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is (negative when
-   * shorter), mostly because its badges wrapped, so a list that lays its rows out by height
-   * can make room for it
+   * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is, mostly because
+   * its badges wrapped, so a list that lays its rows out by height can make room for it. Such a
+   * row is never shorter, so the rows the list has not rendered yet are where it expects them.
    */
   onExtraHeightChange?: (addr: string, extraHeight: number) => void
 }) => {
@@ -194,7 +194,7 @@ const Account = ({
 
     onExtraHeightChange?.(
       addr,
-      contentHeight + containerVerticalInsets - ACCOUNT_SELECT_ACCOUNT_HEIGHT
+      Math.max(0, contentHeight + containerVerticalInsets - ACCOUNT_SELECT_ACCOUNT_HEIGHT)
     )
   }, [addr, containerVerticalInsets, contentHeight, onExtraHeightChange])
 
@@ -452,6 +452,7 @@ const Account = ({
       style={[
         styles.accountContainer,
         containerStyle,
+        !!onExtraHeightChange && { minHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT },
         // @ts-expect-error: Web style
         isSelectable ? animStyle : { cursor: 'default' },
         isOnSecondaryBackground && { backgroundColor: theme.primaryBackground },

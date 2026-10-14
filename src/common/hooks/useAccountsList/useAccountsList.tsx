@@ -1,12 +1,13 @@
 import Fuse from 'fuse.js'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FlatList, useWindowDimensions } from 'react-native'
+import { FlatList, LayoutChangeEvent, useWindowDimensions } from 'react-native'
 import { isAddress } from 'viem'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import { usePendingAccountAddrs } from '@common/hooks/usePendingRequestsCount'
@@ -192,7 +193,17 @@ const useAccountsList = ({
    * Our callback runs in that same commit, right after the scroll, which is the point
    * at which the list is safe to show.
    */
-  const onListContentSizeChange = useCallback(() => setIsListPositioned(true), [])
+  const [listContentHeight, setListContentHeight] = useState(0)
+  const onListContentSizeChange = useCallback((_width: number, height: number) => {
+    setIsListPositioned(true)
+    setListContentHeight(height)
+  }, [])
+
+  const [listHeight, setListHeight] = useState(0)
+  const onListLayout = useCallback(
+    ({ nativeEvent }: LayoutChangeEvent) => setListHeight(nativeEvent.layout.height),
+    []
+  )
 
   /**
    * Positions the list in its first commit, instead of rendering it from the top and
@@ -213,6 +224,48 @@ const useAccountsList = ({
         windowHeight
       })
 
+  /**
+   * The rows above the selected account are not rendered when the list opens, so they are
+   * placed by the estimated height until they mount and report their own. Until the user
+   * touches the list, it goes back to the selected account whenever they do. Capped by the
+   * list's own height rather than the window's, which `initialScrollIndex` has to guess.
+   */
+  const isUserInListRef = useRef(false)
+  const onListTouchStart = useCallback(() => {
+    isUserInListRef.current = true
+  }, [])
+
+  useLayoutEffect(() => {
+    // A list that opens at the top is already shown, so it is left there rather than moved
+    if (isUserInListRef.current || initialScrollIndex === undefined || selectedAccountIndex < 0)
+      return
+    if (!isListPositioned || !listHeight || !listContentHeight) return
+
+    const { offset } = getItemLayout(filteredAccounts, selectedAccountIndex)
+    const maxOffset = Math.max(0, listContentHeight - listHeight)
+    flatlistRef?.current?.scrollToOffset({ offset: Math.min(offset, maxOffset), animated: false })
+  }, [
+    filteredAccounts,
+    flatlistRef,
+    getItemLayout,
+    initialScrollIndex,
+    isListPositioned,
+    listContentHeight,
+    listHeight,
+    selectedAccountIndex
+  ])
+
+  // The web has no touch for the mouse wheel, the scrollbar or the keyboard
+  useEffect(() => {
+    const node = isWeb && isListPositioned ? flatlistRef?.current?.getScrollableNode() : null
+    if (!node) return
+
+    const events = ['wheel', 'mousedown', 'keydown', 'touchstart']
+    events.forEach((event) => node.addEventListener(event, onListTouchStart, { passive: true }))
+
+    return () => events.forEach((event) => node.removeEventListener(event, onListTouchStart))
+  }, [flatlistRef, isListPositioned, onListTouchStart])
+
   // Scrolls to top on search
   useEffect(() => {
     if (prevSearchRef.current === debouncedSearch) return
@@ -231,6 +284,8 @@ const useAccountsList = ({
     getAccountItemHeight,
     onAccountExtraHeightChange,
     onListContentSizeChange,
+    onListLayout,
+    onListTouchStart,
     initialScrollIndex,
     // Nothing to hide when the list starts at the top, so it shows right away
     shouldDisplayAccounts: initialScrollIndex === undefined || isListPositioned,

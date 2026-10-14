@@ -96,6 +96,8 @@ const AccountSelectScreen = () => {
     getItemLayout,
     onAccountExtraHeightChange,
     onListContentSizeChange,
+    onListLayout,
+    onListTouchStart,
     initialScrollIndex,
     shouldDisplayAccounts,
     isReadyToRender
@@ -199,6 +201,8 @@ const AccountSelectScreen = () => {
               getItemLayout={getItemLayout}
               keyExtractor={keyExtractor}
               onContentSizeChange={onListContentSizeChange}
+              onLayout={onListLayout}
+              onTouchStart={onListTouchStart}
               initialScrollIndex={initialScrollIndex}
               ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
             />

@@ -69,6 +69,8 @@ const AccountSelectScreen = () => {
     getItemLayout,
     onAccountExtraHeightChange,
     onListContentSizeChange,
+    onListLayout,
+    onListTouchStart,
     initialScrollIndex,
     shouldDisplayAccounts,
     isReadyToRender
@@ -191,6 +193,8 @@ const AccountSelectScreen = () => {
               getItemLayout={getItemLayout}
               keyExtractor={keyExtractor}
               onContentSizeChange={onListContentSizeChange}
+              onLayout={onListLayout}
+              onTouchStart={onListTouchStart}
               initialScrollIndex={initialScrollIndex}
               // The search keyboard covers the list, so it goes away once the list is scrolled
               keyboardDismissMode="on-drag"
