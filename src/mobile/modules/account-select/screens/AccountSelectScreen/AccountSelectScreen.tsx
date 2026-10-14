@@ -191,6 +191,8 @@ const AccountSelectScreen = () => {
               keyExtractor={keyExtractor}
               onContentSizeChange={onListContentSizeChange}
               initialScrollIndex={initialScrollIndex}
+              // The search keyboard covers the list, so it goes away once the list is scrolled
+              keyboardDismissMode="on-drag"
               ListEmptyComponent={
                 <View style={[flexbox.flex1, flexbox.center]}>
                   <Text>{t('No accounts found')}</Text>
