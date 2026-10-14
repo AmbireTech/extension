@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { Trans } from 'react-i18next'
-import { SectionListData, View, ViewToken } from 'react-native'
+import { LayoutChangeEvent, SectionListData, View, ViewToken } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Dapp } from '@ambire-common/interfaces/dapp'
@@ -19,14 +19,16 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import AccountSelectOption, { ACCOUNT_SELECT_OPTION_HEIGHT } from './AccountSelectOption'
 import AccountSelectSectionHeader, {
   ACCOUNT_SELECT_HIDDEN_HEADER_HEIGHT,
-  ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT
+  ACCOUNT_SELECT_MIN_WIDTH_FOR_INLINE_ACTION,
+  ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT,
+  ACCOUNT_SELECT_VISIBLE_HEADER_WITH_ACTION_ROW_HEIGHT
 } from './AccountSelectSectionHeader'
 import useAccountSelectAccess from './useAccountSelectAccess'
 
@@ -40,11 +42,6 @@ const SELECT_CONTAINER_STYLE = { ...flexbox.flex1, ...spacings.mb0 }
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
-
-const getSectionHeaderHeight = (section: SectionListData<SelectValue>) =>
-  section.key === HIDDEN_SECTION_KEY
-    ? ACCOUNT_SELECT_HIDDEN_HEADER_HEIGHT
-    : ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT
 
 const toOption = (account: Account): SelectValue => ({
   value: account.addr,
@@ -92,6 +89,14 @@ const AccountSelect = ({ dappToConnect }: Props) => {
     reset
   } = access
   const [isHiddenSectionInView, setIsHiddenSectionInView] = useState(true)
+  // Until it's measured, the button goes on its own row, as the sheet is usually narrow
+  const [visibleHeaderWidth, setVisibleHeaderWidth] = useState(0)
+  const canLimit = visibleAccounts.length > 1
+  const isLimitActionOnOwnRow = visibleHeaderWidth < ACCOUNT_SELECT_MIN_WIDTH_FOR_INLINE_ACTION
+  const visibleHeaderHeight =
+    canLimit && isLimitActionOnOwnRow
+      ? ACCOUNT_SELECT_VISIBLE_HEADER_WITH_ACTION_ROW_HEIGHT
+      : ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT
   // The list doesn't support changing this handler once mounted, so it must stay the same
   const [handleViewableItemsChanged] = useState(
     () =>
@@ -99,6 +104,18 @@ const AccountSelect = ({ dappToConnect }: Props) => {
         setIsHiddenSectionInView(
           viewableItems.some((token) => token.section?.key === HIDDEN_SECTION_KEY)
         )
+  )
+
+  const handleVisibleHeaderLayout = useCallback((e: LayoutChangeEvent) => {
+    setVisibleHeaderWidth(e.nativeEvent.layout.width)
+  }, [])
+
+  const getSectionHeaderHeight = useCallback(
+    (section: SectionListData<SelectValue>) =>
+      section.key === HIDDEN_SECTION_KEY
+        ? ACCOUNT_SELECT_HIDDEN_HEADER_HEIGHT
+        : visibleHeaderHeight,
+    [visibleHeaderHeight]
   )
 
   const hiddenAddrs = useMemo(
@@ -200,8 +217,10 @@ const AccountSelect = ({ dappToConnect }: Props) => {
           type="visible"
           count={visibleAccounts.length}
           isAll={!isLimited}
-          actionText={visibleAccounts.length > 1 ? t('Limit to selected only') : undefined}
+          actionText={canLimit ? t('Limit to selected only') : undefined}
           onAction={limitToPickedAccount}
+          isActionOnOwnRow={isLimitActionOnOwnRow}
+          onLayout={handleVisibleHeaderLayout}
         />
       )
     },
@@ -209,8 +228,11 @@ const AccountSelect = ({ dappToConnect }: Props) => {
       hiddenAccounts.length,
       visibleAccounts.length,
       isLimited,
+      canLimit,
+      isLimitActionOnOwnRow,
       showAllAccounts,
       limitToPickedAccount,
+      handleVisibleHeaderLayout,
       t
     ]
   )
@@ -224,7 +246,12 @@ const AccountSelect = ({ dappToConnect }: Props) => {
           spacings.phSm,
           spacings.pvSm,
           spacings.mbSm,
-          { borderRadius: BORDER_RADIUS_PRIMARY, backgroundColor: theme.secondaryBackground }
+          {
+            // Pulled up a bit towards the sheet title, which has a large gap below it
+            marginTop: -SPACING_TY,
+            borderRadius: BORDER_RADIUS_PRIMARY,
+            backgroundColor: theme.secondaryBackground
+          }
         ]}
       >
         <Text fontSize={13} appearance="secondaryText" style={{ lineHeight: 20 }}>
@@ -345,7 +372,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
       bottomSheetTitle={t('Select account')}
       withBottomSheetBackButton={false}
       menuOptionHeight={ACCOUNT_SELECT_OPTION_HEIGHT}
-      headerHeight={dappToConnect ? ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT : 0}
+      headerHeight={dappToConnect ? visibleHeaderHeight : 0}
       getSectionHeaderHeight={dappToConnect ? getSectionHeaderHeight : undefined}
       renderOption={renderOption}
       renderSectionHeader={dappToConnect ? renderSectionHeader : undefined}
