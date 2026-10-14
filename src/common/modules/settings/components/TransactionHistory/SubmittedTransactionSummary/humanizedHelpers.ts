@@ -77,7 +77,14 @@ export const getDappInteractionsFromHumanizedCalls = (
   submittedAccountOp: SubmittedAccountOpLike,
   humanizedCalls: IrCall[]
 ): DappInteraction[] => {
-  if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
+  // Enabling or revoking an EIP-7702 delegation is an empty, 0-value call too, so it must not
+  // be mistaken for a Safe cancellation
+  const isDelegationChange = !!submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta
+
+  if (
+    !isDelegationChange &&
+    isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)
+  ) {
     const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
 
     return [
