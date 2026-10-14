@@ -9,6 +9,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
@@ -115,6 +116,8 @@ const SavedSeedPhrasesBottomSheet = ({
             type="secondary"
             onPress={() => handleAddAddressFromSeed(item.id)}
             childrenPosition="left"
+            // On mobile secondary buttons share the card's background, so it takes the web one
+            style={isMobile ? { backgroundColor: theme.primaryBackground } : undefined}
           >
             <AddCircularIcon
               width={20}
