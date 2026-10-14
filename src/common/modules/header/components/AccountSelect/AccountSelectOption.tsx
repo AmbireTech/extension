@@ -6,6 +6,7 @@ import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
+import Badge from '@common/components/Badge'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -81,6 +82,14 @@ const AccountSelectOption = ({
         </Text>
         <AccountAddress {...reverseLookup} address={account.addr} fontSize={12} withCopy={false} />
       </View>
+      {isSelected && (
+        <Badge
+          type="primaryAccent"
+          text={t('Selected')}
+          // The card already has the accent background, so the badge stands out on the page one
+          style={{ ...spacings.mlTy, backgroundColor: theme.primaryBackground }}
+        />
+      )}
       {!!onToggleVisibility && (
         <HoverablePressable
           onPress={handleToggleVisibility}
