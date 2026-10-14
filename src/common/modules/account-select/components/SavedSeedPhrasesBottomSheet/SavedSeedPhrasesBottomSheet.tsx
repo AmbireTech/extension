@@ -124,14 +124,18 @@ const SavedSeedPhrasesBottomSheet = ({
             />
           </Button>
         </View>
-        {seedAccounts.map((a) => {
+        {seedAccounts.map((a, accountIndex) => {
           return (
             <Account
               key={a.addr}
               account={a}
               withSettings={false}
               isSelectable={false}
+              isOnSecondaryBackground
+              withBadges={false}
+              containerStyle={accountIndex === seedAccounts.length - 1 ? spacings.mb0 : undefined}
               withKeyType={false}
+              withCopy={false}
             />
           )
         })}
