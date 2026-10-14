@@ -1,7 +1,7 @@
 import type { ViewStyle } from 'react-native'
 import { StyleSheet } from 'react-native'
 
-import { SPACING_SM } from '@common/styles/spacings'
+import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import common, { hexToRgba } from '@common/styles/utils/common'
 
 import type { ThemeProps } from '@common/styles/themeConfig'
@@ -86,7 +86,7 @@ const getStyles = (theme: ThemeProps) =>
     // the divider height is reserved, the same as the bundles do.
     cancellationRow: {
       backgroundColor: theme.secondaryBackground,
-      paddingTop: SPACING_SM + OR_DIVIDER_HEIGHT / 2,
+      paddingTop: SPACING_TY + OR_DIVIDER_HEIGHT / 2,
       paddingBottom: SPACING_SM
     },
     bundleWithDividerAbove: {
