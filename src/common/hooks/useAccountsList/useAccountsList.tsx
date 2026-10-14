@@ -83,6 +83,8 @@ const useAccountsList = ({
   // the filtering, which walks every account across five fields
   const debouncedSearch = useDebounce({ value: search, delay: SEARCH_DEBOUNCE_IN_MS })
   const [isListPositioned, setIsListPositioned] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
+  if (debouncedSearch && !hasSearched) setHasSearched(true)
   const { state: domains } = useController('DomainsController', selectDomains)
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: keys } = useController('KeystoreController', selectKeys)
@@ -192,13 +194,19 @@ const useAccountsList = ({
    * scrolling it afterwards (which leaves the rows now in the viewport blank until the
    * batching scheduler catches up). `getItemLayout` lets the list resolve the offset on
    * its own and clamp it to the content.
+   *
+   * Dropped after the first search, as the list then starts at the top. Kept, it stops the
+   * list from keeping its first rows rendered, so clearing a search with no results left it
+   * blank until scrolled.
    */
-  const initialScrollIndex = getInitialScrollIndex({
-    selectedAccountIndex,
-    accountsCount: filteredAccounts.length,
-    itemHeight: ITEM_HEIGHT,
-    windowHeight
-  })
+  const initialScrollIndex = hasSearched
+    ? undefined
+    : getInitialScrollIndex({
+        selectedAccountIndex,
+        accountsCount: filteredAccounts.length,
+        itemHeight: ITEM_HEIGHT,
+        windowHeight
+      })
 
   // Scrolls to top on search
   useEffect(() => {
