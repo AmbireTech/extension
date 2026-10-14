@@ -467,26 +467,28 @@ const Estimation = ({
 
   const currentGasPrice = useMemo(() => {
     const selectedFeeSpeed = signAccountOpState?.selectedFeeSpeed || FeeSpeed.Fast
-    const selectedGasPrice = signAccountOpState?.gasPrices?.[selectedFeeSpeed]?.maxFeePerGas
+    const selectedGasPrice =
+      signAccountOpState?.selectedOptionGasPrices?.[selectedFeeSpeed]?.maxFeePerGas
 
     if (!selectedGasPrice || !signAccountOpState?.selectedOption) return ''
 
     return formatUnits(BigInt(selectedGasPrice), 'gwei')
   }, [
-    signAccountOpState?.gasPrices,
+    signAccountOpState?.selectedOptionGasPrices,
     signAccountOpState?.selectedFeeSpeed,
     signAccountOpState?.selectedOption
   ])
 
   const currentMaxPriorityFeePerGas = useMemo(() => {
     const selectedFeeSpeed = signAccountOpState?.selectedFeeSpeed || FeeSpeed.Fast
-    const selectedGasPrice = signAccountOpState?.gasPrices?.[selectedFeeSpeed]?.maxPriorityFeePerGas
+    const selectedGasPrice =
+      signAccountOpState?.selectedOptionGasPrices?.[selectedFeeSpeed]?.maxPriorityFeePerGas
 
     if (!selectedGasPrice || !signAccountOpState?.selectedOption) return ''
 
     return formatUnits(BigInt(selectedGasPrice), 'gwei')
   }, [
-    signAccountOpState?.gasPrices,
+    signAccountOpState?.selectedOptionGasPrices,
     signAccountOpState?.selectedFeeSpeed,
     signAccountOpState?.selectedOption
   ])
