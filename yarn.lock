@@ -26,17 +26,17 @@
     tap-spec "^5.0.0"
     tape "^5.5.3"
 
-"@anon-rpc/browser-extension-harness@0.3.2":
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/@anon-rpc/browser-extension-harness/-/browser-extension-harness-0.3.2.tgz#7c61cb8ab54478b42e1788e81a7c7733bda690a3"
-  integrity sha512-dTC3OWC0pX6nski39QHCQ6NtZlLq01BPC/ATuXfNsQlRLkb/qC8vVrow/Jk5RETngPVgm6/MZpAAeUQfbrw+Jg==
+"@anon-rpc/browser-extension-harness@0.3.3":
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/@anon-rpc/browser-extension-harness/-/browser-extension-harness-0.3.3.tgz#13c8284d4cacfb269a60019ddd29cde7ddb49721"
+  integrity sha512-OPx5HYKYV9vMza3xyEtf6T1EKbPFwRHO515LfNbB7R1MItk1RwVgiBEukwL8Lk2xaWE7YwhCvccsuKsXgsrIZw==
   dependencies:
-    "@anon-rpc/browser-harness" "0.3.2"
+    "@anon-rpc/browser-harness" "0.3.3"
 
-"@anon-rpc/browser-harness@0.3.2":
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/@anon-rpc/browser-harness/-/browser-harness-0.3.2.tgz#2d29b4440ef4fb8fb15d2afd40f3dcf537562dcf"
-  integrity sha512-W7Z4bRoHvEFVmSmdpyJM3Z+tV0VdS74bc/lMgTYAcikkI2mt74PAo/PR49xIHRfZA8HqNbW3l6O2O40wQhSV/Q==
+"@anon-rpc/browser-harness@0.3.3":
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/@anon-rpc/browser-harness/-/browser-harness-0.3.3.tgz#caa9be03b8403402006b9cd997a70fe1fd85333e"
+  integrity sha512-VPNu5WicTT9UxQiaGwIme/4rufWgOIirlCiPAy4jOyaR6GEyrJJNdch6c0f/Dl+AgtuZVP3kxuvGiPI9a7HXRQ==
   dependencies:
     "@kpstreams/webrtc-client" "^0.2.1"
     "@noble/hashes" "^1.5.0"
