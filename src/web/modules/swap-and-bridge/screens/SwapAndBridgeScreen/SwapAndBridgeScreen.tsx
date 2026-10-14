@@ -14,6 +14,7 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
+import CowSwapAnnouncement from '@common/modules/swap-and-bridge/components/CowSwapAnnouncement'
 import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
 import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
 import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
@@ -255,12 +256,13 @@ const SwapAndBridgeScreen = () => {
           />
         )}
         <View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
             <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
             <PanelTitle title={t('Swap & Bridge')} />
             <ProviderSettingsButton onPress={openProviderSettingsModal} />
           </View>
-          <View style={spacings.mbTy}>
+          <View>
+            <CowSwapAnnouncement openProviderSettingsModal={openProviderSettingsModal} />
             <FromToken
               fromTokenOptions={fromTokenOptions}
               fromTokenValue={fromTokenValue}
@@ -272,8 +274,12 @@ const SwapAndBridgeScreen = () => {
               simulationFailed={!!fromChainSimulationError}
               isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
             />
+            <ToToken
+              simulationFailed={!!toChainSimulationError}
+              disabled={areAllProvidersDisabled}
+              openProviderSettingsModal={openProviderSettingsModal}
+            />
           </View>
-          <ToToken simulationFailed={!!toChainSimulationError} disabled={areAllProvidersDisabled} />
         </View>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}

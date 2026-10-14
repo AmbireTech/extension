@@ -11,6 +11,7 @@ import {
 } from '@ambire-common/libs/portfolio/interfaces'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { calculateRewardsStats } from '@ambire-common/utils/rewards'
+import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
@@ -107,6 +108,13 @@ const PortfolioProvider: React.FC<any> = ({ children }) => {
   const updatePrices = useCallback(async () => {
     try {
       setIsLoadingPrices(true)
+      const featureFlags = await storage.get('flags', {})
+      if (featureFlags.tokenPrices === false) {
+        setWalletTokenPrice(null)
+        setEthTokenPrice(undefined)
+        return
+      }
+
       const cenaInfo = await fetch(
         'https://cena.ambire.com/api/v3/simple/price?ids=weth,ambire-wallet&vs_currencies=usd'
       ).then((r) => r.json())

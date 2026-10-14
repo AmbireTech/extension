@@ -37,6 +37,9 @@ export const ControllerStoreProvider: React.FC<{
   )
 
   const [stateSubscriptionManager] = useState(() => new SubscriptionManager())
+  // The helpers are merged shallowly into a fresh object on every update and are read
+  // without selectors, so every reference differs and the deep comparison is the only
+  // thing keeping an update that carried no change from re-rendering.
   const [helpersSubscriptionManager] = useState(() => new SubscriptionManager())
 
   const [controllerHelpersStore] = useState(() => new ControllerHelpersStore())
@@ -70,27 +73,10 @@ export const ControllerStoreProvider: React.FC<{
     [controllerStore]
   )
 
-  useEffect(() => {
-    const onCtrlUpdate = ({
-      ctrlName,
-      ctrlState,
-      forceEmit
-    }: {
-      ctrlName: string
-      ctrlState: any
-      forceEmit?: boolean
-    }) => {
-      try {
-        controllerStore.update(ctrlName as any, ctrlState, forceEmit)
-      } catch (e) {
-        console.error(`controllerStore.update failed for controller "${ctrlName}":`, e)
-      }
-    }
-
-    eventBus.addEventListener('ctrlUpdate', onCtrlUpdate)
-
-    return () => eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
-  }, [controllerStore])
+  // The store listens for controller states from its own constructor, so a state
+  // emitted while the controllers are still being built is not dropped. Only the
+  // teardown belongs in an effect.
+  useEffect(() => () => controllerStore.destroy(), [controllerStore])
 
   useEffect(() => {
     const onError = (newState: { errors: ErrorRef[]; controller: string }) => {

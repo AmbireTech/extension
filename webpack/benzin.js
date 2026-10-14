@@ -3,8 +3,9 @@ const webpack = require('webpack')
 const CopyPlugin = require('copy-webpack-plugin')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const { CJS_RULE, hardenTerser } = require('./shared')
+const { fetchRelayerNetworks, RELAYER_NETWORKS_GLOBAL } = require('./relayerNetworks')
 
-module.exports = function buildBenzin({ config, defaultExpoConfigPlugins }) {
+module.exports = async function buildBenzin({ config, defaultExpoConfigPlugins }) {
   // Not entering this branch causes the error:
   // handleAction: Controller ProvidersController not found
   // This is a temporary fix
@@ -23,6 +24,9 @@ module.exports = function buildBenzin({ config, defaultExpoConfigPlugins }) {
   config.plugins = [
     ...defaultExpoConfigPlugins,
     new NodePolyfillPlugin(),
+    new webpack.DefinePlugin({
+      [RELAYER_NETWORKS_GLOBAL]: JSON.stringify(await fetchRelayerNetworks())
+    }),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
       process: 'process'

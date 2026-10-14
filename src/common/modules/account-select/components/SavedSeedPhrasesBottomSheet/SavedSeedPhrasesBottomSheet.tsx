@@ -21,6 +21,11 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectStatuses = (state: AllControllersMappingType['StorageController']) => state.statuses
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
 const SavedSeedPhrasesBottomSheet = ({
   sheetRef,
   open,
@@ -34,8 +39,8 @@ const SavedSeedPhrasesBottomSheet = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: statuses } = useController('StorageController', 'statuses')
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: statuses } = useController('StorageController', selectStatuses)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const { seeds, keys } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
   const { subType, initParams } = useController('AccountPickerController').state

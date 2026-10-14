@@ -7,11 +7,12 @@ import {
 } from '@ambire-common/libs/banners/banners'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import usePendingSafeTransactions from '@common/modules/dashboard/hooks/usePendingSafeTransactions'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -97,10 +98,11 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
       style={[
         styles.container,
         minWidthSize(480) && { flex: 1 },
-        minWidthSize(480) && flexbox.justifySpaceBetween
+        minWidthSize(480) && flexbox.justifySpaceBetween,
+        isWeb && { columnGap: SPACING_SM }
       ]}
     >
-      {TABS.map(({ type, tabLabel, disabled, testID }, tabIndex) => {
+      {TABS.map(({ type, tabLabel, disabled, testID }) => {
         const isActive = openTab === type
 
         const withBadge =
@@ -188,7 +190,12 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                     spacings.phMi
                   ]}
                 >
-                  <Text fontSize={10} color={theme.primaryAccent} style={{ lineHeight: 12 }}>
+                  <Text
+                    fontSize={10}
+                    color={theme.primaryAccent}
+                    // Same nudge as the badge above: the font sits the digits above the center
+                    style={[{ lineHeight: 12 }, isMobile && { marginTop: 2 }]}
+                  >
                     {totalPendingCount}
                   </Text>
                 </View>

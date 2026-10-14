@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react'
-import { useLocation, useNavigate } from 'react-router-native'
 import { Subject } from 'rxjs'
 
 import { isDev } from '@common/config/env'
 import { useIsScreenFocusedRef } from '@common/contexts/screenFocusContext'
+import { useScreenLocation } from '@common/contexts/screenLocationContext'
 import useRouterHistory from '@common/hooks/useRouterHistory'
 
 import { TitleChangeEventStreamType, UseNavigationReturnType } from './types'
@@ -11,11 +11,18 @@ import { TitleChangeEventStreamType, UseNavigationReturnType } from './types'
 // Event stream that gets triggered when the title changes
 export const titleChangeEventStream: TitleChangeEventStreamType = new Subject<string>()
 
+/**
+ * Nothing here subscribes to the router's location, which is what makes navigating
+ * cheap: every interactive row on every mounted screen calls this hook, and both
+ * `useLocation` and `useNavigate` (which reads it) would re-render all of them on
+ * every navigation. The history navigates without a subscription, and the screen's
+ * own route comes from `useScreenLocation`.
+ */
 const useNavigation = (): UseNavigationReturnType => {
-  const nav = useNavigate()
-  const currentRoute = useLocation()
   const history = useRouterHistory()
+  const screenLocation = useScreenLocation()
   const isFocusedRef = useIsScreenFocusedRef()
+  const currentRoute = screenLocation?.location || history.location
 
   /**
    * Navigating is the business of the screen the user is on. Screens stay mounted
@@ -52,9 +59,9 @@ const useNavigation = (): UseNavigationReturnType => {
     (to, options) => {
       if (refuseFromBackgroundScreen(`navigate to ${to}`)) return undefined
 
-      // react-router navigate signature supports number (for going back/forward)
+      // The signature supports a number for going back/forward, like react-router's
       if (typeof to === 'number') {
-        return nav(to)
+        return history.go(to)
       }
 
       let destination = to as string
@@ -62,22 +69,20 @@ const useNavigation = (): UseNavigationReturnType => {
         destination = `/${destination}`
       }
 
-      return nav(destination, {
-        ...options,
-        state: {
-          ...(options?.state || {}),
-          prevRoute: currentRoute
-        }
-      })
+      const state = { ...(options?.state || {}), prevRoute: currentRoute }
+
+      return options?.replace
+        ? history.replace(destination, state)
+        : history.push(destination, state)
     },
-    [nav, currentRoute, refuseFromBackgroundScreen]
+    [history, currentRoute, refuseFromBackgroundScreen]
   )
 
   const goBack = useCallback(() => {
     if (refuseFromBackgroundScreen('goBack')) return
 
-    nav(-1)
-  }, [nav, refuseFromBackgroundScreen])
+    history.go(-1)
+  }, [history, refuseFromBackgroundScreen])
 
   const setOptions = useCallback<UseNavigationReturnType['setOptions']>(({ headerTitle }) => {
     if (headerTitle) {
@@ -95,9 +100,10 @@ const useNavigation = (): UseNavigationReturnType => {
     if (isDev) console.warn('navigation: setSearchParams is a stub on mobile')
   }, [])
 
-  // The real depth of the history, so back is offered only when there is an entry to
-  // pop to. Read on every render, which `useLocation` above guarantees per navigation.
-  const canGoBack = history.index > 0
+  // Whether there is a screen underneath to pop to, so back is offered only where it
+  // leads somewhere. A screen's own answer, which is why it does not change when
+  // something is pushed on top of it.
+  const canGoBack = screenLocation ? screenLocation.canGoBack : history.index > 0
 
   return {
     navigate,

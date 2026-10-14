@@ -2,14 +2,12 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import LightningIcon from '@common/assets/svg/LightningIcon'
-import SearchIcon from '@common/assets/svg/SearchIcon'
 import Button from '@common/components/Button'
 import { PanelBackButton } from '@common/components/Panel/Panel'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
-import OptOutControlOption from '@common/modules/settings/components/PrivacyOptOuts/OptOutControlOption'
+import PrivacyOptOutsList from '@common/modules/settings/components/PrivacyOptOuts/PrivacyOptOutsList'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper'
@@ -26,7 +24,7 @@ const PrivacyOptOutsConfiguration = () => {
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <View
         style={[
-          styles.contentContainer,
+          styles.privacyOptOutsContentContainer,
           flexbox.alignSelfCenter,
           spacings.pbSLg,
           { maxWidth: 568 }
@@ -36,32 +34,7 @@ const PrivacyOptOutsConfiguration = () => {
           <PanelBackButton onPress={() => navigate(ROUTES.getStarted)} style={spacings.mrTy} />
           <SettingsPageHeader title={t('Privacy Opt-outs configuration')} style={spacings.mb0} />
         </View>
-        <View style={spacings.mb2Xl}>
-          <OptOutControlOption
-            title={t('Tokens, NFTs & DeFi positions auto discovery')}
-            description={t(
-              'Fetch tokens and positions via Ambire API, using third party providers'
-            )}
-            icon={<SearchIcon width={24} height={24} />}
-            flag="tokenAndDefiAutoDiscovery"
-          />
-          <OptOutControlOption
-            title={t('ERC-4337 smart account features')}
-            description={t(
-              'Use bundlers and paymasters for smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
-            )}
-            icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
-            flag="erc4337"
-          />
-          <OptOutControlOption
-            title={t('ERC-7702 smart account features')}
-            description={t(
-              `Do not upgrade standard EOA accounts to smart accounts (disabling this doesn't auto revoke any delegations you have set up on your accounts)`
-            )}
-            icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
-            flag="eip7702"
-          />
-        </View>
+        <PrivacyOptOutsList />
         <View style={[flexbox.directionRow, flexbox.alignSelfEnd]}>
           <Button
             type="primary"

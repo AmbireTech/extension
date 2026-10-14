@@ -11,7 +11,7 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { isMobile, isWeb } from '@common/config/env'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -50,7 +50,8 @@ const Buttons: FC<Props> = ({
   isLocalStateOutOfSync
 }) => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
+  const buttonSize = isCompactLayout ? 'regular' : 'smaller'
   const callsCount = getCallsCount(networkUserRequests)
 
   const oneClickDisabledReason = useMemo(() => {
@@ -100,7 +101,7 @@ const Buttons: FC<Props> = ({
     <View
       style={[
         isWeb
-          ? isCompactSidePanelLayout
+          ? isNarrowWebLayout
             ? {
                 flexDirection: 'column-reverse',
                 width: '100%',
@@ -118,7 +119,7 @@ const Buttons: FC<Props> = ({
             id: 'batch-btn-tooltip',
             content: batchDisabledReason
           })}
-          style={isWeb && !isCompactSidePanelLayout && spacings.mrLg}
+          style={isWeb && !isNarrowWebLayout && spacings.mrLg}
         >
           <Button
             hasBottomSpacing={false}
@@ -129,7 +130,7 @@ const Buttons: FC<Props> = ({
                   })
                 : t('Start a batch')
             }
-            size={isWeb ? 'smaller' : 'regular'}
+            size={buttonSize}
             disabled={startBatchingDisabled}
             type={isSidePanel ? 'tertiary' : 'secondary'}
             tooltipDataSet={createGlobalTooltipDataSet({
@@ -139,7 +140,7 @@ const Buttons: FC<Props> = ({
             childrenPosition="left"
             style={
               isWeb
-                ? isCompactSidePanelLayout
+                ? isNarrowWebLayout
                   ? { width: '100%', minWidth: 0 }
                   : { minWidth: 160, ...spacings.phMd }
                 : {}
@@ -159,10 +160,7 @@ const Buttons: FC<Props> = ({
           id: 'proceed-btn-tooltip',
           content: oneClickDisabledReason
         })}
-        style={[
-          isMobile && spacings.mbSm,
-          isCompactSidePanelLayout && { width: '100%', minWidth: 0 }
-        ]}
+        style={[isMobile && spacings.mbSm, isNarrowWebLayout && { width: '100%', minWidth: 0 }]}
       >
         {shouldHoldToProceed ? (
           <HoldToProceedButton
@@ -175,7 +173,8 @@ const Buttons: FC<Props> = ({
               handleSubmitForm(true)
             }}
             testID="proceed-btn"
-            style={isCompactSidePanelLayout ? { width: '100%', minWidth: 0 } : undefined}
+            size={buttonSize}
+            style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
           />
         ) : (
           <ButtonWithLoader
@@ -187,9 +186,9 @@ const Buttons: FC<Props> = ({
 
               handleSubmitForm(true)
             }}
-            size={isWeb ? 'smaller' : 'regular'}
+            size={buttonSize}
             testID="proceed-btn"
-            style={isCompactSidePanelLayout ? { width: '100%', minWidth: 0 } : undefined}
+            style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
           />
         )}
       </View>

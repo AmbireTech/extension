@@ -1,16 +1,13 @@
-import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { Dapp } from '@ambire-common/interfaces/dapp'
 import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { submittedAccountOpToAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
-import {
-  flattenHumanizerVisualizations,
-  hasErc7730Humanization
-} from '@ambire-common/libs/humanizer/utils'
+import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import type { HumanizerVisualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
 
 import { DappInteraction, SubmittedAccountOpLike } from './types'
 
-import type { Dapp } from '@ambire-common/interfaces/dapp'
-import type { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
-import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 const WALLET_STAKING_ACTIVITY_MATCHES = [
   {
     action: 'Wrap',
@@ -54,38 +51,7 @@ const getWalletStakingInteraction = (humanizedCalls: IrCall[]): DappInteraction 
 }
 
 export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): IrCall[] => {
-  const clearSigningHum = submittedAccountOp.meta?.clearSigningHumanization
-  const clearSign = hasErc7730Humanization(clearSigningHum) ? clearSigningHum : null
-  if (clearSign) {
-    return clearSign.map((call, index) => ({
-      ...call,
-      id: call.id || String(index)
-    }))
-  }
-
-  const accountOp: AccountOp = {
-    id: submittedAccountOp.id,
-    accountAddr: submittedAccountOp.accountAddr,
-    chainId: submittedAccountOp.chainId,
-    signingKeyAddr: submittedAccountOp.signingKeyAddr ?? null,
-    signingKeyType: submittedAccountOp.signingKeyType ?? null,
-    nonce: submittedAccountOp.nonce ?? null,
-    eoaNonce: submittedAccountOp.eoaNonce,
-    calls: submittedAccountOp.calls,
-    feeCall: submittedAccountOp.feeCall,
-    activatorCall: submittedAccountOp.activatorCall,
-    gasLimit: submittedAccountOp.gasLimit ?? null,
-    signature: submittedAccountOp.signature ?? null,
-    gasFeePayment: submittedAccountOp.gasFeePayment,
-    txnId: submittedAccountOp.txnId,
-    status: submittedAccountOp.status,
-    asUserOperation: submittedAccountOp.asUserOperation,
-    signers: submittedAccountOp.signers,
-    signed: submittedAccountOp.signed,
-    safeTx: submittedAccountOp.safeTx,
-    meta: submittedAccountOp.meta,
-    flags: submittedAccountOp.flags
-  }
+  const accountOp = submittedAccountOpToAccountOp(submittedAccountOp)
 
   return humanizeAccountOp(accountOp).map((call, index) => ({
     ...call,
@@ -93,8 +59,23 @@ export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
   }))
 }
 
-export const getDappInteractions = (
-  submittedAccountOp: SubmittedAccountOpLike
+// The verbs a call's intent uses for a plain outgoing transfer. Both are matched because an
+// ERC-7730 descriptor may word it either way, and an interpolated intent leads with the template's
+// own verb rather than with the descriptor's plain `intent`.
+const SEND_INTENT_WORDS = ['send', 'transfer']
+
+const isSendVisualization = (visualization?: HumanizerVisualization): boolean => {
+  if (!visualization) return false
+
+  const intentText =
+    visualization.type === 'erc7730' ? visualization.intent[0]?.content : visualization.content
+
+  return !!intentText && SEND_INTENT_WORDS.includes(intentText.trim().toLowerCase())
+}
+
+export const getDappInteractionsFromHumanizedCalls = (
+  submittedAccountOp: SubmittedAccountOpLike,
+  humanizedCalls: IrCall[]
 ): DappInteraction[] => {
   if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
     const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
@@ -111,19 +92,13 @@ export const getDappInteractions = (
 
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
-  const humanizedCalls = getHumanizedCalls(submittedAccountOp)
   const walletStakingInteraction = getWalletStakingInteraction(humanizedCalls)
   if (walletStakingInteraction) return [walletStakingInteraction]
 
   const sendAddresses = Array.from(
     new Set(
       humanizedCalls.flatMap((call) => {
-        const firstVisualization = call.fullVisualization?.[0]
-        const isSend =
-          firstVisualization?.type === 'erc7730'
-            ? firstVisualization.title === 'Send'
-            : firstVisualization?.content === 'Send'
-        if (!isSend) return []
+        if (!isSendVisualization(call.fullVisualization?.[0])) return []
 
         return flattenHumanizerVisualizations(call.fullVisualization).flatMap((item) =>
           item.type === 'address' && item.address ? [item.address] : []

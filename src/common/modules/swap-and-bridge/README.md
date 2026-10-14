@@ -51,6 +51,15 @@ Operated by Uniswap Labs.
 - API reference: https://developers.uniswap.org/docs/api-reference
 - Terms: https://uniswap.org/terms-of-service
 
+### CoW Swap
+
+Operated by CoW Swap.
+
+- Base URL: `https://partners.cow.fi`
+- Documentation: https://docs.cow.fi/category/apis
+- API reference: https://docs.cow.fi/cow-protocol/reference/apis/orderbook
+- Terms: https://cow.fi/legal/cowswap-terms
+
 ### Across (status lookups only)
 
 Uniswap settles some cross-chain routes through Across Protocol (operated by Risk Labs). Ambire calls a single read-only Across endpoint to report the progress of such a transfer back to the user. Across is **not** a quote provider and returns no routes.

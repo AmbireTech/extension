@@ -90,6 +90,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
 
   test('Disabling auto-login works', async ({ pages }) => {
     const page = pages.basePage.page
+
     // selectors
     const textBox = page.getByRole('textbox', { name: 'Message (Hello world)' })
     const signButton = page.locator(selectors.sigtool.signButton)
@@ -107,6 +108,10 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
         .first()
         .click({ force: true })
       await signMessageWindow.getByTestId(selectors.signMessageButton).click()
+
+      // The signing authentication (password/biometrics re-confirmation) modal is mobile-only -
+      // on web the keystore signs directly once signMessageButton is clicked, with nothing
+      // further to confirm here.
 
       // assert message visible on sigtool
       await expect(page.locator(selectors.sigtool.messageSignatureTitle)).toContainText(
@@ -144,6 +149,11 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
         signMessageWindow.locator(selectors.sigtool.autoLoginSwitch).first()
       ).toBeEnabled()
       await signMessageWindow.getByTestId(selectors.signMessageButton).click()
+
+      // The signing authentication (password/biometrics re-confirmation) modal is mobile-only -
+      // on web the keystore signs directly once signMessageButton is clicked, with nothing
+      // further to confirm here.
+
       await expect(messageSignatureTitle).toContainText('Message signature')
     })
 
@@ -199,6 +209,10 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       await expect(signMessageWindow.locator(selectors.sigtool.signRequestForEVMText)).toBeVisible()
 
       await signMessageWindow.locator(selectors.sigtool.signInSiweButton).click()
+
+      // The signing authentication (password/biometrics re-confirmation) modal is mobile-only -
+      // on web the keystore signs directly once signInSiweButton is clicked, with nothing
+      // further to confirm here.
     })
 
     await test.step('disconnect account from Ambire extension', async () => {

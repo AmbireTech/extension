@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LayoutChangeEvent, Pressable, View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
@@ -15,21 +15,23 @@ import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableW
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import useAccountsList from '@common/hooks/useAccountsList'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean | null => {
   if (!search) return null
@@ -52,17 +54,19 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 }
 
 const ACCOUNT_OPTIONS = { markSelected: true }
+/** Used until the footer has been measured */
+const FALLBACK_FOOTER_HEIGHT = 88
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
   const flatlistRef = useRef(null)
-  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
-    { flatlistRef }
-  )
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const {
     ref: syncSheetRef,
@@ -73,11 +77,22 @@ const AccountSelectScreen = () => {
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
   // Reserves exactly as much scroll space as the floating footer occupies, so the last
-  // account in the list is never covered by it (the footer grows taller on narrow side panels).
+  // account in the list is never covered by it. The narrow view footer doesn't float.
   const [footerHeight, setFooterHeight] = useState(0)
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
   }, [])
+  const listBottomInset = footerHeight ? footerHeight + SPACING_SM : FALLBACK_FOOTER_HEIGHT
+  const {
+    accounts,
+    control,
+    keyExtractor,
+    getItemLayout,
+    onListContentSizeChange,
+    initialScrollIndex,
+    shouldDisplayAccounts,
+    isReadyToRender
+  } = useAccountsList({ flatlistRef })
 
   const shouldTriggerAddAccountSheetFromSearch = useMemo(
     () => extractTriggerAddAccountSheetParam(routeParams),
@@ -128,11 +143,11 @@ const AccountSelectScreen = () => {
     <Button
       testID="button-add-account"
       text={t('Add account')}
-      size={isCompactSidePanelLayout ? 'regular' : 'smaller'}
+      size={isNarrowWebLayout ? 'regular' : 'smaller'}
       hasBottomSpacing={false}
       onPress={openBottomSheet as any}
       childrenPosition="left"
-      style={isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1}
+      style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}
     >
       <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
     </Button>
@@ -142,13 +157,13 @@ const AccountSelectScreen = () => {
       testID="button-sync-with-mobile"
       type="secondary"
       text={t('Sync with mobile')}
-      size={isCompactSidePanelLayout ? 'regular' : 'smaller'}
+      size={isNarrowWebLayout ? 'regular' : 'smaller'}
       hasBottomSpacing={false}
       onPress={openSyncBottomSheet as any}
       childrenPosition="left"
       // On the wide footer, only as wide as its own label, so it never wraps on two
       // rows. The primary action next to it takes whatever is left.
-      style={isCompactSidePanelLayout ? { width: '100%' } : spacings.mrTy}
+      style={isNarrowWebLayout ? { width: '100%' } : spacings.mrTy}
     >
       <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
     </Button>
@@ -163,39 +178,42 @@ const AccountSelectScreen = () => {
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.FLAT_LIST}
-          style={[
-            styles.container,
-            {
-              opacity: shouldDisplayAccounts ? 1 : 0
-            }
-          ]}
-          contentContainerStyle={{
-            paddingBottom: footerHeight ? footerHeight + SPACING_SM : 88
-          }}
-          wrapperRef={flatlistRef}
-          data={accounts}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          keyExtractor={keyExtractor}
-          ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
-        />
+        <View style={flexbox.flex1}>
+          {isReadyToRender && (
+            <ScrollableWrapper
+              type={WRAPPER_TYPES.FLAT_LIST}
+              style={[styles.container, { opacity: shouldDisplayAccounts ? 1 : 0 }]}
+              contentContainerStyle={{ paddingBottom: listBottomInset }}
+              wrapperRef={flatlistRef}
+              data={accounts}
+              renderItem={renderItem}
+              getItemLayout={getItemLayout}
+              keyExtractor={keyExtractor}
+              onContentSizeChange={onListContentSizeChange}
+              initialScrollIndex={initialScrollIndex}
+              ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+            />
+          )}
+        </View>
         <FooterGlassView
           isSimpleBlur={false}
-          fullWidth={isCompactSidePanelLayout}
+          // In a narrow view the footer sits under the list like on mobile, instead of floating over it
+          absolute={!isNarrowWebLayout}
+          fullWidth={isNarrowWebLayout}
+          size={isNarrowWebLayout ? 'sm' : 'md'}
+          innerContainerStyle={isNarrowWebLayout ? spacings.ph0 : undefined}
           onLayout={handleFooterLayout}
         >
           <View
             style={
-              isCompactSidePanelLayout
-                ? { width: '100%', gap: SPACING_TY }
+              isNarrowWebLayout
+                ? { width: '100%', gap: SPACING_SM }
                 : [flexbox.directionRow, flexbox.alignCenter]
             }
           >
             {/* Mobile stacks "Add account" above "Sync with mobile"; the wide footer
             shows them side by side with the sync action leading instead. */}
-            {isCompactSidePanelLayout ? (
+            {isNarrowWebLayout ? (
               <>
                 {addAccountButton}
                 {syncWithMobileButton}

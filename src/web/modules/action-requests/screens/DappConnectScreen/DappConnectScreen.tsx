@@ -2,6 +2,7 @@ import React from 'react'
 import { View } from 'react-native'
 
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -27,11 +28,17 @@ const DappConnectScreen = () => {
     handleDenyButtonPress,
     handleAuthorizeButtonPress,
     shouldHoldToProceed,
-    resolveButtonText
+    resolveButtonText,
+    isTrustedByUser,
+    canBeTrustedByUser,
+    isScamCheckerEnabled,
+    handleEnableScamChecker,
+    toggleTrust
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
   const { minHeightSize } = useWindowSize()
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   return (
     <TabLayoutContainer
@@ -40,6 +47,9 @@ const DappConnectScreen = () => {
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
+          withRejectOptions
+          rejectOptionsTitle={t('Cancel connection')}
+          rejectOptionText={t('Cancel this connection')}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
           resolveNode={
             shouldHoldToProceed ? (
@@ -68,11 +78,18 @@ const DappConnectScreen = () => {
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
       )}
-      style={{ marginTop: minHeightSize(650) ? 0 : SPACING * responsiveSizeMultiplier }}
+      style={{
+        marginTop: isNarrowWebLayout || minHeightSize(650) ? 0 : SPACING * responsiveSizeMultiplier
+      }}
     >
       {!!dappToConnect && (
         <TabLayoutWrapperMainContent
-          contentContainerStyle={{ ...spacings.pb4Xl, ...spacings.mtMi }}
+          contentContainerStyle={
+            // In a narrow view the header and the footer already space the content like on mobile
+            isNarrowWebLayout
+              ? [spacings.mt0, spacings.pbSm]
+              : { ...spacings.pb4Xl, ...spacings.mtMi }
+          }
         >
           <View style={[styles.container]}>
             <View
@@ -88,11 +105,18 @@ const DappConnectScreen = () => {
                 id={dappToConnect.id}
                 icon={dappToConnect.icon!}
                 securityCheck={dappToConnect.blacklisted}
+                isTrustedByUser={isTrustedByUser}
+                isScamCheckerEnabled={isScamCheckerEnabled}
                 isInAppCatalog={!dappToConnect.isCustom}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
               <DAppConnectBody
                 securityCheck={dappToConnect.blacklisted}
+                isTrustedByUser={isTrustedByUser}
+                canBeTrustedByUser={canBeTrustedByUser}
+                onToggleTrust={toggleTrust}
+                onEnableScamChecker={handleEnableScamChecker}
+                isScamCheckerEnabled={isScamCheckerEnabled}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>

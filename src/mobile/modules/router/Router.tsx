@@ -3,14 +3,20 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from 'rea
 import { AppState, View } from 'react-native'
 import { KeyboardController } from 'react-native-keyboard-controller'
 
+import { useTranslation } from '@common/config/localization'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
+import useBiometrics from '@common/hooks/useBiometrics'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useFonts from '@common/hooks/useFonts'
+import useToast from '@common/hooks/useToast'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
+import { ROUTES } from '@common/modules/router/constants/common'
 import eventBus from '@common/services/event/eventBus'
 import flexbox from '@common/styles/utils/flexbox'
+import { REVEAL_UNLOCK_SCREEN_EVENT } from '@mobile/constants/splashScreen'
 import useMobileInviteGate from '@mobile/hooks/useMobileInviteGate'
 import useNativeThemeSync from '@mobile/hooks/useNativeThemeSync'
 import useLedgerConnectionLifecycle from '@mobile/modules/hardware-wallet/hooks/useLedgerConnectionLifecycle'
@@ -19,12 +25,19 @@ import RequestsBottomSheet from '@mobile/modules/router/components/RequestsBotto
 import NavigationStack from '@mobile/modules/router/stack'
 import { markSplashHidden } from '@mobile/services/bootProfiler'
 
+const UNLOCK_SCREEN_PATH = `/${ROUTES.keyStoreUnlock}`
+
 const Router = () => {
+  const { t } = useTranslation()
+  const { addToast, removeToast } = useToast()
+
+  const { canRenderRoute, areAllControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
+    ControllersStateLoadedContext
+  )
   const { authStatus } = useAuth()
   const keystoreState = useController('KeystoreController').state
-  const { requestModalRef, closeRequestModal, onBottomSheetClosed, onBottomSheetOpened } =
+  const { requestModalRef, onBottomSheetClosed, onBottomSheetOpened } =
     useController('RequestsController')
-  const { canRenderRoute } = useContext(ControllersStateLoadedContext)
   // The mobile app is invite-only for fresh installs. Lives here rather than in a route guard,
   // because this is the one component that is mounted no matter where the app has navigated to.
   const { isGateEnforced } = useMobileInviteGate()
@@ -33,6 +46,8 @@ const Router = () => {
   // are ready — see AppInit). Gate the splash hide on fonts too so the first
   // painted frame already has the custom fonts applied.
   const { fontsLoaded } = useFonts()
+  const { isLoading: isBiometricsLoading } = useBiometrics()
+  const { canUnlockWithBiometrics } = useBiometricsAvailability()
 
   // Disconnect the Ledger BLE transport when the wallet locks or the app is
   // backgrounded; it transparently reconnects on the next device operation.
@@ -48,16 +63,51 @@ const Router = () => {
 
   const splashHideRequested = useRef(false)
   const [isSplashHidden, setIsSplashHidden] = useState(false)
+  const [isBiometricsSplashHoldReleased, setIsBiometricsSplashHoldReleased] = useState(false)
 
   const isReady = authStatus !== AUTH_STATUS.LOADING && canRenderRoute && fontsLoaded
+
+  // A controller that never reports leaves the screens that wait on it on a skeleton
+  // forever, so tell the user instead of animating at them indefinitely. The store
+  // raises the alarm only for the controllers whose wait is not expected, which is the
+  // same set this flag covers.
+  const hasStalledLoading = isStatesLoadingTakingTooLong && !areAllControllerStatesLoaded
 
   // The status bar and the native appearance must not be touched while the
   // splash screen is still on screen, hence the gate on the fade being over
   // instead of on `isReady`.
   useNativeThemeSync(isSplashHidden)
 
+  // A biometric unlock on open runs behind the splash, so it goes straight to the screen
+  // the user unlocked into instead of flashing the unlock screen in between. Released by
+  // that screen settling, or by the unlock screen once the user has to see it.
+  const isHoldingSplashForBiometrics =
+    !isBiometricsSplashHoldReleased &&
+    !isGateEnforced &&
+    !!keystoreState.isReadyToStoreKeys &&
+    // Until the device has answered, it is unknown whether the unlock screen will prompt
+    (isBiometricsLoading || canUnlockWithBiometrics)
+
+  const releaseBiometricsSplashHold = useCallback(() => setIsBiometricsSplashHoldReleased(true), [])
+
+  const handleScreenSettled = useCallback(
+    (pathname: string) => {
+      if (pathname !== UNLOCK_SCREEN_PATH) releaseBiometricsSplashHold()
+    },
+    [releaseBiometricsSplashHold]
+  )
+
   useEffect(() => {
-    if (isReady && !splashHideRequested.current) {
+    eventBus.addEventListener(REVEAL_UNLOCK_SCREEN_EVENT, releaseBiometricsSplashHold)
+
+    return () =>
+      eventBus.removeEventListener(REVEAL_UNLOCK_SCREEN_EVENT, releaseBiometricsSplashHold)
+  }, [releaseBiometricsSplashHold])
+
+  const canHideSplash = (isReady && !isHoldingSplashForBiometrics) || hasStalledLoading
+
+  useEffect(() => {
+    if (canHideSplash && !splashHideRequested.current) {
       splashHideRequested.current = true
       SplashScreen.setOptions({ duration: 200, fade: true })
       SplashScreen.hideAsync()
@@ -66,13 +116,18 @@ const Router = () => {
           markSplashHidden()
         })
         .catch(() => {})
-      // Now that the splash is hidden, let the webview worker stream the
-      // heavy controller states (portfolio, dapps, activity, ...) that were
-      // held back during the critical boot phase. Done after the splash hide
-      // call so any cost of draining the queue does not delay the first paint.
-      dispatch({ type: 'SET_BOOT_PHASE', params: { phase: 'full' } })
     }
-  }, [isReady, dispatch])
+  }, [canHideSplash])
+
+  // Let the webview worker stream the heavy controller states (portfolio, dapps,
+  // activity, ...) that were held back during the critical boot phase. Dispatched once
+  // the app is ready, even while the splash is held over the biometric prompt, so the
+  // screen unlocked into has them. Runs after the splash hide effect, so when the splash
+  // is hidden the draining never delays that first paint.
+  useEffect(() => {
+    if (isReady || hasStalledLoading)
+      dispatch({ type: 'SET_BOOT_PHASE', params: { phase: 'full' } })
+  }, [isReady, hasStalledLoading, dispatch])
 
   // Dismiss the keyboard the moment the app leaves the foreground so iOS never
   // snapshots a visible keyboard, which would otherwise flash on the next launch.
@@ -86,6 +141,21 @@ const Router = () => {
     return () => sub.remove()
   }, [])
 
+  // Warn about the wait without taking over the screen, so whatever the app already
+  // managed to render stays up. Clears itself the moment the states arrive.
+  useEffect(() => {
+    if (!hasStalledLoading) return
+
+    const toastId = addToast(
+      t(
+        "The initial loading is taking longer than expected. This might be due to a connection issue on your side - or a glitch on ours. If it doesn't resolve soon, please close and reopen the app."
+      ),
+      { type: 'warning', sticky: true }
+    )
+
+    return () => removeToast(toastId)
+  }, [hasStalledLoading, addToast, removeToast, t])
+
   // Keep the native splash screen visible until controllers, auth and fonts are ready
   if (!isReady) {
     return null
@@ -97,11 +167,10 @@ const Router = () => {
 
   return (
     <View style={flexbox.flex1}>
-      <NavigationStack />
+      <NavigationStack onScreenSettled={handleScreenSettled} />
 
       <RequestsBottomSheet
         sheetRef={requestModalRef as any}
-        closeBottomSheet={closeRequestModal as any}
         onClosed={handleBottomSheetClosed}
         onOpened={onBottomSheetOpened as any}
       />

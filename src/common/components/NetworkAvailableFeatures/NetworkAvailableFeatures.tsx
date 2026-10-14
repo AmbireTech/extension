@@ -35,6 +35,8 @@ import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   chainId?: bigint
   features: NetworkFeature[] | undefined
@@ -47,6 +49,9 @@ type Props = {
   withScroll?: boolean
   titleStyle?: TextStyle
 }
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const NetworkAvailableFeatures = ({
   chainId,
@@ -63,7 +68,7 @@ const NetworkAvailableFeatures = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { pathname } = useRoute()
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
 
   const {
     state: { networks },

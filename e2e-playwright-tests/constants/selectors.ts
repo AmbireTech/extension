@@ -2,6 +2,11 @@ import { buildSelector } from '@helpers/buildSelector'
 
 // TODO: this should be refactored; we should have single file with selector IDs
 const selectors = {
+  invite: {
+    codeInput: 'invite-code-input',
+    pasteBtn: 'paste-invite-code-btn',
+    verifyBtn: 'verify-invite-code-btn'
+  },
   getStarted: {
     createNewAccountButton: 'create-new-account-btn',
     importAccountButton: 'button-import-account',
@@ -35,7 +40,8 @@ const selectors = {
     changeHDPathButton: 'change-hd-path-btn',
     hdPathConfirmButton: 'hd-path-confirm-btn',
     hdPathLegerLegacy: 'hd-path-option-ledger-legacy',
-    smartAccountPicker: 'add-account-' // need add index 5
+    smartAccountPicker: 'add-account-', // need add index 5
+    viewOnlyInputAddressField: 'view-only-address-field-0'
   },
   dashboard: {
     dashboardGasTankBalance: 'dashboard-gas-tank-balance',
@@ -102,8 +108,11 @@ const selectors = {
     unhideTokenButton: 'unhide-button',
     youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page,
     manageAccountTreeDotsButton: 'account', // on accounts page, has multiple sam IDs,
+    accountOptionsButton: (addr: string) => `account-options-${addr}`, // kebab menu on an account row, unique per address
     removeAccountButton: '//div[contains(text(),"Remove account")]',
     confirmRemoveAccountButton: 'confirm-remove-account-button',
+    confirmExtensionPassField: 'passphrase-field',
+    confirmExtensionButton: 'button-submit',
     customTokens: {
       addCustomTokenButton: 'add-custom-token-button',
       addTokenModalTitle: 'add-token-modal-title-text',
@@ -145,7 +154,9 @@ const selectors = {
     dualChoiceModalAcceptButton: 'dual-choice-modal-primary-button',
     dualChoiceModalTitle: 'dual-choice-modal-title-text',
     previousFeeAmountText: 'previous-fee-amount',
-    updatedFeeAmountText: 'updated-fee-amount'
+    updatedFeeAmountText: 'updated-fee-amount',
+    signPassAuthField: 'signing-auth-password-field',
+    signConfirmButton: 'signing-auth-confirm-button'
   },
   // TODO: update selectors wiyh testID
   ambireRewards: {
@@ -243,6 +254,7 @@ const selectors = {
   personalizeAccount: 'personalize-account',
   pinExtensionCloseBtn: 'pin-extension-close-btn',
   accountSelectBtn: 'account-select-btn',
+  accountRow: (addr: string) => `account-${addr}`, // unique per address, unlike `account`
   selectSeedPhraseLength: 'select-seed-phrase-length',
   option24WordsSeedPhrase: 'option-i-have-24-word-phrase',
   selectChangeHdPath: 'select-change-hd-path',
@@ -299,6 +311,7 @@ const selectors = {
   confirmFollowUpTxn: 'confirm-follow-up-txns-checkbox',
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',
+  signAccountOpScrollView: 'sign-account-op-scroll-view',
   maxAvailableAmount: 'max-available-amount',
   // Swap & Bridge selectors
   selectRouteButton: 'select-route',
@@ -355,6 +368,14 @@ const selectors = {
   dappConnectButton: 'dapp-connect-button',
   dappSecurityCheckPassed: 'dapp-security-check-passed',
   signMessageButton: 'button-sign',
+  switchAccountButton: 'switch-account-button',
+  switchAccountDenyButton: 'switch-account-deny-button',
+  rejectRequestOptionCurrent: 'reject-request-option-current',
+  transactionCallDyn: (index: number) => `recipient-address-${index}`, // one card per call on the sign transaction screen
+  dappScopedAccountsToggle: 'dapp-scoped-accounts-toggle',
+  dappScopedAccountsSelectorButton: 'dapp-scoped-accounts-selector-button',
+  dappScopedAccountsContinueButton: 'dapp-scoped-accounts-continue-button',
+  dappAccountRow: (addr: string) => `dapp-account-row-${addr}`,
   // Notifications
   networkSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
@@ -364,6 +385,7 @@ const selectors = {
   keystoreMigration: {
     recoveryPhraseRow: (id: string) => `recovery-phrase-row-${id}`,
     manageRecoveryPhrase: (id: string) => `manage-recovery-phrase-${id}`,
+    manageRecoveryPhraseHeader: 'manage-recovery-phrase-header',
     recoveryPhraseValue: 'recovery-phrase-value',
     recoveryPhrasePassphraseValue: 'recovery-phrase-passphrase-value',
     revealRecoveryPhraseButton: 'reveal-recovery-phrase-button',

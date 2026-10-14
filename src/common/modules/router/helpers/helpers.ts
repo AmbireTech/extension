@@ -99,7 +99,7 @@ const getInitialRoute = ({
   } else if (!isRequestWindow) {
     // TODO: Always redirects to Dashboard, which for initial extension load is okay, but
     // for other scenarios, ideally, it should be the last route before the keystore got locked.
-    const hasSwapAndBridgePersistentSession = swapAndBridgeState.sessionIds.some(
+    const hasSwapAndBridgePersistentSession = (swapAndBridgeState.sessionIds || []).some(
       (id) => id === 'popup' || id === 'request-window'
     )
 

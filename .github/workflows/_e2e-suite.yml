@@ -30,6 +30,7 @@ env:
   RELAYER_URL: ${{ vars.RELAYER_URL }}
   VELCRO_URL: ${{ vars.VELCRO_URL }}
   LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+  COWSWAP_API_KEY: ${{ vars.COWSWAP_API_KEY }}
   BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
   UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
   SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}

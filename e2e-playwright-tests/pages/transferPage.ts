@@ -179,6 +179,10 @@ export class TransferPage extends BasePage {
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
 
+      // The signing authentication (password/biometrics re-confirmation) modal is mobile-only -
+      // on web the keystore signs directly once signButton is clicked, with nothing further to
+      // confirm here.
+
       // Accept dual choice modal if fee difference is below 0.1$
       const modalTitle = this.page.getByTestId(selectors.transaction.dualChoiceModalTitle)
 
