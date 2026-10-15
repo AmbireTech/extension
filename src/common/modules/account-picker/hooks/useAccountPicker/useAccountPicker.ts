@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import AccountPickerController from '@ambire-common/controllers/accountPicker/accountPicker'
+import { MAX_BULK_PRIVATE_KEYS } from '@ambire-common/libs/keyIterator/keyIterator'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
@@ -53,8 +54,9 @@ const useAccountPicker = () => {
   const [isReady, setIsReady] = useState(false)
   const [onImportPressed, setOnImportPressed] = useState(false)
 
+  // All private keys fit on a single page, since their number is limited
   const ACCOUNT_PICKER_PAGE_SIZE = useMemo(() => {
-    return subType === 'private-key' ? 1 : 5
+    return subType === 'private-key' ? MAX_BULK_PRIVATE_KEYS : 5
   }, [subType])
 
   const setPage = React.useCallback(

@@ -4,6 +4,7 @@ import selectors from 'constants/selectors'
 import { test } from 'fixtures/pageObjects' // your extended test with auth
 
 import { expect } from '@playwright/test'
+import { Wallet } from 'ethers'
 
 import { emulatorOptions } from '../../constants/trezor'
 import {
@@ -38,6 +39,11 @@ test.describe('auth', { tag: '@auth' }, () => {
 
   test('import basic account from private key', async ({ pages }) => {
     await pages.auth.importExistingAccount()
+  })
+
+  test('import several basic accounts from private keys at once', async ({ pages }) => {
+    const privateKeys = Array.from({ length: 3 }, () => Wallet.createRandom().privateKey)
+    await pages.auth.importMultiplePrivateKeys(privateKeys)
   })
 
   // TODO: duplicate; entering same seed phrase 2 times

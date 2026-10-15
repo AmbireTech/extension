@@ -21,8 +21,9 @@ import {
 const PrivateKeyImportScreen = () => {
   const {
     control,
+    fields,
     handleFormSubmit,
-    errors,
+    getPrivateKeyError,
     isValid,
     handleValidation,
     agreedToBackupWarning,
@@ -55,30 +56,37 @@ const PrivateKeyImportScreen = () => {
       >
         <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
           <View>
-            <Controller
-              control={control}
-              rules={{ validate: (value) => handleValidation(value), required: true }}
-              name="privateKey"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  {...NO_AUTOFILL_PROPS}
-                  testID="enter-private-key-field"
-                  onBlur={onBlur}
-                  autoFocus
-                  placeholder={t('Input private key')}
-                  onChangeText={onChange}
-                  value={value}
-                  isValid={!handleValidation(value) && !!value.length}
-                  validLabel={t('✅ Valid private key')}
-                  secureTextEntry
-                  containerStyle={spacings.mbLg}
-                  backgroundColor={theme.secondaryBackground}
-                  error={value.length ? errors?.privateKey?.message : ''}
-                  autoCorrect={false}
-                  onSubmitEditing={handleFormSubmit}
-                />
-              )}
-            />
+            {fields.map((field, index) => (
+              <Controller
+                key={field.id}
+                control={control}
+                rules={{ validate: (value) => handleValidation(value), required: true }}
+                name={`privateKeys.${index}.value`}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    {...NO_AUTOFILL_PROPS}
+                    testID={
+                      index === 0 ? 'enter-private-key-field' : `enter-private-key-field-${index}`
+                    }
+                    onBlur={onBlur}
+                    autoFocus={index === 0}
+                    placeholder={t('Input private key')}
+                    onChangeText={onChange}
+                    value={value}
+                    isValid={
+                      !!value.length && !handleValidation(value) && !getPrivateKeyError(index)
+                    }
+                    validLabel={t('✅ Valid private key')}
+                    secureTextEntry
+                    containerStyle={spacings.mbLg}
+                    backgroundColor={theme.secondaryBackground}
+                    error={value.length ? getPrivateKeyError(index) : ''}
+                    autoCorrect={false}
+                    onSubmitEditing={handleFormSubmit}
+                  />
+                )}
+              />
+            ))}
             <Checkbox
               value={agreedToBackupWarning}
               onValueChange={() => setAgreedToBackupWarning((prev) => !prev)}
