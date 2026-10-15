@@ -1,13 +1,14 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Animated, LayoutChangeEvent, StyleSheet, View, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import { Defs, FeBlend, FeColorMatrix, Filter, Image as SvgImage, Svg } from 'react-native-svg'
 
-import { isWeb } from '@common/config/env'
 import useControllerState from '@common/hooks/useControllerState'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { getAvatarColors } from '@common/utils/avatars'
 
+import type { OverviewCollapse } from '../DashboardPagesCarousel/DashboardPagesCarousel'
 import backgroundImage from './background.png'
+import OverviewBackgroundLayer, { CollapsingLayerGeometry } from './OverviewBackgroundLayer'
 
 // The aspect ratio of `background.png`, which `slice` covers the card with
 const IMAGE_ASPECT_RATIO = 456 / 226
@@ -52,44 +53,22 @@ interface CardSize {
 
 /**
  * Covers the open card with the image as `slice` does, but in a layer of the image's own
- * size, so it can then be moved as if the card got shorter by `collapse`: smaller while the
+ * size, so it can then be moved as if the card got shorter by the collapse: smaller while the
  * card's height decides the cover size, and centred on what is left of the card. That is how
- * web's background moves as its overview collapses, by resizing a card mobile never resizes.
+ * web's background used to move as its overview collapsed, by resizing the card - which
+ * neither platform does anymore.
  */
-const getCollapsingLayer = (
-  { width, height }: CardSize,
-  collapse: Animated.AnimatedInterpolation<number>
-): { width: number; height: number; style: Animated.WithAnimatedObject<ViewStyle> } => {
+const getCollapsingLayerGeometry = ({ width, height }: CardSize): CollapsingLayerGeometry => {
   const layerWidth = Math.max(width, height * IMAGE_ASPECT_RATIO)
   const layerHeight = layerWidth / IMAGE_ASPECT_RATIO
-  // How far the card collapses before its width, not its height, decides the cover size
-  const heightBoundCollapse = height - width / IMAGE_ASPECT_RATIO
 
   return {
     width: layerWidth,
     height: layerHeight,
-    style: {
-      // Web only, so moving it only recomposites the filtered image rather than repainting it
-      ...(isWeb ? ({ willChange: 'transform' } as ViewStyle) : {}),
-      position: 'absolute',
-      width: layerWidth,
-      height: layerHeight,
-      left: (width - layerWidth) / 2,
-      top: (height - layerHeight) / 2,
-      transform: [
-        { translateY: collapse.interpolate({ inputRange: [0, 1], outputRange: [0, -0.5] }) },
-        {
-          scale:
-            heightBoundCollapse > 0
-              ? collapse.interpolate({
-                  inputRange: [0, heightBoundCollapse],
-                  outputRange: [1, Math.min((width + EDGE_BLEED * 2) / layerWidth, 1)],
-                  extrapolate: 'clamp'
-                })
-              : 1
-        }
-      ]
-    }
+    left: (width - layerWidth) / 2,
+    top: (height - layerHeight) / 2,
+    heightBoundCollapse: height - width / IMAGE_ASPECT_RATIO,
+    minScale: Math.min((width + EDGE_BLEED * 2) / layerWidth, 1)
   }
 }
 
@@ -98,8 +77,8 @@ export function OverviewBackground({
   collapse
 }: {
   address: string
-  /** Mobile only, how far the pages have slid over the card. Moves the image by transforms only. */
-  collapse?: Animated.AnimatedInterpolation<number>
+  /** How far the pages have slid over the card. Moves the image by transforms only. */
+  collapse?: OverviewCollapse
 }) {
   const { state } = useControllerState({ id: 'WalletStateController' })
   const [cardSize, setCardSize] = useState<CardSize | null>(null)
@@ -112,14 +91,14 @@ export function OverviewBackground({
     )
   }, [])
 
-  const collapsingLayer = useMemo(
-    () => (collapse && cardSize ? getCollapsingLayer(cardSize, collapse) : null),
+  const geometry = useMemo(
+    () => (collapse && cardSize ? getCollapsingLayerGeometry(cardSize) : null),
     [cardSize, collapse]
   )
   // Sized in points rather than in percent: on iOS the image keeps the size a percentage
   // first resolved to when only the view around it is resized, which cut off its right side
-  const layerWidth = collapsingLayer?.width ?? '100%'
-  const layerHeight = collapsingLayer?.height ?? '100%'
+  const layerWidth = geometry?.width ?? '100%'
+  const layerHeight = geometry?.height ?? '100%'
 
   const colors = getAvatarColors(state.avatarType, address)
 
@@ -151,7 +130,7 @@ export function OverviewBackground({
       ]}
       onLayout={onLayout}
     >
-      <Animated.View style={collapsingLayer?.style ?? StyleSheet.absoluteFillObject}>
+      <OverviewBackgroundLayer geometry={geometry} collapse={collapse}>
         <Svg width={layerWidth} height={layerHeight}>
           <Defs>
             <Filter id="recolor" x="0%" y="0%" width="100%" height="100%">
@@ -170,7 +149,7 @@ export function OverviewBackground({
             filter="url(#recolor)"
           />
         </Svg>
-      </Animated.View>
+      </OverviewBackgroundLayer>
     </View>
   )
 }

@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
-import { Animated, LayoutChangeEvent, View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -11,6 +11,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
+import type { OverviewCollapse } from '@common/modules/dashboard/components/DashboardPagesCarousel/DashboardPagesCarousel'
 import DashboardShell from '@common/modules/dashboard/components/DashboardShell'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
@@ -33,7 +34,7 @@ const DashboardScreen = () => {
   // Until then the pager doesn't know where to start, and would be drawn over the overview
   const isOverviewMeasured = !!overviewHeight && !!collapsibleOverviewHeight
   // How far the pager has slid over the overview, which moves its background in step
-  const [overviewCollapse, setOverviewCollapse] = useState<Animated.AnimatedInterpolation<number>>()
+  const [overviewCollapse, setOverviewCollapse] = useState<OverviewCollapse>()
 
   const {
     state: { account, portfolio }

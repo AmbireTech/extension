@@ -133,6 +133,10 @@ const DashboardPageScrollContainer: FC<Props> = ({
     [carousel, onFooterLayout]
   )
 
+  // Mobile holds the lists in place as the pager slides over the overview, so they are padded
+  // by it. Web moves them with the pager instead, see `useWebCarouselStyles`
+  const overviewPadding = isWeb ? 0 : overviewHeight
+
   const contentContainerStyle = useMemo(() => {
     return [
       topSpacing,
@@ -142,11 +146,11 @@ const DashboardPageScrollContainer: FC<Props> = ({
       // the overview, if its end is hidden without collapsing it. A page whose end shows
       // never scrolls the overview. Padding would not do: flexGrow stretches the content anyway.
       !!minContentHeight && {
-        minHeight: minContentHeight + (canCollapseOverview ? overviewHeight : 0)
+        minHeight: minContentHeight + (canCollapseOverview ? overviewPadding : 0)
       },
       // Must come last, as it overrides the padding of the non-carousel layout. Only the
       // collapsing parts of the header and the overview are padded for, the rest is above the list
-      !!carousel && { paddingTop: bannersHeight + overviewHeight }
+      !!carousel && { paddingTop: bannersHeight + overviewPadding }
     ]
   }, [
     bannersHeight,
@@ -154,7 +158,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
     carousel,
     contentPaddingBottom,
     minContentHeight,
-    overviewHeight,
+    overviewPadding,
     topSpacing
   ])
 

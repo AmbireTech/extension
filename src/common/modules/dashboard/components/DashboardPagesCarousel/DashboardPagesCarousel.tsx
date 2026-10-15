@@ -14,6 +14,7 @@ import {
 } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Reanimated, {
+  DerivedValue,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -46,6 +47,7 @@ import DashboardCarouselContext, {
   DashboardPageScroll
 } from './context'
 import getStyles, { WEB_MOVING_LAYER } from './styles'
+import useWebCarouselStyles from './useWebCarouselStyles'
 
 // The order must match the order the pages are rendered in, because the page
 // index is what maps a swipe to a tab.
@@ -163,6 +165,12 @@ const WhileFocused = ({
   return null
 }
 
+/**
+ * How far the overview is collapsed, from 0 to its height: the native animated value the pager
+ * is moved by on mobile, and the Reanimated value it is moved by on web.
+ */
+export type OverviewCollapse = Animated.AnimatedInterpolation<number> | DerivedValue<number>
+
 export interface DashboardPagesCarouselProps {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
@@ -185,7 +193,7 @@ export interface DashboardPagesCarouselProps {
    * Hands out how far the overview is collapsed, from 0 to `overviewHeight`, as the animated
    * value the pager is moved by, so the overview can move its background in step.
    */
-  onOverviewCollapseChange?: (collapse: Animated.AnimatedInterpolation<number>) => void
+  onOverviewCollapseChange?: (collapse: OverviewCollapse) => void
   children: ReactNode
 }
 
@@ -278,16 +286,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     )
   }, [bannersHeight, overviewHeight, overviewSettle, returnDistanceNode, scrollY])
 
-  useEffect(() => {
-    onOverviewCollapseChange?.(
-      overviewCollapse.interpolate({
-        inputRange: [0, Math.max(overviewHeight, 1)],
-        outputRange: [0, overviewHeight],
-        extrapolate: 'clamp'
-      })
-    )
-  }, [onOverviewCollapseChange, overviewCollapse, overviewHeight])
-
   // The open overview pushes the pages down, by a transform so nothing is laid out again
   const overviewPush = useMemo(
     () =>
@@ -302,11 +300,12 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // Undoes the push for the lists, so their content moves with the finger alone instead of
   // with the finger and the push. They start where the collapsed overview ends and are padded
   // by the open one, while the part above the pages is clipped away.
+  const pagerLiftOffsetStyle = useMemo(
+    () => ({ ...WEB_MOVING_LAYER, marginTop: -overviewHeight, marginBottom: overviewHeight }),
+    [overviewHeight]
+  )
   const pagerLiftStyle = useMemo(
     () => ({
-      ...WEB_MOVING_LAYER,
-      marginTop: -overviewHeight,
-      marginBottom: overviewHeight,
       transform: [
         {
           translateY: overviewCollapse.interpolate({
@@ -366,6 +365,27 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     }),
     [floatingBarFollow, overviewCollapse, overviewHeight, safeBottom]
   )
+
+  // Web draws all of the above by Reanimated instead: see `useWebCarouselStyles`
+  const webStyles = useWebCarouselStyles({
+    scrollOffset,
+    bannersHeight,
+    overviewHeight,
+    floatingBarHideDistance: FLOATING_BAR_HIDE_DISTANCE + safeBottom * 2,
+    duration: OVERVIEW_EXPAND_TIMING.duration
+  })
+  const webCollapse = webStyles?.collapse
+
+  useEffect(() => {
+    onOverviewCollapseChange?.(
+      webCollapse ||
+        overviewCollapse.interpolate({
+          inputRange: [0, Math.max(overviewHeight, 1)],
+          outputRange: [0, overviewHeight],
+          extrapolate: 'clamp'
+        })
+    )
+  }, [onOverviewCollapseChange, overviewCollapse, overviewHeight, webCollapse])
 
   const [renderedTabs, setRenderedTabs] = useState<Partial<Record<TabType, boolean>>>(() => ({
     [openTab]: true
@@ -534,6 +554,11 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     canPull.set(carried <= 0)
     TABS.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
 
+    if (webStyles) {
+      webStyles.expandOverview()
+      return
+    }
+
     overviewSettle.setValue(wasCollapsed)
     Animated.timing(overviewSettle, {
       toValue: 0,
@@ -549,7 +574,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     returnDistance,
     scrollDirection,
     scrollOffset,
-    scrollY
+    scrollY,
+    webStyles
   ])
 
   const renderTabs = useCallback((tabs: (TabType | undefined)[]) => {
@@ -823,6 +849,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const onHeaderRelease = () => {
     endHeaderDrag()
 
+    // Web's overview is never left partly collapsed, see `useWebCarouselStyles`
+    if (webStyles) return
+
     const settleOffset = getOverviewSettleOffset()
 
     if (settleOffset !== null) {
@@ -928,6 +957,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     [children, openTab, pageSize, renderedTabs]
   )
 
+  // Animated draws the moving views on mobile, Reanimated on web: see `useWebCarouselStyles`
+  const MovingView = (webStyles ? Reanimated.View : Animated.View) as typeof Animated.View
+
   const pager = (
     <Reanimated.View style={[flexbox.flex1, pagerStyle]}>
       <ScrollView
@@ -952,7 +984,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     <View style={styles.container} pointerEvents="box-none">
       <WhileFocused openTabIndex={openTabIndex} renderTabs={renderTabs} initAllTabs={initAllTabs} />
       {/* Opaque, as it slides over the part of the overview that collapses */}
-      <Animated.View style={[styles.slider, { transform: [{ translateY: overviewPush }] }]}>
+      <MovingView
+        style={[styles.slider, webStyles?.push ?? { transform: [{ translateY: overviewPush }] }]}
+      >
         <View style={flexbox.flex1} onLayout={onLayout}>
           <DashboardCarouselContext.Provider value={carousel}>
             {(isPulling || !!refreshing) && (
@@ -963,24 +997,35 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
                 <Spinner style={styles.pullSpinnerIcon} />
               </Reanimated.View>
             )}
-            <Animated.View style={[flexbox.flex1, pagerLiftStyle]}>
+            {/* Web moves the lists with the pager rather than holding them in place */}
+            <MovingView
+              style={[
+                flexbox.flex1,
+                !webStyles && pagerLiftOffsetStyle,
+                !webStyles && pagerLiftStyle
+              ]}
+            >
               {/* Web has no pull to refresh, and the gesture would only stand in the way of the wheel */}
               {isWeb ? pager : <GestureDetector gesture={pullGesture}>{pager}</GestureDetector>}
-            </Animated.View>
+            </MovingView>
           </DashboardCarouselContext.Provider>
         </View>
         {/* The banners and the tabs row are account wide, so they are laid over the
       pager instead of moving with it. Rendered after it, because zIndex alone is
       not enough to keep them on top on Android. The pages used to render them
       inside a list that adds this padding on top of the one the tabs row has */}
-        <Animated.View
+        <MovingView
           onStartShouldSetResponderCapture={onHeaderTouchStart}
           onMoveShouldSetResponderCapture={onHeaderTouchMove}
           onResponderMove={onHeaderDrag}
           onResponderRelease={onHeaderRelease}
           onResponderTerminate={endHeaderDrag}
           {...webHeaderProps}
-          style={[styles.header, spacings.phSm, { transform: [{ translateY: headerTranslateY }] }]}
+          style={[
+            styles.header,
+            spacings.phSm,
+            webStyles?.header ?? { transform: [{ translateY: headerTranslateY }] }
+          ]}
         >
           <View onLayout={onBannersLayout}>
             <DashboardBanners />
@@ -988,22 +1033,28 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
           <View onLayout={onTabsLayout}>
             <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
           </View>
-        </Animated.View>
-      </Animated.View>
+        </MovingView>
+      </MovingView>
       {!!overviewHeight && (
-        <Animated.View
+        <MovingView
           pointerEvents="none"
-          style={[styles.collapseCover, { transform: [{ translateY: overviewPush }] }]}
+          style={[
+            styles.collapseCover,
+            webStyles?.push ?? { transform: [{ translateY: overviewPush }] }
+          ]}
         >
           <OverviewCollapseCover />
-        </Animated.View>
+        </MovingView>
       )}
       {/* Outside the pager, so a swipe doesn't carry it along, and only what the open
       tab put in it changes. Hidden together with the overview */}
       {!!openTabFloatingBar && (
-        <Animated.View pointerEvents="box-none" style={[styles.floatingBar, floatingBarHideStyle]}>
+        <MovingView
+          pointerEvents="box-none"
+          style={[styles.floatingBar, webStyles?.floatingBar ?? floatingBarHideStyle]}
+        >
           <FloatingBottomBar {...openTabFloatingBar} />
-        </Animated.View>
+        </MovingView>
       )}
     </View>
   )

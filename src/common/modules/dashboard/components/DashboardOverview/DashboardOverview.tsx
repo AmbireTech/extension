@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
-import { Animated, Pressable, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -22,6 +22,7 @@ import GasTankButton from './GasTankButton'
 import { OverviewBackground } from './OverviewBackground'
 import OverviewCollapsible from './OverviewCollapsible'
 import type { OverviewCollapsibleProps } from './OverviewCollapsible/OverviewCollapsible'
+import type { OverviewCollapse } from '../DashboardPagesCarousel/DashboardPagesCarousel'
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
@@ -32,7 +33,7 @@ interface Props {
   /** The overview is never resized: the pages slide over its collapsing part instead. */
   onCollapsibleHeightChange?: OverviewCollapsibleProps['onHeightChange']
   /** How far the pages have slid over the collapsing part. Moves the background. */
-  overviewCollapse?: Animated.AnimatedInterpolation<number>
+  overviewCollapse?: OverviewCollapse
 }
 
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices

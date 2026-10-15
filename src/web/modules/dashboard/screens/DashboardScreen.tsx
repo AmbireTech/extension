@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useState } from 'react'
-import { Animated, LayoutChangeEvent, View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import GasTankModal from '@common/components/GasTankModal'
@@ -9,6 +9,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
+import type { OverviewCollapse } from '@common/modules/dashboard/components/DashboardPagesCarousel/DashboardPagesCarousel'
 import DashboardShell from '@common/modules/dashboard/components/DashboardShell'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import getStyles from '@common/modules/dashboard/screens/styles'
@@ -31,7 +32,7 @@ const DashboardScreen = () => {
   // Until then the pager doesn't know where to start, and would be drawn over the overview
   const isOverviewMeasured = !!overviewHeight && !!collapsibleOverviewHeight
   // How far the pager has slid over the overview, which moves its background in step
-  const [overviewCollapse, setOverviewCollapse] = useState<Animated.AnimatedInterpolation<number>>()
+  const [overviewCollapse, setOverviewCollapse] = useState<OverviewCollapse>()
 
   const {
     state: { account, portfolio }
