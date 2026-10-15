@@ -164,7 +164,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
   }, [openReplacementRequest, pendingAccountOp])
 
   const handleCancel = useCallback(() => {
-    if (!pendingAccountOp || !canBuildReplacementAccountOp(pendingAccountOp)) return
+    if (!pendingAccountOp) return
 
     openReplacementRequest('cancel', getSafeCancellationAccountOp(pendingAccountOp))
   }, [openReplacementRequest, pendingAccountOp])

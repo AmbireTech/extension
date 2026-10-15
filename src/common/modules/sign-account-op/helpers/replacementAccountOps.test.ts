@@ -7,6 +7,7 @@ import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import {
   canBuildReplacementAccountOp,
   getResendAccountOp,
+  getSafeCancellationAccountOp,
   getSpeedUpAccountOp,
   isSentThroughBundler
 } from './replacementAccountOps'
@@ -96,5 +97,19 @@ describe('replacementAccountOps', () => {
     expect(speedUp.signature).toBe(sentByEoa.signature)
     expect(speedUp.signed).toBe(sentByEoa.signed)
     expect(speedUp.nonce).toBe(268n)
+  })
+
+  test('cancels with an empty Safe transaction at the same nonce, as a regular request', () => {
+    const pending = buildPendingAccountOp(BROADCAST_OPTIONS.byOtherEOA)
+    const cancellation = getSafeCancellationAccountOp(pending)
+
+    expect(cancellation.nonce).toBe(268n)
+    expect(cancellation.calls).toHaveLength(1)
+    expect(cancellation.calls[0]).toMatchObject({ to: ZeroAddress, value: 0n, data: '0x' })
+    expect(cancellation.signature).toBeNull()
+    expect(cancellation.meta).toBeUndefined()
+    // picked from scratch, so the payer and its nonce are never forced on another sender
+    expect(cancellation.gasFeePayment).toBeNull()
+    expect(cancellation.eoaNonce).toBeUndefined()
   })
 })

@@ -92,31 +92,26 @@ export const getSpeedUpAccountOp = (
 })
 
 /**
- * A Safe transaction that does nothing, reusing the pending transaction's Safe nonce and the
- * nonce of the account that sent it, while paying a higher fee. Once confirmed instead of the
- * pending one, the pending one can never go through. It needs fresh owner signatures, as its
- * calls differ from the pending transaction's. The `speedUp` flag keeps the raised fee and the
- * fee payer of the pending transaction, both needed for the replacement to be accepted.
+ * A Safe transaction that does nothing, with the pending transaction's Safe nonce. Once it's
+ * confirmed instead of the pending one, the pending one can never go through. It's a regular
+ * request: it needs fresh owner signatures, as its calls differ, and the fee and the payer are
+ * picked like for any other transaction. When the same EOA that sent the pending transaction
+ * pays, the EOA's nonce is the pending one's (it isn't confirmed yet), so the cancellation
+ * replaces it while waiting, as long as its fee is high enough.
  */
 export const getSafeCancellationAccountOp = (
-  submittedAccountOp: ReplaceableSubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
 ): AccountOp => ({
   id: uuidv4(),
   accountAddr: submittedAccountOp.accountAddr,
   chainId: submittedAccountOp.chainId,
-  signingKeyAddr: submittedAccountOp.signingKeyAddr,
-  signingKeyType: submittedAccountOp.signingKeyType,
-  nonce: submittedAccountOp.nonce,
-  eoaNonce: submittedAccountOp.eoaNonce,
+  signingKeyAddr: submittedAccountOp.signingKeyAddr ?? null,
+  signingKeyType: submittedAccountOp.signingKeyType ?? null,
+  nonce: submittedAccountOp.nonce ?? null,
   calls: [{ id: uuidv4(), to: ZeroAddress, value: 0n, data: '0x' }],
-  gasLimit: submittedAccountOp.gasLimit,
+  gasLimit: null,
   signature: null,
-  gasFeePayment: getIncreasedGasFeePayment(submittedAccountOp.gasFeePayment),
-  meta: {
-    speedUp: {
-      enabled: true
-    }
-  }
+  gasFeePayment: null
 })
 
 /**
