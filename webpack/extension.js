@@ -107,6 +107,14 @@ function processManifest(content, mode) {
         strict_min_version: '116.0'
       }
     }
+    manifest.sidebar_action = {
+      default_panel: 'side-panel.html',
+      default_title: manifest.action.default_title,
+      default_icon: manifest.icons,
+      // Firefox defaults this to true, which would pop the sidebar open on every install/update
+      // even though panel mode is off by default
+      open_at_install: false
+    }
   }
 
   if (isGecko || isSafari) {
@@ -366,7 +374,7 @@ module.exports = async function buildExtension(
       inject: 'body', // to auto inject the main.js bundle in the body
       chunks: ['runtime', 'main'] // include only chunks from the main entry
     }),
-    ...(isWebkit && !isSafari
+    ...((isWebkit && !isSafari) || isGecko
       ? [
           new HtmlWebpackPlugin({
             template: './src/web/public/side-panel.html',
