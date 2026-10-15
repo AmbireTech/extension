@@ -49,6 +49,8 @@ const selectAccountOp = (state: AllControllersMappingType['SignAccountOpControll
   state?.accountOp
 const selectIsSafeAccount = (state: AllControllersMappingType['SignAccountOpController']) =>
   !!state?.account.safeCreation
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
 const selectCurrentUserRequestId = (state: AllControllersMappingType['RequestsController']) =>
   state.currentUserRequest?.id
 const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['ActivityController']) =>
@@ -72,6 +74,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { state: accountOp } = useController('SignAccountOpController', selectAccountOp)
   const { state: isSafeAccount } = useController('SignAccountOpController', selectIsSafeAccount)
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const { state: broadcastedButNotConfirmed } = useController(
     'ActivityController',
     selectBroadcastedButNotConfirmed
@@ -87,6 +90,10 @@ const PendingSafeTransaction = ({ style }: Props) => {
 
     const currentNonce = getAccountOpNonce(accountOp)
     if (currentNonce === null) return null
+    // A pending transaction below the Safe's onchain nonce can never be confirmed, as its nonce
+    // was already used, so it doesn't hold back the transaction being signed
+    const onchainNonce =
+      accountStates[accountOp.accountAddr]?.[accountOp.chainId.toString()]?.nonce ?? 0n
 
     return (
       broadcastedButNotConfirmed?.[accountOp.accountAddr] || []
@@ -94,6 +101,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
       if (
         submittedAccountOp.chainId !== accountOp.chainId ||
         submittedAccountOp.nonce === null ||
+        submittedAccountOp.nonce < onchainNonce ||
         submittedAccountOp.nonce >= currentNonce
       )
         return earliest
@@ -102,7 +110,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
         ? submittedAccountOp
         : earliest
     }, null)
-  }, [accountOp, broadcastedButNotConfirmed, isSafeAccount])
+  }, [accountOp, accountStates, broadcastedButNotConfirmed, isSafeAccount])
 
   const handleSheetOpen = useCallback(() => setShouldRenderCalls(true), [])
   const handleSheetClosed = useCallback(() => setShouldRenderCalls(false), [])
@@ -148,7 +156,9 @@ const PendingSafeTransaction = ({ style }: Props) => {
     if (isSentThroughBundler(pendingAccountOp)) {
       speedUpAccountOp = getResendAccountOp(pendingAccountOp)
     } else if (canBuildReplacementAccountOp(pendingAccountOp)) {
-      speedUpAccountOp = getSpeedUpAccountOp(pendingAccountOp)
+      // Once sent, the txnId is the network's transaction hash, not the Safe transaction hash
+      // the owners signed, so it can't be used to tell who signed. `signed` already says that
+      speedUpAccountOp = { ...getSpeedUpAccountOp(pendingAccountOp), txnId: undefined }
     }
     if (!speedUpAccountOp) return
 

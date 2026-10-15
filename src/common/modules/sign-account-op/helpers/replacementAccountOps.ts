@@ -83,7 +83,8 @@ export const getSpeedUpAccountOp = (submittedAccountOp: ReplaceableSubmittedAcco
     ...submittedAccountOp.meta,
     speedUp: {
       enabled: true
-    }
+    },
+    isResend: true
   }
 })
 
@@ -139,10 +140,12 @@ export const getResendAccountOp = (submittedAccountOp: SubmittedAccountOpLike): 
   gasLimit: null,
   signature: submittedAccountOp.signature ?? null,
   gasFeePayment: null,
-  txnId: submittedAccountOp.txnId,
+  // Left out on purpose: once sent, the stored txnId is no longer the Safe transaction hash
+  // the owners signed, so it can't be used to tell who signed. `signed` already says that
   signers: submittedAccountOp.signers,
   signed: submittedAccountOp.signed,
-  safeTx: submittedAccountOp.safeTx
+  safeTx: submittedAccountOp.safeTx,
+  meta: { isResend: true }
 })
 
 /**

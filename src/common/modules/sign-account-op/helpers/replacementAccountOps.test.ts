@@ -4,7 +4,12 @@ import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccou
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 
-import { getResendAccountOp, isSentThroughBundler } from './replacementAccountOps'
+import {
+  canBuildReplacementAccountOp,
+  getResendAccountOp,
+  getSpeedUpAccountOp,
+  isSentThroughBundler
+} from './replacementAccountOps'
 
 const SAFE = '0x714fD8A33a8eE16F7Fc39B3A1C4D9f3b7a7dDe5c'
 const OWNER = '0x77777777789A8BBEE6C64381e5E89E501fb0e4c8'
@@ -55,7 +60,8 @@ describe('replacementAccountOps', () => {
     expect(resend.nonce).toBe(268n)
     expect(resend.signature).toBe(pending.signature)
     expect(resend.signed).toBe(pending.signed)
-    expect(resend.txnId).toBe(pending.txnId)
+    // the stored txnId isn't the hash the owners signed, so it must not be used to recover them
+    expect(resend.txnId).toBeUndefined()
   })
 
   test('resends as a regular request, with the fee and the way of sending picked again', () => {
@@ -69,5 +75,15 @@ describe('replacementAccountOps', () => {
     expect(resend.eoaNonce).toBeUndefined()
     expect(resend.asUserOperation).toBeUndefined()
     expect(resend.status).toBeUndefined()
+  })
+
+  test('marks every speed up as a resend, so it stays out of the Safe queue', () => {
+    expect(getResendAccountOp(buildPendingAccountOp(BROADCAST_OPTIONS.byBundler)).meta).toEqual({
+      isResend: true
+    })
+
+    const sentByEoa = buildPendingAccountOp(BROADCAST_OPTIONS.byOtherEOA)
+    if (!canBuildReplacementAccountOp(sentByEoa)) throw new Error('Expected a replaceable op')
+    expect(getSpeedUpAccountOp(sentByEoa).meta?.isResend).toBe(true)
   })
 })

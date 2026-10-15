@@ -172,6 +172,8 @@ const SignAccountOpScreen = () => {
 
   const shouldRejectOnchain = useMemo(() => {
     if (!signAccountOpState?.account.safeCreation) return false
+    // re-sending an already sent transaction is simply dropped, the sent one stays as it is
+    if (signAccountOpState.accountOp.meta?.isResend) return false
     const { signature, signed } = signAccountOpState.accountOp
     const signedCount = signed?.length || 0
 
