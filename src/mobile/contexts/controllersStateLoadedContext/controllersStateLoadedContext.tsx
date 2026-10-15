@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
-import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
+import { captureMessage } from '@common/config/analytics/CrashAnalytics'
 import { APP_VERSION, isDev } from '@common/config/env'
 import {
   ControllersStateLoadedContext,

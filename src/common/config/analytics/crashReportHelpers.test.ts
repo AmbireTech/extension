@@ -1,4 +1,6 @@
-import { getReportableAction } from './getReportableAction'
+import { getReportableAction } from './crashReportHelpers'
+
+jest.mock('@common/config/env', () => ({ isTesting: false }))
 
 describe('getReportableAction', () => {
   it('strips args from method actions, keeping only ctrlName and method', () => {

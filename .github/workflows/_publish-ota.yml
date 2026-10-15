@@ -26,6 +26,8 @@ jobs:
     name: Publish OTA bundle (${{ inputs.platform }})
     environment: extension-production
     runs-on: ${{ inputs.runner }}
+    permissions:
+      contents: write # Needed to upload the source map to this repo's release
     concurrency:
       group: ${{ github.workflow }}-${{ inputs.platform }}-${{ github.ref }}
 
@@ -114,6 +116,9 @@ jobs:
           UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
           SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
           WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
+          SENTRY_DSN_MOBILE: ${{ vars.SENTRY_DSN_MOBILE }}
+          # Lets the script upload the OTA bundle's source map
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_MOBILE }}
           # Stallion CI auth - there is no interactive `stallion login` in CI.
           STALLION_CI_TOKEN: ${{ secrets.STALLION_CI_TOKEN }}
           # Private signing key (base64 secret) - signs the OTA so signed app builds accept it.
@@ -129,4 +134,43 @@ jobs:
           fi
           echo "Publishing OTA with note: $NOTE"
           yarn publish:ota:${{ inputs.platform }} "$NOTE"
+        shell: bash
+
+      # Kept first and unconditionally. The release upload below is best effort, and both its skip
+      # paths and a real failure would otherwise lose the map for good.
+      - name: Keep the OTA source map as an artifact 🗺️
+        uses: actions/upload-artifact@v6
+        with:
+          name: ota-sourcemap-${{ inputs.platform }}-${{ github.sha }}
+          path: build/ota-${{ inputs.platform }}-sourcemap
+
+      # Sentry has the map already. This copy outlives the 90 days CI artifacts last, the same as
+      # the extension's source maps.
+      #
+      # The *-source-maps.zip name matters. publish-public-release.yml deletes that glob and counts
+      # the .zips left, so any other name would publish the map and trip that count.
+      #
+      # The target tag is the binary this OTA patches, the one the guardrail resolved. HEAD is
+      # usually ahead of it, hence the commit SHA in the name, as one tag can collect several maps.
+      #
+      # Nothing here fails the job, as the OTA is already live by this point.
+      - name: Attach the OTA source map to this repo's release 🗺️
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="$(git describe --tags --abbrev=0 --match 'v*' HEAD 2>/dev/null || true)"
+          if [ -z "$TAG" ]; then
+            echo "::warning::No v* tag reachable from HEAD (guardrail bypassed?), skipping the OTA source map upload."
+            exit 0
+          fi
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::warning::No release for $TAG in $GITHUB_REPOSITORY, skipping the OTA source map upload. Create the release and re-run to keep it."
+            exit 0
+          fi
+          NAME="ambire-mobile-$(git rev-parse --short HEAD)-${{ inputs.platform }}-ota-source-maps.zip"
+          (cd "build/ota-${{ inputs.platform }}-sourcemap" && zip -qr "$RUNNER_TEMP/$NAME" .)
+          gh release upload "$TAG" "$RUNNER_TEMP/$NAME" --repo "$GITHUB_REPOSITORY" --clobber
+          echo "Source map attached to release $TAG as $NAME"
         shell: bash

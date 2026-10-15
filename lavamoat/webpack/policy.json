@@ -922,8 +922,29 @@
         "@walletconnect/utils>@scure/base": true
       }
     },
-    "@sentry/browser>@sentry-internal/browser-utils": {
+    "@sentry/browser": {
       "globals": {
+        "WebAssembly": true,
+        "XMLHttpRequest.prototype": true,
+        "__SENTRY_DEBUG__": true,
+        "__SENTRY_RELEASE__": true,
+        "console.error": true,
+        "document": true,
+        "queueMicrotask": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "@sentry/browser>@sentry/browser-utils": true,
+        "@sentry/react>@sentry/conventions": true,
+        "@sentry/react>@sentry/core": true,
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@sentry/browser>@sentry/browser-utils": {
+      "globals": {
+        "Element": true,
+        "HTMLElement": true,
+        "Node": true,
         "URL": true,
         "XMLHttpRequest.prototype": true,
         "__SENTRY_DEBUG__": true,
@@ -933,24 +954,8 @@
         "@sentry/react>@sentry/core": true
       }
     },
-    "@sentry/browser": {
-      "globals": {
-        "WebAssembly": true,
-        "XMLHttpRequest.prototype": true,
-        "__SENTRY_DEBUG__": true,
-        "__SENTRY_RELEASE__": true,
-        "console.error": true,
-        "setTimeout": true
-      },
-      "packages": {
-        "@sentry/browser>@sentry-internal/browser-utils": true,
-        "@sentry/react>@sentry/core": true,
-        "node-polyfill-webpack-plugin>console-browserify": true
-      }
-    },
     "@sentry/react>@sentry/core": {
       "globals": {
-        "CustomEvent": true,
         "DOMError": true,
         "DOMException": true,
         "EdgeRuntime": true,
@@ -971,11 +976,14 @@
         "clearTimeout": true,
         "console.error": true,
         "console.warn": true,
-        "document": true,
+        "module": true,
+        "process": true,
         "setTimeout": true
       },
       "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true
+        "@sentry/react>@sentry/conventions": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "process": true
       }
     },
     "@ledgerhq/device-management-kit>@sentry/minimal>@sentry/hub": {
