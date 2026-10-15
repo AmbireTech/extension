@@ -160,6 +160,24 @@ describe('classifyCrashReport', () => {
     })
   })
 
+  describe('React Native network failures', () => {
+    it('drops an RPC that React Native could not reach', () => {
+      const error = providerError('Network request failed')
+
+      expect(classifyCrashReport(error).shouldSend).toBe(false)
+    })
+
+    it("drops the AbortError React Native's fetch rejects with on abort", () => {
+      const error = buildError('Aborted', { name: 'AbortError' })
+
+      expect(classifyCrashReport(error).shouldSend).toBe(false)
+    })
+
+    it('does not drop a plain error whose message is only "Aborted"', () => {
+      expect(classifyCrashReport(buildError('Aborted')).shouldSend).toBe(true)
+    })
+  })
+
   // The crash-analytics e2e suite asserts these are delivered, so no rule may match them
   describe('e2e markers', () => {
     it.each([
