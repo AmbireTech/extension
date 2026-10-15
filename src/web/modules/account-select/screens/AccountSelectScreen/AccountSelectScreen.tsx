@@ -14,6 +14,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
+import { isPrivacyPoolsEnabled } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -31,11 +32,13 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import AccountsTabs, { AccountsTab } from '@web/modules/account-select/components/AccountsTabs'
 import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/PrivacyPoolsAccountRow'
 
 import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { PrivacyPoolsAccountDisplay } from '@common/hooks/usePrivacyPoolsAccounts'
 
 const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean | null => {
   if (!search) return null
@@ -58,6 +61,7 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 }
 
 const ACCOUNT_OPTIONS = { markSelected: true }
+const privacyPoolsAccountKeyExtractor = (account: PrivacyPoolsAccountDisplay) => account.seedId
 /** Used until the footer has been measured */
 const FALLBACK_FOOTER_HEIGHT = 88
 
@@ -90,6 +94,8 @@ const AccountSelectScreen = () => {
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
   const [pendingToBeSetSelectedPrivacyPoolsAccount, setPendingToBeSetSelectedPrivacyPoolsAccount] =
     useState('')
+  // The search stays when switching tabs, so it filters the newly opened tab too
+  const [activeTab, setActiveTab] = useState<AccountsTab>('public')
   // Reserves exactly as much scroll space as the floating footer occupies, so the last
   // account in the list is never covered by it. The narrow view footer doesn't float.
   const [footerHeight, setFooterHeight] = useState(0)
@@ -168,20 +174,24 @@ const AccountSelectScreen = () => {
     }
   }, [navigate, pendingToBeSetSelectedPrivacyPoolsAccount, privacyPoolsAccountId])
 
-  // Below the regular accounts: they have no address to order or scroll to by, and the list's fixed
-  // row layout stays exact for the rows above
-  const privacyPoolsAccountRows = useMemo(
-    () =>
-      filteredPrivacyPoolsAccounts.map((privacyPoolsAccount) => (
-        <PrivacyPoolsAccountRow
-          key={privacyPoolsAccount.seedId}
-          account={privacyPoolsAccount}
-          isSelected={privacyPoolsAccount.seedId === privacyPoolsAccountId}
-          onSelect={setPendingToBeSetSelectedPrivacyPoolsAccount}
-        />
-      )),
-    [filteredPrivacyPoolsAccounts, privacyPoolsAccountId]
+  const renderPrivacyPoolsAccount = useCallback(
+    ({ item: privacyPoolsAccount }: { item: PrivacyPoolsAccountDisplay }) => (
+      <PrivacyPoolsAccountRow
+        account={privacyPoolsAccount}
+        isSelected={privacyPoolsAccount.seedId === privacyPoolsAccountId}
+        onSelect={setPendingToBeSetSelectedPrivacyPoolsAccount}
+      />
+    ),
+    [privacyPoolsAccountId]
   )
+
+  const listContentContainerStyle = useMemo(
+    () => ({ paddingBottom: listBottomInset }),
+    [listBottomInset]
+  )
+  const noAccountsFound = <Text>{t('No accounts found')}</Text>
+  const isPrivateTabOpen = isPrivacyPoolsEnabled && activeTab === 'private'
+  const listStyle = isPrivacyPoolsEnabled ? styles.containerBelowTabs : styles.container
 
   const addAccountButton = (
     <Button
@@ -222,28 +232,35 @@ const AccountSelectScreen = () => {
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
+        {isPrivacyPoolsEnabled && <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />}
         <View style={flexbox.flex1}>
-          {/* Without a regular account selected there is no row to scroll to, so nothing to
-          wait for - which also keeps a wallet with only Privacy Pools accounts listing them */}
-          {(isReadyToRender || !account) && (
+          {isPrivateTabOpen ? (
             <ScrollableWrapper
               type={WRAPPER_TYPES.FLAT_LIST}
-              style={[styles.container, { opacity: shouldDisplayAccounts ? 1 : 0 }]}
-              contentContainerStyle={{ paddingBottom: listBottomInset }}
-              wrapperRef={flatlistRef}
-              data={accounts}
-              renderItem={renderItem}
-              getItemLayout={getItemLayout}
-              keyExtractor={keyExtractor}
-              onContentSizeChange={onListContentSizeChange}
-              initialScrollIndex={initialScrollIndex}
-              ListFooterComponent={
-                privacyPoolsAccountRows.length ? <>{privacyPoolsAccountRows}</> : null
-              }
-              ListEmptyComponent={
-                !privacyPoolsAccountRows.length ? <Text>{t('No accounts found')}</Text> : null
-              }
+              style={listStyle}
+              contentContainerStyle={listContentContainerStyle}
+              data={filteredPrivacyPoolsAccounts}
+              renderItem={renderPrivacyPoolsAccount}
+              keyExtractor={privacyPoolsAccountKeyExtractor}
+              ListEmptyComponent={noAccountsFound}
             />
+          ) : (
+            // Without a regular account selected there is no row to scroll to, so nothing to wait for
+            (isReadyToRender || !account) && (
+              <ScrollableWrapper
+                type={WRAPPER_TYPES.FLAT_LIST}
+                style={[listStyle, { opacity: shouldDisplayAccounts ? 1 : 0 }]}
+                contentContainerStyle={listContentContainerStyle}
+                wrapperRef={flatlistRef}
+                data={accounts}
+                renderItem={renderItem}
+                getItemLayout={getItemLayout}
+                keyExtractor={keyExtractor}
+                onContentSizeChange={onListContentSizeChange}
+                initialScrollIndex={initialScrollIndex}
+                ListEmptyComponent={noAccountsFound}
+              />
+            )
           )}
         </View>
         <FooterGlassView

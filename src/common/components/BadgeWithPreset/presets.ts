@@ -33,9 +33,10 @@ const BADGE_PRESETS: { [preset in Preset]: BadgePreset } = {
   },
   'privacy-pools': {
     text: 'Privacy Pools',
-    type: 'secondaryAccent',
+    type: 'privacyPools',
     tooltipText:
-      'Keeps funds private in Privacy Pools. It has no public address of its own and is created from one of your recovery phrases - write that phrase down, as it is the only way to recover the account.'
+      'Keeps funds private in Privacy Pools. It has no public address of its own and is created from one of your recovery phrases - write that phrase down, as it is the only way to recover the account.',
+    specialType: 'privacy-pools'
   }
 }
 

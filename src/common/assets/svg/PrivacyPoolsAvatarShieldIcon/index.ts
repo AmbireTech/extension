@@ -1,0 +1,3 @@
+import PrivacyPoolsAvatarShieldIcon from './PrivacyPoolsAvatarShieldIcon'
+
+export default PrivacyPoolsAvatarShieldIcon

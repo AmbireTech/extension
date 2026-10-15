@@ -10,10 +10,11 @@ type BadgeType =
   | 'error'
   | 'primaryAccent'
   | 'secondaryAccent'
+  | 'privacyPools'
   | 'new'
   | 'outline'
 
-type SpecialBadgeType = 'metamask' | 'safe'
+type SpecialBadgeType = 'metamask' | 'safe' | 'privacy-pools'
 
 type Props = {
   text: string

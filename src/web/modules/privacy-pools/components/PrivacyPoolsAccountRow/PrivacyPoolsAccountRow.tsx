@@ -11,7 +11,7 @@ import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import { PrivacyPoolsAccountDisplay } from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import getAccountStyles from '@common/modules/account-select/components/Account/styles'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -31,8 +31,8 @@ type Props = {
 const REMOVE_OPTION_VALUE = 'remove'
 
 /**
- * `Account` for a Privacy Pools account, with the same height so both fit one list. The balance
- * is a dash: it is known only once the account is opened and synced.
+ * `Account` for a Privacy Pools account, with the same height so both fit one list. It shows no
+ * balance: that is known only once the account is opened and synced.
  */
 const PrivacyPoolsAccountRow = ({
   account,
@@ -103,22 +103,13 @@ const PrivacyPoolsAccountRow = ({
         <PrivacyPoolsAccountAvatar style={spacings.mrTy} />
         <View style={[flexbox.flex1, flexbox.justifyCenter]}>
           <Text fontSize={14} weight="medium" numberOfLines={1} style={spacings.mrTy}>
-            {account.label}
+            {t('Private account')}
           </Text>
+          {/* The account has no name or address of its own, so its recovery phrase tells it apart */}
           <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-            {t('Private account, no public address')}
+            {t('Added from {{seedLabel}}', { seedLabel: account.label })}
           </Text>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              spacings.mtMi,
-              { columnGap: SPACING_TY }
-            ]}
-          >
-            <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
-              —
-            </Text>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
             <BadgeWithPreset preset="privacy-pools" withRightSpacing={false} />
           </View>
         </View>
