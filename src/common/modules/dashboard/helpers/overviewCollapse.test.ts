@@ -54,16 +54,21 @@ describe('getOverviewCollapsed', () => {
 
 describe('getSettleOffset', () => {
   it('leaves a fully open or collapsed overview alone', () => {
-    expect(getSettleOffset(500, 0, OVERVIEW_HEIGHT)).toBeNull()
-    expect(getSettleOffset(500, 0.5, OVERVIEW_HEIGHT)).toBeNull()
-    expect(getSettleOffset(500, OVERVIEW_HEIGHT, OVERVIEW_HEIGHT)).toBeNull()
+    expect(getSettleOffset(500, 0, OVERVIEW_HEIGHT, 1)).toBeNull()
+    expect(getSettleOffset(500, 0.5, OVERVIEW_HEIGHT, -1)).toBeNull()
+    expect(getSettleOffset(500, OVERVIEW_HEIGHT, OVERVIEW_HEIGHT, 1)).toBeNull()
   })
 
-  it('scrolls back up by the collapse to open it', () => {
-    expect(getSettleOffset(500, 60, OVERVIEW_HEIGHT)).toBe(440)
+  it('completes a collapse once started, however little of it there is', () => {
+    expect(getSettleOffset(500, 10, OVERVIEW_HEIGHT, 1)).toBe(650)
   })
 
-  it('scrolls on down by the rest to collapse it', () => {
-    expect(getSettleOffset(500, 100, OVERVIEW_HEIGHT)).toBe(560)
+  it('completes an expand once started, however little of it there is', () => {
+    expect(getSettleOffset(500, 150, OVERVIEW_HEIGHT, -1)).toBe(350)
+  })
+
+  it('goes to whichever end is closer when it was not scrolled', () => {
+    expect(getSettleOffset(500, 60, OVERVIEW_HEIGHT, 0)).toBe(440)
+    expect(getSettleOffset(500, 100, OVERVIEW_HEIGHT, 0)).toBe(560)
   })
 })

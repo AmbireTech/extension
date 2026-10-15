@@ -8,6 +8,10 @@ import { CarouselList, CarouselListOptions } from './useCarouselList'
 // laid over them can collapse without a round trip through JS.
 const AnimatedFlatList = Animated.FlatList as unknown as typeof FlatList
 
+// Android reports momentum events only to a list that listens for them as a prop, and the
+// carousel listens for them natively instead
+const REPORT_MOMENTUM = () => {}
+
 /**
  * What Reanimated's own `useScrollOffset` registers a scroll handler on a view by, which lets
  * the handler listen alongside the `onScroll` the list already has.
@@ -92,7 +96,12 @@ const useCarouselList = ({
 
   if (!pageScroll) return { ListComponent: FlatList, ref: listRef, onScroll }
 
-  return { ListComponent: AnimatedFlatList, ref, onScroll: handleScroll }
+  return {
+    ListComponent: AnimatedFlatList,
+    ref,
+    onScroll: handleScroll,
+    onMomentumScrollEnd: REPORT_MOMENTUM
+  }
 }
 
 export default useCarouselList

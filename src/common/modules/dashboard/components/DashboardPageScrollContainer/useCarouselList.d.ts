@@ -20,6 +20,8 @@ export interface CarouselList {
   ListComponent: typeof FlatList
   ref: Ref<FlatList>
   onScroll?: FlatListProps<any>['onScroll']
+  /** Mobile only, so Android reports the momentum events the carousel listens for natively. */
+  onMomentumScrollEnd?: FlatListProps<any>['onMomentumScrollEnd']
 }
 
 /**

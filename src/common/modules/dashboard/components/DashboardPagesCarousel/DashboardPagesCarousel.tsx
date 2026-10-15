@@ -97,10 +97,6 @@ const WHEEL_LINE_HEIGHT = 16
 // edge, on top of twice the safe area inset
 const FLOATING_BAR_HIDE_DISTANCE = 60 + SPACING
 
-// How fast (px/ms) a released drag has to be for its momentum to settle the overview,
-// rather than the overview being settled right away
-const SETTLE_VELOCITY = 0.3
-
 /**
  * The work the carousel may only do while the dashboard is the screen the user is on.
  * Its own component, and one that renders nothing, because focus is read through a
@@ -231,6 +227,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // Android ends a settle cut short by a new drag with a momentum end, which must not settle
   // again under the finger: the scroll would fight the drag, and every cut short one restart it
   const isDragging = useSharedValue(false)
+  // Which way the open page was last scrolled: 1 down, -1 up, 0 not since it was opened. A
+  // partly collapsed overview is settled on that way, so a collapse or an expand once started
+  // always completes instead of turning back
+  const scrollDirection = useSharedValue(0)
 
   // Only recreated with the overview's height, as a new node starts over from the offset
   const returnDistanceNode = useMemo(
@@ -411,8 +411,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       overviewHeight
     )
 
-    return getSettleOffset(offsetY, collapsed, overviewHeight)
-  }, [bannersHeight, overviewHeight, returnDistance, scrollOffset])
+    return getSettleOffset(offsetY, collapsed, overviewHeight, scrollDirection.get())
+  }, [bannersHeight, overviewHeight, returnDistance, scrollDirection, scrollOffset])
 
   // Called by the open page's scroll handler on the UI thread. Kept stable apart from the
   // layout, because the pages read it off the context and a new one would re-render all four
@@ -421,15 +421,19 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       onScroll: (offsetY) => {
         'worklet'
 
+        const scrolledBy = offsetY - scrollOffset.get()
         const nextReturnDistance = getNextReturnDistance(
           returnDistance.get(),
-          offsetY - scrollOffset.get(),
+          scrolledBy,
           overviewHeight
         )
 
         returnDistance.set(nextReturnDistance)
         scrollOffset.set(offsetY)
         canPull.set(offsetY <= 0)
+
+        // Less than a pixel is rounding, or the finger resting, not a way the page is going
+        if (Math.abs(scrolledBy) >= 1) scrollDirection.set(Math.sign(scrolledBy))
       },
       onBeginDrag: () => {
         'worklet'
@@ -441,8 +445,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
         isDragging.set(false)
 
-        // A fling is settled once its momentum ends instead
-        if (Math.abs(velocityY) > SETTLE_VELOCITY) return null
+        // A drag let go of at any speed is carried on by momentum, which would take back over
+        // a scroll started now and leave it to be settled twice: it is settled once the
+        // momentum ends instead. Android reports a momentum end even when there is none
+        if (!isiOS || velocityY !== 0) return null
 
         return getOverviewSettleOffset()
       },
@@ -454,7 +460,15 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
         return getOverviewSettleOffset()
       }
     }),
-    [canPull, getOverviewSettleOffset, isDragging, overviewHeight, returnDistance, scrollOffset]
+    [
+      canPull,
+      getOverviewSettleOffset,
+      isDragging,
+      overviewHeight,
+      returnDistance,
+      scrollDirection,
+      scrollOffset
+    ]
   )
 
   // How far the banners are collapsed, which every page shares. A page whose items
@@ -508,6 +522,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
     // A swipe cancels the page's drag without ending it
     isDragging.set(false)
+    // The page is taken to the top, not scrolled there
+    scrollDirection.set(0)
     collapsedBy.current = carried
     // Jumped to like the `diffClamp` is, which takes the jump as a scroll
     returnDistance.set(
@@ -531,6 +547,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     overviewHeight,
     overviewSettle,
     returnDistance,
+    scrollDirection,
     scrollOffset,
     scrollY
   ])

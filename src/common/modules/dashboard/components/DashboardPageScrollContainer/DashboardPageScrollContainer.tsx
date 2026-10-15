@@ -180,7 +180,8 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const {
     ListComponent,
     ref: listRef,
-    onScroll: handleScroll
+    onScroll: handleScroll,
+    onMomentumScrollEnd
   } = useCarouselList({
     listRef: flatlistRef,
     scrollY: carousel?.scrollY,
@@ -260,6 +261,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
       ListFooterComponent={listFooter}
       ListFooterComponentStyle={carousel ? FOOTER_STYLE : undefined}
       onContentSizeChange={carousel ? onContentSizeChange : undefined}
+      onMomentumScrollEnd={onMomentumScrollEnd}
       {...rest}
       {...(carousel ? CAROUSEL_VIRTUALIZATION : NO_PROPS)}
       {...carouselIndicatorProps}

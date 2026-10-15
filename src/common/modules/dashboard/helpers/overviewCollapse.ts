@@ -43,15 +43,25 @@ export const getOverviewCollapsed = (
 }
 
 /**
- * Where to scroll the page to, to take a partly collapsed overview fully open or collapsed,
- * whichever is closer. Scrolling moves the collapse by as much, whether it follows the offset
- * or the return distance. `null` if it is already fully open or collapsed.
+ * Where to scroll the page to, to take a partly collapsed overview fully open or collapsed:
+ * on in the direction it was last moving, so a collapse or an expand once started always
+ * completes, or to whichever is closer when it wasn't moving. Scrolling moves the collapse by
+ * as much, whether it follows the offset or the return distance. `null` if it is already
+ * fully open or collapsed.
  */
-export const getSettleOffset = (offsetY: number, collapsed: number, overviewHeight: number) => {
+export const getSettleOffset = (
+  offsetY: number,
+  collapsed: number,
+  overviewHeight: number,
+  /** 1 while the page was last scrolled down, -1 while up, 0 if it wasn't scrolled. */
+  scrollDirection: number
+) => {
   'worklet'
 
   // A pixel of tolerance, as Android reports offsets rounded
   if (collapsed < 1 || collapsed > overviewHeight - 1) return null
 
-  return collapsed > overviewHeight / 2 ? offsetY + overviewHeight - collapsed : offsetY - collapsed
+  const isCollapsing = scrollDirection ? scrollDirection > 0 : collapsed > overviewHeight / 2
+
+  return isCollapsing ? offsetY + overviewHeight - collapsed : offsetY - collapsed
 }
