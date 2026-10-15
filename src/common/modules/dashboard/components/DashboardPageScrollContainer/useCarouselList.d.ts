@@ -1,0 +1,31 @@
+import { MutableRefObject, Ref } from 'react'
+import { Animated, FlatList, FlatListProps } from 'react-native'
+
+import type { DashboardPageScroll } from '../DashboardPagesCarousel/context'
+
+export interface CarouselListOptions {
+  /** Kept pointing at the list, for scrolling it from JS. */
+  listRef: MutableRefObject<FlatList | null>
+  /** Provided by the mobile carousel only, with `pageScroll`. Without them the list is a plain one. */
+  scrollY?: Animated.Value
+  /** Provided by the mobile carousel only. Without it the list is a plain one. */
+  pageScroll?: DashboardPageScroll
+  /** Only the open page reports its scroll to the carousel. */
+  isOpen: boolean
+  /** The page's own scroll listener, for a list outside the carousel. */
+  onScroll?: FlatListProps<any>['onScroll']
+}
+
+export interface CarouselList {
+  ListComponent: typeof FlatList
+  ref: Ref<FlatList>
+  onScroll?: FlatListProps<any>['onScroll']
+}
+
+/**
+ * The list a dashboard page renders. Inside the mobile carousel the open one reports its
+ * scroll twice from the same native events: into `scrollY`, which draws the banners and the
+ * overview, and to `pageScroll` on the UI thread, which settles a drag let go of halfway.
+ */
+declare const useCarouselList: (options: CarouselListOptions) => CarouselList
+export default useCarouselList

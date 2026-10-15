@@ -1,11 +1,8 @@
 import React, { FC, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Animated,
   FlatList,
   FlatListProps,
   LayoutChangeEvent,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   RefreshControl,
   View,
   ViewStyle
@@ -23,6 +20,7 @@ import DashboardCarouselContext, {
   DashboardFloatingBarProps
 } from '../DashboardPagesCarousel/context'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
+import useCarouselList from './useCarouselList'
 import useListTopSpacing from './useListTopSpacing'
 
 interface Props extends FlatListProps<any> {
@@ -50,10 +48,6 @@ const getFlatListStyle = (tab: TabType, openTab: TabType) => {
 
   return [spacings.phSm, openTab !== tab ? HIDDEN_STYLE : {}]
 }
-
-// The pages of the carousel report their scroll offset natively, so the header
-// laid over them can collapse without a round trip through JS.
-const AnimatedFlatList = Animated.FlatList as unknown as typeof FlatList
 
 // All four pages are rendered, so none may build more than a screenful up front.
 // Overrides the pages' own values, which assume being the only rendered list.
@@ -190,33 +184,24 @@ const DashboardPageScrollContainer: FC<Props> = ({
     }
   }, [carousel])
 
-  const reportScrollOffset = carousel?.reportScrollOffset
-
   // Where this page has got to, told to the carousel rather than asked for by it: the
-  // shared value it keeps is what the header is collapsed by, which a page too short to
-  // take the offset it was given never reaches - and the pull would then read the page
-  // as scrolled while it sits at its top.
-  const handleScrollListener = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      reportScrollOffset?.(event.nativeEvent.contentOffset.y)
-      onScroll?.(event)
-    },
-    [onScroll, reportScrollOffset]
-  )
-
+  // offset it keeps is what the header is collapsed by, which a page too short to take the
+  // offset it was given never reaches - and the pull would then read the page as scrolled
+  // while it sits at its top. Only the open page reports: the offset is shared, and a page
+  // too short to scroll as far would report the offset it stopped at and win by coming last.
   // Bound to the value rather than the whole context, so measuring the header does not
-  // detach the native scroll listener. Only the open page reports into it: the value is
-  // shared, and a page too short to scroll as far would report the offset it stopped at
-  // and win by coming last.
-  const carouselScrollY = carousel?.scrollY
-  const handleScroll = useMemo(() => {
-    if (!carouselScrollY || openTab !== tab) return onScroll
-
-    return Animated.event([{ nativeEvent: { contentOffset: { y: carouselScrollY } } }], {
-      useNativeDriver: true,
-      listener: handleScrollListener
-    })
-  }, [carouselScrollY, handleScrollListener, onScroll, openTab, tab])
+  // detach the native scroll listener.
+  const {
+    ListComponent,
+    ref: listRef,
+    onScroll: handleScroll
+  } = useCarouselList({
+    listRef: flatlistRef,
+    scrollY: carousel?.scrollY,
+    pageScroll: carousel?.pageScroll,
+    isOpen: openTab === tab,
+    onScroll
+  })
 
   // Resets the scroll position on a tab switch. The carousel does this itself for every
   // page, carrying over how far the banners are collapsed.
@@ -253,12 +238,9 @@ const DashboardPageScrollContainer: FC<Props> = ({
     return () => registerFloatingBar(tab, null)
   }, [floatingBar, registerFloatingBar, tab])
 
-  const ListComponent = carousel ? AnimatedFlatList : FlatList
-  const isOpenCarouselPage = !!carousel && openTab === tab
-
   const list = (
     <ListComponent
-      ref={flatlistRef}
+      ref={listRef}
       style={[style, carouselListStyle]}
       contentContainerStyle={contentContainerStyle}
       // Makes the header sticky. The carousel lays its own header over the pages instead
@@ -284,9 +266,6 @@ const DashboardPageScrollContainer: FC<Props> = ({
       ListFooterComponent={listFooter}
       ListFooterComponentStyle={carousel ? FOOTER_STYLE : undefined}
       onContentSizeChange={carousel ? onContentSizeChange : undefined}
-      onScrollBeginDrag={isOpenCarouselPage ? carousel.onPageScrollBeginDrag : undefined}
-      onScrollEndDrag={isOpenCarouselPage ? carousel.onPageScrollEnd : undefined}
-      onMomentumScrollEnd={isOpenCarouselPage ? carousel.onPageMomentumScrollEnd : undefined}
       {...rest}
       {...(carousel ? CAROUSEL_VIRTUALIZATION : NO_PROPS)}
       {...carouselIndicatorProps}

@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+import { Animated } from 'react-native'
 import { NativeGesture } from 'react-native-gesture-handler'
 
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
@@ -19,9 +19,30 @@ export interface DashboardPageHandle {
   listGesture: NativeGesture
 }
 
+/**
+ * Worklets the open page calls from its scroll handler, on the UI thread. They keep the same
+ * state `scrollY` draws by, from the same native events, to settle a drag by - so what is
+ * drawn and what a drag is settled by can never disagree.
+ */
+export interface DashboardPageScroll {
+  /** Every scroll event of the open page, on the UI thread. */
+  onScroll: (offsetY: number) => void
+  /** The open page's drag starting, during which the overview is never settled. */
+  onBeginDrag: () => void
+  /** The open page's drag ending. Returns where to scroll it to settle the overview, if anywhere. */
+  onEndDrag: (velocityY: number) => number | null
+  /** The open page's momentum ending. Returns where to scroll it to settle the overview, if anywhere. */
+  onMomentumEnd: () => number | null
+}
+
 export interface DashboardCarouselContextValue {
-  /** Scroll offset of the page the user is on. Collapses the banners above the tabs row. */
+  /**
+   * Scroll offset of the open page, mapped natively. Collapses the banners and the overview
+   * through native animated nodes, which update the views directly.
+   */
   scrollY: Animated.Value
+  /** What the open page also reports its scroll to, on the UI thread. */
+  pageScroll: DashboardPageScroll
   /** Height of the overlaid header, which the pages must be padded by to start below it. */
   headerHeight: number
   /**
@@ -43,18 +64,6 @@ export interface DashboardCarouselContextValue {
    * dashboard usable when there are enough banners to cover a page whole.
    */
   registerPage: (tab: TabType, handle: DashboardPageHandle | null) => void
-  /**
-   * Where a page has got to. Only the page being dragged knows whether there is
-   * anything above it to scroll back to, and the pull has to know that before it can
-   * tell a drag from the page being scrolled.
-   */
-  reportScrollOffset: (offset: number) => void
-  /** The open page's drag starting, during which the overview is never settled. */
-  onPageScrollBeginDrag: () => void
-  /** The open page's drag ending, which settles a partly collapsed overview. */
-  onPageScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
-  /** The open page's momentum ending, which settles a partly collapsed overview. */
-  onPageMomentumScrollEnd: () => void
   /**
    * The bar belongs to the dashboard rather than to a page, so it is rendered above
    * the pager and stays put through a swipe. A page registers what it wants in it,
