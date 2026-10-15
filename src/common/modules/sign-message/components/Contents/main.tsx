@@ -246,7 +246,8 @@ const Main = ({
         </View>
       )}
       {!!signMessageState.banners?.length && (
-        <View style={spacings.mbLg}>
+        // On mobile the message type badge above takes no layout space, so the banners clear it
+        <View style={[isMobile && spacings.mt, spacings.mbLg]}>
           {signMessageState.banners.map((banner) => (
             <SafetyChecksBanner
               key={banner.id}

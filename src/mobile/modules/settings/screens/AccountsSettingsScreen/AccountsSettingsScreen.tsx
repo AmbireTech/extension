@@ -27,7 +27,7 @@ import {
   ACCOUNT_SELECT_ACCOUNT_MB
 } from '@common/modules/account-select/components/Account/styles'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -38,7 +38,7 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import ExportAccountsToExtensionSheet from '@mobile/modules/accounts-sync/components/ExportAccountsToExtensionSheet'
+import ExportToExtensionSheet from '@mobile/modules/app-data-sync/components/ExportToExtensionSheet'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 
 const AccountsSettingsScreen = () => {
@@ -358,13 +358,10 @@ const AccountsSettingsScreen = () => {
           }}
           onImportPress={() => {
             closeSyncBottomSheet()
-            navigate(ROUTES.importAccountsFromExtension)
+            navigate(ROUTES.importFromExtension)
           }}
         />
-        <ExportAccountsToExtensionSheet
-          sheetRef={exportSheetRef}
-          closeBottomSheet={closeExportSheet}
-        />
+        <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )
