@@ -135,6 +135,11 @@ const PendingSafeTransaction = ({ style }: Props) => {
     [currentUserRequestId, requestsDispatch]
   )
 
+  const alertButtonProps = useMemo(
+    () => ({ text: t('View pending transaction'), onPress: () => openBottomSheet() }),
+    [openBottomSheet, t]
+  )
+
   const handleSpeedUp = useCallback(() => {
     if (!pendingAccountOp) return
 
