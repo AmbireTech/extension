@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Dimensions,
+  Easing,
   InteractionManager,
   LayoutChangeEvent,
   GestureResponderEvent,
@@ -19,6 +20,7 @@ import Reanimated, {
 } from 'react-native-reanimated'
 
 import Spinner from '@common/components/Spinner'
+import { isiOS } from '@common/config/env'
 import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
@@ -66,8 +68,12 @@ const PULL_RESISTANCE = 0.5
 // The gap the pages are held open by while the refresh runs, sized to the spinner
 const PULL_SPINNER_HEIGHT = 56
 
-// Same as the floating bar, which hides and shows together with the overview
-const OVERVIEW_SPRING_CONFIG = { damping: 20, stiffness: 90, overshootClamping: true }
+// Matches the pager's animated scroll to a pressed tab, so the overview expands in step with
+// it: UIKit's ~300ms ease-in-out, and Android's 250ms accelerate-decelerate
+const OVERVIEW_EXPAND_TIMING = {
+  duration: isiOS ? 300 : 250,
+  easing: Easing.inOut(Easing.sin)
+}
 
 // How fast (px/ms) a released drag has to be for its momentum to settle the overview,
 // rather than the overview being settled right away
@@ -347,9 +353,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       TABS.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
 
       overviewSettle.setValue(wasCollapsed)
-      Animated.spring(overviewSettle, {
+      Animated.timing(overviewSettle, {
         toValue: 0,
-        ...OVERVIEW_SPRING_CONFIG,
+        ...OVERVIEW_EXPAND_TIMING,
         useNativeDriver: true
       }).start()
     })
