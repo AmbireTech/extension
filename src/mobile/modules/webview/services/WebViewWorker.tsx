@@ -83,6 +83,7 @@ const getDevServerUrl = () => {
 }
 
 type WorkerErrorPayload = {
+  name?: string
   message?: string
   stack?: string
   url?: string
@@ -94,12 +95,15 @@ type WorkerErrorPayload = {
 
 // The worker sends plain objects, not Errors, so each one is rebuilt here. Its own stack and
 // location go in extra, because they point into the worker bundle, not the RN one. The rebuilt
-// errors all share this function's stack, so they're grouped by message instead.
+// errors all share this function's stack, so they're grouped by message instead. The name is
+// restored so the noise filters that match on it also apply to worker errors.
 const reportWorkerErrors = (ctrlName: string, errors: WorkerErrorPayload[]) => {
-  errors.forEach(({ message = '', level, sendCrashReport, ...location }) => {
+  errors.forEach(({ name, message = '', level, sendCrashReport, ...location }) => {
     if (!shouldReportControllerError({ level, sendCrashReport })) return
 
-    captureWebViewException(new Error(message), {
+    const error = new Error(message)
+    if (name) error.name = name
+    captureWebViewException(error, {
       extra: { ctrlName, ...location },
       fingerprint: [CRASH_REPORT_CONTENT.WEBVIEW, ctrlName, message]
     })
@@ -111,7 +115,8 @@ const globalErrorHandler = `
   window.onerror = function(msg, url, lineNo, columnNo, error) {
     var errMessage = error ? error.message : msg;
     var errStack = error ? error.stack : undefined;
-    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ message: errMessage, stack: errStack, url: url, lineNo: lineNo }] } }));
+    var errName = error ? error.name : undefined;
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ name: errName, message: errMessage, stack: errStack, url: url, lineNo: lineNo }] } }));
     return false;
   };
 `
@@ -251,7 +256,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           try {
             window.postMessage(${embedded}, '*');
           } catch (e) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ name: e.name, message: e.message, stack: e.stack }] } }));
           }
         })();
         true;

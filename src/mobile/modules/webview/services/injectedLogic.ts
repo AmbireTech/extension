@@ -81,7 +81,9 @@ function debounceFrontEndEventUpdatesOnSameTick(
         // Send error back to React Native
         sendToReactEvent('ctrl.error', {
           ctrlName,
-          errors: [{ message: (err as any).message, stack: (err as any).stack }]
+          errors: [
+            { name: (err as any).name, message: (err as any).message, stack: (err as any).stack }
+          ]
         })
       }
     }
@@ -197,7 +199,7 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
 
         sendToReactEvent('ctrl.error', {
           ctrlName: ctrl.name,
-          errors: [{ message, level, sendCrashReport, stack: error?.stack }]
+          errors: [{ name: error?.name, message, level, sendCrashReport, stack: error?.stack }]
         })
       }, 'webview')
     }
@@ -233,7 +235,7 @@ const initControllers = (config: any) => {
   } catch (e: any) {
     sendToReactEvent('ctrl.error', {
       ctrlName: 'Init',
-      errors: [{ message: e.message, stack: e.stack }]
+      errors: [{ name: e.name, message: e.message, stack: e.stack }]
     })
   }
 }
