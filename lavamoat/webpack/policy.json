@@ -809,11 +809,6 @@
         "@ngraveio/bc-ur>sha.js": true
       }
     },
-    "@safe-global/api-kit>@safe-global/protocol-kit>@noble/curves": {
-      "packages": {
-        "@noble/hashes": true
-      }
-    },
     "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/curves": {
       "packages": {
         "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/hashes": true
@@ -846,6 +841,11 @@
     "ox>@noble/curves": {
       "packages": {
         "@noble/hashes": true
+      }
+    },
+    "gridplus-sdk>ox>@noble/curves": {
+      "globals": {
+        "TextEncoder": true
       }
     },
     "viem>@noble/curves": {
@@ -962,7 +962,7 @@
         ]
       },
       "packages": {
-        "@safe-global/api-kit>@safe-global/protocol-kit>@noble/curves": true,
+        "ox>@noble/curves": true,
         "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema": true,
         "@safe-global/api-kit>@safe-global/protocol-kit>@safe-global/safe-deployments": true,
         "@safe-global/api-kit>@safe-global/protocol-kit>@safe-global/safe-modules-deployments": true,
@@ -2429,7 +2429,7 @@
         "crypto.getRandomValues": true
       },
       "packages": {
-        "viem>@noble/curves": true,
+        "gridplus-sdk>ox>@noble/curves": true,
         "@noble/hashes": true
       }
     },

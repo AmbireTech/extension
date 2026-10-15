@@ -2888,25 +2888,25 @@
     bs58check "^2.1.2"
     tslib "^2.3.0"
 
-"@kohaku-eth/plugins@0.0.1-alpha.16":
-  version "0.0.1-alpha.16"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/plugins/-/plugins-0.0.1-alpha.16.tgz#e745df5fdc5b4f7872bac1e0fab75eefaaa1f078"
-  integrity sha512-7QrlLeds2pX2mB/5d1BKnpFSPQI4fUyY0i2DPUlvnPxGyqnrR0HfDzfFVsZd07DpmEze8Q2KmaBQVks1Ltmwrg==
+"@kohaku-eth/plugins@0.0.1-alpha.17":
+  version "0.0.1-alpha.17"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/plugins/-/plugins-0.0.1-alpha.17.tgz#1a339d3ca41206c83aed4362f8012955763f2311"
+  integrity sha512-aPsdpinJGJcYJArpomgBrNWvONiAJ6oPjS2thiwE8l2nJZYKkv4aUWpxBko+fT03lsrupk+ezSb91gjlmMu+eQ==
   dependencies:
-    "@kohaku-eth/provider" "0.1.0-alpha.11"
+    "@kohaku-eth/provider" "0.1.0-alpha.12"
     "@noble/hashes" "^2.2.0"
     "@scure/bip32" "^2.2.0"
     "@scure/bip39" "^2.2.0"
     ox "^0.12.0"
 
-"@kohaku-eth/privacy-pools@0.0.2-alpha.23":
-  version "0.0.2-alpha.23"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.0.2-alpha.23.tgz#e62928e146f505b1b9f47890a173045a80675d41"
-  integrity sha512-3PDuOvYC5uHXK+X54Sc1sJrs5fIY8Q1spaqo/qkf9uDI9hR8wM2eMpRALIpChIihqBsL6PZUX9gQgj4j6xItsw==
+"@kohaku-eth/privacy-pools@0.1.0-alpha.25":
+  version "0.1.0-alpha.25"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.1.0-alpha.25.tgz#73bf1aa2249b0a6253e3cebc7d57482b2ad0618c"
+  integrity sha512-RIEBjYWKwAt+m+FxWS94UkGOG+Sq3V84rHRzxS4NLdH9jCU6YrKN0xSH3wh3+xPUWgJJJy2NsLYkNF0q0iaFNg==
   dependencies:
     "@fatsolutions/privacy-pools-core-circuits" "1.0.5"
-    "@kohaku-eth/plugins" "0.0.1-alpha.16"
-    "@kohaku-eth/provider" "0.1.0-alpha.11"
+    "@kohaku-eth/plugins" "0.0.1-alpha.17"
+    "@kohaku-eth/provider" "0.1.0-alpha.12"
     "@reduxjs/toolkit" "^2.11.2"
     "@saga-sync/client" "^0.1.4"
     "@zk-kit/lean-imt" "^2.2.4"
@@ -2914,10 +2914,10 @@
     ox "^0.12.0"
     viem "^2.51.3"
 
-"@kohaku-eth/provider@0.1.0-alpha.11":
-  version "0.1.0-alpha.11"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/provider/-/provider-0.1.0-alpha.11.tgz#ac00af1949ca6e917365d387c41b26159a04b32a"
-  integrity sha512-/WRNKYKLO9+evwzS7G//7XKOZYMUXGb251eM2H7owmE/LjcM5lc4qn9dslRlXVo03+LVc2NEZ4VpofM/6pHA+Q==
+"@kohaku-eth/provider@0.1.0-alpha.12":
+  version "0.1.0-alpha.12"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/provider/-/provider-0.1.0-alpha.12.tgz#b2673560d61bb4388acf4fcdec8922fde649d767"
+  integrity sha512-gXrvjombJIU/x/6xdMglEq5hKd3IVzh1oVg+gU4P7iWgnkB6aRL7cFQapaO9iyXMwKoZAVdbeK7dCUOpy7jnjw==
   dependencies:
     "@anon-rpc/browser-harness" "^0.3.0"
     ox "^0.12.0"
