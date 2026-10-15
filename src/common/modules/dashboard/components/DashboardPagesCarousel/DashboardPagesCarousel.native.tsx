@@ -167,6 +167,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // Whether the floating bar hides with the overview, decided as the open page scrolls and
   // handed to the UI thread, so it costs no render
   const isOverviewCollapsed = useSharedValue(false)
+  // What was last handed to `isOverviewCollapsed`, so it is only written when it changes:
+  // every write is a message to the UI thread, and reading it back from JS is a sync one
+  const wasOverviewCollapsedRef = useRef(false)
   // What the UI thread collapses the overview by, mirrored for the bar and for settling it
   const overviewCollapseRef = useRef(INITIAL_OVERVIEW_COLLAPSE)
   // Read by `reportScrollOffset`, which has to stay stable
@@ -253,6 +256,14 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   }))
   const openTabIndex = Math.max(TABS.indexOf(openTab), 0)
   const pageHandles = useRef<Partial<Record<TabType, DashboardPageHandle>>>({})
+  // Read by `settleOverview`, which the pages get through the context, so it has to stay
+  // stable: a context that changed with the open tab would re-render all four pages in the
+  // same commit that repaints the tabs row, instead of the deferred one they render in
+  const openTabRef = useRef(openTab)
+
+  useEffect(() => {
+    openTabRef.current = openTab
+  }, [openTab])
   const [floatingBars, setFloatingBars] = useState<
     Partial<Record<TabType, DashboardFloatingBarProps>>
   >({})
@@ -292,7 +303,13 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       overviewLayoutRef.current
     )
     overviewCollapseRef.current = next
-    isOverviewCollapsed.set(next.collapsed > overviewLayoutRef.current.overviewHeight / 2)
+
+    const isCollapsed = next.collapsed > overviewLayoutRef.current.overviewHeight / 2
+
+    if (isCollapsed === wasOverviewCollapsedRef.current) return
+
+    wasOverviewCollapsedRef.current = isCollapsed
+    isOverviewCollapsed.set(isCollapsed)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -368,16 +385,17 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     if (isDraggingRef.current) return
 
     const { lastOffsetY, collapsed } = overviewCollapseRef.current
+    const { overviewHeight: collapsibleHeight } = overviewLayoutRef.current
 
     // A pixel of tolerance, as Android reports offsets rounded
-    if (collapsed < 1 || collapsed > overviewHeight - 1) return
+    if (collapsed < 1 || collapsed > collapsibleHeight - 1) return
 
-    const isCloserToCollapsed = collapsed > overviewHeight / 2
-    pageHandles.current[openTab]?.scrollToOffset(
-      isCloserToCollapsed ? lastOffsetY + overviewHeight - collapsed : lastOffsetY - collapsed,
+    const isCloserToCollapsed = collapsed > collapsibleHeight / 2
+    pageHandles.current[openTabRef.current]?.scrollToOffset(
+      isCloserToCollapsed ? lastOffsetY + collapsibleHeight - collapsed : lastOffsetY - collapsed,
       true
     )
-  }, [openTab, overviewHeight])
+  }, [])
 
   const onPageScrollBeginDrag = useCallback(() => {
     isDraggingRef.current = true
