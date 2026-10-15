@@ -116,6 +116,36 @@ export const getSafeCancellationAccountOp = (
 })
 
 /**
+ * Whether the transaction was sent through a bundler. Such a transaction waits in the bundler's
+ * own queue, under a nonce the wallet doesn't control, so it can't be replaced there.
+ */
+export const isSentThroughBundler = (submittedAccountOp: SubmittedAccountOpLike) =>
+  submittedAccountOp.gasFeePayment?.broadcastOption === BROADCAST_OPTIONS.byBundler
+
+/**
+ * The same transaction as the pending one, opened as a regular request: same calls, same Safe
+ * nonce and the owners' signatures, so nobody has to sign again, while the fee and the way of
+ * sending are picked from scratch. Used to speed up a transaction sent through a bundler, as it
+ * can't be replaced there - whichever of the two is confirmed first goes through.
+ */
+export const getResendAccountOp = (submittedAccountOp: SubmittedAccountOpLike): AccountOp => ({
+  id: uuidv4(),
+  accountAddr: submittedAccountOp.accountAddr,
+  chainId: submittedAccountOp.chainId,
+  signingKeyAddr: submittedAccountOp.signingKeyAddr ?? null,
+  signingKeyType: submittedAccountOp.signingKeyType ?? null,
+  nonce: submittedAccountOp.nonce ?? null,
+  calls: submittedAccountOp.calls,
+  gasLimit: null,
+  signature: submittedAccountOp.signature ?? null,
+  gasFeePayment: null,
+  txnId: submittedAccountOp.txnId,
+  signers: submittedAccountOp.signers,
+  signed: submittedAccountOp.signed,
+  safeTx: submittedAccountOp.safeTx
+})
+
+/**
  * The request that opens the given replacement accountOp for signing, as its own request.
  */
 export const getReplacementBuildRequest = (accountOp: AccountOp): BuildRequest => ({

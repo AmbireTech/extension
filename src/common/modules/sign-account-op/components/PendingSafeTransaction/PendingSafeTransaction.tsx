@@ -1,8 +1,9 @@
-import React, { Suspense, useCallback, useMemo, useState } from 'react'
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
+import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
@@ -15,10 +16,12 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import {
-  canReplacePendingAccountOp,
+  canBuildReplacementAccountOp,
   getReplacementBuildRequest,
+  getResendAccountOp,
   getSafeCancellationAccountOp,
-  getSpeedUpAccountOp
+  getSpeedUpAccountOp,
+  isSentThroughBundler
 } from '@common/modules/sign-account-op/helpers/replacementAccountOps'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -33,10 +36,21 @@ interface Props {
   style?: ViewStyle
 }
 
+type ReplacementAction = 'cancel' | 'speedUp'
+
+/**
+ * How long the sheet waits for the cancel / speed up request to open before letting the user
+ * try again. Opening it normally takes a few seconds at most - if it fails, the reason is
+ * shown by the controller.
+ */
+const REPLACEMENT_REQUEST_TIMEOUT_MS = 15_000
+
 const selectAccountOp = (state: AllControllersMappingType['SignAccountOpController']) =>
   state?.accountOp
 const selectIsSafeAccount = (state: AllControllersMappingType['SignAccountOpController']) =>
   !!state?.account.safeCreation
+const selectCurrentUserRequestId = (state: AllControllersMappingType['RequestsController']) =>
+  state.currentUserRequest?.id
 const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['ActivityController']) =>
   state.broadcastedButNotConfirmed
 
@@ -49,6 +63,12 @@ const PendingSafeTransaction = ({ style }: Props) => {
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
   const [shouldRenderCalls, setShouldRenderCalls] = useState(false)
+  // The action whose request is being opened and the request that was open when it started.
+  // The sheet stays open until another request becomes the current one
+  const [replacementInProgress, setReplacementInProgress] = useState<{
+    action: ReplacementAction
+    fromRequestId: string | number | undefined
+  } | null>(null)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { state: accountOp } = useController('SignAccountOpController', selectAccountOp)
   const { state: isSafeAccount } = useController('SignAccountOpController', selectIsSafeAccount)
@@ -56,7 +76,10 @@ const PendingSafeTransaction = ({ style }: Props) => {
     'ActivityController',
     selectBroadcastedButNotConfirmed
   )
-  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { state: currentUserRequestId, dispatch: requestsDispatch } = useController(
+    'RequestsController',
+    selectCurrentUserRequestId
+  )
 
   // The earliest pending transaction is the one holding back every transaction after it
   const pendingAccountOp = useMemo(() => {
@@ -81,41 +104,57 @@ const PendingSafeTransaction = ({ style }: Props) => {
     }, null)
   }, [accountOp, broadcastedButNotConfirmed, isSafeAccount])
 
-  const canReplace = !!pendingAccountOp && canReplacePendingAccountOp(pendingAccountOp)
-
   const handleSheetOpen = useCallback(() => setShouldRenderCalls(true), [])
   const handleSheetClosed = useCallback(() => setShouldRenderCalls(false), [])
   const handleClose = useCallback(() => closeBottomSheet(), [closeBottomSheet])
-  const alertButtonProps = useMemo(
-    () => ({ text: t('View pending transaction'), onPress: () => openBottomSheet() }),
-    [openBottomSheet, t]
+
+  useEffect(() => {
+    if (!replacementInProgress) return undefined
+
+    if (currentUserRequestId !== replacementInProgress.fromRequestId) {
+      closeBottomSheet()
+      setReplacementInProgress(null)
+      return undefined
+    }
+
+    const timeoutId = setTimeout(
+      () => setReplacementInProgress(null),
+      REPLACEMENT_REQUEST_TIMEOUT_MS
+    )
+    return () => clearTimeout(timeoutId)
+  }, [closeBottomSheet, currentUserRequestId, replacementInProgress])
+
+  const openReplacementRequest = useCallback(
+    (action: ReplacementAction, replacementAccountOp: AccountOp) => {
+      setReplacementInProgress({ action, fromRequestId: currentUserRequestId })
+      requestsDispatch({
+        type: 'method',
+        params: { method: 'build', args: [getReplacementBuildRequest(replacementAccountOp)] }
+      })
+    },
+    [currentUserRequestId, requestsDispatch]
   )
 
   const handleSpeedUp = useCallback(() => {
-    if (!pendingAccountOp || !canReplacePendingAccountOp(pendingAccountOp)) return
+    if (!pendingAccountOp) return
 
-    closeBottomSheet()
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'build',
-        args: [getReplacementBuildRequest(getSpeedUpAccountOp(pendingAccountOp))]
-      }
-    })
-  }, [closeBottomSheet, pendingAccountOp, requestsDispatch])
+    // A transaction sent through a bundler can't be replaced, so it's simply sent again
+    let speedUpAccountOp = null
+    if (isSentThroughBundler(pendingAccountOp)) {
+      speedUpAccountOp = getResendAccountOp(pendingAccountOp)
+    } else if (canBuildReplacementAccountOp(pendingAccountOp)) {
+      speedUpAccountOp = getSpeedUpAccountOp(pendingAccountOp)
+    }
+    if (!speedUpAccountOp) return
+
+    openReplacementRequest('speedUp', speedUpAccountOp)
+  }, [openReplacementRequest, pendingAccountOp])
 
   const handleCancel = useCallback(() => {
-    if (!pendingAccountOp || !canReplacePendingAccountOp(pendingAccountOp)) return
+    if (!pendingAccountOp || !canBuildReplacementAccountOp(pendingAccountOp)) return
 
-    closeBottomSheet()
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'build',
-        args: [getReplacementBuildRequest(getSafeCancellationAccountOp(pendingAccountOp))]
-      }
-    })
-  }, [closeBottomSheet, pendingAccountOp, requestsDispatch])
+    openReplacementRequest('cancel', getSafeCancellationAccountOp(pendingAccountOp))
+  }, [openReplacementRequest, pendingAccountOp])
 
   const sheetHeader = useMemo(
     () => (
@@ -131,20 +170,14 @@ const PendingSafeTransaction = ({ style }: Props) => {
             'This transaction was sent earlier and is still waiting to be confirmed. The transaction you are signing now can only go through after it.'
           )}
         </Text>
-        {canReplace ? (
-          <Text appearance="secondaryText" fontSize={14} style={spacings.mtSm}>
-            {t(
-              'Speeding it up pays a higher fee so it gets confirmed sooner. Cancelling replaces it with a transaction that does nothing, also for a higher fee. Both need to be signed by the owners again.'
-            )}
-          </Text>
-        ) : (
-          <Text appearance="secondaryText" fontSize={12} style={spacings.mtSm}>
-            {t("This transaction was sent in a way that can't be sped up or cancelled from here.")}
-          </Text>
-        )}
+        <Text appearance="secondaryText" fontSize={14} style={spacings.mtSm}>
+          {t(
+            'Speeding it up pays a higher fee so it gets confirmed sooner. Cancelling replaces it with a transaction that does nothing, also for a higher fee. Both need to be signed by the owners again.'
+          )}
+        </Text>
       </View>
     ),
-    [handleClose, canReplace, t]
+    [handleClose, t]
   )
 
   const sheetContent = useMemo(() => {
@@ -162,33 +195,41 @@ const PendingSafeTransaction = ({ style }: Props) => {
               />
             </Suspense>
           ) : null}
-          {canReplace && (
-            <>
-              <View style={styles.transactionCardDivider} />
-              <View style={styles.transactionCardActions}>
-                <Button
-                  type="danger"
-                  size="small"
-                  text={t('Cancel')}
-                  onPress={handleCancel}
-                  hasBottomSpacing={false}
-                  style={flexbox.flex1}
-                />
-                <Button
-                  type="primary"
-                  size="small"
-                  text={t('Speed up')}
-                  onPress={handleSpeedUp}
-                  hasBottomSpacing={false}
-                  style={[flexbox.flex1, spacings.mlTy]}
-                />
-              </View>
-            </>
-          )}
+          <View style={styles.transactionCardDivider} />
+          <View style={styles.transactionCardActions}>
+            <Button
+              type="danger"
+              size="small"
+              text={replacementInProgress?.action === 'cancel' ? t('Canceling...') : t('Cancel')}
+              onPress={handleCancel}
+              disabled={!!replacementInProgress}
+              hasBottomSpacing={false}
+              style={flexbox.flex1}
+            />
+            <Button
+              type="primary"
+              size="small"
+              text={
+                replacementInProgress?.action === 'speedUp' ? t('Speeding up...') : t('Speed up')
+              }
+              onPress={handleSpeedUp}
+              disabled={!!replacementInProgress}
+              hasBottomSpacing={false}
+              style={[flexbox.flex1, spacings.mlTy]}
+            />
+          </View>
         </View>
       </>
     )
-  }, [canReplace, handleCancel, handleSpeedUp, pendingAccountOp, shouldRenderCalls, styles, t])
+  }, [
+    handleCancel,
+    handleSpeedUp,
+    pendingAccountOp,
+    replacementInProgress,
+    shouldRenderCalls,
+    styles,
+    t
+  ])
 
   if (!pendingAccountOp) return null
 
