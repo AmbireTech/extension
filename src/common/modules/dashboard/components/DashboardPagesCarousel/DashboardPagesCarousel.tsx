@@ -1004,56 +1004,64 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     <View style={styles.container} pointerEvents="box-none">
       <WhileFocused openTabIndex={openTabIndex} renderTabs={renderTabs} initAllTabs={initAllTabs} />
       {/* Opaque, as it slides over the part of the overview that collapses */}
+      {/* The moving views take one child each, wrapped if need be: Animated tells its views'
+      props apart by their children when there are several, and rebuilds them on every
+      render. Android resets a view to its default props as it does, which put the pages
+      back over the overview until the next scroll. */}
       <MovingView
         style={[styles.slider, webStyles?.push ?? { transform: [{ translateY: overviewPush }] }]}
       >
-        <View style={flexbox.flex1} onLayout={onLayout}>
-          <DashboardCarouselContext.Provider value={carousel}>
-            {(isPulling || !!refreshing) && (
-              <Reanimated.View
-                pointerEvents="none"
-                style={[styles.pullSpinner, { top: bannersHeight + tabsHeight }, spinnerStyle]}
+        <>
+          <View style={flexbox.flex1} onLayout={onLayout}>
+            <DashboardCarouselContext.Provider value={carousel}>
+              {(isPulling || !!refreshing) && (
+                <Reanimated.View
+                  pointerEvents="none"
+                  style={[styles.pullSpinner, { top: bannersHeight + tabsHeight }, spinnerStyle]}
+                >
+                  <Spinner style={styles.pullSpinnerIcon} />
+                </Reanimated.View>
+              )}
+              {/* Web moves the lists with the pager rather than holding them in place */}
+              <MovingView
+                style={[
+                  flexbox.flex1,
+                  !webStyles && pagerLiftOffsetStyle,
+                  !webStyles && pagerLiftStyle
+                ]}
               >
-                <Spinner style={styles.pullSpinnerIcon} />
-              </Reanimated.View>
-            )}
-            {/* Web moves the lists with the pager rather than holding them in place */}
-            <MovingView
-              style={[
-                flexbox.flex1,
-                !webStyles && pagerLiftOffsetStyle,
-                !webStyles && pagerLiftStyle
-              ]}
-            >
-              {/* Web has no pull to refresh, and the gesture would only stand in the way of the wheel */}
-              {isWeb ? pager : <GestureDetector gesture={pullGesture}>{pager}</GestureDetector>}
-            </MovingView>
-          </DashboardCarouselContext.Provider>
-        </View>
-        {/* The banners and the tabs row are account wide, so they are laid over the
+                {/* Web has no pull to refresh, and the gesture would only stand in the way of the wheel */}
+                {isWeb ? pager : <GestureDetector gesture={pullGesture}>{pager}</GestureDetector>}
+              </MovingView>
+            </DashboardCarouselContext.Provider>
+          </View>
+          {/* The banners and the tabs row are account wide, so they are laid over the
       pager instead of moving with it. Rendered after it, because zIndex alone is
       not enough to keep them on top on Android. The pages used to render them
       inside a list that adds this padding on top of the one the tabs row has */}
-        <MovingView
-          onStartShouldSetResponderCapture={onHeaderTouchStart}
-          onMoveShouldSetResponderCapture={onHeaderTouchMove}
-          onResponderMove={onHeaderDrag}
-          onResponderRelease={onHeaderRelease}
-          onResponderTerminate={endHeaderDrag}
-          {...webHeaderProps}
-          style={[
-            styles.header,
-            spacings.phSm,
-            webStyles?.header ?? { transform: [{ translateY: headerTranslateY }] }
-          ]}
-        >
-          <View onLayout={onBannersLayout}>
-            <DashboardBanners />
-          </View>
-          <View onLayout={onTabsLayout}>
-            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
-          </View>
-        </MovingView>
+          <MovingView
+            onStartShouldSetResponderCapture={onHeaderTouchStart}
+            onMoveShouldSetResponderCapture={onHeaderTouchMove}
+            onResponderMove={onHeaderDrag}
+            onResponderRelease={onHeaderRelease}
+            onResponderTerminate={endHeaderDrag}
+            {...webHeaderProps}
+            style={[
+              styles.header,
+              spacings.phSm,
+              webStyles?.header ?? { transform: [{ translateY: headerTranslateY }] }
+            ]}
+          >
+            <>
+              <View onLayout={onBannersLayout}>
+                <DashboardBanners />
+              </View>
+              <View onLayout={onTabsLayout}>
+                <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
+              </View>
+            </>
+          </MovingView>
+        </>
       </MovingView>
       {!!overviewHeight && (
         <MovingView

@@ -1,12 +1,20 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Animated, FlatList } from 'react-native'
 import { scrollTo, useAnimatedRef, useAnimatedScrollHandler } from 'react-native-reanimated'
 
 import { CarouselList, CarouselListOptions } from './useCarouselList'
 
-// The pages of the carousel report their scroll offset natively, so the header
-// laid over them can collapse without a round trip through JS.
-const AnimatedFlatList = Animated.FlatList as unknown as typeof FlatList
+/**
+ * What Animated maps a native event by onto a view it doesn't render, as ScrollView does for
+ * its sticky headers. Not in Animated's typings.
+ */
+const { attachNativeEvent } = Animated as unknown as {
+  attachNativeEvent: (
+    viewRef: unknown,
+    eventName: string,
+    argMapping: ReadonlyArray<{ nativeEvent: unknown }>
+  ) => { detach: () => void }
+}
 
 // Android reports momentum events only to a list that listens for them as a prop, and the
 // carousel listens for them natively instead
@@ -41,15 +49,22 @@ const useCarouselList = ({
   )
 
   // Draws: the open page's offset drives the carousel's native animated nodes, which update
-  // the views directly and never wait on a React commit
-  const handleScroll = useMemo(() => {
-    if (!scrollY || !isOpen) return onScroll
+  // the views directly and never wait on a React commit. Mapped onto the list from here rather
+  // than through its props, as an Animated list would detach and attach the mapping again on
+  // every render its data changes in, and miss the scroll in between
+  useEffect(() => {
+    if (!scrollY || !isOpen) return undefined
 
-    return Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-      useNativeDriver: true,
-      listener: onScroll
-    })
-  }, [isOpen, onScroll, scrollY])
+    const scrollNode = listRef.current?.getNativeScrollRef()
+
+    if (!scrollNode) return undefined
+
+    const { detach } = attachNativeEvent(scrollNode, 'onScroll', [
+      { nativeEvent: { contentOffset: { y: scrollY } } }
+    ])
+
+    return detach
+  }, [isOpen, listRef, scrollY])
 
   // Decides: the same scroll events, on the UI thread, settle a drag let go of halfway
   const scrollHandler = useAnimatedScrollHandler(
@@ -96,12 +111,7 @@ const useCarouselList = ({
 
   if (!pageScroll) return { ListComponent: FlatList, ref: listRef, onScroll }
 
-  return {
-    ListComponent: AnimatedFlatList,
-    ref,
-    onScroll: handleScroll,
-    onMomentumScrollEnd: REPORT_MOMENTUM
-  }
+  return { ListComponent: FlatList, ref, onScroll, onMomentumScrollEnd: REPORT_MOMENTUM }
 }
 
 export default useCarouselList
