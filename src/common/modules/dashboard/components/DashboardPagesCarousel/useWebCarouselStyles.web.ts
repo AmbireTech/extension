@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { ViewStyle } from 'react-native'
 import {
   Easing,
@@ -101,14 +101,19 @@ const useWebCarouselStyles = ({
     [floatingBarHideDistance, overviewHeight]
   )
 
-  // Typed as the plain style the moving views take, see `WebCarouselStyles`
-  return {
-    collapse,
-    expandOverview,
-    push: push as ViewStyle,
-    header: header as ViewStyle,
-    floatingBar: floatingBar as ViewStyle
-  }
+  // Kept stable, as the carousel scrolls the pager to a pressed tab from an effect that
+  // depends on it, and every new one would run it again - unanimated. Typed as the plain style
+  // the moving views take, see `WebCarouselStyles`
+  return useMemo(
+    () => ({
+      collapse,
+      expandOverview,
+      push: push as ViewStyle,
+      header: header as ViewStyle,
+      floatingBar: floatingBar as ViewStyle
+    }),
+    [collapse, expandOverview, floatingBar, header, push]
+  )
 }
 
 export default useWebCarouselStyles
