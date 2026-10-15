@@ -316,6 +316,21 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Ambire/expo-configure-project.sh\"\n";
 		};
+		A6CF65CE3C7862EECB1A02C8 /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Uploads the dSYMs of release builds to Sentry, so native crashes show readable stack traces.\nif [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The bundle phase already fails a CI release without the token, so only local builds get here without it.\nif [[ -z \"$SENTRY_AUTH_TOKEN\" ]]; then\n  export SENTRY_DISABLE_AUTO_UPLOAD=true\nfi\n/bin/sh \"`${NODE_BINARY:-node} --print \"require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode-debug-files.sh'\"`\"\n";
+		};
 		DEEEC45A1B30D1C563715478 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -339,21 +354,6 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Ambire/Pods-Ambire-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
-		};
-		A6CF65CE3C7862EECB1A02C8 /* Upload Debug Symbols to Sentry */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Upload Debug Symbols to Sentry";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Uploads the dSYMs of release builds to Sentry, so native crashes show readable stack traces.\nif [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The bundle phase already fails a CI release without the token, so only local builds get here without it.\nif [[ -z \"$SENTRY_AUTH_TOKEN\" ]]; then\n  export SENTRY_DISABLE_AUTO_UPLOAD=true\nfi\n/bin/sh \"`${NODE_BINARY:-node} --print \"require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode-debug-files.sh'\"`\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
