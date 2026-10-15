@@ -10,9 +10,9 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import getCanCollapseOverview from '@common/modules/dashboard/hooks/useCollapseOnScroll/getCanCollapseOverview'
+import getCanCollapseOverview from '@common/modules/dashboard/helpers/getCanCollapseOverview'
 import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -32,22 +32,9 @@ interface Props extends FlatListProps<any> {
   floatingBar?: DashboardFloatingBarProps
 }
 
-// We do this instead of unmounting the component to prevent component rerendering when switching tabs.
-const HIDDEN_STYLE: ViewStyle = {
-  position: 'absolute',
-  opacity: 0,
-  display: 'none',
-  // @ts-ignore
-  pointerEvents: 'none'
-}
-
-const getFlatListStyle = (tab: TabType, openTab: TabType) => {
-  // On mobile every page is a slide of the dashboard carousel, so they are all
-  // laid out next to each other instead of only the open one being visible.
-  if (isMobile) return [spacings.phSm, flexbox.flex1]
-
-  return [spacings.phSm, openTab !== tab ? HIDDEN_STYLE : {}]
-}
+// Every page is a slide of the dashboard carousel, so they are all laid out next to each
+// other instead of only the open one being visible.
+const LIST_STYLE = [spacings.phSm, flexbox.flex1]
 
 // All four pages are rendered, so none may build more than a screenful up front.
 // Overrides the pages' own values, which assume being the only rendered list.
@@ -81,7 +68,6 @@ const DashboardPageScrollContainer: FC<Props> = ({
   // gesture that decides before it. Inert on its own.
   const listGesture = useMemo(() => Gesture.Native(), [])
   const { bottom } = useSafeAreaInsets()
-  const style = useMemo(() => getFlatListStyle(tab, openTab), [openTab, tab])
   const { theme } = useTheme()
   const carousel = useContext(DashboardCarouselContext)
   // The part of the header that never collapses. The list starts below it rather than
@@ -220,13 +206,21 @@ const DashboardPageScrollContainer: FC<Props> = ({
     flatlistRef.current?.scrollToOffset({ offset, animated })
   }, [])
 
+  // Web only, by the list's own scrollable node, so a wheel turned over the header scrolls
+  // the page as smoothly as one turned over the page itself
+  const scrollBy = useCallback((delta: number) => {
+    const node = flatlistRef.current?.getScrollableNode() as HTMLElement | null | undefined
+
+    node?.scrollBy?.(0, delta)
+  }, [])
+
   useEffect(() => {
     if (!registerPage) return undefined
 
-    registerPage(tab, { scrollToOffset, listGesture })
+    registerPage(tab, { scrollToOffset, scrollBy, listGesture })
 
     return () => registerPage(tab, null)
-  }, [listGesture, registerPage, scrollToOffset, tab])
+  }, [listGesture, registerPage, scrollBy, scrollToOffset, tab])
 
   const registerFloatingBar = carousel?.registerFloatingBar
 
@@ -241,7 +235,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const list = (
     <ListComponent
       ref={listRef}
-      style={[style, carouselListStyle]}
+      style={[LIST_STYLE, carouselListStyle]}
       contentContainerStyle={contentContainerStyle}
       // Makes the header sticky. The carousel lays its own header over the pages instead
       stickyHeaderIndices={carousel ? undefined : [1]}
@@ -272,7 +266,8 @@ const DashboardPageScrollContainer: FC<Props> = ({
     />
   )
 
-  if (!carousel) return list
+  // Web has no pull to refresh to declare the list's scrolling against
+  if (!carousel || isWeb) return list
 
   return <GestureDetector gesture={listGesture}>{list}</GestureDetector>
 }

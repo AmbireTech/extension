@@ -2,9 +2,6 @@ import { nanoid } from 'nanoid'
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
-
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
@@ -21,16 +18,11 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 import type { DashboardPagesCarouselProps } from '@common/modules/dashboard/components/DashboardPagesCarousel/DashboardPagesCarousel'
 
 interface Props {
-  /** Collapses the overview and hides the floating bar on scroll. The mobile carousel does it itself. */
-  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
-  isSearchHidden?: boolean
-  /** Called whenever another tab is opened, as its page starts at the top. */
-  onTabChange?: () => void
   refreshing?: boolean
   onRefresh?: () => void
-  /** Mobile only, where the carousel slides over the collapsing part of the overview. */
+  /** How far the open overview pushes the pages down. They slide over its collapsing part. */
   overviewHeight?: number
-  /** Mobile only. See `DashboardPagesCarouselProps['onOverviewCollapseChange']` */
+  /** See `DashboardPagesCarouselProps['onOverviewCollapseChange']` */
   onOverviewCollapseChange?: DashboardPagesCarouselProps['onOverviewCollapseChange']
 }
 
@@ -40,11 +32,8 @@ const selectDashboardNetworkFilter = (
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const DashboardPages = ({
-  onScroll,
-  isSearchHidden,
   refreshing,
   onRefresh,
-  onTabChange,
   overviewHeight,
   onOverviewCollapseChange
 }: Props) => {
@@ -75,7 +64,7 @@ const DashboardPages = ({
     [key: string]: boolean
   }>({})
 
-  // The mobile carousel keeps all pages mounted side by side, so they must be
+  // The carousel keeps all pages mounted side by side, so they must be
   // populated upfront instead of when the tab is opened.
   const initAllTabs = useCallback(() => {
     setInitTab((prev) =>
@@ -84,13 +73,6 @@ const DashboardPages = ({
         : { tokens: true, collectibles: true, defi: true, activity: true }
     )
   }, [])
-
-  // Every page must stay mounted on mobile, because the carousel maps a page
-  // index to a tab and an unmounted page would shift the ones after it.
-  const shouldRenderPage = useCallback(
-    (tab: TabType) => isMobile || openTab === tab || !!initTab?.[tab],
-    [initTab, openTab]
-  )
 
   const network = useMemo(() => {
     if (!dashboardNetworkFilter || dashboardNetworkFilter === 'rewards') return null
@@ -116,10 +98,6 @@ const DashboardPages = ({
     }
   }, [openTab, prevOpenTab, initTab])
 
-  useEffect(() => {
-    onTabChange?.()
-  }, [onTabChange, openTab])
-
   return (
     <>
       <SessionIdInUrl sessionId={sessionId} />
@@ -133,59 +111,39 @@ const DashboardPages = ({
         overviewHeight={overviewHeight}
         onOverviewCollapseChange={onOverviewCollapseChange}
       >
+        {/* Every page stays mounted, because the carousel maps a page index to a tab and
+        an unmounted page would shift the ones after it */}
         <Tokens
           openTab={pagesOpenTab}
-          sessionId={sessionId}
-          setOpenTab={setOpenTab}
-          onScroll={onScroll}
           initTab={initTab}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
-          isSearchHidden={isSearchHidden}
           onRefresh={onRefresh}
           refreshing={refreshing}
         />
-        {shouldRenderPage('defi') && (
-          <DeFiPositions
-            openTab={pagesOpenTab}
-            sessionId={sessionId}
-            setOpenTab={setOpenTab}
-            onScroll={onScroll}
-            initTab={initTab}
-            dashboardNetworkFilterName={dashboardNetworkFilterName}
-            isSearchHidden={isSearchHidden}
-            onRefresh={onRefresh}
-            refreshing={refreshing}
-          />
-        )}
-
-        {shouldRenderPage('collectibles') && (
-          <Collections
-            openTab={pagesOpenTab}
-            sessionId={sessionId}
-            setOpenTab={setOpenTab}
-            initTab={initTab}
-            onScroll={onScroll}
-            networks={networks}
-            dashboardNetworkFilterName={dashboardNetworkFilterName}
-            isSearchHidden={isSearchHidden}
-            onRefresh={onRefresh}
-            refreshing={refreshing}
-          />
-        )}
-
-        {shouldRenderPage('activity') && (
-          <Activity
-            openTab={pagesOpenTab}
-            sessionId={sessionId}
-            setOpenTab={setOpenTab}
-            onScroll={onScroll}
-            initTab={initTab}
-            network={network}
-            isSearchHidden={isSearchHidden}
-            onRefresh={onRefresh}
-            refreshing={refreshing}
-          />
-        )}
+        <DeFiPositions
+          openTab={pagesOpenTab}
+          initTab={initTab}
+          sessionId={sessionId}
+          dashboardNetworkFilterName={dashboardNetworkFilterName}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+        />
+        <Collections
+          openTab={pagesOpenTab}
+          initTab={initTab}
+          networks={networks}
+          dashboardNetworkFilterName={dashboardNetworkFilterName}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+        />
+        <Activity
+          openTab={pagesOpenTab}
+          sessionId={sessionId}
+          initTab={initTab}
+          network={network}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+        />
       </DashboardPagesCarousel>
     </>
   )

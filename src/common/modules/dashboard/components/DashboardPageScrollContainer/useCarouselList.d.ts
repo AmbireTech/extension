@@ -6,9 +6,9 @@ import type { DashboardPageScroll } from '../DashboardPagesCarousel/context'
 export interface CarouselListOptions {
   /** Kept pointing at the list, for scrolling it from JS. */
   listRef: MutableRefObject<FlatList | null>
-  /** Provided by the mobile carousel only, with `pageScroll`. Without them the list is a plain one. */
+  /** Provided by the carousel, with `pageScroll`. Without them the list is a plain one. */
   scrollY?: Animated.Value
-  /** Provided by the mobile carousel only. Without it the list is a plain one. */
+  /** Provided by the carousel. Without it the list is a plain one. */
   pageScroll?: DashboardPageScroll
   /** Only the open page reports its scroll to the carousel. */
   isOpen: boolean
@@ -23,9 +23,10 @@ export interface CarouselList {
 }
 
 /**
- * The list a dashboard page renders. Inside the mobile carousel the open one reports its
- * scroll twice from the same native events: into `scrollY`, which draws the banners and the
- * overview, and to `pageScroll` on the UI thread, which settles a drag let go of halfway.
+ * The list a dashboard page renders. Inside the carousel the open one reports its scroll
+ * twice from the same events: into `scrollY`, which draws the banners and the overview, and
+ * to `pageScroll` - on the UI thread on mobile - which settles a partly collapsed overview
+ * once a drag is let go of, or on web, once the scroll stops.
  */
 declare const useCarouselList: (options: CarouselListOptions) => CarouselList
 export default useCarouselList

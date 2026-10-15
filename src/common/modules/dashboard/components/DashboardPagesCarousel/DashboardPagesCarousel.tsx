@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Dimensions,
@@ -22,7 +22,7 @@ import Reanimated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import Spinner from '@common/components/Spinner'
-import { isiOS } from '@common/config/env'
+import { isiOS, isWeb } from '@common/config/env'
 import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
@@ -34,7 +34,7 @@ import {
   getOverviewCollapsed,
   getSettleOffset,
   OVERVIEW_RETURN_DISTANCE
-} from '@common/modules/dashboard/hooks/useCollapseOnScroll/overviewCollapse'
+} from '@common/modules/dashboard/helpers/overviewCollapse'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -45,8 +45,7 @@ import DashboardCarouselContext, {
   DashboardPageHandle,
   DashboardPageScroll
 } from './context'
-import { DashboardPagesCarouselProps } from './DashboardPagesCarousel'
-import getStyles from './styles'
+import getStyles, { WEB_MOVING_LAYER } from './styles'
 
 // The order must match the order the pages are rendered in, because the page
 // index is what maps a swipe to a tab.
@@ -83,8 +82,19 @@ const OVERVIEW_EXPAND_TIMING = {
   easing: Easing.inOut(Easing.sin)
 }
 
+// Web has no native driver: the same nodes are run by JS there, which updates the views
+// directly, without a render
+const USE_NATIVE_DRIVER = !isWeb
+
+// How long a swipe between the pages has to have stopped for to be over on web, which
+// reports it only as scroll events, with no drag start or momentum end
+const WEB_PAGER_IDLE_DELAY = 150
+
+// How many pixels a line of a wheel scrolled by lines stands for, as Firefox reports it
+const WHEEL_LINE_HEIGHT = 16
+
 // How far the floating bar moves from its place above the safe area to below the screen
-// edge, on top of twice the safe area inset. The same as it hides itself by
+// edge, on top of twice the safe area inset
 const FLOATING_BAR_HIDE_DISTANCE = 60 + SPACING
 
 // How fast (px/ms) a released drag has to be for its momentum to settle the overview,
@@ -155,6 +165,32 @@ const WhileFocused = ({
   }, [initAllTabs, isScreenFocused])
 
   return null
+}
+
+export interface DashboardPagesCarouselProps {
+  openTab: TabType
+  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
+  sessionId: string
+  /**
+   * Called once on mount, so the pages the user hasn't opened yet are populated before
+   * they are swiped into view.
+   */
+  initAllTabs: () => void
+  /** Pulling the header down past the top refreshes, as pulling a page down does. Mobile only. */
+  onRefresh?: () => void
+  /** Holds the pages open on the spinner for as long as the refresh runs. */
+  refreshing?: boolean
+  /**
+   * How far the open overview pushes the pager down. The pager slides over the collapsing
+   * part of the overview while the open page is scrolled down.
+   */
+  overviewHeight?: number
+  /**
+   * Hands out how far the overview is collapsed, from 0 to `overviewHeight`, as the animated
+   * value the pager is moved by, so the overview can move its background in step.
+   */
+  onOverviewCollapseChange?: (collapse: Animated.AnimatedInterpolation<number>) => void
+  children: ReactNode
 }
 
 const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
@@ -268,6 +304,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // by the open one, while the part above the pages is clipped away.
   const pagerLiftStyle = useMemo(
     () => ({
+      ...WEB_MOVING_LAYER,
       marginTop: -overviewHeight,
       marginBottom: overviewHeight,
       transform: [
@@ -294,7 +331,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       Animated.timing(floatingBarFollow, {
         toValue,
         ...OVERVIEW_EXPAND_TIMING,
-        useNativeDriver: true
+        useNativeDriver: USE_NATIVE_DRIVER
       }).start()
 
     const showSubscription = Keyboard.addListener(
@@ -485,7 +522,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     Animated.timing(overviewSettle, {
       toValue: 0,
       ...OVERVIEW_EXPAND_TIMING,
-      useNativeDriver: true
+      useNativeDriver: USE_NATIVE_DRIVER
     }).start()
   }, [
     bannersHeight,
@@ -534,6 +571,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // on mount (a deep link may open another tab) must not animate.
   const alignedTabIndexRef = useRef(openTabIndex)
   const isPagerDrivenRef = useRef(false)
+  // Web only: where the pager was last reported at, and whether it is being scrolled to a
+  // pressed tab rather than swiped, which it can only tell apart by the scroll events
+  const pagerOffsetXRef = useRef(0)
+  const isScrollingToTabRef = useRef(false)
 
   useEffect(() => {
     const previousTabIndex = alignedTabIndexRef.current
@@ -546,7 +587,11 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
     if (hasTabChanged) takePagesToTop()
 
-    scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated: hasTabChanged })
+    const offsetX = openTabIndex * pageSize.width
+
+    if (isWeb && Math.abs(offsetX - pagerOffsetXRef.current) > 1) isScrollingToTabRef.current = true
+
+    scrollRef.current?.scrollTo({ x: offsetX, animated: hasTabChanged })
   }, [openTab, openTabIndex, pageSize.width, takePagesToTop])
 
   // Only the banners scroll out of view; the tabs row stays. With no banners it maps to a
@@ -598,6 +643,37 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       if (tab !== openTab) setOpenTab(tab)
     },
     [openTab, pageSize.width, setOpenTab]
+  )
+
+  // Web reports a swipe only as scroll events: the first one that isn't a scroll to a
+  // pressed tab starts it, and it is over once they have stopped coming
+  const pagerIdleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(
+    () => () => {
+      if (pagerIdleTimeoutRef.current) clearTimeout(pagerIdleTimeoutRef.current)
+    },
+    []
+  )
+
+  const onWebPagerScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      pagerOffsetXRef.current = event.nativeEvent.contentOffset.x
+
+      if (!isPagerDrivenRef.current && !isScrollingToTabRef.current) onScrollBeginDrag()
+
+      if (pagerIdleTimeoutRef.current) clearTimeout(pagerIdleTimeoutRef.current)
+
+      pagerIdleTimeoutRef.current = setTimeout(() => {
+        pagerIdleTimeoutRef.current = null
+        isScrollingToTabRef.current = false
+
+        if (isPagerDrivenRef.current) onMomentumScrollEnd(event)
+      }, WEB_PAGER_IDLE_DELAY)
+
+      onPagerScroll(event)
+    },
+    [onMomentumScrollEnd, onPagerScroll, onScrollBeginDrag]
   )
 
   const carousel = useMemo(
@@ -711,6 +787,13 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     }
   }
 
+  // Web only: the header is laid over the open page, so the wheel turned over it is handed
+  // to the page, which would otherwise not scroll under the banners and the tabs
+  const onHeaderWheel = ({ deltaY, deltaMode }: { deltaY: number; deltaMode: number }) => {
+    // Firefox reports a mouse wheel in lines rather than pixels
+    pageHandles.current[openTab]?.scrollBy?.(deltaMode === 1 ? deltaY * WHEEL_LINE_HEIGHT : deltaY)
+  }
+
   const endHeaderDrag = () => {
     isHeaderDraggingRef.current = false
     isDragging.set(false)
@@ -808,6 +891,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
   const openTabFloatingBar = floatingBars[openTab]
 
+  // Web only, where nothing hands the wheel over the header to the page under it
+  const webHeaderProps = isWeb ? { onWheel: onHeaderWheel } : undefined
+
   const pages = useMemo(
     () =>
       React.Children.map(children, (child, index) => {
@@ -823,6 +909,25 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
         )
       }),
     [children, openTab, pageSize, renderedTabs]
+  )
+
+  const pager = (
+    <Reanimated.View style={[flexbox.flex1, pagerStyle]}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        directionalLockEnabled
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        scrollEventThrottle={16}
+        onScroll={isWeb ? onWebPagerScroll : onPagerScroll}
+        onScrollBeginDrag={onScrollBeginDrag}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+      >
+        {pages}
+      </ScrollView>
+    </Reanimated.View>
   )
 
   return (
@@ -842,24 +947,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
               </Reanimated.View>
             )}
             <Animated.View style={[flexbox.flex1, pagerLiftStyle]}>
-              <GestureDetector gesture={pullGesture}>
-                <Reanimated.View style={[flexbox.flex1, pagerStyle]}>
-                  <ScrollView
-                    ref={scrollRef}
-                    horizontal
-                    pagingEnabled
-                    directionalLockEnabled
-                    showsHorizontalScrollIndicator={false}
-                    decelerationRate="fast"
-                    scrollEventThrottle={16}
-                    onScroll={onPagerScroll}
-                    onScrollBeginDrag={onScrollBeginDrag}
-                    onMomentumScrollEnd={onMomentumScrollEnd}
-                  >
-                    {pages}
-                  </ScrollView>
-                </Reanimated.View>
-              </GestureDetector>
+              {/* Web has no pull to refresh, and the gesture would only stand in the way of the wheel */}
+              {isWeb ? pager : <GestureDetector gesture={pullGesture}>{pager}</GestureDetector>}
             </Animated.View>
           </DashboardCarouselContext.Provider>
         </View>
@@ -873,6 +962,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
           onResponderMove={onHeaderDrag}
           onResponderRelease={onHeaderRelease}
           onResponderTerminate={endHeaderDrag}
+          {...webHeaderProps}
           style={[styles.header, spacings.phSm, { transform: [{ translateY: headerTranslateY }] }]}
         >
           <View onLayout={onBannersLayout}>
@@ -895,7 +985,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       tab put in it changes. Hidden together with the overview */}
       {!!openTabFloatingBar && (
         <Animated.View pointerEvents="box-none" style={[styles.floatingBar, floatingBarHideStyle]}>
-          <FloatingBottomBar {...openTabFloatingBar} isHidden={false} />
+          <FloatingBottomBar {...openTabFloatingBar} />
         </Animated.View>
       )}
     </View>

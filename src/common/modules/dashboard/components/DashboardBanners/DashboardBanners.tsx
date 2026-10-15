@@ -2,7 +2,6 @@ import React from 'react'
 import { View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
-import { isMobile } from '@common/config/env'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner/DashboardBanner'
 import MarketingBanner from '@common/modules/dashboard/components/DashboardBanners/MarketingBanner/MarketingBanner'
 import RecoveryPhraseBackupBanner from '@common/modules/dashboard/components/DashboardBanners/RecoveryPhraseBackupBanner'
@@ -13,9 +12,9 @@ const DashboardBanners = () => {
   const [controllerBanners, marketingBanners] = useBanners()
 
   return (
-    // The gap above the tabs row, which web pads the tabs row by. Mobile collapses the banners
-    // away above the tabs row, so the gap has to be part of them to collapse with them.
-    <View style={isMobile && !!controllerBanners.length ? spacings.pbTy : undefined}>
+    // The gap above the tabs row. The banners collapse away above it, so the gap has to be
+    // part of them to collapse with them.
+    <View style={controllerBanners.length ? spacings.pbTy : undefined}>
       {/* Stays on top of everything else - there is nothing more urgent than not
       being able to recover an account that holds funds */}
       <RecoveryPhraseBackupBanner />

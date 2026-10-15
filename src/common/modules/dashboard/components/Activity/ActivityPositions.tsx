@@ -1,6 +1,6 @@
 import React, { FC, Suspense, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlatListProps, View } from 'react-native'
+import { View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { Network } from '@ambire-common/interfaces/network'
@@ -11,16 +11,13 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllerSession from '@common/hooks/useControllerSession'
 import useTheme from '@common/hooks/useTheme'
 import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
 import PendingTransactions from '@common/modules/dashboard/components/Activity/PendingTransactions/lazyPendingTransactions'
-import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
-import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
-import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import SubmittedTransactionSummary, {
   preloadSummaryPreview
@@ -36,12 +33,9 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 interface Props {
   openTab: TabType
-  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll?: FlatListProps<any>['onScroll']
   network: Network | null
-  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
@@ -79,11 +73,8 @@ const selectDashboardNetworkFilter = (
 const ActivityPositions: FC<Props> = ({
   openTab,
   sessionId,
-  setOpenTab,
   initTab,
-  onScroll,
   network,
-  isSearchHidden,
   refreshing,
   onRefresh
 }) => {
@@ -151,11 +142,11 @@ const ActivityPositions: FC<Props> = ({
 
   const renderItem = useCallback(
     ({ item }: { item: Item }) => {
+      // The banners of the account's pending transactions, which the tabs row the carousel
+      // lays over the page used to sit above. Web only, as mobile never had them here
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
-
             {!!accountsOps[sessionId] && (
               <View style={spacings.mbMi}>
                 {currentAccountBanners.map((banner) => (
@@ -310,8 +301,6 @@ const ActivityPositions: FC<Props> = ({
     [
       initTab?.activity,
       theme,
-      openTab,
-      setOpenTab,
       sessionId,
       accountsOps,
       currentAccountBanners,
@@ -330,41 +319,33 @@ const ActivityPositions: FC<Props> = ({
   }, [])
 
   // The transactions are not searchable, so the bar carries the network picker alone.
-  // Rendered above the carousel on mobile, so it stays put through a swipe
+  // Rendered by the carousel above the pages, so it stays put through a swipe
   const floatingBar = useMemo(() => ({ networkFilterTab: 'activity' as const }), [])
 
   return (
-    <>
-      <DashboardPageScrollContainer
-        floatingBar={floatingBar}
-        tab="activity"
-        openTab={openTab}
-        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
-        data={[
-          ...(isMobile ? [] : ['header']),
-          'pending',
-          !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
-          ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
-            ? accountsOps[sessionId].result.items
-            : []),
-          accountsOps?.[sessionId] && !accountsOps[sessionId].result.items.length ? 'empty' : '',
-          'load-more'
-        ]}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        onEndReachedThreshold={isPopup ? 5 : 2.5}
-        initialNumToRender={isPopup ? 10 : 20}
-        windowSize={9} // Larger values can cause performance issues.
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-      />
-      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
-      {!isMobile && openTab === 'activity' && (
-        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
-      )}
-    </>
+    <DashboardPageScrollContainer
+      floatingBar={floatingBar}
+      tab="activity"
+      openTab={openTab}
+      data={[
+        ...(isWeb ? ['header'] : []),
+        'pending',
+        !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
+        ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
+          ? accountsOps[sessionId].result.items
+          : []),
+        accountsOps?.[sessionId] && !accountsOps[sessionId].result.items.length ? 'empty' : '',
+        'load-more'
+      ]}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      onEndReachedThreshold={isPopup ? 5 : 2.5}
+      initialNumToRender={isPopup ? 10 : 20}
+      windowSize={9} // Larger values can cause performance issues.
+      scrollEventThrottle={16}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+    />
   )
 }
 

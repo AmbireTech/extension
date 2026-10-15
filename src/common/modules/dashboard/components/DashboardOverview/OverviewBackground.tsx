@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Animated, LayoutChangeEvent, StyleSheet, View, ViewStyle } from 'react-native'
 import { Defs, FeBlend, FeColorMatrix, Filter, Image as SvgImage, Svg } from 'react-native-svg'
 
+import { isWeb } from '@common/config/env'
 import useControllerState from '@common/hooks/useControllerState'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { getAvatarColors } from '@common/utils/avatars'
@@ -51,34 +52,40 @@ interface CardSize {
  * card's height decides the cover size, and centred on what is left of the card. That is how
  * web's background moves as its overview collapses, by resizing a card mobile never resizes.
  */
-const getCollapsingLayerStyle = (
+const getCollapsingLayer = (
   { width, height }: CardSize,
   collapse: Animated.AnimatedInterpolation<number>
-): Animated.WithAnimatedObject<ViewStyle> => {
+): { width: number; height: number; style: Animated.WithAnimatedObject<ViewStyle> } => {
   const layerWidth = Math.max(width, height * IMAGE_ASPECT_RATIO)
   const layerHeight = layerWidth / IMAGE_ASPECT_RATIO
   // How far the card collapses before its width, not its height, decides the cover size
   const heightBoundCollapse = height - width / IMAGE_ASPECT_RATIO
 
   return {
-    position: 'absolute',
     width: layerWidth,
     height: layerHeight,
-    left: (width - layerWidth) / 2,
-    top: (height - layerHeight) / 2,
-    transform: [
-      { translateY: collapse.interpolate({ inputRange: [0, 1], outputRange: [0, -0.5] }) },
-      {
-        scale:
-          heightBoundCollapse > 0
-            ? collapse.interpolate({
-                inputRange: [0, heightBoundCollapse],
-                outputRange: [1, width / layerWidth],
-                extrapolate: 'clamp'
-              })
-            : 1
-      }
-    ]
+    style: {
+      // Web only, so moving it only recomposites the filtered image rather than repainting it
+      ...(isWeb ? ({ willChange: 'transform' } as ViewStyle) : {}),
+      position: 'absolute',
+      width: layerWidth,
+      height: layerHeight,
+      left: (width - layerWidth) / 2,
+      top: (height - layerHeight) / 2,
+      transform: [
+        { translateY: collapse.interpolate({ inputRange: [0, 1], outputRange: [0, -0.5] }) },
+        {
+          scale:
+            heightBoundCollapse > 0
+              ? collapse.interpolate({
+                  inputRange: [0, heightBoundCollapse],
+                  outputRange: [1, width / layerWidth],
+                  extrapolate: 'clamp'
+                })
+              : 1
+        }
+      ]
+    }
   }
 }
 
@@ -101,13 +108,14 @@ export function OverviewBackground({
     )
   }, [])
 
-  const layerStyle = useMemo(
-    () =>
-      collapse && cardSize
-        ? getCollapsingLayerStyle(cardSize, collapse)
-        : StyleSheet.absoluteFillObject,
+  const collapsingLayer = useMemo(
+    () => (collapse && cardSize ? getCollapsingLayer(cardSize, collapse) : null),
     [cardSize, collapse]
   )
+  // Sized in points rather than in percent: on iOS the image keeps the size a percentage
+  // first resolved to when only the view around it is resized, which cut off its right side
+  const layerWidth = collapsingLayer?.width ?? '100%'
+  const layerHeight = collapsingLayer?.height ?? '100%'
 
   const colors = getAvatarColors(state.avatarType, address)
 
@@ -137,10 +145,10 @@ export function OverviewBackground({
           overflow: 'hidden'
         }
       ]}
-      onLayout={collapse ? onLayout : undefined}
+      onLayout={onLayout}
     >
-      <Animated.View style={layerStyle}>
-        <Svg width="100%" height="100%">
+      <Animated.View style={collapsingLayer?.style ?? StyleSheet.absoluteFillObject}>
+        <Svg width={layerWidth} height={layerHeight}>
           <Defs>
             <Filter id="recolor" x="0%" y="0%" width="100%" height="100%">
               <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
@@ -151,8 +159,8 @@ export function OverviewBackground({
 
           <SvgImage
             href={backgroundImage}
-            width="100%"
-            height="100%"
+            width={layerWidth}
+            height={layerHeight}
             preserveAspectRatio="xMidYMid slice"
             opacity={0.28}
             filter="url(#recolor)"

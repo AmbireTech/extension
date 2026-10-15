@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useRef, useState } from 'react'
-import { Animated, View } from 'react-native'
+import React, { useCallback, useContext, useState } from 'react'
+import { Animated, LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import GasTankModal from '@common/components/GasTankModal'
@@ -8,23 +8,30 @@ import { ControllersStateLoadedContext } from '@common/contexts/controllersState
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
-import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import DashboardShell from '@common/modules/dashboard/components/DashboardShell'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
-import useCollapseOnScroll from '@common/modules/dashboard/hooks/useCollapseOnScroll'
 import getStyles from '@common/modules/dashboard/screens/styles'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import MobileAppPromoBanner from '@web/modules/dashboard/components/MobileAppPromoBanner'
 import commonWebStyles from '@web/styles/utils/common'
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
   const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useModalize()
-  const [dashboardOverviewSize, setDashboardOverviewSize] = useState({
-    width: 0,
-    height: 0
-  })
-  const animatedOverviewHeight = useRef(new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT)).current
+  // The pager starts where the collapsed overview ends and slides over the part that
+  // collapses, so a collapse never resizes or lays out anything. Both heights are static.
+  const [overviewHeight, setOverviewHeight] = useState(0)
+  const [collapsibleOverviewHeight, setCollapsibleOverviewHeight] = useState(0)
+
+  const onOverviewLayout = useCallback(({ nativeEvent }: LayoutChangeEvent) => {
+    setOverviewHeight(nativeEvent.layout.height)
+  }, [])
+  // Until then the pager doesn't know where to start, and would be drawn over the overview
+  const isOverviewMeasured = !!overviewHeight && !!collapsibleOverviewHeight
+  // How far the pager has slid over the overview, which moves its background in step
+  const [overviewCollapse, setOverviewCollapse] = useState<Animated.AnimatedInterpolation<number>>()
 
   const {
     state: { account, portfolio }
@@ -34,21 +41,6 @@ const DashboardScreen = () => {
   // they all arrive, render a lightweight shell (real header, menu buttons and
   // skeletons); mount the full dashboard only once every controller is ready.
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
-
-  const { isOverviewCollapsed, isFloatingBarHidden, onScroll, reset } = useCollapseOnScroll(
-    dashboardOverviewSize.height,
-    OVERVIEW_CONTENT_MAX_HEIGHT
-  )
-
-  useEffect(() => {
-    Animated.spring(animatedOverviewHeight, {
-      toValue: isOverviewCollapsed ? 0 : OVERVIEW_CONTENT_MAX_HEIGHT,
-      bounciness: 0,
-      speed: 2.8,
-      overshootClamping: true,
-      useNativeDriver: false
-    }).start()
-  }, [animatedOverviewHeight, isOverviewCollapsed])
 
   return (
     <LayoutWrapper>
@@ -66,17 +58,31 @@ const DashboardScreen = () => {
           />
 
           <PendingActionWindowModal />
-          <View style={styles.container}>
-            <DashboardOverview
-              openGasTankModal={openGasTankModal}
-              animatedOverviewHeight={animatedOverviewHeight}
-              setDashboardOverviewSize={setDashboardOverviewSize}
-            />
-            <DashboardPages
-              onScroll={onScroll}
-              isSearchHidden={isFloatingBarHidden}
-              onTabChange={reset}
-            />
+          {/* The overview is padded instead, as it is laid out of the flow */}
+          <View style={[styles.container, spacings.pt0]}>
+            {/* Rendered before the pager, which has to be drawn over it */}
+            <View style={[styles.overviewOverlay, spacings.ptSm]} onLayout={onOverviewLayout}>
+              <DashboardOverview
+                openGasTankModal={openGasTankModal}
+                onCollapsibleHeightChange={setCollapsibleOverviewHeight}
+                overviewCollapse={overviewCollapse}
+              />
+            </View>
+            <View
+              style={[
+                flexbox.flex1,
+                {
+                  marginTop: overviewHeight - collapsibleOverviewHeight,
+                  opacity: isOverviewMeasured ? 1 : 0
+                }
+              ]}
+              pointerEvents="box-none"
+            >
+              <DashboardPages
+                overviewHeight={collapsibleOverviewHeight}
+                onOverviewCollapseChange={setOverviewCollapse}
+              />
+            </View>
             <MobileAppPromoBanner />
           </View>
         </>

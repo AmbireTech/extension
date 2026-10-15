@@ -6,11 +6,13 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 
 import type { FloatingBottomBarProps } from '../FloatingBottomBar/FloatingBottomBar'
 
-/** Whether the bar is hidden is the carousel's to decide, not the page's. */
-export type DashboardFloatingBarProps = Omit<FloatingBottomBarProps, 'isHidden'>
+/** What a page wants in the floating bar. Hiding it is the carousel's, not the page's. */
+export type DashboardFloatingBarProps = FloatingBottomBarProps
 
 export interface DashboardPageHandle {
   scrollToOffset: (offset: number, animated?: boolean) => void
+  /** Web only, scrolls the page by the wheel turned over the header laid over it. */
+  scrollBy?: (delta: number) => void
   /**
    * The page's own scrolling, as something the carousel's pull can be declared against.
    * A scrollable page claims a drag before the pull can judge it, and a relation can
@@ -72,7 +74,7 @@ export interface DashboardCarouselContextValue {
   registerFloatingBar: (tab: TabType, bar: DashboardFloatingBarProps | null) => void
 }
 
-/** Provided by the mobile carousel only, so the pages keep their own header elsewhere. */
+/** Provided by the dashboard carousel, which every dashboard page is a slide of. */
 const DashboardCarouselContext = createContext<DashboardCarouselContextValue | null>(null)
 
 export default DashboardCarouselContext

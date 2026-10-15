@@ -7,7 +7,6 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import Tabs from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tabs'
-import useBanners from '@common/modules/dashboard/hooks/useBanners'
 import spacings from '@common/styles/spacings'
 
 import getStyles from './styles'
@@ -21,18 +20,11 @@ interface Props {
 const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, sessionId }) => {
   const [, setSearchParams] = useSearchParams()
   const { styles } = useTheme(getStyles)
-  const [controllerBanners] = useBanners()
   const { minWidthSize } = useWindowSize()
 
   return (
     <View
-      style={[
-        styles.container,
-        // Mobile puts this gap below the banners instead, so it collapses together with them
-        !isMobile && !!controllerBanners.length && spacings.ptTy,
-        isWeb && minWidthSize(480) && spacings.pl,
-        isMobile && spacings.ph
-      ]}
+      style={[styles.container, isWeb && minWidthSize(480) && spacings.pl, isMobile && spacings.ph]}
     >
       <Tabs
         // Only the extension routes on the search params. On mobile the open tab lives
