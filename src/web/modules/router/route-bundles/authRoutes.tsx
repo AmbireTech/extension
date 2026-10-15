@@ -20,6 +20,6 @@ export { default as SafeImportScreen } from '@web/modules/auth/screens/SafeImpor
 export { default as SafeImportByOwnerScreen } from '@web/modules/auth/screens/SafeImportByOwnerScreen'
 export { default as SafeImportMethodScreen } from '@web/modules/auth/screens/SafeImportMethodScreen'
 export { default as SeedPhraseImportScreen } from '@web/modules/auth/screens/SeedPhraseImportScreen'
-export { default as ImportAccountsFromMobileScreen } from '@web/modules/accounts-sync/screens/ImportAccountsFromMobileScreen'
-export { default as ExportAccountsToMobileScreen } from '@web/modules/accounts-sync/screens/ExportAccountsToMobileScreen'
+export { default as ImportFromMobileScreen } from '@web/modules/app-data-sync/screens/ImportFromMobileScreen'
+export { default as ExportToMobileScreen } from '@web/modules/app-data-sync/screens/ExportToMobileScreen'
 export { default as ViewOnlyAccountAdderScreen } from '@web/modules/auth/screens/ViewOnlyAccountAdderScreen'

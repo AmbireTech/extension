@@ -13,7 +13,8 @@ import { isMobile, isWeb } from '@common/config/env'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>
@@ -65,7 +66,11 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
         style={spacings.mb2Xl}
       />
 
-      <FooterGlassView size="sm" absolute={false}>
+      <FooterGlassView
+        size="sm"
+        absolute={false}
+        mobileStyle={{ ...flexbox.directionRow, columnGap: SPACING_TY }}
+      >
         {/* On web the header's back arrow already closes the sheet */}
         {isMobile && (
           <Button
@@ -73,13 +78,14 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
             type="secondary"
             text={t('Cancel')}
             onPress={closeBottomSheet}
+            style={flexbox.flex1}
           />
         )}
         <Button
           testID="form-add-to-contacts-button"
-          style={isWeb && { minWidth: 160 }}
+          style={isWeb ? { minWidth: 160 } : flexbox.flex1}
           disabled={!address || name.length === 0 || name.length > 32}
-          hasBottomSpacing={isMobile}
+          hasBottomSpacing={false}
           text={!name.length ? t('Name your contact') : t('Add to contacts')}
           onPress={handleAddContact}
           size={isWeb ? 'smaller' : 'regular'}

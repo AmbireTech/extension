@@ -19,14 +19,14 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
-import ExportAccountsToExtensionSheet from '@mobile/modules/accounts-sync/components/ExportAccountsToExtensionSheet'
+import ExportToExtensionSheet from '@mobile/modules/app-data-sync/components/ExportToExtensionSheet'
 
 import getStyles from './styles'
 
@@ -208,13 +208,10 @@ const AccountSelectScreen = () => {
         }}
         onImportPress={() => {
           closeSyncBottomSheet()
-          navigate(ROUTES.importAccountsFromExtension)
+          navigate(ROUTES.importFromExtension)
         }}
       />
-      <ExportAccountsToExtensionSheet
-        sheetRef={exportSheetRef}
-        closeBottomSheet={closeExportSheet}
-      />
+      <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
     </MobileLayoutContainer>
   ) : (
     <DashboardSkeleton />

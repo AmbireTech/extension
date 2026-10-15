@@ -461,7 +461,9 @@ const SignInWithEthereum = ({
         {isSafeNotDeployed && (
           <Alert
             type="error"
-            title="Safe account not enabled on this network. Please activate it from Safe Global"
+            title={t(
+              "Your Safe account isn't active on this network yet. Confirm its activation request first, then you can sign this message."
+            )}
           />
         )}
         {signMessageState.signer &&

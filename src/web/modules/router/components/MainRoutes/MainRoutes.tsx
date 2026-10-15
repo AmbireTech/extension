@@ -15,7 +15,6 @@ import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/sc
 import SidePanelNoAccountsScreen from '@web/modules/auth/screens/SidePanelNoAccountsScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
-import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import NetworksScreen from '@web/modules/networks/screens'
 import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
@@ -155,14 +154,14 @@ const MainRoutes = () => {
               element={<AuthGroupScreen pick={(m) => m.QrCameraPermissionPage} />}
             />
             <Route
-              path={WEB_ROUTES.importAccountsFromMobile}
-              element={<AuthGroupScreen pick={(m) => m.ImportAccountsFromMobileScreen} />}
+              path={WEB_ROUTES.importFromMobile}
+              element={<AuthGroupScreen pick={(m) => m.ImportFromMobileScreen} />}
             />
 
             <Route element={<AuthenticatedRoute />}>
               <Route
-                path={WEB_ROUTES.exportAccountsToMobile}
-                element={<AuthGroupScreen pick={(m) => m.ExportAccountsToMobileScreen} />}
+                path={WEB_ROUTES.exportToMobile}
+                element={<AuthGroupScreen pick={(m) => m.ExportToMobileScreen} />}
               />
               <Route element={<SettingsRoutesProvider />}>
                 <Route
@@ -289,7 +288,6 @@ const MainRoutes = () => {
               element={<TrendingTokenDetailsScreen />}
             />
             <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
-            <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
             <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
           </Route>
         </Route>

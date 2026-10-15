@@ -21,6 +21,7 @@ const getStyles = (theme: ThemeProps) =>
       shadowRadius: 0,
       backgroundColor: theme.secondaryBackground,
       ...spacings.phSm,
+      ...spacings.ptSm,
       ...spacings.pbSm
     }
   })

@@ -15,7 +15,7 @@ const EmptyListPlaceholder: React.FC<Props> = ({ placeholderText }) => {
   return (
     <Text
       style={[spacings.pv, flexbox.flex1, text.center]}
-      numberOfLines={1}
+      numberOfLines={2}
       appearance="secondaryText"
       fontSize={14}
     >

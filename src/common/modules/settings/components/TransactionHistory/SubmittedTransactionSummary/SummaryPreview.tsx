@@ -17,6 +17,7 @@ import {
   getFullBalanceChangeAmount,
   getSummaryBalanceChanges,
   getVisibleSummaryBalanceChanges,
+  isNftBalanceChange,
   MAX_VISIBLE_BALANCE_CHANGES
 } from './helpers'
 import { useDappInteractions } from './humanizedCallsHooks'
@@ -72,7 +73,11 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                     weight="semiBold"
                     numberOfLines={isNarrowWebLayout ? 1 : undefined}
                   >
-                    {interaction.id === 'fallback:cancel' ? t('Cancel') : interaction.name}
+                    {interaction.id === 'fallback:cancel'
+                      ? t('Cancel')
+                      : interaction.id === 'fallback:safeDeploy'
+                        ? t('Activate Safe account')
+                        : interaction.name}
                   </Text>
                   {interaction.safeNonce !== undefined && (
                     <Text fontSize={12} appearance="secondaryText">
@@ -145,7 +150,11 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
         >
           {visibleBalanceChanges.map((change, index) => (
             <View
-              key={`${change.address}-${change.balanceChange.toString()}`}
+              key={`${change.address}-${
+                isNftBalanceChange(change)
+                  ? change.tokenId.toString()
+                  : change.balanceChange.toString()
+              }`}
               style={[
                 styles.balanceChangeRow,
                 index < visibleBalanceChanges.length - 1 || hiddenBalanceChangesCount
@@ -155,30 +164,59 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 isNarrowWebLayout && { minHeight: 18 }
               ]}
             >
-              <Text
-                fontSize={12}
-                weight="medium"
-                appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                style={{
-                  cursor: 'pointer',
-                  ...(isNarrowWebLayout ? { lineHeight: 16 } : {})
-                }}
-                dataSet={createGlobalTooltipDataSet({
-                  id: getBalanceChangeTooltipId(change, submittedAccountOp),
-                  content: getFullBalanceChangeAmount(change)
-                })}
-              >
-                {formatBalanceChangeAmount(change)}
-              </Text>
-              <Text
-                fontSize={12}
-                weight="medium"
-                appearance="secondaryText"
-                style={[spacings.mlTy, isNarrowWebLayout && { lineHeight: 16 }]}
-              >
-                {change.symbol}
-              </Text>
-              <BalanceChangeToken change={change} />
+              {isNftBalanceChange(change) ? (
+                // NFTs are unique so the amount is always 1. Show only the sign
+                // to keep the direction visible (e.g. in NFT-for-token swaps)
+                <Text
+                  fontSize={12}
+                  weight="medium"
+                  appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
+                  style={isNarrowWebLayout ? { lineHeight: 16 } : undefined}
+                >
+                  {change.balanceChange > 0n ? '+' : '-'}
+                </Text>
+              ) : (
+                <Text
+                  fontSize={12}
+                  weight="medium"
+                  appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
+                  style={{
+                    cursor: 'pointer',
+                    ...(isNarrowWebLayout ? { lineHeight: 16 } : {})
+                  }}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: getBalanceChangeTooltipId(change, submittedAccountOp),
+                    content: getFullBalanceChangeAmount(change)
+                  })}
+                >
+                  {formatBalanceChangeAmount(change)}
+                </Text>
+              )}
+              {isNftBalanceChange(change) ? (
+                <View style={spacings.mlTy}>
+                  <TokenOrNft
+                    value={change.tokenId}
+                    address={change.address}
+                    textSize={12}
+                    chainId={change.chainId}
+                    tokenMarginRight={0}
+                    tokenIconContainerSize={16}
+                    nftIconPosition="right"
+                  />
+                </View>
+              ) : (
+                <>
+                  <Text
+                    fontSize={12}
+                    weight="medium"
+                    appearance="secondaryText"
+                    style={[spacings.mlTy, isNarrowWebLayout && { lineHeight: 16 }]}
+                  >
+                    {change.symbol}
+                  </Text>
+                  <BalanceChangeToken change={change} />
+                </>
+              )}
             </View>
           ))}
           {!!hiddenBalanceChangesCount && (

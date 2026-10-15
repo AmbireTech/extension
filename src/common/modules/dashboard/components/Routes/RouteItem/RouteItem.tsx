@@ -95,13 +95,7 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength, isNarrowWebL
             >
               <View style={[flexbox.center, flexbox.alignCenter, flexbox.flex1]}>
                 <routeItem.icon
-                  color={
-                    hovered
-                      ? '#000000'
-                      : routeItem.route === WEB_ROUTES.rewards
-                        ? undefined
-                        : '#FFFFFF'
-                  }
+                  color={hovered ? '#000000' : '#FFFFFF'}
                   height={ICON_SIZE}
                   width={ICON_SIZE}
                 />
