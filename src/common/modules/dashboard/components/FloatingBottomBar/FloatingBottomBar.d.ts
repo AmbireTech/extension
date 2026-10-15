@@ -1,6 +1,5 @@
 import React from 'react'
 import { Control } from 'react-hook-form'
-import type { SharedValue } from 'react-native-reanimated'
 
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 
@@ -11,8 +10,6 @@ export interface FloatingBottomBarProps {
   /** The tab of the page the bar belongs to. Set it to put the network picker in the bar. */
   networkFilterTab?: TabType
   isHidden: boolean
-  /** Mobile only, hides it as `isHidden` does but without re-rendering anything. */
-  isHiddenValue?: SharedValue<boolean>
   searchPlaceholder?: string
 }
 

@@ -6,6 +6,7 @@ import {
   InteractionManager,
   LayoutChangeEvent,
   GestureResponderEvent,
+  Keyboard,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
@@ -18,6 +19,7 @@ import Reanimated, {
   useSharedValue,
   withTiming
 } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import Spinner from '@common/components/Spinner'
 import { isiOS } from '@common/config/env'
@@ -34,7 +36,7 @@ import {
   OVERVIEW_RETURN_DISTANCE
 } from '@common/modules/dashboard/hooks/useCollapseOnScroll/overviewCollapse'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import CarouselPage from './CarouselPage'
@@ -80,6 +82,10 @@ const OVERVIEW_EXPAND_TIMING = {
   duration: isiOS ? 300 : 250,
   easing: Easing.inOut(Easing.sin)
 }
+
+// How far the floating bar moves from its place above the safe area to below the screen
+// edge, on top of twice the safe area inset. The same as it hides itself by
+const FLOATING_BAR_HIDE_DISTANCE = 60 + SPACING
 
 // How fast (px/ms) a released drag has to be for its momentum to settle the overview,
 // rather than the overview being settled right away
@@ -188,8 +194,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // Android ends a settle cut short by a new drag with a momentum end, which must not settle
   // again under the finger: the scroll would fight the drag, and every cut short one restart it
   const isDragging = useSharedValue(false)
-  // Whether the floating bar hides with the overview
-  const isOverviewCollapsed = useSharedValue(false)
 
   // Only recreated with the overview's height, as a new node starts over from the offset
   const returnDistanceNode = useMemo(
@@ -268,6 +272,53 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     [overviewCollapse, overviewHeight]
   )
 
+  // The floating bar hides with the overview, drawn by the same native nodes so it moves in
+  // step with it, scroll for scroll. While the keyboard is open it stays where it is, so the
+  // search being typed into stays on screen: `floatingBarFollow` is 0 then.
+  const { bottom: safeBottom } = useSafeAreaInsets()
+  const floatingBarFollow = useMemo(() => new Animated.Value(1), [])
+
+  useEffect(() => {
+    const followOverview = (toValue: number) => () =>
+      Animated.timing(floatingBarFollow, {
+        toValue,
+        ...OVERVIEW_EXPAND_TIMING,
+        useNativeDriver: true
+      }).start()
+
+    const showSubscription = Keyboard.addListener(
+      isiOS ? 'keyboardWillShow' : 'keyboardDidShow',
+      followOverview(0)
+    )
+    const hideSubscription = Keyboard.addListener(
+      isiOS ? 'keyboardWillHide' : 'keyboardDidHide',
+      followOverview(1)
+    )
+
+    return () => {
+      showSubscription.remove()
+      hideSubscription.remove()
+    }
+  }, [floatingBarFollow])
+
+  const floatingBarHideStyle = useMemo(
+    () => ({
+      transform: [
+        {
+          translateY: Animated.multiply(
+            overviewCollapse.interpolate({
+              inputRange: [0, Math.max(overviewHeight, 1)],
+              outputRange: [0, FLOATING_BAR_HIDE_DISTANCE + safeBottom * 2],
+              extrapolate: 'clamp'
+            }),
+            floatingBarFollow
+          )
+        }
+      ]
+    }),
+    [floatingBarFollow, overviewCollapse, overviewHeight, safeBottom]
+  )
+
   const [renderedTabs, setRenderedTabs] = useState<Partial<Record<TabType, boolean>>>(() => ({
     [openTab]: true
   }))
@@ -327,19 +378,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
           offsetY - scrollOffset.get(),
           overviewHeight
         )
-        const collapsed = getOverviewCollapsed(
-          offsetY,
-          nextReturnDistance,
-          bannersHeight,
-          overviewHeight
-        )
-        const isCollapsed = collapsed > overviewHeight / 2
 
         returnDistance.set(nextReturnDistance)
         scrollOffset.set(offsetY)
         canPull.set(offsetY <= 0)
-
-        if (isCollapsed !== isOverviewCollapsed.get()) isOverviewCollapsed.set(isCollapsed)
       },
       onBeginDrag: () => {
         'worklet'
@@ -364,16 +406,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
         return getOverviewSettleOffset()
       }
     }),
-    [
-      bannersHeight,
-      canPull,
-      getOverviewSettleOffset,
-      isDragging,
-      isOverviewCollapsed,
-      overviewHeight,
-      returnDistance,
-      scrollOffset
-    ]
+    [canPull, getOverviewSettleOffset, isDragging, overviewHeight, returnDistance, scrollOffset]
   )
 
   // How far the banners are collapsed, which every page shares. A page whose items
@@ -435,7 +468,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     scrollOffset.set(carried)
     scrollY.setValue(carried)
     canPull.set(carried <= 0)
-    isOverviewCollapsed.set(false)
     TABS.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
 
     overviewSettle.setValue(wasCollapsed)
@@ -448,7 +480,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     bannersHeight,
     canPull,
     isDragging,
-    isOverviewCollapsed,
     overviewHeight,
     overviewSettle,
     returnDistance,
@@ -852,11 +883,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       {/* Outside the pager, so a swipe doesn't carry it along, and only what the open
       tab put in it changes. Hidden together with the overview */}
       {!!openTabFloatingBar && (
-        <FloatingBottomBar
-          {...openTabFloatingBar}
-          isHidden={false}
-          isHiddenValue={isOverviewCollapsed}
-        />
+        <Animated.View pointerEvents="box-none" style={[styles.floatingBar, floatingBarHideStyle]}>
+          <FloatingBottomBar {...openTabFloatingBar} isHidden={false} />
+        </Animated.View>
       )}
     </View>
   )

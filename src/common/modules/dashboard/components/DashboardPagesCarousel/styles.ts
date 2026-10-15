@@ -10,6 +10,7 @@ interface Style {
   header: ViewStyle
   slider: ViewStyle
   collapseCover: ViewStyle
+  floatingBar: ViewStyle
   pullSpinner: ViewStyle
   pullSpinnerIcon: ViewStyle
 }
@@ -31,6 +32,10 @@ const getStyles = (theme: ThemeProps) =>
       top: -OVERVIEW_COLLAPSE_COVER_HEIGHT,
       left: 0,
       right: 0
+    },
+    // Moves the floating bar, which positions itself against the bottom of it
+    floatingBar: {
+      ...StyleSheet.absoluteFillObject
     },
     header: {
       position: 'absolute',

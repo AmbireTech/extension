@@ -28,7 +28,6 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
   networkFilterTab,
   isHidden,
-  isHiddenValue,
   searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
@@ -74,7 +73,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     () => {
       const isKeyboardOpen = !isKeyboardHeightStale.value && Math.abs(height.value) > 0
 
-      return (isHidden || !!isHiddenValue?.value) && !isKeyboardOpen
+      return isHidden && !isKeyboardOpen
     },
     (shouldHide, wasHidden) => {
       if (shouldHide === wasHidden) return
@@ -87,7 +86,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
         overshootClamping: true
       })
     },
-    [isHidden, isHiddenValue, safeBottom]
+    [isHidden, safeBottom]
   )
 
   const animatedStyle = useAnimatedStyle(() => {
