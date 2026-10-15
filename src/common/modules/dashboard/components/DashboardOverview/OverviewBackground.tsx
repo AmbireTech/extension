@@ -12,6 +12,10 @@ import backgroundImage from './background.png'
 // The aspect ratio of `background.png`, which `slice` covers the card with
 const IMAGE_ASPECT_RATIO = 456 / 226
 
+// How far the image overhangs each side of the card once zoomed out as far as it goes, so its
+// edges never land on a fractional pixel inside the card and leave a hairline of black
+const EDGE_BLEED = 1
+
 /** Parse a hex color to normalized [r, g, b] values (0–1) */
 function hexToRgbNorm(hex: string): [number, number, number] {
   return [
@@ -79,7 +83,7 @@ const getCollapsingLayer = (
             heightBoundCollapse > 0
               ? collapse.interpolate({
                   inputRange: [0, heightBoundCollapse],
-                  outputRange: [1, width / layerWidth],
+                  outputRange: [1, Math.min((width + EDGE_BLEED * 2) / layerWidth, 1)],
                   extrapolate: 'clamp'
                 })
               : 1
