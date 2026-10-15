@@ -1,22 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { Animated, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GasTankModal from '@common/components/GasTankModal'
+import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
+import { useIsScreenSettled } from '@common/contexts/screenFocusContext'
 import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
-import DashboardOverviewSkeleton from '@common/modules/dashboard/components/DashboardOverview/Skeleton'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
+import DashboardShell from '@common/modules/dashboard/components/DashboardShell'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
-import TabsAndSearchSkeleton from '@common/modules/dashboard/components/TabsAndSearch/Skeleton'
-import TokensSkeleton from '@common/modules/dashboard/components/Tokens/TokensSkeleton'
 import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
 import getStyles from '@common/modules/dashboard/screens/styles' // Keeping styles in common
-import spacings, { SPACING_MI, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
+import { SPACING_MI, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
@@ -44,15 +45,19 @@ const DashboardScreen = () => {
   // gap, so there the padding is kept in full.
   const overviewPaddingTop = safeTop > SPACING_XL ? SPACING_MI : SPACING_SM
 
-  // Defer rendering of heavy components to prevent blocking route transition
-  const [isReady, setIsReady] = useState(false)
+  const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { dispatch } = useControllersMiddleware()
+  const isScreenSettled = useIsScreenSettled()
 
+  const isShowingRealTree = !!account && areAllControllerStatesLoaded
+
+  // Don't move this out of here - this logic is very finnicky and depends on StackScreen,
+  // the unlock blocking the CPU and the portfolio taking a huge chunk of the CPU's attention.
   useEffect(() => {
-    const rafId = requestAnimationFrame(() => {
-      setTimeout(() => setIsReady(true), 0)
-    })
-    return () => cancelAnimationFrame(rafId)
-  }, [])
+    if (!portfolio?.isAllReady || !isScreenSettled || !isShowingRealTree) return
+
+    dispatch({ type: 'INIT_DEFERRED_CONTROLLERS' })
+  }, [portfolio?.isAllReady, isScreenSettled, isShowingRealTree, dispatch])
 
   if (!account) return null
 
@@ -63,24 +68,18 @@ const DashboardScreen = () => {
       keyboardAwareFooter={false}
     >
       <View style={flexbox.flex1}>
-        <GasTankModal
-          modalRef={gasTankModalRef}
-          handleClose={closeGasTankModal}
-          portfolio={portfolio}
-          account={account}
-        />
-        <PendingActionWindowModal />
         <View style={[styles.container, { paddingTop: overviewPaddingTop }]}>
-          {!isReady ? (
-            <View style={flexbox.flex1}>
-              <DashboardOverviewSkeleton />
-              <View style={[spacings.phSm, spacings.ptTy]}>
-                <TabsAndSearchSkeleton />
-                <TokensSkeleton />
-              </View>
-            </View>
+          {!isShowingRealTree ? (
+            <DashboardShell />
           ) : (
             <>
+              <GasTankModal
+                modalRef={gasTankModalRef}
+                handleClose={closeGasTankModal}
+                portfolio={portfolio}
+                account={account}
+              />
+              <PendingActionWindowModal />
               <DashboardOverview
                 openGasTankModal={openGasTankModal}
                 animatedOverviewHeight={animatedOverviewHeight}

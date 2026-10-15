@@ -7,8 +7,9 @@ import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { ROUTES } from '@common/modules/router/constants/common'
+import useCowSwapAnnouncement from '@common/modules/swap-and-bridge/hooks/useCowSwapAnnouncement'
 import flexbox from '@common/styles/utils/flexbox'
 
 import RouteItem from './RouteItem'
@@ -16,7 +17,8 @@ import { RouteItemType } from './RouteItem/RouteItem'
 
 const Routes = () => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
+  const { isCowSwapAnnouncementVisible } = useCowSwapAnnouncement()
 
   const routeItems: RouteItemType[] = [
     {
@@ -45,7 +47,8 @@ const Routes = () => {
       label: t('Swap & Bridge'),
       route: ROUTES.swapAndBridge,
       scale: 0.95,
-      scaleOnHover: 1
+      scaleOnHover: 1,
+      isNew: isCowSwapAnnouncementVisible
     },
     {
       testID: 'dashboard-button-explore',
@@ -61,7 +64,7 @@ const Routes = () => {
     <View
       style={[
         flexbox.directionRow,
-        isCompactSidePanelLayout && [flexbox.justifyCenter, { width: '100%' }]
+        isNarrowWebLayout && [flexbox.justifyCenter, { width: '100%' }]
       ]}
     >
       {routeItems.map((routeItem, index) => (
@@ -70,7 +73,7 @@ const Routes = () => {
           routeItem={routeItem}
           index={index}
           routeItemsLength={routeItems.length}
-          isCompactSidePanelLayout={isCompactSidePanelLayout}
+          isNarrowWebLayout={isNarrowWebLayout}
         />
       ))}
     </View>

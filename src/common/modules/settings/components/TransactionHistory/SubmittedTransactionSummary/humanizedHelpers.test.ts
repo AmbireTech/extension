@@ -4,7 +4,11 @@ import { jest } from '@jest/globals'
 
 import type { SubmittedAccountOpLike } from '@ambire-common/libs/accountOp/submittedAccountOp'
 
-import { getDappInteractions } from './humanizedHelpers'
+import { getDappInteractionsFromHumanizedCalls, getHumanizedCalls } from './humanizedHelpers'
+
+// The hooks wrap this pure helper; testing it directly keeps these cases free of React/controllers.
+const getDappInteractions = (submittedAccountOp: SubmittedAccountOpLike) =>
+  getDappInteractionsFromHumanizedCalls(submittedAccountOp, getHumanizedCalls(submittedAccountOp))
 
 jest.mock('@ambire-common/libs/humanizer', () => ({ humanizeAccountOp: () => [] }))
 
@@ -41,6 +45,18 @@ describe('getDappInteractions Safe cancellation', () => {
 
     expect(interactions[0]?.safeNonce).toBe(0n)
   })
+
+  test.each([
+    [true, 'fallback:delegation', 'Enable smart settings'],
+    [false, 'fallback:revoke', 'Revoke delegation']
+  ])(
+    'does not treat an EIP-7702 delegation change (setDelegation: %s) as a cancellation',
+    (setDelegation, id, name) => {
+      const interactions = getDappInteractions(buildSubmittedAccountOp({ meta: { setDelegation } }))
+
+      expect(interactions).toEqual([{ id, name, iconType: 'ambire' }])
+    }
+  )
 
   test('treats a call that carries a value as a regular send, not a cancellation', () => {
     const interactions = getDappInteractions(

@@ -81,6 +81,7 @@ jobs:
           echo "NFT_CDN_URL=\"${{ vars.NFT_CDN_URL }}\"" >> .env
           echo "LEGENDS_NFT_ADDRESS=\"${{ vars.LEGENDS_NFT_ADDRESS }}\"" >> .env
           echo "LI_FI_API_KEY=\"${{ vars.LI_FI_API_KEY }}\"" >> .env
+          echo "COWSWAP_API_KEY=\"${{ vars.COWSWAP_API_KEY }}\"" >> .env
           echo "BUNGEE_API_KEY=\"${{ vars.BUNGEE_API_KEY }}\"" >> .env
           echo "UNISWAP_API_KEY=\"${{ vars.UNISWAP_API_KEY }}\"" >> .env
           echo "SAFE_API_KEY=\"${{ vars.SAFE_API_KEY }}\"" >> .env
@@ -105,6 +106,7 @@ jobs:
           NFT_CDN_URL: ${{ vars.NFT_CDN_URL }}
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+          COWSWAP_API_KEY: ${{ vars.COWSWAP_API_KEY }}
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
           UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
           SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}

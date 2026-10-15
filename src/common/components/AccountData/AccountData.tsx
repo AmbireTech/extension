@@ -9,6 +9,7 @@ import Avatar from '@common/components/Avatar'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -22,6 +23,8 @@ import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   onPress?: () => void
   /**
@@ -32,15 +35,19 @@ type Props = {
   withArrowRightIcon?: boolean
 }
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
-  const { isPopup, isSidePanel } = getUiType()
+  const { isPopup } = getUiType()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { isStoreReady } = useControllerStore()
 
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
     duration: 50
@@ -75,12 +82,12 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const formattedAddress = useMemo(() => {
     if (!account) return ''
 
-    if (isSidePanel) return account.addr
+    if (isNarrowWebLayout) return account.addr
 
     if (isMobile) return shortenAddress(account.addr, 18, 4)
 
     return shortenAddress(account.addr, 13)
-  }, [account, isSidePanel])
+  }, [account, isNarrowWebLayout])
 
   if (!account) return null
 
@@ -100,7 +107,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           {
             backgroundColor: '#000000A3',
             flexShrink: 1,
-            ...(isSidePanel ? { minWidth: 0 } : {}),
+            ...(isNarrowWebLayout ? { minWidth: 0 } : {}),
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
           },
           isMobile && {
@@ -122,7 +129,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           ) : (
             <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />
           )}
-          {isSidePanel ? (
+          {isNarrowWebLayout ? (
             <>
               <Text
                 numberOfLines={1}

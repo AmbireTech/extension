@@ -9,6 +9,16 @@ import './src/mobile/services/bootProfiler/bootProfiler'
 import { getRandomValues, install } from 'react-native-quick-crypto'
 install()
 
+// install() doesn't set global.CryptoKey
+if (typeof global.CryptoKey === 'undefined') {
+  const { CryptoKey } = require('react-native-quick-crypto')
+  if (!CryptoKey) {
+    throw new Error(
+      'shim: react-native-quick-crypto did not export CryptoKey; keystore instanceof guards will fail'
+    )
+  }
+  global.CryptoKey = CryptoKey
+}
 // Every secret the wallet generates - the keystore main key, seed phrases, scrypt salts, AES IVs -
 // traces back to this one function, and two of the polyfills below compete for it: whichever runs last
 // owns `global.crypto.getRandomValues`. react-native-get-random-values only claims the slot if it is

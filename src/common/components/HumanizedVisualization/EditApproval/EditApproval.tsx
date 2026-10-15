@@ -12,14 +12,17 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import EditButton from '@common/components/EditButton'
 import FooterGlassView from '@common/components/FooterGlassView'
+import { INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 type EditApprovalAmountInputProps = {
   initialAmount: string
@@ -45,6 +48,7 @@ const EditApprovalAmountInput = memo(
     getMaxAmountText,
     decimals
   }: EditApprovalAmountInputProps) => {
+    const { isNarrowWebLayout } = useCompactLayout()
     const [draftAmount, setDraftAmount] = useState(initialAmount)
 
     useEffect(() => {
@@ -82,7 +86,11 @@ const EditApprovalAmountInput = memo(
           fontSize={16}
           backgroundColor={backgroundColor}
           textAlign="right"
-          inputWrapperStyle={{ height: isMobile ? 52 : 40, ...spacings.prSm }}
+          // A narrow view matches the height of the other inputs
+          inputWrapperStyle={{
+            height: isMobile ? 52 : isNarrowWebLayout ? INPUT_WRAPPER_HEIGHT : 40,
+            ...spacings.prSm
+          }}
           leftIconStyle={spacings.mrTy}
           leftIcon={leftIcon}
         />
@@ -101,6 +109,9 @@ const EditApprovalAmountInput = memo(
     )
   }
 )
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const EditApproval = ({
   editCall,
   token,
@@ -123,13 +134,13 @@ const EditApproval = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isCompactLayout, isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
   const {
     ref: editApprovalsSheetRef,
     open: openEditApprovals,
     close: closeEditApprovals
   } = useModalize()
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const amountRef = useRef<string>('0')
   const [initialAmount, setInitialAmount] = useState<string>('0')
   const [initialValueSet, setInitialValueSet] = useState<boolean>(false)
@@ -199,7 +210,7 @@ const EditApproval = ({
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}
-        type={isCompactSidePanelLayout ? 'bottom-sheet' : 'modal'}
+        type={isNarrowWebLayout ? 'bottom-sheet' : 'modal'}
         closeBottomSheet={closeEditApprovals}
         style={isCompactLayout ? { width: '100%' } : { maxWidth: 460 }}
         shouldBeClosableOnDrag={isMobile}
@@ -229,46 +240,41 @@ const EditApproval = ({
               ...flexbox.directionRowReverse,
               ...spacings.mt2Xl
             }}
-            fullWidth={isCompactSidePanelLayout}
+            fullWidth={isNarrowWebLayout}
           >
-            {isMobile || isCompactSidePanelLayout ? (
+            {isMobile || isNarrowWebLayout ? (
               <>
                 <Button
                   type="primary"
                   text={t('Save')}
                   onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
                   hasBottomSpacing={false}
-                  size="smaller"
-                  style={flexbox.flex1}
+                  size={isNarrowWebLayout ? 'regular' : 'smaller'}
+                  // flex: 1 would squash the height of the stacked narrow view buttons
+                  style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}
                 />
-                <Button
-                  type={isCompactSidePanelLayout ? 'outline' : 'secondary'}
-                  text={t('Cancel')}
-                  onPress={() => closeEditApprovals()}
-                  hasBottomSpacing={false}
-                  size="smaller"
-                  style={[flexbox.flex1, isMobile && spacings.mrTy]}
-                />
+                {/* On web the header's back arrow already closes the sheet */}
+                {isMobile && (
+                  <Button
+                    type={'secondary'}
+                    text={t('Cancel')}
+                    onPress={() => closeEditApprovals()}
+                    hasBottomSpacing={false}
+                    size="smaller"
+                    style={[flexbox.flex1, spacings.mrTy]}
+                  />
+                )}
               </>
             ) : (
-              <>
-                <Button
-                  type="secondary"
-                  text={t('Cancel')}
-                  onPress={() => closeEditApprovals()}
-                  hasBottomSpacing={false}
-                  size="smaller"
-                  style={[{ width: 100 }, spacings.mrTy]}
-                />
-                <Button
-                  type="primary"
-                  text={t('Save')}
-                  onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
-                  hasBottomSpacing={false}
-                  size="smaller"
-                  style={[{ width: 100 }, flexbox.flex1]}
-                />
-              </>
+              // No Cancel here, the header's back arrow already closes the sheet
+              <Button
+                type="primary"
+                text={t('Save')}
+                onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
+                hasBottomSpacing={false}
+                size="smaller"
+                style={[{ width: 100 }, flexbox.flex1]}
+              />
             )}
           </FooterGlassView>
         </View>

@@ -34,6 +34,10 @@ import spacings from '@common/styles/spacings'
 
 import ExpandableOptionSection from './ExpandableOptionSection'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
+
 const AddAccount = ({
   sheetRef,
   closeBottomSheet,
@@ -59,7 +63,7 @@ const AddAccount = ({
     open: openSeedPhraseBottomSheet,
     close: closeSeedPhraseBottomSheet
   } = useModalize()
-  const { state: seeds } = useController('KeystoreController', 'seeds')
+  const { state: seeds } = useController('KeystoreController', selectSeeds)
 
   const optionsHW = useMemo(() => {
     if (isMobile)

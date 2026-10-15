@@ -1,4 +1,5 @@
 import { typeText } from 'common-helpers/typeText'
+import { KEYSTORE_PASS } from 'constants/env'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
 import { SpeculosDevice } from 'libs/speculos-device/device'
@@ -270,18 +271,17 @@ export class SwapAndBridgePage extends BasePage {
     await expect(signButton).toBeVisible({ timeout: 5000 })
     await expect(signButton).toBeEnabled({ timeout: 5000 })
 
-    await signButton.click()
-
-    // TODO: check why this is needed
-    // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
-    await page.waitForTimeout(350)
-    const shouldRetryClick = await signButton.isVisible().catch(() => false)
-    if (shouldRetryClick) {
-      const stillEnabled = await signButton.isEnabled().catch(() => false)
-      if (stillEnabled) {
-        await signButton.click()
+    // Clicking Sign can be intercepted by a transient BottomSheet/overlay (e.g. a warning
+    // or loading state) that briefly covers the button, silently swallowing the click.
+    // Retry the whole click-and-check cycle until it actually lands, instead of a single
+    // fixed-delay wait followed by one last attempt that can still fail the same way.
+    const blockingSheet = page.getByTestId('bottom-sheet').first()
+    await expect(async () => {
+      if (await blockingSheet.isVisible().catch(() => false)) {
+        await blockingSheet.waitFor({ state: 'hidden', timeout: 5000 })
       }
-    }
+      await signButton.click({ timeout: 5000 })
+    }).toPass({ timeout: 30000 })
 
     if (ledgerSimulatorControls) {
       await ledgerSimulatorControls.signSmartAccountTransaction()
@@ -543,8 +543,22 @@ export class SwapAndBridgePage extends BasePage {
     // }
     await expect(page.getByTestId('recipient-address-3')).toHaveText(/Swap|Execute/)
 
+    // The Sign button only becomes enabled once the transaction details panel (a
+    // react-native-web ScrollView, not the page itself) has been scrolled within 40px of its
+    // bottom - see `isCloseToBottom`/`handleScroll` in SignAccountOpScreen.tsx.
+    const signButton = page.getByTestId(selectors.signTransactionButton)
+    const transactionDetailsPanel = page.getByTestId(selectors.signAccountOpScrollView)
+
+    await expect(async () => {
+      await transactionDetailsPanel.evaluate((el: HTMLElement) => {
+        el.scrollTop = el.scrollHeight
+      })
+      await expect(signButton).not.toHaveAttribute('aria-disabled', 'true')
+    }).toPass({ timeout: 30000 })
+
+    // Signing auth modal; not required in all tests
     // sign transaction
-    await page.getByTestId(selectors.signTransactionButton).click()
+    await signButton.click()
   }
 
   async getCurrentBalance() {

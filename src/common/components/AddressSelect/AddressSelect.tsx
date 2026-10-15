@@ -18,9 +18,9 @@ import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
-import { InputProps } from '@common/components/Input'
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
+import { InputProps } from '@common/components/Input'
 import { SectionedSelect } from '@common/components/Select'
 import {
   RenderSelectedOptionParams,
@@ -30,6 +30,7 @@ import {
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
@@ -38,11 +39,8 @@ import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import styles from './styles'
-
-const { isSidePanel } = getUiType()
 
 export interface AddressSelectProps extends InputProps {
   setAddress: (text: string) => void
@@ -56,6 +54,8 @@ export interface AddressSelectProps extends InputProps {
   bottomSheetTitle?: string
   // Shortens the addresses in the list, for a container too narrow to fit a full one.
   withShortenedAddresses?: boolean
+  /** Includes the active wallet account, which is normally omitted to prevent self-transfers. */
+  includeSelectedAccount?: boolean
   /**
    * Background color of the idle input. Set it when the parent has the same color as the
    * default input background, so the input stays visible.
@@ -202,18 +202,12 @@ const SelectedMenuOption: React.FC<{
         button={
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
-        buttonProps={{
-          onPress: () => {
-            if (!address || filteredContacts.length) {
-              setIsMenuOpen(true)
-            }
-          }
-        }}
+        buttonProps={{ onPress: () => setIsMenuOpen(true) }}
         inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
         buttonStyle={{
           ...spacings.pv0,
-          ...spacings.pl,
-          ...spacings.prTy,
+          // Even padding keeps the clear button's press area centered on its icon
+          ...(address ? spacings.phTy : { ...spacings.pl, ...spacings.prTy }),
           ...spacings.mr0,
           ...spacings.ml0
         }}
@@ -265,8 +259,10 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   addressPoisoningMatch,
   bottomSheetTitle,
   withShortenedAddresses,
+  includeSelectedAccount = false,
   inputBackgroundColor
 }) => {
+  const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
   const actualAddress = getAddressFromAddressState({
     resolvedAddress,
@@ -275,7 +271,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const { navigate } = useNavigation()
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const contactAddressMaxLength = isSidePanel || withShortenedAddresses ? 16 : undefined
+  const contactAddressMaxLength = isNarrowWebLayout || withShortenedAddresses ? 16 : undefined
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { state: contacts } = useController('AddressBookController', 'contacts')
   const {
@@ -285,23 +281,40 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     preset: 'opacityInverted'
   })
 
+  const selectableContacts = useMemo<Contact[]>(() => {
+    if (!includeSelectedAccount || !account) return contacts
+    const isSelectedAccountIncluded = contacts.some(
+      ({ address: contactAddress }) => contactAddress.toLowerCase() === account.addr.toLowerCase()
+    )
+    if (isSelectedAccountIncluded) return contacts
+
+    return [
+      {
+        name: account.preferences.label,
+        address: account.addr,
+        isWalletAccount: true
+      },
+      ...contacts
+    ]
+  }, [account, contacts, includeSelectedAccount])
+
   const onManagePress = useCallback(() => {
     navigate(ROUTES.addressBook)
   }, [navigate])
 
   const searchableContacts = useMemo(
     () =>
-      contacts.map((contact) => ({
+      selectableContacts.map((contact) => ({
         contact,
         name: contact.name.toLowerCase(),
         address: contact.address.toLowerCase(),
         domain: getSearchableNames(domains[contact.address]?.names)
       })),
-    [contacts, domains]
+    [selectableContacts, domains]
   )
 
   const filteredContacts = useMemo(() => {
-    if (!actualAddress) return contacts
+    if (!actualAddress) return selectableContacts
 
     const fuse = new Fuse(searchableContacts, {
       keys: [
@@ -316,7 +329,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
     const results = fuse.search(actualAddress)
     return results.map((result) => result.item.contact)
-  }, [contacts, actualAddress, searchableContacts])
+  }, [selectableContacts, actualAddress, searchableContacts])
 
   const setAddressWrapped = useCallback(
     ({ value: newAddress }: Pick<SelectValue, 'value'>) => {
@@ -329,7 +342,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      (isMobile ? contacts : filteredContacts)
+      (isMobile ? selectableContacts : filteredContacts)
         .filter((contact) => contact.isWalletAccount)
         .map((contact, index) => ({
           value: contact.address,
@@ -351,12 +364,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             />
           )
         })),
-    [contacts, filteredContacts, contactAddressMaxLength]
+    [selectableContacts, filteredContacts, contactAddressMaxLength]
   )
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      (isMobile ? contacts : filteredContacts)
+      (isMobile ? selectableContacts : filteredContacts)
         .filter((contact) => !contact.isWalletAccount)
         .map((contact) => ({
           value: contact.address,
@@ -376,7 +389,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             />
           )
         })),
-    [contacts, filteredContacts, contactAddressMaxLength]
+    [selectableContacts, filteredContacts, contactAddressMaxLength]
   )
 
   const selectedOption = useMemo(
@@ -500,19 +513,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     ]
   )
 
-  const shouldAutoFocus = useMemo(() => {
-    if (walletAccountsSourcedContactOptions.length || manuallyAddedContactOptions.length)
-      return false
-
-    return true
-  }, [walletAccountsSourcedContactOptions, manuallyAddedContactOptions])
-
   return (
     <>
       <SectionedSelect
         value={selectedOption}
         setValue={setAddressWrapped}
-        mode={isSidePanel ? 'bottomSheet' : undefined}
+        mode={isNarrowWebLayout ? 'bottomSheet' : undefined}
         sections={sections}
         headerHeight={32}
         menuOptionHeight={54}
@@ -522,11 +528,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
         bottomSheetTitle={bottomSheetTitle}
+        isBottomSheetFullHeight
         renderHeaderChildren={({ toggleMenu, isMenuOpen, selectRef }) => (
           <SelectedMenuOption
             type="input"
             selectRef={selectRef}
-            autoFocus={shouldAutoFocus}
+            autoFocus
             setIsMenuOpen={toggleMenu}
             filteredContacts={filteredContacts}
             isMenuOpen={isMenuOpen}

@@ -7,11 +7,11 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -21,6 +21,8 @@ import { openInTab } from '@common/utils/links'
 
 import Badge from './Badge'
 import ProtocolIcon from './ProtocolIcon'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions' | 'source'> & {
   toggleExpanded: () => void
@@ -47,6 +49,8 @@ const HEALTH_RATE_LEVELS: {
   }
 ]
 
+const selectDapps = (state: AllControllersMappingType['DappsController']) => state.dapps
+
 const DeFiPositionHeader: FC<Props> = ({
   providerName,
   toggleExpanded,
@@ -57,10 +61,10 @@ const DeFiPositionHeader: FC<Props> = ({
   iconUrl,
   siteUrl
 }) => {
-  const { state: dapps } = useController('DappsController', 'dapps')
+  const { state: dapps } = useController('DappsController', selectDapps)
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [

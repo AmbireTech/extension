@@ -4,6 +4,10 @@ import React, { createContext, useContext, useEffect, useLayoutEffect, useState 
 // whatever is mounted there is the focused screen.
 const ScreenFocusContext = createContext(true)
 
+// True by default for the same reason: with no stack to animate, a screen is there
+// as soon as it renders.
+const ScreenSettledContext = createContext(true)
+
 /**
  * Focus to read and to listen to, never to render from: the object's identity never
  * changes, so gaining or losing focus re-renders nothing. What a screen left behind
@@ -83,7 +87,11 @@ const ScreenFocusProvider = ({
 
   return (
     <ScreenFocusStoreContext.Provider value={store}>
-      <ScreenFocusContext.Provider value={isFocused}>{children}</ScreenFocusContext.Provider>
+      <ScreenFocusContext.Provider value={isFocused}>
+        <ScreenSettledContext.Provider value={isFocused && isSettled}>
+          {children}
+        </ScreenSettledContext.Provider>
+      </ScreenFocusContext.Provider>
     </ScreenFocusStoreContext.Provider>
   )
 }
@@ -91,10 +99,23 @@ const ScreenFocusProvider = ({
 /** Re-renders the component when its screen gains or loses focus. */
 const useIsScreenFocused = () => useContext(ScreenFocusContext)
 
+/**
+ * Re-renders the component once the screen it is on is the one the user is on and the
+ * platform has finished transitioning to it - what work that would compete with the
+ * animation waits for.
+ */
+const useIsScreenSettled = () => useContext(ScreenSettledContext)
+
 /** Reads focus without subscribing to it - for handlers and effects. */
 const useIsScreenFocusedRef = () => useContext(ScreenFocusStoreContext).isFocused
 
 /** Focus as a store, for code that reacts to a change on its own. */
 const useScreenFocusStore = () => useContext(ScreenFocusStoreContext)
 
-export { ScreenFocusProvider, useIsScreenFocused, useIsScreenFocusedRef, useScreenFocusStore }
+export {
+  ScreenFocusProvider,
+  useIsScreenFocused,
+  useIsScreenFocusedRef,
+  useIsScreenSettled,
+  useScreenFocusStore
+}

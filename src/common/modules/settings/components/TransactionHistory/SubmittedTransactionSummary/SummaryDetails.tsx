@@ -12,9 +12,9 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import TransactionSummary, {
   sizeMultiplier
@@ -34,7 +34,7 @@ import {
   getTruncatedNetworkName,
   getTruncatedTxnHash
 } from './helpers'
-import { getHumanizedCalls } from './humanizedHelpers'
+import { useHumanizedCalls } from './humanizedCallsHooks'
 import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
 
@@ -49,7 +49,7 @@ const SummaryDetails = ({
   size: 'sm' | 'md' | 'lg'
   defaultType: Props['defaultType']
 }) => {
-  const { isCompactSidePanelLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -57,7 +57,7 @@ const SummaryDetails = ({
     () => getFormattedSubmittedDate(submittedAccountOp.timestamp),
     [submittedAccountOp.timestamp]
   )
-  const humanizedCalls = useMemo(() => getHumanizedCalls(submittedAccountOp), [submittedAccountOp])
+  const humanizedCalls = useHumanizedCalls(submittedAccountOp)
   const summaryBalanceChanges = useMemo(
     () => getSummaryBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
@@ -281,14 +281,14 @@ const SummaryDetails = ({
             style={[
               styles.modalStepRow,
               spacings.mbSm,
-              isCompactSidePanelLayout && { gap: SPACING_SM, flexWrap: 'wrap' }
+              isNarrowWebLayout && { gap: SPACING_SM, flexWrap: 'wrap' }
             ]}
           >
             <Text
               appearance={modalFinalStatus.appearance}
               fontSize={16}
               weight="medium"
-              style={isCompactSidePanelLayout ? spacings.mrTy : undefined}
+              style={isNarrowWebLayout ? spacings.mrTy : undefined}
             >
               {modalFinalStatus.label}
             </Text>
@@ -296,14 +296,14 @@ const SummaryDetails = ({
               <View
                 style={[
                   styles.modalStepRowRight,
-                  isCompactSidePanelLayout && { flexShrink: 1, minWidth: 0 }
+                  isNarrowWebLayout && { flexShrink: 1, minWidth: 0 }
                 ]}
               >
                 <Text
                   fontSize={14}
                   appearance="secondaryText"
-                  numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
-                  style={isCompactSidePanelLayout ? { flexShrink: 1 } : undefined}
+                  numberOfLines={isNarrowWebLayout ? 1 : undefined}
+                  style={isNarrowWebLayout ? { flexShrink: 1 } : undefined}
                 >
                   {submittedDate} on {getTruncatedNetworkName(network.name)}
                 </Text>

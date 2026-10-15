@@ -24,6 +24,8 @@ import { setStringAsync } from '@common/utils/clipboard'
 
 import Option from './BaseAddressOption'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props extends TextProps {
   address: string
   chainId?: bigint
@@ -34,6 +36,8 @@ interface Props extends TextProps {
   isDisplayingPlainAddress?: boolean
   isToken?: boolean
 }
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const BaseAddress: FC<Props> = ({
   children,
@@ -52,7 +56,7 @@ const BaseAddress: FC<Props> = ({
   const { addToast } = useToast()
   const { benzinNetworks } = useBenzinNetworksContext()
   // Standalone Benzin doesn't have access to controllers
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const actualNetworks = networks ?? benzinNetworks
   const network = actualNetworks?.find((n) => n.chainId === chainId)
@@ -118,7 +122,8 @@ const BaseAddress: FC<Props> = ({
         flexbox.directionRow,
         flexbox.wrap,
         isWeb && !isInlineMode && flexbox.flex1,
-        isInlineMode && { maxWidth: '100%' }
+        // Shrinks so it stays within the row when it shares it with the inline avatar
+        isInlineMode && { maxWidth: '100%', flexShrink: 1, minWidth: 0 }
       ]}
     >
       {showInlineActions && !!network?.explorerUrl ? (

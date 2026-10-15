@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import BatchIcon from '@common/assets/svg/BatchIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -14,6 +13,13 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
 import RejectButton from './RejectButton'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
 
 const Footer = ({
   onReject,
@@ -29,11 +35,12 @@ const Footer = ({
   shouldHoldToProceed,
   shouldRejectOnchain,
   isRejectDisabled,
+  holdToProceedButtonType = 'primary',
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
-  const { state: userRequests } = useController('RequestsController', 'userRequests')
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 
@@ -88,7 +95,7 @@ const Footer = ({
                 ? 'dangerFilled'
                 : signButtonType === 'warning'
                   ? 'warning'
-                  : 'primary'
+                  : holdToProceedButtonType
             }
             disabled={isSignDisabled}
             onHoldComplete={onSign}
@@ -124,7 +131,6 @@ const Footer = ({
             <Button
               testID="queue-and-sign-later-button"
               type="secondary"
-              childrenPosition="left"
               text={batchBtnText}
               onPress={onAddToCart}
               disabled={isAddToCartDisabled}
@@ -136,9 +142,7 @@ const Footer = ({
                   content: startBatchingInfo
                 })
               })}
-            >
-              {!isMultisigSigned && <BatchIcon style={spacings.mrTy} />}
-            </Button>
+            />
           </View>
         )}
       </View>
