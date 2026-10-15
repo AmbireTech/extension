@@ -13,6 +13,7 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
 import {
   canReplacePendingAccountOp,
   getReplacementBuildRequest,
@@ -24,6 +25,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
 import PendingAccountOpCalls from './lazyPendingAccountOpCalls'
+import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -35,9 +37,8 @@ const selectAccountOp = (state: AllControllersMappingType['SignAccountOpControll
   state?.accountOp
 const selectIsSafeAccount = (state: AllControllersMappingType['SignAccountOpController']) =>
   !!state?.account.safeCreation
-const selectBroadcastedButNotConfirmed = (
-  state: AllControllersMappingType['ActivityController']
-) => state.broadcastedButNotConfirmed
+const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['ActivityController']) =>
+  state.broadcastedButNotConfirmed
 
 /**
  * Lets the user know that the Safe transaction being signed is queued after one that was already
@@ -45,6 +46,7 @@ const selectBroadcastedButNotConfirmed = (
  */
 const PendingSafeTransaction = ({ style }: Props) => {
   const { t } = useTranslation()
+  const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
   const [shouldRenderCalls, setShouldRenderCalls] = useState(false)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -63,9 +65,9 @@ const PendingSafeTransaction = ({ style }: Props) => {
     const currentNonce = getAccountOpNonce(accountOp)
     if (currentNonce === null) return null
 
-    return (broadcastedButNotConfirmed?.[accountOp.accountAddr] || []).reduce<
-      SubmittedAccountOp | null
-    >((earliest, submittedAccountOp) => {
+    return (
+      broadcastedButNotConfirmed?.[accountOp.accountAddr] || []
+    ).reduce<SubmittedAccountOp | null>((earliest, submittedAccountOp) => {
       if (
         submittedAccountOp.chainId !== accountOp.chainId ||
         submittedAccountOp.nonce === null ||
@@ -119,62 +121,74 @@ const PendingSafeTransaction = ({ style }: Props) => {
     () => (
       // Centered title on mobile, and a back arrow with the title next to it on web
       <View style={spacings.mbLg}>
-        <ModalHeader title={t('Pending transaction')} handleClose={handleClose} style={spacings.mbMi} />
+        <ModalHeader
+          title={t('Pending transaction')}
+          handleClose={handleClose}
+          style={spacings.mbMi}
+        />
         <Text appearance="secondaryText" fontSize={14} style={isMobile ? text.center : undefined}>
           {t(
             'This transaction was sent earlier and is still waiting to be confirmed. The transaction you are signing now can only go through after it.'
           )}
         </Text>
-      </View>
-    ),
-    [handleClose, t]
-  )
-
-  const sheetActions = useMemo(
-    () => (
-      <View style={spacings.mtLg}>
         {canReplace ? (
-          <Text appearance="secondaryText" fontSize={12} style={spacings.mbSm}>
+          <Text appearance="secondaryText" fontSize={14} style={spacings.mtSm}>
             {t(
               'Speeding it up pays a higher fee so it gets confirmed sooner. Cancelling replaces it with a transaction that does nothing, also for a higher fee. Both need to be signed by the owners again.'
             )}
           </Text>
         ) : (
-          <Text appearance="secondaryText" fontSize={12} style={spacings.mbSm}>
+          <Text appearance="secondaryText" fontSize={12} style={spacings.mtSm}>
             {t("This transaction was sent in a way that can't be sped up or cancelled from here.")}
           </Text>
         )}
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Button
-            type="secondary"
-            text={t('Back')}
-            onPress={handleClose}
-            hasBottomSpacing={false}
-            style={flexbox.flex1}
-          />
+      </View>
+    ),
+    [handleClose, canReplace, t]
+  )
+
+  const sheetContent = useMemo(() => {
+    if (!pendingAccountOp) return null
+
+    return (
+      <>
+        {/* The actions live in the transaction's card, so it's clear they act on it */}
+        <View style={styles.transactionCard}>
+          {shouldRenderCalls ? (
+            <Suspense fallback={null}>
+              <PendingAccountOpCalls
+                submittedAccountOp={pendingAccountOp}
+                itemStyle={styles.transactionCardCall}
+              />
+            </Suspense>
+          ) : null}
           {canReplace && (
             <>
-              <Button
-                type="danger"
-                text={t('Cancel')}
-                onPress={handleCancel}
-                hasBottomSpacing={false}
-                style={[flexbox.flex1, spacings.mlTy]}
-              />
-              <Button
-                type="primary"
-                text={t('Speed up')}
-                onPress={handleSpeedUp}
-                hasBottomSpacing={false}
-                style={[flexbox.flex1, spacings.mlTy]}
-              />
+              <View style={styles.transactionCardDivider} />
+              <View style={styles.transactionCardActions}>
+                <Button
+                  type="danger"
+                  size="small"
+                  text={t('Cancel')}
+                  onPress={handleCancel}
+                  hasBottomSpacing={false}
+                  style={flexbox.flex1}
+                />
+                <Button
+                  type="primary"
+                  size="small"
+                  text={t('Speed up')}
+                  onPress={handleSpeedUp}
+                  hasBottomSpacing={false}
+                  style={[flexbox.flex1, spacings.mlTy]}
+                />
+              </View>
             </>
           )}
         </View>
-      </View>
-    ),
-    [canReplace, handleCancel, handleClose, handleSpeedUp, t]
-  )
+      </>
+    )
+  }, [canReplace, handleCancel, handleSpeedUp, pendingAccountOp, shouldRenderCalls, styles, t])
 
   if (!pendingAccountOp) return null
 
@@ -200,12 +214,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
         backgroundColor="secondaryBackground"
         HeaderComponent={sheetHeader}
       >
-        {shouldRenderCalls ? (
-          <Suspense fallback={null}>
-            <PendingAccountOpCalls submittedAccountOp={pendingAccountOp} />
-          </Suspense>
-        ) : null}
-        {sheetActions}
+        {sheetContent}
       </BottomSheet>
     </>
   )

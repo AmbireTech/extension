@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { View } from 'react-native'
+import { StyleProp, View, ViewStyle } from 'react-native'
 
 import HumanizedVisualization, {
   shouldUseErc7730DetailedLayout
@@ -15,12 +15,14 @@ import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 interface Props {
   humanization: IrCall[]
   chainId: bigint
+  /** Extra style for each call's container, e.g. to drop its background inside another card */
+  itemStyle?: StyleProp<ViewStyle>
 }
 
 const visualizationStyle = { width: '100%', minWidth: 0 } as const
 const dappIconSize = 24 * sizeMultiplier.md
 
-const CompactHumanizedCalls = ({ humanization, chainId }: Props) => {
+const CompactHumanizedCalls = ({ humanization, chainId, itemStyle }: Props) => {
   const { styles } = useTheme(getStyles)
 
   return humanization.map((call, index) => {
@@ -36,7 +38,8 @@ const CompactHumanizedCalls = ({ humanization, chainId }: Props) => {
           styles.item,
           spacings.phTy,
           spacings.pvTy,
-          index !== humanization.length - 1 && spacings.mbTy
+          index !== humanization.length - 1 && spacings.mbTy,
+          itemStyle
         ]}
       >
         {call.fullVisualization?.length ? (
