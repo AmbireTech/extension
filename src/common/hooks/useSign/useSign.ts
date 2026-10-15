@@ -622,6 +622,24 @@ const useSign = ({
     shouldShowSafeSigners
   ])
 
+  const holdToSignButtonText = useMemo(() => {
+    if (!signAccountOpState?.account.safeCreation) return t('Hold to sign')
+
+    const isSafeReadyToExecute =
+      signAccountOpState.threshold === 1 ||
+      signAccountOpState.canBroadcast ||
+      isSignedSafeWaitingForNonce
+
+    // the "Safe" term for broadcast is called "Execute"
+    return isSafeReadyToExecute ? t('Hold to execute') : t('Hold to proceed')
+  }, [
+    signAccountOpState?.account.safeCreation,
+    signAccountOpState?.threshold,
+    signAccountOpState?.canBroadcast,
+    isSignedSafeWaitingForNonce,
+    t
+  ])
+
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
   // If so, the "Sign" button should NOT be disabled, so the user can retry broadcasting.
   const notReadyToSignButAlsoNotDone =
@@ -741,6 +759,7 @@ const useSign = ({
     isSignDisabled,
     primaryButtonText,
     signButtonText,
+    holdToSignButtonText,
     isExtremeGasFeeActive,
     extremeGasFeeSignButtonType: signButtonType,
     bundlerNonceDiscrepancy,
