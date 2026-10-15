@@ -1,7 +1,10 @@
 import { excludeIntegrationsByName } from '@common/config/analytics/crashReportHelpers'
 import { processCrashReportEvent } from '@common/config/analytics/processCrashReportEvent'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isTesting } from '@common/config/env'
-import { CULTURE_CONTEXT_INTEGRATION_NAME } from '@common/constants/crashAnalytics'
+import {
+  CrashAnalyticsUnavailableReason,
+  CULTURE_CONTEXT_INTEGRATION_NAME
+} from '@common/constants/crashAnalytics'
 import * as Sentry from '@sentry/react'
 import { IS_FIREFOX } from '@web/constants/common'
 
@@ -49,3 +52,6 @@ export const ErrorBoundary = Sentry.ErrorBoundary
  * contain a choice accompanied by the data collection summary.
  */
 export const CRASH_ANALYTICS_ENABLED_DEFAULT = !isDev && !IS_FIREFOX
+
+/** Always null, only the mobile app reports why crash reporting can't start. */
+export const crashAnalyticsUnavailableReason: CrashAnalyticsUnavailableReason | null = null

@@ -24,9 +24,20 @@ describe('filterCrashReportBreadcrumb', () => {
     expect(filterCrashReportBreadcrumb(touchBreadcrumb)).toBeNull()
   })
 
+  it('drops console breadcrumbs below a warning, so plain logs never reach the scrub', () => {
+    const logBreadcrumb = {
+      category: CONSOLE_BREADCRUMB_CATEGORY,
+      level: 'log' as const,
+      message: `import failed for ${SEED_PHRASE}`
+    }
+
+    expect(filterCrashReportBreadcrumb(logBreadcrumb)).toBeNull()
+  })
+
   it('redacts secrets logged to the console and removes the raw logged arguments', () => {
     const breadcrumb = {
       category: CONSOLE_BREADCRUMB_CATEGORY,
+      level: 'error' as const,
       message: `import failed for ${SEED_PHRASE} with key ${PRIVATE_KEY}`,
       data: { arguments: [SEED_PHRASE, PRIVATE_KEY], logger: 'console' }
     }
@@ -44,6 +55,7 @@ describe('filterCrashReportBreadcrumb', () => {
     const padding = 'x'.repeat(CONSOLE_BREADCRUMB_MESSAGE_MAX_LENGTH - 20)
     const breadcrumb = {
       category: CONSOLE_BREADCRUMB_CATEGORY,
+      level: 'error' as const,
       message: `${padding} ${SEED_PHRASE}`
     }
 
@@ -58,6 +70,7 @@ describe('filterCrashReportBreadcrumb', () => {
     const tail = 'y'.repeat(100_000)
     const breadcrumb = {
       category: CONSOLE_BREADCRUMB_CATEGORY,
+      level: 'error' as const,
       message: `${padding} ${SEED_PHRASE} ${SEED_PHRASE} ${tail}`
     }
 

@@ -2,9 +2,12 @@ import { processCrashReportEvent } from '@common/config/analytics/processCrashRe
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import {
   CONSOLE_BREADCRUMB_CATEGORY,
+  CONSOLE_BREADCRUMB_LEVELS,
   CONSOLE_BREADCRUMB_MESSAGE_MAX_LENGTH,
   CONSOLE_BREADCRUMB_SCRUB_MARGIN,
+  CRASH_ANALYTICS_UNAVAILABLE_REASON,
   CRASH_REPORT_CONTENT,
+  CrashAnalyticsUnavailableReason,
   CrashReportContent,
   TOUCH_BREADCRUMB_CATEGORY
 } from '@common/constants/crashAnalytics'
@@ -20,18 +23,21 @@ export type CrashReportCaptureContext = {
 }
 
 /**
- * Whether the mobile crash reporter should start at all. Gives false without a DSN, in
- * development builds and when the user turned crash reporting off.
+ * Why the mobile crash reporter can't start in a build, whatever the user's choice. Gives null
+ * when the build can run it.
  */
-export const shouldInitCrashAnalytics = ({
+export const getCrashAnalyticsUnavailableReason = ({
   dsn,
-  isDevBuild,
-  isConsentGiven
+  isDevBuild
 }: {
   dsn: string | undefined
   isDevBuild: boolean
-  isConsentGiven: boolean
-}): boolean => !!dsn && !isDevBuild && isConsentGiven
+}): CrashAnalyticsUnavailableReason | null => {
+  if (isDevBuild) return CRASH_ANALYTICS_UNAVAILABLE_REASON.DEV_BUILD
+  if (!dsn) return CRASH_ANALYTICS_UNAVAILABLE_REASON.MISSING_DSN
+
+  return null
+}
 
 /**
  * The Sentry release of a mobile build. Must stay in sync with the release name the source maps
@@ -59,13 +65,16 @@ const prepareConsoleBreadcrumbForScrub = (breadcrumb: Breadcrumb): Breadcrumb =>
 /**
  * The mobile `beforeBreadcrumb`. Breadcrumbs are synced to the native layer and sent with native
  * crashes, which never pass through `beforeSend`, so this is the only scrub they get. Gives null
- * for a breadcrumb that must not be recorded.
+ * for a breadcrumb that must not be recorded, like a console call below a warning.
  */
 export const filterCrashReportBreadcrumb = (breadcrumb: Breadcrumb): Breadcrumb | null => {
   // Touch breadcrumbs carry the text of the touched element, like seed words or balances.
   if (breadcrumb.category === TOUCH_BREADCRUMB_CATEGORY) return null
 
   const isConsoleBreadcrumb = breadcrumb.category === CONSOLE_BREADCRUMB_CATEGORY
+  const isReportedConsoleLevel =
+    !!breadcrumb.level && CONSOLE_BREADCRUMB_LEVELS.includes(breadcrumb.level)
+  if (isConsoleBreadcrumb && !isReportedConsoleLevel) return null
 
   let scrubbedBreadcrumb: Breadcrumb
   try {

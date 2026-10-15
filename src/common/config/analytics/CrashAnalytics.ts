@@ -7,9 +7,9 @@ import {
 import {
   CrashReportCaptureContext,
   filterCrashReportBreadcrumb,
+  getCrashAnalyticsUnavailableReason,
   getMobileCrashReportRelease,
   processMobileCrashReportEvent,
-  shouldInitCrashAnalytics,
   withContentTag
 } from '@common/config/analytics/mobileCrashReportHooks'
 import CONFIG, {
@@ -45,13 +45,13 @@ let isCrashAnalyticsEnabled = getStorageValueSync(
   CRASH_ANALYTICS_ENABLED_DEFAULT
 )
 
-if (
-  shouldInitCrashAnalytics({
-    dsn: CONFIG.SENTRY_DSN_MOBILE,
-    isDevBuild,
-    isConsentGiven: isCrashAnalyticsEnabled
-  })
-) {
+/** Why crash reporting can't start in this build. Null when only the user's choice decides it. */
+export const crashAnalyticsUnavailableReason = getCrashAnalyticsUnavailableReason({
+  dsn: CONFIG.SENTRY_DSN_MOBILE,
+  isDevBuild
+})
+
+if (!crashAnalyticsUnavailableReason && isCrashAnalyticsEnabled) {
   Sentry.init({
     dsn: CONFIG.SENTRY_DSN_MOBILE,
     environment: CONFIG.APP_ENV,

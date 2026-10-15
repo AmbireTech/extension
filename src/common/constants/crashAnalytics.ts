@@ -1,3 +1,5 @@
+import type { SeverityLevel } from '@sentry/browser'
+
 /**
  * Since v5.21.2, we store the crash analytics enabled state in a new storage key
  * to avoid conflicts with the previous storage key. Prev key: 'crashAnalyticsEnabled'.
@@ -17,9 +19,24 @@ export const CRASH_REPORT_CONTENT = {
 
 export type CrashReportContent = (typeof CRASH_REPORT_CONTENT)[keyof typeof CRASH_REPORT_CONTENT]
 
+/** Why the mobile crash reporter can't start in a build, whatever the user's choice. */
+export const CRASH_ANALYTICS_UNAVAILABLE_REASON = {
+  DEV_BUILD: 'devBuild',
+  MISSING_DSN: 'missingDsn'
+} as const
+
+export type CrashAnalyticsUnavailableReason =
+  (typeof CRASH_ANALYTICS_UNAVAILABLE_REASON)[keyof typeof CRASH_ANALYTICS_UNAVAILABLE_REASON]
+
 export const TOUCH_BREADCRUMB_CATEGORY = 'touch'
 
 export const CONSOLE_BREADCRUMB_CATEGORY = 'console'
+
+/**
+ * The only console breadcrumb levels kept. Lower ones are dropped before the secret scrub, which
+ * would otherwise run on the UI thread for every log call.
+ */
+export const CONSOLE_BREADCRUMB_LEVELS: readonly SeverityLevel[] = ['warning', 'error', 'fatal']
 
 /** Console breadcrumb messages are cut to this many characters before they leave the device. */
 export const CONSOLE_BREADCRUMB_MESSAGE_MAX_LENGTH = 500
