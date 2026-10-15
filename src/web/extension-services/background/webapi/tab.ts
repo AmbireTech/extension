@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
-import { browser, engine, isSafari } from '@web/constants/browserapi'
+import { browser, engine, isExtension, isSafari } from '@web/constants/browserapi'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 
 /**
@@ -99,6 +99,12 @@ export const openInTab = async ({
   shouldCloseCurrentWindow?: boolean
 }): Promise<chrome.tabs.Tab> => {
   if (!url) return
+
+  // Standalone websites like benzin have no extension tabs API
+  if (!isExtension) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    return
+  }
 
   const tab = await createTab(url, windowId)
   if (shouldCloseCurrentWindow) {
