@@ -11,11 +11,11 @@ import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
+import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -253,8 +253,7 @@ const AddAccount = ({
         {isPrivacyPoolsEnabled && !showImportOnly && (
           <Option
             text={t('Add a Privacy Pools account')}
-            icon={ShieldInvisibilityIcon}
-            iconProps={{ width: 24, height: 27 }}
+            icon={PrivacyPoolsIcon}
             onPress={openPrivacyPoolsBottomSheet as any}
             testID="add-privacy-pools-account"
             status="none"

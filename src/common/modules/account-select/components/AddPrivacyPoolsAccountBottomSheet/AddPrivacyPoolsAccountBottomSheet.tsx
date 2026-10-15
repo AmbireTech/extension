@@ -12,9 +12,9 @@ import useController from '@common/hooks/useController'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+import getStyles from './styles'
 import useAddPrivacyPoolsAccount from './useAddPrivacyPoolsAccount'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -31,7 +31,7 @@ type Props = {
 /** Adds a Privacy Pools account from a stored recovery phrase (one per phrase) or a new one. */
 const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded }: Props) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { styles } = useTheme(getStyles)
   const { state: seeds } = useController('KeystoreController', selectSeeds)
   const { accounts } = usePrivacyPoolsAccounts()
   const { addFromStoredSeed, addFromNewSeed, pending } = useAddPrivacyPoolsAccount({ onAdded })
@@ -41,74 +41,15 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
     [accounts]
   )
 
-  return (
-    <BottomSheet
-      id="add-privacy-pools-account-bottom-sheet"
-      sheetRef={sheetRef}
-      closeBottomSheet={closeBottomSheet}
-    >
-      <ModalHeader handleClose={closeBottomSheet} title={t('Add a Privacy Pools account')} />
-      <Text fontSize={14} appearance="secondaryText" style={spacings.mbLg}>
-        {t(
-          'A Privacy Pools account keeps your funds private. It is created from one of your recovery phrases, one account per phrase, and that phrase is the only way to recover it.'
-        )}
-      </Text>
-
-      {!!seeds?.length && (
-        <Text fontSize={14} weight="medium" style={spacings.mbTy}>
-          {t('From a stored recovery phrase')}
-        </Text>
-      )}
-      {(seeds || []).map((seed) => {
-        const hasAccount = seedIdsWithAccount.has(seed.id)
-        const isAddingThis = pending?.kind === 'stored-seed' && pending.seedId === seed.id
-
-        return (
-          <View
-            key={seed.id}
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifySpaceBetween,
-              spacings.phSm,
-              spacings.pvTy,
-              spacings.mbTy,
-              { borderRadius: BORDER_RADIUS_PRIMARY, backgroundColor: theme.secondaryBackground }
-            ]}
-          >
-            <Text
-              fontSize={14}
-              weight="medium"
-              numberOfLines={1}
-              style={[flexbox.flex1, spacings.mrSm]}
-            >
-              {seed.label}
-            </Text>
-            {hasAccount ? (
-              <Text fontSize={12} appearance="secondaryText">
-                {t('Already added')}
-              </Text>
-            ) : (
-              <Button
-                testID={`add-privacy-pools-account-${seed.id}`}
-                text={isAddingThis ? t('Adding...') : t('Add')}
-                size="smaller"
-                type="secondary"
-                hasBottomSpacing={false}
-                disabled={!!pending}
-                onPress={() => addFromStoredSeed(seed.id)}
-              />
-            )}
-          </View>
-        )
-      })}
-
-      <View style={!!seeds?.length && spacings.mtSm}>
+  const footer = useMemo(
+    () => (
+      <View style={styles.footer}>
+        <View style={styles.footerDivider} />
         <Option
           text={
             pending?.kind === 'new-seed'
               ? t('Creating a new recovery phrase...')
-              : t('Create a new recovery phrase for it')
+              : t('Create new recovery phrase for it')
           }
           icon={AddCircularIcon}
           onPress={addFromNewSeed}
@@ -117,6 +58,59 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
           status="none"
         />
       </View>
+    ),
+    [addFromNewSeed, pending, styles.footer, styles.footerDivider, t]
+  )
+
+  return (
+    <BottomSheet
+      id="add-privacy-pools-account-bottom-sheet"
+      sheetRef={sheetRef}
+      closeBottomSheet={closeBottomSheet}
+      FooterComponent={footer}
+    >
+      <ModalHeader handleClose={closeBottomSheet} title={t('Add a Privacy Pools account')} />
+      <Text fontSize={14} appearance="secondaryText" style={spacings.mbLg}>
+        {t(
+          'A Privacy Pools account keeps your funds private. It is created from one of your recovery phrases, one account per phrase, and that phrase is the only way to recover it.'
+        )}
+      </Text>
+
+      {(seeds || []).map((seed) => {
+        const hasAccount = seedIdsWithAccount.has(seed.id)
+        const isAddingThis = pending?.kind === 'stored-seed' && pending.seedId === seed.id
+
+        return (
+          <View key={seed.id} style={[styles.seedRow, hasAccount && styles.seedRowWithAccount]}>
+            <Text
+              fontSize={16}
+              weight="medium"
+              appearance={hasAccount ? 'secondaryText' : 'primaryText'}
+              numberOfLines={1}
+              style={[flexbox.flex1, spacings.mrSm]}
+            >
+              {seed.label}
+            </Text>
+            {hasAccount ? (
+              <Text fontSize={16} weight="medium" appearance="secondaryText" style={spacings.phSm}>
+                {t('Already added')}
+              </Text>
+            ) : (
+              <Button
+                testID={`add-privacy-pools-account-${seed.id}`}
+                text={isAddingThis ? t('Adding...') : t('Add')}
+                size="small"
+                type="outline"
+                style={styles.addButton}
+                textStyle={styles.addButtonText}
+                hasBottomSpacing={false}
+                disabled={!!pending}
+                onPress={() => addFromStoredSeed(seed.id)}
+              />
+            )}
+          </View>
+        )
+      })}
     </BottomSheet>
   )
 }
