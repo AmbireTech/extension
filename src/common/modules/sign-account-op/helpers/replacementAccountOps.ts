@@ -57,14 +57,15 @@ const getIncreasedGasFeePayment = (gasFeePayment: GasFeePayment): GasFeePayment 
 
 /**
  * The same transaction as the pending one, with the same nonces and signatures, but paying a
- * higher fee so it replaces the pending one and gets confirmed sooner. The txnId is left out:
+ * higher fee so it replaces the pending one and gets confirmed sooner. It gets an id of its own,
+ * so Activity keeps both instead of one overwriting the other. The txnId is left out:
  * once sent, it's the network's transaction hash, not the Safe transaction hash the owners
  * signed, so it can't be used to tell who signed. `signed` already says that.
  */
 export const getSpeedUpAccountOp = (
   submittedAccountOp: ReplaceableSubmittedAccountOp
 ): AccountOp => ({
-  id: submittedAccountOp.id,
+  id: uuidv4(),
   accountAddr: submittedAccountOp.accountAddr,
   chainId: submittedAccountOp.chainId,
   signingKeyAddr: submittedAccountOp.signingKeyAddr,

@@ -185,7 +185,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
         </Text>
         <Text appearance="secondaryText" fontSize={14} style={spacings.mtSm}>
           {t(
-            'Speeding it up pays a higher fee so it gets confirmed sooner. Cancelling replaces it with a transaction that does nothing, also for a higher fee. Both need to be signed by the owners again.'
+            'Speeding it up sends the same transaction again so it gets confirmed sooner, without new signatures from the owners. Cancelling replaces it with a transaction that does nothing, which the owners need to sign.'
           )}
         </Text>
       </View>

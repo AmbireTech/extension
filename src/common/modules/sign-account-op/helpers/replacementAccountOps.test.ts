@@ -94,6 +94,8 @@ describe('replacementAccountOps', () => {
     const speedUp = getSpeedUpAccountOp(sentByEoa)
 
     expect(speedUp.txnId).toBeUndefined()
+    // a fresh id, so Activity doesn't overwrite the transaction it speeds up
+    expect(speedUp.id).not.toBe(sentByEoa.id)
     expect(speedUp.signature).toBe(sentByEoa.signature)
     expect(speedUp.signed).toBe(sentByEoa.signed)
     expect(speedUp.nonce).toBe(268n)
