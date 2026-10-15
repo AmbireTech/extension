@@ -15,7 +15,6 @@ import Reanimated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming
 } from 'react-native-reanimated'
 
@@ -26,10 +25,10 @@ import DashboardBanners from '@common/modules/dashboard/components/DashboardBann
 import OverviewCollapseCover from '@common/modules/dashboard/components/DashboardOverview/OverviewCollapseCover'
 import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
-import getNextCollapseState, {
-  CollapseState,
-  INITIAL_COLLAPSE_STATE
-} from '@common/modules/dashboard/hooks/useCollapseOnScroll/getNextCollapseState'
+import getNextOverviewCollapse, {
+  INITIAL_OVERVIEW_COLLAPSE,
+  OVERVIEW_RETURN_DISTANCE
+} from '@common/modules/dashboard/hooks/useCollapseOnScroll/getNextOverviewCollapse'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -69,6 +68,10 @@ const PULL_SPINNER_HEIGHT = 56
 
 // Same as the floating bar, which hides and shows together with the overview
 const OVERVIEW_SPRING_CONFIG = { damping: 20, stiffness: 90, overshootClamping: true }
+
+// How fast (px/ms) a released drag has to be for its momentum to settle the overview,
+// rather than the overview being settled right away
+const SETTLE_VELOCITY = 0.3
 
 /**
  * The work the carousel may only do while the dashboard is the screen the user is on.
@@ -155,48 +158,89 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const [bannersHeight, setBannersHeight] = useState(0)
   const [tabsHeight, setTabsHeight] = useState(0)
 
-  // How far the overview is open (1 fully), and whether the floating bar hides with it.
-  // Decided from refs and handed to the UI thread, so a collapse costs no render.
-  const overviewExpansion = useSharedValue(1)
+  // Whether the floating bar hides with the overview, decided as the open page scrolls and
+  // handed to the UI thread, so it costs no render
   const isOverviewCollapsed = useSharedValue(false)
-  const collapseState = useRef(INITIAL_COLLAPSE_STATE)
+  // What the UI thread collapses the overview by, mirrored for the bar and for settling it
+  const overviewCollapseRef = useRef(INITIAL_OVERVIEW_COLLAPSE)
+  // Read by `reportScrollOffset`, which has to stay stable
+  const overviewLayoutRef = useRef({ bannersHeight, overviewHeight })
 
-  const applyCollapseState = useCallback((next: CollapseState) => {
-    const wasCollapsed = collapseState.current.isOverviewCollapsed
-    collapseState.current = next
+  useEffect(() => {
+    overviewLayoutRef.current = { bannersHeight, overviewHeight }
+  }, [bannersHeight, overviewHeight])
 
-    if (next.isOverviewCollapsed === wasCollapsed) return
+  // Eases the overview open when a tab switch takes the pages to the top, which the
+  // offset alone would snap it open by
+  const overviewSettle = useMemo(() => new Animated.Value(0), [])
 
-    isOverviewCollapsed.set(next.isOverviewCollapsed)
-    overviewExpansion.set(withSpring(next.isOverviewCollapsed ? 0 : 1, OVERVIEW_SPRING_CONFIG))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // The overview collapses once the banners are scrolled away, following the open page's
+  // offset on the UI thread, so it tracks the finger both ways for as long as it is down.
+  // Mid-page, a scroll up longer than OVERVIEW_RETURN_DISTANCE expands it with the finger too.
+  // Mirrored by `getNextOverviewCollapse`, which has to be kept in line with it.
+  const overviewCollapse = useMemo(() => {
+    const overviewRange = Math.max(overviewHeight, 1)
+    const collapsedByOffset = scrollY.interpolate({
+      inputRange: [bannersHeight, bannersHeight + overviewRange],
+      outputRange: [0, overviewHeight],
+      extrapolate: 'clamp'
+    })
+    const collapsedByReturn = Animated.diffClamp(
+      scrollY,
+      0,
+      OVERVIEW_RETURN_DISTANCE + overviewHeight
+    ).interpolate({
+      inputRange: [0, overviewRange],
+      outputRange: [0, overviewHeight],
+      extrapolate: 'clamp'
+    })
+    // The smaller of the two, as Animated has no min: a - max(a - b, 0)
+    const collapsedByReturnExcess = Animated.subtract(
+      collapsedByOffset,
+      collapsedByReturn
+    ).interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'extend'
+    })
 
-  // The pages are never resized, so collapsing doesn't change how far they can scroll
-  const onPageScroll = useCallback(
-    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>, collapseThreshold: number) => {
-      applyCollapseState(
-        getNextCollapseState(collapseState.current, {
-          offsetY: nativeEvent.contentOffset.y,
-          contentHeight: nativeEvent.contentSize.height,
-          layoutHeight: nativeEvent.layoutMeasurement.height,
-          scrollDownThreshold: collapseThreshold,
-          collapsibleHeight: 0
-        })
-      )
-    },
-    [applyCollapseState]
-  )
-
-  const expandOverview = useCallback(
-    () => applyCollapseState(INITIAL_COLLAPSE_STATE),
-    [applyCollapseState]
-  )
+    return Animated.add(
+      Animated.subtract(collapsedByOffset, collapsedByReturnExcess),
+      overviewSettle
+    )
+  }, [bannersHeight, overviewHeight, overviewSettle, scrollY])
 
   // The open overview pushes the pages down, by a transform so nothing is laid out again
-  const overviewPushStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: overviewExpansion.value * overviewHeight }]
-  }))
+  const overviewPush = useMemo(
+    () =>
+      overviewCollapse.interpolate({
+        inputRange: [0, Math.max(overviewHeight, 1)],
+        outputRange: [overviewHeight, 0],
+        extrapolate: 'clamp'
+      }),
+    [overviewCollapse, overviewHeight]
+  )
+
+  // Undoes the push for the lists, so their content moves with the finger alone instead of
+  // with the finger and the push. They start where the collapsed overview ends and are padded
+  // by the open one, while the part above the pages is clipped away.
+  const pagerLiftStyle = useMemo(
+    () => ({
+      marginTop: -overviewHeight,
+      marginBottom: overviewHeight,
+      transform: [
+        {
+          translateY: overviewCollapse.interpolate({
+            inputRange: [0, Math.max(overviewHeight, 1)],
+            outputRange: [0, overviewHeight],
+            extrapolate: 'clamp'
+          })
+        }
+      ]
+    }),
+    [overviewCollapse, overviewHeight]
+  )
 
   const [renderedTabs, setRenderedTabs] = useState<Partial<Record<TabType, boolean>>>(() => ({
     [openTab]: true
@@ -235,6 +279,14 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // component, so leaving it out of the dependencies is what keeps it correct here.
   const reportScrollOffset = useCallback((offset: number) => {
     canPull.value = offset <= 0
+
+    const next = getNextOverviewCollapse(
+      overviewCollapseRef.current,
+      offset,
+      overviewLayoutRef.current
+    )
+    overviewCollapseRef.current = next
+    isOverviewCollapsed.set(next.collapsed > overviewLayoutRef.current.overviewHeight / 2)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -273,20 +325,69 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     if (collapsedBy.current) handle.scrollToOffset(collapsedBy.current)
   }, [])
 
+  // Android ends a settle cut short by a new drag with a momentum end, which must not settle
+  // again under the finger: the scroll would fight the drag, and every cut short one restart it
+  const isDraggingRef = useRef(false)
+
   // Opening a tab takes its page to the top but leaves the banners as collapsed as they
   // were: they belong to the dashboard, not to the page. The offset is read back from
   // the native side, since the pages report their scroll straight into the animated
   // node and the value held here is only whatever JS last wrote.
+  // The overview is expanded by that, eased from how collapsed it was.
   const takePagesToTop = useCallback(() => {
     scrollY.stopAnimation((offset) => {
       const carried = Math.min(Math.max(offset, 0), bannersHeight)
+      const wasCollapsed = overviewCollapseRef.current.collapsed
 
+      // A swipe cancels the page's drag without ending it
+      isDraggingRef.current = false
       collapsedBy.current = carried
       scrollY.setValue(carried)
       reportScrollOffset(carried)
       TABS.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
+
+      overviewSettle.setValue(wasCollapsed)
+      Animated.spring(overviewSettle, {
+        toValue: 0,
+        ...OVERVIEW_SPRING_CONFIG,
+        useNativeDriver: true
+      }).start()
     })
-  }, [bannersHeight, reportScrollOffset, scrollY])
+  }, [bannersHeight, overviewSettle, reportScrollOffset, scrollY])
+
+  // A drag let go of with the overview partly collapsed scrolls the open page on until it is
+  // fully open or collapsed, whichever is closer, as the platforms' collapsing headers do.
+  // Read off the mirror, which the open page's scroll events have brought up to date.
+  const settleOverview = useCallback(() => {
+    if (isDraggingRef.current) return
+
+    const { lastOffsetY, collapsed } = overviewCollapseRef.current
+
+    // A pixel of tolerance, as Android reports offsets rounded
+    if (collapsed < 1 || collapsed > overviewHeight - 1) return
+
+    const isCloserToCollapsed = collapsed > overviewHeight / 2
+    pageHandles.current[openTab]?.scrollToOffset(
+      isCloserToCollapsed ? lastOffsetY + overviewHeight - collapsed : lastOffsetY - collapsed,
+      true
+    )
+  }, [openTab, overviewHeight])
+
+  const onPageScrollBeginDrag = useCallback(() => {
+    isDraggingRef.current = true
+  }, [])
+
+  const onPageScrollEnd = useCallback(
+    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+      isDraggingRef.current = false
+
+      // A fling is settled once its momentum ends instead
+      if (Math.abs(nativeEvent.velocity?.y || 0) > SETTLE_VELOCITY) return
+
+      settleOverview()
+    },
+    [settleOverview]
+  )
 
   const renderTabs = useCallback((tabs: (TabType | undefined)[]) => {
     setRenderedTabs((prev) => {
@@ -334,13 +435,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     // pages to the top when it started
     if (isPagerDrivenRef.current) return
 
-    if (hasTabChanged) {
-      takePagesToTop()
-      expandOverview()
-    }
+    if (hasTabChanged) takePagesToTop()
 
     scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated: hasTabChanged })
-  }, [expandOverview, openTab, openTabIndex, pageSize.width, takePagesToTop])
+  }, [openTab, openTabIndex, pageSize.width, takePagesToTop])
 
   // Only the banners scroll out of view; the tabs row stays. With no banners it maps to a
   // constant 0; never a static 0, or the native view keeps the last banner collapse.
@@ -361,9 +459,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const onScrollBeginDrag = useCallback(() => {
     isPagerDrivenRef.current = true
     takePagesToTop()
-    expandOverview()
     renderTabs([TABS[openTabIndex - 1], TABS[openTabIndex + 1]])
-  }, [expandOverview, openTabIndex, renderTabs, takePagesToTop])
+  }, [openTabIndex, renderTabs, takePagesToTop])
 
   // The open tab follows the pager past the halfway point, so the tabs row does not wait
   // for the swipe to settle. Only under a gesture: scrolling to a pressed tab reports
@@ -403,18 +500,22 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       pageHeight: pageSize.height,
       registerPage,
       reportScrollOffset,
-      onPageScroll,
+      onPageScrollBeginDrag,
+      onPageScrollEnd,
+      onPageMomentumScrollEnd: settleOverview,
       registerFloatingBar
     }),
     [
       bannersHeight,
-      onPageScroll,
+      onPageScrollBeginDrag,
+      onPageScrollEnd,
       overviewHeight,
       pageSize.height,
       registerFloatingBar,
       registerPage,
       reportScrollOffset,
       scrollY,
+      settleOverview,
       tabsHeight
     ]
   )
@@ -477,6 +578,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   )
 
   const onHeaderDrag = ({ nativeEvent }: GestureResponderEvent) => {
+    isDraggingRef.current = true
     const dragged = nativeEvent.pageY - touchStartY.current
     const offset = touchStartOffset.current - dragged
 
@@ -500,6 +602,17 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       hasPulledToRefresh.current = true
       onRefresh()
     }
+  }
+
+  const onHeaderRelease = () => {
+    isDraggingRef.current = false
+    endHeaderPull()
+    settleOverview()
+  }
+
+  const onHeaderTerminate = () => {
+    isDraggingRef.current = false
+    endHeaderPull()
   }
 
   const requestRefresh = useCallback(() => {
@@ -602,7 +715,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     <View style={styles.container} pointerEvents="box-none">
       <WhileFocused openTabIndex={openTabIndex} renderTabs={renderTabs} initAllTabs={initAllTabs} />
       {/* Opaque, as it slides over the part of the overview that collapses */}
-      <Reanimated.View style={[styles.slider, overviewPushStyle]}>
+      <Animated.View style={[styles.slider, { transform: [{ translateY: overviewPush }] }]}>
         <View style={flexbox.flex1} onLayout={onLayout}>
           <DashboardCarouselContext.Provider value={carousel}>
             {(isPulling || !!refreshing) && (
@@ -613,24 +726,26 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
                 <Spinner style={styles.pullSpinnerIcon} />
               </Reanimated.View>
             )}
-            <GestureDetector gesture={pullGesture}>
-              <Reanimated.View style={[flexbox.flex1, pagerStyle]}>
-                <ScrollView
-                  ref={scrollRef}
-                  horizontal
-                  pagingEnabled
-                  directionalLockEnabled
-                  showsHorizontalScrollIndicator={false}
-                  decelerationRate="fast"
-                  scrollEventThrottle={16}
-                  onScroll={onPagerScroll}
-                  onScrollBeginDrag={onScrollBeginDrag}
-                  onMomentumScrollEnd={onMomentumScrollEnd}
-                >
-                  {pages}
-                </ScrollView>
-              </Reanimated.View>
-            </GestureDetector>
+            <Animated.View style={[flexbox.flex1, pagerLiftStyle]}>
+              <GestureDetector gesture={pullGesture}>
+                <Reanimated.View style={[flexbox.flex1, pagerStyle]}>
+                  <ScrollView
+                    ref={scrollRef}
+                    horizontal
+                    pagingEnabled
+                    directionalLockEnabled
+                    showsHorizontalScrollIndicator={false}
+                    decelerationRate="fast"
+                    scrollEventThrottle={16}
+                    onScroll={onPagerScroll}
+                    onScrollBeginDrag={onScrollBeginDrag}
+                    onMomentumScrollEnd={onMomentumScrollEnd}
+                  >
+                    {pages}
+                  </ScrollView>
+                </Reanimated.View>
+              </GestureDetector>
+            </Animated.View>
           </DashboardCarouselContext.Provider>
         </View>
         {/* The banners and the tabs row are account wide, so they are laid over the
@@ -641,8 +756,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
           onStartShouldSetResponderCapture={onHeaderTouchStart}
           onMoveShouldSetResponderCapture={onHeaderTouchMove}
           onResponderMove={onHeaderDrag}
-          onResponderRelease={endHeaderPull}
-          onResponderTerminate={endHeaderPull}
+          onResponderRelease={onHeaderRelease}
+          onResponderTerminate={onHeaderTerminate}
           style={[styles.header, spacings.phSm, { transform: [{ translateY: headerTranslateY }] }]}
         >
           <View onLayout={onBannersLayout}>
@@ -652,11 +767,14 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
             <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
           </View>
         </Animated.View>
-      </Reanimated.View>
+      </Animated.View>
       {!!overviewHeight && (
-        <Reanimated.View pointerEvents="none" style={[styles.collapseCover, overviewPushStyle]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.collapseCover, { transform: [{ translateY: overviewPush }] }]}
+        >
           <OverviewCollapseCover />
-        </Reanimated.View>
+        </Animated.View>
       )}
       {/* Outside the pager, so a swipe doesn't carry it along, and only what the open
       tab put in it changes. Hidden together with the overview */}

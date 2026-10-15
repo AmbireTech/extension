@@ -10,7 +10,7 @@ import type { FloatingBottomBarProps } from '../FloatingBottomBar/FloatingBottom
 export type DashboardFloatingBarProps = Omit<FloatingBottomBarProps, 'isHidden'>
 
 export interface DashboardPageHandle {
-  scrollToOffset: (offset: number) => void
+  scrollToOffset: (offset: number, animated?: boolean) => void
   /**
    * The page's own scrolling, as something the carousel's pull can be declared against.
    * A scrollable page claims a drag before the pull can judge it, and a relation can
@@ -30,8 +30,9 @@ export interface DashboardCarouselContextValue {
    */
   collapsibleHeight: number
   /**
-   * How far the open overview pushes the pages down. They are never resized for it, so a
-   * page whose end it hides must be able to scroll this far to collapse it.
+   * How much of the overview collapses. It collapses as the page is scrolled past the
+   * banners, so every page is padded by it, and one whose end it hides has to be able to
+   * scroll this much further.
    */
   overviewHeight: number
   /** Height of a page, which its content has to exceed to be scrollable at all. */
@@ -48,11 +49,12 @@ export interface DashboardCarouselContextValue {
    * tell a drag from the page being scrolled.
    */
   reportScrollOffset: (offset: number) => void
-  /**
-   * The open page's scroll, which collapses the overview and hides the floating bar once
-   * past `collapseThreshold`: how far that page can be scrolled to collapse it, if at all.
-   */
-  onPageScroll: (event: NativeSyntheticEvent<NativeScrollEvent>, collapseThreshold: number) => void
+  /** The open page's drag starting, during which the overview is never settled. */
+  onPageScrollBeginDrag: () => void
+  /** The open page's drag ending, which settles a partly collapsed overview. */
+  onPageScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  /** The open page's momentum ending, which settles a partly collapsed overview. */
+  onPageMomentumScrollEnd: () => void
   /**
    * The bar belongs to the dashboard rather than to a page, so it is rendered above
    * the pager and stays put through a swipe. A page registers what it wants in it,
