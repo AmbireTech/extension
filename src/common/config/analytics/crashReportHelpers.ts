@@ -81,6 +81,21 @@ export const shouldReportControllerError = (
   errorRef.level !== 'expected'
 
 /**
+ * Reports an error a controller emitted with the given capture function, unless the controller
+ * marked it as expected or opted out of crash reports for it. Shared by the extension background
+ * and the mobile app, which each pass their own capture function.
+ */
+export const reportControllerError = (
+  errorRef: ErrorRef,
+  controllerName: string,
+  capture: (exception: unknown, captureContext: { extra: { controllerName: string } }) => unknown
+) => {
+  if (!shouldReportControllerError(errorRef)) return
+
+  capture(errorRef.error, { extra: { controllerName } })
+}
+
+/**
  * The anonymous user ID that crash reports carry, shared by the extension background and the
  * mobile app. Gives undefined until the keystore is ready to store keys.
  */

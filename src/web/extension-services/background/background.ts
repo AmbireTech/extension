@@ -15,7 +15,6 @@ import { EventEmitterRegistryController } from '@ambire-common/controllers/event
 import { MainController } from '@ambire-common/controllers/main/main'
 import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
 import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
-import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
@@ -30,7 +29,7 @@ import {
   getCrashReportUserId,
   getReportableAction,
   logSentryDeliveryWhenTesting,
-  shouldReportControllerError
+  reportControllerError
 } from '@common/config/analytics/crashReportHelpers'
 import { processCrashReportEvent } from '@common/config/analytics/processCrashReportEvent'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
@@ -147,16 +146,6 @@ function stateDebug(
   }
 
   logInfoWithPrefix(key, debugLogs)
-}
-
-function captureBackgroundExceptionFromControllerError(error: ErrorRef, controllerName: string) {
-  if (!shouldReportControllerError(error)) return
-
-  captureBackgroundException(error.error, {
-    extra: {
-      controllerName
-    }
-  })
 }
 
 /**
@@ -418,7 +407,7 @@ const init = async () => {
             method: ctrl.name,
             params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
           })
-          captureBackgroundExceptionFromControllerError(error, ctrl.name)
+          reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')
       }
     })

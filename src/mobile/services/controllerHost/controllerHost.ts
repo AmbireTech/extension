@@ -7,6 +7,8 @@ import { Fetch } from '@ambire-common/interfaces/fetch'
 import { UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
+import { captureControllerException } from '@common/config/analytics/CrashAnalytics'
+import { reportControllerError } from '@common/config/analytics/crashReportHelpers'
 import { APP_VERSION, isAndroid, isDev } from '@common/config/env'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
@@ -30,7 +32,6 @@ import ledgerTransportService from '@mobile/services/ledger/ledgerTransportServi
 
 import { buildStateForFE, queueCtrlStateIfGated, setCriticalControllers } from './bootPhase'
 import {
-  reportControllerError,
   reportControllerHostError,
   reportFailedAction,
   syncCrashReportContext
@@ -185,7 +186,7 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
         if (!ctrl.isInRegistry()) return
 
         emitCtrlError(ctrl.name, ctrl.emittedErrors)
-        reportControllerError(error, ctrl.name)
+        reportControllerError(error, ctrl.name, captureControllerException)
       }, 'mobile')
     }
   })

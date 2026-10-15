@@ -1,4 +1,3 @@
-import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { stringify } from '@ambire-common/libs/richJson/richJson'
@@ -11,8 +10,7 @@ import {
 import {
   getCrashReportAccountAddr,
   getCrashReportUserId,
-  getReportableAction,
-  shouldReportControllerError
+  getReportableAction
 } from '@common/config/analytics/crashReportHelpers'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { Action, MethodAction } from '@common/types/actions'
@@ -22,16 +20,6 @@ import type { MainController } from '@ambire-common/controllers/main/main'
 // The SDK copies every user and extra change to the native layer, so only real changes go out
 let lastReportedUserId: string | undefined
 let lastReportedAccountAddr: string | undefined
-
-/**
- * Reports an error a controller emitted, unless the controller marked it as expected or opted
- * out of crash reports for it.
- */
-export const reportControllerError = (errorRef: ErrorRef, controllerName: string) => {
-  if (!shouldReportControllerError(errorRef)) return
-
-  captureControllerException(errorRef.error, { extra: { controllerName } })
-}
 
 /** Reports a failure of the controller host itself, like a controller state that can't be serialized. */
 export const reportControllerHostError = (error: unknown, controllerName: string) => {
