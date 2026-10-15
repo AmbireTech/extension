@@ -40,7 +40,10 @@ const PHONE_MOCKUP_HEIGHT = 300
 // The panels shrink below `PANEL_WIDTH` on narrower screens, so the QR code is sized from
 // the space its container actually got instead of from the constant, otherwise its white
 // quiet zone spills over the horizontal padding of the card
-const CAPTION_ROW_HEIGHT = 32
+// Two lines of the caption, as the summary of what is selected wraps once it names the settings,
+// networks or Address Book too. The cards are a line taller instead of the QR code smaller.
+const CAPTION_LINE_HEIGHT = 21
+const CAPTION_ROW_HEIGHT = 32 + CAPTION_LINE_HEIGHT
 // The two steps keep the same vertical rhythm, so the titles and the row under them line
 // up. Both are the height of the taller side: the back button for the titles, a store
 // tile for the row under them.
@@ -58,6 +61,7 @@ const ExportToMobileScreen = () => {
   const {
     accounts,
     selectedAddrs,
+    selectionSummary,
     areAllSelected,
     hasSelection,
     selectedSeedsCount,
@@ -116,6 +120,12 @@ const ExportToMobileScreen = () => {
     [minHeightSize]
   )
 
+  // The onboarding panels' own min height, plus the second line of the caption
+  const panelStyle = useMemo(
+    () => [flexbox.flex1, { minHeight: (minHeightSize(620) ? 520 : 560) + CAPTION_LINE_HEIGHT }],
+    [minHeightSize]
+  )
+
   // A filled tile rather than a border, which `secondaryBorder` makes invisible on the
   // white card of the light theme
   const storeBadgeStyle = {
@@ -137,12 +147,7 @@ const ExportToMobileScreen = () => {
             { columnGap: SPACING_XL, maxWidth: PANEL_WIDTH * 2 + SPACING_XL }
           ]}
         >
-          <Panel
-            type="onboarding"
-            spacingsSize="small"
-            panelWidth={PANEL_WIDTH}
-            style={flexbox.flex1}
-          >
+          <Panel type="onboarding" spacingsSize="small" panelWidth={PANEL_WIDTH} style={panelStyle}>
             <View
               style={[
                 flexbox.directionRow,
@@ -178,12 +183,7 @@ const ExportToMobileScreen = () => {
             />
           </Panel>
 
-          <Panel
-            type="onboarding"
-            spacingsSize="small"
-            panelWidth={PANEL_WIDTH}
-            style={flexbox.flex1}
-          >
+          <Panel type="onboarding" spacingsSize="small" panelWidth={PANEL_WIDTH} style={panelStyle}>
             {/* `PanelTitle` carries `flex: 1`, which stretches it down the whole card
             unless it sits in a row of its own */}
             <View
@@ -223,10 +223,7 @@ const ExportToMobileScreen = () => {
                     appearance="secondaryText"
                     style={[spacings.mbTy, text.center]}
                   >
-                    {t('{{count}} account{{s}} selected.', {
-                      count: selectedAddrs.length,
-                      s: selectedAddrs.length !== 1 ? 's' : ''
-                    })}{' '}
+                    {selectionSummary}{' '}
                     <Text
                       fontSize={14}
                       weight="medium"

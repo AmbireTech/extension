@@ -36,7 +36,8 @@ import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRo
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
-  const { accounts, control, keyExtractor, getItemLayout } = useAccountsList()
+  const { accounts, control, keyExtractor, getItemLayout, onAccountExtraHeightChange } =
+    useAccountsList()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
@@ -207,6 +208,7 @@ const AccountsSettingsScreen = () => {
               isSelectable={false}
               containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
               withReceive
+              onExtraHeightChange={onAccountExtraHeightChange}
             />
           </View>
         </View>
@@ -217,7 +219,8 @@ const AccountsSettingsScreen = () => {
       theme.primary,
       theme.iconPrimary,
       shortenAccountAddr,
-      accountOptions
+      accountOptions,
+      onAccountExtraHeightChange
     ]
   )
   const { maxWidthSize } = useWindowSize()

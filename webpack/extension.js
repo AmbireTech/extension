@@ -7,7 +7,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const expoEnv = require('@expo/webpack-config/env')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const LavaMoatPlugin = require('@lavamoat/webpack')
-const { validateEnvVariables } = require('../scripts/validateEnv')
+const { ENV_TARGETS, validateEnvVariables } = require('../scripts/validateEnv')
 const appJSON = require('../app.json')
 const AssetReplacePlugin = require('../plugins/AssetReplacePlugin')
 const createLavamoatUnsafeLayerPlugin = require('../lavamoat/plugins/lavamoat-unsafe-layer-plugin')
@@ -250,7 +250,7 @@ module.exports = async function buildExtension(
   env
 ) {
   if (process.env.IS_TESTING !== 'true') {
-    validateEnvVariables(process.env.APP_ENV)
+    validateEnvVariables(process.env.APP_ENV, ENV_TARGETS.EXTENSION)
   }
   const locations = env.locations || (await (0, expoEnv.getPathsAsync)(env.projectRoot))
   const templatePath = (fileName = '') => path.join(ROOT_DIR, './src/web', fileName)
