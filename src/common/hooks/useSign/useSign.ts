@@ -370,10 +370,12 @@ const useSign = ({
         return
       }
 
+      // No need to pick the key that pays the fee when it is a private key, which pays on its own
       if (
         !signAccountOpState?.account.safeCreation &&
         (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
-        !isFeePayerSameAsSigner
+        !isFeePayerSameAsSigner &&
+        feePayerKeyType !== 'internal'
       ) {
         setIsChooseFeePayerKeyShown(true)
         return
@@ -483,8 +485,23 @@ const useSign = ({
       return
     }
 
+    // A private key signs on its own in one click, so the user is not asked to pick another key
+    const internalKey = signAccountOpState.accountKeyStoreKeys.find(
+      (key) => key.type === 'internal'
+    )
+    if (internalKey) {
+      handleChangeSigningKey(internalKey.addr, internalKey.type)
+      return
+    }
+
     setIsChooseSignerShown(true)
-  }, [currentBannersKey, handleSign, shouldHoldToProceed, signAccountOpState])
+  }, [
+    currentBannersKey,
+    handleChangeSigningKey,
+    handleSign,
+    shouldHoldToProceed,
+    signAccountOpState
+  ])
 
   const acknowledgeWarning = useCallback(() => {
     if (!warningToPromptBeforeSign) return
