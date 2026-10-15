@@ -111,8 +111,13 @@ const useSign = ({
     () => JSON.stringify(signAccountOpState?.banners || []),
     [signAccountOpState?.banners]
   )
+  // Executing a Safe from an EOA that never paid for it publicly links the two forever,
+  // so it always asks for a hold. Only the executing transaction is paid, not a signature
+  const isLinkingNewFeePayerToSafe =
+    !!signAccountOpState?.isFeePayerNotLinkedToSafe && !!signAccountOpState?.canBroadcast
   const shouldHoldToProceed =
-    !!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey
+    (!!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey) ||
+    isLinkingNewFeePayerToSafe
   const shouldShowSafeSigners = showSafeSigners && !shouldHoldToProceed
 
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
@@ -783,6 +788,7 @@ const useSign = ({
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed,
+    isLinkingNewFeePayerToSafe,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,

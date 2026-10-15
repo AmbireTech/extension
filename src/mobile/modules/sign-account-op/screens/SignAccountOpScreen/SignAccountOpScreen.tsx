@@ -140,6 +140,7 @@ const SignAccountOpScreen = () => {
     holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
+    isLinkingNewFeePayerToSafe,
     disabledReason,
     showSafeSigners,
     shouldDisplayQrSigningModal,
@@ -290,7 +291,14 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
-  const holdToProceedButtonType = useDappVerificationHoldButtonType(signAccountOpState?.banners)
+  const dappVerificationHoldButtonType = useDappVerificationHoldButtonType(
+    signAccountOpState?.banners
+  )
+  // Linking a new fee payer to the Safe is a warning, unless a dApp check already calls for more
+  const holdToProceedButtonType =
+    dappVerificationHoldButtonType === 'primary' && isLinkingNewFeePayerToSafe
+      ? 'warning'
+      : dappVerificationHoldButtonType
 
   return (
     <View style={flexbox.flex1}>

@@ -107,7 +107,7 @@ const PayOption = ({
       )}
 
       <View style={[flexbox.flex1, spacings.mlTy, spacings.mrTy]}>
-        {disabledReason ? (
+        {disabledReason && !isPaidByAnotherAccount ? (
           <View>
             <Text weight="semiBold" fontSize={14} numberOfLines={1}>
               {formatDecimals(Number(amountUsd), 'value')}
@@ -128,24 +128,43 @@ const PayOption = ({
         ) : (
           <View>
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text
-                weight="semiBold"
-                fontSize={14}
-                numberOfLines={1}
-                appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
-              >
-                {formatDecimals(Number(amountUsd), 'value')}
-              </Text>
-              {isPaidByAnotherAccount && (
-                <Text
-                  appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
-                  weight="medium"
-                  fontSize={12}
-                  numberOfLines={1}
-                  style={[spacings.mlTy, { flexShrink: 1 }]}
-                >
-                  {formattedAmount} {feeOption.token.symbol}
-                </Text>
+              {/* An option that can't pay shows only what it lacks, so its cost in USD is left out */}
+              {disabledReason ? (
+                <>
+                  <Text weight="semiBold" fontSize={14} numberOfLines={1} style={spacings.mrTy}>
+                    {formattedAmount} {feeOption.token.symbol}
+                  </Text>
+                  <Text
+                    fontSize={isMobile ? 10 : 12}
+                    numberOfLines={1}
+                    appearance={disabledTextAppearance}
+                    style={{ flexShrink: 1 }}
+                  >
+                    {disabledReason}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text
+                    weight="semiBold"
+                    fontSize={14}
+                    numberOfLines={1}
+                    appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
+                  >
+                    {formatDecimals(Number(amountUsd), 'value')}
+                  </Text>
+                  {isPaidByAnotherAccount && (
+                    <Text
+                      appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
+                      weight="medium"
+                      fontSize={12}
+                      numberOfLines={1}
+                      style={[spacings.mlTy, { flexShrink: 1 }]}
+                    >
+                      {formattedAmount} {feeOption.token.symbol}
+                    </Text>
+                  )}
+                </>
               )}
               {/* Note: Under discussion */}
               {/* {showWalletBalanceBadge && (

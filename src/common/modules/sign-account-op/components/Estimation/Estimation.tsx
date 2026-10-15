@@ -14,12 +14,16 @@ import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import shortenAddress from '@ambire-common/utils/shortenAddress'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
 import GaugeIcon from '@common/assets/svg/GaugeIcon'
+import LinkIcon from '@common/assets/svg/LinkIcon'
+import MultiKeysIcon from '@common/assets/svg/MultiKeysIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
+import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Select, { SectionedSelect } from '@common/components/Select'
@@ -42,7 +46,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { NO_FEE_OPTIONS } from './consts'
-import { getFeeOptionValue, mapFeeOptions, sortFeeOptions } from './helpers'
+import { getFeeOptionValue, groupSafeFeeOptions, mapFeeOptions, sortFeeOptions } from './helpers'
 import getStyles from './styles'
 import { DispatchUpdate, Props } from './types'
 
@@ -403,6 +407,12 @@ const Estimation = ({
     return networks.find((n) => n.chainId === signAccountOpState?.accountOp.chainId)
   }, [networks, signAccountOpState?.accountOp.chainId])
 
+  const safeFeePayerLinks = signAccountOpState?.safeFeePayerLinks
+  const safeFeeOptionGroups = useMemo(
+    () => (safeFeePayerLinks ? groupSafeFeeOptions(payOptionsPaidByEOA, safeFeePayerLinks) : null),
+    [payOptionsPaidByEOA, safeFeePayerLinks]
+  )
+
   const feeOptionSelectSections = useMemo(() => {
     if (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length)
       return [
@@ -412,15 +422,41 @@ const Estimation = ({
         }
       ]
 
-    return [
-      {
-        title: {
-          icon: FeeIcon,
-          text: t('Fee tokens in this account')
-        },
-        data: payOptionsPaidByUsOrGasTank,
-        key: 'account-tokens'
+    const accountTokensSection = {
+      title: {
+        icon: FeeIcon,
+        text: t('Fee tokens in this account')
       },
+      data: payOptionsPaidByUsOrGasTank,
+      key: 'account-tokens'
+    }
+
+    // Paying from an EOA publicly links it to the Safe, so the ones that reveal nothing new come first
+    if (safeFeeOptionGroups) {
+      const { owners, linked, notLinked } = safeFeeOptionGroups
+
+      return [
+        accountTokensSection,
+        {
+          title: { icon: MultiKeysIcon, text: t('Safe owners') },
+          data: owners,
+          key: 'safe-owners'
+        },
+        {
+          title: { icon: LinkIcon, text: t('Already linked to this Safe') },
+          data: linked,
+          key: 'safe-linked'
+        },
+        {
+          title: { icon: VisibilityIcon, text: t('Not linked to this Safe yet') },
+          data: notLinked,
+          key: 'safe-not-linked'
+        }
+      ]
+    }
+
+    return [
+      accountTokensSection,
       {
         title: {
           icon: AssetIcon,
@@ -430,7 +466,41 @@ const Estimation = ({
         key: 'eoa-tokens'
       }
     ]
-  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, t])
+  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, safeFeeOptionGroups, t])
+
+  const isFeePayerNotLinkedToSafe = !!signAccountOpState?.isFeePayerNotLinkedToSafe
+
+  const notLinkedToSafeWarning = useMemo(() => {
+    if (!isFeePayerNotLinkedToSafe || !payValue || !safeFeeOptionGroups) return null
+
+    const getPayerName = (feeOption: { paidBy: string; paidByAccountLabel?: string }) =>
+      feeOption.paidByAccountLabel || shortenAddress(feeOption.paidBy, 13)
+    const linkedAlternative = [...safeFeeOptionGroups.owners, ...safeFeeOptionGroups.linked].find(
+      (feeOption) => !feeOption.disabled
+    )
+
+    return (
+      <Alert
+        type="warning"
+        size="sm"
+        title={t('This links {{payer}} to this Safe', { payer: getPayerName(payValue) })}
+        text={t(
+          "Paying the fee from {{payer}} will show publicly that it belongs to the same owner as this Safe. This can't be undone.",
+          { payer: getPayerName(payValue) }
+        )}
+        style={spacings.mtSm}
+        buttonProps={
+          linkedAlternative
+            ? {
+                text: t('Use {{payer}} instead', { payer: getPayerName(linkedAlternative) }),
+                onPress: () => setFeeOption(linkedAlternative)
+              }
+            : undefined
+        }
+        testID="fee-payer-not-linked-to-safe-warning"
+      />
+    )
+  }, [isFeePayerNotLinkedToSafe, payValue, safeFeeOptionGroups, setFeeOption, t])
 
   const nativeFeeOption = signAccountOpState?.estimation.availableFeeOptions.find(
     (feeOption) =>
@@ -757,6 +827,7 @@ const Estimation = ({
         menuPosition="top"
         bottomSheetTitle={t('Network fee')}
       />
+      {notLinkedToSafeWarning}
       <DefaultFeeSelector
         networkName={network?.name}
         payValue={payValue}
