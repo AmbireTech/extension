@@ -137,6 +137,7 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     signButtonText,
+    holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
     disabledReason,
@@ -396,6 +397,7 @@ const SignAccountOpScreen = () => {
               inProgressButtonText={primaryButtonText}
               buttonText={signButtonText}
               shouldHoldToProceed={shouldHoldToProceed}
+              holdToProceedButtonText={holdToSignButtonText}
               shouldRejectOnchain={shouldRejectOnchain}
               isRejectDisabled={isCancelDisabled}
               holdToProceedButtonType={holdToProceedButtonType}
