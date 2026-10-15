@@ -475,9 +475,15 @@ const Estimation = ({
 
     const getPayerName = (feeOption: { paidBy: string; paidByAccountLabel?: string }) =>
       feeOption.paidByAccountLabel || shortenAddress(feeOption.paidBy, 13)
-    const linkedAlternative = [...safeFeeOptionGroups.owners, ...safeFeeOptionGroups.linked].find(
-      (feeOption) => !feeOption.disabled
-    )
+    const usableLinkedOptions = [
+      ...safeFeeOptionGroups.owners,
+      ...safeFeeOptionGroups.linked
+    ].filter((feeOption) => !feeOption.disabled)
+    // Same order as the default payer: the last one first, then owners, then linked
+    const linkedAlternative =
+      usableLinkedOptions.find(
+        (feeOption) => feeOption.paidBy.toLowerCase() === safeFeePayerLinks?.lastUsed
+      ) || usableLinkedOptions[0]
 
     return (
       <Alert
@@ -500,7 +506,14 @@ const Estimation = ({
         testID="fee-payer-not-linked-to-safe-warning"
       />
     )
-  }, [isFeePayerNotLinkedToSafe, payValue, safeFeeOptionGroups, setFeeOption, t])
+  }, [
+    isFeePayerNotLinkedToSafe,
+    payValue,
+    safeFeeOptionGroups,
+    safeFeePayerLinks?.lastUsed,
+    setFeeOption,
+    t
+  ])
 
   const nativeFeeOption = signAccountOpState?.estimation.availableFeeOptions.find(
     (feeOption) =>
