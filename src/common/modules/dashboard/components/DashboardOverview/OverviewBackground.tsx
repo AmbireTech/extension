@@ -13,9 +13,9 @@ import OverviewBackgroundLayer, { CollapsingLayerGeometry } from './OverviewBack
 // The aspect ratio of `background.png`, which `slice` covers the card with
 const IMAGE_ASPECT_RATIO = 456 / 226
 
-// How far the image overhangs each side of the card once zoomed out as far as it goes, so its
-// edges never land on a fractional pixel inside the card and leave a hairline of black
-const EDGE_BLEED = 1
+// How far the image overhangs each side of the card, open or collapsed, so its edges never
+// land on a fractional pixel inside the card and leave a hairline of black
+const EDGE_BLEED = 2
 
 /** Parse a hex color to normalized [r, g, b] values (0–1) */
 function hexToRgbNorm(hex: string): [number, number, number] {
@@ -59,7 +59,10 @@ interface CardSize {
  * neither platform does anymore.
  */
 const getCollapsingLayerGeometry = ({ width, height }: CardSize): CollapsingLayerGeometry => {
-  const layerWidth = Math.max(width, height * IMAGE_ASPECT_RATIO)
+  // Covered as if the card were larger by the bleed on each side
+  const coveredWidth = width + EDGE_BLEED * 2
+  const coveredHeight = height + EDGE_BLEED * 2
+  const layerWidth = Math.max(coveredWidth, coveredHeight * IMAGE_ASPECT_RATIO)
   const layerHeight = layerWidth / IMAGE_ASPECT_RATIO
 
   return {
@@ -67,8 +70,8 @@ const getCollapsingLayerGeometry = ({ width, height }: CardSize): CollapsingLaye
     height: layerHeight,
     left: (width - layerWidth) / 2,
     top: (height - layerHeight) / 2,
-    heightBoundCollapse: height - width / IMAGE_ASPECT_RATIO,
-    minScale: Math.min((width + EDGE_BLEED * 2) / layerWidth, 1)
+    heightBoundCollapse: coveredHeight - coveredWidth / IMAGE_ASPECT_RATIO,
+    minScale: Math.min(coveredWidth / layerWidth, 1)
   }
 }
 
