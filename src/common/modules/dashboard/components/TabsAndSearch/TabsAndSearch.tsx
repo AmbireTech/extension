@@ -28,7 +28,8 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, sessionId }) => {
     <View
       style={[
         styles.container,
-        !!controllerBanners.length && spacings.ptTy,
+        // Mobile puts this gap below the banners instead, so it collapses together with them
+        !isMobile && !!controllerBanners.length && spacings.ptTy,
         isWeb && minWidthSize(480) && spacings.pl,
         isMobile && spacings.ph
       ]}
