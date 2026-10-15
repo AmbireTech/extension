@@ -3,7 +3,6 @@ import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
-import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
@@ -30,6 +29,7 @@ import text from '@common/styles/utils/text'
 import PendingAccountOpCalls from './lazyPendingAccountOpCalls'
 import getStyles from './styles'
 
+import type { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
@@ -156,9 +156,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
     if (isSentThroughBundler(pendingAccountOp)) {
       speedUpAccountOp = getResendAccountOp(pendingAccountOp)
     } else if (canBuildReplacementAccountOp(pendingAccountOp)) {
-      // Once sent, the txnId is the network's transaction hash, not the Safe transaction hash
-      // the owners signed, so it can't be used to tell who signed. `signed` already says that
-      speedUpAccountOp = { ...getSpeedUpAccountOp(pendingAccountOp), txnId: undefined }
+      speedUpAccountOp = getSpeedUpAccountOp(pendingAccountOp)
     }
     if (!speedUpAccountOp) return
 

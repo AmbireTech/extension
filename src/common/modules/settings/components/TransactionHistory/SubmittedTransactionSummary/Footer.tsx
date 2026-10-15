@@ -38,10 +38,7 @@ type Props = {
   size: 'sm' | 'md' | 'lg'
   rawCalls?: SubmittedAccountOpLike['calls']
   submittedAccountOp: SubmittedAccountOpLike
-} & Pick<
-  SubmittedAccountOpLike,
-  'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status'
->
+} & Pick<SubmittedAccountOpLike, 'txnId' | 'identifiedBy' | 'accountAddr' | 'status'>
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account

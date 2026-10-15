@@ -57,9 +57,13 @@ const getIncreasedGasFeePayment = (gasFeePayment: GasFeePayment): GasFeePayment 
 
 /**
  * The same transaction as the pending one, with the same nonces and signatures, but paying a
- * higher fee so it replaces the pending one and gets confirmed sooner.
+ * higher fee so it replaces the pending one and gets confirmed sooner. The txnId is left out:
+ * once sent, it's the network's transaction hash, not the Safe transaction hash the owners
+ * signed, so it can't be used to tell who signed. `signed` already says that.
  */
-export const getSpeedUpAccountOp = (submittedAccountOp: ReplaceableSubmittedAccountOp): AccountOp => ({
+export const getSpeedUpAccountOp = (
+  submittedAccountOp: ReplaceableSubmittedAccountOp
+): AccountOp => ({
   id: submittedAccountOp.id,
   accountAddr: submittedAccountOp.accountAddr,
   chainId: submittedAccountOp.chainId,
@@ -73,7 +77,6 @@ export const getSpeedUpAccountOp = (submittedAccountOp: ReplaceableSubmittedAcco
   gasLimit: submittedAccountOp.gasLimit,
   signature: submittedAccountOp.signature,
   gasFeePayment: getIncreasedGasFeePayment(submittedAccountOp.gasFeePayment),
-  txnId: submittedAccountOp.txnId,
   asUserOperation: submittedAccountOp.asUserOperation,
   signers: submittedAccountOp.signers,
   signed: submittedAccountOp.signed,

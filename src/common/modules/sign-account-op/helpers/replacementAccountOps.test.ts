@@ -86,4 +86,15 @@ describe('replacementAccountOps', () => {
     if (!canBuildReplacementAccountOp(sentByEoa)) throw new Error('Expected a replaceable op')
     expect(getSpeedUpAccountOp(sentByEoa).meta?.isResend).toBe(true)
   })
+
+  test('speeds up without the stored txnId, as it is not the hash the owners signed', () => {
+    const sentByEoa = buildPendingAccountOp(BROADCAST_OPTIONS.byOtherEOA)
+    if (!canBuildReplacementAccountOp(sentByEoa)) throw new Error('Expected a replaceable op')
+    const speedUp = getSpeedUpAccountOp(sentByEoa)
+
+    expect(speedUp.txnId).toBeUndefined()
+    expect(speedUp.signature).toBe(sentByEoa.signature)
+    expect(speedUp.signed).toBe(sentByEoa.signed)
+    expect(speedUp.nonce).toBe(268n)
+  })
 })
