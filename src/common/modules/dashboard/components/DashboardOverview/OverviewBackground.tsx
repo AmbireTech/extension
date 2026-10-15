@@ -1,4 +1,5 @@
-import { StyleSheet, View } from 'react-native'
+import { useCallback, useMemo, useState } from 'react'
+import { Animated, LayoutChangeEvent, StyleSheet, View, ViewStyle } from 'react-native'
 import { Defs, FeBlend, FeColorMatrix, Filter, Image as SvgImage, Svg } from 'react-native-svg'
 
 import useControllerState from '@common/hooks/useControllerState'
@@ -6,6 +7,9 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { getAvatarColors } from '@common/utils/avatars'
 
 import backgroundImage from './background.png'
+
+// The aspect ratio of `background.png`, which `slice` covers the card with
+const IMAGE_ASPECT_RATIO = 456 / 226
 
 /** Parse a hex color to normalized [r, g, b] values (0–1) */
 function hexToRgbNorm(hex: string): [number, number, number] {
@@ -36,8 +40,75 @@ function channelToColorMatrix(srcChannel: 0 | 1 | 2, tr: number, tg: number, tb:
   return `${row(tr)} ${row(tg)} ${row(tb)} 0 0 0 1 0`
 }
 
-export function OverviewBackground({ address }: { address: string }) {
+interface CardSize {
+  width: number
+  height: number
+}
+
+/**
+ * Covers the open card with the image as `slice` does, but in a layer of the image's own
+ * size, so it can then be moved as if the card got shorter by `collapse`: smaller while the
+ * card's height decides the cover size, and centred on what is left of the card. That is how
+ * web's background moves as its overview collapses, by resizing a card mobile never resizes.
+ */
+const getCollapsingLayerStyle = (
+  { width, height }: CardSize,
+  collapse: Animated.AnimatedInterpolation<number>
+): Animated.WithAnimatedObject<ViewStyle> => {
+  const layerWidth = Math.max(width, height * IMAGE_ASPECT_RATIO)
+  const layerHeight = layerWidth / IMAGE_ASPECT_RATIO
+  // How far the card collapses before its width, not its height, decides the cover size
+  const heightBoundCollapse = height - width / IMAGE_ASPECT_RATIO
+
+  return {
+    position: 'absolute',
+    width: layerWidth,
+    height: layerHeight,
+    left: (width - layerWidth) / 2,
+    top: (height - layerHeight) / 2,
+    transform: [
+      { translateY: collapse.interpolate({ inputRange: [0, 1], outputRange: [0, -0.5] }) },
+      {
+        scale:
+          heightBoundCollapse > 0
+            ? collapse.interpolate({
+                inputRange: [0, heightBoundCollapse],
+                outputRange: [1, width / layerWidth],
+                extrapolate: 'clamp'
+              })
+            : 1
+      }
+    ]
+  }
+}
+
+export function OverviewBackground({
+  address,
+  collapse
+}: {
+  address: string
+  /** Mobile only, how far the pages have slid over the card. Moves the image by transforms only. */
+  collapse?: Animated.AnimatedInterpolation<number>
+}) {
   const { state } = useControllerState({ id: 'WalletStateController' })
+  const [cardSize, setCardSize] = useState<CardSize | null>(null)
+
+  const onLayout = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => {
+    setCardSize((prev) =>
+      prev?.width === layout.width && prev?.height === layout.height
+        ? prev
+        : { width: layout.width, height: layout.height }
+    )
+  }, [])
+
+  const layerStyle = useMemo(
+    () =>
+      collapse && cardSize
+        ? getCollapsingLayerStyle(cardSize, collapse)
+        : StyleSheet.absoluteFillObject,
+    [cardSize, collapse]
+  )
+
   const colors = getAvatarColors(state.avatarType, address)
 
   // Avatar colors[0] and colors[1] can sometimes be almost identical (e.g. two dark purples).
@@ -66,25 +137,28 @@ export function OverviewBackground({ address }: { address: string }) {
           overflow: 'hidden'
         }
       ]}
+      onLayout={collapse ? onLayout : undefined}
     >
-      <Svg width="100%" height="100%">
-        <Defs>
-          <Filter id="recolor" x="0%" y="0%" width="100%" height="100%">
-            <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
-            <FeColorMatrix type="matrix" values={matrix2} in="SourceGraphic" result="layer2" />
-            <FeBlend in="layer1" in2="layer2" mode="screen" />
-          </Filter>
-        </Defs>
+      <Animated.View style={layerStyle}>
+        <Svg width="100%" height="100%">
+          <Defs>
+            <Filter id="recolor" x="0%" y="0%" width="100%" height="100%">
+              <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
+              <FeColorMatrix type="matrix" values={matrix2} in="SourceGraphic" result="layer2" />
+              <FeBlend in="layer1" in2="layer2" mode="screen" />
+            </Filter>
+          </Defs>
 
-        <SvgImage
-          href={backgroundImage}
-          width="100%"
-          height="100%"
-          preserveAspectRatio="xMidYMid slice"
-          opacity={0.28}
-          filter="url(#recolor)"
-        />
-      </Svg>
+          <SvgImage
+            href={backgroundImage}
+            width="100%"
+            height="100%"
+            preserveAspectRatio="xMidYMid slice"
+            opacity={0.28}
+            filter="url(#recolor)"
+          />
+        </Svg>
+      </Animated.View>
     </View>
   )
 }

@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
-import { LayoutChangeEvent, View } from 'react-native'
+import { Animated, LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -32,6 +32,8 @@ const DashboardScreen = () => {
   }, [])
   // Until then the pager doesn't know where to start, and would be drawn over the overview
   const isOverviewMeasured = !!overviewHeight && !!collapsibleOverviewHeight
+  // How far the pager has slid over the overview, which moves its background in step
+  const [overviewCollapse, setOverviewCollapse] = useState<Animated.AnimatedInterpolation<number>>()
 
   const {
     state: { account, portfolio }
@@ -90,6 +92,7 @@ const DashboardScreen = () => {
                 <DashboardOverview
                   openGasTankModal={openGasTankModal}
                   onCollapsibleHeightChange={setCollapsibleOverviewHeight}
+                  overviewCollapse={overviewCollapse}
                 />
               </View>
               <View
@@ -106,6 +109,7 @@ const DashboardScreen = () => {
                   onRefresh={reloadAccount}
                   refreshing={isManuallyRefreshing}
                   overviewHeight={collapsibleOverviewHeight}
+                  onOverviewCollapseChange={setOverviewCollapse}
                 />
               </View>
             </>

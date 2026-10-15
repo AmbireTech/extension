@@ -18,6 +18,7 @@ import Tokens from '../Tokens'
 import SessionIdInUrl from './SessionIdInUrl'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { DashboardPagesCarouselProps } from '@common/modules/dashboard/components/DashboardPagesCarousel/DashboardPagesCarousel'
 
 interface Props {
   /** Collapses the overview and hides the floating bar on scroll. The mobile carousel does it itself. */
@@ -29,6 +30,8 @@ interface Props {
   onRefresh?: () => void
   /** Mobile only, where the carousel slides over the collapsing part of the overview. */
   overviewHeight?: number
+  /** Mobile only. See `DashboardPagesCarouselProps['onOverviewCollapseChange']` */
+  onOverviewCollapseChange?: DashboardPagesCarouselProps['onOverviewCollapseChange']
 }
 
 const selectDashboardNetworkFilter = (
@@ -42,7 +45,8 @@ const DashboardPages = ({
   refreshing,
   onRefresh,
   onTabChange,
-  overviewHeight
+  overviewHeight,
+  onOverviewCollapseChange
 }: Props) => {
   const { t } = useTranslation()
   const route = useRoute()
@@ -127,6 +131,7 @@ const DashboardPages = ({
         onRefresh={onRefresh}
         refreshing={refreshing}
         overviewHeight={overviewHeight}
+        onOverviewCollapseChange={onOverviewCollapseChange}
       >
         <Tokens
           openTab={pagesOpenTab}

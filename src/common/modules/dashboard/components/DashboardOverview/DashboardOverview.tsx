@@ -35,6 +35,8 @@ interface Props {
   setDashboardOverviewSize?: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
   /** Mobile only, where the pages slide over the collapsing part instead. */
   onCollapsibleHeightChange?: OverviewCollapsibleProps['onHeightChange']
+  /** Mobile only, how far the pages have slid over the collapsing part. Moves the background. */
+  overviewCollapse?: Animated.AnimatedInterpolation<number>
 }
 
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
@@ -43,7 +45,8 @@ const DashboardOverview: FC<Props> = ({
   openGasTankModal,
   animatedOverviewHeight,
   setDashboardOverviewSize,
-  onCollapsibleHeightChange
+  onCollapsibleHeightChange,
+  overviewCollapse
 }) => {
   const { theme } = useTheme(getStyles)
   const { state: isOffline } = useController('MainController', 'isOffline')
@@ -123,7 +126,7 @@ const DashboardOverview: FC<Props> = ({
           })
         }
       >
-        <OverviewBackground address={account?.addr || ''} />
+        <OverviewBackground address={account?.addr || ''} collapse={overviewCollapse} />
         <View style={{ zIndex: 2 }}>
           <DashboardHeader />
           <OverviewCollapsible

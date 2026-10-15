@@ -165,6 +165,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   onRefresh,
   refreshing,
   overviewHeight = 0,
+  onOverviewCollapseChange,
   children
 }) => {
   const { styles } = useTheme(getStyles)
@@ -240,6 +241,16 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       overviewSettle
     )
   }, [bannersHeight, overviewHeight, overviewSettle, returnDistanceNode, scrollY])
+
+  useEffect(() => {
+    onOverviewCollapseChange?.(
+      overviewCollapse.interpolate({
+        inputRange: [0, Math.max(overviewHeight, 1)],
+        outputRange: [0, overviewHeight],
+        extrapolate: 'clamp'
+      })
+    )
+  }, [onOverviewCollapseChange, overviewCollapse, overviewHeight])
 
   // The open overview pushes the pages down, by a transform so nothing is laid out again
   const overviewPush = useMemo(

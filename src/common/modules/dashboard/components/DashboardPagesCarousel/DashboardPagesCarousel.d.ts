@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react'
+import { Animated } from 'react-native'
 
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 
@@ -20,6 +21,11 @@ export interface DashboardPagesCarouselProps {
    * part of the overview while the open page is scrolled down.
    */
   overviewHeight?: number
+  /**
+   * Hands out how far the overview is collapsed, from 0 to `overviewHeight`, as the native
+   * animated value the pager is moved by, so the overview can move its background in step.
+   */
+  onOverviewCollapseChange?: (collapse: Animated.AnimatedInterpolation<number>) => void
   children: ReactNode
 }
 
