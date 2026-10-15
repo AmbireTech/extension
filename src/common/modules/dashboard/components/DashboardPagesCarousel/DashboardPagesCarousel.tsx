@@ -699,24 +699,44 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     []
   )
 
+  // Hides the pages' scrollbars while the pager moves between them, by `data-pager-moving`
+  // in style.css, and shows them again once it settles on one. Set on the element directly,
+  // so it costs no render
+  const setIsPagerMoving = useCallback((isMoving: boolean) => {
+    const pagerNode = scrollRef.current?.getScrollableNode() as HTMLElement | null | undefined
+
+    if (!pagerNode) return
+
+    if (isMoving) {
+      pagerNode.dataset.pagerMoving = 'true'
+    } else {
+      delete pagerNode.dataset.pagerMoving
+    }
+  }, [])
+
   const onWebPagerScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       pagerOffsetXRef.current = event.nativeEvent.contentOffset.x
 
       if (!isPagerDrivenRef.current && !isScrollingToTabRef.current) onScrollBeginDrag()
 
-      if (pagerIdleTimeoutRef.current) clearTimeout(pagerIdleTimeoutRef.current)
+      if (pagerIdleTimeoutRef.current) {
+        clearTimeout(pagerIdleTimeoutRef.current)
+      } else {
+        setIsPagerMoving(true)
+      }
 
       pagerIdleTimeoutRef.current = setTimeout(() => {
         pagerIdleTimeoutRef.current = null
         isScrollingToTabRef.current = false
+        setIsPagerMoving(false)
 
         if (isPagerDrivenRef.current) onMomentumScrollEnd(event)
       }, WEB_PAGER_IDLE_DELAY)
 
       onPagerScroll(event)
     },
-    [onMomentumScrollEnd, onPagerScroll, onScrollBeginDrag]
+    [onMomentumScrollEnd, onPagerScroll, onScrollBeginDrag, setIsPagerMoving]
   )
 
   const carousel = useMemo(
