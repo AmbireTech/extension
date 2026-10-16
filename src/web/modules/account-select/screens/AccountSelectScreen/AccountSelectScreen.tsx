@@ -82,13 +82,22 @@ const AccountSelectScreen = () => {
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
   }, [])
-  const listBottomInset = footerHeight ? footerHeight + SPACING_SM : FALLBACK_FOOTER_HEIGHT
+  const getListBottomInset = () => {
+    // Under the list rather than over it, so the list needs no room for it
+    if (isNarrowWebLayout) return 0
+
+    return footerHeight ? footerHeight + SPACING_SM : FALLBACK_FOOTER_HEIGHT
+  }
+  const listBottomInset = getListBottomInset()
   const {
     accounts,
     control,
     keyExtractor,
     getItemLayout,
+    onAccountExtraHeightChange,
     onListContentSizeChange,
+    onListLayout,
+    onListTouchStart,
     initialScrollIndex,
     shouldDisplayAccounts,
     isReadyToRender
@@ -114,7 +123,7 @@ const AccountSelectScreen = () => {
   )
 
   const renderItem = useCallback(
-    ({ item: acc }: { item: AccountType }) => {
+    ({ item: acc, index }: { item: AccountType; index: number }) => {
       return (
         <Account
           onSelect={onAccountSelect}
@@ -122,11 +131,13 @@ const AccountSelectScreen = () => {
           withSettings={false}
           options={ACCOUNT_OPTIONS}
           maxAccountAddrLength={32}
+          onExtraHeightChange={onAccountExtraHeightChange}
           withReceive
+          containerStyle={index === accounts.length - 1 ? spacings.mb0 : undefined}
         />
       )
     },
-    [onAccountSelect]
+    [onAccountSelect, onAccountExtraHeightChange, accounts.length]
   )
 
   useEffect(() => {
@@ -190,6 +201,8 @@ const AccountSelectScreen = () => {
               getItemLayout={getItemLayout}
               keyExtractor={keyExtractor}
               onContentSizeChange={onListContentSizeChange}
+              onLayout={onListLayout}
+              onTouchStart={onListTouchStart}
               initialScrollIndex={initialScrollIndex}
               ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
             />

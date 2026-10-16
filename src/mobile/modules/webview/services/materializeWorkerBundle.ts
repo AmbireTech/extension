@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { Directory, File, Paths } from 'expo-file-system'
 
-import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { captureWebViewException } from '@common/config/analytics/CrashAnalytics'
 
 // Materializes the WebView worker bundle from the OTA-shipped copy into a writable,
 // app-sandboxed dir and returns the `file://` URI of its HTML entry, so the WebView can
@@ -55,7 +55,7 @@ export const getMaterializedWorkerBundleUri = (): string | null => {
 
     return html.uri
   } catch (error) {
-    captureException(error)
+    captureWebViewException(error)
     return null
   }
 }
@@ -96,7 +96,7 @@ const materializeWorkerBundle = async (): Promise<string | null> => {
 
     return html.uri
   } catch (error) {
-    captureException(error)
+    captureWebViewException(error)
     return null
   }
 }

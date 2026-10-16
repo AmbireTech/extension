@@ -5,7 +5,6 @@ import { getCallsCount } from '@ambire-common/utils/userRequest'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
-import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 
 import BatchButton, { COMPACT_SECONDARY_BUTTON_PADDING } from './BatchButton'
@@ -32,12 +31,12 @@ const Footer = ({
   inProgressButtonText,
   buttonText,
   shouldHoldToProceed,
+  holdToProceedButtonText,
   shouldRejectOnchain,
   isRejectDisabled,
   holdToProceedButtonType = 'primary',
   signButtonType = 'primary'
 }: Props) => {
-  const { t } = useTranslation()
   const { state: userRequests } = useController('RequestsController', selectUserRequests)
   const { state: account } = useController('SelectedAccountController', selectAccount)
   const { accountOp } = useController('SignAccountOpController').state || {}
@@ -94,7 +93,7 @@ const Footer = ({
         >
           {shouldHoldToProceed && (
             <HoldToProceedButton
-              text={t('Hold to sign')}
+              text={holdToProceedButtonText}
               buttonType={
                 signButtonType === 'dangerFilled'
                   ? 'dangerFilled'

@@ -44,6 +44,7 @@ const Footer = ({
   inProgressButtonText,
   buttonText,
   shouldHoldToProceed,
+  holdToProceedButtonText,
   shouldRejectOnchain,
   isRejectDisabled,
   holdToProceedButtonType = 'primary',
@@ -115,7 +116,7 @@ const Footer = ({
     >
       {shouldHoldToProceed && (
         <HoldToProceedButton
-          text={t('Hold to sign')}
+          text={holdToProceedButtonText}
           buttonType={
             signButtonType === 'dangerFilled'
               ? 'dangerFilled'
