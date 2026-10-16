@@ -13,6 +13,7 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useController from '@common/hooks/useController'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useNavigation from '@common/hooks/useNavigation'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
@@ -136,6 +137,7 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     signButtonText,
+    holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
     disabledReason,
@@ -288,6 +290,7 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
+  const holdToProceedButtonType = useDappVerificationHoldButtonType(signAccountOpState?.banners)
 
   return (
     <View style={flexbox.flex1}>
@@ -394,8 +397,10 @@ const SignAccountOpScreen = () => {
               inProgressButtonText={primaryButtonText}
               buttonText={signButtonText}
               shouldHoldToProceed={shouldHoldToProceed}
+              holdToProceedButtonText={holdToSignButtonText}
               shouldRejectOnchain={shouldRejectOnchain}
               isRejectDisabled={isCancelDisabled}
+              holdToProceedButtonType={holdToProceedButtonType}
               signButtonType={extremeGasFeeSignButtonType}
             />
           </View>

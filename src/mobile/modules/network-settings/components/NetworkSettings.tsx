@@ -180,6 +180,7 @@ const NetworksSettings = () => {
           keyExtractor={keyExtractor as any}
           ListEmptyComponent={renderEmptyState}
           stickySectionHeadersEnabled
+          keyboardDismissMode="on-drag"
         />
       </View>
 

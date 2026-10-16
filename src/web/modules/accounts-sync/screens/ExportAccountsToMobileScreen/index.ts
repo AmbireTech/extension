@@ -1,3 +1,0 @@
-import ExportAccountsToMobileScreen from './ExportAccountsToMobileScreen'
-
-export default ExportAccountsToMobileScreen

@@ -39,6 +39,9 @@ const QrScannerWithPermission = ({
   const [decodeError, setDecodeError] = useState<string | null>(null)
   const lastReadRef = useRef(emptyQrScanLastRead())
   const lastProgressRef = useRef<QrScanProgress | null>(null)
+  // The camera reads the same code several times while it is on screen, and each read
+  // would be decoded again for nothing
+  const lastFragmentRef = useRef<string | null>(null)
 
   const permissionGranted = !!permission?.granted
 
@@ -93,6 +96,9 @@ const QrScannerWithPermission = ({
         const fragment = value.trim()
 
         if (fragment.toLowerCase().startsWith('ur:')) {
+          if (fragment === lastFragmentRef.current) return
+          lastFragmentRef.current = fragment
+
           decoderRef.current.add(fragment)
 
           if (!decoderRef.current.isComplete()) return
@@ -107,6 +113,7 @@ const QrScannerWithPermission = ({
       } catch (error: any) {
         isCompletedRef.current = false
         decoderRef.current.reset()
+        lastFragmentRef.current = null
         setDecodeError(error?.message || t('Failed to decode QR payload.'))
       }
     },
@@ -116,6 +123,7 @@ const QrScannerWithPermission = ({
   const handleRetry = useCallback(() => {
     isCompletedRef.current = false
     decoderRef.current.reset()
+    lastFragmentRef.current = null
     lastReadRef.current = emptyQrScanLastRead()
     lastProgressRef.current = null
     setDecodeError(null)

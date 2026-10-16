@@ -162,6 +162,12 @@ jobs:
           UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
           SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
           WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
+          SENTRY_DSN_MOBILE: ${{ vars.SENTRY_DSN_MOBILE }}
+          # Lets the release build upload its source map and dSYMs
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_MOBILE }}
+          # Must match the release the app reports under, see getMobileCrashReportRelease. The dist
+          # is left to the Xcode default, the build number, which is what the app reports too.
+          SENTRY_RELEASE: mobile-ios@${{ steps.version.outputs.VERSION }}
         run: ${{ inputs.build_command }}
         shell: bash
 

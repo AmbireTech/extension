@@ -1,11 +1,22 @@
-import { StyleSheet, View } from 'react-native'
+import { useCallback, useState } from 'react'
+import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import { Defs, FeBlend, FeColorMatrix, Filter, Image as SvgImage, Svg } from 'react-native-svg'
 
+import { isFirefoxBuild } from '@common/config/env'
 import useControllerState from '@common/hooks/useControllerState'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { getAvatarColors } from '@common/utils/avatars'
 
 import backgroundImage from './background.png'
+
+type BackgroundSize = { width: number | string; height: number | string }
+
+const FULL_SIZE: BackgroundSize = { width: '100%', height: '100%' }
+
+// Firefox doesn't reliably repaint a percentage-sized filtered SVG image when its container
+// resizes (e.g. when the sidebar is widened) - it renders it clipped first and then not at all.
+// So there it's sized in pixels from the container's layout instead.
+const shouldSizeInPixels = isFirefoxBuild
 
 /** Parse a hex color to normalized [r, g, b] values (0–1) */
 function hexToRgbNorm(hex: string): [number, number, number] {
@@ -36,8 +47,27 @@ function channelToColorMatrix(srcChannel: 0 | 1 | 2, tr: number, tg: number, tb:
   return `${row(tr)} ${row(tg)} ${row(tb)} 0 0 0 1 0`
 }
 
+// The overview and the dashboard shell can be mounted at the same time, and a `url(#id)` reference
+// resolves to the first matching id in the document - so every instance needs its own filter id.
+let recolorFilterIdCounter = 0
+
 export function OverviewBackground({ address }: { address: string }) {
   const { state } = useControllerState({ id: 'WalletStateController' })
+  const [recolorFilterId] = useState(() => {
+    recolorFilterIdCounter += 1
+    return `overview-recolor-${recolorFilterIdCounter}`
+  })
+  const [pixelSize, setPixelSize] = useState<BackgroundSize | null>(null)
+  const size = shouldSizeInPixels ? pixelSize : FULL_SIZE
+
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    const width = Math.round(e.nativeEvent.layout.width)
+    const height = Math.round(e.nativeEvent.layout.height)
+
+    setPixelSize((prev) =>
+      prev?.width === width && prev?.height === height ? prev : { width, height }
+    )
+  }, [])
   const colors = getAvatarColors(state.avatarType, address)
 
   // Avatar colors[0] and colors[1] can sometimes be almost identical (e.g. two dark purples).
@@ -66,25 +96,29 @@ export function OverviewBackground({ address }: { address: string }) {
           overflow: 'hidden'
         }
       ]}
+      onLayout={shouldSizeInPixels ? handleLayout : undefined}
     >
-      <Svg width="100%" height="100%">
-        <Defs>
-          <Filter id="recolor" x="0%" y="0%" width="100%" height="100%">
-            <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
-            <FeColorMatrix type="matrix" values={matrix2} in="SourceGraphic" result="layer2" />
-            <FeBlend in="layer1" in2="layer2" mode="screen" />
-          </Filter>
-        </Defs>
+      {/* In Firefox nothing is rendered until the container's first layout gives it a size */}
+      {!!size && (
+        <Svg width={size.width} height={size.height}>
+          <Defs>
+            <Filter id={recolorFilterId} x="0%" y="0%" width="100%" height="100%">
+              <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
+              <FeColorMatrix type="matrix" values={matrix2} in="SourceGraphic" result="layer2" />
+              <FeBlend in="layer1" in2="layer2" mode="screen" />
+            </Filter>
+          </Defs>
 
-        <SvgImage
-          href={backgroundImage}
-          width="100%"
-          height="100%"
-          preserveAspectRatio="xMidYMid slice"
-          opacity={0.28}
-          filter="url(#recolor)"
-        />
-      </Svg>
+          <SvgImage
+            href={backgroundImage}
+            width={size.width}
+            height={size.height}
+            preserveAspectRatio="xMidYMid slice"
+            opacity={0.28}
+            filter={`url(#${recolorFilterId})`}
+          />
+        </Svg>
+      )}
     </View>
   )
 }
