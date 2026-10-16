@@ -32,6 +32,8 @@ const SectionedSelect = ({
   onScrollBeginDrag,
   getSectionHeaderHeight,
   scrollToSelectedOnOpen,
+  isMenuOpen,
+  setIsMenuOpen,
   ...props
 }: SectionedSelectProps) => {
   const selectData = useSelectInternal({
@@ -45,7 +47,9 @@ const SectionedSelect = ({
     onSearch,
     menuPosition,
     renderOption: props.renderOption,
-    closeMenuOnSelect: props.closeMenuOnSelect
+    closeMenuOnSelect: props.closeMenuOnSelect,
+    isMenuOpen,
+    setIsMenuOpen
   })
   const { listRef, filteredData, renderItem, keyExtractor, handleScroll, handleLayout } = selectData
   const [listHeight, setListHeight] = useState(0)

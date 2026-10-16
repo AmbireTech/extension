@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import { getAccountsForDapp } from '@ambire-common/libs/dapps/helpers'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
@@ -40,6 +41,8 @@ const DEFAULT_SECTION_KEY = 'default'
 const VISIBLE_SECTION_KEY = 'visible'
 const HIDDEN_SECTION_KEY = 'hidden'
 const SELECT_CONTAINER_STYLE = { ...flexbox.flex1, ...spacings.mb0 }
+// Without a trigger there is nothing to lay out, so it stays out of the parent's layout
+const SELECT_WITHOUT_TRIGGER_CONTAINER_STYLE = { position: 'absolute' as const }
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -51,6 +54,8 @@ const dismissKeyboard = () => {
   if (isMobile) Keyboard.dismiss()
 }
 
+const renderNoTrigger = () => null
+
 const toOption = (account: Account): SelectValue => ({
   value: account.addr,
   label: account.preferences.label,
@@ -60,13 +65,20 @@ const toOption = (account: Account): SelectValue => ({
 type Props = {
   /** Lets the user also choose which accounts the app that is connecting can see */
   dappToConnect?: Pick<Dapp, 'id' | 'name' | 'accountPreferences'>
+  /**
+   * Lets the user switch accounts and choose which accounts a connected app can see.
+   * There is no trigger then, so the bottom sheet is opened with `isOpen`
+   */
+  dappToManage?: Pick<Dapp, 'id' | 'name' | 'accountPreferences'>
+  isOpen?: boolean
+  setIsOpen?: (isOpen: boolean) => void
 }
 
 /**
  * Displays the selected account and lets the user switch to another one from a bottom sheet.
  * Meant to be used as a screen header.
  */
-const AccountSelect = ({ dappToConnect }: Props) => {
+const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { bottom } = useSafeAreaInsets()
@@ -77,10 +89,15 @@ const AccountSelect = ({ dappToConnect }: Props) => {
   )
   const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch: dappsDispatch } = useController('DappsController')
+  const dapp = dappToConnect ?? dappToManage
+  // A connected app keeps using its last account while the selected one is hidden from it
+  const accountInUseAddr = dappToManage
+    ? getAccountsForDapp(dappToManage.accountPreferences, selectedAccount?.addr)[0]
+    : selectedAccount?.addr
   const access = useAccountSelectAccess({
     accounts,
-    selectedAccountAddr: selectedAccount?.addr,
-    accountPreferences: dappToConnect?.accountPreferences
+    selectedAccountAddr: accountInUseAddr,
+    accountPreferences: dapp?.accountPreferences
   })
   const {
     accountAddr,
@@ -155,13 +172,13 @@ const AccountSelect = ({ dappToConnect }: Props) => {
   )
 
   const sections = useMemo((): SectionListData<SelectValue>[] => {
-    if (!dappToConnect) return [{ key: DEFAULT_SECTION_KEY, data: accounts.map(toOption) }]
+    if (!dapp) return [{ key: DEFAULT_SECTION_KEY, data: accounts.map(toOption) }]
 
     const visibleSection = { key: VISIBLE_SECTION_KEY, data: visibleAccounts.map(toOption) }
     if (!hiddenAccounts.length) return [visibleSection]
 
     return [visibleSection, { key: HIDDEN_SECTION_KEY, data: hiddenAccounts.map(toOption) }]
-  }, [dappToConnect, accounts, visibleAccounts, hiddenAccounts])
+  }, [dapp, accounts, visibleAccounts, hiddenAccounts])
 
   const value = useMemo(() => {
     const account = accounts.find((acc) => acc.addr === accountAddr)
@@ -173,7 +190,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
     ({ value: addr }: SelectValue) => {
       const nextAccountAddr = String(addr)
       dismissKeyboard()
-      if (dappToConnect) {
+      if (dapp) {
         // Also guards keyboard selection - a hidden account has to be shown first
         if (hiddenAddrs.has(nextAccountAddr)) return
 
@@ -184,14 +201,25 @@ const AccountSelect = ({ dappToConnect }: Props) => {
 
       mainDispatch({ type: 'method', params: { method: 'selectAccount', args: [nextAccountAddr] } })
     },
-    [dappToConnect, hiddenAddrs, pickAccount, selectedAccount?.addr, mainDispatch]
+    [dapp, hiddenAddrs, pickAccount, selectedAccount?.addr, mainDispatch]
   )
 
   const applyChanges = useCallback(() => {
     if (hasAccountChanged) {
       mainDispatch({ type: 'method', params: { method: 'selectAccount', args: [accountAddr] } })
     }
-    if (dappToConnect && pendingPreferences) {
+    if (!pendingPreferences) return
+
+    if (dappToManage) {
+      dappsDispatch({
+        type: 'method',
+        params: {
+          method: 'updateDapp',
+          args: [dappToManage.id, { accountPreferences: pendingPreferences }]
+        }
+      })
+    }
+    if (dappToConnect) {
       dappsDispatch({
         type: 'method',
         params: {
@@ -203,6 +231,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
   }, [
     hasAccountChanged,
     accountAddr,
+    dappToManage,
     dappToConnect,
     pendingPreferences,
     mainDispatch,
@@ -213,7 +242,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
     ({ item, isSelected, isLast, onPress }: RenderOptionParams) => {
       const isHidden = hiddenAddrs.has(String(item.value))
       // The selected account is always visible to the app
-      const canToggleVisibility = !!dappToConnect && !isSelected
+      const canToggleVisibility = !!dapp && !isSelected
 
       return (
         <AccountSelectOption
@@ -228,7 +257,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
         />
       )
     },
-    [hiddenAddrs, dappToConnect, showAccount, hideAccount]
+    [hiddenAddrs, dapp, showAccount, hideAccount]
   )
 
   const renderSectionHeader = useCallback(
@@ -270,7 +299,7 @@ const AccountSelect = ({ dappToConnect }: Props) => {
   )
 
   const renderIntro = useCallback(() => {
-    if (!dappToConnect) return null
+    if (!dapp) return null
 
     return (
       <View
@@ -289,13 +318,13 @@ const AccountSelect = ({ dappToConnect }: Props) => {
         <Text fontSize={13} appearance="secondaryText" style={{ lineHeight: 20 }}>
           <Trans
             i18nKey="You can change the selected account or limit which accounts <bold>{{appName}}</bold> can see."
-            values={{ appName: dappToConnect.name }}
+            values={{ appName: dapp.name }}
             components={{ bold: <Text fontSize={13} weight="semiBold" /> }}
           />
         </Text>
       </View>
     )
-  }, [dappToConnect, theme.secondaryBackground])
+  }, [dapp, theme.secondaryBackground])
 
   const isHiddenHeaderPinned = !!hiddenAccounts.length && !isHiddenSectionInView
 
@@ -418,25 +447,29 @@ const AccountSelect = ({ dappToConnect }: Props) => {
       setValue={handleSetValue}
       sections={sections}
       mode="bottomSheet"
+      isMenuOpen={isOpen}
+      setIsMenuOpen={setIsOpen}
       isBottomSheetFullHeight
-      bottomSheetTitle={t('Select account')}
+      bottomSheetTitle={dapp ? t('Manage accounts') : t('Select account')}
       withBottomSheetBackButton={false}
       menuOptionHeight={ACCOUNT_SELECT_OPTION_HEIGHT}
-      headerHeight={dappToConnect ? visibleHeaderHeight : 0}
-      getSectionHeaderHeight={dappToConnect ? getSectionHeaderHeight : undefined}
+      headerHeight={dapp ? visibleHeaderHeight : 0}
+      getSectionHeaderHeight={dapp ? getSectionHeaderHeight : undefined}
       renderOption={renderOption}
-      renderSectionHeader={dappToConnect ? renderSectionHeader : undefined}
-      stickySectionHeadersEnabled={!!dappToConnect}
+      renderSectionHeader={dapp ? renderSectionHeader : undefined}
+      stickySectionHeadersEnabled={!!dapp}
       scrollToSelectedOnOpen
-      closeMenuOnSelect={!dappToConnect}
+      closeMenuOnSelect={!dapp}
       renderHeaderChildren={renderIntro}
-      renderBottomSheetFooter={dappToConnect ? renderFooter : undefined}
+      renderBottomSheetFooter={dapp ? renderFooter : undefined}
       onBottomSheetClosed={reset}
-      onViewableItemsChanged={dappToConnect ? handleViewableItemsChanged : undefined}
+      onViewableItemsChanged={dapp ? handleViewableItemsChanged : undefined}
       onScrollBeginDrag={dismissKeyboard}
-      renderSelectedOption={renderSelectedOption}
+      renderSelectedOption={dappToManage ? renderNoTrigger : renderSelectedOption}
       emptyListPlaceholderText={t('No accounts found')}
-      containerStyle={SELECT_CONTAINER_STYLE}
+      containerStyle={
+        dappToManage ? SELECT_WITHOUT_TRIGGER_CONTAINER_STYLE : SELECT_CONTAINER_STYLE
+      }
     />
   )
 }

@@ -110,4 +110,7 @@ export type SectionedSelectProps = CommonSelectProps &
     scrollToSelectedOnOpen?: boolean
     /** Use when section headers differ in height. Falls back to `headerHeight` */
     getSectionHeaderHeight?: (section: SectionListData<SelectValue>) => number
+    /** Controls the menu from outside, e.g. when it's opened from elsewhere than its trigger */
+    isMenuOpen?: boolean
+    setIsMenuOpen?: (isMenuOpen: boolean) => void
   }

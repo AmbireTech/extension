@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, Dimensions, Pressable, View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
@@ -13,8 +12,8 @@ import { AnimatedPressable } from '@common/hooks/useHover'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import AccountPreferences from '@common/modules/explore/components/ManageApp/AccountPreferences'
-import AccountPreferencesBottomSheet from '@common/modules/explore/components/ManageApp/AccountPreferencesBottomSheet'
 import DisguiseAsMetaMask from '@common/modules/explore/components/ManageApp/DisguiseAsMetaMask'
+import AccountSelect from '@common/modules/header/components/AccountSelect'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -95,11 +94,7 @@ const ManageApp = ({
   const [isNetworkSelectorExpanded, setIsNetworkSelectorExpanded] = useState(false)
   const [isSelfHovered, setIsSelfHovered] = useState(false)
   const parentRef = useRef<View>(null)
-  const {
-    ref: accountPreferencesRef,
-    open: openAccountPreferences,
-    close: closeAccountPreferences
-  } = useModalize()
+  const [isManageAccountsOpen, setIsManageAccountsOpen] = useState(false)
 
   const [menuEl, setMenuEl] = useState<View | null>(null)
   const [position, setPosition] = useState<{
@@ -250,10 +245,10 @@ const ManageApp = ({
         {showChildren ? children : null}
       </AnimatedPressable>
 
-      <AccountPreferencesBottomSheet
-        dapp={dapp}
-        sheetRef={accountPreferencesRef}
-        closeBottomSheet={closeAccountPreferences}
+      <AccountSelect
+        dappToManage={dapp}
+        isOpen={isManageAccountsOpen}
+        setIsOpen={setIsManageAccountsOpen}
       />
 
       {isVisible && (
@@ -324,7 +319,7 @@ const ManageApp = ({
                   dapp={dapp}
                   onManageAccountsPress={() => {
                     setIsOpen(false)
-                    openAccountPreferences()
+                    setIsManageAccountsOpen(true)
                   }}
                   closeMenu={() => setIsOpen(false)}
                 />

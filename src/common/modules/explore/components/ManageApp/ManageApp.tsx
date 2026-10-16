@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -18,9 +18,9 @@ import useController from '@common/hooks/useController'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
-import AccountPreferencesBottomSheet from '@common/modules/explore/components/ManageApp/AccountPreferencesBottomSheet'
 import DisguiseAsMetaMask from '@common/modules/explore/components/ManageApp/DisguiseAsMetaMask'
 import useManageApp from '@common/modules/explore/hooks/useManageApp'
+import AccountSelect from '@common/modules/header/components/AccountSelect'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -61,11 +61,7 @@ const ManageApp = ({
     open: openDisconnectChooser,
     close: closeDisconnectChooser
   } = useModalize()
-  const {
-    ref: accountPreferencesRef,
-    open: openAccountPreferences,
-    close: closeAccountPreferences
-  } = useModalize()
+  const [isManageAccountsOpen, setIsManageAccountsOpen] = useState(false)
   const { t } = useTranslation()
   const { dispatch: mainDispatch } = useController('MainController')
   const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
@@ -284,7 +280,7 @@ const ManageApp = ({
               <Button
                 type="tertiary"
                 text={t('Manage')}
-                onPress={() => openAccountPreferences()}
+                onPress={() => setIsManageAccountsOpen(true)}
                 hasBottomSpacing={false}
                 style={{ ...spacings.mlSm, height: 50 }}
               />
@@ -402,10 +398,10 @@ const ManageApp = ({
       </BottomSheet>
 
       {isWeb && (
-        <AccountPreferencesBottomSheet
-          dapp={dapp}
-          sheetRef={accountPreferencesRef}
-          closeBottomSheet={closeAccountPreferences}
+        <AccountSelect
+          dappToManage={dapp}
+          isOpen={isManageAccountsOpen}
+          setIsOpen={setIsManageAccountsOpen}
         />
       )}
     </>

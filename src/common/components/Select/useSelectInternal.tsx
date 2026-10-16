@@ -24,6 +24,8 @@ type Props = Pick<
   stickySectionHeadersEnabled?: boolean
   headerHeight?: number
   onSearch?: (searchTerm: string) => void
+  isMenuOpen?: SectionedSelectProps['isMenuOpen']
+  setIsMenuOpen?: SectionedSelectProps['setIsMenuOpen']
 }
 
 const useSelectInternal = ({
@@ -39,9 +41,15 @@ const useSelectInternal = ({
   menuPosition,
   onSearch,
   renderOption,
-  closeMenuOnSelect = true
+  closeMenuOnSelect = true,
+  isMenuOpen: controlledIsMenuOpen,
+  setIsMenuOpen: setControlledIsMenuOpen
 }: Props) => {
-  const useSelectReturnValue = useSelect({ menuPosition })
+  const useSelectReturnValue = useSelect({
+    menuPosition,
+    isMenuOpen: controlledIsMenuOpen,
+    setIsMenuOpen: setControlledIsMenuOpen
+  })
   const { search, isMenuOpen, setIsMenuOpen, setSearch } = useSelectReturnValue
   const optionHeight = menuOptionHeight || SELECT_SIZE_TO_HEIGHT[size]
 

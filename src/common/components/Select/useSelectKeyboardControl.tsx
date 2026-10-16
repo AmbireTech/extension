@@ -13,7 +13,7 @@ type Props = Pick<SelectProps, 'size' | 'value' | 'mode' | 'renderOption'> &
     headerHeight: number
     isMenuOpen: boolean
     stickySectionHeadersEnabled?: boolean
-    setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>
+    setIsMenuOpen: (isMenuOpen: boolean) => void
     handleOptionSelect: (item: SelectValue) => void
   }
 
