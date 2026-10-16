@@ -29,7 +29,9 @@ const PrivateKeyImportScreen = () => {
     canAddMore,
     handleFormSubmit,
     getPrivateKeyError,
+    getPrivateKeyInfo,
     isValid,
+    isImporting,
     handleValidation,
     agreedToBackupWarning,
     setAgreedToBackupWarning
@@ -64,6 +66,7 @@ const PrivateKeyImportScreen = () => {
                   onRemove={removePrivateKeyField}
                   handleValidation={handleValidation}
                   getPrivateKeyError={getPrivateKeyError}
+                  getPrivateKeyInfo={getPrivateKeyInfo}
                   onSubmitEditing={handleFormSubmit}
                 />
               ))}
@@ -106,7 +109,7 @@ const PrivateKeyImportScreen = () => {
                 text={t('Confirm')}
                 hasBottomSpacing={false}
                 onPress={handleFormSubmit}
-                disabled={!isValid || !agreedToBackupWarning}
+                disabled={!isValid || !agreedToBackupWarning || isImporting}
               />
             </View>
           </View>

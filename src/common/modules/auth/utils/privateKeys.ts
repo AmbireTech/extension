@@ -1,4 +1,17 @@
-import { normalizePrivateKey } from '@ambire-common/libs/keyIterator/keyIterator'
+import { Wallet } from 'ethers'
+
+import { isValidPrivateKey, normalizePrivateKey } from '@ambire-common/libs/keyIterator/keyIterator'
+
+/**
+ * Returns the address of the account that a private key controls,
+ * or null if the value is not a valid private key.
+ */
+export const getAddressFromPrivateKey = (value: string): string | null => {
+  const trimmedValue = value.trim()
+  if (!isValidPrivateKey(trimmedValue)) return null
+
+  return new Wallet(trimmedValue).address
+}
 
 /**
  * Returns the indexes of every field whose private key is also entered in another field.

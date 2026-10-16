@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 
 import {
@@ -8,13 +8,22 @@ import {
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { getDuplicatePrivateKeyIndexes } from '@common/modules/auth/utils/privateKeys'
+import {
+  getAddressFromPrivateKey,
+  getDuplicatePrivateKeyIndexes
+} from '@common/modules/auth/utils/privateKeys'
 import { storage } from '@common/services/storage'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 /** The value of a new, empty private key field */
 export const DEFAULT_PRIVATE_KEY_FIELD_VALUE = { value: '' }
 
 const DEFAULT_FORM_VALUES = { privateKeys: [DEFAULT_PRIVATE_KEY_FIELD_VALUE] }
+
+const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectKeystoreKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 
 export default function usePrivateKeyImport() {
   const {
@@ -31,26 +40,56 @@ export default function usePrivateKeyImport() {
   const { goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
 
-  const { initParams, subType } = useController('AccountPickerController').state
-  const { dispatch: mainDispatch } = useController('MainController')
+  const { state: mainStatuses, dispatch: mainDispatch } = useController(
+    'MainController',
+    selectMainStatuses
+  )
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: keystoreKeys } = useController('KeystoreController', selectKeystoreKeys)
   const [agreedToBackupWarning, setAgreedToBackupWarning] = useState(false)
   const [importButtonPressed, setImportButtonPressed] = useState(false)
+  // The account picker may already hold init params from an abandoned attempt, so waiting
+  // for them to appear is not enough. The status tells us the background is done.
+  const hasSeenLoading = useRef(false)
 
   const duplicatePrivateKeyIndexes = useMemo(
     () => getDuplicatePrivateKeyIndexes(privateKeys),
     [privateKeys]
   )
 
-  const isValid = areAllFieldsValid && !duplicatePrivateKeyIndexes.length
+  // A key counts as already imported only if both its account and the key itself are in the
+  // wallet. A view-only account whose key is entered now gets upgraded, so it isn't flagged.
+  const alreadyImportedPrivateKeyIndexes = useMemo(() => {
+    const addressesWithImportedKey = new Set(
+      keystoreKeys
+        .filter((key) => key.type === 'internal')
+        .map((key) => key.addr.toLowerCase())
+        .filter((addr) => accounts.some((account) => account.addr.toLowerCase() === addr))
+    )
+
+    return privateKeys.reduce<number[]>((indexes, { value }, index) => {
+      const address = getAddressFromPrivateKey(value)?.toLowerCase()
+
+      return address && addressesWithImportedKey.has(address) ? [...indexes, index] : indexes
+    }, [])
+  }, [privateKeys, keystoreKeys, accounts])
+
+  // There is nothing to import when every entered key is already in the wallet
+  const areAllPrivateKeysAlreadyImported =
+    alreadyImportedPrivateKeyIndexes.length === privateKeys.length
+
+  const isValid =
+    areAllFieldsValid && !duplicatePrivateKeyIndexes.length && !areAllPrivateKeysAlreadyImported
   const canAddMore = fields.length < MAX_BULK_PRIVATE_KEYS
 
   const handleFormSubmit = useCallback(async () => {
+    // The submit button is disabled in these cases, but submitting with the keyboard isn't
+    if (!isValid || !agreedToBackupWarning || importButtonPressed) return
+
     await storage.set('agreedToBackupWarning', { acceptedAt: Date.now() })
 
     await handleSubmit((formValues) => {
-      // The submit button is disabled for duplicates, but submitting with the keyboard isn't
-      if (getDuplicatePrivateKeyIndexes(formValues.privateKeys).length) return
-
+      hasSeenLoading.current = false
       setImportButtonPressed(true)
       mainDispatch({
         type: 'method',
@@ -60,16 +99,33 @@ export default function usePrivateKeyImport() {
         }
       })
     })()
-  }, [mainDispatch, handleSubmit])
+  }, [isValid, agreedToBackupWarning, importButtonPressed, mainDispatch, handleSubmit])
 
   useEffect(() => {
-    if (!!importButtonPressed && initParams && subType === 'private-key') {
-      setImportButtonPressed(false)
-      // The keys are already in the background, so they shouldn't stay in the form's memory
-      reset(DEFAULT_FORM_VALUES)
-      goToNextRoute()
+    if (!importButtonPressed) return
+
+    const status = mainStatuses.accountPickerSetInitParamsFromPrivateKeys
+    if (status === 'LOADING') {
+      hasSeenLoading.current = true
+      return
     }
-  }, [goToNextRoute, initParams, importButtonPressed, subType, reset])
+
+    if (!hasSeenLoading.current) return
+
+    setImportButtonPressed(false)
+
+    // The background shows the error, and the entered keys stay so the user can fix them
+    if (status === 'ERROR') return
+
+    // The keys are already in the background, so they shouldn't stay in the form's memory
+    reset(DEFAULT_FORM_VALUES)
+    goToNextRoute()
+  }, [
+    goToNextRoute,
+    importButtonPressed,
+    mainStatuses.accountPickerSetInitParamsFromPrivateKeys,
+    reset
+  ])
 
   const handleValidation = useCallback(
     (value: string) => {
@@ -101,6 +157,16 @@ export default function usePrivateKeyImport() {
     [errors.privateKeys, duplicatePrivateKeyIndexes, t]
   )
 
+  /** A note to show under a field whose account is already in the wallet with this key */
+  const getPrivateKeyInfo = useCallback(
+    (index: number) => {
+      if (!alreadyImportedPrivateKeyIndexes.includes(index)) return undefined
+
+      return t('This account is already in your wallet.')
+    },
+    [alreadyImportedPrivateKeyIndexes, t]
+  )
+
   const addPrivateKeyField = useCallback(() => {
     if (!canAddMore) return
 
@@ -114,9 +180,11 @@ export default function usePrivateKeyImport() {
     removePrivateKeyField: remove,
     canAddMore,
     isValid,
+    isImporting: importButtonPressed,
     handleFormSubmit,
     handleValidation,
     getPrivateKeyError,
+    getPrivateKeyInfo,
     agreedToBackupWarning,
     setAgreedToBackupWarning
   }

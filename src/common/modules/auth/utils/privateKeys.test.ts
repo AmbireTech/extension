@@ -1,6 +1,6 @@
-import { toBeHex } from 'ethers'
+import { toBeHex, Wallet } from 'ethers'
 
-import { getDuplicatePrivateKeyIndexes } from './privateKeys'
+import { getAddressFromPrivateKey, getDuplicatePrivateKeyIndexes } from './privateKeys'
 
 const privateKey1 = toBeHex(1, 32)
 const privateKey2 = toBeHex(2, 32)
@@ -36,5 +36,22 @@ describe('getDuplicatePrivateKeyIndexes', () => {
   })
   it('returns no indexes for a single field', () => {
     expect(getDuplicatePrivateKeyIndexes(toFields([privateKey1]))).toEqual([])
+  })
+})
+
+describe('getAddressFromPrivateKey', () => {
+  const expectedAddress = new Wallet(privateKey1).address
+
+  it('returns the address of the account the private key controls', () => {
+    expect(getAddressFromPrivateKey(privateKey1)).toBe(expectedAddress)
+  })
+  it('accepts a private key without the 0x prefix or with surrounding spaces', () => {
+    expect(getAddressFromPrivateKey(privateKey1.slice(2))).toBe(expectedAddress)
+    expect(getAddressFromPrivateKey(`  ${privateKey1}  `)).toBe(expectedAddress)
+  })
+  it('returns null for a value that is not a valid private key', () => {
+    expect(getAddressFromPrivateKey('')).toBeNull()
+    expect(getAddressFromPrivateKey('not-a-private-key')).toBeNull()
+    expect(getAddressFromPrivateKey(`${privateKey1.slice(0, -1)}z`)).toBeNull()
   })
 })
