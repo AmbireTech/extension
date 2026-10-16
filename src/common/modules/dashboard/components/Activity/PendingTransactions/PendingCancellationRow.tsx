@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
@@ -35,6 +35,9 @@ interface Props {
  * cancellation exists, the button opens it in the sign flow. Otherwise, the button prepares
  * one, exactly as the Cancel button on the sign screen does.
  */
+// Resets the button if the sign flow never opens, so it can't stay stuck on "Cancelling..."
+const CANCELLING_RESET_TIMEOUT_MS = 5000
+
 const PendingCancellationRow: FC<Props> = ({
   cancellationRequest,
   transactionRequest,
@@ -44,6 +47,7 @@ const PendingCancellationRow: FC<Props> = ({
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { dispatch: requestsDispatch } = useController('RequestsController')
+  const [isCancelling, setIsCancelling] = useState(false)
   const request = cancellationRequest || transactionRequest
   const signed = cancellationRequest?.signAccountOp.accountOp.signed
   const threshold = request?.signAccountOp.threshold ?? 0
@@ -54,8 +58,19 @@ const PendingCancellationRow: FC<Props> = ({
     [signed]
   )
 
+  useEffect(() => {
+    if (!isCancelling) return
+
+    const timeout = setTimeout(() => setIsCancelling(false), CANCELLING_RESET_TIMEOUT_MS)
+
+    return () => clearTimeout(timeout)
+  }, [isCancelling])
+
   const handlePress = useCallback(() => {
     if (!request) return
+
+    // There is a short pause before the sign flow opens, so give instant feedback
+    setIsCancelling(true)
 
     if (cancellationRequest) {
       requestsDispatch({
@@ -82,6 +97,12 @@ const PendingCancellationRow: FC<Props> = ({
     onHoverChange(false)
   }, [onHoverChange])
 
+  const getButtonText = () => {
+    if (isCancelling) return t('Cancelling...')
+
+    return hasMultipleTransactions ? t('Cancel all') : t('Cancel')
+  }
+
   return (
     <View
       testID={`pending-cancellation-row-${request?.id}`}
@@ -100,7 +121,8 @@ const PendingCancellationRow: FC<Props> = ({
         testID={`pending-cancellation-sign-${request?.id}`}
         type="danger"
         size="small"
-        text={hasMultipleTransactions ? t('Cancel all') : t('Cancel')}
+        text={getButtonText()}
+        disabled={isCancelling}
         onPress={handlePress}
         onHoverIn={handleHoverIn}
         onHoverOut={handleHoverOut}
