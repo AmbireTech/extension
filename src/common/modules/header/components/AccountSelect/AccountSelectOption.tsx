@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { Animated, View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
@@ -10,7 +10,7 @@ import Badge from '@common/components/Badge'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useHover, { AnimatedPressable } from '@common/hooks/useHover'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
@@ -64,13 +64,23 @@ const AccountSelectOption = ({
     [onToggleVisibility, account.addr]
   )
 
-  const [bindRowHover, rowHoverStyle] = useHover({ preset: 'opacityInverted' })
+  // The same colors as the rows of the account select screen
+  const [bindRowHover, rowHoverStyle] = useCustomHover({
+    property: 'backgroundColor',
+    values: { from: theme.secondaryBackground, to: theme.hoverBackground }
+  })
 
   const smartAccountType = account.safeCreation ? 'Safe' : account.creation ? 'Ambire' : undefined
   const VisibilityToggleIcon = isHidden ? VisibilityIcon : InvisibilityIcon
   const accountInfoStyle = onToggleVisibility
     ? ACCOUNT_INFO_STYLE
     : ACCOUNT_INFO_WITHOUT_TOGGLE_STYLE
+  // Animated while the account can be picked, so the card changes on hover
+  const cardBackgroundColor = isSelected
+    ? theme.primaryAccent100
+    : isHidden
+      ? theme.secondaryBackground
+      : rowHoverStyle.backgroundColor
 
   const accountInfo = (
     <>
@@ -80,6 +90,8 @@ const AccountSelectOption = ({
           pfp={account.preferences.pfp}
           smartAccountType={smartAccountType}
           size={40}
+          // The card the avatar sits on, so the ring of its badge blends into it
+          typeBadgeRingColor={cardBackgroundColor}
         />
       </View>
       <View style={[flexbox.flex1, { minWidth: 0 }, isHidden && { opacity: HIDDEN_OPACITY }]}>
@@ -107,7 +119,7 @@ const AccountSelectOption = ({
           : { height: ACCOUNT_SELECT_OPTION_HEIGHT, paddingBottom: CARD_GAP }
       }
     >
-      <View
+      <Animated.View
         style={[
           flexbox.directionRow,
           flexbox.alignCenter,
@@ -116,7 +128,7 @@ const AccountSelectOption = ({
             borderRadius: BORDER_RADIUS_PRIMARY,
             borderWidth: 1.5,
             borderColor: isSelected ? theme.primaryAccent200 : 'transparent',
-            backgroundColor: isSelected ? theme.primaryAccent100 : theme.secondaryBackground
+            backgroundColor: cardBackgroundColor
           }
         ]}
       >
@@ -126,7 +138,7 @@ const AccountSelectOption = ({
         ) : (
           <AnimatedPressable
             {...bindRowHover}
-            style={[accountInfoStyle, rowHoverStyle]}
+            style={accountInfoStyle}
             onPress={handlePress}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
@@ -165,7 +177,7 @@ const AccountSelectOption = ({
             </HoverablePressable>
           </View>
         )}
-      </View>
+      </Animated.View>
     </View>
   )
 }
