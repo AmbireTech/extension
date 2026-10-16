@@ -31,11 +31,11 @@ interface Props {
 
 /**
  * A row, shown under the transactions of the nonce, with the signatures collected for the
- * cancellation of the nonce so far and a Cancel button. It is always displayed. When a
+ * cancellation of the nonce so far and a Reject button. It is always displayed. When a
  * cancellation exists, the button opens it in the sign flow. Otherwise, the button prepares
- * one, exactly as the Cancel button on the sign screen does.
+ * one, exactly as the Reject button on the sign screen does.
  */
-// Resets the button if the sign flow never opens, so it can't stay stuck on "Cancelling..."
+// Resets the button if the sign flow never opens, so it can't stay stuck on "Rejecting..."
 const CANCELLING_RESET_TIMEOUT_MS = 5000
 
 const PendingCancellationRow: FC<Props> = ({
@@ -98,9 +98,9 @@ const PendingCancellationRow: FC<Props> = ({
   }, [onHoverChange])
 
   const getButtonText = () => {
-    if (isCancelling) return t('Cancelling...')
+    if (isCancelling) return t('Rejecting...')
 
-    return hasMultipleTransactions ? t('Cancel all') : t('Cancel')
+    return hasMultipleTransactions ? t('Reject all') : t('Reject')
   }
 
   return (
