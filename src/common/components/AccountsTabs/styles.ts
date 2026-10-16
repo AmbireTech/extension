@@ -8,6 +8,7 @@ interface Style {
   container: ViewStyle
   tab: ViewStyle
   activeTab: ViewStyle
+  disabledTab: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -33,6 +34,9 @@ const getStyles = (theme: ThemeProps) =>
     },
     activeTab: {
       backgroundColor: theme.secondaryBackground
+    },
+    disabledTab: {
+      opacity: 0.5
     }
   })
 

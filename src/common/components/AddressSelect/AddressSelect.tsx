@@ -9,6 +9,7 @@ import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
+import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
@@ -47,6 +48,10 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import styles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 
 export interface AddressSelectProps extends InputProps {
   setAddress: (text: string) => void
@@ -278,6 +283,11 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: keys } = useController('KeystoreController', selectKeys)
+  const canSendToPrivacyPoolsAccounts = useMemo(
+    () => !account || !getIsViewOnly(keys, account.associatedKeys),
+    [account, keys]
+  )
   const actualAddress = getAddressFromAddressState({
     resolvedAddress,
     fieldValue: address
@@ -500,9 +510,18 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const accountsTabs = useMemo(
     () =>
       hasAccountsTabs ? (
-        <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} style={spacings.mvTy} />
+        <AccountsTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          disabledTabReasons={
+            canSendToPrivacyPoolsAccounts
+              ? undefined
+              : { private: t('A view-only account cannot send to a private account.') }
+          }
+          style={spacings.mvTy}
+        />
       ) : undefined,
-    [activeTab, hasAccountsTabs]
+    [activeTab, canSendToPrivacyPoolsAccounts, hasAccountsTabs, t]
   )
 
   const renderSectionHeader = useCallback(
