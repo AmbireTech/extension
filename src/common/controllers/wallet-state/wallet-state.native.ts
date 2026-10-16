@@ -2,11 +2,9 @@
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { Storage } from '@ambire-common/interfaces/storage'
-import {
-  CRASH_ANALYTICS_ENABLED_DEFAULT,
-  CRASH_ANALYTICS_ENABLED_STORAGE_KEY
-} from '@common/config/analytics/CrashAnalytics.web'
+import { CRASH_ANALYTICS_ENABLED_DEFAULT } from '@common/config/analytics/CrashAnalytics'
 import { APP_VERSION } from '@common/config/env'
+import { CRASH_ANALYTICS_ENABLED_STORAGE_KEY } from '@common/constants/crashAnalytics'
 import { THEME_TYPES } from '@common/styles/theme/types'
 import { ThemeType } from '@common/styles/themeConfig'
 import { DEFAULT_LOG_LEVEL, LOG_LEVELS, setLoggerInstanceLogLevel } from '@common/utils/logger'

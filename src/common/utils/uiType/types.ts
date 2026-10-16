@@ -15,6 +15,12 @@ export type UiTypeCheck = {
   isRequestWindow: boolean
   isPopup: boolean
   isSidePanel: boolean
+  /**
+   * The side panel is Firefox's sidebar. Unlike Chrome's side panel, it can be open while side
+   * panel mode is off (it then shows a "mode off" notice instead of the wallet), it can be dragged
+   * narrower than the layout supports, and it can't report its own side or width.
+   */
+  isFirefoxSidebar: boolean
   isMobileApp: boolean
   uiType?: UiType
 }

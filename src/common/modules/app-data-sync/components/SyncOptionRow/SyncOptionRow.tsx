@@ -9,13 +9,12 @@ import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
 import { useCustomHover, AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import getAccountStyles from '@common/modules/account-select/components/Account/styles'
+import getAccountStyles, {
+  ACCOUNT_AVATAR_SIZE
+} from '@common/modules/account-select/components/Account/styles'
 import type { SyncOption } from '@common/modules/app-data-sync/hooks/useAppDataSyncExport/useAppDataSyncExport'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-
-/** The size of the account avatars, so the titles line up with the account names */
-const ICON_CIRCLE_SIZE = 40
 
 const OPTION_ICONS: Record<SyncOption, React.FC<SvgProps>> = {
   settings: SettingsIcon,
@@ -41,7 +40,8 @@ const SyncOptionRow = ({ option, title, subtitle, isSelected, onToggle }: Props)
   const { theme, styles } = useTheme(getAccountStyles)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
-    values: { from: theme.primaryBackground, to: theme.secondaryBackground }
+    // The same card as the account rows below it
+    values: { from: theme.secondaryBackground, to: theme.tertiaryBackground }
   })
 
   const handleToggle = useCallback(() => onToggle(option), [onToggle, option])
@@ -63,10 +63,11 @@ const SyncOptionRow = ({ option, title, subtitle, isSelected, onToggle }: Props)
             flexbox.alignCenter,
             flexbox.justifyCenter,
             {
-              width: ICON_CIRCLE_SIZE,
-              height: ICON_CIRCLE_SIZE,
-              borderRadius: ICON_CIRCLE_SIZE / 2,
-              backgroundColor: theme.tertiaryBackground
+              width: ACCOUNT_AVATAR_SIZE,
+              height: ACCOUNT_AVATAR_SIZE,
+              borderRadius: ACCOUNT_AVATAR_SIZE / 2,
+              // Stands out from the card, also when hovered
+              backgroundColor: theme.primaryBackground
             }
           ]}
         >

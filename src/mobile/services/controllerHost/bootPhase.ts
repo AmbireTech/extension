@@ -2,6 +2,7 @@ import { serializeControllerForUI } from '@common/utils/serializeControllerForUI
 import { bootProfiler } from '@mobile/services/bootProfiler/bootProfiler'
 import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
 
+import { reportControllerHostError } from './crashReporting'
 import { emitCtrlError, emitCtrlUpdate } from './uiEvents'
 
 // Boot phase controls which controllers may stream their state to the UI.
@@ -177,6 +178,7 @@ function drainCtrlPayloads(entries: [string, { ctrl: any; forceEmit?: boolean }]
       ;(err as any).controllerName = ctrlName
       console.error('Debug: Failed to drain queued update for ctrl', ctrlName, err)
       emitCtrlError(ctrlName, [{ message: (err as any).message, stack: (err as any).stack }])
+      reportControllerHostError(err, ctrlName)
     }
 
     if (index < entries.length) setTimeout(drainNext, 0)

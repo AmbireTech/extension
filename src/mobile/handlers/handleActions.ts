@@ -77,7 +77,7 @@ export const handleActions = async (
       }
 
       if (ctrl && typeof ctrl[method] === 'function') {
-        ctrl[method](...args)
+        await ctrl[method](...args)
       }
       break
     }
