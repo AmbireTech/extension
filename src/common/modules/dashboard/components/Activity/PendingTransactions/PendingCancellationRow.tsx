@@ -98,7 +98,7 @@ const PendingCancellationRow: FC<Props> = ({
       </Text>
       <Button
         testID={`pending-cancellation-sign-${request?.id}`}
-        type="dangerFilled"
+        type="danger"
         size="small"
         text={hasMultipleTransactions ? t('Cancel all') : t('Cancel')}
         onPress={handlePress}
