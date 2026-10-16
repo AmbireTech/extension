@@ -9,7 +9,7 @@ import {
   EstimationStatus
 } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import { FeeSpeed, SpeedCalc, Warning } from '@ambire-common/interfaces/signAccountOp'
+import { FeeSpeed, SigningStatus, SpeedCalc, Warning } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { getMinReplacementFees } from '@ambire-common/libs/gasPrice/speedUp'
@@ -511,9 +511,11 @@ const Estimation = ({
     isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground
   // The replacement must be paid the same way as the pending transaction it replaces
   const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled
-  const speedUpOriginalFeeAmount = speedUpMeta?.enabled
-    ? speedUpMeta.replacedFees?.amount
-    : undefined
+  // Not compared once the speed up is no longer needed, as the new fee won't be paid
+  const speedUpOriginalFeeAmount =
+    speedUpMeta?.enabled && signAccountOpState?.status?.type !== SigningStatus.SpeedUpNotNeeded
+      ? speedUpMeta.replacedFees?.amount
+      : undefined
   const selectedFeeSpeedAmount = feeSpeeds.find(
     (speed) => speed.type === signAccountOpState?.selectedFeeSpeed
   )?.amount

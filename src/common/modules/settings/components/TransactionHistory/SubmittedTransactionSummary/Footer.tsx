@@ -202,7 +202,9 @@ const Footer: FC<Props> = ({
                         gasPrice: replacedGasFeePayment.gasPrice,
                         maxPriorityFeePerGas: replacedGasFeePayment.maxPriorityFeePerGas,
                         amount: replacedGasFeePayment.amount
-                      }
+                      },
+                      replacedSentAt: submittedAccountOp.timestamp,
+                      replacedIdentifiedBy: submittedAccountOp.identifiedBy
                     }
                   }
                 }
