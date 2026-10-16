@@ -230,6 +230,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             actionsMode="inline"
             shouldWrapInlineActions={false}
             hideLogo
+            isLocalLabelOnly={valueItem.isLocalLabelOnly}
           />
         )
       }
