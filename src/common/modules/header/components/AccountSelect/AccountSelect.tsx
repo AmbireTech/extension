@@ -319,15 +319,24 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
         ]}
       >
         <Text fontSize={13} appearance="secondaryText" style={{ lineHeight: 20 }}>
-          <Trans
-            i18nKey="You can change the selected account or limit which accounts <bold>{{appName}}</bold> can see."
-            values={{ appName: dapp.name }}
-            components={{ bold: <Text fontSize={13} weight="semiBold" /> }}
-          />
+          {/* Names the account like its badge does */}
+          {dappToManage?.isConnected ? (
+            <Trans
+              i18nKey="You can change the connected account or limit which accounts <bold>{{appName}}</bold> can see."
+              values={{ appName: dapp.name }}
+              components={{ bold: <Text fontSize={13} weight="semiBold" /> }}
+            />
+          ) : (
+            <Trans
+              i18nKey="You can change the selected account or limit which accounts <bold>{{appName}}</bold> can see."
+              values={{ appName: dapp.name }}
+              components={{ bold: <Text fontSize={13} weight="semiBold" /> }}
+            />
+          )}
         </Text>
       </View>
     )
-  }, [dapp, theme.secondaryBackground])
+  }, [dapp, dappToManage?.isConnected, theme.secondaryBackground])
 
   const isHiddenHeaderPinned = !!hiddenAccounts.length && !isHiddenSectionInView
 
