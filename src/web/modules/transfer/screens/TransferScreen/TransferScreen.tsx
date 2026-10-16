@@ -634,15 +634,21 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         {(submittedAccountOp?.status === AccountOpStatus.Success ||
           submittedAccountOp?.status === AccountOpStatus.UnknownButPastNonce) && (
           <Completed
-            title={isTopUp ? t('Top up ready!') : t('Transfer done!')}
+            title={
+              isTopUp
+                ? t('Top up ready!')
+                : // Like the Privacy Pools account's own Send
+                  wasSentToPrivacyPoolsAccount
+                  ? t('Sending successfully')
+                  : t('Transfer done!')
+            }
             titleSecondary={
               isTopUp
                 ? t('You can now use your gas tank')
                 : wasSentToPrivacyPoolsAccount
-                  ? t(
-                      '{{symbol}} sent to your Privacy Pools account. It can be sent on once Privacy Pools approves it.',
-                      { symbol: latestBroadcastedToken?.symbol || 'Token' }
-                    )
+                  ? t('Your {{symbol}} is on its way to your Privacy Pools account.', {
+                      symbol: latestBroadcastedToken?.symbol || 'Token'
+                    })
                   : t('{{symbol}} delivered!', {
                       symbol: latestBroadcastedToken?.symbol || 'Token'
                     })

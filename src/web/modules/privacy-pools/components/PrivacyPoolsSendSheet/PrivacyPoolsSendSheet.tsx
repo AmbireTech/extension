@@ -2,7 +2,6 @@ import React, { FC, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { PrivacyPoolsOperation } from '@ambire-common/interfaces/privacyPools'
-import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
@@ -10,6 +9,7 @@ import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
+import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
@@ -130,13 +130,13 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
             />
           )}
 
+          {/* Like the regular Send's outcome. No explorer link: the transfer's hash is not kept */}
           {operation.status === 'success' && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-              <CheckIcon width={20} height={20} color={theme.successDecorative} />
-              <Text fontSize={13} style={[spacings.mlTy, flexbox.flex1]}>
-                {t('The funds are on their way to the address you entered.')}
-              </Text>
-            </View>
+            <Completed
+              title={t('Sending successfully')}
+              titleSecondary={t('Your {{symbol}} is on its way. No trail back to you.', { symbol })}
+              openExplorerText={t('View Transfer')}
+            />
           )}
 
           {operation.status === 'failed' && (
