@@ -265,12 +265,6 @@ const PrivacyPoolsSendScreen = () => {
     [operation]
   )
 
-  // The operation's token may differ from the one now picked in the form
-  const operationTokenPrice = useMemo(
-    () => (operation ? getTokenPrice(operation.chainId, operation.tokenAddress) : null),
-    [getTokenPrice, operation]
-  )
-
   // Priced by the Privacy Pools controller, as the account has no portfolio
   const selectedTokenForField = useMemo(
     () =>
@@ -360,8 +354,6 @@ const PrivacyPoolsSendScreen = () => {
       <PrivacyPoolsSendSheet
         operation={operation}
         symbol={operationAsset?.symbol || ''}
-        decimals={operationAsset?.decimals ?? 18}
-        tokenPrice={operationTokenPrice}
         sheetRef={sheetRef}
         closeBottomSheet={closeSheet}
         onSend={broadcastWithdrawal}

@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { PrivacyPoolsOperation } from '@ambire-common/interfaces/privacyPools'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorFilledIcon from '@common/assets/svg/ErrorFilledIcon'
+import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
@@ -15,14 +16,10 @@ import useTheme from '@common/hooks/useTheme'
 import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import PrivacyPoolsNetworkFee from '@web/modules/privacy-pools/components/PrivacyPoolsNetworkFee'
 
 interface Props {
   operation: PrivacyPoolsOperation | null
   symbol: string
-  decimals: number
-  /** USD price of the sent token, or null when unknown. */
-  tokenPrice: number | null
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
   onSend: () => void
@@ -49,8 +46,6 @@ const transactionSummaryStyle = { marginBottom: SPACING_MD }
 const PrivacyPoolsSendSheet: FC<Props> = ({
   operation,
   symbol,
-  decimals,
-  tokenPrice,
   sheetRef,
   closeBottomSheet,
   onSend,
@@ -107,8 +102,8 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
     >
       {!!operation && (
         <>
-          {/* Like the transaction details of the one-click Swap & Bridge sheet. Not expandable:
-              there is no raw call of the user's account to show */}
+          {/* Like the transaction details of the one-click Swap & Bridge sheet, the network fee
+              among its rows. Not expandable: there is no raw call of the user's account to show */}
           {isConfirming && !!operation.humanization && (
             <TransactionSummary
               style={transactionSummaryStyle}
@@ -121,14 +116,17 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
             />
           )}
 
+          {/* Paying the fee from anything else would link it to the transfer */}
           {isConfirming && !!operation.quote && (
-            <PrivacyPoolsNetworkFee
-              chainId={operation.chainId}
-              tokenAddress={operation.tokenAddress}
-              symbol={symbol}
-              decimals={decimals}
-              quote={operation.quote}
-              tokenPrice={tokenPrice}
+            // As the title, as the alert shows its icon on the title's row and the text below it
+            <Alert
+              type="info"
+              size="sm"
+              style={spacings.mbSm}
+              titleWeight="regular"
+              title={t('The network fee is deducted automatically from the {{symbol}} you send.', {
+                symbol
+              })}
             />
           )}
 
