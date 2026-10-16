@@ -607,7 +607,12 @@ const useSign = ({
     signAccountOpState?.threshold
   ])
 
+  const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
+
   const primaryButtonText = useMemo(() => {
+    // Replaces Sign, Execute and Begin signing, so it's clear the pending transaction gets replaced
+    if (isSpeedUpTransaction) return isSignLoading ? t('Speeding up...') : t('Speed up')
+
     let buttonLabelType: ButtonMode =
       updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
 
@@ -629,6 +634,7 @@ const useSign = ({
         : PRIMARY_BUTTON_LABELS[buttonLabelType].default
     )
   }, [
+    isSpeedUpTransaction,
     isAtLeastOneOfTheKeysInvolvedExternal,
     isSignLoading,
     t,

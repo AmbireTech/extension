@@ -12,6 +12,7 @@ import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/
 import { FeeSpeed, SpeedCalc, Warning } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
+import { getMinReplacementFees } from '@ambire-common/libs/gasPrice/speedUp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
@@ -21,6 +22,7 @@ import GaugeIcon from '@common/assets/svg/GaugeIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Alert from '@common/components/Alert'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { RenderSelectedOptionParams, SelectValue } from '@common/components/Select/types'
@@ -461,6 +463,13 @@ const Estimation = ({
     return mappedFeeOption
   }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts, isViewOnly])
 
+  const speedUpMeta = signAccountOpState?.accountOp.meta?.speedUp
+  const speedUpMinFees = useMemo(() => {
+    if (!speedUpMeta?.enabled || !speedUpMeta.replacedFees) return undefined
+
+    return getMinReplacementFees(speedUpMeta.replacedFees)
+  }, [speedUpMeta])
+
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
   }, [signAccountOpState?.warnings])
@@ -499,8 +508,11 @@ const Estimation = ({
   // The fee token select needs the opposite fill of what it sits on to stay visible
   const selectBackgroundColor =
     isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground
+  // The replacement must be paid the same way as the pending transaction it replaces
+  const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled
   const isFeeTokenSelectDisabled =
     disabled ||
+    isFeeTokenLockedBySpeedUp ||
     (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
     !signAccountOpState?.selectedOption
 
@@ -697,6 +709,7 @@ const Estimation = ({
         }
         selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
+        speedUpMinFees={speedUpMinFees}
       />
       <View>
         {!isViewOnly && (
@@ -741,22 +754,30 @@ const Estimation = ({
           )}
         </View>
       </View>
-      <SectionedSelect
-        setValue={setFeeOption}
-        testID="fee-option-select"
-        headerHeight={FEE_SECTION_LIST_MENU_HEADER_HEIGHT}
-        sections={feeOptionSelectSections}
-        renderSectionHeader={renderFeeOptionSectionHeader}
-        containerStyle={spacings.mb0}
-        value={payValue || NO_FEE_OPTIONS}
-        disabled={isFeeTokenSelectDisabled}
-        selectStyle={{ backgroundColor: selectBackgroundColor, ...spacings.phSm }}
-        defaultValue={payValue ?? undefined}
-        withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
-        stickySectionHeadersEnabled
-        menuPosition="top"
-        bottomSheetTitle={t('Network fee')}
-      />
+      <View
+        dataSet={createGlobalTooltipDataSet({
+          id: 'fee-option-select-speed-up-locked',
+          content: t('To speed up, the fee is paid the same way as your original transaction'),
+          hidden: !isFeeTokenLockedBySpeedUp
+        })}
+      >
+        <SectionedSelect
+          setValue={setFeeOption}
+          testID="fee-option-select"
+          headerHeight={FEE_SECTION_LIST_MENU_HEADER_HEIGHT}
+          sections={feeOptionSelectSections}
+          renderSectionHeader={renderFeeOptionSectionHeader}
+          containerStyle={spacings.mb0}
+          value={payValue || NO_FEE_OPTIONS}
+          disabled={isFeeTokenSelectDisabled}
+          selectStyle={{ backgroundColor: selectBackgroundColor, ...spacings.phSm }}
+          defaultValue={payValue ?? undefined}
+          withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
+          stickySectionHeadersEnabled
+          menuPosition="top"
+          bottomSheetTitle={t('Network fee')}
+        />
+      </View>
       <DefaultFeeSelector
         networkName={network?.name}
         payValue={payValue}

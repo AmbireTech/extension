@@ -56,6 +56,7 @@ const SignAccountOpScreen = () => {
   } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
+  const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { bottom: bottomInset } = useSafeAreaInsets()
@@ -385,7 +386,9 @@ const SignAccountOpScreen = () => {
               isAddToCartDisplayed={
                 !!signAccountOpState &&
                 !!network &&
-                signAccountOpState.accountOp.meta?.setDelegation === undefined
+                signAccountOpState.accountOp.meta?.setDelegation === undefined &&
+                // A speed up replaces the pending transaction as it is, so nothing can be added to it
+                !isSpeedUpTransaction
               }
               isSignLoading={isSignLoading}
               isSignDisabled={isSignDisabled || !hasReachedBottom}
@@ -459,7 +462,9 @@ const SignAccountOpScreen = () => {
                 spacings.mbSm
               ]}
             >
-              <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+              <SectionHeading withMb={false}>
+                {isSpeedUpTransaction ? t('Speed up') : t('Overview')}
+              </SectionHeading>
               <NetworkBadge chainId={network?.chainId} withOnPrefix />
             </View>
           )}
