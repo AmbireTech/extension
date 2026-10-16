@@ -40,7 +40,7 @@ const AccountPreferencesBottomSheet = ({
     localPreferences,
     updateLocalPreferences,
     save
-  } = useDAppAccountPreferences(dapp.id, 'existingDapp', dapp.accountPreferences)
+  } = useDAppAccountPreferences(dapp.id, dapp.accountPreferences)
   const isConfirmDisabled = !!localPreferences?.enabled && !localPreferences.accounts.length
   // There is no choice to be made with a single account, but the option is still
   // displayed (disabled) so it doesn't look like the feature is missing or broken.

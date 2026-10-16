@@ -4,11 +4,7 @@ import { Account } from '@ambire-common/interfaces/account'
 import { DappAccountPreferences } from '@ambire-common/interfaces/dapp'
 import useController from '@common/hooks/useController'
 
-const useDAppAccountPreferences = (
-  id: string,
-  target: 'dappToConnect' | 'existingDapp',
-  accountPreferences?: DappAccountPreferences
-) => {
+const useDAppAccountPreferences = (id: string, accountPreferences?: DappAccountPreferences) => {
   const {
     state: { accounts }
   } = useController('AccountsController')
@@ -23,31 +19,6 @@ const useDAppAccountPreferences = (
 
   const [localPreferences, setLocalPreferences] = useState<DappAccountPreferences | undefined>(
     accountPreferences
-  )
-
-  // A dedicated method with two blocks is needed because typescript displays an
-  // error if we try to use ternary for the method param
-  const updateTarget = useCallback(
-    (newPreferences: DappAccountPreferences) => {
-      if (target === 'dappToConnect') {
-        dispatch({
-          type: 'method',
-          params: {
-            method: 'updateDappToConnect',
-            args: [id, { accountPreferences: newPreferences }]
-          }
-        })
-      } else {
-        dispatch({
-          type: 'method',
-          params: {
-            method: 'updateDapp',
-            args: [id, { accountPreferences: newPreferences }]
-          }
-        })
-      }
-    },
-    [dispatch, id, target]
   )
 
   const toggleSelectAccount = useCallback(
@@ -85,28 +56,21 @@ const useDAppAccountPreferences = (
       return
     }
 
-    setLocalPreferences((prev) => {
-      const next = {
-        enabled: !prev?.enabled,
-        accounts: prev?.accounts.length ? prev.accounts : [selectedAccount.addr],
-        selectedAccount: prev?.selectedAccount || selectedAccount.addr
-      }
-
-      // Update before saving because the toggle is outside of the modal, so the user
-      // may enabled it, decide to select accounts, save, and then disable it again without opening the modal
-      if (target === 'dappToConnect') {
-        updateTarget(next)
-      }
-
-      return next
-    })
-  }, [selectedAccount, target, updateTarget])
+    setLocalPreferences((prev) => ({
+      enabled: !prev?.enabled,
+      accounts: prev?.accounts.length ? prev.accounts : [selectedAccount.addr],
+      selectedAccount: prev?.selectedAccount || selectedAccount.addr
+    }))
+  }, [selectedAccount])
 
   const save = useCallback(() => {
     if (!localPreferences) return
 
-    updateTarget(localPreferences)
-  }, [localPreferences, updateTarget])
+    dispatch({
+      type: 'method',
+      params: { method: 'updateDapp', args: [id, { accountPreferences: localPreferences }] }
+    })
+  }, [localPreferences, dispatch, id])
 
   const updateOrderedAccountList = useCallback(() => {
     setOrderedAccountList(() => {
