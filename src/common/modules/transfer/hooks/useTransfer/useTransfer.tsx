@@ -466,7 +466,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
-        shouldHoldToProceed={validationFormMsgs.recipientAddress.gate === 'hold'}
+        shouldHoldToProceed={validationFormMsgs.recipientAddress.shouldHold}
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
     )
@@ -477,7 +477,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
-    validationFormMsgs.recipientAddress.gate,
+    validationFormMsgs.recipientAddress.shouldHold,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])
