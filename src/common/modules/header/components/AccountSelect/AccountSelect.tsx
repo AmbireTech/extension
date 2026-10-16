@@ -69,7 +69,7 @@ type Props = {
    * Lets the user switch accounts and choose which accounts a connected app can see.
    * There is no trigger then, so the bottom sheet is opened with `isOpen`
    */
-  dappToManage?: Pick<Dapp, 'id' | 'name' | 'accountPreferences'>
+  dappToManage?: Pick<Dapp, 'id' | 'name' | 'accountPreferences' | 'isConnected'>
   isOpen?: boolean
   setIsOpen?: (isOpen: boolean) => void
 }
@@ -236,6 +236,10 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
     dappsDispatch
   ])
 
+  // A connected app's account is "Connected" until another one is picked, which isn't saved yet
+  const selectedBadgeText =
+    dappToManage?.isConnected && !hasAccountChanged ? t('Connected') : t('Selected')
+
   const renderOption = useCallback(
     ({ item, isSelected, isLast, onPress }: RenderOptionParams) => {
       const isHidden = hiddenAddrs.has(String(item.value))
@@ -246,6 +250,7 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
         <AccountSelectOption
           account={item.account}
           isSelected={isSelected}
+          selectedBadgeText={selectedBadgeText}
           isHidden={isHidden}
           isLast={isLast}
           onPress={() => onPress(item)}
@@ -255,7 +260,7 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
         />
       )
     },
-    [hiddenAddrs, dapp, showAccount, hideAccount]
+    [hiddenAddrs, dapp, selectedBadgeText, showAccount, hideAccount]
   )
 
   const renderSectionHeader = useCallback(

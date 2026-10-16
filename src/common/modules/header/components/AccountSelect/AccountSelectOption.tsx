@@ -35,6 +35,8 @@ const ACCOUNT_INFO_WITHOUT_TOGGLE_STYLE: ViewStyle = { ...ACCOUNT_INFO_STYLE, ..
 type Props = {
   account: Account
   isSelected: boolean
+  /** The badge of the selected account. Defaults to "Selected" */
+  selectedBadgeText?: string
   isHidden?: boolean
   /** The last row has no gap below it */
   isLast?: boolean
@@ -46,6 +48,7 @@ type Props = {
 const AccountSelectOption = ({
   account,
   isSelected,
+  selectedBadgeText,
   isHidden,
   isLast,
   onPress,
@@ -88,7 +91,7 @@ const AccountSelectOption = ({
       {isSelected && (
         <Badge
           type="primaryAccent"
-          text={t('Selected')}
+          text={selectedBadgeText ?? t('Selected')}
           // The card already has the accent background, so the badge stands out on the page one
           style={{ ...spacings.mlTy, backgroundColor: theme.primaryBackground }}
         />
