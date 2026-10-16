@@ -27,7 +27,7 @@ const SEGMENT_ICON_GAP = 3
 
 /** The name of each kind of key on the badge, in words that a user new to wallets understands */
 const KEY_TYPE_NAMES: { [type in Key['type']]: string } = {
-  internal: 'private key',
+  internal: 'Private key',
   ledger: 'Ledger',
   trezor: 'Trezor',
   lattice: 'GridPlus',
@@ -118,7 +118,7 @@ const AccountKeysBadge = ({ account, accountKeys }: Props) => {
           color={theme.secondaryText}
           style={{ paddingLeft: SEGMENT_PADDING_LEFT, paddingRight: SPACING_TY }}
         >
-          {t('view-only')}
+          {t('View-only')}
         </Text>
       </View>
     )
