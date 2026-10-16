@@ -711,7 +711,13 @@ const useSign = ({
     signAccountOpState
   ])
 
+  const isSafeFeePayerChoiceRequired = !!signAccountOpState?.isSafeFeePayerChoiceRequired
+
   const disabledReason = useMemo(() => {
+    if (isSafeFeePayerChoiceRequired) {
+      return t('Choose who pays the fee to execute this transaction.')
+    }
+
     if (isExtremeGasFeeProceedDelayedForSign) {
       return t('Please wait {{seconds}}s to review the high network fee.', {
         seconds: extremeGasFeeProceedDelaySeconds
@@ -721,7 +727,13 @@ const useSign = ({
     return typeof hasReachedBottom === 'boolean' && !hasReachedBottom
       ? t('Scroll to the bottom of the transaction overview to sign.')
       : undefined
-  }, [extremeGasFeeProceedDelaySeconds, hasReachedBottom, isExtremeGasFeeProceedDelayedForSign, t])
+  }, [
+    extremeGasFeeProceedDelaySeconds,
+    hasReachedBottom,
+    isExtremeGasFeeProceedDelayedForSign,
+    isSafeFeePayerChoiceRequired,
+    t
+  ])
 
   const signButtonText = useMemo(() => {
     if (isExtremeGasFeeProceedDelayedForSign) {

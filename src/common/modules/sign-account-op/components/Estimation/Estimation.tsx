@@ -144,6 +144,9 @@ const Estimation = ({
     return signAccountOpState?.warnings.find((warning) => warning.id === 'feeTokenPriceUnavailable')
   }, [signAccountOpState?.warnings])
 
+  // A Safe whose only default would link a new account to it is left without a payer
+  const isSafeFeePayerChoiceRequired = !!signAccountOpState?.isSafeFeePayerChoiceRequired
+
   const payOptionsPaidByUsOrGasTank = useMemo(() => {
     if (!signAccountOpState?.estimation.availableFeeOptions.length || !hasEstimation) return []
 
@@ -334,13 +337,16 @@ const Estimation = ({
       return false
 
     const hasNoFeeOptions = !payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length
+    // With no payer picked yet there are no speeds, which doesn't mean the payers can't cover it
     const selectedOptionCannotCoverFee =
-      !feeSpeeds.length || feeSpeeds.every((speed) => speed.disabled)
+      !isSafeFeePayerChoiceRequired &&
+      (!feeSpeeds.length || feeSpeeds.every((speed) => speed.disabled))
 
     return hasNoFeeOptions || selectedOptionCannotCoverFee
   }, [
     feeSpeeds,
     hasEstimation,
+    isSafeFeePayerChoiceRequired,
     payOptionsPaidByEOA.length,
     payOptionsPaidByUsOrGasTank.length,
     isEnableErc4337PromptDismissed,
@@ -585,7 +591,16 @@ const Estimation = ({
   const isFeeTokenSelectDisabled =
     disabled ||
     (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
-    !signAccountOpState?.selectedOption
+    (!signAccountOpState?.selectedOption && !isSafeFeePayerChoiceRequired)
+
+  const chooseSafeFeePayerOption = useMemo(
+    () => ({
+      ...NO_FEE_OPTIONS,
+      value: 'choose-safe-fee-payer',
+      label: t('Choose who pays the fee')
+    }),
+    [t]
+  )
 
   const hasSelectedFeeOption = !!signAccountOpState?.selectedOption
   // Shown in the advanced options instead of the fields, so it's clear why they can't be changed
@@ -724,7 +739,7 @@ const Estimation = ({
     )
   }
 
-  if (!signAccountOpState || !payValue) {
+  if (!signAccountOpState || (!payValue && !isSafeFeePayerChoiceRequired)) {
     if (enableErc4337Prompt) {
       return <View style={spacings.ptTy}>{enableErc4337Prompt}</View>
     }
@@ -831,7 +846,9 @@ const Estimation = ({
         sections={feeOptionSelectSections}
         renderSectionHeader={renderFeeOptionSectionHeader}
         containerStyle={spacings.mb0}
-        value={payValue || NO_FEE_OPTIONS}
+        value={
+          payValue || (isSafeFeePayerChoiceRequired ? chooseSafeFeePayerOption : NO_FEE_OPTIONS)
+        }
         disabled={isFeeTokenSelectDisabled}
         selectStyle={{ backgroundColor: selectBackgroundColor, ...spacings.phSm }}
         defaultValue={payValue ?? undefined}
