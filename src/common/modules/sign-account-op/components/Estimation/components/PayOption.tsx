@@ -91,7 +91,7 @@ const PayOption = ({
     if (feeOption.token.address === ZERO_ADDRESS)
       // This row is the network's native token, so its symbol is the one the other accounts pay in
       return t(
-        "A Safe can't send transactions by itself, so another account has to send them and pay the fee. Pay with your Gas Tank, or with {{nativeSymbol}} from one of your other accounts listed below.",
+        `A Safe can't submit transactions by itself, so another account has to send them and pay the gas. Pick one of your other accounts below that holds enough {{nativeSymbol}}.`,
         { nativeSymbol: feeOption.token.symbol }
       )
 
