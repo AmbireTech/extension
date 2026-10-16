@@ -111,8 +111,13 @@ const SectionedSelect = ({
     for (const section of filteredData) {
       const optionIndex = section.data.findIndex((option) => option.value === value.value)
       if (optionIndex !== -1) {
-        // One item earlier, so a sticky header doesn't cover the selected option
-        const index = flatIndex + 1 + optionIndex - (stickySectionHeadersEnabled ? 1 : 0)
+        let index = flatIndex + 1 + optionIndex
+        if (stickySectionHeadersEnabled) {
+          // Earlier by as many items as the sticky header is tall, so it doesn't cover the option
+          const stickyHeaderHeight = getSectionHeaderHeight?.(section) ?? headerHeight
+          const visibleFromOffset = getItemLayout(null, index).offset - stickyHeaderHeight
+          while (index > 0 && getItemLayout(null, index).offset > visibleFromOffset) index -= 1
+        }
 
         return index > 0 ? index : undefined
       }
@@ -120,7 +125,15 @@ const SectionedSelect = ({
     }
 
     return undefined
-  }, [scrollToSelectedOnOpen, value, filteredData, stickySectionHeadersEnabled])
+  }, [
+    scrollToSelectedOnOpen,
+    value,
+    filteredData,
+    stickySectionHeadersEnabled,
+    getSectionHeaderHeight,
+    headerHeight,
+    getItemLayout
+  ])
 
   const sectionListProps = useMemo(
     () => ({
