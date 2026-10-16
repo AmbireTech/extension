@@ -1,18 +1,16 @@
 import React from 'react'
-import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
-import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
+import PrivateKeyImportField from '@common/modules/auth/components/PrivateKeyImportField'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import usePrivateKeyImport from '@common/modules/auth/hooks/usePrivateKeyImport'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -22,6 +20,9 @@ const PrivateKeyImportScreen = () => {
   const {
     control,
     fields,
+    addPrivateKeyField,
+    removePrivateKeyField,
+    canAddMore,
     handleFormSubmit,
     getPrivateKeyError,
     isValid,
@@ -37,15 +38,31 @@ const PrivateKeyImportScreen = () => {
 
   return (
     <MobileLayoutContainer
+      // Only the fields scroll, so the checkbox and the button in the footer always stay visible
       footer={
-        <Button
-          testID="import-button"
-          size="large"
-          text={t('Confirm')}
-          hasBottomSpacing={false}
-          onPress={handleFormSubmit}
-          disabled={!isValid || !agreedToBackupWarning}
-        />
+        <View>
+          <Checkbox
+            value={agreedToBackupWarning}
+            onValueChange={() => setAgreedToBackupWarning((prev) => !prev)}
+            testID="backup-warning-checkbox"
+            style={spacings.mlTy}
+            label={
+              <Text fontSize={14} appearance="secondaryText">
+                {fields.length > 1
+                  ? t('I know I must keep a secure backup of my keys.')
+                  : t('I know I must keep a secure backup of my key.')}
+              </Text>
+            }
+          />
+          <Button
+            testID="import-button"
+            size="large"
+            text={t('Confirm')}
+            hasBottomSpacing={false}
+            onPress={handleFormSubmit}
+            disabled={!isValid || !agreedToBackupWarning}
+          />
+        </View>
       }
     >
       <MobileLayoutWrapperMainContent
@@ -54,52 +71,31 @@ const PrivateKeyImportScreen = () => {
         title={t('Import private key')}
         withScroll
       >
-        <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
-          <View>
-            {fields.map((field, index) => (
-              <Controller
-                key={field.id}
-                control={control}
-                rules={{ validate: (value) => handleValidation(value), required: true }}
-                name={`privateKeys.${index}.value`}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    {...NO_AUTOFILL_PROPS}
-                    testID={
-                      index === 0 ? 'enter-private-key-field' : `enter-private-key-field-${index}`
-                    }
-                    onBlur={onBlur}
-                    autoFocus={index === 0}
-                    placeholder={t('Input private key')}
-                    onChangeText={onChange}
-                    value={value}
-                    isValid={
-                      !!value.length && !handleValidation(value) && !getPrivateKeyError(index)
-                    }
-                    validLabel={t('✅ Valid private key')}
-                    secureTextEntry
-                    containerStyle={spacings.mbLg}
-                    backgroundColor={theme.secondaryBackground}
-                    error={value.length ? getPrivateKeyError(index) : ''}
-                    autoCorrect={false}
-                    onSubmitEditing={handleFormSubmit}
-                  />
-                )}
-              />
-            ))}
-            <Checkbox
-              value={agreedToBackupWarning}
-              onValueChange={() => setAgreedToBackupWarning((prev) => !prev)}
-              testID="backup-warning-checkbox"
-              style={spacings.mlTy}
-              label={
-                <Text fontSize={14} appearance="secondaryText">
-                  {t('I know I must keep a secure backup of my key.')}
-                </Text>
-              }
-            />
-          </View>
-        </View>
+        {fields.map((field, index) => (
+          <PrivateKeyImportField
+            key={field.id}
+            control={control}
+            index={index}
+            canRemove={fields.length > 1}
+            onRemove={removePrivateKeyField}
+            handleValidation={handleValidation}
+            getPrivateKeyError={getPrivateKeyError}
+            onSubmitEditing={handleFormSubmit}
+          />
+        ))}
+        <Button
+          type="outline"
+          testID="add-one-more-private-key"
+          disabled={!canAddMore}
+          style={{ height: 40 }}
+          size="tiny"
+          onPress={addPrivateKeyField}
+          childrenPosition="left"
+          text={t('Add another private key')}
+          hasBottomSpacing={false}
+        >
+          <AddCircularIcon width={20} height={20} color={theme.primaryText} style={spacings.mrMi} />
+        </Button>
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )
