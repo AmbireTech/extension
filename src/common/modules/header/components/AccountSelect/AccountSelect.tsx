@@ -237,8 +237,14 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
   ])
 
   // A connected app's account is "Connected" until another one is picked, which isn't saved yet
-  const selectedBadgeText =
-    dappToManage?.isConnected && !hasAccountChanged ? t('Connected') : t('Selected')
+  const isConnectedAccountPicked = !!dappToManage?.isConnected && !hasAccountChanged
+  const selectedBadgeText = isConnectedAccountPicked ? t('Connected') : t('Selected')
+  // Names the account like its badge does
+  const limitActionText = canLimit
+    ? isConnectedAccountPicked
+      ? t('Limit to connected account only')
+      : t('Limit to selected account only')
+    : undefined
 
   const renderOption = useCallback(
     ({ item, isSelected, isLast, onPress }: RenderOptionParams) => {
@@ -281,7 +287,7 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
           type="visible"
           count={visibleAccounts.length}
           isAll={!isLimited}
-          actionText={canLimit ? t('Limit to selected account only') : undefined}
+          actionText={limitActionText}
           onAction={limitToPickedAccount}
           isActionOnOwnRow={isLimitActionOnOwnRow}
           onLayout={handleVisibleHeaderLayout}
@@ -292,7 +298,7 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
       hiddenAccounts.length,
       visibleAccounts.length,
       isLimited,
-      canLimit,
+      limitActionText,
       isLimitActionOnOwnRow,
       showAllAccounts,
       limitToPickedAccount,
