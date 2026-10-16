@@ -51,7 +51,7 @@ const PrivateKeyImportField: FC<Props> = ({
   return (
     <Controller
       control={control}
-      rules={{ validate: (value) => handleValidation(value), required: true }}
+      rules={{ validate: (value) => handleValidation(value) }}
       name={`privateKeys.${index}.value`}
       render={({ field: { onChange, onBlur, value } }) => (
         <View style={[spacings.mbTy, flexbox.directionRow, flexbox.alignStart]}>

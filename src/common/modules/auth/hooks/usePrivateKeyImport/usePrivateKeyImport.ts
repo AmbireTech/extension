@@ -71,12 +71,18 @@ export default function usePrivateKeyImport() {
     }, [])
   }, [privateKeys, keystoreKeys, accounts])
 
+  // Empty fields are skipped, so the user can leave a spare field instead of removing it
+  const filledPrivateKeysCount = privateKeys.filter(({ value }) => value.trim()).length
+
   // There is nothing to import when every entered key is already in the wallet
   const areAllPrivateKeysAlreadyImported =
-    alreadyImportedPrivateKeyIndexes.length === privateKeys.length
+    alreadyImportedPrivateKeyIndexes.length === filledPrivateKeysCount
 
   const isValid =
-    areAllFieldsValid && !duplicatePrivateKeyIndexes.length && !areAllPrivateKeysAlreadyImported
+    filledPrivateKeysCount > 0 &&
+    areAllFieldsValid &&
+    !duplicatePrivateKeyIndexes.length &&
+    !areAllPrivateKeysAlreadyImported
   const canAddMore = fields.length < MAX_BULK_PRIVATE_KEYS
 
   const handleFormSubmit = useCallback(async () => {
@@ -92,7 +98,13 @@ export default function usePrivateKeyImport() {
         type: 'method',
         params: {
           method: 'accountPickerSetInitParamsFromPrivateKeys',
-          args: [{ privateKeys: formValues.privateKeys.map(({ value }) => value) }]
+          args: [
+            {
+              privateKeys: formValues.privateKeys
+                .map(({ value }) => value)
+                .filter((value) => value.trim())
+            }
+          ]
         }
       })
     })()
@@ -128,7 +140,8 @@ export default function usePrivateKeyImport() {
     (value: string) => {
       const trimmedValue = value.trim()
 
-      if (!trimmedValue.length) return t('Field is required.')
+      // An empty field is skipped on submit, so it is not an error
+      if (!trimmedValue.length) return undefined
 
       if (!isValidPrivateKey(trimmedValue)) {
         return t('Invalid private key.')
@@ -141,13 +154,13 @@ export default function usePrivateKeyImport() {
 
   /**
    * What to show under each field, worked out once here so every field gets plain values.
-   * An empty field shows nothing; an invalid or repeated key shows an error; a key whose
+   * An empty field shows nothing (it is skipped); an invalid or repeated key shows an error; a key whose
    * account is already in the wallet shows a note.
    */
   const privateKeyFieldStates = useMemo(
     () =>
       privateKeys.map(({ value }, index) => {
-        if (!value.length) return { isValid: false }
+        if (!value.trim()) return { isValid: false }
 
         const error =
           handleValidation(value) ||
