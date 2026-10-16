@@ -140,13 +140,13 @@ const PrivacyPoolsDashboardScreen = () => {
             style={spacings.mbTy}
           />
         )}
-        {/* A first read takes minutes. Locking skips queued networks, hence "keep unlocked". */}
+        {/* A first read takes a while. Locking skips queued networks, hence "keep unlocked". */}
         {!!firstSyncNetworkNames.length && (
           <Banner
             type="info"
             title={t('First sync')}
             text={t(
-              'Reading {{networks}} for the first time. This happens once and takes up to 5 minutes. Keep the wallet unlocked - you can use your other accounts meanwhile.',
+              'Reading {{networks}} for the first time. This happens once and usually takes under a minute. Keep the wallet unlocked - you can use your other accounts meanwhile.',
               { networks: firstSyncNetworkNames.join(', ') }
             )}
           />
