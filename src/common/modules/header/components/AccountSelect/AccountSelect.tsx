@@ -325,7 +325,8 @@ const AccountSelect = ({ dappToConnect }: Props) => {
               onAction={showAllAccounts}
             />
           )}
-          <View style={[flexbox.directionRow, spacings.ptTy, { columnGap: SPACING_SM }]}>
+          {/* With the 8 above it, from the footer or the pinned header, the gap is 12 like other footers */}
+          <View style={[flexbox.directionRow, spacings.ptMi, { columnGap: SPACING_SM }]}>
             {isDirty ? (
               <>
                 <Button
