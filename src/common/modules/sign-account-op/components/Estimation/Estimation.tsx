@@ -449,12 +449,12 @@ const Estimation = ({
           key: 'safe-owners'
         },
         {
-          title: { icon: LinkIcon, text: t('Already linked to this Safe') },
+          title: { icon: LinkIcon, text: t('Used in Ambire for this Safe') },
           data: linked,
           key: 'safe-linked'
         },
         {
-          title: { icon: VisibilityIcon, text: t('Not linked to this Safe yet') },
+          title: { icon: VisibilityIcon, text: t('Other') },
           data: notLinked,
           key: 'safe-not-linked'
         }
