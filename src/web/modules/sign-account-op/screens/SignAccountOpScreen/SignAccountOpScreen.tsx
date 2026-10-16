@@ -34,7 +34,7 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
-import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 import getStyles from './styles'
@@ -125,6 +125,7 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     signButtonText,
+    holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
     shouldDisplayQrSigningModal,
@@ -338,6 +339,7 @@ const SignAccountOpScreen = () => {
         inProgressButtonText={primaryButtonText}
         buttonText={signButtonText}
         shouldHoldToProceed={shouldHoldToProceed}
+        holdToProceedButtonText={holdToSignButtonText}
         shouldRejectOnchain={shouldRejectOnchain}
         isRejectDisabled={isCancelDisabled}
         holdToProceedButtonType={holdToProceedButtonType}

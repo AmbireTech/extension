@@ -65,6 +65,8 @@ interface Props {
    */
   avatarType?: Omit<AvatarType, 'ens'>
   displayTypeBadge?: boolean
+  /** The color of the ring around the type badge, see `TypeBadge` */
+  typeBadgeRingColor?: React.ComponentProps<typeof TypeBadge>['ringColor']
 }
 
 const selectAvatarType = (state: AllControllersMappingType['WalletStateController']) =>
@@ -79,7 +81,8 @@ const Avatar: FC<Props> = ({
   avatarType: propAvatarType,
   style = {},
   showTooltip = false,
-  displayTypeBadge = true
+  displayTypeBadge = true,
+  typeBadgeRingColor
 }) => {
   const { state: shouldDisplayEnsAvatar } = useController(
     'FeatureFlagsController',
@@ -190,6 +193,7 @@ const Avatar: FC<Props> = ({
           smartAccountType={smartAccountType}
           size={size >= 40 ? 'big' : 'small'}
           showTooltip={showTooltip}
+          ringColor={typeBadgeRingColor}
         />
       )}
     </Animated.View>

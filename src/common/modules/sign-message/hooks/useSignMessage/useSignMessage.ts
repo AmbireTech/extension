@@ -14,7 +14,7 @@ import useSigningAuth from '@common/hooks/useSigningAuth'
 import useToast from '@common/hooks/useToast'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
-import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -310,6 +310,13 @@ const useSignMessage = () => {
 
   const signWithDefaultSignerIfPossible = useCallback(() => {
     if (!account?.safeCreation && selectedAccountKeyStoreKeys.length > 1) {
+      // A private key signs on its own in one click, so the user is not asked to pick another key
+      const internalKey = selectedAccountKeyStoreKeys.find((key) => key.type === 'internal')
+      if (internalKey) {
+        setSigner(internalKey.addr, internalKey.type)
+        return
+      }
+
       handleSign()
       return
     }
