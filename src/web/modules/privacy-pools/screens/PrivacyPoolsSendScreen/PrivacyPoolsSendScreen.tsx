@@ -15,6 +15,9 @@ import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
+import TrackProgress from '@common/components/TrackProgress'
+import Completed from '@common/components/TrackProgress/ByStatus/Completed'
+import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
@@ -249,14 +252,26 @@ const PrivacyPoolsSendScreen = () => {
     openSheet()
   }, [operationStatus, operationPhase, openSheet])
 
-  // A sent transfer's form is already cleared by the controller
-  const handleSheetClosed = useCallback(() => {
-    const wasSent = operation?.status === 'success'
-    dismissOperation()
-    if (!wasSent) return
+  /**
+   * Sent, or could not be sent from the confirmation sheet: shown on its own screen, like the regular
+   * Send's outcome. A failure while preparing it is only a toast, as the user is still on the form.
+   */
+  const isOutcomeShown =
+    operation?.status === 'success' ||
+    (operation?.status === 'failed' && operationPhase !== 'proving')
 
+  // Backing out of the confirmation drops the proved transfer. An outcome stays for its screen
+  const handleSheetClosed = useCallback(() => {
+    if (operationStatus !== 'pending') return
+
+    dismissOperation()
+  }, [dismissOperation, operationStatus])
+
+  // A sent transfer's form is already cleared by the controller, a failed one's is kept to retry
+  const closeOutcome = useCallback(() => {
+    dismissOperation()
     navigate(ROUTES.dashboard)
-  }, [dismissOperation, navigate, operation?.status])
+  }, [dismissOperation, navigate])
 
   // The operation carries raw amounts; the token's symbol and decimals come from the asset config
   const operationAsset = useMemo(
@@ -277,6 +292,35 @@ const PrivacyPoolsSendScreen = () => {
         : null,
     [selectedToken, tokenPrice]
   )
+
+  if (isOutcomeShown && operation) {
+    const hasFailed = operation.status === 'failed'
+
+    return (
+      <TrackProgress
+        onPrimaryButtonPress={closeOutcome}
+        secondaryButtonText={hasFailed ? t('Back') : t('Send more')}
+        handleClose={dismissOperation}
+        routeStatus={hasFailed ? 'failed' : undefined}
+      >
+        {/* No explorer link: the transfer's hash is not kept */}
+        {hasFailed ? (
+          <Failed
+            title={t('Something went wrong!')}
+            errorMessage={operation.error || t('The transfer could not be sent. Please try again.')}
+          />
+        ) : (
+          <Completed
+            title={t('Sending successfully')}
+            titleSecondary={t('Your {{symbol}} is on its way. No trail back to you.', {
+              symbol: operationAsset?.symbol || t('Token')
+            })}
+            openExplorerText={t('View Transfer')}
+          />
+        )}
+      </TrackProgress>
+    )
+  }
 
   return (
     <Wrapper>
