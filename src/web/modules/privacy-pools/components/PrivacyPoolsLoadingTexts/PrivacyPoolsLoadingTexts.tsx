@@ -11,7 +11,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 /** One shimmer sweep, from outside its text on the left to outside it on the right. */
-const SWEEP_MS = 2400
+const SWEEP_MS = 2900
 /** The sweep is already this far along as its text fades in, so the band is on its way. */
 const SWEEP_HEAD_START_MS = 200
 /**
