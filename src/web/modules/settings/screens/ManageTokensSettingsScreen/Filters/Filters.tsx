@@ -31,7 +31,7 @@ type Props = {
 
 const ALL_NETWORKS_OPTION = {
   value: 'all',
-  label: <Text weight="medium">All Networks</Text>,
+  label: <Text weight="medium">All networks</Text>,
   icon: (
     <View style={spacings.phMi}>
       <NetworksIcon width={24} height={24} />
