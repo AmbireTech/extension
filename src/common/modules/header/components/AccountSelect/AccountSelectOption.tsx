@@ -103,7 +103,7 @@ const AccountSelectOption = ({
               spacings.phSm,
               spacings.mlTy,
               {
-                height: 32,
+                height: 36,
                 columnGap: 6,
                 borderRadius: 8,
                 backgroundColor: theme.primaryBackground

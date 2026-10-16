@@ -10,7 +10,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-const ROW_HEIGHT = 32
+const ROW_HEIGHT = 36
 /** Height of the visible section's header - the list relies on it being fixed */
 export const ACCOUNT_SELECT_VISIBLE_HEADER_HEIGHT = ROW_HEIGHT + SPACING_TY
 // The card above the hidden section's line already leaves a gap below it
