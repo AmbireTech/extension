@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
@@ -10,6 +10,7 @@ import Badge from '@common/components/Badge'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
@@ -20,6 +21,16 @@ import flexbox from '@common/styles/utils/flexbox'
 export const ACCOUNT_SELECT_OPTION_HEIGHT = 76
 const CARD_GAP = SPACING_TY
 const HIDDEN_OPACITY = 0.45
+// Fills the card up to the Hide / Show button, the card's padding included, so it's all pressable
+const ACCOUNT_INFO_STYLE: ViewStyle = {
+  ...flexbox.flex1,
+  ...flexbox.directionRow,
+  ...flexbox.alignCenter,
+  ...spacings.plSm,
+  alignSelf: 'stretch',
+  minWidth: 0
+}
+const ACCOUNT_INFO_WITHOUT_TOGGLE_STYLE: ViewStyle = { ...ACCOUNT_INFO_STYLE, ...spacings.prSm }
 
 type Props = {
   account: Account
@@ -50,24 +61,16 @@ const AccountSelectOption = ({
     [onToggleVisibility, account.addr]
   )
 
+  const [bindRowHover, rowHoverStyle] = useHover({ preset: 'opacityInverted' })
+
   const smartAccountType = account.safeCreation ? 'Safe' : account.creation ? 'Ambire' : undefined
   const VisibilityToggleIcon = isHidden ? VisibilityIcon : InvisibilityIcon
+  const accountInfoStyle = onToggleVisibility
+    ? ACCOUNT_INFO_STYLE
+    : ACCOUNT_INFO_WITHOUT_TOGGLE_STYLE
 
-  const card = (
-    <View
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        spacings.phSm,
-        {
-          height: ACCOUNT_SELECT_OPTION_HEIGHT - CARD_GAP,
-          borderRadius: BORDER_RADIUS_PRIMARY,
-          borderWidth: 1.5,
-          borderColor: isSelected ? theme.primaryAccent200 : 'transparent',
-          backgroundColor: isSelected ? theme.primaryAccent100 : theme.secondaryBackground
-        }
-      ]}
-    >
+  const accountInfo = (
+    <>
       <View style={isHidden && { opacity: HIDDEN_OPACITY }}>
         <Avatar
           address={account.addr}
@@ -90,34 +93,7 @@ const AccountSelectOption = ({
           style={{ ...spacings.mlTy, backgroundColor: theme.primaryBackground }}
         />
       )}
-      {!!onToggleVisibility && (
-        <HoverablePressable
-          onPress={handleToggleVisibility}
-          accessibilityRole="button"
-          testID={`account-select-${isHidden ? 'show' : 'hide'}-${account.addr}`}
-        >
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              spacings.phSm,
-              spacings.mlTy,
-              {
-                height: 36,
-                columnGap: 6,
-                borderRadius: 8,
-                backgroundColor: theme.primaryBackground
-              }
-            ]}
-          >
-            <VisibilityToggleIcon width={16} height={16} color={theme.iconPrimary} />
-            <Text fontSize={13} weight="medium" appearance="secondaryText">
-              {isHidden ? t('Show') : t('Hide')}
-            </Text>
-          </View>
-        </HoverablePressable>
-      )}
-    </View>
+    </>
   )
 
   return (
@@ -128,20 +104,65 @@ const AccountSelectOption = ({
           : { height: ACCOUNT_SELECT_OPTION_HEIGHT, paddingBottom: CARD_GAP }
       }
     >
-      {isHidden ? (
-        // A hidden account must be shown first, as the selected account is always visible.
-        // Not a disabled pressable, as that would also block the Show button inside it
-        card
-      ) : (
-        <HoverablePressable
-          onPress={handlePress}
-          accessibilityRole="button"
-          accessibilityState={{ selected: isSelected }}
-          testID={`account-select-option-${account.addr}`}
-        >
-          {card}
-        </HoverablePressable>
-      )}
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          {
+            height: ACCOUNT_SELECT_OPTION_HEIGHT - CARD_GAP,
+            borderRadius: BORDER_RADIUS_PRIMARY,
+            borderWidth: 1.5,
+            borderColor: isSelected ? theme.primaryAccent200 : 'transparent',
+            backgroundColor: isSelected ? theme.primaryAccent100 : theme.secondaryBackground
+          }
+        ]}
+      >
+        {isHidden ? (
+          // A hidden account must be shown first, as the selected account is always visible
+          <View style={accountInfoStyle}>{accountInfo}</View>
+        ) : (
+          <AnimatedPressable
+            {...bindRowHover}
+            style={[accountInfoStyle, rowHoverStyle]}
+            onPress={handlePress}
+            accessibilityRole="button"
+            accessibilityState={{ selected: isSelected }}
+            testID={`account-select-option-${account.addr}`}
+          >
+            {accountInfo}
+          </AnimatedPressable>
+        )}
+        {/* Next to the account's button rather than in it, as a button can't contain another */}
+        {!!onToggleVisibility && (
+          <View style={spacings.prSm}>
+            <HoverablePressable
+              onPress={handleToggleVisibility}
+              accessibilityRole="button"
+              testID={`account-select-${isHidden ? 'show' : 'hide'}-${account.addr}`}
+            >
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  spacings.phSm,
+                  spacings.mlTy,
+                  {
+                    height: 36,
+                    columnGap: 6,
+                    borderRadius: 8,
+                    backgroundColor: theme.primaryBackground
+                  }
+                ]}
+              >
+                <VisibilityToggleIcon width={16} height={16} color={theme.iconPrimary} />
+                <Text fontSize={13} weight="medium" appearance="secondaryText">
+                  {isHidden ? t('Show') : t('Hide')}
+                </Text>
+              </View>
+            </HoverablePressable>
+          </View>
+        )}
+      </View>
     </View>
   )
 }
