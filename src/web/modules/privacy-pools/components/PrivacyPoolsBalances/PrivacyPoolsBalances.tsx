@@ -7,6 +7,8 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import TokensEmptyState from '@common/modules/dashboard/components/Tokens/TokensEmptyState'
+import flexbox from '@common/styles/utils/flexbox'
 import PrivacyPoolsTokenItem from '@web/modules/privacy-pools/components/PrivacyPoolsTokenItem'
 import {
   PrivacyPoolsBalanceDisplay,
@@ -20,9 +22,16 @@ interface Props {
   state: PrivacyPoolsBalancesState
   /** Why the account cannot use Privacy Pools, explained while the state is 'unavailable'. */
   unavailableReason: PrivacyPoolsUnavailableReason | null
+  /** Whether reading waits for the recovery phrase backup - see `syncIfStale`. */
+  isWaitingForBackup: boolean
 }
 
-const PrivacyPoolsBalances: FC<Props> = ({ balances, state, unavailableReason }) => {
+const PrivacyPoolsBalances: FC<Props> = ({
+  balances,
+  state,
+  unavailableReason,
+  isWaitingForBackup
+}) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
@@ -57,14 +66,19 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state, unavailableReason })
     )
   }
 
-  if (state === 'not-loaded')
-    return renderNotice(
-      t('Nothing has been checked yet'),
-      t('Once a network is checked, what this account holds on it shows up here.')
+  // The banner above asks for the backup, this says what it is for
+  if (state === 'not-loaded' && isWaitingForBackup)
+    return (
+      <View style={[flexbox.alignCenter, spacings.pv]}>
+        <Text fontSize={16} weight="medium" style={styles.centeredText}>
+          {t('Your tokens will show up here once the recovery phrase is backed up.')}
+        </Text>
+      </View>
     )
 
-  // Only while there are no rows: a later refresh keeps them on screen
-  if (state === 'loading' && !balances.length) {
+  // Only while there are no rows: a later refresh keeps them on screen. Not read yet is the same
+  // wait, as the account is read as soon as it opens backed up
+  if ((state === 'loading' || state === 'not-loaded') && !balances.length) {
     return (
       <View style={styles.container}>
         <View style={styles.row}>
@@ -77,11 +91,8 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state, unavailableReason })
     )
   }
 
-  if (!balances.length)
-    return renderNotice(
-      t('Nothing in this account yet'),
-      t('Send ETH or another supported token to it from any of your other accounts.')
-    )
+  // Like the regular dashboard. The banner above says how to top it up
+  if (!balances.length) return <TokensEmptyState searchValue="" dashboardNetworkFilterName={null} />
 
   return (
     <View>

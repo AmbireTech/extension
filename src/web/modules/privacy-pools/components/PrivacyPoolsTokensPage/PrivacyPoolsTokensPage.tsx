@@ -43,6 +43,8 @@ interface Props {
   balances: PrivacyPoolsBalanceDisplay[]
   state: PrivacyPoolsBalancesState
   unavailableReason: PrivacyPoolsUnavailableReason | null
+  /** Whether reading waits for the recovery phrase backup. */
+  isWaitingForBackup: boolean
   /** The dashboard's network filter name, if any. */
   networkFilterName: string | null
 }
@@ -57,6 +59,7 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
   balances,
   state,
   unavailableReason,
+  isWaitingForBackup,
   networkFilterName
 }) => {
   const { t } = useTranslation()
@@ -113,6 +116,7 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
           balances={filteredBalances}
           state={state}
           unavailableReason={unavailableReason}
+          isWaitingForBackup={isWaitingForBackup}
         />
       )
     },
@@ -127,7 +131,8 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
       setOpenTab,
       state,
       theme.primaryBackground,
-      unavailableReason
+      unavailableReason,
+      isWaitingForBackup
     ]
   )
 

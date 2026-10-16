@@ -31,6 +31,7 @@ const RecoveryPhraseBackupBanner = () => {
 
   // Neutral on the dashboard so a freshly created account isn't greeted by a coloured
   // warning. The icon and the button stay warning coloured to keep the nudge visible.
+  // A Privacy Pools account keeps the warning colour: it cannot be used at all until then
   const neutralBackgroundStyle = useMemo(
     () => ({ backgroundColor: theme.secondaryBackground }),
     [theme.secondaryBackground]
@@ -53,7 +54,7 @@ const RecoveryPhraseBackupBanner = () => {
         }
         buttonText={t('Back up now')}
         onPress={openBottomSheet as any}
-        style={neutralBackgroundStyle}
+        style={privacyPoolsAccountId ? undefined : neutralBackgroundStyle}
       />
       <RecoveryPhraseBackupBottomSheet
         seedId={seedIdOfSelectedAccountNeedingBackup}

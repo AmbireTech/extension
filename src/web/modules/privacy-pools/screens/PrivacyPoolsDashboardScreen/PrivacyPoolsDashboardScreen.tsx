@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Animated, View } from 'react-native'
 
+import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
+import Alert from '@common/components/Alert'
 import Banner from '@common/components/Banner'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import { useTranslation } from '@common/config/localization'
@@ -14,6 +16,7 @@ import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/component
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import getDashboardStyles from '@common/modules/dashboard/screens/styles'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import spacings from '@common/styles/spacings'
 import PrivacyPoolsActivityPage from '@web/modules/privacy-pools/components/PrivacyPoolsActivityPage'
 import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyPoolsOverview'
 import PrivacyPoolsTokensPage from '@web/modules/privacy-pools/components/PrivacyPoolsTokensPage'
@@ -90,12 +93,53 @@ const PrivacyPoolsDashboardScreen = () => {
     [networkRows]
   )
 
+  // What can be sent to the account from a public one, by the pools of the networks it is read on
+  const depositableSymbols = useMemo(() => {
+    const symbols = networkRows.flatMap(
+      ({ chainId }) =>
+        getPrivacyPoolsChainConfig(BigInt(chainId))
+          ?.assets.filter(({ isWithdrawable }) => isWithdrawable)
+          .map(({ symbol }) => symbol) || []
+    )
+
+    return [...new Set(symbols)]
+  }, [networkRows])
+
+  // Only once read: before that, an empty list does not mean an empty account
+  const isEmpty = isBackedUp && balancesState === 'ready' && !balances.length
+  const topUpText = useMemo(() => {
+    if (!depositableSymbols.length) return null
+
+    const tokens =
+      depositableSymbols.length === 1
+        ? depositableSymbols[0]
+        : t('{{tokens}} or {{lastToken}}', {
+            tokens: depositableSymbols.slice(0, -1).join(', '),
+            lastToken: depositableSymbols[depositableSymbols.length - 1]
+          })
+
+    return t(
+      'You can top up this private account by sending {{tokens}} from any of your public accounts.',
+      { tokens }
+    )
+  }, [depositableSymbols, t])
+
   // Above the tabs of both pages, like the regular dashboard's banners
   const banners = useMemo(
     () => (
       <View>
         {/* Under the overview card, like on the regular dashboard */}
         <RecoveryPhraseBackupBanner />
+        {isEmpty && !!topUpText && (
+          // As the title, as the alert shows its icon on the title's row and the text below it
+          <Alert
+            type="info"
+            size="sm"
+            titleWeight="regular"
+            title={topUpText}
+            style={spacings.mbTy}
+          />
+        )}
         {/* A first read takes minutes. Locking skips queued networks, hence "keep unlocked". */}
         {!!firstSyncNetworkNames.length && (
           <Banner
@@ -109,7 +153,7 @@ const PrivacyPoolsDashboardScreen = () => {
         )}
       </View>
     ),
-    [firstSyncNetworkNames, t]
+    [firstSyncNetworkNames, isEmpty, t, topUpText]
   )
 
   // See PrivacyPoolsSendScreen
@@ -137,6 +181,7 @@ const PrivacyPoolsDashboardScreen = () => {
           balances={balances}
           state={balancesState}
           unavailableReason={unavailableReason}
+          isWaitingForBackup={!!selectedAccount && !isBackedUp}
           networkFilterName={networkFilterName}
         />
         <PrivacyPoolsActivityPage
