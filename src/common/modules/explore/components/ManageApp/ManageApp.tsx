@@ -58,6 +58,9 @@ const ManageApp = ({
     close: closeDisconnectChooser
   } = useModalize()
   const [isManageAccountsOpen, setIsManageAccountsOpen] = useState(false)
+  // Every app in Explore has its own ManageApp, so the account sheet mounts only once this one
+  // opens - before its Manage button can be pressed, so the sheet is ready to open by then
+  const [hasOpened, setHasOpened] = useState(false)
   const { t } = useTranslation()
   const { state: balancePerNetwork } = useController(
     'SelectedAccountController',
@@ -66,6 +69,11 @@ const ManageApp = ({
 
   const connectedSources = dapp.connectedSources ?? []
   const hasMultipleSources = connectedSources.length > 1
+
+  const handleOpen = useCallback(() => {
+    setHasOpened(true)
+    open()
+  }, [open])
 
   const handleDisconnect = useCallback(
     (source?: ConnectionSource) => {
@@ -118,7 +126,7 @@ const ManageApp = ({
   return (
     <>
       <AnimatedPressable
-        onPress={open}
+        onPress={handleOpen}
         hitSlop={{ top: 8, bottom: 8, left: 10, right: 10 }}
         {...(buttonProps as any)}
       >
@@ -345,11 +353,13 @@ const ManageApp = ({
         />
       </BottomSheet>
 
-      <AccountSelect
-        dappToManage={dapp}
-        isOpen={isManageAccountsOpen}
-        setIsOpen={setIsManageAccountsOpen}
-      />
+      {hasOpened && (
+        <AccountSelect
+          dappToManage={dapp}
+          isOpen={isManageAccountsOpen}
+          setIsOpen={setIsManageAccountsOpen}
+        />
+      )}
     </>
   )
 }

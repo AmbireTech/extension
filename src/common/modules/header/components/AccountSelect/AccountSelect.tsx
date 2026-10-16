@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { getAccountsForDapp } from '@ambire-common/libs/dapps/helpers'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
@@ -22,6 +21,7 @@ import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useDappConnectedAccount from '@common/modules/explore/hooks/useDappConnectedAccount'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -91,12 +91,10 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
   const { dispatch: dappsDispatch } = useController('DappsController')
   const dapp = dappToConnect ?? dappToManage
   // A connected app keeps using its last account while the selected one is hidden from it
-  const accountInUseAddr = dappToManage
-    ? getAccountsForDapp(dappToManage.accountPreferences, selectedAccount?.addr)[0]
-    : selectedAccount?.addr
+  const accountInUse = useDappConnectedAccount(dappToManage)
   const access = useAccountSelectAccess({
     accounts,
-    selectedAccountAddr: accountInUseAddr,
+    selectedAccountAddr: accountInUse?.addr,
     accountPreferences: dapp?.accountPreferences
   })
   const {
@@ -450,6 +448,7 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
       isMenuOpen={isOpen}
       setIsMenuOpen={setIsOpen}
       isBottomSheetFullHeight
+      withScrollbarPadding
       bottomSheetTitle={dapp ? t('Manage accounts') : t('Select account')}
       withBottomSheetBackButton={false}
       menuOptionHeight={ACCOUNT_SELECT_OPTION_HEIGHT}

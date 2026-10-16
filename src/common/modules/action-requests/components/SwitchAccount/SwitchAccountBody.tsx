@@ -1,5 +1,4 @@
 import React, { FC, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
@@ -7,6 +6,7 @@ import DownArrowLongIcon from '@common/assets/svg/DownArrowLongIcon'
 import Alert from '@common/components/Alert'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'

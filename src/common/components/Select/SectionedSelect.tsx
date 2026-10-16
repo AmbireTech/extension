@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { LayoutChangeEvent } from 'react-native'
 
 import { isWeb } from '@common/config/env'
@@ -34,6 +34,7 @@ const SectionedSelect = ({
   scrollToSelectedOnOpen,
   isMenuOpen,
   setIsMenuOpen,
+  withScrollbarPadding,
   ...props
 }: SectionedSelectProps) => {
   const selectData = useSelectInternal({
@@ -52,22 +53,35 @@ const SectionedSelect = ({
     setIsMenuOpen
   })
   const { listRef, filteredData, renderItem, keyExtractor, handleScroll, handleLayout } = selectData
-  const [listHeight, setListHeight] = useState(0)
-  const [contentHeight, setContentHeight] = useState(0)
-  // The 1px tolerance ignores sub-pixel differences when the content only fills the list
-  const hasVerticalScrollbar = isWeb && contentHeight - listHeight > 1
+  const isScrollbarPaddingEnabled = isWeb && !!withScrollbarPadding
+  // Refs, so a size change re-renders the list only when the scrollbar appears or disappears
+  const listHeightRef = useRef(0)
+  const contentHeightRef = useRef(0)
+  const [hasVerticalScrollbar, setHasVerticalScrollbar] = useState(false)
+
+  const updateHasVerticalScrollbar = useCallback(() => {
+    // The 1px tolerance ignores sub-pixel differences when the content only fills the list
+    setHasVerticalScrollbar(contentHeightRef.current - listHeightRef.current > 1)
+  }, [])
 
   const handleListLayout = useCallback(
     (event: LayoutChangeEvent) => {
       handleLayout(event)
-      if (isWeb) setListHeight(event.nativeEvent.layout.height)
+      if (!isScrollbarPaddingEnabled) return
+
+      listHeightRef.current = event.nativeEvent.layout.height
+      updateHasVerticalScrollbar()
     },
-    [handleLayout]
+    [handleLayout, isScrollbarPaddingEnabled, updateHasVerticalScrollbar]
   )
 
-  const handleContentSizeChange = useCallback((_: number, height: number) => {
-    if (isWeb) setContentHeight(height)
-  }, [])
+  const handleContentSizeChange = useCallback(
+    (_: number, height: number) => {
+      contentHeightRef.current = height
+      updateHasVerticalScrollbar()
+    },
+    [updateHasVerticalScrollbar]
+  )
 
   const optionHeight = menuOptionHeight || SELECT_SIZE_TO_HEIGHT[props.size || DEFAULT_SELECT_SIZE]
 
@@ -145,7 +159,7 @@ const SectionedSelect = ({
       sections: filteredData as SectionedSelectProps['sections'],
       renderItem: renderItem as any,
       onLayout: handleListLayout,
-      onContentSizeChange: handleContentSizeChange,
+      onContentSizeChange: isScrollbarPaddingEnabled ? handleContentSizeChange : undefined,
       contentContainerStyle: hasVerticalScrollbar ? CONTENT_WITH_SCROLLBAR_STYLE : undefined,
       renderSectionHeader,
       keyExtractor,
@@ -167,6 +181,7 @@ const SectionedSelect = ({
       filteredData,
       renderItem,
       handleListLayout,
+      isScrollbarPaddingEnabled,
       handleContentSizeChange,
       hasVerticalScrollbar,
       renderSectionHeader,

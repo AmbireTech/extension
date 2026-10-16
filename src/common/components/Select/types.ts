@@ -113,4 +113,6 @@ export type SectionedSelectProps = CommonSelectProps &
     /** Controls the menu from outside, e.g. when it's opened from elsewhere than its trigger */
     isMenuOpen?: boolean
     setIsMenuOpen?: (isMenuOpen: boolean) => void
+    /** Keeps the rows off the scrollbar on web, like ScrollableWrapper does */
+    withScrollbarPadding?: boolean
   }

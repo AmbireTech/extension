@@ -20,7 +20,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { Portal } from '@gorhom/portal'
 import { reloadCurrentTab } from '@web/extension-services/background/webapi/tab'
 
-import useManageApp from '../../hooks/useManageApp'
+import useDappConnectedAccount from '../../hooks/useDappConnectedAccount'
 import DappIcon from '../DappIcon'
 import DisconnectButton from './DisconnectButton'
 import NetworkSelector from './NetworkSelector'
@@ -89,7 +89,8 @@ const ManageApp = ({
   style = {}
 }: ManageAppProps) => {
   const { theme } = useTheme()
-  const { account } = useManageApp(dapp)
+  // The app may see another account than the selected one
+  const account = useDappConnectedAccount(dapp)
   const [isOpen, setIsOpen] = useState(false)
   const [isNetworkSelectorExpanded, setIsNetworkSelectorExpanded] = useState(false)
   const [isSelfHovered, setIsSelfHovered] = useState(false)
