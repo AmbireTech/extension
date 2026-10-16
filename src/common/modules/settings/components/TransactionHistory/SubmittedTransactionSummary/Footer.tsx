@@ -203,7 +203,10 @@ const Footer: FC<Props> = ({
                         maxPriorityFeePerGas: replacedGasFeePayment.maxPriorityFeePerGas,
                         amount: replacedGasFeePayment.amount
                       },
-                      replacedSentAt: submittedAccountOp.timestamp,
+                      // A speed up of a speed up keeps the time of the very first attempt
+                      replacedSentAt:
+                        submittedAccountOp.meta?.speedUp?.replacedSentAt ??
+                        submittedAccountOp.timestamp,
                       replacedIdentifiedBy: submittedAccountOp.identifiedBy
                     }
                   }

@@ -13,6 +13,8 @@ import { getUiType } from '@common/utils/uiType'
 
 // Lazy on web/extension, static on mobile - see `lazySummaryPreview.native.ts`
 import SummaryPreview, { preloadSummaryPreview } from './lazySummaryPreview'
+import { isSpeedingUp } from './helpers'
+import SpeedUpHistory from './SpeedUpHistory'
 import getStyles from './styles'
 import SummaryDetailsSheet from './SummaryDetailsSheet'
 import SummaryHeader from './SummaryHeader'
@@ -91,6 +93,9 @@ const SubmittedTransactionSummaryInner = ({
             ]}
           />
           <SummaryPreview submittedAccountOp={submittedAccountOp} />
+          {isSpeedingUp(submittedAccountOp) && (
+            <SpeedUpHistory submittedAccountOp={submittedAccountOp} />
+          )}
         </AnimatedPressable>
       </Suspense>
       <SummaryDetailsSheet

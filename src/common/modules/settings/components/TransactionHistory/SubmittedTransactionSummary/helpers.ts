@@ -157,6 +157,29 @@ export const getVisibleSummaryBalanceChanges = (balanceChanges: DisplayBalanceCh
   ]
 }
 
+/**
+ * A speed up that is still waiting to go through. The Activity shows it in place of the
+ * transaction it replaces (see collapseReplacedAccountOps), so its row tells it's speeding up
+ */
+export const isSpeedingUp = (submittedAccountOp: SubmittedAccountOpLike) =>
+  submittedAccountOp.status === AccountOpStatus.BroadcastedButNotConfirmed &&
+  !!submittedAccountOp.meta?.speedUp?.enabled
+
+/**
+ * How much more a speed up pays than the transaction it replaces, in whole percent.
+ * Null when it's unknown or not higher, e.g. when the speed up needs less gas
+ */
+export const getSpeedUpFeeIncreasePercent = (
+  submittedAccountOp: SubmittedAccountOpLike
+): number | null => {
+  const replacedAmount = submittedAccountOp.meta?.speedUp?.replacedFees?.amount
+  const newAmount = submittedAccountOp.gasFeePayment?.amount
+  if (replacedAmount === undefined || newAmount === undefined || replacedAmount <= 0n) return null
+  if (newAmount <= replacedAmount) return null
+
+  return Math.round(Number(((newAmount - replacedAmount) * 10000n) / replacedAmount) / 100)
+}
+
 export const getPresentationalStatus = (
   submittedAccountOp: SubmittedAccountOpLike
 ): SubmittedAccountOpLike['status'] => {
