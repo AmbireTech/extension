@@ -1,0 +1,18 @@
+/* A light band sweeping across the text, like an AI assistant's "thinking" text */
+.privacy-pools-shimmer-text {
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+  animation: privacy-pools-shimmer 1.6s linear infinite;
+}
+
+@keyframes privacy-pools-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0% 0;
+  }
+}

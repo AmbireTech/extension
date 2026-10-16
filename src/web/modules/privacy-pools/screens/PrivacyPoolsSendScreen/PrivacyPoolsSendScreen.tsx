@@ -25,6 +25,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
+import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/PrivacyPoolsLoadingTexts'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
@@ -347,6 +348,12 @@ const PrivacyPoolsSendScreen = () => {
             inputTestId="privacy-pools-amount-field"
             selectTestId="privacy-pools-tokens-select"
           />
+          {/* At the bottom, right above the button */}
+          {isPreparingTransfer && (
+            <View style={{ marginTop: 'auto' }}>
+              <PrivacyPoolsLoadingTexts />
+            </View>
+          )}
         </ScrollableWrapper>
       </Content>
 
