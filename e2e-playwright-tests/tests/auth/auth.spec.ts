@@ -43,7 +43,7 @@ test.describe('auth', { tag: '@auth' }, () => {
 
   test('import several basic accounts from private keys at once', async ({ pages }) => {
     const privateKeys = Array.from({ length: 3 }, () => Wallet.createRandom().privateKey)
-    await pages.auth.importMultiplePrivateKeys(privateKeys)
+    await pages.auth.importExistingAccount(privateKeys)
   })
 
   // TODO: duplicate; entering same seed phrase 2 times

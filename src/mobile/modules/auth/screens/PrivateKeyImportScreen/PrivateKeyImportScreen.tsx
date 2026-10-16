@@ -1,13 +1,11 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
-import PrivateKeyImportField from '@common/modules/auth/components/PrivateKeyImportField'
+import PrivateKeyImportFields from '@common/modules/auth/components/PrivateKeyImportFields'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import usePrivateKeyImport from '@common/modules/auth/hooks/usePrivateKeyImport'
 import spacings from '@common/styles/spacings'
@@ -24,8 +22,7 @@ const PrivateKeyImportScreen = () => {
     removePrivateKeyField,
     canAddMore,
     handleFormSubmit,
-    getPrivateKeyError,
-    getPrivateKeyInfo,
+    privateKeyFieldStates,
     isValid,
     isImporting,
     handleValidation,
@@ -35,8 +32,6 @@ const PrivateKeyImportScreen = () => {
 
   const { goToPrevRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
-
-  const { theme } = useTheme()
 
   return (
     <MobileLayoutContainer
@@ -73,32 +68,16 @@ const PrivateKeyImportScreen = () => {
         title={t('Import private key')}
         withScroll
       >
-        {fields.map((field, index) => (
-          <PrivateKeyImportField
-            key={field.id}
-            control={control}
-            index={index}
-            canRemove={fields.length > 1}
-            onRemove={removePrivateKeyField}
-            handleValidation={handleValidation}
-            getPrivateKeyError={getPrivateKeyError}
-            getPrivateKeyInfo={getPrivateKeyInfo}
-            onSubmitEditing={handleFormSubmit}
-          />
-        ))}
-        <Button
-          type="outline"
-          testID="add-one-more-private-key"
-          disabled={!canAddMore}
-          style={{ height: 40 }}
-          size="tiny"
-          onPress={addPrivateKeyField}
-          childrenPosition="left"
-          text={t('Add another private key')}
-          hasBottomSpacing={false}
-        >
-          <AddCircularIcon width={20} height={20} color={theme.primaryText} style={spacings.mrMi} />
-        </Button>
+        <PrivateKeyImportFields
+          control={control}
+          fields={fields}
+          fieldStates={privateKeyFieldStates}
+          canAddMore={canAddMore}
+          onAdd={addPrivateKeyField}
+          onRemove={removePrivateKeyField}
+          handleValidation={handleValidation}
+          onSubmitEditing={handleFormSubmit}
+        />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

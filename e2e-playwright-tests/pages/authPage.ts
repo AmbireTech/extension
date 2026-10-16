@@ -73,35 +73,16 @@ export class AuthPage extends BasePage {
   }
 
   // TODO: imporove method assertions
-  async importExistingAccount(): Promise<void> {
+  async importExistingAccount(privateKeys: string[] = [PRIVATE_KEY]): Promise<void> {
     await this.click(selectors.getStarted.importExistingAccBtn)
     await this.click(selectors.getStarted.importMethodPrivateBtn)
-    await this.entertext(selectors.getStarted.enterPrivateKeyField, PRIVATE_KEY)
-    await this.click(selectors.getStarted.warningCheckbox)
-    await this.click(selectors.getStarted.importBtn)
-    await this.setExtensionPassword()
-    // assertion on Dashboard after login
-    await this.compareText(
-      selectors.getStarted.confirmationMessageForViewOnly,
-      'Added successfully'
-    )
-    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
-    await this.click(selectors.getStarted.saveAndContinueBtn)
-    await this.compareText(
-      selectors.getStarted.confirmationMessageAmbireWallet,
-      'Ambire Wallet is ready to use'
-    )
-    await this.click(selectors.getStarted.openDashboardButton)
-  }
-
-  async importMultiplePrivateKeys(privateKeys: string[]): Promise<void> {
-    await this.click(selectors.getStarted.importExistingAccBtn)
-    await this.click(selectors.getStarted.importMethodPrivateBtn)
-    await this.entertext(selectors.getStarted.enterPrivateKeyField, privateKeys[0]!)
     for (const [index, privateKey] of privateKeys.entries()) {
-      if (index === 0) continue
-      await this.click(selectors.getStarted.addOneMorePrivateKey)
-      await this.entertext(`${selectors.getStarted.enterPrivateKeyField}-${index}`, privateKey)
+      if (index > 0) await this.click(selectors.getStarted.addOneMorePrivateKey)
+      const fieldSelector =
+        index === 0
+          ? selectors.getStarted.enterPrivateKeyField
+          : `${selectors.getStarted.enterPrivateKeyField}-${index}`
+      await this.entertext(fieldSelector, privateKey)
     }
     await this.click(selectors.getStarted.warningCheckbox)
     await this.click(selectors.getStarted.importBtn)
@@ -111,6 +92,7 @@ export class AuthPage extends BasePage {
       privateKeys.length,
       { timeout: 30000 }
     )
+    // assertion on Dashboard after login
     await this.compareText(
       selectors.getStarted.confirmationMessageForViewOnly,
       'Added successfully'

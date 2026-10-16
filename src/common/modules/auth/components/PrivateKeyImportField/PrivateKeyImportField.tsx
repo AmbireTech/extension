@@ -19,9 +19,11 @@ interface Props {
   canRemove: boolean
   onRemove: (index: number) => void
   handleValidation: (value: string) => string | undefined
-  getPrivateKeyError: (index: number) => string | undefined
+  /** An invalid key or a key entered twice */
+  error?: string
   /** A note for a key that is valid but whose account is already in the wallet */
-  getPrivateKeyInfo: (index: number) => string | undefined
+  info?: string
+  isValid: boolean
   onSubmitEditing: () => void
 }
 
@@ -35,8 +37,9 @@ const PrivateKeyImportField: FC<Props> = ({
   canRemove,
   onRemove,
   handleValidation,
-  getPrivateKeyError,
-  getPrivateKeyInfo,
+  error,
+  info,
+  isValid,
   onSubmitEditing
 }) => {
   const { t } = useTranslation()
@@ -61,18 +64,13 @@ const PrivateKeyImportField: FC<Props> = ({
             placeholder={t('Input private key')}
             onChangeText={onChange}
             value={value}
-            isValid={
-              !!value.length &&
-              !handleValidation(value) &&
-              !getPrivateKeyError(index) &&
-              !getPrivateKeyInfo(index)
-            }
+            isValid={isValid}
             validLabel={t('✅ Valid private key')}
             secureTextEntry
             containerStyle={{ ...spacings.mb0, ...flexbox.flex1 }}
             backgroundColor={theme.secondaryBackground}
-            error={value.length ? getPrivateKeyError(index) : ''}
-            info={getPrivateKeyInfo(index)}
+            error={error}
+            info={info}
             autoCorrect={false}
             onSubmitEditing={onSubmitEditing}
           />

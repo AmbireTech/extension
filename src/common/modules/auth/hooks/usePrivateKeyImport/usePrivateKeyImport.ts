@@ -16,10 +16,7 @@ import { storage } from '@common/services/storage'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-/** The value of a new, empty private key field */
-export const DEFAULT_PRIVATE_KEY_FIELD_VALUE = { value: '' }
-
-const DEFAULT_FORM_VALUES = { privateKeys: [DEFAULT_PRIVATE_KEY_FIELD_VALUE] }
+const DEFAULT_FORM_VALUES = { privateKeys: [{ value: '' }] }
 
 const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
@@ -30,7 +27,7 @@ export default function usePrivateKeyImport() {
     control,
     handleSubmit,
     reset,
-    formState: { errors, isValid: areAllFieldsValid }
+    formState: { isValid: areAllFieldsValid }
   } = useForm({
     mode: 'all',
     defaultValues: DEFAULT_FORM_VALUES
@@ -142,35 +139,35 @@ export default function usePrivateKeyImport() {
     [t]
   )
 
-  /** The error to show under a field: an invalid key first, then a key entered twice */
-  const getPrivateKeyError = useCallback(
-    (index: number) => {
-      const fieldError = errors.privateKeys?.[index]?.value?.message
-      if (fieldError) return fieldError
+  /**
+   * What to show under each field, worked out once here so every field gets plain values.
+   * An empty field shows nothing; an invalid or repeated key shows an error; a key whose
+   * account is already in the wallet shows a note.
+   */
+  const privateKeyFieldStates = useMemo(
+    () =>
+      privateKeys.map(({ value }, index) => {
+        if (!value.length) return { isValid: false }
 
-      if (duplicatePrivateKeyIndexes.includes(index)) {
-        return t('You already entered this private key.')
-      }
+        const error =
+          handleValidation(value) ||
+          (duplicatePrivateKeyIndexes.includes(index)
+            ? t('You already entered this private key.')
+            : undefined)
+        const info =
+          !error && alreadyImportedPrivateKeyIndexes.includes(index)
+            ? t('This account is already in your wallet.')
+            : undefined
 
-      return undefined
-    },
-    [errors.privateKeys, duplicatePrivateKeyIndexes, t]
-  )
-
-  /** A note to show under a field whose account is already in the wallet with this key */
-  const getPrivateKeyInfo = useCallback(
-    (index: number) => {
-      if (!alreadyImportedPrivateKeyIndexes.includes(index)) return undefined
-
-      return t('This account is already in your wallet.')
-    },
-    [alreadyImportedPrivateKeyIndexes, t]
+        return { error, info, isValid: !error && !info }
+      }),
+    [privateKeys, handleValidation, duplicatePrivateKeyIndexes, alreadyImportedPrivateKeyIndexes, t]
   )
 
   const addPrivateKeyField = useCallback(() => {
     if (!canAddMore) return
 
-    append({ ...DEFAULT_PRIVATE_KEY_FIELD_VALUE })
+    append({ value: '' })
   }, [append, canAddMore])
 
   return {
@@ -183,8 +180,7 @@ export default function usePrivateKeyImport() {
     isImporting: importButtonPressed,
     handleFormSubmit,
     handleValidation,
-    getPrivateKeyError,
-    getPrivateKeyInfo,
+    privateKeyFieldStates,
     agreedToBackupWarning,
     setAgreedToBackupWarning
   }
