@@ -1,18 +1,13 @@
 import React, { FC } from 'react'
 import { View } from 'react-native'
 
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import Badge from '@common/components/Badge'
+import { PrivacyPoolsUnavailableReason } from '@ambire-common/interfaces/privacyPools'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
-import type { WalletStateController } from '@common/controllers/wallet-state'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
-import { privateValue } from '@common/utils/ui'
+import PrivacyPoolsTokenItem from '@web/modules/privacy-pools/components/PrivacyPoolsTokenItem'
 import {
   PrivacyPoolsBalanceDisplay,
   PrivacyPoolsBalancesState
@@ -23,17 +18,13 @@ import getStyles from './styles'
 interface Props {
   balances: PrivacyPoolsBalanceDisplay[]
   state: PrivacyPoolsBalancesState
+  /** Why the account cannot use Privacy Pools, explained while the state is 'unavailable'. */
+  unavailableReason: PrivacyPoolsUnavailableReason | null
 }
 
-const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
-
-const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
+const PrivacyPoolsBalances: FC<Props> = ({ balances, state, unavailableReason }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { state: isPrivacyModeEnabled } = useController(
-    'WalletStateController',
-    selectIsPrivacyModeEnabled
-  )
 
   const renderNotice = (title: string, text: string) => (
     <View style={styles.container}>
@@ -48,11 +39,23 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
     </View>
   )
 
-  if (state === 'unavailable')
+  if (state === 'unavailable') {
+    // Here and not on the card above, so the card keeps one height like the regular dashboard's
+    const reasons: { [reason in PrivacyPoolsUnavailableReason]: string } = {
+      'no-account': t('Select a Privacy Pools account to see what it holds.'),
+      'unsupported-network': t(
+        'Privacy Pools is not available on any of the networks you have added. It runs on Ethereum.'
+      ),
+      locked: t('Unlock your wallet to see what you have in Privacy Pools.')
+    }
+
     return renderNotice(
       t('Nothing to show'),
-      t("The card above explains why Privacy Pools can't be used with this account.")
+      unavailableReason
+        ? reasons[unavailableReason]
+        : t("Privacy Pools can't be used with this account right now.")
     )
+  }
 
   if (state === 'not-loaded')
     return renderNotice(
@@ -81,86 +84,9 @@ const PrivacyPoolsBalances: FC<Props> = ({ balances, state }) => {
     )
 
   return (
-    <View style={styles.container}>
-      {balances.map((balance, index) => (
-        <View
-          key={balance.id}
-          style={[styles.row, index === balances.length - 1 && { borderBottomWidth: 0 }]}
-        >
-          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-            {/* The network badge identifies the pool, like on the dashboard's token list */}
-            <TokenIcon
-              chainId={BigInt(balance.chainId)}
-              address={balance.tokenAddress}
-              withNetworkIcon
-              width={32}
-              height={32}
-            />
-            <View style={[flexbox.flex1, spacings.mlSm]}>
-              <Text fontSize={14} weight="medium" numberOfLines={1}>
-                {balance.symbol}
-              </Text>
-              <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
-                <Text fontSize={12} color={theme.secondaryText} numberOfLines={1}>
-                  {balance.networkName}
-                </Text>
-                {/* Like the regular dashboard's pending balance badge */}
-                {balance.isReadyToSend && (
-                  <Badge
-                    text={t('Ready to send')}
-                    type="success"
-                    size="sm"
-                    style={spacings.mlTy}
-                    tooltipText={t(
-                      'Privacy Pools has approved these funds, so they can be sent on.'
-                    )}
-                  />
-                )}
-                {!!balance.pendingAmount && (
-                  <Badge
-                    text={t('Under review')}
-                    type="warning"
-                    size="sm"
-                    style={spacings.mlTy}
-                    tooltipText={t(
-                      'Privacy Pools checks every transfer into it before the funds can be sent on. This can take a while.'
-                    )}
-                  />
-                )}
-              </View>
-            </View>
-          </View>
-          <View style={[flexbox.alignEnd, spacings.mlSm]}>
-            <Text fontSize={14} weight="number_regular" numberOfLines={1}>
-              {privateValue(
-                formatDecimals(Number(balance.approvedAmount), 'amount'),
-                isPrivacyModeEnabled
-              )}
-            </Text>
-            {balance.value !== null && (
-              <Text
-                fontSize={12}
-                weight="number_regular"
-                color={theme.secondaryText}
-                numberOfLines={1}
-              >
-                {privateValue(formatDecimals(balance.value, 'value'), isPrivacyModeEnabled, 8)}
-              </Text>
-            )}
-            {/* Not in the amount above: until approved, a deposit can only be taken back
-            publicly by its depositor */}
-            {!!balance.pendingAmount && (
-              <Text fontSize={12} color={theme.warningText} numberOfLines={1}>
-                {t('+{{amount}} waiting for approval', {
-                  amount: privateValue(
-                    formatDecimals(Number(balance.pendingAmount), 'amount'),
-                    isPrivacyModeEnabled
-                  )
-                })}
-              </Text>
-            )}
-          </View>
-        </View>
+    <View>
+      {balances.map((balance) => (
+        <PrivacyPoolsTokenItem key={balance.id} balance={balance} />
       ))}
     </View>
   )

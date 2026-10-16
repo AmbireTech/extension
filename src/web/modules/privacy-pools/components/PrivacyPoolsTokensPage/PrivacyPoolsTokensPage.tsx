@@ -2,6 +2,7 @@ import React, { FC, ReactElement, useCallback, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Animated, View } from 'react-native'
 
+import { PrivacyPoolsUnavailableReason } from '@ambire-common/interfaces/privacyPools'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
@@ -41,6 +42,7 @@ interface Props {
   banners: ReactElement
   balances: PrivacyPoolsBalanceDisplay[]
   state: PrivacyPoolsBalancesState
+  unavailableReason: PrivacyPoolsUnavailableReason | null
   /** The dashboard's network filter name, if any. */
   networkFilterName: string | null
 }
@@ -54,6 +56,7 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
   banners,
   balances,
   state,
+  unavailableReason,
   networkFilterName
 }) => {
   const { t } = useTranslation()
@@ -105,7 +108,13 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
           />
         )
 
-      return <PrivacyPoolsBalances balances={filteredBalances} state={state} />
+      return (
+        <PrivacyPoolsBalances
+          balances={filteredBalances}
+          state={state}
+          unavailableReason={unavailableReason}
+        />
+      )
     },
     [
       balances.length,
@@ -117,7 +126,8 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
       sessionId,
       setOpenTab,
       state,
-      theme.primaryBackground
+      theme.primaryBackground,
+      unavailableReason
     ]
   )
 

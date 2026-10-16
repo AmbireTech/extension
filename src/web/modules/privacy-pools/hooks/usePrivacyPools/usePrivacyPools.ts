@@ -1,10 +1,7 @@
 import { formatUnits } from 'ethers'
 import { useCallback, useMemo } from 'react'
 
-import {
-  getPrivacyPoolsPriceKey,
-  getPrivacyPoolsValuePerChain
-} from '@ambire-common/libs/privacyPools/prices'
+import { getPrivacyPoolsPriceKey } from '@ambire-common/libs/privacyPools/prices'
 import {
   PrivacyPoolsChainState,
   PrivacyPoolsTokenBalance
@@ -32,13 +29,15 @@ export type PrivacyPoolsBalanceDisplay = {
   tokenAddress: string
   symbol: string
   decimals: number
+  /** The approved and the pending part together, formatted with the token's decimals. */
+  totalAmount: string
   /** The privately spendable part, formatted with the token's decimals. */
   approvedAmount: string
-  /** Whether any of it is approved, i.e. can be sent. */
-  isReadyToSend: boolean
   /** The part still waiting on the association set, or null. Not spendable, so shown apart. */
   pendingAmount: string | null
-  /** USD value of the approved part, or null when the token has no known price. */
+  /** The same part in the token's smallest units. */
+  pendingAmountRaw: bigint
+  /** USD value of the total amount, or null when the token has no known price. */
   value: number | null
 }
 
@@ -149,7 +148,7 @@ const usePrivacyPools = () => {
         .filter(({ balance }) => balance.totalAmount > 0n)
         .map(({ chainId, balance }) => {
           const price = getTokenPrice(chainId, balance.tokenAddress)
-          const approved = Number(formatUnits(balance.approvedAmount, balance.decimals))
+          const total = Number(formatUnits(balance.totalAmount, balance.decimals))
 
           return {
             id: `${chainId}:${balance.tokenAddress}`,
@@ -158,34 +157,27 @@ const usePrivacyPools = () => {
             tokenAddress: balance.tokenAddress,
             symbol: balance.symbol,
             decimals: balance.decimals,
+            totalAmount: formatUnits(balance.totalAmount, balance.decimals),
             approvedAmount: formatUnits(balance.approvedAmount, balance.decimals),
-            isReadyToSend: balance.approvedAmount > 0n,
             pendingAmount: balance.pendingAmount
               ? formatUnits(balance.pendingAmount, balance.decimals)
               : null,
-            value: price === null ? null : approved * price
+            pendingAmountRaw: balance.pendingAmount,
+            value: price === null ? null : total * price
           }
         }),
     [tokenBalances, getNetworkName, getTokenPrice]
   )
 
-  // Approved part only, like the rows. The pending part cannot be withdrawn yet, so it is separate.
+  // The pending part too, like the rows: it shows how much the account holds, while the rows tell
+  // the pending part apart
   const totalPrivateBalance = useMemo(
-    () =>
-      Object.values(getPrivacyPoolsValuePerChain(balancesByChain || {}, prices || {})).reduce(
-        (total, value) => total + value,
-        0
-      ),
-    [balancesByChain, prices]
-  )
-
-  const pendingPrivateBalance = useMemo(
     () =>
       tokenBalances.reduce((total, { chainId, balance }) => {
         const price = getTokenPrice(chainId, balance.tokenAddress)
-        if (price === null || !balance.pendingAmount) return total
+        if (price === null) return total
 
-        return total + Number(formatUnits(balance.pendingAmount, balance.decimals)) * price
+        return total + Number(formatUnits(balance.totalAmount, balance.decimals)) * price
       }, 0),
     [tokenBalances, getTokenPrice]
   )
@@ -238,7 +230,6 @@ const usePrivacyPools = () => {
     balances,
     balancesState,
     totalPrivateBalance,
-    pendingPrivateBalance,
     operation,
     tokenBalances,
     getNetworkName,

@@ -41,7 +41,6 @@ const PrivacyPoolsDashboardScreen = () => {
     balances,
     balancesState,
     totalPrivateBalance,
-    pendingPrivateBalance,
     tokenBalances,
     getNetworkName,
     syncAllChains,
@@ -121,13 +120,10 @@ const PrivacyPoolsDashboardScreen = () => {
       {/* Laid out like the regular dashboard */}
       <View style={styles.container}>
         <PrivacyPoolsOverview
-          unavailableReason={unavailableReason}
           hasSyncedAnyChain={hasSyncedAnyChain}
           isSyncing={isSyncingAnyChain}
           hasSyncError={hasSyncError}
-          isWaitingForBackup={!!selectedAccount && !isBackedUp}
           totalPrivateBalance={totalPrivateBalance}
-          pendingPrivateBalance={pendingPrivateBalance}
           canSend={!!withdrawTokens.length}
           onRefresh={syncAllChains}
           onSend={openSend}
@@ -140,6 +136,7 @@ const PrivacyPoolsDashboardScreen = () => {
           banners={banners}
           balances={balances}
           state={balancesState}
+          unavailableReason={unavailableReason}
           networkFilterName={networkFilterName}
         />
         <PrivacyPoolsActivityPage

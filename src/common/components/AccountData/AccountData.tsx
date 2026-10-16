@@ -93,8 +93,9 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
     return shortenAddress(account.addr, 13)
   }, [account, isNarrowWebLayout])
 
-  const label = account ? account.preferences.label : privacyPoolsAccount?.label
-  const subtitle = account ? `(${formattedAddress})` : t('(Privacy Pools)')
+  // A Privacy Pools account has no name or address of its own, so it is named by its kind
+  const label = account ? account.preferences.label : t('Private account')
+  const subtitle = account ? `(${formattedAddress})` : t('Privacy Pools')
   const canCopyAddress = isWeb && !!account
 
   if (!account && !privacyPoolsAccount) return null
