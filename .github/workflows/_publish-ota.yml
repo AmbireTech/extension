@@ -102,6 +102,8 @@ jobs:
           # Same build-time env as the store build so the OTA bundle inlines identical config.
           # Force production React/Metro bundle in CI (avoids dev/prod mismatch with NODE_ENV undefined)
           NODE_ENV: production
+          # Metro runs out of the default ~2 GB heap while writing the bundle and its source map
+          NODE_OPTIONS: '--max-old-space-size=4096'
           RELAYER_URL: ${{ vars.RELAYER_URL }}
           VELCRO_URL: ${{ vars.VELCRO_URL }}
           REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
