@@ -18,7 +18,7 @@ const isLegends = outputPath.includes('legends')
 const isAmbireNext = process.env.AMBIRE_NEXT === 'true'
 // Whether the Privacy Pools circuit artifacts (~23 MB) are shipped. Must match
 // `isPrivacyPoolsEnabled` in src/common/config/env/env.ts, which hides the feature everywhere else.
-const isPrivacyPoolsBundled = isAmbireNext || process.env.APP_ENV === 'development'
+const isPrivacyPoolsBundled = !isGecko && (isAmbireNext || process.env.APP_ENV === 'development')
 
 // The folder that holds every build output. Defaults to <repo root>/build, but BUILD_DIR
 // can point it at any folder on the machine. Handy with git worktrees: build every worktree
