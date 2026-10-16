@@ -32,7 +32,7 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import AccountsTabs, { AccountsTab } from '@web/modules/account-select/components/AccountsTabs'
+import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/PrivacyPoolsAccountRow'
 
 import getStyles from './styles'

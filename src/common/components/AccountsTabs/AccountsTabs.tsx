@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
 import PublicAccountsIcon from '@common/assets/svg/PublicAccountsIcon'
@@ -16,10 +16,14 @@ type AccountsTab = 'public' | 'private'
 type Props = {
   activeTab: AccountsTab
   onTabChange: (tab: AccountsTab) => void
+  style?: ViewStyle
 }
 
-/** Switches the accounts list between the regular accounts and the Privacy Pools ones. */
-const AccountsTabs: FC<Props> = ({ activeTab, onTabChange }) => {
+/**
+ * Switches a list of accounts between the regular ones and the Privacy Pools ones: the accounts list
+ * and the Send form's recipients.
+ */
+const AccountsTabs: FC<Props> = ({ activeTab, onTabChange, style }) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
 
@@ -42,7 +46,7 @@ const AccountsTabs: FC<Props> = ({ activeTab, onTabChange }) => {
   )
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {tabs.map(({ id, label, Icon, activeIconColor }) => {
         const isActive = activeTab === id
 
