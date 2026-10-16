@@ -200,7 +200,8 @@ const Footer: FC<Props> = ({
                       enabled: true,
                       replacedFees: {
                         gasPrice: replacedGasFeePayment.gasPrice,
-                        maxPriorityFeePerGas: replacedGasFeePayment.maxPriorityFeePerGas
+                        maxPriorityFeePerGas: replacedGasFeePayment.maxPriorityFeePerGas,
+                        amount: replacedGasFeePayment.amount
                       }
                     }
                   }
