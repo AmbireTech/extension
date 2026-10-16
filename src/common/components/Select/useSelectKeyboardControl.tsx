@@ -81,6 +81,9 @@ const useSelectKeyboardControl = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isMenuOpen) return
+      // Custom rows are buttons of their own, next to other buttons (e.g. Hide / Show), so the
+      // browser's focus handles Tab, Enter and the arrows instead of a highlight nobody sees
+      if (renderOption && e.key !== 'Escape') return
 
       try {
         if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
@@ -237,7 +240,8 @@ const useSelectKeyboardControl = ({
     optionHeight,
     listHeight,
     headerHeight,
-    stickySectionHeadersEnabled
+    stickySectionHeadersEnabled,
+    renderOption
   ])
 
   useEffect(() => {

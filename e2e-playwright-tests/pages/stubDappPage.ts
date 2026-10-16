@@ -20,7 +20,6 @@ const REQUEST_WINDOW_TIMEOUT = 15000
 const REQUEST_OUTCOME_TIMEOUT = 30000
 // The connect button stays disabled while the dApp security check is loading
 const DAPP_SECURITY_CHECK_TIMEOUT = 30000
-const TOGGLE_INPUT = 'input[type="checkbox"]'
 
 /**
  * A blank app page that talks to the wallet only through `window.ethereum`, so a test can send
@@ -56,8 +55,8 @@ export class StubDappPage extends BasePage {
 
   /**
    * Connects the app and moves it to the given network. Without `allowedAccountAddrs` the app
-   * gets the wallet's selected account, as with a normal connection. With them, the app is
-   * connected with "Only connect some accounts" and is allowed exactly those accounts.
+   * gets the wallet's selected account, as with a normal connection. With them, the app can see
+   * exactly those accounts - see `allowOnlyAccounts` for how the selected account may change.
    */
   async connect(chainId: number, allowedAccountAddrs?: string[]) {
     const connectWindow = await this.sendRequest(CONNECT_REQUEST_ID, 'eth_requestAccounts', [])
@@ -145,46 +144,33 @@ export class StubDappPage extends BasePage {
   }
 
   /**
-   * Turns on "Only connect some accounts" on the connect screen and allows exactly the given
-   * accounts. The account sheet is opened only when they differ from the toggle's default,
-   * which is the selected account alone.
+   * Lets the app see exactly the given accounts, from the account select in the connect screen's
+   * header. The app always sees the account it uses, so when the selected account isn't one of
+   * them the first one is picked - which also makes it the wallet's selected account.
    */
   private async allowOnlyAccounts(connectWindow: Page, allowedAccountAddrs: string[]) {
-    const scopedAccountsToggle = connectWindow.getByTestId(selectors.dappScopedAccountsToggle)
-
-    await scopedAccountsToggle.click()
-    await expect(
-      scopedAccountsToggle.locator(TOGGLE_INPUT),
-      'only connect some accounts'
-    ).toBeChecked()
-
     const selectedAccountAddr = await this.getSelectedAccount()
-    if (allowedAccountAddrs.length === 1 && allowedAccountAddrs[0] === selectedAccountAddr) return
+    const accountToUseAddr =
+      selectedAccountAddr && allowedAccountAddrs.includes(selectedAccountAddr)
+        ? selectedAccountAddr
+        : allowedAccountAddrs[0]!
 
-    await connectWindow.getByTestId(selectors.dappScopedAccountsSelectorButton).click()
-    const accountRows = connectWindow.locator(`[data-testid^="${selectors.dappAccountRow('')}"]`)
-    await expect(accountRows.first()).toBeVisible()
-
-    const rowTestIDs = await accountRows.evaluateAll((rows) =>
-      rows.map((row) => row.getAttribute('data-testid') as string)
-    )
-    const allowedRowTestIDs = allowedAccountAddrs.map(selectors.dappAccountRow)
-    expect(rowTestIDs, 'the accounts listed in the account sheet').toEqual(
-      expect.arrayContaining(allowedRowTestIDs)
-    )
-
-    for (const rowTestID of rowTestIDs) {
-      const row = connectWindow.getByTestId(rowTestID)
-      const rowToggleInput = row.locator(TOGGLE_INPUT)
-      const shouldBeAllowed = allowedRowTestIDs.includes(rowTestID)
-
-      if ((await rowToggleInput.isChecked()) !== shouldBeAllowed) await row.click()
-      await expect(rowToggleInput, rowTestID).toBeChecked({ checked: shouldBeAllowed })
+    await connectWindow.getByTestId(selectors.dappConnectAccountSelect).click()
+    if (accountToUseAddr !== selectedAccountAddr) {
+      await connectWindow.getByTestId(selectors.dappConnectAccountOption(accountToUseAddr)).click()
     }
 
-    const continueButton = connectWindow.getByTestId(selectors.dappScopedAccountsContinueButton)
-    await continueButton.click()
-    await expect(continueButton).toBeHidden()
+    // Hides every other account, then shows back the rest of the allowed ones
+    await connectWindow.getByTestId(selectors.dappConnectLimitToSelectedAccount).click()
+    for (const accountAddr of allowedAccountAddrs) {
+      if (accountAddr === accountToUseAddr) continue
+
+      await connectWindow.getByTestId(selectors.dappConnectShowAccount(accountAddr)).click()
+    }
+
+    const doneButton = connectWindow.getByTestId(selectors.dappConnectAccountSelectDone)
+    await doneButton.click()
+    await expect(doneButton).toBeHidden()
   }
 
   private async startRequest(requestId: string, method: string, params: unknown[]) {
