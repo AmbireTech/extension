@@ -3,9 +3,9 @@ import { LayoutChangeEvent, View } from 'react-native'
 
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
-import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -31,31 +31,24 @@ type ActionProps = {
 
 const SectionAction = React.memo(function SectionAction({ type, text, onPress }: ActionProps) {
   const { theme } = useTheme()
+  // Filled like a tertiary button
+  const [bindHover, hoverStyle] = useCustomHover({
+    property: 'backgroundColor',
+    values: { from: theme.secondaryBackground, to: theme.tertiaryBackground }
+  })
 
   return (
-    <HoverablePressable
+    <AnimatedPressable
+      {...bindHover}
       onPress={onPress}
       accessibilityRole="button"
       testID={`account-select-${type}-section-action`}
+      style={[flexbox.center, spacings.phSm, { height: ROW_HEIGHT, borderRadius: 8 }, hoverStyle]}
     >
-      <View
-        style={[
-          flexbox.center,
-          spacings.phSm,
-          {
-            height: ROW_HEIGHT,
-            borderRadius: 8,
-            borderWidth: 1,
-            borderColor: theme.tertiaryBackground,
-            backgroundColor: theme.primaryBackground
-          }
-        ]}
-      >
-        <Text fontSize={13} weight="medium" appearance="primary">
-          {text}
-        </Text>
-      </View>
-    </HoverablePressable>
+      <Text fontSize={13} weight="medium" appearance="primary">
+        {text}
+      </Text>
+    </AnimatedPressable>
   )
 })
 
