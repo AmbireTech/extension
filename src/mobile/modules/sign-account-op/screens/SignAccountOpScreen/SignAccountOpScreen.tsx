@@ -13,7 +13,6 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useController from '@common/hooks/useController'
-import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useNavigation from '@common/hooks/useNavigation'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
@@ -140,7 +139,7 @@ const SignAccountOpScreen = () => {
     holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
-    isLinkingNewFeePayerToSafe,
+    holdToProceedButtonType,
     disabledReason,
     showSafeSigners,
     shouldDisplayQrSigningModal,
@@ -291,14 +290,6 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
-  const dappVerificationHoldButtonType = useDappVerificationHoldButtonType(
-    signAccountOpState?.banners
-  )
-  // Linking a new fee payer to the Safe is a warning, unless a dApp check already calls for more
-  const holdToProceedButtonType =
-    dappVerificationHoldButtonType === 'primary' && isLinkingNewFeePayerToSafe
-      ? 'warning'
-      : dappVerificationHoldButtonType
 
   return (
     <View style={flexbox.flex1}>

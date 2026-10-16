@@ -7,6 +7,7 @@ import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/help
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
 import useSigningAuth from '@common/hooks/useSigningAuth'
@@ -118,6 +119,14 @@ const useSign = ({
   const shouldHoldToProceed =
     (!!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey) ||
     isLinkingNewFeePayerToSafe
+  const dappVerificationHoldButtonType = useDappVerificationHoldButtonType(
+    signAccountOpState?.banners
+  )
+  // Linking a new fee payer to the Safe is a warning, unless a dApp check already calls for more
+  const holdToProceedButtonType =
+    dappVerificationHoldButtonType === 'primary' && isLinkingNewFeePayerToSafe
+      ? 'warning'
+      : dappVerificationHoldButtonType
   const shouldShowSafeSigners = showSafeSigners && !shouldHoldToProceed
 
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
@@ -789,6 +798,7 @@ const useSign = ({
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed,
     isLinkingNewFeePayerToSafe,
+    holdToProceedButtonType,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,

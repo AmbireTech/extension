@@ -85,7 +85,7 @@ const PayOption = ({
 
     if (isGasTank)
       return t(
-        "The fee comes out of your Gas Tank and the transaction is sent for you. None of your other accounts gets publicly linked to this Safe, so it's the most private way to pay."
+        'The fee is paid from your Gas Tank and the transaction is relayed for you. The most private way to pay - none of your other accounts get publicly linked to this Safe.'
       )
 
     if (feeOption.token.address === ZERO_ADDRESS)

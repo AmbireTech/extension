@@ -34,7 +34,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
-import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 import getStyles from './styles'
@@ -128,7 +127,7 @@ const SignAccountOpScreen = () => {
     holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
-    isLinkingNewFeePayerToSafe,
+    holdToProceedButtonType,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
@@ -276,14 +275,6 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
-  const dappVerificationHoldButtonType = useDappVerificationHoldButtonType(
-    signAccountOpState?.banners
-  )
-  // Linking a new fee payer to the Safe is a warning, unless a dApp check already calls for more
-  const holdToProceedButtonType =
-    dappVerificationHoldButtonType === 'primary' && isLinkingNewFeePayerToSafe
-      ? 'warning'
-      : dappVerificationHoldButtonType
 
   const footerContent = (
     <>
