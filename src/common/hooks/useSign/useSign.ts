@@ -508,9 +508,23 @@ const useSign = ({
     (_: Key['addr'], newFeePayerKeyType: Key['type']) => {
       handleUpdate({ paidByKeyType: newFeePayerKeyType })
 
-      handleBroadcast()
+      if (newFeePayerKeyType !== 'onekey') {
+        handleBroadcast()
+        return
+      }
+
+      // Same as in handleSign: a OneKey that's unplugged or no longer allowed opens the
+      // authorization tab instead of failing in the background
+      ensureOneKeyAccess()
+        .then((hasOneKeyAccess) => {
+          if (hasOneKeyAccess) handleBroadcast()
+        })
+        .catch((error) => {
+          console.error(error)
+          captureException(error)
+        })
     },
-    [handleBroadcast, handleUpdate]
+    [handleBroadcast, handleUpdate, ensureOneKeyAccess]
   )
 
   const onSignButtonClick = useCallback(() => {
