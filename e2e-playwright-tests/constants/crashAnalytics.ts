@@ -28,8 +28,8 @@ const crashAnalytics = {
   fakePrivateKey: `0x${'deadbeef'.repeat(8)}`,
   /** What scrubSentryEventSecrets (src/common/config/analytics/sentryDataScrubbing.ts) leaves behind. */
   redactedSeedPhrasePlaceholder: '[REDACTED_SEED_PHRASE]',
-  redactedPrivateKeyPlaceholder: '[REDACTED_PRIVATE_KEY]',
-  /** CRASH_ANALYTICS_ENABLED_STORAGE_KEY in src/common/config/analytics/CrashAnalytics.web.ts. */
+  redactedPrivateKeyPlaceholder: '[REDACTED_HEX]',
+  /** CRASH_ANALYTICS_ENABLED_STORAGE_KEY in src/common/constants/crashAnalytics.ts. */
   consentStorageKey: 'crashAnalyticsEnabledV2',
   /**
    * The testing-only messages that reach the explicit capture path, both gated on IS_TESTING.

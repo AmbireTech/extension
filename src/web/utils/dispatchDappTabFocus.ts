@@ -5,7 +5,9 @@ export type DappTabTarget = {
   windowId?: number
 }
 
-export const getDappTabTargetsFromUserRequest = (userRequest?: UserRequest): DappTabTarget[] => {
+export const getDappTabTargetsFromUserRequest = (
+  userRequest?: UserRequest | null
+): DappTabTarget[] => {
   if (!userRequest?.dappPromises?.length) return []
 
   const targets = new Map<number, DappTabTarget>()
@@ -21,6 +23,15 @@ export const getDappTabTargetsFromUserRequest = (userRequest?: UserRequest): Dap
 
   return [...targets.values()]
 }
+
+/**
+ * The browser windows of the apps waiting on a request. Empty for a request without an app window
+ * (e.g. started in the wallet itself, or over WalletConnect).
+ */
+export const getAppWindowIdsFromUserRequest = (userRequest?: UserRequest | null): number[] =>
+  getDappTabTargetsFromUserRequest(userRequest)
+    .map(({ windowId }) => windowId)
+    .filter((windowId): windowId is number => typeof windowId === 'number')
 
 export const getDappTabIdsFromUserRequest = (userRequest?: UserRequest): number[] =>
   getDappTabTargetsFromUserRequest(userRequest).map(({ tabId }) => tabId)

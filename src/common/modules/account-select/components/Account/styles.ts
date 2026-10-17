@@ -2,36 +2,45 @@ import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { isWeb } from '@common/config/env'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   accountContainer: ViewStyle
   label: TextStyle
+  separator: ViewStyle
 }
 
-// Every screen stacks name / address / balance+badges on three rows, which need this height.
-// Web fits them in less, as it has no vertical padding and its text does not scale up
-export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = isWeb ? 82 : 88
+// One line of badges under the avatar, the label and the address, with a separator between
+// them. Rows whose badges wrap are taller, which they report to the list, see `onExtraHeightChange`.
+// On mobile: 2 border + 2 * 8 padding + 36 avatar + 8 + 1 separator + 8 + 20 badges. More than the
+// content needs would be left empty below the badges, as the row is at least this tall
+export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = isWeb ? 95 : 91
 export const ACCOUNT_SELECT_ACCOUNT_MB = SPACING_TY
+/** Also the size of the icons in place of it in rows like it, see `SyncOptionRow` */
+export const ACCOUNT_AVATAR_SIZE = 36
 
-const getStyles = () =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     accountContainer: {
-      ...flexbox.flex1,
-      ...flexbox.directionRow,
-      ...flexbox.justifySpaceBetween,
-      ...spacings.phTy,
-      // The fixed height already leaves the three rows enough room on web
-      ...(isWeb ? spacings.pv0 : spacings.pvTy),
+      ...spacings.plSm,
+      ...spacings.prTy,
+      ...spacings.pvTy,
       ...common.borderRadiusPrimary,
-      marginBottom: ACCOUNT_SELECT_ACCOUNT_MB,
-      minHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT,
-      maxHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT
+      // Always there, so that marking the row as selected does not move its content
+      borderWidth: 1,
+      borderColor: 'transparent',
+      marginBottom: ACCOUNT_SELECT_ACCOUNT_MB
     },
     label: {
       flexShrink: 1,
       ...spacings.mrTy
+    },
+    separator: {
+      height: 1,
+      backgroundColor: theme.secondaryBorder,
+      ...spacings.mvTy,
+      ...(isWeb && { marginTop: SPACING_TY - 2 })
     }
   })
 
