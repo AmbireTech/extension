@@ -1,6 +1,7 @@
 import HardwareSDK from '@onekeyfe/hd-web-sdk'
 import { UI_EVENT, UI_REQUEST, UI_RESPONSE } from '@onekeyfe/hd-core'
 
+import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { OneKeyBridgeInterface } from '@web/modules/hardware-wallet/onekey/types'
 
 const { HardwareWebSdk } = HardwareSDK
@@ -36,8 +37,11 @@ class OneKeySdkBridge implements OneKeyBridgeInterface {
         connectSrc: 'https://jssdk.onekey.so/1.1.0/',
         env: 'webusb'
       })
+      // The SDK returns false only when its iframe from OneKey's servers fails to load or times out
       if (!isInitialized)
-        throw new Error('Could not start the OneKey connection. Please try again.')
+        throw new ExternalSignerError(
+          "Ambire couldn't reach the OneKey service. Check your internet connection and try again."
+        )
     })().catch((error) => {
       // Let the next request try again (the SDK removes its iframe after a failed init),
       // instead of failing until the extension restarts

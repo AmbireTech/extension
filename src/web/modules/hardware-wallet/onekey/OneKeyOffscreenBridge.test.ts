@@ -72,6 +72,21 @@ describe('OneKeyOffscreenBridge', () => {
     )
   })
 
+  test('rethrows an expected failure from the offscreen document without reporting it', async () => {
+    setChrome({ hasOneKeyDocument: true })
+    const message =
+      "Ambire couldn't reach the OneKey service. Check your internet connection and try again."
+    sendMessage.mockResolvedValue({ error: { message, name: 'ExternalSignerError' } })
+    const bridge = new OneKeyOffscreenBridge()
+
+    await expect(bridge.searchDevices()).rejects.toMatchObject({
+      name: 'ExternalSignerError',
+      message,
+      sendCrashReport: false
+    })
+    expect(captureBackgroundException).not.toHaveBeenCalled()
+  })
+
   test('explains in plain words when the offscreen document does not answer', async () => {
     setChrome({ hasOneKeyDocument: true })
     sendMessage.mockResolvedValue(undefined)

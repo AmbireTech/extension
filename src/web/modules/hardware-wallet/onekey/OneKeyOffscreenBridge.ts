@@ -1,3 +1,4 @@
+import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { browser } from '@web/constants/browserapi'
 import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
 
@@ -139,6 +140,10 @@ class OneKeyOffscreenBridge implements OneKeyBridgeInterface {
       const response: OneKeyBridgeResponse | undefined = await browser.runtime.sendMessage(request)
 
       if (response && 'error' in response) {
+        // Expected failures with a message meant for the user, so they aren't reported
+        if (response.error.name === 'ExternalSignerError')
+          throw new ExternalSignerError(response.error.message)
+
         const error = new Error(response.error.message)
         if (response.error.name) error.name = response.error.name
         if (response.error.stack) error.stack = response.error.stack

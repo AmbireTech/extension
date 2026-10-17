@@ -61,7 +61,8 @@ export type OneKeyBridgeRequest = {
 /**
  * What the offscreen document replies to a bridge request. `error` is set when the request
  * threw, which the SDK never does for device errors (those come back as unsuccessful
- * responses), so it always means something unexpected went wrong.
+ * responses). So it means something unexpected went wrong, unless its `name` is
+ * `ExternalSignerError`: an expected failure with a message meant for the user.
  */
 export type OneKeyBridgeResponse =
   | { result: unknown }
