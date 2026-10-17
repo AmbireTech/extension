@@ -4,6 +4,7 @@ import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import OneKeyOffscreenBridge from '@web/modules/hardware-wallet/onekey/OneKeyOffscreenBridge'
 import {
+  OneKeyAddress,
   OneKeyBridgeInterface,
   OneKeyDevice,
   OneKeyResponse
@@ -17,6 +18,12 @@ const STALE_CONNECTION_ERROR_CODES = new Set([
   105, // DeviceNotFound
   110, // DeviceCheckDeviceIdError
   112, // DeviceCheckPassphraseStateError
+  // The passphrase was turned off or on since connecting, so the cached passphrase state is outdated
+  113, // DeviceNotOpenedPassphrase
+  114, // DeviceOpenedPassphrase
+  // The device was unlocked with a PIN for another wallet since connecting. The SDK locks it,
+  // so connecting again asks for the PIN and reads the passphrase state of the wallet it opens
+  118, // DeviceCheckUnlockTypeError
   901 // WebDeviceNotFoundOrNeedsPermission
 ])
 
@@ -39,7 +46,10 @@ const ERROR_MESSAGES_BY_CODE: Record<number, string> = {
   109: REJECTED_MESSAGE, // DeviceInterruptedFromUser
   110: NOT_CONNECTED_MESSAGE, // DeviceCheckDeviceIdError
   112: "The passphrase on your OneKey doesn't match this account. Enter the right passphrase and try again.", // DeviceCheckPassphraseStateError
+  113: 'The passphrase setting on your OneKey changed. Unplug it, plug it back in and try again.', // DeviceNotOpenedPassphrase
+  114: 'The passphrase setting on your OneKey changed. Unplug it, plug it back in and try again.', // DeviceOpenedPassphrase
   117: 'Your OneKey is busy with another request. Finish or cancel it on the device and try again.', // DeviceBusy
+  118: 'Your OneKey is unlocked with the PIN of a different wallet than this account. Unlock it with the right PIN and try again.', // DeviceCheckUnlockTypeError
   302: "Ambire couldn't reach the OneKey service. Check your internet connection and try again.", // IFrameLoadFail
   303: "Ambire couldn't reach the OneKey service. Check your internet connection and try again.", // IframeTimeout
   407: 'Your OneKey needs a firmware update. Update it with the OneKey app and try again.', // CallMethodNeedUpgradeFirmware
@@ -199,13 +209,20 @@ class OneKeyController implements ExternalSignerController {
     await this.#ensureConnected()
     if (this.isUnlocked(path, expectedAddress)) return 'ALREADY_UNLOCKED' as const
 
-    const response = await this.callDevice(() =>
-      this.walletSDK.evmGetAddress(this.connectId, this.deviceId, {
+    const response = await this.callDevice<OneKeyAddress | OneKeyAddress[]>(async () => {
+      // The user may have switched wallets on the device (another PIN or passphrase) since the
+      // state was read. Requests sent with an outdated state make the SDK lock the device, while
+      // reading the state doesn't, so it's read again before looking up another account
+      const passphraseStateResponse = await this.walletSDK.getPassphraseState(this.connectId)
+      if (!passphraseStateResponse.success) return passphraseStateResponse
+      this.passphraseState = passphraseStateResponse.payload || ''
+
+      return this.walletSDK.evmGetAddress(this.connectId, this.deviceId, {
         path,
         passphraseState: this.passphraseState,
         showOnOneKey: false
       })
-    )
+    })
     const payload = getResponsePayload(response, 'address')
     if (Array.isArray(payload))
       throw new Error("Your OneKey didn't return a valid address. Please try again.")
@@ -224,11 +241,9 @@ class OneKeyController implements ExternalSignerController {
   async retrieveAddresses(paths: string[]) {
     const response = await this.callDevice(() =>
       this.walletSDK.evmGetAddress(this.connectId, this.deviceId, {
-        bundle: paths.map((path) => ({
-          path,
-          passphraseState: this.passphraseState,
-          showOnOneKey: false
-        }))
+        // The SDK reads the passphrase state only from the top level, never from bundle items
+        passphraseState: this.passphraseState,
+        bundle: paths.map((path) => ({ path, showOnOneKey: false }))
       })
     )
     const payload = getResponsePayload(response, 'address')

@@ -72,6 +72,59 @@ describe('OneKeyController stale connection recovery', () => {
     expect(evmGetAddress).toHaveBeenNthCalledWith(2, 'connect-id', 'seed-id', expect.anything())
   })
 
+  test('reads the passphrase state again and retries once when the passphrase was turned off since connecting', async () => {
+    const evmGetAddress = jest
+      .fn<OneKeyBridgeInterface['evmGetAddress']>()
+      .mockResolvedValueOnce({
+        success: false,
+        payload: { error: 'Device not opened passphrase', code: 113 }
+      })
+      .mockResolvedValueOnce({ success: true, payload: { path: "m/44'/60'/0'/0/0", address } })
+    const getPassphraseState = jest
+      .fn<OneKeyBridgeInterface['getPassphraseState']>()
+      .mockResolvedValue({ success: true, payload: undefined })
+    const bridge = makeBridge({ evmGetAddress, getPassphraseState })
+    const controller = new OneKeyController(bridge)
+    controller.connectId = 'connect-id'
+    controller.deviceId = 'seed-id'
+    controller.passphraseState = 'outdated-state'
+
+    await expect(controller.retrieveAddresses(["m/44'/60'/0'/0/0"])).resolves.toEqual([address])
+    expect(getPassphraseState).toHaveBeenCalledTimes(1)
+    expect(evmGetAddress).toHaveBeenNthCalledWith(
+      1,
+      'connect-id',
+      'seed-id',
+      expect.objectContaining({ passphraseState: 'outdated-state' })
+    )
+    expect(evmGetAddress).toHaveBeenNthCalledWith(
+      2,
+      'connect-id',
+      'seed-id',
+      expect.objectContaining({ passphraseState: '' })
+    )
+  })
+
+  test('reads the passphrase state of the wallet open on the device before looking up another account', async () => {
+    const getPassphraseState = jest
+      .fn<OneKeyBridgeInterface['getPassphraseState']>()
+      .mockResolvedValue({ success: true, payload: 'hidden-wallet-state' })
+    const bridge = makeBridge({ getPassphraseState })
+    const controller = new OneKeyController(bridge)
+    controller.connectId = 'connect-id'
+    controller.deviceId = 'seed-id'
+    controller.passphraseState = 'standard-wallet-state'
+
+    await expect(controller.unlock("m/44'/60'/0'/0/0", address)).resolves.toBe('JUST_UNLOCKED')
+    expect(bridge.evmGetAddress).toHaveBeenCalledTimes(1)
+    expect(bridge.evmGetAddress).toHaveBeenCalledWith(
+      'connect-id',
+      'seed-id',
+      expect.objectContaining({ passphraseState: 'hidden-wallet-state' })
+    )
+    expect(bridge.searchDevices).not.toHaveBeenCalled()
+  })
+
   test('does not retry other failures', async () => {
     const evmGetAddress = jest.fn<OneKeyBridgeInterface['evmGetAddress']>().mockResolvedValue({
       success: false,
