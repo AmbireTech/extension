@@ -1,6 +1,7 @@
 import { formatUnits, ZeroAddress } from 'ethers'
 
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { getFeeIncreasePercent } from '@ambire-common/libs/gasPrice/speedUp'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import formatDateTime from '@common/utils/formatDateTime'
 
@@ -174,10 +175,9 @@ export const getSpeedUpFeeIncreasePercent = (
 ): number | null => {
   const replacedAmount = submittedAccountOp.meta?.speedUp?.replacedFees?.amount
   const newAmount = submittedAccountOp.gasFeePayment?.amount
-  if (replacedAmount === undefined || newAmount === undefined || replacedAmount <= 0n) return null
-  if (newAmount <= replacedAmount) return null
+  if (replacedAmount === undefined || newAmount === undefined) return null
 
-  return Math.round(Number(((newAmount - replacedAmount) * 10000n) / replacedAmount) / 100)
+  return getFeeIncreasePercent(replacedAmount, newAmount)
 }
 
 export const getPresentationalStatus = (

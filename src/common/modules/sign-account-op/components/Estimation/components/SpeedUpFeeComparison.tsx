@@ -3,6 +3,7 @@ import React, { memo, useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getTokenUsdAmount } from '@ambire-common/controllers/signAccountOp/helper'
+import { getFeeIncreasePercent } from '@ambire-common/libs/gasPrice/speedUp'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Text from '@common/components/Text'
@@ -39,18 +40,16 @@ const SpeedUpFeeComparison = ({ token, originalAmount, newAmount }: Props) => {
       }`
     }
 
-    const increase = newAmount - originalAmount
-    // The new fee can end up lower only if the transaction now needs less gas
-    if (increase <= 0n || originalAmount === 0n) {
+    // Null when the new fee isn't higher, which happens only if the transaction now needs less gas
+    const increasePercent = getFeeIncreasePercent(originalAmount, newAmount)
+    if (increasePercent === null) {
       return { formattedOriginal: formatFee(originalAmount), increaseText: null }
     }
-
-    const increasePercent = Math.round(Number((increase * 10000n) / originalAmount) / 100)
 
     return {
       formattedOriginal: formatFee(originalAmount),
       increaseText: t('+{{amount}} · {{percent}}% more', {
-        amount: formatFee(increase),
+        amount: formatFee(newAmount - originalAmount),
         percent: increasePercent
       })
     }

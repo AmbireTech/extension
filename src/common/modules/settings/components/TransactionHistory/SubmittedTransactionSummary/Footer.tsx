@@ -175,6 +175,8 @@ const Footer: FC<Props> = ({
                   accountAddr: submittedAccountOp.accountAddr
                 },
                 accountOp: {
+                  // Only to fill the field: RequestsController gives every speed up an id of
+                  // its own, as the activity would overwrite the replaced op with a shared one
                   id: submittedAccountOp.id,
                   accountAddr: submittedAccountOp.accountAddr,
                   chainId: submittedAccountOp.chainId,
