@@ -17,7 +17,8 @@ type BadgeType =
 type SpecialBadgeType = 'metamask' | 'safe' | 'privacy-pools'
 
 type Props = {
-  text: string
+  /** Can be left out when `children` render the whole content, e.g. an icon before the text */
+  text?: string
   textStyle?: TextStyle
   weight?: TextWeight
   type?: BadgeType
@@ -29,6 +30,10 @@ type Props = {
   size?: 'sm' | 'md' | 'lg'
   specialType?: SpecialBadgeType
   testId?: string
+  /** Puts the icons (`children` and the tooltip's) before the text instead of after it */
+  isIconLeading?: boolean
+  /** Shows the tooltip on hover over the whole badge, instead of on an info icon */
+  isTooltipOnBadge?: boolean
 }
 
 export type { BadgeType, Props, SpecialBadgeType }

@@ -15,28 +15,29 @@ import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
-import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
-import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
-import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
-import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/rpc'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
+import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import wait from '@ambire-common/utils/wait'
-import { applyCrashReportPolicy } from '@common/config/analytics/applyCrashReportPolicy'
-import { logSentryDeliveryWhenTesting } from '@common/config/analytics/CrashAnalytics.web'
 import {
-  isProviderErrorLike,
-  isSuccessfulRpcStatusCode
-} from '@common/config/analytics/crashReportPolicy'
-import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
+  excludeIntegrationsByName,
+  getCrashReportAccountAddr,
+  getCrashReportUserId,
+  getReportableAction,
+  logSentryDeliveryWhenTesting,
+  reportControllerError
+} from '@common/config/analytics/crashReportHelpers'
+import { processCrashReportEvent } from '@common/config/analytics/processCrashReportEvent'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { CULTURE_CONTEXT_INTEGRATION_NAME } from '@common/constants/crashAnalytics'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
@@ -62,9 +63,10 @@ import {
   VELCRO_URL
 } from '@env'
 import * as Sentry from '@sentry/browser'
-import { browser, platform } from '@web/constants/browserapi'
+import { browser, engine, platform } from '@web/constants/browserapi'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
+import { getRequestToMoveOutOfPanel } from '@web/extension-services/background/handlers/getRequestToMoveOutOfPanel'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
@@ -79,7 +81,8 @@ import {
 } from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
 import {
   getDappTabFocusDispatcher,
-  getPanelManager
+  getPanelManager,
+  handleFirefoxActionClicked
 } from '@web/extension-services/background/webapi/panel'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -95,7 +98,6 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
-import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import {
   captureBackgroundException,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
@@ -103,10 +105,7 @@ import {
   setBackgroundUserContext
 } from './CrashAnalytics'
 import { sendCriticalControllerStates } from './criticalControllerStates'
-import { getReportableAction } from './getReportableAction'
-import { isJsonSyntaxError } from './isJsonSyntaxError'
 
-import type { ProviderError } from '@ambire-common/classes/ProviderError'
 const debugLogs: {
   key: string
   value: object
@@ -158,21 +157,6 @@ function stateDebug(
   logInfoWithPrefix(key, debugLogs)
 }
 
-function captureBackgroundExceptionFromControllerError(error: ErrorRef, controllerName: string) {
-  if (
-    (typeof error.sendCrashReport === 'boolean' && !error.sendCrashReport) ||
-    error.level === 'expected'
-  ) {
-    return
-  }
-
-  captureBackgroundException(error.error, {
-    extra: {
-      controllerName
-    }
-  })
-}
-
 /**
  * How many times the background tries to open IndexedDB before settling for the key-value
  * fallback. Two, not more: a second attempt covers a slow open, and every further one only
@@ -200,94 +184,39 @@ let eventEmitterRegistry: EventEmitterRegistryController
 if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
   Sentry.init({
     ...CRASH_ANALYTICS_BACKGROUND_CONFIG,
-    integrations: [Sentry.extraErrorDataIntegration()],
+    integrations: (defaultIntegrations) => [
+      ...excludeIntegrationsByName(defaultIntegrations, [CULTURE_CONTEXT_INTEGRATION_NAME]),
+      Sentry.extraErrorDataIntegration()
+    ],
     beforeSend(event, hint) {
-      const error = hint.originalException
-
-      // Whether this shape of error is worth sending, how loud it is and which issue it
-      // joins all live in one place, shared with the UI's own beforeSend.
-      if (!applyCrashReportPolicy(event, error)) return null
-
-      // Our services return HTML error pages during outages. The callers already retry, and
-      // reporting every failed parse would only flood Sentry.
-      if (isJsonSyntaxError(error)) return null
-
-      // Matched by name rather than `instanceof`, so an error that reached us through the
-      // messengers still counts. Those arrive as plain objects, not ProviderError instances.
-      if (isProviderErrorLike(error)) {
-        const { providerUrl, isProviderInvictus, statusCode, message } = error as ProviderError
-
-        // Always delete breadcrumbs to reduce event size.
-        delete event.breadcrumbs
-
-        // An RPC that timed out carries nothing beyond the fact that it timed out, so its
-        // event is stripped down the same way a non-2xx one is.
-        if (
-          !isSuccessfulRpcStatusCode(statusCode) ||
-          (message || '').startsWith(RPC_HARDCODED_ERRORS.rpcTimeout)
-        ) {
-          // We don't care about any data for non-2XX errors
-          // We only want to know how many of them happened and group them accordingly
-
-          delete event.user
-          delete event.extra
-          delete event.contexts
-        }
-
-        event.extra = {
-          ...(event.extra || {}),
-          providerUrl
-        }
-
-        event.tags = {
-          ...(event.tags || {}),
-          ...(isProviderInvictus
-            ? {
-                // Allows us to filter issues by provider in Sentry's UI
-                providerUrl: providerUrl || 'should-never-be-undefined',
-                providerType: 'invictus'
-              }
-            : { providerType: 'custom-rpc' })
-        }
-      }
+      const processedEvent = processCrashReportEvent(event, hint.originalException)
+      if (!processedEvent) return null
 
       // Privacy Pools errors, their logs and the requests before them can hold the recipient,
       // amounts or notes, and the user ID would link them to the install, so only the error's
       // type and stack are sent.
-      if (event.extra?.controllerName === PRIVACY_POOLS_CONTROLLER_NAME) {
-        delete event.breadcrumbs
-        delete event.user
-        delete event.contexts
-        delete event.message
-        event.extra = { controllerName: PRIVACY_POOLS_CONTROLLER_NAME }
-        event.exception?.values?.forEach((exception) => {
+      if (processedEvent.extra?.controllerName === PRIVACY_POOLS_CONTROLLER_NAME) {
+        delete processedEvent.breadcrumbs
+        delete processedEvent.user
+        delete processedEvent.contexts
+        delete processedEvent.message
+        processedEvent.extra = { controllerName: PRIVACY_POOLS_CONTROLLER_NAME }
+        processedEvent.exception?.values?.forEach((exception) => {
           delete exception.value
         })
       }
 
-      // No explicit type annotation here: `event`'s type is inferred contextually
-      // as the narrower ErrorEvent (from Sentry.init's expected beforeSend
-      // signature), and both scrubSentryEventSecrets and
-      // buildScrubFailureFallbackEvent are generic in that same type, so
-      // scrubbedEvent stays ErrorEvent instead of widening to Sentry.Event.
-      let scrubbedEvent
-      try {
-        scrubbedEvent = scrubSentryEventSecrets(event)
-      } catch (scrubError) {
-        scrubbedEvent = buildScrubFailureFallbackEvent(event, scrubError)
-      }
-
       // We don't want to miss errors that occur before the controllers are initialized.
-      // Scrubbing above still applies -- only the crashAnalyticsEnabled gate below,
+      // processCrashReportEvent has already scrubbed it -- only the crashAnalyticsEnabled gate below,
       // which depends on walletStateCtrl, can't run yet.
-      if (!walletStateCtrl) return scrubbedEvent
+      if (!walletStateCtrl) return processedEvent
 
       if (isDev) {
-        console.log(`Sentry event captured in background: ${event.event_id}`, scrubbedEvent)
+        console.log(`Sentry event captured in background: ${event.event_id}`, processedEvent)
       }
 
       // If the Sentry is disabled, we don't send any events
-      return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
+      return walletStateCtrl?.crashAnalyticsEnabled ? processedEvent : null
     }
   })
 
@@ -302,6 +231,10 @@ handleKeepAlive()
 providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) => {
   // wait for mainCtrl to be initialized before handling dapp requests
   while (!mainCtrl || !walletStateCtrl) await wait(200)
+  // ...and for the stored settings, as the side panel mode decides whether a request is shown in an
+  // open side panel - until it loads it reads as off (e.g. right after a browser restart)
+  // (Never rejects - settings that fail to load keep their defaults)
+  await walletStateCtrl.initialLoadPromise
 
   const senderTab = meta.sender?.tab
   const tabId = senderTab?.id
@@ -464,7 +397,7 @@ const init = async () => {
             const keystoreCtrl = ctrl as IKeystoreController
             if (keystoreCtrl.isReadyToStoreKeys) {
               setBackgroundUserContext({
-                id: getAppInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
+                id: getCrashReportUserId(keystoreCtrl, mainCtrl.invite.verifiedCode)
               })
               if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
@@ -477,10 +410,10 @@ const init = async () => {
           }
 
           if (ctrl.name === 'SelectedAccountController') {
-            const selectedAccountCtrl = ctrl as ISelectedAccountController
+            const accountAddr = getCrashReportAccountAddr(ctrl as ISelectedAccountController)
 
-            if (selectedAccountCtrl?.account?.addr) {
-              setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
+            if (accountAddr) {
+              setBackgroundExtraContext('account', accountAddr)
             }
           }
         }, 'background')
@@ -501,15 +434,30 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
+            // mainCtrl may not exist yet - WalletStateController is created and loads before it
+            params: { errors: ctrl.emittedErrors, controller: mainCtrl?.name }
           })
-          captureBackgroundExceptionFromControllerError(error, ctrl.name)
+          reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')
       }
     })
   })
 
   qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+
+  // Created before mainCtrl, whose UI manager reads the side panel mode. It doesn't need mainCtrl
+  // itself - the log level callback only runs on a log level change, long after both exist.
+  walletStateCtrl = new WalletStateController({
+    eventEmitterRegistry,
+    onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
+      // A log level change comes from a view, which can only talk to the controllers once init()
+      // has created mainCtrl - guarded anyway, as no app can be connected before that
+      await mainCtrl?.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
+    },
+    storage
+  })
+
+  const getIsSidePanelModeEnabled = () => walletStateCtrl.isSidePanelModeEnabled
 
   // Retried once, because openAmbireIdb() gives up after a second so a blocked upgrade cannot
   // hang the boot — and this is the only call, so a merely slow open (cold browser start, busy
@@ -621,8 +569,8 @@ const init = async () => {
           await windowManager.remove(winId, pm)
         }
       },
-      panel: getPanelManager(pm),
-      dispatchDappTabFocus: getDappTabFocusDispatcher(pm),
+      panel: getPanelManager(pm, getIsSidePanelModeEnabled),
+      dispatchDappTabFocus: getDappTabFocusDispatcher(pm, getIsSidePanelModeEnabled),
       notification: notificationManager,
       message: {
         sendToastMessage: (text, options) => {
@@ -648,15 +596,31 @@ const init = async () => {
   void mainCtrl.phishing.init()
   void mainCtrl.dapps.init()
 
-  walletStateCtrl = new WalletStateController({
-    eventEmitterRegistry,
-    onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
-      await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
-    },
-    storage
-  })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
+
+  // Turning side panel mode off leaves nothing to show a pending app request (Chrome closes its
+  // panel, Firefox's sidebar shows the "mode off" notice), so it's moved to a request window
+  let wasSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
+  walletStateCtrl.onUpdate(() => {
+    const isSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
+    const hasSidePanelModeBeenTurnedOff = wasSidePanelModeEnabled && !isSidePanelModeEnabled
+    wasSidePanelModeEnabled = isSidePanelModeEnabled
+
+    if (!hasSidePanelModeBeenTurnedOff || mainCtrl.requests.requestWindow.windowProps) return
+
+    const requestToMove = getRequestToMoveOutOfPanel(mainCtrl.requests.visibleUserRequests)
+    if (!requestToMove) return
+
+    mainCtrl.requests
+      .setCurrentUserRequestById(requestToMove.request.id, {
+        baseWindowId: requestToMove.baseWindowId
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to move a request out of the side panel', error)
+        captureBackgroundException(error)
+      })
+  })
   autoLockCtrl = new AutoLockController(
     eventEmitterRegistry,
     () => {
@@ -882,7 +846,15 @@ browser.runtime.onConnect.addListener(async (port: Port) => {
 
     pm.addDisconnectListener(port.id, (disconnectedPort) => {
       mainCtrl.ui.removeView(port.id)
-      handleCleanUpOnPortDisconnect({ port, mainCtrl })
+      // Not awaited - nothing below depends on the cleanup finishing
+      handleCleanUpOnPortDisconnect({
+        port,
+        mainCtrl,
+        isSidePanelModeEnabled: walletStateCtrl.isSidePanelModeEnabled
+      }).catch((error: unknown) => {
+        console.error('Failed to clean up after a disconnected view', error)
+        captureBackgroundException(error)
+      })
 
       // The selectedAccount portfolio is reset onLoad of the popup
       // (from the background) while the portfolio update is triggered
@@ -900,6 +872,13 @@ browser.runtime.onConnect.addListener(async (port: Port) => {
     })
   })
 })
+
+// Firefox's toolbar click (see handleFirefoxActionClicked). Registered here because no UI page
+// bundles background.ts - registering it from a UI page too (panel.ts is also imported by UI code)
+// breaks Firefox's extension messaging: every later `browser.*` call hangs.
+if (engine === 'gecko') {
+  browser.action?.onClicked?.addListener(handleFirefoxActionClicked)
+}
 
 // Ensures controllers are initialized when the browser starts.
 browser.runtime.onStartup.addListener(() => {

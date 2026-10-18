@@ -8,6 +8,7 @@ import { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { UiController } from '@ambire-common/controllers/ui/ui'
+import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { buildTimeNetworks } from '@benzin/constants/networks'
 import { benzinUiManager } from '@benzin/contexts/controllersMiddlewareContext/uiManager'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'

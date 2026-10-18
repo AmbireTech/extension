@@ -14,6 +14,7 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -24,6 +25,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const AccountDataDetailed = () => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', selectAccount)
   // Shown in place of a regular account, like in the account lists
@@ -96,6 +98,8 @@ const AccountDataDetailed = () => {
         address={account.addr}
         pfp={account.preferences.pfp}
         smartAccountType={smartAccountType}
+        // The background of the action header this sits in
+        typeBadgeRingColor={theme.secondaryBackground}
       />
       <View
         style={[

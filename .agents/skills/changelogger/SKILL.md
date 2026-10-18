@@ -56,9 +56,10 @@ Workflow
 10. Apply the exclusion rules (see "Excluded product areas" below) to drop Rewards/Legends PRs. Every other PR is included.
 11. Convert each remaining PR into a changelog entry.
 12. Categorize each remaining PR as Added, Changed, or Fixed.
-13. Determine each entry's platform tag from its changed files, refined by any explicit platform note in the PR (see "Platform tags" below). Leave cross-platform entries untagged.
-14. Order entries within each category oldest-merge first (chronological). Note that `git log` lists newest merges first, so reverse that order.
-15. Always append a Full Changelog GitHub compare link.
+13. Fold fixes for bugs that were introduced within this same range into their parent entry (see "Fold in-release fixes" below). Fixes for bugs that existed in the base release stay as separate entries.
+14. Determine each entry's platform tag from its changed files, refined by any explicit platform note in the PR (see "Platform tags" below). Leave cross-platform entries untagged.
+15. Order entries within each category oldest-merge first (chronological). Note that `git log` lists newest merges first, so reverse that order.
+16. Always append a Full Changelog GitHub compare link.
 
 ## ambire-common submodule bump (root repo changelogs only)
 
@@ -335,6 +336,36 @@ Category rules:
 
 If unclear, use `Changed`.
 
+## Fold in-release fixes
+
+The changelog describes what changes for someone moving from the base (previous release tag, or `main`) to the new release. If a feature was added in this range and then a follow-up PR in the same range fixed a bug in it, that bug never reached anyone on the base release. Listing it as a separate `Fixed` entry is noise and makes it harder for one to see what actually changed.
+
+Rules:
+
+* If a `Fixed` PR only fixes something that was **added or changed by another included PR in this same range**, do not give it its own entry. Fold it into the parent entry: append its PR link after the parent's link, and update the parent's sub-bullets if the fix changed the final behavior (describe the final behavior, never the intermediate bug).
+* If the bug **existed in the base release**, keep it as its own `Fixed` entry, even if it is small. These are what users, support, and QA look for to confirm a reported issue is fixed.
+* When unsure, keep the entry separate. A redundant `Fixed` line is cheaper than hiding a fix someone is waiting for.
+
+Example:
+
+```markdown
+<!-- Before -->
+* Added: Portfolio history chart [#100](https://github.com/AmbireTech/ambire-app/pull/100)
+* Fixed: Portfolio history chart shows wrong totals [#105](https://github.com/AmbireTech/ambire-app/pull/105)
+* Fixed: Portfolio history chart crashes on empty accounts [#110](https://github.com/AmbireTech/ambire-app/pull/110)
+* Fixed: Send screen rejects valid ENS names [#112](https://github.com/AmbireTech/ambire-app/pull/112)
+
+<!-- After (#105 and #110 fixed bugs introduced by #100; #112 fixed a bug from the base release) -->
+* Added: Portfolio history chart [#100](https://github.com/AmbireTech/ambire-app/pull/100), [#105](https://github.com/AmbireTech/ambire-app/pull/105), [#110](https://github.com/AmbireTech/ambire-app/pull/110)
+* Fixed: Send screen rejects valid ENS names [#112](https://github.com/AmbireTech/ambire-app/pull/112)
+```
+
+Deciding whether the bug was introduced in this range (any one strong signal is enough):
+
+1. The fix PR's title, body, or linked issue points to a PR from this range ("follow-up to #100", "regression from #100"), or the issue was reported against a pre-release/RC build of this release.
+2. The files the fix changes did not exist in the base: `git diff --diff-filter=A --name-only <base>...<release>`.
+3. The lines the fix changes were last touched only by commits in this range. Run `git blame <fix-merge-sha>^1 -- <file>` on those lines and check each blamed commit with `git merge-base --is-ancestor <commit> <base>`; if any is an ancestor of the base, the bug predates the range, so keep the entry separate.
+
 ## Sub-bullets
 
 Use sub-bullets when:
@@ -378,6 +409,7 @@ After the fenced changelog block, always append a plain-text section listing eve
 ---
 **Excluded (Rewards/Legends):** #7193, #7173, #7171, #7168, #7162, #7158, #7150, #7144
 **Excluded (branch-sync commits):** Merge branch 'main' of ..., Merge branch 'release/v6.8' of ...
+**Folded into parent entry (bug introduced and fixed in this release):** #105, #110 → #100
 ```
 
 This makes the exclusion decisions transparent and reviewable.
@@ -392,7 +424,8 @@ Before returning the changelog, verify:
 * platform-specific entries carry a platform tag ((Mobile)/(iOS)/(Android)/(Extension)/(Chrome)/(Firefox)); cross-platform entries are untagged
 * public wording is clear (📣 titles state the user benefit in plain language, not internal jargon)
 * no em dashes or en dashes in any entry
-* Rewards/Legends PRs are excluded; all other PRs are present (including CI, QA, config, docs, TS fixes)
+* Rewards/Legends PRs are excluded; all other PRs are present (including CI, QA, config, docs, TS fixes), either as their own entry or as a link folded into a parent entry
+* fixes for bugs introduced within this range are folded into their parent entry; fixes for bugs that existed in the base release remain separate `Fixed` entries
 * skipped PRs and branch-sync commits are listed after the changelog block
 * security/signing claims are accurate
 * Full Changelog compare link is present

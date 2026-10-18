@@ -1,14 +1,36 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require('expo/metro-config')
 const { getBundleModeMetroConfig } = require('react-native-worklets/bundleMode')
+const { getSentryExpoConfig } = require('@sentry/react-native/metro')
 const path = require('path')
+const {
+  ENV_TARGETS,
+  PRODUCTION_APP_ENV,
+  validateEnvVariables
+} = require('./scripts/validateEnv')
 
-const config = getDefaultConfig(__dirname)
+// Release bundles, store builds and OTAs alike, inline the env, so a missing value would ship.
+// Only CI builds what reaches users. Local production builds may point at staging or leave out
+// the crash report DSN, and dev sessions don't need the production values.
+if (
+  process.env.CI &&
+  process.env.APP_ENV === PRODUCTION_APP_ENV &&
+  process.env.IS_TESTING !== 'true'
+) {
+  validateEnvVariables(process.env.APP_ENV, ENV_TARGETS.MOBILE)
+}
 
-// Worklets Bundle Mode loads the whole Metro bundle into every worklet runtime, which is
-// what makes `require`, and therefore libraries usable inside a worklet. Reanimated's UI
-// runtime is the one that benefits here — the app runs no worklets of its own.
-getBundleModeMetroConfig(config)
+// Sentry's Expo config gives the Hermes bundle and its source map the same debug ID.
+// Worklets Bundle Mode replaces the resolver without chaining, so it must run before Sentry wraps it.
+const config = getSentryExpoConfig(__dirname, {
+  getDefaultConfig: (projectRoot, options) => {
+    const defaultConfig = getDefaultConfig(projectRoot, options)
+    // Worklets Bundle Mode loads the whole Metro bundle into every worklet runtime, which is
+    // what makes `require`, and therefore libraries usable inside a worklet. Reanimated's UI
+    // runtime is the one that benefits here — the app runs no worklets of its own.
+    return getBundleModeMetroConfig(defaultConfig)
+  }
+})
 
 config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles']
 

@@ -2,10 +2,13 @@ import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
+import { captureControllerException } from '@common/config/analytics/CrashAnalytics'
+import { reportControllerError } from '@common/config/analytics/crashReportHelpers'
 import { APP_VERSION, isAndroid, isDev } from '@common/config/env'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
@@ -28,6 +31,11 @@ import { BOOT_MARK } from '@mobile/services/bootProfiler/constants'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 
 import { buildStateForFE, queueCtrlStateIfGated, setCriticalControllers } from './bootPhase'
+import {
+  reportControllerHostError,
+  reportFailedAction,
+  syncCrashReportContext
+} from './crashReporting'
 import {
   emitCtrlError,
   emitCtrlUpdate,
@@ -153,6 +161,7 @@ function debounceFrontEndEventUpdatesOnSameTick(
         ;(err as any).controllerName = ctrlName
         console.error('Debug: Failed to send update to UI for ctrl', ctrlName, err)
         emitCtrlError(ctrlName, [{ message: (err as any).message, stack: (err as any).stack }])
+        reportControllerHostError(err, ctrlName)
       }
     }
     ctrlOnUpdateIsDirtyFlags[ctrlName] = false
@@ -167,15 +176,17 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
     if (!hasOnUpdateInitialized) {
       ctrl.onUpdate((forceEmit: boolean) => {
         debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, forceEmit)
+        if (mainCtrl) syncCrashReportContext(ctrl, mainCtrl)
       }, 'mobile')
     }
 
     const hasOnErrorInitialized = ctrl.onErrorIds.includes('mobile')
     if (!hasOnErrorInitialized) {
-      ctrl.onError(() => {
+      ctrl.onError((error: ErrorRef) => {
         if (!ctrl.isInRegistry()) return
 
         emitCtrlError(ctrl.name, ctrl.emittedErrors)
+        reportControllerError(error, ctrl.name, captureControllerException)
       }, 'mobile')
     }
   })
@@ -321,6 +332,7 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
     return allControllerNames
   } catch (e: any) {
     emitCtrlError('Init', [{ message: e.message, stack: e.stack }])
+    reportControllerHostError(e, 'Init')
     return []
   }
 }
@@ -333,9 +345,9 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
 export const dispatchToControllers = (action: MethodAction | Action) => {
   if (!mainCtrl) return
 
-  void handleActions(action, {
+  handleActions(action, {
     eventEmitterRegistry,
     mainCtrl,
     dispatch: dispatchToControllers
-  })
+  }).catch((error: unknown) => reportFailedAction(action, error))
 }

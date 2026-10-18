@@ -26,7 +26,7 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -102,14 +102,23 @@ const AccountSelectScreen = () => {
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
   }, [])
-  const listBottomInset = footerHeight ? footerHeight + SPACING_SM : FALLBACK_FOOTER_HEIGHT
+  const getListBottomInset = () => {
+    // Under the list rather than over it, so the list needs no room for it
+    if (isNarrowWebLayout) return 0
+
+    return footerHeight ? footerHeight + SPACING_SM : FALLBACK_FOOTER_HEIGHT
+  }
+  const listBottomInset = getListBottomInset()
   const {
     accounts,
     control,
     search,
     keyExtractor,
     getItemLayout,
+    onAccountExtraHeightChange,
     onListContentSizeChange,
+    onListLayout,
+    onListTouchStart,
     initialScrollIndex,
     shouldDisplayAccounts,
     isReadyToRender
@@ -140,7 +149,7 @@ const AccountSelectScreen = () => {
   )
 
   const renderItem = useCallback(
-    ({ item: acc }: { item: AccountType }) => {
+    ({ item: acc, index }: { item: AccountType; index: number }) => {
       return (
         <Account
           onSelect={onAccountSelect}
@@ -148,11 +157,13 @@ const AccountSelectScreen = () => {
           withSettings={false}
           options={ACCOUNT_OPTIONS}
           maxAccountAddrLength={32}
+          onExtraHeightChange={onAccountExtraHeightChange}
           withReceive
+          containerStyle={index === accounts.length - 1 ? spacings.mb0 : undefined}
         />
       )
     },
-    [onAccountSelect]
+    [onAccountSelect, onAccountExtraHeightChange, accounts.length]
   )
 
   useEffect(() => {
@@ -257,6 +268,8 @@ const AccountSelectScreen = () => {
                 getItemLayout={getItemLayout}
                 keyExtractor={keyExtractor}
                 onContentSizeChange={onListContentSizeChange}
+                onLayout={onListLayout}
+                onTouchStart={onListTouchStart}
                 initialScrollIndex={initialScrollIndex}
                 ListEmptyComponent={noAccountsFound}
               />
@@ -301,11 +314,11 @@ const AccountSelectScreen = () => {
         closeBottomSheet={closeSyncBottomSheet}
         onExportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.exportAccountsToMobile)
+          navigate(WEB_ROUTES.exportToMobile)
         }}
         onImportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.importAccountsFromMobile)
+          navigate(WEB_ROUTES.importFromMobile)
         }}
       />
     </LayoutWrapper>
