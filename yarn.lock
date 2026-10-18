@@ -4646,7 +4646,7 @@
   dependencies:
     abitype "^1.2.3"
 
-"@saga-sync/client@^0.1.4":
+"@saga-sync/client@0.1.4", "@saga-sync/client@^0.1.4":
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/@saga-sync/client/-/client-0.1.4.tgz#d7dc9a52533962088504af899ed440e0cab55cca"
   integrity sha512-q/5rxQOGB2ShYNxsQggfd6KGZ4BAF2z4wSUdWmiRjN/8CXStbyVYgjupdCLbZ8jbtOdvKKEu1dhZDO7/o5gCEg==

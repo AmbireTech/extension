@@ -11,6 +11,7 @@ import type {
   PrivacyPoolsProverFactory
 } from '@ambire-common/libs/privacyPools/prover'
 
+import { openOffscreenDocument } from '../offscreen/offscreenDocument'
 import {
   encodeSignals,
   isFromProverDocument,
@@ -33,7 +34,6 @@ const PROOF_TIMEOUT_MS = 3 * 60 * 1000
 const IDLE_CLOSE_MS = 2 * 60 * 1000
 
 // Not in this version of `@types/chrome`
-const WORKERS_REASON = 'WORKERS' as chrome.offscreen.Reason
 type ChromeRuntimeWithContexts = typeof chrome.runtime & {
   getContexts?: (filter: { contextTypes: string[]; documentUrls: string[] }) => Promise<unknown[]>
 }
@@ -239,15 +239,13 @@ export const createOffscreenProverFactory = ({
 
   const openDocument = async () => {
     await closing
-    // A document left over from before the service worker restarted has lost its port, and Chrome
-    // allows only one offscreen document at a time
-    if (await hasDocument()) await chrome.offscreen.closeDocument()
 
     const readyDocument = waitForReadyDocument()
     try {
-      await chrome.offscreen.createDocument({
-        url: PRIVACY_POOLS_PROVER_DOCUMENT_PATH,
-        reasons: [WORKERS_REASON],
+      // Closes any open document first: one left over from before the service worker restarted
+      // (which has lost its port), or Tornado Cash's, as Chrome allows only one at a time
+      await openOffscreenDocument({
+        path: PRIVACY_POOLS_PROVER_DOCUMENT_PATH,
         justification: 'Generates Privacy Pools withdrawal proofs on several threads.'
       })
       isDocumentOpen = true

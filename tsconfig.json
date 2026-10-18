@@ -14,7 +14,8 @@
       "@mobile/*": ["src/mobile/*"],
       "@web/*": ["src/web/*"],
       "@benzin/*": ["src/benzin/*"],
-      "@legends/*": ["src/legends/*"]
+      "@legends/*": ["src/legends/*"],
+      "@saga-sync/client": ["node_modules/@saga-sync/client/dist/index.d.ts"]
     }
   },
   "exclude": [

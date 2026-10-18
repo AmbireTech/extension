@@ -105,6 +105,7 @@
     "@react-native-masked-view/masked-view": "0.3.2",
     "@reown/walletkit": "1.5.5",
     "@safe-global/api-kit": "5.0.3",
+    "@saga-sync/client": "0.1.4",
     "@sentry/browser": "10.75.2",
     "@sentry/react": "10.75.2",
     "@sentry/react-native": "8.28.0",

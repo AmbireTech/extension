@@ -292,6 +292,12 @@ module.exports = async function buildExtension(
         !isSafari && {
           'privacy-pools-prover': './src/web/extension-services/privacy-pools-prover/offscreen.ts'
         }),
+      // Tornado Cash's offscreen document, which hosts its SDK (it needs `Worker`). Built like the
+      // prover's even where the artifacts are left out, so the LavaMoat policy is the same
+      ...(isWebkit &&
+        !isSafari && {
+          'tornado-cash': './src/web/extension-services/tornado-cash/offscreen.ts'
+        }),
       ...(isGecko && {
         'content-script-ambire-injection':
           './src/web/extension-services/content-script/content-script-ambire-injection.ts',
@@ -444,12 +450,43 @@ module.exports = async function buildExtension(
           })
         ]
       : []),
+    ...(isWebkit && !isSafari
+      ? [
+          new HtmlWebpackPlugin({
+            template: './src/web/public/tornado-cash.html',
+            filename: 'tornado-cash.html',
+            inject: 'body',
+            chunks: ['runtime', 'tornado-cash']
+          })
+        ]
+      : []),
     new CopyPlugin({ patterns: extensionCopyPatterns })
   ]
 
   // Provides a global variable to all files where globalIsAmbireNext is declared including
   // content scripts and injected files
   config.plugins.push(new webpack.DefinePlugin({ globalIsAmbireNext: isAmbireNext }))
+
+  // @kohaku-eth/tornado-cash maps its own `#worker-loader` import to a source file it does not
+  // publish under the `browser` condition (0.0.2-alpha.25). Point that one import, and no other
+  // package's, at the built browser loader.
+  config.plugins.push(
+    new webpack.NormalModuleReplacementPlugin(/^#worker-loader$/, (resource) => {
+      if (!resource.context.includes(path.join('@kohaku-eth', 'tornado-cash'))) return
+
+      resource.request = path.resolve(
+        ROOT_DIR,
+        'node_modules/@kohaku-eth/tornado-cash/dist/worker-loader.browser.js'
+      )
+    })
+  )
+  // Its fallback worker URL, `new URL('../state/state-manager.worker.js', import.meta.url)`, points
+  // outside the package and is never used (the document passes `stateManagerWorkerUrl`), so webpack
+  // must not try to bundle it
+  config.module.rules.push({
+    test: /[\\/]@kohaku-eth[\\/]tornado-cash[\\/]dist[\\/]worker-loader\.browser\.js$/,
+    parser: { url: false }
+  })
 
   // Register unsafe-layer plugin only in production (same environment as LavaMoatPlugin).
   // The plugin adds a rule and assigns layer='unsafe' for LAVAMOAT_UNSAFE_ENTRIES.
