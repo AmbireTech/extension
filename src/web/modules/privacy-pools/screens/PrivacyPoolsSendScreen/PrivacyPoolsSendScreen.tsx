@@ -267,7 +267,7 @@ const PrivacyPoolsSendScreen = () => {
     dismissOperation()
   }, [dismissOperation, operationStatus])
 
-  // A sent transfer's form is already cleared by the controller, a failed one's is kept to retry
+  // The controller already cleared the form of a transfer handed over, even a failed one
   const closeOutcome = useCallback(() => {
     dismissOperation()
     navigate(ROUTES.dashboard)
@@ -307,7 +307,12 @@ const PrivacyPoolsSendScreen = () => {
         {hasFailed ? (
           <Failed
             title={t('Something went wrong!')}
-            errorMessage={operation.error || t('The transfer could not be sent. Please try again.')}
+            errorMessage={
+              operation.error ||
+              t(
+                'We could not confirm the transfer yet. Check your balance before you send it again.'
+              )
+            }
           />
         ) : (
           <Completed

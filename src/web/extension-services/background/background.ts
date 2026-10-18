@@ -180,6 +180,8 @@ function captureBackgroundExceptionFromControllerError(error: ErrorRef, controll
  */
 const IDB_OPEN_ATTEMPTS = 2
 
+const PRIVACY_POOLS_CONTROLLER_NAME = 'PrivacyPoolsController'
+
 let isInitialized = false
 const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
 let mainCtrl: MainController
@@ -247,6 +249,20 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
               }
             : { providerType: 'custom-rpc' })
         }
+      }
+
+      // Privacy Pools errors, their logs and the requests before them can hold the recipient,
+      // amounts or notes, and the user ID would link them to the install, so only the error's
+      // type and stack are sent.
+      if (event.extra?.controllerName === PRIVACY_POOLS_CONTROLLER_NAME) {
+        delete event.breadcrumbs
+        delete event.user
+        delete event.contexts
+        delete event.message
+        event.extra = { controllerName: PRIVACY_POOLS_CONTROLLER_NAME }
+        event.exception?.values?.forEach((exception) => {
+          delete exception.value
+        })
       }
 
       // No explicit type annotation here: `event`'s type is inferred contextually

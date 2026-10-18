@@ -140,11 +140,8 @@ const flowContext = flow
       return next()
     }
 
-    throw ethErrors.provider.custom({
-      code: 4100,
-      message:
-        'Apps can’t use a Privacy Pools account. Switch to another account in Ambire and try again.'
-    })
+    // The same error as a site without permission, so it can't tell a Privacy Pools account is used
+    throw ethErrors.provider.unauthorized()
   })
   // add the dapp request as a userRequest
   .use(async (props, next) => {
