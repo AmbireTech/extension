@@ -8,37 +8,58 @@ import Button from '@common/components/Button'
 import Option from '@common/components/Option'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { PrivacyProviderId } from '@ambire-common/interfaces/privateAccount'
 import useController from '@common/hooks/useController'
-import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
+import usePrivateAccounts from '@common/hooks/usePrivateAccounts'
 import useTheme from '@common/hooks/useTheme'
+import { PRIVACY_PROVIDER_NAMES } from '@common/modules/privacy/providers'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
-import useAddPrivacyPoolsAccount from './useAddPrivacyPoolsAccount'
+import useAddPrivateAccount from './useAddPrivateAccount'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
 
 type Props = {
+  providerId: PrivacyProviderId
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
   /** Called once the new account is added and selected. */
   onAdded: () => void
 }
 
-/** Adds a Privacy Pools account from a stored recovery phrase (one per phrase) or a new one. */
-const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded }: Props) => {
+/**
+ * Adds a private account of `providerId` from a stored recovery phrase (one per phrase and
+ * provider) or a new one.
+ */
+const AddPrivateAccountBottomSheet = ({
+  providerId,
+  sheetRef,
+  closeBottomSheet,
+  onAdded
+}: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { state: seeds } = useController('KeystoreController', selectSeeds)
-  const { accounts } = usePrivacyPoolsAccounts()
-  const { addFromStoredSeed, addFromNewSeed, pending } = useAddPrivacyPoolsAccount({ onAdded })
+  const { accounts } = usePrivateAccounts()
+  const { addFromStoredSeed, addFromNewSeed, pending } = useAddPrivateAccount({
+    providerId,
+    onAdded
+  })
+  const providerName = PRIVACY_PROVIDER_NAMES[providerId]
+  // Privacy Pools' test ids predate the other providers
+  const testIdPrefix =
+    providerId === 'privacyPools' ? 'add-privacy-pools-account' : 'add-tornado-cash-account'
 
   const seedIdsWithAccount = useMemo(
-    () => new Set(accounts.map(({ seedId }) => seedId)),
-    [accounts]
+    () =>
+      new Set(
+        accounts.filter((account) => account.providerId === providerId).map(({ seedId }) => seedId)
+      ),
+    [accounts, providerId]
   )
 
   const footer = useMemo(
@@ -54,25 +75,29 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
           icon={AddCircularIcon}
           onPress={addFromNewSeed}
           disabled={!!pending}
-          testID="add-privacy-pools-account-new-seed"
+          testID={`${testIdPrefix}-new-seed`}
           status="none"
         />
       </View>
     ),
-    [addFromNewSeed, pending, styles.footer, styles.footerDivider, t]
+    [addFromNewSeed, pending, styles.footer, styles.footerDivider, t, testIdPrefix]
   )
 
   return (
     <BottomSheet
-      id="add-privacy-pools-account-bottom-sheet"
+      id={`${testIdPrefix}-bottom-sheet`}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       FooterComponent={footer}
     >
-      <ModalHeader handleClose={closeBottomSheet} title={t('Add a Privacy Pools account')} />
+      <ModalHeader
+        handleClose={closeBottomSheet}
+        title={t('Add a {{provider}} account', { provider: providerName })}
+      />
       <Text fontSize={14} appearance="secondaryText" style={spacings.mbLg}>
         {t(
-          'A Privacy Pools account keeps your funds private. It is created from one of your recovery phrases, one account per phrase, and that phrase is the only way to recover it.'
+          'A {{provider}} account keeps your funds private. It is created from one of your recovery phrases, one account per phrase, and that phrase is the only way to recover it.',
+          { provider: providerName }
         )}
       </Text>
 
@@ -97,7 +122,7 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
               </Text>
             ) : (
               <Button
-                testID={`add-privacy-pools-account-${seed.id}`}
+                testID={`${testIdPrefix}-${seed.id}`}
                 text={isAddingThis ? t('Adding...') : t('Add')}
                 size="small"
                 type="outline"
@@ -115,4 +140,4 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
   )
 }
 
-export default React.memo(AddPrivacyPoolsAccountBottomSheet)
+export default React.memo(AddPrivateAccountBottomSheet)

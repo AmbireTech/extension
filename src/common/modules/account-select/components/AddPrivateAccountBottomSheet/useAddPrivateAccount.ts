@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { PrivacyProviderId } from '@ambire-common/interfaces/privateAccount'
 import { getPrivateAccountSeedId } from '@ambire-common/libs/privateAccount/privateAccount'
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
@@ -7,9 +8,8 @@ import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
-const selectPrivacyPoolsAccountId = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => getPrivateAccountSeedId(state.privateAccount, 'privacyPools')
+const selectPrivateAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.privateAccount
 
 /**
  * The account being added. A new seed's id is unknown in advance, so it is recognised as any
@@ -20,18 +20,23 @@ type PendingAddition =
   | { kind: 'new-seed'; selectedAccountIdBefore: string | null }
 
 /**
- * Adds and selects a Privacy Pools account. `onAdded` fires once both the status and the selection
- * reach the UI, so the previous account's dashboard does not flash. The background toasts failures.
+ * Adds and selects a private account of `providerId`. `onAdded` fires once both the status and
+ * the selection reach the UI, so the previous account's dashboard does not flash. The background
+ * toasts failures.
  */
-const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
+const useAddPrivateAccount = ({
+  providerId,
+  onAdded
+}: {
+  providerId: PrivacyProviderId
+  onAdded: () => void
+}) => {
   const { state: statuses, dispatch: mainDispatch } = useController(
     'MainController',
     selectMainStatuses
   )
-  const { state: privacyPoolsAccountId } = useController(
-    'SelectedAccountController',
-    selectPrivacyPoolsAccountId
-  )
+  const { state: privateAccount } = useController('SelectedAccountController', selectPrivateAccount)
+  const selectedSeedId = getPrivateAccountSeedId(privateAccount, providerId)
   const { getExtraEntropy } = useExtraEntropy()
   const [pending, setPending] = useState<PendingAddition | null>(null)
   // The status may be left from an earlier selection, so it counts only after this one loads
@@ -41,22 +46,25 @@ const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
     (seedId: string) => {
       hasSeenLoading.current = false
       setPending({ kind: 'stored-seed', seedId })
-      mainDispatch({ type: 'method', params: { method: 'addPrivacyPoolsAccount', args: [seedId] } })
+      mainDispatch({
+        type: 'method',
+        params: { method: 'addPrivateAccount', args: [{ providerId, seedId }] }
+      })
     },
-    [mainDispatch]
+    [mainDispatch, providerId]
   )
 
   const addFromNewSeed = useCallback(() => {
     hasSeenLoading.current = false
-    setPending({ kind: 'new-seed', selectedAccountIdBefore: privacyPoolsAccountId ?? null })
+    setPending({ kind: 'new-seed', selectedAccountIdBefore: selectedSeedId })
     mainDispatch({
       type: 'method',
       params: {
-        method: 'addPrivacyPoolsAccountFromNewSeed',
-        args: [{ extraEntropy: getExtraEntropy() }]
+        method: 'addPrivateAccountFromNewSeed',
+        args: [{ providerId, extraEntropy: getExtraEntropy() }]
       }
     })
-  }, [getExtraEntropy, mainDispatch, privacyPoolsAccountId])
+  }, [getExtraEntropy, mainDispatch, providerId, selectedSeedId])
 
   useEffect(() => {
     if (!pending) return
@@ -69,8 +77,8 @@ const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
 
     const isAddedAccountSelected =
       pending.kind === 'stored-seed'
-        ? privacyPoolsAccountId === pending.seedId
-        : !!privacyPoolsAccountId && privacyPoolsAccountId !== pending.selectedAccountIdBefore
+        ? selectedSeedId === pending.seedId
+        : !!selectedSeedId && selectedSeedId !== pending.selectedAccountIdBefore
     // On success, wait for the selection too: it may reach the UI a moment after the status
     const isOver =
       isAddedAccountSelected ||
@@ -82,9 +90,9 @@ const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPending(null)
     if (isAddedAccountSelected) onAdded()
-  }, [onAdded, pending, privacyPoolsAccountId, statuses.selectAccount])
+  }, [onAdded, pending, selectedSeedId, statuses.selectAccount])
 
   return { addFromStoredSeed, addFromNewSeed, pending }
 }
 
-export default useAddPrivacyPoolsAccount
+export default useAddPrivateAccount

@@ -11,21 +11,22 @@ import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
-import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
-import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
+import { isMobile, isPrivacyPoolsEnabled, isTornadoCashEnabled, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
-import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
+import AddPrivateAccountBottomSheet from '@common/modules/account-select/components/AddPrivateAccountBottomSheet'
+import ChoosePrivacyProviderBottomSheet from '@common/modules/account-select/components/ChoosePrivacyProviderBottomSheet'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -37,6 +38,7 @@ import spacings from '@common/styles/spacings'
 
 import ExpandableOptionSection from './ExpandableOptionSection'
 
+import type { PrivacyProviderId } from '@ambire-common/interfaces/privateAccount'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
@@ -67,18 +69,34 @@ const AddAccount = ({
     close: closeSeedPhraseBottomSheet
   } = useModalize()
   const {
-    ref: privacyPoolsSheetRef,
-    open: openPrivacyPoolsBottomSheet,
-    close: closePrivacyPoolsBottomSheet
+    ref: privacyProviderSheetRef,
+    open: openPrivacyProviderBottomSheet,
+    close: closePrivacyProviderBottomSheet
   } = useModalize()
+  const {
+    ref: privateAccountSheetRef,
+    open: openPrivateAccountBottomSheet,
+    close: closePrivateAccountBottomSheet
+  } = useModalize()
+  const [privacyProviderId, setPrivacyProviderId] = useState<PrivacyProviderId>('privacyPools')
   const { state: seeds } = useController('KeystoreController', selectSeeds)
   const { navigate } = useNavigation()
+  const isPrivateAccountAvailable = isPrivacyPoolsEnabled || isTornadoCashEnabled
 
-  const handlePrivacyPoolsAccountAdded = useCallback(() => {
-    closePrivacyPoolsBottomSheet()
+  const handlePrivacyProviderChosen = useCallback(
+    (providerId: PrivacyProviderId) => {
+      setPrivacyProviderId(providerId)
+      closePrivacyProviderBottomSheet()
+      openPrivateAccountBottomSheet()
+    },
+    [closePrivacyProviderBottomSheet, openPrivateAccountBottomSheet]
+  )
+
+  const handlePrivateAccountAdded = useCallback(() => {
+    closePrivateAccountBottomSheet()
     closeBottomSheet()
     navigate(ROUTES.dashboard)
-  }, [closeBottomSheet, closePrivacyPoolsBottomSheet, navigate])
+  }, [closeBottomSheet, closePrivateAccountBottomSheet, navigate])
 
   const optionsHW = useMemo(() => {
     if (isMobile)
@@ -250,12 +268,12 @@ const AddAccount = ({
           />
         )}
         {/* Extension only for now */}
-        {isPrivacyPoolsEnabled && !showImportOnly && (
+        {isPrivateAccountAvailable && !showImportOnly && (
           <Option
-            text={t('Add a Privacy Pools account')}
-            icon={PrivacyPoolsIcon}
-            onPress={openPrivacyPoolsBottomSheet as any}
-            testID="add-privacy-pools-account"
+            text={t('Add a Privacy account')}
+            icon={ShieldInvisibilityIcon}
+            onPress={openPrivacyProviderBottomSheet as any}
+            testID="add-privacy-account"
             status="none"
           />
         )}
@@ -301,12 +319,20 @@ const AddAccount = ({
         )}
       </View>
 
-      {isPrivacyPoolsEnabled && !showImportOnly && (
-        <AddPrivacyPoolsAccountBottomSheet
-          sheetRef={privacyPoolsSheetRef}
-          closeBottomSheet={closePrivacyPoolsBottomSheet}
-          onAdded={handlePrivacyPoolsAccountAdded}
-        />
+      {isPrivateAccountAvailable && !showImportOnly && (
+        <>
+          <ChoosePrivacyProviderBottomSheet
+            sheetRef={privacyProviderSheetRef}
+            closeBottomSheet={closePrivacyProviderBottomSheet}
+            onChoose={handlePrivacyProviderChosen}
+          />
+          <AddPrivateAccountBottomSheet
+            providerId={privacyProviderId}
+            sheetRef={privateAccountSheetRef}
+            closeBottomSheet={closePrivateAccountBottomSheet}
+            onAdded={handlePrivateAccountAdded}
+          />
+        </>
       )}
       <SavedSeedPhrasesBottomSheet
         sheetRef={seedPhraseSheetRef}
