@@ -2,7 +2,6 @@ import React, { useCallback, useContext, useRef, useState } from 'react'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { getPrivateAccountSeedId } from '@ambire-common/libs/privateAccount/privateAccount'
 import GasTankModal from '@common/components/GasTankModal'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
@@ -18,15 +17,15 @@ import getStyles from '@common/modules/dashboard/screens/styles'
 import { getUiType } from '@common/utils/uiType'
 import MobileAppPromoBanner from '@web/modules/dashboard/components/MobileAppPromoBanner'
 import PrivacyPoolsDashboardScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsDashboardScreen'
+import TornadoCashDashboardScreen from '@web/modules/tornado-cash/screens/TornadoCashDashboardScreen'
 import commonWebStyles from '@web/styles/utils/common'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const { isPopup } = getUiType()
 
-const selectPrivacyPoolsAccountId = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => getPrivateAccountSeedId(state.privateAccount, 'privacyPools')
+const selectPrivacyProviderId = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.privateAccount?.providerId ?? null
 
 const AccountDashboardScreen = () => {
   const { styles } = useTheme(getStyles)
@@ -130,17 +129,22 @@ const AccountDashboardScreen = () => {
   )
 }
 
-/** The regular dashboard, or the Privacy Pools one when such an account (no address) is selected. */
+/**
+ * The regular dashboard, or the private account's one (Privacy Pools, Tornado Cash) when such an
+ * account (no address) is selected.
+ */
 const DashboardScreen = () => {
-  const { state: privacyPoolsAccountId } = useController(
+  const { state: privacyProviderId } = useController(
     'SelectedAccountController',
-    selectPrivacyPoolsAccountId
+    selectPrivacyProviderId
   )
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
-  // Privacy Pools state is not pushed before the first paint, so the regular dashboard's shell
-  // holds the place until it arrives - its header already shows the Privacy Pools account
-  if (!privacyPoolsAccountId || !areAllControllerStatesLoaded) return <AccountDashboardScreen />
+  // The privacy controllers' state is not pushed before the first paint, so the regular
+  // dashboard's shell holds the place until it arrives - its header already shows the account
+  if (!privacyProviderId || !areAllControllerStatesLoaded) return <AccountDashboardScreen />
+
+  if (privacyProviderId === 'tornadoCash') return <TornadoCashDashboardScreen />
 
   return <PrivacyPoolsDashboardScreen />
 }

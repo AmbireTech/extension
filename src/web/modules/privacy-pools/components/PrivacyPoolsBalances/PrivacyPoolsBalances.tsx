@@ -24,13 +24,16 @@ interface Props {
   unavailableReason: PrivacyPoolsUnavailableReason | null
   /** Whether reading waits for the recovery phrase backup - see `syncIfStale`. */
   isWaitingForBackup: boolean
+  /** Replaces the Privacy Pools reasons, for another provider's account. */
+  unavailableText?: string
 }
 
 const PrivacyPoolsBalances: FC<Props> = ({
   balances,
   state,
   unavailableReason,
-  isWaitingForBackup
+  isWaitingForBackup,
+  unavailableText
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -60,9 +63,10 @@ const PrivacyPoolsBalances: FC<Props> = ({
 
     return renderNotice(
       t('Nothing to show'),
-      unavailableReason
-        ? reasons[unavailableReason]
-        : t("Privacy Pools can't be used with this account right now.")
+      unavailableText ||
+        (unavailableReason
+          ? reasons[unavailableReason]
+          : t("Privacy Pools can't be used with this account right now."))
     )
   }
 

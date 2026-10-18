@@ -36,7 +36,8 @@ const PrivacyPoolsTokenItem: FC<{ balance: PrivacyPoolsBalanceDisplay }> = ({ ba
     approvedAmount,
     pendingAmount,
     pendingAmountRaw,
-    value
+    value,
+    notesSummary
   } = balance
 
   return (
@@ -63,6 +64,7 @@ const PrivacyPoolsTokenItem: FC<{ balance: PrivacyPoolsBalanceDisplay }> = ({ ba
             </Text>
             <Text fontSize={12} weight="number_medium" appearance="secondaryText" numberOfLines={1}>
               {privateValue(formatDecimals(Number(totalAmount), 'amount'), isPrivacyModeEnabled)}
+              {!!notesSummary && !isPrivacyModeEnabled && ` (${notesSummary})`}
             </Text>
           </View>
           {value !== null && (

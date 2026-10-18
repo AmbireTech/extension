@@ -30,6 +30,8 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 const selectPrivateAccountSeedId = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.privateAccount?.seedId ?? null
+const selectPrivacyProviderId = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.privateAccount?.providerId ?? null
 
 const DashboardHeader = () => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
@@ -37,6 +39,10 @@ const DashboardHeader = () => {
   const { state: privateAccountSeedId } = useController(
     'SelectedAccountController',
     selectPrivateAccountSeedId
+  )
+  const { state: privacyProviderId } = useController(
+    'SelectedAccountController',
+    selectPrivacyProviderId
   )
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted', duration: 50 })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
@@ -52,8 +58,11 @@ const DashboardHeader = () => {
     close: closeNetworkStatusesSheet
   } = useModalize()
 
-  // Shown in production for Privacy Pools: its first network reads take long
-  const shouldDisplayNetworkStatuses = SHOULD_DISPLAY_NETWORK_STATUSES || !!privateAccountSeedId
+  // Shown in production for Privacy Pools: its first network reads take long. Not for Tornado
+  // Cash, which reads one network and shows its progress on the dashboard
+  const shouldDisplayNetworkStatuses =
+    (SHOULD_DISPLAY_NETWORK_STATUSES && privacyProviderId !== 'tornadoCash') ||
+    privacyProviderId === 'privacyPools'
 
   if (!account && !privateAccountSeedId) return null
 

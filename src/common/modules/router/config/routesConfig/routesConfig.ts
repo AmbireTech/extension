@@ -185,6 +185,14 @@ const routesConfig: RouteConfig = {
     name: Platform.select({ default: i18n.t('Send') }),
     withTitlePrefix: false
   },
+  [ROUTES.tornadoCashSend]: {
+    route: ROUTES.tornadoCashSend,
+    title: Platform.select({
+      default: i18n.t('Send')
+    }),
+    name: Platform.select({ default: i18n.t('Send') }),
+    withTitlePrefix: false
+  },
   [ROUTES.transfer]: {
     route: ROUTES.transfer,
     title: Platform.select({

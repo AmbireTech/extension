@@ -39,6 +39,8 @@ export type PrivacyPoolsBalanceDisplay = {
   pendingAmountRaw: bigint
   /** USD value of the total amount, or null when the token has no known price. */
   value: number | null
+  /** What the amount is made of, for a protocol of fixed amounts (Tornado Cash). */
+  notesSummary?: string
 }
 
 /**

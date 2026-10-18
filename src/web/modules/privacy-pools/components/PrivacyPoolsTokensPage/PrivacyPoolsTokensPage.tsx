@@ -47,6 +47,8 @@ interface Props {
   isWaitingForBackup: boolean
   /** The dashboard's network filter name, if any. */
   networkFilterName: string | null
+  /** See `PrivacyPoolsBalances`. */
+  unavailableText?: string
 }
 
 /** The Tokens page of a Privacy Pools account, laid out like the regular dashboard's. */
@@ -60,7 +62,8 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
   state,
   unavailableReason,
   isWaitingForBackup,
-  networkFilterName
+  networkFilterName,
+  unavailableText
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -117,6 +120,7 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
           state={state}
           unavailableReason={unavailableReason}
           isWaitingForBackup={isWaitingForBackup}
+          unavailableText={unavailableText}
         />
       )
     },
@@ -132,7 +136,8 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
       state,
       theme.primaryBackground,
       unavailableReason,
-      isWaitingForBackup
+      isWaitingForBackup,
+      unavailableText
     ]
   )
 
