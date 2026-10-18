@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { getPrivateAccountSeedId } from '@ambire-common/libs/privateAccount/privateAccount'
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 
@@ -8,7 +9,7 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
 const selectPrivacyPoolsAccountId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => getPrivateAccountSeedId(state.privateAccount, 'privacyPools')
 
 /**
  * The account being added. A new seed's id is unknown in advance, so it is recognised as any

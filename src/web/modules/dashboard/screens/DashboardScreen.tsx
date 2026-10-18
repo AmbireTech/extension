@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useRef, useState } from 'react'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import { getPrivateAccountSeedId } from '@ambire-common/libs/privateAccount/privateAccount'
 import GasTankModal from '@common/components/GasTankModal'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
@@ -25,7 +26,7 @@ const { isPopup } = getUiType()
 
 const selectPrivacyPoolsAccountId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => getPrivateAccountSeedId(state.privateAccount, 'privacyPools')
 
 const AccountDashboardScreen = () => {
   const { styles } = useTheme(getStyles)

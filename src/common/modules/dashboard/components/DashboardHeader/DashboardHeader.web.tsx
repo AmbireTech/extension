@@ -27,16 +27,16 @@ const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
-const selectPrivacyPoolsAccountId = (
+const selectPrivateAccountSeedId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => state.privateAccount?.seedId ?? null
 
 const DashboardHeader = () => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
   // `account` is null while a Privacy Pools account is selected
-  const { state: privacyPoolsAccountId } = useController(
+  const { state: privateAccountSeedId } = useController(
     'SelectedAccountController',
-    selectPrivacyPoolsAccountId
+    selectPrivateAccountSeedId
   )
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted', duration: 50 })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
@@ -53,9 +53,9 @@ const DashboardHeader = () => {
   } = useModalize()
 
   // Shown in production for Privacy Pools: its first network reads take long
-  const shouldDisplayNetworkStatuses = SHOULD_DISPLAY_NETWORK_STATUSES || !!privacyPoolsAccountId
+  const shouldDisplayNetworkStatuses = SHOULD_DISPLAY_NETWORK_STATUSES || !!privateAccountSeedId
 
-  if (!account && !privacyPoolsAccountId) return null
+  if (!account && !privateAccountSeedId) return null
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>

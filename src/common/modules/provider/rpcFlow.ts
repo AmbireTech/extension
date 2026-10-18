@@ -126,21 +126,21 @@ const flowContext = flow
 
     return next()
   })
-  // A selected Privacy Pools account has no address to give the app. Apps connected with chosen
+  // A selected private account has no address to give the app. Apps connected with chosen
   // accounts still get theirs (and are asked to switch to it), so this stops only the rest.
   .use(async ({ request, mainCtrl, notificationManager, mapMethod }, next) => {
     const providerCtrl = new ProviderController(mainCtrl, notificationManager)
-    const isPrivacyPoolsAccountSelected = !!mainCtrl.selectedAccount.privacyPoolsAccountId
+    const isPrivateAccountSelected = !!mainCtrl.selectedAccount.privateAccount
 
     if (
       getMetadata('SAFE', providerCtrl, mapMethod) ||
-      !isPrivacyPoolsAccountSelected ||
+      !isPrivateAccountSelected ||
       providerCtrl._getSelectedAccount(request.session.id)
     ) {
       return next()
     }
 
-    // The same error as a site without permission, so it can't tell a Privacy Pools account is used
+    // The same error as a site without permission, so it can't tell a private account is used
     throw ethErrors.provider.unauthorized()
   })
   // add the dapp request as a userRequest

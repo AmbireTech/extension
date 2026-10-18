@@ -10,9 +10,9 @@ import useRecoveryPhraseBackupStatus from '@common/modules/recovery-phrase-backu
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const selectPrivacyPoolsAccountId = (
+const selectPrivateAccountSeedId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => state.privateAccount?.seedId ?? null
 
 /**
  * Nudges the user to write down the recovery phrase of the selected account once it
@@ -23,9 +23,9 @@ const RecoveryPhraseBackupBanner = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { seedIdOfSelectedAccountNeedingBackup } = useRecoveryPhraseBackupStatus()
-  const { state: privacyPoolsAccountId } = useController(
+  const { state: privateAccountSeedId } = useController(
     'SelectedAccountController',
-    selectPrivacyPoolsAccountId
+    selectPrivateAccountSeedId
   )
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
@@ -46,7 +46,7 @@ const RecoveryPhraseBackupBanner = () => {
         title={t('Phrase not backed up!')}
         text={
           // A Privacy Pools account is not read until its phrase is backed up
-          privacyPoolsAccountId
+          privateAccountSeedId
             ? t(
                 'Back up this recovery phrase to start using the account. It is the only way to recover it.'
               )
@@ -54,7 +54,7 @@ const RecoveryPhraseBackupBanner = () => {
         }
         buttonText={t('Back up now')}
         onPress={openBottomSheet as any}
-        style={privacyPoolsAccountId ? undefined : neutralBackgroundStyle}
+        style={privateAccountSeedId ? undefined : neutralBackgroundStyle}
       />
       <RecoveryPhraseBackupBottomSheet
         seedId={seedIdOfSelectedAccountNeedingBackup}

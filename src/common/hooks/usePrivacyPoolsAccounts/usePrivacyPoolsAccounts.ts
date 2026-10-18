@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 
+import { getPrivateAccountSeedId } from '@ambire-common/libs/privateAccount/privateAccount'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 
@@ -32,7 +33,7 @@ const selectPrivacyPoolsAccounts = (state: AllControllersMappingType['PrivacyPoo
 const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
 const selectPrivacyPoolsAccountId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => getPrivateAccountSeedId(state.privateAccount, 'privacyPools')
 
 /**
  * The wallet's Privacy Pools accounts and the selected one. The accounts may still be empty on

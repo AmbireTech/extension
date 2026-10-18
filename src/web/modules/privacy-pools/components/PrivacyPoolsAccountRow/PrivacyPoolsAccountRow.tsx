@@ -60,7 +60,10 @@ const PrivacyPoolsAccountRow = ({
     if (!isSelected) {
       mainDispatch({
         type: 'method',
-        params: { method: 'selectPrivacyPoolsAccount', args: [account.seedId] }
+        params: {
+          method: 'selectPrivateAccount',
+          args: [{ providerId: 'privacyPools', seedId: account.seedId }]
+        }
       })
     }
 

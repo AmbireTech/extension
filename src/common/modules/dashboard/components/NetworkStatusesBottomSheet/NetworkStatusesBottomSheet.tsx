@@ -4,6 +4,7 @@ import { ScrollView } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
+import { getPrivateAccountSeedId } from '@ambire-common/libs/privateAccount/privateAccount'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -35,7 +36,7 @@ const selectPortfolioState = (state: AllControllersMappingType['SelectedAccountC
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 const selectPrivacyPoolsAccountId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => getPrivateAccountSeedId(state.privateAccount, 'privacyPools')
 
 const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()

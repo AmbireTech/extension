@@ -1,13 +1,14 @@
 import { useMemo } from 'react'
 
 import { getPrivacyPoolsValuePerChain } from '@ambire-common/libs/privacyPools/prices'
+import { getPrivateAccountSeedId } from '@ambire-common/libs/privateAccount/privateAccount'
 import useController from '@common/hooks/useController'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectPrivacyPoolsAccountId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => getPrivateAccountSeedId(state.privateAccount, 'privacyPools')
 const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio
 const selectIsAccountSelected = (state: AllControllersMappingType['SelectedAccountController']) =>

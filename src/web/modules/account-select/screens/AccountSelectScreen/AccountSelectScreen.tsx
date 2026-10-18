@@ -4,6 +4,7 @@ import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
+import { getPrivateAccountSeedId } from '@ambire-common/libs/privateAccount/privateAccount'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
@@ -69,7 +70,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
   state.account
 const selectPrivacyPoolsAccountId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => getPrivateAccountSeedId(state.privateAccount, 'privacyPools')
 
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)

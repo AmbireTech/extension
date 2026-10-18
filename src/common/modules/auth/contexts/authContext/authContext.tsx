@@ -17,15 +17,16 @@ type SelectedAccountState = AllControllersMappingType['SelectedAccountController
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectSelectedAccount = (state: SelectedAccountState) => state.account
-const selectPrivacyPoolsAccountId = (state: SelectedAccountState) => state.privacyPoolsAccountId
+const selectPrivateAccountSeedId = (state: SelectedAccountState) =>
+  state.privateAccount?.seedId ?? null
 const selectIsSelectedAccountReady = (state: SelectedAccountState) => state.isReady
 
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: account } = useController('SelectedAccountController', selectSelectedAccount)
-  const { state: privacyPoolsAccountId } = useController(
+  const { state: privateAccountSeedId } = useController(
     'SelectedAccountController',
-    selectPrivacyPoolsAccountId
+    selectPrivateAccountSeedId
   )
   const { state: isReady } = useController(
     'SelectedAccountController',
@@ -36,14 +37,14 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     if (!accounts || !isReady) return AUTH_STATUS.LOADING
 
     // `account` is null while a Privacy Pools account is selected, which may be the only account
-    if (privacyPoolsAccountId) return AUTH_STATUS.AUTHENTICATED
+    if (privateAccountSeedId) return AUTH_STATUS.AUTHENTICATED
 
     if (!accounts?.length || !account) {
       return AUTH_STATUS.NOT_AUTHENTICATED
     }
 
     return AUTH_STATUS.AUTHENTICATED
-  }, [accounts, isReady, account, privacyPoolsAccountId])
+  }, [accounts, isReady, account, privateAccountSeedId])
 
   return (
     <AuthContext.Provider value={useMemo(() => ({ authStatus }), [authStatus])}>

@@ -8,9 +8,9 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const selectAccountAddr = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account?.addr
 
-const selectPrivacyPoolsAccountId = (
+const selectPrivateAccountSeedId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => state.privateAccount?.seedId ?? null
 
 /**
  * The selected account's color seed: its address, or `getPrivacyPoolsColorSeed` for a Privacy Pools
@@ -18,14 +18,14 @@ const selectPrivacyPoolsAccountId = (
  */
 const useSelectedAccountColorSeed = () => {
   const { state: accountAddr } = useController('SelectedAccountController', selectAccountAddr)
-  const { state: privacyPoolsAccountId } = useController(
+  const { state: privateAccountSeedId } = useController(
     'SelectedAccountController',
-    selectPrivacyPoolsAccountId
+    selectPrivateAccountSeedId
   )
 
   return useMemo(
-    () => accountAddr || getPrivacyPoolsColorSeed(privacyPoolsAccountId || ''),
-    [accountAddr, privacyPoolsAccountId]
+    () => accountAddr || getPrivacyPoolsColorSeed(privateAccountSeedId || ''),
+    [accountAddr, privateAccountSeedId]
   )
 }
 

@@ -7,22 +7,22 @@ import { ROUTES } from '@common/modules/router/constants/common'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const selectPrivacyPoolsAccountId = (
+const selectPrivateAccountSeedId = (
   state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+) => state.privateAccount?.seedId ?? null
 
 /**
  * Guards the screens that need the selected account's address (its portfolio, sending, apps),
  * sending a selected Privacy Pools account, which has none, to its dashboard instead.
  */
 const RegularAccountRoute = ({ children }: { children?: ReactNode }) => {
-  const { state: privacyPoolsAccountId } = useController(
+  const { state: privateAccountSeedId } = useController(
     'SelectedAccountController',
-    selectPrivacyPoolsAccountId
+    selectPrivateAccountSeedId
   )
   const isFocused = useIsScreenFocused()
 
-  if (!privacyPoolsAccountId) return children || <Outlet />
+  if (!privateAccountSeedId) return children || <Outlet />
 
   // Only the focused screen redirects, as in `AuthenticatedRoute`
   if (!isFocused) return null
