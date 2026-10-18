@@ -101,6 +101,8 @@ const useTornadoCash = () => {
     hasSyncError: !!syncState?.error,
     isFirstSync: syncState?.status === 'syncing' && !syncState.lastSyncedAt && !balances,
     balances: balanceDisplays,
+    /** The controller's balances, with how many notes of each amount. */
+    noteBalances: balances || [],
     balancesState,
     totalBalance,
     operation,

@@ -30,6 +30,7 @@ import SurveyScreen from '@web/modules/survey/screens/SurveyScreen/SurveyScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
 import PrivacyPoolsSendScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsSendScreen'
+import TornadoCashSendScreen from '@web/modules/tornado-cash/screens/TornadoCashSendScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
 
 const MainRoutes = () => {
@@ -255,6 +256,7 @@ const MainRoutes = () => {
               <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
             </Route>
             <Route path={WEB_ROUTES.privacyPoolsSend} element={<PrivacyPoolsSendScreen />} />
+            <Route path={WEB_ROUTES.tornadoCashSend} element={<TornadoCashSendScreen />} />
             <Route
               path={WEB_ROUTES.signAccountOp}
               element={<RequestWindowGroupScreen pick={(m) => m.SignAccountOpScreen} />}

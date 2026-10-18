@@ -26,7 +26,7 @@ export type PrivacyPoolsTokenOption = SelectValue & {
 const getTokenOptionValue = (chainId: string, tokenAddress: string) =>
   `${chainId}:${tokenAddress.toLowerCase()}`
 
-const getTokenOption = ({
+export const getTokenOption = ({
   chainId,
   tokenAddress,
   isNative,
