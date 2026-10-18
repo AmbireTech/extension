@@ -37,6 +37,12 @@ const BADGE_PRESETS: { [preset in Preset]: BadgePreset } = {
     tooltipText:
       'Keeps funds private in Privacy Pools. It has no public address of its own and is created from one of your recovery phrases - write that phrase down, as it is the only way to recover the account.',
     specialType: 'privacy-pools'
+  },
+  'tornado-cash': {
+    text: 'Tornado Cash',
+    type: 'privacyPools',
+    tooltipText:
+      'Keeps funds private in Tornado Cash. It has no public address of its own and is created from one of your recovery phrases - write that phrase down, as it is the only way to recover the account.'
   }
 }
 

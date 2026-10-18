@@ -14,7 +14,8 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
-import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
+import usePrivateAccounts from '@common/hooks/usePrivateAccounts'
+import { PRIVACY_PROVIDER_NAMES } from '@common/modules/privacy/providers'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -71,7 +72,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
 
   const { state: account } = useController('SelectedAccountController', selectAccount)
   // Shown in place of a regular account, with no address to copy
-  const { selectedAccount: privacyPoolsAccount } = usePrivacyPoolsAccounts()
+  const { selectedAccount: privateAccount } = usePrivateAccounts()
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
     duration: 50
@@ -113,12 +114,14 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
     return shortenAddress(account.addr, 13)
   }, [account, isNarrowWebLayout])
 
-  // A Privacy Pools account has no name or address of its own, so it is named by its kind
+  // A private account has no name or address of its own, so it is named by its kind
   const label = account ? account.preferences.label : t('Private account')
-  const subtitle = account ? `(${formattedAddress})` : t('Privacy Pools')
+  const subtitle = account
+    ? `(${formattedAddress})`
+    : PRIVACY_PROVIDER_NAMES[privateAccount?.providerId ?? 'privacyPools']
   const canCopyAddress = isWeb && !!account
 
-  if (!account && !privacyPoolsAccount) return null
+  if (!account && !privateAccount) return null
 
   return (
     <View

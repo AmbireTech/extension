@@ -7,7 +7,14 @@ type BadgePreset = {
   specialType?: SpecialBadgeType
 }
 
-type Preset = 'smart-account' | 'view-only' | 'ambire-v1' | 'linked' | 'metamask' | 'privacy-pools'
+type Preset =
+  | 'smart-account'
+  | 'view-only'
+  | 'ambire-v1'
+  | 'linked'
+  | 'metamask'
+  | 'privacy-pools'
+  | 'tornado-cash'
 
 type Props = {
   preset: Preset

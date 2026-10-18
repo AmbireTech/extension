@@ -4,7 +4,6 @@ import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
-import { getPrivateAccountSeedId } from '@ambire-common/libs/privateAccount/privateAccount'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
@@ -15,14 +14,15 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isPrivacyPoolsEnabled } from '@common/config/env'
+import { isPrivacyPoolsEnabled, isTornadoCashEnabled } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
-import usePrivacyPoolsAccounts, {
-  filterPrivacyPoolsAccountsBySearch
-} from '@common/hooks/usePrivacyPoolsAccounts'
+import usePrivateAccounts, {
+  filterPrivateAccountsBySearch,
+  getPrivateAccountKey
+} from '@common/hooks/usePrivateAccounts'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
@@ -39,7 +39,7 @@ import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/Privac
 import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-import type { PrivacyPoolsAccountDisplay } from '@common/hooks/usePrivacyPoolsAccounts'
+import type { PrivateAccountDisplay } from '@common/hooks/usePrivateAccounts'
 
 const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean | null => {
   if (!search) return null
@@ -62,27 +62,28 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 }
 
 const ACCOUNT_OPTIONS = { markSelected: true }
-const privacyPoolsAccountKeyExtractor = (account: PrivacyPoolsAccountDisplay) => account.seedId
+const privateAccountKeyExtractor = (account: PrivateAccountDisplay) => getPrivateAccountKey(account)
+/** Whether the Private tab and its accounts are shown at all. */
+const isPrivateAccountAvailable = isPrivacyPoolsEnabled || isTornadoCashEnabled
 /** Used until the footer has been measured */
 const FALLBACK_FOOTER_HEIGHT = 88
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
-const selectPrivacyPoolsAccountId = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => getPrivateAccountSeedId(state.privateAccount, 'privacyPools')
+const selectPrivateAccountKey = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.privateAccount ? getPrivateAccountKey(state.privateAccount) : null
 
 const AccountSelectScreen = () => {
   const { styles, theme } = useTheme(getStyles)
   const { isNarrowWebLayout } = useCompactLayout()
   const flatlistRef = useRef(null)
-  const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
+  const { accounts: privateAccounts } = usePrivateAccounts()
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const { state: account } = useController('SelectedAccountController', selectAccount)
-  const { state: privacyPoolsAccountId } = useController(
+  const { state: selectedPrivateAccountKey } = useController(
     'SelectedAccountController',
-    selectPrivacyPoolsAccountId
+    selectPrivateAccountKey
   )
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const {
@@ -93,7 +94,8 @@ const AccountSelectScreen = () => {
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
-  const [pendingToBeSetSelectedPrivacyPoolsAccount, setPendingToBeSetSelectedPrivacyPoolsAccount] =
+  // By `getPrivateAccountKey`, as accounts of different providers can share a recovery phrase
+  const [pendingToBeSetSelectedPrivateAccount, setPendingToBeSetSelectedPrivateAccount] =
     useState('')
   // The search stays when switching tabs, so it filters the newly opened tab too
   const [activeTab, setActiveTab] = useState<AccountsTab>('public')
@@ -144,9 +146,9 @@ const AccountSelectScreen = () => {
     []
   )
 
-  const filteredPrivacyPoolsAccounts = useMemo(
-    () => filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')),
-    [privacyPoolsAccounts, search, t]
+  const filteredPrivateAccounts = useMemo(
+    () => filterPrivateAccountsBySearch(privateAccounts, search),
+    [privateAccounts, search]
   )
 
   const renderItem = useCallback(
@@ -177,24 +179,30 @@ const AccountSelectScreen = () => {
     }
   }, [account, navigate, pendingToBeSetSelectedAccount])
 
-  // The same for a Privacy Pools account, selected by its recovery phrase id
+  // The same for a private account
   useEffect(() => {
-    if (!pendingToBeSetSelectedPrivacyPoolsAccount) return
+    if (!pendingToBeSetSelectedPrivateAccount) return
 
-    if (privacyPoolsAccountId === pendingToBeSetSelectedPrivacyPoolsAccount) {
+    if (selectedPrivateAccountKey === pendingToBeSetSelectedPrivateAccount) {
       navigate(ROUTES.dashboard)
     }
-  }, [navigate, pendingToBeSetSelectedPrivacyPoolsAccount, privacyPoolsAccountId])
+  }, [navigate, pendingToBeSetSelectedPrivateAccount, selectedPrivateAccountKey])
 
-  const renderPrivacyPoolsAccount = useCallback(
-    ({ item: privacyPoolsAccount }: { item: PrivacyPoolsAccountDisplay }) => (
+  const onPrivateAccountSelect = useCallback(
+    (privateAccount: PrivateAccountDisplay) =>
+      setPendingToBeSetSelectedPrivateAccount(getPrivateAccountKey(privateAccount)),
+    []
+  )
+
+  const renderPrivateAccount = useCallback(
+    ({ item: privateAccount }: { item: PrivateAccountDisplay }) => (
       <PrivacyPoolsAccountRow
-        account={privacyPoolsAccount}
-        isSelected={privacyPoolsAccount.seedId === privacyPoolsAccountId}
-        onSelect={setPendingToBeSetSelectedPrivacyPoolsAccount}
+        account={privateAccount}
+        isSelected={getPrivateAccountKey(privateAccount) === selectedPrivateAccountKey}
+        onSelect={onPrivateAccountSelect}
       />
     ),
-    [privacyPoolsAccountId]
+    [onPrivateAccountSelect, selectedPrivateAccountKey]
   )
 
   const listContentContainerStyle = useMemo(
@@ -202,8 +210,8 @@ const AccountSelectScreen = () => {
     [listBottomInset]
   )
   const noAccountsFound = <Text>{t('No accounts found')}</Text>
-  const isPrivateTabOpen = isPrivacyPoolsEnabled && activeTab === 'private'
-  const listStyle = isPrivacyPoolsEnabled ? styles.containerBelowTabs : styles.container
+  const isPrivateTabOpen = isPrivateAccountAvailable && activeTab === 'private'
+  const listStyle = isPrivateAccountAvailable ? styles.containerBelowTabs : styles.container
 
   const addAccountButton = (
     <Button
@@ -235,7 +243,7 @@ const AccountSelectScreen = () => {
     </Button>
   )
 
-  return !pendingToBeSetSelectedAccount && !pendingToBeSetSelectedPrivacyPoolsAccount ? (
+  return !pendingToBeSetSelectedAccount && !pendingToBeSetSelectedPrivateAccount ? (
     <LayoutWrapper>
       <HeaderWithTitle>
         <HoverablePressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
@@ -244,16 +252,18 @@ const AccountSelectScreen = () => {
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
-        {isPrivacyPoolsEnabled && <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />}
+        {isPrivateAccountAvailable && (
+          <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        )}
         <View style={flexbox.flex1}>
           {isPrivateTabOpen ? (
             <ScrollableWrapper
               type={WRAPPER_TYPES.FLAT_LIST}
               style={listStyle}
               contentContainerStyle={listContentContainerStyle}
-              data={filteredPrivacyPoolsAccounts}
-              renderItem={renderPrivacyPoolsAccount}
-              keyExtractor={privacyPoolsAccountKeyExtractor}
+              data={filteredPrivateAccounts}
+              renderItem={renderPrivateAccount}
+              keyExtractor={privateAccountKeyExtractor}
               ListEmptyComponent={noAccountsFound}
             />
           ) : (

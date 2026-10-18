@@ -12,7 +12,8 @@ import { useTranslation } from '@common/config/localization'
 import useAccountKeys from '@common/hooks/useAccountKeys'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
-import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
+import usePrivateAccounts from '@common/hooks/usePrivateAccounts'
+import { PRIVACY_PROVIDER_BADGE_PRESETS } from '@common/modules/privacy/providers'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -29,7 +30,7 @@ const AccountDataDetailed = () => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', selectAccount)
   // Shown in place of a regular account, like in the account lists
-  const { selectedAccount: privacyPoolsAccount } = usePrivacyPoolsAccounts()
+  const { selectedAccount: privateAccount } = usePrivateAccounts()
   const reverseLookup = useReverseLookup({
     address: account?.addr || ''
   })
@@ -41,7 +42,7 @@ const AccountDataDetailed = () => {
     return undefined
   }, [account])
 
-  if (!account && privacyPoolsAccount)
+  if (!account && privateAccount)
     return (
       <View
         style={[
@@ -72,9 +73,12 @@ const AccountDataDetailed = () => {
               numberOfLines={1}
               style={[spacings.mrTy, isNarrowWebLayout && { flexShrink: 1, minWidth: 0 }]}
             >
-              {privacyPoolsAccount.label}
+              {privateAccount.label}
             </Text>
-            <BadgeWithPreset preset="privacy-pools" withRightSpacing={false} />
+            <BadgeWithPreset
+              preset={PRIVACY_PROVIDER_BADGE_PRESETS[privateAccount.providerId]}
+              withRightSpacing={false}
+            />
           </View>
           <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
             {t('Private account, no public address')}

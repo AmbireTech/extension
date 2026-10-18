@@ -22,8 +22,35 @@ const selectPrivacyPoolsAccounts = (state: AllControllersMappingType['PrivacyPoo
 const selectTornadoCashAccounts = (state: AllControllersMappingType['TornadoCashController']) =>
   state.accounts
 const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
+const selectPrivateAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.privateAccount
 
-/** The wallet's private accounts of every provider, Privacy Pools ones first. */
+/** Filters accounts by label and provider - they have no address or key to search by. */
+export const filterPrivateAccountsBySearch = (
+  accounts: PrivateAccountDisplay[],
+  search: string
+) => {
+  const query = search.trim().toLowerCase()
+  if (!query) return accounts
+
+  return accounts.filter(({ label, providerId }) =>
+    `${label} ${PRIVACY_PROVIDER_NAMES[providerId]}`.toLowerCase().includes(query)
+  )
+}
+
+/** A key that tells private accounts apart across providers, for lists and comparisons. */
+export const getPrivateAccountKey = ({
+  providerId,
+  seedId
+}: {
+  providerId: PrivacyProviderId
+  seedId: string
+}) => `${providerId}:${seedId}`
+
+/**
+ * The wallet's private accounts of every provider, Privacy Pools ones first, and the selected one.
+ * The accounts may still be empty on first paint.
+ */
 const usePrivateAccounts = () => {
   const { t } = useTranslation()
   const { state: privacyPoolsAccounts } = useController(
@@ -35,6 +62,10 @@ const usePrivateAccounts = () => {
     selectTornadoCashAccounts
   )
   const { state: seeds } = useController('KeystoreController', selectSeeds)
+  const { state: selectedPrivateAccount } = useController(
+    'SelectedAccountController',
+    selectPrivateAccount
+  )
 
   const accounts: PrivateAccountDisplay[] = useMemo(() => {
     const toDisplay = (providerId: PrivacyProviderId, seedId: string): PrivateAccountDisplay => {
@@ -56,7 +87,17 @@ const usePrivateAccounts = () => {
     ]
   }, [privacyPoolsAccounts, seeds, t, tornadoCashAccounts])
 
-  return { accounts }
+  const selectedAccount = useMemo(
+    () =>
+      accounts.find(
+        ({ providerId, seedId }) =>
+          providerId === selectedPrivateAccount?.providerId &&
+          seedId === selectedPrivateAccount?.seedId
+      ) || null,
+    [accounts, selectedPrivateAccount]
+  )
+
+  return { accounts, selectedAccount }
 }
 
 export default usePrivateAccounts

@@ -19,10 +19,12 @@ import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
 import useNavigation from '@common/hooks/useNavigation'
-import usePrivacyPoolsAccounts, {
-  filterPrivacyPoolsAccountsBySearch,
-  PrivacyPoolsAccountDisplay
-} from '@common/hooks/usePrivacyPoolsAccounts'
+import usePrivateAccounts, {
+  filterPrivateAccountsBySearch,
+  getPrivateAccountKey,
+  PrivateAccountDisplay
+} from '@common/hooks/usePrivateAccounts'
+import { PRIVACY_PROVIDER_NAMES } from '@common/modules/privacy/providers'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
@@ -43,8 +45,9 @@ const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
   const { accounts, control, search, keyExtractor, getItemLayout, onAccountExtraHeightChange } =
     useAccountsList()
-  const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
+  const { accounts: privateAccounts } = usePrivateAccounts()
   const { dispatch: privacyPoolsDispatch } = useController('PrivacyPoolsController')
+  const { dispatch: tornadoCashDispatch } = useController('TornadoCashController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
@@ -94,7 +97,7 @@ const AccountsSettingsScreen = () => {
     null
   )
   const [privacyPoolsAccountToRemove, setPrivacyPoolsAccountToRemove] =
-    useState<PrivacyPoolsAccountDisplay | null>(null)
+    useState<PrivateAccountDisplay | null>(null)
   const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
   const clearAccountSettingsAccount = useCallback(() => setAccountSettingsAccount(null), [])
 
@@ -189,36 +192,43 @@ const AccountsSettingsScreen = () => {
   const removePrivacyPoolsAccount = useCallback(() => {
     if (!privacyPoolsAccountToRemove) return
 
-    privacyPoolsDispatch({
+    const dispatchToProvider =
+      privacyPoolsAccountToRemove.providerId === 'tornadoCash'
+        ? tornadoCashDispatch
+        : privacyPoolsDispatch
+    dispatchToProvider({
       type: 'method',
       params: { method: 'removeAccount', args: [privacyPoolsAccountToRemove.seedId] }
     })
     cancelRemovePrivacyPoolsAccount()
-  }, [cancelRemovePrivacyPoolsAccount, privacyPoolsAccountToRemove, privacyPoolsDispatch])
+  }, [
+    cancelRemovePrivacyPoolsAccount,
+    privacyPoolsAccountToRemove,
+    privacyPoolsDispatch,
+    tornadoCashDispatch
+  ])
 
   // Below the regular accounts, not draggable: their order is not stored and they have no address
   // to key them by
   const privacyPoolsAccountRows = useMemo(
     () =>
-      filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')).map(
-        (privacyPoolsAccount) => (
-          <View
-            key={privacyPoolsAccount.seedId}
-            style={[
-              spacings.mbTy,
-              spacings.plSm,
-              { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
-            ]}
-          >
-            <PrivacyPoolsAccountRow
-              account={privacyPoolsAccount}
-              onRemove={setPrivacyPoolsAccountToRemove}
-              containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
-            />
-          </View>
-        )
-      ),
-    [privacyPoolsAccounts, search, t, theme.secondaryBackground]
+      filterPrivateAccountsBySearch(privateAccounts, search).map((privacyPoolsAccount) => (
+        <View
+          key={getPrivateAccountKey(privacyPoolsAccount)}
+          style={[
+            spacings.mbTy,
+            spacings.plSm,
+            { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
+          ]}
+        >
+          <PrivacyPoolsAccountRow
+            account={privacyPoolsAccount}
+            onRemove={setPrivacyPoolsAccountToRemove}
+            containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
+          />
+        </View>
+      )),
+    [privateAccounts, search, theme.secondaryBackground]
   )
 
   const renderItem = useCallback(
@@ -445,11 +455,18 @@ const AccountsSettingsScreen = () => {
         </View>
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Text fontSize={16} weight="medium" style={{ ...spacings.mbSm, textAlign: 'center' }}>
-            {t('Are you sure you want to remove this Privacy Pools account?')}
+            {t('Are you sure you want to remove this {{provider}} account?', {
+              provider:
+                PRIVACY_PROVIDER_NAMES[privacyPoolsAccountToRemove?.providerId ?? 'privacyPools']
+            })}
           </Text>
           <Text fontSize={14} appearance="secondaryText" style={{ textAlign: 'center' }}>
             {t(
-              'Its funds stay in Privacy Pools, tied to its recovery phrase. Adding the account again from the same phrase brings them back.'
+              'Its funds stay in {{provider}}, tied to its recovery phrase. Adding the account again from the same phrase brings them back.',
+              {
+                provider:
+                  PRIVACY_PROVIDER_NAMES[privacyPoolsAccountToRemove?.providerId ?? 'privacyPools']
+              }
             )}
           </Text>
         </View>

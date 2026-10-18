@@ -8,7 +8,8 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
-import { PrivacyPoolsAccountDisplay } from '@common/hooks/usePrivacyPoolsAccounts'
+import { PrivateAccountDisplay } from '@common/hooks/usePrivateAccounts'
+import { PRIVACY_PROVIDER_BADGE_PRESETS } from '@common/modules/privacy/providers'
 import useTheme from '@common/hooks/useTheme'
 import getAccountStyles from '@common/modules/account-select/components/Account/styles'
 import spacings from '@common/styles/spacings'
@@ -19,20 +20,20 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
 
 type Props = {
-  account: PrivacyPoolsAccountDisplay
+  account: PrivateAccountDisplay
   isSelected?: boolean
   /** Selects the account on press. Without it the row is display-only. */
-  onSelect?: (seedId: string) => void
+  onSelect?: (account: PrivateAccountDisplay) => void
   /** Adds a "Remove account" option to the row's menu. */
-  onRemove?: (account: PrivacyPoolsAccountDisplay) => void
+  onRemove?: (account: PrivateAccountDisplay) => void
   containerStyle?: ViewStyle
 }
 
 const REMOVE_OPTION_VALUE = 'remove'
 
 /**
- * `Account` for a Privacy Pools account, with the same height so both fit one list. It shows no
- * balance: that is known only once the account is opened and synced.
+ * `Account` for a private account (Privacy Pools, Tornado Cash), with the same height so both fit
+ * one list. It shows no balance: that is known only once the account is opened and synced.
  */
 const PrivacyPoolsAccountRow = ({
   account,
@@ -62,13 +63,13 @@ const PrivacyPoolsAccountRow = ({
         type: 'method',
         params: {
           method: 'selectPrivateAccount',
-          args: [{ providerId: 'privacyPools', seedId: account.seedId }]
+          args: [{ providerId: account.providerId, seedId: account.seedId }]
         }
       })
     }
 
-    onSelect(account.seedId)
-  }, [account.seedId, isSelected, mainDispatch, onSelect])
+    onSelect(account)
+  }, [account, isSelected, mainDispatch, onSelect])
 
   const menuOptions = useMemo(
     () => [
@@ -113,7 +114,10 @@ const PrivacyPoolsAccountRow = ({
             {t('Added from {{seedLabel}}', { seedLabel: account.label })}
           </Text>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
-            <BadgeWithPreset preset="privacy-pools" withRightSpacing={false} />
+            <BadgeWithPreset
+              preset={PRIVACY_PROVIDER_BADGE_PRESETS[account.providerId]}
+              withRightSpacing={false}
+            />
           </View>
         </View>
       </View>
