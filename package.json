@@ -86,6 +86,7 @@
     "@keystonehq/animated-qr": "0.10.0",
     "@keystonehq/bc-ur-registry-eth": "0.22.1",
     "@kohaku-eth/privacy-pools": "0.1.0-alpha.26",
+    "@kohaku-eth/tornado-cash": "0.0.2-alpha.25",
     "@ledgerhq/context-module": "2.5.0",
     "@ledgerhq/device-management-kit": "1.8.0",
     "@ledgerhq/device-signer-kit-ethereum": "1.17.0",
@@ -364,7 +365,10 @@
       "@sentry/react-native>@sentry/expo-upload-sourcemaps>@sentry/cli": false,
       "@keystonehq/bc-ur-registry-eth>hdkey>secp256k1": false,
       "hardhat>keccak": false,
-      "keycard-sdk>@nonth/pcsclite": false
+      "keycard-sdk>@nonth/pcsclite": false,
+      "@kohaku-eth/tornado-cash>@privacy-paymasters/sdk>@pimlico/alto>@opentelemetry/exporter-trace-otlp-proto>@opentelemetry/otlp-transformer>protobufjs": false,
+      "@kohaku-eth/tornado-cash>@privacy-paymasters/sdk>@pimlico/alto>@opentelemetry/sdk-node>@opentelemetry/exporter-trace-otlp-grpc>@grpc/grpc-js>@grpc/proto-loader>protobufjs": false,
+      "@kohaku-eth/tornado-cash>@privacy-paymasters/sdk>@pimlico/alto>bull>msgpackr>msgpackr-extract": false
     }
   }
 }

@@ -13,7 +13,18 @@ const AssetReplacePlugin = require('../plugins/AssetReplacePlugin')
 const createLavamoatUnsafeLayerPlugin = require('../lavamoat/plugins/lavamoat-unsafe-layer-plugin')
 const createLavamoatUnsafePackagesPlugin = require('../lavamoat/plugins/lavamoat-unsafe-packages-plugin')
 const LavamoatIgnoredModulesVerifyPlugin = require('../lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
-const { isWebkit, isGecko, isSafari, isAmbireNext, isPrivacyPoolsBundled } = require('./env')
+const {
+  isWebkit,
+  isGecko,
+  isSafari,
+  isAmbireNext,
+  isPrivacyPoolsBundled,
+  isTornadoCashBundled
+} = require('./env')
+const {
+  TORNADO_CASH_ARTIFACTS_DIR,
+  assertTornadoCashArtifact
+} = require('../scripts/fetch-tornado-cash-artifacts')
 const { CJS_RULE, hardenTerser, ROOT_DIR } = require('./shared')
 
 // Entries that run outside LavaMoat protection.
@@ -334,6 +345,30 @@ module.exports = async function buildExtension(
             from: './node_modules/@fatsolutions/privacy-pools-core-circuits/artifacts',
             to: 'privacy-pools-circuits'
           }
+        ]
+      : []),
+    // Tornado Cash proving artifacts (~34 MB), downloaded by `yarn setup` from a pinned commit and
+    // checked again here, plus the SDK's prebuilt module workers, which load each other by
+    // relative URL and so must sit side by side. Filenames must match TORNADO_CASH_ARTIFACT_PATHS.
+    ...(isTornadoCashBundled
+      ? [
+          {
+            from: TORNADO_CASH_ARTIFACTS_DIR,
+            to: 'tornado-cash',
+            globOptions: { ignore: ['**/*.download'] },
+            transform(content, absoluteFrom) {
+              assertTornadoCashArtifact(path.basename(absoluteFrom), content)
+              return content
+            }
+          },
+          ...[
+            'state-manager.worker.js',
+            'msm-worker.browser.js',
+            'merkle-tree-worker.browser.js'
+          ].map((fileName) => ({
+            from: `./node_modules/@kohaku-eth/tornado-cash/dist/${fileName}`,
+            to: `tornado-cash/${fileName}`
+          }))
         ]
       : []),
     // qr-scanner ships its decoder worker inlined inside a `new Worker(URL.createObjectURL(new Blob([...])))`

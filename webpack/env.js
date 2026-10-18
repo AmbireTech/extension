@@ -19,6 +19,9 @@ const isAmbireNext = process.env.AMBIRE_NEXT === 'true'
 // Whether the Privacy Pools circuit artifacts (~23 MB) are shipped. Must match
 // `isPrivacyPoolsEnabled` in src/common/config/env/env.ts, which hides the feature everywhere else.
 const isPrivacyPoolsBundled = !isGecko && (isAmbireNext || process.env.APP_ENV === 'development')
+// Whether the Tornado Cash proving artifacts (~34 MB) and workers are shipped. Must match
+// `isTornadoCashEnabled` in src/common/config/env/env.ts.
+const isTornadoCashBundled = isPrivacyPoolsBundled
 
 // The folder that holds every build output. Defaults to <repo root>/build, but BUILD_DIR
 // can point it at any folder on the machine. Handy with git worktrees: build every worktree
@@ -39,6 +42,7 @@ module.exports = {
   isLegends,
   isAmbireNext,
   isPrivacyPoolsBundled,
+  isTornadoCashBundled,
   buildDir,
   buildOutputDir
 }

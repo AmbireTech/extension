@@ -27,6 +27,9 @@ yarn install
 yarn allow-scripts
 yarn patch-package
 
+# Proving artifacts the extension ships for Tornado Cash (pinned and hash-checked)
+node scripts/fetch-tornado-cash-artifacts.js
+
 # The inpage bundles are build output and gitignored, so a fresh clone has none.
 # DappWebViewScreen require()s them, which throws when they are missing.
 yarn build:webview

@@ -75,6 +75,13 @@ export const isWeb = Platform.OS === 'web'
 export const isPrivacyPoolsEnabled =
   isWeb && process.env.WEB_ENGINE !== 'gecko' && (isDev || isAmbireNext)
 
+/**
+ * Tornado Cash follows the Privacy Pools rollout and limits: its SDK runs in Web Workers, which
+ * only the extension's offscreen document has (Chrome). Gates only the way into the feature.
+ * Keep in sync with `isTornadoCashBundled` in webpack/env.js.
+ */
+export const isTornadoCashEnabled = isPrivacyPoolsEnabled
+
 enum APP_ENV {
   PROD = 'production',
   STAGING = 'staging',
