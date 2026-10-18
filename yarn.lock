@@ -2899,10 +2899,10 @@
     "@scure/bip39" "^2.2.0"
     ox "^0.12.0"
 
-"@kohaku-eth/privacy-pools@0.1.0-alpha.25":
-  version "0.1.0-alpha.25"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.1.0-alpha.25.tgz#73bf1aa2249b0a6253e3cebc7d57482b2ad0618c"
-  integrity sha512-RIEBjYWKwAt+m+FxWS94UkGOG+Sq3V84rHRzxS4NLdH9jCU6YrKN0xSH3wh3+xPUWgJJJy2NsLYkNF0q0iaFNg==
+"@kohaku-eth/privacy-pools@0.1.0-alpha.26":
+  version "0.1.0-alpha.26"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.1.0-alpha.26.tgz#e8bdfc3db585283fec6e486b156588f4374d9118"
+  integrity sha512-PWxaTizW+KeiM+eIxQQkv6xci14tYvTFKiFuVMtz1CRa9kwD2bjtiP2nH3O0cCiQz2l1scLMGHkZsHzabYtLHQ==
   dependencies:
     "@fatsolutions/privacy-pools-core-circuits" "1.0.5"
     "@kohaku-eth/plugins" "0.0.1-alpha.17"
