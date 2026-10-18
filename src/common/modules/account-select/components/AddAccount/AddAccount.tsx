@@ -86,17 +86,19 @@ const AddAccount = ({
   const handlePrivacyProviderChosen = useCallback(
     (providerId: PrivacyProviderId) => {
       setPrivacyProviderId(providerId)
-      closePrivacyProviderBottomSheet()
+      // Stacked on the provider step, not instead of it: closing one sheet while opening another
+      // leaves only the backdrop. Going back from it returns to the step
       openPrivateAccountBottomSheet()
     },
-    [closePrivacyProviderBottomSheet, openPrivateAccountBottomSheet]
+    [openPrivateAccountBottomSheet]
   )
 
   const handlePrivateAccountAdded = useCallback(() => {
     closePrivateAccountBottomSheet()
+    closePrivacyProviderBottomSheet()
     closeBottomSheet()
     navigate(ROUTES.dashboard)
-  }, [closeBottomSheet, closePrivateAccountBottomSheet, navigate])
+  }, [closeBottomSheet, closePrivacyProviderBottomSheet, closePrivateAccountBottomSheet, navigate])
 
   const optionsHW = useMemo(() => {
     if (isMobile)

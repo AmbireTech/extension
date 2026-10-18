@@ -85,7 +85,8 @@ const AddPrivateAccountBottomSheet = ({
 
   return (
     <BottomSheet
-      id={`${testIdPrefix}-bottom-sheet`}
+      // Fixed: a new id remounts the sheet, which drops an `open` made as the provider changes
+      id="add-private-account-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       FooterComponent={footer}
