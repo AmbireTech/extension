@@ -6,6 +6,8 @@ import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
 import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
+import { TORNADO_CASH_CHAIN_ID } from '@ambire-common/consts/tornadoCash'
+import { readTornadoCashDeposit } from '@ambire-common/libs/tornadoCash/deposit'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
@@ -30,7 +32,8 @@ import useController from '@common/hooks/useController'
 import useControllerSession from '@common/hooks/useControllerSession'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
-import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
+import usePrivateAccounts, { PrivateAccountDisplay } from '@common/hooks/usePrivateAccounts'
+import { PRIVACY_PROVIDER_NAMES } from '@common/modules/privacy/providers'
 import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
@@ -88,7 +91,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isPreparingPrivateDeposit,
     privateDepositError
   } = transferState
-  const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
+  const { accounts: privateAccounts } = usePrivateAccounts()
 
   const amountInFiatBigInt = useMemo(() => {
     try {
@@ -303,13 +306,19 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [transferDispatch]
   )
 
-  const selectPrivacyPoolsRecipient = useCallback(
-    (seedId: string | null) => {
+  const selectPrivateRecipient = useCallback(
+    (privateAccount: PrivateAccountDisplay | null) => {
       transferDispatch({
         type: 'method',
         params: {
           method: 'update',
-          args: [{ privateRecipient: seedId ? { providerId: 'privacyPools', seedId } : null }]
+          args: [
+            {
+              privateRecipient: privateAccount
+                ? { providerId: privateAccount.providerId, seedId: privateAccount.seedId }
+                : null
+            }
+          ]
         }
       })
     },
@@ -609,6 +618,16 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     !!latestBroadcastedAccountOp?.calls.some(
       ({ to }) => to?.toLowerCase() === privacyPoolsEntrypoint.toLowerCase()
     )
+  const wasSentToTornadoCashAccount =
+    latestBroadcastedAccountOp?.chainId === TORNADO_CASH_CHAIN_ID &&
+    latestBroadcastedAccountOp.calls.some(
+      (call) => !!readTornadoCashDeposit({ to: call.to, data: call.data, value: call.value })
+    )
+  const privateRecipientProviderName = wasSentToTornadoCashAccount
+    ? PRIVACY_PROVIDER_NAMES.tornadoCash
+    : wasSentToPrivacyPoolsAccount
+      ? PRIVACY_PROVIDER_NAMES.privacyPools
+      : null
 
   if (displayedView === 'track') {
     return (
@@ -639,17 +658,18 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             title={
               isTopUp
                 ? t('Top up ready!')
-                : // Like the Privacy Pools account's own Send
-                  wasSentToPrivacyPoolsAccount
+                : // Like the private account's own Send
+                  privateRecipientProviderName
                   ? t('Sending successfully')
                   : t('Transfer done!')
             }
             titleSecondary={
               isTopUp
                 ? t('You can now use your gas tank')
-                : wasSentToPrivacyPoolsAccount
-                  ? t('Your {{symbol}} is on its way to your Privacy Pools account.', {
-                      symbol: latestBroadcastedToken?.symbol || 'Token'
+                : privateRecipientProviderName
+                  ? t('Your {{symbol}} is on its way to your {{provider}} account.', {
+                      symbol: latestBroadcastedToken?.symbol || 'Token',
+                      provider: privateRecipientProviderName
                     })
                   : t('{{symbol}} delivered!', {
                       symbol: latestBroadcastedToken?.symbol || 'Token'
@@ -730,8 +750,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 setAmountFieldValue={setAmountFieldValue}
                 addressStateFieldValue={addressStateFieldValue}
                 setAddressStateFieldValue={setAddressStateFieldValue}
-                privacyPoolsAccounts={privacyPoolsAccounts}
-                onSelectPrivacyPoolsRecipient={selectPrivacyPoolsRecipient}
+                privateAccounts={privateAccounts}
+                onSelectPrivateRecipient={selectPrivateRecipient}
               />
             </ScrollableWrapper>
             {isTopUp && !canUseGasTank && (

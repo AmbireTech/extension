@@ -32,15 +32,17 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
-import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
+import { isMobile, isPrivacyPoolsEnabled, isTornadoCashEnabled, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import {
-  filterPrivacyPoolsAccountsBySearch,
-  PrivacyPoolsAccountDisplay
-} from '@common/hooks/usePrivacyPoolsAccounts'
+  filterPrivateAccountsBySearch,
+  getPrivateAccountKey,
+  PrivateAccountDisplay
+} from '@common/hooks/usePrivateAccounts'
+import { PRIVACY_PROVIDER_NAMES } from '@common/modules/privacy/providers'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -79,13 +81,13 @@ export interface AddressSelectProps extends InputProps {
   isRecipientHumanizerKnownTokenOrSmartContract?: boolean
   isRecipientAddressUnknown?: boolean
   addressPoisoningMatch?: AddressPoisoningMatch | null
-  /** Listed as recipients. Having no address, picking one calls `onSelectPrivacyPoolsAccount`. */
-  privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
-  onSelectPrivacyPoolsAccount?: (seedId: string) => void
+  /** Listed as recipients. Having no address, picking one calls `onSelectPrivateAccount`. */
+  privateAccounts?: PrivateAccountDisplay[]
+  onSelectPrivateAccount?: (account: PrivateAccountDisplay) => void
 }
 
 // Marks a Privacy Pools account option - see `setAddressWrapped`
-const PRIVACY_POOLS_OPTION_VALUE_PREFIX = 'privacy-pools-account:'
+const PRIVATE_ACCOUNT_OPTION_VALUE_PREFIX = 'private-account:'
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
   severity: 'error', // Don't let the user submit, just in case there is an error
@@ -282,13 +284,13 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   withShortenedAddresses,
   includeSelectedAccount = false,
   inputBackgroundColor,
-  privacyPoolsAccounts,
-  onSelectPrivacyPoolsAccount
+  privateAccounts,
+  onSelectPrivateAccount
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
   const { state: keys } = useController('KeystoreController', selectKeys)
-  const canSendToPrivacyPoolsAccounts = useMemo(
+  const canSendToPrivateAccounts = useMemo(
     () => !account || !getIsViewOnly(keys, account.associatedKeys),
     [account, keys]
   )
@@ -308,9 +310,10 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const [bindManageBtnAnim, manageBtnAnimStyle] = useHover({
     preset: 'opacityInverted'
   })
-  // Split like the accounts list: Privacy Pools accounts, having no address, are private. Without
-  // them, the list is as it was
-  const hasAccountsTabs = isPrivacyPoolsEnabled && !!onSelectPrivacyPoolsAccount
+  // Split like the accounts list: private accounts (Privacy Pools, Tornado Cash), having no
+  // address, are private. Without them, the list is as it was
+  const hasAccountsTabs =
+    (isPrivacyPoolsEnabled || isTornadoCashEnabled) && !!onSelectPrivateAccount
   // The search stays when switching tabs, so it filters the newly opened tab too
   const [activeTab, setActiveTab] = useState<AccountsTab>('public')
 
@@ -364,53 +367,49 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     return results.map((result) => result.item.contact)
   }, [selectableContacts, actualAddress, searchableContacts])
 
-  const filteredPrivacyPoolsAccounts = useMemo(
+  const filteredPrivateAccounts = useMemo(
     () =>
-      privacyPoolsAccounts && onSelectPrivacyPoolsAccount
-        ? filterPrivacyPoolsAccountsBySearch(
-            privacyPoolsAccounts,
-            isMobile ? '' : actualAddress,
-            t('Privacy Pools')
-          )
+      privateAccounts && onSelectPrivateAccount
+        ? filterPrivateAccountsBySearch(privateAccounts, isMobile ? '' : actualAddress)
         : [],
-    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, actualAddress, t]
+    [privateAccounts, onSelectPrivateAccount, actualAddress]
   )
 
   // Looked up rather than parsed back from the option value
-  const privacyPoolsSeedIdByOptionValue = useMemo(
+  const privateAccountByOptionValue = useMemo(
     () =>
       new Map(
-        filteredPrivacyPoolsAccounts.map(({ seedId }) => [
-          `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
-          seedId
+        filteredPrivateAccounts.map((account) => [
+          `${PRIVATE_ACCOUNT_OPTION_VALUE_PREFIX}${getPrivateAccountKey(account)}`,
+          account
         ])
       ),
-    [filteredPrivacyPoolsAccounts]
+    [filteredPrivateAccounts]
   )
 
   const setAddressWrapped = useCallback(
     ({ value: newAddress }: Pick<SelectValue, 'value'>) => {
       if (typeof newAddress !== 'string') return
 
-      const privacyPoolsSeedId = privacyPoolsSeedIdByOptionValue.get(newAddress)
-      if (privacyPoolsSeedId) {
-        onSelectPrivacyPoolsAccount?.(privacyPoolsSeedId)
+      const privateAccount = privateAccountByOptionValue.get(newAddress)
+      if (privateAccount) {
+        onSelectPrivateAccount?.(privateAccount)
         return
       }
 
       setAddress(newAddress)
     },
-    [onSelectPrivacyPoolsAccount, privacyPoolsSeedIdByOptionValue, setAddress]
+    [onSelectPrivateAccount, privateAccountByOptionValue, setAddress]
   )
 
   const privacyPoolsAccountOptions = useMemo(
     () =>
-      filteredPrivacyPoolsAccounts.map(({ seedId, label }) => ({
-        value: `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
+      filteredPrivateAccounts.map((account) => ({
+        value: `${PRIVATE_ACCOUNT_OPTION_VALUE_PREFIX}${getPrivateAccountKey(account)}`,
         // Named like in the accounts list: the account has no name or address of its own
         label: (
           <View
-            testID={`address-book-privacy-pools-account-${seedId}`}
+            testID={`address-book-private-account-${account.providerId}-${account.seedId}`}
             style={[flexbox.directionRow, flexbox.alignCenter]}
           >
             <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
@@ -419,13 +418,16 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
                 {t('Private account')}
               </Text>
               <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-                {t('Added from {{seedLabel}}', { seedLabel: label })}
+                {t('{{provider}}, added from {{seedLabel}}', {
+                  provider: PRIVACY_PROVIDER_NAMES[account.providerId],
+                  seedLabel: account.label
+                })}
               </Text>
             </View>
           </View>
         )
       })),
-    [filteredPrivacyPoolsAccounts, t]
+    [filteredPrivateAccounts, t]
   )
 
   const walletAccountsSourcedContactOptions = useMemo(
@@ -518,14 +520,14 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           activeTab={activeTab}
           onTabChange={setActiveTab}
           disabledTabReasons={
-            canSendToPrivacyPoolsAccounts
+            canSendToPrivateAccounts
               ? undefined
               : { private: t('A view-only account cannot send to a private account.') }
           }
           style={spacings.mvTy}
         />
       ) : undefined,
-    [activeTab, canSendToPrivacyPoolsAccounts, hasAccountsTabs, t]
+    [activeTab, canSendToPrivateAccounts, hasAccountsTabs, t]
   )
 
   const renderSectionHeader = useCallback(

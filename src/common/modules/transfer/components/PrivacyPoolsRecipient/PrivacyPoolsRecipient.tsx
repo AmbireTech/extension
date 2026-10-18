@@ -14,13 +14,15 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 type Props = {
   label: string
+  /** The private account's provider, such as "Privacy Pools". */
+  providerName: string
   disabled?: boolean
   /** Goes back to entering an address. */
   onClear: () => void
 }
 
-/** Replaces the address field once a Privacy Pools account is picked. Laid out like `Recipient`. */
-const PrivacyPoolsRecipient = ({ label, disabled, onClear }: Props) => {
+/** Replaces the address field once a private account is picked. Laid out like `Recipient`. */
+const PrivacyPoolsRecipient = ({ label, providerName, disabled, onClear }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
@@ -46,7 +48,7 @@ const PrivacyPoolsRecipient = ({ label, disabled, onClear }: Props) => {
             {label}
           </Text>
           <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-            {t('Privacy Pools account')}
+            {t('{{provider}} account', { provider: providerName })}
           </Text>
         </View>
         <HoverablePressable

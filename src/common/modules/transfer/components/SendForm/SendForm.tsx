@@ -16,9 +16,11 @@ import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
-import { PrivacyPoolsAccountDisplay } from '@common/hooks/usePrivacyPoolsAccounts'
+import { PrivateAccountDisplay } from '@common/hooks/usePrivateAccounts'
 import useTheme from '@common/hooks/useTheme'
+import { PRIVACY_PROVIDER_NAMES } from '@common/modules/privacy/providers'
 import PrivacyPoolsRecipient from '@common/modules/transfer/components/PrivacyPoolsRecipient'
+import TornadoCashAmounts from '@common/modules/transfer/components/TornadoCashAmounts'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
@@ -53,8 +55,8 @@ const SendForm = ({
   addressStateFieldValue,
   setAddressStateFieldValue,
   amountAdjustmentInfo,
-  privacyPoolsAccounts,
-  onSelectPrivacyPoolsRecipient
+  privateAccounts,
+  onSelectPrivateRecipient
 }: {
   addressInputState: ReturnType<typeof useAddressInput>
   canUseGasTank: boolean
@@ -67,10 +69,10 @@ const SendForm = ({
   addressStateFieldValue: string
   setAddressStateFieldValue: (value: string) => void
   amountAdjustmentInfo?: AmountAdjustmentInfo | null
-  /** Offered as recipients where Privacy Pools is available. */
-  privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
-  /** Picks a Privacy Pools account by its recovery phrase id, or null to go back to an address. */
-  onSelectPrivacyPoolsRecipient?: (seedId: string | null) => void
+  /** Offered as recipients where a privacy provider is available. */
+  privateAccounts?: PrivateAccountDisplay[]
+  /** Picks a private account, or null to go back to an address. */
+  onSelectPrivateRecipient?: (account: PrivateAccountDisplay | null) => void
 }) => {
   const { validation } = addressInputState
   const {
@@ -269,17 +271,33 @@ const SendForm = ({
     })
   }, [transferDispatch])
 
-  const privacyPoolsRecipientAccount = useMemo(
+  const privateRecipientAccount = useMemo(
     () =>
       privateRecipient
-        ? (privacyPoolsAccounts || []).find(({ seedId }) => seedId === privateRecipient.seedId)
+        ? (privateAccounts || []).find(
+            ({ providerId, seedId }) =>
+              providerId === privateRecipient.providerId && seedId === privateRecipient.seedId
+          )
         : undefined,
-    [privacyPoolsAccounts, privateRecipient]
+    [privateAccounts, privateRecipient]
+  )
+  const privateRecipientProviderName = privateRecipient
+    ? PRIVACY_PROVIDER_NAMES[privateRecipient.providerId]
+    : ''
+
+  const clearPrivateRecipient = useCallback(
+    () => onSelectPrivateRecipient?.(null),
+    [onSelectPrivateRecipient]
   )
 
-  const clearPrivacyPoolsRecipient = useCallback(
-    () => onSelectPrivacyPoolsRecipient?.(null),
-    [onSelectPrivacyPoolsRecipient]
+  const pickTornadoCashAmount = useCallback(
+    (amount: string) => {
+      transferDispatch({
+        type: 'method',
+        params: { method: 'update', args: [{ amountFieldMode: 'token', amount }] }
+      })
+    },
+    [transferDispatch]
   )
 
   const switchAmountFieldMode = useCallback(() => {
@@ -301,8 +319,12 @@ const SendForm = ({
       <View>
         {!isTopUp && !!privateRecipient && (
           <PrivacyPoolsRecipient
-            label={privacyPoolsRecipientAccount?.label || t('Privacy Pools account')}
-            onClear={clearPrivacyPoolsRecipient}
+            label={
+              privateRecipientAccount?.label ||
+              t('{{provider}} account', { provider: privateRecipientProviderName })
+            }
+            providerName={privateRecipientProviderName}
+            onClear={clearPrivateRecipient}
           />
         )}
         {!isTopUp && !privateRecipient && (
@@ -322,8 +344,8 @@ const SendForm = ({
             isRecipientDomainResolving={addressState.isDomainResolving}
             selectedTokenSymbol={selectedToken?.symbol}
             addressPoisoningMatch={addressPoisoningMatch}
-            privacyPoolsAccounts={privacyPoolsAccounts}
-            onSelectPrivacyPoolsAccount={onSelectPrivacyPoolsRecipient}
+            privateAccounts={privateAccounts}
+            onSelectPrivateAccount={onSelectPrivateRecipient}
           />
         )}
       </View>
@@ -333,9 +355,15 @@ const SendForm = ({
           type="info"
           size="sm"
           style={spacings.mbTy}
-          text={t(
-            'None of your tokens can be sent to a Privacy Pools account. It accepts ETH, USDC, USDT and a few other tokens on Ethereum.'
-          )}
+          text={
+            privateRecipient.providerId === 'tornadoCash'
+              ? t(
+                  'None of your tokens can be sent to a Tornado Cash account. It accepts ETH, DAI, USDC, USDT and WBTC on Ethereum.'
+                )
+              : t(
+                  'None of your tokens can be sent to a Privacy Pools account. It accepts ETH, USDC, USDT and a few other tokens on Ethereum.'
+                )
+          }
         />
       )}
 
@@ -368,6 +396,15 @@ const SendForm = ({
           selectTestId="tokens-select"
           simulationFailed={!!simulationError}
           amountAdjustmentInfo={amountAdjustmentInfo}
+        />
+      )}
+
+      {privateRecipient?.providerId === 'tornadoCash' && !!selectedToken && (
+        <TornadoCashAmounts
+          token={selectedToken}
+          amount={controllerAmount}
+          onPick={pickTornadoCashAmount}
+          disabled={disableForm}
         />
       )}
 
