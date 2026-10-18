@@ -85,8 +85,8 @@ const SendForm = ({
       amount: controllerAmount,
       areDefaultsSet,
       addressPoisoningMatch,
-      privacyPoolsRecipient,
-      privacyPoolsDepositError
+      privateRecipient,
+      privateDepositError
     },
     dispatch: transferDispatch
   } = useController('TransferController')
@@ -271,10 +271,10 @@ const SendForm = ({
 
   const privacyPoolsRecipientAccount = useMemo(
     () =>
-      privacyPoolsRecipient
-        ? (privacyPoolsAccounts || []).find(({ seedId }) => seedId === privacyPoolsRecipient)
+      privateRecipient
+        ? (privacyPoolsAccounts || []).find(({ seedId }) => seedId === privateRecipient.seedId)
         : undefined,
-    [privacyPoolsAccounts, privacyPoolsRecipient]
+    [privacyPoolsAccounts, privateRecipient]
   )
 
   const clearPrivacyPoolsRecipient = useCallback(
@@ -299,13 +299,13 @@ const SendForm = ({
   return (
     <>
       <View>
-        {!isTopUp && !!privacyPoolsRecipient && (
+        {!isTopUp && !!privateRecipient && (
           <PrivacyPoolsRecipient
             label={privacyPoolsRecipientAccount?.label || t('Privacy Pools account')}
             onClear={clearPrivacyPoolsRecipient}
           />
         )}
-        {!isTopUp && !privacyPoolsRecipient && (
+        {!isTopUp && !privateRecipient && (
           <Recipient
             disabled={disableForm}
             address={addressStateFieldValue}
@@ -328,7 +328,7 @@ const SendForm = ({
         )}
       </View>
 
-      {!!privacyPoolsRecipient && !tokens.length && areDefaultsSet && (
+      {!!privateRecipient && !tokens.length && areDefaultsSet && (
         <Alert
           type="info"
           size="sm"
@@ -371,8 +371,8 @@ const SendForm = ({
         />
       )}
 
-      {!!privacyPoolsRecipient && !!tokens.length && !!privacyPoolsDepositError && (
-        <Alert type="error" size="sm" style={spacings.mtSm} text={privacyPoolsDepositError} />
+      {!!privateRecipient && !!tokens.length && !!privateDepositError && (
+        <Alert type="error" size="sm" style={spacings.mtSm} text={privateDepositError} />
       )}
     </>
   )

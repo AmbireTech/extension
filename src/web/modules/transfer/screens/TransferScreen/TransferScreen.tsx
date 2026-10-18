@@ -84,9 +84,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     amountInFiat,
     isRecipientAddressViewOnly,
     addressPoisoningMatch,
-    privacyPoolsRecipient,
-    isPreparingPrivacyPoolsDeposit,
-    privacyPoolsDepositError
+    privateRecipient,
+    isPreparingPrivateDeposit,
+    privateDepositError
   } = transferState
   const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
 
@@ -307,7 +307,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     (seedId: string | null) => {
       transferDispatch({
         type: 'method',
-        params: { method: 'update', args: [{ privacyPoolsRecipient: seedId }] }
+        params: {
+          method: 'update',
+          args: [{ privateRecipient: seedId ? { providerId: 'privacyPools', seedId } : null }]
+        }
       })
     },
     [transferDispatch]
@@ -355,8 +358,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const isTransferFormValid = useMemo(() => {
     // No address to validate, but the deposit calls must be prepared, which takes a while
-    if (privacyPoolsRecipient)
-      return !!isFormValid && !isPreparingPrivacyPoolsDeposit && !privacyPoolsDepositError
+    if (privateRecipient) return !!isFormValid && !isPreparingPrivateDeposit && !privateDepositError
 
     return !!(isTopUp
       ? isFormValid
@@ -365,9 +367,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressInputState.validation.severity,
     isFormValid,
     isTopUp,
-    privacyPoolsRecipient,
-    isPreparingPrivacyPoolsDeposit,
-    privacyPoolsDepositError
+    privateRecipient,
+    isPreparingPrivateDeposit,
+    privateDepositError
   ])
 
   const resetTransferForm = useCallback(() => {
@@ -431,7 +433,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                         : getAddressFromAddressState(addressState),
                       executionType,
                       recipientDomain: getResolvedDomainName(domains, addressState),
-                      privacyPoolsSeedId: privacyPoolsRecipient || undefined
+                      privateRecipient: privateRecipient || undefined
                     }
                   }
                 ]
@@ -461,7 +463,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                     : getAddressFromAddressState(addressState),
                   executionType,
                   recipientDomain: getResolvedDomainName(domains, addressState),
-                  privacyPoolsSeedId: privacyPoolsRecipient || undefined
+                  privateRecipient: privateRecipient || undefined
                 }
               }
             ]
@@ -492,7 +494,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       navigate,
       shouldRenderRequestInPanel,
       domains,
-      privacyPoolsRecipient
+      privateRecipient
     ]
   )
 
@@ -518,7 +520,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
         isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
         // See `isTransferFormValid`
-        isLoading={!!privacyPoolsRecipient && isPreparingPrivacyPoolsDeposit}
+        isLoading={!!privateRecipient && isPreparingPrivateDeposit}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
@@ -549,8 +551,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressPoisoningMatch,
     onRecipientAddressUnknownAgree,
     addTransaction,
-    privacyPoolsRecipient,
-    isPreparingPrivacyPoolsDeposit
+    privateRecipient,
+    isPreparingPrivateDeposit
   ])
 
   const handleGoBackPress = useCallback(() => {
