@@ -75,10 +75,17 @@ On Chrome, Privacy Pools proofs run in an offscreen document (`privacy-pools-pro
 
 Proving inputs include a deposit's secret and nullifier, enough to spend it. They go only over a port the document opens, never `runtime.sendMessage` (which every extension page receives), after the background checks the port's extension id, exact URL and lack of a tab. The document is bundled under LavaMoat, has no Sentry and logs only to its own console, because a circuit error can reveal the inputs.
 
+## Tornado Cash
+
+The Tornado Cash SDK always runs in Web Workers (its store, Merkle trees and prover), so on Chrome the whole plugin lives in its own offscreen document (`tornado-cash/`), for one recovery phrase at a time. Chrome allows only one offscreen document, so opening it closes the Privacy Pools prover's and the other way round (`offscreen/offscreenDocument.ts`). The owner of the closed one sees its port disconnect and opens it again when needed. Firefox and Safari have no Tornado Cash.
+
+The document never gets the recovery phrase. It asks the background for RPC calls and for note keys, and the background derives each key only after `KeystoreController.derivePrivacyKey` has checked its path. Keys go only over a port verified like the prover's (`isFromTornadoCashDocument`). The SDK's state (about 200 MB of public pool history) is written by the document straight to IndexedDB, and the history is streamed from the saga CDN by the document too, as both are too large for port messages. The withdrawal the SDK signs is checked in the background (`readTornadoCashPaymasterWithdrawal`) before it is shown or broadcast. The SDK's prebuilt workers are copied as they are and are not under LavaMoat.
+
 ## Things not to break
 
 - Only extension pages may open a UI port. A port can call any controller method, including key and seed export, so the background verifies the sender.
 - Proving inputs only go to a port verified as the prover document's, and that document reports errors nowhere else.
+- Tornado Cash note keys only go to a port verified as its document's, and only for paths the keystore allows.
 - A reply goes to the one frame that asked, not to the tab. Otherwise an answer meant for a dApp in an iframe lands in every other frame of the page.
 - Where a dApp sits, meaning its frame and the tab's top-level document, always comes from the browser and never from the page.
 - Page scripts do as little as possible in cross-origin and deeply nested frames, which is where ads and third-party widgets live.
