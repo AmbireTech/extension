@@ -80,6 +80,10 @@ import {
   createOffscreenProverFactory
 } from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
 import {
+  canUseOffscreenTornadoCash,
+  createOffscreenTornadoCashPluginFactory
+} from '@web/extension-services/tornado-cash/offscreenTornadoCashPluginFactory'
+import {
   getDappTabFocusDispatcher,
   getPanelManager,
   handleFirefoxActionClicked
@@ -166,6 +170,9 @@ const IDB_OPEN_ATTEMPTS = 2
 
 const PRIVACY_POOLS_CONTROLLER_NAME = 'PrivacyPoolsController'
 
+/** Controllers whose errors reach Sentry with only their type and stack - see `beforeSend`. */
+const PRIVATE_ACCOUNT_CONTROLLER_NAMES = [PRIVACY_POOLS_CONTROLLER_NAME, 'TornadoCashController']
+
 let isInitialized = false
 const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
 let mainCtrl: MainController
@@ -192,15 +199,19 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
       const processedEvent = processCrashReportEvent(event, hint.originalException)
       if (!processedEvent) return null
 
-      // Privacy Pools errors, their logs and the requests before them can hold the recipient,
-      // amounts or notes, and the user ID would link them to the install, so only the error's
-      // type and stack are sent.
-      if (processedEvent.extra?.controllerName === PRIVACY_POOLS_CONTROLLER_NAME) {
+      // Privacy Pools and Tornado Cash errors, their logs and the requests before them can hold
+      // the recipient, amounts or notes, and the user ID would link them to the install, so only
+      // the error's type and stack are sent.
+      const controllerName = processedEvent.extra?.controllerName
+      if (
+        typeof controllerName === 'string' &&
+        PRIVATE_ACCOUNT_CONTROLLER_NAMES.includes(controllerName)
+      ) {
         delete processedEvent.breadcrumbs
         delete processedEvent.user
         delete processedEvent.contexts
         delete processedEvent.message
-        processedEvent.extra = { controllerName: PRIVACY_POOLS_CONTROLLER_NAME }
+        processedEvent.extra = { controllerName }
         processedEvent.exception?.values?.forEach((exception) => {
           delete exception.value
         })
@@ -516,6 +527,12 @@ const init = async () => {
     privacyPoolsProverFactory: canUseOffscreenProver()
       ? createOffscreenProverFactory({
           fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
+          onError: (error) => captureBackgroundException(error)
+        })
+      : undefined,
+    // Its SDK runs only in Web Workers, so only where an offscreen document can host it
+    tornadoCashPluginFactory: canUseOffscreenTornadoCash()
+      ? createOffscreenTornadoCashPluginFactory({
           onError: (error) => captureBackgroundException(error)
         })
       : undefined,

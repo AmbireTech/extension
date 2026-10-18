@@ -28,6 +28,7 @@ import type { SignAccountOpController } from '@ambire-common/controllers/signAcc
 import type { SignMessageController } from '@ambire-common/controllers/signMessage/signMessage'
 import type { StorageController } from '@ambire-common/controllers/storage/storage'
 import type { SurveyController } from '@ambire-common/controllers/survey/survey'
+import type { TornadoCashController } from '@ambire-common/controllers/tornadoCash/tornadoCash'
 import type { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import type { TransferController } from '@ambire-common/controllers/transfer/transfer'
 import type { UiController } from '@ambire-common/controllers/ui/ui'
@@ -51,6 +52,7 @@ export type ControllersNestedInMainMappingType = {
   SignMessageController: SignMessageController
   PortfolioController: PortfolioController
   PrivacyPoolsController: PrivacyPoolsController
+  TornadoCashController: TornadoCashController
   ActivityController: ActivityController
   EmailVaultController: EmailVaultController
   SignAccountOpController: SignAccountOpController
@@ -94,6 +96,7 @@ export const controllersNestedInMainMapping =
     'SignMessageController',
     'PortfolioController',
     'PrivacyPoolsController',
+    'TornadoCashController',
     'ActivityController',
     'EmailVaultController',
     'SignAccountOpController',
