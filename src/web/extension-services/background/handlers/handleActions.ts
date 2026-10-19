@@ -13,6 +13,7 @@ import { browser } from '@web/constants/browserapi'
 import { openPanel } from '@web/extension-services/background/webapi/panel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
+import { buildPQ1AccountsToImport } from '@web/modules/hardware-wallet/libs/pq1/importAccounts'
 
 import sessionStorage from '../webapi/sessionStorage'
 import {
@@ -120,6 +121,17 @@ export const handleActions = async (
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
       return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
+    }
+    case 'IMPORT_PQ1_ACCOUNTS': {
+      const { accounts, keys } = buildPQ1AccountsToImport(
+        params.entries,
+        params.deviceId,
+        mainCtrl.accounts.accounts
+      )
+      // Keys first, then accounts, in the account picker's order. Each call
+      // reports its own failure to the UI.
+      await mainCtrl.keystore.addKeysExternallyStored(keys)
+      return await mainCtrl.accounts.addAccounts(accounts)
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
       const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)

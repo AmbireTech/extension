@@ -186,6 +186,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
               false
             ),
             new RouteNode(WEB_ROUTES.qrConnect, common, false, false),
+            new RouteNode(WEB_ROUTES.pq1Connect, common, false, false),
             new RouteNode(WEB_ROUTES.importSmartAccountJson, common, false, false)
           ],
           false,

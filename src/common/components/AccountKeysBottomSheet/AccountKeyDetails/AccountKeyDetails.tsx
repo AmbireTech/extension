@@ -66,7 +66,12 @@ const AccountKeyDetails: FC<Props> = ({ details }) => {
       },
       {
         key: t('HD Path'),
-        value: meta?.hdPathTemplate ? getHdPathFromTemplate(meta.hdPathTemplate, meta.index) : '-',
+        // PQ1 keys have no HD path: their `index` is the account number on the
+        // device, shown below.
+        value:
+          meta?.hdPathTemplate && type !== 'pq1'
+            ? getHdPathFromTemplate(meta.hdPathTemplate, meta.index)
+            : '-',
         tooltip: dedicatedToOneSA
           ? t(
               'Ambire derives a different key on your hardware wallet with an offset of {{offset}}, for security and privacy reasons. You may see {{addr}} when signing on your hardware device.',
@@ -81,6 +86,10 @@ const AccountKeyDetails: FC<Props> = ({ details }) => {
           : ''
       }
     ]
+
+    if (type === 'pq1' && Number.isInteger(meta?.index)) {
+      externalKeyDetails.push({ key: t('Account on device'), value: String(meta.index) })
+    }
 
     if (details.meta?.createdAt && new Date(details.meta.createdAt).toString() !== 'Invalid Date') {
       externalKeyDetails.push({

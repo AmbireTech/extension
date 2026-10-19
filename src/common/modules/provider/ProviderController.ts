@@ -27,6 +27,13 @@ import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
+import {
+  buildPq1Capabilities,
+  isEthGetCodeParams,
+  isPq1AccountCodeQuery,
+  isPq1Key,
+  resolvePq1AccountCode
+} from '@common/modules/hardware-wallet/libs/pq1DappProvider'
 import { SAFE_RPC_METHODS } from '@common/modules/inpage/methods'
 import { metadata } from '@common/modules/provider/metadata'
 import { RequestRes, Web3WalletPermission } from '@common/modules/provider/types'
@@ -135,6 +142,25 @@ export class ProviderController {
       throw ethErrors.provider.unauthorized()
     }
     if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
+
+    // A PQ1 account is a smart-contract wallet, but one not deployed on this
+    // chain yet has no code, so a dapp connected to it would take it for an
+    // EOA. Its answer comes from the PQ1 module — see
+    // `hardware-wallet/libs/pq1DappProvider.ts`.
+    if (
+      method === 'eth_getCode' &&
+      isEthGetCodeParams(params) &&
+      this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) &&
+      this.isUnlocked &&
+      isPq1AccountCodeQuery(
+        this.mainCtrl.keystore.keys,
+        this._internalGetAccounts(id),
+        chainId,
+        params[0]
+      )
+    ) {
+      return resolvePq1AccountCode(provider, params)
+    }
 
     return provider.send(method, params)
   }
@@ -461,6 +487,12 @@ export class ProviderController {
     const state = this.mainCtrl.accounts.accountStates[accountAddr]
     if (!state) {
       throw ethErrors.rpc.invalidParams(`account with address ${accountAddr} does not exist`)
+    }
+
+    // PQ1 wallets batch atomically in one userOp, but `getBaseAccount` sees
+    // them as EOAs — answer from the PQ1 module instead.
+    if (isPq1Key(this.mainCtrl.keystore.keys, accountAddr)) {
+      return buildPq1Capabilities(this.mainCtrl.networks.networks)
     }
 
     const states = await this.mainCtrl.accounts.getOrFetchAccountStates(accountAddr)
