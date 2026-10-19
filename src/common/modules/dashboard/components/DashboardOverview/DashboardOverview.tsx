@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo, useState } from 'react'
+import React, { FC, useCallback, useMemo, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import { isMobile, isWeb } from '@common/config/env'
@@ -19,6 +19,7 @@ import { isExtension } from '@web/constants/browserapi'
 import BalanceAffectingErrors from './BalanceAffectingErrors'
 import ColibriVerificationBadge from './ColibriVerificationBadge'
 import GasTankButton from './GasTankButton'
+import { OverviewBackdrop, OverviewBackdropContext } from './OverviewBackdropBlur'
 import { OverviewBackground } from './OverviewBackground'
 import OverviewCollapsible from './OverviewCollapsible'
 import type { OverviewCollapsibleProps } from './OverviewCollapsible/OverviewCollapsible'
@@ -81,6 +82,13 @@ const DashboardOverview: FC<Props> = ({
 
   const { reloadAccount } = useDashboardReload()
 
+  const cardRef = useRef<View>(null)
+  const address = account?.addr || ''
+  const backdrop = useMemo<OverviewBackdrop>(
+    () => ({ address, collapse: overviewCollapse, cardRef }),
+    [address, overviewCollapse]
+  )
+
   const togglePrivacyMode = useCallback(() => {
     walletStateDispatch({
       type: 'method',
@@ -94,6 +102,7 @@ const DashboardOverview: FC<Props> = ({
   return (
     <View style={[spacings.phSm, spacings.mbTy]}>
       <View
+        ref={cardRef}
         style={[
           common.borderRadiusPrimary,
           spacings.ptTy,
@@ -106,7 +115,7 @@ const DashboardOverview: FC<Props> = ({
           }
         ]}
       >
-        <OverviewBackground address={account?.addr || ''} collapse={overviewCollapse} />
+        <OverviewBackground address={address} collapse={overviewCollapse} />
         <View style={{ zIndex: 2 }}>
           <DashboardHeader />
           <OverviewCollapsible onHeightChange={onCollapsibleHeightChange}>
@@ -198,7 +207,9 @@ const DashboardOverview: FC<Props> = ({
                 <GasTankButton onPress={() => openGasTankModal?.()} account={account} />
               </View>
             </View>
-            <Routes />
+            <OverviewBackdropContext.Provider value={backdrop}>
+              <Routes />
+            </OverviewBackdropContext.Provider>
           </OverviewCollapsible>
         </View>
       </View>

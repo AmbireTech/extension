@@ -1,6 +1,14 @@
 import { useCallback, useMemo, useState } from 'react'
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
-import { Defs, FeBlend, FeColorMatrix, Filter, Image as SvgImage, Svg } from 'react-native-svg'
+import {
+  Defs,
+  FeBlend,
+  FeColorMatrix,
+  FeGaussianBlur,
+  Filter,
+  Image as SvgImage,
+  Svg
+} from 'react-native-svg'
 
 import useControllerState from '@common/hooks/useControllerState'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -77,11 +85,14 @@ const getCollapsingLayerGeometry = ({ width, height }: CardSize): CollapsingLaye
 
 export function OverviewBackground({
   address,
-  collapse
+  collapse,
+  blurRadius
 }: {
   address: string
   /** How far the pages have slid over the card. Moves the image by transforms only. */
   collapse?: OverviewCollapse
+  /** Blurs the image, for a copy of the background that stands in for a backdrop blur. */
+  blurRadius?: number
 }) {
   const { state } = useControllerState({ id: 'WalletStateController' })
   const [cardSize, setCardSize] = useState<CardSize | null>(null)
@@ -120,6 +131,8 @@ export function OverviewBackground({
   // so both colors show up without washing each other out.
   const matrix1 = channelToColorMatrix(0, r1, g1, b1)
   const matrix2 = channelToColorMatrix(2, r2, g2, b2)
+  // Filter ids are page wide, so a blurred copy can't reuse the id of the sharp background's
+  const filterId = blurRadius ? `recolor-blur-${blurRadius}` : 'recolor'
 
   return (
     <View
@@ -136,10 +149,11 @@ export function OverviewBackground({
       <OverviewBackgroundLayer geometry={geometry} collapse={collapse}>
         <Svg width={layerWidth} height={layerHeight}>
           <Defs>
-            <Filter id="recolor" x="0%" y="0%" width="100%" height="100%">
+            <Filter id={filterId} x="0%" y="0%" width="100%" height="100%">
               <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
               <FeColorMatrix type="matrix" values={matrix2} in="SourceGraphic" result="layer2" />
               <FeBlend in="layer1" in2="layer2" mode="screen" />
+              {!!blurRadius && <FeGaussianBlur stdDeviation={blurRadius} />}
             </Filter>
           </Defs>
 
@@ -149,7 +163,7 @@ export function OverviewBackground({
             height={layerHeight}
             preserveAspectRatio="xMidYMid slice"
             opacity={0.28}
-            filter="url(#recolor)"
+            filter={`url(#${filterId})`}
           />
         </Svg>
       </OverviewBackgroundLayer>
