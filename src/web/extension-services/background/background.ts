@@ -192,13 +192,18 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
 
       // Privacy Pools errors, their logs and the requests before them can hold the recipient,
       // amounts or notes, and the user ID would link them to the install, so only the error's
-      // type and stack are sent.
-      if (processedEvent.extra?.controllerName === PRIVACY_POOLS_CONTROLLER_NAME) {
+      // type and stack are sent. Any error is treated so while a Privacy Pools account is
+      // selected, as it can come from any controller. A deposit runs from a regular account,
+      // so the controller's own errors are treated so too.
+      const isPrivacyPoolsEvent =
+        mainCtrl?.selectedAccount.selectedType === 'privacyPools' ||
+        processedEvent.extra?.controllerName === PRIVACY_POOLS_CONTROLLER_NAME
+      if (isPrivacyPoolsEvent) {
         delete processedEvent.breadcrumbs
         delete processedEvent.user
         delete processedEvent.contexts
         delete processedEvent.message
-        processedEvent.extra = { controllerName: PRIVACY_POOLS_CONTROLLER_NAME }
+        delete processedEvent.extra
         processedEvent.exception?.values?.forEach((exception) => {
           delete exception.value
         })
