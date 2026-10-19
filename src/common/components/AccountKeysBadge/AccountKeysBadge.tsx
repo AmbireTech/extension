@@ -30,6 +30,7 @@ const KEY_TYPE_NAMES: { [type in Key['type']]: string } = {
   internal: 'private key',
   ledger: 'Ledger',
   trezor: 'Trezor',
+  onekey: 'OneKey',
   lattice: 'GridPlus',
   qr: 'QR-based',
   nfc: 'NFC card',
