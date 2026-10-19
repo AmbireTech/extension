@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { StyleSheet } from 'react-native'
 import { ScreenStackItem } from 'react-native-screens'
 
-import { ScreenFocusProvider } from '@common/contexts/screenFocusContext'
+import { ScreenFocusProvider, ScreenTouchArea } from '@common/contexts/screenFocusContext'
 import { ScreenLocationProvider } from '@common/contexts/screenLocationContext'
 import useTheme from '@common/hooks/useTheme'
 import AppRoutes from '@mobile/modules/router/components/AppRoutes'
@@ -80,7 +80,9 @@ const StackScreen = ({
       {/* the frame it goes up - what handlers on the screen being left read. */}
       <ScreenFocusProvider isFocused={isFocused} isSettled={isSettled}>
         <ScreenLocationProvider location={entry.location} canGoBack={canGoBack}>
-          {!!isContentReady && <AppRoutes location={entry.location} />}
+          <ScreenTouchArea>
+            {!!isContentReady && <AppRoutes location={entry.location} />}
+          </ScreenTouchArea>
         </ScreenLocationProvider>
       </ScreenFocusProvider>
     </ScreenStackItem>

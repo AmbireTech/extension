@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { Subject } from 'rxjs'
 
 import { isDev } from '@common/config/env'
-import { useIsScreenFocusedRef } from '@common/contexts/screenFocusContext'
+import { runWhenScreenIsOnTop, useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import { useScreenLocation } from '@common/contexts/screenLocationContext'
 import useRouterHistory from '@common/hooks/useRouterHistory'
 
@@ -21,32 +21,30 @@ export const titleChangeEventStream: TitleChangeEventStreamType = new Subject<st
 const useNavigation = (): UseNavigationReturnType => {
   const history = useRouterHistory()
   const screenLocation = useScreenLocation()
-  const isFocusedRef = useIsScreenFocusedRef()
+  const screenFocus = useScreenFocusStore()
   const currentRoute = screenLocation?.location || history.location
 
   /**
    * Navigating is the business of the screen the user is on. Screens stay mounted
    * underneath it, so an effect on one further back would otherwise send the user
-   * somewhere else or move a flow on a step too far. Refused here rather than at each
-   * call site, and read through a ref, so losing focus re-renders nothing.
+   * somewhere else or move a flow on a step too far. Refused (or deferred, see
+   * `runWhenScreenIsOnTop`) here rather than at each call site, and read through a ref,
+   * so losing focus re-renders nothing.
    */
-  const refuseFromBackgroundScreen = useCallback(
-    (action: string) => {
-      if (isFocusedRef.current) return false
-
+  const runFromScreen = useCallback(
+    (action: string, run: () => void) => {
       // A second opinion, since the flag is only as good as the last commit that set
       // it, and refusing the screen the user is on leaves them with dead buttons. The
       // history needs no render to be current. Not the whole answer on its own: two
       // cards can show the same path.
-      if (currentRoute.pathname === history.location.pathname) return false
-
-      if (isDev) {
-        console.warn(`navigation: ignored ${action} from a screen that is not on top`)
+      if (currentRoute.pathname === history.location.pathname) {
+        run()
+        return
       }
 
-      return true
+      runWhenScreenIsOnTop(screenFocus, `navigation: ${action}`, run)
     },
-    [currentRoute.pathname, history, isFocusedRef]
+    [currentRoute.pathname, history, screenFocus]
   )
 
   // Native doesn't have useSearchParams out of the box like DOM
@@ -57,32 +55,33 @@ const useNavigation = (): UseNavigationReturnType => {
 
   const navigate = useCallback<UseNavigationReturnType['navigate']>(
     (to, options) => {
-      if (refuseFromBackgroundScreen(`navigate to ${to}`)) return undefined
+      runFromScreen(`navigate to ${to}`, () => {
+        // The signature supports a number for going back/forward, like react-router's
+        if (typeof to === 'number') {
+          history.go(to)
+          return
+        }
 
-      // The signature supports a number for going back/forward, like react-router's
-      if (typeof to === 'number') {
-        return history.go(to)
-      }
+        let destination = to as string
+        if (destination?.[0] !== '/') {
+          destination = `/${destination}`
+        }
 
-      let destination = to as string
-      if (destination?.[0] !== '/') {
-        destination = `/${destination}`
-      }
+        const state = { ...(options?.state || {}), prevRoute: currentRoute }
 
-      const state = { ...(options?.state || {}), prevRoute: currentRoute }
-
-      return options?.replace
-        ? history.replace(destination, state)
-        : history.push(destination, state)
+        if (options?.replace) {
+          history.replace(destination, state)
+        } else {
+          history.push(destination, state)
+        }
+      })
     },
-    [history, currentRoute, refuseFromBackgroundScreen]
+    [history, currentRoute, runFromScreen]
   )
 
   const goBack = useCallback(() => {
-    if (refuseFromBackgroundScreen('goBack')) return
-
-    history.go(-1)
-  }, [history, refuseFromBackgroundScreen])
+    runFromScreen('goBack', () => history.go(-1))
+  }, [history, runFromScreen])
 
   const setOptions = useCallback<UseNavigationReturnType['setOptions']>(({ headerTitle }) => {
     if (headerTitle) {

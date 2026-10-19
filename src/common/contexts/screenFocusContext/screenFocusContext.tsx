@@ -1,4 +1,21 @@
-import React, { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react'
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState
+} from 'react'
+import { GestureResponderEvent, View } from 'react-native'
+
+import flexbox from '@common/styles/utils/flexbox'
+
+import {
+  createScreenFocusStore,
+  runWhenScreenIsOnTop,
+  ScreenFocusStore,
+  WritableScreenFocusStore
+} from './screenFocusStore'
 
 // True by default: the extension and the websites render one route at a time, so
 // whatever is mounted there is the focused screen.
@@ -8,46 +25,9 @@ const ScreenFocusContext = createContext(true)
 // as soon as it renders.
 const ScreenSettledContext = createContext(true)
 
-/**
- * Focus to read and to listen to, never to render from: the object's identity never
- * changes, so gaining or losing focus re-renders nothing. What a screen left behind
- * renders is paid in the commit that starts the transition to the next one.
- */
-export type ScreenFocusStore = {
-  /** Readable from handlers and effects without subscribing to it. */
-  isFocused: { current: boolean }
-  /** Notified after `isFocused` has changed. */
-  subscribe: (listener: () => void) => () => void
-}
-
-const createScreenFocusStore = (
-  isFocused: boolean
-): ScreenFocusStore & {
-  setIsFocused: (next: boolean) => void
-  notify: () => void
-} => {
-  const ref = { current: isFocused }
-  const listeners = new Set<() => void>()
-
-  return {
-    isFocused: ref,
-    setIsFocused: (next: boolean) => {
-      ref.current = next
-    },
-    notify: () => listeners.forEach((listener) => listener()),
-    subscribe: (listener: () => void) => {
-      listeners.add(listener)
-
-      return () => {
-        listeners.delete(listener)
-      }
-    }
-  }
-}
-
 const ALWAYS_FOCUSED_STORE = createScreenFocusStore(true)
 
-const ScreenFocusStoreContext = createContext<ScreenFocusStore>(ALWAYS_FOCUSED_STORE)
+const ScreenFocusStoreContext = createContext<WritableScreenFocusStore>(ALWAYS_FOCUSED_STORE)
 
 /**
  * Marks its subtree as the screen the user is on. The mobile stack keeps the screens
@@ -74,6 +54,9 @@ const ScreenFocusProvider = ({
   useLayoutEffect(() => {
     store.setIsFocused(isFocused)
   }, [isFocused, store])
+
+  // An action held for this screen has nowhere to run once it is gone
+  useEffect(() => () => store.cancelDeferred(), [store])
 
   // Focus gained is announced once the transition ends, because catching up re-renders
   // the whole screen. Focus lost is announced at once, since it only stops work.
@@ -106,16 +89,43 @@ const useIsScreenFocused = () => useContext(ScreenFocusContext)
  */
 const useIsScreenSettled = () => useContext(ScreenSettledContext)
 
-/** Reads focus without subscribing to it - for handlers and effects. */
-const useIsScreenFocusedRef = () => useContext(ScreenFocusStoreContext).isFocused
-
 /** Focus as a store, for code that reacts to a change on its own. */
-const useScreenFocusStore = () => useContext(ScreenFocusStoreContext)
+const useScreenFocusStore = (): ScreenFocusStore => useContext(ScreenFocusStoreContext)
+
+/**
+ * Tracks whether a finger is on the screen, for `runWhenScreenIsOnTop`. `onPress` runs
+ * while the releasing touch is still counted: the responder events are dispatched
+ * before the bubbled `onTouchEnd` that clears it.
+ */
+const ScreenTouchArea = ({ children }: { children: React.ReactNode }) => {
+  const store = useContext(ScreenFocusStoreContext)
+
+  const handleTouchStart = useCallback(() => store.setIsTouched(true), [store])
+  const handleTouchEnd = useCallback(
+    (e: GestureResponderEvent) => store.setIsTouched(e.nativeEvent.touches.length > 0),
+    [store]
+  )
+  const handleTouchCancel = useCallback(() => store.setIsTouched(false), [store])
+
+  return (
+    <View
+      style={flexbox.flex1}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
+    >
+      {children}
+    </View>
+  )
+}
+
+export type { ScreenFocusStore }
 
 export {
+  runWhenScreenIsOnTop,
   ScreenFocusProvider,
+  ScreenTouchArea,
   useIsScreenFocused,
-  useIsScreenFocusedRef,
   useIsScreenSettled,
   useScreenFocusStore
 }

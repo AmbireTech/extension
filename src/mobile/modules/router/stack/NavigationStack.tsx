@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { KeyboardController } from 'react-native-keyboard-controller'
 import { ScreenStack } from 'react-native-screens'
 
@@ -9,6 +9,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { useCanGoBackInWebViewHistory } from '@common/services/webview/webViewBackNavigation'
 import flexbox from '@common/styles/utils/flexbox'
 
+import { getDismissDelta } from './stackEntries'
 import StackScreen from './StackScreen'
 import useStackEntries from './useStackEntries'
 
@@ -113,13 +114,19 @@ const NavigationStack = ({ onScreenSettled }: Props) => {
     void KeyboardController.dismiss()
   }, [topCardKey])
 
+  // Read through a ref so `handleDismissed` keeps its identity across navigations.
+  const entriesRef = useRef(entries)
+  useLayoutEffect(() => {
+    entriesRef.current = entries
+  }, [entries])
+
   // Goes through the history rather than `navigate`, whose identity changes with the
   // location - which would re-render every card on every navigation.
   const handleDismissed = useCallback(
     (dismissCount: number) => {
       // The platform has already taken the screen off and the router only catches up:
       // the entries this drops are gone, so nothing is animated a second time.
-      history.go(-Math.max(dismissCount, 1))
+      history.go(getDismissDelta(entriesRef.current, history.index, dismissCount))
     },
     [history]
   )
