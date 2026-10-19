@@ -49,23 +49,29 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
 
   const prevTransactionCount = usePrevious<number | null | undefined>(signedTransactionsCount)
 
-  const shouldBeVisible = useMemo(() => {
-    // we're not signing or broadcasting on paused updates
-    if (signAccountOpStatusType === SigningStatus.UpdatesPaused) return false
+  // The signing key is used while the status is InProgress or WaitingForPaymaster
+  // (e.g. the user op is signed after the paymaster responds)
+  const isSigningPhase =
+    signAccountOpStatusType === SigningStatus.InProgress ||
+    signAccountOpStatusType === SigningStatus.WaitingForPaymaster
+  // The fee payer key is used only after signing is Done and the broadcast begins.
+  // Before that, the flow may never reach broadcasting (e.g. a Safe txn that still
+  // needs more signatures gets queued), so the fee payer's modal must not show.
+  const isBroadcastPhase =
+    isSignAndBroadcastInProgress && signAccountOpStatusType === SigningStatus.Done
 
+  const shouldBeVisible = useMemo(() => {
     const isCurrentlyBroadcastingWithExternalKey =
-      isSignAndBroadcastInProgress && !!feePayerKeyType && feePayerKeyType !== 'internal'
+      isBroadcastPhase && !!feePayerKeyType && feePayerKeyType !== 'internal'
     const isCurrentlySigningWithExternalKey =
-      signAccountOpStatusType === SigningStatus.InProgress &&
-      !!signingKeyType &&
-      signingKeyType !== 'internal'
+      isSigningPhase && !!signingKeyType && signingKeyType !== 'internal'
 
     return isCurrentlyBroadcastingWithExternalKey || isCurrentlySigningWithExternalKey
-  }, [isSignAndBroadcastInProgress, feePayerKeyType, signAccountOpStatusType, signingKeyType])
+  }, [isBroadcastPhase, feePayerKeyType, isSigningPhase, signingKeyType])
 
   const currentlyInvolvedSignOrBroadcastKeyType = useMemo(
-    () => (signAccountOpStatusType === SigningStatus.InProgress ? signingKeyType : feePayerKeyType),
-    [feePayerKeyType, signAccountOpStatusType, signingKeyType]
+    () => (isSigningPhase ? signingKeyType : feePayerKeyType),
+    [feePayerKeyType, isSigningPhase, signingKeyType]
   )
 
   useEffect(() => {
