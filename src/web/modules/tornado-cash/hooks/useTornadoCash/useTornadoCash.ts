@@ -14,6 +14,7 @@ type TornadoCashState = AllControllersMappingType['TornadoCashController']
 
 const selectUnavailableReason = (state: TornadoCashState) => state.unavailableReason
 const selectSyncState = (state: TornadoCashState) => state.syncState
+const selectIsInitialSyncDone = (state: TornadoCashState) => state.isInitialSyncDone
 const selectBalances = (state: TornadoCashState) => state.balances
 const selectPrices = (state: TornadoCashState) => state.prices
 const selectOperation = (state: TornadoCashState) => state.operation
@@ -36,6 +37,10 @@ const useTornadoCash = () => {
     selectUnavailableReason
   )
   const { state: syncState } = useController('TornadoCashController', selectSyncState)
+  const { state: isInitialSyncDone } = useController(
+    'TornadoCashController',
+    selectIsInitialSyncDone
+  )
   const { state: balances } = useController('TornadoCashController', selectBalances)
   const { state: prices } = useController('TornadoCashController', selectPrices)
   const { state: operation } = useController('TornadoCashController', selectOperation)
@@ -99,7 +104,8 @@ const useTornadoCash = () => {
     isSyncing: syncState?.status === 'syncing',
     hasSynced: !!syncState?.lastSyncedAt,
     hasSyncError: !!syncState?.error,
-    isFirstSync: syncState?.status === 'syncing' && !syncState.lastSyncedAt && !balances,
+    /** The device's first read of the pools' history, not just this account's first on this run. */
+    isFirstSync: syncState?.status === 'syncing' && isInitialSyncDone === false,
     balances: balanceDisplays,
     /** The controller's balances, with how many notes of each amount. */
     noteBalances: balances || [],

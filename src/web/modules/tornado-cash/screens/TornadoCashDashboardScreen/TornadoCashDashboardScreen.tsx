@@ -100,12 +100,13 @@ const TornadoCashDashboardScreen = () => {
             style={spacings.mbTy}
           />
         )}
+        {/* A first read takes a while. Locking stops it, hence "keep unlocked". */}
         {isFirstSync && (
           <Banner
             type="info"
             title={t('First sync')}
             text={t(
-              'Reading Tornado Cash for the first time. This usually takes about a minute. Keep the wallet unlocked - you can use your other accounts meanwhile.'
+              'Reading Tornado Cash for the first time. This happens once and usually takes about a minute. Keep the wallet unlocked - you can use your other accounts meanwhile.'
             )}
           />
         )}
