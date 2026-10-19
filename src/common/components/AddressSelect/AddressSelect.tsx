@@ -61,6 +61,14 @@ export interface AddressSelectProps extends InputProps {
    * default input background, so the input stays visible.
    */
   inputBackgroundColor?: ColorValue
+  /**
+   * Returns why a contact or wallet account can't be picked, e.g. an account type the flow
+   * doesn't support yet. Such options are disabled, listed last and show the reason in place
+   * of the address.
+   */
+  getContactDisabledReason?: (address: string) => string | null
+  /** Addresses left out of the list, e.g. the ones the flow has already picked */
+  hiddenAddresses?: string[]
   // The props below drive the "Add to address book" prompt, which only applies when the
   // address is a transfer recipient. Other flows can leave them out.
   addressValidationMsg?: string
@@ -69,6 +77,12 @@ export interface AddressSelectProps extends InputProps {
   isRecipientAddressUnknown?: boolean
   addressPoisoningMatch?: AddressPoisoningMatch | null
 }
+
+/** Keeps the order of the options, but lists the disabled ones after all the others */
+const moveDisabledOptionsLast = <T extends { disabled?: boolean }>(options: T[]): T[] => [
+  ...options.filter((option) => !option.disabled),
+  ...options.filter((option) => option.disabled)
+]
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
   severity: 'error', // Don't let the user submit, just in case there is an error
@@ -264,7 +278,9 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   bottomSheetTitle,
   withShortenedAddresses,
   includeSelectedAccount = false,
-  inputBackgroundColor
+  inputBackgroundColor,
+  getContactDisabledReason,
+  hiddenAddresses
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
@@ -285,7 +301,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     preset: 'opacityInverted'
   })
 
-  const selectableContacts = useMemo<Contact[]>(() => {
+  const contactsWithSelectedAccount = useMemo<Contact[]>(() => {
     if (!includeSelectedAccount || !account) return contacts
     const isSelectedAccountIncluded = contacts.some(
       ({ address: contactAddress }) => contactAddress.toLowerCase() === account.addr.toLowerCase()
@@ -301,6 +317,15 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       ...contacts
     ]
   }, [account, contacts, includeSelectedAccount])
+
+  const selectableContacts = useMemo<Contact[]>(() => {
+    if (!hiddenAddresses?.length) return contactsWithSelectedAccount
+
+    const hiddenAddressSet = new Set(hiddenAddresses.map((addr) => addr.toLowerCase()))
+    return contactsWithSelectedAccount.filter(
+      ({ address: contactAddress }) => !hiddenAddressSet.has(contactAddress.toLowerCase())
+    )
+  }, [contactsWithSelectedAccount, hiddenAddresses])
 
   const onManagePress = useCallback(() => {
     navigate(ROUTES.addressBook)
@@ -346,54 +371,70 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      (isMobile ? selectableContacts : filteredContacts)
-        .filter((contact) => contact.isWalletAccount)
-        .map((contact, index) => ({
-          value: contact.address,
-          label: (
-            <AddressBookContact
-              avatarSize={32}
-              testID={`address-book-my-wallet-contact-${index + 1}`}
-              key={contact.address}
-              style={{
-                borderRadius: 0,
-                ...spacings.ph0,
-                ...spacings.pv0
-              }}
-              address={contact.address}
-              name={contact.name}
-              plainAddressMaxLength={contactAddressMaxLength}
-              // Tapping a row selects the address, so a copy icon is not needed on mobile
-              withCopy={isWeb}
-            />
-          )
-        })),
-    [selectableContacts, filteredContacts, contactAddressMaxLength]
+      moveDisabledOptionsLast(
+        (isMobile ? selectableContacts : filteredContacts)
+          .filter((contact) => contact.isWalletAccount)
+          .map((contact, index) => {
+            const disabledReason = getContactDisabledReason?.(contact.address)
+
+            return {
+              value: contact.address,
+              disabled: !!disabledReason,
+              label: (
+                <AddressBookContact
+                  avatarSize={32}
+                  testID={`address-book-my-wallet-contact-${index + 1}`}
+                  key={contact.address}
+                  style={{
+                    borderRadius: 0,
+                    ...spacings.ph0,
+                    ...spacings.pv0
+                  }}
+                  address={contact.address}
+                  name={contact.name}
+                  plainAddressMaxLength={contactAddressMaxLength}
+                  // Tapping a row selects the address, so a copy icon is not needed on mobile
+                  withCopy={isWeb}
+                  disabledReason={disabledReason}
+                />
+              )
+            }
+          })
+      ),
+    [selectableContacts, filteredContacts, contactAddressMaxLength, getContactDisabledReason]
   )
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      (isMobile ? selectableContacts : filteredContacts)
-        .filter((contact) => !contact.isWalletAccount)
-        .map((contact) => ({
-          value: contact.address,
-          label: (
-            <AddressBookContact
-              avatarSize={32}
-              key={contact.address}
-              style={{
-                borderRadius: 0,
-                ...spacings.ph0,
-                ...spacings.pv0
-              }}
-              address={contact.address}
-              name={contact.name}
-              plainAddressMaxLength={contactAddressMaxLength}
-              withCopy={isWeb}
-            />
-          )
-        })),
-    [selectableContacts, filteredContacts, contactAddressMaxLength]
+      moveDisabledOptionsLast(
+        (isMobile ? selectableContacts : filteredContacts)
+          .filter((contact) => !contact.isWalletAccount)
+          .map((contact) => {
+            const disabledReason = getContactDisabledReason?.(contact.address)
+
+            return {
+              value: contact.address,
+              disabled: !!disabledReason,
+              label: (
+                <AddressBookContact
+                  avatarSize={32}
+                  key={contact.address}
+                  style={{
+                    borderRadius: 0,
+                    ...spacings.ph0,
+                    ...spacings.pv0
+                  }}
+                  address={contact.address}
+                  name={contact.name}
+                  plainAddressMaxLength={contactAddressMaxLength}
+                  withCopy={isWeb}
+                  disabledReason={disabledReason}
+                />
+              )
+            }
+          })
+      ),
+    [selectableContacts, filteredContacts, contactAddressMaxLength, getContactDisabledReason]
   )
 
   const selectedOption = useMemo(

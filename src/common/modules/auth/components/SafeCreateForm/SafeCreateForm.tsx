@@ -7,7 +7,6 @@ import AddIcon from '@common/assets/svg/AddIcon'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressSelect from '@common/components/AddressSelect'
-import Button from '@common/components/Button'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -75,19 +74,19 @@ const SafeCreateForm = ({
   ownerAddressValidation,
   validateOwnerAddress,
   owners,
-  isAddOwnerButtonDisabled,
-  handleAddOwner,
+  getUnsupportedOwnerReason,
   handleRemoveOwner,
   requiredConfirmations,
   canDecreaseRequiredConfirmations,
   canIncreaseRequiredConfirmations,
   handleDecreaseRequiredConfirmations,
   handleIncreaseRequiredConfirmations,
-  createButtonDisabledReason,
   withShortenedAddresses
 }: Props) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+
+  const ownerAddresses = useMemo(() => owners.map(({ address }) => address), [owners])
 
   const confirmationsDescription = useMemo(() => {
     if (!owners.length) return t('Add an owner to set this')
@@ -126,31 +125,15 @@ const SafeCreateForm = ({
             bottomSheetTitle={t('Add Safe owner')}
             withShortenedAddresses={withShortenedAddresses}
             includeSelectedAccount
+            getContactDisabledReason={getUnsupportedOwnerReason}
+            // The owners that are already added are left out, so they can't be picked twice
+            hiddenAddresses={ownerAddresses}
             // The parent has the same color as the default input background, so use the focused
             // input color to keep the input visible and the same before and after focus
             inputBackgroundColor={theme.tertiaryBackground}
           />
         )}
       />
-      {/* On its own line, so the input is wide enough to show the selected account in full */}
-      <Button
-        testID="safe-create-add-owner-button"
-        size="smaller"
-        text={t('Add')}
-        hasBottomSpacing={false}
-        onPress={handleAddOwner}
-        disabled={isAddOwnerButtonDisabled}
-      />
-      {!!createButtonDisabledReason && (
-        <Text
-          fontSize={14}
-          appearance="errorText"
-          style={spacings.mtTy}
-          testID="safe-create-disabled-reason"
-        >
-          {createButtonDisabledReason}
-        </Text>
-      )}
 
       <Text fontSize={18} weight="semiBold" style={[spacings.mtLg, spacings.mbSm]}>
         {t('Owners')}

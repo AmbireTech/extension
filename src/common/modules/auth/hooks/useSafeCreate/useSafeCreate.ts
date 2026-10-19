@@ -96,34 +96,30 @@ const useSafeCreate = () => {
   )
   const isEnteredOwnerAlreadyAdded =
     isAddress(enteredOwnerAddress) && ownerAddressSet.has(enteredOwnerAddress.toLowerCase())
+
   // Only the owners that sign with a key are supported for now, so the smart accounts
-  // (incl. Safes) in the wallet can be selected, but not added
-  const enteredSmartAccountOwner = useMemo(
-    () =>
-      accounts.find(
-        (account) =>
-          isSmartAccount(account) &&
-          account.addr.toLowerCase() === enteredOwnerAddress.toLowerCase()
-      ),
-    [accounts, enteredOwnerAddress]
+  // (incl. Safes) in the wallet are disabled in the list and can't be added
+  const getUnsupportedOwnerReason = useCallback(
+    (address: string) => {
+      const smartAccount = accounts.find(
+        (account) => isSmartAccount(account) && account.addr.toLowerCase() === address.toLowerCase()
+      )
+      if (!smartAccount) return null
+
+      return t('Smart accounts coming soon.')
+    },
+    [accounts, t]
   )
 
+  // Covers a smart account address that is typed or pasted instead of picked from the list
   const ownerValidation = useMemo<Validation | null>(() => {
-    if (enteredSmartAccountOwner?.safeCreation)
-      return {
-        severity: 'error',
-        message: t('Safe accounts can’t be added as owners yet. This is coming soon.')
-      }
-    if (enteredSmartAccountOwner)
-      return {
-        severity: 'error',
-        message: t('Smart accounts can’t be added as owners yet. This is coming soon.')
-      }
+    const unsupportedOwnerReason = getUnsupportedOwnerReason(enteredOwnerAddress)
+    if (unsupportedOwnerReason) return { severity: 'error', message: unsupportedOwnerReason }
     if (isEnteredOwnerAlreadyAdded)
       return { severity: 'error', message: t('This owner is already added.') }
 
     return null
-  }, [enteredSmartAccountOwner, isEnteredOwnerAlreadyAdded, t])
+  }, [enteredOwnerAddress, getUnsupportedOwnerReason, isEnteredOwnerAlreadyAdded, t])
 
   const {
     address: ownerAddress,
@@ -177,12 +173,16 @@ const useSafeCreate = () => {
     setSelectedRequiredConfirmations(requiredConfirmations + 1)
   }, [canIncreaseRequiredConfirmations, requiredConfirmations])
 
-  const isAddOwnerButtonDisabled = !isValid || !isAddress(ownerAddress) || !!ownerValidation
+  const canAddEnteredOwner = isValid && isAddress(ownerAddress) && !ownerValidation
 
-  const handleAddOwner = useCallback(() => {
-    if (isAddOwnerButtonDisabled) return
+  // An eligible owner is added as soon as it's picked from the list, pasted or its domain
+  // is resolved, and the field is cleared for the next one. It can be removed from the list
+  useEffect(() => {
+    if (!canAddEnteredOwner) return
 
     const checksummedOwnerAddress = getAddress(ownerAddress) as Hex
+    // Syncs with the address input, whose validation and domain resolution are async
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOwnerAddresses((currentOwnerAddresses) =>
       currentOwnerAddresses.some(
         (address) => address.toLowerCase() === checksummedOwnerAddress.toLowerCase()
@@ -191,7 +191,7 @@ const useSafeCreate = () => {
         : [...currentOwnerAddresses, checksummedOwnerAddress]
     )
     resetAddressInput()
-  }, [isAddOwnerButtonDisabled, ownerAddress, resetAddressInput])
+  }, [canAddEnteredOwner, ownerAddress, resetAddressInput])
 
   const handleRemoveOwner = useCallback((addressToRemove: Hex) => {
     setOwnerAddresses((currentOwnerAddresses) =>
@@ -201,18 +201,10 @@ const useSafeCreate = () => {
     )
   }, [])
 
-  const hasOwnerAddressInput = !!ownerAddressState.fieldValue.trim()
-  // Explains why Create is disabled while there is something in the "Add owner" field,
-  // so an owner the user meant to add isn't left out of the Safe by mistake
-  const createButtonDisabledReason = useMemo(() => {
-    if (!hasOwnerAddressInput) return null
-    if (isAddOwnerButtonDisabled) return t('Clear the “Add owner” field to continue.')
-
-    return t('This address isn’t an owner yet. Press “Add” or clear the field to continue.')
-  }, [hasOwnerAddressInput, isAddOwnerButtonDisabled, t])
-
+  // Eligible owners are added right away, so anything left in the field is still being
+  // entered or can't be added (its validation says why) and doesn't block the creation
   const isCreating = isSubmitting || createSafeAccountStatus === 'LOADING'
-  const isCreateButtonDisabled = !owners.length || isCreating || hasOwnerAddressInput
+  const isCreateButtonDisabled = !owners.length || isCreating
 
   const handleCreate = useCallback(() => {
     if (isCreateButtonDisabled) return
@@ -245,8 +237,7 @@ const useSafeCreate = () => {
     ownerAddressValidation,
     validateOwnerAddress,
     owners,
-    isAddOwnerButtonDisabled,
-    handleAddOwner,
+    getUnsupportedOwnerReason,
     handleRemoveOwner,
     requiredConfirmations,
     canDecreaseRequiredConfirmations,
@@ -254,7 +245,6 @@ const useSafeCreate = () => {
     handleDecreaseRequiredConfirmations,
     handleIncreaseRequiredConfirmations,
     isCreateButtonDisabled,
-    createButtonDisabledReason,
     handleCreate
   }
 }
