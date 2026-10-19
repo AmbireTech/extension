@@ -292,12 +292,19 @@ const SendForm = ({
 
   const pickTornadoCashAmount = useCallback(
     (amount: string) => {
+      // Through the field's own state, which the slider reads, so both move at once
+      if (amountFieldMode === 'token') {
+        setAmountFieldValue(amount)
+        return
+      }
+
+      // Switching the mode copies the controller's amount back into the field
       transferDispatch({
         type: 'method',
         params: { method: 'update', args: [{ amountFieldMode: 'token', amount }] }
       })
     },
-    [transferDispatch]
+    [amountFieldMode, setAmountFieldValue, transferDispatch]
   )
 
   const switchAmountFieldMode = useCallback(() => {
@@ -323,6 +330,7 @@ const SendForm = ({
               privateRecipientAccount?.label ||
               t('{{provider}} account', { provider: privateRecipientProviderName })
             }
+            providerId={privateRecipient.providerId}
             providerName={privateRecipientProviderName}
             onClear={clearPrivateRecipient}
           />
@@ -358,7 +366,7 @@ const SendForm = ({
           text={
             privateRecipient.providerId === 'tornadoCash'
               ? t(
-                  'None of your tokens can be sent to a Tornado Cash account. It accepts ETH, DAI, USDC, USDT and WBTC on Ethereum.'
+                  'None of your tokens can be sent to a Tornado Cash account. It accepts ETH, DAI, USDT and WBTC on Ethereum.'
                 )
               : t(
                   'None of your tokens can be sent to a Privacy Pools account. It accepts ETH, USDC, USDT and a few other tokens on Ethereum.'

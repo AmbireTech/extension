@@ -23,7 +23,7 @@ import AddressScanButton from '@common/components/AddressInput/AddressScanButton
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
 import { InputProps } from '@common/components/Input'
-import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
+import PrivateAccountAvatar from '@common/components/PrivateAccountAvatar'
 import { SectionedSelect } from '@common/components/Select'
 import {
   RenderSelectedOptionParams,
@@ -412,7 +412,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             testID={`address-book-private-account-${account.providerId}-${account.seedId}`}
             style={[flexbox.directionRow, flexbox.alignCenter]}
           >
-            <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+            <PrivateAccountAvatar providerId={account.providerId} size={32} style={spacings.mrTy} />
             <View style={flexbox.flex1}>
               <Text fontSize={14} weight="medium" numberOfLines={1}>
                 {t('Private account')}

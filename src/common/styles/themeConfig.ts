@@ -67,9 +67,11 @@ const ThemeColors = {
     [THEME_TYPES.LIGHT]: '#B34205',
     [THEME_TYPES.DARK]: '#FF955C'
   },
-  privacyPoolsBackground: {
-    [THEME_TYPES.LIGHT]: '#FFF0E8',
-    [THEME_TYPES.DARK]: '#402517'
+  // --- Tornado Cash tokens ---
+  // Its brand's mint green, as on its site
+  tornadoCashText: {
+    [THEME_TYPES.LIGHT]: '#94FEBF',
+    [THEME_TYPES.DARK]: '#94FEBF'
   },
   // --- Other tokens ---
   backdrop: {

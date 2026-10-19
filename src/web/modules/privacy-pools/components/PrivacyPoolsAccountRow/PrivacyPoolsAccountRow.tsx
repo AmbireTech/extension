@@ -1,17 +1,16 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
 
-import BadgeWithPreset from '@common/components/BadgeWithPreset'
 import Dropdown from '@common/components/Dropdown'
-import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
+import PrivateAccountAvatar from '@common/components/PrivateAccountAvatar'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import { PrivateAccountDisplay } from '@common/hooks/usePrivateAccounts'
-import { PRIVACY_PROVIDER_BADGE_PRESETS } from '@common/modules/privacy/providers'
 import useTheme from '@common/hooks/useTheme'
 import getAccountStyles from '@common/modules/account-select/components/Account/styles'
+import { PRIVACY_PROVIDER_NAMES } from '@common/modules/privacy/providers'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -97,6 +96,9 @@ const PrivacyPoolsAccountRow = ({
       testID="privacy-pools-account"
       style={[
         styles.accountContainer,
+        // The menu sits at the end of the row, as in `Account`
+        flexbox.directionRow,
+        flexbox.alignCenter,
         // @ts-expect-error: Web style
         onSelect ? animStyle : { cursor: 'default' },
         onSelect && isSelected && { backgroundColor: theme.secondaryBackground },
@@ -104,21 +106,21 @@ const PrivacyPoolsAccountRow = ({
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-        <PrivacyPoolsAccountAvatar style={spacings.mrTy} />
+        <PrivateAccountAvatar providerId={account.providerId} style={spacings.mrTy} />
         <View style={[flexbox.flex1, flexbox.justifyCenter]}>
           <Text fontSize={14} weight="medium" numberOfLines={1} style={spacings.mrTy}>
             {t('Private account')}
           </Text>
-          {/* The account has no name or address of its own, so its recovery phrase tells it apart */}
+          {/*
+            The account has no name or address of its own, so its provider and recovery phrase
+            tell it apart
+          */}
           <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-            {t('Added from {{seedLabel}}', { seedLabel: account.label })}
+            {t('{{provider}} · {{seedLabel}}', {
+              provider: PRIVACY_PROVIDER_NAMES[account.providerId],
+              seedLabel: account.label
+            })}
           </Text>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
-            <BadgeWithPreset
-              preset={PRIVACY_PROVIDER_BADGE_PRESETS[account.providerId]}
-              withRightSpacing={false}
-            />
-          </View>
         </View>
       </View>
       {!!onRemove && (

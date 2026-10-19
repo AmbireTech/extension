@@ -1,9 +1,10 @@
 import React from 'react'
 import { View } from 'react-native'
 
+import { PrivacyProviderId } from '@ambire-common/interfaces/privateAccount'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
-import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
+import PrivateAccountAvatar from '@common/components/PrivateAccountAvatar'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -14,6 +15,7 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 type Props = {
   label: string
+  providerId: PrivacyProviderId
   /** The private account's provider, such as "Privacy Pools". */
   providerName: string
   disabled?: boolean
@@ -22,7 +24,7 @@ type Props = {
 }
 
 /** Replaces the address field once a private account is picked. Laid out like `Recipient`. */
-const PrivacyPoolsRecipient = ({ label, providerName, disabled, onClear }: Props) => {
+const PrivacyPoolsRecipient = ({ label, providerId, providerName, disabled, onClear }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
@@ -42,7 +44,7 @@ const PrivacyPoolsRecipient = ({ label, providerName, disabled, onClear }: Props
           { borderRadius: BORDER_RADIUS_PRIMARY, backgroundColor: theme.secondaryBackground }
         ]}
       >
-        <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+        <PrivateAccountAvatar providerId={providerId} size={32} style={spacings.mrTy} />
         <View style={flexbox.flex1}>
           <Text fontSize={14} weight="medium" numberOfLines={1}>
             {label}

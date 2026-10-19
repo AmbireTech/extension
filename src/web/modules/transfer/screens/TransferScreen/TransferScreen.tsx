@@ -1,5 +1,5 @@
 import { parseUnits } from 'ethers'
-import React, { Suspense, useCallback, useMemo, useRef, useState } from 'react'
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -88,8 +88,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientAddressViewOnly,
     addressPoisoningMatch,
     privateRecipient,
-    isPreparingPrivateDeposit,
-    privateDepositError
+    privateDepositPreparationsCount
   } = transferState
   const { accounts: privateAccounts } = usePrivateAccounts()
 
@@ -366,20 +365,24 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
   const isTransferFormValid = useMemo(() => {
-    // No address to validate, but the deposit calls must be prepared, which takes a while
-    if (privateRecipient) return !!isFormValid && !isPreparingPrivateDeposit && !privateDepositError
+    // No address to validate. The deposit calls are built once the user proceeds
+    if (privateRecipient) return !!isFormValid
 
     return !!(isTopUp
       ? isFormValid
       : isFormValid && addressInputState.validation.severity !== 'error')
-  }, [
-    addressInputState.validation.severity,
-    isFormValid,
-    isTopUp,
-    privateRecipient,
-    isPreparingPrivateDeposit,
-    privateDepositError
-  ])
+  }, [addressInputState.validation.severity, isFormValid, isTopUp, privateRecipient])
+
+  /**
+   * `privateDepositPreparationsCount` when the user last proceeded with a private deposit, whose
+   * calls are built only then. Its preparation is done once the count moves past it.
+   */
+  const [awaitedPrivateDepositCount, setAwaitedPrivateDepositCount] = useState<number | null>(null)
+  const isAwaitingPrivateDeposit =
+    awaitedPrivateDepositCount !== null &&
+    privateDepositPreparationsCount === awaitedPrivateDepositCount
+  /** The awaited count whose finished preparation was already acted on. */
+  const handledPrivateDepositCountRef = useRef<number | null>(null)
 
   const resetTransferForm = useCallback(() => {
     transferDispatch({
@@ -449,6 +452,13 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               }
             })
             if (isPopup) window.close()
+          } else if (privateRecipient) {
+            // Opened once the deposit is built, as there is nothing to estimate before that
+            setAwaitedPrivateDepositCount(privateDepositPreparationsCount)
+            transferDispatch({
+              type: 'method',
+              params: { method: 'preparePrivateDeposit', args: [] }
+            })
           } else {
             openEstimationModalAndDispatch()
           }
@@ -503,9 +513,29 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       navigate,
       shouldRenderRequestInPanel,
       domains,
-      privateRecipient
+      privateRecipient,
+      privateDepositPreparationsCount,
+      transferDispatch
     ]
   )
+
+  useEffect(() => {
+    if (
+      awaitedPrivateDepositCount === null ||
+      isAwaitingPrivateDeposit ||
+      handledPrivateDepositCountRef.current === awaitedPrivateDepositCount
+    )
+      return
+
+    handledPrivateDepositCountRef.current = awaitedPrivateDepositCount
+    // Without an account op the deposit could not be built, and the form shows why
+    if (signAccountOpController) openEstimationModalAndDispatch()
+  }, [
+    awaitedPrivateDepositCount,
+    isAwaitingPrivateDeposit,
+    signAccountOpController,
+    openEstimationModalAndDispatch
+  ])
 
   const isSignAccountOpInProgress = useMemo(() => {
     if (!account || !userRequests.length || !selectedToken) return false
@@ -529,7 +559,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
         isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
         // See `isTransferFormValid`
-        isLoading={!!privateRecipient && isPreparingPrivateDeposit}
+        isLoading={isAwaitingPrivateDeposit}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
@@ -560,8 +590,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressPoisoningMatch,
     onRecipientAddressUnknownAgree,
     addTransaction,
-    privateRecipient,
-    isPreparingPrivateDeposit
+    isAwaitingPrivateDeposit
   ])
 
   const handleGoBackPress = useCallback(() => {

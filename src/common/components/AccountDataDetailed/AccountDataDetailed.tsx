@@ -4,8 +4,7 @@ import { View } from 'react-native'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
-import BadgeWithPreset from '@common/components/BadgeWithPreset'
-import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
+import PrivateAccountAvatar from '@common/components/PrivateAccountAvatar'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -13,7 +12,6 @@ import useAccountKeys from '@common/hooks/useAccountKeys'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import usePrivateAccounts from '@common/hooks/usePrivateAccounts'
-import { PRIVACY_PROVIDER_BADGE_PRESETS } from '@common/modules/privacy/providers'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -52,7 +50,7 @@ const AccountDataDetailed = () => {
           isNarrowWebLayout && { minWidth: 0 }
         ]}
       >
-        <PrivacyPoolsAccountAvatar style={spacings.mrTy} />
+        <PrivateAccountAvatar providerId={privateAccount.providerId} style={spacings.mrTy} />
         <View
           style={[
             flexbox.flex1,
@@ -75,10 +73,6 @@ const AccountDataDetailed = () => {
             >
               {privateAccount.label}
             </Text>
-            <BadgeWithPreset
-              preset={PRIVACY_PROVIDER_BADGE_PRESETS[privateAccount.providerId]}
-              withRightSpacing={false}
-            />
           </View>
           <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
             {t('Private account, no public address')}

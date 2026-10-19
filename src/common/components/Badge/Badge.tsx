@@ -4,9 +4,7 @@ import { View } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
-import PrivacyPoolsLogoIcon from '@common/assets/svg/PrivacyPoolsLogoIcon'
 import StarsIcon from '@common/assets/svg/StarsIcon'
-import TornadoCashIcon from '@common/assets/svg/TornadoCashIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -49,10 +47,6 @@ const getBadgeTypes = (theme: ThemeProps) => ({
   secondaryAccent: {
     color: theme.secondaryAccent400,
     backgroundColor: theme.secondaryAccent100
-  },
-  privacyPools: {
-    color: theme.privacyPoolsText,
-    backgroundColor: theme.privacyPoolsBackground
   },
   new: {
     color: theme.neutral400,
@@ -114,28 +108,6 @@ const Badge = ({
           })}
           width={sizeMultiplier * 14}
           height={sizeMultiplier * 14}
-        />
-      )}
-      {!!tooltipText && specialType === 'privacy-pools' && (
-        <PrivacyPoolsLogoIcon
-          dataSet={createGlobalTooltipDataSet({
-            id: tooltipId,
-            content: tooltipText
-          })}
-          color={color}
-          width={sizeMultiplier * 16}
-          height={sizeMultiplier * 16}
-        />
-      )}
-      {!!tooltipText && specialType === 'tornado-cash' && (
-        <TornadoCashIcon
-          dataSet={createGlobalTooltipDataSet({
-            id: tooltipId,
-            content: tooltipText
-          })}
-          color={color}
-          width={sizeMultiplier * 16}
-          height={sizeMultiplier * 16}
         />
       )}
     </>

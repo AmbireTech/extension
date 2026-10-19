@@ -9,6 +9,7 @@ import Text from '@common/components/Text'
 import { isPrivacyPoolsEnabled, isTornadoCashEnabled } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { PRIVACY_PROVIDER_NAMES } from '@common/modules/privacy/providers'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
 import type { PrivacyProviderId } from '@ambire-common/interfaces/privateAccount'
@@ -22,6 +23,7 @@ type Props = {
 /** The step between "Add a Privacy account" and the provider's own add sheet. */
 const ChoosePrivacyProviderBottomSheet = ({ sheetRef, closeBottomSheet, onChoose }: Props) => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   return (
     <BottomSheet
@@ -48,6 +50,7 @@ const ChoosePrivacyProviderBottomSheet = ({ sheetRef, closeBottomSheet, onChoose
         <Option
           text={PRIVACY_PROVIDER_NAMES.tornadoCash}
           icon={TornadoCashIcon}
+          hoveredIconColor={theme.tornadoCashText}
           onPress={() => onChoose('tornadoCash')}
           testID="choose-privacy-provider-tornado-cash"
           status="none"

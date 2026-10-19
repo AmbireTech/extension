@@ -10,11 +10,10 @@ type BadgeType =
   | 'error'
   | 'primaryAccent'
   | 'secondaryAccent'
-  | 'privacyPools'
   | 'new'
   | 'outline'
 
-type SpecialBadgeType = 'metamask' | 'safe' | 'privacy-pools' | 'tornado-cash'
+type SpecialBadgeType = 'metamask' | 'safe'
 
 type Props = {
   /** Can be left out when `children` render the whole content, e.g. an icon before the text */

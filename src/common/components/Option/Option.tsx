@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
@@ -19,6 +19,8 @@ interface Props {
   onPress: () => void
   withBottomSpacing?: boolean
   iconProps?: SvgProps
+  /** The icon's color while hovered, e.g. a brand's own. The theme's accent when left out. */
+  hoveredIconColor?: ColorValue
   children?: React.ReactNode
   testID?: string
   disabled?: boolean
@@ -33,6 +35,7 @@ const Option = ({
   withBottomSpacing,
   text,
   iconProps = {},
+  hoveredIconColor,
   children,
   testID,
   disabled,
@@ -48,6 +51,11 @@ const Option = ({
       to: theme.secondaryBackground
     }
   })
+
+  const getIconColor = () => {
+    if (isHovered && hoveredIconColor) return hoveredIconColor
+    return isHovered && themeType === THEME_TYPES.LIGHT ? theme.primaryAccent : theme.iconPrimary
+  }
 
   return (
     <AnimatedPressable
@@ -70,12 +78,7 @@ const Option = ({
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         <View style={styles.iconWrapper}>
-          <Icon
-            color={
-              isHovered && themeType === THEME_TYPES.LIGHT ? theme.primaryAccent : theme.iconPrimary
-            }
-            {...iconProps}
-          />
+          <Icon color={getIconColor()} {...iconProps} />
         </View>
         <Text style={flexbox.flex1} fontSize={14} weight="medium" numberOfLines={1}>
           {text}

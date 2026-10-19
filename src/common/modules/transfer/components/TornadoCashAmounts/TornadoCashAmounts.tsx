@@ -1,16 +1,14 @@
 import { formatUnits, parseUnits } from 'ethers'
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
-import {
-  getTornadoCashPoolsOfAsset,
-  splitIntoTornadoCashNotes
-} from '@ambire-common/libs/tornadoCash/amounts'
+import { getTornadoCashPoolsOfAsset } from '@ambire-common/libs/tornadoCash/amounts'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
-import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import { useTranslation } from '@common/config/localization'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
@@ -29,52 +27,88 @@ const formatAmount = (amount: bigint, decimals: number) => {
   return formatted.endsWith('.0') ? formatted.slice(0, -2) : formatted
 }
 
-/**
- * Tornado Cash holds fixed amounts only, so sending to it offers them as quick picks and shows
- * how the amount in the field is split into them - one part per pool deposit.
- */
+const toAmountWei = (amount: string, decimals: number) => {
+  const sanitizedAmount = getSafeAmountFromFieldValue(amount, decimals)
+  if (!sanitizedAmount) return null
+
+  try {
+    return parseUnits(sanitizedAmount, decimals)
+  } catch {
+    return null
+  }
+}
+
+type PillProps = {
+  text: string
+  isSelected: boolean
+  disabled?: boolean
+  testID: string
+  onPress: () => void
+}
+
+/** Shaped and colored like the amount field's "Max" pill, so the two read as one group. */
+const AmountPill = React.memo(({ text, isSelected, disabled, testID, onPress }: PillProps) => {
+  const { theme } = useTheme()
+  const [bindAnim, animStyle] = useCustomHover({
+    property: 'backgroundColor',
+    values: {
+      from: theme.primaryAccent100,
+      to: hexToRgba(theme.primaryAccent200, 0.16)
+    },
+    forceHoveredStyle: isSelected
+  })
+
+  return (
+    <AnimatedPressable
+      testID={testID}
+      onPress={onPress}
+      disabled={disabled}
+      style={[
+        spacings.phSm,
+        spacings.mrTy,
+        spacings.mbTy,
+        {
+          paddingVertical: 2,
+          borderRadius: 11,
+          borderWidth: 1,
+          borderColor: isSelected ? theme.primary : 'transparent'
+        },
+        animStyle,
+        disabled && { opacity: 0.5 }
+      ]}
+      {...bindAnim}
+    >
+      <Text fontSize={12} weight="medium" appearance="primary">
+        {text}
+      </Text>
+    </AnimatedPressable>
+  )
+})
+
+/** Tornado Cash holds fixed amounts only, so sending to it offers them as quick picks. */
 const TornadoCashAmounts = ({ token, amount, onPick, disabled }: Props) => {
-  const { t } = useTranslation()
   const pools = useMemo(() => getTornadoCashPoolsOfAsset(token.address).reverse(), [token.address])
+  const amountWei = useMemo(() => toAmountWei(amount, token.decimals), [amount, token.decimals])
 
-  const split = useMemo(() => {
-    const sanitizedAmount = getSafeAmountFromFieldValue(amount, token.decimals)
-    if (!sanitizedAmount || !Number(sanitizedAmount)) return null
-
-    return splitIntoTornadoCashNotes(token.address, parseUnits(sanitizedAmount, token.decimals))
-  }, [amount, token.address, token.decimals])
+  const handlePick = useCallback(
+    (denomination: bigint, decimals: number) => onPick(formatUnits(denomination, decimals)),
+    [onPick]
+  )
 
   if (!pools.length) return null
 
   return (
-    <View style={spacings.mtSm}>
-      <View style={[flexbox.directionRow, flexbox.wrap]}>
-        {pools.map(({ address, denomination, decimals, symbol }) => (
-          <Button
-            key={address}
-            testID={`tornado-cash-amount-${formatAmount(denomination, decimals)}`}
-            text={`${formatAmount(denomination, decimals)} ${symbol}`}
-            size="small"
-            type="secondary"
-            hasBottomSpacing={false}
-            disabled={disabled}
-            style={[spacings.mrTy, spacings.mbTy]}
-            onPress={() => onPick(formatUnits(denomination, decimals))}
-          />
-        ))}
-      </View>
-      {!!split && (
-        <Text fontSize={12} appearance="secondaryText">
-          {t('Sent as {{parts}}', {
-            parts: split
-              .map(
-                ({ pool, count }) =>
-                  `${count} × ${formatAmount(pool.denomination, pool.decimals)} ${pool.symbol}`
-              )
-              .join(' + ')
-          })}
-        </Text>
-      )}
+    <View style={[flexbox.directionRow, flexbox.wrap, spacings.mtTy, spacings.phTy]}>
+      {pools.map(({ address, denomination, decimals, symbol }) => (
+        <AmountPill
+          key={address}
+          testID={`tornado-cash-amount-${formatAmount(denomination, decimals)}`}
+          text={`${formatAmount(denomination, decimals)} ${symbol}`}
+          isSelected={amountWei === denomination}
+          disabled={disabled}
+          onPress={() => handlePick(denomination, decimals)}
+        />
+      ))}
     </View>
   )
 }

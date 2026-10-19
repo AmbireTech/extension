@@ -6,7 +6,7 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
-import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
+import PrivateAccountAvatar from '@common/components/PrivateAccountAvatar'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -163,7 +163,11 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
             />
           )}
           {isStoreReady && !account && (
-            <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+            <PrivateAccountAvatar
+              providerId={privateAccount?.providerId ?? 'privacyPools'}
+              size={32}
+              style={spacings.mrTy}
+            />
           )}
           {!isStoreReady && (
             <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />

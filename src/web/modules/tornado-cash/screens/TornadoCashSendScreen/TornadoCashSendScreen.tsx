@@ -15,7 +15,6 @@ import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
-import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
 import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
@@ -40,12 +39,6 @@ const NO_ADDRESS_STATE: AddressState = {
 }
 
 const CHAIN_ID = TORNADO_CASH_CHAIN_ID.toString()
-
-/** An amount in token units without a needless ".0". */
-const formatAmount = (amount: bigint, decimals: number) => {
-  const formatted = formatUnits(amount, decimals)
-  return formatted.endsWith('.0') ? formatted.slice(0, -2) : formatted
-}
 
 /**
  * Send (a withdrawal, in protocol terms) from a Tornado Cash account, laid out like the Privacy
@@ -252,7 +245,7 @@ const TornadoCashSendScreen = () => {
           />
         ) : (
           <Completed
-            title={operation.status === 'success' ? t('Sending successfully') : t('Sending...')}
+            title={t('Sending successfully')}
             titleSecondary={t('Your {{symbol}} is on its way. No trail back to you.', {
               symbol: operation.symbol
             })}
@@ -325,18 +318,6 @@ const TornadoCashSendScreen = () => {
             inputTestId="tornado-cash-amount-field"
             selectTestId="tornado-cash-tokens-select"
           />
-          {!!ownedNotes.length && (
-            <Text fontSize={12} appearance="secondaryText" style={spacings.mtSm}>
-              {t('Your balance is made of {{parts}}. Each part is sent whole.', {
-                parts: ownedNotes
-                  .map(
-                    ({ pool, count }) =>
-                      `${count} × ${formatAmount(pool.denomination, pool.decimals)} ${pool.symbol}`
-                  )
-                  .join(', ')
-              })}
-            </Text>
-          )}
           {isPreparingSend && (
             <View style={{ marginTop: 'auto' }}>
               <PrivacyPoolsLoadingTexts />
