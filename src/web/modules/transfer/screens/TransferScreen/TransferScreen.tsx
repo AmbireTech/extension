@@ -40,9 +40,11 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
+import getTransferBuildRequest from '@common/modules/transfer/utils/getTransferBuildRequest'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+import { getVisibleNftTokenId } from '@common/utils/nft'
 import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
@@ -75,8 +77,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     signAccountOpController,
     latestBroadcastedAccountOp,
     latestBroadcastedToken,
+    latestBroadcastedNft,
     hasProceeded,
-    selectedToken,
+    selectedNft,
+    selectedChainId,
     amountFieldMode,
     amount: controllerAmount,
     amountInFiat,
@@ -166,10 +170,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [userRequests, account])
 
   const networkUserRequests = useMemo(() => {
-    if (!selectedToken || !account || !userRequests.length) return []
+    if (!selectedChainId || !account || !userRequests.length) return []
 
-    return accountUserRequests.filter((r) => r.meta.chainId === selectedToken.chainId)
-  }, [selectedToken, account, userRequests.length, accountUserRequests])
+    return accountUserRequests.filter((r) => r.meta.chainId === selectedChainId)
+  }, [selectedChainId, account, userRequests.length, accountUserRequests])
 
   const batchNetworkUserRequestsCount = useMemo(() => {
     if (!latestBatchedNetwork || !account || !accountUserRequests.length) return 0
@@ -319,11 +323,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   })
 
   /**
-   * True if the user has pending user requests and there is no amount set in the form.
+   * True if the user has pending user requests and there is nothing to send in the form
+   * (no amount set and no NFT selected).
    * Used to allow the user to open the SignAccountOp window to sign the requests.
    */
   const isSendingBatch =
-    accountUserRequests.length > 0 && !transferState.amount && visibleUserRequests.length > 0
+    accountUserRequests.length > 0 &&
+    !transferState.amount &&
+    !selectedNft &&
+    visibleUserRequests.length > 0
 
   const submitButtonText = useMemo(() => {
     const callsCount = getCallsCount(isSendingBatch ? accountUserRequests : networkUserRequests)
@@ -383,31 +391,24 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         return
       }
 
-      if (isFormValid && transferState.selectedToken) {
+      const buildRequest = getTransferBuildRequest({
+        selectedNft: transferState.selectedNft,
+        selectedToken: transferState.selectedToken,
+        amount: transferState.amount,
+        amountInFiat: amountInFiatBigInt, // used only for topUp calcs
+        recipientAddress: isTopUp ? FEE_COLLECTOR : getAddressFromAddressState(addressState),
+        recipientDomain: getResolvedDomainName(domains, addressState),
+        executionType
+      })
+
+      if (isFormValid && buildRequest) {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
           if (!!account?.safeCreation || networkUserRequests.length > 0) {
             requestsDispatch({
               type: 'method',
-              params: {
-                method: 'build',
-                args: [
-                  {
-                    type: 'transferRequest',
-                    params: {
-                      amount: transferState.amount,
-                      amountInFiat: amountInFiatBigInt, // used only for topUp calcs
-                      selectedToken: transferState.selectedToken,
-                      recipientAddress: isTopUp
-                        ? FEE_COLLECTOR
-                        : getAddressFromAddressState(addressState),
-                      executionType,
-                      recipientDomain: getResolvedDomainName(domains, addressState)
-                    }
-                  }
-                ]
-              }
+              params: { method: 'build', args: [buildRequest] }
             })
             if (isPopup) window.close()
           } else {
@@ -419,28 +420,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         // Batch
         requestsDispatch({
           type: 'method',
-          params: {
-            method: 'build',
-            args: [
-              {
-                type: 'transferRequest',
-                params: {
-                  amount: transferState.amount,
-                  amountInFiat: amountInFiatBigInt, // used only for topUp calcs
-                  selectedToken: transferState.selectedToken,
-                  recipientAddress: isTopUp
-                    ? FEE_COLLECTOR
-                    : getAddressFromAddressState(addressState),
-                  executionType,
-                  recipientDomain: getResolvedDomainName(domains, addressState)
-                }
-              }
-            ]
-          }
+          params: { method: 'build', args: [buildRequest] }
         })
 
         setShowAddedToBatch(true)
-        setLatestBatchedNetwork(transferState.selectedToken?.chainId)
+        setLatestBatchedNetwork(transferState.selectedChainId)
 
         resetTransferForm()
       }
@@ -467,16 +451,16 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   )
 
   const isSignAccountOpInProgress = useMemo(() => {
-    if (!account || !userRequests.length || !selectedToken) return false
+    if (!account || !userRequests.length || !selectedChainId) return false
 
     const signAccountOpRequest = userRequests.find(
       (r) =>
         r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
-        r.meta.chainId === selectedToken.chainId
+        r.meta.chainId === selectedChainId
     ) as CallsUserRequest | undefined
     return !!signAccountOpRequest?.signAccountOp.isSignAndBroadcastInProgress
-  }, [account, selectedToken, userRequests])
+  }, [account, selectedChainId, userRequests])
 
   const buttons = useMemo(() => {
     return (
@@ -594,9 +578,14 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             titleSecondary={
               isTopUp
                 ? t('You can now use your gas tank')
-                : t('{{symbol}} delivered!', {
-                    symbol: latestBroadcastedToken?.symbol || 'Token'
-                  })
+                : latestBroadcastedNft
+                  ? t('{{name}} #{{tokenId}} delivered!', {
+                      name: latestBroadcastedNft.collectionName || t('NFT'),
+                      tokenId: getVisibleNftTokenId(latestBroadcastedNft.tokenId.toString())
+                    })
+                  : t('{{symbol}} delivered!', {
+                      symbol: latestBroadcastedToken?.symbol || 'Token'
+                    })
             }
             explorerLink={explorerLink}
             openExplorerText="View Transfer"

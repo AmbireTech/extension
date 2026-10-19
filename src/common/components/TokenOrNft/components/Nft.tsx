@@ -16,6 +16,7 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getVisibleNftTokenId } from '@common/utils/nft'
 
 interface Props {
   tokenId: bigint
@@ -31,15 +32,9 @@ interface Props {
 }
 
 const NFT_NAME_MAX_LENGTH = 12
-const NFT_TOKEN_ID_MAX_LENGTH = 9
 
 const getVisibleNftName = (name: string) =>
   name.length > NFT_NAME_MAX_LENGTH ? `${name.slice(0, NFT_NAME_MAX_LENGTH)}...` : name
-
-const getVisibleTokenId = (tokenId: string) =>
-  tokenId.length > NFT_TOKEN_ID_MAX_LENGTH
-    ? `${tokenId.slice(0, 3)}...${tokenId.slice(-3)}`
-    : tokenId
 
 const Nft: FC<Props> = ({
   address,
@@ -61,7 +56,7 @@ const Nft: FC<Props> = ({
   // Truncate the collection name and the id separately so the id is always visible
   // and NFTs from the same collection (e.g. Uniswap positions) remain distinguishable
   const visibleCollectionName = getVisibleNftName(nftName)
-  const visibleTokenId = `#${getVisibleTokenId(fullTokenId)}`
+  const visibleTokenId = `#${getVisibleNftTokenId(fullTokenId)}`
   const isNameTruncated = `${visibleCollectionName} ${visibleTokenId}` !== fullName
   const tooltipId = useMemo(
     () => `nft-name-${address}-${tokenId.toString()}-${nanoid(6)}`,
