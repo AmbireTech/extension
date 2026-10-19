@@ -62,6 +62,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   dappIconSize = 24 * sizeMultiplierSize,
   transactionSummarySection = 'all',
   showDescriptionTitle = false,
+  titleTextSize = textSize,
+  labelTextSize = textSize,
+  labelWeight,
   nestingDepth = 0
 }) => {
   const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactLayout()
@@ -506,7 +509,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   {!!getErc7730RowLabel(row).trim() && (
                     <Text
                       fontSize={12}
-                      weight="regular"
+                      weight={labelWeight ?? 'regular'}
                       appearance="secondaryText"
                       style={[spacings.mrSm, { flexShrink: 1 }]}
                     >
@@ -717,7 +720,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     <View style={{ width: '100%' }}>
       {shouldShowDescriptionTitle && (
         <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
-          {renderTitleParts(textSize)}
+          {renderTitleParts(titleTextSize)}
         </View>
       )}
       {detailedRows.map((row) => {
@@ -733,7 +736,12 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           return (
             <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
               {!!getErc7730RowLabel(row).trim() && (
-                <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbTy}>
+                <Text
+                  fontSize={labelTextSize}
+                  weight={labelWeight}
+                  appearance="secondaryText"
+                  style={spacings.mbTy}
+                >
                   {getErc7730RowLabel(row)}
                 </Text>
               )}
@@ -811,7 +819,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             ]}
           >
             <Text
-              fontSize={textSize}
+              fontSize={labelTextSize}
+              weight={labelWeight}
               appearance="secondaryText"
               style={{ flex: 1, minWidth: withMobileLayout ? 0 : 120, marginRight: SPACING_SM }}
             >
