@@ -25,6 +25,7 @@ const {
   TORNADO_CASH_ARTIFACTS_DIR,
   assertTornadoCashArtifact
 } = require('../scripts/fetch-tornado-cash-artifacts')
+const { precompileTornadoCashWitness } = require('../scripts/precompile-tornado-cash-witness')
 const { CJS_RULE, hardenTerser, ROOT_DIR } = require('./shared')
 
 // Entries that run outside LavaMoat protection.
@@ -373,7 +374,11 @@ module.exports = async function buildExtension(
             'merkle-tree-worker.browser.js'
           ].map((fileName) => ({
             from: `./node_modules/@kohaku-eth/tornado-cash/dist/${fileName}`,
-            to: `tornado-cash/${fileName}`
+            to: `tornado-cash/${fileName}`,
+            // The state manager proves withdrawals, which would otherwise need 'unsafe-eval'
+            ...(fileName === 'state-manager.worker.js' && {
+              transform: (content) => precompileTornadoCashWitness(content.toString())
+            })
           }))
         ]
       : []),
