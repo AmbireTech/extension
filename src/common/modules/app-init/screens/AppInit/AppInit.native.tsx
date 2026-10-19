@@ -16,6 +16,7 @@ import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHand
 import { AuthProvider } from '@common/modules/auth/contexts/authContext'
 import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onboardingNavigationContext'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
+import MandatoryOtaUpdateModal from '@mobile/components/MandatoryOtaUpdateModal'
 import { ControllersMiddlewareProvider } from '@mobile/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStateLoadedContext'
 import NfcCardSessionModal from '@mobile/modules/hardware-wallet/components/NfcCardSessionModal'
@@ -48,6 +49,7 @@ const AppInit = () => {
                                     <OnboardingNavigationProvider>
                                       <AppRouter />
                                       <NfcCardSessionModal />
+                                      <MandatoryOtaUpdateModal />
                                       <PortalHost name="global" />
                                     </OnboardingNavigationProvider>
                                   </BiometricsProvider>

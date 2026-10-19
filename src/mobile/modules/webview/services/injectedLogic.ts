@@ -1,4 +1,5 @@
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
+import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
@@ -80,7 +81,9 @@ function debounceFrontEndEventUpdatesOnSameTick(
         // Send error back to React Native
         sendToReactEvent('ctrl.error', {
           ctrlName,
-          errors: [{ message: (err as any).message, stack: (err as any).stack }]
+          errors: [
+            { name: (err as any).name, message: (err as any).message, stack: (err as any).stack }
+          ]
         })
       }
     }
@@ -190,10 +193,14 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
 
     const hasOnErrorInitialized = ctrl.onErrorIds.includes('webview')
     if (!hasOnErrorInitialized) {
-      ctrl.onError(() => {
+      // Only the new error is sent, as `emittedErrors` still holds the ones reported before
+      ctrl.onError(({ message, level, sendCrashReport, error }: ErrorRef) => {
         if (!ctrl.isInRegistry()) return
 
-        sendToReactEvent('ctrl.error', { ctrlName: ctrl.name, errors: ctrl.emittedErrors })
+        sendToReactEvent('ctrl.error', {
+          ctrlName: ctrl.name,
+          errors: [{ name: error?.name, message, level, sendCrashReport, stack: error?.stack }]
+        })
       }, 'webview')
     }
   })
@@ -228,7 +235,7 @@ const initControllers = (config: any) => {
   } catch (e: any) {
     sendToReactEvent('ctrl.error', {
       ctrlName: 'Init',
-      errors: [{ message: e.message, stack: e.stack }]
+      errors: [{ name: e.name, message: e.message, stack: e.stack }]
     })
   }
 }

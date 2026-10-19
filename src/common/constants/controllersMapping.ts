@@ -2,6 +2,7 @@ import type AccountPickerController from '@ambire-common/controllers/accountPick
 import type { AccountsController } from '@ambire-common/controllers/accounts/accounts'
 import type { ActivityController } from '@ambire-common/controllers/activity/activity'
 import type { AddressBookController } from '@ambire-common/controllers/addressBook/addressBook'
+import type { AppDataSyncController } from '@ambire-common/controllers/appDataSync/appDataSync'
 import type { AutoLoginController } from '@ambire-common/controllers/autoLogin/autoLogin'
 import type { BannerController } from '@ambire-common/controllers/banner/banner'
 import type { ContractInfoController } from '@ambire-common/controllers/contractInfo/contractInfo'
@@ -72,6 +73,7 @@ export type ControllersNestedInMainMappingType = {
   SurveyController: SurveyController
   DebugController: DebugController
   VerificationController: VerificationController
+  AppDataSyncController: AppDataSyncController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
@@ -112,7 +114,8 @@ export const controllersNestedInMainMapping =
     'WalletTokenController',
     'SurveyController',
     'DebugController',
-    'VerificationController'
+    'VerificationController',
+    'AppDataSyncController'
   ] as const)
 
 export type AllControllersMappingType = {

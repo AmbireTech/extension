@@ -9,7 +9,7 @@ import {
   LI_FI_API_KEY,
   NFT_CDN_URL,
   RELAYER_URL,
-  SENTRY_DSN,
+  SENTRY_DSN_MOBILE,
   UNISWAP_API_KEY,
   VELCRO_URL,
   WALLETCONNECT_PROJECT_ID
@@ -18,8 +18,13 @@ import {
 import appJSON from '../../../../app.json'
 
 export const isTesting = process.env.IS_TESTING === 'true'
-const runtimeAppEnv =
-  process.env.APP_ENV || (typeof __DEV__ !== 'undefined' && __DEV__ ? 'development' : 'production')
+/**
+ * Whether the JS runs as a debug build, whatever `APP_ENV` says. A dev-client session started with
+ * `APP_ENV=production` is still a debug build. Always false where `__DEV__` doesn't exist, like
+ * the extension and the websites.
+ */
+export const isDebugBuild = typeof __DEV__ !== 'undefined' && __DEV__
+const runtimeAppEnv = process.env.APP_ENV || (isDebugBuild ? 'development' : 'production')
 export const isDev = runtimeAppEnv === 'development'
 export const isProd = runtimeAppEnv === 'production'
 export const isStaging = runtimeAppEnv === 'staging'
@@ -38,6 +43,8 @@ export const DEV_PREFILLED_PASSWORD =
  * production webkit builds with different branding for testing purposes.
  */
 export const isAmbireNext = process.env.AMBIRE_NEXT === 'true'
+/** The Firefox build of the extension (popup, tab, request window or sidebar). False on mobile. */
+export const isFirefoxBuild = process.env.WEB_ENGINE === 'gecko'
 
 /** On Android, this is the package name. On iOS, this is the bundle ID. */
 export const APP_ID = Application.applicationId
@@ -72,7 +79,7 @@ const CONFIG: Config = {
   APP_ENV: APP_ENV.DEV,
   RELAYER_URL,
   VELCRO_URL,
-  SENTRY_DSN,
+  SENTRY_DSN_MOBILE,
   NFT_CDN_URL: NFT_CDN_URL || 'https://nftcdn.ambire.com',
   ENVIRONMENT: process.env.ENVIRONMENT || 'development',
   DEFAULT_KEYSTORE_PASSWORD_DEV: process.env.DEFAULT_KEYSTORE_PASSWORD_DEV || '',

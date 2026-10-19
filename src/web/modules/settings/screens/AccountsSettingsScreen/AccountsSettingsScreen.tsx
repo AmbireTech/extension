@@ -23,7 +23,7 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -36,7 +36,8 @@ import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRo
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
-  const { accounts, control, keyExtractor, getItemLayout } = useAccountsList()
+  const { accounts, control, keyExtractor, getItemLayout, onAccountExtraHeightChange } =
+    useAccountsList()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
@@ -207,6 +208,7 @@ const AccountsSettingsScreen = () => {
               isSelectable={false}
               containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
               withReceive
+              onExtraHeightChange={onAccountExtraHeightChange}
             />
           </View>
         </View>
@@ -217,7 +219,8 @@ const AccountsSettingsScreen = () => {
       theme.primary,
       theme.iconPrimary,
       shortenAccountAddr,
-      accountOptions
+      accountOptions,
+      onAccountExtraHeightChange
     ]
   )
   const { maxWidthSize } = useWindowSize()
@@ -364,11 +367,11 @@ const AccountsSettingsScreen = () => {
         closeBottomSheet={closeSyncBottomSheet}
         onExportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.exportAccountsToMobile)
+          navigate(WEB_ROUTES.exportToMobile)
         }}
         onImportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.importAccountsFromMobile)
+          navigate(WEB_ROUTES.importFromMobile)
         }}
       />
     </>

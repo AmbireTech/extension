@@ -8,7 +8,7 @@ import { Props as DualChoiceModalProps } from '@common/components/DualChoiceModa
 import CommonText, { Props } from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import GlassView from '../GlassView'
@@ -79,9 +79,20 @@ const ButtonWrapper = ({
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
 
-  // Mobile and narrow web stack the buttons full-width, primary on top
+  // Mobile and narrow web show the buttons on one full-width row, each one growing from the
+  // width of its label, so a longer primary label still fits next to Cancel
   if (isCompactLayout) {
-    return <View style={spacings.ptSm}>{children}</View>
+    return (
+      <View
+        style={[
+          reverse ? flexbox.directionRowReverse : flexbox.directionRow,
+          spacings.ptSm,
+          { gap: SPACING_TY }
+        ]}
+      >
+        {children}
+      </View>
+    )
   }
 
   return (
@@ -139,8 +150,9 @@ const DualChoiceWarningModal = ({
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
           type={type === 'error' ? 'dangerFilled' : type}
-          hasBottomSpacing={isCompactLayout}
+          hasBottomSpacing={false}
           size={isCompactLayout ? 'regular' : 'smaller'}
+          style={isCompactLayout ? { flexGrow: 1 } : undefined}
           {...primaryButtonProps}
         />
         {secondaryButtonText && onSecondaryButtonPress && (
@@ -155,7 +167,7 @@ const DualChoiceWarningModal = ({
             size={isCompactLayout ? 'regular' : 'smaller'}
             {...secondaryButtonProps}
             style={[
-              !isCompactLayout && spacings.mrLg,
+              isCompactLayout ? { flexGrow: 1 } : spacings.mrLg,
               secondaryButtonProps?.style as ViewStyle | undefined
             ]}
           />

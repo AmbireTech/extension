@@ -14,6 +14,8 @@ const AccountButton = () => {
         navigate(WEB_ROUTES.accountSelect)
       }}
       withArrowRightIcon={isWeb}
+      // The black of the dashboard's overview card
+      backgroundBehindColor="#000000"
     />
   )
 }

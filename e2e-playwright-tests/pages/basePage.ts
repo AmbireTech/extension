@@ -11,6 +11,8 @@ export class BasePage {
 
   context: BrowserContext
 
+  serviceWorker: any
+
   private _reqListener?: (r: PWRequest) => void
 
   private _monitorInstalled = false
@@ -23,9 +25,19 @@ export class BasePage {
     headers: Record<string, string>
   }> = []
 
-  constructor({ page, context }: BootstrapContext) {
+  constructor({ page, context, serviceWorker }: BootstrapContext) {
     this.page = page
     this.context = context
+    this.serviceWorker = serviceWorker
+  }
+
+  /** The address of the selected account, as the wallet saved it, or undefined when none is. */
+  async getSelectedAccount(): Promise<string | undefined> {
+    const { selectedAccount } = await this.serviceWorker.evaluate(() =>
+      chrome.storage.local.get('selectedAccount')
+    )
+
+    return selectedAccount
   }
 
   async navigateToURL(url: string) {

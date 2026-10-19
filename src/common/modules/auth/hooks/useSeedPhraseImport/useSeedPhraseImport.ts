@@ -1,12 +1,15 @@
-import { wordlists } from 'bip39'
-import { Mnemonic } from 'ethers'
-import { useCallback, useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import {
+  getSeedPhraseValidation,
+  normalizeSeedPhrase,
+  SeedPhraseError
+} from '@common/modules/auth/utils/seedPhrase'
 
 export default function useSeedPhraseImport() {
   const { goToNextRoute } = useOnboardingNavigation()
@@ -16,7 +19,6 @@ export default function useSeedPhraseImport() {
   const { dispatch: keystoreDispatch } = useController('KeystoreController')
   const { dispatch: mainDispatch } = useController('MainController')
   const {
-    watch,
     control,
     handleSubmit,
     setValue,
@@ -30,32 +32,31 @@ export default function useSeedPhraseImport() {
   const [importButtonPressed, setImportButtonPressed] = useState(false)
 
   const [enablePassphrase, setEnablePassphrase] = useState(false)
-  const [seedPhraseStatus, setSeedPhraseStatus] = useState<'incomplete' | 'valid' | 'invalid'>(
-    'incomplete'
+  const seedValue = useWatch({ control, name: 'seed' })
+  // `null` while the seed input is not focused
+  const [seedCaretPosition, setSeedCaretPosition] = useState<number | null>(null)
+  const { status: seedPhraseStatus, error } = useMemo(
+    () => getSeedPhraseValidation(seedValue, seedCaretPosition),
+    [seedValue, seedCaretPosition]
   )
 
-  useEffect(() => {
-    const { unsubscribe } = watch((value) => {
-      if (!value.seed) {
-        setSeedPhraseStatus('incomplete')
-        return
-      }
+  const seedPhraseError = useMemo(() => {
+    if (!error) return undefined
 
-      const formattedSeed = value.seed.trim().split(/\s+/).join(' ')
+    const errorMessages: { [key in SeedPhraseError]: string } = {
+      'unknown-words': t('Some words are not valid recovery phrase words.'),
+      'wrong-word-count': t('A recovery phrase has 12, 15, 18, 21 or 24 words.'),
+      'invalid-phrase': t(
+        'Invalid recovery phrase. Check that the words are spelled correctly and in the right order.'
+      )
+    }
 
-      if (!Mnemonic.isValidMnemonic(formattedSeed)) {
-        setSeedPhraseStatus('invalid')
-        return
-      }
-
-      setSeedPhraseStatus('valid')
-    })
-    return () => unsubscribe()
-  }, [watch])
+    return errorMessages[error]
+  }, [error, t])
 
   const handleFormSubmit = useCallback(async () => {
     await handleSubmit(({ seed, passphrase }) => {
-      const formattedSeed = seed.trim().toLowerCase().replace(/\s+/g, ' ')
+      const formattedSeed = normalizeSeedPhrase(seed)
       setImportButtonPressed(true)
       keystoreDispatch({
         type: 'method',
@@ -95,19 +96,9 @@ export default function useSeedPhraseImport() {
     }
   }, [enablePassphrase, setValue, unregister])
 
-  const validateSeedPhraseWord = useCallback(
-    (value: string) => {
-      const formattedSeed = value.trim().toLowerCase().replace(/\s+/g, ' ')
-
-      const couldValueBeAPastedSeed = formattedSeed.length > 1
-
-      // If the value contains multiple words, it could be a pasted seed phrase
-      // Don't display errors in this case, otherwise an error flashes when pasting
-      if (!formattedSeed || couldValueBeAPastedSeed) return undefined
-      if (!wordlists.english?.includes(value)) return t('invalid-bip39-word')
-      return undefined
-    },
-    [t]
+  const validateSeedPhrase = useCallback(
+    (value: string) => getSeedPhraseValidation(value).status === 'valid',
+    []
   )
 
   return {
@@ -116,10 +107,12 @@ export default function useSeedPhraseImport() {
     enablePassphrase,
     setEnablePassphrase,
     seedPhraseStatus,
-    setSeedPhraseStatus,
+    seedPhraseError,
+    seedCaretPosition,
+    setSeedCaretPosition,
     importButtonPressed,
     setImportButtonPressed,
     handleFormSubmit,
-    validateSeedPhraseWord
+    validateSeedPhrase
   }
 }

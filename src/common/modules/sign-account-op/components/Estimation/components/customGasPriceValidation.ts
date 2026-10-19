@@ -6,9 +6,10 @@ export type CustomGasPriceField = 'maxFeePerGas' | 'maxPriorityFeePerGas' | 'gas
 /**
  * Why a custom gas value is not valid:
  * - `invalid` - the value is empty, is not a number, or is not greater than 0
+ * - `tooManyDecimals` - the fee has more decimals than gwei allows (the smallest unit is 1 wei)
  * - `aboveMaxFee` - the max priority fee is higher than the max fee per gas
  */
-export type CustomGasPriceErrorReason = 'invalid' | 'aboveMaxFee'
+export type CustomGasPriceErrorReason = 'invalid' | 'tooManyDecimals' | 'aboveMaxFee'
 
 /** The validation errors, one per field, so that each input shows only its own error. */
 export type CustomGasPriceErrors = Partial<Record<CustomGasPriceField, CustomGasPriceErrorReason>>
@@ -31,8 +32,16 @@ type CustomGasPriceInput = {
   canSetCustomGas: boolean
 }
 
+/** The max number of decimals a fee in gwei can have, because 1 gwei = 10^9 wei. */
+export const GWEI_DECIMALS = 9
+
 /** Makes a value that the user typed ready to parse. Accepts a comma as the decimal separator. */
 export const normalizeCustomGasValue = (value: string) => value.trim().replace(',', '.')
+
+const getDecimalsCount = (value: string) => value.split('.')[1]?.length ?? 0
+
+const getGweiErrorReason = (value: string): CustomGasPriceErrorReason =>
+  getDecimalsCount(value) > GWEI_DECIMALS ? 'tooManyDecimals' : 'invalid'
 
 const parsePositiveGwei = (value: string): bigint | null => {
   if (!value) return null
@@ -74,14 +83,14 @@ export const validateCustomGasPrice = ({
 }: CustomGasPriceInput): { errors: CustomGasPriceErrors; values: CustomGasPriceValues | null } => {
   const errors: CustomGasPriceErrors = {}
 
-  const parsedMaxFeePerGas = parsePositiveGwei(normalizeCustomGasValue(maxFeePerGas))
-  if (parsedMaxFeePerGas === null) errors.maxFeePerGas = 'invalid'
+  const normalizedMaxFeePerGas = normalizeCustomGasValue(maxFeePerGas)
+  const parsedMaxFeePerGas = parsePositiveGwei(normalizedMaxFeePerGas)
+  if (parsedMaxFeePerGas === null) errors.maxFeePerGas = getGweiErrorReason(normalizedMaxFeePerGas)
 
-  const parsedMaxPriorityFeePerGas = is1559
-    ? parsePositiveGwei(normalizeCustomGasValue(maxPriorityFeePerGas))
-    : 0n
+  const normalizedMaxPriorityFeePerGas = normalizeCustomGasValue(maxPriorityFeePerGas)
+  const parsedMaxPriorityFeePerGas = is1559 ? parsePositiveGwei(normalizedMaxPriorityFeePerGas) : 0n
   if (parsedMaxPriorityFeePerGas === null) {
-    errors.maxPriorityFeePerGas = 'invalid'
+    errors.maxPriorityFeePerGas = getGweiErrorReason(normalizedMaxPriorityFeePerGas)
   } else if (parsedMaxFeePerGas !== null && parsedMaxPriorityFeePerGas > parsedMaxFeePerGas) {
     errors.maxPriorityFeePerGas = 'aboveMaxFee'
   }

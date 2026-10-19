@@ -61,6 +61,30 @@ describe('validateCustomGasPrice', () => {
     })
   })
 
+  test('marks the fees that have more decimals than gwei allows', () => {
+    expect(
+      validateCustomGasPrice({
+        ...validInput,
+        maxFeePerGas: '0.0264607201',
+        maxPriorityFeePerGas: '0.0001323031'
+      })
+    ).toEqual({
+      errors: { maxFeePerGas: 'tooManyDecimals', maxPriorityFeePerGas: 'tooManyDecimals' },
+      values: null
+    })
+  })
+
+  test('accepts fees with exactly 9 decimals', () => {
+    const { values } = validateCustomGasPrice({
+      ...validInput,
+      maxFeePerGas: '0.026460720',
+      maxPriorityFeePerGas: '0.000132303'
+    })
+
+    expect(values?.maxFeePerGas).toBe(26460720n)
+    expect(values?.maxPriorityFeePerGas).toBe(132303n)
+  })
+
   test('marks the max priority fee when it is higher than the max fee', () => {
     expect(validateCustomGasPrice({ ...validInput, maxPriorityFeePerGas: '0.2' })).toEqual({
       errors: { maxPriorityFeePerGas: 'aboveMaxFee' },

@@ -83,7 +83,7 @@ const ErrorInformation = () => {
     if (!hasDeveloperInformation && !canRefetchAccountState) return null
 
     return (
-      <View style={[flexbox.alignCenter]}>
+      <View style={styles.errorTextContainer}>
         {hasDeveloperInformation && !canRefetchAccountState && (
           <>
             <AlertVertical.Text
@@ -132,6 +132,7 @@ const ErrorInformation = () => {
     refetchAccountState,
     signAccountOpState,
     styles.alertText,
+    styles.errorTextContainer,
     theme.secondaryText,
     t,
     tenderlyLink

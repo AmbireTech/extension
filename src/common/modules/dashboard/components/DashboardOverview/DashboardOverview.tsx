@@ -218,8 +218,6 @@ const DashboardOverview: FC<Props> = ({
               </View>
               <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
                 <GasTankButton onPress={() => openGasTankModal?.()} account={account} />
-                {/* NOTE: this is commented out instead of deleted because we might wat to return it */}
-                {/* <RewardsButton /> */}
               </View>
             </View>
             <Routes />

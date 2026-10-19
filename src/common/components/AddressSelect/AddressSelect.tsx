@@ -96,6 +96,7 @@ const SelectedMenuOption: React.FC<{
     color: 'errorText'
   }
   inputBackgroundColor?: ColorValue
+  plainAddressMaxLength?: number
 }> = ({
   selectRef,
   filteredContacts,
@@ -112,7 +113,8 @@ const SelectedMenuOption: React.FC<{
   type = 'selected-menu-option',
   autoFocus = false,
   addressHighlight,
-  inputBackgroundColor
+  inputBackgroundColor,
+  plainAddressMaxLength
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -169,6 +171,7 @@ const SelectedMenuOption: React.FC<{
         resolvedAddress={resolvedAddress}
         resolvedAddressType={resolvedAddressType}
         addressHighlight={addressHighlight}
+        plainAddressMaxLength={plainAddressMaxLength}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         // On mobile input mode we still need details view when poisoning highlight exists,
@@ -230,6 +233,7 @@ const SelectedMenuOption: React.FC<{
       theme.neutral400,
       addressHighlight,
       inputBackgroundColor,
+      plainAddressMaxLength,
       type,
       validation
     ]
@@ -495,6 +499,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           renderConfirmAddress={renderConfirmAddress}
           addressHighlight={selectedAddressHighlight}
           inputBackgroundColor={inputBackgroundColor}
+          plainAddressMaxLength={contactAddressMaxLength}
         />
       )
     },
@@ -509,7 +514,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       disabled,
       renderConfirmAddress,
       selectedAddressHighlight,
-      inputBackgroundColor
+      inputBackgroundColor,
+      contactAddressMaxLength
     ]
   )
 
@@ -546,6 +552,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             setAddress={setAddress}
             disabled={disabled}
             addressHighlight={selectedAddressHighlight}
+            plainAddressMaxLength={contactAddressMaxLength}
           />
         )}
         containerStyle={spacings.mb0}

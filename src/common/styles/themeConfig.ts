@@ -21,6 +21,8 @@ const ThemeColors = {
   primaryBackground: NEUTRAL_PRIMITIVES.neutral300,
   secondaryBackground: NEUTRAL_PRIMITIVES.neutral100,
   tertiaryBackground: NEUTRAL_PRIMITIVES.neutral400,
+  /** "bg 3, hover, stroke" in Figma */
+  hoverBackground: NEUTRAL_PRIMITIVES.neutral500,
   // --- Text tokens ---
   primaryText: NEUTRAL_PRIMITIVES.neutral900,
   secondaryText: NEUTRAL_PRIMITIVES.neutral700,

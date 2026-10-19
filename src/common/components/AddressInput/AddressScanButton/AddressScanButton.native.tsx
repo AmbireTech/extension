@@ -13,7 +13,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import CameraScanner from '@mobile/components/CameraScanner'
@@ -128,7 +128,8 @@ const AddressScanButton = ({ onScanned }: AddressScanButtonProps) => {
               size="sm"
               absolute={false}
               style={{ ...spacings.ptSm, marginTop: 'auto' }}
-              mobileStyle={spacings.ptLg}
+              // One row, each button growing from its label, so "Grant camera access" fits next to Back
+              mobileStyle={{ ...spacings.ptLg, ...flexbox.directionRow, columnGap: SPACING_TY }}
             >
               <Button
                 size="regular"
@@ -136,11 +137,13 @@ const AddressScanButton = ({ onScanned }: AddressScanButtonProps) => {
                 type="secondary"
                 text={t('Back')}
                 onPress={() => closeBottomSheet()}
+                style={{ flexGrow: 1 }}
               />
               {!permissionGranted && (
                 <Button
                   size="regular"
                   hasBottomSpacing
+                  style={{ flexGrow: 1 }}
                   text={
                     permission && !permission.canAskAgain
                       ? t('Open settings')

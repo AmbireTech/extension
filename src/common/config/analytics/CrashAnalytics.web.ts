@@ -1,6 +1,10 @@
-import { applyCrashReportPolicy } from '@common/config/analytics/applyCrashReportPolicy'
-import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
+import { excludeIntegrationsByName } from '@common/config/analytics/crashReportHelpers'
+import { processCrashReportEvent } from '@common/config/analytics/processCrashReportEvent'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isTesting } from '@common/config/env'
+import {
+  CrashAnalyticsUnavailableReason,
+  CULTURE_CONTEXT_INTEGRATION_NAME
+} from '@common/constants/crashAnalytics'
 import * as Sentry from '@sentry/react'
 import { IS_FIREFOX } from '@web/constants/common'
 
@@ -14,7 +18,9 @@ export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   release: `extension-${isAmbireNext ? 'next-' : ''}${process.env.WEB_ENGINE}@${APP_VERSION}`,
   // Disables sending personally identifiable information
   sendDefaultPii: false,
-  integrations: [],
+  // The SDK's newer CultureContext default would add the user's locale and timezone to every event
+  integrations: (defaultIntegrations) =>
+    excludeIntegrationsByName(defaultIntegrations, [CULTURE_CONTEXT_INTEGRATION_NAME]),
   // Sentry is doing some extra work to make sure the fetch it finds is the right one, but it
   // doesn't work under LavaMoat so we pass it the fetch used in that context.
   transport: (options) => Sentry.makeFetchTransport(options, (...args) => fetch(...args)),
@@ -22,32 +28,12 @@ export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   debug: isTesting,
   // No explicit `event` param type here: annotating this object as
   // Sentry.BrowserOptions lets `event`'s type be inferred contextually as the
-  // narrower `ErrorEvent`, which scrubSentryEventSecrets (generic) then
+  // narrower `ErrorEvent`, which processCrashReportEvent (generic) then
   // preserves in its return type -- an explicit `event: Sentry.Event` param
   // widens both to the general Event union, which BrowserOptions rejects.
   beforeSend(event, hint) {
-    if (!applyCrashReportPolicy(event, hint?.originalException)) return null
-
-    return scrubSentryEventSecrets(event)
+    return processCrashReportEvent(event, hint?.originalException)
   }
-}
-
-/**
- * Logs every event Sentry actually delivers, so a report that silently never leaves the
- * extension is distinguishable from no error happening at all. Call it right after
- * `Sentry.init`, passing the client of the package that initialized it. No-op unless this is
- * a testing build.
- */
-export const logSentryDeliveryWhenTesting = (client: ReturnType<typeof Sentry.getClient>) => {
-  if (!isTesting || !client) return
-
-  client.on('afterSendEvent', (event, sendResponse) => {
-    console.log(
-      `[sentry] delivered ${event.type || 'error'} event ${event.event_id} with status ${
-        sendResponse.statusCode
-      }`
-    )
-  })
 }
 
 export const captureException = Sentry.captureException
@@ -67,8 +53,5 @@ export const ErrorBoundary = Sentry.ErrorBoundary
  */
 export const CRASH_ANALYTICS_ENABLED_DEFAULT = !isDev && !IS_FIREFOX
 
-/**
- * Since v5.21.2, we store the crash analytics enabled state in a new storage key
- * to avoid conflicts with the previous storage key. Prev key: 'crashAnalyticsEnabled'.
- */
-export const CRASH_ANALYTICS_ENABLED_STORAGE_KEY = 'crashAnalyticsEnabledV2'
+/** Always null, only the mobile app reports why crash reporting can't start. */
+export const crashAnalyticsUnavailableReason: CrashAnalyticsUnavailableReason | null = null

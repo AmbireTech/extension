@@ -7,7 +7,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
-import { useTranslation } from '@common/config/localization'
+import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING } from '@common/styles/spacings'
@@ -15,6 +15,10 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
+import { openInTab } from '@common/utils/links'
+
+const MOBILE_APP_DOWNLOAD_URL =
+  'https://www.ambire.com/download?utm_source=ambire_extension&utm_medium=in_app&utm_campaign=mobile_launch_existing_users&utm_content=download_modal#mobile'
 
 // The "Invite code" label sits on the border line itself (fieldset/legend style) - an
 // absolutely-positioned Text whose background matches the sheet's own, so it masks the
@@ -46,6 +50,14 @@ const MobileAppInfoBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, invit
     addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
   }, [inviteCode, addToast, t])
 
+  const handleOpenDownloadPage = useCallback(() => {
+    openInTab({ url: MOBILE_APP_DOWNLOAD_URL }).catch((error) => {
+      console.error('Failed to open the mobile app download page', error)
+      captureException(error)
+      addToast(t("Couldn't open link") as string, { type: 'error' })
+    })
+  }, [addToast, t])
+
   return (
     <BottomSheet
       id="mobile-app-info-bottom-sheet"
@@ -57,12 +69,24 @@ const MobileAppInfoBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, invit
         {t('Ambire Mobile is live! 🚀')}
       </Text>
       <Text appearance="secondaryText" fontSize={14} style={[spacings.mbTy, text.center]}>
-        {t('Our brand-new mobile app is here.')}
+        <Trans>
+          Our brand-new mobile app is{' '}
+          <Text
+            appearance="secondaryText"
+            fontSize={14}
+            underline
+            color={theme.infoDecorative}
+            onPress={handleOpenDownloadPage}
+          >
+            available for download
+          </Text>
+          .
+        </Trans>
       </Text>
       {/* TODO: confirm final marketing copy for this paragraph with product/design */}
       <Text appearance="secondaryText" fontSize={14} style={[spacings.mbLg, text.center]}>
         {t(
-          'Use the invite code below to activate your existing Ambire account in the Ambire Mobile app and access your wallet on the go.'
+          'Use the code below to activate your existing Ambire account in the Ambire Mobile app and access your wallet on the go.'
         )}
       </Text>
       <View style={{ position: 'relative', marginTop: 10 }}>

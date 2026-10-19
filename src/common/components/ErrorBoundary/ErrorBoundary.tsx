@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { ReactNode, useCallback, useState } from 'react'
 import { Trans } from 'react-i18next'
 import { Pressable, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -29,9 +29,15 @@ import Text from '../Text'
 
 interface Props {
   error: Error
+  /** Overrides the wallet-specific title, for apps that hold no funds. */
+  title?: string
+  /** Overrides the wallet-specific reload and support instructions. */
+  description?: ReactNode
+  /** Replaces the default Ambire Wallet logo. */
+  logo?: ReactNode
 }
 
-const ErrorBoundaryInner = ({ error }: Props) => {
+const ErrorBoundaryInner = ({ error, title, description, logo }: Props) => {
   const { theme, themeType } = useTheme()
   const { t } = useTranslation()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -140,14 +146,17 @@ const ErrorBoundaryInner = ({ error }: Props) => {
       </BottomSheet>
 
       <FullScreenMessage
-        title={t('Something went wrong, but your funds are safe!')}
+        title={title ?? t('Something went wrong, but your funds are safe!')}
         description={
-          <Text fontSize={14} style={text.center}>
-            {t('Try reloading the page. If the issue persists, restart your browser or ')}
-            <SupportLink />
-            {t(' for assistance.')}
-          </Text>
+          description ?? (
+            <Text fontSize={14} style={text.center}>
+              {t('Try reloading the page. If the issue persists, restart your browser or ')}
+              <SupportLink />
+              {t(' for assistance.')}
+            </Text>
+          )
         }
+        logo={logo}
         actions={
           <Button
             style={{
@@ -173,7 +182,7 @@ const ErrorBoundaryInner = ({ error }: Props) => {
   )
 }
 
-const ErrorBoundary = ({ error }: Props) => {
+const ErrorBoundary = ({ error, title, description, logo }: Props) => {
   const [themeType] = useState<ThemeType>(
     ((isExtension && localStorage.getItem('fallbackSelectedThemeType')) as ThemeType | undefined) ||
       DEFAULT_THEME
@@ -184,7 +193,7 @@ const ErrorBoundary = ({ error }: Props) => {
     // To ensure that the ErrorBoundary has access to the theme and wraps as many components as possible,
     // we render a ThemeProvider with a forced theme type.
     <LeanThemeProvider selectedThemeType={themeType} updateThemeType={() => {}}>
-      <ErrorBoundaryInner error={error} />
+      <ErrorBoundaryInner error={error} title={title} description={description} logo={logo} />
     </LeanThemeProvider>
   )
 }

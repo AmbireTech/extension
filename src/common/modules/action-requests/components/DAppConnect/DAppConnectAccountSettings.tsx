@@ -112,6 +112,7 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
                 text={t('Continue')}
                 hasBottomSpacing={false}
                 disabled={isContinueDisabled}
+                testID="dapp-scoped-accounts-continue-button"
               />
             </View>
           </FooterGlassView>

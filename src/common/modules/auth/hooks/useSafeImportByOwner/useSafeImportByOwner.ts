@@ -4,6 +4,7 @@ import { useForm, useWatch } from 'react-hook-form'
 
 import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
 import { Account } from '@ambire-common/interfaces/account'
+import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Hex } from '@ambire-common/interfaces/hex'
 import useAddressInput from '@common/hooks/useAddressInput'
@@ -218,16 +219,6 @@ const useSafeImportByOwner = () => {
     const importedAddressSet = new Set(
       importedAccounts.map((account) => account.addr.toLowerCase())
     )
-    const accountsToImport: Account[] = currentDisplayableData.accounts
-      .filter((account) => selectedAddressSet.has(account.addr.toLowerCase()))
-      .map(({ addr, associatedKeys, initialPrivileges, creation, safeCreation, preferences }) => ({
-        addr,
-        associatedKeys,
-        initialPrivileges,
-        creation,
-        safeCreation,
-        preferences
-      }))
     const accountAddressesToRemove = currentDisplayableData.accounts
       .filter((account) => {
         const normalizedAddress = account.addr.toLowerCase()
@@ -236,6 +227,30 @@ const useSafeImportByOwner = () => {
         )
       })
       .map((account) => account.addr)
+    // The removals run before the additions, so the default labels are numbered after them
+    const accountsLeftAfterRemoval = importedAccounts.filter(
+      (account) => !accountAddressesToRemove.includes(account.addr)
+    )
+    const newAddresses = currentDisplayableData.accounts
+      .map((account) => account.addr)
+      .filter(
+        (address) =>
+          selectedAddressSet.has(address.toLowerCase()) &&
+          !importedAddressSet.has(address.toLowerCase())
+      )
+    // Already imported accounts keep their preferences, so only the new ones get a default label
+    const accountsToImport: Account[] = currentDisplayableData.accounts
+      .filter((account) => selectedAddressSet.has(account.addr.toLowerCase()))
+      .map(({ addr, associatedKeys, initialPrivileges, creation, safeCreation, preferences }) => ({
+        addr,
+        associatedKeys,
+        initialPrivileges,
+        creation,
+        safeCreation,
+        preferences: newAddresses.includes(addr)
+          ? getDefaultAccountPreferences(addr, accountsLeftAfterRemoval, newAddresses.indexOf(addr))
+          : preferences
+      }))
 
     hasSeenUpdateAccountsLoading.current = false
     isImportRequested.current = true

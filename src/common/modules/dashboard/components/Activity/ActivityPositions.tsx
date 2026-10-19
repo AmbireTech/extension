@@ -214,7 +214,7 @@ const ActivityPositions: FC<Props> = ({
               style={styles.noPositions}
             >
               {t(
-                `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the extension, but you can ${isWeb ? '\n' : ''}check your address on `
+                `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the ${isMobile ? 'app' : 'extension'}, but you can ${isWeb ? '\n' : ''}check your address on `
               )}
               <Text
                 weight="medium"

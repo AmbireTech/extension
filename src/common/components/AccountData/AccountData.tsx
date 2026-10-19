@@ -17,8 +17,10 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
+import { parseHexColor } from '@common/utils/recolorLottie'
 import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
@@ -33,15 +35,33 @@ type Props = {
    * Consider refactoring in the future, if this is needed
    */
   withArrowRightIcon?: boolean
+  /** The solid color behind the button, which its translucent background darkens */
+  backgroundBehindColor?: string
+}
+
+/** How much the button's black background covers what is behind it */
+const BUTTON_BACKGROUND_OPACITY = 0.64
+const MAX_CHANNEL = 255
+
+/** The solid color the button looks on top of `backgroundBehindColor`, for the badge ring */
+const getButtonColorOver = (backgroundBehindColor: string) => {
+  const channels = parseHexColor(backgroundBehindColor)
+  if (!channels) return '#000000'
+
+  const [r, g, b] = channels.map((channel) =>
+    Math.round(channel * MAX_CHANNEL * (1 - BUTTON_BACKGROUND_OPACITY))
+  )
+
+  return `rgb(${r}, ${g}, ${b})`
 }
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
 
-const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
+const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindColor }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const { isPopup } = getUiType()
   const { isNarrowWebLayout } = useCompactLayout()
@@ -105,7 +125,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         style={[
           styles.accountButton,
           {
-            backgroundColor: '#000000A3',
+            backgroundColor: hexToRgba('#000000', BUTTON_BACKGROUND_OPACITY),
             flexShrink: 1,
             ...(isNarrowWebLayout ? { minWidth: 0 } : {}),
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
@@ -125,6 +145,9 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
               address={account.addr}
               size={32}
               smartAccountType={smartAccountType}
+              typeBadgeRingColor={getButtonColorOver(
+                backgroundBehindColor ?? String(theme.primaryBackground)
+              )}
             />
           ) : (
             <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />

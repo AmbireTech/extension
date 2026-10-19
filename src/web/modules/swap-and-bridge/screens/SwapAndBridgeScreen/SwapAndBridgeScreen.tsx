@@ -14,6 +14,7 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
+import CowSwapAnnouncement from '@common/modules/swap-and-bridge/components/CowSwapAnnouncement'
 import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
 import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
 import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
@@ -260,20 +261,25 @@ const SwapAndBridgeScreen = () => {
             <PanelTitle title={t('Swap & Bridge')} />
             <ProviderSettingsButton onPress={openProviderSettingsModal} />
           </View>
-          <FromToken
-            fromTokenOptions={fromTokenOptions}
-            fromTokenValue={fromTokenValue}
-            fromAmountValue={fromAmountValue}
-            fromTokenAmountSelectDisabled={areAllProvidersDisabled || fromTokenAmountSelectDisabled}
-            onFromAmountChange={onFromAmountChange}
-            simulationFailed={!!fromChainSimulationError}
-            isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
-          />
-          <ToToken
-            simulationFailed={!!toChainSimulationError}
-            disabled={areAllProvidersDisabled}
-            openProviderSettingsModal={openProviderSettingsModal}
-          />
+          <View>
+            <CowSwapAnnouncement openProviderSettingsModal={openProviderSettingsModal} />
+            <FromToken
+              fromTokenOptions={fromTokenOptions}
+              fromTokenValue={fromTokenValue}
+              fromAmountValue={fromAmountValue}
+              fromTokenAmountSelectDisabled={
+                areAllProvidersDisabled || fromTokenAmountSelectDisabled
+              }
+              onFromAmountChange={onFromAmountChange}
+              simulationFailed={!!fromChainSimulationError}
+              isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
+            />
+            <ToToken
+              simulationFailed={!!toChainSimulationError}
+              disabled={areAllProvidersDisabled}
+              openProviderSettingsModal={openProviderSettingsModal}
+            />
+          </View>
         </View>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}

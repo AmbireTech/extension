@@ -22,12 +22,8 @@ import useElementSize from '@common/hooks/useElementSize'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
-import {
-  ACCOUNT_SELECT_ACCOUNT_HEIGHT,
-  ACCOUNT_SELECT_ACCOUNT_MB
-} from '@common/modules/account-select/components/Account/styles'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -38,12 +34,19 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import ExportAccountsToExtensionSheet from '@mobile/modules/accounts-sync/components/ExportAccountsToExtensionSheet'
+import ExportToExtensionSheet from '@mobile/modules/app-data-sync/components/ExportToExtensionSheet'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
-  const { accounts, control, keyExtractor, getItemLayout } = useAccountsList()
+  const {
+    accounts,
+    control,
+    keyExtractor,
+    getItemLayout,
+    getAccountItemHeight,
+    onAccountExtraHeightChange
+  } = useAccountsList()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
@@ -218,6 +221,7 @@ const AccountsSettingsScreen = () => {
                 containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
                 withReceive={!isMobile}
                 withCopy={!isMobile}
+                onExtraHeightChange={onAccountExtraHeightChange}
               />
             </View>
           </View>
@@ -229,8 +233,16 @@ const AccountsSettingsScreen = () => {
       theme.primary,
       theme.iconPrimary,
       shortenAccountAddr,
-      accountOptions
+      accountOptions,
+      onAccountExtraHeightChange
     ]
+  )
+
+  // The list positions its rows by these heights, so a row whose badges wrapped is given
+  // the room it grew by
+  const getDraggableItemHeight = useCallback(
+    (item: AccountInterface) => getAccountItemHeight(item.addr),
+    [getAccountItemHeight]
   )
 
   return (
@@ -272,7 +284,8 @@ const AccountsSettingsScreen = () => {
             onDragEnd={handleAccDragEnd}
             renderItem={renderItem as any}
             getItemLayout={getItemLayout}
-            itemHeight={ACCOUNT_SELECT_ACCOUNT_HEIGHT + ACCOUNT_SELECT_ACCOUNT_MB}
+            itemHeight={getDraggableItemHeight}
+            keyboardDismissMode="on-drag"
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />
         </View>
@@ -358,13 +371,10 @@ const AccountsSettingsScreen = () => {
           }}
           onImportPress={() => {
             closeSyncBottomSheet()
-            navigate(ROUTES.importAccountsFromExtension)
+            navigate(ROUTES.importFromExtension)
           }}
         />
-        <ExportAccountsToExtensionSheet
-          sheetRef={exportSheetRef}
-          closeBottomSheet={closeExportSheet}
-        />
+        <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

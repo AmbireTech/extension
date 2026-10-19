@@ -5,12 +5,18 @@ import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
+import OneKeyKeyIterator from '@common/modules/hardware-wallet/libs/oneKeyKeyIterator'
 import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator/qrKeyIterator'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
-import { browser } from '@web/constants/browserapi'
-import { openPanel } from '@web/extension-services/background/webapi/panel'
+import { browser, engine } from '@web/constants/browserapi'
+import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
+import {
+  getPanelWindowId,
+  openPanel,
+  setPanelWindowId
+} from '@web/extension-services/background/webapi/panel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 
@@ -115,6 +121,12 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR': {
       return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator)
     }
+    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY': {
+      return await mainCtrl.handleAccountPickerInitOneKey(
+        OneKeyKeyIterator,
+        params.preferredDeviceId
+      )
+    }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE': {
       return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator)
     }
@@ -126,7 +138,7 @@ export const handleActions = async (
       if (!keystoreSavedSeed) return
 
       const keyIterator = new KeyIterator(keystoreSavedSeed.seed, keystoreSavedSeed.seedPassphrase)
-      await mainCtrl.accountPicker.setInitParams({
+      mainCtrl.accountPicker.setInitParams({
         keyIterator,
         hdPathTemplate: keystoreSavedSeed.hdPathTemplate
       })
@@ -257,14 +269,48 @@ export const handleActions = async (
     case 'OPEN_EXTENSION_POPUP': {
       if (!pm) return
 
-      const isSidePanelModeEnabled = await storage.get('isSidePanelModeEnabled', false)
+      const isStoredSidePanelModeEnabled = await storage.get('isSidePanelModeEnabled', false)
+      const hasOpenedFirefoxSidebar = !!params?.hasOpenedFirefoxSidebar
+      // Firefox rejects sidebarAction.open() outside a user gesture, which doesn't survive the
+      // message to the background - so the UI opens the sidebar itself, and what it did decides
+      // here instead of the stored mode, which the UI's copy of the state can disagree with
+      const isSidePanelModeEnabled =
+        engine === 'gecko' ? hasOpenedFirefoxSidebar : isStoredSidePanelModeEnabled
       const overlayPortName = isSidePanelModeEnabled ? 'side-panel' : 'popup'
       const targetWindowId = meta?.windowId ?? port?.sender?.tab?.windowId
 
-      const getOverlayPort = () => pm!.ports.find((p) => p.name === overlayPortName)
+      // Each browser window has its own side panel, so only the one in the sender's window counts -
+      // a panel open in another window isn't the one the user asked for. A panel that has just
+      // opened is found once it reports its window, right after connecting.
+      const getOverlayPort = () =>
+        pm!.ports.find((p) => {
+          if (p.name !== overlayPortName) return false
+          if (overlayPortName !== 'side-panel' || targetWindowId === undefined) return true
+
+          return getPanelWindowId(p.id) === targetWindowId
+        })
+
+      // Shows the dashboard in the view the action came from (e.g. the onboarding tab) when neither
+      // the popup nor the side panel can be opened. Only that view - another one may be in the
+      // middle of a request (e.g. a request window on a sign screen) and must not be moved.
+      const navigateSenderToDashboard = () => {
+        if (!port) return
+
+        pm!.sendToPort(port, '> ui', { method: 'navigate', params: { route: '/', options: {} } })
+      }
+
+      // The UI didn't open the Firefox sidebar, but panel mode is on, so the action has no popup to
+      // open. Waiting for one would leave the user on a button that does nothing.
+      if (engine === 'gecko' && !hasOpenedFirefoxSidebar && isStoredSidePanelModeEnabled) {
+        navigateSenderToDashboard()
+        return
+      }
 
       const focusOverlay = async () => {
         if (isSidePanelModeEnabled) {
+          // Already opened by the UI (see above)
+          if (engine === 'gecko') return
+
           await openPanel(targetWindowId)
           return
         }
@@ -304,15 +350,29 @@ export const handleActions = async (
         await sessionStorage.set('isOpenExtensionPopupLoading', true)
         await focusOverlay()
         await waitForOverlayOpen()
-      } catch {
+        // Opening can "succeed" without anything showing up - don't leave the user waiting then
+        if (!getOverlayPort()) navigateSenderToDashboard()
+      } catch (error) {
+        // Retried once below, so the first failure isn't reported
+        console.warn('Failed to open the wallet, retrying', error)
         try {
           await focusOverlay()
           await waitForOverlayOpen()
-        } catch {
-          pm.send('> ui', { method: 'navigate', params: { route: '/', options: {} } })
+          if (!getOverlayPort()) navigateSenderToDashboard()
+        } catch (retryError) {
+          console.error('Failed to open the wallet, showing the dashboard instead', retryError)
+          captureBackgroundException(retryError)
+          navigateSenderToDashboard()
         }
       }
       await sessionStorage.set('isOpenExtensionPopupLoading', false)
+      break
+    }
+
+    case 'SET_SIDE_PANEL_WINDOW_ID': {
+      if (port?.name !== 'side-panel') return
+
+      setPanelWindowId(port.id, params.windowId)
       break
     }
 
