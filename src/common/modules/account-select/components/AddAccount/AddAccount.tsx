@@ -274,6 +274,7 @@ const AddAccount = ({
           <Option
             text={t('Add a Privacy account')}
             icon={ShieldInvisibilityIcon}
+            iconProps={{ width: 21, height: 24 }}
             onPress={openPrivacyProviderBottomSheet as any}
             testID="add-privacy-account"
             status="none"

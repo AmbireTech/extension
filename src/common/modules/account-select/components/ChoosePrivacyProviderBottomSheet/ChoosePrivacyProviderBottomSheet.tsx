@@ -1,7 +1,7 @@
 import React from 'react'
 
-import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
+import TornadoCashIcon from '@common/assets/svg/TornadoCashIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
@@ -47,8 +47,7 @@ const ChoosePrivacyProviderBottomSheet = ({ sheetRef, closeBottomSheet, onChoose
       {isTornadoCashEnabled && (
         <Option
           text={PRIVACY_PROVIDER_NAMES.tornadoCash}
-          // TODO: no Tornado Cash icon in src/common/assets/svg yet - replace PrivacyIcon with it
-          icon={PrivacyIcon}
+          icon={TornadoCashIcon}
           onPress={() => onChoose('tornadoCash')}
           testID="choose-privacy-provider-tornado-cash"
           status="none"

@@ -6,6 +6,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import PrivacyPoolsLogoIcon from '@common/assets/svg/PrivacyPoolsLogoIcon'
 import StarsIcon from '@common/assets/svg/StarsIcon'
+import TornadoCashIcon from '@common/assets/svg/TornadoCashIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -117,6 +118,17 @@ const Badge = ({
       )}
       {!!tooltipText && specialType === 'privacy-pools' && (
         <PrivacyPoolsLogoIcon
+          dataSet={createGlobalTooltipDataSet({
+            id: tooltipId,
+            content: tooltipText
+          })}
+          color={color}
+          width={sizeMultiplier * 16}
+          height={sizeMultiplier * 16}
+        />
+      )}
+      {!!tooltipText && specialType === 'tornado-cash' && (
+        <TornadoCashIcon
           dataSet={createGlobalTooltipDataSet({
             id: tooltipId,
             content: tooltipText

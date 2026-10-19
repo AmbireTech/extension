@@ -14,7 +14,7 @@ type BadgeType =
   | 'new'
   | 'outline'
 
-type SpecialBadgeType = 'metamask' | 'safe' | 'privacy-pools'
+type SpecialBadgeType = 'metamask' | 'safe' | 'privacy-pools' | 'tornado-cash'
 
 type Props = {
   /** Can be left out when `children` render the whole content, e.g. an icon before the text */
