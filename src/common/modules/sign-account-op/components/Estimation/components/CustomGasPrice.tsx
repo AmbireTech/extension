@@ -123,7 +123,7 @@ type Props = {
   closeBottomSheet: () => void
   canSetCustomGas: boolean
   /** Why the fee can't be set manually. Shown instead of the fields */
-  unavailableReason?: string
+  unavailableReason?: { title: string; text: string }
   currentGas: string
   currentMaxFeePerGas: string
   currentMaxPriorityFeePerGas: string
@@ -299,8 +299,8 @@ const CustomGasPrice = ({
         <Alert
           type="info"
           size="sm"
-          title={t('The fee is set automatically')}
-          text={unavailableReason}
+          title={unavailableReason.title}
+          text={unavailableReason.text}
         />
       ) : (
         <View>

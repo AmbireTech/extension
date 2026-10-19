@@ -474,7 +474,14 @@ const Estimation = ({
     ]
   }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, safeFeeOptionGroups, t])
 
-  const isFeePayerNotLinkedToSafe = !!signAccountOpState?.isFeePayerNotLinkedToSafe
+  // Derived from payValue instead of the controller flag, which lags behind a local payer pick
+  // until the update round-trip completes and would briefly name the wrong payer
+  const isFeePayerNotLinkedToSafe = useMemo(
+    () =>
+      !!payValue &&
+      !!safeFeeOptionGroups?.notLinked.some((feeOption) => feeOption.value === payValue.value),
+    [payValue, safeFeeOptionGroups]
+  )
 
   const notLinkedToSafeWarning = useMemo(() => {
     if (!isFeePayerNotLinkedToSafe || !payValue || !safeFeeOptionGroups) return null
@@ -605,25 +612,51 @@ const Estimation = ({
   const hasSelectedFeeOption = !!signAccountOpState?.selectedOption
   // Shown in the advanced options instead of the fields, so it's clear why they can't be changed
   const customGasPricesUnavailableReason = useMemo(() => {
-    if (canSetCustomGasPrices || !hasSelectedFeeOption) return undefined
+    // Without a payer (e.g. a Safe waiting for one to be chosen) there are no gas values to adjust yet
+    if (!hasSelectedFeeOption) {
+      return {
+        title: t('Choose who pays the fee'),
+        text: t('Choose who pays the fee first. The fee can be adjusted after that.')
+      }
+    }
+    if (canSetCustomGasPrices) return undefined
 
+    const title = t('The fee is set automatically')
     const nativeSymbol = network?.nativeAssetSymbol || ''
     // A smart account pays its own fee through a service that sets it, so only another account can.
-    // An upgraded basic account (7702) can set it when paying in the native token itself
+    // An upgraded basic account (7702) can set it when paying in the native token itself.
+    // A Safe lists the other accounts split by how they relate to it, so it names those sections
+    if (safeFeeOptionGroups) {
+      return {
+        title,
+        text: t(
+          'This Safe’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}} from one of your other accounts, listed under "Safe owners", "Used in Ambire for this Safe" or "Other".',
+          { nativeSymbol }
+        )
+      }
+    }
+
     if (isSmartAccount(signAccountOpState?.account)) {
-      return t(
-        'This account’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}} from one of your other accounts, listed under "Native tokens from my EOAs".',
+      return {
+        title,
+        text: t(
+          'This account’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}} from one of your other accounts, listed under "Native tokens from my EOAs".',
+          { nativeSymbol }
+        )
+      }
+    }
+
+    return {
+      title,
+      text: t(
+        'This account’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}}.',
         { nativeSymbol }
       )
     }
-
-    return t(
-      'This account’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}}.',
-      { nativeSymbol }
-    )
   }, [
     canSetCustomGasPrices,
     network?.nativeAssetSymbol,
+    safeFeeOptionGroups,
     signAccountOpState?.account,
     hasSelectedFeeOption,
     t

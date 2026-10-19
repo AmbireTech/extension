@@ -84,6 +84,7 @@ const useSign = ({
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [shouldDisplayQrSigningModal, setShouldDisplayQrSigningModal] = useState(false)
   const [acknowledgedBannersKey, setAcknowledgedBannersKey] = useState<string | null>(null)
+  const [acknowledgedNewFeePayer, setAcknowledgedNewFeePayer] = useState<string | null>(null)
   const safeSignAndCloseRequest = useRef<{
     accountOpId: string
     signingKeyAddr: Key['addr']
@@ -115,9 +116,14 @@ const useSign = ({
     [signAccountOpState?.banners]
   )
   // Executing a Safe from an EOA that never paid for it publicly links the two forever,
-  // so it always asks for a hold. Only the executing transaction is paid, not a signature
+  // so it asks for a hold. Only the executing transaction is paid, not a signature.
+  // Once held for a payer, the hold is not asked again for it, so the sign button can show
+  // its loading state, but switching to another new payer asks for it again
+  const feePayer = signAccountOpState?.accountOp.gasFeePayment?.paidBy ?? null
   const isLinkingNewFeePayerToSafe =
-    !!signAccountOpState?.isFeePayerNotLinkedToSafe && !!signAccountOpState?.canBroadcast
+    !!signAccountOpState?.isFeePayerNotLinkedToSafe &&
+    !!signAccountOpState?.canBroadcast &&
+    acknowledgedNewFeePayer !== feePayer
   const shouldHoldToProceed =
     (!!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey) ||
     isLinkingNewFeePayerToSafe
@@ -534,6 +540,9 @@ const useSign = ({
     if (!signAccountOpState) return
 
     setAcknowledgedBannersKey(currentBannersKey)
+    // Only a click made through the linking hold counts. Collecting a Safe signature shows no hold
+    // for it, and the same payer must still be held for once the Safe becomes ready to execute
+    if (isLinkingNewFeePayerToSafe) setAcknowledgedNewFeePayer(feePayer)
 
     if (!!signAccountOpState.account.safeCreation && !signAccountOpState.canBroadcast) {
       setShowSafeSigners((prev) => (shouldHoldToProceed ? true : !prev))
@@ -560,8 +569,10 @@ const useSign = ({
     setIsChooseSignerShown(true)
   }, [
     currentBannersKey,
+    feePayer,
     handleChangeSigningKey,
     handleSign,
+    isLinkingNewFeePayerToSafe,
     shouldHoldToProceed,
     signAccountOpState
   ])
