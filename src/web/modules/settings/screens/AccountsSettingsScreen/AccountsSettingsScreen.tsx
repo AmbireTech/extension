@@ -8,6 +8,7 @@ import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
+import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -15,6 +16,7 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
+import { isPrivacyPoolsEnabled } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
@@ -38,6 +40,8 @@ import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/Privac
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
+
+const privacyPoolsAccountKeyExtractor = (account: PrivacyPoolsAccountDisplay) => account.seedId
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
@@ -95,6 +99,8 @@ const AccountsSettingsScreen = () => {
   )
   const [privacyPoolsAccountToRemove, setPrivacyPoolsAccountToRemove] =
     useState<PrivacyPoolsAccountDisplay | null>(null)
+  // The search stays when switching tabs, so it filters the newly opened tab too
+  const [activeTab, setActiveTab] = useState<AccountsTab>('public')
   const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
   const clearAccountSettingsAccount = useCallback(() => setAccountSettingsAccount(null), [])
 
@@ -196,29 +202,29 @@ const AccountsSettingsScreen = () => {
     cancelRemovePrivacyPoolsAccount()
   }, [cancelRemovePrivacyPoolsAccount, privacyPoolsAccountToRemove, privacyPoolsDispatch])
 
-  // Below the regular accounts, not draggable: their order is not stored and they have no address
-  // to key them by
-  const privacyPoolsAccountRows = useMemo(
-    () =>
-      filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')).map(
-        (privacyPoolsAccount) => (
-          <View
-            key={privacyPoolsAccount.seedId}
-            style={[
-              spacings.mbTy,
-              spacings.plSm,
-              { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
-            ]}
-          >
-            <PrivacyPoolsAccountRow
-              account={privacyPoolsAccount}
-              onRemove={setPrivacyPoolsAccountToRemove}
-              containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
-            />
-          </View>
-        )
-      ),
-    [privacyPoolsAccounts, search, t, theme.secondaryBackground]
+  // Not draggable: their order is not stored and they have no address to key them by
+  const filteredPrivacyPoolsAccounts = useMemo(
+    () => filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')),
+    [privacyPoolsAccounts, search, t]
+  )
+
+  const renderPrivacyPoolsAccount = useCallback(
+    ({ item: privacyPoolsAccount }: { item: PrivacyPoolsAccountDisplay }) => (
+      <View
+        style={[
+          spacings.mbTy,
+          spacings.plSm,
+          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
+        ]}
+      >
+        <PrivacyPoolsAccountRow
+          account={privacyPoolsAccount}
+          onRemove={setPrivacyPoolsAccountToRemove}
+          containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
+        />
+      </View>
+    ),
+    [theme.secondaryBackground]
   )
 
   const renderItem = useCallback(
@@ -341,20 +347,26 @@ const AccountsSettingsScreen = () => {
         </>
       </SettingsPageHeader>
       <View style={[flexbox.flex1]} ref={accountsContainerRef}>
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
-          data={localAccounts}
-          keyExtractor={keyExtractor}
-          onDragEnd={handleAccDragEnd}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          ListFooterComponent={
-            privacyPoolsAccountRows.length ? <>{privacyPoolsAccountRows}</> : null
-          }
-          ListEmptyComponent={
-            !privacyPoolsAccountRows.length ? <Text>{t('No accounts found')}</Text> : null
-          }
-        />
+        {isPrivacyPoolsEnabled && <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />}
+        {isPrivacyPoolsEnabled && activeTab === 'private' ? (
+          <ScrollableWrapper
+            type={WRAPPER_TYPES.FLAT_LIST}
+            data={filteredPrivacyPoolsAccounts}
+            keyExtractor={privacyPoolsAccountKeyExtractor}
+            renderItem={renderPrivacyPoolsAccount}
+            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          />
+        ) : (
+          <ScrollableWrapper
+            type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
+            data={localAccounts}
+            keyExtractor={keyExtractor}
+            onDragEnd={handleAccDragEnd}
+            renderItem={renderItem}
+            getItemLayout={getItemLayout}
+            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          />
+        )}
       </View>
       <AccountDeploySettingsBottomSheet
         sheetRef={sheetRefAccountDeploySettings}

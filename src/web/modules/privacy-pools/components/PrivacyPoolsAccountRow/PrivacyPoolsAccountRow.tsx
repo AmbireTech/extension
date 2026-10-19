@@ -93,6 +93,8 @@ const PrivacyPoolsAccountRow = ({
       testID="privacy-pools-account"
       style={[
         styles.accountContainer,
+        flexbox.directionRow,
+        flexbox.alignCenter,
         // @ts-expect-error: Web style
         onSelect ? animStyle : { cursor: 'default' },
         onSelect && isSelected && { backgroundColor: theme.secondaryBackground },
