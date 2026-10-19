@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ListRenderItemInfo, Pressable, View } from 'react-native'
 import { IHandles } from 'react-native-modalize/lib/options'
@@ -11,7 +11,6 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
@@ -43,18 +42,10 @@ const SavedSeedPhrasesBottomSheet = ({
   const { state: statuses } = useController('StorageController', selectStatuses)
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { seeds, keys } = useController('KeystoreController').state
-  const { dispatch } = useControllersMiddleware()
-  const { subType, initParams } = useController('AccountPickerController').state
-  const [addAccountButtonPressed, setAddAccountButtonPressed] = useState(false)
+  const { dispatchAndWait: mainDispatchAndWait } = useController('MainController')
+  const [preparingSeedId, setPreparingSeedId] = useState<string | null>(null)
   const { goToNextRoute } = useOnboardingNavigation()
   const { navigate } = useNavigation()
-
-  useEffect(() => {
-    if (addAccountButtonPressed && initParams && subType === 'seed') {
-      setAddAccountButtonPressed(false)
-      goToNextRoute(WEB_ROUTES.accountPersonalize)
-    }
-  }, [addAccountButtonPressed, goToNextRoute, initParams, subType])
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {
@@ -68,14 +59,23 @@ const SavedSeedPhrasesBottomSheet = ({
   )
 
   const handleAddAddressFromSeed = useCallback(
-    (id: string) => {
-      setAddAccountButtonPressed(true)
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE',
-        params: { id }
-      })
+    async (id: string) => {
+      setPreparingSeedId(id)
+      try {
+        // Selects and prepares the phrase's next account for the personalize step
+        await mainDispatchAndWait({
+          type: 'method',
+          params: { method: 'accountPickerSetInitParamsFromSavedSeed', args: [id] }
+        })
+        goToNextRoute(WEB_ROUTES.accountPersonalize)
+      } catch (error) {
+        // The controller reports its own failures, here the button only becomes usable again
+        console.error('Failed to prepare an account from the saved recovery phrase', error)
+      } finally {
+        setPreparingSeedId(null)
+      }
     },
-    [dispatch]
+    [mainDispatchAndWait, goToNextRoute]
   )
 
   const renderItem = ({
@@ -115,6 +115,7 @@ const SavedSeedPhrasesBottomSheet = ({
             size="smaller"
             type="secondary"
             onPress={() => handleAddAddressFromSeed(item.id)}
+            disabled={!!preparingSeedId}
             childrenPosition="left"
             // On mobile secondary buttons share the card's background, so it takes the web one
             style={isMobile ? { backgroundColor: theme.primaryBackground } : undefined}

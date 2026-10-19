@@ -232,10 +232,8 @@ export class SettingsPage extends BasePage {
     // add account
     await this.click(selectors.settings.viewOnlyImportButton)
 
-    // assert success text
-    await expect(this.page.locator(selectors.settings.addedSuccessfullyText)).toHaveText(
-      'Added successfully'
-    )
+    // assert the account is shown for personalizing
+    await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
     const duration = Date.now() - start
     console.log(`Import took ${duration} ms`)
 

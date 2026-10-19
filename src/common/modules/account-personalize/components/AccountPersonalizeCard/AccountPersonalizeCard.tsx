@@ -4,15 +4,11 @@ import { View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import AccountAddress from '@common/components/AccountAddress'
-import AccountBadges from '@common/components/AccountBadges'
-import AccountKeysBadge from '@common/components/AccountKeysBadge'
 import Avatar from '@common/components/Avatar'
 import Editable from '@common/components/Editable'
-import { isMobile, isWeb } from '@common/config/env'
-import useAccountKeys from '@common/hooks/useAccountKeys'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -25,7 +21,8 @@ type Props = {
   }>
   hasBottomSpacing?: boolean
   disableEdit?: boolean
-  onSave: (value: string) => void
+  // The name lives in the form until the accounts are added, so nothing has to be saved
+  onSave?: (value: string) => void
 }
 
 const AccountPersonalizeCard = ({
@@ -38,7 +35,6 @@ const AccountPersonalizeCard = ({
 }: Props) => {
   const { addr: address, preferences } = account
   const reverseLookup = useReverseLookup({ address })
-  const accountKeys = useAccountKeys(account)
   const { styles } = useTheme(getStyles)
 
   return (
@@ -71,8 +67,6 @@ const AccountPersonalizeCard = ({
                   />
                 )}
               />
-              {/* On mobile the keys badge and the other badges move to the row below the address */}
-              {isWeb && <AccountBadges accountData={account} accountKeys={accountKeys} />}
             </View>
             <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
               <AccountAddress
@@ -82,24 +76,6 @@ const AccountPersonalizeCard = ({
                 withCopy={false}
               />
             </View>
-            {isMobile && (
-              <View
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  spacings.mtMi,
-                  { columnGap: SPACING_TY }
-                ]}
-              >
-                <AccountKeysBadge account={account} accountKeys={accountKeys} />
-                <AccountBadges
-                  accountData={account}
-                  accountKeys={accountKeys}
-                  withSpacing={false}
-                  withViewOnly={false}
-                />
-              </View>
-            )}
           </View>
         </View>
       </View>

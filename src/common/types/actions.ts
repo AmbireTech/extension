@@ -1,7 +1,6 @@
-import { Account } from '@ambire-common/interfaces/account'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
-import { Key, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
+import { Key } from '@ambire-common/interfaces/keystore'
 import { NfcExportedKey } from '@common/modules/hardware-wallets/nfc/types'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -87,11 +86,6 @@ type MainControllerAccountPickerInitNfcWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET'
   params: { payload: NfcExportedKey }
 }
-type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
-  params: { id: string }
-}
-
 type ResetAccountAddingOnPageErrorAction = {
   type: 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR'
 }
@@ -142,11 +136,6 @@ type AddressBookControllerRenameContact = {
 type ChangeCurrentDappNetworkAction = {
   type: 'CHANGE_CURRENT_DAPP_NETWORK'
   params: { chainId: number; id: string }
-}
-
-type ImportSmartAccountJson = {
-  type: 'IMPORT_SMART_ACCOUNT_JSON'
-  params: { readyToAddAccount: Account; keys: ReadyToAddKeys['internal'] }
 }
 
 type OpenExtensionPopupAction = {
@@ -284,7 +273,6 @@ export type Action =
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
-  | MainControllerAccountPickerInitFromSavedSeedPhraseAction
   | HandshakeAction
   | ResetAccountAddingOnPageErrorAction
   | MainControllerHandleSignMessage
@@ -293,7 +281,6 @@ export type Action =
   | AddressBookControllerAddContact
   | AddressBookControllerRenameContact
   | ChangeCurrentDappNetworkAction
-  | ImportSmartAccountJson
   | OpenExtensionPopupAction
   | SetSidePanelWindowIdAction
   | InitAllControllersAction

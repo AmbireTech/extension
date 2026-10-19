@@ -61,8 +61,8 @@ test.describe('auth', { tag: '@auth-mobile' }, () => {
     await test.step('set extension password', async () => {
       await pages.auth.setExtensionPassword(KEYSTORE_PASS)
     })
-    await test.step('assert message and click complete', async () => {
-      await expect(screen.getByRole('text', { name: 'Added successfully' })).toBeVisible()
+    await test.step('assert the account to personalize and proceed', async () => {
+      await expect(screen.getByTestId(selectors.getStarted.personalizeAccountsHeader)).toBeVisible()
       await screen.getByTestId(selectors.getStarted.saveAndContinueBtn).tap()
     })
     await test.step('assert account on dashboard', async () => {

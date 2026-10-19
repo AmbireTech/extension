@@ -141,9 +141,11 @@ const ImportFromMobileScreen = () => {
     [t, theme]
   )
 
+  // The synced accounts are added already, so the flow skips the personalize step (which
+  // only adds prepared accounts) and goes on to where onboarding ends
   const handlePasswordSet = useCallback(() => {
     closePasswordSheet()
-    goToNextRoute(WEB_ROUTES.accountPersonalize)
+    goToNextRoute()
   }, [closePasswordSheet, goToNextRoute])
 
   const { setPasswordFromSync, isSettingPassword } = useSyncedPasswordSetup({
@@ -197,11 +199,12 @@ const ImportFromMobileScreen = () => {
       }
 
       closePasswordSheet()
-      // Without a password of its own, setting one comes next. Otherwise the freshly
-      // imported accounts can be named right away. Both are onboarding routes reachable
+      // Without a password of its own, setting one comes next. Otherwise the flow goes on
+      // to where onboarding ends - the synced accounts are added already, so there is
+      // nothing for the personalize step to add. These are onboarding routes reachable
       // through internal navigation only, so going there with `navigate` gets bounced
       // back to this screen.
-      goToNextRoute(hasPasswordSecret ? WEB_ROUTES.accountPersonalize : WEB_ROUTES.keyStoreSetup)
+      goToNextRoute()
     },
     [
       addToast,

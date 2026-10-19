@@ -1,3 +1,4 @@
+import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { IRequestsController } from '@ambire-common/interfaces/requests'
 import { ISurveyController } from '@ambire-common/interfaces/survey'
@@ -65,6 +66,7 @@ const getRouteForUserRequest = ({
 
 const getInitialRoute = ({
   keystoreState,
+  accountPickerState,
   authStatus,
   requestsState,
   swapAndBridgeState,
@@ -74,6 +76,7 @@ const getInitialRoute = ({
   isSidePanel
 }: {
   keystoreState: IKeystoreController
+  accountPickerState?: Pick<IAccountPickerController, 'readyToAddAccounts'>
   authStatus?: AUTH_STATUS
   requestsState: IRequestsController
   swapAndBridgeState: ISwapAndBridgeController
@@ -84,6 +87,12 @@ const getInitialRoute = ({
 }) => {
   if (keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked) {
     return ROUTES.keyStoreUnlock
+  }
+
+  // Accounts prepared by a flow the user left on its last step (e.g. by closing the tab)
+  // wait there, for them to add or go back from - the background keeps them while it runs
+  if (!isRequestWindow && !isSidePanel && accountPickerState?.readyToAddAccounts.length) {
+    return ROUTES.accountPersonalize
   }
 
   if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED) {
@@ -127,6 +136,7 @@ const getInitialRoute = ({
 const resolveViewRoute = async (mainCtrl: MainController, view: View): Promise<string | null> => {
   const routeControllers = {
     keystoreState: mainCtrl.keystore,
+    accountPickerState: mainCtrl.accountPicker,
     requestsState: mainCtrl.requests,
     swapAndBridgeState: mainCtrl.swapAndBridge,
     transferState: mainCtrl.transfer,

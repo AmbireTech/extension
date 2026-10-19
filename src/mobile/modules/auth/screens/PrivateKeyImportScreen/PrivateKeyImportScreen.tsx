@@ -20,6 +20,7 @@ import {
 
 const PrivateKeyImportScreen = () => {
   const {
+    importButtonPressed,
     control,
     handleFormSubmit,
     errors,
@@ -43,7 +44,7 @@ const PrivateKeyImportScreen = () => {
           text={t('Confirm')}
           hasBottomSpacing={false}
           onPress={handleFormSubmit}
-          disabled={!isValid || !agreedToBackupWarning}
+          disabled={!isValid || !agreedToBackupWarning || importButtonPressed}
         />
       }
     >

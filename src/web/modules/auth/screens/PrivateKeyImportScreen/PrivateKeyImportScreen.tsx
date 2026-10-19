@@ -22,6 +22,7 @@ export const CARD_WIDTH = 400
 
 const PrivateKeyImportScreen = () => {
   const {
+    importButtonPressed,
     control,
     handleFormSubmit,
     errors,
@@ -92,7 +93,7 @@ const PrivateKeyImportScreen = () => {
               text={t('Confirm')}
               hasBottomSpacing={false}
               onPress={handleFormSubmit}
-              disabled={!isValid || !agreedToBackupWarning}
+              disabled={!isValid || !agreedToBackupWarning || importButtonPressed}
             />
           </View>
         </Panel>

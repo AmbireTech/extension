@@ -58,7 +58,7 @@ const ImportFromExtensionScreen = () => {
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack } = useNavigation()
   const { addToast } = useToast()
-  const { goToPrevRoute } = useOnboardingNavigation()
+  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
   const {
@@ -145,10 +145,12 @@ const ImportFromExtensionScreen = () => {
     [t, theme]
   )
 
+  // The synced accounts are added already, so the flow skips the personalize step (which
+  // only adds prepared accounts) and goes on to where onboarding ends
   const handlePasswordSet = useCallback(() => {
     closePasswordSheet()
-    navigate(ROUTES.accountPersonalize)
-  }, [closePasswordSheet, navigate])
+    goToNextRoute()
+  }, [closePasswordSheet, goToNextRoute])
 
   const { setPasswordFromSync, isSettingPassword } = useSyncedPasswordSetup({
     onPasswordSet: handlePasswordSet
@@ -196,18 +198,19 @@ const ImportFromExtensionScreen = () => {
       }
 
       closePasswordSheet()
-      // Without a password of its own, setting one comes next. Otherwise the freshly
-      // imported accounts can be named right away.
-      navigate(hasPasswordSecret ? ROUTES.accountPersonalize : ROUTES.keyStoreSetup)
+      // Without a password of its own, setting one comes next. Otherwise the flow goes on
+      // to where onboarding ends - the synced accounts are added already, so there is
+      // nothing for the personalize step to add.
+      goToNextRoute()
     },
     [
       addToast,
       closePasswordSheet,
+      goToNextRoute,
       hasPasswordSecret,
       isBiometricsEnabled,
       isPasswordReused,
       leaveScreen,
-      navigate,
       saveBiometricsSecret,
       setPasswordFromSync,
       t

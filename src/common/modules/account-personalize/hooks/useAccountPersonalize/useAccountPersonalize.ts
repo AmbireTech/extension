@@ -1,327 +1,92 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 
 import { Account } from '@ambire-common/interfaces/account'
-import wait from '@ambire-common/utils/wait'
 import useController from '@common/hooks/useController'
-import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { openInTab } from '@common/utils/links'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+// Adding writes the accounts and keys, and the smart accounts' identities are created on the
+// Relayer, which can take a while on a slow connection - so it gets more room than the default.
+const ADD_ACCOUNTS_TIMEOUT_MS = 60_000
+
+const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
+  state.readyToAddAccounts
+const selectSubType = (state: AllControllersMappingType['AccountPickerController']) => state.subType
+
+/**
+ * The personalize step of every account adding flow: shows the accounts the flow prepared,
+ * lets the user name them, and adds them once the user proceeds. Nothing is added before -
+ * going back only resets the flow.
+ */
 export default function useAccountPersonalize() {
-  const { goToNextRoute, setAccountsToPersonalize, accountsToPersonalize } =
-    useOnboardingNavigation()
+  const { goToNextRoute } = useOnboardingNavigation()
+  const { state: readyToAddAccounts, dispatchAndWait: accountPickerDispatchAndWait } =
+    useController('AccountPickerController', selectReadyToAddAccounts)
+  const { state: subType } = useController('AccountPickerController', selectSubType)
+  const [isAdding, setIsAdding] = useState(false)
+  // Kept once added: where the flow ends in the popup rather than here (web tabs), the
+  // screen stays up and shows them as added
+  const [addedAccounts, setAddedAccounts] = useState<Account[] | null>(null)
 
-  const { state: accountPickerState, dispatch: accountPickerDispatch } =
-    useController('AccountPickerController')
-  const {
-    state: { statuses, accounts },
-    dispatch: accountsDispatch
-  } = useController('AccountsController')
-  const { isSetupComplete } = useController('WalletStateController').state
-  const { addToast } = useToast()
-  const initPassed = useRef(false)
-  const newlyAddedAccounts = useMemo(() => accounts.filter((a) => a.newlyAdded) || [], [accounts])
-
-  const { handleSubmit, control, setValue, getValues } = useForm({
-    defaultValues: {
-      accounts: accountPickerState.addedAccountsFromCurrentSession || newlyAddedAccounts
-    }
+  const { control, getValues, reset } = useForm({
+    defaultValues: { accounts: readyToAddAccounts }
   })
-
-  // Remains in loading state until `accountsToPersonalize` are loaded
-  const [isLoading, setIsLoading] = useState(true)
-  // Enters into completed state after the `Complete` button is pressed
-  const [completed, setCompleted] = useState(false)
-
-  useEffect(() => {
-    if (!accountPickerState.initParams) return
-    if (accountPickerState.isInitialized) return
-    if (initPassed.current && !completed) return
-
-    accountPickerDispatch({
-      type: 'method',
-      params: {
-        method: 'init',
-        args: []
-      }
-    })
-    if (!isLoading) setIsLoading(true)
-    if (completed) setCompleted(false)
-    if (accountsToPersonalize.length) setAccountsToPersonalize([])
-    initPassed.current = true
-  }, [
-    isLoading,
-    accountPickerDispatch,
-    accountPickerState.isInitialized,
-    accountPickerState.initParams,
-    completed,
-    accountsToPersonalize,
-    setAccountsToPersonalize
-  ])
-
-  useEffect(() => {
-    if (
-      !accountPickerState.initParams &&
-      !accountPickerState.isInitialized &&
-      accountsToPersonalize.length &&
-      !newlyAddedAccounts.length &&
-      !completed
-    ) {
-      setCompleted(true)
-      initPassed.current = false
-    }
-  }, [
-    accountPickerState.initParams,
-    accountPickerState.isInitialized,
-    accountsToPersonalize.length,
-    completed,
-    newlyAddedAccounts.length,
-    goToNextRoute,
-    isSetupComplete
-  ])
-
-  useEffect(() => {
-    if (!isSetupComplete && !!completed) goToNextRoute()
-  }, [completed, goToNextRoute, isSetupComplete])
-
-  const accountPickerInitializedRef = useRef(accountPickerState.isInitialized)
-  const accountsToPersonalizeRef = useRef(accountsToPersonalize)
-  const newlyAddedAccountsRef = useRef(newlyAddedAccounts)
-  const isLoadingRef = useRef(isLoading)
-
-  useEffect(() => {
-    accountPickerInitializedRef.current = accountPickerState.isInitialized
-  }, [accountPickerState.isInitialized])
-
-  useEffect(() => {
-    accountsToPersonalizeRef.current = accountsToPersonalize
-  }, [accountsToPersonalize])
-
-  useEffect(() => {
-    newlyAddedAccountsRef.current = newlyAddedAccounts
-  }, [newlyAddedAccounts])
-
-  useEffect(() => {
-    isLoadingRef.current = isLoading
-  }, [isLoading])
-
-  const accountPickerShouldAddAutomaticallyRef = useRef(
-    accountPickerState.initParams?.shouldAddNextAccountAutomatically
-  )
-  useEffect(() => {
-    accountPickerShouldAddAutomaticallyRef.current =
-      accountPickerState.initParams?.shouldAddNextAccountAutomatically
-  }, [accountPickerState.initParams?.shouldAddNextAccountAutomatically])
-
-  useEffect(() => {
-    // We reference the latest values via refs. Accessing state directly inside this
-    // async effect could read outdated values, since state updates are not guaranteed
-    // to sync during the async wait loops.
-    const getShouldStopLoadingBasedOnLatestState = () => {
-      const hasAccounts =
-        (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
-        (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
-
-      const isInitialized = !!accountPickerInitializedRef.current
-      const shouldAddAutomatically = accountPickerShouldAddAutomaticallyRef.current ?? true
-
-      if (isInitialized) {
-        // If we expect the controller to automatically add an account,
-        // we shouldn't stop loading until the account is actually in state.
-        if (shouldAddAutomatically) {
-          return hasAccounts
-        }
-        return true
-      }
-
-      return hasAccounts
-    }
-
-    // We reference the latest values via refs. Accessing state directly inside this
-    // async effect could read outdated values, since state updates are not guaranteed
-    // to sync during the async wait loops.
-    const getShouldComplete = () => {
-      const isInitialized = !!accountPickerInitializedRef.current
-      const hasAccounts =
-        (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
-        (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
-      const shouldAddAutomatically = accountPickerShouldAddAutomaticallyRef.current ?? true
-
-      if (!isInitialized && shouldAddAutomatically) {
-        return false // don't complete yet, we're waiting for auto-add
-      }
-
-      return !isInitialized && !hasAccounts
-    }
-
-    let resolved = false
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    ;(async () => {
-      // initial UX delay
-      await wait(1100)
-      if (resolved) return
-
-      if (getShouldStopLoadingBasedOnLatestState()) {
-        if (!resolved) setIsLoading(false)
-        return
-      }
-
-      const timeoutMs = 3000 // Poll for up to 3s to allow controller updates to arrive.
-      const intervalMs = 200 // Poll interval
-      const start = Date.now()
-
-      while (Date.now() - start < timeoutMs && !resolved) {
-        await wait(intervalMs)
-        if (resolved) return
-        if (getShouldStopLoadingBasedOnLatestState()) {
-          if (!resolved) setIsLoading(false)
-          return
-        }
-      }
-
-      if (resolved) return
-      if (!isLoadingRef.current) return
-
-      setIsLoading(false)
-      if (getShouldComplete()) setCompleted(true)
-    })()
-
-    return () => {
-      resolved = true
-    }
-  }, [isLoading])
-
-  // the hook inits the list with accountsToPersonalize
-  useEffect(() => {
-    let state: Account[] = []
-    if (accountPickerState.isInitialized) {
-      state = accountPickerState.addedAccountsFromCurrentSession
-    }
-
-    if (!accountPickerState.isInitialized && newlyAddedAccounts.length) {
-      state = newlyAddedAccounts
-    }
-
-    if (state.length) {
-      const hasNewAccounts = state.some(
-        (st) => !accountsToPersonalize.find((acc) => acc.addr === st.addr)
-      )
-
-      if (!accountsToPersonalize.length || hasNewAccounts) {
-        // Merge to keep customized preferences (like labels) for existing accounts
-        const merged = state.map(
-          (st) => accountsToPersonalize.find((acc) => acc.addr === st.addr) || st
-        )
-        setAccountsToPersonalize(merged)
-      }
-    }
-    // Having nothing to personalize deliberately leaves the route alone: moving on from
-    // here dispatches instead of navigating, so it looped. The `Complete` button owns it.
-  }, [
-    accountPickerState.isInitialized,
-    accountPickerState.addedAccountsFromCurrentSession,
-    accountsToPersonalize,
-    newlyAddedAccounts,
-    statuses.addAccounts,
-    setAccountsToPersonalize
-  ])
-
-  // prevents showing accounts to personalize from prev sessions
-  useEffect(() => {
-    if (newlyAddedAccounts.length && accountPickerState.isInitialized) {
-      accountsDispatch({
-        type: 'method',
-        params: {
-          method: 'resetAccountsNewlyAddedState',
-          args: []
-        }
-      })
-    }
-  }, [newlyAddedAccounts.length, accountPickerState.isInitialized, accountsDispatch])
-
-  useEffect(() => {
-    setValue('accounts', accountsToPersonalize)
-  }, [accountsToPersonalize, setValue])
-
   const { fields } = useFieldArray({ control, name: 'accounts' })
 
-  const handleSave = useCallback(
-    (data?: { accounts: Account[] }) => {
-      const newAccounts = data?.accounts || getValues('accounts')
-      accountsDispatch({
-        type: 'method',
-        params: {
-          method: 'updateAccountPreferences',
-          args: [newAccounts.map((a) => ({ addr: a.addr, preferences: a.preferences }))]
-        }
-      })
-    },
-    [accountsDispatch, getValues]
-  )
-
+  // The prepared accounts change when more are added from the picker. The names the
+  // user gave the ones already there are kept.
   useEffect(() => {
-    const handleBeforeUnload = () => handleSave()
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-    }
-  }, [handleSave])
+    if (isAdding || addedAccounts) return
 
-  const handleComplete = useCallback(async () => {
-    await handleSubmit(handleSave)()
-    accountsDispatch({
-      type: 'method',
-      params: {
-        method: 'resetAccountsNewlyAddedState',
-        args: []
-      }
+    const namedAccounts = getValues('accounts')
+    reset({
+      accounts: readyToAddAccounts.map(
+        (account) => namedAccounts.find((named) => named.addr === account.addr) || account
+      )
     })
-    if (isSetupComplete) {
-      initPassed.current = false
-      accountPickerDispatch({
-        type: 'method',
-        params: {
-          method: 'reset',
-          args: []
-        }
-      })
+  }, [readyToAddAccounts, isAdding, addedAccounts, getValues, reset])
 
-      // With accounts on screen the press confirms their names and the cards stay up as
-      // the receipt; with none there is nothing to confirm, so it moves on instead.
-      if (!accountsToPersonalize.length) goToNextRoute()
-    } else {
-      setCompleted(true)
-    }
-  }, [
-    isSetupComplete,
-    accountsDispatch,
-    accountPickerDispatch,
-    handleSave,
-    handleSubmit,
-    accountsToPersonalize.length,
-    goToNextRoute
-  ])
+  // Where the flow goes on depends on the accounts just added, so the latest one is read
+  const goToNextRouteRef = useRef(goToNextRoute)
+  useEffect(() => {
+    goToNextRouteRef.current = goToNextRoute
+  }, [goToNextRoute])
 
-  const handleContactSupport = useCallback(async () => {
+  const handleProceed = useCallback(async () => {
+    if (isAdding) return
+
+    const accounts = getValues('accounts')
+    setIsAdding(true)
     try {
-      await openInTab({ url: 'https://help.ambire.com/en' })
-    } catch {
-      addToast("Couldn't open link", { type: 'error' })
+      await accountPickerDispatchAndWait(
+        {
+          type: 'method',
+          params: {
+            method: 'addPreparedAccounts',
+            args: [accounts.map(({ addr, preferences }) => ({ addr, preferences }))]
+          }
+        },
+        ADD_ACCOUNTS_TIMEOUT_MS
+      )
+      setAddedAccounts(accounts)
+      goToNextRouteRef.current()
+    } catch (error) {
+      // The controller reports its own failures, here the button only becomes usable again
+      console.error('Failed to add the accounts', error)
+    } finally {
+      setIsAdding(false)
     }
-  }, [addToast])
+  }, [isAdding, getValues, accountPickerDispatchAndWait])
 
   return {
-    isLoading,
-    completed,
-    fields,
     control,
-    accounts,
-    accountPickerState,
-    accountsToPersonalize,
-    handleSave,
-    handleComplete,
-    handleContactSupport
+    fields,
+    isAdding,
+    addedAccounts,
+    handleProceed,
+    // Only a recovery phrase or a hardware wallet has more accounts to pick from
+    addMoreSource: !addedAccounts && (subType === 'seed' || subType === 'hw') ? subType : null
   }
 }

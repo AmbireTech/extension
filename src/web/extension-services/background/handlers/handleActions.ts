@@ -1,7 +1,6 @@
 import { MainController } from '@ambire-common/controllers/main/main'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
-import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
@@ -126,18 +125,6 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
       return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
     }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
-      const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
-      if (!keystoreSavedSeed) return
-
-      const keyIterator = new KeyIterator(keystoreSavedSeed.seed, keystoreSavedSeed.seedPassphrase)
-      await mainCtrl.accountPicker.setInitParams({
-        keyIterator,
-        hdPathTemplate: keystoreSavedSeed.hdPathTemplate
-      })
-      break
-    }
-
     case 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR': {
       await mainCtrl.accountPicker.reset()
       const accounts = [...mainCtrl.accounts.accounts]
@@ -150,20 +137,6 @@ export const handleActions = async (
 
       break
     }
-    case 'IMPORT_SMART_ACCOUNT_JSON': {
-      // Add accounts first, because some of the next steps have validation
-      // if accounts exists.
-      await mainCtrl.accounts.addAccounts([params.readyToAddAccount])
-
-      // Then add keys, because some of the next steps could have validation
-      // if keys exists. Should be separate (not combined in Promise.all,
-      // since firing multiple keystore actions is not possible
-      // (the #wrapKeystoreAction listens for the first one to finish and
-      // skips the parallel one, if one is requested).
-
-      return await mainCtrl.keystore.addKeys(params.keys)
-    }
-
     case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
       mainCtrl.signMessage.setSigners(params.signers)
       return await mainCtrl.handleSignMessage()

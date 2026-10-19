@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 import { isValidPrivateKey } from '@ambire-common/libs/keyIterator/keyIterator'
@@ -12,7 +12,6 @@ export default function usePrivateKeyImport() {
   const {
     control,
     handleSubmit,
-    getValues,
     formState: { errors, isValid }
   } = useForm({
     mode: 'all',
@@ -21,37 +20,37 @@ export default function usePrivateKeyImport() {
   const { goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
 
-  const { initParams, subType } = useController('AccountPickerController').state
-  const { dispatch: mainDispatch } = useController('MainController')
+  const { dispatchAndWait: mainDispatchAndWait } = useController('MainController')
   const [agreedToBackupWarning, setAgreedToBackupWarning] = useState(false)
   const [importButtonPressed, setImportButtonPressed] = useState(false)
 
   const handleFormSubmit = useCallback(async () => {
     await storage.set('agreedToBackupWarning', { acceptedAt: Date.now() })
 
-    await handleSubmit(({ privateKey }) => {
+    await handleSubmit(async ({ privateKey }) => {
       setImportButtonPressed(true)
       const trimmedPrivateKey = privateKey.trim()
       const noPrefixPrivateKey =
         trimmedPrivateKey.slice(0, 2) === '0x' ? trimmedPrivateKey.slice(2) : trimmedPrivateKey
 
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
-          args: [{ privKeyOrSeed: noPrefixPrivateKey }]
-        }
-      })
+      try {
+        // Prepares the key's account for the personalize step
+        await mainDispatchAndWait({
+          type: 'method',
+          params: {
+            method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
+            args: [{ privKeyOrSeed: noPrefixPrivateKey }]
+          }
+        })
+        goToNextRoute()
+      } catch (error) {
+        // The controller reports its own failures, here the button only becomes usable again
+        console.error('Failed to prepare the private key account', error)
+      } finally {
+        setImportButtonPressed(false)
+      }
     })()
-  }, [mainDispatch, handleSubmit])
-
-  useEffect(() => {
-    if (!getValues('privateKey')) return
-    if (!!importButtonPressed && initParams && subType === 'private-key') {
-      setImportButtonPressed(false)
-      goToNextRoute()
-    }
-  }, [goToNextRoute, getValues, initParams, importButtonPressed, subType])
+  }, [mainDispatchAndWait, handleSubmit, goToNextRoute])
 
   const handleValidation = (value: string) => {
     const trimmedValue = value.trim()
@@ -72,6 +71,7 @@ export default function usePrivateKeyImport() {
     handleFormSubmit,
     handleValidation,
     agreedToBackupWarning,
-    setAgreedToBackupWarning
+    setAgreedToBackupWarning,
+    importButtonPressed
   }
 }

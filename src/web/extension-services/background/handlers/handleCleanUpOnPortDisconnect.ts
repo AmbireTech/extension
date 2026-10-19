@@ -1,5 +1,5 @@
 import { MainController } from '@ambire-common/controllers/main/main'
-import { ONBOARDING_WEB_ROUTES } from '@common/modules/router/constants/common'
+import { ONBOARDING_WEB_ROUTES, ROUTES } from '@common/modules/router/constants/common'
 import { IS_FIREFOX } from '@web/constants/common'
 import { forgetPanelWindowId } from '@web/extension-services/background/webapi/panel'
 import { Port } from '@web/extension-services/messengers'
@@ -81,17 +81,16 @@ export const handleCleanUpOnPortDisconnect = async ({
     (r) => url.pathname.includes(r) && port.name === 'tab'
   )
 
-  // The logic below ensures that if the onboarding flow was forcefully closed,
-  // the AccountsPersonalize screen will not be shown the next time the extension is opened.
+  // An account adding flow closed midway is dropped, so it does not come back the next time
+  // the extension is opened - unless it was closed on its last step: the prepared accounts
+  // wait there, for the user to add or go back from (see `getInitialRoute`).
   if (isOnboardingRoute) {
-    // handles the case when the accountPicker is initialized
-    if (mainCtrl.accountPicker.isInitialized) {
-      await mainCtrl.accountPicker.reset()
-    }
+    const { isInitialized, initParams, readyToAddAccounts } = mainCtrl.accountPicker
+    const isOnPersonalizeStep = url.pathname.includes(ROUTES.accountPersonalize)
+    const isWaitingToBeAdded = isOnPersonalizeStep && !!readyToAddAccounts.length
 
-    // handles the case when the accountPicker is not initialized e.g. "import JSON" or "view-only" flows
-    if (mainCtrl.accounts.accounts.filter((a) => a.newlyAdded).length) {
-      await mainCtrl.accounts.resetAccountsNewlyAddedState()
+    if ((isInitialized || initParams || readyToAddAccounts.length) && !isWaitingToBeAdded) {
+      await mainCtrl.accountPicker.reset()
     }
   }
 

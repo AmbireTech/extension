@@ -49,10 +49,7 @@ describe('getReportableAction', () => {
     { type: 'HANDSHAKE' },
     { type: 'UPDATE_PORT_URL', params: { url: 'https://ambire.com' } },
     { type: 'WINDOW_REMOVED', params: { id: 5 } },
-    {
-      type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE',
-      params: { id: 'seed-id' }
-    }
+    { type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' }
   ]
 
   nonMethodActions.forEach((action) => {

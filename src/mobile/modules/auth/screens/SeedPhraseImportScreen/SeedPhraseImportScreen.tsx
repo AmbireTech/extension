@@ -21,6 +21,7 @@ import SeedPhraseInput from './SeedPhraseInput'
 
 const SeedPhraseImportScreen = () => {
   const {
+    importButtonPressed,
     control,
     isValid,
     enablePassphrase,
@@ -46,7 +47,7 @@ const SeedPhraseImportScreen = () => {
           text={t('Confirm')}
           hasBottomSpacing={false}
           onPress={handleFormSubmit}
-          disabled={!isValid}
+          disabled={!isValid || importButtonPressed}
         />
       }
     >

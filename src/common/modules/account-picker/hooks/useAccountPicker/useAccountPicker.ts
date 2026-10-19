@@ -12,10 +12,6 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-// Creating the smart account identities on the Relayer and updating their state afterwards
-// can take a while on a slow connection, so the import gets more room than the default.
-const ADD_ACCOUNTS_TIMEOUT_MS = 60_000
-
 export interface Account {
   type: string
   address: string
@@ -114,29 +110,24 @@ const useAccountPicker = () => {
 
   const onImportReady = useCallback(async () => {
     // The button disables on re-render, so a second press landing in the same frame would
-    // import a selection the first one has already cleared.
+    // prepare the selection twice.
     if (onImportPressed) return
 
     shouldResetAccountsSelectionOnUnmount.current = false
     setOnImportPressed(true)
 
     try {
-      // Controller actions are fire-and-forget, so the import replies to this call once the
-      // accounts are actually added, instead of the screen watching a transient status.
-      await accountPickerDispatchAndWait(
-        {
-          type: 'method',
-          params: {
-            // `dispatchAndWait` appends the request id as the last argument, so the accounts
-            // param before it has to be passed explicitly (the controller reads the selection).
-            method: 'addAccounts',
-            args: [undefined]
-          }
-        },
-        ADD_ACCOUNTS_TIMEOUT_MS
-      )
+      // Controller actions are fire-and-forget, so the picker replies to this call once the
+      // selection is prepared, instead of the screen watching a transient status. The
+      // personalize step adds the accounts once the user proceeds.
+      await accountPickerDispatchAndWait({
+        type: 'method',
+        params: { method: 'prepareSelectedAccounts', args: [] }
+      })
 
       goToNextRoute(WEB_ROUTES.accountPersonalize)
+      // Going back from the personalize step adds nothing, so the picker is usable again
+      setOnImportPressed(false)
     } catch {
       // The error itself is reported by the controller, here the screen only becomes usable again
       shouldResetAccountsSelectionOnUnmount.current = true
@@ -158,9 +149,7 @@ const useAccountPicker = () => {
     }
   }, [accountPickerDispatch])
 
-  // `onImportPressed` is what keeps the screen in its importing state until it navigates away.
-  // The controller resets `addAccountsStatus` to 'INITIAL' right after the import completes,
-  // which would otherwise flash the screen back to its idle state for a frame.
+  // `onImportPressed` keeps the screen in its importing state while the selection is prepared
   const isLoading = useMemo(
     () =>
       onImportPressed ||

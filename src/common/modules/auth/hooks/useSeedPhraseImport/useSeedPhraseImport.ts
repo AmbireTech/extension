@@ -15,14 +15,12 @@ export default function useSeedPhraseImport() {
   const { goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
 
-  const { initParams, subType } = useController('AccountPickerController').state
   const { dispatch: keystoreDispatch } = useController('KeystoreController')
-  const { dispatch: mainDispatch } = useController('MainController')
+  const { dispatchAndWait: mainDispatchAndWait } = useController('MainController')
   const {
     control,
     handleSubmit,
     setValue,
-    getValues,
     formState: { isValid },
     unregister
   } = useForm({
@@ -55,7 +53,7 @@ export default function useSeedPhraseImport() {
   }, [error, t])
 
   const handleFormSubmit = useCallback(async () => {
-    await handleSubmit(({ seed, passphrase }) => {
+    await handleSubmit(async ({ seed, passphrase }) => {
       const formattedSeed = normalizeSeedPhrase(seed)
       setImportButtonPressed(true)
       keystoreDispatch({
@@ -71,23 +69,24 @@ export default function useSeedPhraseImport() {
           ]
         }
       })
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
-          args: [{ privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }]
-        }
-      })
+      try {
+        // Selects and prepares the phrase's first account for the personalize step
+        await mainDispatchAndWait({
+          type: 'method',
+          params: {
+            method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
+            args: [{ privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }]
+          }
+        })
+        goToNextRoute()
+      } catch (error) {
+        // The controller reports its own failures, here the button only becomes usable again
+        console.error('Failed to prepare the recovery phrase accounts', error)
+      } finally {
+        setImportButtonPressed(false)
+      }
     })()
-  }, [mainDispatch, keystoreDispatch, handleSubmit])
-
-  useEffect(() => {
-    if (!getValues('seed')) return
-    if (!!importButtonPressed && initParams && subType === 'seed') {
-      setImportButtonPressed(false)
-      goToNextRoute()
-    }
-  }, [goToNextRoute, getValues, initParams, subType, importButtonPressed])
+  }, [mainDispatchAndWait, keystoreDispatch, handleSubmit, goToNextRoute])
 
   useEffect(() => {
     if (!enablePassphrase) {

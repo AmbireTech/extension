@@ -8,8 +8,6 @@ import React, {
   useState
 } from 'react'
 
-import { Account } from '@ambire-common/interfaces/account'
-import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
@@ -38,15 +36,11 @@ const OnboardingNavigationContext = createContext<{
   goToNextRoute: (routeName?: OnboardingRoute, routeState?: Record<string, unknown>) => void
   goToPrevRoute: () => void
   setTriggeredHwWalletFlow: React.Dispatch<React.SetStateAction<HwWalletsNeedingRedirect>>
-  setAccountsToPersonalize: React.Dispatch<React.SetStateAction<Account[]>>
-  accountsToPersonalize: Account[]
 }>({
   isOnboardingRoute: false,
   goToNextRoute: () => {},
   goToPrevRoute: () => {},
-  setTriggeredHwWalletFlow: () => null,
-  setAccountsToPersonalize: () => null,
-  accountsToPersonalize: []
+  setTriggeredHwWalletFlow: () => null
 })
 
 class RouteNode {
@@ -66,14 +60,12 @@ class RouteNode {
   }
 }
 
-const getAccountsToPersonalizeFromSession = (): Account[] => {
-  try {
-    const stored = syncSessionStorage.get('accountsToPersonalize')
-    return stored ? parse(stored) : []
-  } catch {
-    return []
-  }
-}
+/** The steps of an account adding flow after its own screen - leaving for any other ends it. */
+const ACCOUNT_ADDING_FLOW_ROUTES: string[] = [
+  WEB_ROUTES.keyStoreSetup,
+  WEB_ROUTES.accountPicker,
+  WEB_ROUTES.accountPersonalize
+]
 
 const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.hasPasswordSecret
@@ -93,36 +85,16 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const { isSetupComplete } = useController('WalletStateController').state
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const {
-    state: { isInitialized, subType, initParams, type },
+    state: { isInitialized, subType, initParams, type, readyToAddAccounts },
     dispatch: accountPickerDispatch
   } = useController('AccountPickerController')
+  // Prepared by the flow for the personalize step, which adds them on proceeding
+  const hasPreparedAccounts = !!readyToAddAccounts?.length
   const isOnboardingRoute = useMemo(
     () => ONBOARDING_WEB_ROUTES.includes((path || '').substring(1)),
     [path]
   )
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
-
-  // session storage is needed here to prevent state reset on account-personalize page reload
-  const [accountsToPersonalize, setAccountsToPersonalize] = useState<Account[]>(() => {
-    const currentRoute = path?.substring(1)
-    if (currentRoute === WEB_ROUTES.accountPersonalize) return getAccountsToPersonalizeFromSession()
-
-    return []
-  })
-
-  useEffect(() => {
-    const currentRoute = path?.substring(1)
-    if (currentRoute === WEB_ROUTES.accountPersonalize)
-      syncSessionStorage.set('accountsToPersonalize', stringify(accountsToPersonalize))
-  }, [accountsToPersonalize, path])
-
-  useEffect(() => {
-    const currentRoute = path?.substring(1)
-    if (currentRoute !== WEB_ROUTES.accountPersonalize) {
-      syncSessionStorage.remove('accountsToPersonalize')
-      if (accountsToPersonalize.length) setAccountsToPersonalize([])
-    }
-  }, [path, accountsToPersonalize.length])
 
   const onboardingRoutesTree = useMemo(() => {
     // on mobile, we skip onboardingCompleted and go straight to the dashboard ('/')
@@ -143,7 +115,12 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             new RouteNode(
               WEB_ROUTES.accountPicker,
               [
-                new RouteNode(WEB_ROUTES.accountPersonalize, afterPersonalizeRoutes, false, false),
+                new RouteNode(
+                  WEB_ROUTES.accountPersonalize,
+                  afterPersonalizeRoutes,
+                  !hasPreparedAccounts,
+                  false
+                ),
                 new RouteNode('/')
               ],
               false,
@@ -157,7 +134,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
                 ...afterPersonalizeRoutes,
                 new RouteNode(WEB_ROUTES.accountPicker, [new RouteNode('/')], false, false)
               ],
-              false,
+              // Nothing to add (e.g. the accounts came with a sync), so the flow skips it
+              !hasPreparedAccounts,
               false
             )
           ]
@@ -198,7 +176,14 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       authStatus !== AUTH_STATUS.NOT_AUTHENTICATED,
       false
     )
-  }, [hasPasswordSecret, authStatus, isSetupComplete, subType, accounts?.length])
+  }, [
+    hasPasswordSecret,
+    authStatus,
+    isSetupComplete,
+    subType,
+    accounts?.length,
+    hasPreparedAccounts
+  ])
 
   const loadHistory = () => {
     try {
@@ -378,45 +363,20 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     }
   }, [goToNextRoute, initParams, type, triggeredHwWalletFlow, path])
 
-  // Reset the AccountPickerController if it is initialized and
-  // the current route is not one of 'account-personalize' or 'account-picker'
+  // Ends the account adding flow once the user leaves it - back to where it started, or
+  // anywhere else. Only a move counts: flows prepare their accounts on their own screen,
+  // and its own steps (the password setup, the picker and personalize) keep it.
+  const hasAccountAddingFlow = isInitialized || !!initParams || hasPreparedAccounts
   useEffect(() => {
     if (!onboardingInitialized) return
-    if (!isInitialized) return
+    if (path === prevPath) return
+    if (!hasAccountAddingFlow) return
 
     const currentRoute = path?.substring(1) || ''
-    if (!currentRoute) return
-
-    const shouldResetAccountPicker = ![
-      WEB_ROUTES.accountPersonalize,
-      WEB_ROUTES.accountPicker
-    ].some((r) => currentRoute.includes(r))
-
-    if (shouldResetAccountPicker) {
-      accountPickerDispatch({
-        type: 'method',
-        params: {
-          method: 'reset',
-          args: []
-        }
-      })
-    }
-  }, [onboardingInitialized, path, accountPickerDispatch, isInitialized, history])
-
-  // Init params from an abandoned flow (e.g. "Create new account", then back) are not
-  // covered above, as the picker is never initialized. Left in place, the next flow's
-  // personalize step would init them and silently add an account from that key.
-  useEffect(() => {
-    if (path === prevPath) return
-    if (!initParams || isInitialized) return
-
-    const currentRoute = path?.substring(1)
-    const isFlowSelectorRoute =
-      currentRoute === WEB_ROUTES.getStarted || currentRoute === WEB_ROUTES.importExistingAccount
-    if (!isFlowSelectorRoute) return
+    if (!currentRoute || ACCOUNT_ADDING_FLOW_ROUTES.includes(currentRoute)) return
 
     accountPickerDispatch({ type: 'method', params: { method: 'reset', args: [] } })
-  }, [path, prevPath, initParams, isInitialized, accountPickerDispatch])
+  }, [onboardingInitialized, path, prevPath, hasAccountAddingFlow, accountPickerDispatch])
 
   // Some routes are protected and should only be accessed through internal navigation.
   // If a user attempts to access one of these routes directly via the URL bar,
@@ -496,18 +456,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       isOnboardingRoute,
       goToNextRoute,
       goToPrevRoute,
-      setTriggeredHwWalletFlow,
-      setAccountsToPersonalize,
-      accountsToPersonalize
+      setTriggeredHwWalletFlow
     }),
-    [
-      isOnboardingRoute,
-      goToPrevRoute,
-      goToNextRoute,
-      setTriggeredHwWalletFlow,
-      setAccountsToPersonalize,
-      accountsToPersonalize
-    ]
+    [isOnboardingRoute, goToPrevRoute, goToNextRoute, setTriggeredHwWalletFlow]
   )
   return (
     <OnboardingNavigationContext.Provider value={value}>

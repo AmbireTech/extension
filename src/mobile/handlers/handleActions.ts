@@ -2,7 +2,6 @@ import { getSessionId, Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { getDappIdFromUrl, getNormalizedHostnameFromUrl } from '@ambire-common/libs/dapps/helpers'
-import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
 import NfcKeyIterator from '@common/modules/hardware-wallets/libs/nfcKeyIterator'
@@ -242,18 +241,6 @@ export const handleActions = async (
         },
         params.id
       )
-      break
-    }
-
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
-      const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
-      if (!keystoreSavedSeed) return
-
-      const keyIterator = new KeyIterator(keystoreSavedSeed.seed, keystoreSavedSeed.seedPassphrase)
-      await mainCtrl.accountPicker.setInitParams({
-        keyIterator,
-        hdPathTemplate: keystoreSavedSeed.hdPathTemplate
-      })
       break
     }
 
