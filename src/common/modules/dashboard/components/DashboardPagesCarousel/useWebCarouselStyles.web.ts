@@ -76,8 +76,13 @@ const useWebCarouselStyles = ({
     animateCollapse(false)
   }, [animateCollapse, scrollUpStartOffset])
 
+  // Shown only along with the push for the measured overview: Reanimated applies a new height
+  // a frame or more after the render that reveals the pages, which showed them collapsed
   const push = useAnimatedStyle(
-    () => ({ transform: [{ translateY: overviewHeight - collapse.get() }] }),
+    () => ({
+      opacity: overviewHeight ? 1 : 0,
+      transform: [{ translateY: overviewHeight - collapse.get() }]
+    }),
     [overviewHeight]
   )
 
