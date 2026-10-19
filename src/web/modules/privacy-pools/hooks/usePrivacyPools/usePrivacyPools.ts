@@ -1,7 +1,10 @@
 import { formatUnits } from 'ethers'
 import { useCallback, useMemo } from 'react'
 
-import { getPrivacyPoolsPriceKey } from '@ambire-common/libs/privacyPools/prices'
+import {
+  getPrivacyPoolsPriceKey,
+  getPrivacyPoolsValuePerChain
+} from '@ambire-common/libs/privacyPools/prices'
 import {
   PrivacyPoolsChainState,
   PrivacyPoolsTokenBalance
@@ -170,16 +173,14 @@ const usePrivacyPools = () => {
   )
 
   // The pending part too, like the rows: it shows how much the account holds, while the rows tell
-  // the pending part apart
+  // the pending part apart. Valued like the networks screen, so the two totals match
   const totalPrivateBalance = useMemo(
     () =>
-      tokenBalances.reduce((total, { chainId, balance }) => {
-        const price = getTokenPrice(chainId, balance.tokenAddress)
-        if (price === null) return total
-
-        return total + Number(formatUnits(balance.totalAmount, balance.decimals)) * price
-      }, 0),
-    [tokenBalances, getTokenPrice]
+      Object.values(getPrivacyPoolsValuePerChain(balancesByChain || {}, prices || {})).reduce(
+        (total, value) => total + value,
+        0
+      ),
+    [balancesByChain, prices]
   )
 
   const balancesState: PrivacyPoolsBalancesState = useMemo(() => {
