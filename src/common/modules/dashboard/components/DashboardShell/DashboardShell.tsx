@@ -38,9 +38,14 @@ const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags
 // Instant placeholder shown while the data-heavy controllers load
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
+const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.selectedType
 
 const DashboardShell = ({ contentContainerStyle }: Props) => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
+  // The Privacy Pools dashboard has no gas tank, and these actions need an address
+  const isPrivacyPoolsAccount = selectedType === 'privacyPools'
   // Also used for a Privacy Pools account while its dashboard loads
   const backgroundColorSeed = useSelectedAccountColorSeed()
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
@@ -95,12 +100,16 @@ const DashboardShell = ({ contentContainerStyle }: Props) => {
                   }
                 />
               </View>
-              {/* The gas-tank balance is never cached, so it always loads as a skeleton.
-              Matches the GasTankButton loading skeleton and the balance block's margin. */}
-              <View style={spacings.mb}>
-                <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} />
-              </View>
-              <Routes />
+              {!isPrivacyPoolsAccount && (
+                <>
+                  {/* The gas-tank balance is never cached, so it always loads as a skeleton.
+                  Matches the GasTankButton loading skeleton and the balance block's margin. */}
+                  <View style={spacings.mb}>
+                    <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} />
+                  </View>
+                  <Routes />
+                </>
+              )}
             </View>
           </View>
         </View>

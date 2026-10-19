@@ -20,8 +20,8 @@ import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
-import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
+import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
 import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
@@ -76,10 +76,6 @@ import {
 } from '@web/extension-services/background/handlers/handleScripting'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import {
-  canUseOffscreenProver,
-  createOffscreenProverFactory
-} from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
-import {
   getDappTabFocusDispatcher,
   getPanelManager,
   handleFirefoxActionClicked
@@ -91,6 +87,10 @@ import {
   Port,
   PortMessenger
 } from '@web/extension-services/messengers'
+import {
+  canUseOffscreenProver,
+  createOffscreenProverFactory
+} from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
@@ -962,7 +962,7 @@ if ('hid' in navigator) navigator.hid.addEventListener('disconnect', () => {})
 try {
   browser.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
     if (newState !== 'active') return
-    if (!mainCtrl || !mainCtrl.selectedAccount.account) {
+    if (!mainCtrl || !mainCtrl.selectedAccount.selectedType) {
       console.error(
         'Idle state changed to active but mainCtrl or selected account is not initialized',
         mainCtrl

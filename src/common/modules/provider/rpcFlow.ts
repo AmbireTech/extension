@@ -130,7 +130,7 @@ const flowContext = flow
   // accounts still get theirs (and are asked to switch to it), so this stops only the rest.
   .use(async ({ request, mainCtrl, notificationManager, mapMethod }, next) => {
     const providerCtrl = new ProviderController(mainCtrl, notificationManager)
-    const isPrivacyPoolsAccountSelected = !!mainCtrl.selectedAccount.privacyPoolsAccountId
+    const isPrivacyPoolsAccountSelected = mainCtrl.selectedAccount.selectedType === 'privacyPools'
 
     if (
       getMetadata('SAFE', providerCtrl, mapMethod) ||

@@ -139,9 +139,14 @@ const resolveViewRoute = async (mainCtrl: MainController, view: View): Promise<s
     surveyState: mainCtrl.survey
   }
 
-  await awaitControllersInitialLoad([...Object.values(routeControllers), mainCtrl.accounts])
+  await awaitControllersInitialLoad([
+    ...Object.values(routeControllers),
+    mainCtrl.accounts,
+    mainCtrl.selectedAccount
+  ])
 
-  const authStatus = mainCtrl.accounts.accounts.length
+  // As in `authContext`, so a wallet with only Privacy Pools accounts isn't sent to onboarding
+  const authStatus = mainCtrl.selectedAccount.selectedType
     ? AUTH_STATUS.AUTHENTICATED
     : AUTH_STATUS.NOT_AUTHENTICATED
 

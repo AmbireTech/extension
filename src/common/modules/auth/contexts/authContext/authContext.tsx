@@ -16,17 +16,12 @@ const AuthContext = createContext<AuthContextData>({
 type SelectedAccountState = AllControllersMappingType['SelectedAccountController']
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
-const selectSelectedAccount = (state: SelectedAccountState) => state.account
-const selectPrivacyPoolsAccountId = (state: SelectedAccountState) => state.privacyPoolsAccountId
+const selectSelectedType = (state: SelectedAccountState) => state.selectedType
 const selectIsSelectedAccountReady = (state: SelectedAccountState) => state.isReady
 
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { state: accounts } = useController('AccountsController', selectAccounts)
-  const { state: account } = useController('SelectedAccountController', selectSelectedAccount)
-  const { state: privacyPoolsAccountId } = useController(
-    'SelectedAccountController',
-    selectPrivacyPoolsAccountId
-  )
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
   const { state: isReady } = useController(
     'SelectedAccountController',
     selectIsSelectedAccountReady
@@ -35,15 +30,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const authStatus = useMemo(() => {
     if (!accounts || !isReady) return AUTH_STATUS.LOADING
 
-    // `account` is null while a Privacy Pools account is selected, which may be the only account
-    if (privacyPoolsAccountId) return AUTH_STATUS.AUTHENTICATED
-
-    if (!accounts?.length || !account) {
-      return AUTH_STATUS.NOT_AUTHENTICATED
-    }
-
-    return AUTH_STATUS.AUTHENTICATED
-  }, [accounts, isReady, account, privacyPoolsAccountId])
+    // A Privacy Pools account counts too, and it may be the only account
+    return selectedType ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.NOT_AUTHENTICATED
+  }, [accounts, isReady, selectedType])
 
   return (
     <AuthContext.Provider value={useMemo(() => ({ authStatus }), [authStatus])}>

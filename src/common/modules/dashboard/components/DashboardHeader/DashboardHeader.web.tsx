@@ -25,19 +25,11 @@ const { isPopup, isSidePanel } = getUiType()
 
 const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
-const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.account
-const selectPrivacyPoolsAccountId = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.selectedType
 
 const DashboardHeader = () => {
-  const { state: account } = useController('SelectedAccountController', selectAccount)
-  // `account` is null while a Privacy Pools account is selected
-  const { state: privacyPoolsAccountId } = useController(
-    'SelectedAccountController',
-    selectPrivacyPoolsAccountId
-  )
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted', duration: 50 })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
     preset: 'opacityInverted',
@@ -53,9 +45,10 @@ const DashboardHeader = () => {
   } = useModalize()
 
   // Shown in production for Privacy Pools: its first network reads take long
-  const shouldDisplayNetworkStatuses = SHOULD_DISPLAY_NETWORK_STATUSES || !!privacyPoolsAccountId
+  const shouldDisplayNetworkStatuses =
+    SHOULD_DISPLAY_NETWORK_STATUSES || selectedType === 'privacyPools'
 
-  if (!account && !privacyPoolsAccountId) return null
+  if (!selectedType) return null
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>

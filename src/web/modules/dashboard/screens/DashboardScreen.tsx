@@ -23,9 +23,8 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const { isPopup } = getUiType()
 
-const selectPrivacyPoolsAccountId = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => state.privacyPoolsAccountId
+const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.selectedType
 
 const AccountDashboardScreen = () => {
   const { styles } = useTheme(getStyles)
@@ -131,15 +130,14 @@ const AccountDashboardScreen = () => {
 
 /** The regular dashboard, or the Privacy Pools one when such an account (no address) is selected. */
 const DashboardScreen = () => {
-  const { state: privacyPoolsAccountId } = useController(
-    'SelectedAccountController',
-    selectPrivacyPoolsAccountId
-  )
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   // Privacy Pools state is not pushed before the first paint, so the regular dashboard's shell
-  // holds the place until it arrives - its header already shows the Privacy Pools account
-  if (!privacyPoolsAccountId || !areAllControllerStatesLoaded) return <AccountDashboardScreen />
+  // holds the place until it arrives - its header already shows the Privacy Pools account, and
+  // it leaves out the actions that account can't use
+  if (selectedType !== 'privacyPools' || !areAllControllerStatesLoaded)
+    return <AccountDashboardScreen />
 
   return <PrivacyPoolsDashboardScreen />
 }
