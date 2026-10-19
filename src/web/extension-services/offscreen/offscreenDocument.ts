@@ -11,7 +11,10 @@ type ChromeRuntimeWithContexts = typeof chrome.runtime & {
   getContexts?: (filter: { contextTypes: string[]; documentUrls?: string[] }) => Promise<unknown[]>
 }
 
-/** Serializes opening, so two owners never race between closing and creating. */
+/**
+ * Serializes opening and closing, so two callers never both see a document open and both close it
+ * (the second fails with "No current offscreen document").
+ */
 let queue: Promise<unknown> = Promise.resolve()
 
 /** Whether an offscreen document is open: `documentUrl`'s, or any when it is left out. */
@@ -43,8 +46,18 @@ export const openOffscreenDocument = ({
 
     await chrome.offscreen.createDocument({ url: path, reasons: [WORKERS_REASON], justification })
   })
-  // The next opening waits for this one, whether it worked or not
+  // The next opening or closing waits for this one, whether it worked or not
   queue = open.catch(() => {})
 
   return open
+}
+
+/** Closes `documentUrl`'s offscreen document if it is the open one, in turn with openings. */
+export const closeOffscreenDocument = (documentUrl: string): Promise<void> => {
+  const close = queue.then(async () => {
+    if (await hasOffscreenDocument(documentUrl)) await chrome.offscreen.closeDocument()
+  })
+  queue = close.catch(() => {})
+
+  return close
 }

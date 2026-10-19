@@ -5,7 +5,7 @@ import type {
 } from '@ambire-common/interfaces/tornadoCash'
 import { TORNADO_CASH_PLUGIN_STOPPED_MESSAGE } from '@ambire-common/libs/tornadoCash/plugin'
 
-import { hasOffscreenDocument, openOffscreenDocument } from '../offscreen/offscreenDocument'
+import { closeOffscreenDocument, openOffscreenDocument } from '../offscreen/offscreenDocument'
 import {
   decodeTornadoCashValue,
   encodeTornadoCashValue,
@@ -123,7 +123,7 @@ export const createOffscreenTornadoCashPluginFactory = ({
 
   const closeOwnDocument = async () => {
     try {
-      if (await hasOffscreenDocument(documentUrl)) await chrome.offscreen.closeDocument()
+      await closeOffscreenDocument(documentUrl)
     } catch (error: any) {
       console.error('tornadoCash: the document could not be closed', error)
       onError(error instanceof Error ? error : new Error(String(error)))
@@ -238,12 +238,19 @@ export const createOffscreenTornadoCashPluginFactory = ({
         } satisfies ToTornadoCashDocument)
       })
 
-    const dispose = async () => {
-      if (isStopped) return
-      isStopped = true
-      rejectAll(new Error(TORNADO_CASH_PLUGIN_STOPPED_MESSAGE))
-      port.disconnect()
-      await closeOwnDocument()
+    /** The first `dispose` call's closing, which later calls wait for too. */
+    let disposing: Promise<void> | null = null
+    const dispose = () => {
+      // Its document is already gone, and the open one, if any, may be a newer plugin's
+      if (!disposing && isStopped) disposing = Promise.resolve()
+      if (!disposing) {
+        isStopped = true
+        rejectAll(new Error(TORNADO_CASH_PLUGIN_STOPPED_MESSAGE))
+        port.disconnect()
+        disposing = closeOwnDocument()
+      }
+
+      return disposing
     }
     stopCurrent = dispose
 
