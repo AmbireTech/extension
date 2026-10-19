@@ -94,6 +94,7 @@ const GetStartedScreen = () => {
                 type="tertiary"
                 text={t('Import existing account')}
                 onPress={() => handleAuthButtonPress('import-existing-account')}
+                disabled={isCreatingNewAccount}
                 childrenPosition="left"
                 hasBottomSpacing={false}
               >
@@ -112,6 +113,7 @@ const GetStartedScreen = () => {
               type="outline"
               hasBottomSpacing={false}
               onPress={() => goToNextRoute(WEB_ROUTES.importFromMobile)}
+              disabled={isCreatingNewAccount}
               text={t('Already an Ambire user')}
             >
               <RightArrowIcon color={theme.primaryText} style={spacings.mlTy} />

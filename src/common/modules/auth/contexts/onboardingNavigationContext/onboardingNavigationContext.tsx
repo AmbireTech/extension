@@ -403,6 +403,21 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     }
   }, [onboardingInitialized, path, accountPickerDispatch, isInitialized, history])
 
+  // Init params from an abandoned flow (e.g. "Create new account", then back) are not
+  // covered above, as the picker is never initialized. Left in place, the next flow's
+  // personalize step would init them and silently add an account from that key.
+  useEffect(() => {
+    if (path === prevPath) return
+    if (!initParams || isInitialized) return
+
+    const currentRoute = path?.substring(1)
+    const isFlowSelectorRoute =
+      currentRoute === WEB_ROUTES.getStarted || currentRoute === WEB_ROUTES.importExistingAccount
+    if (!isFlowSelectorRoute) return
+
+    accountPickerDispatch({ type: 'method', params: { method: 'reset', args: [] } })
+  }, [path, prevPath, initParams, isInitialized, accountPickerDispatch])
+
   // Some routes are protected and should only be accessed through internal navigation.
   // If a user attempts to access one of these routes directly via the URL bar,
   // this hook should block the navigation and redirect them back to the previous route.
