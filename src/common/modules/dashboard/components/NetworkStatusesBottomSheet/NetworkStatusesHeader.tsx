@@ -5,6 +5,7 @@ import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 /** The statuses table header, with columns sized like the rows. */
 const NetworkStatusesHeader: FC<{
@@ -16,7 +17,7 @@ const NetworkStatusesHeader: FC<{
   return (
     <View
       style={[
-        { flexDirection: 'row' },
+        flexbox.directionRow,
         spacings.pbTy,
         {
           borderBottomWidth: 2,

@@ -14,13 +14,12 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 type Props = {
   label: string
-  disabled?: boolean
   /** Goes back to entering an address. */
   onClear: () => void
 }
 
 /** Replaces the address field once a Privacy Pools account is picked. Laid out like `Recipient`. */
-const PrivacyPoolsRecipient = ({ label, disabled, onClear }: Props) => {
+const PrivacyPoolsRecipient = ({ label, onClear }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
@@ -52,7 +51,6 @@ const PrivacyPoolsRecipient = ({ label, disabled, onClear }: Props) => {
         <HoverablePressable
           testID="privacy-pools-recipient-clear"
           onPress={onClear}
-          disabled={disabled}
           style={spacings.mlTy}
         >
           <CloseIcon width={14} height={14} color={theme.secondaryText} />
