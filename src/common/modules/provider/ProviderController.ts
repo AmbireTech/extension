@@ -219,6 +219,11 @@ export class ProviderController {
       throw ethErrors.provider.unauthorized()
     }
 
+    // The same error as `rpcFlow` gives, so an app can't tell a private account is used
+    if (this.mainCtrl.selectedAccount.privateAccount) {
+      throw ethErrors.provider.unauthorized()
+    }
+
     if (!this.mainCtrl.selectedAccount.account) {
       throw new Error('wallet account not selected')
     }

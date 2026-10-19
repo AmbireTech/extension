@@ -8,6 +8,7 @@ import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
+import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -15,6 +16,7 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
+import { isPrivacyPoolsEnabled, isTornadoCashEnabled } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
@@ -41,11 +43,24 @@ import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Ac
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const privateAccountKeyExtractor = (account: PrivateAccountDisplay) => getPrivateAccountKey(account)
+/** Whether the Private tab and its accounts are shown at all. */
+const isPrivateAccountAvailable = isPrivacyPoolsEnabled || isTornadoCashEnabled
+const selectIsPrivateAccountSelected = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => !!state.privateAccount
+
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
   const { accounts, control, search, keyExtractor, getItemLayout, onAccountExtraHeightChange } =
     useAccountsList()
   const { accounts: privateAccounts } = usePrivateAccounts()
+  const { state: isPrivateAccountSelected } = useController(
+    'SelectedAccountController',
+    selectIsPrivateAccountSelected
+  )
   const { dispatch: privacyPoolsDispatch } = useController('PrivacyPoolsController')
   const { dispatch: tornadoCashDispatch } = useController('TornadoCashController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -98,6 +113,11 @@ const AccountsSettingsScreen = () => {
   )
   const [privacyPoolsAccountToRemove, setPrivacyPoolsAccountToRemove] =
     useState<PrivateAccountDisplay | null>(null)
+  // The search stays when switching tabs, so it filters the newly opened tab too. Opens on the
+  // tab of the selected account.
+  const [activeTab, setActiveTab] = useState<AccountsTab>(
+    isPrivateAccountSelected ? 'private' : 'public'
+  )
   const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
   const clearAccountSettingsAccount = useCallback(() => setAccountSettingsAccount(null), [])
 
@@ -208,27 +228,29 @@ const AccountsSettingsScreen = () => {
     tornadoCashDispatch
   ])
 
-  // Below the regular accounts, not draggable: their order is not stored and they have no address
-  // to key them by
-  const privacyPoolsAccountRows = useMemo(
-    () =>
-      filterPrivateAccountsBySearch(privateAccounts, search).map((privacyPoolsAccount) => (
-        <View
-          key={getPrivateAccountKey(privacyPoolsAccount)}
-          style={[
-            spacings.mbTy,
-            spacings.plSm,
-            { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
-          ]}
-        >
-          <PrivacyPoolsAccountRow
-            account={privacyPoolsAccount}
-            onRemove={setPrivacyPoolsAccountToRemove}
-            containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
-          />
-        </View>
-      )),
-    [privateAccounts, search, theme.secondaryBackground]
+  // Not draggable: their order is not stored and they have no address to key them by
+  const filteredPrivateAccounts = useMemo(
+    () => filterPrivateAccountsBySearch(privateAccounts, search),
+    [privateAccounts, search]
+  )
+
+  const renderPrivateAccount = useCallback(
+    ({ item: privateAccount }: { item: PrivateAccountDisplay }) => (
+      <View
+        style={[
+          spacings.mbTy,
+          spacings.plSm,
+          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
+        ]}
+      >
+        <PrivacyPoolsAccountRow
+          account={privateAccount}
+          onRemove={setPrivacyPoolsAccountToRemove}
+          containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
+        />
+      </View>
+    ),
+    [theme.secondaryBackground]
   )
 
   const renderItem = useCallback(
@@ -351,20 +373,28 @@ const AccountsSettingsScreen = () => {
         </>
       </SettingsPageHeader>
       <View style={[flexbox.flex1]} ref={accountsContainerRef}>
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
-          data={localAccounts}
-          keyExtractor={keyExtractor}
-          onDragEnd={handleAccDragEnd}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          ListFooterComponent={
-            privacyPoolsAccountRows.length ? <>{privacyPoolsAccountRows}</> : null
-          }
-          ListEmptyComponent={
-            !privacyPoolsAccountRows.length ? <Text>{t('No accounts found')}</Text> : null
-          }
-        />
+        {isPrivateAccountAvailable && (
+          <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        )}
+        {isPrivateAccountAvailable && activeTab === 'private' ? (
+          <ScrollableWrapper
+            type={WRAPPER_TYPES.FLAT_LIST}
+            data={filteredPrivateAccounts}
+            keyExtractor={privateAccountKeyExtractor}
+            renderItem={renderPrivateAccount}
+            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          />
+        ) : (
+          <ScrollableWrapper
+            type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
+            data={localAccounts}
+            keyExtractor={keyExtractor}
+            onDragEnd={handleAccDragEnd}
+            renderItem={renderItem}
+            getItemLayout={getItemLayout}
+            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          />
+        )}
       </View>
       <AccountDeploySettingsBottomSheet
         sheetRef={sheetRefAccountDeploySettings}

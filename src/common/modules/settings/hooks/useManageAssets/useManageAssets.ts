@@ -176,7 +176,8 @@ const useManageAssets = <T extends PortfolioAsset>({
   const { networks } = useController('NetworksController').state
   const {
     state: {
-      portfolio: { isAllReady, tokens, collections }
+      portfolio: { isAllReady, tokens, collections },
+      privateAccount
     }
   } = useController('SelectedAccountController')
 
@@ -199,8 +200,8 @@ const useManageAssets = <T extends PortfolioAsset>({
     customAssets,
     hiddenAssets,
     // The lists come from the stored state, so they only wait for the portfolio
-    // when there is nothing to display yet
-    isLoading: !isAllReady && !customAssets.length && !hiddenAssets.length
+    // when there is nothing to display yet. A private account has no portfolio to wait for.
+    isLoading: !privateAccount && !isAllReady && !customAssets.length && !hiddenAssets.length
   }
 }
 

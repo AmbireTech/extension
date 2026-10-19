@@ -2,6 +2,7 @@ import { formatUnits, ZeroAddress } from 'ethers'
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
+import { getPrivacyPoolsTokenId } from '@ambire-common/consts/privacyPools'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
@@ -21,10 +22,6 @@ export type PrivacyPoolsTokenOption = SelectValue & {
   // The approved balance in raw units, for validating the typed amount
   availableAmount: bigint
 }
-
-/** Includes the chain: the same token on two chains must not collide (it would prove the wrong pool). */
-const getTokenOptionValue = (chainId: string, tokenAddress: string) =>
-  `${chainId}:${tokenAddress.toLowerCase()}`
 
 export const getTokenOption = ({
   chainId,
@@ -46,7 +43,7 @@ export const getTokenOption = ({
   networkName: string
   availableAmount: bigint
 }): PrivacyPoolsTokenOption => ({
-  value: getTokenOptionValue(chainId, tokenAddress),
+  value: getPrivacyPoolsTokenId(chainId, tokenAddress),
   chainId,
   tokenAddress,
   isNative,

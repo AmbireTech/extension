@@ -25,25 +25,11 @@ const { isPopup, isSidePanel } = getUiType()
 
 const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
-const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.account
-const selectPrivateAccountSeedId = (
-  state: AllControllersMappingType['SelectedAccountController']
-) => state.privateAccount?.seedId ?? null
-const selectPrivacyProviderId = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.privateAccount?.providerId ?? null
+const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.selectedType
 
 const DashboardHeader = () => {
-  const { state: account } = useController('SelectedAccountController', selectAccount)
-  // `account` is null while a Privacy Pools account is selected
-  const { state: privateAccountSeedId } = useController(
-    'SelectedAccountController',
-    selectPrivateAccountSeedId
-  )
-  const { state: privacyProviderId } = useController(
-    'SelectedAccountController',
-    selectPrivacyProviderId
-  )
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted', duration: 50 })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
     preset: 'opacityInverted',
@@ -61,10 +47,10 @@ const DashboardHeader = () => {
   // Shown in production for Privacy Pools: its first network reads take long. Not for Tornado
   // Cash, which reads one network and shows its progress on the dashboard
   const shouldDisplayNetworkStatuses =
-    (SHOULD_DISPLAY_NETWORK_STATUSES && privacyProviderId !== 'tornadoCash') ||
-    privacyProviderId === 'privacyPools'
+    (SHOULD_DISPLAY_NETWORK_STATUSES && selectedType !== 'tornadoCash') ||
+    selectedType === 'privacyPools'
 
-  if (!account && !privateAccountSeedId) return null
+  if (!selectedType) return null
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>

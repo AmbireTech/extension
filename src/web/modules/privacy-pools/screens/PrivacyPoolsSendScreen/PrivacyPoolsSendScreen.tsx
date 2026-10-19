@@ -8,13 +8,13 @@ import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/do
 import { PrivacyPoolsSendForm } from '@ambire-common/interfaces/privacyPools'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
-import Alert from '@common/components/Alert'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
+import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
 import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
@@ -129,6 +129,20 @@ const PrivacyPoolsSendScreen = () => {
     () =>
       withdrawTokens.find(({ value }) => value === selectedTokenValue) || withdrawTokens[0] || null,
     [withdrawTokens, selectedTokenValue]
+  )
+
+  // Shown in the select itself, like the regular Send, so the form does not grow
+  const noTokensOption: SelectValue = useMemo(
+    () => ({
+      value: 'noTokens',
+      label: (
+        <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
+          {t('No tokens found')}
+        </Text>
+      ),
+      icon: null
+    }),
+    [t]
   )
 
   const handleChangeToken = useCallback(
@@ -360,21 +374,10 @@ const PrivacyPoolsSendScreen = () => {
             disabled={isTransferInFlight}
           />
 
-          {!withdrawTokens.length && (
-            <Alert
-              type="info"
-              size="sm"
-              style={spacings.mbTy}
-              text={t(
-                'There is nothing to send yet. Either nothing has been sent to this account, or what has is still waiting for Privacy Pools to approve it.'
-              )}
-            />
-          )}
-
           <SendToken
             label={t('Send token')}
             fromTokenOptions={withdrawTokens}
-            fromTokenValue={selectedToken || undefined}
+            fromTokenValue={selectedToken || noTokensOption}
             fromAmountValue={fieldMode === 'token' ? amount : amounts.amountInFiat}
             fromTokenAmountSelectDisabled={!withdrawTokens.length || isTransferInFlight}
             handleChangeFromToken={handleChangeToken}

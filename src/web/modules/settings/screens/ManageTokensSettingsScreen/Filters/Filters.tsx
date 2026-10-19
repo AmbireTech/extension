@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Search from '@common/components/Search'
 import Select from '@common/components/Select'
@@ -20,6 +21,9 @@ import flexbox from '@common/styles/utils/flexbox'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectIsPrivateAccountSelected = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => !!state.privateAccount
 
 type Props = {
   control: any
@@ -48,6 +52,11 @@ const Filters: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
+  // Adding checks the asset against an address, which a private account doesn't have
+  const { state: isAddDisabled } = useController(
+    'SelectedAccountController',
+    selectIsPrivateAccountSelected
+  )
   const { theme } = useTheme()
   const isNftsTab = activeTab === 'nfts'
   const copy = ASSET_COPY[isNftsTab ? 'ERC721' : 'ERC20']
@@ -89,18 +98,30 @@ const Filters: FC<Props> = ({
           containerStyle={{ width: 260, marginBottom: 0, ...spacings.mrTy }}
         />
       </View>
-      <Button
-        testID={isNftsTab ? 'add-custom-nft-button' : 'add-custom-token-button'}
-        childrenPosition="left"
-        size="smaller"
-        style={[spacings.phSm, { height: 40 }]}
-        textStyle={{ fontSize: 12 }}
-        text={t(copy.addButton)}
-        onPress={openAddAssetBottomSheet}
-        hasBottomSpacing={false}
+      <View
+        dataSet={
+          isAddDisabled
+            ? createGlobalTooltipDataSet({
+                id: 'add-custom-asset-disabled',
+                content: t('Not available for private accounts.')
+              })
+            : undefined
+        }
       >
-        <AddCircularIcon width={20} height={20} style={spacings.mrMi} />
-      </Button>
+        <Button
+          testID={isNftsTab ? 'add-custom-nft-button' : 'add-custom-token-button'}
+          childrenPosition="left"
+          size="smaller"
+          style={[spacings.phSm, { height: 40 }]}
+          textStyle={{ fontSize: 12 }}
+          text={t(copy.addButton)}
+          onPress={openAddAssetBottomSheet}
+          disabled={isAddDisabled}
+          hasBottomSpacing={false}
+        >
+          <AddCircularIcon width={20} height={20} style={spacings.mrMi} />
+        </Button>
+      </View>
     </View>
   )
 }

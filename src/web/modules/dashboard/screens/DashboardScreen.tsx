@@ -16,6 +16,7 @@ import PendingActionWindowModal from '@common/modules/dashboard/components/Pendi
 import getStyles from '@common/modules/dashboard/screens/styles'
 import { getUiType } from '@common/utils/uiType'
 import MobileAppPromoBanner from '@web/modules/dashboard/components/MobileAppPromoBanner'
+import PrivacyPoolsDashboardShell from '@web/modules/privacy-pools/components/PrivacyPoolsDashboardShell'
 import PrivacyPoolsDashboardScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsDashboardScreen'
 import TornadoCashDashboardScreen from '@web/modules/tornado-cash/screens/TornadoCashDashboardScreen'
 import commonWebStyles from '@web/styles/utils/common'
@@ -24,8 +25,8 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const { isPopup } = getUiType()
 
-const selectPrivacyProviderId = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.privateAccount?.providerId ?? null
+const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.selectedType
 
 const AccountDashboardScreen = () => {
   const { styles } = useTheme(getStyles)
@@ -134,17 +135,22 @@ const AccountDashboardScreen = () => {
  * account (no address) is selected.
  */
 const DashboardScreen = () => {
-  const { state: privacyProviderId } = useController(
-    'SelectedAccountController',
-    selectPrivacyProviderId
-  )
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
-  // The privacy controllers' state is not pushed before the first paint, so the regular
-  // dashboard's shell holds the place until it arrives - its header already shows the account
-  if (!privacyProviderId || !areAllControllerStatesLoaded) return <AccountDashboardScreen />
+  if (selectedType === 'tornadoCash') {
+    // The Tornado Cash state is not pushed before the first paint, so the regular dashboard's
+    // shell holds the place until it arrives - its header already shows the account
+    if (!areAllControllerStatesLoaded) return <AccountDashboardScreen />
 
-  if (privacyProviderId === 'tornadoCash') return <TornadoCashDashboardScreen />
+    return <TornadoCashDashboardScreen />
+  }
+
+  if (selectedType !== 'privacyPools') return <AccountDashboardScreen />
+
+  // Privacy Pools state is not pushed before the first paint, so a shell with the same card
+  // holds the place until it arrives
+  if (!areAllControllerStatesLoaded) return <PrivacyPoolsDashboardShell />
 
   return <PrivacyPoolsDashboardScreen />
 }

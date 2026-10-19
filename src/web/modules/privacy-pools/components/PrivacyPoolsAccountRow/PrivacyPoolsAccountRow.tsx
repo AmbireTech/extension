@@ -9,7 +9,10 @@ import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import { PrivateAccountDisplay } from '@common/hooks/usePrivateAccounts'
 import useTheme from '@common/hooks/useTheme'
-import getAccountStyles from '@common/modules/account-select/components/Account/styles'
+import getAccountStyles, {
+  ACCOUNT_AVATAR_SIZE,
+  ACCOUNT_SELECT_ACCOUNT_HEIGHT
+} from '@common/modules/account-select/components/Account/styles'
 import { PRIVACY_PROVIDER_NAMES } from '@common/modules/privacy/providers'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -31,8 +34,9 @@ type Props = {
 const REMOVE_OPTION_VALUE = 'remove'
 
 /**
- * `Account` for a private account (Privacy Pools, Tornado Cash), with the same height so both fit
- * one list. It shows no balance: that is known only once the account is opened and synced.
+ * `Account` for a private account (Privacy Pools, Tornado Cash), with the same height and selected
+ * state so both fit one list. It shows no balance: that is known only once the account is opened
+ * and synced.
  */
 const PrivacyPoolsAccountRow = ({
   account,
@@ -51,6 +55,12 @@ const PrivacyPoolsAccountRow = ({
     property: 'backgroundColor',
     values: { from: theme.primaryBackground, to: theme.secondaryBackground }
   })
+
+  // The same as the selected regular account
+  const selectedStyle = useMemo(
+    () => ({ backgroundColor: theme.primaryAccent100, borderColor: theme.primaryAccent }),
+    [theme.primaryAccent, theme.primaryAccent100]
+  )
 
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
 
@@ -96,19 +106,23 @@ const PrivacyPoolsAccountRow = ({
       testID="privacy-pools-account"
       style={[
         styles.accountContainer,
-        // The menu sits at the end of the row, as in `Account`
-        flexbox.directionRow,
-        flexbox.alignCenter,
+        containerStyle,
+        { minHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT },
+        // It has no badges line under a separator like `Account`, so its one line is centered
+        flexbox.justifyCenter,
         // @ts-expect-error: Web style
         onSelect ? animStyle : { cursor: 'default' },
-        onSelect && isSelected && { backgroundColor: theme.secondaryBackground },
-        containerStyle
+        onSelect && isSelected && selectedStyle
       ]}
     >
-      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-        <PrivateAccountAvatar providerId={account.providerId} style={spacings.mrTy} />
+      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        <PrivateAccountAvatar
+          providerId={account.providerId}
+          size={ACCOUNT_AVATAR_SIZE}
+          style={spacings.mrTy}
+        />
         <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-          <Text fontSize={14} weight="medium" numberOfLines={1} style={spacings.mrTy}>
+          <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
             {t('Private account')}
           </Text>
           {/*
@@ -122,18 +136,18 @@ const PrivacyPoolsAccountRow = ({
             })}
           </Text>
         </View>
+        {!!onRemove && (
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
+            <Dropdown
+              data={menuOptions}
+              externalPosition={dropdownPosition}
+              setExternalPosition={setDropdownPosition}
+              onSelect={handleMenuSelect}
+              kebabIconProps={{ width: 28, height: 28 }}
+            />
+          </View>
+        )}
       </View>
-      {!!onRemove && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-          <Dropdown
-            data={menuOptions}
-            externalPosition={dropdownPosition}
-            setExternalPosition={setDropdownPosition}
-            onSelect={handleMenuSelect}
-            kebabIconProps={{ width: 28, height: 28 }}
-          />
-        </View>
-      )}
     </AnimatedPressable>
   )
 }
