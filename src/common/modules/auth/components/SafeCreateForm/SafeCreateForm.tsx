@@ -83,6 +83,7 @@ const SafeCreateForm = ({
   canIncreaseRequiredConfirmations,
   handleDecreaseRequiredConfirmations,
   handleIncreaseRequiredConfirmations,
+  createButtonDisabledReason,
   withShortenedAddresses
 }: Props) => {
   const { t } = useTranslation()
@@ -140,6 +141,16 @@ const SafeCreateForm = ({
         onPress={handleAddOwner}
         disabled={isAddOwnerButtonDisabled}
       />
+      {!!createButtonDisabledReason && (
+        <Text
+          fontSize={14}
+          appearance="errorText"
+          style={spacings.mtTy}
+          testID="safe-create-disabled-reason"
+        >
+          {createButtonDisabledReason}
+        </Text>
+      )}
 
       <Text fontSize={18} weight="semiBold" style={[spacings.mtLg, spacings.mbSm]}>
         {t('Owners')}

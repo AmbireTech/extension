@@ -1,9 +1,10 @@
 import { getAddress, isAddress } from 'ethers'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Hex } from '@ambire-common/interfaces/hex'
+import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { useTranslation } from '@common/config/localization'
@@ -40,7 +41,7 @@ const useSafeCreate = () => {
     'SafeController',
     selectCreateSafeAccountStatus
   )
-  const isCreateRequested = useRef(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [ownerAddresses, setOwnerAddresses] = useState<Hex[]>([])
   const [selectedRequiredConfirmations, setSelectedRequiredConfirmations] = useState(
     MIN_REQUIRED_CONFIRMATIONS
@@ -89,17 +90,40 @@ const useSafeCreate = () => {
     [ownerAddresses]
   )
 
-  const enteredOwnerAddress = getAddressFromAddressState(ownerAddressState)
+  const enteredOwnerAddress = useMemo(
+    () => getAddressFromAddressState(ownerAddressState),
+    [ownerAddressState]
+  )
   const isEnteredOwnerAlreadyAdded =
     isAddress(enteredOwnerAddress) && ownerAddressSet.has(enteredOwnerAddress.toLowerCase())
-
-  const duplicateOwnerValidation = useMemo<Validation | null>(
+  // Only the owners that sign with a key are supported for now, so the smart accounts
+  // (incl. Safes) in the wallet can be selected, but not added
+  const enteredSmartAccountOwner = useMemo(
     () =>
-      isEnteredOwnerAlreadyAdded
-        ? { severity: 'error', message: t('This owner is already added.') }
-        : null,
-    [isEnteredOwnerAlreadyAdded, t]
+      accounts.find(
+        (account) =>
+          isSmartAccount(account) &&
+          account.addr.toLowerCase() === enteredOwnerAddress.toLowerCase()
+      ),
+    [accounts, enteredOwnerAddress]
   )
+
+  const ownerValidation = useMemo<Validation | null>(() => {
+    if (enteredSmartAccountOwner?.safeCreation)
+      return {
+        severity: 'error',
+        message: t('Safe accounts can’t be added as owners yet. This is coming soon.')
+      }
+    if (enteredSmartAccountOwner)
+      return {
+        severity: 'error',
+        message: t('Smart accounts can’t be added as owners yet. This is coming soon.')
+      }
+    if (isEnteredOwnerAlreadyAdded)
+      return { severity: 'error', message: t('This owner is already added.') }
+
+    return null
+  }, [enteredSmartAccountOwner, isEnteredOwnerAlreadyAdded, t])
 
   const {
     address: ownerAddress,
@@ -109,7 +133,7 @@ const useSafeCreate = () => {
   } = useAddressInput({
     addressState: ownerAddressState,
     setAddressState: setOwnerAddressState,
-    overwriteValidation: duplicateOwnerValidation,
+    overwriteValidation: ownerValidation,
     handleRevalidate: handleRevalidateOwnerAddress
   })
 
@@ -153,7 +177,7 @@ const useSafeCreate = () => {
     setSelectedRequiredConfirmations(requiredConfirmations + 1)
   }, [canIncreaseRequiredConfirmations, requiredConfirmations])
 
-  const isAddOwnerButtonDisabled = !isValid || !isAddress(ownerAddress)
+  const isAddOwnerButtonDisabled = !isValid || !isAddress(ownerAddress) || !!ownerValidation
 
   const handleAddOwner = useCallback(() => {
     if (isAddOwnerButtonDisabled) return
@@ -177,13 +201,25 @@ const useSafeCreate = () => {
     )
   }, [])
 
-  const isCreating = createSafeAccountStatus === 'LOADING'
-  const isCreateButtonDisabled = !owners.length || isCreating
+  const hasOwnerAddressInput = !!ownerAddressState.fieldValue.trim()
+  // Explains why Create is disabled while there is something in the "Add owner" field,
+  // so an owner the user meant to add isn't left out of the Safe by mistake
+  const createButtonDisabledReason = useMemo(() => {
+    if (!hasOwnerAddressInput) return null
+    if (isAddOwnerButtonDisabled) return t('Clear the “Add owner” field to continue.')
+
+    return t('This address isn’t an owner yet. Press “Add” or clear the field to continue.')
+  }, [hasOwnerAddressInput, isAddOwnerButtonDisabled, t])
+
+  const isCreating = isSubmitting || createSafeAccountStatus === 'LOADING'
+  const isCreateButtonDisabled = !owners.length || isCreating || hasOwnerAddressInput
 
   const handleCreate = useCallback(() => {
     if (isCreateButtonDisabled) return
 
-    isCreateRequested.current = true
+    // Set locally, as the LOADING status of the controller arrives with a delay,
+    // in which a second press would dispatch the creation again
+    setIsSubmitting(true)
     safeDispatch({
       type: 'method',
       params: { method: 'createSafeAccount', args: [ownerAddresses, requiredConfirmations] }
@@ -193,13 +229,14 @@ const useSafeCreate = () => {
   // Proceed to the account personalization once the Safe is added to the wallet.
   // On error, the controller shows the error and the user stays on the form
   useEffect(() => {
-    if (!isCreateRequested.current) return
-    if (createSafeAccountStatus === 'ERROR') isCreateRequested.current = false
-    if (createSafeAccountStatus !== 'SUCCESS') return
+    if (!isSubmitting) return
+    if (createSafeAccountStatus !== 'SUCCESS' && createSafeAccountStatus !== 'ERROR') return
 
-    isCreateRequested.current = false
-    goToNextRoute()
-  }, [createSafeAccountStatus, goToNextRoute])
+    // Syncs with the status of the controller, which is an external store
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsSubmitting(false)
+    if (createSafeAccountStatus === 'SUCCESS') goToNextRoute()
+  }, [createSafeAccountStatus, goToNextRoute, isSubmitting])
 
   return {
     control,
@@ -217,6 +254,7 @@ const useSafeCreate = () => {
     handleDecreaseRequiredConfirmations,
     handleIncreaseRequiredConfirmations,
     isCreateButtonDisabled,
+    createButtonDisabledReason,
     handleCreate
   }
 }
