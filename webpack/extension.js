@@ -30,6 +30,7 @@ const LAVAMOAT_UNSAFE_ENTRIES = new Set([
   'ambire-inpage',
   'ethereum-inpage',
   'content-script',
+  'onekey-offscreen',
   'content-script-ambire-injection',
   'content-script-ethereum-injection'
 ])
@@ -123,7 +124,7 @@ function processManifest(content, mode) {
 
   const permissions = [...manifest.permissions, 'scripting', 'alarms']
   if (isWebkit && !isSafari) {
-    permissions.push('system.display', 'sidePanel')
+    permissions.push('system.display', 'sidePanel', 'offscreen')
     manifest.side_panel = { default_path: 'side-panel.html' }
   }
   manifest.permissions = permissions
@@ -275,6 +276,10 @@ module.exports = async function buildExtension(
         './src/web/extension-services/content-script/content-script-messenger-bridge.ts',
       'ambire-inpage': './src/web/modules/inpage/ambire-inpage.ts',
       'ethereum-inpage': './src/web/modules/inpage/ethereum-inpage.ts',
+      ...(isWebkit &&
+        !isSafari && {
+          'onekey-offscreen': './src/web/extension-services/onekey-offscreen/onekey-offscreen.ts'
+        }),
       ...(isGecko && {
         'content-script-ambire-injection':
           './src/web/extension-services/content-script/content-script-ambire-injection.ts',
@@ -375,6 +380,16 @@ module.exports = async function buildExtension(
       chunks: ['runtime', 'main'] // include only chunks from the main entry
     }),
     ...((isWebkit && !isSafari) || isGecko
+      ? [
+          new HtmlWebpackPlugin({
+            template: './src/web/public/onekey-offscreen.html',
+            filename: 'onekey-offscreen.html',
+            inject: 'body',
+            chunks: ['runtime', 'onekey-offscreen']
+          })
+        ]
+      : []),
+    ...(isWebkit && !isSafari
       ? [
           new HtmlWebpackPlugin({
             template: './src/web/public/side-panel.html',
@@ -489,6 +504,7 @@ module.exports = async function buildExtension(
           chunk.name !== 'ambire-inpage' &&
           chunk.name !== 'ethereum-inpage' &&
           chunk.name !== 'content-script' &&
+          chunk.name !== 'onekey-offscreen' &&
           (!enableLavaMoat || chunk.name !== 'background')
         )
       }

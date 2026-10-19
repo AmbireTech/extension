@@ -86,8 +86,10 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import OneKeyController from '@web/modules/hardware-wallet/controllers/OneKeyController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
+import OneKeySigner from '@web/modules/hardware-wallet/libs/OneKeySigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
@@ -168,6 +170,7 @@ let autoLockCtrl: AutoLockController
 let pm: PortMessenger
 let ledgerCtrl: LedgerController
 let trezorCtrl: TrezorController
+let oneKeyCtrl: OneKeyController
 let qrCtrl: QrHardwareController
 let eventEmitterRegistry: EventEmitterRegistryController
 
@@ -298,6 +301,7 @@ const init = async () => {
     () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
   )
   trezorCtrl = new TrezorController(windowManager as UiManager['window'])
+  oneKeyCtrl = new OneKeyController()
   const latticeCtrl = new LatticeController()
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
@@ -498,12 +502,14 @@ const init = async () => {
       // TODO: there is a mismatch in hw signer types, it's not a big deal
       ledger: LedgerSigner,
       trezor: TrezorSigner,
+      onekey: OneKeySigner,
       lattice: LatticeSigner,
       qr: QrHardwareSigner
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
+      onekey: oneKeyCtrl,
       lattice: latticeCtrl,
       qr: qrCtrl
     } as any,

@@ -97,6 +97,9 @@
     "@metamask/obs-store": "6.0.2",
     "@ngraveio/bc-ur": "1.1.13",
     "@noble/hashes": "1.8.0",
+    "@onekeyfe/hd-core": "1.1.0",
+    "@onekeyfe/hd-shared": "1.1.0",
+    "@onekeyfe/hd-web-sdk": "1.1.0",
     "@raugfer/jazzicon": "1.0.6",
     "@react-native-async-storage/async-storage": "3.0.2",
     "@react-native-community/netinfo": "12.0.1",
@@ -334,13 +337,19 @@
   "resolutions": {
     "elliptic": "^6.6.1",
     "browserslist": "^4.23.0",
-    "cipher-base": "^1.0.6"
+    "cipher-base": "^1.0.6",
+    "@onekeyfe/hd-core": "1.1.0",
+    "@onekeyfe/hd-shared": "1.1.0",
+    "@onekeyfe/hd-transport": "1.1.0",
+    "@onekeyfe/hd-transport-http": "1.1.0",
+    "@onekeyfe/hd-transport-web-device": "1.1.0"
   },
   "private": true,
   "lavamoat": {
     "allowScripts": {
       "$root$": false,
       "@lavamoat/preinstall-always-fail": false,
+      "@onekeyfe/hd-core>@onekeyfe/hd-transport>protobufjs": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/protobuf>protobufjs": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/transport>usb": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/utxo-lib>blake-hash": false,
