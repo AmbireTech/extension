@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -10,6 +9,7 @@ import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
@@ -21,6 +21,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
 import { isMobile, isWeb } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
@@ -116,6 +117,15 @@ const AddAccount = ({
           goToNextRoute(ROUTES.ledgerConnect)
         },
         testID: 'ledger-option'
+      },
+      {
+        key: 'onekey',
+        text: t('OneKey'),
+        icon: OneKeyIcon,
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.oneKeyConnect)
+        },
+        testID: 'onekey-option'
       },
       {
         key: 'lattice',

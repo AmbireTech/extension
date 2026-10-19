@@ -109,6 +109,10 @@ const MainRoutes = () => {
               element={<AuthGroupScreen pick={(m) => m.LedgerConnectScreen} />}
             />
             <Route
+              path={WEB_ROUTES.oneKeyConnect}
+              element={<AuthGroupScreen pick={(m) => m.OneKeyConnectScreen} />}
+            />
+            <Route
               path={WEB_ROUTES.safeImport}
               element={<AuthGroupScreen pick={(m) => m.SafeImportMethodScreen} />}
             />
@@ -154,14 +158,14 @@ const MainRoutes = () => {
               element={<AuthGroupScreen pick={(m) => m.QrCameraPermissionPage} />}
             />
             <Route
-              path={WEB_ROUTES.importAccountsFromMobile}
-              element={<AuthGroupScreen pick={(m) => m.ImportAccountsFromMobileScreen} />}
+              path={WEB_ROUTES.importFromMobile}
+              element={<AuthGroupScreen pick={(m) => m.ImportFromMobileScreen} />}
             />
 
             <Route element={<AuthenticatedRoute />}>
               <Route
-                path={WEB_ROUTES.exportAccountsToMobile}
-                element={<AuthGroupScreen pick={(m) => m.ExportAccountsToMobileScreen} />}
+                path={WEB_ROUTES.exportToMobile}
+                element={<AuthGroupScreen pick={(m) => m.ExportToMobileScreen} />}
               />
               <Route element={<SettingsRoutesProvider />}>
                 <Route

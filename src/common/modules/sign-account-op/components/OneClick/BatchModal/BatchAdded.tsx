@@ -16,7 +16,7 @@ import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
-import spacings, { SPACING_MD } from '@common/styles/spacings'
+import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -58,7 +58,7 @@ const BatchAdded: FC<Props> = ({
       testID="add-more-button"
       size={buttonSize}
       childrenPosition="left"
-      style={isWideWebLayout ? spacings.mrLg : {}}
+      style={isWideWebLayout ? spacings.mrLg : flexbox.flex1}
     >
       <AddCircularIcon width={24} height={24} color={theme.primaryText} />
     </Button>
@@ -67,10 +67,11 @@ const BatchAdded: FC<Props> = ({
   const primaryButton = (
     <Button
       onPress={onPrimaryButtonPress}
-      hasBottomSpacing={isMobile}
+      hasBottomSpacing={false}
       textStyle={spacings.phTy}
       text={primaryButtonText}
       size={buttonSize}
+      style={isWideWebLayout ? {} : flexbox.flex1}
       testID="go-dashboard-button"
     />
   )
@@ -139,7 +140,9 @@ const BatchAdded: FC<Props> = ({
           >
             <BatchIcon width={24} height={24} color={theme.primaryAccent300} />
             <Text style={[spacings.mlSm]} color={theme.primaryAccent300}>
-              {t('{{ callsCount }} transactions in batch', { callsCount })}
+              {callsCount === 1
+                ? t('1 transaction in batch')
+                : t('{{ callsCount }} transactions in batch', { callsCount })}
             </Text>
           </View>
           <Text fontSize={12} weight="medium" appearance="tertiaryText" style={text.center}>
@@ -153,23 +156,16 @@ const BatchAdded: FC<Props> = ({
           fullWidth={isNarrowWebLayout}
           innerContainerStyle={isNarrowWebLayout ? spacings.ph0 : undefined}
         >
-          {isNarrowWebLayout ? (
-            // Stacked full-width buttons, primary on top - same as the mobile footer
-            <>
-              {primaryButton}
-              {secondaryButton}
-            </>
-          ) : isWeb ? (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
-              {secondaryButton}
-              {primaryButton}
-            </View>
-          ) : (
-            <>
-              {secondaryButton}
-              {primaryButton}
-            </>
-          )}
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              isWideWebLayout ? flexbox.justifySpaceBetween : { gap: SPACING_TY }
+            ]}
+          >
+            {secondaryButton}
+            {primaryButton}
+          </View>
         </FooterGlassView>
       </View>
     </LayoutWrapper>

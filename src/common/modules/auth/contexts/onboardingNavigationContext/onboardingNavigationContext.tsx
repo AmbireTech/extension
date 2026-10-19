@@ -31,7 +31,7 @@ import { getUiType } from '@common/utils/uiType'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
-type HwWalletsNeedingRedirect = 'trezor' | 'lattice' | null
+type HwWalletsNeedingRedirect = 'trezor' | 'onekey' | 'lattice' | null
 
 const OnboardingNavigationContext = createContext<{
   isOnboardingRoute: boolean
@@ -176,6 +176,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             new RouteNode(WEB_ROUTES.importSeedPhrase, common, false, false),
             new RouteNode(WEB_ROUTES.ledgerConnect, common, false, false),
             new RouteNode(WEB_ROUTES.trezorConnect, common, false, false),
+            new RouteNode(WEB_ROUTES.oneKeyConnect, common, false, false),
             new RouteNode(
               WEB_ROUTES.safeImport,
               [
@@ -192,8 +193,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           false
         ),
         new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false),
-        new RouteNode(WEB_ROUTES.importAccountsFromMobile, common, false, false),
-        new RouteNode(MOBILE_ROUTES.importAccountsFromExtension, common, false, false)
+        new RouteNode(WEB_ROUTES.importFromMobile, common, false, false),
+        new RouteNode(MOBILE_ROUTES.importFromExtension, common, false, false)
       ],
       authStatus !== AUTH_STATUS.NOT_AUTHENTICATED,
       false
@@ -365,7 +366,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     const shouldRedirectToHwWalletFlow =
-      initParams && type && ['lattice', 'trezor'].includes(type) && triggeredHwWalletFlow
+      initParams && type && ['lattice', 'trezor', 'onekey'].includes(type) && triggeredHwWalletFlow
     if (shouldRedirectToHwWalletFlow) {
       setTriggeredHwWalletFlow(null)
 

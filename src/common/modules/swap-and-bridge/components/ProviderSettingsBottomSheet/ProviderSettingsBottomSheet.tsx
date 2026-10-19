@@ -27,8 +27,15 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const PROVIDER_ICON_WIDTH = 72
 const PROVIDER_ICON_STYLE = { width: PROVIDER_ICON_WIDTH }
-const SETTINGS_BUTTON_STYLE = { width: 40, height: 40 }
-const COMPACT_SETTINGS_BUTTON_STYLE = { width: 28, height: 28 }
+/** Width/height of the swap provider settings (gear) button. */
+export const SETTINGS_BUTTON_SIZE = 40
+/** Width/height of the compact swap provider settings (gear) button. */
+export const COMPACT_SETTINGS_BUTTON_SIZE = 28
+const SETTINGS_BUTTON_STYLE = { width: SETTINGS_BUTTON_SIZE, height: SETTINGS_BUTTON_SIZE }
+const COMPACT_SETTINGS_BUTTON_STYLE = {
+  width: COMPACT_SETTINGS_BUTTON_SIZE,
+  height: COMPACT_SETTINGS_BUTTON_SIZE
+}
 const SHEET_STYLE = isWeb ? { width: '100%' as const, maxWidth: 480 } : undefined
 const COW_SWAP_PROVIDER_ID = 'cowswap'
 

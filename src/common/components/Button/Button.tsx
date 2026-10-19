@@ -6,6 +6,7 @@ import { isMobile, isWeb } from '@common/config/env'
 import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/useHover'
 import { AnimatedText } from '@common/hooks/useHover/useHover'
 import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -15,6 +16,12 @@ import useOnEnterKeyPress from '@web/hooks/useOnEnterKeyPress'
 
 import { createGlobalTooltipDataSet } from '../GlobalTooltip'
 import getStyles from './styles'
+
+/**
+ * The narrow layouts (mobile and the narrow side panel) are dense, so the tallest buttons
+ * (`large` and `regular`, 56 by default) are slightly shorter there
+ */
+export const COMPACT_LAYOUT_BUTTON_HEIGHT = 50
 
 type ButtonTypes =
   | 'primary'
@@ -53,6 +60,8 @@ export interface Props extends PressableProps {
   testID?: string
   submitOnEnter?: boolean
   tooltipDataSet?: ReturnType<typeof createGlobalTooltipDataSet>
+  /** Overrides the style of the info icon that `tooltipDataSet` adds, e.g. to center it */
+  tooltipIconStyle?: ViewStyle
 }
 
 const OPACITY_ANIMATION = {
@@ -166,10 +175,12 @@ const Button = ({
   testID,
   submitOnEnter: _submitOnEnter,
   tooltipDataSet,
+  tooltipIconStyle,
   onPress,
   ...rest
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
+  const { isCompactLayout } = useCompactLayout()
   const { clearToasts } = useToast()
   const submitOnEnter = _submitOnEnter ?? type === 'primary'
 
@@ -443,6 +454,8 @@ const Button = ({
       style={
         [
           containerStylesSizes[size],
+          isCompactLayout &&
+            (size === 'large' || size === 'regular') && { height: COMPACT_LAYOUT_BUTTON_HEIGHT },
           styles.buttonContainer,
           containerStyles[type],
           !!accentColor && { borderColor: accentColor },
@@ -566,7 +579,8 @@ const Button = ({
             height={16}
             style={{
               ...flexbox.alignSelfStart,
-              ...spacings.mlMi
+              ...spacings.mlMi,
+              ...tooltipIconStyle
             }}
             dataSet={tooltipDataSet}
           />

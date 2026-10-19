@@ -8,6 +8,7 @@ import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Alert from '@common/components/Alert'
 import FatToggle from '@common/components/FatToggle'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkBadge from '@common/components/NetworkBadge'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Select from '@common/components/Select'
@@ -22,6 +23,7 @@ import HardwareWalletSigningModal from '@common/modules/hardware-wallets/compone
 import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
 import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
+import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import Info from '@common/modules/sign-message/components/Info'
 import spacings, {
   SPACING,
@@ -170,7 +172,9 @@ const SignInWithEthereum = ({
     // message is not a SIWE one.
     return signMessageState.messageToSign!.content as SiweMessageUserRequest['meta']['params']
   }, [signMessageState.messageToSign])
-  const isAutoLoginEnabledByUser = siweMessageToSign?.isAutoLoginEnabledByUser || false
+  const isAutoLoginBlockedByScamChecker = !!signMessageState.isAutoLoginBlockedByScamChecker
+  const isAutoLoginEnabledByUser =
+    !isAutoLoginBlockedByScamChecker && !!siweMessageToSign?.isAutoLoginEnabledByUser
 
   const network = useMemo(
     () =>
@@ -285,6 +289,21 @@ const SignInWithEthereum = ({
         />
         {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
       </View>
+      {!!signMessageState.banners?.length && (
+        <View style={spacings.mbLg}>
+          {signMessageState.banners.map((banner) => (
+            <SafetyChecksBanner
+              key={banner.id}
+              type={banner.type}
+              title={banner.title}
+              text={banner.text}
+              secondaryText={banner.secondaryText}
+              trustableDappUrls={banner.trustableDappUrls}
+              style={spacings.mbTy}
+            />
+          ))}
+        </View>
+      )}
       <View style={styles.container}>
         <View
           style={{
@@ -376,6 +395,13 @@ const SignInWithEthereum = ({
               ]}
             >
               <View
+                dataSet={createGlobalTooltipDataSet({
+                  id: 'siwe-auto-login-blocked',
+                  content: t(
+                    "Auto-login isn't available for this app because it didn't pass our safety check."
+                  ),
+                  hidden: !isAutoLoginBlockedByScamChecker
+                })}
                 style={[
                   flexbox.directionRow,
                   flexbox.alignCenter,
@@ -389,6 +415,7 @@ const SignInWithEthereum = ({
                 <FatToggle
                   isOn={isAutoLoginEnabledByUser}
                   onToggle={updateIsAutoLoginEnabled}
+                  disabled={isAutoLoginBlockedByScamChecker}
                   width={36}
                   height={20}
                 />
@@ -434,7 +461,9 @@ const SignInWithEthereum = ({
         {isSafeNotDeployed && (
           <Alert
             type="error"
-            title="Safe account not enabled on this network. Please activate it from Safe Global"
+            title={t(
+              "Your Safe account isn't active on this network yet. Confirm its activation request first, then you can sign this message."
+            )}
           />
         )}
         {signMessageState.signer &&

@@ -7,7 +7,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const expoEnv = require('@expo/webpack-config/env')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const LavaMoatPlugin = require('@lavamoat/webpack')
-const { validateEnvVariables } = require('../scripts/validateEnv')
+const { ENV_TARGETS, validateEnvVariables } = require('../scripts/validateEnv')
 const appJSON = require('../app.json')
 const AssetReplacePlugin = require('../plugins/AssetReplacePlugin')
 const createLavamoatUnsafeLayerPlugin = require('../lavamoat/plugins/lavamoat-unsafe-layer-plugin')
@@ -30,6 +30,7 @@ const LAVAMOAT_UNSAFE_ENTRIES = new Set([
   'ambire-inpage',
   'ethereum-inpage',
   'content-script',
+  'onekey-offscreen',
   'content-script-ambire-injection',
   'content-script-ethereum-injection'
 ])
@@ -107,6 +108,14 @@ function processManifest(content, mode) {
         strict_min_version: '116.0'
       }
     }
+    manifest.sidebar_action = {
+      default_panel: 'side-panel.html',
+      default_title: manifest.action.default_title,
+      default_icon: manifest.icons,
+      // Firefox defaults this to true, which would pop the sidebar open on every install/update
+      // even though panel mode is off by default
+      open_at_install: false
+    }
   }
 
   if (isGecko || isSafari) {
@@ -115,7 +124,7 @@ function processManifest(content, mode) {
 
   const permissions = [...manifest.permissions, 'scripting', 'alarms']
   if (isWebkit && !isSafari) {
-    permissions.push('system.display', 'sidePanel')
+    permissions.push('system.display', 'sidePanel', 'offscreen')
     manifest.side_panel = { default_path: 'side-panel.html' }
   }
   manifest.permissions = permissions
@@ -242,7 +251,7 @@ module.exports = async function buildExtension(
   env
 ) {
   if (process.env.IS_TESTING !== 'true') {
-    validateEnvVariables(process.env.APP_ENV)
+    validateEnvVariables(process.env.APP_ENV, ENV_TARGETS.EXTENSION)
   }
   const locations = env.locations || (await (0, expoEnv.getPathsAsync)(env.projectRoot))
   const templatePath = (fileName = '') => path.join(ROOT_DIR, './src/web', fileName)
@@ -267,6 +276,10 @@ module.exports = async function buildExtension(
         './src/web/extension-services/content-script/content-script-messenger-bridge.ts',
       'ambire-inpage': './src/web/modules/inpage/ambire-inpage.ts',
       'ethereum-inpage': './src/web/modules/inpage/ethereum-inpage.ts',
+      ...(isWebkit &&
+        !isSafari && {
+          'onekey-offscreen': './src/web/extension-services/onekey-offscreen/onekey-offscreen.ts'
+        }),
       ...(isGecko && {
         'content-script-ambire-injection':
           './src/web/extension-services/content-script/content-script-ambire-injection.ts',
@@ -366,6 +379,16 @@ module.exports = async function buildExtension(
       inject: 'body', // to auto inject the main.js bundle in the body
       chunks: ['runtime', 'main'] // include only chunks from the main entry
     }),
+    ...((isWebkit && !isSafari) || isGecko
+      ? [
+          new HtmlWebpackPlugin({
+            template: './src/web/public/onekey-offscreen.html',
+            filename: 'onekey-offscreen.html',
+            inject: 'body',
+            chunks: ['runtime', 'onekey-offscreen']
+          })
+        ]
+      : []),
     ...(isWebkit && !isSafari
       ? [
           new HtmlWebpackPlugin({
@@ -481,6 +504,7 @@ module.exports = async function buildExtension(
           chunk.name !== 'ambire-inpage' &&
           chunk.name !== 'ethereum-inpage' &&
           chunk.name !== 'content-script' &&
+          chunk.name !== 'onekey-offscreen' &&
           (!enableLavaMoat || chunk.name !== 'background')
         )
       }

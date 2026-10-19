@@ -19,12 +19,12 @@ interface Props {
 const StakingFooter = ({ form }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { submitButtonText, isSubmitDisabled, onSubmit, onCancel } = form
   const footerButtonStyle = useMemo(
     () =>
-      isNarrowWebLayout ? [styles.footerButton, styles.footerButtonCompact] : styles.footerButton,
-    [isNarrowWebLayout, styles.footerButton, styles.footerButtonCompact]
+      isCompactLayout ? [styles.footerButton, styles.footerButtonCompact] : styles.footerButton,
+    [isCompactLayout, styles.footerButton, styles.footerButtonCompact]
   )
 
   return (

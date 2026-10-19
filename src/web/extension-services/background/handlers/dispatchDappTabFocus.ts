@@ -1,7 +1,6 @@
 import { Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ConnectionSource } from '@ambire-common/interfaces/dapp'
-import { isSidePanelView } from '@ambire-common/interfaces/ui'
 import { browser } from '@web/constants/browserapi'
 import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
 
@@ -16,8 +15,6 @@ export type DappTabTarget = {
   tabId: number
   windowId?: number
 }
-
-export const isSidePanelOpen = (mainCtrl: MainController) => mainCtrl.ui.views.some(isSidePanelView)
 
 /**
  * Session.tabId falls back to Date.now() (~1e12) when there is no real browser tab
@@ -138,7 +135,9 @@ export const dispatchDappTabFocusFromMainCtrl = (
   targets: DappTabTarget[],
   delayMs?: number
 ) => {
-  if (!isSidePanelOpen(mainCtrl)) return
+  // Only when a panel in the dapp's window showed the request - the same check that decides where
+  // requests are shown (a request window regains the focus on its own once it closes)
+  if (!targets.some(({ windowId }) => mainCtrl.ui.panel?.isOpen(windowId))) return
 
   scheduleDappTabFocusDispatch(targets, delayMs)
 }

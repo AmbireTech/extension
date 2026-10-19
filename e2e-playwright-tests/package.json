@@ -27,6 +27,8 @@
     "keystore:migration": "npx playwright test -g @keystoreMigration",
     "performance": "npx playwright test -g @performance",
     "crash:analytics": "npx playwright test -g @crashAnalytics",
+    "switch:account": "npx playwright test -g @switchAccount",
+    "dapp:account:permissions": "npx playwright test -g @dappAccountPermissions",
     "postinstall": "patch-package"
   },
   "author": "Filip",
