@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
-import WalletStakingScreen from '@web/modules/wallet-staking/screens/WalletStakingScreen'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
@@ -17,6 +16,7 @@ import SidePanelNoAccountsScreen from '@web/modules/auth/screens/SidePanelNoAcco
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
 import NetworksScreen from '@web/modules/networks/screens'
+import PrivacyPoolsSendScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsSendScreen'
 import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
 import TabOnlyRoute from '@web/modules/router/components/TabOnlyRoute'
@@ -29,8 +29,8 @@ import { SettingsRoutesProvider } from '@web/modules/settings/contexts/SettingsR
 import SurveyScreen from '@web/modules/survey/screens/SurveyScreen/SurveyScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
-import PrivacyPoolsSendScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsSendScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
+import WalletStakingScreen from '@web/modules/wallet-staking/screens/WalletStakingScreen'
 
 const MainRoutes = () => {
   const location = useLocation()
@@ -182,24 +182,20 @@ const MainRoutes = () => {
                   path={WEB_ROUTES.networksSettings}
                   element={<SettingsGroupScreen pick={(m) => m.NetworksSettingsScreen} />}
                 />
-                <Route element={<RegularAccountRoute />}>
-                  <Route
-                    path={WEB_ROUTES.transactions}
-                    element={
-                      <SettingsGroupScreen pick={(m) => m.TransactionHistorySettingsScreen} />
-                    }
-                  />
-                  <Route
-                    path={WEB_ROUTES.signedMessages}
-                    element={
-                      <SettingsGroupScreen pick={(m) => m.SignedMessageHistorySettingsScreen} />
-                    }
-                  />
-                  <Route
-                    path={WEB_ROUTES.manageTokens}
-                    element={<SettingsGroupScreen pick={(m) => m.ManageTokensSettingsScreen} />}
-                  />
-                </Route>
+                <Route
+                  path={WEB_ROUTES.transactions}
+                  element={<SettingsGroupScreen pick={(m) => m.TransactionHistorySettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.signedMessages}
+                  element={
+                    <SettingsGroupScreen pick={(m) => m.SignedMessageHistorySettingsScreen} />
+                  }
+                />
+                <Route
+                  path={WEB_ROUTES.manageTokens}
+                  element={<SettingsGroupScreen pick={(m) => m.ManageTokensSettingsScreen} />}
+                />
                 <Route
                   path={WEB_ROUTES.devicePasswordSet}
                   element={<SettingsGroupScreen pick={(m) => m.DevicePasswordSetSettingsScreen} />}
@@ -244,7 +240,6 @@ const MainRoutes = () => {
               <Route path={WEB_ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
               <Route path={WEB_ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
               <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
-              <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
               <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
               <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
               <Route path={WEB_ROUTES.walletStaking} element={<WalletStakingScreen />} />
@@ -252,8 +247,9 @@ const MainRoutes = () => {
                 path={WEB_ROUTES.trendingTokenDetails}
                 element={<TrendingTokenDetailsScreen />}
               />
-              <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
             </Route>
+            <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
+            <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
             <Route path={WEB_ROUTES.privacyPoolsSend} element={<PrivacyPoolsSendScreen />} />
             <Route
               path={WEB_ROUTES.signAccountOp}
