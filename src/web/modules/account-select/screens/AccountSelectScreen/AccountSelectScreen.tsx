@@ -94,8 +94,11 @@ const AccountSelectScreen = () => {
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
   const [pendingToBeSetSelectedPrivacyPoolsAccount, setPendingToBeSetSelectedPrivacyPoolsAccount] =
     useState('')
-  // The search stays when switching tabs, so it filters the newly opened tab too
-  const [activeTab, setActiveTab] = useState<AccountsTab>('public')
+  // The search stays when switching tabs, so it filters the newly opened tab too. Opens on the
+  // tab of the selected account.
+  const [activeTab, setActiveTab] = useState<AccountsTab>(
+    privacyPoolsAccountId ? 'private' : 'public'
+  )
   // Reserves exactly as much scroll space as the floating footer occupies, so the last
   // account in the list is never covered by it. The narrow view footer doesn't float.
   const [footerHeight, setFooterHeight] = useState(0)

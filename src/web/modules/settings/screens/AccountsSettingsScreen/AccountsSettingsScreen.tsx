@@ -41,13 +41,22 @@ import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Ac
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const privacyPoolsAccountKeyExtractor = (account: PrivacyPoolsAccountDisplay) => account.seedId
+const selectPrivacyPoolsAccountId = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.privacyPoolsAccountId
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
   const { accounts, control, search, keyExtractor, getItemLayout, onAccountExtraHeightChange } =
     useAccountsList()
   const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
+  const { state: privacyPoolsAccountId } = useController(
+    'SelectedAccountController',
+    selectPrivacyPoolsAccountId
+  )
   const { dispatch: privacyPoolsDispatch } = useController('PrivacyPoolsController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const accountsContainerRef = useRef(null)
@@ -99,8 +108,11 @@ const AccountsSettingsScreen = () => {
   )
   const [privacyPoolsAccountToRemove, setPrivacyPoolsAccountToRemove] =
     useState<PrivacyPoolsAccountDisplay | null>(null)
-  // The search stays when switching tabs, so it filters the newly opened tab too
-  const [activeTab, setActiveTab] = useState<AccountsTab>('public')
+  // The search stays when switching tabs, so it filters the newly opened tab too. Opens on the
+  // tab of the selected account.
+  const [activeTab, setActiveTab] = useState<AccountsTab>(
+    privacyPoolsAccountId ? 'private' : 'public'
+  )
   const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
   const clearAccountSettingsAccount = useCallback(() => setAccountSettingsAccount(null), [])
 
