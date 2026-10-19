@@ -16,9 +16,10 @@ test.describe('add account', { tag: '@addAccount-mobile' }, () => {
         projectName: testInfo.project.name
       })
 
-      // The first account only needs to be view-only here - this spec exercises adding a
-      // *second* account from an already-onboarded app, not signing.
-      await screen.getByTestId(selectors.settings.watchAnAddressButton).tap()
+      // The first account only needs to be view-only here - adding a
+      // second account from an already-onboarded app, not signing
+      await screen.getByTestId(selectors.getStarted.importExistingAccBtn).tap()
+      await screen.getByTestId(selectors.getStarted.importMethodWatchAddress).tap()
       await screen
         .getByTestId(selectors.getStarted.viewOnlyInputAddressField)
         .fill(mainConstants.addresses.basicAccount)

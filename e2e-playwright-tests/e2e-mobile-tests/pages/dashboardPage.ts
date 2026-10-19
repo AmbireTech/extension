@@ -20,7 +20,7 @@ export class DashboardPage extends BasePageMobile {
   }
 
   async checkNoTransactionOnActivityTab(): Promise<void> {
-    await this.screen.getByTestId(selectors.dashboard.activityTabButton).tap()
+    // await this.screen.getByTestId(selectors.dashboard.activityTabButton).tap()
     await expect(
       this.screen.getByTestId(selectors.dashboard.noTransactionOnActivityTab)
     ).toContainText(

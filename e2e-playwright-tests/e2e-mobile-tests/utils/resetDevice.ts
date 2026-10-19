@@ -1,10 +1,10 @@
 import { execSync } from 'child_process'
-import { join } from 'path'
-
 import { IOS_MOBILE_INVITE_CODE } from 'constants/env'
 import selectors from 'constants/selectors'
+import { join } from 'path'
 
 import { expect } from '@mobilewright/test'
+
 import type { Device, Screen } from 'mobilewright'
 
 const ANDROID_HOME = process.env.ANDROID_HOME ?? join(process.env.HOME ?? '', 'Library/Android/sdk')
@@ -48,18 +48,18 @@ export async function resetAppToCleanState({
       .trim()
     execSync(`rm -rf "${dataContainer}"`)
     await device.launchApp(bundleId)
-  }
 
-  const inviteCodeInput = screen.getByTestId(selectors.invite.codeInput)
-  if (await inviteCodeInput.count()) {
-    if (!IOS_MOBILE_INVITE_CODE) {
-      throw new Error(
-        'App is showing the invite gate but MOBILE_INVITE_CODE is not set (see e2e-playwright-tests/constants/env.ts).'
-      )
+    const inviteCodeInput = screen.getByTestId(selectors.invite.codeInput)
+    if (await inviteCodeInput.count()) {
+      if (!IOS_MOBILE_INVITE_CODE) {
+        throw new Error(
+          'App is showing the invite gate but MOBILE_INVITE_CODE is not set (see e2e-playwright-tests/constants/env.ts).'
+        )
+      }
+
+      await inviteCodeInput.fill(IOS_MOBILE_INVITE_CODE)
+      await screen.getByTestId(selectors.invite.verifyBtn).tap()
+      await expect(inviteCodeInput).not.toBeVisible()
     }
-
-    await inviteCodeInput.fill(IOS_MOBILE_INVITE_CODE)
-    await screen.getByTestId(selectors.invite.verifyBtn).tap()
-    await expect(inviteCodeInput).not.toBeVisible()
   }
 }

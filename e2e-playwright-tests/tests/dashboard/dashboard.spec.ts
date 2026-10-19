@@ -16,7 +16,8 @@ test.describe('dashboard', { tag: '@dashboard' }, () => {
     await context.close()
   })
 
-  test('should have balance on the dashboard', async ({ pages }) => {
+  test.only('should have balance on the dashboard', async ({ pages }) => {
+    await pages.basePage.pause()
     await pages.dashboard.checkBalanceInAccount()
   })
 

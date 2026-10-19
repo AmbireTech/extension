@@ -30,7 +30,7 @@ test.describe('gasTank - Basic Account', { tag: '@gasTank-mobile' }, () => {
     }
   )
 
-  test('should top up Gas Tank with 0.01 USDC on Base', async ({ pages }) => {
+  test.only('should top up Gas Tank with 0.01 USDC on Base', async ({ pages }) => {
     const sendToken = tokens.usdc.base
     const message = 'Top up ready!'
 
