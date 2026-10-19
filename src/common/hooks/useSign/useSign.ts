@@ -6,7 +6,6 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
-import { captureException } from '@common/config/analytics/CrashAnalytics'
 import useController from '@common/hooks/useController'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
@@ -424,14 +423,9 @@ const useSign = ({
 
       // When the OneKey is unplugged or the browser no longer lets Ambire use it, this opens
       // the tab the browser asks for access to a device from, instead of signing
-      ensureOneKeyAccess()
-        .then((hasOneKeyAccess) => {
-          if (hasOneKeyAccess) continueSigning()
-        })
-        .catch((error) => {
-          console.error(error)
-          captureException(error)
-        })
+      void ensureOneKeyAccess().then((hasOneKeyAccess) => {
+        if (hasOneKeyAccess) continueSigning()
+      })
     },
     [
       signAccountOpState?.accountOp.signingKeyAddr,
@@ -515,14 +509,9 @@ const useSign = ({
 
       // Same as in handleSign: a OneKey that's unplugged or no longer allowed opens the
       // authorization tab instead of failing in the background
-      ensureOneKeyAccess()
-        .then((hasOneKeyAccess) => {
-          if (hasOneKeyAccess) handleBroadcast()
-        })
-        .catch((error) => {
-          console.error(error)
-          captureException(error)
-        })
+      void ensureOneKeyAccess().then((hasOneKeyAccess) => {
+        if (hasOneKeyAccess) handleBroadcast()
+      })
     },
     [handleBroadcast, handleUpdate, ensureOneKeyAccess]
   )
