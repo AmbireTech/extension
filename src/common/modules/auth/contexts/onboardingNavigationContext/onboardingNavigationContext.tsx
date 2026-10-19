@@ -90,6 +90,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   } = useController('AccountPickerController')
   // Prepared by the flow for the personalize step, which adds them on proceeding
   const hasPreparedAccounts = !!readyToAddAccounts?.length
+  // A flow is under way - set up (personalize prepares its accounts) or prepared already
+  const hasAccountAddingFlow = isInitialized || !!initParams || hasPreparedAccounts
   const isOnboardingRoute = useMemo(
     () => ONBOARDING_WEB_ROUTES.includes((path || '').substring(1)),
     [path]
@@ -118,7 +120,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
                 new RouteNode(
                   WEB_ROUTES.accountPersonalize,
                   afterPersonalizeRoutes,
-                  !hasPreparedAccounts,
+                  !hasAccountAddingFlow,
                   false
                 ),
                 new RouteNode('/')
@@ -135,7 +137,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
                 new RouteNode(WEB_ROUTES.accountPicker, [new RouteNode('/')], false, false)
               ],
               // Nothing to add (e.g. the accounts came with a sync), so the flow skips it
-              !hasPreparedAccounts,
+              !hasAccountAddingFlow,
               false
             )
           ]
@@ -182,7 +184,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     isSetupComplete,
     subType,
     accounts?.length,
-    hasPreparedAccounts
+    hasAccountAddingFlow
   ])
 
   const loadHistory = () => {
@@ -277,13 +279,20 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         nextRoute = findNextEnabledRoute(currentNode.children, routeName)
       }
       if (nextRoute) {
+        // The password is set once, so its step is replaced rather than left behind: every
+        // way back - the back arrow, a swipe, the browser's - skips it, as the tree does
+        const isLeavingPasswordSetup = currentRoute === WEB_ROUTES.keyStoreSetup
+
         if (nextRoute.name === '/' && !getUiType().isMobileApp) {
           dispatch({ type: 'OPEN_EXTENSION_POPUP' })
         } else {
           navigateRef.current(nextRoute.name, {
-            state: { ...routeState, internal: true }
+            state: { ...routeState, internal: true },
+            replace: isLeavingPasswordSetup
           })
         }
+        if (isLeavingPasswordSetup) return
+
         // Checked inside the updater rather than against a captured copy, so the
         // breadcrumb cannot pick up a duplicate from a stale read.
         setHistory((prevHistory) =>
@@ -366,7 +375,6 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   // Ends the account adding flow once the user leaves it - back to where it started, or
   // anywhere else. Only a move counts: flows prepare their accounts on their own screen,
   // and its own steps (the password setup, the picker and personalize) keep it.
-  const hasAccountAddingFlow = isInitialized || !!initParams || hasPreparedAccounts
   useEffect(() => {
     if (!onboardingInitialized) return
     if (path === prevPath) return

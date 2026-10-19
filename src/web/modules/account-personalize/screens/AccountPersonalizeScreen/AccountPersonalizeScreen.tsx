@@ -4,12 +4,14 @@ import { ScrollView, View } from 'react-native'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import EditAccountIcon from '@common/assets/svg/EditAccountIcon'
 import Button from '@common/components/Button'
+import DotsLoadingAnimation from '@common/components/DotsLoadingAnimation'
 import Panel from '@common/components/Panel'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
+import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -30,8 +32,16 @@ const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
-  const { control, fields, isAdding, addedAccounts, handleProceed, addMoreSource } =
-    useAccountPersonalize()
+  const {
+    control,
+    fields,
+    isPreparing,
+    hasPreparingFailed,
+    isAdding,
+    addedAccounts,
+    handleProceed,
+    addMoreSource
+  } = useAccountPersonalize()
 
   // Added, and the flow went on in the popup - this tab stays up to show them
   if (addedAccounts) {
@@ -84,60 +94,79 @@ const AccountPersonalizeScreen = () => {
           onBackButtonPress={goToPrevRoute}
           title={fields.length > 1 ? t('Personalize accounts') : t('Personalize account')}
         >
-          <View testID="personalize-accounts-header" style={[flexbox.alignCenter, spacings.mbXl]}>
-            <EditAccountIcon />
-          </View>
-          <ScrollView style={spacings.mbLg}>
-            {fields.length ? (
-              fields.map((field, index) => (
-                <AccountPersonalizeCard
-                  key={field.id}
-                  control={control}
-                  index={index}
-                  account={field}
-                  hasBottomSpacing={index !== fields.length - 1}
-                  disableEdit={isAdding}
-                />
-              ))
-            ) : (
-              // The prepared accounts are gone (e.g. the browser was restarted), so there
-              // is nothing to add - only to go back from
-              <Text appearance="secondaryText" weight="medium" style={text.center}>
-                {t('There are no accounts to add. Please go back and start again.')}
+          {isPreparing ? (
+            <View style={flexbox.alignCenter}>
+              <View style={spacings.mbXl}>
+                <AccountsLoadingAnimation />
+              </View>
+              <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
+                {t('Loading accounts')}
               </Text>
-            )}
-          </ScrollView>
-          <Button
-            testID="button-proceed"
-            size="large"
-            onPress={handleProceed}
-            hasBottomSpacing={false}
-            text={isAdding ? t('Adding...') : t('Proceed')}
-            disabled={!fields.length || isAdding}
-          />
-          {!!addMoreSource && (
-            <Button
-              testID="add-more-accounts-btn"
-              type="outline"
-              text={
-                addMoreSource === 'hw'
-                  ? t('Add more accounts from this hardware wallet')
-                  : t('Add more accounts from this recovery phrase')
-              }
-              onPress={() => goToNextRoute(WEB_ROUTES.accountPicker)}
-              disabled={isAdding}
-              style={{ ...spacings.phMi, ...spacings.mtSm, height: 40 }}
-              size="tiny"
-              hasBottomSpacing={false}
-              childrenPosition="left"
-            >
-              <AddCircularIcon
-                width={20}
-                height={20}
-                color={theme.primaryText}
-                style={spacings.mrMi}
+              <DotsLoadingAnimation />
+            </View>
+          ) : (
+            <>
+              <View
+                testID="personalize-accounts-header"
+                style={[flexbox.alignCenter, spacings.mbXl]}
+              >
+                <EditAccountIcon />
+              </View>
+              <ScrollView style={spacings.mbLg}>
+                {fields.length ? (
+                  fields.map((field, index) => (
+                    <AccountPersonalizeCard
+                      key={field.id}
+                      control={control}
+                      index={index}
+                      account={field}
+                      hasBottomSpacing={index !== fields.length - 1}
+                      disableEdit={isAdding}
+                    />
+                  ))
+                ) : (
+                  // Preparing failed, or the prepared accounts are gone (e.g. the browser was
+                  // restarted), so there is nothing to add - only to go back from
+                  <Text appearance="secondaryText" weight="medium" style={text.center}>
+                    {hasPreparingFailed
+                      ? t("We couldn't load your accounts. Please go back and try again.")
+                      : t('There are no accounts to add. Please go back and start again.')}
+                  </Text>
+                )}
+              </ScrollView>
+              <Button
+                testID="button-proceed"
+                size="large"
+                onPress={handleProceed}
+                hasBottomSpacing={false}
+                text={isAdding ? t('Adding...') : t('Proceed')}
+                disabled={!fields.length || isAdding}
               />
-            </Button>
+              {!!addMoreSource && (
+                <Button
+                  testID="add-more-accounts-btn"
+                  type="outline"
+                  text={
+                    addMoreSource === 'hw'
+                      ? t('Add more accounts from this hardware wallet')
+                      : t('Add more accounts from this recovery phrase')
+                  }
+                  onPress={() => goToNextRoute(WEB_ROUTES.accountPicker)}
+                  disabled={isAdding}
+                  style={{ ...spacings.phMi, ...spacings.mtSm, height: 40 }}
+                  size="tiny"
+                  hasBottomSpacing={false}
+                  childrenPosition="left"
+                >
+                  <AddCircularIcon
+                    width={20}
+                    height={20}
+                    color={theme.primaryText}
+                    style={spacings.mrMi}
+                  />
+                </Button>
+              )}
+            </>
           )}
         </Panel>
       </TabLayoutWrapperMainContent>
