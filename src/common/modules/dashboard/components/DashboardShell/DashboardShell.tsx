@@ -4,7 +4,6 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useSelectedAccountColorSeed from '@common/hooks/useSelectedAccountColorSeed'
 import DashboardBalance, {
   BALANCE_HEIGHT
 } from '@common/modules/dashboard/components/DashboardBalance'
@@ -38,16 +37,9 @@ const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags
 // Instant placeholder shown while the data-heavy controllers load
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
-const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.selectedType
 
 const DashboardShell = ({ contentContainerStyle }: Props) => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
-  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
-  // The Privacy Pools dashboard has no gas tank, and these actions need an address
-  const isPrivacyPoolsAccount = selectedType === 'privacyPools'
-  // Also used for a Privacy Pools account while its dashboard loads
-  const backgroundColorSeed = useSelectedAccountColorSeed()
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const { state: isTokenPricesEnabled } = useController(
     'FeatureFlagsController',
@@ -80,7 +72,7 @@ const DashboardShell = ({ contentContainerStyle }: Props) => {
             { overflow: 'hidden' }
           ]}
         >
-          <OverviewBackground address={backgroundColorSeed} />
+          <OverviewBackground address={account?.addr || ''} />
           <View style={{ zIndex: 2 }}>
             <DashboardHeader />
             <View style={[flexbox.alignCenter, spacings.pt]}>
@@ -100,16 +92,12 @@ const DashboardShell = ({ contentContainerStyle }: Props) => {
                   }
                 />
               </View>
-              {!isPrivacyPoolsAccount && (
-                <>
-                  {/* The gas-tank balance is never cached, so it always loads as a skeleton.
-                  Matches the GasTankButton loading skeleton and the balance block's margin. */}
-                  <View style={spacings.mb}>
-                    <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} />
-                  </View>
-                  <Routes />
-                </>
-              )}
+              {/* The gas-tank balance is never cached, so it always loads as a skeleton.
+              Matches the GasTankButton loading skeleton and the balance block's margin. */}
+              <View style={spacings.mb}>
+                <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} />
+              </View>
+              <Routes />
             </View>
           </View>
         </View>

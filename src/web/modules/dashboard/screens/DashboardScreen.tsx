@@ -16,6 +16,7 @@ import PendingActionWindowModal from '@common/modules/dashboard/components/Pendi
 import getStyles from '@common/modules/dashboard/screens/styles'
 import { getUiType } from '@common/utils/uiType'
 import MobileAppPromoBanner from '@web/modules/dashboard/components/MobileAppPromoBanner'
+import PrivacyPoolsDashboardShell from '@web/modules/privacy-pools/components/PrivacyPoolsDashboardShell'
 import PrivacyPoolsDashboardScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsDashboardScreen'
 import commonWebStyles from '@web/styles/utils/common'
 
@@ -133,11 +134,11 @@ const DashboardScreen = () => {
   const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
-  // Privacy Pools state is not pushed before the first paint, so the regular dashboard's shell
-  // holds the place until it arrives - its header already shows the Privacy Pools account, and
-  // it leaves out the actions that account can't use
-  if (selectedType !== 'privacyPools' || !areAllControllerStatesLoaded)
-    return <AccountDashboardScreen />
+  if (selectedType !== 'privacyPools') return <AccountDashboardScreen />
+
+  // Privacy Pools state is not pushed before the first paint, so a shell with the same card
+  // holds the place until it arrives
+  if (!areAllControllerStatesLoaded) return <PrivacyPoolsDashboardShell />
 
   return <PrivacyPoolsDashboardScreen />
 }
