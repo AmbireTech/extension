@@ -60,6 +60,10 @@ const NEUTRAL_PRIMITIVES = {
     [THEME_TYPES.LIGHT]: '#E3E6EB',
     [THEME_TYPES.DARK]: '#0D0E0F'
   },
+  neutral500: {
+    [THEME_TYPES.LIGHT]: '#E9ECF0',
+    [THEME_TYPES.DARK]: '#34383D'
+  },
   neutral600: {
     [THEME_TYPES.LIGHT]: '#808EA1',
     [THEME_TYPES.DARK]: '#96A1B1'

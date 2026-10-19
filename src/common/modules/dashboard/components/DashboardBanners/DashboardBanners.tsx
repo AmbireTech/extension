@@ -5,6 +5,7 @@ import { BannerType } from '@ambire-common/interfaces/banner'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner/DashboardBanner'
 import MarketingBanner from '@common/modules/dashboard/components/DashboardBanners/MarketingBanner/MarketingBanner'
 import RecoveryPhraseBackupBanner from '@common/modules/dashboard/components/DashboardBanners/RecoveryPhraseBackupBanner'
+import WebsiteAccessBanner from '@common/modules/dashboard/components/DashboardBanners/WebsiteAccessBanner'
 import useBanners from '@common/modules/dashboard/hooks/useBanners'
 import spacings from '@common/styles/spacings'
 
@@ -18,6 +19,7 @@ const DashboardBanners = () => {
       {/* Stays on top of everything else - there is nothing more urgent than not
       being able to recover an account that holds funds */}
       <RecoveryPhraseBackupBanner />
+      <WebsiteAccessBanner />
       {marketingBanners.map((banner) => (
         <MarketingBanner key={banner.id} banner={banner} />
       ))}

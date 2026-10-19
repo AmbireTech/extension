@@ -10,6 +10,7 @@ import {
   Svg
 } from 'react-native-svg'
 
+import { isFirefoxBuild } from '@common/config/env'
 import useControllerState from '@common/hooks/useControllerState'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { getAvatarColors } from '@common/utils/avatars'
@@ -24,6 +25,15 @@ const IMAGE_ASPECT_RATIO = 456 / 226
 // How far the image overhangs each side of the card, open or collapsed, so its edges never
 // land on a fractional pixel inside the card and leave a hairline of black
 const EDGE_BLEED = 2
+
+type BackgroundSize = { width: number | string; height: number | string }
+
+const FULL_SIZE: BackgroundSize = { width: '100%', height: '100%' }
+
+// Firefox doesn't reliably repaint a percentage-sized filtered SVG image when its container
+// resizes (e.g. when the sidebar is widened) - it renders it clipped first and then not at all.
+// So there it's sized in pixels from the container's layout instead.
+const shouldSizeInPixels = isFirefoxBuild
 
 /** Parse a hex color to normalized [r, g, b] values (0–1) */
 function hexToRgbNorm(hex: string): [number, number, number] {
@@ -83,6 +93,10 @@ const getCollapsingLayerGeometry = ({ width, height }: CardSize): CollapsingLaye
   }
 }
 
+// The overview and the dashboard shell can be mounted at the same time, and a `url(#id)` reference
+// resolves to the first matching id in the document - so every instance needs its own filter id.
+let recolorFilterIdCounter = 0
+
 export function OverviewBackground({
   address,
   collapse,
@@ -95,6 +109,10 @@ export function OverviewBackground({
   blurRadius?: number
 }) {
   const { state } = useControllerState({ id: 'WalletStateController' })
+  const [recolorFilterId] = useState(() => {
+    recolorFilterIdCounter += 1
+    return `overview-recolor-${recolorFilterIdCounter}`
+  })
   const [cardSize, setCardSize] = useState<CardSize | null>(null)
 
   const onLayout = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => {
@@ -111,8 +129,10 @@ export function OverviewBackground({
   )
   // Sized in points rather than in percent: on iOS the image keeps the size a percentage
   // first resolved to when only the view around it is resized, which cut off its right side
-  const layerWidth = geometry?.width ?? '100%'
-  const layerHeight = geometry?.height ?? '100%'
+  const fallbackSize = shouldSizeInPixels
+    ? cardSize && { width: Math.round(cardSize.width), height: Math.round(cardSize.height) }
+    : FULL_SIZE
+  const size: BackgroundSize | null = geometry ?? fallbackSize
 
   const colors = getAvatarColors(state.avatarType, address)
 
@@ -131,8 +151,6 @@ export function OverviewBackground({
   // so both colors show up without washing each other out.
   const matrix1 = channelToColorMatrix(0, r1, g1, b1)
   const matrix2 = channelToColorMatrix(2, r2, g2, b2)
-  // Filter ids are page wide, so a blurred copy can't reuse the id of the sharp background's
-  const filterId = blurRadius ? `recolor-blur-${blurRadius}` : 'recolor'
 
   return (
     <View
@@ -147,25 +165,28 @@ export function OverviewBackground({
       onLayout={onLayout}
     >
       <OverviewBackgroundLayer geometry={geometry} collapse={collapse}>
-        <Svg width={layerWidth} height={layerHeight}>
-          <Defs>
-            <Filter id={filterId} x="0%" y="0%" width="100%" height="100%">
-              <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
-              <FeColorMatrix type="matrix" values={matrix2} in="SourceGraphic" result="layer2" />
-              <FeBlend in="layer1" in2="layer2" mode="screen" />
-              {!!blurRadius && <FeGaussianBlur stdDeviation={blurRadius} />}
-            </Filter>
-          </Defs>
+        {/* In Firefox nothing is rendered until the container's first layout gives it a size */}
+        {!!size && (
+          <Svg width={size.width} height={size.height}>
+            <Defs>
+              <Filter id={recolorFilterId} x="0%" y="0%" width="100%" height="100%">
+                <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
+                <FeColorMatrix type="matrix" values={matrix2} in="SourceGraphic" result="layer2" />
+                <FeBlend in="layer1" in2="layer2" mode="screen" />
+                {!!blurRadius && <FeGaussianBlur stdDeviation={blurRadius} />}
+              </Filter>
+            </Defs>
 
-          <SvgImage
-            href={backgroundImage}
-            width={layerWidth}
-            height={layerHeight}
-            preserveAspectRatio="xMidYMid slice"
-            opacity={0.28}
-            filter={`url(#${filterId})`}
-          />
-        </Svg>
+            <SvgImage
+              href={backgroundImage}
+              width={size.width}
+              height={size.height}
+              preserveAspectRatio="xMidYMid slice"
+              opacity={0.28}
+              filter={`url(#${recolorFilterId})`}
+            />
+          </Svg>
+        )}
       </OverviewBackgroundLayer>
     </View>
   )

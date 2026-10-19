@@ -11,7 +11,7 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllerSession from '@common/hooks/useControllerSession'
 import useTheme from '@common/hooks/useTheme'
@@ -203,7 +203,7 @@ const ActivityPositions: FC<Props> = ({
               style={styles.noPositions}
             >
               {t(
-                `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the extension, but you can ${isWeb ? '\n' : ''}check your address on `
+                `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the ${isMobile ? 'app' : 'extension'}, but you can ${isWeb ? '\n' : ''}check your address on `
               )}
               <Text
                 weight="medium"

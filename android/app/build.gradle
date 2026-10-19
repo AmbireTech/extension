@@ -3,6 +3,7 @@ import groovy.json.JsonSlurper
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: "io.sentry.android.gradle"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
@@ -83,6 +84,22 @@ def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBu
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// Uploads the JS source maps of release builds, so crash reports show readable stack traces.
+// The url, org and project come from android/sentry.properties.
+def sentryReactNativeDir = new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile()
+apply from: new File(sentryReactNativeDir, "sentry.gradle.kts")
+def isCi = System.getenv('CI') != null
+def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+
+// Local builds have no upload token, so they skip the upload instead of failing on it. A CI release
+// without it would ship crash reports nobody can read, so it fails instead.
+if (!System.getenv('SENTRY_AUTH_TOKEN')) {
+    if (isCi && isReleaseTask) {
+        throw new GradleException('Release build in CI without SENTRY_AUTH_TOKEN. The workflow passes it from the SENTRY_AUTH_TOKEN_MOBILE secret of the extension-production environment.')
+    }
+    project.ext.shouldSentryAutoUploadGeneral = { -> return false }
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -96,9 +113,9 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         // targetSdkVersion is also provided by the React Native Gradle plugin; for React Native 0.81.x the default is 36 (Android 16).
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 75
+        versionCode 76
         // This is planned to be in sync with app.json 's "version" two components, e.g. 5.39
-        versionName "6.22"
+        versionName "6.23"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -122,7 +139,6 @@ android {
             def releaseKeyPassword = 'android'
 
             // Local-only credentials from credentials.json (guarded to avoid CI using it).
-            def isCi = System.getenv('CI') != null
             def credentialsFile = new File(projectRoot, "credentials.json")
             if (!isCi && credentialsFile.exists()) {
                 def json = new JsonSlurper().parse(credentialsFile)
@@ -145,7 +161,6 @@ android {
             // The debug keystore is the one shipped with the Android SDK - its key is public
             // knowledge. A release artifact signed with it can be re-signed by anyone, so a CI
             // release build must fail loudly instead of quietly falling back to it.
-            def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
             if (isCi && isReleaseTask && !project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
                 throw new GradleException('Release build in CI without a signing keystore. The workflow writes MYAPP_UPLOAD_* in its "Prepare Android signing config" step.')
             }
@@ -184,6 +199,25 @@ android {
     }
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+}
+
+// Uploads the debug symbols of the native libraries built from source, so native crashes in
+// them show readable stack traces. The RN SDK already brings the Sentry Android SDK, and no
+// tracing is collected.
+sentry {
+    uploadNativeSymbols = shouldSentryAutoUpload()
+    autoUploadNativeSymbols = shouldSentryAutoUpload()
+    autoUploadProguardMapping = shouldSentryAutoUpload()
+    includeNativeSources = false
+    includeSourceContext = false
+    // Would send build telemetry to sentry.io, outside our own Sentry instance
+    telemetry = false
+    tracingInstrumentation {
+        enabled = false
+    }
+    autoInstallation {
+        enabled = false
     }
 }
 
