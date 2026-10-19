@@ -6,6 +6,10 @@ import { useModalize } from 'react-native-modalize'
 import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { PrivacyPoolsSendForm } from '@ambire-common/interfaces/privacyPools'
+import {
+  AmountFieldMode,
+  getAmountsFromFieldValue
+} from '@ambire-common/libs/transfer/fieldAmounts'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
@@ -32,7 +36,6 @@ import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/Priv
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
-import { AmountFieldMode, getAmountsFromFieldValue } from '@web/modules/privacy-pools/utils/amount'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -153,6 +156,25 @@ const PrivacyPoolsSendScreen = () => {
     [setAmounts, updateSendForm]
   )
 
+  // An amount typed for a picked token that ran out is dropped, so it is not sent in the fallback
+  useEffect(() => {
+    if (!selectedTokenValue || !selectedToken || selectedToken.value === selectedTokenValue) return
+
+    updateSendForm({ tokenId: String(selectedToken.value) })
+    setAmounts(NO_AMOUNTS)
+  }, [selectedToken, selectedTokenValue, setAmounts, updateSendForm])
+
+  // Keeps the fallback token once an amount is typed for it, so a token that becomes sendable
+  // later does not take its place under the same amount
+  const setAmountsOfSelectedToken = useCallback(
+    (newAmounts: typeof NO_AMOUNTS) => {
+      if (selectedToken && selectedToken.value !== selectedTokenValue)
+        updateSendForm({ tokenId: String(selectedToken.value) })
+      setAmounts(newAmounts)
+    },
+    [selectedToken, selectedTokenValue, setAmounts, updateSendForm]
+  )
+
   const tokenPrice = useMemo(
     () => (selectedToken ? getTokenPrice(selectedToken.chainId, selectedToken.tokenAddress) : null),
     [getTokenPrice, selectedToken]
@@ -162,7 +184,7 @@ const PrivacyPoolsSendScreen = () => {
 
   const setAmountFieldValue = useCallback(
     (fieldValue: string) =>
-      setAmounts(
+      setAmountsOfSelectedToken(
         getAmountsFromFieldValue({
           fieldValue,
           fieldMode,
@@ -170,7 +192,7 @@ const PrivacyPoolsSendScreen = () => {
           decimals: selectedToken?.decimals ?? 18
         })
       ),
-    [fieldMode, selectedToken?.decimals, setAmounts, tokenPrice]
+    [fieldMode, selectedToken?.decimals, setAmountsOfSelectedToken, tokenPrice]
   )
   const switchAmountFieldMode = useCallback(
     () => updateSendForm({ amountFieldMode: amountFieldMode === 'token' ? 'fiat' : 'token' }),
@@ -184,7 +206,7 @@ const PrivacyPoolsSendScreen = () => {
   )
   const setMaxAmount = useCallback(
     () =>
-      setAmounts(
+      setAmountsOfSelectedToken(
         getAmountsFromFieldValue({
           fieldValue: maxAmount,
           fieldMode: 'token',
@@ -192,7 +214,7 @@ const PrivacyPoolsSendScreen = () => {
           decimals: selectedToken?.decimals ?? 18
         })
       ),
-    [maxAmount, selectedToken?.decimals, setAmounts, tokenPrice]
+    [maxAmount, selectedToken?.decimals, setAmountsOfSelectedToken, tokenPrice]
   )
 
   const { amount } = amounts
