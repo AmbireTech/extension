@@ -21,6 +21,7 @@ type PendingAddition =
 /**
  * Adds and selects a Privacy Pools account. `onAdded` fires once both the status and the selection
  * reach the UI, so the previous account's dashboard does not flash. The background toasts failures.
+ * `canAdd` is false while an add or another account selection is running.
  */
 const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
   const { state: statuses, dispatch: mainDispatch } = useController(
@@ -83,7 +84,11 @@ const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
     if (isAddedAccountSelected) onAdded()
   }, [onAdded, pending, privacyPoolsAccountId, statuses.selectAccount])
 
-  return { addFromStoredSeed, addFromNewSeed, pending }
+  // While another selection runs, the background drops an add without a word, and the sheet
+  // would wait for it forever
+  const canAdd = !pending && statuses.selectAccount === 'INITIAL'
+
+  return { addFromStoredSeed, addFromNewSeed, pending, canAdd }
 }
 
 export default useAddPrivacyPoolsAccount

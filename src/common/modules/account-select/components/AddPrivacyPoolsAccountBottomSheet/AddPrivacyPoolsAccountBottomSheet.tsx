@@ -34,7 +34,9 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
   const { styles } = useTheme(getStyles)
   const { state: seeds } = useController('KeystoreController', selectSeeds)
   const { accounts } = usePrivacyPoolsAccounts()
-  const { addFromStoredSeed, addFromNewSeed, pending } = useAddPrivacyPoolsAccount({ onAdded })
+  const { addFromStoredSeed, addFromNewSeed, pending, canAdd } = useAddPrivacyPoolsAccount({
+    onAdded
+  })
 
   const seedIdsWithAccount = useMemo(
     () => new Set(accounts.map(({ seedId }) => seedId)),
@@ -53,13 +55,13 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
           }
           icon={AddCircularIcon}
           onPress={addFromNewSeed}
-          disabled={!!pending}
+          disabled={!canAdd}
           testID="add-privacy-pools-account-new-seed"
           status="none"
         />
       </View>
     ),
-    [addFromNewSeed, pending, styles.footer, styles.footerDivider, t]
+    [addFromNewSeed, canAdd, pending, styles.footer, styles.footerDivider, t]
   )
 
   return (
@@ -104,7 +106,7 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
                 style={styles.addButton}
                 textStyle={styles.addButtonText}
                 hasBottomSpacing={false}
-                disabled={!!pending}
+                disabled={!canAdd}
                 onPress={() => addFromStoredSeed(seed.id)}
               />
             )}
