@@ -5,8 +5,6 @@
 // It is imported in background for development builds, and injected via Webpack
 // plugin for production where LavaMoat + SES isolate modules and harden intrinsics.
 import 'setimmediate'
-// Must stay the first import: it patches a global needed at module-evaluation time - see the file
-import './kohakuShims'
 
 import { nanoid } from 'nanoid'
 
