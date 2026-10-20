@@ -69,8 +69,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressState,
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressUnknown,
-    isRecipientAddressUnknownAgreed,
-    isRecipientAddressFirstTimeSend,
     isFormValid,
     signAccountOpController,
     latestBroadcastedAccountOp,
@@ -79,9 +77,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     selectedToken,
     amountFieldMode,
     amount: controllerAmount,
-    amountInFiat,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch
+    amountInFiat
   } = transferState
 
   const amountInFiatBigInt = useMemo(() => {
@@ -490,15 +486,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
-        shouldHoldToProceed={
-          (isRecipientAddressUnknown &&
-            !isRecipientAddressUnknownAgreed &&
-            !isRecipientHumanizerKnownTokenOrSmartContract &&
-            isRecipientAddressFirstTimeSend) ||
-          isRecipientAddressViewOnly ||
-          // poisoning detected - require hold-to-proceed as an additional safety step
-          !!addressPoisoningMatch
-        }
+        shouldHoldToProceed={!!validationFormMsgs.recipientAddress.shouldHold}
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
     )
@@ -509,12 +497,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
-    isRecipientAddressUnknown,
-    isRecipientAddressUnknownAgreed,
-    isRecipientHumanizerKnownTokenOrSmartContract,
-    isRecipientAddressFirstTimeSend,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch,
+    validationFormMsgs.recipientAddress.shouldHold,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])
