@@ -305,10 +305,20 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   )
 
   const goToPrevRoute = useCallback(() => {
-    // On mobile every step is a screen in the native stack, which a swipe or Android's back
-    // pops without the breadcrumb knowing. Going back the same way keeps the back arrow in
-    // step with them - the breadcrumb is only the way back when there is no screen below.
-    if (getUiType().isMobileApp && goBackInStack()) {
+    // The platform's own back - a swipe or Android's back on mobile, the browser's back
+    // button on web - goes back without the breadcrumb knowing. Going back the same way
+    // keeps the back arrow in step with it: popping the screen from the native stack, or
+    // stepping back in the browser history when the app navigated here (`prevRoute` is
+    // stamped on every in-app navigation). The breadcrumb is only the way back otherwise.
+    const wentBackThePlatformWay = (() => {
+      if (getUiType().isMobileApp) return goBackInStack()
+
+      const hasInAppHistory = !!(routerHistory.location.state as { prevRoute?: unknown } | null)
+        ?.prevRoute
+      if (hasInAppHistory) routerHistory.go(-1)
+      return hasInAppHistory
+    })()
+    if (wentBackThePlatformWay) {
       setHistory((prevHistory) => prevHistory.slice(0, -1))
       return
     }
@@ -346,7 +356,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         return
       }
     }
-  }, [deepSearchRouteNode, onboardingRoutesTree])
+  }, [deepSearchRouteNode, onboardingRoutesTree, routerHistory])
 
   const [onboardingInitialized, setOnboardingInitialized] = useState(false)
   const [triggeredHwWalletFlow, setTriggeredHwWalletFlow] = useState<HwWalletsNeedingRedirect>(null)
