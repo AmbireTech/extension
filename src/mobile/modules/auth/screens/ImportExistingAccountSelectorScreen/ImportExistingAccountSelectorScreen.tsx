@@ -14,7 +14,7 @@ import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
-import Button from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -31,8 +31,6 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
-// Keeps the expandable NFC section the same height as the regular size buttons
-const ROW_HEIGHT = 56
 const ICON_SLOT_SIZE = 24
 
 type ImportMethod = {
@@ -122,7 +120,8 @@ const NfcCardSection = React.memo(
             flexbox.alignCenter,
             flexbox.justifySpaceBetween,
             spacings.phSm,
-            { height: ROW_HEIGHT }
+            // Keeps the expandable NFC section the same height as the regular size buttons
+            { height: BUTTON_HEIGHT }
           ]}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>

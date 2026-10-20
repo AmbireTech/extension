@@ -12,6 +12,7 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -178,7 +179,7 @@ const TokenData: FC<Props> = ({ token }) => {
             flexbox.alignCenter,
             spacings.phSm,
             spacings.mbTy,
-            { height: 56, borderRadius: BORDER_RADIUS_PRIMARY },
+            { height: BUTTON_HEIGHT, borderRadius: BORDER_RADIUS_PRIMARY },
             websiteAnimStyle
           ]}
         >

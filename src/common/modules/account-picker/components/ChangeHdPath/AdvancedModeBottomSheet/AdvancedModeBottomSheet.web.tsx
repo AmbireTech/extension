@@ -5,7 +5,7 @@ import { Pressable, View } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import BottomSheet from '@common/components/BottomSheet'
-import Button from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import NumberInput from '@common/components/NumberInput'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
@@ -138,7 +138,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
                   flexbox.center,
                   flexbox.directionRow,
                   common.borderRadiusPrimary,
-                  { width: options.length > 3 ? 136 : 168, height: 56 },
+                  { width: options.length > 3 ? 136 : 168, height: BUTTON_HEIGHT },
                   {
                     borderWidth: 1,
                     borderColor: theme.primaryBorder,

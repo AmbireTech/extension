@@ -14,7 +14,7 @@ import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
-import Button from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -24,7 +24,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -184,7 +184,9 @@ const ImportExistingAccountSelectorScreen = () => {
     }).start()
 
     Animated.timing(animatedHeight, {
-      toValue: showMore ? (buttons.length - VISIBLE_BUTTONS_COUNT) * 70 : 0,
+      toValue: showMore
+        ? (buttons.length - VISIBLE_BUTTONS_COUNT) * (BUTTON_HEIGHT + SPACING_SM)
+        : 0,
       duration: 300,
       useNativeDriver: false
     }).start()

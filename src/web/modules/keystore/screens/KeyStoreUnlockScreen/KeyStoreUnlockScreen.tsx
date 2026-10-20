@@ -8,7 +8,7 @@ import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
-import Button from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import FatToggle from '@common/components/FatToggle'
 import {
   createGlobalTooltipDataSet,
@@ -333,8 +333,11 @@ const KeyStoreUnlockScreen = () => {
                   onBlur={onBlur}
                   placeholder={t('Enter your password')}
                   autoFocus={isWeb}
-                  inputStyle={{ height: 54 }} // 56-2px border
-                  inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
+                  inputStyle={{ height: BUTTON_HEIGHT - 2 }} // minus the 2px border
+                  inputWrapperStyle={{
+                    backgroundColor: theme.secondaryBackground,
+                    height: BUTTON_HEIGHT
+                  }}
                   onChangeText={(val: string) => {
                     onChange(val)
                     if (errorMessage) {

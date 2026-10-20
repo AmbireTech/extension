@@ -4,6 +4,7 @@ import { Animated, ColorValue, Linking, View } from 'react-native'
 import Alert from '@common/components/Alert'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
@@ -23,7 +24,7 @@ import { QrWalletConfigs } from '@common/modules/hardware-wallets/qr/wallets'
 import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
 
 const VISIBLE_WALLETS_COUNT = 2
-const QR_WALLET_ROW_HEIGHT = 56
+const QR_WALLET_ROW_HEIGHT = BUTTON_HEIGHT
 const BASE_SCANNER_SIZE = 290
 const MIN_SCANNER_SIZE = 220
 

@@ -6,7 +6,7 @@ import Animated from 'react-native-reanimated'
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import LockIcon from '@common/assets/svg/LockIcon'
-import Button from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -178,8 +178,11 @@ const KeyStoreUnlockScreen = () => {
                   onBlur={onBlur}
                   placeholder={t('Enter your password')}
                   autoFocus
-                  inputStyle={{ height: 54 }} // 56-2px border
-                  inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
+                  inputStyle={{ height: BUTTON_HEIGHT - 2 }} // minus the 2px border
+                  inputWrapperStyle={{
+                    backgroundColor: theme.secondaryBackground,
+                    height: BUTTON_HEIGHT
+                  }}
                   onChangeText={(val: string) => {
                     onChange(val)
                     if (errorMessage) {

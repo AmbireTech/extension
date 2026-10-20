@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import BottomSheet from '@common/components/BottomSheet'
-import Button from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import NumberInput from '@common/components/NumberInput'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
@@ -92,7 +92,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
               common.borderRadiusPrimary,
               spacings.phMd,
               spacings.mbTy,
-              { width: '100%', height: 56 },
+              { width: '100%', height: BUTTON_HEIGHT },
               {
                 borderWidth: 1,
                 borderColor: theme.primaryBorder,

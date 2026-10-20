@@ -12,7 +12,7 @@ import {
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
-import Button, { COMPACT_LAYOUT_BUTTON_HEIGHT } from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -161,9 +161,7 @@ const OneClickEstimation = ({
     if (!signAccountOpController) return null
 
     // The wide footer keeps `smaller` buttons, but as tall as the compact ones
-    const signButtonStyle = isCompactLayout
-      ? { width: '100%' as const }
-      : { height: COMPACT_LAYOUT_BUTTON_HEIGHT }
+    const signButtonStyle = isCompactLayout ? { width: '100%' as const } : { height: BUTTON_HEIGHT }
     const signButton =
       !!banners && !!banners.length ? (
         <HoldToProceedButton
@@ -276,7 +274,7 @@ const OneClickEstimation = ({
               onPress={closeEstimationModal}
               hasBottomSpacing={false}
               disabled={isSignLoading}
-              style={{ width: 98, height: COMPACT_LAYOUT_BUTTON_HEIGHT, ...spacings.mrLg }}
+              style={{ width: 98, height: BUTTON_HEIGHT, ...spacings.mrLg }}
               size="smaller"
             />
             {signButton}

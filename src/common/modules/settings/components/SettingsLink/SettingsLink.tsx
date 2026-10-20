@@ -6,12 +6,13 @@ import { SvgProps } from 'react-native-svg'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -83,8 +84,7 @@ const SettingsLink: FC<Props> = ({
         flexbox.justifySpaceBetween,
         flexbox.alignCenter,
         spacings.phSm,
-        isWeb && spacings.pv,
-        isMobile && { height: 54 },
+        { height: BUTTON_HEIGHT },
         isSidebarLink ? spacings.prLg : {},
         isSidebarLink ? spacings.mbMi : flexbox.flex1,
         {
