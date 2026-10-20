@@ -8,12 +8,20 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import FooterGlassView from '@common/components/FooterGlassView'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
-import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
+
+import { TransactionSummaryType } from './loadTransactionSummary'
 
 interface Props {
   operation: PrivacyPoolsOperation | null
   symbol: string
+  /**
+   * Loaded by the screen while the transfer is proving. The sheet opens only once it is set, so
+   * the summary is there as it slides in. Stays null if it could not be loaded.
+   */
+  TransactionSummary: TransactionSummaryType | null
+  /** Whether loading `TransactionSummary` has finished, successfully or not */
+  isTransactionSummaryLoaded: boolean
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
   onSend: () => void
@@ -40,6 +48,8 @@ const transactionSummaryStyle = { marginBottom: SPACING_MD }
 const PrivacyPoolsSendSheet: FC<Props> = ({
   operation,
   symbol,
+  TransactionSummary,
+  isTransactionSummaryLoaded,
   sheetRef,
   closeBottomSheet,
   onSend,
@@ -84,14 +94,15 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
       closeBottomSheet={isBroadcasting ? undefined : closeBottomSheet}
       onOpen={handleOpen}
       onClosed={onClosed}
-      autoOpen={shouldOpenOnMount}
+      // Waits for the summary, so it does not appear after the sheet has opened
+      autoOpen={shouldOpenOnMount && isTransactionSummaryLoaded}
       backgroundColor="primaryBackground"
     >
       {!!operation && (
         <>
           {/* Like the transaction details of the one-click Swap & Bridge sheet, the network fee
               among its rows. Not expandable: there is no raw call of the user's account to show */}
-          {isConfirming && !!operation.humanization && (
+          {isConfirming && !!operation.humanization && !!TransactionSummary && (
             <TransactionSummary
               style={transactionSummaryStyle}
               call={operation.humanization}

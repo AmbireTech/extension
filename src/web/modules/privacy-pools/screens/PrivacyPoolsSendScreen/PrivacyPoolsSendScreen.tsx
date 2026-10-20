@@ -20,6 +20,7 @@ import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
 import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { isWeb } from '@common/config/env'
@@ -34,6 +35,9 @@ import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/PrivacyPoolsLoadingTexts'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
+import loadTransactionSummary, {
+  TransactionSummaryType
+} from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet/loadTransactionSummary'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
 
@@ -76,6 +80,31 @@ const PrivacyPoolsSendScreen = () => {
   } = usePrivacyPools()
   const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const [TransactionSummary, setTransactionSummary] = useState<TransactionSummaryType | null>(null)
+  const [isTransactionSummaryLoaded, setIsTransactionSummaryLoaded] = useState(false)
+
+  // Loads the confirmation sheet's summary while the user fills in the form and the transfer is
+  // proved, so the sheet opens with it in place
+  useEffect(() => {
+    let isMounted = true
+
+    loadTransactionSummary()
+      .then((component) => {
+        if (isMounted) setTransactionSummary(() => component)
+      })
+      .catch((error) => {
+        // The sheet still opens, without the summary, so the transfer can go on
+        console.error('privacyPools: could not load the transaction summary', error)
+        captureException(error)
+      })
+      .finally(() => {
+        if (isMounted) setIsTransactionSummaryLoaded(true)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
   const { state: sendForm, dispatch: privacyPoolsDispatch } = useController(
     'PrivacyPoolsController',
     selectSendForm
@@ -278,15 +307,16 @@ const PrivacyPoolsSendScreen = () => {
     })
   }, [canSend, parsedAmount, prepareWithdrawal, recipient, selectedToken])
 
-  // Opens the sheet when the transfer is ready. One already ready on coming back to the screen is
-  // opened by the sheet itself - see `PrivacyPoolsSendSheet`
+  // Opens the sheet when the transfer is ready and its summary is loaded. One already ready on
+  // coming back to the screen is opened by the sheet itself - see `PrivacyPoolsSendSheet`
   const operationPhase = operation?.phase
   const operationStatus = operation?.status
   useEffect(() => {
+    if (!isTransactionSummaryLoaded) return
     if (operationStatus !== 'pending' || operationPhase !== 'ready') return
 
     openSheet()
-  }, [operationStatus, operationPhase, openSheet])
+  }, [isTransactionSummaryLoaded, operationStatus, operationPhase, openSheet])
 
   /**
    * Sent, or could not be sent from the confirmation sheet: shown on its own screen, like the regular
@@ -428,6 +458,8 @@ const PrivacyPoolsSendScreen = () => {
       <PrivacyPoolsSendSheet
         operation={operation}
         symbol={operationAsset?.symbol || ''}
+        TransactionSummary={TransactionSummary}
+        isTransactionSummaryLoaded={isTransactionSummaryLoaded}
         sheetRef={sheetRef}
         closeBottomSheet={closeSheet}
         onSend={broadcastWithdrawal}
