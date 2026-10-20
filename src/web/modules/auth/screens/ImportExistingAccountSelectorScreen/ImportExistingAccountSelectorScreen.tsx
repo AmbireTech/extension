@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, ScrollView, View } from 'react-native'
+import { Animated, ColorValue, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
@@ -49,8 +49,8 @@ type ButtonType = {
    * to match the ones that draw a circle inset in it. The slot keeps the labels aligned.
    */
   iconSize?: number
-  /** The icon keeps its own (brand) colors instead of taking the icon color. */
-  hasBrandIconColors?: boolean
+  /** Overrides the icon color, e.g. for a brand mark */
+  iconColor?: ColorValue
 }
 
 const ImportExistingAccountSelectorScreen = () => {
@@ -94,7 +94,8 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(WEB_ROUTES.importFromMobile)
         },
         icon: AmbireLogoSquare,
-        hasBrandIconColors: true
+        // The full Ambire purple, not the logo's default lighter tint
+        iconColor: theme.primary
       },
       {
         title: 'Private key',
@@ -172,7 +173,7 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: ViewOnlyIcon
       }
     ],
-    [goToNextRoute, addToast, dispatch, t, setTriggeredHwWalletFlow]
+    [goToNextRoute, addToast, dispatch, t, setTriggeredHwWalletFlow, theme.primary]
   )
 
   useEffect(() => {
@@ -209,7 +210,7 @@ const ImportExistingAccountSelectorScreen = () => {
                     onPress,
                     icon: IconComponent,
                     iconSize = ICON_SLOT_SIZE,
-                    hasBrandIconColors
+                    iconColor
                   }) => (
                     <Button
                       key={title}
@@ -233,7 +234,7 @@ const ImportExistingAccountSelectorScreen = () => {
                           <IconComponent
                             width={iconSize}
                             height={iconSize}
-                            color={hasBrandIconColors ? undefined : theme.iconPrimary}
+                            color={iconColor || theme.iconPrimary}
                           />
                         </View>
                         <Text style={spacings.mlSm} fontSize={16} weight="medium">
@@ -255,7 +256,7 @@ const ImportExistingAccountSelectorScreen = () => {
                       onPress,
                       icon: IconComponent,
                       iconSize = ICON_SLOT_SIZE,
-                      hasBrandIconColors
+                      iconColor
                     }) => (
                       <Button
                         key={title}
@@ -279,7 +280,7 @@ const ImportExistingAccountSelectorScreen = () => {
                             <IconComponent
                               width={iconSize}
                               height={iconSize}
-                              color={hasBrandIconColors ? undefined : theme.iconPrimary}
+                              color={iconColor || theme.iconPrimary}
                             />
                           </View>
                           <Text style={spacings.mlSm} fontSize={14} weight="medium">

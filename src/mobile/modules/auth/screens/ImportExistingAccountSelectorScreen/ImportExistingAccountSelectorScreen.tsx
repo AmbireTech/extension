@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { Pressable, ScrollView, View } from 'react-native'
+import { ColorValue, Pressable, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
@@ -44,21 +44,15 @@ type ImportMethod = {
    * to match the ones that draw a circle inset in it. The slot keeps the labels aligned.
    */
   iconSize?: number
-  /** The icon keeps its own (brand) colors instead of taking the icon color. */
-  hasBrandIconColors?: boolean
+  /** Overrides the icon color, e.g. for a brand mark */
+  iconColor?: ColorValue
 }
 
 const toTestID = (title: string) =>
   `import-method-${title.toLocaleLowerCase().split(' ').join('-')}`
 
 const ImportMethodButton = React.memo(
-  ({
-    title,
-    onPress,
-    icon: IconComponent,
-    iconSize = ICON_SLOT_SIZE,
-    hasBrandIconColors
-  }: ImportMethod) => {
+  ({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE, iconColor }: ImportMethod) => {
     const { theme } = useTheme()
     const { t } = useTranslation()
 
@@ -79,7 +73,7 @@ const ImportMethodButton = React.memo(
             <IconComponent
               width={iconSize}
               height={iconSize}
-              color={hasBrandIconColors ? undefined : theme.iconPrimary}
+              color={iconColor || theme.iconPrimary}
             />
           </View>
           <Text style={spacings.mlSm} fontSize={16} weight="medium">
@@ -183,6 +177,7 @@ NfcCardSection.displayName = 'NfcCardSection'
 
 const ImportExistingAccountSelectorScreen = () => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const [areNfcCardsExpanded, setAreNfcCardsExpanded] = useState(false)
@@ -199,7 +194,8 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(ROUTES.importFromExtension)
         },
         icon: AmbireLogoSquare,
-        hasBrandIconColors: true
+        // The full Ambire purple, not the logo's default lighter tint
+        iconColor: theme.primary
       },
       {
         title: 'Private key',
@@ -245,7 +241,7 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: ScanIcon
       }
     ],
-    [goToNextRoute]
+    [goToNextRoute, theme.primary]
   )
 
   const goToViewOnlyAccountAdder = useCallback(
