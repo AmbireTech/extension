@@ -49,29 +49,30 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
 
   const prevTransactionCount = usePrevious<number | null | undefined>(signedTransactionsCount)
 
-  // The signing key is used while the status is InProgress or WaitingForPaymaster
-  // (e.g. the user op is signed after the paymaster responds).
+  // The signing key may be used while the status is InProgress, but not every
+  // InProgress reaches the device (e.g. a fully signed Safe that is only executed).
+  // WaitingForPaymaster isn't listed because useSign renders the warnings modal
+  // instead of this one while the paymaster is loading.
   // SafeQuickBroadcastBundler sits between the two sign() calls of a Safe quick
-  // broadcast - treating it as signing keeps the modal from hiding and reappearing
+  // broadcast - treating it as signing keeps the modal from hiding and reappearing,
+  // even though the second sign() reuses the Safe signature without the device
   const isSigningPhase =
     signAccountOpStatusType === SigningStatus.InProgress ||
-    signAccountOpStatusType === SigningStatus.WaitingForPaymaster ||
     (isSignAndBroadcastInProgress &&
       signAccountOpStatusType === SigningStatus.SafeQuickBroadcastBundler)
-  // The fee payer key is used only after signing is Done and the broadcast begins.
+  // The fee payer key can only be used after signing is Done and the broadcast begins,
+  // and only by raw-transaction broadcasts (bundler and relayer broadcasts don't use it).
   // Before that, the flow may never reach broadcasting (e.g. a Safe txn that still
   // needs more signatures gets queued), so the fee payer's modal must not show.
   const isBroadcastPhase =
     isSignAndBroadcastInProgress && signAccountOpStatusType === SigningStatus.Done
 
-  const shouldBeVisible = useMemo(() => {
-    const isCurrentlyBroadcastingWithExternalKey =
-      isBroadcastPhase && !!feePayerKeyType && feePayerKeyType !== 'internal'
-    const isCurrentlySigningWithExternalKey =
-      isSigningPhase && !!signingKeyType && signingKeyType !== 'internal'
-
-    return isCurrentlyBroadcastingWithExternalKey || isCurrentlySigningWithExternalKey
-  }, [isBroadcastPhase, feePayerKeyType, isSigningPhase, signingKeyType])
+  const isCurrentlyBroadcastingWithExternalKey =
+    isBroadcastPhase && !!feePayerKeyType && feePayerKeyType !== 'internal'
+  const isCurrentlySigningWithExternalKey =
+    isSigningPhase && !!signingKeyType && signingKeyType !== 'internal'
+  const shouldBeVisible =
+    isCurrentlyBroadcastingWithExternalKey || isCurrentlySigningWithExternalKey
 
   const currentlyInvolvedSignOrBroadcastKeyType = useMemo(
     () => (isSigningPhase ? signingKeyType : feePayerKeyType),
