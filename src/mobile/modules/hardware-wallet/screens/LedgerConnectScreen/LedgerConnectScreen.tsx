@@ -10,6 +10,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isAndroid } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
@@ -33,6 +34,7 @@ const LedgerConnectScreen = () => {
   const { theme } = useTheme()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { dispatch } = useControllersMiddleware()
+  const screenFocus = useScreenFocusStore()
   const mainCtrlState = useController('MainController').state
   const { initParams, type } = useController('AccountPickerController').state
 
@@ -42,8 +44,8 @@ const LedgerConnectScreen = () => {
   // Set once we've connected and asked the worker to init the account picker; the
   // navigation effect below waits for the picker to actually be ready.
   const [importStarted, setImportStarted] = useState(false)
-  // Guards against navigating twice if the picker-ready effect re-fires before
-  // this screen unmounts.
+  // Guards against navigating twice if the picker-ready effect re-fires while
+  // the picker is open on top of this screen.
   const hasNavigatedRef = useRef(false)
 
   const onDiscoveryError = useCallback(
@@ -91,6 +93,20 @@ const LedgerConnectScreen = () => {
       goToNextRoute()
     }
   }, [importStarted, initParams, type, goToNextRoute])
+
+  // The stack keeps this screen mounted under the account picker, so a back to it
+  // starts over from the device list instead of the finished connect.
+  useEffect(
+    () =>
+      screenFocus.subscribe(() => {
+        if (!screenFocus.isFocused.current || !hasNavigatedRef.current) return
+
+        hasNavigatedRef.current = false
+        setImportStarted(false)
+        setIsConnecting(false)
+      }),
+    [screenFocus]
+  )
 
   const isInitLoading = mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
   const isUsbTab = tab === 'usb'
