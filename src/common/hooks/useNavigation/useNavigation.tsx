@@ -4,6 +4,7 @@ import { Subject } from 'rxjs'
 import { isDev } from '@common/config/env'
 import { runWhenScreenIsOnTop, useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import { useScreenLocation } from '@common/contexts/screenLocationContext'
+import { goBackInStack } from '@common/services/navigation/stackBackNavigation'
 import useRouterHistory from '@common/hooks/useRouterHistory'
 
 import { TitleChangeEventStreamType, UseNavigationReturnType } from './types'
@@ -79,8 +80,12 @@ const useNavigation = (): UseNavigationReturnType => {
     [history, currentRoute, runFromScreen]
   )
 
+  // One screen back, the way a swipe goes - not one history entry, as a screen can own
+  // several (see `stackBackNavigation`). Android's back button and the back arrows use it.
   const goBack = useCallback(() => {
-    runFromScreen('goBack', () => history.go(-1))
+    runFromScreen('goBack', () => {
+      if (!goBackInStack()) history.go(-1)
+    })
   }, [history, runFromScreen])
 
   const setOptions = useCallback<UseNavigationReturnType['setOptions']>(({ headerTitle }) => {

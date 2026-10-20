@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, View } from 'react-native'
+import { GestureDetector } from 'react-native-gesture-handler'
 import { ScreenStackItem } from 'react-native-screens'
 
+import { ScreenBackContext } from '@common/contexts/screenBackContext'
 import { ScreenFocusProvider, ScreenTouchArea } from '@common/contexts/screenFocusContext'
 import { ScreenLocationProvider } from '@common/contexts/screenLocationContext'
 import useTheme from '@common/hooks/useTheme'
+import flexbox from '@common/styles/utils/flexbox'
+import useEdgeSwipeBackGesture from '@mobile/hooks/useEdgeSwipeBackGesture'
 import AppRoutes from '@mobile/modules/router/components/AppRoutes'
 
 import { StackEntry } from './stackEntries'
@@ -49,6 +53,20 @@ const StackScreen = ({
   const { theme } = useTheme()
   const isContentReady = useIsContentReady()
 
+  // A screen going back through steps of its own takes the swipe over from the stack,
+  // whose native one can only pop the screen (see `useScreenBackHandler`)
+  const [backHandler, setBackHandlerState] = useState<(() => void) | null>(null)
+  const setBackHandler = useCallback(
+    (handler: (() => void) | null) => setBackHandlerState(() => handler),
+    []
+  )
+  const screenBack = useMemo(() => ({ setBackHandler }), [setBackHandler])
+  const handleEdgeSwipeBack = useCallback(() => backHandler?.(), [backHandler])
+  const edgeSwipeBackGesture = useEdgeSwipeBackGesture({
+    enabled: !!backHandler,
+    onBack: handleEdgeSwipeBack
+  })
+
   const handleDismissed = useCallback(
     (e: { nativeEvent: { dismissCount: number } }) => onDismissed(e.nativeEvent.dismissCount),
     [onDismissed]
@@ -72,7 +90,7 @@ const StackScreen = ({
       // in. The platform defaults it to `pop`, so without this every automatic
       // navigation - the boot redirects, unlocking - would look like going back.
       replaceAnimation={entry.replaceAnimation}
-      gestureEnabled={gestureEnabled}
+      gestureEnabled={gestureEnabled && !backHandler}
       hideKeyboardOnSwipe
       onDismissed={handleDismissed}
     >
@@ -80,9 +98,17 @@ const StackScreen = ({
       {/* the frame it goes up - what handlers on the screen being left read. */}
       <ScreenFocusProvider isFocused={isFocused} isSettled={isSettled}>
         <ScreenLocationProvider location={entry.location} canGoBack={canGoBack}>
-          <ScreenTouchArea>
-            {!!isContentReady && <AppRoutes location={entry.location} />}
-          </ScreenTouchArea>
+          <ScreenBackContext.Provider value={screenBack}>
+            {/* Always mounted, and only enabled while a handler is set, so setting one */}
+            {/* does not remount the screen */}
+            <GestureDetector gesture={edgeSwipeBackGesture}>
+              <View style={flexbox.flex1}>
+                <ScreenTouchArea>
+                  {!!isContentReady && <AppRoutes location={entry.location} />}
+                </ScreenTouchArea>
+              </View>
+            </GestureDetector>
+          </ScreenBackContext.Provider>
         </ScreenLocationProvider>
       </ScreenFocusProvider>
     </ScreenStackItem>

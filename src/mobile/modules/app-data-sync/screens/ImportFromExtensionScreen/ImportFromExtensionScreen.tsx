@@ -3,6 +3,7 @@ import { Image, ImageSourcePropType, LayoutChangeEvent, View } from 'react-nativ
 import { useModalize } from 'react-native-modalize'
 import Carousel from 'react-native-reanimated-carousel'
 
+import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheExtension from '@common/assets/images/sync-steps-on-the-extension.gif'
 import Alert from '@common/components/Alert'
@@ -264,6 +265,10 @@ const ImportFromExtensionScreen = () => {
 
     leaveScreen()
   }, [handleStepIndexChange, isScanning, leaveScreen, retryScan, stepIndex])
+
+  // The swipe and Android's back step back like the arrow while there is a step to go back
+  // to, and leave the screen (as the arrow does then) from the first one
+  useScreenBackHandler(isScanning || stepIndex ? handleBackButtonPress : null)
 
   const handleStartScanning = useCallback(() => {
     setScanProgress(null)

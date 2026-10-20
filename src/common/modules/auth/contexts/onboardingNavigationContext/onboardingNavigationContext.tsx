@@ -23,6 +23,7 @@ import {
   ONBOARDING_WEB_ROUTES,
   WEB_ROUTES
 } from '@common/modules/router/constants/common'
+import { goBackInStack } from '@common/services/navigation/stackBackNavigation'
 import { syncSessionStorage } from '@common/services/storage'
 import { getUiType } from '@common/utils/uiType'
 
@@ -304,6 +305,14 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   )
 
   const goToPrevRoute = useCallback(() => {
+    // On mobile every step is a screen in the native stack, which a swipe or Android's back
+    // pops without the breadcrumb knowing. Going back the same way keeps the back arrow in
+    // step with them - the breadcrumb is only the way back when there is no screen below.
+    if (getUiType().isMobileApp && goBackInStack()) {
+      setHistory((prevHistory) => prevHistory.slice(0, -1))
+      return
+    }
+
     // The breadcrumb is read through its ref for the same reason as `navigate`
     // above. This one only ever runs from a back button, long after the render
     // that produced the value, so it is always the current one by then.

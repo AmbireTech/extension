@@ -6,6 +6,7 @@ import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomS
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import useRouterHistory from '@common/hooks/useRouterHistory'
 import { ROUTES } from '@common/modules/router/constants/common'
+import { setStackGoBackHandler } from '@common/services/navigation/stackBackNavigation'
 import { useCanGoBackInWebViewHistory } from '@common/services/webview/webViewBackNavigation'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -130,6 +131,18 @@ const NavigationStack = ({ onScreenSettled }: Props) => {
     },
     [history]
   )
+
+  // A back button goes back the way a swipe does (see `stackBackNavigation`)
+  useEffect(() => {
+    setStackGoBackHandler(() => {
+      if (entriesRef.current.length < 2) return false
+
+      history.go(getDismissDelta(entriesRef.current, history.index, 1))
+      return true
+    })
+
+    return () => setStackGoBackHandler(null)
+  }, [history])
 
   return (
     <ScreenStack style={flexbox.flex1} onFinishTransitioning={handleFinishTransitioning}>
