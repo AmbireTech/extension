@@ -50,10 +50,14 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   const prevTransactionCount = usePrevious<number | null | undefined>(signedTransactionsCount)
 
   // The signing key is used while the status is InProgress or WaitingForPaymaster
-  // (e.g. the user op is signed after the paymaster responds)
+  // (e.g. the user op is signed after the paymaster responds).
+  // SafeQuickBroadcastBundler sits between the two sign() calls of a Safe quick
+  // broadcast - treating it as signing keeps the modal from hiding and reappearing
   const isSigningPhase =
     signAccountOpStatusType === SigningStatus.InProgress ||
-    signAccountOpStatusType === SigningStatus.WaitingForPaymaster
+    signAccountOpStatusType === SigningStatus.WaitingForPaymaster ||
+    (isSignAndBroadcastInProgress &&
+      signAccountOpStatusType === SigningStatus.SafeQuickBroadcastBundler)
   // The fee payer key is used only after signing is Done and the broadcast begins.
   // Before that, the flow may never reach broadcasting (e.g. a Safe txn that still
   // needs more signatures gets queued), so the fee payer's modal must not show.
