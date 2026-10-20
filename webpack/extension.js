@@ -30,6 +30,7 @@ const LAVAMOAT_UNSAFE_ENTRIES = new Set([
   'ambire-inpage',
   'ethereum-inpage',
   'content-script',
+  'onekey-offscreen',
   'content-script-ambire-injection',
   'content-script-ethereum-injection'
 ])
@@ -123,7 +124,8 @@ function processManifest(content, mode) {
 
   const permissions = [...manifest.permissions, 'scripting', 'alarms']
   if (isWebkit && !isSafari) {
-    // 'offscreen' hosts the Privacy Pools prover, which needs `Worker` (missing in service workers)
+    // 'offscreen' hosts the OneKey SDK iframe and the Privacy Pools prover, which needs `Worker`
+    // (missing in service workers)
     permissions.push('system.display', 'sidePanel', 'offscreen')
     manifest.side_panel = { default_path: 'side-panel.html' }
   }
@@ -281,6 +283,10 @@ module.exports = async function buildExtension(
         !isSafari && {
           'privacy-pools-prover': './src/web/extension-services/privacy-pools-prover/offscreen.ts'
         }),
+      ...(isWebkit &&
+        !isSafari && {
+          'onekey-offscreen': './src/web/extension-services/onekey-offscreen/onekey-offscreen.ts'
+        }),
       ...(isGecko && {
         'content-script-ambire-injection':
           './src/web/extension-services/content-script/content-script-ambire-injection.ts',
@@ -394,6 +400,16 @@ module.exports = async function buildExtension(
       chunks: ['runtime', 'main'] // include only chunks from the main entry
     }),
     ...((isWebkit && !isSafari) || isGecko
+      ? [
+          new HtmlWebpackPlugin({
+            template: './src/web/public/onekey-offscreen.html',
+            filename: 'onekey-offscreen.html',
+            inject: 'body',
+            chunks: ['runtime', 'onekey-offscreen']
+          })
+        ]
+      : []),
+    ...(isWebkit && !isSafari
       ? [
           new HtmlWebpackPlugin({
             template: './src/web/public/side-panel.html',
@@ -523,6 +539,7 @@ module.exports = async function buildExtension(
           chunk.name !== 'ambire-inpage' &&
           chunk.name !== 'ethereum-inpage' &&
           chunk.name !== 'content-script' &&
+          chunk.name !== 'onekey-offscreen' &&
           (!enableLavaMoat || chunk.name !== 'background')
         )
       }

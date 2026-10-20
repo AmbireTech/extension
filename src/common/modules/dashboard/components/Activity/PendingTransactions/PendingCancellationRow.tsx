@@ -110,11 +110,10 @@ const PendingCancellationRow: FC<Props> = ({
         styles.cancellationRow,
         flexbox.directionRow,
         flexbox.alignCenter,
-        flexbox.justifySpaceBetween,
-        spacings.phSm
+        flexbox.justifySpaceBetween
       ]}
     >
-      <Text fontSize={12} weight="medium" appearance="secondaryText" style={flexbox.flex1}>
+      <Text fontSize={14} weight="medium" appearance="secondaryText" style={flexbox.flex1}>
         {t('{{signedCount}}/{{threshold}} signatures', { signedCount, threshold })}
       </Text>
       <Button
