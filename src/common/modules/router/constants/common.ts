@@ -61,6 +61,7 @@ const MOBILE_ROUTES = {
 
 const WEB_ROUTES = {
   ...COMMON_ROUTES,
+  privacyPoolsSend: 'privacy-pools-send',
   earn: 'earn',
   transactions: 'transactions',
   signedMessages: 'signed-messages',
