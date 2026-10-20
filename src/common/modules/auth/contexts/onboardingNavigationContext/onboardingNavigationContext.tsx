@@ -19,6 +19,7 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import {
   BACK_NAVIGATION_STATE,
+  FORWARD_NAVIGATION_STATE,
   MOBILE_ROUTES,
   ONBOARDING_WEB_ROUTES,
   WEB_ROUTES
@@ -268,6 +269,22 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     onboardingHistoryRef.current = history
   }, [history])
 
+  /**
+   * The platform's own back - a swipe or Android's back on mobile, the browser's back
+   * button on web - goes back without the breadcrumb knowing. Going back the same way keeps
+   * the app's navigation in step with it: popping the screen from the native stack, or
+   * stepping back in the browser history when the app navigated here (`prevRoute` is
+   * stamped on every in-app navigation). Returns whether it went back.
+   */
+  const goBackThePlatformWay = useCallback(() => {
+    if (getUiType().isMobileApp) return goBackInStack()
+
+    const hasInAppHistory = !!(routerHistory.location.state as { prevRoute?: unknown } | null)
+      ?.prevRoute
+    if (hasInAppHistory) routerHistory.go(-1)
+    return hasInAppHistory
+  }, [routerHistory])
+
   const goToNextRoute = useCallback(
     (routeName?: OnboardingRoute, routeState?: Record<string, unknown>) => {
       const currentRoute = routerHistory.location.pathname?.substring(1) || '/'
@@ -280,46 +297,54 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         if (!currentNode) return
         nextRoute = findNextEnabledRoute(currentNode.children, routeName)
       }
-      if (nextRoute) {
-        // The password is set once, so its step is replaced rather than left behind: every
-        // way back - the back arrow, a swipe, the browser's - skips it, as the tree does
-        const isLeavingPasswordSetup = currentRoute === WEB_ROUTES.keyStoreSetup
+      if (!nextRoute) return
 
-        if (nextRoute.name === '/' && !getUiType().isMobileApp) {
-          dispatch({ type: 'OPEN_EXTENSION_POPUP' })
-        } else {
-          navigateRef.current(nextRoute.name, {
-            state: { ...routeState, internal: true },
-            replace: isLeavingPasswordSetup
-          })
-        }
-        if (isLeavingPasswordSetup) return
-
-        // Checked inside the updater rather than against a captured copy, so the
-        // breadcrumb cannot pick up a duplicate from a stale read.
-        setHistory((prevHistory) =>
-          prevHistory.includes(currentRoute) ? prevHistory : [...prevHistory, currentRoute]
-        )
+      // Going on to the screen the user came from (e.g. back to personalize from the picker
+      // opened for more accounts) is going back to it, rather than stacking it again -
+      // unless the navigation declares itself a step forward
+      const cameFrom = (
+        routerHistory.location.state as { prevRoute?: { pathname?: string } } | null
+      )?.prevRoute?.pathname
+      const isDeclaredForward = routeState?.navDirection === FORWARD_NAVIGATION_STATE.navDirection
+      if (cameFrom === `/${nextRoute.name}` && !isDeclaredForward && goBackThePlatformWay()) {
+        setHistory((prevHistory) => prevHistory.slice(0, -1))
+        return
       }
+
+      // The password is set once, so its step is replaced rather than left behind: every
+      // way back - the back arrow, a swipe, the browser's - skips it, as the tree does
+      const isLeavingPasswordSetup = currentRoute === WEB_ROUTES.keyStoreSetup
+
+      if (nextRoute.name === '/' && !getUiType().isMobileApp) {
+        dispatch({ type: 'OPEN_EXTENSION_POPUP' })
+      } else {
+        navigateRef.current(nextRoute.name, {
+          state: { ...routeState, internal: true },
+          replace: isLeavingPasswordSetup
+        })
+      }
+      if (isLeavingPasswordSetup) return
+
+      // Checked inside the updater rather than against a captured copy, so the
+      // breadcrumb cannot pick up a duplicate from a stale read.
+      setHistory((prevHistory) =>
+        prevHistory.includes(currentRoute) ? prevHistory : [...prevHistory, currentRoute]
+      )
     },
-    [routerHistory, onboardingRoutesTree, findNextEnabledRoute, deepSearchRouteNode, dispatch]
+    [
+      routerHistory,
+      onboardingRoutesTree,
+      findNextEnabledRoute,
+      deepSearchRouteNode,
+      dispatch,
+      goBackThePlatformWay
+    ]
   )
 
   const goToPrevRoute = useCallback(() => {
-    // The platform's own back - a swipe or Android's back on mobile, the browser's back
-    // button on web - goes back without the breadcrumb knowing. Going back the same way
-    // keeps the back arrow in step with it: popping the screen from the native stack, or
-    // stepping back in the browser history when the app navigated here (`prevRoute` is
-    // stamped on every in-app navigation). The breadcrumb is only the way back otherwise.
-    const wentBackThePlatformWay = (() => {
-      if (getUiType().isMobileApp) return goBackInStack()
-
-      const hasInAppHistory = !!(routerHistory.location.state as { prevRoute?: unknown } | null)
-        ?.prevRoute
-      if (hasInAppHistory) routerHistory.go(-1)
-      return hasInAppHistory
-    })()
-    if (wentBackThePlatformWay) {
+    // The back arrow goes back the way the platform's own back does (see
+    // `goBackThePlatformWay`) - the breadcrumb is only the way back otherwise
+    if (goBackThePlatformWay()) {
       setHistory((prevHistory) => prevHistory.slice(0, -1))
       return
     }
@@ -357,7 +382,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         return
       }
     }
-  }, [deepSearchRouteNode, onboardingRoutesTree, routerHistory])
+  }, [deepSearchRouteNode, onboardingRoutesTree, goBackThePlatformWay])
 
   const [onboardingInitialized, setOnboardingInitialized] = useState(false)
   const [triggeredHwWalletFlow, setTriggeredHwWalletFlow] = useState<HwWalletsNeedingRedirect>(null)
