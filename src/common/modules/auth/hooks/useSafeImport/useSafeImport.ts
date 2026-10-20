@@ -76,6 +76,8 @@ const useSafeImport = () => {
       })
       reset()
       goToNextRoute()
+      // Going back from the personalize step adds nothing, so the form is usable again
+      setIsLoading(false)
     } catch (e: any) {
       setIsLoading(false)
       addToast(

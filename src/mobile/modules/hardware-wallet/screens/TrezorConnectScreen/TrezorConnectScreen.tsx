@@ -8,6 +8,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isiOS } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -27,6 +28,7 @@ const TrezorConnectScreen = () => {
   const { t } = useTranslation()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { dispatch } = useControllersMiddleware()
+  const screenFocus = useScreenFocusStore()
   const mainCtrlState = useController('MainController').state
   const { initParams, type } = useController('AccountPickerController').state
 
@@ -36,8 +38,8 @@ const TrezorConnectScreen = () => {
   // redirect to Suite and trap the user.
   const [importStarted, setImportStarted] = useState(false)
 
-  // Guards against navigating twice if the picker-ready effect re-fires before
-  // this screen unmounts.
+  // Guards against navigating twice if the picker-ready effect re-fires while
+  // the picker is open on top of this screen.
   const hasNavigatedRef = useRef(false)
 
   const startImport = useCallback(() => {
@@ -56,6 +58,19 @@ const TrezorConnectScreen = () => {
       goToNextRoute()
     }
   }, [importStarted, initParams, type, goToNextRoute])
+
+  // The stack keeps this screen mounted under the account picker, so a back to it
+  // has to let a new import navigate again.
+  useEffect(
+    () =>
+      screenFocus.subscribe(() => {
+        if (!screenFocus.isFocused.current || !hasNavigatedRef.current) return
+
+        hasNavigatedRef.current = false
+        setImportStarted(false)
+      }),
+    [screenFocus]
+  )
 
   const isLoading = mainCtrlState.statuses.handleAccountPickerInitTrezor === 'LOADING'
 

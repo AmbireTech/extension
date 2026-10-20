@@ -6,6 +6,7 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import Alert from '@common/components/Alert'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable } from '@common/hooks/useHover'
@@ -30,6 +31,7 @@ const QrConnectScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
+  const screenFocus = useScreenFocusStore()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { initParams, type } = useController('AccountPickerController').state
   const mainCtrlState = useController('MainController').state
@@ -59,6 +61,23 @@ const QrConnectScreen = () => {
     setScanError(null)
     setScannerKey((prev) => prev + 1)
   }, [])
+
+  // The stack keeps this screen mounted under the account picker, and the scanner
+  // stops reading once it completes, so a back to it starts a fresh scan.
+  useEffect(() => {
+    let wasBlurred = false
+
+    return screenFocus.subscribe(() => {
+      if (!screenFocus.isFocused.current) {
+        wasBlurred = true
+        return
+      }
+      if (!wasBlurred) return
+
+      wasBlurred = false
+      resetScanner()
+    })
+  }, [screenFocus, resetScanner])
 
   const handleBackButtonPressed = useCallback(() => {
     resetScanner()
