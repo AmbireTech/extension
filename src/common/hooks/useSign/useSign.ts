@@ -7,6 +7,7 @@ import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/help
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
 import useSigningAuth from '@common/hooks/useSigningAuth'
@@ -83,6 +84,7 @@ const useSign = ({
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [shouldDisplayQrSigningModal, setShouldDisplayQrSigningModal] = useState(false)
   const [acknowledgedBannersKey, setAcknowledgedBannersKey] = useState<string | null>(null)
+  const [acknowledgedNewFeePayer, setAcknowledgedNewFeePayer] = useState<string | null>(null)
   const safeSignAndCloseRequest = useRef<{
     accountOpId: string
     signingKeyAddr: Key['addr']
@@ -113,8 +115,26 @@ const useSign = ({
     () => JSON.stringify(signAccountOpState?.banners || []),
     [signAccountOpState?.banners]
   )
+  // Executing a Safe from an EOA that never paid for it publicly links the two forever,
+  // so it asks for a hold. Only the executing transaction is paid, not a signature.
+  // Once held for a payer, the hold is not asked again for it, so the sign button can show
+  // its loading state, but switching to another new payer asks for it again
+  const feePayer = signAccountOpState?.accountOp.gasFeePayment?.paidBy ?? null
+  const isLinkingNewFeePayerToSafe =
+    !!signAccountOpState?.isFeePayerNotLinkedToSafe &&
+    !!signAccountOpState?.canBroadcast &&
+    acknowledgedNewFeePayer !== feePayer
   const shouldHoldToProceed =
-    !!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey
+    (!!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey) ||
+    isLinkingNewFeePayerToSafe
+  const dappVerificationHoldButtonType = useDappVerificationHoldButtonType(
+    signAccountOpState?.banners
+  )
+  // Linking a new fee payer to the Safe is a warning, unless a dApp check already calls for more
+  const holdToProceedButtonType =
+    dappVerificationHoldButtonType === 'primary' && isLinkingNewFeePayerToSafe
+      ? 'warning'
+      : dappVerificationHoldButtonType
   const shouldShowSafeSigners = showSafeSigners && !shouldHoldToProceed
 
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
@@ -520,6 +540,9 @@ const useSign = ({
     if (!signAccountOpState) return
 
     setAcknowledgedBannersKey(currentBannersKey)
+    // Only a click made through the linking hold counts. Collecting a Safe signature shows no hold
+    // for it, and the same payer must still be held for once the Safe becomes ready to execute
+    if (isLinkingNewFeePayerToSafe) setAcknowledgedNewFeePayer(feePayer)
 
     if (!!signAccountOpState.account.safeCreation && !signAccountOpState.canBroadcast) {
       setShowSafeSigners((prev) => (shouldHoldToProceed ? true : !prev))
@@ -546,8 +569,10 @@ const useSign = ({
     setIsChooseSignerShown(true)
   }, [
     currentBannersKey,
+    feePayer,
     handleChangeSigningKey,
     handleSign,
+    isLinkingNewFeePayerToSafe,
     shouldHoldToProceed,
     signAccountOpState
   ])
@@ -746,7 +771,13 @@ const useSign = ({
     signAccountOpState
   ])
 
+  const isSafeFeePayerChoiceRequired = !!signAccountOpState?.isSafeFeePayerChoiceRequired
+
   const disabledReason = useMemo(() => {
+    if (isSafeFeePayerChoiceRequired) {
+      return t('Choose who pays the fee to execute this transaction.')
+    }
+
     if (isExtremeGasFeeProceedDelayedForSign) {
       return t('Please wait {{seconds}}s to review the high network fee.', {
         seconds: extremeGasFeeProceedDelaySeconds
@@ -756,7 +787,13 @@ const useSign = ({
     return typeof hasReachedBottom === 'boolean' && !hasReachedBottom
       ? t('Scroll to the bottom of the transaction overview to sign.')
       : undefined
-  }, [extremeGasFeeProceedDelaySeconds, hasReachedBottom, isExtremeGasFeeProceedDelayedForSign, t])
+  }, [
+    extremeGasFeeProceedDelaySeconds,
+    hasReachedBottom,
+    isExtremeGasFeeProceedDelayedForSign,
+    isSafeFeePayerChoiceRequired,
+    t
+  ])
 
   const signButtonText = useMemo(() => {
     if (isExtremeGasFeeProceedDelayedForSign) {
@@ -832,6 +869,8 @@ const useSign = ({
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed,
+    isLinkingNewFeePayerToSafe,
+    holdToProceedButtonType,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
