@@ -153,7 +153,7 @@ const ImportFromMobileScreen = () => {
   })
 
   const leaveScreen = useCallback(() => {
-    // Without accounts this is the onboarding flow, which came from the get started screen
+    // Without accounts this is the onboarding flow, which came from the import method screen
     if (!accountsCount) return goToPrevRoute()
 
     // Going back instead of navigating, so the screen the user came from doesn't end up
@@ -171,7 +171,7 @@ const ImportFromMobileScreen = () => {
   const handleImported = useCallback(
     async ({ password, importedAccountsCount, syncedExtrasLabel }: AppDataSyncImportResult) => {
       // Only the settings, networks or Address Book came over, so there are no accounts to
-      // set up or name. Onboarding stays on the get started screen, as there is still no
+      // set up or name. Onboarding goes back to the import method screen, as there is still no
       // account to go on with.
       if (!importedAccountsCount) {
         closePasswordSheet()

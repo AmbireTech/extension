@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
@@ -43,13 +44,21 @@ type ImportMethod = {
    * to match the ones that draw a circle inset in it. The slot keeps the labels aligned.
    */
   iconSize?: number
+  /** The icon keeps its own (brand) colors instead of taking the icon color. */
+  hasBrandIconColors?: boolean
 }
 
 const toTestID = (title: string) =>
   `import-method-${title.toLocaleLowerCase().split(' ').join('-')}`
 
 const ImportMethodButton = React.memo(
-  ({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE }: ImportMethod) => {
+  ({
+    title,
+    onPress,
+    icon: IconComponent,
+    iconSize = ICON_SLOT_SIZE,
+    hasBrandIconColors
+  }: ImportMethod) => {
     const { theme } = useTheme()
     const { t } = useTranslation()
 
@@ -67,7 +76,11 @@ const ImportMethodButton = React.memo(
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <View style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}>
-            <IconComponent width={iconSize} height={iconSize} color={theme.iconPrimary} />
+            <IconComponent
+              width={iconSize}
+              height={iconSize}
+              color={hasBrandIconColors ? undefined : theme.iconPrimary}
+            />
           </View>
           <Text style={spacings.mlSm} fontSize={16} weight="medium">
             {t(title)}
@@ -179,6 +192,15 @@ const ImportExistingAccountSelectorScreen = () => {
 
   const buttons: ImportMethod[] = useMemo(
     () => [
+      {
+        // Accounts the user already has in the Ambire extension come over with a sync
+        title: 'Already an Ambire user',
+        onPress: () => {
+          goToNextRoute(ROUTES.importFromExtension)
+        },
+        icon: AmbireLogoSquare,
+        hasBrandIconColors: true
+      },
       {
         title: 'Private key',
         onPress: () => {

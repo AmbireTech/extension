@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
@@ -36,7 +37,7 @@ import { isSafari } from '@web/constants/browserapi'
 import getStyles from './styles'
 
 export const CARD_WIDTH = 400
-const VISIBLE_BUTTONS_COUNT = 5
+const VISIBLE_BUTTONS_COUNT = 6
 const ICON_SLOT_SIZE = 24
 
 type ButtonType = {
@@ -48,6 +49,8 @@ type ButtonType = {
    * to match the ones that draw a circle inset in it. The slot keeps the labels aligned.
    */
   iconSize?: number
+  /** The icon keeps its own (brand) colors instead of taking the icon color. */
+  hasBrandIconColors?: boolean
 }
 
 const ImportExistingAccountSelectorScreen = () => {
@@ -84,6 +87,15 @@ const ImportExistingAccountSelectorScreen = () => {
 
   const buttons: ButtonType[] = useMemo(
     () => [
+      {
+        // Accounts the user already has in the Ambire mobile app come over with a sync
+        title: 'Already an Ambire user',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.importFromMobile)
+        },
+        icon: AmbireLogoSquare,
+        hasBrandIconColors: true
+      },
       {
         title: 'Private key',
         onPress: () => {
@@ -191,42 +203,14 @@ const ImportExistingAccountSelectorScreen = () => {
             <ScrollView contentContainerStyle={[flexbox.justifySpaceBetween]}>
               {buttons
                 .slice(0, VISIBLE_BUTTONS_COUNT)
-                .map(({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE }) => (
-                  <Button
-                    key={title}
-                    type="tertiary"
-                    onPress={onPress}
-                    testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
-                    childrenContainerStyle={{
-                      ...flexbox.directionRow,
-                      ...flexbox.alignCenter,
-                      ...flexbox.justifySpaceBetween,
-                      ...flexbox.flex1
-                    }}
-                  >
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <View
-                        style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}
-                      >
-                        <IconComponent
-                          width={iconSize}
-                          height={iconSize}
-                          color={theme.iconPrimary}
-                        />
-                      </View>
-                      <Text style={spacings.mlSm} fontSize={16} weight="medium">
-                        {t(title)}
-                      </Text>
-                    </View>
-                    <RightArrowIcon color={theme.iconPrimary} />
-                  </Button>
-                ))}
-              <Animated.View
-                style={{ height: animatedHeight, opacity: animatedOpacity, overflow: 'hidden' }}
-              >
-                {buttons
-                  .slice(VISIBLE_BUTTONS_COUNT)
-                  .map(({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE }) => (
+                .map(
+                  ({
+                    title,
+                    onPress,
+                    icon: IconComponent,
+                    iconSize = ICON_SLOT_SIZE,
+                    hasBrandIconColors
+                  }) => (
                     <Button
                       key={title}
                       type="tertiary"
@@ -249,18 +233,65 @@ const ImportExistingAccountSelectorScreen = () => {
                           <IconComponent
                             width={iconSize}
                             height={iconSize}
-                            color={theme.iconPrimary}
+                            color={hasBrandIconColors ? undefined : theme.iconPrimary}
                           />
                         </View>
-                        <Text style={spacings.mlSm} fontSize={14} weight="medium">
+                        <Text style={spacings.mlSm} fontSize={16} weight="medium">
                           {t(title)}
                         </Text>
                       </View>
-                      <RightArrowIcon
-                        {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
-                      />
+                      <RightArrowIcon color={theme.iconPrimary} />
                     </Button>
-                  ))}
+                  )
+                )}
+              <Animated.View
+                style={{ height: animatedHeight, opacity: animatedOpacity, overflow: 'hidden' }}
+              >
+                {buttons
+                  .slice(VISIBLE_BUTTONS_COUNT)
+                  .map(
+                    ({
+                      title,
+                      onPress,
+                      icon: IconComponent,
+                      iconSize = ICON_SLOT_SIZE,
+                      hasBrandIconColors
+                    }) => (
+                      <Button
+                        key={title}
+                        type="tertiary"
+                        onPress={onPress}
+                        testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
+                        childrenContainerStyle={{
+                          ...flexbox.directionRow,
+                          ...flexbox.alignCenter,
+                          ...flexbox.justifySpaceBetween,
+                          ...flexbox.flex1
+                        }}
+                      >
+                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                          <View
+                            style={[
+                              flexbox.center,
+                              { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }
+                            ]}
+                          >
+                            <IconComponent
+                              width={iconSize}
+                              height={iconSize}
+                              color={hasBrandIconColors ? undefined : theme.iconPrimary}
+                            />
+                          </View>
+                          <Text style={spacings.mlSm} fontSize={14} weight="medium">
+                            {t(title)}
+                          </Text>
+                        </View>
+                        <RightArrowIcon
+                          {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
+                        />
+                      </Button>
+                    )
+                  )}
               </Animated.View>
             </ScrollView>
             {buttons.length > VISIBLE_BUTTONS_COUNT && (
