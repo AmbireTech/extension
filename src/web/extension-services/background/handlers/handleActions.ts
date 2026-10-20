@@ -5,6 +5,7 @@ import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
+import OneKeyKeyIterator from '@common/modules/hardware-wallet/libs/oneKeyKeyIterator'
 import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator/qrKeyIterator'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
@@ -120,6 +121,12 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR': {
       return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator)
     }
+    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY': {
+      return await mainCtrl.handleAccountPickerInitOneKey(
+        OneKeyKeyIterator,
+        params.preferredDeviceId
+      )
+    }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE': {
       return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator)
     }
@@ -131,7 +138,7 @@ export const handleActions = async (
       if (!keystoreSavedSeed) return
 
       const keyIterator = new KeyIterator(keystoreSavedSeed.seed, keystoreSavedSeed.seedPassphrase)
-      await mainCtrl.accountPicker.setInitParams({
+      mainCtrl.accountPicker.setInitParams({
         keyIterator,
         hdPathTemplate: keystoreSavedSeed.hdPathTemplate
       })

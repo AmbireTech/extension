@@ -824,6 +824,12 @@
         "crypto": true
       }
     },
+    "@onekeyfe/hd-shared": {
+      "globals": {
+        "SuppressedError": true,
+        "setTimeout": true
+      }
+    },
     "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema": {
       "packages": {
         "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js": true,

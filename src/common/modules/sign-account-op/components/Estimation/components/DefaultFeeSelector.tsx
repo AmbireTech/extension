@@ -68,13 +68,18 @@ const DefaultFeeSelector = ({
   const shouldShowDefaultFeeOptionCheckbox = useMemo(() => {
     if (!payValue || !hasManyPayOptionsByUsOrGasTank || !baselineFeeOption) return false
     if (payValue.value === baselineFeeOption) return false
+    // Only the token is saved, not who pays, so offering it for another account's
+    // option would suggest that account gets remembered as the payer
+    const accountAddr = signAccountOpState?.accountOp.accountAddr
+    if (!accountAddr || payValue.paidBy.toLowerCase() !== accountAddr.toLowerCase()) return false
 
     return !isPersistedDefaultFeeOptionSelected
   }, [
     isPersistedDefaultFeeOptionSelected,
     hasManyPayOptionsByUsOrGasTank,
     baselineFeeOption,
-    payValue
+    payValue,
+    signAccountOpState?.accountOp.accountAddr
   ])
 
   const isDefaultFeeOptionSelected = useMemo(() => {
