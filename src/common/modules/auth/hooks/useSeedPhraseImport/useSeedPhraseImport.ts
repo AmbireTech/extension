@@ -110,7 +110,6 @@ export default function useSeedPhraseImport() {
     seedCaretPosition,
     setSeedCaretPosition,
     importButtonPressed,
-    setImportButtonPressed,
     handleFormSubmit,
     validateSeedPhrase
   }

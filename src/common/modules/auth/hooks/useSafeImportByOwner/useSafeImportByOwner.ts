@@ -160,7 +160,6 @@ const useSafeImportByOwner = () => {
 
   const failedNetworkNames = useMemo(() => {
     if (!currentDisplayableData) return []
-    console.log(currentDisplayableData.failedNetworks)
     return currentDisplayableData.failedNetworks.map(
       (chainId) =>
         enabledNetworks.find((network) => network.chainId === chainId)?.name || chainId.toString()

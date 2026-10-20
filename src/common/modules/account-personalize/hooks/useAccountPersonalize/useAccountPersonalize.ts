@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 
 import { Account } from '@ambire-common/interfaces/account'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 
@@ -22,10 +23,6 @@ const MAX_LOADING_MS = 5000
 const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
   state.readyToAddAccounts
 const selectSubType = (state: AllControllersMappingType['AccountPickerController']) => state.subType
-const selectInitParams = (state: AllControllersMappingType['AccountPickerController']) =>
-  state.initParams
-const selectIsInitialized = (state: AllControllersMappingType['AccountPickerController']) =>
-  state.isInitialized
 
 /**
  * The personalize step of every account adding flow: shows the accounts the flow prepared
@@ -33,12 +30,11 @@ const selectIsInitialized = (state: AllControllersMappingType['AccountPickerCont
  * proceeds. Nothing is added before - going back only resets the flow.
  */
 export default function useAccountPersonalize() {
+  const { t } = useTranslation()
   const { goToNextRoute } = useOnboardingNavigation()
   const { state: readyToAddAccounts, dispatchAndWait: accountPickerDispatchAndWait } =
     useController('AccountPickerController', selectReadyToAddAccounts)
   const { state: subType } = useController('AccountPickerController', selectSubType)
-  const { state: initParams } = useController('AccountPickerController', selectInitParams)
-  const { state: isInitialized } = useController('AccountPickerController', selectIsInitialized)
   const [prepareResult, setPrepareResult] = useState<'done' | 'failed' | null>(null)
   const [hasMinLoadingPassed, setHasMinLoadingPassed] = useState(false)
   const [hasMaxLoadingPassed, setHasMaxLoadingPassed] = useState(false)
@@ -55,18 +51,16 @@ export default function useAccountPersonalize() {
 
   // The flows that come straight here (Create, a recovery phrase, a private key) only set the
   // picker up, so the screen opens at once and the account is selected and prepared here,
-  // while it shows that it is loading. Decided once, when the screen opens: a picker set up
+  // while it shows that it is loading. Asked once, when the screen opens: a picker set up
   // already (hardware wallets, or back from the picker) has prepared what there is - even
-  // nothing, when all accounts were deselected there.
-  const [shouldPrepare] = useState(
-    () => !!initParams && !isInitialized && !readyToAddAccounts.length
-  )
+  // nothing, when all accounts were deselected there. The controller decides, as the state
+  // here can still lack what the flow just set up.
   useEffect(() => {
-    if (!shouldPrepare || hasStartedPreparing.current) return
+    if (hasStartedPreparing.current) return
 
     hasStartedPreparing.current = true
     accountPickerDispatchAndWait(
-      { type: 'method', params: { method: 'init', args: [] } },
+      { type: 'method', params: { method: 'initIfNotStarted', args: [] } },
       PREPARE_ACCOUNTS_TIMEOUT_MS
     )
       .then(() => setPrepareResult('done'))
@@ -75,7 +69,7 @@ export default function useAccountPersonalize() {
         console.error('Failed to prepare the accounts', error)
         setPrepareResult('failed')
       })
-  }, [shouldPrepare, accountPickerDispatchAndWait])
+  }, [accountPickerDispatchAndWait])
 
   useEffect(() => {
     const minTimeout = setTimeout(() => setHasMinLoadingPassed(true), MIN_LOADING_MS)
@@ -87,7 +81,7 @@ export default function useAccountPersonalize() {
     }
   }, [])
 
-  const isPreparing = shouldPrepare && !readyToAddAccounts.length && !prepareResult
+  const isPreparing = !readyToAddAccounts.length && !prepareResult
   const isLoading = !hasMinLoadingPassed || (isPreparing && !hasMaxLoadingPassed)
 
   // The prepared accounts change when more are added from the picker. The names the
@@ -135,16 +129,35 @@ export default function useAccountPersonalize() {
     }
   }, [isAdding, getValues, accountPickerDispatchAndWait])
 
+  const canAddMore = !addedAccounts && !isLoading
+
   return {
     control,
     fields,
     isLoading,
-    hasPreparingFailed: prepareResult === 'failed',
     isAdding,
     addedAccounts,
     handleProceed,
+    // Only the loading state shows while loading - no title yet
+    title: isLoading
+      ? ' '
+      : !fields.length
+        ? t('No new accounts added')
+        : fields.length > 1
+          ? t('Personalize accounts')
+          : t('Personalize account'),
+    // Preparing failed, every account was deselected on the picker, or the prepared accounts
+    // are gone (the app or browser was restarted) - nothing to add, only to go back from
+    noAccountsText:
+      prepareResult === 'failed'
+        ? t("We couldn't load your accounts. Please go back and try again.")
+        : t('There are no accounts to add. Go back to select the accounts you want to add.'),
     // Only a recovery phrase or a hardware wallet has more accounts to pick from
-    addMoreSource:
-      !addedAccounts && !isLoading && (subType === 'seed' || subType === 'hw') ? subType : null
+    addMoreText:
+      canAddMore && subType === 'seed'
+        ? t('Add more accounts from this recovery phrase')
+        : canAddMore && subType === 'hw'
+          ? t('Add more accounts from this hardware wallet')
+          : null
   }
 }

@@ -12,9 +12,9 @@ import { ControllersStateLoadedContext } from '@common/contexts/controllersState
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
-import useRouterHistory from '@common/hooks/useRouterHistory'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
+import useRouterHistory from '@common/hooks/useRouterHistory'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import {
@@ -45,21 +45,66 @@ const OnboardingNavigationContext = createContext<{
   setTriggeredHwWalletFlow: () => null
 })
 
-class RouteNode {
+type RouteNode = {
   name: string
+  children: RouteNode[]
+  /** Skipped by the flow - the step is done already, or has nothing to do */
+  disabled: boolean
+  /** Reachable only through in-app navigation, never by typing its url */
+  isProtected: boolean
+}
 
-  children: RouteNode[] = []
+const route = (
+  name: string,
+  children: RouteNode[] = [],
+  { disabled = false, isProtected = false } = {}
+): RouteNode => ({ name, children, disabled, isProtected })
 
-  disabled: boolean = false
+/** The first route named `name` in the tree, depth first. */
+const findRouteNode = (node: RouteNode, name: string): RouteNode | null => {
+  if (node.name === name) return node
 
-  isProtected: boolean = true
-
-  constructor(name: string, children: RouteNode[] = [], disabled = false, isProtected = true) {
-    this.name = name
-    if (children) this.children = children
-    this.disabled = disabled
-    this.isProtected = isProtected
+  for (const child of node.children) {
+    const found = findRouteNode(child, name)
+    if (found) return found
   }
+
+  return null
+}
+
+/**
+ * The route to move on to among `nodes`: the one named `targetName` or, without one, the
+ * first that is not disabled - looking into the children of a disabled one instead of it.
+ */
+const findNextEnabledRoute = (nodes: RouteNode[], targetName?: string): RouteNode | null => {
+  if (targetName) {
+    const node = nodes.find((n) => n.name === targetName)
+    if (!node) return null
+
+    return node.disabled ? findNextEnabledRoute(node.children) : node
+  }
+
+  const firstEnabled = nodes.find((node) => !node.disabled)
+  if (firstEnabled) return firstEnabled
+
+  for (const node of nodes) {
+    const deepEnabled = findNextEnabledRoute(node.children)
+    if (deepEnabled) return deepEnabled
+  }
+
+  return null
+}
+
+const ONBOARDING_HISTORY_STORAGE_KEY = 'onboarding_history'
+
+const loadHistory = (): string[] => {
+  try {
+    const savedHistory = syncSessionStorage.get(ONBOARDING_HISTORY_STORAGE_KEY)
+    if (savedHistory) return JSON.parse(savedHistory)
+  } catch (error) {
+    console.error('Failed to load navigation state:', error)
+  }
+  return []
 }
 
 /** The steps of an account adding flow after its own screen - leaving for any other ends it. */
@@ -71,11 +116,28 @@ const ACCOUNT_ADDING_FLOW_ROUTES: string[] = [
 
 const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.hasPasswordSecret
-const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+// Read before the controller states are loaded too
+const selectAccountsCount = (state: AllControllersMappingType['AccountsController']) =>
+  state.accounts?.length ?? 0
+const selectIsSetupComplete = (state: AllControllersMappingType['WalletStateController']) =>
+  state.isSetupComplete
+const selectRecoverKeyStoreStatus = (state: AllControllersMappingType['EmailVaultController']) =>
+  state.statuses?.recoverKeyStore
+const selectPickerSubType = (state: AllControllersMappingType['AccountPickerController']) =>
+  state.subType
+const selectPickerType = (state: AllControllersMappingType['AccountPickerController']) => state.type
+// A flow is under way - set up (personalize prepares its accounts) or prepared already
+const selectHasAccountAddingFlow = (state: AllControllersMappingType['AccountPickerController']) =>
+  !!state.isInitialized || !!state.initParams || !!state.readyToAddAccounts?.length
+const selectHasPickerInitParams = (state: AllControllersMappingType['AccountPickerController']) =>
+  !!state.initParams
 
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
-  const { statuses: emailVaultStatuses } = useController('EmailVaultController').state
+  const { state: recoverKeyStoreStatus } = useController(
+    'EmailVaultController',
+    selectRecoverKeyStoreStatus
+  )
   const { path, params } = useRoute()
   const prevPath: string | undefined = usePrevious(path)
   const { navigate } = useNavigation()
@@ -84,172 +146,92 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const routerHistory = useRouterHistory()
   const { authStatus } = useAuth()
   const { dispatch } = useControllersMiddleware()
-  const { isSetupComplete } = useController('WalletStateController').state
-  const { state: accounts } = useController('AccountsController', selectAccounts)
-  const {
-    state: { isInitialized, subType, initParams, type, readyToAddAccounts },
-    dispatch: accountPickerDispatch
-  } = useController('AccountPickerController')
-  // Prepared by the flow for the personalize step, which adds them on proceeding
-  const hasPreparedAccounts = !!readyToAddAccounts?.length
-  // A flow is under way - set up (personalize prepares its accounts) or prepared already
-  const hasAccountAddingFlow = isInitialized || !!initParams || hasPreparedAccounts
-  const isOnboardingRoute = useMemo(
-    () => ONBOARDING_WEB_ROUTES.includes((path || '').substring(1)),
-    [path]
+  const { state: isSetupComplete } = useController('WalletStateController', selectIsSetupComplete)
+  const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
+  const { state: subType, dispatch: accountPickerDispatch } = useController(
+    'AccountPickerController',
+    selectPickerSubType
   )
+  const { state: type } = useController('AccountPickerController', selectPickerType)
+  const { state: hasPickerInitParams } = useController(
+    'AccountPickerController',
+    selectHasPickerInitParams
+  )
+  const { state: hasAccountAddingFlow } = useController(
+    'AccountPickerController',
+    selectHasAccountAddingFlow
+  )
+  const isOnboardingRoute = ONBOARDING_WEB_ROUTES.includes((path || '').substring(1))
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   const onboardingRoutesTree = useMemo(() => {
     // on mobile, we skip onboardingCompleted and go straight to the dashboard ('/')
     const afterPersonalizeRoutes = getUiType().isMobileApp
-      ? [new RouteNode('/')]
+      ? [route('/')]
       : [
-          new RouteNode(
-            WEB_ROUTES.onboardingCompleted,
-            [new RouteNode('/')],
-            isSetupComplete || !accounts?.length
-          ),
-          new RouteNode('/')
+          route(WEB_ROUTES.onboardingCompleted, [route('/')], {
+            disabled: isSetupComplete || !accountsCount,
+            isProtected: true
+          }),
+          route('/')
         ]
+    // Nothing to add (e.g. the accounts came with a sync), so the flow skips it
+    const isPersonalizeDisabled = !hasAccountAddingFlow
 
-    const nextAccountPickerRoutes =
+    const accountPickerRoutes =
       subType === 'hw'
         ? [
-            new RouteNode(
-              WEB_ROUTES.accountPicker,
-              [
-                new RouteNode(
-                  WEB_ROUTES.accountPersonalize,
-                  afterPersonalizeRoutes,
-                  !hasAccountAddingFlow,
-                  false
-                ),
-                new RouteNode('/')
-              ],
-              false,
-              false
-            )
+            route(WEB_ROUTES.accountPicker, [
+              route(WEB_ROUTES.accountPersonalize, afterPersonalizeRoutes, {
+                disabled: isPersonalizeDisabled
+              }),
+              route('/')
+            ])
           ]
         : [
-            new RouteNode(
+            route(
               WEB_ROUTES.accountPersonalize,
-              [
-                ...afterPersonalizeRoutes,
-                new RouteNode(WEB_ROUTES.accountPicker, [new RouteNode('/')], false, false)
-              ],
-              // Nothing to add (e.g. the accounts came with a sync), so the flow skips it
-              !hasAccountAddingFlow,
-              false
+              [...afterPersonalizeRoutes, route(WEB_ROUTES.accountPicker, [route('/')])],
+              { disabled: isPersonalizeDisabled }
             )
           ]
-    const common = [
-      new RouteNode(WEB_ROUTES.keyStoreSetup, nextAccountPickerRoutes, hasPasswordSecret)
-    ]
+    const passwordSetup = route(WEB_ROUTES.keyStoreSetup, accountPickerRoutes, {
+      disabled: hasPasswordSecret,
+      isProtected: true
+    })
+    const importMethod = (name: string) => route(name, [passwordSetup])
 
-    return new RouteNode(
+    return route(
       WEB_ROUTES.getStarted,
       [
-        new RouteNode(
-          WEB_ROUTES.importExistingAccount,
-          [
-            ...(common && common[0] && common[0].disabled ? common[0].children : common),
-            new RouteNode(WEB_ROUTES.importPrivateKey, common, false, false),
-            new RouteNode(WEB_ROUTES.importSeedPhrase, common, false, false),
-            new RouteNode(WEB_ROUTES.ledgerConnect, common, false, false),
-            new RouteNode(WEB_ROUTES.trezorConnect, common, false, false),
-            new RouteNode(
-              WEB_ROUTES.safeImport,
-              [
-                new RouteNode(WEB_ROUTES.safeImportAddress, common, false, false),
-                new RouteNode(WEB_ROUTES.safeImportByOwner, common, false, false)
-              ],
-              false,
-              false
-            ),
-            new RouteNode(WEB_ROUTES.qrConnect, common, false, false),
-            new RouteNode(WEB_ROUTES.importSmartAccountJson, common, false, false),
-            // "Already an Ambire user" - a sync from the other app
-            new RouteNode(WEB_ROUTES.importFromMobile, common, false, false),
-            new RouteNode(MOBILE_ROUTES.importFromExtension, common, false, false)
-          ],
-          false,
-          false
-        ),
-        new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false)
+        route(WEB_ROUTES.importExistingAccount, [
+          // Once the password is set, the flow goes on past its step (the first enabled one)
+          ...(hasPasswordSecret ? accountPickerRoutes : [passwordSetup]),
+          importMethod(WEB_ROUTES.importPrivateKey),
+          importMethod(WEB_ROUTES.importSeedPhrase),
+          importMethod(WEB_ROUTES.ledgerConnect),
+          importMethod(WEB_ROUTES.trezorConnect),
+          route(WEB_ROUTES.safeImport, [
+            importMethod(WEB_ROUTES.safeImportAddress),
+            importMethod(WEB_ROUTES.safeImportByOwner)
+          ]),
+          importMethod(WEB_ROUTES.qrConnect),
+          importMethod(WEB_ROUTES.importSmartAccountJson),
+          // "Already an Ambire user" - a sync from the other app
+          importMethod(WEB_ROUTES.importFromMobile),
+          importMethod(MOBILE_ROUTES.importFromExtension)
+        ]),
+        importMethod(WEB_ROUTES.viewOnlyAccountAdder)
       ],
-      authStatus !== AUTH_STATUS.NOT_AUTHENTICATED,
-      false
+      { disabled: authStatus !== AUTH_STATUS.NOT_AUTHENTICATED }
     )
-  }, [
-    hasPasswordSecret,
-    authStatus,
-    isSetupComplete,
-    subType,
-    accounts?.length,
-    hasAccountAddingFlow
-  ])
+  }, [hasPasswordSecret, authStatus, isSetupComplete, subType, accountsCount, hasAccountAddingFlow])
 
-  const loadHistory = () => {
-    try {
-      const savedHistory = syncSessionStorage.get('onboarding_history')
-      if (savedHistory) return JSON.parse(savedHistory)
-    } catch (error) {
-      console.error('Failed to load navigation state:', error)
-    }
-    return []
-  }
-
-  const [history, setHistory] = useState<string[]>(loadHistory())
+  const [history, setHistory] = useState<string[]>(loadHistory)
 
   useEffect(() => {
-    syncSessionStorage.set('onboarding_history', JSON.stringify(history))
+    syncSessionStorage.set(ONBOARDING_HISTORY_STORAGE_KEY, JSON.stringify(history))
   }, [history])
-
-  const deepSearchRouteNode = useCallback(
-    (node: RouteNode, routeName: string): RouteNode | null => {
-      if (node.name === routeName) return node
-
-      if (node.children && node.children.length > 0) {
-        for (const child of node.children) {
-          const found = deepSearchRouteNode(child, routeName)
-          if (found) return found
-        }
-      }
-
-      return null
-    },
-    []
-  )
-
-  const findNextEnabledRoute = useCallback(
-    (nodes: RouteNode[], targetName?: OnboardingRoute): RouteNode | null => {
-      if (targetName) {
-        const node = nodes.find((n) => n.name === targetName)
-
-        if (!node) return null
-
-        if (!node.disabled) {
-          return node
-        }
-
-        return findNextEnabledRoute(node.children)
-      }
-
-      const firstEnabled = nodes.find((node) => !node.disabled)
-      if (firstEnabled) return firstEnabled
-
-      for (const node of nodes) {
-        if (node.children && node.children.length > 0) {
-          const deepEnabled = findNextEnabledRoute(node.children)
-          if (deepEnabled) return deepEnabled
-        }
-      }
-
-      return null
-    },
-    []
-  )
 
   /**
    * `navigate` is rebuilt on every navigation. Keeping the latest one in a ref is
@@ -269,21 +251,26 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     onboardingHistoryRef.current = history
   }, [history])
 
+  // `prevRoute` is stamped on every in-app navigation
+  const getCameFrom = useCallback(
+    () => (routerHistory.location.state as { prevRoute?: { pathname?: string } } | null)?.prevRoute,
+    [routerHistory]
+  )
+
   /**
    * The platform's own back - a swipe or Android's back on mobile, the browser's back
    * button on web - goes back without the breadcrumb knowing. Going back the same way keeps
    * the app's navigation in step with it: popping the screen from the native stack, or
-   * stepping back in the browser history when the app navigated here (`prevRoute` is
-   * stamped on every in-app navigation). Returns whether it went back.
+   * stepping back in the browser history when the app navigated here. Returns whether it
+   * went back.
    */
   const goBackThePlatformWay = useCallback(() => {
     if (getUiType().isMobileApp) return goBackInStack()
+    if (!getCameFrom()) return false
 
-    const hasInAppHistory = !!(routerHistory.location.state as { prevRoute?: unknown } | null)
-      ?.prevRoute
-    if (hasInAppHistory) routerHistory.go(-1)
-    return hasInAppHistory
-  }, [routerHistory])
+    routerHistory.go(-1)
+    return true
+  }, [routerHistory, getCameFrom])
 
   const goToNextRoute = useCallback(
     (routeName?: OnboardingRoute, routeState?: Record<string, unknown>) => {
@@ -291,9 +278,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
       let nextRoute: RouteNode | null = null
       if (routeName && ONBOARDING_WEB_ROUTES.includes(routeName)) {
-        nextRoute = deepSearchRouteNode(onboardingRoutesTree, routeName)
+        nextRoute = findRouteNode(onboardingRoutesTree, routeName)
       } else {
-        const currentNode = deepSearchRouteNode(onboardingRoutesTree, currentRoute)
+        const currentNode = findRouteNode(onboardingRoutesTree, currentRoute)
         if (!currentNode) return
         nextRoute = findNextEnabledRoute(currentNode.children, routeName)
       }
@@ -302,11 +289,12 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       // Going on to the screen the user came from (e.g. back to personalize from the picker
       // opened for more accounts) is going back to it, rather than stacking it again -
       // unless the navigation declares itself a step forward
-      const cameFrom = (
-        routerHistory.location.state as { prevRoute?: { pathname?: string } } | null
-      )?.prevRoute?.pathname
       const isDeclaredForward = routeState?.navDirection === FORWARD_NAVIGATION_STATE.navDirection
-      if (cameFrom === `/${nextRoute.name}` && !isDeclaredForward && goBackThePlatformWay()) {
+      if (
+        getCameFrom()?.pathname === `/${nextRoute.name}` &&
+        !isDeclaredForward &&
+        goBackThePlatformWay()
+      ) {
         setHistory((prevHistory) => prevHistory.slice(0, -1))
         return
       }
@@ -331,14 +319,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         prevHistory.includes(currentRoute) ? prevHistory : [...prevHistory, currentRoute]
       )
     },
-    [
-      routerHistory,
-      onboardingRoutesTree,
-      findNextEnabledRoute,
-      deepSearchRouteNode,
-      dispatch,
-      goBackThePlatformWay
-    ]
+    [routerHistory, onboardingRoutesTree, dispatch, getCameFrom, goBackThePlatformWay]
   )
 
   const goToPrevRoute = useCallback(() => {
@@ -352,84 +333,61 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     // The breadcrumb is read through its ref for the same reason as `navigate`
     // above. This one only ever runs from a back button, long after the render
     // that produced the value, so it is always the current one by then.
-    const currentOnboardingHistory = onboardingHistoryRef.current
-    const newHistory = [...currentOnboardingHistory]
+    const breadcrumb = onboardingHistoryRef.current
+    // The last step not skipped - or one no longer in the tree, which ends the flow
+    const prevIndex = breadcrumb.findLastIndex(
+      (name) => !findRouteNode(onboardingRoutesTree, name)?.disabled
+    )
+    const prevRoute =
+      prevIndex >= 0 ? findRouteNode(onboardingRoutesTree, breadcrumb[prevIndex]!) : null
 
-    if (!currentOnboardingHistory.length) {
-      navigateRef.current('/')
-      setHistory([])
+    if (prevRoute) {
+      // Onboarding walks its own route tree, so going back is a forward
+      // navigation as far as the history is concerned. `navDirection` tells
+      // the mobile card stack to play it as a back transition anyway.
+      navigateRef.current(prevRoute.name, {
+        state: { internal: true, ...BACK_NAVIGATION_STATE }
+      })
+      setHistory(breadcrumb.slice(0, prevIndex))
       return
     }
 
-    while (newHistory.length > 0) {
-      const prevRouteName = newHistory[newHistory.length - 1]
-      const prevRoute = deepSearchRouteNode(onboardingRoutesTree, prevRouteName!)
-      newHistory.pop()
-      if (!prevRoute) {
-        navigateRef.current('/')
-        setHistory([])
-        return
-      }
+    // Every step left is skipped, so there is nowhere to go back to
+    if (prevIndex < 0 && breadcrumb.length) return
 
-      if (!prevRoute.disabled) {
-        // Onboarding walks its own route tree, so going back is a forward
-        // navigation as far as the history is concerned. `navDirection` tells
-        // the mobile card stack to play it as a back transition anyway.
-        navigateRef.current(prevRoute.name, {
-          state: { internal: true, ...BACK_NAVIGATION_STATE }
-        })
-        setHistory(newHistory)
-        return
-      }
-    }
-  }, [deepSearchRouteNode, onboardingRoutesTree, goBackThePlatformWay])
+    navigateRef.current('/')
+    setHistory([])
+  }, [onboardingRoutesTree, goBackThePlatformWay])
 
-  const [onboardingInitialized, setOnboardingInitialized] = useState(false)
   const [triggeredHwWalletFlow, setTriggeredHwWalletFlow] = useState<HwWalletsNeedingRedirect>(null)
 
   useEffect(() => {
-    if (getUiType().isPopup) return
+    const isHwWalletNeedingRedirect = !!type && ['lattice', 'trezor'].includes(type)
+    if (!triggeredHwWalletFlow || !hasPickerInitParams || !isHwWalletNeedingRedirect) return
 
-    const currentRoute = path?.substring(1)
-    if (!currentRoute) return
+    setTriggeredHwWalletFlow(null)
+    goToNextRoute(isOnboardingRoute ? undefined : WEB_ROUTES.accountPicker)
+  }, [goToNextRoute, hasPickerInitParams, type, triggeredHwWalletFlow, isOnboardingRoute])
 
-    if (ONBOARDING_WEB_ROUTES.includes(currentRoute) && !onboardingInitialized) {
-      setOnboardingInitialized(true)
-    }
-
-    if (!ONBOARDING_WEB_ROUTES.includes(currentRoute) && onboardingInitialized) {
-      setOnboardingInitialized(false)
-    }
-  }, [onboardingInitialized, path])
-
-  useEffect(() => {
-    const shouldRedirectToHwWalletFlow =
-      initParams && type && ['lattice', 'trezor'].includes(type) && triggeredHwWalletFlow
-    if (shouldRedirectToHwWalletFlow) {
-      setTriggeredHwWalletFlow(null)
-
-      const currentRoute = path?.substring(1)
-      const nextRoute =
-        currentRoute && ONBOARDING_WEB_ROUTES.includes(currentRoute)
-          ? undefined
-          : WEB_ROUTES.accountPicker
-      goToNextRoute(nextRoute)
-    }
-  }, [goToNextRoute, initParams, type, triggeredHwWalletFlow, path])
+  // Whether the last route (the root aside) was an onboarding one. Never in the popup.
+  const wasOnOnboardingRouteRef = useRef(false)
 
   // Ends the account adding flow once the user leaves it - back to where it started, or
   // anywhere else. Only a move counts: flows prepare their accounts on their own screen,
   // and its own steps (the password setup, the picker and personalize) keep it.
   useEffect(() => {
-    if (!onboardingInitialized) return
-    if (path === prevPath) return
-    if (!hasAccountAddingFlow) return
+    const currentRoute = path?.substring(1)
+    if (!currentRoute) return
 
-    const currentRoute = path?.substring(1) || ''
-    if (!currentRoute || ACCOUNT_ADDING_FLOW_ROUTES.includes(currentRoute)) return
+    const wasOnOnboardingRoute = wasOnOnboardingRouteRef.current
+    wasOnOnboardingRouteRef.current =
+      !getUiType().isPopup && ONBOARDING_WEB_ROUTES.includes(currentRoute)
+
+    if (!wasOnOnboardingRoute || path === prevPath || !hasAccountAddingFlow) return
+    if (ACCOUNT_ADDING_FLOW_ROUTES.includes(currentRoute)) return
 
     accountPickerDispatch({ type: 'method', params: { method: 'reset', args: [] } })
-  }, [onboardingInitialized, path, prevPath, hasAccountAddingFlow, accountPickerDispatch])
+  }, [path, prevPath, hasAccountAddingFlow, accountPickerDispatch])
 
   // Some routes are protected and should only be accessed through internal navigation.
   // If a user attempts to access one of these routes directly via the URL bar,
@@ -438,21 +396,13 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     if (getUiType().isPopup || getUiType().isMobileApp) return
     const currentRoute = path?.substring(1)
     const prevRoute = prevPath?.substring(1)
-    if (!currentRoute) return
-    if (!ONBOARDING_WEB_ROUTES.includes(currentRoute)) return
-    const node = deepSearchRouteNode(onboardingRoutesTree, currentRoute)
+    if (!currentRoute || !prevRoute || !ONBOARDING_WEB_ROUTES.includes(currentRoute)) return
 
-    if (!node) {
-      !!prevRoute && navigate(prevRoute, { state: { internal: true } })
-      return
-    }
+    const node = findRouteNode(onboardingRoutesTree, currentRoute)
+    if (node && (!node.isProtected || params?.internal)) return
 
-    if (node.isProtected) {
-      if (!params || !params.internal) {
-        !!prevRoute && navigate(prevRoute, { state: { internal: true } })
-      }
-    }
-  }, [path, prevPath, params, deepSearchRouteNode, navigate, onboardingRoutesTree, history])
+    navigate(prevRoute, { state: { internal: true } })
+  }, [path, prevPath, params, navigate, onboardingRoutesTree])
 
   // Reset the onboarding history state in case we are no longer on an onboarding route
   useEffect(() => {
@@ -466,11 +416,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
     const handleBackButton = () => {
       const changedRoute = window.location.hash.replace('#/', '')
-      if (!history.length) return
+      if (!onboardingHistoryRef.current.length) return
       if (!ONBOARDING_WEB_ROUTES.includes(changedRoute)) return
-
-      const node = deepSearchRouteNode(onboardingRoutesTree, changedRoute)
-      if (!node?.disabled) return
+      if (!findRouteNode(onboardingRoutesTree, changedRoute)?.disabled) return
 
       goToPrevRoute()
     }
@@ -480,13 +428,13 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     return () => {
       window.removeEventListener('hashchange', handleBackButton)
     }
-  }, [goToPrevRoute, history, deepSearchRouteNode, onboardingRoutesTree])
+  }, [goToPrevRoute, onboardingRoutesTree])
 
   useEffect(() => {
     const currentRoute = path?.substring(1)
     if (!currentRoute) return
     if (!areAllControllerStatesLoaded) return
-    if (emailVaultStatuses?.recoverKeyStore !== 'INITIAL') return
+    if (recoverKeyStoreStatus !== 'INITIAL') return
 
     if (
       !hasPasswordSecret &&
@@ -501,7 +449,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     goToNextRoute,
     hasPasswordSecret,
     areAllControllerStatesLoaded,
-    emailVaultStatuses?.recoverKeyStore
+    recoverKeyStoreStatus
   ])
 
   const value = useMemo(

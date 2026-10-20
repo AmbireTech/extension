@@ -1,9 +1,8 @@
-import { isWeakMap } from 'lodash'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
-import AccountPickerController from '@ambire-common/controllers/accountPicker/accountPicker'
+import type AccountPickerController from '@ambire-common/controllers/accountPicker/accountPicker'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
@@ -11,16 +10,6 @@ import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNav
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-export interface Account {
-  type: string
-  address: string
-  brandName: string
-  alianName?: string
-  displayBrandName?: string
-  index?: number
-  balance?: number
-}
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
@@ -49,11 +38,9 @@ const useAccountPicker = () => {
   const [isReady, setIsReady] = useState(false)
   const [onImportPressed, setOnImportPressed] = useState(false)
 
-  const ACCOUNT_PICKER_PAGE_SIZE = useMemo(() => {
-    return subType === 'private-key' ? 1 : 5
-  }, [subType])
+  const ACCOUNT_PICKER_PAGE_SIZE = subType === 'private-key' ? 1 : 5
 
-  const setPage = React.useCallback(
+  const setPage = useCallback(
     (page = 1) => {
       accountPickerDispatch({
         type: 'method',

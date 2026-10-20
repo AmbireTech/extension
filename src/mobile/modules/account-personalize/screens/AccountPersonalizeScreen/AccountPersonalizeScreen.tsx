@@ -28,8 +28,16 @@ const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
-  const { control, fields, isLoading, hasPreparingFailed, isAdding, handleProceed, addMoreSource } =
-    useAccountPersonalize()
+  const {
+    control,
+    fields,
+    isLoading,
+    isAdding,
+    handleProceed,
+    title,
+    noAccountsText,
+    addMoreText
+  } = useAccountPersonalize()
 
   return (
     <MobileLayoutContainer
@@ -44,15 +52,11 @@ const AccountPersonalizeScreen = () => {
               text={isAdding ? t('Adding...') : t('Proceed')}
               disabled={!fields.length || isAdding}
             />
-            {!!addMoreSource && (
+            {!!addMoreText && (
               <Button
                 testID="add-more-accounts-btn"
                 type="outline"
-                text={
-                  addMoreSource === 'hw'
-                    ? t('Add more accounts from this hardware wallet')
-                    : t('Add more accounts from this recovery phrase')
-                }
+                text={addMoreText}
                 // Adding more accounts is a step forward, even when the picker
                 // is the screen this flow arrived from (hardware wallets).
                 onPress={() => goToNextRoute(WEB_ROUTES.accountPicker, FORWARD_NAVIGATION_STATE)}
@@ -80,15 +84,7 @@ const AccountPersonalizeScreen = () => {
         withBackButton={!isLoading}
         headerStyle={HEADER_STYLE}
         onBackButtonPress={goToPrevRoute}
-        title={
-          isLoading
-            ? ' '
-            : !fields.length
-              ? t('No new accounts added')
-              : fields.length > 1
-                ? t('Personalize accounts')
-                : t('Personalize account')
-        }
+        title={title}
         withScroll
       >
         {isLoading ? (
@@ -102,29 +98,27 @@ const AccountPersonalizeScreen = () => {
             <DotsLoadingAnimation />
           </View>
         ) : (
-          <View testID="personalize-accounts-header" style={[flexbox.alignCenter, spacings.mbXl]}>
-            <EditAccountIcon />
-          </View>
-        )}
-        {isLoading ? null : fields.length ? (
-          fields.map((field, index) => (
-            <AccountPersonalizeCard
-              key={field.id}
-              control={control}
-              index={index}
-              account={field}
-              hasBottomSpacing={index !== fields.length - 1}
-              disableEdit={isAdding}
-            />
-          ))
-        ) : (
-          // Preparing failed, every account was deselected on the picker, or the prepared
-          // accounts are gone (e.g. the app was restarted) - nothing to add, only to go back from
-          <Text appearance="secondaryText" weight="medium" style={text.center}>
-            {hasPreparingFailed
-              ? t("We couldn't load your accounts. Please go back and try again.")
-              : t('There are no accounts to add. Go back to select the accounts you want to add.')}
-          </Text>
+          <>
+            <View testID="personalize-accounts-header" style={[flexbox.alignCenter, spacings.mbXl]}>
+              <EditAccountIcon />
+            </View>
+            {fields.length ? (
+              fields.map((field, index) => (
+                <AccountPersonalizeCard
+                  key={field.id}
+                  control={control}
+                  index={index}
+                  account={field}
+                  hasBottomSpacing={index !== fields.length - 1}
+                  disableEdit={isAdding}
+                />
+              ))
+            ) : (
+              <Text appearance="secondaryText" weight="medium" style={text.center}>
+                {noAccountsText}
+              </Text>
+            )}
+          </>
         )}
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
