@@ -246,7 +246,8 @@ const Main = ({
         </View>
       )}
       {!!signMessageState.banners?.length && (
-        <View style={spacings.mbLg}>
+        // On mobile the message type badge above takes no layout space, so the banners clear it
+        <View style={[isMobile && spacings.mt, spacings.mbLg]}>
           {signMessageState.banners.map((banner) => (
             <SafetyChecksBanner
               key={banner.id}
@@ -279,7 +280,9 @@ const Main = ({
           {isSafeNotDeployed && (
             <Alert
               type="error"
-              title="Safe account not enabled on this network. Please activate it from Safe Global"
+              title={t(
+                "Your Safe account isn't active on this network yet. Confirm its activation request first, then you can sign this message."
+              )}
               style={spacings.mt}
             />
           )}

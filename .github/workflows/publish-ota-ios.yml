@@ -17,6 +17,8 @@ jobs:
   publish-ota-ios:
     name: Publish iOS OTA bundle to Stallion
     uses: ./.github/workflows/_publish-ota.yml
+    permissions:
+      contents: write # Lets the reusable workflow attach the source map to this repo's release
     with:
       platform: ios
       runner: macos-15

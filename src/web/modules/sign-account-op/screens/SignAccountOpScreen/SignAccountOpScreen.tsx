@@ -16,6 +16,7 @@ import ActionHeader from '@common/modules/action-requests/components/ActionHeade
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
+import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
@@ -33,7 +34,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
-import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 import getStyles from './styles'
@@ -124,8 +124,10 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     signButtonText,
+    holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
+    holdToProceedButtonType,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
@@ -157,7 +159,8 @@ const SignAccountOpScreen = () => {
     safeAccountTabState.requestId === accountOpRequest?.id
       ? safeAccountTabState.activeTab
       : 'overview'
-  const shouldUseSafeAccountTabs = !!signAccountOpState?.account.safeCreation
+  const shouldUseSafeAccountTabs =
+    !!signAccountOpState?.account.safeCreation && !signAccountOpState.accountOp.meta?.isSafeDeploy
   const isOverviewTabActive = !shouldUseSafeAccountTabs || activeSafeAccountTab === 'overview'
 
   const handleSafeAccountTabChange = useCallback(
@@ -272,15 +275,16 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
-  const holdToProceedButtonType = useDappVerificationHoldButtonType(signAccountOpState?.banners)
 
   const footerContent = (
     <>
       {!estimationFailed &&
       signAccountOpState?.canBroadcast &&
       signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-        // Like on mobile, the top spacing comes from the fee header in Estimation
-        <View style={isNarrowWebLayout ? spacings.mbTy : spacings.mb}>
+        // Like on mobile, the compact layout keeps a wider gap between the fee and the buttons
+        <View
+          style={isNarrowWebLayout ? { marginBottom: COMPACT_FEE_TO_BUTTONS_SPACING } : spacings.mb}
+        >
           <Estimation
             signAccountOpState={signAccountOpState}
             disabled={isSignLoading}
@@ -311,7 +315,7 @@ const SignAccountOpScreen = () => {
             signed={signAccountOpState.accountOp.signed || []}
             importedKeys={signAccountOpState.accountKeyStoreKeys}
             threshold={signAccountOpState.threshold}
-            style={isNarrowWebLayout ? { ...spacings.ptSm, ...spacings.mbMd } : spacings.mb}
+            style={isNarrowWebLayout ? spacings.mbXl : spacings.mb}
           />
         )}
 
@@ -334,6 +338,7 @@ const SignAccountOpScreen = () => {
         inProgressButtonText={primaryButtonText}
         buttonText={signButtonText}
         shouldHoldToProceed={shouldHoldToProceed}
+        holdToProceedButtonText={holdToSignButtonText}
         shouldRejectOnchain={shouldRejectOnchain}
         isRejectDisabled={isCancelDisabled}
         holdToProceedButtonType={holdToProceedButtonType}

@@ -9,6 +9,7 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import { ROUTES } from '@common/modules/router/constants/common'
+import useCowSwapAnnouncement from '@common/modules/swap-and-bridge/hooks/useCowSwapAnnouncement'
 import flexbox from '@common/styles/utils/flexbox'
 
 import RouteItem from './RouteItem'
@@ -17,6 +18,7 @@ import { RouteItemType } from './RouteItem/RouteItem'
 const Routes = () => {
   const { t } = useTranslation()
   const { isNarrowWebLayout } = useCompactLayout()
+  const { isCowSwapAnnouncementVisible } = useCowSwapAnnouncement()
 
   const routeItems: RouteItemType[] = [
     {
@@ -45,7 +47,8 @@ const Routes = () => {
       label: t('Swap & Bridge'),
       route: ROUTES.swapAndBridge,
       scale: 0.95,
-      scaleOnHover: 1
+      scaleOnHover: 1,
+      isNew: isCowSwapAnnouncementVisible
     },
     {
       testID: 'dashboard-button-explore',

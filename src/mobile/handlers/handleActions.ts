@@ -77,7 +77,7 @@ export const handleActions = async (
       }
 
       if (ctrl && typeof ctrl[method] === 'function') {
-        ctrl[method](...args)
+        await ctrl[method](...args)
       }
       break
     }
@@ -250,7 +250,7 @@ export const handleActions = async (
       if (!keystoreSavedSeed) return
 
       const keyIterator = new KeyIterator(keystoreSavedSeed.seed, keystoreSavedSeed.seedPassphrase)
-      await mainCtrl.accountPicker.setInitParams({
+      mainCtrl.accountPicker.setInitParams({
         keyIterator,
         hdPathTemplate: keystoreSavedSeed.hdPathTemplate
       })

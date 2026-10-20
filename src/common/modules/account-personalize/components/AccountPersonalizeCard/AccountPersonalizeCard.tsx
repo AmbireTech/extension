@@ -5,7 +5,7 @@ import { View } from 'react-native'
 import { Account } from '@ambire-common/interfaces/account'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
-import AccountKeyIcons from '@common/components/AccountKeyIcons'
+import AccountKeysBadge from '@common/components/AccountKeysBadge'
 import Avatar from '@common/components/Avatar'
 import EditableAccountName from '@common/components/EditableAccountName'
 import { isMobile, isWeb } from '@common/config/env'
@@ -75,7 +75,7 @@ const AccountPersonalizeCard = ({
                   />
                 )}
               />
-              {/* On mobile the key icons and badges move to the row below the address */}
+              {/* On mobile the keys badge and the other badges move to the row below the address */}
               {isWeb && <AccountBadges accountData={account} accountKeys={accountKeys} />}
             </View>
             <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
@@ -95,16 +95,12 @@ const AccountPersonalizeCard = ({
                   { columnGap: SPACING_TY }
                 ]}
               >
-                <AccountKeyIcons
-                  isExtended
-                  account={account}
-                  accountKeys={accountKeys}
-                  withContainerSpacing={false}
-                />
+                <AccountKeysBadge account={account} accountKeys={accountKeys} />
                 <AccountBadges
                   accountData={account}
                   accountKeys={accountKeys}
                   withSpacing={false}
+                  withViewOnly={false}
                 />
               </View>
             )}

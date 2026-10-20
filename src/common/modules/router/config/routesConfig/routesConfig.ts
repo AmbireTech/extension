@@ -88,6 +88,11 @@ const routesConfig: RouteConfig = {
       web: i18n.t('Connect Trezor')
     })
   },
+  [ROUTES.oneKeyConnect]: {
+    route: ROUTES.oneKeyConnect,
+    title: Platform.select({ default: i18n.t('Welcome to Ambire Wallet') }),
+    name: Platform.select({ default: i18n.t('Connect OneKey') })
+  },
   [ROUTES.authEmailAccount]: {
     route: ROUTES.authEmailAccount,
     title: Platform.select({
@@ -441,18 +446,18 @@ const routesConfig: RouteConfig = {
     title: Platform.select({ default: i18n.t('Camera permission') }),
     name: Platform.select({ default: i18n.t('Camera permission') })
   },
-  [ROUTES.exportAccountsToMobile]: {
-    route: ROUTES.exportAccountsToMobile,
-    title: Platform.select({ default: i18n.t('Export accounts to mobile') }),
-    name: Platform.select({ default: i18n.t('Export accounts to mobile') })
+  [ROUTES.exportToMobile]: {
+    route: ROUTES.exportToMobile,
+    title: Platform.select({ default: i18n.t('Export to mobile') }),
+    name: Platform.select({ default: i18n.t('Export to mobile') })
   },
-  [ROUTES.importAccountsFromMobile]: {
-    route: ROUTES.importAccountsFromMobile,
+  [ROUTES.importFromMobile]: {
+    route: ROUTES.importFromMobile,
     title: Platform.select({ default: i18n.t('Import from mobile') }),
     name: Platform.select({ default: i18n.t('Import from mobile') })
   },
-  [ROUTES.importAccountsFromExtension]: {
-    route: ROUTES.importAccountsFromExtension,
+  [ROUTES.importFromExtension]: {
+    route: ROUTES.importFromExtension,
     title: Platform.select({ default: i18n.t('Import from extension') }),
     name: Platform.select({ default: i18n.t('Import from extension') })
   }

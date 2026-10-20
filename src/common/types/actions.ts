@@ -76,6 +76,10 @@ type MainControllerAccountPickerInitLedgerAction = {
 type MainControllerAccountPickerInitTrezorAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR'
 }
+type MainControllerAccountPickerInitOneKeyAction = {
+  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY'
+  params: { preferredDeviceId?: string }
+}
 type MainControllerAccountPickerInitLatticeAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
 }
@@ -151,6 +155,23 @@ type ImportSmartAccountJson = {
 
 type OpenExtensionPopupAction = {
   type: 'OPEN_EXTENSION_POPUP'
+  params?: {
+    /**
+     * Set by the UI on Firefox once it has opened the sidebar itself (only the UI can - see
+     * useOpenWalletFromClick). On Firefox the background trusts this over its stored side panel
+     * mode, so the two can never disagree about what was opened.
+     */
+    hasOpenedFirefoxSidebar?: boolean
+  }
+}
+
+/**
+ * Sent once by a side panel, right after it connects, so app requests can be shown in the panel of
+ * the app's own window (until then the panel doesn't count as open for any specific window).
+ */
+type SetSidePanelWindowIdAction = {
+  type: 'SET_SIDE_PANEL_WINDOW_ID'
+  params: { windowId: number }
 }
 
 type WindowRemovedAction = {
@@ -266,6 +287,7 @@ export type Action =
   | MainControllerAccountPickerInitNfcWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
+  | MainControllerAccountPickerInitOneKeyAction
   | MainControllerAccountPickerInitLedgerAction
   | MainControllerAccountPickerInitFromSavedSeedPhraseAction
   | HandshakeAction
@@ -278,6 +300,7 @@ export type Action =
   | ChangeCurrentDappNetworkAction
   | ImportSmartAccountJson
   | OpenExtensionPopupAction
+  | SetSidePanelWindowIdAction
   | InitAllControllersAction
   | WindowRemovedAction
   | GetAllControllerNamesAction

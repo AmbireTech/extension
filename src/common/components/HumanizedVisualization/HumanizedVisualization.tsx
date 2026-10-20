@@ -8,6 +8,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import HumanizedVisualizationItem from './HumanizedVisualizationItem'
 
+import type { TextWeight } from '@common/components/Text'
+
 import type { FC } from 'react'
 import type { ViewStyle } from 'react-native'
 
@@ -25,6 +27,9 @@ interface Props {
   style?: StyleProp<ViewStyle>
   erc7730Mode?: 'summary' | 'description'
   showErc7730DescriptionTitle?: boolean
+  erc7730TitleTextSize?: number
+  erc7730LabelTextSize?: number
+  erc7730LabelWeight?: TextWeight
   hideNestedErc7730Rows?: boolean
   hideMobileErc7730Title?: boolean
   isErc7730TransactionSummaryLayout?: boolean
@@ -55,6 +60,9 @@ const HumanizedVisualization: FC<Props> = ({
   style,
   erc7730Mode = 'summary',
   showErc7730DescriptionTitle = false,
+  erc7730TitleTextSize,
+  erc7730LabelTextSize,
+  erc7730LabelWeight,
   hideNestedErc7730Rows = false,
   hideMobileErc7730Title = false,
   isErc7730TransactionSummaryLayout = false,
@@ -126,6 +134,9 @@ const HumanizedVisualization: FC<Props> = ({
               imageSize={imageSize}
               erc7730Mode={erc7730Mode}
               showErc7730DescriptionTitle={showErc7730DescriptionTitle}
+              erc7730TitleTextSize={erc7730TitleTextSize}
+              erc7730LabelTextSize={erc7730LabelTextSize}
+              erc7730LabelWeight={erc7730LabelWeight}
               hideNestedErc7730Rows={hideNestedErc7730Rows}
               hideMobileErc7730Title={hideMobileErc7730Title}
               isErc7730TransactionSummaryLayout={isErc7730TransactionSummaryLayout}

@@ -46,6 +46,18 @@ describe('getDappInteractions Safe cancellation', () => {
     expect(interactions[0]?.safeNonce).toBe(0n)
   })
 
+  test.each([
+    [true, 'fallback:delegation', 'Enable smart settings'],
+    [false, 'fallback:revoke', 'Revoke delegation']
+  ])(
+    'does not treat an EIP-7702 delegation change (setDelegation: %s) as a cancellation',
+    (setDelegation, id, name) => {
+      const interactions = getDappInteractions(buildSubmittedAccountOp({ meta: { setDelegation } }))
+
+      expect(interactions).toEqual([{ id, name, iconType: 'ambire' }])
+    }
+  )
+
   test('treats a call that carries a value as a regular send, not a cancellation', () => {
     const interactions = getDappInteractions(
       buildSubmittedAccountOp({ calls: [{ to: ZeroAddress, value: 1n, data: '0x' }] })
@@ -56,5 +68,21 @@ describe('getDappInteractions Safe cancellation', () => {
       name: 'Send',
       iconType: 'send'
     })
+  })
+})
+
+describe('getDappInteractions Safe deployment', () => {
+  test('shows a Safe deployment with the Safe account icon', () => {
+    const interactions = getDappInteractions(
+      buildSubmittedAccountOp({ meta: { isSafeDeploy: true } })
+    )
+
+    expect(interactions).toEqual([
+      {
+        id: 'fallback:safeDeploy',
+        name: 'Activate Safe account',
+        iconType: 'safe'
+      }
+    ])
   })
 })
