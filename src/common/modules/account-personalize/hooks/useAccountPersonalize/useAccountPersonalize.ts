@@ -12,6 +12,9 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const ADD_ACCOUNTS_TIMEOUT_MS = 60_000
 // Finding the next unused account derives the accounts page by page
 const PREPARE_ACCOUNTS_TIMEOUT_MS = 30_000
+// The loading state stays up at least this long, so it reads as a step rather than a
+// flicker where preparing is quick (the extension) or already done (e.g. hardware wallets)
+const MIN_LOADING_MS = 1000
 
 const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
   state.readyToAddAccounts
@@ -34,6 +37,7 @@ export default function useAccountPersonalize() {
   const { state: initParams } = useController('AccountPickerController', selectInitParams)
   const { state: isInitialized } = useController('AccountPickerController', selectIsInitialized)
   const [prepareResult, setPrepareResult] = useState<'done' | 'failed' | null>(null)
+  const [hasMinLoadingPassed, setHasMinLoadingPassed] = useState(false)
   const hasStartedPreparing = useRef(false)
   const [isAdding, setIsAdding] = useState(false)
   // Kept once added: where the flow ends in the popup rather than here (web tabs), the
@@ -66,7 +70,14 @@ export default function useAccountPersonalize() {
       })
   }, [initParams, isInitialized, readyToAddAccounts.length, accountPickerDispatchAndWait])
 
+  useEffect(() => {
+    const timeout = setTimeout(() => setHasMinLoadingPassed(true), MIN_LOADING_MS)
+
+    return () => clearTimeout(timeout)
+  }, [])
+
   const isPreparing = !!initParams && !readyToAddAccounts.length && !prepareResult
+  const isLoading = !hasMinLoadingPassed || isPreparing
 
   // The prepared accounts change when more are added from the picker. The names the
   // user gave the ones already there are kept.
@@ -116,13 +127,13 @@ export default function useAccountPersonalize() {
   return {
     control,
     fields,
-    isPreparing,
+    isLoading,
     hasPreparingFailed: prepareResult === 'failed',
     isAdding,
     addedAccounts,
     handleProceed,
     // Only a recovery phrase or a hardware wallet has more accounts to pick from
     addMoreSource:
-      !addedAccounts && !isPreparing && (subType === 'seed' || subType === 'hw') ? subType : null
+      !addedAccounts && !isLoading && (subType === 'seed' || subType === 'hw') ? subType : null
   }
 }

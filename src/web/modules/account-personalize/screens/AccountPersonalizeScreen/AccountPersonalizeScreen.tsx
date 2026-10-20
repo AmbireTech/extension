@@ -28,6 +28,9 @@ import getStyles from './styles'
 
 export const CARD_WIDTH = 400
 
+// As tall as the header's back button (28), also while the button is hidden
+const HEADER_STYLE = { minHeight: 28 }
+
 const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
@@ -35,7 +38,7 @@ const AccountPersonalizeScreen = () => {
   const {
     control,
     fields,
-    isPreparing,
+    isLoading,
     hasPreparingFailed,
     isAdding,
     addedAccounts,
@@ -90,11 +93,20 @@ const AccountPersonalizeScreen = () => {
         <Panel
           type="onboarding"
           spacingsSize="small"
-          withBackButton
+          // Only the loading state shows while loading - no way back, no title yet. The header
+          // stays, as tall as with the back button, so nothing moves once it is loaded.
+          withBackButton={!isLoading}
+          titleContainerStyle={HEADER_STYLE}
           onBackButtonPress={goToPrevRoute}
-          title={fields.length > 1 ? t('Personalize accounts') : t('Personalize account')}
+          title={
+            isLoading
+              ? ' '
+              : fields.length > 1
+                ? t('Personalize accounts')
+                : t('Personalize account')
+          }
         >
-          {isPreparing ? (
+          {isLoading ? (
             <View style={flexbox.alignCenter}>
               <View style={spacings.mbXl}>
                 <AccountsLoadingAnimation />

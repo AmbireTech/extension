@@ -168,6 +168,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   onBackButtonPress,
   rightIcon,
   title,
+  headerStyle,
   headerOverlay,
   ...rest
 }) => {
@@ -189,7 +190,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
     return (
       <View style={[flexbox.flex1, withHorizontalPadding && spacings.phSm]}>
         {hasHeader && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg, headerStyle]}>
             {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
             {!!withBackButton && (
@@ -226,7 +227,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
       style={[flexbox.flex1, withHorizontalPadding && spacings.phSm, contentContainerStyle]}
     >
       {hasHeader && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg, headerStyle]}>
           {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
           {!!withBackButton && (

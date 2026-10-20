@@ -21,24 +21,20 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
+// As tall as the header's back button (28), also while the button is hidden
+const HEADER_STYLE = { minHeight: 28 }
+
 const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
-  const {
-    control,
-    fields,
-    isPreparing,
-    hasPreparingFailed,
-    isAdding,
-    handleProceed,
-    addMoreSource
-  } = useAccountPersonalize()
+  const { control, fields, isLoading, hasPreparingFailed, isAdding, handleProceed, addMoreSource } =
+    useAccountPersonalize()
 
   return (
     <MobileLayoutContainer
       footer={
-        !isPreparing && (
+        !isLoading && (
           <>
             <Button
               testID="button-proceed"
@@ -79,12 +75,17 @@ const AccountPersonalizeScreen = () => {
       }
     >
       <MobileLayoutWrapperMainContent
-        withBackButton
+        // Only the loading state shows while loading - no way back, no title yet. The header
+        // stays, as tall as with the back button, so nothing moves once it is loaded.
+        withBackButton={!isLoading}
+        headerStyle={HEADER_STYLE}
         onBackButtonPress={goToPrevRoute}
-        title={fields.length > 1 ? t('Personalize accounts') : t('Personalize account')}
+        title={
+          isLoading ? ' ' : fields.length > 1 ? t('Personalize accounts') : t('Personalize account')
+        }
         withScroll
       >
-        {isPreparing ? (
+        {isLoading ? (
           <View style={flexbox.alignCenter}>
             <View style={spacings.mbLg}>
               <AccountsLoadingAnimation />
@@ -99,7 +100,7 @@ const AccountPersonalizeScreen = () => {
             <EditAccountIcon />
           </View>
         )}
-        {isPreparing ? null : fields.length ? (
+        {isLoading ? null : fields.length ? (
           fields.map((field, index) => (
             <AccountPersonalizeCard
               key={field.id}
