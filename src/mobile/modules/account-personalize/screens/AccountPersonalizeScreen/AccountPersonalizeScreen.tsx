@@ -81,7 +81,13 @@ const AccountPersonalizeScreen = () => {
         headerStyle={HEADER_STYLE}
         onBackButtonPress={goToPrevRoute}
         title={
-          isLoading ? ' ' : fields.length > 1 ? t('Personalize accounts') : t('Personalize account')
+          isLoading
+            ? ' '
+            : !fields.length
+              ? t('No new accounts added')
+              : fields.length > 1
+                ? t('Personalize accounts')
+                : t('Personalize account')
         }
         withScroll
       >
@@ -112,12 +118,12 @@ const AccountPersonalizeScreen = () => {
             />
           ))
         ) : (
-          // Preparing failed, or the prepared accounts are gone (e.g. the app was restarted),
-          // so there is nothing to add - only to go back from
+          // Preparing failed, every account was deselected on the picker, or the prepared
+          // accounts are gone (e.g. the app was restarted) - nothing to add, only to go back from
           <Text appearance="secondaryText" weight="medium" style={text.center}>
             {hasPreparingFailed
               ? t("We couldn't load your accounts. Please go back and try again.")
-              : t('There are no accounts to add. Please go back and start again.')}
+              : t('There are no accounts to add. Go back to select the accounts you want to add.')}
           </Text>
         )}
       </MobileLayoutWrapperMainContent>

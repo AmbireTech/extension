@@ -15,6 +15,9 @@ const PREPARE_ACCOUNTS_TIMEOUT_MS = 30_000
 // The loading state stays up at least this long, so it reads as a step rather than a
 // flicker where preparing is quick (the extension) or already done (e.g. hardware wallets)
 const MIN_LOADING_MS = 1000
+// ...and at most this long while waiting for accounts, after which the screen shows that
+// there are none (and fills in, should they still arrive)
+const MAX_LOADING_MS = 5000
 
 const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
   state.readyToAddAccounts
@@ -38,6 +41,7 @@ export default function useAccountPersonalize() {
   const { state: isInitialized } = useController('AccountPickerController', selectIsInitialized)
   const [prepareResult, setPrepareResult] = useState<'done' | 'failed' | null>(null)
   const [hasMinLoadingPassed, setHasMinLoadingPassed] = useState(false)
+  const [hasMaxLoadingPassed, setHasMaxLoadingPassed] = useState(false)
   const hasStartedPreparing = useRef(false)
   const [isAdding, setIsAdding] = useState(false)
   // Kept once added: where the flow ends in the popup rather than here (web tabs), the
@@ -51,11 +55,14 @@ export default function useAccountPersonalize() {
 
   // The flows that come straight here (Create, a recovery phrase, a private key) only set the
   // picker up, so the screen opens at once and the account is selected and prepared here,
-  // while it shows that it is loading. `initParams` is a gate, not a trigger: a new object
-  // arrives with every state update, so the ref keeps it from running twice.
+  // while it shows that it is loading. Decided once, when the screen opens: a picker set up
+  // already (hardware wallets, or back from the picker) has prepared what there is - even
+  // nothing, when all accounts were deselected there.
+  const [shouldPrepare] = useState(
+    () => !!initParams && !isInitialized && !readyToAddAccounts.length
+  )
   useEffect(() => {
-    if (hasStartedPreparing.current) return
-    if (!initParams || isInitialized || readyToAddAccounts.length) return
+    if (!shouldPrepare || hasStartedPreparing.current) return
 
     hasStartedPreparing.current = true
     accountPickerDispatchAndWait(
@@ -68,16 +75,20 @@ export default function useAccountPersonalize() {
         console.error('Failed to prepare the accounts', error)
         setPrepareResult('failed')
       })
-  }, [initParams, isInitialized, readyToAddAccounts.length, accountPickerDispatchAndWait])
+  }, [shouldPrepare, accountPickerDispatchAndWait])
 
   useEffect(() => {
-    const timeout = setTimeout(() => setHasMinLoadingPassed(true), MIN_LOADING_MS)
+    const minTimeout = setTimeout(() => setHasMinLoadingPassed(true), MIN_LOADING_MS)
+    const maxTimeout = setTimeout(() => setHasMaxLoadingPassed(true), MAX_LOADING_MS)
 
-    return () => clearTimeout(timeout)
+    return () => {
+      clearTimeout(minTimeout)
+      clearTimeout(maxTimeout)
+    }
   }, [])
 
-  const isPreparing = !!initParams && !readyToAddAccounts.length && !prepareResult
-  const isLoading = !hasMinLoadingPassed || isPreparing
+  const isPreparing = shouldPrepare && !readyToAddAccounts.length && !prepareResult
+  const isLoading = !hasMinLoadingPassed || (isPreparing && !hasMaxLoadingPassed)
 
   // The prepared accounts change when more are added from the picker. The names the
   // user gave the ones already there are kept.
