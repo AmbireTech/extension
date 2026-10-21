@@ -51,9 +51,9 @@
     "expo:install": "expo install",
     "profile:js": "node scripts/profile-js.mjs",
     "test": "jest --config=./jest.config.js --passWithNoTests",
-    "extension:type:check": "tsc --noEmit --project tsconfig.typecheck-extension.json",
-    "extension:type:check-new": "yarn extension:type:check | yarn tsc-baseline check",
-    "extension:type:update": "yarn extension:type:check | yarn tsc-baseline save && node scripts/patchBaseline.js",
+    "type:check": "tsc --noEmit --project tsconfig.typecheck.json",
+    "type:check-new": "yarn type:check | yarn tsc-baseline check",
+    "type:update": "yarn type:check | yarn tsc-baseline save && node scripts/patchBaseline.js",
     "setup": "sh ./scripts/setup.sh",
     "setup:ci": "yarn install --frozen-lockfile && yarn allow-scripts && yarn patch-package"
   },
