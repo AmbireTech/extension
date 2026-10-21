@@ -12,6 +12,8 @@ type Params = {
   recipientAddress: string
   recipientDomain: string | undefined
   executionType: RequestExecutionType
+  /** Seed id of the Privacy Pools account to send a token to, which has no address. */
+  privacyPoolsSeedId?: string
 }
 
 /**
@@ -25,7 +27,8 @@ const getTransferBuildRequest = ({
   amountInFiat,
   recipientAddress,
   recipientDomain,
-  executionType
+  executionType,
+  privacyPoolsSeedId
 }: Params): BuildRequest | null => {
   if (selectedNft) {
     return {
@@ -44,7 +47,8 @@ const getTransferBuildRequest = ({
       selectedToken,
       recipientAddress,
       executionType,
-      recipientDomain
+      recipientDomain,
+      privacyPoolsSeedId
     }
   }
 }

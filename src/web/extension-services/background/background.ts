@@ -19,6 +19,7 @@ import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAc
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
+import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
 import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
@@ -84,10 +85,16 @@ import {
   Port,
   PortMessenger
 } from '@web/extension-services/messengers'
+import {
+  canUseOffscreenProver,
+  createOffscreenProverFactory
+} from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import OneKeyController from '@web/modules/hardware-wallet/controllers/OneKeyController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
+import OneKeySigner from '@web/modules/hardware-wallet/libs/OneKeySigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
@@ -157,6 +164,8 @@ function stateDebug(
  */
 const IDB_OPEN_ATTEMPTS = 2
 
+const PRIVACY_POOLS_CONTROLLER_NAME = 'PrivacyPoolsController'
+
 let isInitialized = false
 const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
 let mainCtrl: MainController
@@ -168,6 +177,7 @@ let autoLockCtrl: AutoLockController
 let pm: PortMessenger
 let ledgerCtrl: LedgerController
 let trezorCtrl: TrezorController
+let oneKeyCtrl: OneKeyController
 let qrCtrl: QrHardwareController
 let eventEmitterRegistry: EventEmitterRegistryController
 
@@ -182,6 +192,25 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
     beforeSend(event, hint) {
       const processedEvent = processCrashReportEvent(event, hint.originalException)
       if (!processedEvent) return null
+
+      // Privacy Pools errors, their logs and the requests before them can hold the recipient,
+      // amounts or notes, and the user ID would link them to the install, so only the error's
+      // type and stack are sent. Any error is treated so while a Privacy Pools account is
+      // selected, as it can come from any controller. A deposit runs from a regular account,
+      // so the controller's own errors are treated so too.
+      const isPrivacyPoolsEvent =
+        mainCtrl?.selectedAccount.selectedType === 'privacyPools' ||
+        processedEvent.extra?.controllerName === PRIVACY_POOLS_CONTROLLER_NAME
+      if (isPrivacyPoolsEvent) {
+        delete processedEvent.breadcrumbs
+        delete processedEvent.user
+        delete processedEvent.contexts
+        delete processedEvent.message
+        delete processedEvent.extra
+        processedEvent.exception?.values?.forEach((exception) => {
+          delete exception.value
+        })
+      }
 
       // We don't want to miss errors that occur before the controllers are initialized.
       // processCrashReportEvent has already scrubbed it -- only the crashAnalyticsEnabled gate below,
@@ -298,6 +327,7 @@ const init = async () => {
     () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
   )
   trezorCtrl = new TrezorController(windowManager as UiManager['window'])
+  oneKeyCtrl = new OneKeyController()
   const latticeCtrl = new LatticeController()
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
@@ -479,12 +509,23 @@ const init = async () => {
 
   const idb = await openIdbWithRetry()
 
+  // Copied at build time and served same-origin - see webpack/extension.js
+  const privacyPoolsCircuitsBaseUrl = browser.runtime.getURL('privacy-pools-circuits/')
+
   mainCtrl = new MainController({
     eventEmitterRegistry,
     appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,
+    privacyPoolsCircuitsBaseUrl,
+    // On Chrome, in an offscreen document using every core; elsewhere or if it fails, right here
+    privacyPoolsProverFactory: canUseOffscreenProver()
+      ? createOffscreenProverFactory({
+          fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
+          onError: (error) => captureBackgroundException(error)
+        })
+      : undefined,
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
@@ -498,12 +539,14 @@ const init = async () => {
       // TODO: there is a mismatch in hw signer types, it's not a big deal
       ledger: LedgerSigner,
       trezor: TrezorSigner,
+      onekey: OneKeySigner,
       lattice: LatticeSigner,
       qr: QrHardwareSigner
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
+      onekey: oneKeyCtrl,
       lattice: latticeCtrl,
       qr: qrCtrl
     } as any,
@@ -928,7 +971,7 @@ if ('hid' in navigator) navigator.hid.addEventListener('disconnect', () => {})
 try {
   browser.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
     if (newState !== 'active') return
-    if (!mainCtrl || !mainCtrl.selectedAccount.account) {
+    if (!mainCtrl || !mainCtrl.selectedAccount.selectedType) {
       console.error(
         'Idle state changed to active but mainCtrl or selected account is not initialized',
         mainCtrl

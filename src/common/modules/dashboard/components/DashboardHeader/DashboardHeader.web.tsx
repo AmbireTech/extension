@@ -25,11 +25,11 @@ const { isPopup, isSidePanel } = getUiType()
 
 const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
-const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.account
+const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.selectedType
 
 const DashboardHeader = () => {
-  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
   const [bindBurgerAnim, burgerAnimStyle] = useHover({ preset: 'opacityInverted', duration: 50 })
   const [bindNetworkStatusesAnim, networkStatusesAnimStyle] = useHover({
     preset: 'opacityInverted',
@@ -44,20 +44,25 @@ const DashboardHeader = () => {
     close: closeNetworkStatusesSheet
   } = useModalize()
 
-  if (!account) return null
+  // Shown in production for Privacy Pools: its first network reads take long
+  const shouldDisplayNetworkStatuses =
+    SHOULD_DISPLAY_NETWORK_STATUSES || selectedType === 'privacyPools'
+
+  if (!selectedType) return null
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>
-      {SHOULD_DISPLAY_NETWORK_STATUSES && (
+      {shouldDisplayNetworkStatuses && (
         <NetworkStatusesBottomSheet
           sheetRef={networkStatusesSheetRef}
           closeBottomSheet={closeNetworkStatusesSheet}
         />
       )}
       <View style={[flexbox.directionRow, flexbox.flex1, flexbox.justifySpaceBetween]}>
+        {/* Also shows a Privacy Pools account */}
         <AccountButton />
         <View style={[flexbox.directionRow, flexbox.alignStart]}>
-          {SHOULD_DISPLAY_NETWORK_STATUSES && (
+          {shouldDisplayNetworkStatuses && (
             <Pressable
               style={[flexbox.justifyCenter, flexbox.alignCenter, { width: 40, height: 40 }]}
               onPress={() => openNetworkStatusesSheet()}
