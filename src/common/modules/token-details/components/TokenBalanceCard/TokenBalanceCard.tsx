@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
@@ -10,7 +10,7 @@ import XWalletLegacyBadge from '@common/components/XWalletLegacyBadge'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import TokenDetailsTitle from '@common/modules/token-details/components/Title'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -31,7 +31,12 @@ type TokenBalanceCardProps = Pick<
      * resolved by address/chainId, so the balance icon matches the price display above.
      */
     uri?: string
+    /** Shown in the card under the balance, aligned with it, e.g. the parts of the balance. */
+    footer?: ReactNode
   }
+
+/** The token icon's container, which the footer is indented past. */
+const ICON_CONTAINER_SIZE = 40
 
 const TokenBalanceCard = ({
   symbol,
@@ -47,7 +52,8 @@ const TokenBalanceCard = ({
   isVesting,
   containerStyle,
   xWalletAmount,
-  uri
+  uri,
+  footer
 }: TokenBalanceCardProps) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -55,97 +61,104 @@ const TokenBalanceCard = ({
   return (
     <View>
       <TokenDetailsTitle title={t('Your balance')} />
-      <View style={[styles.tokenInfoAndIcon, containerStyle]}>
-        <TokenIcon
-          containerHeight={40}
-          containerWidth={40}
-          width={32}
-          height={32}
-          networkSize={16}
-          withContainer
-          address={address}
-          onGasTank={onGasTank}
-          chainId={chainId}
-          uri={uri}
-        />
-        <View style={styles.tokenInfo}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text
-              fontSize={15}
-              selectable
-              weight="semiBold"
-              style={{ ...spacings.mrSm, lineHeight: 20 }}
-            >
-              {symbol}
-            </Text>
-            {xWalletAmount !== undefined && (
-              <>
-                <XWalletConversionTooltip
-                  address={address}
-                  chainId={chainId}
-                  xWalletAmount={xWalletAmount}
-                  tooltipId="token-details-x-wallet-conversion"
-                />
-                <XWalletLegacyBadge
-                  address={address}
-                  chainId={chainId}
-                  xWalletAmount={xWalletAmount}
-                  tooltipId="token-details-x-wallet-legacy"
-                  testID="token-details-x-wallet-legacy-badge"
-                />
-              </>
-            )}
-            {isRewards && (
-              <Text fontSize={12} weight="medium">
-                {t('Claimable rewards')}
+      <View style={[styles.container, containerStyle]}>
+        <View style={styles.tokenInfoAndIcon}>
+          <TokenIcon
+            containerHeight={ICON_CONTAINER_SIZE}
+            containerWidth={ICON_CONTAINER_SIZE}
+            width={32}
+            height={32}
+            networkSize={16}
+            withContainer
+            address={address}
+            onGasTank={onGasTank}
+            chainId={chainId}
+            uri={uri}
+          />
+          <View style={styles.tokenInfo}>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text
+                fontSize={15}
+                selectable
+                weight="semiBold"
+                style={{ ...spacings.mrSm, lineHeight: 20 }}
+              >
+                {symbol}
               </Text>
+              {xWalletAmount !== undefined && (
+                <>
+                  <XWalletConversionTooltip
+                    address={address}
+                    chainId={chainId}
+                    xWalletAmount={xWalletAmount}
+                    tooltipId="token-details-x-wallet-conversion"
+                  />
+                  <XWalletLegacyBadge
+                    address={address}
+                    chainId={chainId}
+                    xWalletAmount={xWalletAmount}
+                    tooltipId="token-details-x-wallet-legacy"
+                    testID="token-details-x-wallet-legacy-badge"
+                  />
+                </>
+              )}
+              {isRewards && (
+                <Text fontSize={12} weight="medium">
+                  {t('Claimable rewards')}
+                </Text>
+              )}
+              {isVesting && (
+                <Text fontSize={12} weight="medium">
+                  {t('Claimable early supporters vesting')}
+                </Text>
+              )}
+            </View>
+            <Text
+              fontSize={13}
+              appearance="secondaryText"
+              weight="medium"
+              dataSet={createGlobalTooltipDataSet({
+                id: `token-balance`,
+                content: balance
+              })}
+            >
+              {balanceFormatted}
+            </Text>
+            {!!onGasTank && (
+              <View style={styles.balance}>
+                <Text
+                  style={spacings.mtMi}
+                  color={theme.errorDecorative}
+                  fontSize={12}
+                  weight="number_regular"
+                  numberOfLines={1}
+                >
+                  (This token is a gas tank one and therefore actions are limited)
+                </Text>
+              </View>
             )}
-            {isVesting && (
-              <Text fontSize={12} weight="medium">
-                {t('Claimable early supporters vesting')}
+          </View>
+          <View style={flexbox.alignEnd}>
+            <Text fontSize={15} weight="number_bold" style={{ lineHeight: 20 }}>
+              {balanceUSDFormatted}
+            </Text>
+            {typeof change24h === 'number' && (
+              <Text
+                fontSize={13}
+                weight="number_medium"
+                appearance={change24h >= 0 ? 'successText' : 'errorText'}
+                style={spacings.mlMi}
+              >
+                {change24hFormatted}
               </Text>
             )}
           </View>
-          <Text
-            fontSize={13}
-            appearance="secondaryText"
-            weight="medium"
-            dataSet={createGlobalTooltipDataSet({
-              id: `token-balance`,
-              content: balance
-            })}
-          >
-            {balanceFormatted}
-          </Text>
-          {!!onGasTank && (
-            <View style={styles.balance}>
-              <Text
-                style={spacings.mtMi}
-                color={theme.errorDecorative}
-                fontSize={12}
-                weight="number_regular"
-                numberOfLines={1}
-              >
-                (This token is a gas tank one and therefore actions are limited)
-              </Text>
-            </View>
-          )}
         </View>
-        <View style={flexbox.alignEnd}>
-          <Text fontSize={15} weight="number_bold" style={{ lineHeight: 20 }}>
-            {balanceUSDFormatted}
-          </Text>
-          {typeof change24h === 'number' && (
-            <Text
-              fontSize={13}
-              weight="number_medium"
-              appearance={change24h >= 0 ? 'successText' : 'errorText'}
-              style={spacings.mlMi}
-            >
-              {change24hFormatted}
-            </Text>
-          )}
-        </View>
+        {!!footer && (
+          <View style={[spacings.mtTy, { marginLeft: ICON_CONTAINER_SIZE + SPACING_TY }]}>
+            {footer}
+          </View>
+        )}
       </View>
     </View>
   )

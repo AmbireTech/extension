@@ -182,38 +182,39 @@ const PrivacyPoolsTokenDetailsScreen = () => {
           }
           change24h={formatted.change24h}
           change24hFormatted={formatted.change24hFormatted}
-          containerStyle={balance.pendingAmount ? spacings.mbTy : undefined}
+          footer={
+            // Like the token's row: the part being verified can only be taken back, not sent
+            !!balance.pendingAmount && (
+              <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+                <PendingBadge
+                  amount={balance.pendingAmountRaw}
+                  amountFormatted={
+                    privateValue(
+                      formatDecimals(Number(balance.pendingAmount), 'amount'),
+                      isPrivacyModeEnabled
+                    ) ?? ''
+                  }
+                  label="being verified"
+                  backgroundColor={theme.infoBackground}
+                  textColor={theme.infoText}
+                />
+                <Text
+                  color={theme.successText}
+                  weight="medium"
+                  fontSize={12}
+                  numberOfLines={1}
+                  style={spacings.mlSm}
+                >
+                  {privateValue(
+                    formatDecimals(Number(balance.approvedAmount), 'amount'),
+                    isPrivacyModeEnabled
+                  )}{' '}
+                  {t('(ready to send)')}
+                </Text>
+              </View>
+            )
+          }
         />
-        {/* Like the token's row: the part being verified can only be taken back, not sent */}
-        {!!balance.pendingAmount && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm, spacings.phTy]}>
-            <PendingBadge
-              amount={balance.pendingAmountRaw}
-              amountFormatted={
-                privateValue(
-                  formatDecimals(Number(balance.pendingAmount), 'amount'),
-                  isPrivacyModeEnabled
-                ) ?? ''
-              }
-              label="being verified"
-              backgroundColor={theme.infoBackground}
-              textColor={theme.infoText}
-            />
-            <Text
-              color={theme.successText}
-              weight="medium"
-              fontSize={12}
-              numberOfLines={1}
-              style={spacings.mlSm}
-            >
-              {privateValue(
-                formatDecimals(Number(balance.approvedAmount), 'amount'),
-                isPrivacyModeEnabled
-              )}{' '}
-              {t('(ready to send)')}
-            </Text>
-          </View>
-        )}
         <TokenData token={token} />
         <PrivacyPoolsPoolStats
           chainId={balance.chainId}
