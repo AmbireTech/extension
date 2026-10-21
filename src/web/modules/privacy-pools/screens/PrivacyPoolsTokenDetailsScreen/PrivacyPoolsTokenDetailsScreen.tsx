@@ -29,6 +29,7 @@ import TokenPriceDisplay from '@common/modules/token-details/components/TokenPri
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { privateValue } from '@common/utils/ui'
+import PrivacyPoolsPoolStats from '@web/modules/privacy-pools/components/PrivacyPoolsPoolStats'
 import PrivacyPoolsRagequitSheet from '@web/modules/privacy-pools/components/PrivacyPoolsRagequitSheet'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 
@@ -49,8 +50,8 @@ const RagequitIcon = React.memo(({ width }: SvgProps) => {
 /**
  * A Privacy Pools token's details, laid out like the regular token details: its price, the balance
  * with the part still being verified, and only what is the same for everyone holding the token
- * (network, contract), so nothing is looked up for this account. The token is in the URL
- * (`?chainId=&address=`), like Send.
+ * (network, contract, the numbers of its pool), so nothing is looked up for this account. The
+ * token is in the URL (`?chainId=&address=`), like Send.
  *
  * Send moves what is verified, privately. Rage quit takes back a deposit still being verified,
  * publicly, to the account it came from - see `PrivacyPoolsRagequitSheet`.
@@ -224,6 +225,13 @@ const PrivacyPoolsTokenDetailsScreen = () => {
           </View>
         )}
         <TokenData token={token} />
+        <PrivacyPoolsPoolStats
+          chainId={balance.chainId}
+          tokenAddress={balance.tokenAddress}
+          symbol={balance.symbol}
+          decimals={balance.decimals}
+          price={price}
+        />
       </ScrollableWrapper>
       <FooterGlassView
         size="sm"
