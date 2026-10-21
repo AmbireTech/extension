@@ -149,7 +149,11 @@ const nodeCoreRedirects = {
   // entry below is still load-bearing for everything else that does require it, ethers v5
   // (`@ethersproject/providers`), Sentry and the crypto-browserify family among them.
   crypto: 'react-native-quick-crypto',
-  stream: 'readable-stream',
+  // Same polyfill as the web build. The hoisted `readable-stream` (1.0.33) can't stand in for
+  // `stream`: it requires `stream` itself, so it would resolve to its own half-loaded module and
+  // crash with "Object prototype argument must be an Object or null" on the first use - e.g.
+  // `create-hash` (via `cipher-base`) when bs58check encodes the xpub on QR wallet import.
+  stream: 'stream-browserify',
   buffer: 'buffer',
   http: 'stream-http',
   https: 'https-browserify',
