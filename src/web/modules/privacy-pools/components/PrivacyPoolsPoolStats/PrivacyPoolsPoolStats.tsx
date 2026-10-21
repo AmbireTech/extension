@@ -23,7 +23,14 @@ type Props = {
   price: number | null
 }
 
-type Row = { id: string; label: string; value: string; tooltip?: string }
+type Row = {
+  id: string
+  label: string
+  value: string
+  /** A smaller line under the value, e.g. its amount in the token. */
+  subValue?: string
+  tooltip?: string
+}
 
 /** One placeholder per row the numbers fill. */
 const SKELETON_ROW_IDS = ['total', 'approved', 'pending', 'deposits24h', 'withdrawals24h']
@@ -96,17 +103,19 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
 
     const formatAmount = (amount: bigint) =>
       `${formatDecimals(Number(formatUnits(amount, decimals)), 'amount')} ${symbol}`
-    const totalAmount = Number(formatUnits(stats.totalAmount, decimals))
+    // Without a price only the amount is known, so it is the value itself
+    const formatValue = (amount: bigint) =>
+      price === null ? null : formatDecimals(Number(formatUnits(amount, decimals)) * price, 'value')
+    const totalValue = formatValue(stats.totalAmount)
+    const pendingValue = formatValue(stats.pendingAmount)
 
     return [
       {
         id: 'total',
         label: t('Total value locked'),
         tooltip: t('Everything held in this pool right now, by everyone who uses it.'),
-        value:
-          price === null
-            ? formatAmount(stats.totalAmount)
-            : `${formatAmount(stats.totalAmount)} (${formatDecimals(totalAmount * price, 'value')})`
+        value: totalValue ?? formatAmount(stats.totalAmount),
+        subValue: totalValue ? formatAmount(stats.totalAmount) : undefined
       },
       {
         id: 'approved',
@@ -119,11 +128,10 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
       {
         id: 'pending',
         label: t('Pending deposits'),
-        value: stats.pendingDepositsCount
-          ? `${formatDecimals(stats.pendingDepositsCount, 'noDecimal')} (${formatAmount(
-              stats.pendingAmount
-            )})`
-          : '0',
+        value: formatDecimals(stats.pendingDepositsCount, 'noDecimal'),
+        subValue: stats.pendingDepositsCount
+          ? [pendingValue, formatAmount(stats.pendingAmount)].filter(Boolean).join(' · ')
+          : undefined,
         tooltip: t('New deposits are checked before they can be sent. This takes up to 7 days.')
       },
       {
@@ -165,17 +173,25 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
 
   return (
     <>
-      {rows.map(({ id, label, value, tooltip }, index) => (
+      {rows.map(({ id, label, value, subValue, tooltip }, index) => (
         <View
           key={id}
           style={[
             flexbox.directionRow,
             flexbox.justifySpaceBetween,
+            flexbox.alignStart,
             index < rows.length - 1 && spacings.mbSm
           ]}
         >
           <Label text={label} tooltipId={`privacy-pools-pool-stats-${id}`} tooltip={tooltip} />
-          <Label text={value} />
+          <View style={[flexbox.alignEnd, spacings.mlSm]}>
+            <Label text={value} />
+            {!!subValue && (
+              <Text fontSize={12} appearance="tertiaryText" weight="medium" numberOfLines={1}>
+                {subValue}
+              </Text>
+            )}
+          </View>
         </View>
       ))}
     </>
