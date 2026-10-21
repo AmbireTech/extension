@@ -11,7 +11,6 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import PendingCancellationRow from './PendingCancellationRow'
@@ -48,7 +47,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   )
   const chainBorderColor = cancellationHoverAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [hexToRgba(theme.primaryAccent, 0.5), theme.errorDecorative as string]
+    outputRange: [theme.primaryAccent as string, theme.errorDecorative as string]
   })
   const [manuallySelectedNonceIndex, setManuallySelectedNonceIndex] = useState<number | null>(null)
 
@@ -158,7 +157,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
         <Text
           fontSize={14}
           weight="medium"
-          appearance="secondaryText"
+          appearance="primaryText"
           style={[styles.orDividerText, spacings.phSm]}
         >
           {t('OR')}

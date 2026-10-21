@@ -51,7 +51,7 @@ const getStyles = (theme: ThemeProps) =>
     // Hidden overflow, so that the header gets clipped by the rounded corners
     chainWrapper: {
       borderWidth: 1,
-      borderColor: hexToRgba(theme.primaryAccent, 0.5),
+      borderColor: theme.primaryAccent,
       backgroundColor: theme.secondaryBackground,
       overflow: 'hidden',
       ...common.borderRadiusPrimary
