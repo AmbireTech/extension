@@ -1,35 +1,48 @@
 import { setStringAsync } from 'expo-clipboard'
-import React, { useCallback, useMemo, useState } from 'react'
-import { View, ViewStyle } from 'react-native'
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { StyleSheet, View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
-import AccountKeyIcons from '@common/components/AccountKeyIcons'
+import AccountKeysBadge from '@common/components/AccountKeysBadge'
 import Avatar from '@common/components/Avatar'
+import Badge from '@common/components/Badge'
 import Dropdown from '@common/components/Dropdown'
 import Editable from '@common/components/Editable'
+import NetworkIcon from '@common/components/NetworkIcon'
+import PendingRequestsBadge from '@common/components/PendingRequestsBadge'
+import SafeSignerBadges from '@common/components/SafeSignerBadges'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAccountKeys from '@common/hooks/useAccountKeys'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import usePendingRequestsCount from '@common/hooks/usePendingRequestsCount'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import useSafeDeployedChainIds from '@common/hooks/useSafeDeployedChainIds'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import measureLayoutSync from '@common/utils/measureLayoutSync'
 
-import getStyles from './styles'
+import getStyles, { ACCOUNT_AVATAR_SIZE, ACCOUNT_SELECT_ACCOUNT_HEIGHT } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
+/** The chain icons in the Safe badge, smaller than in the account picker to fit in a badge */
+const SAFE_CHAIN_ICON_SIZE = 14
+const SAFE_CHAIN_ICON_OVERLAP = 5
+const SAFE_CHAIN_ICON_LOGO_SCALE = (SAFE_CHAIN_ICON_SIZE - 2) / SAFE_CHAIN_ICON_SIZE
+const MAX_SAFE_CHAIN_ICONS = 7
 
 const selectSelectAccountStatus = (state: AllControllersMappingType['MainController']) =>
   state.statuses.selectAccount
@@ -53,7 +66,11 @@ const Account = ({
   withReceive = false,
   withCopy = true,
   switchAccountOnPress = true,
-  withBalance = true
+  withBalance = true,
+  withSafeSignerBadges = false,
+  isOnSecondaryBackground = false,
+  withBadges = true,
+  onExtraHeightChange
 }: {
   account: AccountInterface
   onSelect?: (addr: string) => void
@@ -69,7 +86,7 @@ const Account = ({
     withOptionsButton?: boolean
     markSelected?: boolean
     setAccountToImportOrExport?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
-    setSmartSettingsAccount?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
+    setAccountSettingsAccount?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
     setAccountToRemove?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
   }
   containerStyle?: ViewStyle
@@ -78,6 +95,21 @@ const Account = ({
   /** Set to false when pressing the row means something else than switching to it */
   switchAccountOnPress?: boolean
   withBalance?: boolean
+  /** Whether to tell which of the user's Safe accounts the account is a signer of */
+  withSafeSignerBadges?: boolean
+  /**
+   * For a row that is not selectable and sits on a card in the secondary background, so it
+   * gets a card of its own in the primary one
+   */
+  isOnSecondaryBackground?: boolean
+  /** Set to false to show only the avatar, the label and the address, without the badges row */
+  withBadges?: boolean
+  /**
+   * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is, mostly because
+   * its badges wrapped, so a list that lays its rows out by height can make room for it. Such a
+   * row is never shorter, so the rows the list has not rendered yet are where it expects them.
+   */
+  onExtraHeightChange?: (addr: string, extraHeight: number) => void
 }) => {
   const { addr, preferences } = account
   const { t } = useTranslation()
@@ -103,8 +135,9 @@ const Account = ({
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: !inverseInteractionColors ? theme.primaryBackground : theme.secondaryBackground,
-      to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
+      // A card in the secondary background, so its edges show on the primary one
+      from: theme.secondaryBackground,
+      to: !inverseInteractionColors ? theme.hoverBackground : theme.primaryBackground
     }
   })
 
@@ -113,6 +146,69 @@ const Account = ({
   })
 
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
+
+  const safeDeployedChainIds = useSafeDeployedChainIds(account)
+  const pendingRequestsCount = usePendingRequestsCount(account)
+
+  /**
+   * The badges wrap one by one onto more lines when they do not fit next to each other, so
+   * the row takes the height its content needs. Lists that lay their rows out by height are
+   * told how far that is from `ACCOUNT_SELECT_ACCOUNT_HEIGHT`.
+   */
+  const contentRef = useRef<View>(null)
+  const contentHeightRef = useRef<View>(null)
+  const [contentHeight, setContentHeight] = useState<number | null>(null)
+  // What the row adds around its content, which its height is worked out from
+  const containerVerticalInsets = useMemo(() => {
+    const { paddingTop, paddingBottom, paddingVertical, padding, borderWidth } = StyleSheet.flatten(
+      [styles.accountContainer, containerStyle]
+    )
+    const toNumber = (value: unknown) => (typeof value === 'number' ? value : 0)
+
+    return (
+      toNumber(paddingTop ?? paddingVertical ?? padding) +
+      toNumber(paddingBottom ?? paddingVertical ?? padding) +
+      2 * toNumber(borderWidth)
+    )
+  }, [containerStyle, styles.accountContainer])
+
+  /**
+   * Measured in a layout effect rather than on layout, so that a list that positions its
+   * rows by height has this one's before it is painted, instead of jumping to it.
+   */
+  const updateContentHeight = useCallback(() => {
+    // Relative to the row's content, as the native measuring needs an ancestor
+    const content = measureLayoutSync(contentHeightRef.current, contentRef.current)
+    if (!content) return
+
+    const height = Math.round(content.height)
+    setContentHeight((prev) => (prev === height ? prev : height))
+  }, [])
+
+  // Whenever what the badges show changes, as that may change how many lines they take. Anything
+  // else that resizes the row is caught by the content's `onLayout`, at worst a frame later.
+  useLayoutEffect(updateContentHeight, [
+    updateContentHeight,
+    account,
+    accountKeys,
+    balance,
+    pendingRequestsCount,
+    safeDeployedChainIds,
+    withBadges,
+    withBalance,
+    withKeyType,
+    withSafeSignerBadges
+  ])
+
+  // Only once measured, as a list may remount the row when its height changes
+  useLayoutEffect(() => {
+    if (contentHeight === null) return
+
+    onExtraHeightChange?.(
+      addr,
+      Math.max(0, contentHeight + containerVerticalInsets - ACCOUNT_SELECT_ACCOUNT_HEIGHT)
+    )
+  }, [addr, containerVerticalInsets, contentHeight, onExtraHeightChange])
 
   const selectAccount = useCallback(() => {
     if (options.setAccountToImportOrExport) {
@@ -164,7 +260,12 @@ const Account = ({
     }
 
     if (item.value === 'toSmarter') {
-      !!options.setSmartSettingsAccount && options.setSmartSettingsAccount(account)
+      !!options.setAccountSettingsAccount && options.setAccountSettingsAccount(account)
+      return
+    }
+
+    if (item.value === 'deploySettings') {
+      !!options.setAccountSettingsAccount && options.setAccountSettingsAccount(account)
     }
   }
 
@@ -172,14 +273,18 @@ const Account = ({
     if (!options.withOptionsButton) return []
 
     const add7702Option = canBecomeSmarter(account, accountKeys)
-    const submenuOptions = [
-      { label: account.safeCreation ? 'Manage owners' : 'Manage keys', value: 'keys' },
-      { label: 'Remove account', value: 'remove', style: { color: theme.errorDecorative } }
+    const commonSubmenuOptions = [
+      { label: account.safeCreation ? t('Manage owners') : t('Manage keys'), value: 'keys' },
+      { label: t('Remove account'), value: 'remove', style: { color: theme.errorDecorative } }
     ]
-    const submenuOptions7702 = [{ label: 'Smart settings', value: 'toSmarter' }]
+    const settingsOption = account.safeCreation
+      ? [{ label: t('Activation settings'), value: 'deploySettings' }]
+      : add7702Option && isWeb
+        ? [{ label: t('Smart settings'), value: 'toSmarter' }]
+        : []
 
-    return add7702Option && isWeb ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
-  }, [account, accountKeys, options.withOptionsButton, theme.errorDecorative])
+    return [...settingsOption, ...commonSubmenuOptions]
+  }, [account, accountKeys, options.withOptionsButton, t, theme.errorDecorative])
 
   const handleCopy = async () => {
     try {
@@ -188,6 +293,166 @@ const Account = ({
     } catch {
       addToast(t('Failed to copy address'))
     }
+  }
+
+  const label = !withSettings ? (
+    // A read-only label needs no row around it, and this screen mounts one of
+    // these per account
+    <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
+      {account.preferences.label}
+    </Text>
+  ) : (
+    <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
+      <Editable
+        initialValue={account.preferences.label}
+        onSave={onSave}
+        fontSize={16}
+        height={isMobile ? 24 : 20}
+        textProps={{
+          weight: 'medium'
+        }}
+        minWidth={120}
+        maxLength={40}
+      />
+    </View>
+  )
+
+  const address = (
+    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <AccountAddress
+        {...reverseLookup}
+        containerStyle={spacings.pb0}
+        address={addr}
+        plainAddressMaxLength={maxAccountAddrLength}
+        // On web the copy button fits next to the address, unlike on mobile, where it
+        // sits next to the account to keep the touch targets apart
+        withCopy={isWeb && withCopy}
+        withReceive={false}
+        withUpdateEnsInTooltip={isSelectable}
+      />
+    </View>
+  )
+
+  // The balance, the keys badge and the other badges share the row below the avatar, at the full
+  // width of the row, wrapping one by one
+  const badges = (
+    <View
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        flexbox.wrap,
+        { columnGap: SPACING_MI, rowGap: SPACING_MI }
+      ]}
+    >
+      {balance !== null && withBalance && (
+        <Badge
+          style={{
+            columnGap: SPACING_MI,
+            // The icon leads, like the avatar on the Safe signer badges
+            paddingLeft: SPACING_MI,
+            // The badge leaves room only for a trailing info icon when it has children
+            paddingRight: SPACING_TY,
+            // Stands out from the card in either theme, as the card is in the secondary one
+            backgroundColor: theme.primaryBackground
+          }}
+        >
+          <WalletIcon width={14} height={14} color={theme.secondaryText} />
+          <Text fontSize={12} weight="semiBold" color={theme.primaryText}>
+            {formatDecimals(balance, 'value')}
+          </Text>
+        </Badge>
+      )}
+      {!!pendingRequestsCount && <PendingRequestsBadge count={pendingRequestsCount} />}
+      {!!withKeyType &&
+        (safeDeployedChainIds.length ? (
+          // The Safe key badge, telling also which chains the Safe is deployed on
+          <Badge
+            type="secondaryAccent"
+            style={{
+              columnGap: SPACING_MI,
+              // The chain icons at the end have room around them already
+              paddingRight: SPACING_MI
+            }}
+          >
+            <Text fontSize={12} weight="medium" color={theme.secondaryAccent400} numberOfLines={1}>
+              {t('Safe active on')}
+            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              {safeDeployedChainIds.slice(0, MAX_SAFE_CHAIN_ICONS).map((chainId, index, arr) => (
+                // Overlapping like the chains an account is used on in the account picker
+                <View
+                  key={chainId}
+                  style={{
+                    marginLeft: index ? -SAFE_CHAIN_ICON_OVERLAP : 0,
+                    zIndex: arr.length - index,
+                    borderRadius: 50,
+                    borderWidth: 1,
+                    // Sets the overlapping icons apart in the color of the badge
+                    borderColor: theme.secondaryAccent100,
+                    // Filled like the ring, so the icon below does not show through where the
+                    // edge of the icon and the ring's inner edge are rounded to different pixels
+                    backgroundColor: theme.secondaryAccent100
+                  }}
+                >
+                  <NetworkIcon
+                    id={chainId}
+                    size={SAFE_CHAIN_ICON_SIZE}
+                    // Leaves 1px of the white circle around the logo, instead of a tenth of it
+                    scale={SAFE_CHAIN_ICON_LOGO_SCALE}
+                    style={{ backgroundColor: '#fff' }}
+                  />
+                </View>
+              ))}
+            </View>
+          </Badge>
+        ) : (
+          <AccountKeysBadge account={account} accountKeys={accountKeys} />
+        ))}
+      <AccountBadges
+        accountData={account}
+        accountKeys={accountKeys}
+        withSpacing={false}
+        withViewOnly={!withKeyType}
+      />
+      {withSafeSignerBadges && <SafeSignerBadges account={account} />}
+    </View>
+  )
+
+  const actions = (
+    <View style={[flexbox.directionRow, flexbox.alignCenter, !isMobile && spacings.mlTy]}>
+      {renderRightChildren && renderRightChildren()}
+      {!isWeb && withCopy && (
+        <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
+          <CopyIcon width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} strokeWidth="1" />
+        </AnimatedPressable>
+      )}
+      {withReceive && <ReceiveButton address={addr} fontSize={ACTION_ICON_SIZE - 8} />}
+      {!!options.withOptionsButton && (
+        <Dropdown
+          data={submenu}
+          externalPosition={dropdownPosition}
+          setExternalPosition={setDropdownPosition}
+          onSelect={onDropdownSelect}
+          kebabIconProps={{ width: 28, height: 28 }}
+          testID={`account-options-${addr}`}
+        />
+      )}
+    </View>
+  )
+
+  const isMarkedSelected = isSelectable && !!options.markSelected && addr === selectedAccount?.addr
+
+  // The background the avatar sits on, so the ring of its badge blends into it
+  const getAvatarBadgeRingColor = () => {
+    if (isMarkedSelected)
+      return !inverseInteractionColors ? theme.primaryAccent100 : theme.primaryBackground
+    // Animated, so that it changes along with the row on hover
+    if (isSelectable) return animStyle.backgroundColor
+
+    if (isOnSecondaryBackground) return theme.primaryBackground
+
+    // Not interactive, the row has no background of its own and sits on its list's card
+    return theme.secondaryBackground
   }
 
   return (
@@ -199,107 +464,55 @@ const Account = ({
       style={[
         styles.accountContainer,
         containerStyle,
+        !!onExtraHeightChange && { minHeight: ACCOUNT_SELECT_ACCOUNT_HEIGHT },
         // @ts-expect-error: Web style
         isSelectable ? animStyle : { cursor: 'default' },
-        isSelectable &&
-          options.markSelected &&
-          addr === selectedAccount?.addr && {
-            backgroundColor: !inverseInteractionColors
-              ? theme.secondaryBackground
-              : theme.primaryBackground
-          }
+        isOnSecondaryBackground && { backgroundColor: theme.primaryBackground },
+        isMarkedSelected &&
+          (!inverseInteractionColors
+            ? { backgroundColor: theme.primaryAccent100, borderColor: theme.primaryAccent }
+            : { backgroundColor: theme.primaryBackground })
       ]}
     >
       <View
-        style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}
+        ref={contentRef}
+        onLayout={updateContentHeight}
+        style={[flexbox.directionRow, flexbox.alignCenter]}
         testID={`account-${addr}`}
       >
-        {renderLeftChildren && renderLeftChildren()}
-        <Avatar
-          address={account.addr}
-          pfp={account.preferences.pfp}
-          smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
-          showTooltip
+        {/* As tall as the content, which the row's height is worked out from */}
+        <View
+          pointerEvents="none"
+          ref={contentHeightRef}
+          style={{ position: 'absolute', top: 0, bottom: 0, width: 0 }}
         />
-        <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-          {!withSettings ? (
-            // A read-only label needs no row around it, and this screen mounts one of
-            // these per account
-            <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
-              {account.preferences.label}
-            </Text>
-          ) : (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-              <Editable
-                initialValue={account.preferences.label}
-                onSave={onSave}
-                fontSize={16}
-                height={isMobile ? 24 : 20}
-                textProps={{
-                  weight: 'medium'
-                }}
-                minWidth={120}
-                maxLength={40}
-              />
-            </View>
-          )}
+        {/* Centered on the whole row, with the badges below the avatar rather than below it */}
+        {renderLeftChildren && renderLeftChildren()}
+        <View style={flexbox.flex1}>
+          {/* The avatar and the actions are centered on the label and the address */}
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <AccountAddress
-              {...reverseLookup}
-              containerStyle={spacings.pb0}
-              address={addr}
-              plainAddressMaxLength={maxAccountAddrLength}
-              // On web the copy button fits next to the address, unlike on mobile, where it
-              // sits next to the account to keep the touch targets apart
-              withCopy={isWeb && withCopy}
-              withReceive={false}
-              withUpdateEnsInTooltip={isSelectable}
+            <Avatar
+              address={account.addr}
+              pfp={account.preferences.pfp}
+              smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
+              size={ACCOUNT_AVATAR_SIZE}
+              typeBadgeRingColor={getAvatarBadgeRingColor()}
+              showTooltip
             />
+            <View style={[flexbox.flex1, flexbox.justifyCenter]}>
+              {label}
+              {address}
+            </View>
+            {actions}
           </View>
-          {/* The balance, the key icons and the badges share the row below the address */}
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              spacings.mtMi,
-              { columnGap: SPACING_TY }
-            ]}
-          >
-            {balance !== null && withBalance && (
-              <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
-                {formatDecimals(balance, 'value')}
-              </Text>
-            )}
-            {!!withKeyType && (
-              <AccountKeyIcons
-                isExtended
-                account={account}
-                accountKeys={accountKeys}
-                withContainerSpacing={false}
-              />
-            )}
-            <AccountBadges accountData={account} accountKeys={accountKeys} withSpacing={false} />
-          </View>
+          {withBadges && (
+            <>
+              {/* A view rather than a border, as per-side borders can leave stray lines on native */}
+              <View style={styles.separator} />
+              {badges}
+            </>
+          )}
         </View>
-      </View>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-        {renderRightChildren && renderRightChildren()}
-        {!isWeb && withCopy && (
-          <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
-            <CopyIcon width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} strokeWidth="1" />
-          </AnimatedPressable>
-        )}
-        {withReceive && <ReceiveButton address={addr} fontSize={ACTION_ICON_SIZE - 8} />}
-        {!!options.withOptionsButton && (
-          <Dropdown
-            data={submenu}
-            externalPosition={dropdownPosition}
-            setExternalPosition={setDropdownPosition}
-            onSelect={onDropdownSelect}
-            kebabIconProps={{ width: 28, height: 28 }}
-            testID={`account-options-${addr}`}
-          />
-        )}
       </View>
     </AnimatedPressable>
   )

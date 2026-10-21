@@ -2,6 +2,10 @@ import React, { FC } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 
 import { EIP7702Auth } from '@ambire-common/consts/7702'
+import type {
+  BalanceChange,
+  NftBalanceChange
+} from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import { StepsData } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
@@ -10,6 +14,7 @@ import StarsIcon from '@common/assets/svg/StarsIcon'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
@@ -37,6 +42,11 @@ interface Props {
   delegation?: EIP7702Auth
 }
 
+type DisplayBalanceChange = BalanceChange | NftBalanceChange
+
+const isNftBalanceChange = (change: DisplayBalanceChange): change is NftBalanceChange =>
+  'tokenId' in change
+
 const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, delegation }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { width: windowWidth } = useWindowDimensions()
@@ -44,8 +54,10 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   const { blockData, finalizedStatus, feePaidWith, tokenPricesEnabled, from, originatedFrom } =
     stepsState
   const finalStepRows: any = getFinalizedRows(blockData, finalizedStatus)
-  const balanceChanges =
-    stepsState.submittedAccountOp?.balanceChanges || stepsState.balanceChanges || []
+  const balanceChanges: DisplayBalanceChange[] = [
+    ...(stepsState.submittedAccountOp?.balanceChanges ?? stepsState.balanceChanges ?? []),
+    ...(stepsState.submittedAccountOp?.nftBalanceChanges ?? stepsState.nftBalanceChanges ?? [])
+  ]
   const { hasBalanceChangesFailed } = stepsState
   const hasBalanceChangesLoaded = hasBalanceChangesSettled(stepsState) && !hasBalanceChangesFailed
   const assetsOut = balanceChanges.filter((change) => change.balanceChange < 0n)
@@ -147,7 +159,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
 
   const isFinalized = displayActiveStep === 'finalized'
 
-  const renderBalanceChangesCard = (title: string, changes: typeof balanceChanges) => (
+  const renderBalanceChangesCard = (title: string, changes: DisplayBalanceChange[]) => (
     <View
       style={[
         flexbox.flex1,
@@ -182,17 +194,40 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
           }
         ]}
       >
-        {changes.map((change, index) => (
-          <PendingTokenSummary
-            key={change.address}
-            token={{
-              ...change,
-              simulationAmount: change.balanceChange
-            }}
-            chainId={change.chainId}
-            hasBottomSpacing={index < changes.length - 1}
-          />
-        ))}
+        {changes.map((change, index) => {
+          if (isNftBalanceChange(change)) {
+            return (
+              <View
+                key={`${change.address}-${change.tokenId.toString()}`}
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifySpaceBetween,
+                  index < changes.length - 1 ? spacings.mbSm : undefined
+                ]}
+              >
+                <TokenOrNft
+                  value={change.tokenId}
+                  address={change.address}
+                  chainId={change.chainId}
+                  tokenMarginRight={0}
+                />
+              </View>
+            )
+          }
+
+          return (
+            <PendingTokenSummary
+              key={change.address}
+              token={{
+                ...change,
+                simulationAmount: change.balanceChange
+              }}
+              chainId={change.chainId}
+              hasBottomSpacing={index < changes.length - 1}
+            />
+          )
+        })}
       </View>
     </View>
   )

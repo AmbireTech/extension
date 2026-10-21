@@ -13,25 +13,28 @@ import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
-import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
+import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
+import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
-import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/rpc'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
-import { applyCrashReportPolicy } from '@common/config/analytics/applyCrashReportPolicy'
-import { logSentryDeliveryWhenTesting } from '@common/config/analytics/CrashAnalytics.web'
 import {
-  isProviderErrorLike,
-  isSuccessfulRpcStatusCode
-} from '@common/config/analytics/crashReportPolicy'
-import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
+  excludeIntegrationsByName,
+  getCrashReportAccountAddr,
+  getCrashReportUserId,
+  getReportableAction,
+  logSentryDeliveryWhenTesting,
+  reportControllerError
+} from '@common/config/analytics/crashReportHelpers'
+import { processCrashReportEvent } from '@common/config/analytics/processCrashReportEvent'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { CULTURE_CONTEXT_INTEGRATION_NAME } from '@common/constants/crashAnalytics'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
@@ -86,7 +89,6 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
-import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import {
   captureBackgroundException,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
@@ -94,10 +96,7 @@ import {
   setBackgroundUserContext
 } from './CrashAnalytics'
 import { sendCriticalControllerStates } from './criticalControllerStates'
-import { getReportableAction } from './getReportableAction'
-import { isJsonSyntaxError } from './isJsonSyntaxError'
 
-import type { ProviderError } from '@ambire-common/classes/ProviderError'
 const debugLogs: {
   key: string
   value: object
@@ -149,20 +148,12 @@ function stateDebug(
   logInfoWithPrefix(key, debugLogs)
 }
 
-function captureBackgroundExceptionFromControllerError(error: ErrorRef, controllerName: string) {
-  if (
-    (typeof error.sendCrashReport === 'boolean' && !error.sendCrashReport) ||
-    error.level === 'expected'
-  ) {
-    return
-  }
-
-  captureBackgroundException(error.error, {
-    extra: {
-      controllerName
-    }
-  })
-}
+/**
+ * How many times the background tries to open IndexedDB before settling for the key-value
+ * fallback. Two, not more: a second attempt covers a slow open, and every further one only
+ * adds its own deadline to the boot for a failure that is not going to clear.
+ */
+const IDB_OPEN_ATTEMPTS = 2
 
 let isInitialized = false
 const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
@@ -182,80 +173,25 @@ let eventEmitterRegistry: EventEmitterRegistryController
 if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
   Sentry.init({
     ...CRASH_ANALYTICS_BACKGROUND_CONFIG,
-    integrations: [Sentry.extraErrorDataIntegration()],
+    integrations: (defaultIntegrations) => [
+      ...excludeIntegrationsByName(defaultIntegrations, [CULTURE_CONTEXT_INTEGRATION_NAME]),
+      Sentry.extraErrorDataIntegration()
+    ],
     beforeSend(event, hint) {
-      const error = hint.originalException
-
-      // Whether this shape of error is worth sending, how loud it is and which issue it
-      // joins all live in one place, shared with the UI's own beforeSend.
-      if (!applyCrashReportPolicy(event, error)) return null
-
-      // Our services return HTML error pages during outages. The callers already retry, and
-      // reporting every failed parse would only flood Sentry.
-      if (isJsonSyntaxError(error)) return null
-
-      // Matched by name rather than `instanceof`, so an error that reached us through the
-      // messengers still counts. Those arrive as plain objects, not ProviderError instances.
-      if (isProviderErrorLike(error)) {
-        const { providerUrl, isProviderInvictus, statusCode, message } = error as ProviderError
-
-        // Always delete breadcrumbs to reduce event size.
-        delete event.breadcrumbs
-
-        // An RPC that timed out carries nothing beyond the fact that it timed out, so its
-        // event is stripped down the same way a non-2xx one is.
-        if (
-          !isSuccessfulRpcStatusCode(statusCode) ||
-          (message || '').startsWith(RPC_HARDCODED_ERRORS.rpcTimeout)
-        ) {
-          // We don't care about any data for non-2XX errors
-          // We only want to know how many of them happened and group them accordingly
-
-          delete event.user
-          delete event.extra
-          delete event.contexts
-        }
-
-        event.extra = {
-          ...(event.extra || {}),
-          providerUrl
-        }
-
-        event.tags = {
-          ...(event.tags || {}),
-          ...(isProviderInvictus
-            ? {
-                // Allows us to filter issues by provider in Sentry's UI
-                providerUrl: providerUrl || 'should-never-be-undefined',
-                providerType: 'invictus'
-              }
-            : { providerType: 'custom-rpc' })
-        }
-      }
-
-      // No explicit type annotation here: `event`'s type is inferred contextually
-      // as the narrower ErrorEvent (from Sentry.init's expected beforeSend
-      // signature), and both scrubSentryEventSecrets and
-      // buildScrubFailureFallbackEvent are generic in that same type, so
-      // scrubbedEvent stays ErrorEvent instead of widening to Sentry.Event.
-      let scrubbedEvent
-      try {
-        scrubbedEvent = scrubSentryEventSecrets(event)
-      } catch (scrubError) {
-        scrubbedEvent = buildScrubFailureFallbackEvent(event, scrubError)
-      }
+      const processedEvent = processCrashReportEvent(event, hint.originalException)
+      if (!processedEvent) return null
 
       // We don't want to miss errors that occur before the controllers are initialized.
-      // Scrubbing above still applies -- only the crashAnalyticsEnabled gate below,
+      // processCrashReportEvent has already scrubbed it -- only the crashAnalyticsEnabled gate below,
       // which depends on walletStateCtrl, can't run yet.
-      if (!walletStateCtrl) return scrubbedEvent
+      if (!walletStateCtrl) return processedEvent
 
       if (isDev) {
-        console.log(`Sentry event captured in background: ${event.event_id}`, scrubbedEvent)
+        console.log(`Sentry event captured in background: ${event.event_id}`, processedEvent)
       }
 
       // If the Sentry is disabled, we don't send any events
-      return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
+      return walletStateCtrl?.crashAnalyticsEnabled ? processedEvent : null
     }
   })
 
@@ -432,7 +368,7 @@ const init = async () => {
             const keystoreCtrl = ctrl as IKeystoreController
             if (keystoreCtrl.isReadyToStoreKeys) {
               setBackgroundUserContext({
-                id: getAppInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
+                id: getCrashReportUserId(keystoreCtrl, mainCtrl.invite.verifiedCode)
               })
               if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
@@ -445,10 +381,10 @@ const init = async () => {
           }
 
           if (ctrl.name === 'SelectedAccountController') {
-            const selectedAccountCtrl = ctrl as ISelectedAccountController
+            const accountAddr = getCrashReportAccountAddr(ctrl as ISelectedAccountController)
 
-            if (selectedAccountCtrl?.account?.addr) {
-              setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
+            if (accountAddr) {
+              setBackgroundExtraContext('account', accountAddr)
             }
           }
         }, 'background')
@@ -471,13 +407,56 @@ const init = async () => {
             method: ctrl.name,
             params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
           })
-          captureBackgroundExceptionFromControllerError(error, ctrl.name)
+          reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')
       }
     })
   })
 
   qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+
+  // Retried once, because openAmbireIdb() gives up after a second so a blocked upgrade cannot
+  // hang the boot — and this is the only call, so a merely slow open (cold browser start, busy
+  // disk) would otherwise put the whole service-worker lifetime on key-value, where history
+  // renders from the blob frozen at migration time.
+  //
+  // Reported after the last attempt, not the first: this is the only signal that a user has
+  // landed on the key-value fallback. The wallet stays usable — history renders from the
+  // retained legacy blob — so nothing surfaces in the UI, which means without this the
+  // fallback is invisible in aggregate and we could not tell whether it affects one user or
+  // many. Reporting a failure the retry went on to recover from would make it useless.
+  const openIdbWithRetry = async () => {
+    let lastError: any
+    let attempts = 0
+
+    while (attempts < IDB_OPEN_ATTEMPTS) {
+      attempts += 1
+      try {
+        return await openAmbireIdb()
+      } catch (error: any) {
+        lastError = error
+
+        // VersionError means a database newer than this build's dbVersion, i.e. a downgrade.
+        // That is not transient — a retry fails identically and only delays the boot. Any
+        // other name points at the open itself failing, which a retry can still win.
+        if (error?.name === 'VersionError') break
+      }
+    }
+
+    console.error('[background] Failed to open IDB, activity will fall back to storage', lastError)
+    captureBackgroundException(lastError, {
+      extra: {
+        errorName: lastError?.name,
+        expectedDbVersion: AMBIRE_IDB_SCHEMA.dbVersion,
+        // Fewer than IDB_OPEN_ATTEMPTS means the loop broke early on a downgrade.
+        attempts
+      }
+    })
+
+    return undefined
+  }
+
+  const idb = await openIdbWithRetry()
 
   mainCtrl = new MainController({
     eventEmitterRegistry,
@@ -492,6 +471,7 @@ const init = async () => {
     bungeeApiKey: BUNGEE_API_KEY,
     uniswapApiKey: UNISWAP_API_KEY,
     featureFlags: {},
+    idb,
     keystoreSigners: {
       internal: KeystoreSigner,
       // TODO: there is a mismatch in hw signer types, it's not a big deal

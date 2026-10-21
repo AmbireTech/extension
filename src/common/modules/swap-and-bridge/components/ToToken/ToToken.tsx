@@ -16,6 +16,7 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useExchangesInfo from '@common/hooks/useExchangesInfo'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
 import useTheme from '@common/hooks/useTheme'
@@ -59,7 +60,9 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
     switchTokensStatus,
     supportedChainIds,
     disabledSwapProviderIds,
-    signAccountOpController
+    signAccountOpController,
+    toTokenMarketData,
+    isToTokenSelectionPending
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
@@ -70,6 +73,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
   )
   const networks = useNetworks({
     acc: account,
+    allowUndeployedSafeOnChainId: fromSelectedToken?.chainId,
     additionalCheck: {
       chainIds: supportedChainIds,
       reason: t(
@@ -123,6 +127,14 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
       : toTokenShortList
   }, [toTokenSearchTerm, toTokenSearchResults, toSelectedToken, toTokenShortList])
 
+  // The market data only holds the tokens currently in the list, so this is one lookup
+  // per list or search rather than one per row
+  const visibleTokensExchangeIds = useMemo(
+    () => Object.values(toTokenMarketData).flatMap(({ exchanges }) => exchanges || []),
+    [toTokenMarketData]
+  )
+  const exchangesInfo = useExchangesInfo(visibleTokensExchangeIds)
+
   const {
     options: toTokenOptions,
     value: toTokenValue,
@@ -132,7 +144,9 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
     token: toSelectedToken ? getTokenId(toSelectedToken) : '',
     networks,
     isLoading: !toTokenShortList.length && updateToTokenListStatus !== 'INITIAL',
-    isToToken: true
+    isSelectionPending: isToTokenSelectionPending,
+    isToToken: true,
+    exchangesInfo
   })
 
   const shouldShowAmountOnEstimationFailure = useMemo(() => {

@@ -149,7 +149,7 @@ const GasTankButton = ({ onPress, account }: Props) => {
       return t('Gas Tank')
     }
 
-    if (buttonState === 'disabled') return t('Gas Tank Disabled')
+    if (buttonState === 'disabled') return t('Gas Tank disabled')
     if (['generic', 'error'].includes(buttonState)) return t('Gas Tank')
 
     return totalBalanceGasTankDetails.balanceUSD === 0

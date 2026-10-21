@@ -43,13 +43,19 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 interface Props {
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
+  onClosed?: () => void
   account: Account | null
 }
 
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
-const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, account }) => {
+const AccountSmartSettingsBottomSheet: FC<Props> = ({
+  sheetRef,
+  closeBottomSheet,
+  onClosed,
+  account
+}) => {
   const {
     state: { accountStates },
     dispatch: accountsDispatch
@@ -196,6 +202,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
       id="account-delegations-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
+      onClosed={onClosed}
       scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}
@@ -371,10 +378,10 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                             {accountState?.[net.chainId.toString()]?.delegatedContractName ===
                               'METAMASK' && <MetamaskIcon width={20} height={20} />}
                             {accountState?.[net.chainId.toString()]?.delegatedContractName ===
-                              'UNKNOWN' && <Badge type="success" text={t('unknown')} />}
+                              'UNKNOWN' && <Badge type="success" text={t('Unknown')} />}
                           </>
                         ) : (
-                          <Badge type="default" text={t('disabled')} />
+                          <Badge type="default" text={t('Disabled')} />
                         )}
                       </View>
                     ) : (

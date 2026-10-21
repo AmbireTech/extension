@@ -909,15 +909,17 @@
         "TextEncoder": true
       }
     },
-    "@sentry/browser>@sentry-internal/browser-utils": {
-      "globals": {
-        "URL": true,
-        "XMLHttpRequest.prototype": true,
-        "__SENTRY_DEBUG__": true,
-        "clearTimeout": true
-      },
+    "ox>@scure/bip32": {
       "packages": {
-        "@sentry/react>@sentry/core": true
+        "ox>@noble/curves": true,
+        "@noble/hashes": true,
+        "@walletconnect/utils>@scure/base": true
+      }
+    },
+    "ox>@scure/bip39": {
+      "packages": {
+        "@noble/hashes": true,
+        "@walletconnect/utils>@scure/base": true
       }
     },
     "@sentry/browser": {
@@ -927,17 +929,33 @@
         "__SENTRY_DEBUG__": true,
         "__SENTRY_RELEASE__": true,
         "console.error": true,
+        "document": true,
+        "queueMicrotask": true,
         "setTimeout": true
       },
       "packages": {
-        "@sentry/browser>@sentry-internal/browser-utils": true,
+        "@sentry/browser>@sentry/browser-utils": true,
+        "@sentry/react>@sentry/conventions": true,
         "@sentry/react>@sentry/core": true,
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
+    "@sentry/browser>@sentry/browser-utils": {
+      "globals": {
+        "Element": true,
+        "HTMLElement": true,
+        "Node": true,
+        "URL": true,
+        "XMLHttpRequest.prototype": true,
+        "__SENTRY_DEBUG__": true,
+        "clearTimeout": true
+      },
+      "packages": {
+        "@sentry/react>@sentry/core": true
+      }
+    },
     "@sentry/react>@sentry/core": {
       "globals": {
-        "CustomEvent": true,
         "DOMError": true,
         "DOMException": true,
         "EdgeRuntime": true,
@@ -958,11 +976,14 @@
         "clearTimeout": true,
         "console.error": true,
         "console.warn": true,
-        "document": true,
+        "module": true,
+        "process": true,
         "setTimeout": true
       },
       "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true
+        "@sentry/react>@sentry/conventions": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "process": true
       }
     },
     "@ledgerhq/device-management-kit>@sentry/minimal>@sentry/hub": {
@@ -1998,6 +2019,19 @@
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
+    "idb": {
+      "globals": {
+        "DOMException": true,
+        "IDBCursor": true,
+        "IDBDatabase": true,
+        "IDBIndex": true,
+        "IDBObjectStore": true,
+        "IDBRequest": true,
+        "IDBTransaction": true,
+        "indexedDB.deleteDatabase": true,
+        "indexedDB.open": true
+      }
+    },
     "react-native-web>inline-style-prefixer": {
       "packages": {
         "react-native-web>inline-style-prefixer>css-in-js-utils": true
@@ -2226,17 +2260,24 @@
         "TextDecoder": true,
         "TextEncoder": true,
         "crypto.getRandomValues": true,
+        "crypto.subtle.deriveBits": true,
         "crypto.subtle.exportKey": true,
+        "crypto.subtle.generateKey": true,
         "crypto.subtle.importKey": true,
+        "crypto.subtle.sign": true,
+        "crypto.subtle.verify": true,
         "document.title": true,
         "location.hostname": true,
         "location.origin": true,
-        "navigator.credentials": true
+        "navigator.credentials.create": true,
+        "navigator.credentials.get": true
       },
       "packages": {
         "ox>@adraffy/ens-normalize": true,
         "viem>@noble/curves": true,
         "@noble/hashes": true,
+        "ox>@scure/bip32": true,
+        "ox>@scure/bip39": true,
         "ox>abitype": true
       }
     },
@@ -3208,6 +3249,7 @@
     "viem": {
       "globals": {
         "AbortController": true,
+        "DOMException": true,
         "Image": true,
         "Request": true,
         "TextDecoder": true,
@@ -3221,7 +3263,8 @@
         "fetch": true,
         "queueMicrotask": true,
         "setInterval": true,
-        "setTimeout": true
+        "setTimeout": true,
+        "structuredClone": true
       },
       "packages": {
         "viem>@noble/curves": true,

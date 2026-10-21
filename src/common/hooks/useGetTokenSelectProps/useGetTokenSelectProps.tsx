@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 
 import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeToToken } from '@ambire-common/interfaces/swapAndBridge'
+import { ExchangeInfoMap } from '@ambire-common/libs/portfolio/interfaces'
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -69,13 +70,18 @@ const useGetTokenSelectProps = ({
   token,
   networks,
   isLoading,
-  isToToken: _isToToken = false
+  isSelectionPending,
+  isToToken: _isToToken = false,
+  exchangesInfo
 }: {
   tokens: (SwapAndBridgeToToken | TokenResult)[]
   token: string
   networks: SupportedNetworks[]
   isLoading?: boolean
+  /** Shows the value as loading. The options stay usable. */
+  isSelectionPending?: boolean
   isToToken?: boolean
+  exchangesInfo?: ExchangeInfoMap
 }) => {
   const { state: portfolioTokens } = useController(
     'SelectedAccountController',
@@ -208,6 +214,7 @@ const useGetTokenSelectProps = ({
             isToToken={_isToToken}
             isSelected={isSelected}
             getFormattedDetails={getFormattedDetails}
+            exchangesInfo={exchangesInfo}
           />
         ),
         icon: (
@@ -231,9 +238,11 @@ const useGetTokenSelectProps = ({
     const options = tokens.map((tk) => buildOption(tk, false))
     const selectedToken = tokens.find((tk) => getTokenId(tk) === token)
 
+    const noSelectionValue = isSelectionPending ? LOADING_TOKEN_ITEMS[0] : NO_VALUE_SELECTED[0]
+
     return {
       options,
-      value: selectedToken ? buildOption(selectedToken, true) : NO_VALUE_SELECTED[0],
+      value: selectedToken ? buildOption(selectedToken, true) : noSelectionValue,
       amountSelectDisabled: false
     }
   }, [
@@ -241,9 +250,11 @@ const useGetTokenSelectProps = ({
     token,
     networks,
     isLoading,
+    isSelectionPending,
     _isToToken,
     portfolioTokensToIndex,
-    networkSimulatedAccountOp
+    networkSimulatedAccountOp,
+    exchangesInfo
   ])
 }
 

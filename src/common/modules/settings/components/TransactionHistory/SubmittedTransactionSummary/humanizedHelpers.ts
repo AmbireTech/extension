@@ -1,13 +1,13 @@
+import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { submittedAccountOpToAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
-import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
-import type { HumanizerVisualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
 
 import { DappInteraction, SubmittedAccountOpLike } from './types'
 
+import type { HumanizerVisualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 const WALLET_STAKING_ACTIVITY_MATCHES = [
   {
     action: 'Wrap',
@@ -77,6 +77,16 @@ export const getDappInteractionsFromHumanizedCalls = (
   submittedAccountOp: SubmittedAccountOpLike,
   humanizedCalls: IrCall[]
 ): DappInteraction[] => {
+  if (submittedAccountOp.meta?.isSafeDeploy) {
+    return [
+      {
+        id: 'fallback:safeDeploy',
+        name: 'Activate Safe account',
+        iconType: 'safe'
+      }
+    ]
+  }
+
   // Must come before the Safe cancellation check: a delegation change is also an empty,
   // 0-value call and would otherwise be mistaken for a cancellation
   if (submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta) {

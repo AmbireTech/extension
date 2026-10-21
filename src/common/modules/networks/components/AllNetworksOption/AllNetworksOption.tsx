@@ -70,7 +70,7 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
           <NetworksIcon width={22} height={22} />
         </View>
         <Text style={spacings.mlTy} weight="medium" fontSize={16}>
-          {t('All Networks')}
+          {t('All networks')}
         </Text>
       </View>
       <Text fontSize={20} weight="semiBold" appearance="primaryText">
