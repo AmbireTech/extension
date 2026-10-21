@@ -7,17 +7,15 @@ import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
-import Button from '@common/components/Button'
-import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { privateValue } from '@common/utils/ui'
 
-import RagequitDepositRow, { RagequitAccount, RagequitDepositView } from './RagequitDepositRow'
+import RagequitDepositRow, { RagequitDepositView } from './RagequitDepositRow'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -39,8 +37,8 @@ interface Props {
 
 /**
  * Rage quit: takes back one deposit still being verified, publicly and in full, to the account it
- * came from - the only one that can. Lists the token's deposits, then asks to confirm, as the
- * account is switched to that one and the deposit stops being private.
+ * came from - the only one that can. Lists the token's deposits, each with its own Rage quit, which
+ * switches to that account and opens the transaction to sign there.
  *
  * The deposits are asked for each time the sheet opens, as only it needs them.
  */
@@ -66,7 +64,8 @@ const PrivacyPoolsRagequitSheet: FC<Props> = ({
   )
   const [deposits, setDeposits] = useState<PrivacyPoolsRagequitDeposit[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [selectedLabel, setSelectedLabel] = useState<bigint | null>(null)
+  /** The deposit whose rage quit was asked for, so only its button shows it being prepared. */
+  const [submittedLabel, setSubmittedLabel] = useState<bigint | null>(null)
   // Only the latest request's answer is shown, and none after the sheet is gone
   const latestRequestRef = useRef(0)
   const hasSubmittedRef = useRef(false)
@@ -101,7 +100,7 @@ const PrivacyPoolsRagequitSheet: FC<Props> = ({
   const handleClosed = useCallback(() => {
     latestRequestRef.current += 1
     hasSubmittedRef.current = false
-    setSelectedLabel(null)
+    setSubmittedLabel(null)
     setDeposits(null)
     setLoadError(null)
   }, [])
@@ -128,35 +127,29 @@ const PrivacyPoolsRagequitSheet: FC<Props> = ({
       }),
     [accounts, decimals, deposits, isPrivacyModeEnabled, keys, symbol]
   )
-  const selectedDeposit = useMemo(
-    () => depositViews.find(({ label }) => label === selectedLabel) || null,
-    [depositViews, selectedLabel]
+  const isSubmitting = ragequitStatus === 'LOADING'
+  const handleRagequit = useCallback(
+    (label: bigint) => {
+      if (isSubmitting) return
+
+      hasSubmittedRef.current = true
+      setSubmittedLabel(label)
+      mainDispatch({
+        type: 'method',
+        params: { method: 'privacyPoolsRagequit', args: [{ chainId, label }] }
+      })
+    },
+    [chainId, isSubmitting, mainDispatch]
   )
 
-  const isSubmitting = ragequitStatus === 'LOADING'
-  const handleConfirm = useCallback(() => {
-    if (!selectedDeposit || isSubmitting) return
-
-    hasSubmittedRef.current = true
-    mainDispatch({
-      type: 'method',
-      params: {
-        method: 'privacyPoolsRagequit',
-        args: [{ chainId, label: selectedDeposit.label }]
-      }
-    })
-  }, [chainId, isSubmitting, mainDispatch, selectedDeposit])
-
   // Handed over for signing: the account is switched and the request opens. A failure stays on
-  // the confirmation, with the controller's toast saying why
+  // the list, with the controller's toast saying why
   useEffect(() => {
     if (ragequitStatus !== 'SUCCESS' || !hasSubmittedRef.current) return
 
     hasSubmittedRef.current = false
     closeBottomSheet()
   }, [closeBottomSheet, ragequitStatus])
-
-  const goBack = useCallback(() => setSelectedLabel(null), [])
 
   const renderList = () => {
     if (loadError)
@@ -192,7 +185,9 @@ const PrivacyPoolsRagequitSheet: FC<Props> = ({
       <RagequitDepositRow
         key={deposit.label.toString()}
         deposit={deposit}
-        onPress={setSelectedLabel}
+        onRagequit={handleRagequit}
+        isSubmitting={isSubmitting && deposit.label === submittedLabel}
+        isDisabled={isSubmitting}
       />
     ))
   }
@@ -211,57 +206,10 @@ const PrivacyPoolsRagequitSheet: FC<Props> = ({
         {t('Rage quit')}
       </Text>
 
-      {selectedDeposit ? (
-        <>
-          <Text fontSize={14} appearance="secondaryText" style={spacings.mbSm}>
-            {t('{{amount}} goes back to this account:', {
-              amount: selectedDeposit.amountFormatted
-            })}
-          </Text>
-          <View style={[spacings.mbMd, flexbox.directionRow]}>
-            <RagequitAccount deposit={selectedDeposit} />
-          </View>
-          <Alert
-            type="warning"
-            size="sm"
-            style={spacings.mbLg}
-            title={t('This is public')}
-            text={t(
-              'Anyone will be able to see that this account took these funds out of Privacy Pools, so they are no longer private. It goes back in full, and this account pays the network fee.'
-            )}
-          />
-          <View style={[flexbox.directionRow, { gap: SPACING_TY }]}>
-            <Button
-              testID="privacy-pools-ragequit-back"
-              type="secondary"
-              text={t('Back')}
-              onPress={goBack}
-              disabled={isSubmitting}
-              hasBottomSpacing={false}
-              size="smaller"
-              style={flexbox.flex1}
-            />
-            <ButtonWithLoader
-              testID="privacy-pools-ragequit-confirm"
-              text={isSubmitting ? t('Preparing...') : t('Rage quit')}
-              isLoading={isSubmitting}
-              disabled={isSubmitting}
-              onPress={handleConfirm}
-              size="smaller"
-              style={flexbox.flex1}
-            />
-          </View>
-        </>
-      ) : (
-        <>
-          <Text fontSize={14} appearance="secondaryText" style={spacings.mbMd}>
-            {t(
-              'Deposits still being verified can be taken back, in full, to the account they came from. Pick one.'
-            )}
-          </Text>
-          {renderList()}
-        </>
-      )}
+      <Text fontSize={14} appearance="secondaryText" style={spacings.mbMd}>
+        {t('Pick a deposit to take back. It goes back in full to the account it came from.')}
+      </Text>
+      {renderList()}
     </BottomSheet>
   )
 }

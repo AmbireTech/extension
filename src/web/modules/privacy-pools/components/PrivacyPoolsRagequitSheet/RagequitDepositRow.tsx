@@ -5,9 +5,9 @@ import { Account } from '@ambire-common/interfaces/account'
 import { PrivacyPoolsRagequitDeposit } from '@ambire-common/interfaces/privacyPools'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Avatar from '@common/components/Avatar'
+import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -23,7 +23,7 @@ export type RagequitDepositView = PrivacyPoolsRagequitDeposit & {
 }
 
 /** The account a deposit goes back to: its avatar, name and address. */
-export const RagequitAccount: FC<{ deposit: RagequitDepositView }> = ({ deposit }) => {
+const RagequitAccount: FC<{ deposit: RagequitDepositView }> = ({ deposit }) => {
   const { t } = useTranslation()
   const { account, depositorAddr } = deposit
 
@@ -49,19 +49,19 @@ export const RagequitAccount: FC<{ deposit: RagequitDepositView }> = ({ deposit 
 }
 
 /**
- * One deposit that can be taken back. Not pressable when its account is not in the wallet or is
- * view-only, as nothing could sign for it; the row says why.
+ * One deposit that can be taken back, with its own Rage quit button. Without one when its account
+ * is not in the wallet or is view-only, as nothing could sign for it; the row says why.
  */
 const RagequitDepositRow: FC<{
   deposit: RagequitDepositView
-  onPress: (label: bigint) => void
-}> = ({ deposit, onPress }) => {
+  onRagequit: (label: bigint) => void
+  /** This row's rage quit is being prepared. */
+  isSubmitting: boolean
+  /** Another row's is, and only one runs at a time. */
+  isDisabled: boolean
+}> = ({ deposit, onRagequit, isSubmitting, isDisabled }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: { from: theme.secondaryBackground, to: theme.tertiaryBackground }
-  })
   const blockedReason = useMemo(() => {
     if (!deposit.account) return t('Add this account to your wallet to take this deposit back.')
     if (deposit.isViewOnly) return t('Import the key of this account to take this deposit back.')
@@ -69,34 +69,42 @@ const RagequitDepositRow: FC<{
     return null
   }, [deposit.account, deposit.isViewOnly, t])
 
-  const handlePress = useCallback(() => onPress(deposit.label), [deposit.label, onPress])
+  const handleRagequit = useCallback(() => onRagequit(deposit.label), [deposit.label, onRagequit])
 
   return (
-    <AnimatedPressable
-      onPress={handlePress}
-      disabled={!!blockedReason}
+    <View
       style={[
         spacings.phSm,
         spacings.pvSm,
         spacings.mbTy,
-        { borderRadius: BORDER_RADIUS_PRIMARY, backgroundColor: theme.secondaryBackground },
-        !blockedReason && animStyle
+        { borderRadius: BORDER_RADIUS_PRIMARY, backgroundColor: theme.secondaryBackground }
       ]}
       testID={`privacy-pools-ragequit-deposit-${deposit.label.toString()}`}
-      {...(blockedReason ? {} : bindAnim)}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         <RagequitAccount deposit={deposit} />
-        <Text fontSize={14} weight="number_bold" style={spacings.mlSm}>
+        <Text fontSize={14} weight="number_bold" style={spacings.mhSm}>
           {deposit.amountFormatted}
         </Text>
+        {!blockedReason && (
+          <ButtonWithLoader
+            testID={`privacy-pools-ragequit-${deposit.label.toString()}`}
+            type="danger"
+            size="small"
+            text={isSubmitting ? t('Preparing...') : t('Rage quit')}
+            isLoading={isSubmitting}
+            disabled={isSubmitting || isDisabled}
+            onPress={handleRagequit}
+            hasBottomSpacing={false}
+          />
+        )}
       </View>
       {!!blockedReason && (
         <Text fontSize={12} appearance="warningText" style={spacings.mtTy}>
           {blockedReason}
         </Text>
       )}
-    </AnimatedPressable>
+    </View>
   )
 }
 
