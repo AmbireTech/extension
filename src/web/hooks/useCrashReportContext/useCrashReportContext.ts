@@ -1,6 +1,11 @@
 import { useEffect, useMemo } from 'react'
 
-import { setCrashReportId, setTagContext } from '@common/config/analytics/CrashAnalytics'
+import {
+  setCrashReportId,
+  setTagContext,
+  syncCrashAnalyticsConsent,
+  syncPrivacyPoolsAccountSelected
+} from '@common/config/analytics/CrashAnalytics'
 import {
   createCrashReportAccountTagsSync,
   getCrashReportAccountTags
@@ -10,6 +15,11 @@ import useControllerState from '@common/hooks/useControllerState'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 const selectCrashReportId = (state: AllControllersMappingType['WalletStateController']) =>
   state.crashReportId
+const selectCrashAnalyticsEnabled = (state: AllControllersMappingType['WalletStateController']) =>
+  state.crashAnalyticsEnabled
+const selectIsPrivacyPoolsAccountSelected = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.selectedType === 'privacyPools'
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
@@ -39,12 +49,31 @@ export default function useCrashReportContext() {
     selector: selectAccountStates
   })
   const { state: keys } = useControllerState({ id: 'KeystoreController', selector: selectKeys })
+  const { state: crashAnalyticsEnabled } = useControllerState({
+    id: 'WalletStateController',
+    selector: selectCrashAnalyticsEnabled
+  })
+  const { state: isPrivacyPoolsAccountSelected } = useControllerState({
+    id: 'SelectedAccountController',
+    selector: selectIsPrivacyPoolsAccountSelected
+  })
 
   const syncAccountTags = useMemo(() => createCrashReportAccountTagsSync(setTagContext), [])
 
   useEffect(() => {
     setCrashReportId(crashReportId)
   }, [crashReportId])
+
+  useEffect(() => {
+    // Undefined until the controller's first state reaches the UI
+    if (crashAnalyticsEnabled === undefined) return
+
+    syncCrashAnalyticsConsent(crashAnalyticsEnabled)
+  }, [crashAnalyticsEnabled])
+
+  useEffect(() => {
+    syncPrivacyPoolsAccountSelected(!!isPrivacyPoolsAccountSelected)
+  }, [isPrivacyPoolsAccountSelected])
 
   useEffect(() => {
     // The provider mounts before the controllers' first state reaches the UI
