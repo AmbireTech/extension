@@ -10,7 +10,6 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import GlassView from '@common/components/GlassView'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
-import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useToast from '@common/hooks/useToast'
@@ -74,9 +73,10 @@ const EditAccountNameBottomSheet = ({
       addToast(t('Account name updated.'))
       close()
     } catch (error) {
+      // Not reported here, as the controller already reports the failed save
+      console.error('Saving the account name failed', error)
       setIsSaving(false)
       addToast(t("Couldn't save the new name. Please try again."), { type: 'error' })
-      captureException(error)
     }
   }, [addToast, canSave, close, onSave, t, trimmedName])
 
