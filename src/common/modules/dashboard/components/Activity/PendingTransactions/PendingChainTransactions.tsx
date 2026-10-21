@@ -202,7 +202,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
               style={[
                 styles.nonceNavigationButton,
                 flexbox.center,
-                spacings.mlTy,
+                spacings.mlSm,
                 !hasPrevNonce && styles.nonceNavigationButtonDisabled
               ]}
             >
@@ -227,17 +227,17 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
               <RightArrowIcon width={6} height={11} color={theme.tertiaryText} />
             </HoverablePressable>
           </View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtTy]}>
             {isCurrentNonce && (
-              <View style={[styles.currentNoncePill, flexbox.center, spacings.phMi]}>
-                <Text fontSize={14} color={theme.primaryAccent}>
+              <View style={[styles.currentNoncePill, flexbox.center, spacings.phTy]}>
+                <Text fontSize={12} weight="medium" color={theme.primaryAccent}>
                   {t('Next to execute')}
                 </Text>
               </View>
             )}
             {waitsForPrecedingNonce && (
-              <View style={[styles.futureNoncePill, flexbox.center, spacings.phMi]}>
-                <Text fontSize={14} color={theme.warningText}>
+              <View style={[styles.futureNoncePill, flexbox.center, spacings.phTy]}>
+                <Text fontSize={12} weight="medium" color={theme.warningText}>
                   {t('waits for nonce {{nonce}}', { nonce: (nonceGroup.nonce - 1n).toString() })}
                 </Text>
               </View>
