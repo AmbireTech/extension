@@ -226,8 +226,10 @@ export const ENTRY_POINT_V06 = '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789' as c
 /** PQSmartWalletFactory, deployed with CREATE2 (Arachnid's deterministic
  *  deployer), so it has this address on every chain in
  *  `PQ1_SUPPORTED_CHAIN_IDS`. The firmware derives wallet addresses from the
- *  same address (`PQ_SMART_WALLET_FACTORY`). */
-export const FACTORY = '0xe8ce78cd976497447ff8b76c71b59ae42af0d452' as const
+ *  same address (`PQ_SMART_WALLET_FACTORY`). This is the contract set frozen
+ *  for the 2026-10 audit; firmware built for the earlier factory
+ *  (`0xe8ce78cd…d452`) is refused with `FIRMWARE_MISMATCH_MESSAGE`. */
+export const FACTORY = '0xe3dba404dcec30093de26764965a51689c1607bd' as const
 
 /** sha256 of an empty `paymasterAndData`. PQ1 UserOps have no paymaster,
  *  and SIGN_USEROP takes the hash of that field. */
