@@ -237,8 +237,12 @@ export class SettingsPage extends BasePage {
     const duration = Date.now() - start
     console.log(`Import took ${duration} ms`)
 
-    // complete and assert info text
+    // proceed - which adds the account - and wait until it is added, so the next step does
+    // not leave the screen while the account is still being added
     await this.click(selectors.getStarted.saveAndContinueBtn)
+    await expect(this.page.getByTestId(selectors.getStarted.personalizeAccountsHeader)).toBeHidden({
+      timeout: 30000
+    })
 
     // TODO: check if behavior is expected; message was not visible when test ran
     // assert info text

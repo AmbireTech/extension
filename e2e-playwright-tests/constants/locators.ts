@@ -31,6 +31,7 @@ const locators = {
   viewOnlySecondInputAddressField: 'input[data-testid="view-only-address-field-1"]',
   addAccount: 'div[data-testid="button-add-account"]',
   smartAccountPicker: 'div[data-testid^="add-account-"] >> nth=5',
+  secondSmartAccountPicker: 'div[data-testid^="add-account-"] >> nth=6',
   // smartAccountPickerForHDPath: 'div[data-testid^="add-account-"] >> nth=5',
   // importAccountButton: 'div[data-testid="button-import-account"]',
   // changeHDPathButton: 'div[data-testid="change-hd-path-btn"]',

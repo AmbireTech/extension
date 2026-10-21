@@ -181,12 +181,12 @@ export class AuthPage extends BasePage {
     // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
     await this.click(selectors.getStarted.importAccountButton)
     await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
-    // add another acc
+    // add another acc - the one prepared above stays selected, so a click on it would deselect it
     await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)
     await this.click(selectors.getStarted.addMoreAccountsButton)
     await this.page.waitForTimeout(3000)
     await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
-    await this.page.locator(locators.smartAccountPicker).click()
+    await this.page.locator(locators.secondSmartAccountPicker).click()
     // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
     await this.click(selectors.getStarted.importAccountButton)
     await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
