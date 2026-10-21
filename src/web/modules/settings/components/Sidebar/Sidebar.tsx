@@ -13,6 +13,7 @@ import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
+import PrivacyNetworkIcon from '@common/assets/svg/PrivacyNetworkIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
@@ -21,6 +22,7 @@ import TransactionHistoryIcon from '@common/assets/svg/TransactionHistoryIcon'
 import GlassView from '@common/components/GlassView'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { EXTENSION_STORE_REVIEWS_URL } from '@common/constants/stores'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -94,6 +96,12 @@ export const SETTINGS_LINKS = [
     label: 'Privacy opt-outs',
     path: ROUTES.optOuts
   },
+  {
+    key: 'privacy-network',
+    Icon: PrivacyNetworkIcon,
+    label: 'Privacy network',
+    path: ROUTES.privacyNetwork
+  },
   // Disabled for now - will be added in future releases
   // {
   //   key: 'email-vault',
@@ -142,8 +150,12 @@ const OTHER_LINKS = [
   }
 ]
 
+const selectIsAnonRpcSupported = (state: AllControllersMappingType['AnonRpcController']) =>
+  state.isSupported
+
 const Sidebar = ({ activeLink }: { activeLink?: string }) => {
   const { theme, styles } = useTheme(getStyles)
+  const { state: isAnonRpcSupported } = useController('AnonRpcController', selectIsAnonRpcSupported)
   const keystoreState = useController('KeystoreController').state
   const { isReady: evIsReady, emailVaultStates } = useController('EmailVaultController').state
   const { state } = useRoute()
@@ -211,6 +223,8 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
               _link.key === 'device-password-recovery'
             )
               return null
+            // Needs offscreen documents, which only Chromium browsers have
+            if (!isAnonRpcSupported && _link.key === 'privacy-network') return null
             // If the KeyStore device password is not configured yet, redirect to DevicePassword->Set route under the hood,
             // instead of loading DevicePassword->Change route.
             const link =

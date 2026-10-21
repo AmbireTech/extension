@@ -12,6 +12,7 @@ export { default as ManageTokensSettingsScreen } from '@web/modules/settings/scr
 export { default as NetworksConfiguration } from '@web/modules/network-settings/screens'
 export { default as NetworksSettingsScreen } from '@web/modules/settings/screens/NetworksSettingsScreen'
 export { default as OptOutsScreen } from '@web/modules/settings/screens/OptOutsScreen'
+export { default as PrivacyNetworkSettingsScreen } from '@web/modules/settings/screens/PrivacyNetworkSettingsScreen'
 export { default as PrivacyOptOutsConfiguration } from '@web/modules/network-settings/screens/PrivacyOptOutsConfiguration'
 export { default as RecoveryPhrasesSettingsScreen } from '@web/modules/settings/screens/RecoveryPhrasesSettingsScreen'
 export { default as SignedMessageHistorySettingsScreen } from '@web/modules/settings/screens/SignedMessageHistorySettingsScreen'

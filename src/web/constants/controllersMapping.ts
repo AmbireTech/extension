@@ -4,6 +4,7 @@ import { createExhaustiveArray } from '@common/utils/createExhaustiveArray'
 
 import type { AutoLockController } from '@common/controllers/auto-lock'
 import type { WalletStateController } from '@common/controllers/wallet-state'
+import type { AnonRpcController } from '@web/extension-services/background/controllers/anon-rpc'
 import type { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
 
 export type ExtensionBaseControllersMappingType = {
@@ -11,13 +12,15 @@ export type ExtensionBaseControllersMappingType = {
   WalletStateController: WalletStateController
   AutoLockController: AutoLockController
   ExtensionUpdateController: ExtensionUpdateController
+  AnonRpcController: AnonRpcController
 }
 
 export const baseControllersMapping = createExhaustiveArray<ExtensionBaseControllersMappingType>()([
   'MainController',
   'WalletStateController',
   'AutoLockController',
-  'ExtensionUpdateController'
+  'ExtensionUpdateController',
+  'AnonRpcController'
 ])
 
 export const controllersMapping = {

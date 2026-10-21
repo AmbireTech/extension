@@ -5,6 +5,55 @@
         "@ambire/signature-validator>ethers": true
       }
     },
+    "@anon-rpc/browser-extension-harness": {
+      "globals": {
+        "DOMException": true,
+        "Headers": true,
+        "Request": true,
+        "Response": true,
+        "atob": true,
+        "btoa": true,
+        "chrome": true,
+        "console": true,
+        "document": true,
+        "fetch": true
+      },
+      "packages": {
+        "@anon-rpc/browser-extension-harness>@anon-rpc/browser-harness": true,
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@anon-rpc/browser-extension-harness>@anon-rpc/browser-harness": {
+      "globals": {
+        "AbortController": true,
+        "Blob": true,
+        "DOMException": true,
+        "DecompressionStream": true,
+        "Headers": true,
+        "IDBKeyRange.lowerBound": true,
+        "MessageChannel": true,
+        "ReadableStream": true,
+        "Request": true,
+        "Response": true,
+        "TextDecoder": true,
+        "TextEncoder": true,
+        "URL": true,
+        "addEventListener": true,
+        "console": true,
+        "document.body.appendChild": true,
+        "document.createElement": true,
+        "fetch": true,
+        "indexedDB": true,
+        "location.href": true,
+        "location.origin": true,
+        "removeEventListener": true
+      },
+      "packages": {
+        "@anon-rpc/browser-extension-harness>@anon-rpc/browser-harness>@kpstreams/webrtc-client": true,
+        "@noble/hashes": true,
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
     "@corpus-core/colibri-stateless": {
       "globals": {
         "Buffer": true,
@@ -613,6 +662,30 @@
         "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check": true,
         "buffer": true,
         "tslib": true
+      }
+    },
+    "@anon-rpc/browser-extension-harness>@anon-rpc/browser-harness>@kpstreams/webrtc-client>@kpstreams/core": {
+      "globals": {
+        "ReadableStream": true,
+        "TextEncoder": true,
+        "WritableStream": true,
+        "atob": true,
+        "btoa": true,
+        "clearTimeout": true,
+        "crypto.getRandomValues": true,
+        "crypto.subtle.importKey": true,
+        "crypto.subtle.sign": true,
+        "setTimeout": true
+      }
+    },
+    "@anon-rpc/browser-extension-harness>@anon-rpc/browser-harness>@kpstreams/webrtc-client": {
+      "globals": {
+        "AbortSignal.timeout": true,
+        "RTCPeerConnection": true,
+        "TextEncoder": true
+      },
+      "packages": {
+        "@anon-rpc/browser-extension-harness>@anon-rpc/browser-harness>@kpstreams/webrtc-client>@kpstreams/core": true
       }
     },
     "@ledgerhq/context-module": {
@@ -2077,6 +2150,14 @@
     "@ngraveio/bc-ur>jsbi": {
       "globals": {
         "define": true
+      }
+    },
+    "json5": {
+      "globals": {
+        "console.warn": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
     "hardhat>keccak": {
