@@ -14,7 +14,7 @@ import AccountPersonalizeCard from '@common/modules/account-personalize/componen
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { FORWARD_NAVIGATION_STATE, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -150,7 +150,9 @@ const AccountPersonalizeScreen = () => {
                   testID="add-more-accounts-btn"
                   type="outline"
                   text={addMoreText}
-                  onPress={() => goToNextRoute(WEB_ROUTES.accountPicker)}
+                  // Adding more accounts is a step forward, even when the picker is the screen
+                  // this flow arrived from (hardware wallets)
+                  onPress={() => goToNextRoute(WEB_ROUTES.accountPicker, FORWARD_NAVIGATION_STATE)}
                   disabled={isAdding}
                   style={{ ...spacings.phMi, ...spacings.mtSm, height: 40 }}
                   size="tiny"
