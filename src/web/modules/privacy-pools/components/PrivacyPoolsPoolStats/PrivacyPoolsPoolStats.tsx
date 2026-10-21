@@ -4,7 +4,6 @@ import { View } from 'react-native'
 
 import { PrivacyPoolsPoolStats as PoolStats } from '@ambire-common/interfaces/privacyPools'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -29,7 +28,6 @@ type Row = {
   value: string
   /** A smaller line under the value, e.g. its amount in the token. */
   subValue?: string
-  tooltip?: string
 }
 
 /** One placeholder per row the numbers fill. */
@@ -37,24 +35,17 @@ const SKELETON_ROW_IDS = ['total', 'approved', 'pending', 'deposits24h', 'withdr
 
 const selectChains = (state: AllControllersMappingType['PrivacyPoolsController']) => state.chains
 
-const Label = React.memo(
-  ({ text, tooltipId, tooltip }: { text: string; tooltipId?: string; tooltip?: string }) => (
-    <Text
-      weight="medium"
-      fontSize={14}
-      appearance="secondaryText"
-      numberOfLines={1}
-      ellipsizeMode="tail"
-      dataSet={
-        tooltipId && tooltip
-          ? createGlobalTooltipDataSet({ id: tooltipId, content: tooltip })
-          : undefined
-      }
-    >
-      {text}
-    </Text>
-  )
-)
+const Label = React.memo(({ text }: { text: string }) => (
+  <Text
+    weight="medium"
+    fontSize={14}
+    appearance="secondaryText"
+    numberOfLines={1}
+    ellipsizeMode="tail"
+  >
+    {text}
+  </Text>
+))
 
 /**
  * The numbers of a token's pool, as rows of the token details' "About" (see `TokenData`): what it holds,
@@ -113,17 +104,13 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
       {
         id: 'total',
         label: t('Total value locked'),
-        tooltip: t('Everything held in this pool right now, by everyone who uses it.'),
         value: totalValue ?? formatAmount(stats.totalAmount),
         subValue: totalValue ? formatAmount(stats.totalAmount) : undefined
       },
       {
         id: 'approved',
         label: t('Verified deposits'),
-        value: formatDecimals(stats.approvedDepositsCount, 'noDecimal'),
-        tooltip: t(
-          'Sending from the pool hides you among everyone who deposited, so the more deposits, the more private it is.'
-        )
+        value: formatDecimals(stats.approvedDepositsCount, 'noDecimal')
       },
       {
         id: 'pending',
@@ -131,8 +118,7 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
         value: formatDecimals(stats.pendingDepositsCount, 'noDecimal'),
         subValue: stats.pendingDepositsCount
           ? [pendingValue, formatAmount(stats.pendingAmount)].filter(Boolean).join(' · ')
-          : undefined,
-        tooltip: t('New deposits are checked before they can be sent. This takes up to 7 days.')
+          : undefined
       },
       {
         id: 'deposits24h',
@@ -173,7 +159,7 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
 
   return (
     <>
-      {rows.map(({ id, label, value, subValue, tooltip }, index) => (
+      {rows.map(({ id, label, value, subValue }, index) => (
         <View
           key={id}
           style={[
@@ -183,7 +169,7 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
             index < rows.length - 1 && spacings.mbSm
           ]}
         >
-          <Label text={label} tooltipId={`privacy-pools-pool-stats-${id}`} tooltip={tooltip} />
+          <Label text={label} />
           <View style={[flexbox.alignEnd, spacings.mlSm]}>
             <Label text={value} />
             {!!subValue && (
