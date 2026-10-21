@@ -17,7 +17,6 @@ import { ControllersStateLoadedContext } from '@common/contexts/controllersState
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
-import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
@@ -59,8 +58,7 @@ const RagequitIcon = React.memo(({ width }: SvgProps) => {
 const PrivacyPoolsTokenDetailsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { navigate } = useNavigation()
-  const { params } = useRoute()
+  const { navigate, searchParams } = useNavigation()
   const { isNarrowWebLayout } = useCompactLayout()
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
   const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
@@ -76,8 +74,10 @@ const PrivacyPoolsTokenDetailsScreen = () => {
     setFooterHeight(event.nativeEvent.layout.height)
   }, [])
 
-  const chainId = String(params?.chainId || '')
-  const tokenAddress = String(params?.address || '').toLowerCase()
+  // From the URL, not `useRoute().params`, which is the route state whenever there is one - and
+  // `navigate` always sets one
+  const chainId = searchParams.get('chainId') || ''
+  const tokenAddress = (searchParams.get('address') || '').toLowerCase()
   const balance = useMemo(
     () => balances.find(({ id }) => id === `${chainId}:${tokenAddress}`) || null,
     [balances, chainId, tokenAddress]
