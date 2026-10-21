@@ -365,9 +365,12 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     // Every step left is skipped, so there is nowhere to go back to
     if (prevIndex < 0 && breadcrumb.length) return
 
+    // Leaving the flow ends it. The reset effect below never runs in the popup, where
+    // personalize can be reopened with the prepared accounts (see `getInitialRoute`).
+    accountPickerDispatch({ type: 'method', params: { method: 'reset', args: [] } })
     navigateRef.current('/')
     setHistory([])
-  }, [onboardingRoutesTree, goBackThePlatformWay])
+  }, [onboardingRoutesTree, goBackThePlatformWay, accountPickerDispatch])
 
   // Whether the last route (the root aside) was an onboarding one. Never in the popup.
   const wasOnOnboardingRouteRef = useRef(false)
