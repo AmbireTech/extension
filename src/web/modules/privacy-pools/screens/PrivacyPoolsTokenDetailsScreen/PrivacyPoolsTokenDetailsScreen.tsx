@@ -25,7 +25,6 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
 import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
 import TokenData from '@common/modules/token-details/components/TokenData'
-import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { privateValue } from '@common/utils/ui'
@@ -48,10 +47,10 @@ const RagequitIcon = React.memo(({ width }: SvgProps) => {
 })
 
 /**
- * A Privacy Pools token's details, laid out like the regular token details: its price, the balance
- * with the part still being verified, and only what is the same for everyone holding the token
- * (network, contract, the numbers of its pool), so nothing is looked up for this account. The
- * token is in the URL (`?chainId=&address=`), like Send.
+ * A Privacy Pools token's details, laid out like the regular token details but without the price,
+ * which says nothing about the pool: the balance with the part still being verified, and only what
+ * is the same for everyone holding the token (network, contract, the numbers of its pool), so
+ * nothing is looked up for this account. The token is in the URL (`?chainId=&address=`), like Send.
  *
  * Send moves what is verified, privately. Rage quit takes back a deposit still being verified,
  * publicly, to the account it came from - see `PrivacyPoolsRagequitSheet`.
@@ -170,15 +169,6 @@ const PrivacyPoolsTokenDetailsScreen = () => {
           }
         ]}
       >
-        <TokenPriceDisplay
-          symbol={token.symbol}
-          address={token.address}
-          chainId={token.chainId}
-          priceUSDFormatted={formatted.priceUSDFormatted}
-          // Absent without market data, so neither is shown
-          change24h={formatted.change24h}
-          change24hFormatted={formatted.change24hFormatted}
-        />
         <TokenBalanceCard
           symbol={token.symbol}
           address={token.address}
