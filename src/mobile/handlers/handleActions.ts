@@ -245,19 +245,27 @@ export const handleActions = async (
     }
 
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER': {
-      return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator)
+      return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator, params?.requestId)
     }
 
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR': {
-      return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator)
+      return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator, params?.requestId)
     }
 
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
-      return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
+      return await mainCtrl.handleAccountPickerInitQr(
+        QrKeyIterator,
+        params.payload,
+        params.requestId
+      )
     }
 
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET': {
-      return await mainCtrl.handleAccountPickerInitNfc(NfcKeyIterator, params.payload)
+      return await mainCtrl.handleAccountPickerInitNfc(
+        NfcKeyIterator,
+        params.payload,
+        params.requestId
+      )
     }
 
     case 'WEBVIEW_ORIGIN_CHANGED': {

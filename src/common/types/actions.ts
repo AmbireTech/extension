@@ -69,25 +69,27 @@ type SetViewFocusAction = {
   params: { id?: string }
 }
 
+// The account picker set up for a hardware wallet. `requestId` is replied to once it is
+// done (see `useAccountPickerHardwareInit`).
 type MainControllerAccountPickerInitLedgerAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER'
+  params?: { requestId?: string }
 }
 type MainControllerAccountPickerInitTrezorAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR'
+  params?: { requestId?: string }
 }
 type MainControllerAccountPickerInitLatticeAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
+  params?: { requestId?: string }
 }
 type MainControllerAccountPickerInitQrWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET'
-  params: { payload: string | Uint8Array }
+  params: { payload: string | Uint8Array; requestId?: string }
 }
 type MainControllerAccountPickerInitNfcWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET'
-  params: { payload: NfcExportedKey }
-}
-type ResetAccountAddingOnPageErrorAction = {
-  type: 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR'
+  params: { payload: NfcExportedKey; requestId?: string }
 }
 
 type MainControllerHandleSignMessage = {
@@ -274,7 +276,6 @@ export type Action =
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
   | HandshakeAction
-  | ResetAccountAddingOnPageErrorAction
   | MainControllerHandleSignMessage
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerDisconnectAllDappsAction

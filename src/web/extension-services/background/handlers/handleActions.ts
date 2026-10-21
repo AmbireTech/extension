@@ -114,28 +114,20 @@ export const handleActions = async (
       break
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER': {
-      return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator)
+      return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator, params?.requestId)
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR': {
-      return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator)
+      return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator, params?.requestId)
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE': {
-      return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator)
+      return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator, params?.requestId)
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
-      return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
-    }
-    case 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR': {
-      await mainCtrl.accountPicker.reset()
-      const accounts = [...mainCtrl.accounts.accounts]
-
-      for (const account of accounts) {
-        if (account.newlyAdded) {
-          await mainCtrl.removeAccount(account.addr)
-        }
-      }
-
-      break
+      return await mainCtrl.handleAccountPickerInitQr(
+        QrKeyIterator,
+        params.payload,
+        params.requestId
+      )
     }
     case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
       mainCtrl.signMessage.setSigners(params.signers)

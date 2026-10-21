@@ -7,11 +7,11 @@ import Text from '@common/components/Text'
 import { isLedgerEmulator } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import spacings from '@common/styles/spacings'
 import {
@@ -23,16 +23,14 @@ import { closeCurrentWindow } from '@web/extension-services/background/webapi/wi
 export const CARD_WIDTH = 400
 
 const LedgerConnectScreen = () => {
-  const mainCtrlState = useController('MainController').state
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { requestLedgerDeviceAccess } = useLedger()
   const { addToast } = useToast()
   const { t } = useTranslation()
   const [isGrantingPermission, setIsGrantingPermission] = useState(false)
   const { theme } = useTheme()
-  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const { dispatch } = useControllersMiddleware()
-  const { initParams, type } = useController('AccountPickerController').state
+  const { goToPrevRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
   const [authorizeButtonPressed, setAuthorizeButtonPressed] = useState(false)
   const route = useRoute()
 
@@ -60,14 +58,18 @@ const LedgerConnectScreen = () => {
         })
         await closeCurrentWindow()
       } else {
-        dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })
+        try {
+          await initAccountPicker({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })
+        } catch (error) {
+          // The controller reports its own failures, here the button only becomes usable again
+          console.error('Failed to set the account picker up for Ledger', error)
+        }
       }
     } catch (error: any) {
       addToast(error.message, { type: 'error' })
     } finally {
-      // Clear the flag to allow the user to try again. For all other cases,
-      // the state gets reset automatically, because the on connect success
-      // the flow redirects the user to another route (and this component unmounts).
+      // Clear the flag to allow the user to try again. On success the flow has
+      // moved on to the account picker (and this component unmounts).
       setIsGrantingPermission(false)
     }
   }
@@ -83,22 +85,7 @@ const LedgerConnectScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authorizeButtonPressed, isGrantingPermission])
 
-  useEffect(() => {
-    if (!isLedgerEmulator && !!authorizeButtonPressed && initParams && type === 'ledger') {
-      setAuthorizeButtonPressed(false)
-      goToNextRoute()
-    }
-  }, [authorizeButtonPressed, goToNextRoute, dispatch, initParams, type])
-
-  useEffect(() => {
-    // In Emulator mode, once the Ledger account picker init succeeds, move to the next screen
-    if (isLedgerEmulator && mainCtrlState.statuses.handleAccountPickerInitLedger === 'SUCCESS') {
-      goToNextRoute()
-    }
-  }, [goToNextRoute, mainCtrlState.statuses.handleAccountPickerInitLedger])
-
-  const isLoading =
-    isGrantingPermission || mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
+  const isLoading = isGrantingPermission
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>

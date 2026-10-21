@@ -1,11 +1,10 @@
 import { useCallback, useContext, useMemo, useState } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
+import { waitForReply } from '@common/hooks/useController/waitForReply'
 import useControllerState, { createSubscriptionIntent } from '@common/hooks/useControllerState'
-import eventBus from '@common/services/event/eventBus'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type MethodKeys<T> = {
@@ -148,51 +147,12 @@ export default function useController<
       // scrypt on a low end device), so the caller can raise the timeout
       timeoutMs: number = 10_000
     ) => {
-      const requestId = uuidv4()
+      return waitForReply<R>(`${id}.${String(action.params.method)}`, timeoutMs, (requestId) => {
+        const ctrlAction = {
+          ...action,
+          params: { ...action.params, ctrlName: id, args: [...action.params.args, requestId] }
+        } as never as AnyControllerAction
 
-      const ctrlAction = {
-        ...action,
-        params: { ...action.params, ctrlName: id, args: [...action.params.args, requestId] }
-      } as never as AnyControllerAction
-
-      return new Promise<R>((resolve, reject) => {
-        let settled = false
-
-        const cleanup = () => {
-          eventBus.removeEventListener('receiveOneTimeData', onResponse)
-          clearTimeout(timeoutId)
-        }
-
-        const onResponse = (data: any) => {
-          if (data?.requestId !== requestId) return
-          if (settled) return
-
-          settled = true
-
-          cleanup()
-
-          if (data.ok) {
-            resolve(data.res as R)
-          } else {
-            reject(new Error(data.error ?? `Calling ${id}.${ctrlAction.params.method} failed`))
-          }
-        }
-
-        const timeoutId = setTimeout(() => {
-          if (settled) return
-          settled = true
-
-          cleanup()
-          reject(
-            new Error(
-              `Calling ${id}.${ctrlAction.params.method} timed out after ${timeoutMs / 1000} seconds`
-            )
-          )
-        }, timeoutMs)
-
-        // Listen before dispatching: on mobile the controllers run in this realm and
-        // can reply synchronously, before a listener added afterwards would exist
-        eventBus.addEventListener('receiveOneTimeData', onResponse)
         controllersMiddlewareDispatch(ctrlAction as any)
       })
     },

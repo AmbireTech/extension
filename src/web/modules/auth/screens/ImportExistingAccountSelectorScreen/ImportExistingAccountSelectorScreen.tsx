@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, ColorValue, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
@@ -18,11 +18,11 @@ import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -58,13 +58,26 @@ const ImportExistingAccountSelectorScreen = () => {
   const { t } = useTranslation()
   const wrapperRef = useRef<View | null>(null)
 
-  const { goToPrevRoute, goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
+  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
+  // Trezor and GridPlus connect from here, as their own windows ask for the device
+  const connectHardwareWallet = useCallback(
+    (
+      type:
+        | 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR'
+        | 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
+    ) =>
+      initAccountPicker({ type }).catch((error) => {
+        // The controller reports its own failures
+        console.error('Failed to set the account picker up for the hardware wallet', error)
+      }),
+    [initAccountPicker]
+  )
   const [showMore, setShowMore] = useState(false)
 
   const animatedHeight = useRef(new Animated.Value(0)).current
   const animatedOpacity = useRef(new Animated.Value(0)).current
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
   const [bindAnim, animStyle] = useMultiHover({
     values: [
       {
@@ -130,8 +143,7 @@ const ImportExistingAccountSelectorScreen = () => {
               { type: 'error' }
             )
           } else {
-            setTriggeredHwWalletFlow('trezor')
-            dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
+            connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR')
           }
         },
         icon: TrezorBadgeIcon
@@ -146,8 +158,7 @@ const ImportExistingAccountSelectorScreen = () => {
       {
         title: 'Grid Plus',
         onPress: () => {
-          setTriggeredHwWalletFlow('lattice')
-          dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
+          connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE')
         },
         icon: GridPlusIcon
       },
@@ -173,7 +184,7 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: ViewOnlyIcon
       }
     ],
-    [goToNextRoute, addToast, dispatch, t, setTriggeredHwWalletFlow, theme.primary]
+    [goToNextRoute, addToast, connectHardwareWallet, t, theme.primary]
   )
 
   useEffect(() => {

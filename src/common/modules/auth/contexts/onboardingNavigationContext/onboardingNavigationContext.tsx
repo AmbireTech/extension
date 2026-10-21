@@ -31,18 +31,15 @@ import { getUiType } from '@common/utils/uiType'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
-type HwWalletsNeedingRedirect = 'trezor' | 'lattice' | null
 
 const OnboardingNavigationContext = createContext<{
   isOnboardingRoute: boolean
   goToNextRoute: (routeName?: OnboardingRoute, routeState?: Record<string, unknown>) => void
   goToPrevRoute: () => void
-  setTriggeredHwWalletFlow: React.Dispatch<React.SetStateAction<HwWalletsNeedingRedirect>>
 }>({
   isOnboardingRoute: false,
   goToNextRoute: () => {},
-  goToPrevRoute: () => {},
-  setTriggeredHwWalletFlow: () => null
+  goToPrevRoute: () => {}
 })
 
 type RouteNode = {
@@ -131,12 +128,9 @@ const selectRecoverKeyStoreStatus = (state: AllControllersMappingType['EmailVaul
   state.statuses?.recoverKeyStore
 const selectPickerSubType = (state: AllControllersMappingType['AccountPickerController']) =>
   state.subType
-const selectPickerType = (state: AllControllersMappingType['AccountPickerController']) => state.type
 // A flow is under way - set up (personalize prepares its accounts) or prepared already
 const selectHasAccountAddingFlow = (state: AllControllersMappingType['AccountPickerController']) =>
   !!state.isInitialized || !!state.initParams || !!state.readyToAddAccounts?.length
-const selectHasPickerInitParams = (state: AllControllersMappingType['AccountPickerController']) =>
-  !!state.initParams
 
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
@@ -157,11 +151,6 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const { state: subType, dispatch: accountPickerDispatch } = useController(
     'AccountPickerController',
     selectPickerSubType
-  )
-  const { state: type } = useController('AccountPickerController', selectPickerType)
-  const { state: hasPickerInitParams } = useController(
-    'AccountPickerController',
-    selectHasPickerInitParams
   )
   const { state: hasAccountAddingFlow } = useController(
     'AccountPickerController',
@@ -380,22 +369,14 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     setHistory([])
   }, [onboardingRoutesTree, goBackThePlatformWay])
 
-  const [triggeredHwWalletFlow, setTriggeredHwWalletFlow] = useState<HwWalletsNeedingRedirect>(null)
-
-  useEffect(() => {
-    const isHwWalletNeedingRedirect = !!type && ['lattice', 'trezor'].includes(type)
-    if (!triggeredHwWalletFlow || !hasPickerInitParams || !isHwWalletNeedingRedirect) return
-
-    setTriggeredHwWalletFlow(null)
-    goToNextRoute(isOnboardingRoute ? undefined : WEB_ROUTES.accountPicker)
-  }, [goToNextRoute, hasPickerInitParams, type, triggeredHwWalletFlow, isOnboardingRoute])
-
   // Whether the last route (the root aside) was an onboarding one. Never in the popup.
   const wasOnOnboardingRouteRef = useRef(false)
 
   // Ends the account adding flow once the user leaves it - back to where it started, or
   // anywhere else. Only a move counts: flows prepare their accounts on their own screen,
-  // and its own steps (the password setup, the picker and personalize) keep it.
+  // and its own steps (the password setup, the picker and personalize) keep it. Reset
+  // whether or not a flow seems under way: the state here can lag behind the flow that
+  // just started, and resetting a picker with nothing in it costs one update.
   useEffect(() => {
     const currentRoute = path?.substring(1)
     if (!currentRoute) return
@@ -404,11 +385,11 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     wasOnOnboardingRouteRef.current =
       !getUiType().isPopup && ONBOARDING_WEB_ROUTES.includes(currentRoute)
 
-    if (!wasOnOnboardingRoute || path === prevPath || !hasAccountAddingFlow) return
+    if (!wasOnOnboardingRoute || path === prevPath) return
     if (ACCOUNT_ADDING_FLOW_ROUTES.includes(currentRoute)) return
 
     accountPickerDispatch({ type: 'method', params: { method: 'reset', args: [] } })
-  }, [path, prevPath, hasAccountAddingFlow, accountPickerDispatch])
+  }, [path, prevPath, accountPickerDispatch])
 
   // Some routes are protected and should only be accessed through internal navigation.
   // If a user attempts to access one of these routes directly via the URL bar,
@@ -477,10 +458,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     () => ({
       isOnboardingRoute,
       goToNextRoute,
-      goToPrevRoute,
-      setTriggeredHwWalletFlow
+      goToPrevRoute
     }),
-    [isOnboardingRoute, goToPrevRoute, goToNextRoute, setTriggeredHwWalletFlow]
+    [isOnboardingRoute, goToPrevRoute, goToNextRoute]
   )
   return (
     <OnboardingNavigationContext.Provider value={value}>
