@@ -5,7 +5,6 @@ import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Style = {
-  container: ViewStyle
   tokenInfoAndIcon: ViewStyle
   tokenInfo: ViewStyle
   balance: ViewStyle
@@ -13,17 +12,15 @@ type Style = {
 
 const getStyles = (theme: ThemeProps): Style =>
   StyleSheet.create({
-    container: {
+    tokenInfoAndIcon: {
+      ...flexbox.directionRow,
       ...spacings.pvTy,
       ...spacings.plTy,
       ...spacings.prSm,
       ...spacings.mbMd,
+      ...flexbox.alignCenter,
       backgroundColor: theme.secondaryBackground,
       borderRadius: 12
-    },
-    tokenInfoAndIcon: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter
     },
     tokenInfo: {
       ...spacings.mlTy,
