@@ -84,7 +84,7 @@ const SettingsLink: FC<Props> = ({
         flexbox.justifySpaceBetween,
         flexbox.alignCenter,
         spacings.phSm,
-        { height: BUTTON_HEIGHT },
+        { minHeight: BUTTON_HEIGHT },
         isSidebarLink ? spacings.prLg : {},
         isSidebarLink ? spacings.mbMi : flexbox.flex1,
         {
