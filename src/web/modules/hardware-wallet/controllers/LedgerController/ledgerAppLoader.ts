@@ -37,8 +37,12 @@ export const getLoadScriptApiLevel = (commands: Uint8Array[]): number | undefine
  * release bumps the API level. Source: `API_LEVEL` in `Makefile.defines` at the
  * `<model>_<os>` tags of https://github.com/LedgerHQ/ledger-secure-sdk.
  * Add a row when the bundled "Ambire Signer" builds move to a new API level.
+ * `ledgerAppLoader.test.ts` fails until the row is added.
  */
-const OS_VERSION_BY_API_LEVEL: Record<number, Partial<Record<DeviceModelId, [number, number]>>> = {
+export const OS_VERSION_BY_API_LEVEL: Record<
+  number,
+  Partial<Record<DeviceModelId, [number, number]>>
+> = {
   27: {
     [DeviceModelId.NANO_SP]: [1, 7],
     [DeviceModelId.STAX]: [1, 11],
