@@ -104,9 +104,8 @@ const useAccountPicker = () => {
     setOnImportPressed(true)
 
     try {
-      // Controller actions are fire-and-forget, so the picker replies to this call once the
-      // selection is prepared, instead of the screen watching a transient status. The
-      // personalize step adds the accounts once the user proceeds.
+      // Replies once the selection is prepared, rather than the screen watching a transient
+      // status. Personalize adds the accounts once the user proceeds.
       await accountPickerDispatchAndWait({
         type: 'method',
         params: { method: 'prepareSelectedAccounts', args: [] }

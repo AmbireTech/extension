@@ -62,7 +62,7 @@ const SavedSeedPhrasesBottomSheet = ({
     async (id: string) => {
       setPreparingSeedId(id)
       try {
-        // Selects and prepares the phrase's next account for the personalize step
+        // Sets the picker up with the phrase - personalize prepares its next account
         await mainDispatchAndWait({
           type: 'method',
           params: { method: 'accountPickerSetInitParamsFromSavedSeed', args: [id] }

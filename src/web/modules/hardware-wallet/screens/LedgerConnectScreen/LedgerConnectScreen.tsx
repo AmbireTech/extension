@@ -85,8 +85,6 @@ const LedgerConnectScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authorizeButtonPressed, isGrantingPermission])
 
-  const isLoading = isGrantingPermission
-
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
@@ -119,8 +117,8 @@ const LedgerConnectScreen = () => {
           </Text>
           {!isLedgerEmulator && (
             <Button
-              text={isLoading ? t('Connecting...') : t('Authorize & connect')}
-              disabled={isLoading}
+              text={isGrantingPermission ? t('Connecting...') : t('Authorize & connect')}
+              disabled={isGrantingPermission}
               onPress={onPressNext}
               hasBottomSpacing={false}
             />

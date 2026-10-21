@@ -71,7 +71,7 @@ export default function useSeedPhraseImport() {
         }
       })
       try {
-        // Selects and prepares the phrase's first account for the personalize step
+        // Sets the picker up with the phrase - personalize prepares its first account
         await mainDispatchAndWait({
           type: 'method',
           params: {

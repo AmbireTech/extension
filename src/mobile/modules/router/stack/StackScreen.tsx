@@ -99,8 +99,8 @@ const StackScreen = ({
       <ScreenFocusProvider isFocused={isFocused} isSettled={isSettled}>
         <ScreenLocationProvider location={entry.location} canGoBack={canGoBack}>
           <ScreenBackContext.Provider value={screenBack}>
-            {/* Always mounted, and only enabled while a handler is set, so setting one */}
-            {/* does not remount the screen */}
+            {/* Always mounted and only enabled while a handler is set, so setting one
+            does not remount the screen */}
             <GestureDetector gesture={edgeSwipeBackGesture}>
               <View style={flexbox.flex1}>
                 <ScreenTouchArea>

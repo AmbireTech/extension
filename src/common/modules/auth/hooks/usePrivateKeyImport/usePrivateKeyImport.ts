@@ -35,7 +35,7 @@ export default function usePrivateKeyImport() {
         trimmedPrivateKey.slice(0, 2) === '0x' ? trimmedPrivateKey.slice(2) : trimmedPrivateKey
 
       try {
-        // Prepares the key's account for the personalize step
+        // Sets the picker up with the key - personalize prepares its account
         await mainDispatchAndWait({
           type: 'method',
           params: {

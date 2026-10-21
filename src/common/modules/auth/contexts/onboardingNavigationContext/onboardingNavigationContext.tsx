@@ -253,11 +253,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   )
 
   /**
-   * The platform's own back - a swipe or Android's back on mobile, the browser's back
-   * button on web - goes back without the breadcrumb knowing. Going back the same way keeps
-   * the app's navigation in step with it: popping the screen from the native stack, or
-   * stepping back in the browser history when the app navigated here. Returns whether it
-   * went back.
+   * Goes back the way the platform's own back does (a swipe, Android's back, the browser's
+   * back), so the app's navigation stays in step with it. Returns whether it went back.
    */
   const goBackThePlatformWay = useCallback(() => {
     if (getUiType().isMobileApp) return goBackInStack()
@@ -273,9 +270,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
       let nextRoute: RouteNode | null = null
       if (routeName && ONBOARDING_WEB_ROUTES.includes(routeName)) {
-        // A flow names its step when it moves on right after setting the picker up, as the
-        // tree lags behind that (the reply arrives before the state). The password still
-        // comes first, as nothing can be added before it is set.
+        // A flow names its step right after setting the picker up, as the tree lags behind
+        // that. The password still comes first - nothing can be added before it is set.
         const isWaitingForPassword =
           !hasPasswordSecret && ACCOUNT_ADDING_STEPS_AFTER_PASSWORD.includes(routeName)
         nextRoute = findRouteNode(
@@ -289,9 +285,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       }
       if (!nextRoute) return
 
-      // Going on to the screen the user came from (e.g. back to personalize from the picker
-      // opened for more accounts) is going back to it, rather than stacking it again -
-      // unless the navigation declares itself a step forward
+      // Going on to the screen the user came from (e.g. personalize, from "Add more") goes back
+      // to it rather than stacking it again - unless the navigation is declared a step forward
       const isDeclaredForward = routeState?.navDirection === FORWARD_NAVIGATION_STATE.navDirection
       if (
         getCameFrom()?.pathname === `/${nextRoute.name}` &&
@@ -302,8 +297,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         return
       }
 
-      // The password is set once, so its step is replaced rather than left behind: every
-      // way back - the back arrow, a swipe, the browser's - skips it, as the tree does
+      // The password is set once, so its step is replaced - every way back (arrow, swipe,
+      // browser) skips it, as the tree does
       const isLeavingPasswordSetup = currentRoute === WEB_ROUTES.keyStoreSetup
 
       if (nextRoute.name === '/' && !getUiType().isMobileApp) {
@@ -375,11 +370,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   // Whether the last route (the root aside) was an onboarding one. Never in the popup.
   const wasOnOnboardingRouteRef = useRef(false)
 
-  // Ends the account adding flow once the user leaves it - back to where it started, or
-  // anywhere else. Only a move counts: flows prepare their accounts on their own screen,
-  // and its own steps (the password setup, the picker and personalize) keep it. Reset
-  // whether or not a flow seems under way: the state here can lag behind the flow that
-  // just started, and resetting a picker with nothing in it costs one update.
+  // Ends the account adding flow on a move off its steps - flows prepare on their own screen,
+  // so only a move counts. Resets regardless, as the state can lag behind a flow just started.
   useEffect(() => {
     const currentRoute = path?.substring(1)
     if (!currentRoute) return

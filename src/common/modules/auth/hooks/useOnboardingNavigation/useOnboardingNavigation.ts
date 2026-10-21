@@ -17,14 +17,10 @@ export default function useOnboardingNavigation() {
   }
 
   /**
-   * Onboarding is a stack of screens on mobile, so every screen the user has been
-   * through is still mounted and still reacting to state. Moving the flow on is only
-   * ever the business of the screen the user is looking at: `goToNextRoute()` advances
-   * from whatever the current route is, so a call from a screen further back skips a
-   * step. Ignored rather than gated at each call site, so a new screen cannot
-   * reintroduce it. Decided when called rather than when rendered,
-   * so a tap on a screen the stack has not committed as the top one yet is deferred
-   * until it is (see `runWhenScreenIsOnTop`) instead of lost.
+   * Onboarding is a stack of screens on mobile, all still mounted and reacting to state, and
+   * `goToNextRoute()` advances from the current route - so a screen further back moving the
+   * flow on skips a step. Handled here rather than at each call site; a tap on a screen not
+   * yet committed as the top one is deferred until it is (see `runWhenScreenIsOnTop`).
    */
   return useMemo(() => {
     if (isFocused) return context

@@ -4,16 +4,16 @@ import { SvgProps } from 'react-native-svg'
 
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
-import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
+import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -25,7 +25,6 @@ import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNav
 import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -54,7 +53,7 @@ type ButtonType = {
 }
 
 const ImportExistingAccountSelectorScreen = () => {
-  const { theme, themeType } = useTheme(getStyles)
+  const { theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const wrapperRef = useRef<View | null>(null)
 
@@ -203,6 +202,38 @@ const ImportExistingAccountSelectorScreen = () => {
     }).start()
   }, [animatedHeight, animatedOpacity, showMore, buttons.length])
 
+  const renderImportMethod = useCallback(
+    ({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE, iconColor }: ButtonType) => (
+      <Button
+        key={title}
+        type="tertiary"
+        onPress={onPress}
+        testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
+        childrenContainerStyle={{
+          ...flexbox.directionRow,
+          ...flexbox.alignCenter,
+          ...flexbox.justifySpaceBetween,
+          ...flexbox.flex1
+        }}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}>
+            <IconComponent
+              width={iconSize}
+              height={iconSize}
+              color={iconColor || theme.iconPrimary}
+            />
+          </View>
+          <Text style={spacings.mlSm} fontSize={16} weight="medium">
+            {t(title)}
+          </Text>
+        </View>
+        <RightArrowIcon color={theme.iconPrimary} />
+      </Button>
+    ),
+    [t, theme.iconPrimary]
+  )
+
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent wrapperRef={wrapperRef} contentContainerStyle={spacings.mbLg}>
@@ -215,97 +246,11 @@ const ImportExistingAccountSelectorScreen = () => {
         >
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
             <ScrollView contentContainerStyle={[flexbox.justifySpaceBetween]}>
-              {buttons
-                .slice(0, VISIBLE_BUTTONS_COUNT)
-                .map(
-                  ({
-                    title,
-                    onPress,
-                    icon: IconComponent,
-                    iconSize = ICON_SLOT_SIZE,
-                    iconColor
-                  }) => (
-                    <Button
-                      key={title}
-                      type="tertiary"
-                      onPress={onPress}
-                      testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
-                      childrenContainerStyle={{
-                        ...flexbox.directionRow,
-                        ...flexbox.alignCenter,
-                        ...flexbox.justifySpaceBetween,
-                        ...flexbox.flex1
-                      }}
-                    >
-                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <View
-                          style={[
-                            flexbox.center,
-                            { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }
-                          ]}
-                        >
-                          <IconComponent
-                            width={iconSize}
-                            height={iconSize}
-                            color={iconColor || theme.iconPrimary}
-                          />
-                        </View>
-                        <Text style={spacings.mlSm} fontSize={16} weight="medium">
-                          {t(title)}
-                        </Text>
-                      </View>
-                      <RightArrowIcon color={theme.iconPrimary} />
-                    </Button>
-                  )
-                )}
+              {buttons.slice(0, VISIBLE_BUTTONS_COUNT).map(renderImportMethod)}
               <Animated.View
                 style={{ height: animatedHeight, opacity: animatedOpacity, overflow: 'hidden' }}
               >
-                {buttons
-                  .slice(VISIBLE_BUTTONS_COUNT)
-                  .map(
-                    ({
-                      title,
-                      onPress,
-                      icon: IconComponent,
-                      iconSize = ICON_SLOT_SIZE,
-                      iconColor
-                    }) => (
-                      <Button
-                        key={title}
-                        type="tertiary"
-                        onPress={onPress}
-                        testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
-                        childrenContainerStyle={{
-                          ...flexbox.directionRow,
-                          ...flexbox.alignCenter,
-                          ...flexbox.justifySpaceBetween,
-                          ...flexbox.flex1
-                        }}
-                      >
-                        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                          <View
-                            style={[
-                              flexbox.center,
-                              { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }
-                            ]}
-                          >
-                            <IconComponent
-                              width={iconSize}
-                              height={iconSize}
-                              color={iconColor || theme.iconPrimary}
-                            />
-                          </View>
-                          <Text style={spacings.mlSm} fontSize={14} weight="medium">
-                            {t(title)}
-                          </Text>
-                        </View>
-                        <RightArrowIcon
-                          {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
-                        />
-                      </Button>
-                    )
-                  )}
+                {buttons.slice(VISIBLE_BUTTONS_COUNT).map(renderImportMethod)}
               </Animated.View>
             </ScrollView>
             {buttons.length > VISIBLE_BUTTONS_COUNT && (

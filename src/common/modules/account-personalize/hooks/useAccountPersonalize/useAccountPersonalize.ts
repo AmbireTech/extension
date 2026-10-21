@@ -51,12 +51,8 @@ export default function useAccountPersonalize() {
   })
   const { fields } = useFieldArray({ control, name: 'accounts' })
 
-  // The flows that come straight here (Create, a recovery phrase, a private key) only set the
-  // picker up, so the screen opens at once and the account is selected and prepared here,
-  // while it shows that it is loading. Asked once, when the screen opens: a picker set up
-  // already (hardware wallets, or back from the picker) has prepared what there is - even
-  // nothing, when all accounts were deselected there. The controller decides, as the state
-  // here can still lack what the flow just set up.
+  // Create, a recovery phrase and a private key only set the picker up, so it is started here,
+  // once. The controller decides whether to start, as the state here can lag behind the flow.
   useEffect(() => {
     if (hasStartedPreparing.current) return
 
@@ -143,7 +139,8 @@ export default function useAccountPersonalize() {
     isAdding,
     addedAccounts,
     handleProceed,
-    // Only the loading state shows while loading - no title yet
+    // A blank title while loading: the header (and its height) shows only with a title or a
+    // back arrow
     title: isLoading
       ? ' '
       : !fields.length
