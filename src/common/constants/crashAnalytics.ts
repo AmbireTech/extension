@@ -7,6 +7,58 @@ import type { SeverityLevel } from '@sentry/browser'
 export const CRASH_ANALYTICS_ENABLED_STORAGE_KEY = 'crashAnalyticsEnabledV2'
 
 /**
+ * Where the random crash report id is stored. The id is what the user can share with support to
+ * have their reports found in Sentry. It is not derived from anything else on the device.
+ */
+export const CRASH_REPORT_ID_STORAGE_KEY = 'crashReportId'
+
+/**
+ * The user id sent while no crash report id exists yet. The native Sentry SDKs fill an install id
+ * of their own into reports that have no user id, and a fixed value keeps that from happening.
+ */
+export const CRASH_REPORT_ID_UNASSIGNED = 'unassigned'
+
+/** Sentry tag keys of the account traits that replace the account address in crash reports. */
+export const CRASH_REPORT_ACCOUNT_TAGS = {
+  ACCOUNT_TYPE: 'accountType',
+  KEY_TYPE: 'keyType',
+  ACCOUNT_COUNT: 'accountCount'
+} as const
+
+export const PRIVACY_POOLS_CONTROLLER_NAME = 'PrivacyPoolsController'
+
+/** The controllers whose updates can change the account traits sent with crash reports. */
+export const CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS = [
+  'SelectedAccountController',
+  'AccountsController',
+  'KeystoreController'
+]
+
+export type CrashReportAccountTagKey =
+  (typeof CRASH_REPORT_ACCOUNT_TAGS)[keyof typeof CRASH_REPORT_ACCOUNT_TAGS]
+
+export const CRASH_REPORT_ACCOUNT_TYPE = {
+  EOA: 'eoa',
+  SMART: 'smart',
+  SMARTER_EOA: '7702'
+} as const
+
+export const CRASH_REPORT_KEY_TYPE = {
+  INTERNAL: 'internal',
+  HARDWARE: 'hardware',
+  NONE: 'none'
+} as const
+
+export const CRASH_REPORT_ACCOUNT_COUNT = {
+  ONE: '1',
+  FEW: '2-5',
+  MANY: '6+'
+} as const
+
+/** The most accounts that still fall in the `2-5` bucket. */
+export const CRASH_REPORT_FEW_ACCOUNTS_MAX = 5
+
+/**
  * Which part of the mobile app a crash report came from, sent as the `content` tag so issues can
  * be filtered by it. Errors that reach the global handlers get `UNHANDLED`.
  */

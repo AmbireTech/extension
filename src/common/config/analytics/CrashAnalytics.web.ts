@@ -38,8 +38,12 @@ export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
 
 export const captureException = Sentry.captureException
 export const captureMessage = Sentry.captureMessage
-export const setExtraContext = Sentry.setExtra
-export const setUserContext = Sentry.setUser
+
+/** Puts the crash report id on later reports, or removes the user when there is none. */
+export const setCrashReportId = (crashReportId: string | null) =>
+  Sentry.setUser(crashReportId ? { id: crashReportId } : null)
+
+export const setTagContext = Sentry.setTag
 export const ErrorBoundary = Sentry.ErrorBoundary
 
 /**

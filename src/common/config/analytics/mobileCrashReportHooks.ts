@@ -1,4 +1,7 @@
-import { processCrashReportEvent } from '@common/config/analytics/processCrashReportEvent'
+import {
+  processCrashReportEvent,
+  stripPrivacyPoolsCrashReportEvent
+} from '@common/config/analytics/processCrashReportEvent'
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import {
   CONSOLE_BREADCRUMB_CATEGORY,
@@ -116,6 +119,20 @@ const moveMessageStackToThread = <T extends SentryEvent>(event: T): T => {
   return messageEvent
 }
 
+// The device name is often the owner's name, and the locale and timezone narrow down where they are
+const stripDevicePersonalContext = (event: SentryEvent) => {
+  const { device, culture } = event.contexts || {}
+  if (device) {
+    delete device.name
+    delete device.locale
+    delete device.timezone
+  }
+  if (culture) {
+    delete culture.locale
+    delete culture.timezone
+  }
+}
+
 /**
  * The mobile `beforeSend`. Gives null when the user turned crash reporting off or the shared
  * pipeline drops the event. Otherwise gives back the scrubbed event, tagged as `unhandled` when
@@ -124,12 +141,16 @@ const moveMessageStackToThread = <T extends SentryEvent>(event: T): T => {
 export const processMobileCrashReportEvent = <T extends SentryEvent>(
   event: T,
   originalException: unknown,
-  isConsentGiven: boolean
+  isConsentGiven: boolean,
+  isPrivacyPoolsAccountSelected = false
 ): T | null => {
   if (!isConsentGiven) return null
 
   const processedEvent = processCrashReportEvent(moveMessageStackToThread(event), originalException)
   if (!processedEvent) return null
+
+  stripDevicePersonalContext(processedEvent)
+  stripPrivacyPoolsCrashReportEvent(processedEvent, isPrivacyPoolsAccountSelected)
 
   processedEvent.tags = {
     ...processedEvent.tags,

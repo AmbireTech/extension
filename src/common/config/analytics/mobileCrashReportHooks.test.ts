@@ -113,6 +113,45 @@ describe('processMobileCrashReportEvent', () => {
     expect(result?.tags).toEqual({ content: CRASH_REPORT_CONTENT.UNHANDLED })
   })
 
+  it('strips the device name, locale and timezone but keeps the rest of the device', () => {
+    const event = {
+      ...buildEvent(),
+      contexts: {
+        device: {
+          name: "Jane's iPhone",
+          locale: 'bg_BG',
+          timezone: 'Europe/Sofia',
+          model: 'iPhone15'
+        },
+        culture: { locale: 'bg-BG', timezone: 'Europe/Sofia', calendar: 'GregorianCalendar' }
+      }
+    }
+
+    const result = processMobileCrashReportEvent(event, new Error('unexpected state'), true)
+
+    expect(result?.contexts).toEqual({
+      device: { model: 'iPhone15' },
+      culture: { calendar: 'GregorianCalendar' }
+    })
+  })
+
+  it('strips the id, account traits and details of a report sent while a Privacy Pools account is selected', () => {
+    const event = {
+      ...buildEvent({ content: CRASH_REPORT_CONTENT.CONTROLLERS, accountType: 'eoa' }),
+      user: { id: 'crash-report-id' },
+      extra: { controllerName: 'SwapAndBridgeController' },
+      exception: { values: [{ type: 'Error', value: 'withdraw to recipient failed' }] }
+    }
+
+    const result = processMobileCrashReportEvent(event, new Error('unexpected state'), true, true)
+
+    expect(result).not.toHaveProperty('user')
+    expect(result).not.toHaveProperty('message')
+    expect(result).not.toHaveProperty('extra')
+    expect(result?.tags).toEqual({ content: CRASH_REPORT_CONTENT.CONTROLLERS })
+    expect(result?.exception).toEqual({ values: [{ type: 'Error' }] })
+  })
+
   it('keeps the content tag a capture site set', () => {
     const result = processMobileCrashReportEvent(
       buildEvent({ content: CRASH_REPORT_CONTENT.CONTROLLERS }),
