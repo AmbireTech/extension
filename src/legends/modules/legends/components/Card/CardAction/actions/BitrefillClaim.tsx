@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import spacings from '@common/styles/spacings'
 import { LEGENDS_CONTRACT_ADDRESS } from '@legends/constants/addresses'
 import { ERROR_MESSAGES } from '@legends/constants/errors/messages'
 import { BASE_CHAIN_ID } from '@legends/constants/networks'
@@ -109,12 +110,7 @@ const BitrefillClaim = ({ meta }: Props) => {
           <Pressable onPress={copyText}>
             <div className={styles.bitrefillCode}>
               <p style={{ fontWeight: 'bold' }}>{meta.code}</p>
-              <CopyIcon
-                color="#7C51FF"
-                width="1.5rem"
-                height="1.5rem"
-                style={{ marginLeft: '1.25rem' }}
-              />
+              <CopyIcon color="#7C51FF" width="1.5rem" height="1.5rem" style={spacings.mlMd} />
             </div>
           </Pressable>
         </div>
