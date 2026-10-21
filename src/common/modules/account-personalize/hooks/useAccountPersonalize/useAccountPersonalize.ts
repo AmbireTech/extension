@@ -35,7 +35,9 @@ export default function useAccountPersonalize() {
   const { state: readyToAddAccounts, dispatchAndWait: accountPickerDispatchAndWait } =
     useController('AccountPickerController', selectReadyToAddAccounts)
   const { state: subType } = useController('AccountPickerController', selectSubType)
-  const [prepareResult, setPrepareResult] = useState<'done' | 'failed' | null>(null)
+  const [prepareResult, setPrepareResult] = useState<{ preparedCount: number } | 'failed' | null>(
+    null
+  )
   const [hasMinLoadingPassed, setHasMinLoadingPassed] = useState(false)
   const [hasMaxLoadingPassed, setHasMaxLoadingPassed] = useState(false)
   const hasStartedPreparing = useRef(false)
@@ -63,7 +65,7 @@ export default function useAccountPersonalize() {
       { type: 'method', params: { method: 'initIfNotStarted', args: [] } },
       PREPARE_ACCOUNTS_TIMEOUT_MS
     )
-      .then(() => setPrepareResult('done'))
+      .then((preparedCount: number) => setPrepareResult({ preparedCount }))
       .catch((error) => {
         // The controller reports its own failures, here the screen only stops loading
         console.error('Failed to prepare the accounts', error)
@@ -81,7 +83,10 @@ export default function useAccountPersonalize() {
     }
   }, [])
 
-  const isPreparing = !readyToAddAccounts.length && !prepareResult
+  // Until the reply, then until the accounts it reports reach the state - the reply can come
+  // first (mobile holds updates back while a screen transition runs)
+  const preparedCount = prepareResult === 'failed' ? 0 : prepareResult?.preparedCount
+  const isPreparing = !readyToAddAccounts.length && preparedCount !== 0
   const isLoading = !hasMinLoadingPassed || (isPreparing && !hasMaxLoadingPassed)
 
   // The prepared accounts change when more are added from the picker. The names the
