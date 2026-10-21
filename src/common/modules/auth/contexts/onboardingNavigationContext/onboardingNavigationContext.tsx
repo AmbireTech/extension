@@ -217,6 +217,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           importMethod(WEB_ROUTES.importSeedPhrase),
           importMethod(WEB_ROUTES.ledgerConnect),
           importMethod(WEB_ROUTES.trezorConnect),
+          importMethod(WEB_ROUTES.oneKeyConnect),
           route(WEB_ROUTES.safeImport, [
             importMethod(WEB_ROUTES.safeImportAddress),
             importMethod(WEB_ROUTES.safeImportByOwner)

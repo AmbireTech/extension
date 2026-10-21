@@ -51,9 +51,9 @@
     "expo:install": "expo install",
     "profile:js": "node scripts/profile-js.mjs",
     "test": "jest --config=./jest.config.js --passWithNoTests",
-    "extension:type:check": "tsc --noEmit --project tsconfig.typecheck-extension.json",
-    "extension:type:check-new": "yarn extension:type:check | yarn tsc-baseline check",
-    "extension:type:update": "yarn extension:type:check | yarn tsc-baseline save && node scripts/patchBaseline.js",
+    "type:check": "tsc --noEmit --project tsconfig.typecheck.json",
+    "type:check-new": "yarn type:check | yarn tsc-baseline check",
+    "type:update": "yarn type:check | yarn tsc-baseline save && node scripts/patchBaseline.js",
     "setup": "sh ./scripts/setup.sh",
     "setup:ci": "yarn install --frozen-lockfile && yarn allow-scripts && yarn patch-package"
   },
@@ -85,6 +85,7 @@
     "@gorhom/portal": "1.0.14",
     "@keystonehq/animated-qr": "0.10.0",
     "@keystonehq/bc-ur-registry-eth": "0.22.1",
+    "@kohaku-eth/privacy-pools": "0.1.0-alpha.26",
     "@ledgerhq/context-module": "2.5.0",
     "@ledgerhq/device-management-kit": "1.8.0",
     "@ledgerhq/device-signer-kit-ethereum": "1.17.0",
@@ -97,6 +98,9 @@
     "@metamask/obs-store": "6.0.2",
     "@ngraveio/bc-ur": "1.1.13",
     "@noble/hashes": "1.8.0",
+    "@onekeyfe/hd-core": "1.1.0",
+    "@onekeyfe/hd-shared": "1.1.0",
+    "@onekeyfe/hd-web-sdk": "1.1.0",
     "@raugfer/jazzicon": "1.0.6",
     "@react-native-async-storage/async-storage": "3.0.2",
     "@react-native-community/netinfo": "12.0.1",
@@ -334,13 +338,19 @@
   "resolutions": {
     "elliptic": "^6.6.1",
     "browserslist": "^4.23.0",
-    "cipher-base": "^1.0.6"
+    "cipher-base": "^1.0.6",
+    "@onekeyfe/hd-core": "1.1.0",
+    "@onekeyfe/hd-shared": "1.1.0",
+    "@onekeyfe/hd-transport": "1.1.0",
+    "@onekeyfe/hd-transport-http": "1.1.0",
+    "@onekeyfe/hd-transport-web-device": "1.1.0"
   },
   "private": true,
   "lavamoat": {
     "allowScripts": {
       "$root$": false,
       "@lavamoat/preinstall-always-fail": false,
+      "@onekeyfe/hd-core>@onekeyfe/hd-transport>protobufjs": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/protobuf>protobufjs": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/transport>usb": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/utxo-lib>blake-hash": false,

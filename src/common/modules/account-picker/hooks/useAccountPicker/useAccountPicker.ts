@@ -154,7 +154,7 @@ const useAccountPicker = () => {
     () =>
       !!(
         subType === 'seed' ||
-        (type && ['ledger', 'lattice', 'trezor', 'qr', 'nfc'].includes(type))
+        (type && ['ledger', 'lattice', 'trezor', 'onekey', 'qr', 'nfc'].includes(type))
       ),
     [type, subType]
   )

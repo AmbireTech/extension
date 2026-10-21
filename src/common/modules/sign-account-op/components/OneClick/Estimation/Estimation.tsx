@@ -117,6 +117,7 @@ const OneClickEstimation = ({
     signButtonText,
     holdToSignButtonText,
     extremeGasFeeSignButtonType,
+    isLinkingNewFeePayerToSafe,
     bundlerNonceDiscrepancy,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
@@ -163,11 +164,15 @@ const OneClickEstimation = ({
     // The wide footer keeps `smaller` buttons, but as tall as the compact ones
     const signButtonStyle = isCompactLayout ? { width: '100%' as const } : { height: BUTTON_HEIGHT }
     const signButton =
-      !!banners && !!banners.length ? (
+      (!!banners && !!banners.length) || isLinkingNewFeePayerToSafe ? (
         <HoldToProceedButton
           testID="sign-proceed-btn"
           text={holdToSignButtonText}
-          buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
+          buttonType={
+            extremeGasFeeSignButtonType === 'warning' || isLinkingNewFeePayerToSafe
+              ? 'warning'
+              : 'primary'
+          }
           disabled={isSignDisabled || signingErrors.length > 0}
           onPressIn={markFreshActionPress}
           onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
@@ -286,6 +291,7 @@ const OneClickEstimation = ({
     signAccountOpController,
     bottom,
     banners,
+    isLinkingNewFeePayerToSafe,
     bundlerNonceDiscrepancy,
     closeEstimationModal,
     extremeGasFeeSignButtonType,

@@ -7,6 +7,7 @@ import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -142,7 +143,7 @@ const ImportExistingAccountSelectorScreen = () => {
               { type: 'error' }
             )
           } else {
-            connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR')
+            void connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR')
           }
         },
         icon: TrezorBadgeIcon
@@ -155,9 +156,16 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: LedgerBadgeIcon
       },
       {
+        title: t('OneKey'),
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.oneKeyConnect)
+        },
+        icon: OneKeyIcon
+      },
+      {
         title: 'Grid Plus',
         onPress: () => {
-          connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE')
+          void connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE')
         },
         icon: GridPlusIcon
       },

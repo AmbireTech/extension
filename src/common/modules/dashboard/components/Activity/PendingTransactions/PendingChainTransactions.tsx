@@ -11,6 +11,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import PendingCancellationRow from './PendingCancellationRow'
@@ -47,7 +48,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   )
   const chainBorderColor = cancellationHoverAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [theme.neutral600 as string, theme.errorDecorative as string]
+    outputRange: [hexToRgba(theme.primaryAccent, 0.5), theme.errorDecorative as string]
   })
   const [manuallySelectedNonceIndex, setManuallySelectedNonceIndex] = useState<number | null>(null)
 
@@ -151,15 +152,17 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   }, [animatedHeight, cancellationHoverAnim])
 
   const renderOrDivider = () => (
-    <View pointerEvents="none" style={styles.orDividerAnchor}>
-      <View style={[styles.orDividerRow, flexbox.directionRow, flexbox.alignCenter]}>
-        <View style={[styles.orDividerLine, flexbox.flex1]} />
-        <View style={[styles.orDividerPill, flexbox.center, spacings.phTy, spacings.mhTy]}>
-          <Text fontSize={11} weight="medium" color={theme.warningText}>
-            {t('OR')}
-          </Text>
-        </View>
-        <View style={[styles.orDividerLine, flexbox.flex1]} />
+    <View pointerEvents="none" style={styles.orDivider}>
+      <View style={styles.orDividerLine} />
+      <View style={[styles.orDividerLabel, flexbox.center]}>
+        <Text
+          fontSize={14}
+          weight="medium"
+          appearance="secondaryText"
+          style={[styles.orDividerText, spacings.phSm]}
+        >
+          {t('OR')}
+        </Text>
       </View>
     </View>
   )
@@ -186,9 +189,8 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
         </View>
         <View style={flexbox.alignEnd}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {/* The colon is kept out of the key, because i18next treats it as a namespace separator */}
             <Text fontSize={16} weight="semiBold">
-              {t('Nonce')}:
+              {t('Nonce')}
             </Text>
             <HoverablePressable
               testID={`pending-transactions-prev-nonce-${group.network.chainId.toString()}`}
@@ -204,7 +206,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
                 !hasPrevNonce && styles.nonceNavigationButtonDisabled
               ]}
             >
-              <LeftArrowIcon width={6} height={11} color={theme.iconPrimary} />
+              <LeftArrowIcon width={6} height={11} color={theme.tertiaryText} />
             </HoverablePressable>
             <Text fontSize={16} weight="semiBold" color={nonceColor} style={spacings.mhTy}>
               {nonceGroup.nonce.toString()}
@@ -222,21 +224,21 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
                 !hasNextNonce && styles.nonceNavigationButtonDisabled
               ]}
             >
-              <RightArrowIcon width={6} height={11} color={theme.iconPrimary} />
+              <RightArrowIcon width={6} height={11} color={theme.tertiaryText} />
             </HoverablePressable>
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
             {isCurrentNonce && (
               <View style={[styles.currentNoncePill, flexbox.center, spacings.phMi]}>
-                <Text fontSize={11} weight="medium" color={theme.primaryAccent}>
+                <Text fontSize={14} color={theme.primaryAccent}>
                   {t('Next to execute')}
                 </Text>
               </View>
             )}
             {waitsForPrecedingNonce && (
               <View style={[styles.futureNoncePill, flexbox.center, spacings.phMi]}>
-                <Text fontSize={11} weight="medium" color={theme.warningText}>
-                  {t('Waits for nonce {{nonce}}', { nonce: (nonceGroup.nonce - 1n).toString() })}
+                <Text fontSize={14} color={theme.warningText}>
+                  {t('waits for nonce {{nonce}}', { nonce: (nonceGroup.nonce - 1n).toString() })}
                 </Text>
               </View>
             )}
@@ -245,18 +247,11 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
       </View>
 
       <Animated.View style={[styles.animatedContentWrapper, { height: animatedHeight }]}>
-        {/* The bundles bring their own padding and span the box up to its border, so that
-            the transaction summaries keep as much space as possible */}
         <View onLayout={handleContentLayout} style={styles.measuredContent}>
           {transactionRequests.map((request, index) => (
             <Fragment key={request.id}>
               {index > 0 && renderOrDivider()}
-              <PendingTransactionBundle
-                request={request}
-                isCurrentNonce={isCurrentNonce}
-                hasDividerAbove={index > 0}
-                hasDividerBelow
-              />
+              <PendingTransactionBundle request={request} isCurrentNonce={isCurrentNonce} />
             </Fragment>
           ))}
           {transactionRequests.length > 0 && renderOrDivider()}

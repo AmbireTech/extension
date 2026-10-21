@@ -64,9 +64,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     amountFieldMode,
     amount: controllerAmount,
     amountInFiat,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch,
-    recipientDomainAddressChange
+    isRecipientAddressViewOnly
   } = transferState
 
   const amountInFiatBigInt = useMemo(() => {
@@ -468,17 +466,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
-        shouldHoldToProceed={
-          (isRecipientAddressUnknown &&
-            !isRecipientAddressUnknownAgreed &&
-            !isRecipientHumanizerKnownTokenOrSmartContract &&
-            isRecipientAddressFirstTimeSend) ||
-          isRecipientAddressViewOnly ||
-          // poisoning detected - require hold-to-proceed as an additional safety step
-          !!addressPoisoningMatch ||
-          // domain now resolves to a different address than last time - possible expiry/snipe
-          !!recipientDomainAddressChange
-        }
+        shouldHoldToProceed={!!validationFormMsgs.recipientAddress.shouldHold}
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
     )
@@ -489,13 +477,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
-    isRecipientAddressUnknown,
-    isRecipientAddressUnknownAgreed,
-    isRecipientHumanizerKnownTokenOrSmartContract,
-    isRecipientAddressFirstTimeSend,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch,
-    recipientDomainAddressChange,
+    validationFormMsgs.recipientAddress.shouldHold,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])
