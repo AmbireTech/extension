@@ -36,8 +36,13 @@ const OnboardingNavigationContext = createContext<{
   isOnboardingRoute: boolean
   goToNextRoute: (routeName?: OnboardingRoute, routeState?: Record<string, unknown>) => void
   goToPrevRoute: () => void
+  /** Accounts a sync added already, which the personalize step shows for naming */
+  syncedAccountAddrs: string[]
+  setSyncedAccountAddrs: (addrs: string[]) => void
 }>({
   isOnboardingRoute: false,
+  syncedAccountAddrs: [],
+  setSyncedAccountAddrs: () => {},
   goToNextRoute: () => {},
   goToPrevRoute: () => {}
 })
@@ -93,6 +98,9 @@ const findNextEnabledRoute = (nodes: RouteNode[], targetName?: string): RouteNod
 }
 
 const ONBOARDING_HISTORY_STORAGE_KEY = 'onboarding_history'
+
+// Keeps the same (empty) array when there is nothing to drop, so the context does not change
+const dropSyncedAccountAddrs = (addrs: string[]) => (addrs.length ? [] : addrs)
 
 const loadHistory = (): string[] => {
   try {
@@ -159,6 +167,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const isOnboardingRoute = ONBOARDING_WEB_ROUTES.includes((path || '').substring(1))
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
+  const [syncedAccountAddrs, setSyncedAccountAddrs] = useState<string[]>([])
+  const hasSyncedAccounts = !!syncedAccountAddrs.length
+
   const onboardingRoutesTree = useMemo(() => {
     // on mobile, we skip onboardingCompleted and go straight to the dashboard ('/')
     const afterPersonalizeRoutes = getUiType().isMobileApp
@@ -170,8 +181,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           }),
           route('/')
         ]
-    // Nothing to add (e.g. the accounts came with a sync), so the flow skips it
-    const isPersonalizeDisabled = !hasAccountAddingFlow
+    // Nothing to add or name, so the flow skips it
+    const isPersonalizeDisabled = !hasAccountAddingFlow && !hasSyncedAccounts
 
     const accountPickerRoutes =
       subType === 'hw'
@@ -220,7 +231,15 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       ],
       { disabled: authStatus !== AUTH_STATUS.NOT_AUTHENTICATED }
     )
-  }, [hasPasswordSecret, authStatus, isSetupComplete, subType, accountsCount, hasAccountAddingFlow])
+  }, [
+    hasPasswordSecret,
+    authStatus,
+    isSetupComplete,
+    subType,
+    accountsCount,
+    hasAccountAddingFlow,
+    hasSyncedAccounts
+  ])
 
   const [history, setHistory] = useState<string[]>(loadHistory)
 
@@ -363,6 +382,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     // Leaving the flow ends it. The reset effect below never runs in the popup, where
     // personalize can be reopened with the prepared accounts (see `getInitialRoute`).
     accountPickerDispatch({ type: 'method', params: { method: 'reset', args: [] } })
+    setSyncedAccountAddrs(dropSyncedAccountAddrs)
     navigateRef.current('/')
     setHistory([])
   }, [onboardingRoutesTree, goBackThePlatformWay, accountPickerDispatch])
@@ -381,10 +401,21 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       !getUiType().isPopup && ONBOARDING_WEB_ROUTES.includes(currentRoute)
 
     if (!wasOnOnboardingRoute || path === prevPath) return
+
+    // After a sync, personalize has no way back (see `useAccountPersonalize`). The browser's
+    // back cannot be blocked, so it ends the flow instead, on the dashboard.
+    const isBackFromSyncedPersonalize =
+      hasSyncedAccounts &&
+      prevPath === `/${WEB_ROUTES.accountPersonalize}` &&
+      currentRoute !== WEB_ROUTES.onboardingCompleted
+    if (isBackFromSyncedPersonalize && !getUiType().isMobileApp) navigateRef.current('/')
+
     if (ACCOUNT_ADDING_FLOW_ROUTES.includes(currentRoute)) return
 
     accountPickerDispatch({ type: 'method', params: { method: 'reset', args: [] } })
-  }, [path, prevPath, accountPickerDispatch])
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSyncedAccountAddrs(dropSyncedAccountAddrs)
+  }, [path, prevPath, accountPickerDispatch, hasSyncedAccounts])
 
   // Some routes are protected and should only be accessed through internal navigation.
   // If a user attempts to access one of these routes directly via the URL bar,
@@ -453,9 +484,11 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     () => ({
       isOnboardingRoute,
       goToNextRoute,
-      goToPrevRoute
+      goToPrevRoute,
+      syncedAccountAddrs,
+      setSyncedAccountAddrs
     }),
-    [isOnboardingRoute, goToPrevRoute, goToNextRoute]
+    [isOnboardingRoute, goToPrevRoute, goToNextRoute, syncedAccountAddrs]
   )
   return (
     <OnboardingNavigationContext.Provider value={value}>

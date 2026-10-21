@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { useTranslation } from '@common/config/localization'
+import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 
@@ -23,18 +24,37 @@ const MAX_LOADING_MS = 5000
 const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
   state.readyToAddAccounts
 const selectSubType = (state: AllControllersMappingType['AccountPickerController']) => state.subType
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+// Takes the swipe and Android's back over, to go nowhere
+const stayOnScreen = () => {}
 
 /**
  * The personalize step of every account adding flow: shows the accounts the flow prepared
  * (or prepares them, see below), lets the user name them, and adds them once the user
- * proceeds. Nothing is added before - going back only resets the flow.
+ * proceeds. Nothing is added before - going back only resets the flow. Accounts a sync
+ * added already are only named here.
  */
 export default function useAccountPersonalize() {
   const { t } = useTranslation()
-  const { goToNextRoute } = useOnboardingNavigation()
+  const { goToNextRoute, syncedAccountAddrs, setSyncedAccountAddrs } = useOnboardingNavigation()
   const { state: readyToAddAccounts, dispatchAndWait: accountPickerDispatchAndWait } =
     useController('AccountPickerController', selectReadyToAddAccounts)
   const { state: subType } = useController('AccountPickerController', selectSubType)
+  const { state: accounts, dispatch: accountsDispatch } = useController(
+    'AccountsController',
+    selectAccounts
+  )
+  const isSyncedMode = !!syncedAccountAddrs.length
+  const syncedAccounts = useMemo(() => {
+    const syncedAddrs = syncedAccountAddrs.map((addr) => addr.toLowerCase())
+
+    return accounts.filter(({ addr }) => syncedAddrs.includes(addr.toLowerCase()))
+  }, [accounts, syncedAccountAddrs])
+  const accountsToName = isSyncedMode ? syncedAccounts : readyToAddAccounts
+
+  // A sync has added its accounts already, so there is nothing to go back to - only Proceed
+  // (the browser's back is handled by the onboarding navigation)
+  useScreenBackHandler(isSyncedMode ? stayOnScreen : null)
   const [prepareResult, setPrepareResult] = useState<{ preparedCount: number } | 'failed' | null>(
     null
   )
@@ -47,14 +67,14 @@ export default function useAccountPersonalize() {
   const [addedAccounts, setAddedAccounts] = useState<Account[] | null>(null)
 
   const { control, getValues, reset } = useForm({
-    defaultValues: { accounts: readyToAddAccounts }
+    defaultValues: { accounts: accountsToName }
   })
   const { fields } = useFieldArray({ control, name: 'accounts' })
 
   // Create, a recovery phrase and a private key only set the picker up, so it is started here,
   // once. The controller decides whether to start, as the state here can lag behind the flow.
   useEffect(() => {
-    if (hasStartedPreparing.current) return
+    if (hasStartedPreparing.current || isSyncedMode) return
 
     hasStartedPreparing.current = true
     accountPickerDispatchAndWait(
@@ -67,7 +87,7 @@ export default function useAccountPersonalize() {
         console.error('Failed to prepare the accounts', error)
         setPrepareResult('failed')
       })
-  }, [accountPickerDispatchAndWait])
+  }, [accountPickerDispatchAndWait, isSyncedMode])
 
   useEffect(() => {
     const minTimeout = setTimeout(() => setHasMinLoadingPassed(true), MIN_LOADING_MS)
@@ -82,7 +102,7 @@ export default function useAccountPersonalize() {
   // Until the reply, then until the accounts it reports reach the state - the reply can come
   // first (mobile holds updates back while a screen transition runs)
   const preparedCount = prepareResult === 'failed' ? 0 : prepareResult?.preparedCount
-  const isPreparing = !readyToAddAccounts.length && preparedCount !== 0
+  const isPreparing = !isSyncedMode && !readyToAddAccounts.length && preparedCount !== 0
   const isLoading = !hasMinLoadingPassed || (isPreparing && !hasMaxLoadingPassed)
 
   // The prepared accounts change when more are added from the picker. The names the
@@ -92,11 +112,11 @@ export default function useAccountPersonalize() {
 
     const namedAccounts = getValues('accounts')
     reset({
-      accounts: readyToAddAccounts.map(
+      accounts: accountsToName.map(
         (account) => namedAccounts.find((named) => named.addr === account.addr) || account
       )
     })
-  }, [readyToAddAccounts, isAdding, addedAccounts, getValues, reset])
+  }, [accountsToName, isAdding, addedAccounts, getValues, reset])
 
   // Where the flow goes on depends on the accounts just added, so the latest one is read
   const goToNextRouteRef = useRef(goToNextRoute)
@@ -107,20 +127,27 @@ export default function useAccountPersonalize() {
   const handleProceed = useCallback(async () => {
     if (isAdding) return
 
-    const accounts = getValues('accounts')
+    const namedAccounts = getValues('accounts')
+    const names = namedAccounts.map(({ addr, preferences }) => ({ addr, preferences }))
+    if (isSyncedMode) {
+      accountsDispatch({
+        type: 'method',
+        params: { method: 'updateAccountPreferences', args: [names] }
+      })
+      setAddedAccounts(namedAccounts)
+      // Dropped first, as the way back is closed only while they are set
+      setSyncedAccountAddrs([])
+      goToNextRouteRef.current()
+      return
+    }
+
     setIsAdding(true)
     try {
       await accountPickerDispatchAndWait(
-        {
-          type: 'method',
-          params: {
-            method: 'addPreparedAccounts',
-            args: [accounts.map(({ addr, preferences }) => ({ addr, preferences }))]
-          }
-        },
+        { type: 'method', params: { method: 'addPreparedAccounts', args: [names] } },
         ADD_ACCOUNTS_TIMEOUT_MS
       )
-      setAddedAccounts(accounts)
+      setAddedAccounts(namedAccounts)
       goToNextRouteRef.current()
     } catch (error) {
       // The controller reports its own failures, here the button only becomes usable again
@@ -128,14 +155,23 @@ export default function useAccountPersonalize() {
     } finally {
       setIsAdding(false)
     }
-  }, [isAdding, getValues, accountPickerDispatchAndWait])
+  }, [
+    isAdding,
+    isSyncedMode,
+    getValues,
+    accountsDispatch,
+    setSyncedAccountAddrs,
+    accountPickerDispatchAndWait
+  ])
 
-  const canAddMore = !addedAccounts && !isLoading
+  const canAddMore = !isSyncedMode && !addedAccounts && !isLoading
 
   return {
     control,
     fields,
     isLoading,
+    // No way back while loading, nor after a sync
+    hasBackButton: !isLoading && !isSyncedMode,
     isAdding,
     addedAccounts,
     handleProceed,

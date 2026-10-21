@@ -65,7 +65,7 @@ const ImportFromMobileScreen = () => {
   const { addToast } = useToast()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
-  const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
+  const { goToNextRoute, goToPrevRoute, setSyncedAccountAddrs } = useOnboardingNavigation()
   const {
     ref: passwordSheetRef,
     open: openPasswordSheet,
@@ -141,11 +141,9 @@ const ImportFromMobileScreen = () => {
     [t, theme]
   )
 
-  // The synced accounts are added already, so the flow skips the personalize step (which
-  // only adds prepared accounts) and goes on to where onboarding ends
   const handlePasswordSet = useCallback(() => {
     closePasswordSheet()
-    goToNextRoute()
+    goToNextRoute(WEB_ROUTES.accountPersonalize)
   }, [closePasswordSheet, goToNextRoute])
 
   const { setPasswordFromSync, isSettingPassword } = useSyncedPasswordSetup({
@@ -169,16 +167,19 @@ const ImportFromMobileScreen = () => {
   }, [accountsCount, canGoBack, goBack, goToPrevRoute, navigate])
 
   const handleImported = useCallback(
-    async ({ password, importedAccountsCount, syncedExtrasLabel }: AppDataSyncImportResult) => {
+    async ({ password, importedAccountAddrs, syncedExtrasLabel }: AppDataSyncImportResult) => {
       // Only the settings, networks or Address Book came over, so there are no accounts to
       // set up or name. Onboarding goes back to the import method screen, as there is still no
       // account to go on with.
-      if (!importedAccountsCount) {
+      if (!importedAccountAddrs.length) {
         closePasswordSheet()
         addToast(t('Synced: {{items}}.', { items: syncedExtrasLabel }), { type: 'success' })
         leaveScreen()
         return
       }
+
+      // Added already - personalize shows them for naming
+      setSyncedAccountAddrs(importedAccountAddrs)
 
       // During onboarding the accounts arrive before the extension has a password of its
       // own. Reusing the mobile app's one sets it (and biometrics) right here, so the
@@ -199,12 +200,10 @@ const ImportFromMobileScreen = () => {
       }
 
       closePasswordSheet()
-      // Without a password of its own, setting one comes next. Otherwise the flow goes on
-      // to where onboarding ends - the synced accounts are added already, so there is
-      // nothing for the personalize step to add. These are onboarding routes reachable
-      // through internal navigation only, so going there with `navigate` gets bounced
-      // back to this screen.
-      goToNextRoute()
+      // Without a password of its own, setting one comes next, then naming the accounts.
+      // Both are onboarding routes reachable through internal navigation only, so going
+      // there with `navigate` gets bounced back to this screen.
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
     },
     [
       addToast,
@@ -216,6 +215,7 @@ const ImportFromMobileScreen = () => {
       leaveScreen,
       saveBiometricsSecret,
       setPasswordFromSync,
+      setSyncedAccountAddrs,
       t
     ]
   )

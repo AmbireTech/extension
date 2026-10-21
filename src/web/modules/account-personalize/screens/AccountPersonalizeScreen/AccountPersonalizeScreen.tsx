@@ -39,6 +39,7 @@ const AccountPersonalizeScreen = () => {
     control,
     fields,
     isLoading,
+    hasBackButton,
     isAdding,
     addedAccounts,
     handleProceed,
@@ -94,9 +95,8 @@ const AccountPersonalizeScreen = () => {
         <Panel
           type="onboarding"
           spacingsSize="small"
-          // Only the loading state shows while loading - no way back, no title yet. The header
-          // stays, as tall as with the back button, so nothing moves once it is loaded.
-          withBackButton={!isLoading}
+          // The header stays, as tall as with the back button, so nothing moves once it shows up
+          withBackButton={hasBackButton}
           titleContainerStyle={HEADER_STYLE}
           onBackButtonPress={goToPrevRoute}
           title={title}

@@ -28,7 +28,7 @@ import type { AppDataSyncImportResult } from '@common/modules/app-data-sync/hook
 import useSyncedPasswordSetup from '@common/modules/app-data-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
-import { ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import spacings from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY, BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
@@ -59,7 +59,7 @@ const ImportFromExtensionScreen = () => {
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack } = useNavigation()
   const { addToast } = useToast()
-  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
+  const { goToPrevRoute, goToNextRoute, setSyncedAccountAddrs } = useOnboardingNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
   const {
@@ -146,11 +146,9 @@ const ImportFromExtensionScreen = () => {
     [t, theme]
   )
 
-  // The synced accounts are added already, so the flow skips the personalize step (which
-  // only adds prepared accounts) and goes on to where onboarding ends
   const handlePasswordSet = useCallback(() => {
     closePasswordSheet()
-    goToNextRoute()
+    goToNextRoute(WEB_ROUTES.accountPersonalize)
   }, [closePasswordSheet, goToNextRoute])
 
   const { setPasswordFromSync, isSettingPassword } = useSyncedPasswordSetup({
@@ -169,16 +167,19 @@ const ImportFromExtensionScreen = () => {
   }, [accountsCount, canGoBack, goBack, goToPrevRoute, navigate])
 
   const handleImported = useCallback(
-    async ({ password, importedAccountsCount, syncedExtrasLabel }: AppDataSyncImportResult) => {
+    async ({ password, importedAccountAddrs, syncedExtrasLabel }: AppDataSyncImportResult) => {
       // Only the settings, networks or Address Book came over, so there are no accounts to
       // set up or name. Onboarding goes back to the import method screen, as there is still no
       // account to go on with.
-      if (!importedAccountsCount) {
+      if (!importedAccountAddrs.length) {
         closePasswordSheet()
         addToast(t('Synced: {{items}}.', { items: syncedExtrasLabel }), { type: 'success' })
         leaveScreen()
         return
       }
+
+      // Added already - personalize shows them for naming
+      setSyncedAccountAddrs(importedAccountAddrs)
 
       // During onboarding the accounts arrive before this device has a password of its
       // own. Reusing the extension's one sets it (and biometrics) right here, so the
@@ -199,10 +200,8 @@ const ImportFromExtensionScreen = () => {
       }
 
       closePasswordSheet()
-      // Without a password of its own, setting one comes next. Otherwise the flow goes on
-      // to where onboarding ends - the synced accounts are added already, so there is
-      // nothing for the personalize step to add.
-      goToNextRoute()
+      // Without a password of its own, setting one comes next, then naming the accounts
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
     },
     [
       addToast,
@@ -214,6 +213,7 @@ const ImportFromExtensionScreen = () => {
       leaveScreen,
       saveBiometricsSecret,
       setPasswordFromSync,
+      setSyncedAccountAddrs,
       t
     ]
   )
