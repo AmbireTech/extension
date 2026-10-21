@@ -101,7 +101,8 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
     return [
       {
         id: 'total',
-        label: t('In the pool'),
+        label: t('Total value locked'),
+        tooltip: t('Everything held in this pool right now, by everyone who uses it.'),
         value:
           price === null
             ? formatAmount(stats.totalAmount)
@@ -117,7 +118,7 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
       },
       {
         id: 'pending',
-        label: t('Being verified'),
+        label: t('Pending deposits'),
         value: stats.pendingDepositsCount
           ? `${formatDecimals(stats.pendingDepositsCount, 'noDecimal')} (${formatAmount(
               stats.pendingAmount
