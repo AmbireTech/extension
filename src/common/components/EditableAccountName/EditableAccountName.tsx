@@ -15,7 +15,8 @@ type Props = {
   account: Account
   /** The name as currently stored - see `currentName` of `EditAccountNameBottomSheet` */
   name: string
-  onSave: (name: string) => void
+  /** See `onSave` of `EditAccountNameBottomSheet` */
+  onSave: (name: string) => Promise<void>
   textProps?: TextProps
   disabled?: boolean
   testID?: string

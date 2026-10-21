@@ -130,7 +130,7 @@ const Account = ({
     [addr]
   )
   const { state: balance } = useController('SelectedAccountController', selectBalance)
-  const { dispatch: accountsDispatch } = useController('AccountsController')
+  const { dispatchAndWait: accountsDispatchAndWait } = useController('AccountsController')
   const reverseLookup = useReverseLookup({ address: addr, privacyUpdateMode: 'never' })
   const accountKeys = useAccountKeys(account)
   const [bindAnim, animStyle] = useCustomHover({
@@ -234,10 +234,8 @@ const Account = ({
   ])
 
   const onSave = useCallback(
-    (value: string) => {
-      if (!addr) return
-
-      accountsDispatch({
+    async (value: string) => {
+      await accountsDispatchAndWait({
         type: 'method',
         params: {
           method: 'updateAccountPreferences',
@@ -245,7 +243,7 @@ const Account = ({
         }
       })
     },
-    [addr, accountsDispatch, preferences.pfp]
+    [addr, accountsDispatchAndWait, preferences.pfp]
   )
 
   const onDropdownSelect = (item: { label: string; value: string }) => {
