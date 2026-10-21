@@ -20,6 +20,7 @@ import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -215,7 +216,7 @@ const SmartAccountImportScreen = () => {
           }
         })
         setAccountToImport(null)
-        goToNextRoute()
+        goToNextRoute(WEB_ROUTES.accountPersonalize)
       } catch (e) {
         // The controller reports its own failures, here the screen only becomes usable again
         console.error('Failed to prepare the account from the JSON file', e)

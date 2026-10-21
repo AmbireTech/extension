@@ -114,6 +114,12 @@ const ACCOUNT_ADDING_FLOW_ROUTES: string[] = [
   WEB_ROUTES.accountPersonalize
 ]
 
+/** The steps of an account adding flow that come after the password is set. */
+const ACCOUNT_ADDING_STEPS_AFTER_PASSWORD: string[] = [
+  WEB_ROUTES.accountPicker,
+  WEB_ROUTES.accountPersonalize
+]
+
 const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.hasPasswordSecret
 // Read before the controller states are loaded too
@@ -278,7 +284,15 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
       let nextRoute: RouteNode | null = null
       if (routeName && ONBOARDING_WEB_ROUTES.includes(routeName)) {
-        nextRoute = findRouteNode(onboardingRoutesTree, routeName)
+        // A flow names its step when it moves on right after setting the picker up, as the
+        // tree lags behind that (the reply arrives before the state). The password still
+        // comes first, as nothing can be added before it is set.
+        const isWaitingForPassword =
+          !hasPasswordSecret && ACCOUNT_ADDING_STEPS_AFTER_PASSWORD.includes(routeName)
+        nextRoute = findRouteNode(
+          onboardingRoutesTree,
+          isWaitingForPassword ? WEB_ROUTES.keyStoreSetup : routeName
+        )
       } else {
         const currentNode = findRouteNode(onboardingRoutesTree, currentRoute)
         if (!currentNode) return
@@ -319,7 +333,14 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         prevHistory.includes(currentRoute) ? prevHistory : [...prevHistory, currentRoute]
       )
     },
-    [routerHistory, onboardingRoutesTree, dispatch, getCameFrom, goBackThePlatformWay]
+    [
+      routerHistory,
+      onboardingRoutesTree,
+      hasPasswordSecret,
+      dispatch,
+      getCameFrom,
+      goBackThePlatformWay
+    ]
   )
 
   const goToPrevRoute = useCallback(() => {

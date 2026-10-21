@@ -10,6 +10,7 @@ import { Hex } from '@ambire-common/interfaces/hex'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
 import type { AccountsController } from '@ambire-common/controllers/accounts/accounts'
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
@@ -249,7 +250,7 @@ const useSafeImportByOwner = () => {
           ]
         }
       })
-      goToNextRoute()
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
     } catch (error) {
       // The controller reports its own failures, here the button only becomes usable again
       console.error('Failed to prepare the Safe accounts', error)

@@ -6,6 +6,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 
 export default function usePrivateKeyImport() {
@@ -42,7 +43,7 @@ export default function usePrivateKeyImport() {
             args: [{ privKeyOrSeed: noPrefixPrivateKey }]
           }
         })
-        goToNextRoute()
+        goToNextRoute(WEB_ROUTES.accountPersonalize)
       } catch (error) {
         // The controller reports its own failures, here the button only becomes usable again
         console.error('Failed to prepare the private key account', error)

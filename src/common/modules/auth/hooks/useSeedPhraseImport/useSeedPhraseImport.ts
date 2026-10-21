@@ -5,6 +5,7 @@ import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/deriva
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import {
   getSeedPhraseValidation,
   normalizeSeedPhrase,
@@ -78,7 +79,7 @@ export default function useSeedPhraseImport() {
             args: [{ privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }]
           }
         })
-        goToNextRoute()
+        goToNextRoute(WEB_ROUTES.accountPersonalize)
       } catch (error) {
         // The controller reports its own failures, here the button only becomes usable again
         console.error('Failed to prepare the recovery phrase accounts', error)

@@ -7,6 +7,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
 // sometimes safe addresses come like eth:address
 // so we split it, if it has a :, and then we validate
@@ -75,7 +76,7 @@ const useSafeImport = () => {
         }
       })
       reset()
-      goToNextRoute()
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
       // Going back from the personalize step adds nothing, so the form is usable again
       setIsLoading(false)
     } catch (e: any) {

@@ -12,7 +12,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 
 const getDuplicateAccountIndexes = (accounts: AddressState[]) => {
   const accountAddresses = accounts.map((addressState) => {
@@ -127,7 +127,7 @@ export default function useViewOnlyAccountAdder() {
         type: 'method',
         params: { method: 'prepareAccounts', args: [{ accounts: accountsToAdd }] }
       })
-      goToNextRoute()
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
       // Going back from the personalize step adds nothing, so the form is usable again
       setIsLoading(false)
     } catch (e: any) {
