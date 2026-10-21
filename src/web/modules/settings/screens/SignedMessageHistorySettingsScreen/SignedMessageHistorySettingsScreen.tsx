@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native'
 import { Account } from '@ambire-common/interfaces/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -65,12 +66,25 @@ const SignedMessageHistory: FC<{
   )
 }
 
+const PrivacyPoolsSignedMessageHistory = () => {
+  const { t } = useTranslation()
+
+  return (
+    <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
+      <Text fontSize={16} style={text.center}>
+        {t("Privacy pools accounts don't sign messages.")}
+      </Text>
+    </View>
+  )
+}
+
 const SignedMessageHistorySettingsScreen = () => {
   const [sessionId] = useState(nanoid())
   return (
     <HistorySettingsPage
       historyType="messages"
       HistoryComponent={SignedMessageHistory}
+      PrivacyPoolsHistoryComponent={PrivacyPoolsSignedMessageHistory}
       sessionId={sessionId}
     />
   )

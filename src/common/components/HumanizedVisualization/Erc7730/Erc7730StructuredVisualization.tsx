@@ -1,9 +1,11 @@
+import { formatUnits } from 'ethers'
 import React, { FC, memo, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import { MAX_DISPLAYED_NESTED_CALLDATA_DEPTH } from '@ambire-common/libs/humanizer/erc7730/consts'
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import { getErc7730RowLabel, getErc7730RowValues } from '@ambire-common/libs/humanizer/utils'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import useNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import ChainVisualization from '@common/components/HumanizedVisualization/ChainVisualization'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
@@ -121,6 +123,22 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
       if (valueItem.type === 'token') {
         const tokenChainId = valueItem.chainId || chainId
+        // Only with a price and decimals the humanizer vouched for, so it is never a guess
+        const usdValue =
+          valueItem.usdPrice !== undefined && valueItem.tokenInfo ? (
+            <Text
+              fontSize={overrideTextSize}
+              weight="medium"
+              appearance="primaryText"
+              style={spacings.mrTy}
+            >
+              {formatDecimals(
+                Number(formatUnits(valueItem.value, valueItem.tokenInfo.decimals)) *
+                  valueItem.usdPrice,
+                'value'
+              )}
+            </Text>
+          ) : null
         const shouldShowEditApproval =
           !!editApprovalCallInfo &&
           valueItem.address.toLowerCase() === editApprovalCallInfo.token.toLowerCase()
@@ -140,6 +158,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 }
               ]}
             >
+              {usdValue}
               <TokenOrNft
                 sizeMultiplierSize={sizeMultiplierSize}
                 value={valueItem.value}
@@ -148,6 +167,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 chainId={tokenChainId}
                 tokenMarginRight={0}
                 tokenIconContainerSize={20}
+                knownTokenInfo={valueItem.tokenInfo}
               />
               {shouldShowEditApproval && (
                 <EditApproval
@@ -177,6 +197,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             <View
               style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd, flexbox.wrap]}
             >
+              {usdValue}
               <TokenOrNft
                 sizeMultiplierSize={sizeMultiplierSize}
                 value={valueItem.value}
@@ -185,6 +206,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 chainId={tokenChainId}
                 tokenMarginRight={0}
                 tokenIconContainerSize={20}
+                knownTokenInfo={valueItem.tokenInfo}
               />
               {shouldShowEditApproval && (
                 <EditApproval
@@ -211,6 +233,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             actionsMode="inline"
             shouldWrapInlineActions={false}
             hideLogo
+            isLocalLabelOnly={valueItem.isLocalLabelOnly}
           />
         )
       }
@@ -492,53 +515,77 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               ]}
             >
               {visibleRows.map((row) => (
-                <View
+                <React.Fragment
                   key={`${item.id}-transaction-summary-${getErc7730RowLabel(row)}-${getErc7730RowValues(
                     row
                   )
                     .map((value) => value.id)
                     .join('-')}`}
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.justifySpaceBetween,
-                    { marginTop: SPACING_SM * sizeMultiplierSize },
-                    { width: '100%', minWidth: 0 }
-                  ]}
                 >
-                  {!!getErc7730RowLabel(row).trim() && (
-                    <Text
-                      fontSize={12}
-                      weight={labelWeight ?? 'regular'}
-                      appearance="secondaryText"
-                      style={[spacings.mrSm, { flexShrink: 1 }]}
-                    >
-                      {getTransactionSummaryRowLabel(getErc7730RowLabel(row))}
-                    </Text>
+                  {/* Sets the rows from here on apart, where the humanizer groups them */}
+                  {!!row.hasSeparatorBefore && (
+                    <View
+                      style={{
+                        height: 1,
+                        width: '100%',
+                        backgroundColor: theme.secondaryBorder,
+                        marginTop: SPACING_SM * sizeMultiplierSize
+                      }}
+                    />
                   )}
                   <View
                     style={[
                       flexbox.directionRow,
                       flexbox.alignCenter,
-                      flexbox.justifyEnd,
-                      flexbox.wrap,
-                      { minWidth: 0, flexShrink: 1 }
+                      flexbox.justifySpaceBetween,
+                      { marginTop: SPACING_SM * sizeMultiplierSize },
+                      { width: '100%', minWidth: 0 }
                     ]}
                   >
-                    {getErc7730RowInlineValues(row).map((value, valueIndex) => (
-                      // `flexShrink`/`minWidth` let the wrapper shrink below the value's
-                      // content width. Without them a long unbreakable value (e.g. a
-                      // non-EVM recipient hash) keeps its full width and, because the
-                      // container is right-aligned, overflows to the left over the label.
-                      <View
-                        key={value.id}
-                        style={[{ flexShrink: 1, minWidth: 0 }, valueIndex > 0 && spacings.mlTy]}
+                    {!!getErc7730RowLabel(row).trim() && (
+                      <Text
+                        fontSize={12}
+                        weight={labelWeight ?? 'regular'}
+                        appearance="secondaryText"
+                        style={[spacings.mrSm, { flexShrink: 1 }]}
                       >
-                        {renderValue(value, valueTextSize)}
-                      </View>
-                    ))}
+                        {getTransactionSummaryRowLabel(getErc7730RowLabel(row))}
+                      </Text>
+                    )}
+                    <View
+                      style={[
+                        flexbox.directionRow,
+                        flexbox.alignCenter,
+                        flexbox.justifyEnd,
+                        flexbox.wrap,
+                        { minWidth: 0, flexShrink: 1 }
+                      ]}
+                    >
+                      {row.type === 'single-value' && !!row.valuePrefix && (
+                        <Text
+                          fontSize={valueTextSize}
+                          weight="medium"
+                          appearance="primaryText"
+                          style={spacings.mrTy}
+                        >
+                          {t(row.valuePrefix)}
+                        </Text>
+                      )}
+                      {getErc7730RowInlineValues(row).map((value, valueIndex) => (
+                        // `flexShrink`/`minWidth` let the wrapper shrink below the value's
+                        // content width. Without them a long unbreakable value (e.g. a
+                        // non-EVM recipient hash) keeps its full width and, because the
+                        // container is right-aligned, overflows to the left over the label.
+                        <View
+                          key={value.id}
+                          style={[{ flexShrink: 1, minWidth: 0 }, valueIndex > 0 && spacings.mlTy]}
+                        >
+                          {renderValue(value, valueTextSize)}
+                        </View>
+                      ))}
+                    </View>
                   </View>
-                </View>
+                </React.Fragment>
               ))}
             </View>
           )}
