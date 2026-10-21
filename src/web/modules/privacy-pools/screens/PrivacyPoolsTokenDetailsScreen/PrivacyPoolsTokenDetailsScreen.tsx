@@ -215,14 +215,15 @@ const PrivacyPoolsTokenDetailsScreen = () => {
             )
           }
         />
-        <TokenData token={token} />
-        <PrivacyPoolsPoolStats
-          chainId={balance.chainId}
-          tokenAddress={balance.tokenAddress}
-          symbol={balance.symbol}
-          decimals={balance.decimals}
-          price={price}
-        />
+        <TokenData token={token}>
+          <PrivacyPoolsPoolStats
+            chainId={balance.chainId}
+            tokenAddress={balance.tokenAddress}
+            symbol={balance.symbol}
+            decimals={balance.decimals}
+            price={price}
+          />
+        </TokenData>
       </ScrollableWrapper>
       <FooterGlassView
         size="sm"

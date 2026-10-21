@@ -9,10 +9,7 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
-import TokenDetailsTitle from '@common/modules/token-details/components/Title'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -53,14 +50,13 @@ const Label = React.memo(
 )
 
 /**
- * The numbers of a token's pool, laid out like the regular token details' "About": what it holds,
+ * The numbers of a token's pool, as rows of the token details' "About" (see `TokenData`): what it holds,
  * how many deposits a withdrawal hides among, and the last day's activity. Read from this device's
  * copy of the pool's history (see `PrivacyPoolsController.getPoolStats`), so they are reloaded
  * whenever the network is read again, and nothing is asked of anyone.
  */
 const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price }: Props) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
   const { dispatchAndWait } = useController('PrivacyPoolsController')
   const { state: chains } = useController('PrivacyPoolsController', selectChains)
   const lastSyncedAt = chains?.[chainId]?.lastSyncedAt ?? null
@@ -145,46 +141,42 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
   // Nothing to show before the network is read: the screen is reached only after, so it is brief
   if (stats === null && !loadError) return null
 
+  if (loadError && !stats)
+    return (
+      <Text fontSize={14} appearance="secondaryText">
+        {t('Could not load the numbers of this pool.')}
+      </Text>
+    )
+
+  if (stats === undefined)
+    return (
+      <>
+        {SKELETON_ROW_IDS.map((id, index) => (
+          <SkeletonLoader
+            key={id}
+            width="100%"
+            height={20}
+            style={index < SKELETON_ROW_IDS.length - 1 ? spacings.mbSm : undefined}
+          />
+        ))}
+      </>
+    )
+
   return (
     <>
-      <TokenDetailsTitle title={t('Pool')} />
-      <View
-        style={[
-          spacings.phSm,
-          spacings.pv,
-          spacings.mbTy,
-          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
-        ]}
-      >
-        {!!loadError && !stats && (
-          <Text fontSize={14} appearance="secondaryText">
-            {t('Could not load the numbers of this pool.')}
-          </Text>
-        )}
-        {stats === undefined &&
-          !loadError &&
-          SKELETON_ROW_IDS.map((id, index) => (
-            <SkeletonLoader
-              key={id}
-              width="100%"
-              height={20}
-              style={index < SKELETON_ROW_IDS.length - 1 ? spacings.mbSm : undefined}
-            />
-          ))}
-        {rows.map(({ id, label, value, tooltip }, index) => (
-          <View
-            key={id}
-            style={[
-              flexbox.directionRow,
-              flexbox.justifySpaceBetween,
-              index < rows.length - 1 && spacings.mbSm
-            ]}
-          >
-            <Label text={label} tooltipId={`privacy-pools-pool-stats-${id}`} tooltip={tooltip} />
-            <Label text={value} />
-          </View>
-        ))}
-      </View>
+      {rows.map(({ id, label, value, tooltip }, index) => (
+        <View
+          key={id}
+          style={[
+            flexbox.directionRow,
+            flexbox.justifySpaceBetween,
+            index < rows.length - 1 && spacings.mbSm
+          ]}
+        >
+          <Label text={label} tooltipId={`privacy-pools-pool-stats-${id}`} tooltip={tooltip} />
+          <Label text={value} />
+        </View>
+      ))}
     </>
   )
 }
