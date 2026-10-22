@@ -14,7 +14,7 @@ import AccountKeysBadge from '@common/components/AccountKeysBadge'
 import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import Dropdown from '@common/components/Dropdown'
-import Editable from '@common/components/Editable'
+import EditableAccountName from '@common/components/EditableAccountName'
 import NetworkIcon from '@common/components/NetworkIcon'
 import PendingRequestsBadge from '@common/components/PendingRequestsBadge'
 import SafeSignerBadges from '@common/components/SafeSignerBadges'
@@ -38,6 +38,7 @@ import getStyles, { ACCOUNT_AVATAR_SIZE, ACCOUNT_SELECT_ACCOUNT_HEIGHT } from '.
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
+const NAME_TEXT_PROPS = { weight: 'medium' } as const
 /** The chain icons in the Safe badge, smaller than in the account picker to fit in a badge */
 const SAFE_CHAIN_ICON_SIZE = 14
 const SAFE_CHAIN_ICON_OVERLAP = 5
@@ -129,7 +130,7 @@ const Account = ({
     [addr]
   )
   const { state: balance } = useController('SelectedAccountController', selectBalance)
-  const { dispatch: accountsDispatch } = useController('AccountsController')
+  const { dispatchAndWait: accountsDispatchAndWait } = useController('AccountsController')
   const reverseLookup = useReverseLookup({ address: addr, privacyUpdateMode: 'never' })
   const accountKeys = useAccountKeys(account)
   const [bindAnim, animStyle] = useCustomHover({
@@ -233,19 +234,16 @@ const Account = ({
   ])
 
   const onSave = useCallback(
-    (value: string) => {
-      if (!addr) return
-
-      accountsDispatch({
+    async (value: string) => {
+      await accountsDispatchAndWait({
         type: 'method',
         params: {
           method: 'updateAccountPreferences',
           args: [[{ addr, preferences: { label: value, pfp: preferences.pfp } }]]
         }
       })
-      addToast(t('Account label updated.'))
     },
-    [addToast, addr, accountsDispatch, preferences.pfp, t]
+    [addr, accountsDispatchAndWait, preferences.pfp]
   )
 
   const onDropdownSelect = (item: { label: string; value: string }) => {
@@ -303,16 +301,11 @@ const Account = ({
     </Text>
   ) : (
     <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-      <Editable
-        initialValue={account.preferences.label}
+      <EditableAccountName
+        account={account}
+        name={account.preferences.label}
         onSave={onSave}
-        fontSize={16}
-        height={isMobile ? 24 : 20}
-        textProps={{
-          weight: 'medium'
-        }}
-        minWidth={120}
-        maxLength={40}
+        textProps={NAME_TEXT_PROPS}
       />
     </View>
   )

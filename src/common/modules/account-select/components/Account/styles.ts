@@ -12,8 +12,10 @@ interface Style {
 }
 
 // One line of badges under the avatar, the label and the address, with a separator between
-// them. Rows whose badges wrap are taller, which they report to the list, see `onExtraHeightChange`
-export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = isWeb ? 95 : 97
+// them. Rows whose badges wrap are taller, which they report to the list, see `onExtraHeightChange`.
+// On mobile: 2 border + 2 * 8 padding + 36 avatar + 8 + 1 separator + 8 + 20 badges. More than the
+// content needs would be left empty below the badges, as the row is at least this tall
+export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = isWeb ? 95 : 91
 export const ACCOUNT_SELECT_ACCOUNT_MB = SPACING_TY
 /** Also the size of the icons in place of it in rows like it, see `SyncOptionRow` */
 export const ACCOUNT_AVATAR_SIZE = 36

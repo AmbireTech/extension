@@ -7,10 +7,12 @@ import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/help
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
 import useSigningAuth from '@common/hooks/useSigningAuth'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
+import useOneKey from '@common/modules/hardware-wallets/hooks/useOneKey'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
@@ -82,12 +84,14 @@ const useSign = ({
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [shouldDisplayQrSigningModal, setShouldDisplayQrSigningModal] = useState(false)
   const [acknowledgedBannersKey, setAcknowledgedBannersKey] = useState<string | null>(null)
+  const [acknowledgedNewFeePayer, setAcknowledgedNewFeePayer] = useState<string | null>(null)
   const safeSignAndCloseRequest = useRef<{
     accountOpId: string
     signingKeyAddr: Key['addr']
   } | null>(null)
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
   const { isLedgerConnected } = useLedger()
+  const { ensureOneKeyAccess } = useOneKey()
   const {
     currentRequest,
     signingStep,
@@ -111,8 +115,26 @@ const useSign = ({
     () => JSON.stringify(signAccountOpState?.banners || []),
     [signAccountOpState?.banners]
   )
+  // Executing a Safe from an EOA that never paid for it publicly links the two forever,
+  // so it asks for a hold. Only the executing transaction is paid, not a signature.
+  // Once held for a payer, the hold is not asked again for it, so the sign button can show
+  // its loading state, but switching to another new payer asks for it again
+  const feePayer = signAccountOpState?.accountOp.gasFeePayment?.paidBy ?? null
+  const isLinkingNewFeePayerToSafe =
+    !!signAccountOpState?.isFeePayerNotLinkedToSafe &&
+    !!signAccountOpState?.canBroadcast &&
+    acknowledgedNewFeePayer !== feePayer
   const shouldHoldToProceed =
-    !!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey
+    (!!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey) ||
+    isLinkingNewFeePayerToSafe
+  const dappVerificationHoldButtonType = useDappVerificationHoldButtonType(
+    signAccountOpState?.banners
+  )
+  // Linking a new fee payer to the Safe is a warning, unless a dApp check already calls for more
+  const holdToProceedButtonType =
+    dappVerificationHoldButtonType === 'primary' && isLinkingNewFeePayerToSafe
+      ? 'warning'
+      : dappVerificationHoldButtonType
   const shouldShowSafeSigners = showSafeSigners && !shouldHoldToProceed
 
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
@@ -198,21 +220,33 @@ const useSign = ({
   const signingKeyType = signAccountOpState?.accountOp?.signingKeyType
   const feePayerKeyType = signAccountOpState?.accountOp?.gasFeePayment?.paidByKeyType
 
-  const isAtLeastOneOfTheKeysInvolvedLedger = useMemo(() => {
-    // if we're broadcasting with ledger, return true
-    if (feePayerKeyType === 'ledger') return true
+  const getIsKeyTypeInvolved = useCallback(
+    (keyType: Key['type']) => {
+      // if we're broadcasting with this key type, return true
+      if (feePayerKeyType === keyType) return true
 
-    // if the account is not a Safe, check the txn signer
-    if (!signAccountOpState?.account.safeCreation) return signingKeyType === 'ledger'
+      // if the account is not a Safe, check the txn signer
+      if (!signAccountOpState?.account.safeCreation) return signingKeyType === keyType
 
-    // if it's a Safe, check all the signers
-    return !!signAccountOpState.accountOp.signers?.find((s) => s.type === 'ledger')
-  }, [
-    signAccountOpState?.account.safeCreation,
-    signAccountOpState?.accountOp.signers,
-    signingKeyType,
-    feePayerKeyType
-  ])
+      // if it's a Safe, check all the signers
+      return !!signAccountOpState.accountOp.signers?.find((s) => s.type === keyType)
+    },
+    [
+      signAccountOpState?.account.safeCreation,
+      signAccountOpState?.accountOp.signers,
+      signingKeyType,
+      feePayerKeyType
+    ]
+  )
+
+  const isAtLeastOneOfTheKeysInvolvedLedger = useMemo(
+    () => getIsKeyTypeInvolved('ledger'),
+    [getIsKeyTypeInvolved]
+  )
+  const isAtLeastOneOfTheKeysInvolvedOneKey = useMemo(
+    () => getIsKeyTypeInvolved('onekey'),
+    [getIsKeyTypeInvolved]
+  )
 
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)
@@ -360,34 +394,58 @@ const useSign = ({
       const isFeePayerSameAsSigner =
         signAccountOpState?.accountOp.signingKeyAddr ===
         signAccountOpState?.accountOp.gasFeePayment?.paidBy
-      const isLedgerKeyInvolvedInTheJustChosenKeys =
+      const getIsKeyTypeInvolvedInTheJustChosenKeys = (
+        keyType: Key['type'],
+        isInvolvedInTheAccountOp: boolean
+      ) =>
         _chosenSigningKeyTypes && _chosenSigningKeyTypes.length
-          ? _chosenSigningKeyTypes.indexOf('ledger') !== -1 || feePayerKeyType === 'ledger'
-          : isAtLeastOneOfTheKeysInvolvedLedger
+          ? _chosenSigningKeyTypes.indexOf(keyType) !== -1 || feePayerKeyType === keyType
+          : isInvolvedInTheAccountOp
+      const isLedgerKeyInvolvedInTheJustChosenKeys = getIsKeyTypeInvolvedInTheJustChosenKeys(
+        'ledger',
+        isAtLeastOneOfTheKeysInvolvedLedger
+      )
 
       if (isLedgerKeyInvolvedInTheJustChosenKeys && !isLedgerConnected) {
         setShouldDisplayLedgerConnectModal(true)
         return
       }
 
-      // No need to pick the key that pays the fee when it is a private key, which pays on its own
-      if (
-        !signAccountOpState?.account.safeCreation &&
-        (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
-        !isFeePayerSameAsSigner &&
-        feePayerKeyType !== 'internal'
-      ) {
-        setIsChooseFeePayerKeyShown(true)
+      const isOneKeyKeyInvolvedInTheJustChosenKeys = getIsKeyTypeInvolvedInTheJustChosenKeys(
+        'onekey',
+        isAtLeastOneOfTheKeysInvolvedOneKey
+      )
+
+      const continueSigning = () => {
+        if (
+          !signAccountOpState?.account.safeCreation &&
+          (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
+          !isFeePayerSameAsSigner &&
+          feePayerKeyType !== 'internal'
+        ) {
+          setIsChooseFeePayerKeyShown(true)
+          return
+        }
+
+        if (isExternalQr) {
+          // don't return here — QR flow is part of the signing itself,
+          // unlike Ledger where we need to stop and wait for connection
+          setShouldDisplayQrSigningModal(true)
+        }
+
+        handleBroadcast()
+      }
+
+      if (!isOneKeyKeyInvolvedInTheJustChosenKeys) {
+        continueSigning()
         return
       }
 
-      if (isExternalQr) {
-        // don't return here — QR flow is part of the signing itself,
-        // unlike Ledger where we need to stop and wait for connection
-        setShouldDisplayQrSigningModal(true)
-      }
-
-      handleBroadcast()
+      // When the OneKey is unplugged or the browser no longer lets Ambire use it, this opens
+      // the tab the browser asks for access to a device from, instead of signing
+      void ensureOneKeyAccess().then((hasOneKeyAccess) => {
+        if (hasOneKeyAccess) continueSigning()
+      })
     },
     [
       signAccountOpState?.accountOp.signingKeyAddr,
@@ -400,6 +458,8 @@ const useSign = ({
       feePayerKeyType,
       isAtLeastOneOfTheKeysInvolvedLedger,
       isLedgerConnected,
+      isAtLeastOneOfTheKeysInvolvedOneKey,
+      ensureOneKeyAccess,
       handleBroadcast,
       openWarningModal,
       handleUpdateStatus,
@@ -462,15 +522,27 @@ const useSign = ({
     (_: Key['addr'], newFeePayerKeyType: Key['type']) => {
       handleUpdate({ paidByKeyType: newFeePayerKeyType })
 
-      handleBroadcast()
+      if (newFeePayerKeyType !== 'onekey') {
+        handleBroadcast()
+        return
+      }
+
+      // Same as in handleSign: a OneKey that's unplugged or no longer allowed opens the
+      // authorization tab instead of failing in the background
+      void ensureOneKeyAccess().then((hasOneKeyAccess) => {
+        if (hasOneKeyAccess) handleBroadcast()
+      })
     },
-    [handleBroadcast, handleUpdate]
+    [handleBroadcast, handleUpdate, ensureOneKeyAccess]
   )
 
   const onSignButtonClick = useCallback(() => {
     if (!signAccountOpState) return
 
     setAcknowledgedBannersKey(currentBannersKey)
+    // Only a click made through the linking hold counts. Collecting a Safe signature shows no hold
+    // for it, and the same payer must still be held for once the Safe becomes ready to execute
+    if (isLinkingNewFeePayerToSafe) setAcknowledgedNewFeePayer(feePayer)
 
     if (!!signAccountOpState.account.safeCreation && !signAccountOpState.canBroadcast) {
       setShowSafeSigners((prev) => (shouldHoldToProceed ? true : !prev))
@@ -497,8 +569,10 @@ const useSign = ({
     setIsChooseSignerShown(true)
   }, [
     currentBannersKey,
+    feePayer,
     handleChangeSigningKey,
     handleSign,
+    isLinkingNewFeePayerToSafe,
     shouldHoldToProceed,
     signAccountOpState
   ])
@@ -607,7 +681,12 @@ const useSign = ({
     signAccountOpState?.threshold
   ])
 
+  const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
+
   const primaryButtonText = useMemo(() => {
+    // Replaces Sign, Execute and Begin signing, so it's clear the pending transaction gets replaced
+    if (isSpeedUpTransaction) return isSignLoading ? t('Speeding up...') : t('Speed up')
+
     let buttonLabelType: ButtonMode =
       updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
 
@@ -629,6 +708,7 @@ const useSign = ({
         : PRIMARY_BUTTON_LABELS[buttonLabelType].default
     )
   }, [
+    isSpeedUpTransaction,
     isAtLeastOneOfTheKeysInvolvedExternal,
     isSignLoading,
     t,
@@ -697,7 +777,13 @@ const useSign = ({
     signAccountOpState
   ])
 
+  const isSafeFeePayerChoiceRequired = !!signAccountOpState?.isSafeFeePayerChoiceRequired
+
   const disabledReason = useMemo(() => {
+    if (isSafeFeePayerChoiceRequired) {
+      return t('Choose who pays the fee to execute this transaction.')
+    }
+
     if (isExtremeGasFeeProceedDelayedForSign) {
       return t('Please wait {{seconds}}s to review the high network fee.', {
         seconds: extremeGasFeeProceedDelaySeconds
@@ -707,7 +793,13 @@ const useSign = ({
     return typeof hasReachedBottom === 'boolean' && !hasReachedBottom
       ? t('Scroll to the bottom of the transaction overview to sign.')
       : undefined
-  }, [extremeGasFeeProceedDelaySeconds, hasReachedBottom, isExtremeGasFeeProceedDelayedForSign, t])
+  }, [
+    extremeGasFeeProceedDelaySeconds,
+    hasReachedBottom,
+    isExtremeGasFeeProceedDelayedForSign,
+    isSafeFeePayerChoiceRequired,
+    t
+  ])
 
   const signButtonText = useMemo(() => {
     if (isExtremeGasFeeProceedDelayedForSign) {
@@ -783,6 +875,8 @@ const useSign = ({
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed,
+    isLinkingNewFeePayerToSafe,
+    holdToProceedButtonType,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,

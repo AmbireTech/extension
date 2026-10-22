@@ -282,6 +282,9 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
       appVersion: config.APP_VERSION,
       platform: isAndroid ? 'mobile-android' : 'mobile-ios',
       fetch: fetchWithAnalytics as any,
+      // Not bundled on mobile (~23 MB). Empty, so the prover refuses to start instead of failing
+      // later with an unclear fetch error.
+      privacyPoolsCircuitsBaseUrl: '',
       relayerUrl: config.RELAYER_URL,
       velcroUrl: config.VELCRO_URL,
       liFiApiKey: config.LIFI_EXPLORER_URL,

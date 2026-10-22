@@ -1,13 +1,32 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
-import { Defs, FeBlend, FeColorMatrix, Filter, Image as SvgImage, Svg } from 'react-native-svg'
+import {
+  Defs,
+  FeBlend,
+  FeColorMatrix,
+  FeGaussianBlur,
+  Filter,
+  Image as SvgImage,
+  Svg
+} from 'react-native-svg'
 
 import { isFirefoxBuild } from '@common/config/env'
-import useControllerState from '@common/hooks/useControllerState'
+import useController from '@common/hooks/useController'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { getAvatarColors } from '@common/utils/avatars'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+import type { OverviewCollapse } from '../DashboardPagesCarousel/DashboardPagesCarousel'
 import backgroundImage from './background.png'
+import OverviewBackgroundLayer, { CollapsingLayerGeometry } from './OverviewBackgroundLayer'
+
+// The aspect ratio of `background.png`, which `slice` covers the card with
+const IMAGE_ASPECT_RATIO = 456 / 226
+
+// How far the image overhangs each side of the card, open or collapsed, so its edges never
+// land on a fractional pixel inside the card and leave a hairline of black
+const EDGE_BLEED = 2
 
 type BackgroundSize = { width: number | string; height: number | string }
 
@@ -47,28 +66,80 @@ function channelToColorMatrix(srcChannel: 0 | 1 | 2, tr: number, tg: number, tb:
   return `${row(tr)} ${row(tg)} ${row(tb)} 0 0 0 1 0`
 }
 
+interface CardSize {
+  width: number
+  height: number
+}
+
+/**
+ * Covers the open card with the image as `slice` does, but in a layer of the image's own
+ * size, so it can then be moved as if the card got shorter by the collapse: smaller while the
+ * card's height decides the cover size, and centred on what is left of the card. That is how
+ * web's background used to move as its overview collapsed, by resizing the card - which
+ * neither platform does anymore.
+ */
+const getCollapsingLayerGeometry = ({ width, height }: CardSize): CollapsingLayerGeometry => {
+  // Covered as if the card were larger by the bleed on each side
+  const coveredWidth = width + EDGE_BLEED * 2
+  const coveredHeight = height + EDGE_BLEED * 2
+  const layerWidth = Math.max(coveredWidth, coveredHeight * IMAGE_ASPECT_RATIO)
+  const layerHeight = layerWidth / IMAGE_ASPECT_RATIO
+
+  return {
+    width: layerWidth,
+    height: layerHeight,
+    left: (width - layerWidth) / 2,
+    top: (height - layerHeight) / 2,
+    heightBoundCollapse: coveredHeight - coveredWidth / IMAGE_ASPECT_RATIO,
+    minScale: Math.min(coveredWidth / layerWidth, 1)
+  }
+}
+
 // The overview and the dashboard shell can be mounted at the same time, and a `url(#id)` reference
 // resolves to the first matching id in the document - so every instance needs its own filter id.
 let recolorFilterIdCounter = 0
 
-export function OverviewBackground({ address }: { address: string }) {
-  const { state } = useControllerState({ id: 'WalletStateController' })
+const selectAvatarType = (state: AllControllersMappingType['WalletStateController']) =>
+  state.avatarType
+
+export function OverviewBackground({
+  address,
+  collapse,
+  blurRadius
+}: {
+  address: string
+  /** How far the pages have slid over the card. Moves the image by transforms only. */
+  collapse?: OverviewCollapse
+  /** Blurs the image, for a copy of the background that stands in for a backdrop blur. */
+  blurRadius?: number
+}) {
+  const { state: avatarType } = useController('WalletStateController', selectAvatarType)
   const [recolorFilterId] = useState(() => {
     recolorFilterIdCounter += 1
     return `overview-recolor-${recolorFilterIdCounter}`
   })
-  const [pixelSize, setPixelSize] = useState<BackgroundSize | null>(null)
-  const size = shouldSizeInPixels ? pixelSize : FULL_SIZE
+  const [cardSize, setCardSize] = useState<CardSize | null>(null)
 
-  const handleLayout = useCallback((e: LayoutChangeEvent) => {
-    const width = Math.round(e.nativeEvent.layout.width)
-    const height = Math.round(e.nativeEvent.layout.height)
-
-    setPixelSize((prev) =>
-      prev?.width === width && prev?.height === height ? prev : { width, height }
+  const onLayout = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => {
+    setCardSize((prev) =>
+      prev?.width === layout.width && prev?.height === layout.height
+        ? prev
+        : { width: layout.width, height: layout.height }
     )
   }, [])
-  const colors = getAvatarColors(state.avatarType, address)
+
+  const geometry = useMemo(
+    () => (collapse && cardSize ? getCollapsingLayerGeometry(cardSize) : null),
+    [cardSize, collapse]
+  )
+  // Sized in points rather than in percent: on iOS the image keeps the size a percentage
+  // first resolved to when only the view around it is resized, which cut off its right side
+  const fallbackSize = shouldSizeInPixels
+    ? cardSize && { width: Math.round(cardSize.width), height: Math.round(cardSize.height) }
+    : FULL_SIZE
+  const size: BackgroundSize | null = geometry ?? fallbackSize
+
+  const colors = getAvatarColors(avatarType, address)
 
   // Avatar colors[0] and colors[1] can sometimes be almost identical (e.g. two dark purples).
   // In that case, fall back to colors[2] as the secondary so the two layers actually look different.
@@ -96,29 +167,32 @@ export function OverviewBackground({ address }: { address: string }) {
           overflow: 'hidden'
         }
       ]}
-      onLayout={shouldSizeInPixels ? handleLayout : undefined}
+      onLayout={onLayout}
     >
-      {/* In Firefox nothing is rendered until the container's first layout gives it a size */}
-      {!!size && (
-        <Svg width={size.width} height={size.height}>
-          <Defs>
-            <Filter id={recolorFilterId} x="0%" y="0%" width="100%" height="100%">
-              <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
-              <FeColorMatrix type="matrix" values={matrix2} in="SourceGraphic" result="layer2" />
-              <FeBlend in="layer1" in2="layer2" mode="screen" />
-            </Filter>
-          </Defs>
+      <OverviewBackgroundLayer geometry={geometry} collapse={collapse}>
+        {/* In Firefox nothing is rendered until the container's first layout gives it a size */}
+        {!!size && (
+          <Svg width={size.width} height={size.height}>
+            <Defs>
+              <Filter id={recolorFilterId} x="0%" y="0%" width="100%" height="100%">
+                <FeColorMatrix type="matrix" values={matrix1} in="SourceGraphic" result="layer1" />
+                <FeColorMatrix type="matrix" values={matrix2} in="SourceGraphic" result="layer2" />
+                <FeBlend in="layer1" in2="layer2" mode="screen" />
+                {!!blurRadius && <FeGaussianBlur stdDeviation={blurRadius} />}
+              </Filter>
+            </Defs>
 
-          <SvgImage
-            href={backgroundImage}
-            width={size.width}
-            height={size.height}
-            preserveAspectRatio="xMidYMid slice"
-            opacity={0.28}
-            filter={`url(#${recolorFilterId})`}
-          />
-        </Svg>
-      )}
+            <SvgImage
+              href={backgroundImage}
+              width={size.width}
+              height={size.height}
+              preserveAspectRatio="xMidYMid slice"
+              opacity={0.28}
+              filter={`url(#${recolorFilterId})`}
+            />
+          </Svg>
+        )}
+      </OverviewBackgroundLayer>
     </View>
   )
 }
