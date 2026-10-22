@@ -326,7 +326,7 @@ const Account = ({
                   borderColor: theme.successDecorative
                 }}
                 type="success"
-                text={t('used')}
+                text={t('Used')}
               />
             )}
             {shouldShowUsedOnNetworks && !isMobile && (
@@ -365,7 +365,7 @@ const Account = ({
             {!!unused && (
               <Badge
                 type={shouldBeDisplayedAsNew ? 'new' : 'outline'}
-                text={shouldBeDisplayedAsNew ? t('New') : t('unused')}
+                text={shouldBeDisplayedAsNew ? t('New') : t('Unused')}
               />
             )}
           </View>
