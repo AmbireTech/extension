@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Key } from '@ambire-common/interfaces/keystore'
 import {
@@ -74,7 +73,6 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { bottom } = useSafeAreaInsets()
   const { isCompactLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const chainId = signAccountOpController?.accountOp.chainId
@@ -286,7 +284,6 @@ const OneClickEstimation = ({
     )
   }, [
     signAccountOpController,
-    bottom,
     banners,
     isLinkingNewFeePayerToSafe,
     bundlerNonceDiscrepancy,
