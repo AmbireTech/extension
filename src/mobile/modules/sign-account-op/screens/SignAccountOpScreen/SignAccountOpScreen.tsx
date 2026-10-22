@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -31,7 +30,7 @@ import SafetyChecksOverlay from '@common/modules/sign-account-op/components/Safe
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import Modals from '@mobile/modules/sign-account-op/components/Modals/Modals'
@@ -47,6 +46,9 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
 }
 
+// The footer pads itself horizontally, and below it keeps only the layout's bottom inset
+const FOOTER_STYLE = { ...spacings.ph0, ...spacings.pt0 }
+
 const SignAccountOpScreen = () => {
   const {
     state: { currentUserRequest, visibleUserRequests },
@@ -57,16 +59,6 @@ const SignAccountOpScreen = () => {
     useController('SignAccountOpController')
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-  const { bottom: bottomInset } = useSafeAreaInsets()
-  // The footer pads itself horizontally and keeps a bit more room above the home indicator, if any
-  const footerStyle = useMemo(
-    () => ({
-      ...spacings.ph0,
-      ...spacings.pt0,
-      paddingBottom: bottomInset ? bottomInset + SPACING_TY : SPACING_SM
-    }),
-    [bottomInset]
-  )
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
@@ -335,7 +327,7 @@ const SignAccountOpScreen = () => {
       <MobileLayoutContainer
         withHorizontalPadding
         header={<ActionHeader />}
-        footerStyle={footerStyle}
+        footerStyle={FOOTER_STYLE}
         footer={
           <View style={styles.footerContainer}>
             {!estimationFailed &&

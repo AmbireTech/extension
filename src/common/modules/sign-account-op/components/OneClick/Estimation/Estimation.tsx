@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import {
   ISignAccountOpController,
-  SignAccountOpError
+  SignAccountOpError,
+  SigningStatus
 } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import Alert from '@common/components/Alert'
@@ -31,7 +30,7 @@ import PendingTransactions from '@common/modules/sign-account-op/components/Pend
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -57,9 +56,6 @@ const { isRequestWindow, isTab, isSidePanel } = getUiType()
 // A full tab shows the estimation in a centered modal, everywhere else it's a bottom sheet with a dragger
 const isEstimationSheetModal = isTab && !isSidePanel
 
-// The footer takes over the bottom inset, so the scroll content doesn't pad above it too
-const MOBILE_SCROLL_VIEW_PROPS = { contentContainerStyle: { paddingBottom: 0 } }
-
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const OneClickEstimation = ({
@@ -77,7 +73,6 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { bottom } = useSafeAreaInsets()
   const { isCompactLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const chainId = signAccountOpController?.accountOp.chainId
@@ -199,9 +194,7 @@ const OneClickEstimation = ({
       <View
         style={[
           // Keeps the fee header off the bottom sheet's dragger
-          !isEstimationSheetModal && spacings.ptTy,
-          // A bit more room above the home indicator, if the phone has one
-          isMobile && { paddingBottom: bottom ? bottom + SPACING_TY : SPACING_SM }
+          !isEstimationSheetModal && spacings.ptTy
         ]}
       >
         <KeySelect
@@ -291,7 +284,6 @@ const OneClickEstimation = ({
     )
   }, [
     signAccountOpController,
-    bottom,
     banners,
     isLinkingNewFeePayerToSafe,
     bundlerNonceDiscrepancy,
@@ -336,7 +328,6 @@ const OneClickEstimation = ({
         isScrollEnabled={isMobile || shouldShowTxnDetails}
         shouldBeClosableOnDrag={isMobile}
         FooterComponent={footerComponent}
-        scrollViewProps={isMobile ? MOBILE_SCROLL_VIEW_PROPS : undefined}
       >
         {!!banners && !!banners.length && (
           <View style={spacings.mbTy}>
