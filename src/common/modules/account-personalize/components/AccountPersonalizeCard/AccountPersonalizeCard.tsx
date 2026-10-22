@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Control, Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
@@ -27,7 +27,7 @@ type Props = {
   }>
   hasBottomSpacing?: boolean
   disableEdit?: boolean
-  onSave: (value: string) => void
+  onSaveName: (addr: Account['addr'], name: string) => Promise<void>
 }
 
 const AccountPersonalizeCard = ({
@@ -36,12 +36,17 @@ const AccountPersonalizeCard = ({
   control,
   hasBottomSpacing = true,
   disableEdit,
-  onSave
+  onSaveName
 }: Props) => {
   const { addr: address, preferences } = account
   const reverseLookup = useReverseLookup({ address })
   const accountKeys = useAccountKeys(account)
   const { styles } = useTheme(getStyles)
+
+  const handleSaveName = useCallback(
+    (name: string) => onSaveName(address, name),
+    [address, onSaveName]
+  )
 
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
@@ -60,15 +65,11 @@ const AccountPersonalizeCard = ({
               <Controller
                 control={control}
                 name={`accounts.${index}.preferences.label`}
-                render={({ field: { onChange, value } }) => (
+                render={({ field: { value } }) => (
                   <EditableAccountName
                     account={account}
                     name={value}
-                    // The form is updated first, as `onSave` saves the names from it
-                    onSave={(name) => {
-                      onChange(name)
-                      onSave(name)
-                    }}
+                    onSave={handleSaveName}
                     testID={`edit-name-field-${index}`}
                     textProps={NAME_TEXT_PROPS}
                     disabled={disableEdit}

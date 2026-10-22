@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -10,7 +10,6 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import GlassView from '@common/components/GlassView'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
-import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useToast from '@common/hooks/useToast'
@@ -21,19 +20,17 @@ import text from '@common/styles/utils/text'
 /** The longest account name a user can enter */
 export const ACCOUNT_NAME_MAX_LENGTH = 40
 
-/** How long to wait for a saved name to show up before telling the user it failed */
-const SAVE_TIMEOUT_MS = 10_000
-
 const WIDE_MODAL_STYLE: ViewStyle = { maxWidth: 400, ...spacings.pvLg, ...spacings.phLg }
 
 type Props = {
   account: Account
-  /**
-   * The name as currently stored. The sheet keeps loading after Save until this
-   * equals the new name, so it must come from the source the save updates
-   */
+  /** The name as currently stored, which the input starts with */
   currentName: string
-  onSave: (name: string) => void
+  /**
+   * Saves the new name. The sheet keeps loading until the returned promise settles,
+   * then closes on success or shows an error and stays open on failure
+   */
+  onSave: (name: string) => Promise<void>
   /** Called once the closing animation ends, so the caller can unmount the sheet */
   onClosed: () => void
   testID?: string
@@ -55,37 +52,50 @@ const EditAccountNameBottomSheet = ({
   const { isCompactLayout } = useCompactLayout()
   const { ref: sheetRef, close } = useModalize()
   const [name, setName] = useState(currentName)
-  const [pendingName, setPendingName] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   const trimmedName = name.trim()
-  const isSaving = pendingName !== null
   const canSave = !!trimmedName && trimmedName !== currentName && !isSaving
 
-  const handleCancel = useCallback(() => close(), [close])
+  // The save can't be called back once sent, so the sheet stays open until it settles
+  const handleClose = useCallback(() => {
+    if (isSaving) return
 
-  const handleSave = useCallback(() => {
+    close()
+  }, [close, isSaving])
+
+  const handleSave = useCallback(async () => {
     if (!canSave) return
 
-    setPendingName(trimmedName)
-    onSave(trimmedName)
-  }, [canSave, onSave, trimmedName])
+    setIsSaving(true)
+    try {
+      await onSave(trimmedName)
+      addToast(t('Account name updated.'))
+      close()
+    } catch (error) {
+      // Not reported here, as the controller already reports the failed save
+      console.error('Saving the account name failed', error)
+      setIsSaving(false)
+      addToast(t("Couldn't save the new name. Please try again."), { type: 'error' })
+    }
+  }, [addToast, canSave, close, onSave, t, trimmedName])
 
   const renderButtons = ({
     buttonStyle,
     isPrimaryFirst = false
   }: { buttonStyle?: ViewStyle; isPrimaryFirst?: boolean } = {}) => {
-    const cancelButton = (
+    const buttons = [
       <Button
         type="secondary"
         size="smaller"
         text={t('Cancel')}
-        onPress={handleCancel}
+        onPress={handleClose}
+        disabled={isSaving}
         hasBottomSpacing={false}
         style={buttonStyle}
         testID={`${testID}-cancel-button`}
-      />
-    )
-    const saveButton = (
+        key="cancel"
+      />,
       <ButtonWithLoader
         type="primary"
         size="smaller"
@@ -95,39 +105,13 @@ const EditAccountNameBottomSheet = ({
         isLoading={isSaving}
         style={buttonStyle}
         testID={`${testID}-save-button`}
+        key="save"
       />
-    )
+    ]
 
-    return isPrimaryFirst ? (
-      <>
-        {saveButton}
-        {cancelButton}
-      </>
-    ) : (
-      <>
-        {cancelButton}
-        {saveButton}
-      </>
-    )
+    // Reordering the elements rather than the layout keeps the focus order matching what is shown
+    return isPrimaryFirst ? buttons.reverse() : buttons
   }
-
-  useEffect(() => {
-    if (pendingName === null) return
-
-    if (currentName === pendingName) {
-      addToast(t('Account name updated.'))
-      close()
-      return
-    }
-
-    const timeoutId = setTimeout(() => {
-      setPendingName(null)
-      addToast(t("Couldn't save the new name. Please try again."), { type: 'error' })
-      captureException(new Error('Saving the account name timed out'))
-    }, SAVE_TIMEOUT_MS)
-
-    return () => clearTimeout(timeoutId)
-  }, [addToast, close, currentName, pendingName, t])
 
   return (
     <BottomSheet
@@ -135,7 +119,8 @@ const EditAccountNameBottomSheet = ({
       // Narrow screens (side panel, mobile) get a regular bottom sheet, wide screens a centered modal
       type={isCompactLayout ? 'bottom-sheet' : 'modal'}
       sheetRef={sheetRef}
-      closeBottomSheet={close}
+      closeBottomSheet={handleClose}
+      shouldBeClosableOnDrag={!isSaving}
       onClosed={onClosed}
       autoOpen
       style={isCompactLayout ? undefined : WIDE_MODAL_STYLE}
