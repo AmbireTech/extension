@@ -61,6 +61,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   } = useIsScrollable()
   const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
   const scrollViewRef = externalScrollViewRef || internalScrollViewRef
+  // A full height sheet's list scrolls itself, and its own ref reaches it through the list
+  // props. Modalize re-attaches its ref on every render, so giving it the same ref would
+  // point it at Modalize's ScrollView instead, which doesn't scroll
+  const isListScrollingItself =
+    !!(flatListProps || sectionListProps) && !isScrollEnabled && !adjustToContentHeight
 
   const {
     modalTopOffset,
@@ -176,7 +181,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             key={id}
             ref={setRef}
             // React 19 makes refs strictly nullable. Temporary cast until Modalize updates its types.
-            contentRef={scrollViewRef as RefObject<ScrollView>}
+            contentRef={
+              (isListScrollingItself
+                ? internalScrollViewRef
+                : scrollViewRef) as RefObject<ScrollView>
+            }
             modalStyle={[
               styles.bottomSheet,
               isModal
