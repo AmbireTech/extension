@@ -22,7 +22,8 @@ const PendingBadge = ({
   amount: bigint
   amountFormatted: string
   label: string
-  Icon: React.ComponentType<SvgProps>
+  /** Shown after the text. Without it the badge keeps the same padding on both sides. */
+  Icon?: React.ComponentType<SvgProps>
   backgroundColor: ColorValue
   textColor: ColorValue
   borderColor?: ColorValue
@@ -47,7 +48,7 @@ const PendingBadge = ({
       style={[
         spacings.pvMi,
         spacings.plSm,
-        spacings.prTy,
+        Icon ? spacings.prTy : spacings.prSm,
         spacings.mbMi,
         flexboxStyles.alignSelfStart,
         flexboxStyles.alignCenter,
@@ -71,11 +72,11 @@ const PendingBadge = ({
         weight="medium"
         fontSize={12}
         numberOfLines={1}
-        style={spacings.mrMi}
+        style={!!Icon && spacings.mrMi}
       >
         {t(`${amount > 0n ? '+' : ''}${amountFormatted} ${label}`)}
       </Text>
-      <Icon color={textColor} width={20} height={20} />
+      {!!Icon && <Icon color={textColor} width={20} height={20} />}
     </AnimatedPressable>
   )
 }

@@ -3,6 +3,8 @@ import locators from 'constants/locators'
 import selectors from 'constants/selectors'
 import BootstrapContext from 'interfaces/bootstrapContext'
 
+import { expect } from '@playwright/test'
+
 import mainConstants from '../constants/mainConstants'
 import { BasePage } from './basePage'
 
@@ -71,13 +73,25 @@ export class AuthPage extends BasePage {
   }
 
   // TODO: imporove method assertions
-  async importExistingAccount(): Promise<void> {
+  async importExistingAccount(privateKeys: string[] = [PRIVATE_KEY]): Promise<void> {
     await this.click(selectors.getStarted.importExistingAccBtn)
     await this.click(selectors.getStarted.importMethodPrivateBtn)
-    await this.entertext(selectors.getStarted.enterPrivateKeyField, PRIVATE_KEY)
+    for (const [index, privateKey] of privateKeys.entries()) {
+      if (index > 0) await this.click(selectors.getStarted.addOneMorePrivateKey)
+      const fieldSelector =
+        index === 0
+          ? selectors.getStarted.enterPrivateKeyField
+          : `${selectors.getStarted.enterPrivateKeyField}-${index}`
+      await this.entertext(fieldSelector, privateKey)
+    }
     await this.click(selectors.getStarted.warningCheckbox)
     await this.click(selectors.getStarted.importBtn)
     await this.setExtensionPassword()
+    // every private key is imported as its own account
+    await expect(this.page.getByTestId(selectors.personalizeAccount)).toHaveCount(
+      privateKeys.length,
+      { timeout: 30000 }
+    )
     // assertion on Dashboard after login
     await this.compareText(
       selectors.getStarted.confirmationMessageForViewOnly,
@@ -118,10 +132,10 @@ export class AuthPage extends BasePage {
   }
 
   async personalizeAccountName(name: string): Promise<void> {
-    // clear field input first
+    // opens the edit account name modal
     await this.click(selectors.getStarted.editFirstAccNameButton)
     await this.entertext(selectors.getStarted.editAccountNameInputField, name)
-    await this.compareText(selectors.getStarted.editFirstAccNameButton, 'Save')
+    await this.click(selectors.getStarted.saveFirstAccNameButton)
   }
 
   // TODO: imporove method assertions

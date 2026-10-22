@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
-import { Key } from '@ambire-common/interfaces/keystore'
+import { ExternalKey, Key } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import Text from '@common/components/Text'
@@ -111,7 +111,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   return (
     <HardwareWalletSigningModal
       isVisible={shouldBeVisible}
-      keyType={displayedKeyType as 'trezor' | 'ledger' | 'lattice' | 'qr'}
+      keyType={displayedKeyType as ExternalKey['type']}
       cancelReq={cancelReq}
       signingRequest={hardwareWalletSigningRequest}
     >

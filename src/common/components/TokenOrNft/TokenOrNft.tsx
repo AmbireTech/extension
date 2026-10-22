@@ -24,6 +24,11 @@ interface Props {
   tokenMarginRight?: number
   tokenIconContainerSize?: number
   nftIconPosition?: 'left' | 'right'
+  /**
+   * The token's symbol and decimals, when the caller already knows them for certain. The token is
+   * then shown right away, without looking it up.
+   */
+  knownTokenInfo?: { symbol: string; decimals: number }
 }
 
 const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -40,15 +45,16 @@ const TokenOrNft: FC<Props> = ({
   sizeMultiplierSize = 1,
   tokenMarginRight,
   tokenIconContainerSize,
-  nftIconPosition
+  nftIconPosition,
+  knownTokenInfo
 }) => {
   const marginRight =
     tokenMarginRight !== undefined ? tokenMarginRight : SPACING_TY * sizeMultiplierSize
   const { addToast } = useToast()
   const [assetInfo, setAssetInfo] = useState<{
-    tokenInfo?: TokenResult
+    tokenInfo?: Pick<TokenResult, 'symbol' | 'decimals'>
     nftInfo?: CollectionResult
-  }>({})
+  }>(() => (knownTokenInfo ? { tokenInfo: knownTokenInfo } : {}))
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { dispatchAndWait } = useController('ProvidersController')
   const { state: tokenPricesEnabled } = useController(
@@ -100,6 +106,8 @@ const TokenOrNft: FC<Props> = ({
   }, [])
 
   useEffect(() => {
+    // Nothing to look up, and the lookup would replace it with what it found
+    if (knownTokenInfo) return
     if (addNetwork && chainId && !network) {
       addNetwork(chainId)
       return
@@ -136,7 +144,8 @@ const TokenOrNft: FC<Props> = ({
     t,
     addNetwork,
     chainId,
-    isTokenPricesEnabled
+    isTokenPricesEnabled,
+    knownTokenInfo
   ])
 
   if (!assetInfo.nftInfo && !assetInfo.tokenInfo)
