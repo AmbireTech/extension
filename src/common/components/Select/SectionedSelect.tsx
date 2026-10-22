@@ -162,7 +162,8 @@ const SectionedSelect = ({
       renderItem: renderItem as any,
       onLayout: handleListLayout,
       onContentSizeChange: isScrollbarPaddingEnabled ? handleContentSizeChange : undefined,
-      contentContainerStyle: hasVerticalScrollbar ? CONTENT_WITH_SCROLLBAR_STYLE : undefined,
+      // Left out unless needed, as an undefined one would wipe the bottom sheet's own padding
+      ...(hasVerticalScrollbar && { contentContainerStyle: CONTENT_WITH_SCROLLBAR_STYLE }),
       renderSectionHeader,
       keyExtractor,
       ...SELECT_LIST_VIRTUALIZATION,
