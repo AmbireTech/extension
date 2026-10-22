@@ -28,7 +28,6 @@ import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useDappConnectedAccount from '@common/modules/explore/hooks/useDappConnectedAccount'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -97,11 +96,9 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
   const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch: dappsDispatch } = useController('DappsController')
   const dapp = dappToConnect ?? dappToManage
-  // A connected app keeps using its last account while the selected one is hidden from it
-  const accountInUse = useDappConnectedAccount(dappToManage)
   const access = useAccountSelectAccess({
     accounts,
-    selectedAccountAddr: accountInUse?.addr,
+    walletAccountAddr: selectedAccount?.addr,
     accountPreferences: dapp?.accountPreferences
   })
   const {

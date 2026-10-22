@@ -2,10 +2,12 @@ import { useCallback, useMemo, useState } from 'react'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Dapp, DappAccountPreferences } from '@ambire-common/interfaces/dapp'
+import { getAccountsForDapp } from '@ambire-common/libs/dapps/helpers'
 
 type Params = {
   accounts: Account[]
-  selectedAccountAddr: string | undefined
+  /** The account selected in the wallet */
+  walletAccountAddr: string | undefined
   accountPreferences: Dapp['accountPreferences']
 }
 
@@ -14,13 +16,20 @@ type Params = {
  * so they can be applied together on Save (Done when connecting) or thrown away on Cancel.
  * The picked account is always visible to the app.
  */
-const useAccountSelectAccess = ({ accounts, selectedAccountAddr, accountPreferences }: Params) => {
+const useAccountSelectAccess = ({ accounts, walletAccountAddr, accountPreferences }: Params) => {
   const [pendingAccountAddr, setPendingAccountAddr] = useState<string | null>(null)
   // `null` means untouched, so the saved preferences keep showing through
   const [pendingPreferences, setPendingPreferences] = useState<DappAccountPreferences | null>(null)
 
-  const accountAddr = pendingAccountAddr ?? selectedAccountAddr ?? ''
   const preferences = pendingPreferences ?? accountPreferences
+  // The account the app ends up with without switching the wallet's - the wallet's own when the
+  // app may see it, otherwise the one it last used
+  const [preferredAddr] = getAccountsForDapp(preferences, walletAccountAddr)
+  // A removed account can still be in the saved preferences
+  const appAccountAddr = accounts.some((acc) => acc.addr === preferredAddr)
+    ? preferredAddr
+    : walletAccountAddr
+  const accountAddr = pendingAccountAddr ?? appAccountAddr ?? ''
   const isLimited = !!preferences?.enabled
 
   const isVisible = useCallback(
@@ -100,7 +109,8 @@ const useAccountSelectAccess = ({ accounts, selectedAccountAddr, accountPreferen
     setPendingPreferences(null)
   }, [])
 
-  const hasAccountChanged = !!pendingAccountAddr && pendingAccountAddr !== selectedAccountAddr
+  // Then the wallet switches to the picked account too, or the app wouldn't end up with it
+  const hasAccountChanged = !!pendingAccountAddr && pendingAccountAddr !== appAccountAddr
   const hasPreferencesChanged = !!pendingPreferences
 
   return {
