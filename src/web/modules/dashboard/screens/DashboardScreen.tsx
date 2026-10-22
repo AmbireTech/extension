@@ -16,9 +16,16 @@ import getStyles from '@common/modules/dashboard/screens/styles'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import MobileAppPromoBanner from '@web/modules/dashboard/components/MobileAppPromoBanner'
+import PrivacyPoolsDashboardShell from '@web/modules/privacy-pools/components/PrivacyPoolsDashboardShell'
+import PrivacyPoolsDashboardScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsDashboardScreen'
 import commonWebStyles from '@web/styles/utils/common'
 
-const DashboardScreen = () => {
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.selectedType
+
+const AccountDashboardScreen = () => {
   const { styles } = useTheme(getStyles)
   const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useModalize()
   // The pager starts where the collapsed overview ends and slides over the part that
@@ -90,6 +97,20 @@ const DashboardScreen = () => {
       )}
     </LayoutWrapper>
   )
+}
+
+/** The regular dashboard, or the Privacy Pools one when such an account (no address) is selected. */
+const DashboardScreen = () => {
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
+  const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+
+  if (selectedType !== 'privacyPools') return <AccountDashboardScreen />
+
+  // Privacy Pools state is not pushed before the first paint, so a shell with the same card
+  // holds the place until it arrives
+  if (!areAllControllerStatesLoaded) return <PrivacyPoolsDashboardShell />
+
+  return <PrivacyPoolsDashboardScreen />
 }
 
 export default React.memo(DashboardScreen)

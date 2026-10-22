@@ -13,7 +13,7 @@ const AssetReplacePlugin = require('../plugins/AssetReplacePlugin')
 const createLavamoatUnsafeLayerPlugin = require('../lavamoat/plugins/lavamoat-unsafe-layer-plugin')
 const createLavamoatUnsafePackagesPlugin = require('../lavamoat/plugins/lavamoat-unsafe-packages-plugin')
 const LavamoatIgnoredModulesVerifyPlugin = require('../lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
-const { isWebkit, isGecko, isSafari, isAmbireNext } = require('./env')
+const { isWebkit, isGecko, isSafari, isAmbireNext, isPrivacyPoolsBundled } = require('./env')
 const { CJS_RULE, hardenTerser, ROOT_DIR } = require('./shared')
 
 // Entries that run outside LavaMoat protection.
@@ -30,6 +30,7 @@ const LAVAMOAT_UNSAFE_ENTRIES = new Set([
   'ambire-inpage',
   'ethereum-inpage',
   'content-script',
+  'onekey-offscreen',
   'content-script-ambire-injection',
   'content-script-ethereum-injection'
 ])
@@ -123,7 +124,9 @@ function processManifest(content, mode) {
 
   const permissions = [...manifest.permissions, 'scripting', 'alarms']
   if (isWebkit && !isSafari) {
-    permissions.push('system.display', 'sidePanel')
+    // 'offscreen' hosts the OneKey SDK iframe and the Privacy Pools prover, which needs `Worker`
+    // (missing in service workers)
+    permissions.push('system.display', 'sidePanel', 'offscreen')
     manifest.side_panel = { default_path: 'side-panel.html' }
   }
   manifest.permissions = permissions
@@ -275,6 +278,15 @@ module.exports = async function buildExtension(
         './src/web/extension-services/content-script/content-script-messenger-bridge.ts',
       'ambire-inpage': './src/web/modules/inpage/ambire-inpage.ts',
       'ethereum-inpage': './src/web/modules/inpage/ethereum-inpage.ts',
+      // Privacy Pools prover's offscreen document. Firefox and Safari prove in the background.
+      ...(isWebkit &&
+        !isSafari && {
+          'privacy-pools-prover': './src/web/extension-services/privacy-pools-prover/offscreen.ts'
+        }),
+      ...(isWebkit &&
+        !isSafari && {
+          'onekey-offscreen': './src/web/extension-services/onekey-offscreen/onekey-offscreen.ts'
+        }),
       ...(isGecko && {
         'content-script-ambire-injection':
           './src/web/extension-services/content-script/content-script-ambire-injection.ts',
@@ -317,6 +329,19 @@ module.exports = async function buildExtension(
       from: './node_modules/webextension-polyfill/dist/browser-polyfill.min.js',
       to: 'browser-polyfill.min.js'
     },
+    // Privacy Pools proving keys and witness generators (~23 MB), served same-origin instead of the
+    // SDK's default raw.githubusercontent.com (a third party in the withdrawal path, needing a CSP
+    // entry, re-downloaded per prover). Also works offline. Filenames must match
+    // PRIVACY_POOLS_CIRCUIT_PATHS. Left out of the builds that hide the feature, so they don't
+    // grow by the artifacts' size. The prover itself stays, as nothing can reach it there.
+    ...(isPrivacyPoolsBundled
+      ? [
+          {
+            from: './node_modules/@fatsolutions/privacy-pools-core-circuits/artifacts',
+            to: 'privacy-pools-circuits'
+          }
+        ]
+      : []),
     // qr-scanner ships its decoder worker inlined inside a `new Worker(URL.createObjectURL(new Blob([...])))`
     // call. Firefox MV3 extension pages reject blob: workers under the default `script-src 'self'` CSP,
     // so we extract the worker source once at build time and serve it as a real same-origin file.
@@ -377,10 +402,26 @@ module.exports = async function buildExtension(
     ...((isWebkit && !isSafari) || isGecko
       ? [
           new HtmlWebpackPlugin({
+            template: './src/web/public/onekey-offscreen.html',
+            filename: 'onekey-offscreen.html',
+            inject: 'body',
+            chunks: ['runtime', 'onekey-offscreen']
+          })
+        ]
+      : []),
+    ...(isWebkit && !isSafari
+      ? [
+          new HtmlWebpackPlugin({
             template: './src/web/public/side-panel.html',
             filename: 'side-panel.html',
             inject: 'body',
             chunks: ['runtime', 'rootTheme', 'main']
+          }),
+          new HtmlWebpackPlugin({
+            template: './src/web/public/privacy-pools-prover.html',
+            filename: 'privacy-pools-prover.html',
+            inject: 'body',
+            chunks: ['runtime', 'privacy-pools-prover']
           })
         ]
       : []),
@@ -427,6 +468,15 @@ module.exports = async function buildExtension(
   }
 
   config.module.rules.push(CJS_RULE)
+
+  if (enableLavaMoat) {
+    // See lavamoat/loaders/noble-frost-stub-loader.js
+    config.module.rules.push({
+      test: /[\\/]@noble[\\/]curves[\\/]abstract[\\/]frost\.js$/,
+      enforce: 'pre',
+      use: [path.resolve(ROOT_DIR, 'lavamoat/loaders/noble-frost-stub-loader.js')]
+    })
+  }
 
   // Allow @expo-google-fonts assets (TTF/WOFF/etc) to be emitted explicitly instead of
   // relying on Webpack's "ambient" asset behavior. LavaMoat treats ambient assets from
@@ -489,6 +539,7 @@ module.exports = async function buildExtension(
           chunk.name !== 'ambire-inpage' &&
           chunk.name !== 'ethereum-inpage' &&
           chunk.name !== 'content-script' &&
+          chunk.name !== 'onekey-offscreen' &&
           (!enableLavaMoat || chunk.name !== 'background')
         )
       }

@@ -15,9 +15,11 @@ interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   sessionId: string
+  /** The tabs to show - see `Tabs`. */
+  tabs?: TabType[]
 }
 
-const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, sessionId }) => {
+const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, sessionId, tabs }) => {
   const [, setSearchParams] = useSearchParams()
   const { styles } = useTheme(getStyles)
   const { minWidthSize } = useWindowSize()
@@ -33,6 +35,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, sessionId }) => {
         handleChangeQuery={(tab) => !isMobile && setSearchParams({ tab, sessionId })}
         setOpenTab={setOpenTab}
         openTab={openTab}
+        tabs={tabs}
       />
     </View>
   )

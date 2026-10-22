@@ -496,6 +496,15 @@
         "react": true
       }
     },
+    "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits": {
+      "globals": {
+        "URL": true,
+        "fetch": true
+      },
+      "packages": {
+        "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits>snarkjs": true
+      }
+    },
     "react-tooltip>@floating-ui/dom>@floating-ui/core": {
       "packages": {
         "react-tooltip>@floating-ui/dom>@floating-ui/utils": true
@@ -613,6 +622,35 @@
         "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check": true,
         "buffer": true,
         "tslib": true
+      }
+    },
+    "@kohaku-eth/privacy-pools": {
+      "globals": {
+        "URL": true,
+        "console.error": true,
+        "console.group": true,
+        "console.groupEnd": true,
+        "console.log": true,
+        "console.warn": true
+      },
+      "meta": {
+        "webpack-optimization": [
+          "Dependency 'viem' reexports from 'ox>abitype' and webpack collapsed that to a direct import.",
+          "Dependency '@kohaku-eth/privacy-pools>@reduxjs/toolkit' reexports from '@kohaku-eth/privacy-pools>@reduxjs/toolkit>reselect' and webpack collapsed that to a direct import."
+        ]
+      },
+      "packages": {
+        "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits": true,
+        "@kohaku-eth/privacy-pools>@kohaku-eth/provider": true,
+        "@kohaku-eth/privacy-pools>@reduxjs/toolkit": true,
+        "@kohaku-eth/privacy-pools>@saga-sync/client": true,
+        "@kohaku-eth/privacy-pools>@zk-kit/lean-imt": true,
+        "ox>abitype": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "ethers": true,
+        "@kohaku-eth/privacy-pools>maci-crypto": true,
+        "@kohaku-eth/privacy-pools>@reduxjs/toolkit>reselect": true,
+        "viem": true
       }
     },
     "@ledgerhq/context-module": {
@@ -771,6 +809,11 @@
         "@ngraveio/bc-ur>sha.js": true
       }
     },
+    "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/curves": {
+      "packages": {
+        "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/hashes": true
+      }
+    },
     "@metamask/eth-sig-util>ethereum-cryptography>@noble/curves": {
       "globals": {
         "TextEncoder": true
@@ -785,6 +828,14 @@
       },
       "packages": {
         "ethers>@noble/hashes": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>maci-crypto>ethers>@noble/curves": {
+      "globals": {
+        "TextEncoder": true
+      },
+      "packages": {
+        "@kohaku-eth/privacy-pools>maci-crypto>ethers>@noble/hashes": true
       }
     },
     "ox>@noble/curves": {
@@ -812,6 +863,12 @@
         "crypto": true
       }
     },
+    "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/hashes": {
+      "globals": {
+        "TextEncoder": true,
+        "crypto": true
+      }
+    },
     "@metamask/eth-sig-util>ethereum-cryptography>@noble/hashes": {
       "globals": {
         "TextEncoder": true,
@@ -824,6 +881,18 @@
         "crypto": true
       }
     },
+    "@kohaku-eth/privacy-pools>maci-crypto>ethers>@noble/hashes": {
+      "globals": {
+        "TextEncoder": true,
+        "crypto": true
+      }
+    },
+    "@onekeyfe/hd-shared": {
+      "globals": {
+        "SuppressedError": true,
+        "setTimeout": true
+      }
+    },
     "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema": {
       "packages": {
         "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js": true,
@@ -834,6 +903,29 @@
       "packages": {
         "@raugfer/jazzicon>color": true,
         "@raugfer/jazzicon>mersenne-twister": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@reduxjs/toolkit": {
+      "globals": {
+        "AbortController": true,
+        "__REDUX_DEVTOOLS_EXTENSION_COMPOSE__": true,
+        "__REDUX_DEVTOOLS_EXTENSION__": true,
+        "cancelAnimationFrame": true,
+        "clearTimeout": true,
+        "console.error": true,
+        "console.warn": true,
+        "process": true,
+        "queueMicrotask": true,
+        "requestAnimationFrame": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "@kohaku-eth/privacy-pools>@reduxjs/toolkit>immer": true,
+        "process": true,
+        "@kohaku-eth/privacy-pools>@reduxjs/toolkit>redux-thunk": true,
+        "@kohaku-eth/privacy-pools>@reduxjs/toolkit>redux": true,
+        "@kohaku-eth/privacy-pools>@reduxjs/toolkit>reselect": true
       }
     },
     "react-router-dom>@remix-run/router": {
@@ -895,6 +987,29 @@
     "@safe-global/api-kit>@safe-global/types-kit": {
       "packages": {
         "ox>abitype": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@saga-sync/client": {
+      "globals": {
+        "Blob": true,
+        "DecompressionStream": true,
+        "Response": true,
+        "TextDecoder": true
+      },
+      "packages": {
+        "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core": {
+      "globals": {
+        "TextDecoder": true,
+        "TextEncoder": true,
+        "fetch": true,
+        "process.env": true
+      },
+      "packages": {
+        "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/curves": true,
+        "@kohaku-eth/privacy-pools>@saga-sync/client>@saga-sync/core>@noble/hashes": true
       }
     },
     "@metamask/eth-sig-util>@scure/base": {
@@ -1080,6 +1195,31 @@
       },
       "packages": {
         "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub": {
+      "packages": {
+        "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub>@zk-kit/utils": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@zk-kit/lean-imt": {
+      "packages": {
+        "@kohaku-eth/privacy-pools>@zk-kit/lean-imt>@zk-kit/utils": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/poseidon-cipher": {
+      "packages": {
+        "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub>@zk-kit/utils": {
+      "packages": {
+        "buffer": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@zk-kit/lean-imt>@zk-kit/utils": {
+      "packages": {
+        "buffer": true
       }
     },
     "@keystonehq/animated-qr>@zxing/browser": {
@@ -1724,6 +1864,27 @@
         "eth-crypto>ethers>@ethersproject/wordlists": true
       }
     },
+    "@kohaku-eth/privacy-pools>maci-crypto>ethers": {
+      "globals": {
+        "AbortController": true,
+        "Event": true,
+        "Headers": true,
+        "atob": true,
+        "btoa": true,
+        "clearTimeout": true,
+        "console.log": true,
+        "fetch": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "ox>@adraffy/ens-normalize": true,
+        "@kohaku-eth/privacy-pools>maci-crypto>ethers>@noble/curves": true,
+        "@kohaku-eth/privacy-pools>maci-crypto>ethers>@noble/hashes": true,
+        "@kohaku-eth/privacy-pools>maci-crypto>ethers>aes-js": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "@kohaku-eth/privacy-pools>maci-crypto>ethers>tslib": true
+      }
+    },
     "events": {
       "globals": {
         "console": true
@@ -1835,6 +1996,23 @@
       },
       "packages": {
         "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits>snarkjs>ffjavascript": {
+      "globals": {
+        "Blob": true,
+        "TextEncoder": true,
+        "URL.createObjectURL": true,
+        "WebAssembly.Memory": true,
+        "WebAssembly.compile": true,
+        "WebAssembly.instantiate": true,
+        "Worker": true,
+        "btoa": true,
+        "crypto": true,
+        "curve_bls12381": "write",
+        "curve_bn128": "write",
+        "navigator": true,
+        "setTimeout": true
       }
     },
     "react-dropzone>file-selector": {
@@ -2032,6 +2210,12 @@
         "indexedDB.open": true
       }
     },
+    "@kohaku-eth/privacy-pools>@reduxjs/toolkit>immer": {
+      "globals": {
+        "Iterator": true,
+        "process.env.NODE_ENV": true
+      }
+    },
     "react-native-web>inline-style-prefixer": {
       "packages": {
         "react-native-web>inline-style-prefixer>css-in-js-utils": true
@@ -2178,6 +2362,14 @@
       },
       "packages": {
         "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>maci-crypto": {
+      "packages": {
+        "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub": true,
+        "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/poseidon-cipher": true,
+        "@ngraveio/bc-ur>assert": true,
+        "@kohaku-eth/privacy-pools>maci-crypto>ethers": true
       }
     },
     "crypto-browserify>create-hash>md5.js": {
@@ -2921,6 +3113,25 @@
         "stream-http>readable-stream>util-deprecate": true
       }
     },
+    "@kohaku-eth/privacy-pools>@reduxjs/toolkit>redux": {
+      "globals": {
+        "console": true,
+        "process.env.NODE_ENV": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>@reduxjs/toolkit>reselect": {
+      "globals": {
+        "WeakRef": true,
+        "console.warn": true,
+        "process.env.NODE_ENV": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
     "crypto-browserify>pbkdf2>ripemd160": {
       "packages": {
         "buffer": true,
@@ -3069,6 +3280,29 @@
         "@raugfer/jazzicon>color>color-string>simple-swizzle>is-arrayish": true
       }
     },
+    "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits>snarkjs": {
+      "globals": {
+        "TextDecoder": true,
+        "TextEncoder": true,
+        "WebAssembly": true,
+        "console.error": true,
+        "console.log": true,
+        "console.warn": true,
+        "crypto.getRandomValues": true,
+        "crypto.subtle.digest": true,
+        "curve": true,
+        "fetch": true,
+        "gc": true,
+        "process": true,
+        "prompt": true,
+        "setImmediate": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits>snarkjs>ffjavascript": true,
+        "process": true
+      }
+    },
     "stream-browserify": {
       "packages": {
         "events": true,
@@ -3154,6 +3388,13 @@
       }
     },
     "tslib": {
+      "globals": {
+        "AsyncIterator": true,
+        "Iterator": true,
+        "SuppressedError": true
+      }
+    },
+    "@kohaku-eth/privacy-pools>maci-crypto>ethers>tslib": {
       "globals": {
         "AsyncIterator": true,
         "Iterator": true,

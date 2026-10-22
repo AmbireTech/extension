@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, Pressable } from 'react-native'
+import { ColorValue, Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/interfaces/addressBook'
@@ -9,18 +9,21 @@ import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
+import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
+import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
 import { InputProps } from '@common/components/Input'
+import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import { SectionedSelect } from '@common/components/Select'
 import {
   RenderSelectedOptionParams,
@@ -29,11 +32,15 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
+import {
+  filterPrivacyPoolsAccountsBySearch,
+  PrivacyPoolsAccountDisplay
+} from '@common/hooks/usePrivacyPoolsAccounts'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -41,6 +48,10 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import styles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 
 export interface AddressSelectProps extends InputProps {
   setAddress: (text: string) => void
@@ -68,7 +79,13 @@ export interface AddressSelectProps extends InputProps {
   isRecipientHumanizerKnownTokenOrSmartContract?: boolean
   isRecipientAddressUnknown?: boolean
   addressPoisoningMatch?: AddressPoisoningMatch | null
+  /** Listed as recipients. Having no address, picking one calls `onSelectPrivacyPoolsAccount`. */
+  privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
+  onSelectPrivacyPoolsAccount?: (seedId: string) => void
 }
+
+// Marks a Privacy Pools account option - see `setAddressWrapped`
+const PRIVACY_POOLS_OPTION_VALUE_PREFIX = 'privacy-pools-account:'
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
   severity: 'error', // Don't let the user submit, just in case there is an error
@@ -264,10 +281,17 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   bottomSheetTitle,
   withShortenedAddresses,
   includeSelectedAccount = false,
-  inputBackgroundColor
+  inputBackgroundColor,
+  privacyPoolsAccounts,
+  onSelectPrivacyPoolsAccount
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: keys } = useController('KeystoreController', selectKeys)
+  const canSendToPrivacyPoolsAccounts = useMemo(
+    () => !account || !getIsViewOnly(keys, account.associatedKeys),
+    [account, keys]
+  )
   const actualAddress = getAddressFromAddressState({
     resolvedAddress,
     fieldValue: address
@@ -284,6 +308,11 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const [bindManageBtnAnim, manageBtnAnimStyle] = useHover({
     preset: 'opacityInverted'
   })
+  // Split like the accounts list: Privacy Pools accounts, having no address, are private. Without
+  // them, the list is as it was
+  const hasAccountsTabs = isPrivacyPoolsEnabled && !!onSelectPrivacyPoolsAccount
+  // The search stays when switching tabs, so it filters the newly opened tab too
+  const [activeTab, setActiveTab] = useState<AccountsTab>('public')
 
   const selectableContacts = useMemo<Contact[]>(() => {
     if (!includeSelectedAccount || !account) return contacts
@@ -335,13 +364,68 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     return results.map((result) => result.item.contact)
   }, [selectableContacts, actualAddress, searchableContacts])
 
+  const filteredPrivacyPoolsAccounts = useMemo(
+    () =>
+      privacyPoolsAccounts && onSelectPrivacyPoolsAccount
+        ? filterPrivacyPoolsAccountsBySearch(
+            privacyPoolsAccounts,
+            isMobile ? '' : actualAddress,
+            t('Privacy Pools')
+          )
+        : [],
+    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, actualAddress, t]
+  )
+
+  // Looked up rather than parsed back from the option value
+  const privacyPoolsSeedIdByOptionValue = useMemo(
+    () =>
+      new Map(
+        filteredPrivacyPoolsAccounts.map(({ seedId }) => [
+          `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
+          seedId
+        ])
+      ),
+    [filteredPrivacyPoolsAccounts]
+  )
+
   const setAddressWrapped = useCallback(
     ({ value: newAddress }: Pick<SelectValue, 'value'>) => {
       if (typeof newAddress !== 'string') return
 
+      const privacyPoolsSeedId = privacyPoolsSeedIdByOptionValue.get(newAddress)
+      if (privacyPoolsSeedId) {
+        onSelectPrivacyPoolsAccount?.(privacyPoolsSeedId)
+        return
+      }
+
       setAddress(newAddress)
     },
-    [setAddress]
+    [onSelectPrivacyPoolsAccount, privacyPoolsSeedIdByOptionValue, setAddress]
+  )
+
+  const privacyPoolsAccountOptions = useMemo(
+    () =>
+      filteredPrivacyPoolsAccounts.map(({ seedId, label }) => ({
+        value: `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
+        // Named like in the accounts list: the account has no name or address of its own
+        label: (
+          <View
+            testID={`address-book-privacy-pools-account-${seedId}`}
+            style={[flexbox.directionRow, flexbox.alignCenter]}
+          >
+            <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+            <View style={flexbox.flex1}>
+              <Text fontSize={14} weight="medium" numberOfLines={1}>
+                {t('Private account')}
+              </Text>
+              <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
+                {t('Added from {{seedLabel}}', { seedLabel: label })}
+              </Text>
+            </View>
+          </View>
+        )
+      })),
+    [filteredPrivacyPoolsAccounts, t]
   )
 
   const walletAccountsSourcedContactOptions = useMemo(
@@ -404,20 +488,45 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   )
 
   const sections = useMemo(() => {
-    if (!walletAccountsSourcedContactOptions.length && !manuallyAddedContactOptions.length)
-      return []
+    const myWallets = { data: walletAccountsSourcedContactOptions, key: 'my-wallets' }
+    const privacyPoolsAccountsSection = {
+      data: privacyPoolsAccountOptions,
+      key: 'privacy-pools-accounts'
+    }
+    const addressBook = { data: manuallyAddedContactOptions, key: 'contacts' }
+    const shownSections = !hasAccountsTabs
+      ? [myWallets, addressBook]
+      : activeTab === 'private'
+        ? [privacyPoolsAccountsSection]
+        : [myWallets, addressBook]
 
-    return [
-      {
-        data: walletAccountsSourcedContactOptions,
-        key: 'my-wallets'
-      },
-      {
-        data: manuallyAddedContactOptions,
-        key: 'contacts'
-      }
-    ]
-  }, [walletAccountsSourcedContactOptions, manuallyAddedContactOptions])
+    if (shownSections.every(({ data }) => !data.length)) return []
+
+    return shownSections
+  }, [
+    activeTab,
+    hasAccountsTabs,
+    walletAccountsSourcedContactOptions,
+    privacyPoolsAccountOptions,
+    manuallyAddedContactOptions
+  ])
+
+  const accountsTabs = useMemo(
+    () =>
+      hasAccountsTabs ? (
+        <AccountsTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          disabledTabReasons={
+            canSendToPrivacyPoolsAccounts
+              ? undefined
+              : { private: t('A view-only account cannot send to a private account.') }
+          }
+          style={spacings.mvTy}
+        />
+      ) : undefined,
+    [activeTab, canSendToPrivacyPoolsAccounts, hasAccountsTabs, t]
+  )
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: SectionedSelectProps['sections'][0] }) => {
@@ -439,6 +548,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           )}
         </TitleAndIcon>
       ) : (
+        // The Privacy Pools accounts too: they are the user's own, like those of the public tab
         <TitleAndIcon title={t('My wallets')} icon={WalletIcon} />
       )
     },
@@ -531,7 +641,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
         withSearch={false}
         renderSectionHeader={renderSectionHeader}
         renderSelectedOption={renderSelectedOption}
-        emptyListPlaceholderText={t('No contacts found')}
+        emptyListPlaceholderText={
+          hasAccountsTabs && activeTab === 'private'
+            ? t('No accounts found')
+            : t('No contacts found')
+        }
+        menuHeader={accountsTabs}
         menuPosition="bottom"
         bottomSheetTitle={bottomSheetTitle}
         isBottomSheetFullHeight
