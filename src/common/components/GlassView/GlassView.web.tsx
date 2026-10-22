@@ -65,6 +65,12 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     // Compute and apply backdropFilter directly — no setState, no re-render.
     // blurAmount is in the deps array so this re-runs whenever it changes.
     const applyBackdropFilter = (displacementUrl: string | null) => {
+      // Even a zero blur would still be a backdrop filter
+      if (!blurAmount) {
+        el.style.backdropFilter = 'none'
+        return
+      }
+
       let filter: string
       if (engine !== 'webkit' || isSimpleBlur || !displacementUrl) {
         filter = `blur(${blurAmount}px)`
