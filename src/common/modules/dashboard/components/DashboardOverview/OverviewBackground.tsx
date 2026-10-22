@@ -11,9 +11,11 @@ import {
 } from 'react-native-svg'
 
 import { isFirefoxBuild } from '@common/config/env'
-import useControllerState from '@common/hooks/useControllerState'
+import useController from '@common/hooks/useController'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { getAvatarColors } from '@common/utils/avatars'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 import type { OverviewCollapse } from '../DashboardPagesCarousel/DashboardPagesCarousel'
 import backgroundImage from './background.png'
@@ -97,6 +99,9 @@ const getCollapsingLayerGeometry = ({ width, height }: CardSize): CollapsingLaye
 // resolves to the first matching id in the document - so every instance needs its own filter id.
 let recolorFilterIdCounter = 0
 
+const selectAvatarType = (state: AllControllersMappingType['WalletStateController']) =>
+  state.avatarType
+
 export function OverviewBackground({
   address,
   collapse,
@@ -108,7 +113,7 @@ export function OverviewBackground({
   /** Blurs the image, for a copy of the background that stands in for a backdrop blur. */
   blurRadius?: number
 }) {
-  const { state } = useControllerState({ id: 'WalletStateController' })
+  const { state: avatarType } = useController('WalletStateController', selectAvatarType)
   const [recolorFilterId] = useState(() => {
     recolorFilterIdCounter += 1
     return `overview-recolor-${recolorFilterIdCounter}`
@@ -134,7 +139,7 @@ export function OverviewBackground({
     : FULL_SIZE
   const size: BackgroundSize | null = geometry ?? fallbackSize
 
-  const colors = getAvatarColors(state.avatarType, address)
+  const colors = getAvatarColors(avatarType, address)
 
   // Avatar colors[0] and colors[1] can sometimes be almost identical (e.g. two dark purples).
   // In that case, fall back to colors[2] as the secondary so the two layers actually look different.
