@@ -88,20 +88,12 @@ const OVERVIEW_EXPAND_TIMING = {
 // directly, without a render
 const USE_NATIVE_DRIVER = !isWeb
 
-// How long a swipe between the pages has to have stopped for to be over on web, which
-// reports it only as scroll events, with no drag start or momentum end
+// How long the pager has to have stopped for to be settled on a page on web, which reports
+// scrolling to a pressed tab only as scroll events, with no momentum end
 const WEB_PAGER_IDLE_DELAY = 150
 
 // How many pixels a line of a wheel scrolled by lines stands for, as Firefox reports it
 const WHEEL_LINE_HEIGHT = 16
-
-// How far a wheel gesture over the pages travels before it is locked to the axis it went most along
-const WHEEL_AXIS_LOCK_DISTANCE = 6
-
-/** How far a wheel event scrolls down, in pixels. */
-const getWheelDeltaY = ({ deltaY, deltaMode }: { deltaY: number; deltaMode: number }) =>
-  // Firefox reports a mouse wheel in lines rather than pixels
-  deltaMode === 1 ? deltaY * WHEEL_LINE_HEIGHT : deltaY
 
 // How far the floating bar moves from its place above the safe area to below the screen
 // edge, on top of twice the safe area inset
@@ -622,10 +614,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // on mount (a deep link may open another tab) must not animate.
   const alignedTabIndexRef = useRef(openTabIndex)
   const isPagerDrivenRef = useRef(false)
-  // Web only: where the pager was last reported at, and whether it is being scrolled to a
-  // pressed tab rather than swiped, which it can only tell apart by the scroll events
-  const pagerOffsetXRef = useRef(0)
-  const isScrollingToTabRef = useRef(false)
 
   useEffect(() => {
     const previousTabIndex = alignedTabIndexRef.current
@@ -638,11 +626,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
     if (hasTabChanged) takePagesToTop()
 
-    const offsetX = openTabIndex * pageSize.width
-
-    if (isWeb && Math.abs(offsetX - pagerOffsetXRef.current) > 1) isScrollingToTabRef.current = true
-
-    scrollRef.current?.scrollTo({ x: offsetX, animated: hasTabChanged })
+    scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated: hasTabChanged })
   }, [openTab, openTabIndex, pageSize.width, takePagesToTop])
 
   // Only the banners scroll out of view; the tabs row stays. With no banners it maps to a
@@ -696,8 +680,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     [openTab, pageSize.width, setOpenTab]
   )
 
-  // Web reports a swipe only as scroll events: the first one that isn't a scroll to a
-  // pressed tab starts it, and it is over once they have stopped coming
+  // Web reports scrolling to a pressed tab only as scroll events, so it is over once they
+  // have stopped coming
   const pagerIdleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(
@@ -722,30 +706,18 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     }
   }, [])
 
-  const onWebPagerScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      pagerOffsetXRef.current = event.nativeEvent.contentOffset.x
+  const onWebPagerScroll = useCallback(() => {
+    if (pagerIdleTimeoutRef.current) {
+      clearTimeout(pagerIdleTimeoutRef.current)
+    } else {
+      setIsPagerMoving(true)
+    }
 
-      if (!isPagerDrivenRef.current && !isScrollingToTabRef.current) onScrollBeginDrag()
-
-      if (pagerIdleTimeoutRef.current) {
-        clearTimeout(pagerIdleTimeoutRef.current)
-      } else {
-        setIsPagerMoving(true)
-      }
-
-      pagerIdleTimeoutRef.current = setTimeout(() => {
-        pagerIdleTimeoutRef.current = null
-        isScrollingToTabRef.current = false
-        setIsPagerMoving(false)
-
-        if (isPagerDrivenRef.current) onMomentumScrollEnd(event)
-      }, WEB_PAGER_IDLE_DELAY)
-
-      onPagerScroll(event)
-    },
-    [onMomentumScrollEnd, onPagerScroll, onScrollBeginDrag, setIsPagerMoving]
-  )
+    pagerIdleTimeoutRef.current = setTimeout(() => {
+      pagerIdleTimeoutRef.current = null
+      setIsPagerMoving(false)
+    }, WEB_PAGER_IDLE_DELAY)
+  }, [setIsPagerMoving])
 
   const carousel = useMemo(
     () => ({
@@ -860,55 +832,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
   // Web only: the header is laid over the open page, so the wheel turned over it is handed
   // to the page, which would otherwise not scroll under the banners and the tabs
-  const onHeaderWheel = (event: { deltaY: number; deltaMode: number }) => {
-    pageHandles.current[openTab]?.scrollBy?.(getWheelDeltaY(event))
+  const onHeaderWheel = ({ deltaY, deltaMode }: { deltaY: number; deltaMode: number }) => {
+    // Firefox reports a mouse wheel in lines rather than pixels
+    pageHandles.current[openTab]?.scrollBy?.(deltaMode === 1 ? deltaY * WHEEL_LINE_HEIGHT : deltaY)
   }
-
-  // Web only: Firefox hands a vertical trackpad swipe the open page can't take to the pager,
-  // which then moves sideways by the swipe's slight horizontal part and takes the pages to
-  // the top as a swipe between them does. A mostly vertical swipe only scrolls the open page.
-  useEffect(() => {
-    if (!isWeb) return undefined
-
-    const pagerNode = scrollRef.current?.getScrollableNode() as HTMLElement | null | undefined
-
-    if (!pagerNode) return undefined
-
-    let travelX = 0
-    let travelY = 0
-    let lockedAxis: 'x' | 'y' | null = null
-    let idleTimeoutId: ReturnType<typeof setTimeout> | undefined
-
-    const onWheel = (event: WheelEvent) => {
-      clearTimeout(idleTimeoutId)
-      idleTimeoutId = setTimeout(() => {
-        travelX = 0
-        travelY = 0
-        lockedAxis = null
-      }, WEB_PAGER_IDLE_DELAY)
-
-      if (!lockedAxis) {
-        travelX += Math.abs(event.deltaX)
-        travelY += Math.abs(event.deltaY)
-
-        if (Math.max(travelX, travelY) < WHEEL_AXIS_LOCK_DISTANCE) return
-
-        lockedAxis = travelX > travelY ? 'x' : 'y'
-      }
-
-      if (lockedAxis === 'x' || !event.deltaX) return
-
-      event.preventDefault()
-      pageHandles.current[openTab]?.scrollBy?.(getWheelDeltaY(event))
-    }
-
-    pagerNode.addEventListener('wheel', onWheel, { passive: false })
-
-    return () => {
-      clearTimeout(idleTimeoutId)
-      pagerNode.removeEventListener('wheel', onWheel)
-    }
-  }, [openTab])
 
   const endHeaderDrag = () => {
     isHeaderDraggingRef.current = false
@@ -1044,6 +971,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       <ScrollView
         ref={scrollRef}
         horizontal
+        // Web switches the pages by the tabs alone: a sideways trackpad swipe is too easily
+        // set off by one meant to scroll the page
+        scrollEnabled={!isWeb}
         pagingEnabled
         directionalLockEnabled
         showsHorizontalScrollIndicator={false}
