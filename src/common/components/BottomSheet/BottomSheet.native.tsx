@@ -103,10 +103,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   // applies to the ScrollView/FlatList/SectionList paths; a `customRenderer`
   // controls its own layout, so it keeps the plain bottom inset. Modals are
   // vertically centered and lifted via `modalKeyboardOffsetStyle`, so they skip
-  // this padding entirely.
+  // this padding entirely. A footer sits below the content, so it takes the
+  // keyboard padding instead, or it would stay hidden behind the keyboard.
+  const keyboardBottomPadding =
+    !isModal && !customRenderer && isKeyboardVisible ? visibleKeyboardHeight : 0
   const contentBottomPadding = isModal
     ? 0
-    : (bottom || SPACING_SM) + (!customRenderer && isKeyboardVisible ? visibleKeyboardHeight : 0)
+    : (bottom || SPACING_SM) + (FooterComponent ? 0 : keyboardBottomPadding)
 
   const bottomSheetContextValue = useBottomSheetContextValue(isOpen)
 
@@ -185,7 +188,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             modalHeight={modalHeight}
             threshold={90}
             HeaderComponent={HeaderComponent}
-            FooterComponent={FooterComponent}
+            FooterComponent={
+              // Always wrapped, so the footer doesn't remount when the keyboard toggles
+              !!FooterComponent && (
+                <View style={{ paddingBottom: keyboardBottomPadding }}>{FooterComponent}</View>
+              )
+            }
             adjustToContentHeight={
               customRenderer ? false : !isModal && isKeyboardVisible ? false : adjustToContentHeight
             }
