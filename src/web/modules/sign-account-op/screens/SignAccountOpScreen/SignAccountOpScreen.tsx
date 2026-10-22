@@ -36,7 +36,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
-import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 import getStyles from './styles'
@@ -133,6 +132,7 @@ const SignAccountOpScreen = () => {
     holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
+    holdToProceedButtonType,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
@@ -280,7 +280,6 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
-  const holdToProceedButtonType = useDappVerificationHoldButtonType(signAccountOpState?.banners)
 
   const footerContent = (
     <>

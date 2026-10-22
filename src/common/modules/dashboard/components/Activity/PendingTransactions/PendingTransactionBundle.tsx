@@ -80,7 +80,15 @@ const PendingTransactionBundle: FC<Props> = ({ request, isCurrentNonce }) => {
           flexbox.justifySpaceBetween
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap, flexbox.flex1]}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.wrap,
+            flexbox.flex1,
+            spacings.phSm
+          ]}
+        >
           <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
             {t('{{signedCount}}/{{threshold}} signatures', { signedCount, threshold })}
           </Text>
@@ -125,7 +133,8 @@ const PendingTransactionBundle: FC<Props> = ({ request, isCurrentNonce }) => {
           text={t('Open')}
           onPress={handleOpen}
           hasBottomSpacing={false}
-          style={[spacings.ml, { minWidth: 76, height: 40 }]}
+          textStyle={styles.actionButtonText}
+          style={[spacings.ml, styles.actionButton]}
         />
       </View>
     </View>

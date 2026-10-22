@@ -2,7 +2,11 @@ import { ZeroAddress } from 'ethers'
 
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { Contacts } from '@ambire-common/interfaces/addressBook'
-import { FeeSpeed, ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import {
+  FeeSpeed,
+  ISignAccountOpController,
+  SafeFeePayerLinks
+} from '@ambire-common/interfaces/signAccountOp'
 import { canBecomeSmarter, isAmbireV2Account } from '@ambire-common/libs/account/account'
 import { canFeeOptionCoverAmount } from '@ambire-common/libs/account/feeOptions'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
@@ -189,4 +193,28 @@ const mapFeeOptions = (
   }
 }
 
-export { getFeeOptionValue, mapFeeOptions, sortFeeOptions }
+type MappedFeeOption = ReturnType<typeof mapFeeOptions>
+
+/**
+ * Splits the fee options paid by EOAs by how the EOA relates to the Safe, keeping their order.
+ * Owners and linked EOAs are already publicly tied to the Safe; paying from any other one ties it.
+ */
+const groupSafeFeeOptions = (
+  feeOptions: MappedFeeOption[],
+  safeFeePayerLinks: SafeFeePayerLinks
+) => {
+  const owners: MappedFeeOption[] = []
+  const linked: MappedFeeOption[] = []
+  const notLinked: MappedFeeOption[] = []
+
+  feeOptions.forEach((feeOption) => {
+    const paidBy = feeOption.paidBy.toLowerCase()
+    if (safeFeePayerLinks.owners.includes(paidBy)) owners.push(feeOption)
+    else if (safeFeePayerLinks.linked.includes(paidBy)) linked.push(feeOption)
+    else notLinked.push(feeOption)
+  })
+
+  return { owners, linked, notLinked }
+}
+
+export { getFeeOptionValue, groupSafeFeeOptions, mapFeeOptions, sortFeeOptions }
