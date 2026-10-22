@@ -30,6 +30,8 @@ const BannerButton: FC<Props> = ({
   const { theme } = useTheme()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
   const color = accentColor || theme[`${colorType}Text`]
+  // The accent is a bright purple in both themes, so its text has to stay light in both
+  const primaryTextColor = accentColor ? theme.neutral200 : theme.neutral100
 
   const typeStyle: ViewStyle = useMemo(() => {
     if (type === 'primary') {
@@ -62,7 +64,7 @@ const BannerButton: FC<Props> = ({
       testID={testID}
       {...bindAnim}
     >
-      <Text color={type === 'primary' ? theme.neutral100 : color} fontSize={14} weight="medium">
+      <Text color={type === 'primary' ? primaryTextColor : color} fontSize={14} weight="medium">
         {children}
       </Text>
     </AnimatedPressable>
