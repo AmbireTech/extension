@@ -173,14 +173,14 @@ describe('PQ1Signer.signTypedData — Safe / CoW routing', () => {
 
   it('never retries a refused structured sign blind', async () => {
     const { signer, sent } = signerWith(CAP_OFFCHAIN_SAFE_TX | CAP_OFFCHAIN_COW_ORDER, true)
-    await expect(signer.signTypedData(SAFE_TX as never, ctx())).rejects.toThrow(/refused/)
+    await expect(signer.signTypedData(SAFE_TX as never, ctx())).rejects.toThrow('refused')
     expect(sent).toEqual(['safe_tx'])
   })
 
   it('refuses a request whose domain names another chain', async () => {
     const { signer, sent } = signerWith(CAP_OFFCHAIN_SAFE_TX)
     await expect(signer.signTypedData(SAFE_TX as never, ctx(8453n))).rejects.toThrow(
-      /different network/
+      'different network'
     )
     expect(sent).toEqual([])
   })
@@ -188,7 +188,7 @@ describe('PQ1Signer.signTypedData — Safe / CoW routing', () => {
   it('refuses an account not yet deployed on the network', async () => {
     mockAccountState.isDeployed = false
     const { signer, sent } = signerWith(CAP_OFFCHAIN_COW_ORDER)
-    await expect(signer.signTypedData(COW_ORDER as never, ctx())).rejects.toThrow(/isn't set up/)
+    await expect(signer.signTypedData(COW_ORDER as never, ctx())).rejects.toThrow("isn't set up")
     expect(sent).toEqual([])
   })
 })

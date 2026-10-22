@@ -6,9 +6,8 @@
 // whatever the wallet's active owner is.
 
 import { C10_SIG_LEN, SIG_WRAPPER_LEN, VERIFIER_STUB_RETURN_TRUE_CODE } from '../config'
+import { hexToBytes } from '../transport/bytes'
 import { buildUserOp, forEstimate, type UserOpJson } from './userop'
-
-const unhex = (s: string): Uint8Array => Uint8Array.from(Buffer.from(s.replace(/^0x/, ''), 'hex'))
 
 function baseOp(): UserOpJson {
   return buildUserOp({
@@ -33,7 +32,7 @@ function readWordBE(sig: Uint8Array, wordIdx: number): bigint {
 
 describe('forEstimate dummy signature', () => {
   it('emits a structurally valid abi.encode(uint256 ownerIndex, bytes) envelope', () => {
-    const sig = unhex(forEstimate(baseOp(), 1n).signature)
+    const sig = hexToBytes(forEstimate(baseOp(), 1n).signature)
     expect(sig.length).toBe(SIG_WRAPPER_LEN)
     // word 1 = offset to the bytes arg (0x40); word 2 = inner length.
     expect(readWordBE(sig, 1)).toBe(0x40n)
@@ -46,14 +45,14 @@ describe('forEstimate dummy signature', () => {
 
   it('writes the supplied ownerIndex into the first word', () => {
     for (const idx of [0n, 1n, 2n, 3n, 255n, 4096n]) {
-      const sig = unhex(forEstimate(baseOp(), idx).signature)
+      const sig = hexToBytes(forEstimate(baseOp(), idx).signature)
       expect(readWordBE(sig, 0)).toBe(idx)
     }
   })
 
   it('does NOT hardcode ownerIndex=1 for a rotated-owner wallet', () => {
     // A wallet whose active owner isn't 1.
-    const sig = unhex(forEstimate(baseOp(), 3n).signature)
+    const sig = hexToBytes(forEstimate(baseOp(), 3n).signature)
     expect(readWordBE(sig, 0)).toBe(3n)
     expect(readWordBE(sig, 0)).not.toBe(1n)
   })

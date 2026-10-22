@@ -8,15 +8,13 @@
 
 import { encodeSafeCanonical, safeDataHash } from '../safe/canonical'
 import { computeSafeTxHash } from '../safe/eip712'
+import { bytesToHex0x, hexToBytes } from '../transport/bytes'
 import { encodeCanonical } from './canonical'
 import { buildOrderUid, GPV2_SETTLEMENT_ADDRESS } from './eip712'
 import { type GPv2Order } from './types'
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000' as const
 const MULTISEND_CALL_ONLY_130 = '0x40A2aCCbd92BCA938b02010E17A5b8929b49130D' as const
-
-const hex = (b: Uint8Array): string => Buffer.from(b).toString('hex')
-const unhex = (s: string): Uint8Array => Uint8Array.from(Buffer.from(s.replace(/^0x/, ''), 'hex'))
 
 // Reference vectors — byte-identical to the firmware test's constants
 // (ORDER_DIGEST_HEX, CANONICAL_HEX, DIRECT_PRESIGN_HEX, SAFE_* and MS_*).
@@ -67,7 +65,7 @@ const order: GPv2Order = {
   sellAmount: BigInt(V.order.sellAmount),
   buyAmount: BigInt(V.order.buyAmount),
   validTo: V.order.validTo,
-  appData: unhex(V.order.appData),
+  appData: hexToBytes(V.order.appData),
   feeAmount: BigInt(V.order.feeAmount),
   kind: 'sell',
   partiallyFillable: false,
@@ -80,30 +78,30 @@ const safeAddr = V.safeWrapped.owner as `0x${string}`
 
 describe('extension producers emit the exact firmware-consumed bytes', () => {
   it('encodeCanonical == firmware canonical', () => {
-    expect(hex(encodeCanonical(order))).toBe(V.canonical.replace(/^0x/, ''))
+    expect(bytesToHex0x(encodeCanonical(order))).toBe(V.canonical)
   })
 
   it("extension's own EIP-712 orderDigest == reference (ethers == firmware)", () => {
     const uid = buildOrderUid(order, walletOwner)
-    expect(hex(uid.bytes.slice(0, 32))).toBe(V.orderDigest.replace(/^0x/, ''))
+    expect(bytesToHex0x(uid.bytes.slice(0, 32))).toBe(V.orderDigest)
   })
 
   it('direct orderUid bytes == the setPreSignature calldata the firmware verified', () => {
     const uid = buildOrderUid(order, walletOwner)
-    const calldata = unhex(V.direct.setPreSignatureCalldata)
-    expect(hex(uid.bytes)).toBe(hex(calldata.slice(100, 156)))
+    const calldata = hexToBytes(V.direct.setPreSignatureCalldata)
+    expect(bytesToHex0x(uid.bytes)).toBe(bytesToHex0x(calldata.slice(100, 156)))
   })
 
   it('Safe-wrapped orderUid embeds the Safe as owner (== presign calldata)', () => {
     const uid = buildOrderUid(order, safeAddr)
-    const calldata = unhex(V.safeWrapped.presignCalldata)
-    expect(hex(uid.bytes)).toBe(hex(calldata.slice(100, 156)))
+    const calldata = hexToBytes(V.safeWrapped.presignCalldata)
+    expect(bytesToHex0x(uid.bytes)).toBe(bytesToHex0x(calldata.slice(100, 156)))
   })
 
   it('safeDataHash(presign) + encodeSafeCanonical == firmware Safe canonical (wrapped)', () => {
-    const presign = unhex(V.safeWrapped.presignCalldata)
+    const presign = hexToBytes(V.safeWrapped.presignCalldata)
     const dataHash = safeDataHash(presign)
-    expect(hex(dataHash)).toBe(V.safeWrapped.dataHash.replace(/^0x/, ''))
+    expect(bytesToHex0x(dataHash)).toBe(V.safeWrapped.dataHash)
     const canon = encodeSafeCanonical({
       chainId: 1,
       safeAddress: safeAddr,
@@ -118,11 +116,11 @@ describe('extension producers emit the exact firmware-consumed bytes', () => {
       refundReceiver: ZERO_ADDR,
       nonce: 0n
     })
-    expect(hex(canon)).toBe(V.safeWrapped.canonicalSafe.replace(/^0x/, ''))
+    expect(bytesToHex0x(canon)).toBe(V.safeWrapped.canonicalSafe)
   })
 
   it("extension's computeSafeTxHash == reference safeTxHash (wrapped)", () => {
-    const presign = unhex(V.safeWrapped.presignCalldata)
+    const presign = hexToBytes(V.safeWrapped.presignCalldata)
     const h = computeSafeTxHash({
       chainId: 1,
       safeAddress: safeAddr,
@@ -137,13 +135,13 @@ describe('extension producers emit the exact firmware-consumed bytes', () => {
       refundReceiver: ZERO_ADDR,
       nonce: 0n
     })
-    expect(hex(h)).toBe(V.safeWrapped.safeTxHash.replace(/^0x/, ''))
+    expect(bytesToHex0x(h)).toBe(V.safeWrapped.safeTxHash)
   })
 
   it('safeDataHash(multiSend) + encodeSafeCanonical == firmware Safe canonical (multiSend)', () => {
-    const ms = unhex(V.safeMultiSend.multiSendCalldata)
+    const ms = hexToBytes(V.safeMultiSend.multiSendCalldata)
     const dataHash = safeDataHash(ms)
-    expect(hex(dataHash)).toBe(V.safeMultiSend.dataHash.replace(/^0x/, ''))
+    expect(bytesToHex0x(dataHash)).toBe(V.safeMultiSend.dataHash)
     const canon = encodeSafeCanonical({
       chainId: 1,
       safeAddress: safeAddr,
@@ -158,11 +156,11 @@ describe('extension producers emit the exact firmware-consumed bytes', () => {
       refundReceiver: ZERO_ADDR,
       nonce: 1n
     })
-    expect(hex(canon)).toBe(V.safeMultiSend.canonicalSafe.replace(/^0x/, ''))
+    expect(bytesToHex0x(canon)).toBe(V.safeMultiSend.canonicalSafe)
   })
 
   it("extension's computeSafeTxHash == reference safeTxHash (multiSend)", () => {
-    const ms = unhex(V.safeMultiSend.multiSendCalldata)
+    const ms = hexToBytes(V.safeMultiSend.multiSendCalldata)
     const h = computeSafeTxHash({
       chainId: 1,
       safeAddress: safeAddr,
@@ -177,6 +175,6 @@ describe('extension producers emit the exact firmware-consumed bytes', () => {
       refundReceiver: ZERO_ADDR,
       nonce: 1n
     })
-    expect(hex(h)).toBe(V.safeMultiSend.safeTxHash.replace(/^0x/, ''))
+    expect(bytesToHex0x(h)).toBe(V.safeMultiSend.safeTxHash)
   })
 })

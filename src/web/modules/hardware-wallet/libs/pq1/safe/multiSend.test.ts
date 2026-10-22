@@ -349,14 +349,14 @@ describe('assertSafeOperationSignable (host mirror of the Safe operation gates)'
 
   it('refuses DelegateCall to a non-allowlisted target', () => {
     expect(() => assertSafeOperationSignable(1, TOKEN, cowFlowCalldata())).toThrow(
-      /only supported by PQ1 firmware for a canonical MultiSendCallOnly/
+      'only supported by PQ1 firmware for a canonical MultiSendCallOnly'
     )
   })
 
   it('refuses a hard-rule-violating batch with the device banner quoted', () => {
     const recOp1 = encodeMs(packRecord(1, TOKEN, 0n, approveCalldata(GPV2_VAULT_RELAYER, 1)))
     expect(() => assertSafeOperationSignable(1, MS_CALL_ONLY_130, recOp1)).toThrow(
-      /Safe sign \/ msend rec op!=0/
+      'Safe sign / msend rec op!=0'
     )
   })
 })

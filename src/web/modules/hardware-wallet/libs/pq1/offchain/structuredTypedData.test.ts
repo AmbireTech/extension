@@ -250,7 +250,7 @@ describe('structured SIGN_OFFCHAIN payloads', () => {
         kind: 'cow_order',
         cowOrderBundle: packCowOrderBundle(s.order)
       })
-    ).toThrow(/deployed wallet/)
+    ).toThrow('deployed wallet')
   })
 
   it('refuse a CoW payload whose legs do not frame exactly', () => {
@@ -261,6 +261,6 @@ describe('structured SIGN_OFFCHAIN payloads', () => {
     padded.set(trailer)
     expect(() =>
       buildSignOffchainPayload({ ...header, kind: 'cow_order', cowOrderBundle: padded })
-    ).toThrow(/legs do not end/)
+    ).toThrow('legs do not end')
   })
 })

@@ -7,7 +7,7 @@ import useTheme from '@common/hooks/useTheme'
  *  in the same style as TrezorBadgeIcon / LedgerBadgeIcon. */
 const PQ1BadgeIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
-  const maskId = useId().replace(/:/g, '')
+  const maskId = useId().replaceAll(':', '')
   const iconColor = color || theme.iconPrimary
 
   return (

@@ -185,14 +185,14 @@ function trailerSectionLens(payload: Uint8Array, dataLen: number): number[] {
 describe('buildSignPayload downgrade gates', () => {
   it('refuses a direct CoW setPreSignature without a cowOrderBundle', () => {
     expect(() => buildSignPayload(baseParams(GPV2_SETTLEMENT, presignCalldata()))).toThrow(
-      /CoW setPreSignature requires a CoW order bundle/
+      'CoW setPreSignature requires a CoW order bundle'
     )
   })
 
   it('fires the direct gate on malformed presign calldata too (selector-only, like the firmware)', () => {
     const malformed = presignCalldata().subarray(0, 60)
     expect(() => buildSignPayload(baseParams(GPV2_SETTLEMENT, malformed))).toThrow(
-      /CoW setPreSignature requires a CoW order bundle/
+      'CoW setPreSignature requires a CoW order bundle'
     )
   })
 
@@ -214,7 +214,7 @@ describe('buildSignPayload downgrade gates', () => {
         ...baseParams(SAFE_ADDR, approveHashCalldata()),
         safeV1Bundle: bundle
       })
-    ).toThrow(/Safe-wrapped CoW setPreSignature requires a CoW order bundle/)
+    ).toThrow('Safe-wrapped CoW setPreSignature requires a CoW order bundle')
   })
 
   it('accepts a Safe(approveHash)-wrapped CoW presign with both bundles, sections framed in order', () => {
@@ -250,7 +250,7 @@ describe('buildSignPayload downgrade gates', () => {
   it('refuses a Safe(execTransaction)-wrapped CoW presign without a cowOrderBundle', () => {
     const data = execTransactionCalldata(GPV2_SETTLEMENT, presignCalldata())
     expect(() => buildSignPayload(baseParams(SAFE_ADDR, data))).toThrow(
-      /Safe-wrapped CoW setPreSignature requires a CoW order bundle/
+      'Safe-wrapped CoW setPreSignature requires a CoW order bundle'
     )
     expect(() =>
       buildSignPayload({
@@ -274,7 +274,7 @@ describe('buildSignPayload multiSend gates', () => {
         ...baseParams(SAFE_ADDR, approveHashCalldata()),
         safeV1Bundle: bundle
       })
-    ).toThrow(/Safe-wrapped CoW setPreSignature requires a CoW order bundle/)
+    ).toThrow('Safe-wrapped CoW setPreSignature requires a CoW order bundle')
   })
 
   it('accepts an approveHash-flavour multiSend CoW batch with both bundles', () => {
@@ -325,7 +325,7 @@ describe('buildSignPayload multiSend gates', () => {
         safeV1Bundle: safeV1Bundle(MS_CALL_ONLY_130, twoPresigns, 1),
         cowOrderBundle: new Uint8Array(COW_CANONICAL_LEN)
       })
-    ).toThrow(/Safe sign \/ msend 2\+ presign/)
+    ).toThrow('Safe sign / msend 2+ presign')
   })
 
   it("refuses a malformed claimed multiSend regardless of trailers ('msend malformed')", () => {
@@ -336,13 +336,13 @@ describe('buildSignPayload multiSend gates', () => {
         safeV1Bundle: safeV1Bundle(MS_CALL_ONLY_130, malformed, 1),
         cowOrderBundle: new Uint8Array(COW_CANONICAL_LEN)
       })
-    ).toThrow(/Safe sign \/ msend malformed/)
+    ).toThrow('Safe sign / msend malformed')
   })
 
   it('gates the execTransaction flavour: multiSend CoW batch requires a CoW order bundle', () => {
     const data = execTransactionCalldata(MS_CALL_ONLY_130, cowMultiSendCalldata(), 1)
     expect(() => buildSignPayload(baseParams(SAFE_ADDR, data))).toThrow(
-      /Safe-wrapped CoW setPreSignature requires a CoW order bundle/
+      'Safe-wrapped CoW setPreSignature requires a CoW order bundle'
     )
     expect(() =>
       buildSignPayload({
@@ -380,7 +380,7 @@ describe('buildSignBatchPayload downgrade gates', () => {
           }
         ]
       })
-    ).toThrow(/inner call 0: Safe-wrapped CoW setPreSignature requires a CoW order bundle/)
+    ).toThrow('inner call 0: Safe-wrapped CoW setPreSignature requires a CoW order bundle')
 
     expect(() =>
       buildSignBatchPayload({
@@ -394,7 +394,7 @@ describe('buildSignBatchPayload downgrade gates', () => {
           }
         ]
       })
-    ).toThrow(/inner call 1: Safe-wrapped CoW setPreSignature requires a CoW order bundle/)
+    ).toThrow('inner call 1: Safe-wrapped CoW setPreSignature requires a CoW order bundle')
   })
 
   it('refuses a multiSend-batched CoW presign call without a cowOrderBundle (both flavours)', () => {
@@ -410,7 +410,7 @@ describe('buildSignBatchPayload downgrade gates', () => {
           }
         ]
       })
-    ).toThrow(/inner call 0: Safe-wrapped CoW setPreSignature requires a CoW order bundle/)
+    ).toThrow('inner call 0: Safe-wrapped CoW setPreSignature requires a CoW order bundle')
 
     expect(() =>
       buildSignBatchPayload({
@@ -423,7 +423,7 @@ describe('buildSignBatchPayload downgrade gates', () => {
           }
         ]
       })
-    ).toThrow(/inner call 0: Safe-wrapped CoW setPreSignature requires a CoW order bundle/)
+    ).toThrow('inner call 0: Safe-wrapped CoW setPreSignature requires a CoW order bundle')
   })
 
   it('refuses a hard-rule-violating multiSend batch on the batch wire, quoting the banner', () => {
@@ -444,7 +444,9 @@ describe('buildSignBatchPayload downgrade gates', () => {
           }
         ]
       })
-    ).toThrow(/inner call 0: Safe multiSend batch refused .* msend 2\+ presign/)
+    ).toThrow(
+      'inner call 0: Safe multiSend batch refused by the PQ1 ("Safe sign / msend 2+ presign")'
+    )
   })
 
   it('accepts a multiSend CoW batch with the CoW order and safe_v1 bundles on the same call', () => {
