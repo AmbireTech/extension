@@ -119,14 +119,18 @@ const moveMessageStackToThread = <T extends SentryEvent>(event: T): T => {
   return messageEvent
 }
 
-// The device name is often the owner's name, and the locale and timezone narrow down where they are
+// The device name is often the owner's name, and the locale and timezone narrow down where they are.
+// The native SDKs also add a per-install id that survives a crash report id reset, so it would link
+// the old reports to the new ones.
 const stripDevicePersonalContext = (event: SentryEvent) => {
-  const { device, culture } = event.contexts || {}
+  const { device, culture, app } = event.contexts || {}
   if (device) {
+    delete device.id
     delete device.name
     delete device.locale
     delete device.timezone
   }
+  if (app) delete app.device_app_hash
   if (culture) {
     delete culture.locale
     delete culture.timezone

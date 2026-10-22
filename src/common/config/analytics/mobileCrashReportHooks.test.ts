@@ -113,16 +113,18 @@ describe('processMobileCrashReportEvent', () => {
     expect(result?.tags).toEqual({ content: CRASH_REPORT_CONTENT.UNHANDLED })
   })
 
-  it('strips the device name, locale and timezone but keeps the rest of the device', () => {
+  it('strips the install ids, device name, locale and timezone but keeps the rest of the device', () => {
     const event = {
       ...buildEvent(),
       contexts: {
         device: {
+          id: 'a3f1c2d4-android-installation-id',
           name: "Jane's iPhone",
           locale: 'bg_BG',
           timezone: 'Europe/Sofia',
           model: 'iPhone15'
         },
+        app: { device_app_hash: '9b2e6f0c1d', app_version: '5.40.0' },
         culture: { locale: 'bg-BG', timezone: 'Europe/Sofia', calendar: 'GregorianCalendar' }
       }
     }
@@ -131,6 +133,7 @@ describe('processMobileCrashReportEvent', () => {
 
     expect(result?.contexts).toEqual({
       device: { model: 'iPhone15' },
+      app: { app_version: '5.40.0' },
       culture: { calendar: 'GregorianCalendar' }
     })
   })
