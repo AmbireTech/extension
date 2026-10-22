@@ -367,11 +367,20 @@ const useSign = ({
   // Lets the signing authentication prompt resume the very call it interrupted, without
   // handleSign having to depend on itself
   const handleSignRef = useRef<
-    ((_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => void) | null
+    | ((
+        _chosenSigningKeyTypes?: Key['type'][],
+        _warningAccepted?: boolean,
+        _chosenSigningKeyAddr?: Key['addr']
+      ) => void)
+    | null
   >(null)
 
   const handleSign = useCallback(
-    (_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => {
+    (
+      _chosenSigningKeyTypes?: Key['type'][],
+      _warningAccepted?: boolean,
+      _chosenSigningKeyAddr?: Key['addr']
+    ) => {
       // Prioritize warning(s) modals over all others
       // Warning modals are not displayed in the one-click swap flow
       if (warningToPromptBeforeSign && !_warningAccepted) {
@@ -384,19 +393,22 @@ const useSign = ({
       // only when the keystore holds the signing key - a hardware wallet confirms on the device
       if (
         getIsSigningWithInternalKey(_chosenSigningKeyTypes) &&
-        requestSigningAuth(() => handleSignRef.current?.(_chosenSigningKeyTypes, _warningAccepted))
+        requestSigningAuth(() =>
+          handleSignRef.current?.(_chosenSigningKeyTypes, _warningAccepted, _chosenSigningKeyAddr)
+        )
       )
         return
 
+      // The signing key update is async, so the state may still hold the old key
+      // (the default signer, e.g. Ledger). Prefer the just-chosen key.
+      const effectiveSigningKeyAddr =
+        _chosenSigningKeyAddr ?? signAccountOpState?.accountOp.signingKeyAddr
       const isFeePayerSameAsSigner =
-        signAccountOpState?.accountOp.signingKeyAddr ===
-        signAccountOpState?.accountOp.gasFeePayment?.paidBy
+        effectiveSigningKeyAddr === signAccountOpState?.accountOp.gasFeePayment?.paidBy
 
-      // The update above is async, so the state may still hold the old key
-      // (the default signer, e.g. Ledger). Prefer the just-chosen type.
       const chosenKeyType = _chosenSigningKeyTypes?.[0]
       const effectiveSigningKeyType = chosenKeyType ?? signAccountOpState?.accountOp.signingKeyType
-      // The fee payer follows the signing key when the signer pays the fee
+      // The fee payer follows the signing key only when the just-chosen key pays the fee
       // (see update() in SignAccountOpController)
       const effectiveFeePayerKeyType =
         chosenKeyType && isFeePayerSameAsSigner ? chosenKeyType : feePayerKeyType
@@ -483,10 +495,10 @@ const useSign = ({
     (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => {
       handleUpdate({ signingKeyAddr, signingKeyType: _chosenSigningKeyType })
 
-      // Explicitly pass the currently selected signing key type, because
-      // the signing key type in the state might not be updated yet,
+      // Explicitly pass the currently selected signing key, because
+      // the signing key in the state might not be updated yet,
       // and Sign Account Op controller assigns a default signing upfront
-      handleSign([_chosenSigningKeyType])
+      handleSign([_chosenSigningKeyType], undefined, signingKeyAddr)
     },
     [handleSign, handleUpdate]
   )

@@ -8,8 +8,9 @@ import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfac
 
 import useSign from './useSign'
 
-const mockLedgerKey = { addr: '0xledger', type: 'ledger' }
-const mockQrKey = { addr: '0xqr', type: 'qr' }
+// The same EOA imported as both a Ledger and a QR key, so both keys share its address
+const mockLedgerKey = { addr: '0xeoa', type: 'ledger' }
+const mockQrKey = { addr: '0xeoa', type: 'qr' }
 
 const mockIsLedgerConnected = { value: false }
 
@@ -70,7 +71,7 @@ jest.mock('@common/hooks/useController', () => ({
 }))
 
 // Resolves to useLedger.web.ts via webpack's .web.ts extension rule, which jest
-// cannot resolve — hence the virtual mock. Same for the @web alias below.
+// cannot resolve — hence the virtual mock
 jest.mock(
   '@common/modules/hardware-wallets/hooks/useLedger',
   () => ({
@@ -134,17 +135,13 @@ jest.mock('react-native-modalize', () => ({
   useModalize: () => ({ ref: { current: null }, open: jest.fn(), close: jest.fn() })
 }))
 
-jest.mock(
-  '@web/modules/sign-account-op/utils/helpers',
-  () => ({
-    getIsSignLoading: (status?: ISignAccountOpController['status']) =>
-      status?.type === SigningStatus.InProgress ||
-      status?.type === SigningStatus.UpdatesPaused ||
-      status?.type === SigningStatus.WaitingForPaymaster ||
-      status?.type === SigningStatus.Done
-  }),
-  { virtual: true }
-)
+jest.mock('@web/modules/sign-account-op/utils/helpers', () => ({
+  getIsSignLoading: (status?: ISignAccountOpController['status']) =>
+    status?.type === SigningStatus.InProgress ||
+    status?.type === SigningStatus.UpdatesPaused ||
+    status?.type === SigningStatus.WaitingForPaymaster ||
+    status?.type === SigningStatus.Done
+}))
 
 const mockHookResult = { current: null as ReturnType<typeof useSign> | null }
 let root: ReturnType<typeof createRoot>
@@ -253,6 +250,32 @@ describe('useSign - signing flow selection after choosing a key', () => {
     expect(getHookResult().renderedButNotNecessarilyVisibleModal).not.toBe('qr-sign')
     expect(getHookResult().shouldDisplayQrSigningModal).toBe(false)
     expect(broadcastDispatches()).toHaveLength(1)
+  })
+
+  it('still asks to connect the Ledger when the old Ledger signer keeps paying the fee', () => {
+    // A smart account whose keys have different addresses - the fee stays with
+    // the old signer, because only a payer that is the just-chosen key follows it
+    const smartAccountLedgerKey = { addr: '0xsigner1', type: 'ledger' }
+    const smartAccountQrKey = { addr: '0xsigner2', type: 'qr' }
+    mockSignAccountOpState.current = buildSignAccountOpState({
+      accountKeyStoreKeys: [smartAccountLedgerKey, smartAccountQrKey],
+      feePayerKeyStoreKeys: [smartAccountLedgerKey],
+      accountOp: {
+        id: 'op-1',
+        signingKeyAddr: smartAccountLedgerKey.addr,
+        signingKeyType: 'ledger',
+        gasFeePayment: { paidBy: smartAccountLedgerKey.addr, paidByKeyType: 'ledger' }
+      }
+    })
+    mount()
+
+    act(() => {
+      getHookResult().handleChangeSigningKey(smartAccountQrKey.addr, 'qr')
+    })
+
+    expect(getHookResult().shouldDisplayLedgerConnectModal).toBe(true)
+    expect(getHookResult().renderedButNotNecessarilyVisibleModal).toBe('ledger-connect')
+    expect(broadcastDispatches()).toHaveLength(0)
   })
 
   it('falls back to the controller state when no key was just chosen', () => {
