@@ -11,7 +11,7 @@ type Params = {
 
 /**
  * Keeps the account the user picks and the accounts an app may see as unsaved edits,
- * so they can be applied together on Done or thrown away on Cancel.
+ * so they can be applied together on Save (Done when connecting) or thrown away on Cancel.
  * The picked account is always visible to the app.
  */
 const useAccountSelectAccess = ({ accounts, selectedAccountAddr, accountPreferences }: Params) => {

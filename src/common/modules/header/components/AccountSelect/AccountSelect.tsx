@@ -387,7 +387,8 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
                 testID="account-select-cancel"
               />
               <Button
-                text={t('Done')}
+                // Managing saves right away, while connecting only applies on Connect
+                text={dappToManage ? t('Save') : t('Done')}
                 onPress={() => {
                   applyChanges()
                   closeSheet()
@@ -408,6 +409,7 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
       hiddenAccounts.length,
       showAllAccounts,
       isDirty,
+      dappToManage,
       applyChanges,
       t
     ]
