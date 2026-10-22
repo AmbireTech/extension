@@ -190,6 +190,23 @@ const SignAccountOpScreen = () => {
     return isSafeRejectionCall(calls, accountAddr)
   }, [shouldRejectOnchain, signAccountOpState])
 
+  // Removes the request without an onchain Safe rejection, even if Safe signatures were collected
+  const handleCloseAccountOp = useCallback(() => {
+    if (!accountOpRequest) return
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [
+          'User rejected the transaction request.',
+          [accountOpRequest.id],
+          { shouldOpenNextRequest: visibleUserRequests.length > 1 }
+        ]
+      }
+    })
+  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
+
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
 
@@ -211,23 +228,13 @@ const SignAccountOpScreen = () => {
       return
     }
 
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'rejectUserRequests',
-        args: [
-          'User rejected the transaction request.',
-          [accountOpRequest.id],
-          { shouldOpenNextRequest: visibleUserRequests.length > 1 }
-        ]
-      }
-    })
+    handleCloseAccountOp()
   }, [
     requestsDispatch,
     accountOpRequest,
     shouldRejectOnchain,
     isCancelDisabled,
-    visibleUserRequests.length
+    handleCloseAccountOp
   ])
 
   useEffect(() => {
@@ -352,7 +359,7 @@ const SignAccountOpScreen = () => {
         isRejectDisabled={isCancelDisabled}
         holdToProceedButtonType={holdToProceedButtonType}
         signButtonType={extremeGasFeeSignButtonType}
-        onClose={isSpeedUpNotNeeded ? handleRejectAccountOp : undefined}
+        onClose={isSpeedUpNotNeeded ? handleCloseAccountOp : undefined}
       />
     </>
   )
