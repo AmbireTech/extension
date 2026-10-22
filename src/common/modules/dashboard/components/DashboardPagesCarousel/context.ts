@@ -1,4 +1,4 @@
-import { createContext } from 'react'
+import { createContext, useContext } from 'react'
 import { Animated } from 'react-native'
 import { NativeGesture } from 'react-native-gesture-handler'
 
@@ -76,5 +76,15 @@ export interface DashboardCarouselContextValue {
 
 /** Provided by the dashboard carousel, which every dashboard page is a slide of. */
 const DashboardCarouselContext = createContext<DashboardCarouselContextValue | null>(null)
+
+/** The carousel a dashboard page is a slide of. Throws outside of one, where no page can be. */
+export const useDashboardCarousel = (): DashboardCarouselContextValue => {
+  const carousel = useContext(DashboardCarouselContext)
+
+  if (!carousel)
+    throw new Error('A dashboard page has to be rendered inside DashboardPagesCarousel')
+
+  return carousel
+}
 
 export default DashboardCarouselContext

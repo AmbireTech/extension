@@ -6,6 +6,8 @@ export interface WebCarouselStylesOptions {
   scrollOffset: SharedValue<number>
   bannersHeight: number
   overviewHeight: number
+  /** Whether there is an overview to collapse at all, so the pages wait for it to be measured. */
+  hasOverview: boolean
   /** How far the floating bar moves to be fully hidden. */
   floatingBarHideDistance: number
   /** How long the overview takes to collapse or expand. */

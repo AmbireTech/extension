@@ -28,8 +28,6 @@ interface Props {
   }
   networks: Network[]
   dashboardNetworkFilterName: string | null
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 const SEARCH_DEBOUNCE_MS = 200
@@ -49,14 +47,7 @@ const selectDashboardNetworkFilter = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.dashboardNetworkFilter
 
-const Collections: FC<Props> = ({
-  openTab,
-  initTab,
-  networks,
-  dashboardNetworkFilterName,
-  refreshing,
-  onRefresh
-}) => {
+const Collections: FC<Props> = ({ openTab, initTab, networks, dashboardNetworkFilterName }) => {
   const { state: collections } = useController(
     'SelectedAccountController',
     selectPortfolioCollections
@@ -227,8 +218,6 @@ const Collections: FC<Props> = ({
         initialNumToRender={isPopup ? 4 : 10}
         windowSize={15}
         scrollEventThrottle={16}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
       />
     </>
   )

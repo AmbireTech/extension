@@ -117,32 +117,24 @@ const DashboardPages = ({
           openTab={pagesOpenTab}
           initTab={initTab}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
         />
         <DeFiPositions
           openTab={pagesOpenTab}
           initTab={initTab}
           sessionId={sessionId}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
         />
         <Collections
           openTab={pagesOpenTab}
           initTab={initTab}
           networks={networks}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
         />
         <Activity
           openTab={pagesOpenTab}
           sessionId={sessionId}
           initTab={initTab}
           network={network}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
         />
       </DashboardPagesCarousel>
     </>

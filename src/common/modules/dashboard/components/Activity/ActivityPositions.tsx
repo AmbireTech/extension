@@ -36,8 +36,6 @@ interface Props {
   initTab?: { [key: string]: boolean }
   sessionId: string
   network: Network | null
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 const { isPopup, isRequestWindow } = getUiType()
@@ -70,14 +68,7 @@ const selectDashboardNetworkFilter = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.dashboardNetworkFilter
 
-const ActivityPositions: FC<Props> = ({
-  openTab,
-  sessionId,
-  initTab,
-  network,
-  refreshing,
-  onRefresh
-}) => {
+const ActivityPositions: FC<Props> = ({ openTab, sessionId, initTab, network }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
@@ -343,8 +334,6 @@ const ActivityPositions: FC<Props> = ({
       initialNumToRender={isPopup ? 10 : 20}
       windowSize={9} // Larger values can cause performance issues.
       scrollEventThrottle={16}
-      refreshing={refreshing}
-      onRefresh={onRefresh}
     />
   )
 }

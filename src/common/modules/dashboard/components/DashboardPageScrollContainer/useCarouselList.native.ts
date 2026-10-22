@@ -53,7 +53,7 @@ const useCarouselList = ({
   // than through its props, as an Animated list would detach and attach the mapping again on
   // every render its data changes in, and miss the scroll in between
   useEffect(() => {
-    if (!scrollY || !isOpen) return undefined
+    if (!isOpen) return undefined
 
     const scrollNode = listRef.current?.getNativeScrollRef()
 
@@ -70,24 +70,24 @@ const useCarouselList = ({
   const scrollHandler = useAnimatedScrollHandler(
     {
       onScroll: (event) => {
-        if (!pageScroll || !isOpen) return
+        if (!isOpen) return
 
         pageScroll.onScroll(event.contentOffset.y)
       },
       onBeginDrag: () => {
-        if (!pageScroll || !isOpen) return
+        if (!isOpen) return
 
         pageScroll.onBeginDrag()
       },
       onEndDrag: (event) => {
-        if (!pageScroll || !isOpen) return
+        if (!isOpen) return
 
         const settleOffset = pageScroll.onEndDrag(event.velocity?.y || 0)
 
         if (settleOffset !== null) scrollTo(animatedRef, 0, settleOffset, true)
       },
       onMomentumEnd: () => {
-        if (!pageScroll || !isOpen) return
+        if (!isOpen) return
 
         const settleOffset = pageScroll.onMomentumEnd()
 
@@ -98,8 +98,6 @@ const useCarouselList = ({
   ) as unknown as RegistrableScrollHandler
 
   useEffect(() => {
-    if (!pageScroll) return undefined
-
     return animatedRef.observe((tag) => {
       if (!tag) return undefined
 
@@ -107,9 +105,7 @@ const useCarouselList = ({
 
       return () => scrollHandler.workletEventHandler.unregisterFromEvents(tag)
     })
-  }, [animatedRef, pageScroll, scrollHandler])
-
-  if (!pageScroll) return { ListComponent: FlatList, ref: listRef, onScroll }
+  }, [animatedRef, scrollHandler])
 
   return { ListComponent: FlatList, ref, onScroll, onMomentumScrollEnd: REPORT_MOMENTUM }
 }

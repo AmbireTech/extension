@@ -43,8 +43,6 @@ interface Props {
     [key: string]: boolean
   }
   dashboardNetworkFilterName: string | null
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 // if any of the post amount (during simulation) or the current state
@@ -116,7 +114,7 @@ const isCollapsibleToken = (
 
 const { isPopup } = getUiType()
 
-const Tokens = ({ openTab, initTab, dashboardNetworkFilterName, refreshing, onRefresh }: Props) => {
+const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const {
@@ -446,8 +444,6 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName, refreshing, onRe
       initialNumToRender={isPopup ? 10 : 20}
       windowSize={isMobile ? 3 : 9} // Larger values can cause performance issues.
       scrollEventThrottle={16}
-      refreshing={refreshing}
-      onRefresh={onRefresh}
     />
   )
 }

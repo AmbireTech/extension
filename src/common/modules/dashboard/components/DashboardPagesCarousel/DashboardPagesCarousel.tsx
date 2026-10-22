@@ -49,8 +49,8 @@ import DashboardCarouselContext, {
 import getStyles, { WEB_MOVING_LAYER } from './styles'
 import useWebCarouselStyles from './useWebCarouselStyles'
 
-// The order must match the order the pages are rendered in, because the page
-// index is what maps a swipe to a tab.
+// The regular dashboard's pages. The order must match the order the pages are rendered in,
+// because the page index is what maps a swipe to a tab.
 const TABS: TabType[] = ['tokens', 'defi', 'collectibles', 'activity']
 
 // Every page is rendered, but one at a time and only once the open one is done
@@ -107,10 +107,12 @@ const FLOATING_BAR_HIDE_DISTANCE = 60 + SPACING
  * the user asked for, so it has to stay as small as it can be.
  */
 const WhileFocused = ({
+  tabs,
   openTabIndex,
   renderTabs,
   initAllTabs
 }: {
+  tabs: TabType[]
   openTabIndex: number
   renderTabs: (tabs: (TabType | undefined)[]) => void
   initAllTabs: () => void
@@ -126,10 +128,11 @@ const WhileFocused = ({
     let isCancelled = false
     let timeoutId: ReturnType<typeof setTimeout> | undefined
 
-    const byDistanceToOpenTab = TABS.map((tab, index) => ({
-      tab,
-      distance: Math.abs(index - openTabIndex)
-    }))
+    const byDistanceToOpenTab = tabs
+      .map((tab, index) => ({
+        tab,
+        distance: Math.abs(index - openTabIndex)
+      }))
       .sort((a, b) => a.distance - b.distance)
       .map(({ tab }) => tab)
 
@@ -150,7 +153,7 @@ const WhileFocused = ({
       interaction.cancel()
       if (timeoutId) clearTimeout(timeoutId)
     }
-  }, [isScreenFocused, openTabIndex, renderTabs])
+  }, [isScreenFocused, openTabIndex, renderTabs, tabs])
 
   // Deferred until the interactions are over, and a navigation away is one of them,
   // so this has to ask whether the dashboard is still the screen it was deferred on.
@@ -172,6 +175,13 @@ const WhileFocused = ({
 export type OverviewCollapse = Animated.AnimatedInterpolation<number> | DerivedValue<number>
 
 export interface DashboardPagesCarouselProps {
+  /**
+   * The pages' tabs, in the order the pages are rendered in. A stable reference. Defaults to
+   * the regular dashboard's.
+   */
+  tabs?: TabType[]
+  /** Laid over the pages above the tabs row. Defaults to the regular dashboard's banners. */
+  banners?: ReactNode
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   sessionId: string
@@ -186,7 +196,8 @@ export interface DashboardPagesCarouselProps {
   refreshing?: boolean
   /**
    * How far the open overview pushes the pager down. The pager slides over the collapsing
-   * part of the overview while the open page is scrolled down.
+   * part of the overview while the open page is scrolled down. Left out when nothing
+   * collapses, as above a Privacy Pools account's pages.
    */
   overviewHeight?: number
   /**
@@ -198,17 +209,20 @@ export interface DashboardPagesCarouselProps {
 }
 
 const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
+  tabs = TABS,
+  banners,
   openTab,
   setOpenTab,
   sessionId,
   initAllTabs,
   onRefresh,
   refreshing,
-  overviewHeight = 0,
+  overviewHeight: overviewHeightProp,
   onOverviewCollapseChange,
   children
 }) => {
   const { styles } = useTheme(getStyles)
+  const overviewHeight = overviewHeightProp ?? 0
   const scrollRef = useRef<ScrollView>(null)
   // The pages are explicitly sized because a page taller than the pager would
   // make the pager scroll vertically instead of the list inside it.
@@ -371,6 +385,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     scrollOffset,
     bannersHeight,
     overviewHeight,
+    hasOverview: overviewHeightProp !== undefined,
     floatingBarHideDistance: FLOATING_BAR_HIDE_DISTANCE + safeBottom * 2,
     duration: OVERVIEW_EXPAND_TIMING.duration
   })
@@ -390,7 +405,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const [renderedTabs, setRenderedTabs] = useState<Partial<Record<TabType, boolean>>>(() => ({
     [openTab]: true
   }))
-  const openTabIndex = Math.max(TABS.indexOf(openTab), 0)
+  const openTabIndex = Math.max(tabs.indexOf(openTab), 0)
   const pageHandles = useRef<Partial<Record<TabType, DashboardPageHandle>>>({})
   const [floatingBars, setFloatingBars] = useState<
     Partial<Record<TabType, DashboardFloatingBarProps>>
@@ -552,7 +567,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     scrollOffset.set(carried)
     scrollY.setValue(carried)
     canPull.set(carried <= 0)
-    TABS.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
+    tabs.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
 
     if (webStyles) {
       webStyles.expandOverview()
@@ -575,6 +590,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     scrollDirection,
     scrollOffset,
     scrollY,
+    tabs,
     webStyles
   ])
 
@@ -648,8 +664,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const onScrollBeginDrag = useCallback(() => {
     isPagerDrivenRef.current = true
     takePagesToTop()
-    renderTabs([TABS[openTabIndex - 1], TABS[openTabIndex + 1]])
-  }, [openTabIndex, renderTabs, takePagesToTop])
+    renderTabs([tabs[openTabIndex - 1], tabs[openTabIndex + 1]])
+  }, [openTabIndex, renderTabs, tabs, takePagesToTop])
 
   // The open tab follows the pager past the halfway point, so the tabs row does not wait
   // for the swipe to settle. Only under a gesture: scrolling to a pressed tab reports
@@ -658,26 +674,26 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (!isPagerDrivenRef.current) return
 
-      const tab = TABS[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
+      const tab = tabs[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
 
       if (!tab || tab === openTab) return
 
       setOpenTab(tab)
     },
-    [openTab, pageSize.width, setOpenTab]
+    [openTab, pageSize.width, setOpenTab, tabs]
   )
 
   const onMomentumScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       isPagerDrivenRef.current = false
 
-      const tab = TABS[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
+      const tab = tabs[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
 
       if (!tab) return
 
       if (tab !== openTab) setOpenTab(tab)
     },
-    [openTab, pageSize.width, setOpenTab]
+    [openTab, pageSize.width, setOpenTab, tabs]
   )
 
   // Web reports scrolling to a pressed tab only as scroll events, so it is over once they
@@ -949,7 +965,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const pages = useMemo(
     () =>
       React.Children.map(children, (child, index) => {
-        const tab = TABS[index]
+        const tab = tabs[index]
 
         return (
           <CarouselPage
@@ -960,7 +976,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
           </CarouselPage>
         )
       }),
-    [children, openTab, pageSize, renderedTabs]
+    [children, openTab, pageSize, renderedTabs, tabs]
   )
 
   // Animated draws the moving views on mobile, Reanimated on web: see `useWebCarouselStyles`
@@ -991,7 +1007,12 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   return (
     // Lets a touch through to the overview where the pages have slid away from it
     <View style={styles.container} pointerEvents="box-none">
-      <WhileFocused openTabIndex={openTabIndex} renderTabs={renderTabs} initAllTabs={initAllTabs} />
+      <WhileFocused
+        tabs={tabs}
+        openTabIndex={openTabIndex}
+        renderTabs={renderTabs}
+        initAllTabs={initAllTabs}
+      />
       {/* Opaque, as it slides over the part of the overview that collapses */}
       {/* The moving views take one child each, wrapped if need be: Animated tells its views'
       props apart by their children when there are several, and rebuilds them on every
@@ -1037,11 +1058,14 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
             ]}
           >
             <>
-              <View onLayout={onBannersLayout}>
-                <DashboardBanners />
-              </View>
+              <View onLayout={onBannersLayout}>{banners ?? <DashboardBanners />}</View>
               <View onLayout={onTabsLayout}>
-                <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
+                <TabsAndSearch
+                  openTab={openTab}
+                  setOpenTab={setOpenTab}
+                  sessionId={sessionId}
+                  tabs={tabs}
+                />
               </View>
             </>
           </MovingView>

@@ -17,7 +17,7 @@ const useCarouselList = ({
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       onScroll?.(event)
 
-      if (!pageScroll || !isOpen) return
+      if (!isOpen) return
 
       const offsetY = event.nativeEvent.contentOffset.y
 
@@ -29,8 +29,6 @@ const useCarouselList = ({
     },
     [isOpen, onScroll, pageScroll]
   )
-
-  if (!pageScroll) return { ListComponent: FlatList, ref: listRef, onScroll }
 
   return { ListComponent: FlatList, ref: listRef, onScroll: handleScroll }
 }

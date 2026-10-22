@@ -38,8 +38,6 @@ interface Props {
   initTab?: { [key: string]: boolean }
   sessionId: string
   dashboardNetworkFilterName: string | null
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
@@ -62,14 +60,7 @@ const selectDashboardNetworkFilter = (
 const selectBanners = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.banners
 
-const DeFiPositions: FC<Props> = ({
-  openTab,
-  initTab,
-  sessionId,
-  dashboardNetworkFilterName,
-  refreshing,
-  onRefresh
-}) => {
+const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetworkFilterName }) => {
   const { t } = useTranslation()
   const { flags } = useController('FeatureFlagsController').state
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
@@ -335,8 +326,6 @@ const DeFiPositions: FC<Props> = ({
       initialNumToRender={isPopup ? 10 : 20}
       windowSize={9} // Larger values can cause performance issues.
       scrollEventThrottle={16}
-      refreshing={refreshing}
-      onRefresh={onRefresh}
     />
   )
 }
