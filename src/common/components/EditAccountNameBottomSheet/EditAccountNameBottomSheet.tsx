@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Account } from '@ambire-common/interfaces/account'
 import Avatar from '@common/components/Avatar'
@@ -11,7 +10,6 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import GlassView from '@common/components/GlassView'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
@@ -24,8 +22,6 @@ import text from '@common/styles/utils/text'
 export const ACCOUNT_NAME_MAX_LENGTH = 40
 
 const WIDE_MODAL_STYLE: ViewStyle = { maxWidth: 400, ...spacings.pvLg, ...spacings.phLg }
-// The footer below the content takes the bottom spacing instead
-const COMPACT_SCROLL_VIEW_PROPS = { contentContainerStyle: spacings.pb0 }
 
 type Props = {
   account: Account
@@ -54,7 +50,6 @@ const EditAccountNameBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
   const { isCompactLayout } = useCompactLayout()
   const { ref: sheetRef, close } = useModalize()
@@ -123,17 +118,10 @@ const EditAccountNameBottomSheet = ({
       onClosed={onClosed}
       autoOpen
       style={isCompactLayout ? undefined : WIDE_MODAL_STYLE}
-      scrollViewProps={isCompactLayout ? COMPACT_SCROLL_VIEW_PROPS : undefined}
       // On narrow screens the buttons stay pinned to the bottom of the sheet
       FooterComponent={
         isCompactLayout && (
-          <View
-            style={[
-              flexbox.directionRow,
-              spacings.ptLg,
-              { columnGap: SPACING_SM, paddingBottom: isWeb ? 0 : bottom || SPACING_SM }
-            ]}
-          >
+          <View style={[flexbox.directionRow, spacings.ptLg, { columnGap: SPACING_SM }]}>
             {/* Unpadded cells, as flex splits the space after each button's own padding and border */}
             {renderButtons().map((button) => (
               <View key={button.key} style={flexbox.flex1}>
