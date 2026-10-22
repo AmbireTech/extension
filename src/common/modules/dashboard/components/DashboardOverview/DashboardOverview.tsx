@@ -12,7 +12,7 @@ import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
 
@@ -36,6 +36,13 @@ interface Props {
   /** How far the pages have slid over the collapsing part. Moves the background. */
   overviewCollapse?: OverviewCollapse
 }
+
+/** The card's inset from the sides. `OverviewCollapseCover` lines its corners up with it. */
+export const OVERVIEW_CARD_INSET_STYLE = spacings.phSm
+/** The gap below the card, which `OverviewCollapseCover` fills as the pages slide over it. */
+export const OVERVIEW_CARD_GAP = SPACING_TY
+/** The card's corner radius, which `OverviewCollapseCover` rounds the cut-off card by. */
+export const OVERVIEW_CARD_RADIUS = BORDER_RADIUS_PRIMARY
 
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
 
@@ -100,11 +107,11 @@ const DashboardOverview: FC<Props> = ({
   }, [walletStateDispatch])
 
   return (
-    <View style={[spacings.phSm, spacings.mbTy]}>
+    <View style={[OVERVIEW_CARD_INSET_STYLE, { marginBottom: OVERVIEW_CARD_GAP }]}>
       <View
         ref={cardRef}
         style={[
-          common.borderRadiusPrimary,
+          { borderRadius: OVERVIEW_CARD_RADIUS },
           spacings.ptTy,
           isWeb && spacings.phSm,
           isMobile && spacings.phTy,

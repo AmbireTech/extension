@@ -2,14 +2,13 @@ import React from 'react'
 import { ColorValue, View, ViewStyle } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
-import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-// Match the card in DashboardOverview: its horizontal inset, the gap below it and its radius
-const CARD_INSET = SPACING_SM
-const CARD_GAP = SPACING_TY
-const RADIUS = BORDER_RADIUS_PRIMARY
+import {
+  OVERVIEW_CARD_GAP as CARD_GAP,
+  OVERVIEW_CARD_INSET_STYLE,
+  OVERVIEW_CARD_RADIUS as RADIUS
+} from './DashboardOverview'
 
 /** How far above the top of the pages the cover reaches. */
 export const OVERVIEW_COLLAPSE_COVER_HEIGHT = CARD_GAP + RADIUS
@@ -38,13 +37,7 @@ const OverviewCollapseCover = () => {
 
   return (
     <View pointerEvents="none" style={{ height: OVERVIEW_COLLAPSE_COVER_HEIGHT }}>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.justifySpaceBetween,
-          { paddingHorizontal: CARD_INSET }
-        ]}
-      >
+      <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, OVERVIEW_CARD_INSET_STYLE]}>
         <View style={CORNER_STYLE}>
           <View style={getRingStyle('left', theme.primaryBackground)} />
         </View>
