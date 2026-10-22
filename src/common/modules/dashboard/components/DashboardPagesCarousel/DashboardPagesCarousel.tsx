@@ -95,6 +95,14 @@ const WEB_PAGER_IDLE_DELAY = 150
 // How many pixels a line of a wheel scrolled by lines stands for, as Firefox reports it
 const WHEEL_LINE_HEIGHT = 16
 
+// How far a wheel gesture over the pages travels before it is locked to the axis it went most along
+const WHEEL_AXIS_LOCK_DISTANCE = 6
+
+/** How far a wheel event scrolls down, in pixels. */
+const getWheelDeltaY = ({ deltaY, deltaMode }: { deltaY: number; deltaMode: number }) =>
+  // Firefox reports a mouse wheel in lines rather than pixels
+  deltaMode === 1 ? deltaY * WHEEL_LINE_HEIGHT : deltaY
+
 // How far the floating bar moves from its place above the safe area to below the screen
 // edge, on top of twice the safe area inset
 const FLOATING_BAR_HIDE_DISTANCE = 60 + SPACING
@@ -852,10 +860,55 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
   // Web only: the header is laid over the open page, so the wheel turned over it is handed
   // to the page, which would otherwise not scroll under the banners and the tabs
-  const onHeaderWheel = ({ deltaY, deltaMode }: { deltaY: number; deltaMode: number }) => {
-    // Firefox reports a mouse wheel in lines rather than pixels
-    pageHandles.current[openTab]?.scrollBy?.(deltaMode === 1 ? deltaY * WHEEL_LINE_HEIGHT : deltaY)
+  const onHeaderWheel = (event: { deltaY: number; deltaMode: number }) => {
+    pageHandles.current[openTab]?.scrollBy?.(getWheelDeltaY(event))
   }
+
+  // Web only: Firefox hands a vertical trackpad swipe the open page can't take to the pager,
+  // which then moves sideways by the swipe's slight horizontal part and takes the pages to
+  // the top as a swipe between them does. A mostly vertical swipe only scrolls the open page.
+  useEffect(() => {
+    if (!isWeb) return undefined
+
+    const pagerNode = scrollRef.current?.getScrollableNode() as HTMLElement | null | undefined
+
+    if (!pagerNode) return undefined
+
+    let travelX = 0
+    let travelY = 0
+    let lockedAxis: 'x' | 'y' | null = null
+    let idleTimeoutId: ReturnType<typeof setTimeout> | undefined
+
+    const onWheel = (event: WheelEvent) => {
+      clearTimeout(idleTimeoutId)
+      idleTimeoutId = setTimeout(() => {
+        travelX = 0
+        travelY = 0
+        lockedAxis = null
+      }, WEB_PAGER_IDLE_DELAY)
+
+      if (!lockedAxis) {
+        travelX += Math.abs(event.deltaX)
+        travelY += Math.abs(event.deltaY)
+
+        if (Math.max(travelX, travelY) < WHEEL_AXIS_LOCK_DISTANCE) return
+
+        lockedAxis = travelX > travelY ? 'x' : 'y'
+      }
+
+      if (lockedAxis === 'x' || !event.deltaX) return
+
+      event.preventDefault()
+      pageHandles.current[openTab]?.scrollBy?.(getWheelDeltaY(event))
+    }
+
+    pagerNode.addEventListener('wheel', onWheel, { passive: false })
+
+    return () => {
+      clearTimeout(idleTimeoutId)
+      pagerNode.removeEventListener('wheel', onWheel)
+    }
+  }, [openTab])
 
   const endHeaderDrag = () => {
     isHeaderDraggingRef.current = false
