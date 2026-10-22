@@ -5,12 +5,14 @@ import { ExternalKey, Key } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import Text from '@common/components/Text'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useToast from '@common/hooks/useToast'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 
 const { isPopup } = getUiType()
@@ -26,6 +28,7 @@ interface Props {
   actionType?: 'swapAndBridge' | 'transfer'
   cancelReq?: () => void
   hardwareWalletSigningRequest?: HardwareWalletSigningRequest | null
+  isPaymasterSlow?: boolean
 }
 
 const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
@@ -35,8 +38,10 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   accountOp,
   actionType,
   cancelReq,
-  hardwareWalletSigningRequest
+  hardwareWalletSigningRequest,
+  isPaymasterSlow
 }: Props) => {
+  const { t } = useTranslation()
   const { dispatch: requestsCtrlDispatch } = useController('RequestsController')
   const { addToast } = useToast()
 
@@ -128,6 +133,14 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
         <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>
           <Text weight="medium" fontSize={16}>
             {shouldSignAuth.text}
+          </Text>
+        </View>
+      ) : null}
+
+      {isPaymasterSlow ? (
+        <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>
+          <Text fontSize={14} appearance="secondaryText" style={text.center}>
+            {t('Sending the transaction is taking longer than expected. Please wait...')}
           </Text>
         </View>
       ) : null}

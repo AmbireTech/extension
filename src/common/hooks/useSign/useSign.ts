@@ -633,13 +633,22 @@ const useSign = ({
     | 'hw-sign'
     | 'qr-sign'
     | null = useMemo(() => {
+    const activeSigningKeyType = signAccountOpState?.activeSigningKeyType
+    // QR and NFC keys have their own modals, so the HW signing modal isn't used for them
+    const isHardwareWalletSigningActive =
+      !!activeSigningKeyType && !['internal', 'qr', 'nfc'].includes(activeSigningKeyType)
+
     // Prioritize warning(s) modals over all others
     if (
       warningToPromptBeforeSign ||
       // We render the warning modal if the paymaster is loading, but
       // don't display it to the user until the paymaster has been loading for too long.
       // This is required because opening the modal isn't possible if it isn't rendered.
-      signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
+      // Not while a hardware wallet is mid-flow (e.g. between the 7702 authorization and
+      // the transaction): the HW signing modal stays rendered instead, so it doesn't hide
+      // and reappear, and it shows the slow paymaster message itself
+      (signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster &&
+        !isHardwareWalletSigningActive)
     )
       return 'warnings'
 
@@ -659,6 +668,7 @@ const useSign = ({
     isAtLeastOneOfTheKeysInvolvedExternal,
     shouldDisplayLedgerConnectModal,
     shouldDisplayQrSigningModal,
+    signAccountOpState?.activeSigningKeyType,
     signAccountOpState?.gasFeeChangedConfirmationRequired,
     signAccountOpState?.status?.type,
     signingStep,
