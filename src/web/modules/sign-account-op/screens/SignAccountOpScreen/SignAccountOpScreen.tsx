@@ -448,6 +448,15 @@ const SignAccountOpScreen = () => {
           {shouldUseSafeAccountTabs ? (
             <>
               {isNarrowWebLayout && <SafeNonce withNetwork />}
+              {/* A Safe has tabs instead of the title the speed up status is shown under */}
+              {isSpeedUpTransaction && (
+                <View style={spacings.mbSm}>
+                  <SpeedUpStatus
+                    sentAt={signAccountOpState?.accountOp.meta?.speedUp?.replacedSentAt}
+                    isCompleted={isSpeedUpNotNeeded}
+                  />
+                </View>
+              )}
               <SafeAccountTabs
                 activeTab={activeSafeAccountTab}
                 networkChainId={network?.chainId}
