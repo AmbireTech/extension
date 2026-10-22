@@ -264,7 +264,7 @@ const KeyStoreUnlockScreen = () => {
           </Text>
         </View>
       </View>
-      {isExtensionUpdateAvailable && !isPasswordUnlockRequired && <UpdateAvailableModal />}
+      {isExtensionUpdateAvailable && <UpdateAvailableModal />}
       {/* A narrow layout fills the width and spreads the form vertically like on mobile */}
       <View style={isNarrowWebLayout ? styles.narrowContainer : styles.container}>
         {unlockMethod === 'biometrics' && canUseBiometrics && (
