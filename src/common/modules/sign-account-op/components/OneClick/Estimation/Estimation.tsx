@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { WARNINGS } from '@ambire-common/consts/signAccountOp/errorHandling'
 import { Key } from '@ambire-common/interfaces/keystore'
 import {
   ISignAccountOpController,
@@ -134,12 +133,6 @@ const OneClickEstimation = ({
     updateType
   })
   const { banners } = signAccountOpController || {}
-  // The significant balance decrease warning is shown only on the simulation's "Assets out"
-  // card, which this sheet doesn't have. It still makes signing require a hold below
-  const visibleBanners = useMemo(
-    () => banners?.filter((banner) => banner.id !== WARNINGS.significantBalanceDecrease.id),
-    [banners]
-  )
 
   useEffect(() => {
     // Require a fresh click/press for each newly opened estimation flow.
@@ -336,9 +329,9 @@ const OneClickEstimation = ({
         shouldBeClosableOnDrag={isMobile}
         FooterComponent={footerComponent}
       >
-        {!!visibleBanners && !!visibleBanners.length && (
+        {!!banners && !!banners.length && (
           <View style={spacings.mbTy}>
-            {visibleBanners.map((banner) => (
+            {banners.map((banner) => (
               <SafetyChecksBanner
                 key={banner.id}
                 type={banner.type}
