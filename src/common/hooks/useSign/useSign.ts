@@ -7,14 +7,19 @@ import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/help
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
+import useSigningAuth from '@common/hooks/useSigningAuth'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
+import useOneKey from '@common/modules/hardware-wallets/hooks/useOneKey'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
 import type { SignAccountOpUpdateProps } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
 
 const PRIMARY_BUTTON_LABELS: Record<
@@ -53,6 +58,8 @@ type Props = {
   onSafeSignComplete?: () => void
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const useSign = ({
   handleUpdateStatus,
   signAccountOpState,
@@ -63,7 +70,7 @@ const useSign = ({
   onSafeSignComplete
 }: Props) => {
   const { t } = useTranslation()
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { dispatch: mainControllerDispatch } = useController('MainController')
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -77,12 +84,14 @@ const useSign = ({
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [shouldDisplayQrSigningModal, setShouldDisplayQrSigningModal] = useState(false)
   const [acknowledgedBannersKey, setAcknowledgedBannersKey] = useState<string | null>(null)
+  const [acknowledgedNewFeePayer, setAcknowledgedNewFeePayer] = useState<string | null>(null)
   const safeSignAndCloseRequest = useRef<{
     accountOpId: string
     signingKeyAddr: Key['addr']
   } | null>(null)
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
   const { isLedgerConnected } = useLedger()
+  const { ensureOneKeyAccess } = useOneKey()
   const {
     currentRequest,
     signingStep,
@@ -92,12 +101,40 @@ const useSign = ({
     signingCleanup
   } = useQrSigningFlow()
 
+  const {
+    sheetRef: signingAuthSheetRef,
+    requestSigningAuth,
+    cancelSigningAuth,
+    signingAuthProps
+  } = useSigningAuth({
+    requirement: signAccountOpState?.signingAuthRequirement,
+    requestId: signAccountOpState?.accountOp.id
+  })
+
   const currentBannersKey = useMemo(
     () => JSON.stringify(signAccountOpState?.banners || []),
     [signAccountOpState?.banners]
   )
+  // Executing a Safe from an EOA that never paid for it publicly links the two forever,
+  // so it asks for a hold. Only the executing transaction is paid, not a signature.
+  // Once held for a payer, the hold is not asked again for it, so the sign button can show
+  // its loading state, but switching to another new payer asks for it again
+  const feePayer = signAccountOpState?.accountOp.gasFeePayment?.paidBy ?? null
+  const isLinkingNewFeePayerToSafe =
+    !!signAccountOpState?.isFeePayerNotLinkedToSafe &&
+    !!signAccountOpState?.canBroadcast &&
+    acknowledgedNewFeePayer !== feePayer
   const shouldHoldToProceed =
-    !!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey
+    (!!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey) ||
+    isLinkingNewFeePayerToSafe
+  const dappVerificationHoldButtonType = useDappVerificationHoldButtonType(
+    signAccountOpState?.banners
+  )
+  // Linking a new fee payer to the Safe is a warning, unless a dApp check already calls for more
+  const holdToProceedButtonType =
+    dappVerificationHoldButtonType === 'primary' && isLinkingNewFeePayerToSafe
+      ? 'warning'
+      : dappVerificationHoldButtonType
   const shouldShowSafeSigners = showSafeSigners && !shouldHoldToProceed
 
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
@@ -137,10 +174,6 @@ const useSign = ({
   const isSignLoading = getIsSignLoading(signAccountOpState?.status)
 
   useEffect(() => {
-    if (signAccountOpState?.estimation.estimationRetryError) {
-      setSlowRequest(false)
-      return
-    }
     const timeout = setTimeout(() => {
       // set the request to slow if the state is not init (no estimation)
       // or the gas prices haven't been fetched
@@ -157,11 +190,7 @@ const useSign = ({
     return () => {
       clearTimeout(timeout)
     }
-  }, [
-    signAccountOpState?.isInitialized,
-    signAccountOpState?.gasPrices,
-    signAccountOpState?.estimation.estimationRetryError
-  ])
+  }, [signAccountOpState?.isInitialized, signAccountOpState?.gasPrices])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -191,21 +220,33 @@ const useSign = ({
   const signingKeyType = signAccountOpState?.accountOp?.signingKeyType
   const feePayerKeyType = signAccountOpState?.accountOp?.gasFeePayment?.paidByKeyType
 
-  const isAtLeastOneOfTheKeysInvolvedLedger = useMemo(() => {
-    // if we're broadcasting with ledger, return true
-    if (feePayerKeyType === 'ledger') return true
+  const getIsKeyTypeInvolved = useCallback(
+    (keyType: Key['type']) => {
+      // if we're broadcasting with this key type, return true
+      if (feePayerKeyType === keyType) return true
 
-    // if the account is not a Safe, check the txn signer
-    if (!signAccountOpState?.account.safeCreation) return signingKeyType === 'ledger'
+      // if the account is not a Safe, check the txn signer
+      if (!signAccountOpState?.account.safeCreation) return signingKeyType === keyType
 
-    // if it's a Safe, check all the signers
-    return !!signAccountOpState.accountOp.signers?.find((s) => s.type === 'ledger')
-  }, [
-    signAccountOpState?.account.safeCreation,
-    signAccountOpState?.accountOp.signers,
-    signingKeyType,
-    feePayerKeyType
-  ])
+      // if it's a Safe, check all the signers
+      return !!signAccountOpState.accountOp.signers?.find((s) => s.type === keyType)
+    },
+    [
+      signAccountOpState?.account.safeCreation,
+      signAccountOpState?.accountOp.signers,
+      signingKeyType,
+      feePayerKeyType
+    ]
+  )
+
+  const isAtLeastOneOfTheKeysInvolvedLedger = useMemo(
+    () => getIsKeyTypeInvolved('ledger'),
+    [getIsKeyTypeInvolved]
+  )
+  const isAtLeastOneOfTheKeysInvolvedOneKey = useMemo(
+    () => getIsKeyTypeInvolved('onekey'),
+    [getIsKeyTypeInvolved]
+  )
 
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)
@@ -306,6 +347,29 @@ const useSign = ({
     handleBroadcast()
   }, [closeGasFeeUpdatedModal, handleBroadcast])
 
+  const getIsSigningWithInternalKey = useCallback(
+    (_chosenSigningKeyTypes?: Key['type'][]) => {
+      if (_chosenSigningKeyTypes?.length) return _chosenSigningKeyTypes.includes('internal')
+
+      // A Safe is signed by whichever of its owners are imported, so any internal one counts
+      if (signAccountOpState?.account.safeCreation)
+        return !!signAccountOpState.accountOp.signers?.some(({ type }) => type === 'internal')
+
+      return signingKeyType === 'internal'
+    },
+    [
+      signAccountOpState?.account.safeCreation,
+      signAccountOpState?.accountOp.signers,
+      signingKeyType
+    ]
+  )
+
+  // Lets the signing authentication prompt resume the very call it interrupted, without
+  // handleSign having to depend on itself
+  const handleSignRef = useRef<
+    ((_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => void) | null
+  >(null)
+
   const handleSign = useCallback(
     (_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => {
       // Prioritize warning(s) modals over all others
@@ -315,6 +379,14 @@ const useSign = ({
         handleUpdateStatus(SigningStatus.UpdatesPaused)
         return
       }
+
+      // A first time recipient or dapp has to be confirmed with the password or biometrics, but
+      // only when the keystore holds the signing key - a hardware wallet confirms on the device
+      if (
+        getIsSigningWithInternalKey(_chosenSigningKeyTypes) &&
+        requestSigningAuth(() => handleSignRef.current?.(_chosenSigningKeyTypes, _warningAccepted))
+      )
+        return
 
       const isFeePayerSameAsSigner =
         signAccountOpState?.accountOp.signingKeyAddr ===
@@ -330,32 +402,58 @@ const useSign = ({
         chosenKeyType && isFeePayerSameAsSigner ? chosenKeyType : feePayerKeyType
 
       const isExternalQr = effectiveSigningKeyType === 'qr' || effectiveFeePayerKeyType === 'qr'
-      const isLedgerKeyInvolvedInTheJustChosenKeys =
+      const getIsKeyTypeInvolvedInTheJustChosenKeys = (
+        keyType: Key['type'],
+        isInvolvedInTheAccountOp: boolean
+      ) =>
         _chosenSigningKeyTypes && _chosenSigningKeyTypes.length
-          ? _chosenSigningKeyTypes.indexOf('ledger') !== -1 || effectiveFeePayerKeyType === 'ledger'
-          : isAtLeastOneOfTheKeysInvolvedLedger
+          ? _chosenSigningKeyTypes.indexOf(keyType) !== -1 || effectiveFeePayerKeyType === keyType
+          : isInvolvedInTheAccountOp
+      const isLedgerKeyInvolvedInTheJustChosenKeys = getIsKeyTypeInvolvedInTheJustChosenKeys(
+        'ledger',
+        isAtLeastOneOfTheKeysInvolvedLedger
+      )
 
       if (isLedgerKeyInvolvedInTheJustChosenKeys && !isLedgerConnected) {
         setShouldDisplayLedgerConnectModal(true)
         return
       }
 
-      if (
-        !signAccountOpState?.account.safeCreation &&
-        (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
-        !isFeePayerSameAsSigner
-      ) {
-        setIsChooseFeePayerKeyShown(true)
+      const isOneKeyKeyInvolvedInTheJustChosenKeys = getIsKeyTypeInvolvedInTheJustChosenKeys(
+        'onekey',
+        isAtLeastOneOfTheKeysInvolvedOneKey
+      )
+
+      const continueSigning = () => {
+        if (
+          !signAccountOpState?.account.safeCreation &&
+          (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
+          !isFeePayerSameAsSigner &&
+          feePayerKeyType !== 'internal'
+        ) {
+          setIsChooseFeePayerKeyShown(true)
+          return
+        }
+
+        if (isExternalQr) {
+          // don't return here — QR flow is part of the signing itself,
+          // unlike Ledger where we need to stop and wait for connection
+          setShouldDisplayQrSigningModal(true)
+        }
+
+        handleBroadcast()
+      }
+
+      if (!isOneKeyKeyInvolvedInTheJustChosenKeys) {
+        continueSigning()
         return
       }
 
-      if (isExternalQr) {
-        // don't return here — QR flow is part of the signing itself,
-        // unlike Ledger where we need to stop and wait for connection
-        setShouldDisplayQrSigningModal(true)
-      }
-
-      handleBroadcast()
+      // When the OneKey is unplugged or the browser no longer lets Ambire use it, this opens
+      // the tab the browser asks for access to a device from, instead of signing
+      void ensureOneKeyAccess().then((hasOneKeyAccess) => {
+        if (hasOneKeyAccess) continueSigning()
+      })
     },
     [
       signAccountOpState?.accountOp.signingKeyAddr,
@@ -367,11 +465,19 @@ const useSign = ({
       feePayerKeyType,
       isAtLeastOneOfTheKeysInvolvedLedger,
       isLedgerConnected,
+      isAtLeastOneOfTheKeysInvolvedOneKey,
+      ensureOneKeyAccess,
       handleBroadcast,
       openWarningModal,
-      handleUpdateStatus
+      handleUpdateStatus,
+      getIsSigningWithInternalKey,
+      requestSigningAuth
     ]
   )
+
+  useEffect(() => {
+    handleSignRef.current = handleSign
+  }, [handleSign])
 
   const handleChangeSigningKey = useCallback(
     (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => {
@@ -423,15 +529,27 @@ const useSign = ({
     (_: Key['addr'], newFeePayerKeyType: Key['type']) => {
       handleUpdate({ paidByKeyType: newFeePayerKeyType })
 
-      handleBroadcast()
+      if (newFeePayerKeyType !== 'onekey') {
+        handleBroadcast()
+        return
+      }
+
+      // Same as in handleSign: a OneKey that's unplugged or no longer allowed opens the
+      // authorization tab instead of failing in the background
+      void ensureOneKeyAccess().then((hasOneKeyAccess) => {
+        if (hasOneKeyAccess) handleBroadcast()
+      })
     },
-    [handleBroadcast, handleUpdate]
+    [handleBroadcast, handleUpdate, ensureOneKeyAccess]
   )
 
   const onSignButtonClick = useCallback(() => {
     if (!signAccountOpState) return
 
     setAcknowledgedBannersKey(currentBannersKey)
+    // Only a click made through the linking hold counts. Collecting a Safe signature shows no hold
+    // for it, and the same payer must still be held for once the Safe becomes ready to execute
+    if (isLinkingNewFeePayerToSafe) setAcknowledgedNewFeePayer(feePayer)
 
     if (!!signAccountOpState.account.safeCreation && !signAccountOpState.canBroadcast) {
       setShowSafeSigners((prev) => (shouldHoldToProceed ? true : !prev))
@@ -446,8 +564,25 @@ const useSign = ({
       return
     }
 
+    // A private key signs on its own in one click, so the user is not asked to pick another key
+    const internalKey = signAccountOpState.accountKeyStoreKeys.find(
+      (key) => key.type === 'internal'
+    )
+    if (internalKey) {
+      handleChangeSigningKey(internalKey.addr, internalKey.type)
+      return
+    }
+
     setIsChooseSignerShown(true)
-  }, [currentBannersKey, handleSign, shouldHoldToProceed, signAccountOpState])
+  }, [
+    currentBannersKey,
+    feePayer,
+    handleChangeSigningKey,
+    handleSign,
+    isLinkingNewFeePayerToSafe,
+    shouldHoldToProceed,
+    signAccountOpState
+  ])
 
   const acknowledgeWarning = useCallback(() => {
     if (!warningToPromptBeforeSign) return
@@ -505,13 +640,22 @@ const useSign = ({
     | 'hw-sign'
     | 'qr-sign'
     | null = useMemo(() => {
+    const activeSigningKeyType = signAccountOpState?.activeSigningKeyType
+    // QR and NFC keys have their own modals, so the HW signing modal isn't used for them
+    const isHardwareWalletSigningActive =
+      !!activeSigningKeyType && !['internal', 'qr', 'nfc'].includes(activeSigningKeyType)
+
     // Prioritize warning(s) modals over all others
     if (
       warningToPromptBeforeSign ||
       // We render the warning modal if the paymaster is loading, but
       // don't display it to the user until the paymaster has been loading for too long.
       // This is required because opening the modal isn't possible if it isn't rendered.
-      signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
+      // Not while a hardware wallet is mid-flow (e.g. between the 7702 authorization and
+      // the transaction): the HW signing modal stays rendered instead, so it doesn't hide
+      // and reappear, and it shows the slow paymaster message itself
+      (signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster &&
+        !isHardwareWalletSigningActive)
     )
       return 'warnings'
 
@@ -531,6 +675,7 @@ const useSign = ({
     isAtLeastOneOfTheKeysInvolvedExternal,
     shouldDisplayLedgerConnectModal,
     shouldDisplayQrSigningModal,
+    signAccountOpState?.activeSigningKeyType,
     signAccountOpState?.gasFeeChangedConfirmationRequired,
     signAccountOpState?.status?.type,
     signingStep,
@@ -553,7 +698,12 @@ const useSign = ({
     signAccountOpState?.threshold
   ])
 
+  const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
+
   const primaryButtonText = useMemo(() => {
+    // Replaces Sign, Execute and Begin signing, so it's clear the pending transaction gets replaced
+    if (isSpeedUpTransaction) return isSignLoading ? t('Speeding up...') : t('Speed up')
+
     let buttonLabelType: ButtonMode =
       updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
 
@@ -575,6 +725,7 @@ const useSign = ({
         : PRIMARY_BUTTON_LABELS[buttonLabelType].default
     )
   }, [
+    isSpeedUpTransaction,
     isAtLeastOneOfTheKeysInvolvedExternal,
     isSignLoading,
     t,
@@ -583,6 +734,24 @@ const useSign = ({
     signAccountOpState?.canBroadcast,
     isSignedSafeWaitingForNonce,
     shouldShowSafeSigners
+  ])
+
+  const holdToSignButtonText = useMemo(() => {
+    if (!signAccountOpState?.account.safeCreation) return t('Hold to sign')
+
+    const isSafeReadyToExecute =
+      signAccountOpState.threshold === 1 ||
+      signAccountOpState.canBroadcast ||
+      isSignedSafeWaitingForNonce
+
+    // the "Safe" term for broadcast is called "Execute"
+    return isSafeReadyToExecute ? t('Hold to execute') : t('Hold to proceed')
+  }, [
+    signAccountOpState?.account.safeCreation,
+    signAccountOpState?.threshold,
+    signAccountOpState?.canBroadcast,
+    isSignedSafeWaitingForNonce,
+    t
   ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
@@ -625,7 +794,13 @@ const useSign = ({
     signAccountOpState
   ])
 
+  const isSafeFeePayerChoiceRequired = !!signAccountOpState?.isSafeFeePayerChoiceRequired
+
   const disabledReason = useMemo(() => {
+    if (isSafeFeePayerChoiceRequired) {
+      return t('Choose who pays the fee to execute this transaction.')
+    }
+
     if (isExtremeGasFeeProceedDelayedForSign) {
       return t('Please wait {{seconds}}s to review the high network fee.', {
         seconds: extremeGasFeeProceedDelaySeconds
@@ -635,7 +810,13 @@ const useSign = ({
     return typeof hasReachedBottom === 'boolean' && !hasReachedBottom
       ? t('Scroll to the bottom of the transaction overview to sign.')
       : undefined
-  }, [extremeGasFeeProceedDelaySeconds, hasReachedBottom, isExtremeGasFeeProceedDelayedForSign, t])
+  }, [
+    extremeGasFeeProceedDelaySeconds,
+    hasReachedBottom,
+    isExtremeGasFeeProceedDelayedForSign,
+    isSafeFeePayerChoiceRequired,
+    t
+  ])
 
   const signButtonText = useMemo(() => {
     if (isExtremeGasFeeProceedDelayedForSign) {
@@ -704,12 +885,15 @@ const useSign = ({
     isSignDisabled,
     primaryButtonText,
     signButtonText,
+    holdToSignButtonText,
     isExtremeGasFeeActive,
     extremeGasFeeSignButtonType: signButtonType,
     bundlerNonceDiscrepancy,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed,
+    isLinkingNewFeePayerToSafe,
+    holdToProceedButtonType,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
@@ -719,7 +903,10 @@ const useSign = ({
     currentRequest,
     signingStep,
     disabledReason,
-    showSafeSigners: shouldShowSafeSigners
+    showSafeSigners: shouldShowSafeSigners,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   }
 }
 

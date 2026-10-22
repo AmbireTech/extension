@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import React, { FC, useCallback } from 'react'
+import React, { FC, useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -15,10 +15,10 @@ import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
@@ -26,6 +26,8 @@ import { openInTab } from '@common/utils/links'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 type Props = {
   network: Network
@@ -37,7 +39,9 @@ type Props = {
   'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status'
 >
 
-const increaseByFifteenPercent = (value: bigint) => (value * 115n + 99n) / 100n
+// Resets the button if the sign flow never opens, so it can't stay stuck on "Loading..."
+const SPEED_UP_LOADING_RESET_TIMEOUT_MS = 5000
+
 const canBuildSpeedUpAccountOp = (
   submittedAccountOp: SubmittedAccountOpLike
 ): submittedAccountOp is SubmittedAccountOpLike &
@@ -53,6 +57,9 @@ const canBuildSpeedUpAccountOp = (
   submittedAccountOp.gasLimit !== undefined &&
   submittedAccountOp.signature !== undefined
 
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
 const Footer: FC<Props> = ({
   network,
   txnId,
@@ -66,10 +73,11 @@ const Footer: FC<Props> = ({
   const { styles } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
+  const [isSpeedUpLoading, setIsSpeedUpLoading] = useState(false)
 
   const { chainId } = network
   const isPendingTransaction =
@@ -137,18 +145,20 @@ const Footer: FC<Props> = ({
     })
   }, [rawCalls, requestsDispatch, network.chainId, accountAddr])
 
-  const handleSpeedUpTransaction = useCallback(() => {
-    if (!submittedAccountOp.gasFeePayment || !canBuildSpeedUpAccountOp(submittedAccountOp)) return
+  useEffect(() => {
+    if (!isSpeedUpLoading) return
 
-    const nextGasFeePayment = {
-      ...submittedAccountOp.gasFeePayment,
-      gasPrice: increaseByFifteenPercent(submittedAccountOp.gasFeePayment.gasPrice),
-      maxPriorityFeePerGas:
-        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas &&
-        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas !== 0n
-          ? increaseByFifteenPercent(submittedAccountOp.gasFeePayment.maxPriorityFeePerGas)
-          : submittedAccountOp.gasFeePayment.maxPriorityFeePerGas
-    }
+    const timeout = setTimeout(() => setIsSpeedUpLoading(false), SPEED_UP_LOADING_RESET_TIMEOUT_MS)
+
+    return () => clearTimeout(timeout)
+  }, [isSpeedUpLoading])
+
+  const handleSpeedUpTransaction = useCallback(() => {
+    const { gasFeePayment: replacedGasFeePayment } = submittedAccountOp
+    if (!replacedGasFeePayment || !canBuildSpeedUpAccountOp(submittedAccountOp)) return
+
+    // There is a short pause before the sign flow opens, so give instant feedback
+    setIsSpeedUpLoading(true)
 
     requestsDispatch({
       type: 'method',
@@ -165,6 +175,8 @@ const Footer: FC<Props> = ({
                   accountAddr: submittedAccountOp.accountAddr
                 },
                 accountOp: {
+                  // Only to fill the field: RequestsController gives every speed up an id of
+                  // its own, as the activity would overwrite the replaced op with a shared one
                   id: submittedAccountOp.id,
                   accountAddr: submittedAccountOp.accountAddr,
                   chainId: submittedAccountOp.chainId,
@@ -177,7 +189,7 @@ const Footer: FC<Props> = ({
                   activatorCall: submittedAccountOp.activatorCall,
                   gasLimit: submittedAccountOp.gasLimit,
                   signature: submittedAccountOp.signature,
-                  gasFeePayment: nextGasFeePayment,
+                  gasFeePayment: replacedGasFeePayment,
                   txnId: submittedAccountOp.txnId,
                   asUserOperation: submittedAccountOp.asUserOperation,
                   signers: submittedAccountOp.signers,
@@ -187,7 +199,17 @@ const Footer: FC<Props> = ({
                   meta: {
                     ...submittedAccountOp.meta,
                     speedUp: {
-                      enabled: true
+                      enabled: true,
+                      replacedFees: {
+                        gasPrice: replacedGasFeePayment.gasPrice,
+                        maxPriorityFeePerGas: replacedGasFeePayment.maxPriorityFeePerGas,
+                        amount: replacedGasFeePayment.amount
+                      },
+                      // A speed up of a speed up keeps the time of the very first attempt
+                      replacedSentAt:
+                        submittedAccountOp.meta?.speedUp?.replacedSentAt ??
+                        submittedAccountOp.timestamp,
+                      replacedIdentifiedBy: submittedAccountOp.identifiedBy
                     }
                   }
                 }
@@ -223,9 +245,15 @@ const Footer: FC<Props> = ({
 
   const buttonSize = isMobile ? 'regular' : 'smaller'
 
+  const getRepeatButtonText = () => {
+    if (!shouldShowSpeedUp) return t('Repeat')
+
+    return isSpeedUpLoading ? t('Loading...') : t('Speed up')
+  }
+
   const openExplorerButton = (
     <View
-      style={isMobile ? styles.footerButtonWrapper : undefined}
+      style={isCompactLayout ? styles.footerButtonWrapper : undefined}
       dataSet={createGlobalTooltipDataSet({
         id: `open-explorer-disabled-${submittedAccountOp.id}`,
         content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
@@ -241,7 +269,8 @@ const Footer: FC<Props> = ({
         hasBottomSpacing={false}
         style={[
           styles.footerButton,
-          isCompactSidePanelLayout && {
+          isMobile && { height: 46 },
+          isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
             ...spacings.prTy,
@@ -251,14 +280,14 @@ const Footer: FC<Props> = ({
         childrenPosition="left"
         testID="view-transaction-link"
       >
-        <OpenIcon style={spacings.mrMi} width={16} height={16} />
+        <OpenIcon style={spacings.mrMi} width={20} height={20} />
       </Button>
     </View>
   )
 
   const repeatButton = (
     <View
-      style={isMobile ? styles.footerButtonWrapper : undefined}
+      style={isCompactLayout ? styles.footerButtonWrapper : undefined}
       dataSet={createGlobalTooltipDataSet({
         id: `repeat-disabled-${submittedAccountOp.id}`,
         content: isExternal
@@ -269,15 +298,16 @@ const Footer: FC<Props> = ({
     >
       <Button
         type="tertiary"
-        text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
+        text={getRepeatButtonText()}
         onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
         size={buttonSize}
         hasBottomSpacing={false}
-        disabled={!canRepeatTransaction}
+        disabled={!canRepeatTransaction || (shouldShowSpeedUp && isSpeedUpLoading)}
         style={[
           styles.footerButton,
-          !isMobile && !isCompactSidePanelLayout && spacings.mrTy,
-          isCompactSidePanelLayout && {
+          isMobile && { height: 46 },
+          !isMobile && !isNarrowWebLayout && spacings.mrTy,
+          isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
             ...spacings.prTy,
@@ -287,9 +317,9 @@ const Footer: FC<Props> = ({
         childrenPosition="left"
       >
         {shouldShowSpeedUp ? (
-          <SpeedUpIcon style={spacings.mrMi} width={16} height={16} />
+          <SpeedUpIcon style={spacings.mrMi} width={20} height={20} />
         ) : (
-          <RefreshIcon style={spacings.mrMi} width={16} height={16} />
+          <RefreshIcon style={spacings.mrMi} width={20} height={20} strokeWidth="2" />
         )}
       </Button>
     </View>
@@ -307,12 +337,12 @@ const Footer: FC<Props> = ({
         text={t('Copy link')}
         onPress={handleCopyTransaction}
         type="primary"
-        size={buttonSize}
+        size={isCompactLayout ? 'regular' : 'smaller'}
         disabled={areExplorerButtonsDisabled}
         hasBottomSpacing={false}
         style={[
           styles.footerButton,
-          isCompactSidePanelLayout && {
+          isNarrowWebLayout && {
             width: '100%',
             ...spacings.plTy,
             ...spacings.prTy,
@@ -321,15 +351,22 @@ const Footer: FC<Props> = ({
         ]}
         childrenPosition="left"
       >
-        <CopyIcon style={spacings.mrMi} width={16} height={16} />
+        <CopyIcon style={spacings.mrMi} width={20} height={20} />
       </Button>
     </View>
   )
 
-  if (isMobile)
+  if (isCompactLayout)
     return (
-      <View style={[styles.footer, { paddingBottom: bottom || SPACING_SM }]}>
-        <View style={styles.footerButtonsRow}>
+      <View
+        style={[styles.footer, isMobile ? { paddingBottom: bottom || SPACING_SM } : spacings.phSm]}
+      >
+        <View
+          style={[
+            styles.footerButtonsRow,
+            isNarrowWebLayout && { columnGap: SPACING_TY, ...spacings.mbTy }
+          ]}
+        >
           {openExplorerButton}
           {repeatButton}
         </View>
@@ -338,29 +375,10 @@ const Footer: FC<Props> = ({
     )
 
   return (
-    <View style={[styles.footer, isCompactSidePanelLayout && spacings.phSm]}>
-      <View
-        style={[
-          styles.footerButtonsRow,
-          isCompactSidePanelLayout && {
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            gap: SPACING_TY
-          }
-        ]}
-      >
+    <View style={styles.footer}>
+      <View style={styles.footerButtonsRow}>
         {openExplorerButton}
-        <View
-          style={[
-            styles.footerRightButtonsGroup,
-            isCompactSidePanelLayout && {
-              flexDirection: 'column',
-              alignItems: 'stretch',
-              width: '100%',
-              gap: SPACING_TY
-            }
-          ]}
-        >
+        <View style={styles.footerRightButtonsGroup}>
           {repeatButton}
           {copyLinkButton}
         </View>

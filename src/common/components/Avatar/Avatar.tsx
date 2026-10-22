@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState } from 'react'
+import React, { FC, useEffect, useMemo, useState } from 'react'
 import { Animated, ViewStyle } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -13,6 +13,12 @@ import EnsAvatar from './EnsAvatar'
 import JazzIcon from './Jazz'
 import Polycons from './Polycons/Polycons'
 import TypeBadge from './TypeBadge'
+import useSharedPulse from './useSharedPulse'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectShouldDisplayEnsAvatar = (state: AllControllersMappingType['FeatureFlagsController']) =>
+  isLegends || isBenzin || state.flags.keepEnsProfilesUpToDate
 
 const getAvatarType = ({
   ensAvatar,
@@ -59,7 +65,12 @@ interface Props {
    */
   avatarType?: Omit<AvatarType, 'ens'>
   displayTypeBadge?: boolean
+  /** The color of the ring around the type badge, see `TypeBadge` */
+  typeBadgeRingColor?: React.ComponentProps<typeof TypeBadge>['ringColor']
 }
+
+const selectAvatarType = (state: AllControllersMappingType['WalletStateController']) =>
+  state.avatarType
 
 const Avatar: FC<Props> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -70,29 +81,41 @@ const Avatar: FC<Props> = ({
   avatarType: propAvatarType,
   style = {},
   showTooltip = false,
-  displayTypeBadge = true
+  displayTypeBadge = true,
+  typeBadgeRingColor
 }) => {
+  const { state: shouldDisplayEnsAvatar } = useController(
+    'FeatureFlagsController',
+    selectShouldDisplayEnsAvatar
+  )
   // the ENS avatar may point to an image that no longer exists or just fails to load
   // In that case we must fallback to the next avatar type
   const [ensAvatarImageState, setEnsAvatarImageState] = useState<'loading' | 'loaded' | 'failed'>(
     'loading'
   )
   const ensAvatarImageFetchFailed = ensAvatarImageState === 'failed'
-  // ENS Avatar
-  const {
-    state: { domains, loadingAddresses }
-  } = useController('DomainsController')
-  // There is no wallet controller state in benzin/rewards so we need to be careful
-
-  let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = propAvatarType || 'jazzicons'
-
-  if (!isLegends && !isBenzin && !propAvatarType) {
-    const walletState = useController('WalletStateController').state
-    avatarTypeSetting = walletState?.avatarType || 'jazzicons'
-  }
-
-  const isEnsLoading = address ? loadingAddresses?.includes(address) : false
-  const ensAvatar = domains?.[address]?.avatar
+  // ENS Avatar. Both selectors read the one address instead of the whole map, so a
+  // lookup that resolves for one address does not re-render every other avatar
+  const selectEnsAvatar = useMemo(
+    () => (state: AllControllersMappingType['DomainsController']) =>
+      shouldDisplayEnsAvatar ? state.domains[address]?.avatar : undefined,
+    [address, shouldDisplayEnsAvatar]
+  )
+  const selectIsEnsLoading = useMemo(
+    () => (state: AllControllersMappingType['DomainsController']) =>
+      !!address && state.loadingAddresses.includes(address),
+    [address]
+  )
+  const { state: ensAvatar } = useController('DomainsController', selectEnsAvatar)
+  const { state: isEnsLoading } = useController('DomainsController', selectIsEnsLoading)
+  // There is no wallet controller state in benzin/rewards, and the hook must still be
+  // called there - reading its state is what decides whether it subscribes, and the
+  // store answers a controller it does not have with an empty state
+  const { state: walletStateAvatarType } = useController('WalletStateController', selectAvatarType)
+  const usesWalletStateSetting = !isLegends && !isBenzin && !propAvatarType
+  const avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = usesWalletStateSetting
+    ? walletStateAvatarType || 'jazzicons'
+    : propAvatarType || 'jazzicons'
   const avatarType = getAvatarType({
     ensAvatar,
     ensAvatarImageFetchFailed,
@@ -115,32 +138,8 @@ const Avatar: FC<Props> = ({
     return undefined
   }, [avatarType, ensAvatar, ensAvatarImageFetchFailed, ensAvatarImageState])
 
-  // Pulsating animation
-  const pulseAnim = useRef(new Animated.Value(1)).current
-
-  // @ts-ignore
-  useEffect(() => {
-    if (isEnsLoading) {
-      const pulse = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 0.7,
-            duration: 800,
-            useNativeDriver: true
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true
-          })
-        ])
-      )
-      pulse.start()
-      return () => pulse.stop()
-    }
-
-    pulseAnim.setValue(1)
-  }, [isEnsLoading, pulseAnim])
+  // Pulsating animation, shared by every avatar that is waiting on ENS
+  const pulseAnim = useSharedPulse(isEnsLoading)
 
   return (
     <Animated.View
@@ -149,7 +148,9 @@ const Avatar: FC<Props> = ({
         flexbox.alignCenter,
         flexbox.justifyCenter,
         style,
-        { opacity: pulseAnim }
+        // Plain number unless it is actually pulsing, so a list of avatars does not
+        // build one native animated node per row for a value that never moves
+        { opacity: isEnsLoading ? pulseAnim : 1 }
       ]}
     >
       {/* The skeleton is displayed while the ENS image is loading, while the whole avatar is pulsing when we don't know
@@ -188,13 +189,15 @@ const Avatar: FC<Props> = ({
       )}
       {displayTypeBadge && (
         <TypeBadge
+          address={address}
           smartAccountType={smartAccountType}
           size={size >= 40 ? 'big' : 'small'}
           showTooltip={showTooltip}
+          ringColor={typeBadgeRingColor}
         />
       )}
     </Animated.View>
   )
 }
 
-export default Avatar
+export default React.memo(Avatar)

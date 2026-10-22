@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NativeScrollEvent, ScrollView, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -10,6 +10,7 @@ import Alert from '@common/components/Alert'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useSign from '@common/hooks/useSign'
@@ -19,12 +20,16 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
+import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
+import SpeedUpNotNeededFee from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpNotNeededFee'
+import SpeedUpStatus from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpStatus'
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
@@ -34,10 +39,17 @@ import Modals from '@mobile/modules/sign-account-op/components/Modals/Modals'
 
 import getStyles from './styles'
 
+import type { SafeAccountTab } from '@common/modules/sign-account-op/components/SafeAccountTabs'
+import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
+import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
+
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
 }
+
+// The footer pads itself horizontally, and below it keeps only the layout's bottom inset
+const FOOTER_STYLE = { ...spacings.ph0, ...spacings.pt0 }
 
 const SignAccountOpScreen = () => {
   const {
@@ -47,6 +59,9 @@ const SignAccountOpScreen = () => {
   } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
+  const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
+  // The transaction being sped up was processed first, so all that's left is closing the request
+  const isSpeedUpNotNeeded = signAccountOpState?.status?.type === SigningStatus.SpeedUpNotNeeded
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const [containerHeight, setContainerHeight] = useState(0)
@@ -110,16 +125,16 @@ const SignAccountOpScreen = () => {
     handleChangeFeePayerKeyType,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
-    signingKeyType,
-    feePayerKeyType,
     shouldDisplayLedgerConnectModal,
     network,
     isSignDisabled,
     bundlerNonceDiscrepancy,
     primaryButtonText,
     signButtonText,
+    holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
+    holdToProceedButtonType,
     disabledReason,
     showSafeSigners,
     shouldDisplayQrSigningModal,
@@ -129,7 +144,10 @@ const SignAccountOpScreen = () => {
     handleQrSigningFlowOnRejectPressed,
     handleQrSigningFlowOnBackPressed,
     currentRequest,
-    signingStep
+    signingStep,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -143,13 +161,35 @@ const SignAccountOpScreen = () => {
     return currentUserRequest as CallsUserRequest
   }, [currentUserRequest])
 
+  const [safeAccountTabState, setSafeAccountTabState] = useState({
+    requestId: accountOpRequest?.id,
+    activeTab: 'overview' as SafeAccountTab
+  })
+  const activeSafeAccountTab =
+    safeAccountTabState.requestId === accountOpRequest?.id
+      ? safeAccountTabState.activeTab
+      : 'overview'
+  const shouldUseSafeAccountTabs =
+    !!signAccountOpState?.account.safeCreation && !signAccountOpState.accountOp.meta?.isSafeDeploy
+  const isOverviewTabActive = !shouldUseSafeAccountTabs || activeSafeAccountTab === 'overview'
+
+  const handleSafeAccountTabChange = useCallback(
+    (activeTab: SafeAccountTab) => {
+      setSafeAccountTabState({ requestId: accountOpRequest?.id, activeTab })
+    },
+    [accountOpRequest?.id]
+  )
+
   const shouldRejectOnchain = useMemo(() => {
     if (!signAccountOpState?.account.safeCreation) return false
+    // A speed up reuses the signatures of the pending transaction it replaces, so canceling
+    // it only closes the request. The pending transaction itself is left as it is
+    if (isSpeedUpTransaction) return false
     const { signature, signed } = signAccountOpState.accountOp
     const signedCount = signed?.length || 0
 
     return !!signature && signature !== '0x' && signedCount > 0
-  }, [signAccountOpState])
+  }, [signAccountOpState, isSpeedUpTransaction])
 
   const isCancelDisabled = useMemo(() => {
     if (!shouldRejectOnchain || !signAccountOpState) return false
@@ -157,6 +197,23 @@ const SignAccountOpScreen = () => {
     const { calls, accountAddr } = signAccountOpState.accountOp
     return isSafeRejectionCall(calls, accountAddr)
   }, [shouldRejectOnchain, signAccountOpState])
+
+  // Removes the request without an onchain Safe rejection, even if Safe signatures were collected
+  const handleCloseAccountOp = useCallback(() => {
+    if (!accountOpRequest) return
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [
+          'User rejected the transaction request.',
+          [accountOpRequest.id],
+          { shouldOpenNextRequest: visibleUserRequests.length > 1 }
+        ]
+      }
+    })
+  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
 
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
@@ -179,38 +236,51 @@ const SignAccountOpScreen = () => {
       return
     }
 
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'rejectUserRequests',
-        args: [
-          'User rejected the transaction request.',
-          [accountOpRequest.id],
-          { shouldOpenNextRequest: visibleUserRequests.length > 1 }
-        ]
-      }
-    })
+    handleCloseAccountOp()
   }, [
     requestsDispatch,
     accountOpRequest,
     shouldRejectOnchain,
     isCancelDisabled,
-    visibleUserRequests.length
+    handleCloseAccountOp
   ])
 
   useEffect(() => {
-    if (isSignDisabled || !containerHeight || !contentHeight) return
+    if (!isOverviewTabActive || isSignDisabled || !containerHeight || !contentHeight) return
     const isScrollNotVisible = contentHeight <= containerHeight
 
-    if (setHasReachedBottom && !hasReachedBottom) setHasReachedBottom(isScrollNotVisible)
+    const updateHasReachedBottomTimeout = setTimeout(() => {
+      if (!hasReachedBottom) setHasReachedBottom(isScrollNotVisible)
+    }, 0)
+
+    return () => clearTimeout(updateHasReachedBottomTimeout)
   }, [
     contentHeight,
     containerHeight,
-    setHasReachedBottom,
     hasReachedBottom,
     hasEstimation,
-    isSignDisabled
+    isSignDisabled,
+    isOverviewTabActive
   ])
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (!isOverviewTabActive || hasReachedBottom) return
+      if (isCloseToBottom(event.nativeEvent)) setHasReachedBottom(true)
+    },
+    [hasReachedBottom, isOverviewTabActive]
+  )
+
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    setContainerHeight(event.nativeEvent.layout.height)
+  }, [])
+
+  const handleContentSizeChange = useCallback(
+    (_: number, height: number) => {
+      if (isOverviewTabActive) setContentHeight(height)
+    },
+    [isOverviewTabActive]
+  )
 
   const isAddToCartDisabled = useMemo(() => {
     if (signAccountOpState?.account.safeCreation) return false
@@ -233,6 +303,11 @@ const SignAccountOpScreen = () => {
           !signAccountOpState?.isInitialized || !!signAccountOpState.safetyChecksLoading
         }
       />
+      <SigningAuthBottomSheet
+        sheetRef={signingAuthSheetRef}
+        onCancel={cancelSigningAuth}
+        {...signingAuthProps}
+      />
       <Modals
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpState}
@@ -240,8 +315,6 @@ const SignAccountOpScreen = () => {
         gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
         handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
         handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
-        feePayerKeyType={feePayerKeyType}
-        signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
         shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
         handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
@@ -265,24 +338,26 @@ const SignAccountOpScreen = () => {
       <MobileLayoutContainer
         withHorizontalPadding
         header={<ActionHeader />}
-        footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+        footerStyle={FOOTER_STYLE}
         footer={
           <View style={styles.footerContainer}>
             {!estimationFailed &&
             signAccountOpState?.canBroadcast &&
             signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-              <View style={spacings.mbTy}>
-                <Estimation
-                  signAccountOpState={signAccountOpState}
-                  disabled={isSignLoading}
-                  hasEstimation={!!hasEstimation}
-                  slowRequest={slowRequest}
-                  isViewOnly={isViewOnly}
-                  isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
-                  sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
-                  updateType="Requests"
-                  bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
-                />
+              <View style={{ marginBottom: COMPACT_FEE_TO_BUTTONS_SPACING }}>
+                <SpeedUpNotNeededFee isSpeedUpNotNeeded={isSpeedUpNotNeeded}>
+                  <Estimation
+                    signAccountOpState={signAccountOpState}
+                    disabled={isSignLoading || isSpeedUpNotNeeded}
+                    hasEstimation={!!hasEstimation}
+                    slowRequest={slowRequest}
+                    isViewOnly={isViewOnly}
+                    isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
+                    sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
+                    updateType="Requests"
+                    bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+                  />
+                </SpeedUpNotNeededFee>
               </View>
             ) : null}
 
@@ -292,7 +367,7 @@ const SignAccountOpScreen = () => {
               !signAccountOpState.canBroadcast &&
               !!signAccountOpState.account.safeCreation &&
               showSafeSigners && (
-                <View style={[spacings.ptSm, spacings.mbMd]}>
+                <View style={spacings.mbXl}>
                   <SafeOwners
                     account={signAccountOpState.account}
                     onSign={handleChangeSigningKey}
@@ -314,7 +389,9 @@ const SignAccountOpScreen = () => {
               isAddToCartDisplayed={
                 !!signAccountOpState &&
                 !!network &&
-                signAccountOpState.accountOp.meta?.setDelegation === undefined
+                signAccountOpState.accountOp.meta?.setDelegation === undefined &&
+                // A speed up replaces the pending transaction as it is, so nothing can be added to it
+                !isSpeedUpTransaction
               }
               isSignLoading={isSignLoading}
               isSignDisabled={isSignDisabled || !hasReachedBottom}
@@ -326,9 +403,12 @@ const SignAccountOpScreen = () => {
               inProgressButtonText={primaryButtonText}
               buttonText={signButtonText}
               shouldHoldToProceed={shouldHoldToProceed}
+              holdToProceedButtonText={holdToSignButtonText}
               shouldRejectOnchain={shouldRejectOnchain}
               isRejectDisabled={isCancelDisabled}
+              holdToProceedButtonType={holdToProceedButtonType}
               signButtonType={extremeGasFeeSignButtonType}
+              onClose={isSpeedUpNotNeeded ? handleCloseAccountOp : undefined}
             />
           </View>
         }
@@ -357,15 +437,9 @@ const SignAccountOpScreen = () => {
         {/* MobileLayoutWrapperMainContent supports scroll but the logic that determines the height
           of the content doesn't work with it, so we use a ScrollView here */}
         <ScrollView
-          onScroll={(e) => {
-            if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
-          }}
-          onLayout={(e) => {
-            setContainerHeight(e.nativeEvent.layout.height)
-          }}
-          onContentSizeChange={(_, height) => {
-            setContentHeight(height)
-          }}
+          onScroll={handleScroll}
+          onLayout={handleLayout}
+          onContentSizeChange={handleContentSizeChange}
           scrollEventThrottle={16}
           contentContainerStyle={spacings.pbSm}
           showsVerticalScrollIndicator={false}
@@ -374,8 +448,24 @@ const SignAccountOpScreen = () => {
           // child's own press handler.
           keyboardShouldPersistTaps="handled"
         >
-          {signAccountOpState?.account.safeCreation ? (
-            <SafeNonce />
+          {shouldUseSafeAccountTabs ? (
+            <>
+              <SafeNonce />
+              {/* A Safe has tabs instead of the title the speed up status is shown under */}
+              {isSpeedUpTransaction && (
+                <View style={spacings.mbSm}>
+                  <SpeedUpStatus
+                    sentAt={signAccountOpState?.accountOp.meta?.speedUp?.replacedSentAt}
+                    isCompleted={isSpeedUpNotNeeded}
+                  />
+                </View>
+              )}
+              <SafeAccountTabs
+                activeTab={activeSafeAccountTab}
+                onTabChange={handleSafeAccountTabChange}
+                variant="segmented"
+              />
+            </>
           ) : (
             <View
               style={[
@@ -385,44 +475,66 @@ const SignAccountOpScreen = () => {
                 spacings.mbSm
               ]}
             >
-              <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+              <View>
+                <SectionHeading withMb={false}>
+                  {isSpeedUpTransaction ? t('Speed up') : t('Overview')}
+                </SectionHeading>
+                {isSpeedUpTransaction && (
+                  <SpeedUpStatus
+                    sentAt={signAccountOpState?.accountOp.meta?.speedUp?.replacedSentAt}
+                    isCompleted={isSpeedUpNotNeeded}
+                  />
+                )}
+              </View>
               <NetworkBadge chainId={network?.chainId} withOnPrefix />
             </View>
           )}
-          <PendingTransactions
-            network={network}
-            setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
-            delegatedContract={signAccountOpState?.delegatedContract}
-            hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
-          />
-          <SafeEip712Data
-            accountAddr={signAccountOpState?.accountOp.accountAddr}
-            chainId={signAccountOpState?.accountOp.chainId}
-            safeEip712Data={signAccountOpState?.safeEip712Data}
-          />
-          {/* Display errors only if the user is not in view-only mode */}
-          {signAccountOpState?.errors?.length && !isViewOnly ? (
-            <ErrorInformation />
+          {isOverviewTabActive ? (
+            <>
+              <PendingTransactions
+                network={network}
+                setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
+                delegatedContract={signAccountOpState?.delegatedContract}
+                hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
+              />
+              {/* Display errors only if the user is not in view-only mode */}
+              {signAccountOpState?.errors?.length && !isViewOnly ? (
+                <ErrorInformation />
+              ) : (
+                // What the speed up would change no longer matters once it can't go through
+                !isSpeedUpNotNeeded && (
+                  <Simulation
+                    network={network}
+                    isViewOnly={isViewOnly}
+                    isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
+                  />
+                )
+              )}
+              {signAccountOpState?.hasSafeApiFailed && (
+                <Alert
+                  size="sm"
+                  type="warning"
+                  title={t('Safe API failure')}
+                  text={t('Transaction was not sent to Safe Global due to a Safe API failure')}
+                  style={spacings.mt}
+                />
+              )}
+              {isViewOnly && (
+                <NoKeysToSignAlert
+                  style={spacings.mt}
+                  chainId={signAccountOpState?.accountOp?.chainId}
+                />
+              )}
+            </>
           ) : (
-            <Simulation
-              network={network}
-              isViewOnly={isViewOnly}
-              isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
-            />
-          )}
-          {signAccountOpState?.hasSafeApiFailed && (
-            <Alert
-              size="sm"
-              type="warning"
-              title={t('Safe API failure')}
-              text={t('Transaction was not sent to Safe Global due to a Safe API failure')}
-              style={spacings.mt}
-            />
-          )}
-          {isViewOnly && (
-            <NoKeysToSignAlert
-              style={spacings.mt}
-              chainId={signAccountOpState?.accountOp?.chainId}
+            <SafeEip712Data
+              accountAddr={signAccountOpState?.accountOp.accountAddr}
+              chainId={signAccountOpState?.accountOp.chainId}
+              safeEip712Data={signAccountOpState?.safeEip712Data}
+              withTitle={false}
+              hideTabs
+              activeTab={activeSafeAccountTab as SafeEip712ActiveTab}
+              onTabChange={handleSafeAccountTabChange}
             />
           )}
         </ScrollView>

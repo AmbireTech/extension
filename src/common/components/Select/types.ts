@@ -62,6 +62,14 @@ export type CommonSelectProps = {
     isMenuOpen,
     selectRef
   }: RenderSelectedOptionParams) => ReactNode
+  /**
+   * Shown right above the options, in the dropdown and in the bottom sheet alike - e.g. tabs that
+   * switch which options are listed.
+   */
+  menuHeader?: ReactNode
+  onBottomSheetClosed?: () => void
+  // Opens the bottom sheet at full height (perfect for autoFocus to prevent layout shifts)
+  isBottomSheetFullHeight?: boolean
   attemptToFetchMoreOptions?: (search: string) => void
   onSearch?: (search: string) => void
   renderSelectedOption?: ({

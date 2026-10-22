@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { View } from 'react-native'
+import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react'
+import { View, ViewStyle } from 'react-native'
 import {
   KeyboardAvoidingView,
   KeyboardAwareScrollView,
@@ -12,8 +12,7 @@ import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomS
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import {
@@ -23,6 +22,40 @@ import {
 import getStyles from './styles'
 
 const KeyboardAwareContainerContext = createContext(false)
+
+// Starts the overlay right under the header, which has a SPACING_LG bottom margin
+const HEADER_OVERLAY_STYLE: ViewStyle = {
+  position: 'absolute',
+  top: -SPACING_LG,
+  left: 0,
+  right: 0,
+  bottom: 0
+}
+
+/**
+ * Renders `headerOverlay` on top of the content, starting right under the header.
+ * The overlay covers the whole content area (and not only its own height), because
+ * Android doesn't deliver touches to children that overflow their parent. Touches
+ * that miss the overlay's children pass through to the content below.
+ */
+const WithHeaderOverlay = ({
+  headerOverlay,
+  children
+}: {
+  headerOverlay?: ReactNode
+  children: ReactNode
+}) => {
+  if (!headerOverlay) return <>{children}</>
+
+  return (
+    <View style={flexbox.flex1}>
+      {children}
+      <View style={HEADER_OVERLAY_STYLE} pointerEvents="box-none">
+        {headerOverlay}
+      </View>
+    </View>
+  )
+}
 
 const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   backgroundColor,
@@ -43,16 +76,19 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   const isSheetOpen = openBottomSheetsCount > 0
 
   const [keepSuppressedUntilKeyboardHidden, setKeepSuppressedUntilKeyboardHidden] = useState(false)
+  const [isKeyboardUp, setIsKeyboardUp] = useState(false)
   const isSheetOpenRef = useRef(isSheetOpen)
   isSheetOpenRef.current = isSheetOpen
 
   useEffect(() => {
     const willShowSub = KeyboardEvents.addListener('keyboardWillShow', () => {
+      setIsKeyboardUp(true)
       // If the keyboard comes up while a sheet is open, remember that we must
       // keep avoidance suppressed through the keyboard's hide animation later.
       if (isSheetOpenRef.current) setKeepSuppressedUntilKeyboardHidden(true)
     })
     const didHideSub = KeyboardEvents.addListener('keyboardDidHide', () => {
+      setIsKeyboardUp(false)
       setKeepSuppressedUntilKeyboardHidden(false)
     })
 
@@ -64,16 +100,20 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
 
   const paddingTop = isInsideBottomSheet ? 0 : insets.top + (withTopPadding ? SPACING_SM : 0)
 
+  // A sheet opening turns the avoidance off mid keyboard-hide animation, leaving the content
+  // sized for a keyboard that has gone. It stays on until the keyboard is actually down.
   const isKeyboardAvoidingEnabled =
-    keyboardAwareFooter && !isSheetOpen && !keepSuppressedUntilKeyboardHidden
+    keyboardAwareFooter && (!isSheetOpen || isKeyboardUp) && !keepSuppressedUntilKeyboardHidden
 
   return (
-    // `behavior="height"` shrinks the whole container by the keyboard's overlap,
+    // `behavior="padding"` pads the container's bottom by the keyboard's overlap,
     // so the flex:1 content area compresses and the footer is pushed up above the
     // keyboard instead of being covered by it. The overlap is measured from the
     // view's on-screen frame, so the bottom safe-area inset is accounted for.
+    // Not "height": once closed it returns no style, and Reanimated keeps the last height
+    // it set, so at times the footer stayed lifted after the keyboard hid
     <KeyboardAvoidingView
-      behavior="height"
+      behavior="padding"
       enabled={isKeyboardAvoidingEnabled}
       style={[
         flexbox.flex1,
@@ -128,12 +168,14 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   onBackButtonPress,
   rightIcon,
   title,
+  headerOverlay,
   ...rest
 }) => {
-  const { isOnboardingRoute } = useOnboardingNavigation()
   const { goBack } = useNavigation()
   const insets = useSafeAreaInsets()
   const isInsideKeyboardAwareContainer = useContext(KeyboardAwareContainerContext)
+
+  const hasHeader = !!title || !!withBackButton
 
   const handleBackButtonPress = () => {
     if (onBackButtonPress) {
@@ -146,7 +188,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   if (withScroll) {
     return (
       <View style={[flexbox.flex1, withHorizontalPadding && spacings.phSm]}>
-        {(!!title || !!withBackButton) && (
+        {hasHeader && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
             {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
@@ -155,23 +197,25 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
             )}
           </View>
         )}
-        <KeyboardAwareScrollView
-          ref={wrapperRef}
-          style={flexbox.flex1}
-          contentContainerStyle={[
-            { flexGrow: 1, paddingBottom: insets.bottom || SPACING_SM },
-            contentContainerStyle
-          ]}
-          bottomOffset={200}
-          extraKeyboardSpace={isInsideKeyboardAwareContainer ? -1000 : 0}
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-          showsVerticalScrollIndicator={false}
-          {...keyboardAwareScrollViewProps}
-          {...rest}
-        >
-          {children}
-        </KeyboardAwareScrollView>
+        <WithHeaderOverlay headerOverlay={hasHeader ? headerOverlay : undefined}>
+          <KeyboardAwareScrollView
+            ref={wrapperRef}
+            style={flexbox.flex1}
+            contentContainerStyle={[
+              { flexGrow: 1, paddingBottom: insets.bottom || SPACING_SM },
+              contentContainerStyle
+            ]}
+            bottomOffset={200}
+            extraKeyboardSpace={isInsideKeyboardAwareContainer ? -1000 : 0}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            {...keyboardAwareScrollViewProps}
+            {...rest}
+          >
+            {children}
+          </KeyboardAwareScrollView>
+        </WithHeaderOverlay>
       </View>
     )
   }
@@ -181,7 +225,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
       ref={wrapperRef}
       style={[flexbox.flex1, withHorizontalPadding && spacings.phSm, contentContainerStyle]}
     >
-      {(!!title || !!withBackButton) && (
+      {hasHeader && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
           {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
@@ -190,7 +234,9 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
           )}
         </View>
       )}
-      {children}
+      <WithHeaderOverlay headerOverlay={hasHeader ? headerOverlay : undefined}>
+        {children}
+      </WithHeaderOverlay>
     </View>
   )
 }

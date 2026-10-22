@@ -1,7 +1,7 @@
 import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, TextInput, View } from 'react-native'
+import { TextInput, View } from 'react-native'
 
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
@@ -17,6 +17,7 @@ import AddressScanButton from '@common/components/AddressInput/AddressScanButton
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -25,6 +26,8 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props extends InputProps {
   withDetails?: boolean
@@ -43,7 +46,12 @@ interface Props extends InputProps {
   // When provided, a scan icon is shown that opens a camera QR scanner
   // (mobile only) and passes the scanned address back. No-op on web.
   onScanAddress?: (address: string) => void
+  // Shortens the address of the entered contact, for a container too narrow to fit a full one.
+  plainAddressMaxLength?: number
 }
+
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
 
 const AddressInput: React.FC<Props> = ({
   withDetails,
@@ -61,13 +69,14 @@ const AddressInput: React.FC<Props> = ({
   value,
   renderConfirmAddress,
   onScanAddress,
+  plainAddressMaxLength,
   ...rest
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
-  const { state: contacts } = useController('AddressBookController', 'contacts')
-  const { domains } = useController('DomainsController').state
+  const { state: contacts } = useController('AddressBookController', selectContacts)
+  const { state: domains } = useController('DomainsController', selectDomains)
   const { message, severity } = validation
   const isError = severity === 'error'
 
@@ -94,6 +103,14 @@ const AddressInput: React.FC<Props> = ({
     fieldValue: value || ''
   })
 
+  const isClearButtonVisible = !rest.button && !!value && !!withDetails
+
+  const handleClear = useCallback(() => {
+    !!onChangeText && onChangeText('')
+    inputRef?.current?.focus()
+    !!onClearButtonPress && onClearButtonPress()
+  }, [onChangeText, onClearButtonPress])
+
   const isValidAddress = useMemo(() => validateAddress(address).severity === 'success', [address])
 
   // Ensure the displayed name is the normalized one stored by the resolver, not the raw field value
@@ -110,6 +127,7 @@ const AddressInput: React.FC<Props> = ({
         </Text>
       )}
       <Input
+        {...NO_AUTOFILL_PROPS}
         // Purposefully spread props here, so that we don't override AddressInput's props
         {...rest}
         value={value}
@@ -141,11 +159,16 @@ const AddressInput: React.FC<Props> = ({
                 <>
                   {resolvedAddress && !isRecipientDomainResolving ? (
                     <AnimatedPressable
-                      style={[flexbox.alignCenter, flexbox.directionRow, animStyle]}
+                      style={[
+                        flexbox.alignCenter,
+                        flexbox.directionRow,
+                        { flexShrink: 1 },
+                        animStyle
+                      ]}
                       onPress={handleCopyResolvedAddress}
                       {...bindAnim}
                     >
-                      <Text style={flexbox.flex1} numberOfLines={1}>
+                      <Text style={{ flexShrink: 1 }} numberOfLines={1}>
                         <Text
                           style={{
                             flex: 1
@@ -188,6 +211,7 @@ const AddressInput: React.FC<Props> = ({
                 }}
                 address={address}
                 addressHighlight={addressHighlight}
+                plainAddressMaxLength={plainAddressMaxLength}
                 name={
                   (contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name ||
                     resolvedDomainName) ??
@@ -203,18 +227,14 @@ const AddressInput: React.FC<Props> = ({
           rest.button ||
           (!value && onScanAddress ? (
             <AddressScanButton onScanned={onScanAddress} />
-          ) : value && withDetails ? (
-            <Pressable
-              style={{ width: 24, height: 24, ...flexbox.center }}
-              onPress={() => {
-                !!onChangeText && onChangeText('')
-                inputRef?.current?.focus()
-                !!onClearButtonPress && onClearButtonPress()
-              }}
-            >
-              <CloseIcon width={12} height={12} strokeWidth="1.75" style={spacings.mlMi} />
-            </Pressable>
+          ) : isClearButtonVisible ? (
+            <View style={{ width: 24, height: 24, ...flexbox.center }}>
+              <CloseIcon width={12} height={12} strokeWidth="1.75" />
+            </View>
           ) : null)
+        }
+        buttonProps={
+          isClearButtonVisible ? { ...rest.buttonProps, onPress: handleClear } : rest.buttonProps
         }
       />
     </>

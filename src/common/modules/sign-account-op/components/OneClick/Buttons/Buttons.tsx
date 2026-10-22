@@ -5,14 +5,13 @@ import { View } from 'react-native'
 import { SignAccountOpError } from '@ambire-common/interfaces/signAccountOp'
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import BatchIcon from '@common/assets/svg/BatchIcon'
-import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
-import { isMobile, isWeb } from '@common/config/env'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import useCompactLayout from '@common/hooks/useCompactLayout'
+import BatchButton from '@common/modules/sign-account-op/components/Footer/BatchButton'
+import CompactFooterButtons from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -50,7 +49,8 @@ const Buttons: FC<Props> = ({
   isLocalStateOutOfSync
 }) => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
+  const buttonSize = isCompactLayout ? 'regular' : 'smaller'
   const callsCount = getCallsCount(networkUserRequests)
 
   const oneClickDisabledReason = useMemo(() => {
@@ -96,103 +96,87 @@ const Buttons: FC<Props> = ({
       : proceedBtnText
   }, [proceedBtnText, callsCount, t])
 
-  return (
+  const proceedButton = shouldHoldToProceed ? (
+    <HoldToProceedButton
+      text={t('Hold to proceed')}
+      disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
+      onHoldComplete={() => {
+        if (isLocalStateOutOfSync) return
+        onRecipientAddressUnknownAgree?.()
+
+        handleSubmitForm(true)
+      }}
+      testID="proceed-btn"
+      size={buttonSize}
+      style={isCompactLayout ? { width: '100%', minWidth: 0 } : undefined}
+    />
+  ) : (
+    <ButtonWithLoader
+      text={primaryButtonText}
+      disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
+      isLoading={isLoading}
+      onPress={() => {
+        if (isLocalStateOutOfSync) return
+
+        handleSubmitForm(true)
+      }}
+      size={buttonSize}
+      testID="proceed-btn"
+      style={isCompactLayout ? { width: '100%', minWidth: 0 } : undefined}
+    />
+  )
+
+  const proceedButtonWithTooltip = (
     <View
-      style={[
-        isWeb
-          ? isCompactSidePanelLayout
-            ? {
-                flexDirection: 'column-reverse',
-                width: '100%',
-                alignItems: 'stretch',
-                gap: SPACING_TY
-              }
-            : [flexbox.directionRow, flexbox.alignCenter]
-          : { flexDirection: 'column-reverse' },
-        flexbox.justifyEnd
-      ]}
+      dataSet={createGlobalTooltipDataSet({
+        id: 'proceed-btn-tooltip',
+        content: oneClickDisabledReason
+      })}
     >
-      {!isRequestWindow && (
-        <View
-          dataSet={createGlobalTooltipDataSet({
-            id: 'batch-btn-tooltip',
-            content: batchDisabledReason
-          })}
-          style={isWeb && !isCompactSidePanelLayout && spacings.mrLg}
-        >
-          <Button
-            hasBottomSpacing={false}
-            text={
-              callsCount > 0 && !batchDisabledReason
-                ? t('Add to batch ({{count}})', {
-                    count: callsCount
-                  })
-                : t('Start a batch')
-            }
-            size={isWeb ? 'smaller' : 'regular'}
-            disabled={startBatchingDisabled}
-            type={isSidePanel ? 'tertiary' : 'secondary'}
-            tooltipDataSet={createGlobalTooltipDataSet({
-              id: 'start-batch-info-tooltip',
-              content: startBatchingInfo
-            })}
-            childrenPosition="left"
-            style={
-              isWeb
-                ? isCompactSidePanelLayout
-                  ? { width: '100%', minWidth: 0 }
-                  : { minWidth: 160, ...spacings.phMd }
-                : {}
-            }
-            onPress={() => {
-              if (isLocalStateOutOfSync) return
-              handleSubmitForm(false)
-            }}
-            testID="batch-btn"
-          >
-            <BatchIcon style={spacings.mrMi} />
-          </Button>
-        </View>
-      )}
-      <View
-        dataSet={createGlobalTooltipDataSet({
-          id: 'proceed-btn-tooltip',
-          content: oneClickDisabledReason
-        })}
-        style={[
-          isMobile && spacings.mbSm,
-          isCompactSidePanelLayout && { width: '100%', minWidth: 0 }
-        ]}
-      >
-        {shouldHoldToProceed ? (
-          <HoldToProceedButton
-            text={t('Hold to proceed')}
-            disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
-            onHoldComplete={() => {
-              if (isLocalStateOutOfSync) return
-              onRecipientAddressUnknownAgree?.()
+      {proceedButton}
+    </View>
+  )
 
-              handleSubmitForm(true)
-            }}
-            testID="proceed-btn"
-            style={isCompactSidePanelLayout ? { width: '100%', minWidth: 0 } : undefined}
-          />
-        ) : (
-          <ButtonWithLoader
-            text={primaryButtonText}
-            disabled={isNotReadyToProceed || isLoading || !!oneClickDisabledReason}
-            isLoading={isLoading}
-            onPress={() => {
-              if (isLocalStateOutOfSync) return
+  if (isRequestWindow) return proceedButtonWithTooltip
 
-              handleSubmitForm(true)
-            }}
-            size={isWeb ? 'smaller' : 'regular'}
-            testID="proceed-btn"
-            style={isCompactSidePanelLayout ? { width: '100%', minWidth: 0 } : undefined}
-          />
-        )}
-      </View>
+  const batchButton = (
+    <View
+      dataSet={createGlobalTooltipDataSet({
+        id: 'batch-btn-tooltip',
+        content: batchDisabledReason
+      })}
+      style={isCompactLayout ? flexbox.flex1 : spacings.mrLg}
+    >
+      <BatchButton
+        testID="batch-btn"
+        badgeCount={!batchDisabledReason ? callsCount : 0}
+        infoTooltip={startBatchingInfo}
+        size={buttonSize}
+        disabled={startBatchingDisabled}
+        type={isSidePanel ? 'tertiary' : 'secondary'}
+        style={isCompactLayout ? { width: '100%' } : { minWidth: 160, ...spacings.phMd }}
+        onPress={() => {
+          if (isLocalStateOutOfSync) return
+          handleSubmitForm(false)
+        }}
+      />
+    </View>
+  )
+
+  if (isCompactLayout) {
+    return (
+      <CompactFooterButtons
+        isEvenSplit
+        secondaryActions={batchButton}
+        primaryAction={proceedButtonWithTooltip}
+      />
+    )
+  }
+
+  return (
+    <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
+      {batchButton}
+      {proceedButtonWithTooltip}
     </View>
   )
 }

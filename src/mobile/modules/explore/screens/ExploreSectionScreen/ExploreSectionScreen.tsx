@@ -26,18 +26,21 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import DisconnectAllBottomSheet, {
   DisconnectAllBottomSheetHandle
 } from '@common/modules/explore/components/DisconnectAllBottomSheet'
-import WalletStaking from '@common/modules/explore/components/WalletStaking'
-import { shouldShowWalletStaking } from '@common/modules/explore/helpers/shouldShowWalletStaking'
+import WalletStakingCard from '@common/modules/wallet-staking/components/WalletStakingCard'
+import { shouldShowWalletStaking } from '@common/modules/wallet-staking/helpers/shouldShowWalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const TYPE_TITLES: Record<ExploreSectionType, string> = {
   // 'trending' is listed for type completeness; trending has its own dedicated screen (it never
@@ -49,13 +52,19 @@ const TYPE_TITLES: Record<ExploreSectionType, string> = {
   apps: 'Explore apps'
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const ExploreSectionScreen = () => {
   const { t } = useTranslation()
   const { params } = useRoute()
   const { navigate } = useNavigation()
   const { theme } = useTheme()
   const { state } = useController('DappsController')
-  const { state: allNetworks } = useController('NetworksController', 'networks')
+  const { state: allNetworks } = useController('NetworksController', selectNetworks)
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const [network, setNetwork] = useState<Network | null>(null)
   const [category, setCategory] = useState<string | null>(null)
@@ -114,7 +123,7 @@ const ExploreSectionScreen = () => {
   const networksOptions: SelectValue[] = useMemo(
     () => [
       ALL_NETWORKS_OPTION,
-      ...allNetworks.map((n: Network) => ({
+      ...sortNetworksByBalance(allNetworks, balancePerNetwork).map((n: Network) => ({
         value: n.name,
         label: (
           <Text weight="medium" fontSize={12} numberOfLines={1}>
@@ -124,7 +133,7 @@ const ExploreSectionScreen = () => {
         icon: <NetworkIcon size={24} key={n.chainId.toString()} id={n.chainId.toString()} />
       }))
     ],
-    [allNetworks, ALL_NETWORKS_OPTION]
+    [allNetworks, balancePerNetwork, ALL_NETWORKS_OPTION]
   )
 
   const ALL_CATEGORIES_OPTION = useMemo(
@@ -269,8 +278,9 @@ const ExploreSectionScreen = () => {
             data={dapps}
             renderItem={renderItem}
             keyExtractor={(item: Dapp) => item.id}
+            keyboardDismissMode="on-drag"
             ListHeaderComponent={
-              sectionType === 'apps' && isWalletStakingVisible ? WalletStaking : undefined
+              sectionType === 'apps' && isWalletStakingVisible ? WalletStakingCard : undefined
             }
             ListEmptyComponent={
               sectionType === 'apps' ? null : (

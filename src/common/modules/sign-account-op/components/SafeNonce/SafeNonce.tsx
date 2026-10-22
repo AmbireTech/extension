@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Keyboard, Pressable, View, ViewStyle } from 'react-native'
 
-import { getAccountOpNonce, isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
@@ -13,7 +13,9 @@ import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { isValidSafeNonce } from './helpers'
+import { getQueuedSafeNonces, isValidSafeNonce } from './helpers'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const getNonce = (safeTxNonce: string | undefined, accountOpNonce: bigint | null) =>
   safeTxNonce === undefined ? (accountOpNonce ?? 0n) : BigInt(safeTxNonce)
@@ -22,13 +24,19 @@ interface Props {
   withNetwork?: boolean
 }
 
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+
 const SafeNonce = ({ withNetwork = false }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state: signAccountOpState, dispatch } = useController('SignAccountOpController')
-  const { state: accountStates } = useController('AccountsController', 'accountStates')
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
   const fromRequestId = signAccountOpState?.fromRequestId
 
   // Nonces already used by every OTHER queued Safe request for this account/chain. Computed
@@ -39,20 +47,12 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
 
     const { accountOp } = signAccountOpState
 
-    return userRequests.reduce<bigint[]>((nonces, request) => {
-      if (
-        request.kind !== 'calls' ||
-        request.id === fromRequestId ||
-        !request.signAccountOp.account.safeCreation ||
-        request.signAccountOp.accountOp.accountAddr !== accountOp.accountAddr ||
-        request.signAccountOp.accountOp.chainId !== accountOp.chainId
-      )
-        return nonces
-
-      const requestNonce = getAccountOpNonce(request.signAccountOp.accountOp)
-      if (requestNonce !== null) nonces.push(requestNonce)
-      return nonces
-    }, [])
+    return getQueuedSafeNonces(
+      userRequests,
+      fromRequestId,
+      accountOp.accountAddr,
+      accountOp.chainId
+    )
   }, [fromRequestId, signAccountOpState, userRequests])
 
   const nonce = useMemo(
@@ -305,7 +305,11 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     ]
   )
 
-  if (!signAccountOpState?.account.safeCreation) return null
+  if (
+    !signAccountOpState?.account.safeCreation ||
+    !!signAccountOpState?.accountOp.meta?.isSafeDeploy
+  )
+    return null
 
   return !hasNetworkLayout ? (
     <View ref={containerRef} style={{ width: 165, height: 40 }}>

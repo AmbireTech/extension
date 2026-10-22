@@ -8,6 +8,7 @@ import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
+import { findAccountOpOrReplacement } from '@ambire-common/libs/activity/replacements'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
@@ -24,13 +25,29 @@ import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import { getUiType } from '@common/utils/uiType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isRequestWindow } = getUiType()
+
+const selectVerifiedDomainsStatus = (state: AllControllersMappingType['DomainsController']) =>
+  state.verifiedDomainsStatus
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
+const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.visibleUserRequests
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+const selectAccountsOps = (state: AllControllersMappingType['ActivityController']) =>
+  state.accountsOps
 
 const useTransfer = (isTopUpScreen: boolean) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { verifiedDomainsStatus, domains } = useController('DomainsController').state
+  const { state: verifiedDomainsStatus } = useController(
+    'DomainsController',
+    selectVerifiedDomainsStatus
+  )
+  const { state: domains } = useController('DomainsController', selectDomains)
   const {
     isTopUp,
     validationFormMsgs,
@@ -48,9 +65,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     amountFieldMode,
     amount: controllerAmount,
     amountInFiat,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch,
-    recipientDomainAddressChange
+    isRecipientAddressViewOnly
   } = transferState
 
   const amountInFiatBigInt = useMemo(() => {
@@ -63,18 +78,21 @@ const useTransfer = (isTopUpScreen: boolean) => {
 
   const { navigate } = useNavigation()
   const { t } = useTranslation()
-  const { state: visibleUserRequests } = useController('RequestsController', 'visibleUserRequests')
+  const { state: visibleUserRequests } = useController(
+    'RequestsController',
+    selectVisibleUserRequests
+  )
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
-  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { state: accountsOps } = useController('ActivityController', 'accountsOps')
+  const { state: accountsOps } = useController('ActivityController', selectAccountsOps)
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
@@ -111,12 +129,11 @@ const useTransfer = (isTopUpScreen: boolean) => {
     addressState.fieldValue !== addressStateFieldValue
 
   const submittedAccountOp = useMemo(() => {
-    if (!accountsOps.transfer || !latestBroadcastedAccountOp?.signature) return
+    if (!accountsOps.transfer || !latestBroadcastedAccountOp) return
 
-    return accountsOps.transfer.result.items.find(
-      (accOp) => accOp.signature === latestBroadcastedAccountOp.signature
-    )
-  }, [accountsOps.transfer, latestBroadcastedAccountOp?.signature])
+    // Once sped up, the activity shows its speed up instead of it
+    return findAccountOpOrReplacement(accountsOps.transfer.result.items, latestBroadcastedAccountOp)
+  }, [accountsOps.transfer, latestBroadcastedAccountOp])
 
   const accountUserRequests = useMemo(() => {
     if (!account || !userRequests.length) return []
@@ -201,7 +218,8 @@ const useTransfer = (isTopUpScreen: boolean) => {
     close: closeEstimationModal
   } = useModalize()
 
-  const closeEstimationModalAndDispatch = useCallback(() => {
+  // Resets the proceeded state without closing the sheet, so the sheet can call it once it closed
+  const handleEstimationModalClosed = useCallback(() => {
     transferDispatch({
       type: 'method',
       params: {
@@ -209,8 +227,12 @@ const useTransfer = (isTopUpScreen: boolean) => {
         args: [false]
       }
     })
+  }, [transferDispatch])
+
+  const closeEstimationModalAndDispatch = useCallback(() => {
+    handleEstimationModalClosed()
     closeEstimationModal()
-  }, [closeEstimationModal, transferDispatch])
+  }, [closeEstimationModal, handleEstimationModalClosed])
 
   const openEstimationModalAndDispatch = useCallback(() => {
     transferDispatch({
@@ -444,17 +466,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
-        shouldHoldToProceed={
-          (isRecipientAddressUnknown &&
-            !isRecipientAddressUnknownAgreed &&
-            !isRecipientHumanizerKnownTokenOrSmartContract &&
-            isRecipientAddressFirstTimeSend) ||
-          isRecipientAddressViewOnly ||
-          // poisoning detected - require hold-to-proceed as an additional safety step
-          !!addressPoisoningMatch ||
-          // domain now resolves to a different address than last time - possible expiry/snipe
-          !!recipientDomainAddressChange
-        }
+        shouldHoldToProceed={!!validationFormMsgs.recipientAddress.shouldHold}
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
     )
@@ -465,13 +477,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
-    isRecipientAddressUnknown,
-    isRecipientAddressUnknownAgreed,
-    isRecipientHumanizerKnownTokenOrSmartContract,
-    isRecipientAddressFirstTimeSend,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch,
-    recipientDomainAddressChange,
+    validationFormMsgs.recipientAddress.shouldHold,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])
@@ -554,6 +560,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     closeGasTankInfoBottomSheet,
     estimationModalRef,
     closeEstimationModalAndDispatch,
+    handleEstimationModalClosed,
     updateController,
     handleUpdateStatus,
     portfolio,

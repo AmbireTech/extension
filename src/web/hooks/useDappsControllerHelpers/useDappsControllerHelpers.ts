@@ -16,8 +16,7 @@ export default function useDappsControllerHelpers(
   dispatch: (action: MethodAction | Action) => void
 ) {
   const { state, updateHelpers } = useControllerState({
-    id: 'DappsController',
-    subscriptionEnabled: true
+    id: 'DappsController'
   })
 
   const dappSessions = useMemo(() => state.dappSessions ?? {}, [state.dappSessions])

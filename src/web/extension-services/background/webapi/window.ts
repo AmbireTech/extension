@@ -1,22 +1,22 @@
 import { EventEmitter } from 'events'
 
 import { FocusWindowParams, WindowProps } from '@ambire-common/interfaces/ui'
-import { SPACING } from '@common/styles/spacings'
 import { browser, engine, isExtension, isSafari } from '@web/constants/browserapi'
 import { IS_FIREFOX, IS_WINDOWS } from '@web/constants/common'
 import {
-  MIN_NOTIFICATION_WINDOW_HEIGHT,
   NOTIFICATION_WINDOW_HEIGHT,
   NOTIFICATION_WINDOW_WIDTH,
-  TAB_WIDE_CONTENT_WIDTH
+  POPUP_HEIGHT,
+  POPUP_WIDTH,
+  SIDE_PANEL_WIDTH
 } from '@web/constants/spacings'
+import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
+import {
+  isSidePanelModeEnabled,
+  isSidePanelOnLeft
+} from '@web/extension-services/background/webapi/panel'
 import { PortMessenger } from '@web/extension-services/messengers'
-import { isExtensionOverlayPort } from '@web/utils/sidePanel'
-
-type CustomSize = {
-  width: number
-  height: number
-}
+import { isExtensionOverlayPort, SIDE_PANEL_WIDTH_STORAGE_KEY } from '@web/utils/sidePanel'
 
 /**
  * The usable area of a single display, positioned in the desktop coordinate space. A display
@@ -34,6 +34,12 @@ type WorkArea = {
  * `system.display` API and exposes the offset through these non-standard properties instead.
  */
 type ScreenWithOffset = Screen & { availLeft?: number; availTop?: number }
+
+/**
+ * A plausible upper bound for the inset Chromium leaves around the web contents. Anything larger
+ * is something else taking horizontal space from the page, such as docked DevTools.
+ */
+const MAX_WEB_CONTENTS_INSET = 16
 
 const event = new EventEmitter()
 
@@ -53,28 +59,27 @@ export const WINDOW_SIZE = {
   height: NOTIFICATION_WINDOW_HEIGHT
 }
 
-const formatScreenHeight = (h: number) => {
+/**
+ * The width the user last gave the side panel, as stored by the panel itself, or the width Chrome
+ * opens the panel with when nothing valid is stored.
+ */
+const getSidePanelWidth = async (): Promise<number> => {
   try {
-    const height = h > MIN_NOTIFICATION_WINDOW_HEIGHT ? h : MIN_NOTIFICATION_WINDOW_HEIGHT
+    const { [SIDE_PANEL_WIDTH_STORAGE_KEY]: storedWidth } = await browser.storage.local.get(
+      SIDE_PANEL_WIDTH_STORAGE_KEY
+    )
 
-    return Math.round(height)
-  } catch (error) {
-    return Math.round(MIN_NOTIFICATION_WINDOW_HEIGHT)
-  }
-}
-
-const formatScreenWidth = (w: number) => {
-  try {
-    if (w < NOTIFICATION_WINDOW_WIDTH) {
-      return Math.round(NOTIFICATION_WINDOW_WIDTH)
-    }
-    if (w > TAB_WIDE_CONTENT_WIDTH) {
-      return Math.round(TAB_WIDE_CONTENT_WIDTH)
+    if (typeof storedWidth !== 'number' || !Number.isFinite(storedWidth) || storedWidth <= 0) {
+      return SIDE_PANEL_WIDTH
     }
 
-    return Math.round(w)
+    // The browser rejects fractional sizes
+    return Math.round(storedWidth)
   } catch (error) {
-    return Math.round(NOTIFICATION_WINDOW_WIDTH)
+    console.error('Failed to read the side panel width', error)
+    captureBackgroundException(error)
+
+    return SIDE_PANEL_WIDTH
   }
 }
 
@@ -137,8 +142,8 @@ const clampToWorkArea = (
   workAreaStart: number,
   workAreaSize: number
 ) => {
-  const min = workAreaStart + SPACING
-  const max = workAreaStart + workAreaSize - windowSize - SPACING
+  const min = workAreaStart
+  const max = workAreaStart + workAreaSize - windowSize
 
   // The window doesn't fit, so align it to the start of the work area
   if (max < min) return Math.round(min)
@@ -146,9 +151,34 @@ const clampToWorkArea = (
   return Math.round(Math.min(Math.max(position, min), max))
 }
 
-const calculateWindowSizeAndPosition = async (
+/**
+ * Chromium rounds the corners of the web contents and leaves a small, even inset around them. The
+ * browser window and its tab only report their own sizes, so what the page loses on the sides is
+ * that inset - and the same amount sits below the page, inflating the chrome height.
+ */
+const getWebContentsInset = (
   baseWindow: chrome.windows.Window,
-  customSize?: CustomSize
+  activeTab: chrome.tabs.Tab | undefined
+) => {
+  if (!baseWindow.width || !activeTab?.width) return 0
+
+  const inset = (baseWindow.width - activeTab.width) / 2
+
+  // Docked DevTools and an open side panel shrink the tab too, and that is not an inset
+  if (inset < 0 || inset > MAX_WEB_CONTENTS_INSET) return 0
+
+  return inset
+}
+
+/**
+ * Sizes and places the request window so a request shows up beside the page instead of covering
+ * it: spanning the page area along its right edge, at the width of the surface the user picked
+ * for the extension - the popup or the side panel. Chrome exposes neither the popup's anchor nor
+ * the width the user gave the panel, so the position is derived from the browser window and the
+ * panel width is the one the panel stored.
+ */
+const calculateWindowSizeAndPosition = async (
+  baseWindow: chrome.windows.Window
 ): Promise<{ width: number; height: number; left: number; top: number }> => {
   // In CI (headless: true), the calculated window position is always outside the visible screen, causing window.open() to fail with:
   // "Invalid value for bounds. Bounds must be at least 50% within visible screen space".
@@ -162,56 +192,41 @@ const calculateWindowSizeAndPosition = async (
     }
   }
 
-  const workArea = await getDisplayWorkArea(baseWindow)
-
-  // The service worker has no screen to fall back to, so an unknown display layout, as in Safari
-  // or when Chrome can't report its displays, is sized like the default request window
-  const screenWidth = formatScreenWidth(workArea?.width ?? NOTIFICATION_WINDOW_WIDTH)
-  const screenHeight = formatScreenHeight(workArea?.height ?? NOTIFICATION_WINDOW_HEIGHT)
-
-  const ratio = 0.9 // 90% of the screen/tab size
-
-  // By default the desired window dimensions should be 720x800
-  // or if the screen height is smaller 800 make the window height 90% of the screen height
-  let desiredWidth = 720
-  let desiredHeight = Math.min(800, screenHeight * ratio)
-
-  if (customSize) {
-    desiredWidth = customSize.width
-    desiredHeight = Math.min(customSize.height, screenHeight * ratio)
-  }
-
-  let leftPosition = (screenWidth - desiredWidth) / 2
-  let topPosition = (screenHeight - desiredHeight) / 2
+  const [workArea, isSidePanelMode] = await Promise.all([
+    getDisplayWorkArea(baseWindow),
+    isSidePanelModeEnabled()
+  ])
 
   const [activeTab] = (baseWindow.tabs || []).find((t) => t.active)
     ? [(baseWindow.tabs || []).find((t) => t.active)]
     : await chrome.tabs.query({ active: true, windowId: baseWindow.id })
 
-  let leftOffset = 0
-  let topOffset = 0
+  const [width, isOnLeft] = isSidePanelMode
+    ? await Promise.all([getSidePanelWidth(), isSidePanelOnLeft()])
+    : [POPUP_WIDTH, false]
+  const baseLeft = baseWindow.left ?? 0
+  const baseTop = baseWindow.top ?? 0
+  const baseWidth = baseWindow.width || width
+  const baseHeight = baseWindow.height || 0
 
-  if (baseWindow && baseWindow.left !== undefined && baseWindow.top !== undefined) {
-    leftOffset = baseWindow.left
-    topOffset = baseWindow.top
-  }
+  const webContentsInset = getWebContentsInset(baseWindow, activeTab)
 
-  if (activeTab && activeTab.width && activeTab.height) {
-    if (customSize) desiredWidth = customSize.width
-    leftPosition = (activeTab.width - desiredWidth) / 2 + leftOffset
-    // Pass customSize height to the helper as the height may be lower than the minimum height
-    desiredHeight = formatScreenHeight(
-      customSize?.height
-        ? Math.min(customSize.height, activeTab.height * ratio)
-        : Math.min(desiredHeight, activeTab.height * ratio)
-    )
-    topPosition =
-      (activeTab.height - desiredHeight) / 2 + topOffset + baseWindow.height! - activeTab.height
-  }
+  // Everything the browser draws above the page: the title bar, the tab strip and the toolbar
+  const browserChromeHeight =
+    baseHeight && activeTab?.height ? baseHeight - activeTab.height - webContentsInset : 0
+
+  // Both modes span the whole page area; only the width tells them apart
+  let height = activeTab?.height || baseHeight || POPUP_HEIGHT
+
+  if (workArea) height = Math.min(height, workArea.height)
+
+  const leftPosition = isOnLeft
+    ? baseLeft + webContentsInset
+    : baseLeft + baseWidth - webContentsInset - width
+  const topPosition = baseTop + browserChromeHeight
 
   // The browser rejects fractional sizes
-  const width = Math.round(desiredWidth)
-  const height = Math.round(desiredHeight)
+  height = Math.round(height)
 
   // The browser rejects bounds that are mostly outside the visible screen space. Without a known
   // display layout the position can only be kept away from the top left corner.
@@ -220,18 +235,14 @@ const calculateWindowSizeAndPosition = async (
     height,
     left: workArea
       ? clampToWorkArea(leftPosition, width, workArea.left, workArea.width)
-      : Math.round(Math.max(leftPosition, SPACING)),
+      : Math.round(Math.max(leftPosition, 0)),
     top: workArea
       ? clampToWorkArea(topPosition, height, workArea.top, workArea.height)
-      : Math.round(Math.max(topPosition, SPACING))
+      : Math.round(Math.max(topPosition, 0))
   }
 }
 
-const create = async (
-  url: string,
-  customSize?: CustomSize,
-  baseWindowId?: number
-): Promise<WindowProps> => {
+const create = async (url: string, baseWindowId?: number): Promise<WindowProps> => {
   let baseWindow: chrome.windows.Window | undefined
 
   if (baseWindowId) {
@@ -255,7 +266,7 @@ const create = async (
     })
   }
 
-  const { width, height, left, top } = await calculateWindowSizeAndPosition(baseWindow, customSize)
+  const { width, height, left, top } = await calculateWindowSizeAndPosition(baseWindow)
 
   const win = await chrome.windows.create({
     focused: true,
@@ -310,17 +321,22 @@ const remove = async (winId: number, pm: PortMessenger) => {
 }
 
 const open = async (
-  options: { route?: string; customSize?: CustomSize; baseWindowId?: number } = {}
+  options: { route?: string; baseWindowId?: number } = {}
 ): Promise<WindowProps> => {
-  const { route, customSize, baseWindowId } = options
+  const { route, baseWindowId } = options
 
   const url = `request-window.html${route ? `#/${route}` : ''}`
-  return create(url, customSize, baseWindowId)
+  return create(url, baseWindowId)
 }
+/** How long a window gets to report itself focused before it is treated as unfocusable. */
+const FOCUS_CONFIRMATION_TIMEOUT = 1000
+
 /**
- * Focuses an existing window. In some cases, the passed window
- * cannot be focused (e.g., on Arc browser). If the window cannot be focused
- * within 1 second, a new window is created and the old one is removed.
+ * Focuses an existing window and repositions it over the window it was opened from. Some windows
+ * can never be focused (Arc does this) - one that still isn't focused after a second is replaced
+ * by a fresh one, unless the caller asked for the window to be left alone.
+ *
+ * Resolves with the props of whichever window the caller ends up with.
  */
 const focus = async (
   windowProps: WindowProps,
@@ -328,7 +344,7 @@ const focus = async (
 ): Promise<WindowProps> => {
   if (!windowProps) throw new Error('windowProps is undefined')
 
-  const { id, width, height, createdFromWindowId } = windowProps
+  const { id, createdFromWindowId } = windowProps
   const { reopenIfNeeded = true } = params || {}
 
   let baseWindow: chrome.windows.Window | undefined
@@ -344,12 +360,27 @@ const focus = async (
     baseWindow = await chrome.windows.getCurrent({ populate: true })
   }
 
-  const { left, top } = await calculateWindowSizeAndPosition(baseWindow, { width, height })
+  const { width, height, left, top } = await calculateWindowSizeAndPosition(baseWindow)
 
   const updatedProps = { width, height, left, top, focused: true }
 
+  /**
+   * Whether the browser reports the window as focused right now. Asked rather than inferred:
+   * a window that was already focused when we got here never fires a focus event, and one that
+   * was just created can still be reported as unfocused by the call that focuses it. Neither
+   * silence is evidence that focusing failed.
+   */
+  const isWindowFocused = async () => {
+    const win = await chrome.windows.get(id).catch((e) => {
+      console.error(e)
+      return undefined
+    })
+
+    return !!win?.focused
+  }
+
   return new Promise<WindowProps>((resolve, reject) => {
-    let isFocused = false
+    let isSettled = false
     let timeoutId: NodeJS.Timeout
 
     const cleanup = () => {
@@ -357,55 +388,67 @@ const focus = async (
       if (timeoutId) clearTimeout(timeoutId)
     }
 
+    const settleWith = (props: WindowProps) => {
+      if (isSettled) return
+
+      isSettled = true
+      cleanup()
+      resolve(props)
+    }
+
+    const settle = () => settleWith({ id, createdFromWindowId, ...updatedProps })
+
+    const fail = (error: any) => {
+      if (isSettled) return
+
+      isSettled = true
+      cleanup()
+      reject(error)
+    }
+
     const focusListener = async (winId: number) => {
-      if (winId === id) {
-        const win = await chrome.windows.get(id).catch((e) => {
-          console.error(e)
-          return undefined
-        })
-        // In some Arc browser instances, the window never gets focused
-        // therefore we need a fallback logic that will open a new window
-        // and close the unfocused one
-        if (win && win.focused) {
-          isFocused = true
-          resolve({ id, createdFromWindowId, ...updatedProps })
-          cleanup()
-        }
-      }
+      if (winId !== id || isSettled) return
+
+      if (await isWindowFocused()) settle()
     }
 
     chrome.windows.onFocusChanged.addListener(focusListener)
 
-    // Attempt to focus the window
     chrome.windows
       .update(id, updatedProps)
-      .then((focusedWindow) => {
-        if (focusedWindow && focusedWindow.focused) {
-          isFocused = true
-          cleanup()
-          resolve({ id, createdFromWindowId, ...updatedProps })
-        }
-      })
-      .catch((error) => {
-        cleanup()
-        reject(error)
-      })
+      .then(async (focusedWindow) => {
+        if (isSettled) return
 
-    // Handle focus timeout - fallback to creating new window
+        if (focusedWindow?.focused || (await isWindowFocused())) settle()
+      })
+      .catch(fail)
+
     timeoutId = setTimeout(async () => {
-      cleanup()
+      if (isSettled) return
 
-      if (!isFocused && reopenIfNeeded) {
-        try {
-          // Create new window and remove the old one
-          const newWindow = await open()
-          await chrome.windows.remove(id)
-          resolve(newWindow)
-        } catch (error) {
-          reject(error)
-        }
+      // Last word before the window is replaced. Removing one the user is looking at is far
+      // worse than leaving an unfocused one up, so it only happens once the browser has
+      // confirmed the window really is not focused.
+      if (await isWindowFocused()) {
+        settle()
+        return
       }
-    }, 1000)
+
+      // Nothing left to try and the caller would rather keep an unfocused window than lose it
+      // (closing the request window mid-signing aborts the signing)
+      if (!reopenIfNeeded) {
+        settle()
+        return
+      }
+
+      try {
+        const newWindow = await open()
+        await chrome.windows.remove(id)
+        settleWith(newWindow)
+      } catch (error) {
+        fail(error)
+      }
+    }, FOCUS_CONFIRMATION_TIMEOUT)
   })
 }
 

@@ -6,10 +6,11 @@ import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridg
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -32,39 +33,46 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
+  // On web secondary is primaryBackground, which vanishes on the flat narrow footer - tertiary is
+  // the mobile secondary fill
+  const secondaryButtonType = isNarrowWebLayout ? 'tertiary' : 'secondary'
 
   const buttonsContent = (
     <View
       style={[
         routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,
-        isMobile && { flexDirection: 'column-reverse' },
-        !isMobile && flexbox.alignCenter,
-        !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter
+        flexbox.alignCenter,
+        !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter,
+        // Two halves of one full-width row
+        isCompactLayout && { gap: SPACING_TY }
       ]}
     >
       {!isRequestWindow ? (
         <Button
           onPress={handleClose}
           hasBottomSpacing={false}
-          size={isMobile ? 'regular' : 'smaller'}
-          type={routeStatus !== 'failed' ? 'secondary' : 'primary'}
+          size={isCompactLayout ? 'regular' : 'smaller'}
+          type={routeStatus !== 'failed' ? secondaryButtonType : 'primary'}
           text={secondaryButtonText}
           testID="track-progress-secondary-button"
-          style={{
-            ...(isMobile ? {} : routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg),
-            minWidth: 144
-          }}
+          style={
+            isCompactLayout
+              ? flexbox.flex1
+              : { ...(routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg), minWidth: 144 }
+          }
         />
       ) : (
-        <View />
+        // Keeps Close centered in the wide row, the compact one has nothing to center against
+        !isCompactLayout && <View />
       )}
       <Button
         onPress={onPrimaryButtonPress}
-        hasBottomSpacing={isMobile}
-        style={!isMobile ? { width: isRequestWindow ? 160 : 104 } : {}}
+        hasBottomSpacing={false}
+        style={isCompactLayout ? flexbox.flex1 : { width: isRequestWindow ? 160 : 104 }}
         text={t('Close')}
-        size={isMobile ? 'regular' : 'smaller'}
-        type={routeStatus !== 'failed' ? 'primary' : 'secondary'}
+        size={isCompactLayout ? 'regular' : 'smaller'}
+        type={routeStatus !== 'failed' ? 'primary' : secondaryButtonType}
         testID="track-progress-primary-button"
       />
     </View>
@@ -92,7 +100,14 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
           <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mvLg }} />
         )}
 
-        <FooterGlassView absolute={false} size="sm" style={isWeb ? spacings.mbTy : {}}>
+        <FooterGlassView
+          absolute={false}
+          size="sm"
+          style={isWeb ? spacings.mbTy : {}}
+          // The full-width row of buttons needs a full-width footer, not a content-sized pill
+          fullWidth={isNarrowWebLayout}
+          innerContainerStyle={isNarrowWebLayout ? spacings.ph0 : undefined}
+        >
           {buttonsContent}
         </FooterGlassView>
       </View>

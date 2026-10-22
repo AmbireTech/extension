@@ -4,12 +4,19 @@ import { Platform } from 'react-native'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
+import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
+import {
+  captureWebViewException,
+  captureWebViewMessage
+} from '@common/config/analytics/CrashAnalytics'
+import { shouldReportControllerError } from '@common/config/analytics/crashReportHelpers'
+import { CRASH_REPORT_CONTENT } from '@common/constants/crashAnalytics'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
 import { getAllSerialized, storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
-import { BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS } from '@mobile/constants/storageSnapshot'
+import { BOOT_SNAPSHOT_STORAGE_KEYS } from '@mobile/constants/storageSnapshot'
 import {
   approveWalletConnectSession,
   approveWcAuthenticate,
@@ -43,6 +50,15 @@ import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService
 
 import { decode, encode } from './bridgeCodec'
 
+// The worker hosts no controllers — those run in the RN realm (see
+// @mobile/services/controllerHost). It is still mounted and its bridge is live, so
+// anything moved back into the worker gets storage, fetch, the hardware-wallet
+// transports and the controller-state channel without further wiring.
+//
+// Moving a controller back in also makes `yarn dev:webview` required again for development
+// builds, and the dev-server notice below live again — both are dormant only because nothing
+// calls init() today. Restore the README's dev-server step along with it.
+//
 // In production the worker bundle is materialized from the OTA-shipped copy (which rides
 // the Metro bundle) into a writable, app-sandboxed dir and loaded from there via `file://`,
 // so OTA updates reach it. It falls back to the native-asset copy baked into the signed app
@@ -66,11 +82,41 @@ const getDevServerUrl = () => {
   return `http://${WEBVIEW_DEV_HOST}:${WEBVIEW_DEV_SERVER_PORT}`
 }
 
+type WorkerErrorPayload = {
+  name?: string
+  message?: string
+  stack?: string
+  url?: string
+  lineNo?: number
+  // Set only for controller errors, the global handlers report every error
+  level?: ErrorRef['level']
+  sendCrashReport?: boolean
+}
+
+// The worker sends plain objects, not Errors, so each one is rebuilt here. Its own stack and
+// location go in extra, because they point into the worker bundle, not the RN one. The rebuilt
+// errors all share this function's stack, so they're grouped by message instead. The name is
+// restored so the noise filters that match on it also apply to worker errors.
+const reportWorkerErrors = (ctrlName: string, errors: WorkerErrorPayload[]) => {
+  errors.forEach(({ name, message = '', level, sendCrashReport, ...location }) => {
+    if (!shouldReportControllerError({ level, sendCrashReport })) return
+
+    const error = new Error(message)
+    if (name) error.name = name
+    captureWebViewException(error, {
+      extra: { ctrlName, ...location },
+      fingerprint: [CRASH_REPORT_CONTENT.WEBVIEW, ctrlName, message]
+    })
+  })
+}
+
 // Global error handler injected into the WebView HTML
 const globalErrorHandler = `
   window.onerror = function(msg, url, lineNo, columnNo, error) {
-    var errMessage = error ? error.stack || error.message : msg;
-    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ message: errMessage, url: url, lineNo: lineNo }] } }));
+    var errMessage = error ? error.message : msg;
+    var errStack = error ? error.stack : undefined;
+    var errName = error ? error.name : undefined;
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ name: errName, message: errMessage, stack: errStack, url: url, lineNo: lineNo }] } }));
     return false;
   };
 `
@@ -78,6 +124,12 @@ const globalErrorHandler = `
 export interface WebViewWorkerRef {
   dispatch: (action: any, raw?: boolean) => void
   init: (config: any) => Promise<string[]>
+  /**
+   * Asks the worker to post its boot marks. Returns false when the worker has not
+   * loaded its bundle yet, so the caller can print the report without waiting for
+   * marks that are never coming.
+   */
+  flushBootProfile: () => boolean
 }
 
 export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
@@ -113,9 +165,13 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // Sticky, so the notice stays up until the worker actually boots instead of
   // flashing back to a blank screen the moment the dev server answers again.
   const [hasDevServerFailed, setHasDevServerFailed] = useState(false)
+  // Nothing calls init() while the worker hosts no controllers, so this stays false and the
+  // dev-server probe below never runs — a missing dev server is harmless today. It turns back
+  // on by itself if a controller is moved into the worker.
+  const isInitializeRequested = !!lastConfig.current || !!pendingConfig.current
 
   useEffect(() => {
-    if (!__DEV__ || isReady) return undefined
+    if (!__DEV__ || isReady || !isInitializeRequested) return undefined
 
     let isActive = true
     let probeTimeoutId: ReturnType<typeof setTimeout> | null = null
@@ -149,7 +205,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       isActive = false
       if (probeTimeoutId) clearTimeout(probeTimeoutId)
     }
-  }, [devUrl, isReady])
+  }, [devUrl, isInitializeRequested, isReady])
 
   useEffect(() => {
     if (__DEV__ || prodBundleUri) return undefined
@@ -181,8 +237,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
     initReadyWarningTimeoutRef.current = setTimeout(() => {
       if (initResolver.current && !isReadyRef.current) {
         console.warn(
-          `[WebViewWorker] Controllers are not ready after ${CONTROLLER_STORE_MAX_LOADING_TIME}ms. ` +
-            `Actions may be dropped. Dev host: ${devUrl}. ` +
+          `[WebViewWorker] The worker did not report ready after ${CONTROLLER_STORE_MAX_LOADING_TIME}ms. ` +
+            `Actions dispatched to it are dropped. Dev host: ${devUrl}. ` +
             `If you are developing locally, ensure the webview dev server is running.`
         )
       }
@@ -200,7 +256,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           try {
             window.postMessage(${embedded}, '*');
           } catch (e) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ name: e.name, message: e.message, stack: e.stack }] } }));
           }
         })();
         true;
@@ -212,21 +268,19 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // reloads). The richJson stringify here covers the whole storage snapshot, which
   // is why it is measured separately from the injectJavaScript hop.
   //
-  // PERF: ship a one-shot snapshot of async storage so the worker can seed an
-  // in-memory cache and serve controller-boot reads locally instead of making 80+
-  // separate bridged storage.get round-trips (each delivered via its own
-  // injectJavaScript), which saturated the bridge for seconds. Bulk keys no
-  // controller needs to construct are left out of it (see
-  // BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS) and fetched over the bridge on first use —
-  // the snapshot's `allKeys` is what lets the worker tell those apart from keys that
-  // genuinely are not stored.
+  // PERF: ship a one-shot snapshot of the async storage keys a controller hosted in
+  // the worker needs to construct (see BOOT_SNAPSHOT_STORAGE_KEYS), so it can seed an
+  // in-memory cache and serve those reads locally instead of making one bridged
+  // storage.get round-trip per key, each delivered via its own injectJavaScript. The
+  // snapshot's `allKeys` is what lets the worker tell a key it has to fetch over the
+  // bridge from one that simply is not stored.
   //
   // The snapshot is taken here, not once in init(), so a worker that reloads (dev
   // HMR, a renderer crash) is seeded with what storage holds NOW. Reusing the
   // boot-time snapshot would hide every write made since from the new context.
   const injectInitPayload = (configToSend: any) => {
     bootProfiler.startSpan(BOOT_MARK.rnStorageSnapshot)
-    const storageSnapshot = getAllSerialized(BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS)
+    const storageSnapshot = getAllSerialized(BOOT_SNAPSHOT_STORAGE_KEYS)
     bootProfiler.endSpan(BOOT_MARK.rnStorageSnapshot, {
       count: Object.keys(storageSnapshot.values).length
     })
@@ -268,6 +322,15 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           pendingConfig.current = config
         }
       })
+    },
+    flushBootProfile: () => {
+      // `isLoaded`, not `isReady`: the worker answers this before it is configured,
+      // and its bundle-eval and page timings are worth having even when it hosts
+      // nothing and therefore never reports ready.
+      if (!isLoaded) return false
+
+      dispatchToWebView({ type: 'FLUSH_BOOT_PROFILE' })
+      return true
     }
   }))
 
@@ -362,6 +425,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
         case 'ctrl.error':
           eventBus.emit('error', { errors: data.payload.errors, controller: data.payload.ctrlName })
+          reportWorkerErrors(data.payload.ctrlName, data.payload.errors)
           break
 
         case 'ctrl.debug':
@@ -617,9 +681,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
             sendResponse(data.id, null, err.message)
           }
           break
-        case 'trezor.getPublicKey':
+        case 'trezor.ethereumGetPublicKey':
           try {
-            sendResponse(data.id, await trezorDeeplinkService.getPublicKey(data.payload))
+            sendResponse(data.id, await trezorDeeplinkService.ethereumGetPublicKey(data.payload))
           } catch (err: any) {
             sendResponse(data.id, null, err.message)
           }
@@ -720,6 +784,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   const handleRenderProcessGone = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent || {}
     console.warn('[WebViewWorker] WebView process terminated, remounting worker...', nativeEvent)
+    captureWebViewMessage('The WebView worker process was terminated and is being remounted', {
+      level: 'warning',
+      extra: { didCrash: nativeEvent?.didCrash }
+    })
     isReadyRef.current = false
     setIsReady(false)
     setIsLoaded(false)

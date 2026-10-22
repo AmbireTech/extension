@@ -13,10 +13,14 @@ import { getUiType } from '@common/utils/uiType'
 
 // Lazy on web/extension, static on mobile - see `lazySummaryPreview.native.ts`
 import SummaryPreview, { preloadSummaryPreview } from './lazySummaryPreview'
+import { isSpeedingUp } from './helpers'
+import SpeedUpHistory from './SpeedUpHistory'
 import getStyles from './styles'
 import SummaryDetailsSheet from './SummaryDetailsSheet'
 import SummaryHeader from './SummaryHeader'
 import { Props } from './types'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 export { preloadSummaryPreview }
 
@@ -26,6 +30,8 @@ const ROW_SKELETON_HEIGHT = 96
 
 const { isTab } = getUiType()
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const SubmittedTransactionSummaryInner = ({
   submittedAccountOp,
   size = 'lg',
@@ -34,7 +40,7 @@ const SubmittedTransactionSummaryInner = ({
   modalType
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
   const network: Network | undefined = useMemo(
@@ -87,6 +93,9 @@ const SubmittedTransactionSummaryInner = ({
             ]}
           />
           <SummaryPreview submittedAccountOp={submittedAccountOp} />
+          {isSpeedingUp(submittedAccountOp) && (
+            <SpeedUpHistory submittedAccountOp={submittedAccountOp} />
+          )}
         </AnimatedPressable>
       </Suspense>
       <SummaryDetailsSheet

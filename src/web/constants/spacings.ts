@@ -1,6 +1,15 @@
 import { engine } from '@web/constants/browserapi'
 
 export const POPUP_WIDTH = 480
+// The width Chrome opens the side panel with. The request window falls back to it until the panel
+// has stored the width the user gave it.
+export const SIDE_PANEL_WIDTH = 400
+/**
+ * The narrowest Firefox sidebar the layout supports - Firefox lets the sidebar be dragged narrower,
+ * and below this SidePanelTooNarrowOverlay asks the user to widen it. Chrome's side panel has a
+ * minimum width of its own, so it isn't checked against this.
+ */
+export const SIDE_PANEL_MIN_WIDTH = 360
 export const TAB_CONTENT_WIDTH = 990
 export const TAB_WIDE_CONTENT_WIDTH = 1320
 

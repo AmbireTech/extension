@@ -84,6 +84,12 @@ textarea {
   outline: none;
 }
 
+/* The seed phrase input text is transparent and the colored words are rendered
+   behind it, so the selection must be translucent to keep the words visible */
+textarea[data-seed-phrase-input='true']::selection {
+  background-color: rgba(128, 128, 255, 0.35);
+}
+
 ::-webkit-scrollbar {
   width: 4px;
 }
@@ -96,6 +102,13 @@ textarea {
 ::-webkit-scrollbar-thumb {
   background: var(--scroll-thumb-color);
   border-radius: 13px;
+}
+
+/* The dashboard pages hide their scrollbars while the carousel moves between them, and show
+   them again once it settles on one. Transparent rather than removed, so nothing is laid out again */
+[data-pager-moving='true'] ::-webkit-scrollbar-track,
+[data-pager-moving='true'] ::-webkit-scrollbar-thumb {
+  background: transparent;
 }
 
 .button-icon g,

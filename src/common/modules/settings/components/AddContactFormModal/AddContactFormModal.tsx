@@ -19,9 +19,11 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 type Props = {
   id: string
@@ -29,14 +31,22 @@ type Props = {
   closeBottomSheet: () => void
 }
 
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectVerifiedDomainsStatus = (state: AllControllersMappingType['DomainsController']) =>
+  state.verifiedDomainsStatus
+
 const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { state: contacts } = useController('AddressBookController', 'contacts')
-  const { state: accounts } = useController('AccountsController', 'accounts')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { state: contacts } = useController('AddressBookController', selectContacts)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: verifiedDomainsStatus } = useController(
+    'DomainsController',
+    selectVerifiedDomainsStatus
+  )
 
   const {
     control,
@@ -215,26 +225,30 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
             {t('Add new contact')}
           </Text>
           {formFields}
-          <Button
-            testID="add-to-address-book-button"
-            text={t('Add to Address Book')}
-            onPress={submitForm}
-            size="large"
-            childrenPosition="left"
-            hasBottomSpacing={false}
-            disabled={!isValid || isSubmitting}
-            style={spacings.mbSm}
-          >
-            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-          </Button>
-          <Button
-            testID="cancel-add-to-address-book-button"
-            text={t('Cancel')}
-            onPress={handleClose}
-            type="tertiary"
-            size="large"
-            hasBottomSpacing={false}
-          />
+          {/* One row, each button growing from its label, so the long one still fits next to Cancel */}
+          <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
+            <Button
+              testID="cancel-add-to-address-book-button"
+              text={t('Cancel')}
+              onPress={handleClose}
+              type="tertiary"
+              size="large"
+              hasBottomSpacing={false}
+              style={{ flexGrow: 1, ...spacings.phSm }}
+            />
+            <Button
+              testID="add-to-address-book-button"
+              text={t('Add to Address Book')}
+              onPress={submitForm}
+              size="large"
+              childrenPosition="left"
+              hasBottomSpacing={false}
+              disabled={!isValid || isSubmitting}
+              style={{ flexGrow: 1, ...spacings.phSm }}
+            >
+              <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+            </Button>
+          </View>
         </View>
       )}
     </BottomSheet>

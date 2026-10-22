@@ -4,11 +4,12 @@ import { View } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
+import PrivacyPoolsLogoIcon from '@common/assets/svg/PrivacyPoolsLogoIcon'
 import StarsIcon from '@common/assets/svg/StarsIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -48,6 +49,10 @@ const getBadgeTypes = (theme: ThemeProps) => ({
     color: theme.secondaryAccent400,
     backgroundColor: theme.secondaryAccent100
   },
+  privacyPools: {
+    color: theme.privacyPoolsText,
+    backgroundColor: theme.privacyPoolsBackground
+  },
   new: {
     color: theme.neutral400,
     backgroundColor: 'transparent'
@@ -72,7 +77,9 @@ const Badge = ({
   children,
   size = 'sm',
   specialType,
-  testId
+  testId,
+  isIconLeading = false,
+  isTooltipOnBadge = false
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
   const badgeTypes = getBadgeTypes(theme)
@@ -80,46 +87,13 @@ const Badge = ({
   const tooltipId = nanoid(6)
   const sizeMultiplier = SIZES[size]
 
-  return (
-    <View
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        styles.badge,
-        {
-          height: sizeMultiplier * 20,
-          backgroundColor: backgroundColor
-        },
-        type === 'outline' && styles.outlineBadge,
-        type === 'new' && styles.newBadge,
-        withRightSpacing && spacings.mrMd,
-        (!!tooltipText || !!children) && {
-          paddingRight: sizeMultiplier * 2
-        },
-        style
-      ]}
-      nativeID={nativeID}
-      testID={testId}
-    >
-      {text && (
-        <Text
-          weight={weight || 'medium'}
-          fontSize={12}
-          color={color}
-          style={[(!!tooltipText || type === 'new') && spacings.mrMi, textStyle]}
-        >
-          {text}
-        </Text>
-      )}
-      {type === 'new' && (
-        <StarsIcon
-          width={12 * sizeMultiplier}
-          height={12 * sizeMultiplier}
-          color={theme.neutral400}
-        />
-      )}
+  const hasInfoIcon = !!tooltipText && !isTooltipOnBadge
+  const hasIcon = hasInfoIcon || !!children
+
+  const icons = (
+    <>
       {children}
-      {!!tooltipText && !specialType && (
+      {hasInfoIcon && !specialType && (
         <InfoIcon
           dataSet={createGlobalTooltipDataSet({
             id: tooltipId,
@@ -141,6 +115,72 @@ const Badge = ({
           height={sizeMultiplier * 14}
         />
       )}
+      {!!tooltipText && specialType === 'privacy-pools' && (
+        <PrivacyPoolsLogoIcon
+          dataSet={createGlobalTooltipDataSet({
+            id: tooltipId,
+            content: tooltipText
+          })}
+          color={color}
+          width={sizeMultiplier * 16}
+          height={sizeMultiplier * 16}
+        />
+      )}
+    </>
+  )
+
+  return (
+    <View
+      dataSet={
+        isTooltipOnBadge && !!tooltipText
+          ? createGlobalTooltipDataSet({ id: tooltipId, content: tooltipText })
+          : undefined
+      }
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        styles.badge,
+        {
+          height: sizeMultiplier * 20,
+          backgroundColor: backgroundColor
+        },
+        type === 'outline' && styles.outlineBadge,
+        type === 'new' && styles.newBadge,
+        withRightSpacing && spacings.mrMd,
+        // Less padding on the side of the icon, as it has room around it already
+        hasIcon &&
+          (isIconLeading
+            ? { paddingLeft: sizeMultiplier * SPACING_MI }
+            : { paddingRight: sizeMultiplier * 2 }),
+        style
+      ]}
+      nativeID={nativeID}
+      testID={testId}
+    >
+      {isIconLeading && icons}
+      {!!text && (
+        <Text
+          weight={weight || 'medium'}
+          fontSize={12}
+          color={color}
+          style={[
+            isIconLeading
+              ? hasIcon && spacings.mlMi
+              : (hasInfoIcon || type === 'new') && spacings.mrMi,
+            textStyle
+          ]}
+        >
+          {text}
+        </Text>
+      )}
+      {type === 'new' && (
+        <StarsIcon
+          width={12 * sizeMultiplier}
+          height={12 * sizeMultiplier}
+          color={theme.neutral400}
+        />
+      )}
+      {!isIconLeading && icons}
     </View>
   )
 }

@@ -6,9 +6,9 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import { Props as DualChoiceModalProps } from '@common/components/DualChoiceModal/DualChoiceModal'
 import CommonText, { Props } from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import GlassView from '../GlassView'
@@ -77,9 +77,22 @@ const ButtonWrapper = ({
   reverse: boolean
 }) => {
   const { styles } = useTheme(getStyles)
+  const { isCompactLayout } = useCompactLayout()
 
-  if (isMobile) {
-    return <View style={spacings.ptSm}>{children}</View>
+  // Mobile and narrow web show the buttons on one full-width row, each one growing from the
+  // width of its label, so a longer primary label still fits next to Cancel
+  if (isCompactLayout) {
+    return (
+      <View
+        style={[
+          reverse ? flexbox.directionRowReverse : flexbox.directionRow,
+          spacings.ptSm,
+          { gap: SPACING_TY }
+        ]}
+      >
+        {children}
+      </View>
+    )
   }
 
   return (
@@ -115,6 +128,7 @@ const DualChoiceWarningModal = ({
   type?: Type
 }) => {
   const { theme } = useTheme()
+  const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
 
   return (
     <Wrapper>
@@ -136,20 +150,26 @@ const DualChoiceWarningModal = ({
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
           type={type === 'error' ? 'dangerFilled' : type}
-          hasBottomSpacing={isMobile ? true : false}
-          size={isMobile ? 'regular' : 'smaller'}
+          hasBottomSpacing={false}
+          size={isCompactLayout ? 'regular' : 'smaller'}
+          style={isCompactLayout ? { flexGrow: 1 } : undefined}
           {...primaryButtonProps}
         />
         {secondaryButtonText && onSecondaryButtonPress && (
           <Button
             text={secondaryButtonText}
             onPress={onSecondaryButtonPress}
-            type="secondary"
+            // On web secondary is primaryBackground, which vanishes on the sheet - tertiary is the
+            // mobile secondary fill
+            type={isNarrowWebLayout ? 'tertiary' : 'secondary'}
             hasBottomSpacing={false}
             accentColor={theme.secondaryText}
-            size={isMobile ? 'regular' : 'smaller'}
+            size={isCompactLayout ? 'regular' : 'smaller'}
             {...secondaryButtonProps}
-            style={[isWeb && spacings.mrLg, secondaryButtonProps?.style as ViewStyle | undefined]}
+            style={[
+              isCompactLayout ? { flexGrow: 1 } : spacings.mrLg,
+              secondaryButtonProps?.style as ViewStyle | undefined
+            ]}
           />
         )}
       </ButtonWrapper>

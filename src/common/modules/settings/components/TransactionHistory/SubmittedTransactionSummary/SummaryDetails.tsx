@@ -3,7 +3,6 @@ import { Pressable, View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -11,10 +10,12 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import TokenOrNft from '@common/components/TokenOrNft'
 import { useTranslation } from '@common/config/localization'
+import useCallsWithDecodedData from '@common/hooks/useCallsWithDecodedData'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import TransactionSummary, {
   sizeMultiplier
@@ -32,11 +33,14 @@ import {
   getPresentationalStatus,
   getSummaryBalanceChanges,
   getTruncatedNetworkName,
-  getTruncatedTxnHash
+  getTruncatedTxnHash,
+  isNftBalanceChange
 } from './helpers'
-import { getHumanizedCalls } from './humanizedHelpers'
+import { useHumanizedCalls } from './humanizedCallsHooks'
 import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
+
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 
 const SummaryDetails = ({
   submittedAccountOp,
@@ -49,7 +53,7 @@ const SummaryDetails = ({
   size: 'sm' | 'md' | 'lg'
   defaultType: Props['defaultType']
 }) => {
-  const { isCompactSidePanelLayout, isCompactLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -57,7 +61,8 @@ const SummaryDetails = ({
     () => getFormattedSubmittedDate(submittedAccountOp.timestamp),
     [submittedAccountOp.timestamp]
   )
-  const humanizedCalls = useMemo(() => getHumanizedCalls(submittedAccountOp), [submittedAccountOp])
+  const callsWithoutDecodedData = useHumanizedCalls(submittedAccountOp)
+  const humanizedCalls = useCallsWithDecodedData(callsWithoutDecodedData)
   const summaryBalanceChanges = useMemo(
     () => getSummaryBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
@@ -103,17 +108,42 @@ const SummaryDetails = ({
         </Text>
       </View>
       <View style={styles.modalSimulationBody}>
-        {changes.map((change, index) => (
-          <PendingTokenSummary
-            key={`${change.address}-${change.balanceChange.toString()}`}
-            token={{
-              ...change,
-              simulationAmount: change.balanceChange
-            }}
-            chainId={change.chainId}
-            hasBottomSpacing={index < changes.length - 1}
-          />
-        ))}
+        {changes.map((change, index) => {
+          if (isNftBalanceChange(change)) {
+            return (
+              <View
+                key={`${change.address}-${change.tokenId.toString()}`}
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifySpaceBetween,
+                  index < changes.length - 1 ? spacings.mbSm : undefined
+                ]}
+              >
+                <TokenOrNft
+                  value={change.tokenId}
+                  address={change.address}
+                  chainId={change.chainId}
+                  tokenMarginRight={0}
+                  textSize={12}
+                  tokenIconContainerSize={16}
+                />
+              </View>
+            )
+          }
+
+          return (
+            <PendingTokenSummary
+              key={`${change.address}-${change.balanceChange.toString()}`}
+              token={{
+                ...change,
+                simulationAmount: change.balanceChange
+              }}
+              chainId={change.chainId}
+              hasBottomSpacing={index < changes.length - 1}
+            />
+          )
+        })}
       </View>
     </View>
   )
@@ -180,7 +210,6 @@ const SummaryDetails = ({
                     }
                   : undefined
               }
-              disableSelectorFetching
             />
           ))}
         {!isDelegationTxn && !humanizedCalls.length && <SkeletonLoader width="100%" height={112} />}
@@ -281,14 +310,14 @@ const SummaryDetails = ({
             style={[
               styles.modalStepRow,
               spacings.mbSm,
-              isCompactSidePanelLayout && { gap: SPACING_SM, flexWrap: 'wrap' }
+              isNarrowWebLayout && { gap: SPACING_SM, flexWrap: 'wrap' }
             ]}
           >
             <Text
               appearance={modalFinalStatus.appearance}
               fontSize={16}
               weight="medium"
-              style={isCompactSidePanelLayout ? spacings.mrTy : undefined}
+              style={isNarrowWebLayout ? spacings.mrTy : undefined}
             >
               {modalFinalStatus.label}
             </Text>
@@ -296,14 +325,14 @@ const SummaryDetails = ({
               <View
                 style={[
                   styles.modalStepRowRight,
-                  isCompactSidePanelLayout && { flexShrink: 1, minWidth: 0 }
+                  isNarrowWebLayout && { flexShrink: 1, minWidth: 0 }
                 ]}
               >
                 <Text
                   fontSize={14}
                   appearance="secondaryText"
-                  numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
-                  style={isCompactSidePanelLayout ? { flexShrink: 1 } : undefined}
+                  numberOfLines={isNarrowWebLayout ? 1 : undefined}
+                  style={isNarrowWebLayout ? { flexShrink: 1 } : undefined}
                 >
                   {submittedDate} on {getTruncatedNetworkName(network.name)}
                 </Text>

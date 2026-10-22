@@ -13,7 +13,9 @@ import {
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import Text, { TextAppearance } from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useAutoFocus from '@common/hooks/useAutoFocus'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
+import useTextInputRemountKey from '@common/hooks/useTextInputRemountKey'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
@@ -90,11 +92,17 @@ const Input = ({
   backgroundColor,
   renderConfirmAddress,
   preventJumpOnValidationChange,
+  autoFocus,
   ...rest
 }: InputProps) => {
   const { theme, styles } = useTheme(getStyles)
+  const { autoFocus: nativeAutoFocus, setInputRef: setAutoFocusInputRef } = useAutoFocus(
+    autoFocus,
+    setInputRef
+  )
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
   const [isFocused, setIsFocused] = useState(false)
+  const textInputRemountKey = useTextInputRemountKey(rest.value, isFocused)
 
   const handleOnFocus = (e: BlurEvent) => {
     if (disabled) return
@@ -103,8 +111,9 @@ const Input = ({
     return onFocus(e)
   }
   const handleOnBlur = (e: BlurEvent) => {
-    if (disabled) return
+    // Always cleared, or a field disabled while focused stays "focused" and is never remounted
     setIsFocused(false)
+    if (disabled) return
     return onBlur(e)
   }
 
@@ -157,6 +166,7 @@ const Input = ({
           <View style={[inputStyles, hasButton ? { width: '100%' } : {}]}>
             {customInputContent}
             <TextInput
+              key={textInputRemountKey}
               placeholderTextColor={theme.secondaryText}
               autoCapitalize="none"
               autoCorrect={false}
@@ -164,7 +174,8 @@ const Input = ({
               editable={editable ?? !disabled}
               onBlur={handleOnBlur}
               onFocus={handleOnFocus}
-              ref={setInputRef}
+              ref={setAutoFocusInputRef}
+              autoFocus={nativeAutoFocus}
               {...rest}
               style={[
                 styles.nativeInput,

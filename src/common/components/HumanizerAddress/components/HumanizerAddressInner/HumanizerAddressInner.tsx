@@ -11,6 +11,8 @@ import { isExtension } from '@web/constants/browserapi'
 import { AddressName, BenzinAddressName } from '../AddressName'
 import BaseAddress from '../BaseAddress'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props extends TextProps {
   address: string
   // example of highestPriorityAlias: a name coming from the humanizer's metadata
@@ -21,7 +23,12 @@ interface Props extends TextProps {
   chainId: bigint
   verification?: BlacklistedStatus
   isToken?: boolean
+  isLocalLabelOnly?: boolean
 }
+
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 const HumanizerAddressInner: FC<Props> = ({
   humanizerInfo,
@@ -31,18 +38,18 @@ const HumanizerAddressInner: FC<Props> = ({
   actionsMode = 'tooltip',
   chainId,
   isToken,
+  isLocalLabelOnly,
   ...rest
 }) => {
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
-  const accountsState = useController('AccountsController').state
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const { contacts = [] } = useController('AddressBookController').state
   const checksummedAddress = getAddressCaught(address)
 
   const localAddressLabel = useMemo(() => {
     const zeroAddressLabel = address === ZeroAddress && 'Zero Address'
     const contact = contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())
-    const account =
-      accountsState?.accounts && accountsState.accounts.find((a) => a.addr === checksummedAddress)
+    const account = accounts?.find((a) => a.addr === checksummedAddress)
     const hardcodedName = humanizerInfo?.name
     const tokenSymbol =
       portfolio?.tokens?.find((token) => token.address.toLowerCase() === address.toLowerCase())
@@ -63,7 +70,7 @@ const HumanizerAddressInner: FC<Props> = ({
     portfolio?.tokens,
     address,
     checksummedAddress,
-    accountsState?.accounts
+    accounts
   ])
 
   if (actionsMode === 'inline') {
@@ -76,6 +83,7 @@ const HumanizerAddressInner: FC<Props> = ({
           actionsMode={actionsMode}
           fallbackLabel={localAddressLabel || undefined}
           isToken={isToken}
+          isLocalLabelOnly={isLocalLabelOnly}
           {...rest}
         />
       )
@@ -88,6 +96,7 @@ const HumanizerAddressInner: FC<Props> = ({
         actionsMode={actionsMode}
         fallbackLabel={localAddressLabel || undefined}
         isToken={isToken}
+        isLocalLabelOnly={isLocalLabelOnly}
         {...rest}
       />
     )
@@ -116,6 +125,7 @@ const HumanizerAddressInner: FC<Props> = ({
         hideActions={hideActions}
         actionsMode={actionsMode}
         isToken={isToken}
+        isLocalLabelOnly={isLocalLabelOnly}
         {...rest}
       />
     )
@@ -127,6 +137,7 @@ const HumanizerAddressInner: FC<Props> = ({
       hideActions={hideActions}
       actionsMode={actionsMode}
       isToken={isToken}
+      isLocalLabelOnly={isLocalLabelOnly}
       {...rest}
     />
   )

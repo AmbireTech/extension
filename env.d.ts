@@ -9,8 +9,9 @@ declare module '@env' {
     VELCRO_URL: string
     BUNGEE_API_KEY: string
     LI_FI_API_KEY: string
+    COWSWAP_API_KEY: string
     UNISWAP_API_KEY: string
-    SENTRY_DSN?: string
+    SENTRY_DSN_MOBILE?: string
     ENVIRONMENT: string
     DEFAULT_KEYSTORE_PASSWORD_DEV: string
     DEFAULT_INVITE_CODE_DEV: string
@@ -38,7 +39,7 @@ declare module '@env' {
   /**
    * Sentry is application monitoring and error tracking app used by the mobile app.
    */
-  export const SENTRY_DSN: EnvTypes['SENTRY_DSN'] | undefined
+  export const SENTRY_DSN_MOBILE: EnvTypes['SENTRY_DSN_MOBILE'] | undefined
 
   /**
    * The URL for the Ambire NFT proxy service, responsible for resolving NFT images from the passed parameters.
@@ -104,6 +105,11 @@ declare module '@env' {
    * across multiple blockchains. Access is restricted and requires an API key.
    */
   export const LI_FI_API_KEY: EnvTypes['LI_FI_API_KEY']
+
+  /**
+   * CoW Swap Partner API key. Required for routes through CoW Swap.
+   */
+  export const COWSWAP_API_KEY: EnvTypes['COWSWAP_API_KEY']
 
   /**
    * Uniswap Trading API key. Required by the Uniswap router.

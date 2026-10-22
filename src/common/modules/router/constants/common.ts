@@ -56,12 +56,12 @@ const MOBILE_ROUTES = {
   dappWebView: 'explore/webview',
   qrReader: 'qr-reader',
   migrationOnboarding: 'migration-onboarding',
-  importAccountsFromExtension: 'import-accounts-from-extension'
+  importFromExtension: 'import-from-extension'
 }
 
 const WEB_ROUTES = {
   ...COMMON_ROUTES,
-  rewards: 'rewards',
+  privacyPoolsSend: 'privacy-pools-send',
   earn: 'earn',
   transactions: 'transactions',
   signedMessages: 'signed-messages',
@@ -84,8 +84,9 @@ const WEB_ROUTES = {
   optOuts: 'settings/opt-outs',
   survey: 'survey',
   qrPermission: 'qr-permission',
-  exportAccountsToMobile: 'export-accounts-to-mobile',
-  importAccountsFromMobile: 'import-accounts-from-mobile',
+  exportToMobile: 'export-to-mobile',
+  importFromMobile: 'import-from-mobile',
+  oneKeyConnect: 'onekey-connect',
   // INTERNAL ROUTES
   internalLogs: 'internal/logs'
 }
@@ -144,6 +145,7 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.viewOnlyAccountAdder,
   COMMON_ROUTES.ledgerConnect,
   COMMON_ROUTES.trezorConnect,
+  WEB_ROUTES.oneKeyConnect,
   COMMON_ROUTES.keyStoreSetup,
   COMMON_ROUTES.accountPersonalize,
   COMMON_ROUTES.accountPicker,
@@ -152,8 +154,8 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.safeImportAddress,
   COMMON_ROUTES.safeImportByOwner,
   COMMON_ROUTES.qrConnect,
-  WEB_ROUTES.importAccountsFromMobile,
-  MOBILE_ROUTES.importAccountsFromExtension
+  WEB_ROUTES.importFromMobile,
+  MOBILE_ROUTES.importFromExtension
 ] as const
 
 export {

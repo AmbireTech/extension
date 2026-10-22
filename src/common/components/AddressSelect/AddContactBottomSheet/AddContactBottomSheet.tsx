@@ -13,8 +13,8 @@ import { isMobile, isWeb } from '@common/config/env'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>
@@ -27,7 +27,6 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const [name, setName] = useState('')
 
   const handleAddContact = () => {
@@ -70,25 +69,23 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
       <FooterGlassView
         size="sm"
         absolute={false}
-        // Keep Cancel → primary child order for row layouts; reverse only when stacked
-        // so the primary action sits on top (same pattern as CustomGasPrice).
-        innerContainerStyle={
-          isCompactSidePanelLayout ? { flexDirection: 'column-reverse' } : undefined
-        }
+        mobileStyle={{ ...flexbox.directionRow, columnGap: SPACING_TY }}
       >
-        <Button
-          hasBottomSpacing={false}
-          type="secondary"
-          text={t('Cancel')}
-          onPress={closeBottomSheet}
-          style={isWeb && { minWidth: 96, ...spacings.mrLg }}
-          size={isWeb ? 'smaller' : 'regular'}
-        />
+        {/* On web the header's back arrow already closes the sheet */}
+        {isMobile && (
+          <Button
+            hasBottomSpacing={false}
+            type="secondary"
+            text={t('Cancel')}
+            onPress={closeBottomSheet}
+            style={flexbox.flex1}
+          />
+        )}
         <Button
           testID="form-add-to-contacts-button"
-          style={isWeb && { minWidth: 160 }}
+          style={isWeb ? { minWidth: 160 } : flexbox.flex1}
           disabled={!address || name.length === 0 || name.length > 32}
-          hasBottomSpacing={isMobile}
+          hasBottomSpacing={false}
           text={!name.length ? t('Name your contact') : t('Add to contacts')}
           onPress={handleAddContact}
           size={isWeb ? 'smaller' : 'regular'}

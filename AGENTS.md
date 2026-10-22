@@ -10,20 +10,20 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - `background` in the wallet refers to:
   - Service worker on Chrome (`src/web/extension-services/background/`)
   - Background script on Firefox (`src/web/extension-services/background/`)
-  - Webview worker on mobile (`src/mobile/modules/webview/services/`)
+  - In-process controller host on mobile (`src/mobile/services/controllerHost/`) — the controllers run in the same React Native JS realm as the UI, so there is no separate background context and no bridge. The WebView worker (`src/mobile/modules/webview/services/`) is still mounted and its bridge is live, but it hosts no controllers and reads no storage
 - Unlike typical manifest version 3 extensions where the service worker is allowed to sleep, this extension is designed to stay alive: the UI periodically sends `ambire-extension-ping` messages, the background responds with `ambire-extension-pong` to prevent the service worker from being suspended, and the background's `init()` function (which bootstraps all controllers) is called on every incoming message - a no-op if already initialized, but essential after a service worker suspension because the JS context is destroyed on sleep and `isInitialized` resets
 - The business logic and persistent state is handled primarily using `controllers` (JS classes), which usually run in the `background`
 - The websites run some controllers separately without a `background`
 - The extension's scripts (background, content script, inpage, UI) and the messaging between them are documented in `src/web/extension-services/README.md` and `src/web/extension-services/messengers/README.md`
 - `src/ambire-common` is a **git submodule** that contains the business logic of the application. Changes inside it are in a separate repo and require a separate commit flow
 - `src/common` can be imported by all environments, but environments shouldn't import from other environments (e.g., `web/` SHOULD NOT import from `mobile/`)
-- There are environment specific files. Be VERY careful when creating files and debugging as they exist in two ways:
+- Environment-specific files exist in two forms, so check which one applies before creating or debugging a file:
   - Have the file in the environment folder (e.g., `mobile/`, `web/`) and import it from there
   - Use the `.native.tsx` or `.web.tsx` suffix and import from `common/`, which automatically resolves to the correct file based on the environment
 
 ## Useful commands (not exhaustive):
 
-- Check for typescript errors - `yarn extension:type:check-new`
+- Check for typescript errors - `yarn type:check-new`
 - Lint and auto-fix source files: `yarn lint:fix`
 
 ## Rules
@@ -51,12 +51,12 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 ### Security:
 
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
-- The extension uses LavaMoat with SES for the background. If you add/remove dependencies or change import patterns, regenerate the policy with `yarn build:extensions:generate-policy` and review the changes
+- The extension uses LavaMoat with SES for the background. If you add/remove dependencies or change import patterns, regenerate the policy with `yarn build:web:webkit:generate-policy` and review the changes
 
 ### Code quality:
 
 - Ensure that list keys are unique and stable (NEVER use the array index)
-- ALWAYS memoize functions, components and complex values with `useMemo`, `useCallback` and `React.memo`.
+- Memoize functions, components and complex values with `useMemo`, `useCallback` and `React.memo`.
 - ALWAYS use state selectors with `useControllerState` if reading a specific slice of the state - `const { state: mainStatuses, dispatch: mainDispatch } = useController('MainController', selectMainStatuses)`, where selectMainStatuses is defined as a pure function outside of the component (`const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses`)
 - ALWAYS ensure that subscriptions, event listeners, timers and other side effects are properly cleaned up. Even if it's a simple `setTimeout` used to reject a promise, it should be cleared.
 - NEVER delete existing comments when updating a code block. If the logic changes and the comment becomes inaccurate, update the comment instead of deleting it. Delete a comment ONLY if the logic it describes is completely removed or the new logic is entirely self-explanatory without the comment
@@ -69,8 +69,8 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 
 ## Controller state update lifecycle
 
-1. The UI calls `dispatch` from `useController` to invoke a controller method. This is **fire-and-forget** — `dispatch` does NOT return a response or the new state
-2. The action travels to the background (via `PortMessenger` in the extension, `WebViewWorker` in mobile) where `handleActions` finds the controller and calls the requested method
+1. The UI calls `dispatch` from `useController` to invoke a controller method. This is **fire-and-forget** — `dispatch` does NOT return a response or the new state. When data is too heavy for public state and the UI needs only a subset of it, or needs it only conditionally, use `dispatchAndWait` instead, which returns a promise with the result
+2. The action travels to the background (via `PortMessenger` in the extension, a direct call into the in-process controller host on mobile) where `handleActions` finds the controller and calls the requested method
 3. The controller method updates its internal state and calls `this.emitUpdate()`
 4. The `background` has an `onUpdate` listener for every registered controller that serializes the controller state and sends it back to the UI
 5. The UI receives the update, writes it to the `controllerStore`, and `useControllerState` (via `useSyncExternalStore`) triggers a React re-render with the new state

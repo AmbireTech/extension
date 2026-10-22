@@ -6,21 +6,28 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
+import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
+import { parseHexColor } from '@common/utils/recolorLottie'
 import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 type Props = {
   onPress?: () => void
@@ -30,17 +37,41 @@ type Props = {
    * Consider refactoring in the future, if this is needed
    */
   withArrowRightIcon?: boolean
+  /** The solid color behind the button, which its translucent background darkens */
+  backgroundBehindColor?: string
 }
 
-const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
+/** How much the button's black background covers what is behind it */
+const BUTTON_BACKGROUND_OPACITY = 0.64
+const MAX_CHANNEL = 255
+
+/** The solid color the button looks on top of `backgroundBehindColor`, for the badge ring */
+const getButtonColorOver = (backgroundBehindColor: string) => {
+  const channels = parseHexColor(backgroundBehindColor)
+  if (!channels) return '#000000'
+
+  const [r, g, b] = channels.map((channel) =>
+    Math.round(channel * MAX_CHANNEL * (1 - BUTTON_BACKGROUND_OPACITY))
+  )
+
+  return `rgb(${r}, ${g}, ${b})`
+}
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
+const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindColor }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
-  const { isPopup, isSidePanel } = getUiType()
+  const { isPopup } = getUiType()
+  const { isNarrowWebLayout } = useCompactLayout()
   const { isStoreReady } = useControllerStore()
 
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  // Shown in place of a regular account, with no address to copy
+  const { selectedAccount: privacyPoolsAccount } = usePrivacyPoolsAccounts()
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
     duration: 50
@@ -75,14 +106,19 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const formattedAddress = useMemo(() => {
     if (!account) return ''
 
-    if (isSidePanel) return account.addr
+    if (isNarrowWebLayout) return account.addr
 
     if (isMobile) return shortenAddress(account.addr, 18, 4)
 
     return shortenAddress(account.addr, 13)
-  }, [account, isSidePanel])
+  }, [account, isNarrowWebLayout])
 
-  if (!account) return null
+  // A Privacy Pools account has no name or address of its own, so it is named by its kind
+  const label = account ? account.preferences.label : t('Private account')
+  const subtitle = account ? `(${formattedAddress})` : t('Privacy Pools')
+  const canCopyAddress = isWeb && !!account
+
+  if (!account && !privacyPoolsAccount) return null
 
   return (
     <View
@@ -98,9 +134,9 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         style={[
           styles.accountButton,
           {
-            backgroundColor: '#000000A3',
+            backgroundColor: hexToRgba('#000000', BUTTON_BACKGROUND_OPACITY),
             flexShrink: 1,
-            ...(isSidePanel ? { minWidth: 0 } : {}),
+            ...(isNarrowWebLayout ? { minWidth: 0 } : {}),
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
           },
           isMobile && {
@@ -112,17 +148,24 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         {...(onPress ? bindAccountBtnAnim : {})}
       >
         <>
-          {isStoreReady ? (
+          {isStoreReady && account && (
             <Avatar
               pfp={account.preferences.pfp}
               address={account.addr}
               size={32}
               smartAccountType={smartAccountType}
+              typeBadgeRingColor={getButtonColorOver(
+                backgroundBehindColor ?? String(theme.primaryBackground)
+              )}
             />
-          ) : (
+          )}
+          {isStoreReady && !account && (
+            <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+          )}
+          {!isStoreReady && (
             <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />
           )}
-          {isSidePanel ? (
+          {isNarrowWebLayout ? (
             <>
               <Text
                 numberOfLines={1}
@@ -140,7 +183,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
                 color="#FFFFFF"
                 fontSize={14}
               >
-                {account.preferences.label}
+                {label}
               </Text>
               {maxWidthSize('s') && (
                 <View
@@ -155,12 +198,12 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
                     numberOfLines={1}
                     ellipsizeMode="tail"
                     style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
-                    weight="mono_regular"
+                    weight={account ? 'mono_regular' : 'regular'}
                     fontSize={12}
                   >
-                    ({formattedAddress})
+                    {subtitle}
                   </Text>
-                  {isWeb && (
+                  {canCopyAddress && (
                     <AnimatedPressable
                       style={addressAnimStyle}
                       onPress={handleCopyText}
@@ -184,18 +227,18 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
                 color="#FFFFFF"
                 fontSize={14}
               >
-                {account.preferences.label}
+                {label}
               </Text>
               <>
                 <Text
                   color="#B9BFC9"
                   style={[isWeb ? spacings.mrTy : undefined]}
-                  weight="mono_regular"
+                  weight={account ? 'mono_regular' : 'regular'}
                   fontSize={12}
                 >
-                  ({formattedAddress})
+                  {subtitle}
                 </Text>
-                {isWeb && (
+                {canCopyAddress && (
                   <AnimatedPressable
                     style={addressAnimStyle}
                     onPress={handleCopyText}

@@ -12,7 +12,6 @@ interface Styles {
   tierDetails: ViewStyle
   currentTierBadge: ViewStyle
   currentTierBadgeText: TextStyle
-  cancelButton: ViewStyle
   stakeButton: ViewStyle
   actionButtonText: TextStyle
   feeExemption: ViewStyle
@@ -49,15 +48,8 @@ const getStyles = (theme: ThemeProps) =>
       color: theme.primaryBackground,
       fontSize: 11
     },
-    cancelButton: {
-      width: 'auto',
-      paddingLeft: 16,
-      paddingRight: 16,
-      height: 52
-    },
     stakeButton: {
       width: 'auto',
-      marginLeft: 24,
       paddingLeft: 24,
       paddingRight: 24,
       height: 52

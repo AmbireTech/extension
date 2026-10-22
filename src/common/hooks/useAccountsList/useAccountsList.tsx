@@ -1,19 +1,76 @@
 import Fuse from 'fuse.js'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FlatList } from 'react-native'
+import { FlatList, LayoutChangeEvent, useWindowDimensions } from 'react-native'
 import { isAddress } from 'viem'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useDebounce from '@common/hooks/useDebounce'
+import { usePendingAccountAddrs } from '@common/hooks/usePendingRequestsCount'
 import {
   ACCOUNT_SELECT_ACCOUNT_HEIGHT,
   ACCOUNT_SELECT_ACCOUNT_MB
 } from '@common/modules/account-select/components/Account/styles'
 
+import getInitialScrollIndex from './getInitialScrollIndex'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const ITEM_HEIGHT = ACCOUNT_SELECT_ACCOUNT_HEIGHT + ACCOUNT_SELECT_ACCOUNT_MB
+
+const SEARCH_DEBOUNCE_IN_MS = 350
+
+const FUSE_KEYS = [
+  { name: 'label', weight: 0.5 },
+  { name: 'domainNames', weight: 0.3 },
+  { name: 'address', weight: 0.1 },
+  { name: 'keyLabels', weight: 0.2 },
+  { name: 'smart', weight: 0.1 },
+  // Lets "pending" find the accounts with the pending badge
+  { name: 'pending', weight: 0.1 }
+]
+
+const FUSE_OPTIONS = {
+  keys: FUSE_KEYS,
+  threshold: 0.3,
+  /*
+  `ignoreLocation = false`:
+  - Fuse prioritizes matches that appear near the beginning of the string
+    (e.g. typing "vi" ranks "Vitalik" above "MyVitalikWallet").
+  - We set this explicitly, even though it's the default, to avoid accidental overrides during future refactoring.
+
+  `distance = 1000`:
+  - ETH addresses are long, and valid matches often appear near the end.
+    By default, Fuse scores these lower, which may exclude them.
+  - distance reduces this penalty so such matches are still returned
+    (e.g. searching for "33" should match 0x579f87277E14f32df7FA4036D76BbfC94C325033 even though "33" is at the end).
+  - distance does NOT represent string length - it controls how strongly Fuse penalizes late-position matches.
+    A large value reduces this penalty so end-of-string matches are still returned while start matches remain prioritized.
+
+  Summary:
+  - ignoreLocation: false → keep prioritizing early-position matches
+  - distance: 1000 → allow matches anywhere in the string without discarding them
+  */
+  ignoreLocation: false,
+  distance: 1000
+}
+
+const selectDomains = (state: AllControllersMappingType['DomainsController']) => state.domains
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
+/**
+ * Powers the accounts list on the account select and the accounts settings screens.
+ * Pass `flatlistRef` to also get the list positioned on the selected account from its
+ * very first render - the caller then has to mount the list only once `isReadyToRender`
+ * is true, because `initialScrollIndex` is read on the first mount alone.
+ */
 const useAccountsList = ({
   flatlistRef
 }: {
@@ -26,14 +83,19 @@ const useAccountsList = ({
     }
   })
   const search = watch('search')
-  const [shouldDisplayAccounts, setShouldDisplayAccounts] = useState(false)
-  const {
-    state: { domains }
-  } = useController('DomainsController')
-  const { state: accounts } = useController('AccountsController', 'accounts')
-  const { state: keys } = useController('KeystoreController', 'keys')
-  const { state: selectedAccount } = useController('SelectedAccountController', 'account')
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // The raw value drives the input so the caret stays instant, the debounced one drives
+  // the filtering, which walks every account across five fields
+  const debouncedSearch = useDebounce({ value: search, delay: SEARCH_DEBOUNCE_IN_MS })
+  const [isListPositioned, setIsListPositioned] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
+  if (debouncedSearch && !hasSearched) setHasSearched(true)
+  const { state: domains } = useController('DomainsController', selectDomains)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
+  const { height: windowHeight } = useWindowDimensions()
+  const prevSearchRef = useRef(debouncedSearch)
+  const pendingAccountAddrs = usePendingAccountAddrs(accounts)
 
   const searchableAccounts = useMemo(
     () =>
@@ -46,106 +108,171 @@ const useAccountsList = ({
           .join(' '),
         domainNames: getSearchableNames(domains[account.addr]?.names),
         address: account.addr.toLowerCase(),
-        smart: isSmartAccount(account) ? 'smart' : ''
+        smart: isSmartAccount(account) ? 'smart' : '',
+        pending: pendingAccountAddrs.has(account.addr) ? 'pending' : ''
       })),
-    [accounts, domains, keys]
+    [accounts, domains, keys, pendingAccountAddrs]
+  )
+
+  // Indexing is the expensive half of Fuse and depends only on the list, so it is built
+  // once per list rather than on every keystroke
+  const fuse = useMemo(
+    () =>
+      new Fuse(searchableAccounts, FUSE_OPTIONS, Fuse.createIndex(FUSE_KEYS, searchableAccounts)),
+    [searchableAccounts]
   )
 
   const filteredAccounts = useMemo(() => {
-    if (!search) return accounts
+    if (!debouncedSearch) return accounts
 
     // Exact match if the search is an address
-    if (isAddress(search)) {
+    if (isAddress(debouncedSearch)) {
       const account = accounts.find(
-        (account) => account.addr.toLowerCase() === search.toLowerCase()
+        (account) => account.addr.toLowerCase() === debouncedSearch.toLowerCase()
       )
 
       return account ? [account] : []
     }
 
-    const fuse = new Fuse(searchableAccounts, {
-      keys: [
-        { name: 'label', weight: 0.5 },
-        { name: 'domainNames', weight: 0.3 },
-        { name: 'address', weight: 0.1 },
-        { name: 'keyLabels', weight: 0.2 },
-        { name: 'smart', weight: 0.1 }
-      ],
-      threshold: 0.3,
-      /*
-      `ignoreLocation = false`:
-      - Fuse prioritizes matches that appear near the beginning of the string
-        (e.g. typing "vi" ranks "Vitalik" above "MyVitalikWallet").
-      - We set this explicitly, even though it's the default, to avoid accidental overrides during future refactoring.
+    return fuse.search(debouncedSearch).map((result) => result.item.account)
+  }, [accounts, fuse, debouncedSearch])
 
-      `distance = 1000`:
-      - ETH addresses are long, and valid matches often appear near the end.
-        By default, Fuse scores these lower, which may exclude them.
-      - distance reduces this penalty so such matches are still returned
-        (e.g. searching for "33" should match 0x579f87277E14f32df7FA4036D76BbfC94C325033 even though "33" is at the end).
-      - distance does NOT represent string length - it controls how strongly Fuse penalizes late-position matches.
-        A large value reduces this penalty so end-of-string matches are still returned while start matches remain prioritized.
-
-      Summary:
-      - ignoreLocation: false → keep prioritizing early-position matches
-      - distance: 1000 → allow matches anywhere in the string without discarding them
-      */
-      ignoreLocation: false,
-      distance: 1000
-    })
-
-    const results = fuse.search(search)
-    return results.map((result) => result.item.account)
-  }, [accounts, searchableAccounts, search])
-
-  const selectedAccountIndex = accounts.findIndex(
+  // Against the filtered list, because that is what the FlatList is rendering
+  const selectedAccountIndex = filteredAccounts.findIndex(
     (account) => account.addr === selectedAccount?.addr
   )
 
   const keyExtractor = useCallback((account: AccountType) => account.addr, [])
 
-  const getItemLayout = useCallback(
-    (_: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * index,
-      index
-    }),
+  /** How far each row's height is from the default one, mostly because its badges wrapped */
+  const [extraHeights, setExtraHeights] = useState<Record<AccountType['addr'], number>>({})
+
+  const onAccountExtraHeightChange = useCallback(
+    (addr: AccountType['addr'], extraHeight: number) =>
+      setExtraHeights((prev) =>
+        (prev[addr] ?? 0) === extraHeight ? prev : { ...prev, [addr]: extraHeight }
+      ),
     []
   )
 
-  // Scrolls to the selected account in the FlatList.
-  const scrollToSelectedAccount = useCallback(
-    (attempt: number = 0) => {
-      const MAX_ATTEMPTS = 3
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
-      }
-
-      if (attempt > MAX_ATTEMPTS || !accounts.length || selectedAccountIndex === -1) {
-        setShouldDisplayAccounts(true)
-        return
-      }
-
-      if (flatlistRef?.current && !shouldDisplayAccounts) {
-        // Uses scrollToOffset (instead of scrollToIndex) so that FlatList does NOT need to
-        // pre-render every item between 0 and selectedAccountIndex
-        flatlistRef.current.scrollToOffset({
-          animated: false,
-          offset: selectedAccountIndex * ITEM_HEIGHT
-        })
-        setShouldDisplayAccounts(true)
-      } else if (!shouldDisplayAccounts) {
-        // Retry
-        timeoutRef.current = setTimeout(() => scrollToSelectedAccount(attempt + 1), 100)
-      }
-    },
-    [accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]
+  /** The height a row takes in the list, including the gap below it */
+  const getAccountItemHeight = useCallback(
+    (addr: AccountType['addr']) => ITEM_HEIGHT + (extraHeights[addr] ?? 0),
+    [extraHeights]
   )
 
+  const getItemLayout = useMemo(() => {
+    // The offsets add up the heights of the rows above, so they are worked out once per
+    // list instead of on every call
+    let offsetsFor: ArrayLike<AccountType> | null | undefined
+    let offsets: number[] = []
+
+    return (data: ArrayLike<AccountType> | null | undefined, index: number) => {
+      if (data !== offsetsFor) {
+        offsetsFor = data
+        offsets = []
+        let offset = 0
+        for (let i = 0; i < (data?.length ?? 0); i++) {
+          offsets.push(offset)
+          offset += getAccountItemHeight(data![i]!.addr)
+        }
+      }
+
+      return {
+        length: data?.[index] ? getAccountItemHeight(data[index].addr) : ITEM_HEIGHT,
+        offset: offsets[index] ?? ITEM_HEIGHT * index,
+        index
+      }
+    }
+  }, [getAccountItemHeight])
+
+  /**
+   * `initialScrollIndex` only fixes which rows are rendered. react-native-web still
+   * applies the scroll itself imperatively, from its own `onContentSizeChange`, so the
+   * list is painted at the top for one frame before it lands on the selected account.
+   * Our callback runs in that same commit, right after the scroll, which is the point
+   * at which the list is safe to show.
+   */
+  const [listContentHeight, setListContentHeight] = useState(0)
+  const onListContentSizeChange = useCallback((_width: number, height: number) => {
+    setIsListPositioned(true)
+    setListContentHeight(height)
+  }, [])
+
+  const [listHeight, setListHeight] = useState(0)
+  const onListLayout = useCallback(
+    ({ nativeEvent }: LayoutChangeEvent) => setListHeight(nativeEvent.layout.height),
+    []
+  )
+
+  /**
+   * Positions the list in its first commit, instead of rendering it from the top and
+   * scrolling it afterwards (which leaves the rows now in the viewport blank until the
+   * batching scheduler catches up). `getItemLayout` lets the list resolve the offset on
+   * its own and clamp it to the content.
+   *
+   * Dropped after the first search, as the list then starts at the top. Kept, it stops the
+   * list from keeping its first rows rendered, so clearing a search with no results left it
+   * blank until scrolled.
+   */
+  const initialScrollIndex = hasSearched
+    ? undefined
+    : getInitialScrollIndex({
+        selectedAccountIndex,
+        accountsCount: filteredAccounts.length,
+        itemHeight: ITEM_HEIGHT,
+        windowHeight
+      })
+
+  /**
+   * The rows above the selected account are not rendered when the list opens, so they are
+   * placed by the estimated height until they mount and report their own. Until the user
+   * touches the list, it goes back to the selected account whenever they do. Capped by the
+   * list's own height rather than the window's, which `initialScrollIndex` has to guess.
+   */
+  const isUserInListRef = useRef(false)
+  const onListTouchStart = useCallback(() => {
+    isUserInListRef.current = true
+  }, [])
+
+  useLayoutEffect(() => {
+    // A list that opens at the top is already shown, so it is left there rather than moved
+    if (isUserInListRef.current || initialScrollIndex === undefined || selectedAccountIndex < 0)
+      return
+    if (!isListPositioned || !listHeight || !listContentHeight) return
+
+    const { offset } = getItemLayout(filteredAccounts, selectedAccountIndex)
+    const maxOffset = Math.max(0, listContentHeight - listHeight)
+    flatlistRef?.current?.scrollToOffset({ offset: Math.min(offset, maxOffset), animated: false })
+  }, [
+    filteredAccounts,
+    flatlistRef,
+    getItemLayout,
+    initialScrollIndex,
+    isListPositioned,
+    listContentHeight,
+    listHeight,
+    selectedAccountIndex
+  ])
+
+  // The web has no touch for the mouse wheel, the scrollbar or the keyboard
   useEffect(() => {
-    scrollToSelectedAccount()
-  }, [scrollToSelectedAccount])
+    const node = isWeb && isListPositioned ? flatlistRef?.current?.getScrollableNode() : null
+    if (!node) return
+
+    const events = ['wheel', 'mousedown', 'keydown', 'touchstart']
+    events.forEach((event) => node.addEventListener(event, onListTouchStart, { passive: true }))
+
+    return () => events.forEach((event) => node.removeEventListener(event, onListTouchStart))
+  }, [flatlistRef, isListPositioned, onListTouchStart])
+
+  // Scrolls to top on search
+  useEffect(() => {
+    if (prevSearchRef.current === debouncedSearch) return
+
+    prevSearchRef.current = debouncedSearch
+    flatlistRef?.current?.scrollToOffset({ animated: false, offset: 0 })
+  }, [flatlistRef, debouncedSearch])
 
   return {
     accounts: filteredAccounts,
@@ -154,7 +281,17 @@ const useAccountsList = ({
     search,
     keyExtractor,
     getItemLayout,
-    shouldDisplayAccounts
+    getAccountItemHeight,
+    onAccountExtraHeightChange,
+    onListContentSizeChange,
+    onListLayout,
+    onListTouchStart,
+    initialScrollIndex,
+    // Nothing to hide when the list starts at the top, so it shows right away
+    shouldDisplayAccounts: initialScrollIndex === undefined || isListPositioned,
+    // Gated on the unfiltered accounts so an empty search result still renders the
+    // list (and with it the empty state) instead of unmounting it
+    isReadyToRender: !flatlistRef || accounts.length > 0
   }
 }
 

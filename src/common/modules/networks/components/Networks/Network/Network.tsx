@@ -12,10 +12,13 @@ import useController from '@common/hooks/useController'
 import { AnimatedPressable, DURATIONS, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP } from '@common/modules/networks/components/NetworkBottomSheet'
+import useNetworksBalances from '@common/modules/networks/hooks/useNetworksBalances'
 import getStyles from '@common/modules/networks/styles'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   chainId: bigint | string
@@ -23,6 +26,8 @@ interface Props {
   openSettingsBottomSheet: (chainId: bigint | string) => void
   onPress: (chainId: bigint | string) => void
 }
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomSheet, onPress }) => {
   const { theme, styles } = useTheme(getStyles)
@@ -33,10 +38,11 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
       to: theme.secondaryBackground
     }
   })
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const {
-    state: { portfolio, dashboardNetworkFilter }
+    state: { dashboardNetworkFilter }
   } = useController('SelectedAccountController')
+  const { balancePerNetwork, isPrivacyPoolsAccount } = useNetworksBalances()
 
   const isInternalNetwork = chainId === 'rewards' || chainId === 'gasTank'
   // Doesn't have to be binded
@@ -55,7 +61,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
     await openBlockExplorer(networkData?.explorerUrl)
   }, [networkData, openBlockExplorer, isBlockExplorerMissing])
 
-  const networkBalance = portfolio.balancePerNetwork[chainId.toString()] || 0
+  const networkBalance = balancePerNetwork[chainId.toString()] || 0
   let networkName = networkData?.name
 
   if (chainId === 'rewards') {
@@ -89,32 +95,35 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
         >
           {networkName}
         </Text>
-        <AnimatedPressable
-          // Bind the parent animation so its hover state doesn't get lost
-          // when hovering over the explorer icon
-          onHoverIn={triggerHovered}
-          onPress={handleOpenBlockExplorer}
-          dataSet={createGlobalTooltipDataSet({
-            id: tooltipBlockExplorerMissingId,
-            content: NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP,
-            hidden: !isBlockExplorerMissing
-          })}
-          style={[
-            spacings.mlSm,
-            explorerIconAnimStyle,
-            (dashboardNetworkFilter === chainId || isHovered) &&
-              !isInternalNetwork && { opacity: 1 }
-          ]}
-        >
-          {({ hovered }: any) => (
-            <OpenIcon
-              width={24}
-              height={24}
-              color={hovered ? theme.primaryText : theme.iconPrimary}
-              style={isBlockExplorerMissing && { opacity: 0.4 }}
-            />
-          )}
-        </AnimatedPressable>
+        {/* A Privacy Pools account has no address to show in an explorer */}
+        {!isPrivacyPoolsAccount && (
+          <AnimatedPressable
+            // Bind the parent animation so its hover state doesn't get lost
+            // when hovering over the explorer icon
+            onHoverIn={triggerHovered}
+            onPress={handleOpenBlockExplorer}
+            dataSet={createGlobalTooltipDataSet({
+              id: tooltipBlockExplorerMissingId,
+              content: NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP,
+              hidden: !isBlockExplorerMissing
+            })}
+            style={[
+              spacings.mlSm,
+              explorerIconAnimStyle,
+              (dashboardNetworkFilter === chainId || isHovered) &&
+                !isInternalNetwork && { opacity: 1 }
+            ]}
+          >
+            {({ hovered }: any) => (
+              <OpenIcon
+                width={24}
+                height={24}
+                color={hovered ? theme.primaryText : theme.iconPrimary}
+                style={isBlockExplorerMissing && { opacity: 0.4 }}
+              />
+            )}
+          </AnimatedPressable>
+        )}
       </View>
       <View style={[flexbox.alignCenter, flexbox.directionRow]}>
         <Text

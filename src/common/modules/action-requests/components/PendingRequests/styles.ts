@@ -20,8 +20,10 @@ interface Styles {
   cardHumanization: ViewStyle
   cardNetwork: ViewStyle
   sheetHeader: ViewStyle
-  closeButton: ViewStyle
   openButton: ViewStyle
+  waitingPill: ViewStyle
+  waitingNote: ViewStyle
+  waitingNoteText: TextStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -113,16 +115,7 @@ const getStyles = (theme: ThemeProps) =>
       width: '100%'
     },
     sheetHeader: {
-      ...flexbox.directionRow,
-      ...flexbox.alignStart,
-      ...flexbox.justifySpaceBetween,
       ...spacings.mbLg
-    },
-    closeButton: {
-      ...flexbox.center,
-      width: 32,
-      height: 32,
-      flexShrink: 0
     },
     openButton: {
       ...flexbox.center,
@@ -130,6 +123,25 @@ const getStyles = (theme: ThemeProps) =>
       minHeight: 44,
       ...spacings.mlTy,
       flexShrink: 0
+    },
+    waitingPill: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...spacings.mlTy,
+      ...spacings.phTy,
+      ...spacings.pvMi,
+      borderRadius: 50,
+      backgroundColor: theme.warningBackground,
+      flexShrink: 0
+    },
+    waitingNote: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...spacings.mtTy,
+      width: '100%'
+    },
+    waitingNoteText: {
+      flexShrink: 1
     }
   })
 

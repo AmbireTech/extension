@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
+import { TouchableOpacity, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import {
@@ -12,15 +12,12 @@ import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Banner from '@common/components/Banner'
 import HourglassIconAnimated from '@common/components/HourglassIconAnimated'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllerSession from '@common/hooks/useControllerSession'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
-import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -29,7 +26,6 @@ import { openInTab } from '@common/utils/links'
 import { searchWithNetworkName } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
-import FloatingBottomBar from '../FloatingBottomBar'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import { getHasPendingDefiUpdate } from './helpers'
@@ -39,15 +35,9 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 interface Props {
   openTab: TabType
-  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
-  animatedOverviewHeight: Animated.Value
-  isSearchHidden?: boolean
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
@@ -55,31 +45,46 @@ const { isPopup } = getUiType()
 const selectScheduledUpdateChainIds = (state: AllControllersMappingType['PortfolioController']) =>
   state.scheduledUpdateChainIds
 
-const DeFiPositions: FC<Props> = ({
-  openTab,
-  setOpenTab,
-  initTab,
-  sessionId,
-  onScroll,
-  dashboardNetworkFilterName,
-  animatedOverviewHeight,
-  isSearchHidden,
-  refreshing,
-  onRefresh
-}) => {
+const selectPortfolioDefiPositions = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio?.defiPositions
+const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.isAllReady
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+const selectBanners = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.banners
+
+const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetworkFilterName }) => {
   const { t } = useTranslation()
   const { flags } = useController('FeatureFlagsController').state
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme } = useTheme()
   const searchValue = watch('search')
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: scheduledUpdateChainIds, dispatch: portfolioDispatch } = useController(
     'PortfolioController',
     selectScheduledUpdateChainIds
   )
-  const {
-    state: { account, portfolio, dashboardNetworkFilter, banners }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: defiPositions } = useController(
+    'SelectedAccountController',
+    selectPortfolioDefiPositions
+  )
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    selectDashboardNetworkFilter
+  )
+  const { state: banners } = useController('SelectedAccountController', selectBanners)
   const { setSearchParams, navigate } = useNavigation()
 
   const hasPendingUpdate = useMemo(
@@ -134,7 +139,7 @@ const DeFiPositions: FC<Props> = ({
   })
 
   const filteredPositions = useMemo(() => {
-    const defiToSearch = portfolio.defiPositions
+    const defiToSearch = defiPositions
       .filter(({ chainId, positions }) => {
         let isMatchingNetwork = true
 
@@ -157,23 +162,10 @@ const DeFiPositions: FC<Props> = ({
       search: searchValue,
       keys: ['providerName', 'assetNames']
     })
-  }, [portfolio.defiPositions, dashboardNetworkFilter, searchValue, networks])
+  }, [defiPositions, dashboardNetworkFilter, searchValue, networks])
 
   const renderItem = useCallback(
     ({ item }: any) => {
-      if (item === 'header') {
-        return (
-          <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              currentTab="defi"
-              sessionId={sessionId}
-            />
-          </View>
-        )
-      }
-
       if (item === 'banners') {
         return (
           <View style={spacings.mbMi}>
@@ -270,12 +262,8 @@ const DeFiPositions: FC<Props> = ({
     },
     [
       initTab?.defi,
-      theme.primaryBackground,
       theme.linkText,
       theme.infoText,
-      openTab,
-      setOpenTab,
-      sessionId,
       currentAccountBanners,
       searchValue,
       dashboardNetworkFilterName,
@@ -291,7 +279,7 @@ const DeFiPositions: FC<Props> = ({
   }, [])
 
   const dataItems = useMemo(() => {
-    const items: string[] = isMobile ? [] : ['header']
+    const items: string[] = []
 
     if (currentAccountBanners.length > 0) {
       items.push('banners')
@@ -301,11 +289,11 @@ const DeFiPositions: FC<Props> = ({
       if (hasPendingUpdate) {
         items.push('pending-update')
       }
-      items.push(!portfolio.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
-      if (initTab?.defi && portfolio.isAllReady) {
+      items.push(!isPortfolioAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
+      if (initTab?.defi && isPortfolioAllReady) {
         filteredPositions.forEach((p: any) => items.push(p))
       }
-      items.push(portfolio.isAllReady && !filteredPositions.length ? 'empty' : '')
+      items.push(isPortfolioAllReady && !filteredPositions.length ? 'empty' : '')
     } else {
       items.push('disabled')
     }
@@ -317,39 +305,28 @@ const DeFiPositions: FC<Props> = ({
     flags.tokenAndDefiAutoDiscovery,
     hasPendingUpdate,
     initTab?.defi,
-    portfolio.isAllReady
+    isPortfolioAllReady
   ])
 
-  // Rendered above the carousel on mobile, so it stays put through a swipe
+  // Rendered by the carousel above the pages, so it stays put through a swipe
   const floatingBar = useMemo(
-    () => ({ control, searchPlaceholder: t('Search DeFi') }),
+    () => ({ control, networkFilterTab: 'defi' as const, searchPlaceholder: t('Search DeFi') }),
     [control, t]
   )
 
   return (
-    <>
-      <DashboardPageScrollContainer
-        floatingBar={floatingBar}
-        tab="defi"
-        openTab={openTab}
-        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
-        data={dataItems}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        onEndReachedThreshold={isPopup ? 5 : 2.5}
-        initialNumToRender={isPopup ? 10 : 20}
-        windowSize={9} // Larger values can cause performance issues.
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        animatedOverviewHeight={animatedOverviewHeight}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-      />
-      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
-      {!isMobile && openTab === 'defi' && (
-        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
-      )}
-    </>
+    <DashboardPageScrollContainer
+      floatingBar={floatingBar}
+      tab="defi"
+      openTab={openTab}
+      data={dataItems}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      onEndReachedThreshold={isPopup ? 5 : 2.5}
+      initialNumToRender={isPopup ? 10 : 20}
+      windowSize={9} // Larger values can cause performance issues.
+      scrollEventThrottle={16}
+    />
   )
 }
 

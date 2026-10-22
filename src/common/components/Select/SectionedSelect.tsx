@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import EmptyListPlaceholder from './components/EmptyListPlaceholder'
 import SelectContainer from './components/SelectContainer'
+import { SELECT_LIST_VIRTUALIZATION } from './styles'
 import { SectionedSelectProps } from './types'
 import useSelectInternal from './useSelectInternal'
 
@@ -42,6 +43,41 @@ const SectionedSelect = ({
     handleLayout
   } = selectData
 
+  // Memoized for the same reason `Select` memoizes its `flatListProps`: a new object
+  // here defeats `React.memo` on the BottomSheet, so every render of the parent
+  // re-renders every mounted row of the list.
+  const sectionListProps = useMemo(
+    () => ({
+      ref: listRef,
+      sections: filteredData as SectionedSelectProps['sections'],
+      renderItem: renderItem as any,
+      onLayout: handleLayout,
+      renderSectionHeader,
+      keyExtractor,
+      ...SELECT_LIST_VIRTUALIZATION,
+      SectionSeparatorComponent,
+      removeClippedSubviews: true,
+      getItemLayout: getItemLayout as any,
+      ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,
+      stickySectionHeadersEnabled,
+      onScroll: handleScroll,
+      scrollEventThrottle: 16
+    }),
+    [
+      listRef,
+      filteredData,
+      renderItem,
+      handleLayout,
+      renderSectionHeader,
+      keyExtractor,
+      SectionSeparatorComponent,
+      getItemLayout,
+      emptyListPlaceholderText,
+      stickySectionHeadersEnabled,
+      handleScroll
+    ]
+  )
+
   return (
     <SelectContainer
       value={value}
@@ -52,24 +88,7 @@ const SectionedSelect = ({
       id={testID}
       testID={testID}
       listRef={listRef}
-      sectionListProps={{
-        ref: listRef,
-        sections: filteredData as SectionedSelectProps['sections'],
-        renderItem: renderItem as any,
-        onLayout: handleLayout,
-        renderSectionHeader: renderSectionHeader,
-        keyExtractor: keyExtractor,
-        initialNumToRender: 15,
-        windowSize: 10,
-        maxToRenderPerBatch: 20,
-        SectionSeparatorComponent: SectionSeparatorComponent,
-        removeClippedSubviews: true,
-        getItemLayout: getItemLayout as any,
-        ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,
-        stickySectionHeadersEnabled: stickySectionHeadersEnabled,
-        onScroll: handleScroll,
-        scrollEventThrottle: 16
-      }}
+      sectionListProps={sectionListProps}
     />
   )
 }

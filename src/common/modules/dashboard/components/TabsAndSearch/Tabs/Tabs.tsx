@@ -7,11 +7,12 @@ import {
 } from '@ambire-common/libs/banners/banners'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import usePendingSafeTransactions from '@common/modules/dashboard/hooks/usePendingSafeTransactions'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -31,6 +32,8 @@ interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   handleChangeQuery: (openTab: string) => void
+  /** The tabs to show, in their usual order. All by default. */
+  tabs?: TabType[]
 }
 
 const TABS: {
@@ -61,7 +64,7 @@ const TABS: {
   }
 ]
 
-const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
+const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery, tabs }) => {
   const { styles, theme } = useTheme(getStyles)
   const { minWidthSize } = useWindowSize()
   const { state: banners } = useController('ActivityController', selectActivityBanners)
@@ -84,6 +87,11 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
     return getCurrentAccountBanners(banners, accountAddr)
   }, [banners, accountAddr])
 
+  const visibleTabs = useMemo(
+    () => (tabs ? TABS.filter(({ type }) => tabs.includes(type)) : TABS),
+    [tabs]
+  )
+
   const pendingBanner = useMemo(() => {
     return currentAccountBanners.find((b) => b.category === 'pending-to-be-confirmed-acc-ops')
   }, [currentAccountBanners])
@@ -97,10 +105,11 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
       style={[
         styles.container,
         minWidthSize(480) && { flex: 1 },
-        minWidthSize(480) && flexbox.justifySpaceBetween
+        minWidthSize(480) && flexbox.justifySpaceBetween,
+        isWeb && { columnGap: SPACING_SM }
       ]}
     >
-      {TABS.map(({ type, tabLabel, disabled, testID }, tabIndex) => {
+      {visibleTabs.map(({ type, tabLabel, disabled, testID }) => {
         const isActive = openTab === type
 
         const withBadge =
@@ -188,7 +197,12 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
                     spacings.phMi
                   ]}
                 >
-                  <Text fontSize={10} color={theme.primaryAccent} style={{ lineHeight: 12 }}>
+                  <Text
+                    fontSize={10}
+                    color={theme.primaryAccent}
+                    // Same nudge as the badge above: the font sits the digits above the center
+                    style={[{ lineHeight: 12 }, isMobile && { marginTop: 2 }]}
+                  >
                     {totalPendingCount}
                   </Text>
                 </View>

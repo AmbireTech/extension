@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -10,10 +10,20 @@ import { EIP_1271_NOT_SUPPORTED_BY, toPersonalSignHex } from '@ambire-common/lib
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
+import useSigningAuth from '@common/hooks/useSigningAuth'
 import useToast from '@common/hooks/useToast'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
+import useOneKey from '@common/modules/hardware-wallets/hooks/useOneKey'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
-import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
 
 const useSignMessage = () => {
   const { t } = useTranslation()
@@ -21,17 +31,18 @@ const useSignMessage = () => {
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
   // Tracks which request hasReachedBottom currently reflects, so it can't carry over "already
   // read" from a previous message onto a new, unread one (would silently skip
   // isScrollToBottomForced below and hide the down arrow for content that's actually unread).
   const [hasReachedBottomRequestId, setHasReachedBottomRequestId] = useState<
     string | number | undefined
   >(undefined)
-  const { state: account } = useController('SelectedAccountController', 'account')
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { state: accountStates } = useController('AccountsController', 'accountStates')
   const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
+  const { ensureOneKeyAccess } = useOneKey()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const {
@@ -47,6 +58,15 @@ const useSignMessage = () => {
     signingCleanup
   } = useQrSigningFlow()
   const { addToast } = useToast()
+  const {
+    sheetRef: signingAuthSheetRef,
+    requestSigningAuth,
+    cancelSigningAuth,
+    signingAuthProps
+  } = useSigningAuth({
+    requirement: signMessageState.signingAuthRequirement,
+    requestId: signMessageState.messageToSign?.fromRequestId
+  })
 
   const userRequest = useMemo(() => {
     if (
@@ -205,6 +225,12 @@ const useSignMessage = () => {
     })
   }, [userRequest, t, requestsDispatch])
 
+  // Lets the signing authentication prompt resume the very call it interrupted, without
+  // handleSign having to depend on itself
+  const handleSignRef = useRef<
+    ((signers?: { addr: Key['addr']; type: Key['type'] }[]) => void) | null
+  >(null)
+
   const handleSign = useCallback(
     (signers?: { addr: Key['addr']; type: Key['type'] }[]) => {
       // Has more than one key, should first choose the key to sign with
@@ -224,19 +250,53 @@ const useSignMessage = () => {
         return
       }
 
+      // A first time dapp has to be confirmed with the password or biometrics, but only when the
+      // keystore holds the key - a hardware wallet confirms on the device
+      const isSigningWithInternalKey = chosenSigners.some(({ type }) => type === 'internal')
+      if (isSigningWithInternalKey && requestSigningAuth(() => handleSignRef.current?.(signers)))
+        return
+
       const isLedgerKeyChosen = chosenSigners.find((s) => s.type === 'ledger')
       if (isLedgerKeyChosen && !isLedgerConnected) {
         setShouldDisplayLedgerConnectModal(true)
         return
       }
 
-      dispatch({
-        type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
-        params: { signers: chosenSigners }
+      const signWithChosenSigners = () => {
+        dispatch({
+          type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
+          params: { signers: chosenSigners }
+        })
+      }
+
+      const isOneKeyKeyChosen = chosenSigners.some((s) => s.type === 'onekey')
+      if (!isOneKeyKeyChosen) {
+        signWithChosenSigners()
+        return
+      }
+
+      // When the OneKey is unplugged or the browser no longer lets Ambire use it, this opens
+      // the tab the browser asks for access to a device from, instead of signing
+      //
+      // ensureOneKeyAccess() catches every error itself and always resolves
+      void ensureOneKeyAccess().then((hasOneKeyAccess) => {
+        if (hasOneKeyAccess) signWithChosenSigners()
       })
     },
-    [isLedgerConnected, dispatch, addToast, t, signMessageState.signers]
+    [
+      isLedgerConnected,
+      ensureOneKeyAccess,
+      dispatch,
+      addToast,
+      t,
+      signMessageState.signers,
+      requestSigningAuth
+    ]
   )
+
+  useEffect(() => {
+    handleSignRef.current = handleSign
+  }, [handleSign])
 
   const cancelQrSigningFlow = useCallback(() => {
     signingCleanup()
@@ -276,6 +336,13 @@ const useSignMessage = () => {
 
   const signWithDefaultSignerIfPossible = useCallback(() => {
     if (!account?.safeCreation && selectedAccountKeyStoreKeys.length > 1) {
+      // A private key signs on its own in one click, so the user is not asked to pick another key
+      const internalKey = selectedAccountKeyStoreKeys.find((key) => key.type === 'internal')
+      if (internalKey) {
+        setSigner(internalKey.addr, internalKey.type)
+        return
+      }
+
       handleSign()
       return
     }
@@ -416,7 +483,10 @@ const useSignMessage = () => {
     holdToProceedCompleteText,
     hasSafetyBanners,
     holdToProceedButtonType,
-    isResolveActionDisabled
+    isResolveActionDisabled,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps
   }
 }
 

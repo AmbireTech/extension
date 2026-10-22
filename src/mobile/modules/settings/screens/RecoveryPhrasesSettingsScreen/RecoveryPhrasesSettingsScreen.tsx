@@ -23,11 +23,16 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectStatuses = (state: AllControllersMappingType['StorageController']) => state.statuses
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
 const RecoveryPhrasesSettingsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: statuses } = useController('StorageController', 'statuses')
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: statuses } = useController('StorageController', selectStatuses)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const { seeds, keys } = useController('KeystoreController').state
   const { notBackedUpSeedIds, seedsSortedByBackupStatus } = useRecoveryPhraseBackupStatus()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -90,19 +95,18 @@ const RecoveryPhrasesSettingsScreen = () => {
             <SettingsIcon width={20} height={20} style={spacings.mrMi} color={theme.primaryText} />
           </Button>
         </View>
-        {associatedAccounts.map((a) => {
+        {associatedAccounts.map((a, accountIndex) => {
           return (
             <Account
               key={a.addr}
               account={a}
               withSettings={false}
               isSelectable={false}
-              containerStyle={{
-                marginBottom: 0,
-                paddingHorizontal: 0,
-                minHeight: 82,
-                maxHeight: 82
-              }}
+              isOnSecondaryBackground
+              withBadges={false}
+              containerStyle={
+                accountIndex === associatedAccounts.length - 1 ? spacings.mb0 : undefined
+              }
               withKeyType={false}
               withCopy={false}
             />

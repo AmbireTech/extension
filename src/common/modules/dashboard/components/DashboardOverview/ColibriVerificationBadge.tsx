@@ -11,6 +11,8 @@ import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   color: ColorValue
   isVisible: boolean
@@ -18,16 +20,22 @@ type Props = {
 
 type ChainStatus = 'loading' | 'success' | 'warning' | 'stale'
 
+const selectPortfolioState = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio?.portfolioState
+
+const selectAllNetworks = (state: AllControllersMappingType['NetworksController']) =>
+  state.allNetworks
+
 const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
   const { t } = useTranslation()
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
-  const { state: allNetworks } = useController('NetworksController', 'allNetworks')
+  const { state: portfolioState } = useController('SelectedAccountController', selectPortfolioState)
+  const { state: allNetworks } = useController('NetworksController', selectAllNetworks)
 
   const configuredChainIds = useMemo(
     () =>
       allNetworks
         .filter((network) => {
-          const networkState = portfolio.portfolioState[network.chainId.toString()]
+          const networkState = portfolioState[network.chainId.toString()]
 
           if (!network.isColibriEnabled) return false
           if (networkState?.verification?.provider !== 'colibri') return false
@@ -35,16 +43,16 @@ const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
           return !networkState.accountOps?.length
         })
         .map((network) => network.chainId.toString()),
-    [allNetworks, portfolio.portfolioState]
+    [allNetworks, portfolioState]
   )
 
   const statusByChainId = useMemo<Record<string, ChainStatus>>(() => {
     return Object.fromEntries(
-      Object.entries(portfolio.portfolioState)
+      Object.entries(portfolioState)
         .filter(([, state]) => state?.verification?.provider === 'colibri')
         .map(([chainId, state]) => [chainId, state!.verification!.status as ChainStatus])
     )
-  }, [portfolio.portfolioState])
+  }, [portfolioState])
 
   const getChainStatus = useCallback(
     (chainId: string): ChainStatus => {

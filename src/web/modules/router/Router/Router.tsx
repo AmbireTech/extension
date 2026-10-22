@@ -4,6 +4,8 @@ import { Route, Routes } from 'react-router-dom'
 
 import { useTranslation } from '@common/config/localization'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
+import { selectSidePanelModeStatus } from '@common/controllers/wallet-state/selectors'
+import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
@@ -16,7 +18,9 @@ import RecoveryScreen from '@web/components/RecoveryScreen'
 import Splash from '@web/components/Splash'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
+import usePersistSidePanelLayout from '@web/hooks/usePersistSidePanelLayout'
 import useSidePanelActionRequestRouting from '@web/hooks/useSidePanelActionRequestRouting'
+import SidePanelModeDisabledScreen from '@web/modules/auth/screens/SidePanelModeDisabledScreen'
 import DashboardScreen from '@web/modules/dashboard/screens/DashboardScreen'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
 
@@ -24,7 +28,7 @@ import getStyles from './styles'
 
 const AsyncMainRoute = lazy(() => import('@web/modules/router/components/MainRoutes'))
 
-const { isPopup } = getUiType()
+const { isPopup, isFirefoxSidebar } = getUiType()
 
 const TIME_TO_LAND_ON_A_ROUTE = 3000
 
@@ -40,8 +44,13 @@ const Router = () => {
   const { canRenderRoute, areAllControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
     ControllersStateLoadedContext
   )
+  const { state: sidePanelModeStatus } = useController(
+    'WalletStateController',
+    selectSidePanelModeStatus
+  )
   useCurrentActionSideEffects()
   useSidePanelActionRequestRouting()
+  usePersistSidePanelLayout()
 
   // Controller state is received but the extension hasn't routed anywhere
   const hasNothingToRender = !pathname && areAllControllerStatesLoaded
@@ -92,6 +101,14 @@ const Router = () => {
   const isRouteWithCriticalControllers = Object.keys(ROUTE_CRITICAL_CONTROLLERS).includes(pathname)
   const canRenderCurrentRoute =
     areAllControllerStatesLoaded || (isRouteWithCriticalControllers && canRenderRoute)
+
+  // Firefox can't hide the extension's sidebar from its sidebar switcher, so it can be opened
+  // while the wallet is set to open as a popup - show a notice there instead of a second wallet UI.
+  // The mode reads as off until the stored settings load, so the splash is kept until then -
+  // otherwise the notice could flash before the wallet, or the wallet before the notice.
+  if (isFirefoxSidebar && sidePanelModeStatus !== 'on') {
+    return sidePanelModeStatus === 'off' ? <SidePanelModeDisabledScreen /> : <Splash />
+  }
 
   if (authStatus === AUTH_STATUS.LOADING || !canRenderCurrentRoute) {
     // Routes in ROUTE_CRITICAL_CONTROLLERS load next to instantly so it doesn't make sense to display

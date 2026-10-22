@@ -1,3 +1,0 @@
-import ImportAccountsFromMobileScreen from './ImportAccountsFromMobileScreen'
-
-export default ImportAccountsFromMobileScreen

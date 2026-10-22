@@ -5,11 +5,13 @@ import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
+import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { findAccountOpOrReplacement } from '@ambire-common/libs/activity/replacements'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
@@ -29,6 +31,7 @@ import useController from '@common/hooks/useController'
 import useControllerSession from '@common/hooks/useControllerSession'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
@@ -47,7 +50,16 @@ import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isRequestWindow, isPopup } = getUiType()
+
+const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.visibleUserRequests
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+const selectAccountsOps = (state: AllControllersMappingType['ActivityController']) =>
+  state.accountsOps
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
@@ -60,8 +72,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressState,
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressUnknown,
-    isRecipientAddressUnknownAgreed,
-    isRecipientAddressFirstTimeSend,
     isFormValid,
     signAccountOpController,
     latestBroadcastedAccountOp,
@@ -71,9 +81,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     amountFieldMode,
     amount: controllerAmount,
     amountInFiat,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch
+    privacyPoolsRecipient,
+    isPreparingPrivacyPoolsDeposit,
+    privacyPoolsDepositError
   } = transferState
+  const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
 
   const amountInFiatBigInt = useMemo(() => {
     try {
@@ -86,18 +98,21 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { navigate } = useNavigation()
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const { t } = useTranslation()
-  const { state: visibleUserRequests } = useController('RequestsController', 'visibleUserRequests')
+  const { state: visibleUserRequests } = useController(
+    'RequestsController',
+    selectVisibleUserRequests
+  )
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
-  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { state: accountsOps } = useController('ActivityController', 'accountsOps')
+  const { state: accountsOps } = useController('ActivityController', selectAccountsOps)
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
@@ -134,12 +149,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressState.fieldValue !== addressStateFieldValue
 
   const submittedAccountOp = useMemo(() => {
-    if (!accountsOps.transfer || !latestBroadcastedAccountOp?.signature) return
+    if (!accountsOps.transfer || !latestBroadcastedAccountOp) return
 
-    return accountsOps.transfer.result.items.find(
-      (accOp) => accOp.signature === latestBroadcastedAccountOp.signature
-    )
-  }, [accountsOps.transfer, latestBroadcastedAccountOp?.signature])
+    // Once sped up, the activity shows its speed up instead of it
+    return findAccountOpOrReplacement(accountsOps.transfer.result.items, latestBroadcastedAccountOp)
+  }, [accountsOps.transfer, latestBroadcastedAccountOp])
 
   const accountUserRequests = useMemo(() => {
     if (!account || !userRequests.length) return []
@@ -285,6 +299,16 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [transferDispatch]
   )
 
+  const selectPrivacyPoolsRecipient = useCallback(
+    (seedId: string | null) => {
+      transferDispatch({
+        type: 'method',
+        params: { method: 'update', args: [{ privacyPoolsRecipient: seedId }] }
+      })
+    },
+    [transferDispatch]
+  )
+
   const onRecipientAddressUnknownAgree = useCallback(() => {
     transferDispatch({
       type: 'method',
@@ -326,10 +350,21 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
   const isTransferFormValid = useMemo(() => {
+    // No address to validate, but the deposit calls must be prepared, which takes a while
+    if (privacyPoolsRecipient)
+      return !!isFormValid && !isPreparingPrivacyPoolsDeposit && !privacyPoolsDepositError
+
     return !!(isTopUp
       ? isFormValid
       : isFormValid && addressInputState.validation.severity !== 'error')
-  }, [addressInputState.validation.severity, isFormValid, isTopUp])
+  }, [
+    addressInputState.validation.severity,
+    isFormValid,
+    isTopUp,
+    privacyPoolsRecipient,
+    isPreparingPrivacyPoolsDeposit,
+    privacyPoolsDepositError
+  ])
 
   const resetTransferForm = useCallback(() => {
     transferDispatch({
@@ -391,7 +426,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                         ? FEE_COLLECTOR
                         : getAddressFromAddressState(addressState),
                       executionType,
-                      recipientDomain: getResolvedDomainName(domains, addressState)
+                      recipientDomain: getResolvedDomainName(domains, addressState),
+                      privacyPoolsSeedId: privacyPoolsRecipient || undefined
                     }
                   }
                 ]
@@ -420,7 +456,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                     ? FEE_COLLECTOR
                     : getAddressFromAddressState(addressState),
                   executionType,
-                  recipientDomain: getResolvedDomainName(domains, addressState)
+                  recipientDomain: getResolvedDomainName(domains, addressState),
+                  privacyPoolsSeedId: privacyPoolsRecipient || undefined
                 }
               }
             ]
@@ -450,7 +487,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       account?.safeCreation,
       navigate,
       shouldRenderRequestInPanel,
-      domains
+      domains,
+      privacyPoolsRecipient
     ]
   )
 
@@ -475,18 +513,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
         isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
+        // See `isTransferFormValid`
+        isLoading={!!privacyPoolsRecipient && isPreparingPrivacyPoolsDeposit}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
-        shouldHoldToProceed={
-          (isRecipientAddressUnknown &&
-            !isRecipientAddressUnknownAgreed &&
-            !isRecipientHumanizerKnownTokenOrSmartContract &&
-            isRecipientAddressFirstTimeSend) ||
-          isRecipientAddressViewOnly ||
-          // poisoning detected - require hold-to-proceed as an additional safety step
-          !!addressPoisoningMatch
-        }
+        shouldHoldToProceed={!!validationFormMsgs.recipientAddress.shouldHold}
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
     )
@@ -497,14 +529,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
-    isRecipientAddressUnknown,
-    isRecipientAddressUnknownAgreed,
-    isRecipientHumanizerKnownTokenOrSmartContract,
-    isRecipientAddressFirstTimeSend,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch,
+    validationFormMsgs.recipientAddress.shouldHold,
     onRecipientAddressUnknownAgree,
-    addTransaction
+    addTransaction,
+    privacyPoolsRecipient,
+    isPreparingPrivacyPoolsDeposit
   ])
 
   const handleGoBackPress = useCallback(() => {
@@ -552,6 +581,16 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     )
   }
 
+  // Read from the sent op, as the form and its recipient are reset after sending
+  const privacyPoolsEntrypoint = latestBroadcastedAccountOp
+    ? getPrivacyPoolsChainConfig(latestBroadcastedAccountOp.chainId)?.entrypointAddress
+    : undefined
+  const wasSentToPrivacyPoolsAccount =
+    !!privacyPoolsEntrypoint &&
+    !!latestBroadcastedAccountOp?.calls.some(
+      ({ to }) => to?.toLowerCase() === privacyPoolsEntrypoint.toLowerCase()
+    )
+
   if (displayedView === 'track') {
     return (
       <TrackProgress
@@ -578,13 +617,24 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         {(submittedAccountOp?.status === AccountOpStatus.Success ||
           submittedAccountOp?.status === AccountOpStatus.UnknownButPastNonce) && (
           <Completed
-            title={isTopUp ? t('Top up ready!') : t('Transfer done!')}
+            title={
+              isTopUp
+                ? t('Top up ready!')
+                : // Like the Privacy Pools account's own Send
+                  wasSentToPrivacyPoolsAccount
+                  ? t('Sending successfully')
+                  : t('Transfer done!')
+            }
             titleSecondary={
               isTopUp
                 ? t('You can now use your gas tank')
-                : t('{{symbol}} delivered!', {
-                    symbol: latestBroadcastedToken?.symbol || 'Token'
-                  })
+                : wasSentToPrivacyPoolsAccount
+                  ? t('Your {{symbol}} is on its way to your Privacy Pools account.', {
+                      symbol: latestBroadcastedToken?.symbol || 'Token'
+                    })
+                  : t('{{symbol}} delivered!', {
+                      symbol: latestBroadcastedToken?.symbol || 'Token'
+                    })
             }
             explorerLink={explorerLink}
             openExplorerText="View Transfer"
@@ -636,10 +686,13 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               style={flexbox.flex1}
               contentContainerStyle={[
                 flexbox.flex1,
+                // The outer Content scroll already pads both sides, so the inner scrollbar
+                // gutter would only narrow the form on the right
+                spacings.pr0,
                 isTopUp ? { maxWidth: '100%', width: '100%' } : {}
               ]}
             >
-              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
                 <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
                 <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
                 <View style={{ width: 40 }} />
@@ -647,16 +700,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               <SendForm
                 addressInputState={addressInputState}
                 canUseGasTank={canUseGasTank}
-                amountErrorMessage={
-                  validationFormMsgs.amount.message ||
-                  transferState.amountAdjustmentWarning?.message ||
-                  ''
-                }
-                amountErrorSeverity={
-                  validationFormMsgs.amount.message
-                    ? validationFormMsgs.amount.severity
-                    : transferState.amountAdjustmentWarning?.severity
-                }
+                amountErrorMessage={validationFormMsgs.amount.message || ''}
+                amountErrorSeverity={validationFormMsgs.amount.severity}
+                amountAdjustmentInfo={transferState.amountAdjustmentInfo}
                 isRecipientAddressUnknown={isRecipientAddressUnknown}
                 isRecipientHumanizerKnownTokenOrSmartContract={
                   isRecipientHumanizerKnownTokenOrSmartContract
@@ -665,6 +711,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 setAmountFieldValue={setAmountFieldValue}
                 addressStateFieldValue={addressStateFieldValue}
                 setAddressStateFieldValue={setAddressStateFieldValue}
+                privacyPoolsAccounts={privacyPoolsAccounts}
+                onSelectPrivacyPoolsRecipient={selectPrivacyPoolsRecipient}
               />
             </ScrollableWrapper>
             {isTopUp && !canUseGasTank && (

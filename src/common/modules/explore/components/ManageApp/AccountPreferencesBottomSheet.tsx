@@ -10,15 +10,13 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import DAppAccountList from '@common/modules/dapp-catalog/components/DAppAccountList'
 import ToggleDAppScopedAccounts from '@common/modules/dapp-catalog/components/ToggleDAppScopedAccounts'
 import useDAppAccountPreferences from '@common/modules/dapp-catalog/hooks/useDAppAccountPreferences'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
 
 interface AccountPreferencesBottomSheetProps {
   dapp: Dapp
@@ -31,6 +29,7 @@ const AccountPreferencesBottomSheet = ({
   sheetRef,
   closeBottomSheet
 }: AccountPreferencesBottomSheetProps) => {
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
   const {
@@ -83,7 +82,7 @@ const AccountPreferencesBottomSheet = ({
       {localPreferences?.enabled ? (
         <>
           <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mb}>
-            {t('Select which accounts you want to connect with the app')}
+            {t('Select accounts to connect')}
           </Text>
 
           <DAppAccountList
@@ -96,7 +95,7 @@ const AccountPreferencesBottomSheet = ({
         /* Placeholder to rendering the content behind buttons */
         <View style={{ height: 120 }} />
       )}
-      <FooterGlassView size="sm" absolute={isSidePanel} preferGlassFooter={isSidePanel}>
+      <FooterGlassView size="sm" absolute={isNarrowWebLayout} preferGlassFooter={isNarrowWebLayout}>
         <Button
           type="secondary"
           size="smaller"

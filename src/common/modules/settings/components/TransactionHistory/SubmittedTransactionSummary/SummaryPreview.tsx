@@ -6,8 +6,8 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -17,9 +17,10 @@ import {
   getFullBalanceChangeAmount,
   getSummaryBalanceChanges,
   getVisibleSummaryBalanceChanges,
+  isNftBalanceChange,
   MAX_VISIBLE_BALANCE_CHANGES
 } from './helpers'
-import { getDappInteractions } from './humanizedHelpers'
+import { useDappInteractions } from './humanizedCallsHooks'
 import InteractionAddress from './InteractionAddress'
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
@@ -28,7 +29,7 @@ import { SubmittedAccountOpLike } from './types'
 const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedAccountOpLike }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const orderedBalanceChanges = useMemo(
     () => getSummaryBalanceChanges(submittedAccountOp),
@@ -43,18 +44,15 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
     0
   )
   const shouldShowBalanceChangesSummary = orderedBalanceChanges.length > 0
-  const dappInteractions = useMemo(
-    () => getDappInteractions(submittedAccountOp),
-    [submittedAccountOp]
-  )
+  const dappInteractions = useDappInteractions(submittedAccountOp)
 
   return (
-    <View style={[styles.contentContainer, isCompactSidePanelLayout && { minWidth: 0 }]}>
+    <View style={[styles.contentContainer, isNarrowWebLayout && { minWidth: 0 }]}>
       <View
         style={[
           styles.dappInteractionsColumn,
           shouldShowBalanceChangesSummary ? spacings.mrSm : undefined,
-          isCompactSidePanelLayout && { minWidth: 0, flexShrink: 1 }
+          isNarrowWebLayout && { minWidth: 0, flexShrink: 1 }
         ]}
       >
         {dappInteractions.length ? (
@@ -65,17 +63,21 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 style={[
                   styles.dappInteractionRow,
                   index < dappInteractions.length - 1 ? spacings.mbTy : undefined,
-                  isCompactSidePanelLayout && { minWidth: 0, maxWidth: '100%' }
+                  isNarrowWebLayout && { minWidth: 0, maxWidth: '100%' }
                 ]}
               >
                 <DappInteractionIcon interaction={interaction} />
-                <View style={isCompactSidePanelLayout ? { flexShrink: 1, minWidth: 0 } : undefined}>
+                <View style={isNarrowWebLayout ? { flexShrink: 1, minWidth: 0 } : undefined}>
                   <Text
                     fontSize={14}
                     weight="semiBold"
-                    numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
+                    numberOfLines={isNarrowWebLayout ? 1 : undefined}
                   >
-                    {interaction.id === 'fallback:cancel' ? t('Cancel') : interaction.name}
+                    {interaction.id === 'fallback:cancel'
+                      ? t('Cancel')
+                      : interaction.id === 'fallback:safeDeploy'
+                        ? t('Activate Safe account')
+                        : interaction.name}
                   </Text>
                   {interaction.safeNonce !== undefined && (
                     <Text fontSize={12} appearance="secondaryText">
@@ -89,13 +91,13 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                       style={[
                         flexbox.alignCenter,
                         flexbox.directionRow,
-                        isCompactSidePanelLayout && { minWidth: 0 }
+                        isNarrowWebLayout && { minWidth: 0 }
                       ]}
                     >
                       <Text
                         fontSize={12}
                         appearance="secondaryText"
-                        style={isCompactSidePanelLayout ? { lineHeight: 16 } : undefined}
+                        style={isNarrowWebLayout ? { lineHeight: 16 } : undefined}
                       >
                         {t('to ')}
                       </Text>
@@ -106,10 +108,8 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                         <Text
                           fontSize={12}
                           appearance="secondaryText"
-                          numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
-                          style={
-                            isCompactSidePanelLayout ? { flexShrink: 1, lineHeight: 16 } : undefined
-                          }
+                          numberOfLines={isNarrowWebLayout ? 1 : undefined}
+                          style={isNarrowWebLayout ? { flexShrink: 1, lineHeight: 16 } : undefined}
                         >
                           {interaction.description}
                         </Text>
@@ -145,45 +145,78 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
         <View
           style={[
             styles.balanceChangesRightColumn,
-            isCompactSidePanelLayout && { flexShrink: 0, ...spacings.mlTy }
+            isNarrowWebLayout && { flexShrink: 0, ...spacings.mlTy }
           ]}
         >
           {visibleBalanceChanges.map((change, index) => (
             <View
-              key={`${change.address}-${change.balanceChange.toString()}`}
+              key={`${change.address}-${
+                isNftBalanceChange(change)
+                  ? change.tokenId.toString()
+                  : change.balanceChange.toString()
+              }`}
               style={[
                 styles.balanceChangeRow,
                 index < visibleBalanceChanges.length - 1 || hiddenBalanceChangesCount
                   ? spacings.mbTy
                   : null,
                 // Custom fontSize clears Text lineHeight; keep row height stable so amounts don't overlap.
-                isCompactSidePanelLayout && { minHeight: 18 }
+                isNarrowWebLayout && { minHeight: 18 }
               ]}
             >
-              <Text
-                fontSize={12}
-                weight="medium"
-                appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                style={{
-                  cursor: 'pointer',
-                  ...(isCompactSidePanelLayout ? { lineHeight: 16 } : {})
-                }}
-                dataSet={createGlobalTooltipDataSet({
-                  id: getBalanceChangeTooltipId(change, submittedAccountOp),
-                  content: getFullBalanceChangeAmount(change)
-                })}
-              >
-                {formatBalanceChangeAmount(change)}
-              </Text>
-              <Text
-                fontSize={12}
-                weight="medium"
-                appearance="secondaryText"
-                style={[spacings.mlTy, isCompactSidePanelLayout && { lineHeight: 16 }]}
-              >
-                {change.symbol}
-              </Text>
-              <BalanceChangeToken change={change} />
+              {isNftBalanceChange(change) ? (
+                // NFTs are unique so the amount is always 1. Show only the sign
+                // to keep the direction visible (e.g. in NFT-for-token swaps)
+                <Text
+                  fontSize={12}
+                  weight="medium"
+                  appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
+                  style={isNarrowWebLayout ? { lineHeight: 16 } : undefined}
+                >
+                  {change.balanceChange > 0n ? '+' : '-'}
+                </Text>
+              ) : (
+                <Text
+                  fontSize={12}
+                  weight="medium"
+                  appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
+                  style={{
+                    cursor: 'pointer',
+                    ...(isNarrowWebLayout ? { lineHeight: 16 } : {})
+                  }}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: getBalanceChangeTooltipId(change, submittedAccountOp),
+                    content: getFullBalanceChangeAmount(change)
+                  })}
+                >
+                  {formatBalanceChangeAmount(change)}
+                </Text>
+              )}
+              {isNftBalanceChange(change) ? (
+                <View style={spacings.mlTy}>
+                  <TokenOrNft
+                    value={change.tokenId}
+                    address={change.address}
+                    textSize={12}
+                    chainId={change.chainId}
+                    tokenMarginRight={0}
+                    tokenIconContainerSize={16}
+                    nftIconPosition="right"
+                  />
+                </View>
+              ) : (
+                <>
+                  <Text
+                    fontSize={12}
+                    weight="medium"
+                    appearance="secondaryText"
+                    style={[spacings.mlTy, isNarrowWebLayout && { lineHeight: 16 }]}
+                  >
+                    {change.symbol}
+                  </Text>
+                  <BalanceChangeToken change={change} />
+                </>
+              )}
             </View>
           ))}
           {!!hiddenBalanceChangesCount && (

@@ -147,7 +147,7 @@ export class ProviderController {
 
     const accounts = this._internalGetAccounts(id)
 
-    await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts)
+    await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts, id)
 
     this.mainCtrl.ui.dispatchDappTabFocus?.([{ tabId: session.tabId, windowId: session.windowId }])
 
@@ -216,6 +216,11 @@ export class ProviderController {
       !this.mainCtrl.dapps.hasPermission(session.id, getRequestSource(session)) ||
       !this.isUnlocked
     ) {
+      throw ethErrors.provider.unauthorized()
+    }
+
+    // The same error as `rpcFlow` gives, so an app can't tell a Privacy Pools account is used
+    if (this.mainCtrl.selectedAccount.selectedType === 'privacyPools') {
       throw ethErrors.provider.unauthorized()
     }
 

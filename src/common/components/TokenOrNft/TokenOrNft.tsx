@@ -13,6 +13,8 @@ import HumanizerAddress from '../HumanizerAddress'
 import Nft from './components/Nft'
 import Token from './components/Token'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   address: string
   value: bigint
@@ -21,7 +23,19 @@ interface Props {
   chainId: bigint
   tokenMarginRight?: number
   tokenIconContainerSize?: number
+  nftIconPosition?: 'left' | 'right'
+  /**
+   * The token's symbol and decimals, when the caller already knows them for certain. The token is
+   * then shown right away, without looking it up.
+   */
+  knownTokenInfo?: { symbol: string; decimals: number }
 }
+
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectTokenPricesEnabled = (state: AllControllersMappingType['FeatureFlagsController']) =>
+  state.flags?.tokenPrices === true
 
 const TokenOrNft: FC<Props> = ({
   value,
@@ -30,20 +44,27 @@ const TokenOrNft: FC<Props> = ({
   chainId,
   sizeMultiplierSize = 1,
   tokenMarginRight,
-  tokenIconContainerSize
+  tokenIconContainerSize,
+  nftIconPosition,
+  knownTokenInfo
 }) => {
   const marginRight =
     tokenMarginRight !== undefined ? tokenMarginRight : SPACING_TY * sizeMultiplierSize
   const { addToast } = useToast()
   const [assetInfo, setAssetInfo] = useState<{
-    tokenInfo?: TokenResult
+    tokenInfo?: Pick<TokenResult, 'symbol' | 'decimals'>
     nftInfo?: CollectionResult
-  }>({})
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  }>(() => (knownTokenInfo ? { tokenInfo: knownTokenInfo } : {}))
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { dispatchAndWait } = useController('ProvidersController')
+  const { state: tokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectTokenPricesEnabled
+  )
+  const isTokenPricesEnabled = useCallback(() => tokenPricesEnabled, [tokenPricesEnabled])
 
   const { t } = useTranslation()
-  const { state: controllerNetworks } = useController('NetworksController', 'networks')
+  const { state: controllerNetworks } = useController('NetworksController', selectNetworks)
   const { benzinNetworks, addNetwork } = useBenzinNetworksContext()
   // Component used across Benzin and Extension, make sure to always set networks
   const networks = controllerNetworks ?? benzinNetworks
@@ -85,6 +106,8 @@ const TokenOrNft: FC<Props> = ({
   }, [])
 
   useEffect(() => {
+    // Nothing to look up, and the lookup would replace it with what it found
+    if (knownTokenInfo) return
     if (addNetwork && chainId && !network) {
       addNetwork(chainId)
       return
@@ -99,10 +122,15 @@ const TokenOrNft: FC<Props> = ({
     if (tokenFromPortfolio || nftFromPortfolio)
       setAssetInfo({ tokenInfo: tokenFromPortfolio, nftInfo: nftFromPortfolio })
     else if (network)
-      resolveAssetInfo(address, network, (_assetInfo: any) => {
-        setAssetInfo(_assetInfo)
-        fetchFallbackNameIfNeeded(_assetInfo).catch(console.error)
-      }).catch((e) => {
+      resolveAssetInfo(
+        address,
+        network,
+        (_assetInfo: any) => {
+          setAssetInfo(_assetInfo)
+          fetchFallbackNameIfNeeded(_assetInfo).catch(console.error)
+        },
+        isTokenPricesEnabled
+      ).catch((e) => {
         fetchFallbackNameIfNeeded({}).catch(console.error)
         console.error(e)
       })
@@ -115,7 +143,9 @@ const TokenOrNft: FC<Props> = ({
     portfolio?.tokens,
     t,
     addNetwork,
-    chainId
+    chainId,
+    isTokenPricesEnabled,
+    knownTokenInfo
   ])
 
   if (!assetInfo.nftInfo && !assetInfo.tokenInfo)
@@ -154,6 +184,9 @@ const TokenOrNft: FC<Props> = ({
         networks={networks}
         tokenId={value}
         nftInfo={assetInfo.nftInfo}
+        textSize={textSize}
+        iconSize={tokenIconContainerSize}
+        iconPosition={nftIconPosition}
         hideSendNft
       />
     )

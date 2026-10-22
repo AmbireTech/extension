@@ -84,6 +84,10 @@ export class SignMessagePage extends BasePage {
 
     await signMessageButton.click()
 
+    // The signing authentication (password/biometrics re-confirmation) modal is mobile-only -
+    // on web the keystore signs directly once signMessageButton is clicked, with no further
+    // confirmation step, so there's nothing to wait for or fill in here for non-Ledger signers.
+
     if (ledgerSimulatorControls) {
       // Wait for the "Review message" screen to appear on the Ledger device before confirming the transaction flow.
       const isReadyToSign = await ledgerSimulatorControls.waitForText('Review message')

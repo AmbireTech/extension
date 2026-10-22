@@ -61,7 +61,7 @@ The dApp channel is request and response, built on the messengers in [`messenger
 
 The provider hands the call to the content script, which passes it to the background. There a dApp session is resolved from the tab, window and frame the browser reports, and `handleProviderRequests` (in `src/common/modules/provider/`) either answers it outright or sends it through `rpcFlow`, which checks permission, unlocks the wallet and opens a request window when the user has to approve something.
 
-Not every call gets that far. The provider answers `eth_chainId` from its own cache because dApps poll it constantly, and forwards plain read calls to the dApp's own RPC endpoint once it has found one, falling back to the wallet's provider.
+Not every call gets that far: the provider answers `eth_chainId` from its own cache because dApps poll it constantly. Every other read (an `eth_*` method with no handler of its own) reaches `ProviderController.ethRpc`, which passes it unchanged to the RPC of the network the dApp is on. Until the dApp is connected, only the methods in `SAFE_RPC_METHODS` are allowed.
 
 ## Wallet events
 
@@ -69,9 +69,16 @@ Every dApp connection is a `Session` in the DappsController, holding the messeng
 
 A broadcast lands in the whole tab, so the session's origin travels with it and the provider drops anything that doesn't match the page it is running in.
 
+## The Privacy Pools prover
+
+On Chrome, Privacy Pools proofs run in an offscreen document (`privacy-pools-prover/`) on every core, since the service worker has no `Worker` and would prove on one thread. The background opens it on the first proof and closes it when idle. If it cannot start, the background proves by itself from then on. Firefox and Safari always prove in the background.
+
+Proving inputs include a deposit's secret and nullifier, enough to spend it. They go only over a port the document opens, never `runtime.sendMessage` (which every extension page receives), after the background checks the port's extension id, exact URL and lack of a tab. The document is bundled under LavaMoat, has no Sentry and logs only to its own console, because a circuit error can reveal the inputs.
+
 ## Things not to break
 
 - Only extension pages may open a UI port. A port can call any controller method, including key and seed export, so the background verifies the sender.
+- Proving inputs only go to a port verified as the prover document's, and that document reports errors nowhere else.
 - A reply goes to the one frame that asked, not to the tab. Otherwise an answer meant for a dApp in an iframe lands in every other frame of the page.
 - Where a dApp sits, meaning its frame and the tab's top-level document, always comes from the browser and never from the page.
 - Page scripts do as little as possible in cross-origin and deeply nested frames, which is where ads and third-party widgets live.

@@ -9,6 +9,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
@@ -20,6 +21,11 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectStatuses = (state: AllControllersMappingType['StorageController']) => state.statuses
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 const SavedSeedPhrasesBottomSheet = ({
   sheetRef,
@@ -34,8 +40,8 @@ const SavedSeedPhrasesBottomSheet = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: statuses } = useController('StorageController', 'statuses')
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: statuses } = useController('StorageController', selectStatuses)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const { seeds, keys } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
   const { subType, initParams } = useController('AccountPickerController').state
@@ -110,6 +116,8 @@ const SavedSeedPhrasesBottomSheet = ({
             type="secondary"
             onPress={() => handleAddAddressFromSeed(item.id)}
             childrenPosition="left"
+            // On mobile secondary buttons share the card's background, so it takes the web one
+            style={isMobile ? { backgroundColor: theme.primaryBackground } : undefined}
           >
             <AddCircularIcon
               width={20}
@@ -119,14 +127,18 @@ const SavedSeedPhrasesBottomSheet = ({
             />
           </Button>
         </View>
-        {seedAccounts.map((a) => {
+        {seedAccounts.map((a, accountIndex) => {
           return (
             <Account
               key={a.addr}
               account={a}
               withSettings={false}
               isSelectable={false}
+              isOnSecondaryBackground
+              withBadges={false}
+              containerStyle={accountIndex === seedAccounts.length - 1 ? spacings.mb0 : undefined}
               withKeyType={false}
+              withCopy={false}
             />
           )
         })}

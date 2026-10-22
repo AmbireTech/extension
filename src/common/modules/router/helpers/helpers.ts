@@ -1,4 +1,5 @@
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
+import { IPrivacyPoolsController } from '@ambire-common/interfaces/privacyPools'
 import { IRequestsController } from '@ambire-common/interfaces/requests'
 import { ISurveyController } from '@ambire-common/interfaces/survey'
 import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
@@ -69,6 +70,7 @@ const getInitialRoute = ({
   requestsState,
   swapAndBridgeState,
   transferState,
+  privacyPoolsState,
   surveyState,
   isRequestWindow,
   isSidePanel
@@ -78,6 +80,7 @@ const getInitialRoute = ({
   requestsState: IRequestsController
   swapAndBridgeState: ISwapAndBridgeController
   transferState: ITransferController
+  privacyPoolsState?: IPrivacyPoolsController
   surveyState?: ISurveyController
   isRequestWindow: boolean
   isSidePanel?: boolean
@@ -99,7 +102,7 @@ const getInitialRoute = ({
   } else if (!isRequestWindow) {
     // TODO: Always redirects to Dashboard, which for initial extension load is okay, but
     // for other scenarios, ideally, it should be the last route before the keystore got locked.
-    const hasSwapAndBridgePersistentSession = swapAndBridgeState.sessionIds.some(
+    const hasSwapAndBridgePersistentSession = (swapAndBridgeState.sessionIds || []).some(
       (id) => id === 'popup' || id === 'request-window'
     )
 
@@ -112,6 +115,8 @@ const getInitialRoute = ({
       }
       return ROUTES.transfer
     }
+    // Cleared on switching accounts, so it is always the selected Privacy Pools account's
+    if (privacyPoolsState?.hasPersistedSendForm) return ROUTES.privacyPoolsSend
     if (surveyState && surveyState.hasPersistentState) return ROUTES.survey
     return ROUTES.dashboard
   }
@@ -130,12 +135,18 @@ const resolveViewRoute = async (mainCtrl: MainController, view: View): Promise<s
     requestsState: mainCtrl.requests,
     swapAndBridgeState: mainCtrl.swapAndBridge,
     transferState: mainCtrl.transfer,
+    privacyPoolsState: mainCtrl.privacyPools,
     surveyState: mainCtrl.survey
   }
 
-  await awaitControllersInitialLoad([...Object.values(routeControllers), mainCtrl.accounts])
+  await awaitControllersInitialLoad([
+    ...Object.values(routeControllers),
+    mainCtrl.accounts,
+    mainCtrl.selectedAccount
+  ])
 
-  const authStatus = mainCtrl.accounts.accounts.length
+  // As in `authContext`, so a wallet with only Privacy Pools accounts isn't sent to onboarding
+  const authStatus = mainCtrl.selectedAccount.selectedType
     ? AUTH_STATUS.AUTHENTICATED
     : AUTH_STATUS.NOT_AUTHENTICATED
 

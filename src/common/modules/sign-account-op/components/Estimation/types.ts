@@ -28,7 +28,6 @@ type Props = {
   serviceFee?: SwapAndBridgeRoute['serviceFee']
   withTitle?: boolean
   isOneClick?: boolean
-  shouldShowTxnDetails?: boolean
 }
 
 type DispatchUpdate = (update: {

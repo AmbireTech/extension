@@ -140,6 +140,8 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
                     inputStyle={{ height: '100%', ...spacings.plMi, ...spacings.prTy }}
                     containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
                     nativeInputStyle={{ fontSize: 14 }}
+                    placeholder={placeholder}
+                    placeholderTextColor={theme.tertiaryText}
                     onChangeText={onChange}
                     onBlur={() => {
                       onBlur()
@@ -158,7 +160,7 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
                     testID="search-input-placeholder"
                   >
                     {!!placeholder && (
-                      <Text appearance="secondaryText" fontSize={14} numberOfLines={1}>
+                      <Text color={theme.tertiaryText} fontSize={14} numberOfLines={1}>
                         {placeholder}
                       </Text>
                     )}

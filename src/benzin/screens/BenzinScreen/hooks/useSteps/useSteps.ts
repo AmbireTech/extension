@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { EIP7702Auth } from '@ambire-common/consts/7702'
 import { AMBIRE_PAYMASTER, ERC_4337_ENTRYPOINT } from '@ambire-common/consts/deploy'
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { Network } from '@ambire-common/interfaces/network'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
@@ -22,15 +23,17 @@ import {
   BalanceChange,
   fetchFrontRanTxnId,
   fetchTxnId,
+  NftBalanceChange,
   SubmittedAccountOp,
+  submittedAccountOpToAccountOp,
   SubmittedAccountOpLike
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
+import type { Erc7730CallDescriptors } from '@ambire-common/libs/humanizer/erc7730/types'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import { hasErc7730Humanization } from '@ambire-common/libs/humanizer/utils'
-import { getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
+import { getTransferLogNfts, getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
 import { Bundler } from '@ambire-common/services/bundlers/bundler'
@@ -39,6 +42,7 @@ import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/type
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { generateUuid } from '@ambire-common/utils/uuid'
+import { waitWithAbort } from '@ambire-common/utils/wait'
 import {
   handleOps060,
   handleOps070
@@ -47,11 +51,18 @@ import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScree
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import { logWarnWithPrefix } from '@common/utils/logger'
 
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
 const REFETCH_TIME = 3000 // 3 seconds
 const REFETCH_TIME_ETHEREUM = 12000 // 12 seconds
+// Reading the balances on the receipt block right after confirmation may fail
+// if the RPC node hasn't synced that block yet, so retry before giving up
+const BALANCE_CHANGES_MAX_ATTEMPTS = 3
+const BALANCE_CHANGES_RETRY_DELAY = 3000 // 3 seconds
+const selectTokenPricesEnabled = (state: IFeatureFlagsController) =>
+  state.flags?.tokenPrices === true
 
 export type FeePaidWith = {
   address: string
@@ -82,7 +93,11 @@ export interface StepsData {
   blockData: null | Block
   finalizedStatus: FinalizedStatusType
   feePaidWith: FeePaidWith | null
+  tokenPricesEnabled: boolean
   balanceChanges?: BalanceChange[]
+  nftBalanceChanges?: NftBalanceChange[]
+  /** Set when the balance changes could not be read, so the UI can say so instead of waiting. */
+  hasBalanceChangesFailed: boolean
   calls: IrCall[] | null
   txnId: string | null
   from: string | null
@@ -162,6 +177,16 @@ const getBalanceChangesSignature = (changes?: BalanceChange[]) =>
         .map((change) => `${change.address}:${change.chainId}:${change.balanceChange.toString()}`)
         .join('|')
 
+const getNftBalanceChangesSignature = (changes?: NftBalanceChange[]) =>
+  typeof changes === 'undefined'
+    ? 'undefined'
+    : changes
+        .map(
+          (change) =>
+            `${change.address}:${change.chainId}:${change.tokenId}:${change.balanceChange.toString()}`
+        )
+        .join('|')
+
 const useSteps = ({
   txnId,
   userOpHash,
@@ -205,6 +230,10 @@ const useSteps = ({
   const [isFrontRan, setIsFrontRan] = useState<boolean>(false)
   const [isFetching, setIsFetching] = useState<boolean>(false)
   const [balanceChanges, setBalanceChanges] = useState<BalanceChange[] | undefined>(undefined)
+  const [nftBalanceChanges, setNftBalanceChanges] = useState<NftBalanceChange[] | undefined>(
+    undefined
+  )
+  const [hasBalanceChangesFailed, setHasBalanceChangesFailed] = useState<boolean>(false)
   const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOpLike | null>(null)
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
@@ -213,6 +242,12 @@ const useSteps = ({
     dispatch: activityDispatch
   } = useController('ActivityController')
   const { dispatchAndWait } = useController('ProvidersController')
+  const { dispatchAndWait: erc7730DispatchAndWait } = useController('Erc7730Controller')
+  const { state: tokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectTokenPricesEnabled
+  )
+  const isTokenPricesEnabled = useCallback(() => tokenPricesEnabled, [tokenPricesEnabled])
   const benzinActivityOp = useMemo(() => {
     if (!extensionAccOp || !('benzin' in accountsOps)) return null
 
@@ -231,6 +266,10 @@ const useSteps = ({
   const submittedAccountOp = activityAccOp || extensionAccOp || null
   const submittedAccountOpBalanceChangesSignature = useMemo(
     () => getBalanceChangesSignature(submittedAccountOp?.balanceChanges),
+    [submittedAccountOp]
+  )
+  const submittedAccountOpNftBalanceChangesSignature = useMemo(
+    () => getNftBalanceChangesSignature(submittedAccountOp?.nftBalanceChanges),
     [submittedAccountOp]
   )
 
@@ -304,15 +343,22 @@ const useSteps = ({
     const benzinBalanceChangesSignature = getBalanceChangesSignature(
       benzinActivityOp.balanceChanges
     )
+    const benzinNftBalanceChangesSignature = getNftBalanceChangesSignature(
+      benzinActivityOp.nftBalanceChanges
+    )
     const activityBalanceChangesSignature = getBalanceChangesSignature(
       activityAccOp?.balanceChanges
+    )
+    const activityNftBalanceChangesSignature = getNftBalanceChangesSignature(
+      activityAccOp?.nftBalanceChanges
     )
 
     if (
       activityAccOp?.status === benzinActivityOp.status &&
       activityAccOp?.txnId === benzinActivityOp.txnId &&
       activityAccOp?.blockNumber === benzinActivityOp.blockNumber &&
-      benzinBalanceChangesSignature === activityBalanceChangesSignature
+      benzinBalanceChangesSignature === activityBalanceChangesSignature &&
+      benzinNftBalanceChangesSignature === activityNftBalanceChangesSignature
     ) {
       return
     }
@@ -956,7 +1002,8 @@ const useSteps = ({
           isSponsored,
           chainId: tokenChainId
         })
-      }
+      },
+      isTokenPricesEnabled
     ).catch(() => {
       if (!isMounted) return
       setFeePaidWith({
@@ -973,7 +1020,16 @@ const useSteps = ({
     return () => {
       isMounted = false
     }
-  }, [txnReceipt.actualGasCost, feePaidWith, feeCall, network, userOp, networks, extensionAccOp])
+  }, [
+    txnReceipt.actualGasCost,
+    feePaidWith,
+    feeCall,
+    network,
+    userOp,
+    networks,
+    extensionAccOp,
+    isTokenPricesEnabled
+  ])
 
   useEffect(() => {
     if (
@@ -982,16 +1038,41 @@ const useSteps = ({
       !receiptLogs ||
       !txnReceipt.blockNumber ||
       typeof balanceChanges !== 'undefined' ||
-      submittedAccountOpBalanceChangesSignature !== 'undefined'
+      (submittedAccountOpBalanceChangesSignature !== 'undefined' &&
+        submittedAccountOpNftBalanceChangesSignature !== 'undefined')
     )
       return
 
     let isMounted = true
+    let retryDelay: ReturnType<typeof waitWithAbort> | null = null
 
     void (async () => {
-      try {
-        const foundTokens = await getTransferLogTokens(receiptLogs, from)
+      let foundTokens: string[]
+      let foundNftBalanceChanges: NftBalanceChange[]
 
+      try {
+        const [transferLogTokens, foundNfts] = await Promise.all([
+          getTransferLogTokens(receiptLogs, from),
+          getTransferLogNfts(receiptLogs, from)
+        ])
+        foundTokens = transferLogTokens
+        foundNftBalanceChanges = foundNfts.map((change) => ({
+          ...change,
+          chainId: network.chainId
+        }))
+      } catch (error) {
+        if (!isMounted) return
+
+        logWarnWithPrefix(
+          'balance changes',
+          `Reading the transferred tokens on chain ${network.chainId.toString()} failed`,
+          error
+        )
+        setHasBalanceChangesFailed(true)
+        return
+      }
+
+      const getBalanceChanges = () =>
         dispatchAndWait({
           type: 'method',
           params: {
@@ -1019,22 +1100,43 @@ const useSteps = ({
             ]
           }
         })
-          .then((res) => {
-            if (!isMounted) return
-            setBalanceChanges(res)
-          })
-          .catch(() => null)
 
-        if (!isMounted) return
-      } catch (error) {
-        if (!isMounted) return
+      const fetchBalanceChanges = async (attempt: number): Promise<void> => {
+        try {
+          const res = await getBalanceChanges()
+          if (!isMounted) return
 
-        setBalanceChanges([])
+          setHasBalanceChangesFailed(false)
+          setBalanceChanges(res)
+          setNftBalanceChanges(foundNftBalanceChanges)
+        } catch (error) {
+          if (!isMounted) return
+
+          logWarnWithPrefix(
+            'balance changes',
+            `Reading the balances on chain ${network.chainId.toString()} failed (attempt ${attempt}/${BALANCE_CHANGES_MAX_ATTEMPTS})`,
+            error
+          )
+
+          if (attempt >= BALANCE_CHANGES_MAX_ATTEMPTS) {
+            setHasBalanceChangesFailed(true)
+            return
+          }
+
+          retryDelay = waitWithAbort(BALANCE_CHANGES_RETRY_DELAY)
+          await retryDelay.promise
+          if (!isMounted) return
+
+          await fetchBalanceChanges(attempt + 1)
+        }
       }
+
+      await fetchBalanceChanges(1)
     })()
 
     return () => {
       isMounted = false
+      retryDelay?.abort()
     }
   }, [
     activityAccOp,
@@ -1048,20 +1150,33 @@ const useSteps = ({
     txnReceipt.transactionHash,
     from,
     dispatchAndWait,
-    submittedAccountOpBalanceChangesSignature
+    submittedAccountOpBalanceChangesSignature,
+    submittedAccountOpNftBalanceChangesSignature
   ])
 
   useEffect(() => {
     if (!network) return
 
-    const clearSign = submittedAccountOp?.meta?.clearSigningHumanization
-    const persistedHumanization = hasErc7730Humanization(clearSign) ? clearSign : null
-    if (submittedAccountOp && persistedHumanization) {
-      const humanizedCalls = persistedHumanization.filter(filterEntryPointAuthCall)
-      setCalls(parseHumanizer(humanizedCalls))
-      setFrom(submittedAccountOp.accountAddr)
-      setFeeCall(submittedAccountOp.feeCall || null)
-      return
+    let isStale = false
+    // Renders the plain humanization immediately (as before), then upgrades the same calls in
+    // place once `Erc7730Controller` resolves the "clear signing" descriptors - avoids a loading
+    // flicker while still showing the detail the live signing flow shows. Any failure leaves the
+    // plain humanization on screen.
+    const enhanceWithErc7730 = (accountOp: AccountOp) => {
+      erc7730DispatchAndWait<'resolveDescriptorsForAccountOp', Erc7730CallDescriptors>({
+        type: 'method',
+        params: { method: 'resolveDescriptorsForAccountOp', args: [accountOp] }
+      })
+        .then((erc7730Descriptors) => {
+          if (isStale || !erc7730Descriptors || !Object.keys(erc7730Descriptors).length) return
+
+          setCalls(
+            parseHumanizer(
+              humanizeAccountOp(accountOp, { erc7730Descriptors }).filter(filterEntryPointAuthCall)
+            )
+          )
+        })
+        .catch(() => null)
     }
 
     // if we have the extension account op passed, we do not need to
@@ -1071,7 +1186,24 @@ const useSteps = ({
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
       setFeeCall(extensionAccOp.feeCall || null)
-      return
+      enhanceWithErc7730(extensionAccOp)
+      return () => {
+        isStale = true
+      }
+    }
+
+    // A past activity item (no live extensionAccOp) still has its own `calls`, so humanize those
+    // directly instead of falling all the way to reproducing calls from the raw txn/userOp receipt.
+    if (submittedAccountOp) {
+      const accountOp = submittedAccountOpToAccountOp(submittedAccountOp)
+      const humanizedCalls = humanizeAccountOp(accountOp).filter(filterEntryPointAuthCall)
+      setCalls(parseHumanizer(humanizedCalls))
+      setFrom(submittedAccountOp.accountAddr)
+      setFeeCall(submittedAccountOp.feeCall || null)
+      enhanceWithErc7730(accountOp)
+      return () => {
+        isStale = true
+      }
     }
 
     if (userOpHash && userOp?.hashStatus !== 'found') return
@@ -1108,17 +1240,35 @@ const useSteps = ({
       const humanizedCalls = humanizeAccountOp(accountOp).filter(filterEntryPointAuthCall)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(accountOp.accountAddr)
+      enhanceWithErc7730(accountOp)
       if (decodedFeeCall) {
         setFeeCall(decodedFeeCall)
       }
     }
-  }, [network, txnReceipt, txn, userOpHash, userOp, txnId, extensionAccOp, submittedAccountOp])
+
+    return () => {
+      isStale = true
+    }
+  }, [
+    network,
+    txnReceipt,
+    txn,
+    userOpHash,
+    userOp,
+    txnId,
+    extensionAccOp,
+    submittedAccountOp,
+    erc7730DispatchAndWait
+  ])
 
   return {
     blockData,
     finalizedStatus,
     feePaidWith,
+    tokenPricesEnabled,
     balanceChanges,
+    nftBalanceChanges,
+    hasBalanceChangesFailed,
     calls: calls || null,
     txnId: foundTxnId,
     from: from || null,

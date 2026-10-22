@@ -1,6 +1,6 @@
 import React, { FC, Suspense, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, View } from 'react-native'
+import { View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { Network } from '@ambire-common/interfaces/network'
@@ -17,9 +17,7 @@ import useControllerSession from '@common/hooks/useControllerSession'
 import useTheme from '@common/hooks/useTheme'
 import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
 import PendingTransactions from '@common/modules/dashboard/components/Activity/PendingTransactions/lazyPendingTransactions'
-import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
-import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import SubmittedTransactionSummary, {
   preloadSummaryPreview
@@ -31,16 +29,13 @@ import { getUiType } from '@common/utils/uiType'
 
 import styles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   openTab: TabType
-  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll?: FlatListProps<any>['onScroll']
-  animatedOverviewHeight: Animated.Value
   network: Network | null
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 const { isPopup, isRequestWindow } = getUiType()
@@ -64,27 +59,31 @@ type Item =
   | 'skeleton'
   | 'load-more'
 
-const ActivityPositions: FC<Props> = ({
-  openTab,
-  sessionId,
-  setOpenTab,
-  initTab,
-  onScroll,
-  animatedOverviewHeight,
-  network,
-  refreshing,
-  onRefresh
-}) => {
+const selectAccountsOps = (state: AllControllersMappingType['ActivityController']) =>
+  state.accountsOps
+const selectBanners = (state: AllControllersMappingType['ActivityController']) => state.banners
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+
+const ActivityPositions: FC<Props> = ({ openTab, sessionId, initTab, network }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const {
-    state: { accountsOps, banners },
-    dispatch: activityDispatch
-  } = useController('ActivityController')
-  const {
-    state: { account, dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
+  const { state: accountsOps, dispatch: activityDispatch } = useController(
+    'ActivityController',
+    selectAccountsOps
+  )
+  const { state: banners } = useController('ActivityController', selectBanners)
+  // Read as slices rather than off the whole state, so the page does not re-render on
+  // every portfolio tick - it holds no portfolio data of its own.
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    selectDashboardNetworkFilter
+  )
 
   const currentAccountBanners = useMemo(() => {
     return getCurrentAccountBanners(banners, account?.addr)
@@ -134,16 +133,11 @@ const ActivityPositions: FC<Props> = ({
 
   const renderItem = useCallback(
     ({ item }: { item: Item }) => {
+      // The banners of the account's pending transactions, which the tabs row the carousel
+      // lays over the page used to sit above. Web only, as mobile never had them here
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              currentTab="activity"
-              sessionId={sessionId}
-            />
-
             {!!accountsOps[sessionId] && (
               <View style={spacings.mbMi}>
                 {currentAccountBanners.map((banner) => (
@@ -200,7 +194,7 @@ const ActivityPositions: FC<Props> = ({
               style={styles.noPositions}
             >
               {t(
-                `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the extension, but you can ${isWeb ? '\n' : ''}check your address on `
+                `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the ${isMobile ? 'app' : 'extension'}, but you can ${isWeb ? '\n' : ''}check your address on `
               )}
               <Text
                 weight="medium"
@@ -298,8 +292,6 @@ const ActivityPositions: FC<Props> = ({
     [
       initTab?.activity,
       theme,
-      openTab,
-      setOpenTab,
       sessionId,
       accountsOps,
       currentAccountBanners,
@@ -317,13 +309,17 @@ const ActivityPositions: FC<Props> = ({
     return `${positionOrElement.id}-${positionOrElement.txnId}-${positionOrElement.timestamp}`
   }, [])
 
+  // The transactions are not searchable, so the bar carries the network picker alone.
+  // Rendered by the carousel above the pages, so it stays put through a swipe
+  const floatingBar = useMemo(() => ({ networkFilterTab: 'activity' as const }), [])
+
   return (
     <DashboardPageScrollContainer
+      floatingBar={floatingBar}
       tab="activity"
       openTab={openTab}
-      ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
       data={[
-        ...(isMobile ? [] : ['header']),
+        ...(isWeb ? ['header'] : []),
         'pending',
         !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
         ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
@@ -337,11 +333,7 @@ const ActivityPositions: FC<Props> = ({
       onEndReachedThreshold={isPopup ? 5 : 2.5}
       initialNumToRender={isPopup ? 10 : 20}
       windowSize={9} // Larger values can cause performance issues.
-      onScroll={onScroll}
       scrollEventThrottle={16}
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      animatedOverviewHeight={animatedOverviewHeight}
     />
   )
 }

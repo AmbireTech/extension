@@ -1,17 +1,14 @@
 import React from 'react'
-import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
-import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
+import PrivateKeyImportFields from '@common/modules/auth/components/PrivateKeyImportFields'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import usePrivateKeyImport from '@common/modules/auth/hooks/usePrivateKeyImport'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -20,9 +17,14 @@ import {
 const PrivateKeyImportScreen = () => {
   const {
     control,
+    fields,
+    addPrivateKeyField,
+    removePrivateKeyField,
+    canAddMore,
     handleFormSubmit,
-    errors,
+    privateKeyFieldStates,
     isValid,
+    isImporting,
     handleValidation,
     agreedToBackupWarning,
     setAgreedToBackupWarning
@@ -31,19 +33,33 @@ const PrivateKeyImportScreen = () => {
   const { goToPrevRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
 
-  const { theme } = useTheme()
-
   return (
     <MobileLayoutContainer
+      // Only the fields scroll, so the checkbox and the button in the footer always stay visible
       footer={
-        <Button
-          testID="import-button"
-          size="large"
-          text={t('Confirm')}
-          hasBottomSpacing={false}
-          onPress={handleFormSubmit}
-          disabled={!isValid || !agreedToBackupWarning}
-        />
+        <View>
+          <Checkbox
+            value={agreedToBackupWarning}
+            onValueChange={() => setAgreedToBackupWarning((prev) => !prev)}
+            testID="backup-warning-checkbox"
+            style={spacings.mlTy}
+            label={
+              <Text fontSize={14} appearance="secondaryText">
+                {fields.length > 1
+                  ? t('I know I must keep a secure backup of my keys.')
+                  : t('I know I must keep a secure backup of my key.')}
+              </Text>
+            }
+          />
+          <Button
+            testID="import-button"
+            size="large"
+            text={t('Confirm')}
+            hasBottomSpacing={false}
+            onPress={handleFormSubmit}
+            disabled={!isValid || !agreedToBackupWarning || isImporting}
+          />
+        </View>
       }
     >
       <MobileLayoutWrapperMainContent
@@ -52,44 +68,16 @@ const PrivateKeyImportScreen = () => {
         title={t('Import private key')}
         withScroll
       >
-        <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
-          <View>
-            <Controller
-              control={control}
-              rules={{ validate: (value) => handleValidation(value), required: true }}
-              name="privateKey"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  testID="enter-private-key-field"
-                  onBlur={onBlur}
-                  autoFocus
-                  placeholder={t('Input private key')}
-                  onChangeText={onChange}
-                  value={value}
-                  isValid={!handleValidation(value) && !!value.length}
-                  validLabel={t('✅ Valid private key')}
-                  secureTextEntry
-                  containerStyle={spacings.mbLg}
-                  backgroundColor={theme.secondaryBackground}
-                  error={value.length ? errors?.privateKey?.message : ''}
-                  autoCorrect={false}
-                  onSubmitEditing={handleFormSubmit}
-                />
-              )}
-            />
-            <Checkbox
-              value={agreedToBackupWarning}
-              onValueChange={() => setAgreedToBackupWarning((prev) => !prev)}
-              testID="backup-warning-checkbox"
-              style={spacings.mlTy}
-              label={
-                <Text fontSize={14} appearance="secondaryText">
-                  {t('I know I must keep a secure backup of my key.')}
-                </Text>
-              }
-            />
-          </View>
-        </View>
+        <PrivateKeyImportFields
+          control={control}
+          fields={fields}
+          fieldStates={privateKeyFieldStates}
+          canAddMore={canAddMore}
+          onAdd={addPrivateKeyField}
+          onRemove={removePrivateKeyField}
+          handleValidation={handleValidation}
+          onSubmitEditing={handleFormSubmit}
+        />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

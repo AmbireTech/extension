@@ -1,11 +1,12 @@
 import React, { FC, useMemo } from 'react'
 
 import { Account } from '@ambire-common/interfaces/account'
+import { Key } from '@ambire-common/interfaces/keystore'
 import {
   isAmbireV1LinkedAccount as getIsAmbireV1LinkedAccount,
   isSmartAccount as getIsSmartAccount
 } from '@ambire-common/libs/account/account'
-import useController from '@common/hooks/useController'
+import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
@@ -13,12 +14,20 @@ import BadgeWithPreset from '../BadgeWithPreset'
 
 interface Props {
   accountData: Account
+  /** The account's own keystore keys, so a list of rows subscribes to them only once */
+  accountKeys: Key[]
   // When false, badges drop their fixed left margin so a parent columnGap can space them
   withSpacing?: boolean
+  /** When false, the view-only badge is left out, for rows that show it in `AccountKeysBadge` */
+  withViewOnly?: boolean
 }
 
-const AccountBadges: FC<Props> = ({ accountData, withSpacing = true }) => {
-  const keystoreCtrl = useController('KeystoreController').state
+const AccountBadges: FC<Props> = ({
+  accountData,
+  accountKeys,
+  withSpacing = true,
+  withViewOnly = true
+}) => {
   const { theme } = useTheme()
 
   const isSmartAccount = useMemo(
@@ -35,20 +44,27 @@ const AccountBadges: FC<Props> = ({ accountData, withSpacing = true }) => {
 
   return (
     <>
-      {keystoreCtrl.keys.every((k) => !accountData?.associatedKeys.includes(k.addr)) &&
-        !isSafeAccount && (
-          <BadgeWithPreset
-            preset="view-only"
-            style={{
-              ...(withSpacing ? spacings.mlTy : {}),
-              borderWidth: 1,
-              borderColor: theme.neutral600
-            }}
-          />
-        )}
+      {withViewOnly && !accountKeys.length && !isSafeAccount && (
+        <BadgeWithPreset
+          preset="view-only"
+          isIconLeading
+          isTooltipOnBadge
+          style={{
+            ...(withSpacing ? spacings.mlTy : {}),
+            borderWidth: 1,
+            borderColor: theme.neutral600
+          }}
+        >
+          <ViewOnlyIcon width={14} height={14} color={theme.neutral600} />
+        </BadgeWithPreset>
+      )}
 
       {isSmartAccount && isAmbireV1LinkedAccount && (
-        <BadgeWithPreset preset="ambire-v1" style={withSpacing ? spacings.mlTy : undefined} />
+        <BadgeWithPreset
+          preset="ambire-v1"
+          isIconLeading
+          style={withSpacing ? spacings.mlTy : undefined}
+        />
       )}
     </>
   )

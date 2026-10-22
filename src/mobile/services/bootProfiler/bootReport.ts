@@ -57,7 +57,49 @@ const PHASES: { label: string; from: string; to: string }[] = [
     to: BOOT_MARK.rnAppInitMounted
   },
   {
-    label: '  └ App rendered → WebView worker mounted',
+    label: 'Controller construction (new MainController, ...)',
+    from: BOOT_MARK.rnAppInitMounted,
+    to: BOOT_MARK.rnControllersReady
+  },
+  {
+    label: '  ├ MainController',
+    from: BOOT_MARK.rnMainCtrlConstructed,
+    to: BOOT_MARK.rnMainCtrlConstructed
+  },
+  {
+    label: '  ├ WalletStateController',
+    from: BOOT_MARK.rnWalletStateCtrlConstructed,
+    to: BOOT_MARK.rnWalletStateCtrlConstructed
+  },
+  {
+    label: '  └ AutoLockController',
+    from: BOOT_MARK.rnAutoLockCtrlConstructed,
+    to: BOOT_MARK.rnAutoLockCtrlConstructed
+  },
+  {
+    label: 'Controllers ready → critical controller states in store',
+    from: BOOT_MARK.rnControllersReady,
+    to: BOOT_MARK.rnStoreCriticalReady
+  },
+  {
+    label: 'Critical ready → splash hidden',
+    from: BOOT_MARK.rnStoreCriticalReady,
+    to: BOOT_MARK.rnSplashHidden
+  },
+  {
+    label: 'Splash hidden → first paint',
+    from: BOOT_MARK.rnSplashHidden,
+    to: BOOT_MARK.rnFirstPaint
+  },
+  {
+    label: 'Critical ready → all non-deferred controller states in store',
+    from: BOOT_MARK.rnStoreCriticalReady,
+    to: BOOT_MARK.rnStoreNonDeferredReady
+  },
+  // WebView worker. It still loads its bundle, so the spawn and module-eval rows are
+  // always there; the rows past the init payload need it to be initialized again.
+  {
+    label: 'App rendered → WebView worker mounted',
     from: BOOT_MARK.rnAppRender,
     to: BOOT_MARK.rnWebviewMounted
   },
@@ -92,7 +134,7 @@ const PHASES: { label: string; from: string; to: string }[] = [
     to: BOOT_MARK.workerInitReceived
   },
   {
-    label: 'Controller construction (new MainController, ...)',
+    label: 'Worker init received → worker ready (construction of what it hosts)',
     from: BOOT_MARK.workerInitReceived,
     to: BOOT_MARK.workerReady
   },
@@ -100,21 +142,6 @@ const PHASES: { label: string; from: string; to: string }[] = [
     label: 'Worker ready → critical controller states in store',
     from: BOOT_MARK.rnWorkerReadyReceived,
     to: BOOT_MARK.rnStoreCriticalReady
-  },
-  {
-    label: 'Critical ready → splash hidden',
-    from: BOOT_MARK.rnStoreCriticalReady,
-    to: BOOT_MARK.rnSplashHidden
-  },
-  {
-    label: 'Splash hidden → first paint',
-    from: BOOT_MARK.rnSplashHidden,
-    to: BOOT_MARK.rnFirstPaint
-  },
-  {
-    label: 'Critical ready → all non-deferred controller states in store',
-    from: BOOT_MARK.rnStoreCriticalReady,
-    to: BOOT_MARK.rnStoreNonDeferredReady
   }
 ]
 
@@ -142,8 +169,12 @@ const formatDetail = (mark: BootMark) => {
 const findMark = (marks: BootMark[], name: string) => marks.find((mark) => mark.name === name)
 
 // Marks that have their own table and would otherwise bury the timeline under one
-// row per storage key.
+// row per controller or storage key.
 const TIMELINE_EXCLUDED_PREFIXES = [
+  BOOT_MARK_PREFIX.rnCtrlSerialize,
+  BOOT_MARK_PREFIX.workerCtrlSerialize,
+  BOOT_MARK_PREFIX.workerCtrlEncode,
+  BOOT_MARK_PREFIX.rnCtrlDecode,
   BOOT_MARK_PREFIX.rnStorageKey,
   BOOT_MARK_PREFIX.workerStorageRead
 ]
@@ -234,8 +265,10 @@ type ControllerRow = {
 }
 
 /**
- * Per-controller cost of getting the first state across the bridge: `toJSON` in
- * the worker, richJson stringify, wire size, richJson parse on the RN side.
+ * What the first state of each controller costs to reach the UI. A controller running
+ * in the RN realm only pays `toJSON()` plus the nested-controller pruning; one hosted
+ * in the WebView worker also pays the richJson stringify, the wire bytes and the
+ * richJson parse on the RN side, so those columns are empty for the former.
  */
 const buildControllerTable = (marks: BootMark[], originMs: number) => {
   const rows: Map<string, ControllerRow> = new Map()
@@ -246,7 +279,11 @@ const buildControllerTable = (marks: BootMark[], originMs: number) => {
   }
 
   marks.forEach((mark) => {
-    if (mark.name.startsWith(BOOT_MARK_PREFIX.workerCtrlSerialize)) {
+    if (mark.name.startsWith(BOOT_MARK_PREFIX.rnCtrlSerialize)) {
+      const row = rowFor(mark.name.slice(BOOT_MARK_PREFIX.rnCtrlSerialize.length))
+      row.serializeMs = mark.detail?.durationMs
+      row.arrivedAtMs = mark.epochMs - originMs
+    } else if (mark.name.startsWith(BOOT_MARK_PREFIX.workerCtrlSerialize)) {
       rowFor(mark.name.slice(BOOT_MARK_PREFIX.workerCtrlSerialize.length)).serializeMs =
         mark.detail?.durationMs
     } else if (mark.name.startsWith(BOOT_MARK_PREFIX.workerCtrlEncode)) {
@@ -407,7 +444,7 @@ export const buildBootReport = (): string => {
   if (!firstMark) return 'Boot profile: no marks recorded'
 
   const originMs = firstMark.epochMs
-  const build = isDev ? 'DEV (Metro bundle + HTTP worker bundle — not representative)' : 'RELEASE'
+  const build = isDev ? 'DEV (Metro bundle — not representative)' : 'RELEASE'
 
   return [
     '',
@@ -421,7 +458,7 @@ export const buildBootReport = (): string => {
     '── Measured spans, slowest first ──',
     buildSpanRanking(marks),
     '',
-    '── First controller state across the bridge, most expensive first ──',
+    '── First controller state to the UI, most expensive first ──',
     buildControllerTable(marks, originMs),
     '',
     '── Init storage snapshot by key, biggest first ──',

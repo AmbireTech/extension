@@ -2,6 +2,7 @@ import type AccountPickerController from '@ambire-common/controllers/accountPick
 import type { AccountsController } from '@ambire-common/controllers/accounts/accounts'
 import type { ActivityController } from '@ambire-common/controllers/activity/activity'
 import type { AddressBookController } from '@ambire-common/controllers/addressBook/addressBook'
+import type { AppDataSyncController } from '@ambire-common/controllers/appDataSync/appDataSync'
 import type { AutoLoginController } from '@ambire-common/controllers/autoLogin/autoLogin'
 import type { BannerController } from '@ambire-common/controllers/banner/banner'
 import type { ContractInfoController } from '@ambire-common/controllers/contractInfo/contractInfo'
@@ -10,6 +11,7 @@ import type { DappsController } from '@ambire-common/controllers/dapps/dapps'
 import type { DebugController } from '@ambire-common/controllers/debug/debug'
 import type { DomainsController } from '@ambire-common/controllers/domains/domains'
 import type { EmailVaultController } from '@ambire-common/controllers/emailVault/emailVault'
+import type { Erc7730Controller } from '@ambire-common/controllers/erc7730/erc7730'
 import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import type { InviteController } from '@ambire-common/controllers/invite/invite'
 import type { KeystoreController } from '@ambire-common/controllers/keystore/keystore'
@@ -17,6 +19,7 @@ import type { MainController } from '@ambire-common/controllers/main/main'
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
 import type { PhishingController } from '@ambire-common/controllers/phishing/phishing'
 import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
+import type { PrivacyPoolsController } from '@ambire-common/controllers/privacyPools/privacyPools'
 import type { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import type { RequestsController } from '@ambire-common/controllers/requests/requests'
 import type { SafeController } from '@ambire-common/controllers/safe/safe'
@@ -31,6 +34,7 @@ import type { UiController } from '@ambire-common/controllers/ui/ui'
 import type { AutoLockController } from '@common/controllers/auto-lock'
 import type { WalletStateController } from '@common/controllers/wallet-state'
 import type { VerificationController } from '@ambire-common/controllers/verification/verification'
+import type { WalletTokenController } from '@ambire-common/controllers/walletToken/walletToken'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 import { createExhaustiveArray } from '@common/utils/createExhaustiveArray'
 
@@ -46,6 +50,7 @@ export type ControllersNestedInMainMappingType = {
   KeystoreController: KeystoreController
   SignMessageController: SignMessageController
   PortfolioController: PortfolioController
+  PrivacyPoolsController: PrivacyPoolsController
   ActivityController: ActivityController
   EmailVaultController: EmailVaultController
   SignAccountOpController: SignAccountOpController
@@ -55,6 +60,7 @@ export type ControllersNestedInMainMappingType = {
   RequestsController: RequestsController
   AddressBookController: AddressBookController
   DomainsController: DomainsController
+  Erc7730Controller: Erc7730Controller
   ContractNamesController: ContractNamesController
   InviteController: InviteController
   SwapAndBridgeController: SwapAndBridgeController
@@ -65,9 +71,11 @@ export type ControllersNestedInMainMappingType = {
   SafeController: SafeController
   QrHardwareController: QrHardwareController
   ContractInfoController: ContractInfoController
+  WalletTokenController: WalletTokenController
   SurveyController: SurveyController
   DebugController: DebugController
   VerificationController: VerificationController
+  AppDataSyncController: AppDataSyncController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
@@ -85,6 +93,7 @@ export const controllersNestedInMainMapping =
     'KeystoreController',
     'SignMessageController',
     'PortfolioController',
+    'PrivacyPoolsController',
     'ActivityController',
     'EmailVaultController',
     'SignAccountOpController',
@@ -94,6 +103,7 @@ export const controllersNestedInMainMapping =
     'RequestsController',
     'AddressBookController',
     'DomainsController',
+    'Erc7730Controller',
     'ContractNamesController',
     'InviteController',
     'SwapAndBridgeController',
@@ -104,9 +114,11 @@ export const controllersNestedInMainMapping =
     'SafeController',
     'QrHardwareController',
     'ContractInfoController',
+    'WalletTokenController',
     'SurveyController',
     'DebugController',
-    'VerificationController'
+    'VerificationController',
+    'AppDataSyncController'
   ] as const)
 
 export type AllControllersMappingType = {

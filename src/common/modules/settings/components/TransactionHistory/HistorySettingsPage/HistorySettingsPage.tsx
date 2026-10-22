@@ -32,6 +32,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const ITEMS_PER_PAGE = 10
 
 interface Props {
@@ -41,15 +43,30 @@ interface Props {
     account: Account
     sessionId: string
   }>
+  /** Shown in place of the history while a Privacy Pools account, which has no address, is selected */
+  PrivacyPoolsHistoryComponent: ComponentType
   historyType: 'transactions' | 'messages'
   sessionId: string
 }
 
-const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, sessionId }) => {
-  const { state: networks } = useController('NetworksController', 'networks')
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.selectedType
+
+const HistorySettingsPage: FC<Props> = ({
+  HistoryComponent,
+  PrivacyPoolsHistoryComponent,
+  historyType,
+  sessionId
+}) => {
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: activityState, dispatch: activityDispatch } = useController('ActivityController')
-  const { state: accounts } = useController('AccountsController', 'accounts')
-  const { state: accountData } = useController('SelectedAccountController', 'account')
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: accountData } = useController('SelectedAccountController', selectAccount)
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
   const [page, setPage] = useState(1)
   const { t } = useTranslation()
   const { maxWidthSize } = useWindowSize()
@@ -60,7 +77,7 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
   const ALL_NETWORKS_OPTION = useMemo(
     () => ({
       value: 'all',
-      label: <Text weight="medium">All Networks</Text>,
+      label: <Text weight="medium">All networks</Text>,
       icon: (
         <View
           style={[
@@ -236,6 +253,17 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
     return ITEMS_PER_PAGE * page - itemsTotal >= 0
   }, [itemsTotal, page])
 
+  const title = historyType === 'messages' ? 'Signed messages' : 'Transaction history'
+
+  if (selectedType === 'privacyPools') {
+    return (
+      <>
+        <SettingsPageHeader title={title} />
+        <PrivacyPoolsHistoryComponent />
+      </>
+    )
+  }
+
   if (!account) {
     return (
       <View style={[flexbox.flex1, flexbox.center]}>
@@ -246,9 +274,7 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
 
   return (
     <>
-      <SettingsPageHeader
-        title={historyType === 'messages' ? 'Signed messages' : 'Transaction history'}
-      />
+      <SettingsPageHeader title={title} />
       <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.mbSm]}>
         <Select
           setValue={handleSetAccountValue}

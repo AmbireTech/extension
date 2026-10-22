@@ -84,6 +84,26 @@ jest.mock(
   { virtual: true }
 )
 
+// Same as useLedger above - resolves to useOneKey.web.ts
+jest.mock(
+  '@common/modules/hardware-wallets/hooks/useOneKey',
+  () => ({
+    __esModule: true,
+    default: () => ({ ensureOneKeyAccess: jest.fn().mockResolvedValue(true) })
+  }),
+  { virtual: true }
+)
+
+jest.mock('@common/hooks/useSigningAuth', () => ({
+  __esModule: true,
+  default: () => ({
+    sheetRef: { current: null },
+    requestSigningAuth: () => false,
+    cancelSigningAuth: jest.fn(),
+    signingAuthProps: {}
+  })
+}))
+
 jest.mock('@common/modules/hardware-wallets/hooks/useQrSigningFlow', () => ({
   __esModule: true,
   default: () => ({

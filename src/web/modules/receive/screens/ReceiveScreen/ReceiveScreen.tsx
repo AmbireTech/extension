@@ -12,25 +12,25 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import useReceive from '@common/modules/receive/hooks/useReceive'
+import RegularAccountRoute from '@common/modules/router/components/RegularAccountRoute'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
-const { isSidePanel } = getUiType()
-
 const ReceiveScreen: FC = () => {
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
   const {
     account,
-    isViewOnly,
+    warningMessage,
     label,
     pfp,
     isEOA,
@@ -49,17 +49,20 @@ const ReceiveScreen: FC = () => {
     setShowAllNetworks
   } = useReceive()
 
+  // With a Privacy Pools account selected, only another account's address, passed in, can show
+  if (!account) return <RegularAccountRoute />
+
   return (
     <LayoutWrapper>
       <HeaderWithTitle />
 
       <ScrollableWrapper showsVerticalScrollIndicator={false}>
-        <View style={[isEOA ? spacings.pt3Xl : spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
+        <View style={[isEOA ? spacings.pt3Xl : spacings.ptTy, spacings.mb, flexbox.alignCenter]}>
           <Avatar
             size={40}
             pfp={pfp}
-            address={account?.addr || ''}
-            smartAccountType={(account?.creation && 'Ambire') || (account?.safeCreation && 'Safe')}
+            address={account.addr}
+            smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
             style={spacings.pr0}
           />
           <Text weight="semiBold" fontSize={14} style={spacings.mtMi}>
@@ -67,7 +70,7 @@ const ReceiveScreen: FC = () => {
           </Text>
         </View>
         <View style={styles.qrCodeContainer}>
-          {!!account && !qrCodeError && (
+          {!qrCodeError && (
             <View style={styles.qrCode}>
               <QRCode
                 value={account.addr}
@@ -86,12 +89,19 @@ const ReceiveScreen: FC = () => {
           )}
         </View>
         <View style={spacings.phSm}>
-          <View style={[styles.accountAddressWrapper]}>
+          <View
+            style={[
+              styles.accountAddressWrapper,
+              isNarrowWebLayout
+                ? styles.accountAddressWrapperNarrow
+                : styles.accountAddressWrapperWide
+            ]}
+          >
             <View
               style={[
                 flexbox.directionRow,
-                isSidePanel
-                  ? [flexbox.alignCenter, { alignSelf: 'center' }]
+                isNarrowWebLayout
+                  ? [flexbox.alignCenter, { width: '100%' }]
                   : [flexbox.center, { flexShrink: 1, minWidth: 0, maxWidth: '100%' }]
               ]}
             >
@@ -99,13 +109,13 @@ const ReceiveScreen: FC = () => {
                 isLoading={isDomainResolving}
                 name={name}
                 type={type}
-                address={account?.addr || ''}
+                address={account.addr}
                 plainAddressMaxLength={42}
                 fontSize={14}
               />
             </View>
           </View>
-          {isViewOnly ? (
+          {warningMessage ? (
             <View
               style={[
                 spacings.mbSm,
@@ -115,7 +125,7 @@ const ReceiveScreen: FC = () => {
                 }
               ]}
             >
-              <Alert size="sm" type="warning" title={t('The account is view-only.')} />
+              <Alert size="sm" type="warning" title={warningMessage} />
             </View>
           ) : (
             <View style={spacings.mb2Xl} />

@@ -16,7 +16,7 @@ import { Portal } from '@gorhom/portal'
 
 import Backdrop from './Backdrop'
 import { BottomSheetProps } from './BottomSheet'
-import { BottomSheetContext } from './BottomSheetContext'
+import { BottomSheetContext, useBottomSheetContextValue } from './BottomSheetContext'
 import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
@@ -103,17 +103,24 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   // applies to the ScrollView/FlatList/SectionList paths; a `customRenderer`
   // controls its own layout, so it keeps the plain bottom inset. Modals are
   // vertically centered and lifted via `modalKeyboardOffsetStyle`, so they skip
-  // this padding entirely.
-  const contentBottomPadding = isModal
-    ? 0
-    : (bottom || SPACING_SM) + (!customRenderer && isKeyboardVisible ? visibleKeyboardHeight : 0)
+  // this padding entirely. A footer sits below the content, so it takes all of
+  // the bottom padding instead, or it would stay hidden behind the keyboard.
+  const keyboardBottomPadding =
+    !isModal && !customRenderer && isKeyboardVisible ? visibleKeyboardHeight : 0
+  const bottomInset = bottom || SPACING_SM
+  const contentBottomPadding = isModal || FooterComponent ? 0 : bottomInset + keyboardBottomPadding
+  // The keyboard covers the bottom inset, so above it the footer keeps only a small gap
+  let footerBottomPadding = isModal ? 0 : bottomInset
+  if (keyboardBottomPadding) footerBottomPadding = keyboardBottomPadding + SPACING_SM
+
+  const bottomSheetContextValue = useBottomSheetContextValue(isOpen)
 
   return (
     <Portal hostName="global">
       {/* PortalHost renders portals in a keyless array - without this key React matches */}
       {/* them by position and rebuilds this sheet closed when another one unmounts. True */}
       {/* in @gorhom/portal 1.0.14 (2026-09-10); fix proposed in gorhom/react-native-portal#62. */}
-      <BottomSheetContext.Provider key={id} value={true}>
+      <BottomSheetContext.Provider key={id} value={bottomSheetContextValue}>
         {/* Wrapping the content in a View with a stable `key` prevents Portal */}
         {/* from losing track of its subtree during React reconciliation and re-renders. */}
         {/* Without this, the backdrop stays, but Modalize could disappear */}
@@ -183,7 +190,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             modalHeight={modalHeight}
             threshold={90}
             HeaderComponent={HeaderComponent}
-            FooterComponent={FooterComponent}
+            FooterComponent={
+              // Always wrapped, so the footer doesn't remount when the keyboard toggles
+              !!FooterComponent && (
+                <View style={{ paddingBottom: footerBottomPadding }}>{FooterComponent}</View>
+              )
+            }
             adjustToContentHeight={
               customRenderer ? false : !isModal && isKeyboardVisible ? false : adjustToContentHeight
             }

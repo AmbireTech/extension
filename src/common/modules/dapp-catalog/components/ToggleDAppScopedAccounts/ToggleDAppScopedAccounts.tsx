@@ -7,11 +7,11 @@ import FatToggle from '@common/components/FatToggle'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 type Props = {
   enabled: boolean
@@ -24,8 +24,6 @@ type Props = {
   disabledTooltip?: { id: string; content: string }
 }
 
-const { isSidePanel } = getUiType()
-
 const ToggleDAppScopedAccounts: FC<Props> = ({
   enabled,
   selectedCount,
@@ -35,10 +33,11 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
   disabled,
   disabledTooltip
 }) => {
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
-  // Side panel is too narrow for toggle + account badge on one row.
-  const stackToggleAndBadge = isSidePanel
+  // A narrow view has no room for toggle + account badge on one row.
+  const stackToggleAndBadge = isNarrowWebLayout
   const canOpenAccountSelector = !disabled && !!onOpenAccountSelector
 
   const PillContainer = canOpenAccountSelector ? HoverablePressable : View
@@ -59,6 +58,7 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
         {...(canOpenAccountSelector && {
           onPress: onOpenAccountSelector
         })}
+        testID="dapp-scoped-accounts-selector-button"
       >
         <Text fontSize={12} weight="medium" appearance="primary">
           {t('{{count}} account{{s}} selected', {
@@ -87,6 +87,7 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
       onToggle={onToggle}
       disabled={disabled}
       trackStyle={spacings.mrTy}
+      testID="dapp-scoped-accounts-toggle"
     />
   )
 
