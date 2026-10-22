@@ -31,7 +31,7 @@ import useKeyStoreUnlock from '@common/modules/keystore/hooks/useKeyStoreUnlock'
 import backgroundImage from '@common/modules/keystore/images/background.png'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { syncSessionStorage } from '@common/services/storage'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -40,7 +40,7 @@ import { getUiType } from '@common/utils/uiType'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
 
 import getStyles from './styles'
-import UpdateAvailableBanner, { selectIsExtensionUpdateAvailable } from './UpdateAvailableBanner'
+import UpdateAvailableModal, { selectIsExtensionUpdateAvailable } from './UpdateAvailableModal'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -181,17 +181,13 @@ const KeyStoreUnlockScreen = () => {
         style={[
           styles.hero,
           {
-            // The update banner takes over the gap below the card, so the rest of the screen stays in place
-            marginBottom:
-              isExtensionUpdateAvailable && !isPasswordUnlockRequired
-                ? SPACING_TY
-                : isNarrowWebLayout
-                  ? SPACING_SM
-                  : canUseBiometrics
-                    ? 42
-                    : isPasswordUnlockRequired
-                      ? 24
-                      : 56
+            marginBottom: isNarrowWebLayout
+              ? SPACING_SM
+              : canUseBiometrics
+                ? 42
+                : isPasswordUnlockRequired
+                  ? 24
+                  : 56
           }
         ]}
       >
@@ -268,11 +264,7 @@ const KeyStoreUnlockScreen = () => {
           </Text>
         </View>
       </View>
-      {isExtensionUpdateAvailable && !isPasswordUnlockRequired && (
-        <View style={[spacings.phSm, spacings.mbTy, { width: '100%' }]}>
-          <UpdateAvailableBanner />
-        </View>
-      )}
+      {isExtensionUpdateAvailable && !isPasswordUnlockRequired && <UpdateAvailableModal />}
       {/* A narrow layout fills the width and spreads the form vertically like on mobile */}
       <View style={isNarrowWebLayout ? styles.narrowContainer : styles.container}>
         {unlockMethod === 'biometrics' && canUseBiometrics && (

@@ -8,6 +8,7 @@ import {
   BannerType as NonMarketingBannerType
 } from '@ambire-common/interfaces/banner'
 import BatchIcon from '@common/assets/svg/BatchIcon'
+import SparklesIcon from '@common/assets/svg/SparklesIcon'
 import Banner from '@common/components/Banner'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
@@ -30,6 +31,12 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
   state.visibleUserRequests
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
+const getBannerStyle = (isSingleRow: boolean, isUpdateAvailable: boolean) => {
+  if (isUpdateAvailable) return { ...spacings.phSm, ...spacings.pvTy }
+
+  return isSingleRow ? spacings.pbTy : undefined
+}
 
 const DashboardBanner = ({
   banner
@@ -59,16 +66,27 @@ const DashboardBanner = ({
   const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
   const isPendingSignatureRequest = banner.id === 'safe-message-request-banner'
   const isSwapAndBridgeStatus = category === 'bridge-in-progress'
-  const isSingleRow = isPendingAccountOp || isPendingSignatureRequest || isSwapAndBridgeStatus
+  const isUpdateAvailable = banner.id === 'update-available'
+  const isSingleRow =
+    isPendingAccountOp || isPendingSignatureRequest || isSwapAndBridgeStatus || isUpdateAvailable
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
+    if (isUpdateAvailable) return SparklesIcon
 
     return null
-  }, [category])
+  }, [category, isUpdateAvailable])
 
   // the network goes on a second row so the banner stays short on every screen size
   const subtitle = useMemo(() => {
+    if (isUpdateAvailable && text) {
+      return (
+        <Text fontSize={isMobile ? 12 : 14} appearance="secondaryText">
+          {text}
+        </Text>
+      )
+    }
+
     if (!isPendingAccountOp || !meta?.chainId) return null
 
     const networkName = networks.find(({ chainId }) => chainId === meta.chainId)?.name
@@ -87,7 +105,7 @@ const DashboardBanner = ({
         )}
       </View>
     )
-  }, [isPendingAccountOp, meta, networks, t])
+  }, [isPendingAccountOp, isUpdateAvailable, meta, networks, t, text])
 
   const handleActionPress = useCallback(
     (action: Action) => {
@@ -310,7 +328,8 @@ const DashboardBanner = ({
         type={type}
         text={text}
         singleRow={isSingleRow}
-        style={isSingleRow ? spacings.pbTy : undefined}
+        isAccent={isUpdateAvailable}
+        style={getBannerStyle(isSingleRow, isUpdateAvailable)}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined

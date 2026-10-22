@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react'
-import { PressableProps, ViewStyle } from 'react-native'
+import { ColorValue, PressableProps, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
@@ -14,24 +14,35 @@ type Props = {
   onPress: () => void
   children: React.ReactNode
   testID?: string
+  /** Overrides the color that `colorType` resolves to, e.g. for banners in the brand accent */
+  accentColor?: ColorValue
 } & Partial<PressableProps>
 
-const BannerButton: FC<Props> = ({ type, colorType, onPress, children, testID, ...rest }) => {
+const BannerButton: FC<Props> = ({
+  type,
+  colorType,
+  onPress,
+  children,
+  testID,
+  accentColor,
+  ...rest
+}) => {
   const { theme } = useTheme()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
+  const color = accentColor || theme[`${colorType}Text`]
 
   const typeStyle: ViewStyle = useMemo(() => {
     if (type === 'primary') {
       return {
-        backgroundColor: theme[`${colorType}Text`]
+        backgroundColor: color
       }
     }
 
     return {
       borderWidth: 1,
-      borderColor: theme[`${colorType}Text`]
+      borderColor: color
     }
-  }, [type, colorType, theme])
+  }, [type, color])
 
   return (
     <AnimatedPressable
@@ -51,11 +62,7 @@ const BannerButton: FC<Props> = ({ type, colorType, onPress, children, testID, .
       testID={testID}
       {...bindAnim}
     >
-      <Text
-        color={type === 'primary' ? theme.neutral100 : theme[`${colorType}Text`]}
-        fontSize={14}
-        weight="medium"
-      >
+      <Text color={type === 'primary' ? theme.neutral100 : color} fontSize={14} weight="medium">
         {children}
       </Text>
     </AnimatedPressable>
