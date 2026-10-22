@@ -869,9 +869,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const onHeaderRelease = () => {
     endHeaderDrag()
 
-    // Web's overview is never left partly collapsed, see `useWebCarouselStyles`
-    if (webStyles) return
-
     const settleOffset = getOverviewSettleOffset()
 
     if (settleOffset !== null) {
@@ -957,8 +954,17 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
   const openTabFloatingBar = floatingBars[openTab]
 
-  // Web only, where nothing hands the wheel over the header to the page under it
-  const webHeaderProps = isWeb ? { onWheel: onHeaderWheel } : undefined
+  // Web only takes the wheel, where nothing hands it over the header to the page under it.
+  // A mouse drag would otherwise be taken for a touch one and scroll the page.
+  const headerProps = isWeb
+    ? { onWheel: onHeaderWheel }
+    : {
+        onStartShouldSetResponderCapture: onHeaderTouchStart,
+        onMoveShouldSetResponderCapture: onHeaderTouchMove,
+        onResponderMove: onHeaderDrag,
+        onResponderRelease: onHeaderRelease,
+        onResponderTerminate: endHeaderDrag
+      }
 
   const pages = useMemo(
     () =>
@@ -1040,12 +1046,7 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       not enough to keep them on top on Android. The pages used to render them
       inside a list that adds this padding on top of the one the tabs row has */}
           <MovingView
-            onStartShouldSetResponderCapture={onHeaderTouchStart}
-            onMoveShouldSetResponderCapture={onHeaderTouchMove}
-            onResponderMove={onHeaderDrag}
-            onResponderRelease={onHeaderRelease}
-            onResponderTerminate={endHeaderDrag}
-            {...webHeaderProps}
+            {...headerProps}
             style={[
               styles.header,
               spacings.phSm,
