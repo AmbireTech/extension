@@ -10,7 +10,8 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
-  View
+  View,
+  ViewStyle
 } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Reanimated, {
@@ -88,9 +89,13 @@ const OVERVIEW_EXPAND_TIMING = {
 // directly, without a render
 const USE_NATIVE_DRIVER = !isWeb
 
-// How long the pager has to have stopped for to be settled on a page on web, which reports
-// scrolling to a pressed tab only as scroll events, with no momentum end
-const WEB_PAGER_IDLE_DELAY = 150
+// Web slides to a pressed tab by a CSS transition, run off the main thread so a tab switch's
+// renders can't hold it up (a smooth scroll lagged on Firefox). Eased like the overview
+const WEB_PAGER_TRANSITION = `transform ${OVERVIEW_EXPAND_TIMING.duration}ms cubic-bezier(0.37, 0, 0.63, 1)`
+
+// Clips the pages beside the open one without being scrollable, so focusing something in one
+// can't scroll the row sideways as `overflow: hidden` would let it
+const WEB_PAGER_CLIP = { overflow: 'clip' } as unknown as ViewStyle
 
 // How many pixels a line of a wheel scrolled by lines stands for, as Firefox reports it
 const WHEEL_LINE_HEIGHT = 16
@@ -224,6 +229,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const { styles } = useTheme(getStyles)
   const overviewHeight = overviewHeightProp ?? 0
   const scrollRef = useRef<ScrollView>(null)
+  // Web only, where the pages are a row moved by a transform rather than a scroll view
+  const webPagerRef = useRef<View>(null)
   // The pages are explicitly sized because a page taller than the pager would
   // make the pager scroll vertically instead of the list inside it.
   const [pageSize, setPageSize] = useState({ width: Dimensions.get('window').width, height: 0 })
@@ -626,6 +633,39 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     setTabsHeight(layout.height)
   }, [])
 
+  const webPagerSettleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(
+    () => () => {
+      if (webPagerSettleTimeoutRef.current) clearTimeout(webPagerSettleTimeoutRef.current)
+    },
+    []
+  )
+
+  // Moves the web pager to a page, and hides the pages' scrollbars while it slides there, by
+  // `data-pager-moving` in style.css. Set on the element directly, so it costs no render
+  const moveWebPager = useCallback((offsetX: number, animated: boolean) => {
+    const pagerNode = webPagerRef.current as unknown as HTMLElement | null
+
+    if (!pagerNode) return
+
+    if (webPagerSettleTimeoutRef.current) clearTimeout(webPagerSettleTimeoutRef.current)
+
+    pagerNode.style.transition = animated ? WEB_PAGER_TRANSITION : 'none'
+    pagerNode.style.transform = `translateX(${-offsetX}px)`
+
+    if (!animated) {
+      delete pagerNode.dataset.pagerMoving
+      return
+    }
+
+    pagerNode.dataset.pagerMoving = 'true'
+    webPagerSettleTimeoutRef.current = setTimeout(() => {
+      webPagerSettleTimeoutRef.current = null
+      delete pagerNode.dataset.pagerMoving
+    }, OVERVIEW_EXPAND_TIMING.duration)
+  }, [])
+
   // Follows the tab that was selected by pressing a tab. Aligning after a resize or
   // on mount (a deep link may open another tab) must not animate.
   const alignedTabIndexRef = useRef(openTabIndex)
@@ -642,8 +682,15 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
     if (hasTabChanged) takePagesToTop()
 
-    scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated: hasTabChanged })
-  }, [openTab, openTabIndex, pageSize.width, takePagesToTop])
+    const offsetX = openTabIndex * pageSize.width
+
+    if (isWeb) {
+      moveWebPager(offsetX, hasTabChanged)
+      return
+    }
+
+    scrollRef.current?.scrollTo({ x: offsetX, animated: hasTabChanged })
+  }, [moveWebPager, openTab, openTabIndex, pageSize.width, takePagesToTop])
 
   // Only the banners scroll out of view; the tabs row stays. With no banners it maps to a
   // constant 0; never a static 0, or the native view keeps the last banner collapse.
@@ -695,45 +742,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     },
     [openTab, pageSize.width, setOpenTab, tabs]
   )
-
-  // Web reports scrolling to a pressed tab only as scroll events, so it is over once they
-  // have stopped coming
-  const pagerIdleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(
-    () => () => {
-      if (pagerIdleTimeoutRef.current) clearTimeout(pagerIdleTimeoutRef.current)
-    },
-    []
-  )
-
-  // Hides the pages' scrollbars while the pager moves between them, by `data-pager-moving`
-  // in style.css, and shows them again once it settles on one. Set on the element directly,
-  // so it costs no render
-  const setIsPagerMoving = useCallback((isMoving: boolean) => {
-    const pagerNode = scrollRef.current?.getScrollableNode() as HTMLElement | null | undefined
-
-    if (!pagerNode) return
-
-    if (isMoving) {
-      pagerNode.dataset.pagerMoving = 'true'
-    } else {
-      delete pagerNode.dataset.pagerMoving
-    }
-  }, [])
-
-  const onWebPagerScroll = useCallback(() => {
-    if (pagerIdleTimeoutRef.current) {
-      clearTimeout(pagerIdleTimeoutRef.current)
-    } else {
-      setIsPagerMoving(true)
-    }
-
-    pagerIdleTimeoutRef.current = setTimeout(() => {
-      pagerIdleTimeoutRef.current = null
-      setIsPagerMoving(false)
-    }, WEB_PAGER_IDLE_DELAY)
-  }, [setIsPagerMoving])
 
   const carousel = useMemo(
     () => ({
@@ -983,24 +991,29 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   const MovingView = (webStyles ? Reanimated.View : Animated.View) as typeof Animated.View
 
   const pager = (
-    <Reanimated.View style={[flexbox.flex1, pagerStyle]}>
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        // Web switches the pages by the tabs alone: a sideways trackpad swipe is too easily
-        // set off by one meant to scroll the page
-        scrollEnabled={!isWeb}
-        pagingEnabled
-        directionalLockEnabled
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        scrollEventThrottle={16}
-        onScroll={isWeb ? onWebPagerScroll : onPagerScroll}
-        onScrollBeginDrag={onScrollBeginDrag}
-        onMomentumScrollEnd={onMomentumScrollEnd}
-      >
-        {pages}
-      </ScrollView>
+    <Reanimated.View style={[flexbox.flex1, isWeb && WEB_PAGER_CLIP, pagerStyle]}>
+      {/* Web switches the pages by the tabs alone: a sideways trackpad swipe is too easily
+      set off by one meant to scroll the page */}
+      {isWeb ? (
+        <View ref={webPagerRef} style={[flexbox.directionRow, WEB_MOVING_LAYER]}>
+          {pages}
+        </View>
+      ) : (
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          directionalLockEnabled
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          scrollEventThrottle={16}
+          onScroll={onPagerScroll}
+          onScrollBeginDrag={onScrollBeginDrag}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+        >
+          {pages}
+        </ScrollView>
+      )}
     </Reanimated.View>
   )
 
