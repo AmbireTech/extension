@@ -12,6 +12,7 @@ import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -48,6 +49,7 @@ const EditAccountNameBottomSheet = ({
   testID = 'edit-account-name'
 }: Props) => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const { addToast } = useToast()
   const { isCompactLayout } = useCompactLayout()
   const { ref: sheetRef, close } = useModalize()
@@ -80,38 +82,30 @@ const EditAccountNameBottomSheet = ({
     }
   }, [addToast, canSave, close, onSave, t, trimmedName])
 
-  const renderButtons = ({
-    buttonStyle,
-    isPrimaryFirst = false
-  }: { buttonStyle?: ViewStyle; isPrimaryFirst?: boolean } = {}) => {
-    const buttons = [
-      <Button
-        type="secondary"
-        size="smaller"
-        text={t('Cancel')}
-        onPress={handleClose}
-        disabled={isSaving}
-        hasBottomSpacing={false}
-        style={buttonStyle}
-        testID={`${testID}-cancel-button`}
-        key="cancel"
-      />,
-      <ButtonWithLoader
-        type="primary"
-        size="smaller"
-        text={isSaving ? '' : t('Save')}
-        onPress={handleSave}
-        disabled={!canSave}
-        isLoading={isSaving}
-        style={buttonStyle}
-        testID={`${testID}-save-button`}
-        key="save"
-      />
-    ]
-
-    // Reordering the elements rather than the layout keeps the focus order matching what is shown
-    return isPrimaryFirst ? buttons.reverse() : buttons
-  }
+  const renderButtons = ({ buttonStyle }: { buttonStyle?: ViewStyle } = {}) => [
+    <Button
+      type="secondary"
+      size="smaller"
+      text={t('Cancel')}
+      onPress={handleClose}
+      disabled={isSaving}
+      hasBottomSpacing={false}
+      style={buttonStyle}
+      testID={`${testID}-cancel-button`}
+      key="cancel"
+    />,
+    <ButtonWithLoader
+      type="primary"
+      size="smaller"
+      text={isSaving ? '' : t('Save')}
+      onPress={handleSave}
+      disabled={!canSave}
+      isLoading={isSaving}
+      style={buttonStyle}
+      testID={`${testID}-save-button`}
+      key="save"
+    />
+  ]
 
   return (
     <BottomSheet
@@ -145,14 +139,22 @@ const EditAccountNameBottomSheet = ({
         onChangeText={setName}
         onSubmitEditing={handleSave}
         maxLength={ACCOUNT_NAME_MAX_LENGTH}
+        label={t('Account name')}
         placeholder={t('Account name')}
+        // The default background is the sheet's own, which hides the field while it isn't focused
+        backgroundColor={theme.secondaryBackground}
         autoFocus
         containerStyle={spacings.mb0}
         testID={testID}
       />
       {isCompactLayout ? (
-        <View style={[spacings.ptLg, { rowGap: SPACING_SM }]}>
-          {renderButtons({ isPrimaryFirst: true })}
+        <View style={[flexbox.directionRow, spacings.ptLg, { columnGap: SPACING_SM }]}>
+          {/* Unpadded cells, as flex splits the space after each button's own padding and border */}
+          {renderButtons().map((button) => (
+            <View key={button.key} style={flexbox.flex1}>
+              {button}
+            </View>
+          ))}
         </View>
       ) : (
         // On wide screens the buttons sit centered in a glass pill instead of filling the width
