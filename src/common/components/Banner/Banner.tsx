@@ -16,6 +16,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+const ACCENT_TITLE_LINE_HEIGHT = 20
+
 const ICON_MAP: {
   [key in BannerType]: React.FC<any>
 } = {
@@ -110,12 +112,16 @@ const Banner = React.memo(
               height={isMobile ? 22 : 24}
               color={accentColor || theme[`${type}Text`]}
             />
-            <View style={[flexbox.flex1, spacings.mlMi]}>
+            <View style={[flexbox.flex1, isAccent ? spacings.mlSm : spacings.mlMi]}>
               <Text
                 fontSize={titleFontSize || (isMobile ? 14 : 16)}
                 weight={isAccent ? 'semiBold' : 'medium'}
                 numberOfLines={singleRow ? 1 : undefined}
-                style={!singleRow && isMobile && { marginTop: 2 }}
+                style={[
+                  !singleRow && isMobile && { marginTop: 2 },
+                  // `Text` resets the line height whenever it gets a custom font size
+                  isAccent && { lineHeight: ACCENT_TITLE_LINE_HEIGHT }
+                ]}
               >
                 {title}
               </Text>

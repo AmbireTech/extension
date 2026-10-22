@@ -32,6 +32,9 @@ const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsCon
   state.visibleUserRequests
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
+// `Text` resets the line height whenever it gets a custom font size
+const UPDATE_AVAILABLE_SUBTITLE_STYLE = { ...spacings.mtMi, lineHeight: 18 }
+
 const getBannerStyle = (isSingleRow: boolean, isUpdateAvailable: boolean) => {
   if (isUpdateAvailable) return { ...spacings.phSm, ...spacings.pvTy }
 
@@ -81,7 +84,11 @@ const DashboardBanner = ({
   const subtitle = useMemo(() => {
     if (isUpdateAvailable && text) {
       return (
-        <Text fontSize={isMobile ? 12 : 14} appearance="secondaryText">
+        <Text
+          fontSize={isMobile ? 12 : 14}
+          appearance="secondaryText"
+          style={UPDATE_AVAILABLE_SUBTITLE_STYLE}
+        >
           {text}
         </Text>
       )
