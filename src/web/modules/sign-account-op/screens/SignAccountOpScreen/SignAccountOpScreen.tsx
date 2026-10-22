@@ -177,11 +177,14 @@ const SignAccountOpScreen = () => {
 
   const shouldRejectOnchain = useMemo(() => {
     if (!signAccountOpState?.account.safeCreation) return false
+    // A speed up reuses the signatures of the pending transaction it replaces, so canceling
+    // it only closes the request. The pending transaction itself is left as it is
+    if (isSpeedUpTransaction) return false
     const { signature, signed } = signAccountOpState.accountOp
     const signedCount = signed?.length || 0
 
     return !!signature && signature !== '0x' && signedCount > 0
-  }, [signAccountOpState])
+  }, [signAccountOpState, isSpeedUpTransaction])
 
   const isCancelDisabled = useMemo(() => {
     if (!shouldRejectOnchain || !signAccountOpState) return false
