@@ -40,6 +40,8 @@ const UpdateAvailableModal = () => {
       id="extension-update-modal"
       type="modal"
       autoOpen
+      // The close button sits in the top 20px, which the drag area would otherwise cover
+      withHandle={false}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       style={styles.modal}
@@ -60,22 +62,33 @@ const UpdateAvailableModal = () => {
           />
         </View>
       </Pressable>
-      <View style={[flexbox.alignCenter, spacings.mb2Xl]}>
-        <SparklesIcon width={36} height={36} color={theme.primaryAccent} style={spacings.mbMd} />
-        <Text fontSize={20} weight="medium" color={theme.neutral800} style={text.center}>
-          {t('New version available')}
-        </Text>
-        <Text fontSize={14} appearance="secondaryText" style={[text.center, spacings.mtMi]}>
-          {t('Update Ambire to the newest version before unlocking your wallet.')}
-        </Text>
+      <View style={styles.content}>
+        <View style={[flexbox.alignCenter, spacings.mb2Xl]}>
+          <SparklesIcon width={36} height={36} color={theme.primaryAccent} style={spacings.mbMd} />
+          <Text
+            fontSize={20}
+            weight="medium"
+            color={theme.neutral800}
+            style={[text.center, styles.title]}
+          >
+            {t('New version available')}
+          </Text>
+          <Text
+            fontSize={14}
+            appearance="secondaryText"
+            style={[text.center, spacings.mtMi, styles.description]}
+          >
+            {t('Update Ambire to the newest version before unlocking your wallet.')}
+          </Text>
+        </View>
+        <Button
+          testID="button-apply-extension-update"
+          text={t('Update now')}
+          hasBottomSpacing={false}
+          style={styles.updateButton}
+          onPress={applyUpdate}
+        />
       </View>
-      <Button
-        testID="button-apply-extension-update"
-        text={t('Update now')}
-        hasBottomSpacing={false}
-        style={styles.updateButton}
-        onPress={applyUpdate}
-      />
     </BottomSheet>
   )
 }
