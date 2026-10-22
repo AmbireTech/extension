@@ -64,7 +64,9 @@ const UpdateAvailableModal = () => {
       </Pressable>
       <View style={styles.content}>
         <View style={[flexbox.alignCenter, spacings.mb2Xl]}>
-          <SparklesIcon width={36} height={36} color={theme.primaryAccent} style={spacings.mbMd} />
+          <View style={spacings.mbMd}>
+            <SparklesIcon width={36} height={36} />
+          </View>
           <Text
             fontSize={20}
             weight="medium"
