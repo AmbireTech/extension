@@ -1,5 +1,5 @@
-import { ReactNode } from 'react'
-import { SectionListData, SectionListProps, TextStyle, ViewStyle } from 'react-native'
+import { ReactNode, RefObject } from 'react'
+import { SectionList, SectionListData, SectionListProps, TextStyle, ViewStyle } from 'react-native'
 
 export type SelectValue = {
   value: string | number
@@ -120,4 +120,6 @@ export type SectionedSelectProps = CommonSelectProps &
     setIsMenuOpen?: (isMenuOpen: boolean) => void
     /** Keeps the rows off the scrollbar on web, like ScrollableWrapper does */
     withScrollbarPadding?: boolean
+    /** Gives access to the list, e.g. to scroll it from outside */
+    listRef?: RefObject<SectionList<SelectValue> | null>
   }

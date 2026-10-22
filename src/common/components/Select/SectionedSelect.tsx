@@ -35,6 +35,7 @@ const SectionedSelect = ({
   isMenuOpen,
   setIsMenuOpen,
   withScrollbarPadding,
+  listRef: externalListRef,
   ...props
 }: SectionedSelectProps) => {
   const selectData = useSelectInternal({
@@ -50,7 +51,8 @@ const SectionedSelect = ({
     renderOption: props.renderOption,
     closeMenuOnSelect: props.closeMenuOnSelect,
     isMenuOpen,
-    setIsMenuOpen
+    setIsMenuOpen,
+    listRef: externalListRef
   })
   const { listRef, filteredData, renderItem, keyExtractor, handleScroll, handleLayout } = selectData
   const isScrollbarPaddingEnabled = isWeb && !!withScrollbarPadding

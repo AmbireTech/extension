@@ -26,6 +26,7 @@ type Props = Pick<
   onSearch?: (searchTerm: string) => void
   isMenuOpen?: SectionedSelectProps['isMenuOpen']
   setIsMenuOpen?: SectionedSelectProps['setIsMenuOpen']
+  listRef?: SectionedSelectProps['listRef']
 }
 
 const useSelectInternal = ({
@@ -43,7 +44,8 @@ const useSelectInternal = ({
   renderOption,
   closeMenuOnSelect = true,
   isMenuOpen: controlledIsMenuOpen,
-  setIsMenuOpen: setControlledIsMenuOpen
+  setIsMenuOpen: setControlledIsMenuOpen,
+  listRef: externalListRef
 }: Props) => {
   const useSelectReturnValue = useSelect({
     menuPosition,
@@ -178,7 +180,8 @@ const useSelectInternal = ({
     setIsMenuOpen,
     handleOptionSelect,
     mode,
-    renderOption
+    renderOption,
+    listRef: externalListRef
   })
 
   return {

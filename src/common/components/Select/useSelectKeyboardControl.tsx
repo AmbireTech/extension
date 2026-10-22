@@ -15,6 +15,7 @@ type Props = Pick<SelectProps, 'size' | 'value' | 'mode' | 'renderOption'> &
     stickySectionHeadersEnabled?: boolean
     setIsMenuOpen: (isMenuOpen: boolean) => void
     handleOptionSelect: (item: SelectValue) => void
+    listRef?: SectionedSelectProps['listRef']
   }
 
 const useSelectKeyboardControl = ({
@@ -29,9 +30,11 @@ const useSelectKeyboardControl = ({
   setIsMenuOpen,
   handleOptionSelect,
   mode,
-  renderOption
+  renderOption,
+  listRef: externalListRef
 }: Props) => {
-  const listRef: any = useRef(null)
+  const internalListRef = useRef(null)
+  const listRef: any = externalListRef ?? internalListRef
   const highlightedItemOnMouseMoveEnabled = useRef(true)
   const scrollOffset = useRef(0)
 
@@ -241,7 +244,8 @@ const useSelectKeyboardControl = ({
     listHeight,
     headerHeight,
     stickySectionHeadersEnabled,
-    renderOption
+    renderOption,
+    listRef
   ])
 
   useEffect(() => {

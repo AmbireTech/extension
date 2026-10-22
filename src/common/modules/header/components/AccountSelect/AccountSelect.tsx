@@ -1,6 +1,13 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans } from 'react-i18next'
-import { Keyboard, LayoutChangeEvent, SectionListData, View, ViewToken } from 'react-native'
+import {
+  Keyboard,
+  LayoutChangeEvent,
+  SectionList,
+  SectionListData,
+  View,
+  ViewToken
+} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Account } from '@ambire-common/interfaces/account'
@@ -130,10 +137,21 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
     dismissKeyboard()
     showAllAccountsAction()
   }, [showAllAccountsAction])
+  const listRef = useRef<SectionList<SelectValue>>(null)
+  const shouldScrollToTopRef = useRef(false)
   const limitToPickedAccount = useCallback(() => {
     dismissKeyboard()
     limitToPickedAccountAction()
+    shouldScrollToTopRef.current = true
   }, [limitToPickedAccountAction])
+  // The picked account is the only one left visible, at the top, so it's scrolled into view.
+  // Only once the list has re-rendered, as the rows leaving above would stop the scroll midway
+  useEffect(() => {
+    if (!shouldScrollToTopRef.current) return
+
+    shouldScrollToTopRef.current = false
+    listRef.current?.getScrollResponder()?.scrollTo({ x: 0, y: 0, animated: true })
+  }, [visibleAccounts])
   const [isHiddenSectionInView, setIsHiddenSectionInView] = useState(true)
   // Until it's measured, the button goes on its own row, as the sheet is usually narrow
   const [visibleHeaderWidth, setVisibleHeaderWidth] = useState(0)
@@ -455,6 +473,7 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
   return (
     <SectionedSelect
       testID="account-select"
+      listRef={listRef}
       value={value}
       setValue={handleSetValue}
       sections={sections}
