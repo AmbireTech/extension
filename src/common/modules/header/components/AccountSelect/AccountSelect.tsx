@@ -348,6 +348,9 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
 
   const renderFooter = useCallback(
     ({ setIsMenuOpen }: RenderSelectedOptionParams) => {
+      // Without changes the sheet closes from the backdrop, so the space shows another account
+      if (!isDirty && !isHiddenHeaderPinned) return null
+
       const closeSheet = () => {
         dismissKeyboard()
         setIsMenuOpen(false)
@@ -373,39 +376,28 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
             />
           )}
           {/* With the 8 above it, from the footer or the pinned header, the gap is 12 like other footers */}
-          <View style={[flexbox.directionRow, spacings.ptMi, { columnGap: SPACING_SM }]}>
-            {isDirty ? (
-              <>
-                <Button
-                  type="secondary"
-                  text={t('Cancel')}
-                  onPress={closeSheet}
-                  hasBottomSpacing={false}
-                  style={flexbox.flex1}
-                  testID="account-select-cancel"
-                />
-                <Button
-                  text={t('Done')}
-                  onPress={() => {
-                    applyChanges()
-                    closeSheet()
-                  }}
-                  hasBottomSpacing={false}
-                  style={flexbox.flex1}
-                  testID="account-select-done"
-                />
-              </>
-            ) : (
+          {isDirty && (
+            <View style={[flexbox.directionRow, spacings.ptMi, { columnGap: SPACING_SM }]}>
               <Button
                 type="secondary"
-                text={t('Close')}
+                text={t('Cancel')}
                 onPress={closeSheet}
                 hasBottomSpacing={false}
                 style={flexbox.flex1}
-                testID="account-select-close"
+                testID="account-select-cancel"
               />
-            )}
-          </View>
+              <Button
+                text={t('Done')}
+                onPress={() => {
+                  applyChanges()
+                  closeSheet()
+                }}
+                hasBottomSpacing={false}
+                style={flexbox.flex1}
+                testID="account-select-done"
+              />
+            </View>
+          )}
         </View>
       )
     },
