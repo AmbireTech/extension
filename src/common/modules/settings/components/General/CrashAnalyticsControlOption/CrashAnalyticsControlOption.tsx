@@ -82,8 +82,11 @@ const CrashAnalyticsControlOption = () => {
             <CopyIcon style={spacings.mlMi} width={14} height={14} color={theme.primaryAccent300} />
           </Badge>
         </HoverablePressable>
-        <View
+        <InfoIcon
           style={spacings.mlMi}
+          width={16}
+          height={16}
+          color={theme.primaryAccent300}
           dataSet={createGlobalTooltipDataSet({
             id: 'crash-report-id-tooltip',
             content: t(
@@ -91,9 +94,7 @@ const CrashAnalyticsControlOption = () => {
               { crashReportId }
             )
           })}
-        >
-          <InfoIcon width={16} height={16} color={theme.primaryAccent300} />
-        </View>
+        />
       </View>
     )
   }, [crashAnalyticsEnabled, crashReportId, handleCopyCrashReportId, t, theme.primaryAccent300])
