@@ -1,31 +1,27 @@
 import { parseUnits } from 'ethers'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { LayoutChangeEvent, View } from 'react-native'
+import { LayoutChangeEvent } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { SvgProps } from 'react-native-svg'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import LogOutIcon from '@common/assets/svg/LogOutIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import Header from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
 import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
 import TokenData from '@common/modules/token-details/components/TokenData'
-import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { privateValue } from '@common/utils/ui'
@@ -47,9 +43,8 @@ const RagequitIcon = React.memo(({ width }: SvgProps) => {
 })
 
 /**
- * A Privacy Pools token's details, laid out like the regular token details: its price, the balance
- * with the part still being verified, and only what is the same for everyone holding the token
- * (network, contract), so nothing is looked up for this account. The token is in the URL
+ * A Privacy Pools token's details, laid out like the regular token details: for now only the
+ * balance and the network, so nothing is looked up for this account. The token is in the URL
  * (`?chainId=&address=`), like Send.
  *
  * Send moves what is verified, privately. Rage quit takes back a deposit still being verified,
@@ -169,15 +164,6 @@ const PrivacyPoolsTokenDetailsScreen = () => {
           }
         ]}
       >
-        <TokenPriceDisplay
-          symbol={token.symbol}
-          address={token.address}
-          chainId={token.chainId}
-          priceUSDFormatted={formatted.priceUSDFormatted}
-          // Absent without market data, so neither is shown
-          change24h={formatted.change24h}
-          change24hFormatted={formatted.change24hFormatted}
-        />
         <TokenBalanceCard
           symbol={token.symbol}
           address={token.address}
@@ -191,39 +177,9 @@ const PrivacyPoolsTokenDetailsScreen = () => {
           }
           change24h={formatted.change24h}
           change24hFormatted={formatted.change24hFormatted}
-          containerStyle={balance.pendingAmount ? spacings.mbTy : undefined}
         />
-        {/* Like the token's row: the part being verified can only be taken back, not sent */}
-        {!!balance.pendingAmount && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm, spacings.phTy]}>
-            <PendingBadge
-              amount={balance.pendingAmountRaw}
-              amountFormatted={
-                privateValue(
-                  formatDecimals(Number(balance.pendingAmount), 'amount'),
-                  isPrivacyModeEnabled
-                ) ?? ''
-              }
-              label="being verified"
-              backgroundColor={theme.infoBackground}
-              textColor={theme.infoText}
-            />
-            <Text
-              color={theme.successText}
-              weight="medium"
-              fontSize={12}
-              numberOfLines={1}
-              style={spacings.mlSm}
-            >
-              {privateValue(
-                formatDecimals(Number(balance.approvedAmount), 'amount'),
-                isPrivacyModeEnabled
-              )}{' '}
-              {t('(ready to send)')}
-            </Text>
-          </View>
-        )}
-        <TokenData token={token} />
+        {/* Only the network for now; what else to show here (e.g. about the pool) is to come */}
+        <TokenData token={token} hideContractAddress />
       </ScrollableWrapper>
       <FooterGlassView
         size="sm"

@@ -26,6 +26,8 @@ import type { NetworksController } from '@ambire-common/controllers/networks/net
 const selectNetworks = (state: NetworksController) => state.networks
 type Props = {
   token: TokenResult
+  /** Shows only the network, e.g. for a Privacy Pools token, whose details are still to come. */
+  hideContractAddress?: boolean
 }
 
 type Row = {
@@ -104,7 +106,7 @@ const Row = memo(
   }
 )
 
-const TokenData: FC<Props> = ({ token }) => {
+const TokenData: FC<Props> = ({ token, hideContractAddress }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [bindWebsiteAnim, websiteAnimStyle] = useCustomHover({
@@ -122,11 +124,12 @@ const TokenData: FC<Props> = ({ token }) => {
         label: t('Chain'),
         value: token.chainId
       },
-      !isNative(token) && {
-        id: 'address',
-        label: t('Contract address'),
-        value: token.address
-      },
+      !isNative(token) &&
+        !hideContractAddress && {
+          id: 'address',
+          label: t('Contract address'),
+          value: token.address
+        },
       typeof usdMarketData?.marketCap === 'number' && {
         label: t('Market cap'),
         value: `${formatDecimals(usdMarketData.marketCap, 'value')}`
@@ -144,7 +147,7 @@ const TokenData: FC<Props> = ({ token }) => {
         value: `${formatDecimals(usdMarketData.volume24h, 'value')}`
       }
     ].filter(Boolean) as Row[]
-  }, [token, t])
+  }, [token, hideContractAddress, t])
 
   return (
     <>
