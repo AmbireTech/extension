@@ -16,6 +16,11 @@ import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
+// The design draws the X 10px wide with a 1.5px stroke. The icon is drawn in a 14.121 box where its
+// lines are 12 long, so a 11.7675px box makes the lines 10px and a 1.8 stroke width makes them 1.5px.
+const CLOSE_ICON_SIZE = 11.7675
+const CLOSE_ICON_STROKE_WIDTH = '1.8'
+
 /**
  * Opens on its own over the lock screen and asks the user to update before unlocking.
  * Closing it leaves the lock screen usable, the update stays one tap away on the dashboard.
@@ -46,7 +51,13 @@ const UpdateAvailableModal = () => {
         onPress={() => closeBottomSheet()}
       >
         <View style={styles.closeIconWrapper}>
-          <CloseIcon width={10} height={10} color={theme.iconPrimary} strokeWidth="2" />
+          <CloseIcon
+            width={CLOSE_ICON_SIZE}
+            height={CLOSE_ICON_SIZE}
+            color={theme.primaryAccent}
+            strokeWidth={CLOSE_ICON_STROKE_WIDTH}
+            strokeLinecap="butt"
+          />
         </View>
       </Pressable>
       <View style={[flexbox.alignCenter, spacings.mb2Xl]}>
