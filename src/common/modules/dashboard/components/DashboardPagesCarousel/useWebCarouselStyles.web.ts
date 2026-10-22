@@ -8,13 +8,12 @@ import {
   withTiming
 } from 'react-native-reanimated'
 
-import { OVERVIEW_RETURN_DISTANCE } from '@common/modules/dashboard/helpers/overviewCollapse'
+import {
+  OVERVIEW_RETURN_DISTANCE,
+  WEB_OVERVIEW_COLLAPSE_START_DISTANCE
+} from '@common/modules/dashboard/helpers/overviewCollapse'
 
 import { WebCarouselStyles, WebCarouselStylesOptions } from './useWebCarouselStyles'
-
-// How far past the banners a page has to be scrolled down for the overview to collapse, so a
-// nudge of the wheel doesn't set it off
-const COLLAPSE_START_DISTANCE = 8
 
 const useWebCarouselStyles = ({
   scrollOffset,
@@ -50,7 +49,7 @@ const useWebCarouselStyles = ({
     (offsetY, previousOffsetY) => {
       if (previousOffsetY === null || offsetY === previousOffsetY) return
 
-      if (offsetY - bannersHeight <= COLLAPSE_START_DISTANCE) {
+      if (offsetY - bannersHeight <= WEB_OVERVIEW_COLLAPSE_START_DISTANCE) {
         scrollUpStartOffset.set(-1)
         animateCollapse(false)
 

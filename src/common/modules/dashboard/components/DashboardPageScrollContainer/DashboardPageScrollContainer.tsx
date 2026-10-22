@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import getCanCollapseOverview from '@common/modules/dashboard/helpers/getCanCollapseOverview'
+import { WEB_OVERVIEW_COLLAPSE_START_DISTANCE } from '@common/modules/dashboard/helpers/overviewCollapse'
 import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -94,10 +95,20 @@ const DashboardPageScrollContainer: FC<Props> = ({
   const minContentHeight = carousel?.pageHeight ? listHeight + bannersHeight : 0
   const barReach = floatingBar ? FLOATING_BAR_REACH + bottom : 0
 
+  // Mobile holds the lists in place as the pager slides over the overview, so they are padded
+  // by it. Web moves them with the pager instead, see `useWebCarouselStyles`
+  const overviewPadding = isWeb ? 0 : overviewHeight
+  // How far past the banners a page has to scroll to collapse the overview. Mobile collapses it
+  // with the offset, so by its whole height; web all at once, a few pixels past the banners
+  const overviewCollapseRange = isWeb ? WEB_OVERVIEW_COLLAPSE_START_DISTANCE + 1 : overviewHeight
+
   const updateCanCollapseOverview = useCallback(() => {
     setCanCollapseOverview(
       getCanCollapseOverview({
-        contentHeight: contentHeightRef.current - footerHeightRef.current,
+        // On web, the open overview pushes the list's end down out of view by as much as the
+        // padding hides of it on mobile
+        contentHeight:
+          contentHeightRef.current - footerHeightRef.current + overviewHeight - overviewPadding,
         paddingBottom: contentPaddingBottom,
         listHeight,
         minContentHeight,
@@ -106,7 +117,15 @@ const DashboardPageScrollContainer: FC<Props> = ({
         barReach
       })
     )
-  }, [bannersHeight, barReach, contentPaddingBottom, listHeight, minContentHeight, overviewHeight])
+  }, [
+    bannersHeight,
+    barReach,
+    contentPaddingBottom,
+    listHeight,
+    minContentHeight,
+    overviewHeight,
+    overviewPadding
+  ])
 
   useEffect(() => {
     updateCanCollapseOverview()
@@ -133,10 +152,6 @@ const DashboardPageScrollContainer: FC<Props> = ({
     [carousel, onFooterLayout]
   )
 
-  // Mobile holds the lists in place as the pager slides over the overview, so they are padded
-  // by it. Web moves them with the pager instead, see `useWebCarouselStyles`
-  const overviewPadding = isWeb ? 0 : overviewHeight
-
   const contentContainerStyle = useMemo(() => {
     return [
       topSpacing,
@@ -146,7 +161,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
       // the overview, if its end is hidden without collapsing it. A page whose end shows
       // never scrolls the overview. Padding would not do: flexGrow stretches the content anyway.
       !!minContentHeight && {
-        minHeight: minContentHeight + (canCollapseOverview ? overviewPadding : 0)
+        minHeight: minContentHeight + (canCollapseOverview ? overviewCollapseRange : 0)
       },
       // Must come last, as it overrides the padding of the non-carousel layout. Only the
       // collapsing parts of the header and the overview are padded for, the rest is above the list
@@ -158,6 +173,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
     carousel,
     contentPaddingBottom,
     minContentHeight,
+    overviewCollapseRange,
     overviewPadding,
     topSpacing
   ])

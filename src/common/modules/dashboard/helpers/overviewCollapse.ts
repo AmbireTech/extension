@@ -1,6 +1,12 @@
 /** How far a page has to be scrolled up before the overview starts expanding mid-page. */
 export const OVERVIEW_RETURN_DISTANCE = 100
 
+/**
+ * Web only: how far past the banners a page has to be scrolled down for the overview to
+ * collapse, so a nudge of the wheel doesn't set it off.
+ */
+export const WEB_OVERVIEW_COLLAPSE_START_DISTANCE = 8
+
 const clamp = (value: number, min: number, max: number) => {
   'worklet'
 
