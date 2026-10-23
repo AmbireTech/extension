@@ -271,12 +271,12 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
 
       return (
         <AccountSelectOption
-          account={item.account}
+          option={item}
           isSelected={isSelected}
           selectedBadgeText={selectedBadgeText}
           isHidden={isHidden}
           isLast={isLast}
-          onPress={() => onPress(item)}
+          onPress={onPress}
           onToggleVisibility={
             canToggleVisibility ? (isHidden ? showAccount : hideAccount) : undefined
           }

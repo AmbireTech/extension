@@ -8,6 +8,7 @@ import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import HoverablePressable from '@common/components/HoverablePressable'
+import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -33,20 +34,22 @@ const ACCOUNT_INFO_STYLE: ViewStyle = {
 const ACCOUNT_INFO_WITHOUT_TOGGLE_STYLE: ViewStyle = { ...ACCOUNT_INFO_STYLE, ...spacings.prSm }
 
 type Props = {
-  account: Account
+  /** An option of the account select, holding its `account` */
+  option: SelectValue
   isSelected: boolean
   /** The badge of the selected account. Defaults to "Selected" */
   selectedBadgeText?: string
   isHidden?: boolean
   /** The last row has no gap below it */
   isLast?: boolean
-  onPress: (addr: string) => void
+  /** Receives the option, so the select's own handler can be passed as is and the row stays memoized */
+  onPress: (option: SelectValue) => void
   /** Omit to show no Hide / Show button, e.g. for the selected account */
   onToggleVisibility?: (addr: string) => void
 }
 
 const AccountSelectOption = ({
-  account,
+  option,
   isSelected,
   selectedBadgeText,
   isHidden,
@@ -56,9 +59,10 @@ const AccountSelectOption = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const account: Account = option.account
   const reverseLookup = useReverseLookup({ address: account.addr, privacyUpdateMode: 'never' })
 
-  const handlePress = useCallback(() => onPress(account.addr), [onPress, account.addr])
+  const handlePress = useCallback(() => onPress(option), [onPress, option])
   const handleToggleVisibility = useCallback(
     () => onToggleVisibility?.(account.addr),
     [onToggleVisibility, account.addr]
