@@ -46,12 +46,10 @@ const getStyles = (theme: ThemeProps) => {
   return StyleSheet.create<Style>({
     modal,
     // In a narrow layout (e.g. the side panel) `BottomSheet` turns the modal into a sheet along the
-    // bottom edge, which is not centered by a margin like a modal and has no room for rounded bottom corners
+    // bottom edge. Only a real modal gets the auto margin that centers it, so it is added here
     modalNarrow: {
       ...modal,
-      maxWidth: '100%',
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0
+      margin: 'auto'
     },
     content,
     // `BottomSheet` adds its own bottom padding to a sheet in a narrow layout
