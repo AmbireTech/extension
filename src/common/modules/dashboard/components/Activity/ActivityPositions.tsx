@@ -225,6 +225,12 @@ const ActivityPositions: FC<Props> = ({ openTab, sessionId, initTab, network }) 
         )
       }
 
+      // Not held back until the tab is first opened like the rows, so it is already in place
+      // while the carousel slides the page in
+      if (item === 'skeleton') {
+        return <ActivityPositionsSkeleton amount={4} />
+      }
+
       if (!initTab?.activity || !item || item === 'keep-this-to-avoid-key-warning') return null
 
       if (item === 'pending') {
@@ -235,10 +241,6 @@ const ActivityPositions: FC<Props> = ({ openTab, sessionId, initTab, network }) 
             <PendingTransactions />
           </Suspense>
         )
-      }
-
-      if (item === 'skeleton') {
-        return <ActivityPositionsSkeleton amount={4} />
       }
 
       if (item === 'load-more') {
