@@ -67,7 +67,9 @@ const GRADIENT_SECOND_STOP_OFFSET = 0.697115
 /**
  * Three sparkles with a gradient from the secondary to the primary accent color.
  * The drawing is a little bigger than its box, by the width of its outline, like in the design.
- * Its colors come from the theme, so `color` is not used.
+ * Its colors come from the theme, so `color` is not used. The design is dark and uses #7AFFF9 and
+ * #9D7AFF, so the tokens are the ones that have those colors in the dark theme and darker ones in
+ * the light theme, where the light colors would hardly show on a light background.
  */
 const SparklesIcon: FC<SvgProps> = ({ width = 24, height = 24, style }) => {
   const { theme } = useTheme()
@@ -95,10 +97,10 @@ const SparklesIcon: FC<SvgProps> = ({ width = 24, height = 24, style }) => {
             y2={gradient.y2}
             gradientUnits="userSpaceOnUse"
           >
-            <Stop stopColor={theme.secondaryAccent200 as string} />
+            <Stop stopColor={theme.secondaryAccent400 as string} />
             <Stop
               offset={GRADIENT_SECOND_STOP_OFFSET}
-              stopColor={theme.primaryAccent200 as string}
+              stopColor={theme.primaryAccent300 as string}
             />
           </LinearGradient>
         ))}
