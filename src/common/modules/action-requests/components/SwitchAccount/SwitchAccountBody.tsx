@@ -48,10 +48,12 @@ const SwitchAccountBody: FC<Props> = ({
   )
 
   const reasonText = useMemo(() => {
+    if (!nextRequestKind) return t('Switch to this account to continue.')
     if (nextRequestKind === 'calls') return t('Switch to this account to sign the transaction.')
-    if (nextRequestKind === 'message') return t('Switch to this account to sign the message.')
 
-    return t('Switch to this account to continue.')
+    // Every other request that waits for a switch is a message to sign - plain, typed, sign-in
+    // or an authorization
+    return t('Switch to this account to sign the message.')
   }, [nextRequestKind, t])
 
   return (
