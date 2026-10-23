@@ -8,8 +8,6 @@ export type ModalsProps = Pick<
   | 'gasFeeUpdatedModalRef'
   | 'handleAcceptGasFeeUpdate'
   | 'handleDismissGasFeeUpdate'
-  | 'feePayerKeyType'
-  | 'signingKeyType'
   | 'slowPaymasterRequest'
   | 'shouldDisplayLedgerConnectModal'
   | 'handleDismissLedgerConnectModal'
