@@ -15,7 +15,7 @@ the mobile bundle, only uses the chain list and the small dapp-provider
 helpers in `src/common/modules/hardware-wallet/`. Browsers without WebHID
 (Firefox, Safari) get a plain "your browser doesn't support WebHID" message.
 
-The firmware is open source: [EthereumPhone/PQ1](https://github.com/EthereumPhone/PQ1/tree/8a3fb4b3).
+The firmware is open source: [EthereumPhone/PQ1](https://github.com/EthereumPhone/PQ1/tree/0b0e6ac1).
 File paths in comments that point "to the firmware repo" (`secure/src/...`,
 `proto/src/lib.rs`, `docs/companion/...`) are relative to it. The wire
 format, the size caps in `config.ts` and the catalogs below match that
@@ -59,13 +59,16 @@ checked on the device (see below), so leaving one out never makes the device
 show something false: it shows less, or refuses a call it knows needs the
 data (a token transfer whose ERC-7730 descriptor is missing, for example).
 
-- **Transactions**: one UserOp of up to 4 calls. Each call gets its bundles
-  (`aa/callTrailers.ts`): a token's metadata, an ERC-7730 descriptor, the
-  function name, and the names of the addresses shown. A CoW
-  `setPreSignature` carries the order it pre-signs, read from the CoW API,
-  and a Safe `approveHash` the Safe transaction it approves, read from the
-  Safe Transaction Service. The device refuses those two without them, so
-  Ambire refuses them first if it can't build them.
+- **Transactions**: one UserOp of up to 4 calls, with up to 8,192 bytes of
+  data each and 16,384 together (a Safe `execTransaction` call: 4,096).
+  Firmware that doesn't report `CAP_SIGN_USEROP_DATA_8K` takes 4,096 bytes
+  per call; a longer call gets an "update your PQ1" message before anything
+  is sent. Each call gets its bundles (`aa/callTrailers.ts`): a token's
+  metadata, an ERC-7730 descriptor, the function name, and the names of the
+  addresses shown. A CoW `setPreSignature` carries the order it pre-signs,
+  read from the CoW API, and a Safe `approveHash` the Safe transaction it
+  approves, read from the Safe Transaction Service. The device refuses those
+  two without them, so Ambire refuses them first if it can't build them.
 - **Messages**: `personal_sign` messages are shown as text, or as hex when
   they aren't text. A message too long for the device's pages is signed as
   its EIP-191 hash (`transport/personalSignView.ts`).
@@ -144,7 +147,7 @@ rebuild `erc7730/catalog.review.json`, the per-descriptor summary that
 npx jest --config=./jest.config.js src/web/modules/hardware-wallet/libs/pq1 src/web/modules/hardware-wallet/libs/PQ1Signer src/common/modules/hardware-wallet/libs/pq1DappProvider
 ```
 
-240 tests. They include:
+249 tests. They include:
 - the send pipeline against a fake device, chain and bundler (`aa/broadcast.test.ts`);
 - the WebHID transport against a fake device (`transport/hid.test.ts`);
 - what dapps are told about a PQ1 account (`pq1DappProvider.test.ts`);

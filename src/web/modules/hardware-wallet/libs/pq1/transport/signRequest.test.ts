@@ -2,8 +2,10 @@
 // a call that needs a bundle it lacks: a direct CoW presign, a Safe
 // approveHash, and a CoW presign inside a Safe transaction — single-call and
 // in a MultiSendCallOnly batch. They also lay out the CoW order and Safe
-// bundles of one call in the positions the device reads them from.
+// bundles of one call in the positions the device reads them from, and cap
+// each call's data, and a batch's summed data, as the device does.
 
+import { MAX_BATCH_CALL_DATA_TOTAL_LEN, MAX_TX_LEN } from '../config'
 import { SAFE_EXEC_TRANSACTION_SELECTOR } from '../safe/execCalldata'
 import { MULTI_SEND_SELECTOR } from '../safe/multiSend'
 import { hexToBytes } from './bytes'
@@ -497,5 +499,47 @@ describe('buildSignBatchPayload downgrade gates', () => {
       { kind: 3, txIdx: 1, len: COW_CANONICAL_LEN },
       { kind: 4, txIdx: 1, len: safe.length }
     ])
+  })
+})
+
+describe('call-data caps', () => {
+  const userOpHeader = {
+    chainId: 1,
+    accountIndex: 0,
+    slotIndex: 0,
+    sender: SENDER,
+    nonce: 0,
+    callGas: 0,
+    verGas: 0,
+    preVerificationGas: 0,
+    maxFeePerGas: 0,
+    maxPriorityFeePerGas: 0
+  }
+  const batch = (...dataLens: number[]) => ({
+    ...userOpHeader,
+    calls: dataLens.map((dataLen) => ({ to: OTHER_TO, value: 0, data: new Uint8Array(dataLen) }))
+  })
+
+  it('takes up to MAX_TX_LEN_LEGACY bytes in one call unless given the device cap', () => {
+    expect(() => buildSignPayload(baseParams(OTHER_TO, new Uint8Array(4096)))).not.toThrow()
+    expect(() => buildSignPayload(baseParams(OTHER_TO, new Uint8Array(4097)))).toThrow(
+      'call data too long (4097 > 4096)'
+    )
+    expect(() =>
+      buildSignPayload(baseParams(OTHER_TO, new Uint8Array(8192)), MAX_TX_LEN)
+    ).not.toThrow()
+    expect(() => buildSignPayload(baseParams(OTHER_TO, new Uint8Array(8193)), MAX_TX_LEN)).toThrow(
+      'call data too long (8193 > 8192)'
+    )
+  })
+
+  it('caps the summed call data of a batch at MAX_BATCH_CALL_DATA_TOTAL_LEN', () => {
+    expect(() => buildSignBatchPayload(batch(8192, 8192), MAX_TX_LEN)).not.toThrow()
+    expect(() => buildSignBatchPayload(batch(8192, 8192, 1), MAX_TX_LEN)).toThrow(
+      `call data too long in total (16385 > ${MAX_BATCH_CALL_DATA_TOTAL_LEN})`
+    )
+    expect(() => buildSignBatchPayload(batch(68, 4097))).toThrow(
+      'inner call 1: call data too long (4097 > 4096)'
+    )
   })
 })

@@ -11,10 +11,11 @@ import {
   FLAG_INCLUDE_INIT_CODE,
   isAccountIndex,
   isSlotIndex,
+  MAX_BATCH_CALL_DATA_TOTAL_LEN,
   MAX_BATCH_TXS,
   MAX_NAME_BUNDLES,
   MAX_TRAILERS_PER_BATCH,
-  MAX_TX_LEN,
+  MAX_TX_LEN_LEGACY,
   NAME_BUNDLE_MAX_LEN,
   SAFE_TX_BUNDLE_MAX_LEN,
   SAFE_TX_CANONICAL_LEN,
@@ -219,11 +220,12 @@ function buildUserOpHeader(p: UserOpHeader): Uint8Array {
 }
 
 /** `to(20) || value(u256) || data_len(u16) || data` of one call, after
- *  checking the data length and the call's bundles. */
-function encodeCall(call: BatchInnerCall, where: string): Uint8Array {
+ *  checking the data length against `maxDataLen` (the device's per-call cap,
+ *  see `maxCallDataLen`) and the call's bundles. */
+function encodeCall(call: BatchInnerCall, where: string, maxDataLen: number): Uint8Array {
   const data = call.data ?? EMPTY
-  if (data.length > MAX_TX_LEN) {
-    throw new Error(`${where}call data too long (${data.length} > ${MAX_TX_LEN})`)
+  if (data.length > maxDataLen) {
+    throw new Error(`${where}call data too long (${data.length} > ${maxDataLen})`)
   }
   assertCallBundles(call, data, where)
   return concatBytes([addressBytes(call.to), u256be(call.value), u16be(data.length), data])
@@ -245,10 +247,16 @@ function assertNameBundles(nameBundles: Uint8Array[]): void {
  * come after all seven slots, as `[u8 count]` and u16-length-prefixed
  * bundles; without names that section is left out entirely, which the
  * device treats differently from a count of 0.
+ *
+ * `maxDataLen` is the device's per-call cap (`maxCallDataLen` of its
+ * capabilities); it defaults to the cap every firmware accepts.
  */
-export function buildSignPayload(p: SignRequestParams): Uint8Array {
+export function buildSignPayload(
+  p: SignRequestParams,
+  maxDataLen: number = MAX_TX_LEN_LEGACY
+): Uint8Array {
   const header = buildUserOpHeader(p)
-  const call = encodeCall(p, '')
+  const call = encodeCall(p, '', maxDataLen)
   const slots: Array<[number | null, Uint8Array]> = [
     [TRAILER_KIND_ERC20, p.erc20Bundle ?? EMPTY],
     [null, EMPTY], // kind 2, reserved by the firmware
@@ -302,16 +310,29 @@ function callTrailerRecords(call: BatchInnerCall, txIdx: number): TrailerRecord[
  * `[u8 count]` + `count × {u8 kind, u8 tx_idx, u16 BE len, bytes}`. Name
  * bundles apply to every call (`tx_idx` 0xff). The device refuses anything
  * after the last record.
+ *
+ * `maxDataLen` is the device's per-call cap, as for `buildSignPayload`; the
+ * calls' summed data is capped at `MAX_BATCH_CALL_DATA_TOTAL_LEN` on every
+ * firmware.
  */
-export function buildSignBatchPayload(p: BatchSignRequestParams): Uint8Array {
+export function buildSignBatchPayload(
+  p: BatchSignRequestParams,
+  maxDataLen: number = MAX_TX_LEN_LEGACY
+): Uint8Array {
   if (p.calls.length === 0) throw new Error('SIGN_USEROP_BATCH: calls[] must be non-empty')
   if (p.calls.length > MAX_BATCH_TXS) {
     throw new Error(`SIGN_USEROP_BATCH: too many calls (${p.calls.length} > ${MAX_BATCH_TXS})`)
   }
+  const totalDataBytes = p.calls.reduce((sum, call) => sum + (call.data?.length ?? 0), 0)
+  if (totalDataBytes > MAX_BATCH_CALL_DATA_TOTAL_LEN) {
+    throw new Error(
+      `SIGN_USEROP_BATCH: call data too long in total (${totalDataBytes} > ${MAX_BATCH_CALL_DATA_TOTAL_LEN})`
+    )
+  }
   const nameBundles = p.nameBundles ?? []
   assertNameBundles(nameBundles)
 
-  const calls = p.calls.map((call, txIdx) => encodeCall(call, `inner call ${txIdx}: `))
+  const calls = p.calls.map((call, txIdx) => encodeCall(call, `inner call ${txIdx}: `, maxDataLen))
   const records: TrailerRecord[] = [
     ...p.calls.flatMap((call, txIdx) => callTrailerRecords(call, txIdx)),
     ...nameBundles.map((bytes) => ({

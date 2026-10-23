@@ -44,10 +44,29 @@ const DEVICE_ERROR_MESSAGES: Record<DeviceErrorCode, string> = {
 export const PQ1_UNSUPPORTED_NETWORK_MESSAGE =
   "PQ1 accounts aren't available on this network. Switch to a network that supports PQ1 and try again."
 
-/** Shown when a request carries more data than the device can take, so it
- *  couldn't show the user what they are approving. */
-export const TOO_LARGE_FOR_DEVICE_MESSAGE =
-  "This request is too large for the PQ1 to show on its screen, so it can't sign it. Nothing was signed or sent."
+// Requests with more data than any PQ1 firmware signs. The limit is the size
+// of the device's buffers, not of its screen: a call to an unknown contract
+// is signed blind, showing the data's length and hash, whatever its size.
+// Data that only older firmware refuses (4,097 to 8,192 bytes in one call) is
+// a `DeviceError` with code `outdated` instead.
+
+const formatByteCount = (n: number): string => n.toLocaleString('en-US')
+
+/** One call with more than `limit` (`MAX_TX_LEN`) bytes of data. */
+export function callDataTooLargeMessage(bytes: number, limit: number): string {
+  return `This transaction carries more data than a PQ1 can sign (${formatByteCount(bytes)} bytes in one action, and the most is ${formatByteCount(limit)}). If it's a swap, try a smaller amount or another route. Nothing was signed or sent.`
+}
+
+/** A batch whose calls carry more than `limit`
+ *  (`MAX_BATCH_CALL_DATA_TOTAL_LEN`) bytes of data together. */
+export function batchDataTooLargeMessage(bytes: number, limit: number): string {
+  return `These actions carry ${formatByteCount(bytes)} bytes of data together, and a PQ1 can sign at most ${formatByteCount(limit)} in one transaction. Send them in smaller batches. Nothing was signed or sent.`
+}
+
+/** A Safe transaction whose data is over the device's Safe cap. */
+export function safeTxTooLargeMessage(bytes: number, limit: number): string {
+  return `This Safe transaction carries more data than a PQ1 can sign (${formatByteCount(bytes)} bytes, and the most is ${formatByteCount(limit)}). Nothing was signed or sent.`
+}
 
 /** Shown for anything unexpected. The original error goes to the logs and Sentry. */
 export const PQ1_GENERIC_ERROR_MESSAGE =

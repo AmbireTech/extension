@@ -23,7 +23,7 @@
 
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 
-import { MAX_TX_LEN, SAFE_TX_CANONICAL_LEN } from '../config'
+import { SAFE_INNER_DATA_MAX_LEN, SAFE_TX_CANONICAL_LEN } from '../config'
 import { bytesToHex0x, concatBytes, hexToBytes, isSameBytes, u16be } from '../transport/bytes'
 import { fetchSafeTx, type SafeTxFields } from './api'
 import { decodeApproveHash } from './calldata'
@@ -107,9 +107,9 @@ export function packSafeV1Bundle(canonical: Uint8Array, rawData: Uint8Array): Ui
   if (canonical.length !== SAFE_TX_CANONICAL_LEN) {
     throw new Error(`canonical length ${canonical.length} != ${SAFE_TX_CANONICAL_LEN}`)
   }
-  if (rawData.length > MAX_TX_LEN) {
+  if (rawData.length > SAFE_INNER_DATA_MAX_LEN) {
     throw new Error(
-      `Safe inner raw_data is ${rawData.length} bytes, exceeds firmware cap ${MAX_TX_LEN}`
+      `Safe inner raw_data is ${rawData.length} bytes, exceeds firmware cap ${SAFE_INNER_DATA_MAX_LEN}`
     )
   }
   return concatBytes([canonical, u16be(rawData.length), rawData])

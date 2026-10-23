@@ -10,7 +10,7 @@
 // `approveHash` or a CoW `setPreSignature` without them, so failing to
 // build one refuses the request with a `Pq1UserError` first.
 
-import { MAX_TX_LEN } from '../config'
+import { SAFE_INNER_DATA_MAX_LEN } from '../config'
 import { isCowPresignClaim } from '../cowswap/calldata'
 import { tryBuildCowOrderBundle } from '../cowswap/orderBundle'
 import { reportClearSigningFallback } from '../db/common'
@@ -23,7 +23,7 @@ import {
 } from '../erc20/detect'
 import { isErc20MethodCall } from '../erc20/selectors'
 import { buildErc7730BundleForCall } from '../erc7730/lookup'
-import { Pq1UserError, TOO_LARGE_FOR_DEVICE_MESSAGE } from '../errors'
+import { Pq1UserError, safeTxTooLargeMessage } from '../errors'
 import {
   buildNameBundles,
   collectDisplayAddresses,
@@ -312,10 +312,10 @@ export async function buildOffchainSafeTxSections(
   safe: `0x${string}`,
   inner: SafeTxInnerCall
 ): Promise<{ erc20Bundle?: Uint8Array; cowOrderBundle?: Uint8Array; nameBundles: Uint8Array[] }> {
-  if (inner.data.length > MAX_TX_LEN) {
+  if (inner.data.length > SAFE_INNER_DATA_MAX_LEN) {
     throw new Pq1UserError(
-      TOO_LARGE_FOR_DEVICE_MESSAGE,
-      `SafeTx data of ${inner.data.length} bytes > MAX_TX_LEN (${MAX_TX_LEN})`
+      safeTxTooLargeMessage(inner.data.length, SAFE_INNER_DATA_MAX_LEN),
+      `SafeTx data of ${inner.data.length} bytes > SAFE_INNER_DATA_MAX_LEN (${SAFE_INNER_DATA_MAX_LEN})`
     )
   }
   try {

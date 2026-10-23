@@ -8,6 +8,7 @@
 import {
   CAP_OFFCHAIN_COW_ORDER,
   CAP_OFFCHAIN_SAFE_TX,
+  CAP_SIGN_USEROP_DATA_8K,
   INS_GET_DEVICE_INFO,
   INS_GET_INIT_CODE,
   INS_GET_STATUS,
@@ -20,6 +21,7 @@ import {
   SW_OK,
   timeoutForIns
 } from '../config'
+import { concatBytes, readU16Be, u32be } from './bytes'
 import { DeviceCommands } from './commands'
 import { DeviceError, type ApduResponse, type HidTransport } from './hid'
 
@@ -181,5 +183,84 @@ describe('DeviceCommands.getCapabilities', () => {
 describe('timeoutForIns', () => {
   it('waits as long for a signature-count update as for a signature: both can wait for the user', () => {
     expect(timeoutForIns(INS_OFFCHAIN_SYNC)).toBe(timeoutForIns(INS_SIGN_USEROP))
+  })
+})
+
+describe('DeviceCommands call-data cap (CAP_SIGN_USEROP_DATA_8K)', () => {
+  /** A GET_DEVICE_INFO reply: protocol version 0x0203 (u16), firmware
+   *  version (3), device id (16), then the capability word (u32). */
+  const deviceInfo = (capabilities: number) =>
+    concatBytes([new Uint8Array([0x02, 0x03]), new Uint8Array(3 + 16), u32be(capabilities)])
+  const userOpHeader = {
+    chainId: 8453,
+    accountIndex: 0,
+    slotIndex: 0,
+    sender: '0x1111111111111111111111111111111111111111' as `0x${string}`,
+    nonce: 0,
+    callGas: 0,
+    verGas: 0,
+    preVerificationGas: 0,
+    maxFeePerGas: 0,
+    maxPriorityFeePerGas: 0
+  }
+  const call = (dataLen: number) => ({
+    to: '0x2222222222222222222222222222222222222222' as `0x${string}`,
+    value: 0,
+    data: new Uint8Array(dataLen).fill(0xab)
+  })
+  const signParams = (dataLen: number) => ({ ...userOpHeader, ...call(dataLen) })
+  /** A device that reports `capabilities` and records every sign payload it
+   *  is sent. It refuses each one: the tests only look at what was sent. */
+  const deviceWith = (capabilities: number) => {
+    const sentPayloads: Uint8Array[] = []
+    const transport = {
+      sendApdu: async (ins: number) => {
+        if (ins !== INS_GET_DEVICE_INFO) throw new Error(`unexpected INS 0x${ins.toString(16)}`)
+        return { sw: SW_OK, data: deviceInfo(capabilities) }
+      },
+      sendChainedApdu: async (_ins: number, payload: Uint8Array) => {
+        sentPayloads.push(payload)
+        return { sw: SW_INTERNAL_ERROR, data: new Uint8Array() }
+      }
+    } as unknown as HidTransport
+    return { commands: new DeviceCommands(transport), sentPayloads }
+  }
+  const OLDER_FIRMWARE = CAP_OFFCHAIN_SAFE_TX | CAP_OFFCHAIN_COW_ORDER
+  const CURRENT_FIRMWARE = OLDER_FIRMWARE | CAP_SIGN_USEROP_DATA_8K
+  /** Offset of `data_len` (u16) in a SIGN_USEROP payload. */
+  const DATA_LEN_OFF = 328
+
+  it('asks for a PQ1 update, sending nothing, before 5,050 bytes reach older firmware', async () => {
+    const { commands, sentPayloads } = deviceWith(OLDER_FIRMWARE)
+    const err = await commands.signUserOp(signParams(5050)).catch((e) => e)
+    expect(err).toBeInstanceOf(DeviceError)
+    expect(err.code).toBe('outdated')
+    expect(sentPayloads).toHaveLength(0)
+
+    await commands.signUserOp(signParams(4096)).catch(() => undefined)
+    expect(sentPayloads).toHaveLength(1)
+  })
+
+  it('sends calls of up to 8,192 bytes to current firmware, and never more', async () => {
+    const { commands, sentPayloads } = deviceWith(CURRENT_FIRMWARE)
+    await commands.signUserOp(signParams(5050)).catch(() => undefined)
+    expect(sentPayloads).toHaveLength(1)
+    expect(readU16Be(sentPayloads[0]!, DATA_LEN_OFF)).toBe(5050)
+
+    await commands.signUserOp(signParams(8192)).catch(() => undefined)
+    expect(sentPayloads).toHaveLength(2)
+
+    await expect(commands.signUserOp(signParams(8193))).rejects.toThrow('8193 > 8192')
+    expect(sentPayloads).toHaveLength(2)
+  })
+
+  it('applies the same check to every call of a batch', async () => {
+    const { commands, sentPayloads } = deviceWith(OLDER_FIRMWARE)
+    const err = await commands
+      .signUserOpBatch({ ...userOpHeader, calls: [call(68), call(5050)] })
+      .catch((e) => e)
+    expect(err).toBeInstanceOf(DeviceError)
+    expect(err.code).toBe('outdated')
+    expect(sentPayloads).toHaveLength(0)
   })
 })

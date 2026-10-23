@@ -18,7 +18,9 @@ import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import {
   ENTRY_POINT_V06,
   ESTIMATE_PLACEHOLDER_GAS,
+  EXEC_TRANSACTION_MAX_CALLDATA_LEN,
   FACTORY,
+  MAX_BATCH_CALL_DATA_TOTAL_LEN,
   MAX_BATCH_TXS,
   MAX_TX_LEN,
   pimlicoBundlerUrl,
@@ -27,10 +29,13 @@ import {
   VERIFIER_STUB_RETURN_TRUE_CODE
 } from '../config'
 import {
+  batchDataTooLargeMessage,
+  callDataTooLargeMessage,
   PQ1_UNSUPPORTED_NETWORK_MESSAGE,
   Pq1UserError,
-  TOO_LARGE_FOR_DEVICE_MESSAGE
+  safeTxTooLargeMessage
 } from '../errors'
+import { isSafeExecTransaction } from '../safe/execCalldata'
 import { hexToBytes } from '../transport/bytes'
 import type { DeviceCommands } from '../transport/commands'
 import type { SignBundle } from '../transport/signResponse'
@@ -69,15 +74,37 @@ export function assertPq1CallCount(calls: readonly unknown[]): void {
   )
 }
 
-/** Refuse a call whose data is longer than the device takes for one call,
- *  with a message the user understands, before any device or network work. */
-function assertPq1CallDataFits(calls: readonly { data: `0x${string}` }[]): void {
-  const longest = Math.max(0, ...calls.map((call) => (call.data.length - 2) / 2))
-  if (longest <= MAX_TX_LEN) return
-  throw new Pq1UserError(
-    TOO_LARGE_FOR_DEVICE_MESSAGE,
-    `call data of ${longest} bytes > MAX_TX_LEN (${MAX_TX_LEN})`
+/** Refuse calldata that no PQ1 firmware signs, with a message the user
+ *  understands, before any device or network work starts. A call over the
+ *  connected device's own cap (`MAX_TX_LEN_LEGACY` on firmware without
+ *  `CAP_SIGN_USEROP_DATA_8K`) is refused when signing, by
+ *  `DeviceCommands.signUserOp`, with an "update your PQ1" error. */
+export function assertPq1CallDataFits(calls: readonly { data: `0x${string}` }[]): void {
+  const callData = calls.map((call) => hexToBytes(call.data))
+  const longest = Math.max(0, ...callData.map((data) => data.length))
+  if (longest > MAX_TX_LEN) {
+    throw new Pq1UserError(
+      callDataTooLargeMessage(longest, MAX_TX_LEN),
+      `call data of ${longest} bytes > MAX_TX_LEN (${MAX_TX_LEN})`
+    )
+  }
+  const total = callData.reduce((sum, data) => sum + data.length, 0)
+  if (total > MAX_BATCH_CALL_DATA_TOTAL_LEN) {
+    throw new Pq1UserError(
+      batchDataTooLargeMessage(total, MAX_BATCH_CALL_DATA_TOTAL_LEN),
+      `summed call data of ${total} bytes > MAX_BATCH_CALL_DATA_TOTAL_LEN (${MAX_BATCH_CALL_DATA_TOTAL_LEN})`
+    )
+  }
+  const longestSafeTx = Math.max(
+    0,
+    ...callData.filter(isSafeExecTransaction).map((data) => data.length)
   )
+  if (longestSafeTx > EXEC_TRANSACTION_MAX_CALLDATA_LEN) {
+    throw new Pq1UserError(
+      safeTxTooLargeMessage(longestSafeTx, EXEC_TRANSACTION_MAX_CALLDATA_LEN),
+      `execTransaction call data of ${longestSafeTx} bytes > EXEC_TRANSACTION_MAX_CALLDATA_LEN (${EXEC_TRANSACTION_MAX_CALLDATA_LEN})`
+    )
+  }
 }
 
 export type PQ1BroadcastParams = {
