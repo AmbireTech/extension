@@ -119,6 +119,8 @@ jobs:
 
       - name: Build webkit extension and generate LavaMoat policy
         run: yarn build:web:webkit:generate-policy
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Validate LavaMoat policy
         shell: bash
