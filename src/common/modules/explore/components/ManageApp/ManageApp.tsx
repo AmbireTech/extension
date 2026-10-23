@@ -354,7 +354,9 @@ const ManageApp = ({
       </BottomSheet>
 
       {hasOpened && (
+        // Remounted per app, so unsaved edits made for one app are never saved for the next
         <AccountSelect
+          key={dapp.id}
           dappToManage={dapp}
           isOpen={isManageAccountsOpen}
           setIsOpen={setIsManageAccountsOpen}
