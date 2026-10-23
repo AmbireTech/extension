@@ -5,9 +5,9 @@ import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
 import { Session } from '@ambire-common/classes/session'
-import { MainController } from '@ambire-common/controllers/main/main'
 import { Account } from '@ambire-common/interfaces/account'
 import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { IMainController } from '@ambire-common/interfaces/main'
 import { Network } from '@ambire-common/interfaces/network'
 import { UiManager } from '@ambire-common/interfaces/ui'
 import {
@@ -57,7 +57,7 @@ const handleSignMessage = (requestRes: RequestRes) => {
   throw new Error('Internal error: request result not found', requestRes)
 }
 
-function getSelectedAccount(mainCtrl: MainController, id: string): string | undefined {
+function getSelectedAccount(mainCtrl: IMainController, id: string): string | undefined {
   const extensionSelectedAccount = mainCtrl.selectedAccount.account?.addr
   const preferences = mainCtrl.dapps.getDapp(id)?.accountPreferences
 
@@ -73,12 +73,12 @@ function getSelectedAccount(mainCtrl: MainController, id: string): string | unde
 }
 
 export class ProviderController {
-  mainCtrl: MainController
+  mainCtrl: IMainController
 
   isUnlocked: boolean
   private notificationManager: UiManager['notification']
 
-  constructor(mainCtrl: MainController, notificationManager: UiManager['notification']) {
+  constructor(mainCtrl: IMainController, notificationManager: UiManager['notification']) {
     this.mainCtrl = mainCtrl
     this.notificationManager = notificationManager
 
@@ -352,7 +352,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'AddChain',
-    ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       const chainParams = request.params[0]
 
       if (!chainParams)
@@ -728,7 +728,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'AddChain',
-    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       const chainParams = request.params[0]
       if (!chainParams)
         throw ethErrors.rpc.invalidParams(
@@ -807,7 +807,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'WalletWatchAsset',
-    ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       const options = request.params?.options
       const tokenAddress = options?.address
 
@@ -858,7 +858,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'GetEncryptionPublicKey',
-    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       let incomingAddress
       try {
         incomingAddress = getAddress(request.params?.[0])
@@ -896,7 +896,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'Decrypt',
-    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       let incomingAddress
       try {
         incomingAddress = getAddress(request.params?.[1])
