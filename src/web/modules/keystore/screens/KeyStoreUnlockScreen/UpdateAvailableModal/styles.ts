@@ -1,13 +1,15 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   modal: ViewStyle
+  modalNarrow: ViewStyle
   content: ViewStyle
+  contentNarrow: ViewStyle
   closeButton: ViewStyle
   closeIconWrapper: ViewStyle
   title: TextStyle
@@ -24,22 +26,38 @@ const CLOSE_ICON_WRAPPER_SIZE = 24
 const CONTENT_PADDING_TOP = 52
 const CONTENT_PADDING_BOTTOM = 40
 
-const getStyles = (theme: ThemeProps) =>
-  StyleSheet.create<Style>({
-    modal: {
-      width: '100%',
-      maxWidth: 360,
-      backgroundColor: theme.primaryAccent100,
-      borderColor: theme.primaryAccent300,
-      borderRadius: BORDER_RADIUS_PRIMARY,
-      // The padding lives in `content`, so that the close button is positioned from the card's edge
-      ...spacings.ph0,
-      ...spacings.pv0
+const getStyles = (theme: ThemeProps) => {
+  const modal: ViewStyle = {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: theme.primaryAccent100,
+    borderColor: theme.primaryAccent300,
+    borderRadius: BORDER_RADIUS_PRIMARY,
+    // The padding lives in `content`, so that the close button is positioned from the card's edge
+    ...spacings.ph0,
+    ...spacings.pv0
+  }
+  const content: ViewStyle = {
+    ...spacings.ph,
+    paddingTop: CONTENT_PADDING_TOP - MODAL_BORDER_WIDTH,
+    paddingBottom: CONTENT_PADDING_BOTTOM - MODAL_BORDER_WIDTH
+  }
+
+  return StyleSheet.create<Style>({
+    modal,
+    // In a narrow layout (e.g. the side panel) `BottomSheet` turns the modal into a sheet along the
+    // bottom edge, which is not centered by a margin like a modal and has no room for rounded bottom corners
+    modalNarrow: {
+      ...modal,
+      maxWidth: '100%',
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0
     },
-    content: {
-      ...spacings.ph,
-      paddingTop: CONTENT_PADDING_TOP - MODAL_BORDER_WIDTH,
-      paddingBottom: CONTENT_PADDING_BOTTOM - MODAL_BORDER_WIDTH
+    content,
+    // `BottomSheet` adds its own bottom padding to a sheet in a narrow layout
+    contentNarrow: {
+      ...content,
+      paddingBottom: CONTENT_PADDING_BOTTOM - MODAL_BORDER_WIDTH - SPACING_SM
     },
     closeButton: {
       position: 'absolute',
@@ -69,5 +87,6 @@ const getStyles = (theme: ThemeProps) =>
       alignSelf: 'center'
     }
   })
+}
 
 export default getStyles

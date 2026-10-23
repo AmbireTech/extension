@@ -9,6 +9,7 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -28,6 +29,7 @@ const CLOSE_ICON_STROKE_WIDTH = '1.8'
 const UpdateAvailableModal = () => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
+  const { isNarrowWebLayout } = useCompactLayout()
   const { dispatch } = useController('ExtensionUpdateController')
   const { ref: sheetRef, close: closeBottomSheet } = useModalize()
 
@@ -44,7 +46,7 @@ const UpdateAvailableModal = () => {
       withHandle={false}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      style={styles.modal}
+      style={isNarrowWebLayout ? styles.modalNarrow : styles.modal}
     >
       <Pressable
         testID="button-close-extension-update-modal"
@@ -62,7 +64,7 @@ const UpdateAvailableModal = () => {
           />
         </View>
       </Pressable>
-      <View style={styles.content}>
+      <View style={isNarrowWebLayout ? styles.contentNarrow : styles.content}>
         <View style={[flexbox.alignCenter, spacings.mb2Xl]}>
           <View style={spacings.mbMd}>
             <SparklesIcon width={36} height={36} />
