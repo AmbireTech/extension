@@ -327,7 +327,9 @@ const ActivityPositions: FC<Props> = ({ openTab, sessionId, initTab, network }) 
       data={[
         ...(isWeb ? ['header'] : []),
         'pending',
-        !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
+        // Until this session's result arrives it is unknown whether the account has any
+        // activity, so the rows are held by a skeleton instead of an empty page.
+        !accountsOps?.[sessionId] ? 'skeleton' : 'keep-this-to-avoid-key-warning',
         ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
           ? accountsOps[sessionId].result.items
           : []),
