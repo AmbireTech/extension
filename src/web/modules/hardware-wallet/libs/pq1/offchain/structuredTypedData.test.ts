@@ -1,4 +1,4 @@
-// SafeTx / CoW order typed data → SIGN_OFFCHAIN kinds 4 / 5. The golden
+// SafeTx / CoW order / Permit2 typed data → SIGN_OFFCHAIN kinds 4 / 5 / 6. The golden
 // payloads in `structuredOffchain.goldens.json` come from the firmware repo
 // (`tools/companion-stub/structured_offchain.py --emit-goldens`), built from
 // the ethers-checked mainnet references its tests pin; Ambire's builders
@@ -9,6 +9,7 @@ import { hashTypedData, type TypedDataDefinition } from 'viem'
 import { SIGN_OFFCHAIN_HEADER_LEN } from '../config'
 import { GPV2_SETTLEMENT_ADDRESS } from '../cowswap/eip712'
 import { packCowOrderBundle } from '../cowswap/orderBundle'
+import { PERMIT2_ADDRESS } from '../permit2/eip712'
 import { encodeSafeCanonical } from '../safe/canonical'
 import { packSafeV1Bundle } from '../safe/safeV1Trailer'
 import { bytesToHex0x } from '../transport/bytes'
@@ -262,5 +263,284 @@ describe('structured SIGN_OFFCHAIN payloads', () => {
     expect(() =>
       buildSignOffchainPayload({ ...header, kind: 'cow_order', cowOrderBundle: padded })
     ).toThrow('legs do not end')
+  })
+})
+
+// ── Uniswap Permit2 (kind 6) ───────────────────────────────────────────
+// The permits behind the four `permit2_*` goldens (the firmware's tests use
+// the same ones; their digests are checked against viem there too).
+
+const USDC_BASE = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+const WETH_BASE = '0x4200000000000000000000000000000000000006'
+const USDC_ETH = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
+const UNIVERSAL_ROUTER_BASE = '0x6ff5693b99212da76ad316178a184ab56d299b43'
+const UNIVERSAL_ROUTER_ETH = '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad'
+const UINT160_MAX = (1n << 160n) - 1n
+const UINT256_MAX = (1n << 256n) - 1n
+
+const PERMIT_DETAILS_TYPE = [
+  { name: 'token', type: 'address' },
+  { name: 'amount', type: 'uint160' },
+  { name: 'expiration', type: 'uint48' },
+  { name: 'nonce', type: 'uint48' }
+]
+const TOKEN_PERMISSIONS_TYPE = [
+  { name: 'token', type: 'address' },
+  { name: 'amount', type: 'uint256' }
+]
+const permit2Domain = (chainId: number) => ({
+  name: 'Permit2',
+  chainId,
+  verifyingContract: PERMIT2_ADDRESS
+})
+
+const permitSingle = (): StructuredTypedDataInput => ({
+  domain: permit2Domain(8453),
+  types: {
+    PermitSingle: [
+      { name: 'details', type: 'PermitDetails' },
+      { name: 'spender', type: 'address' },
+      { name: 'sigDeadline', type: 'uint256' }
+    ],
+    PermitDetails: PERMIT_DETAILS_TYPE
+  },
+  primaryType: 'PermitSingle',
+  message: {
+    details: { token: USDC_BASE, amount: '1000000000', expiration: '1798761600', nonce: '3' },
+    spender: UNIVERSAL_ROUTER_BASE,
+    sigDeadline: '1767225600'
+  }
+})
+
+const permitBatch = (): StructuredTypedDataInput => ({
+  domain: permit2Domain(8453),
+  types: {
+    PermitBatch: [
+      { name: 'details', type: 'PermitDetails[]' },
+      { name: 'spender', type: 'address' },
+      { name: 'sigDeadline', type: 'uint256' }
+    ],
+    PermitDetails: PERMIT_DETAILS_TYPE
+  },
+  primaryType: 'PermitBatch',
+  message: {
+    details: [
+      { token: USDC_BASE, amount: '1000000000', expiration: '1798761600', nonce: '3' },
+      { token: WETH_BASE, amount: UINT160_MAX.toString(), expiration: '0', nonce: '0' }
+    ],
+    spender: UNIVERSAL_ROUTER_BASE,
+    sigDeadline: '1767225600'
+  }
+})
+
+const permitTransfer = (): StructuredTypedDataInput => ({
+  domain: permit2Domain(1),
+  types: {
+    PermitTransferFrom: [
+      { name: 'permitted', type: 'TokenPermissions' },
+      { name: 'spender', type: 'address' },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' }
+    ],
+    TokenPermissions: TOKEN_PERMISSIONS_TYPE
+  },
+  primaryType: 'PermitTransferFrom',
+  message: {
+    permitted: { token: USDC_ETH, amount: '500000000' },
+    spender: UNIVERSAL_ROUTER_ETH,
+    nonce: '42',
+    deadline: '1767225600'
+  }
+})
+
+const permitBatchTransfer = (): StructuredTypedDataInput => ({
+  domain: permit2Domain(8453),
+  types: {
+    PermitBatchTransferFrom: [
+      { name: 'permitted', type: 'TokenPermissions[]' },
+      { name: 'spender', type: 'address' },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' }
+    ],
+    TokenPermissions: TOKEN_PERMISSIONS_TYPE
+  },
+  primaryType: 'PermitBatchTransferFrom',
+  message: {
+    permitted: [
+      { token: USDC_BASE, amount: UINT256_MAX.toString() },
+      { token: WETH_BASE, amount: '123456789012345678' }
+    ],
+    spender: UNIVERSAL_ROUTER_BASE,
+    nonce: ((1n << 200n) + 7n).toString(),
+    deadline: UINT256_MAX.toString()
+  }
+})
+
+/** `td` with its message's `field` replaced by `value`. */
+const withMessageField = (
+  td: StructuredTypedDataInput,
+  field: string,
+  value: unknown
+): StructuredTypedDataInput => ({ ...td, message: { ...td.message, [field]: value } })
+
+describe('classifyStructuredTypedData — Permit2', () => {
+  it.each([
+    ['permit2_single', permitSingle],
+    ['permit2_batch', permitBatch],
+    ['permit2_transfer', permitTransfer],
+    ['permit2_batch_transfer', permitBatchTransfer]
+  ] as const)('reproduces the %s golden hash and payload', (name, build) => {
+    const s = classifyStructuredTypedData(build())
+    if (s.kind !== 'permit2') throw new Error(`classified as ${s.kind}`)
+    const v = golden(name)
+    expect(s.chainId).toBe(BigInt(v.chainId))
+    expect(bytesToHex0x(s.digest)).toBe(v.digest)
+    expect(viemHash(build())).toBe(v.digest)
+    const wire = buildSignOffchainPayload({
+      ...header,
+      chainId: v.chainId,
+      kind: 'permit2',
+      permit2Canonical: s.canonical,
+      erc20Bundles: s.permit.tokens.map(() => undefined)
+    })
+    expect(wire[13]).toBe(v.kind)
+    expect(payloadOf(wire)).toBe(v.payload)
+  })
+
+  it('accepts an explicit EIP712Domain type', () => {
+    const td = permitSingle()
+    td.types = {
+      ...td.types,
+      EIP712Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' }
+      ]
+    }
+    expect(classifyStructuredTypedData(td).kind).toBe('permit2')
+  })
+
+  const notPermit2: [string, () => StructuredTypedDataInput][] = [
+    [
+      'another verifying contract',
+      () => ({
+        ...permitSingle(),
+        domain: { ...permit2Domain(8453), verifyingContract: UNIVERSAL_ROUTER_BASE }
+      })
+    ],
+    [
+      'a domain with a version',
+      () => ({ ...permitSingle(), domain: { ...permit2Domain(8453), version: '1' } })
+    ],
+    [
+      'another domain name',
+      () => ({ ...permitSingle(), domain: { ...permit2Domain(8453), name: 'Permit3' } })
+    ],
+    [
+      'a UniswapX witness permit',
+      () => ({
+        ...permitTransfer(),
+        primaryType: 'PermitWitnessTransferFrom',
+        types: { PermitWitnessTransferFrom: [], TokenPermissions: TOKEN_PERMISSIONS_TYPE }
+      })
+    ],
+    ['an extra message field', () => withMessageField(permitSingle(), 'extra', '1')],
+    [
+      'an amount over uint160',
+      () =>
+        withMessageField(permitSingle(), 'details', {
+          token: USDC_BASE,
+          amount: (UINT160_MAX + 1n).toString(),
+          expiration: '0',
+          nonce: '0'
+        })
+    ],
+    [
+      'reordered PermitDetails fields',
+      () => {
+        const td = permitSingle()
+        const [token, amount, expiration, nonce] = PERMIT_DETAILS_TYPE
+        td.types = { ...td.types, PermitDetails: [amount!, token!, expiration!, nonce!] }
+        return td
+      }
+    ],
+    [
+      'a missing PermitDetails type',
+      () => ({ ...permitSingle(), types: { PermitSingle: permitSingle().types.PermitSingle! } })
+    ],
+    ['a single permit given an array', () => withMessageField(permitSingle(), 'details', [])]
+  ]
+  it.each(notPermit2)('treats %s as other', (_label, build) => {
+    expect(classifyStructuredTypedData(build()).kind).toBe('other')
+  })
+
+  const batchDetails = (tokens: string[]) =>
+    tokens.map((token) => ({ token, amount: '1', expiration: '0', nonce: '0' }))
+  const refusals: [string, StructuredTypedDataInput, string][] = [
+    [
+      'the same token twice',
+      withMessageField(permitBatch(), 'details', batchDetails([USDC_BASE, USDC_BASE])),
+      'the same token more than once'
+    ],
+    [
+      'more tokens than the device shows',
+      withMessageField(
+        permitBatch(),
+        'details',
+        batchDetails(
+          Array.from({ length: 7 }, (_, i) => `0x${(i + 1).toString(16).padStart(40, '0')}`)
+        )
+      ),
+      'covers 7 tokens'
+    ],
+    ['no token', withMessageField(permitBatch(), 'details', []), 'names no token'],
+    ['a zero spender', withMessageField(permitSingle(), 'spender', ZERO), 'an empty address'],
+    [
+      'a zero token',
+      withMessageField(permitBatchTransfer(), 'permitted', [{ token: ZERO, amount: '1' }]),
+      'an empty address'
+    ]
+  ]
+  it.each(refusals)(
+    'refuses a permit naming %s, instead of signing it blind',
+    (_label, td, why) => {
+      const s = classifyStructuredTypedData(td)
+      if (s.kind !== 'refused') throw new Error(`classified as ${s.kind}`)
+      expect(s.message).toContain(why)
+      expect(s.message).toContain('Nothing was signed.')
+    }
+  )
+})
+
+describe('Permit2 SIGN_OFFCHAIN payload', () => {
+  const single = () => {
+    const s = classifyStructuredTypedData(permitSingle())
+    if (s.kind !== 'permit2') throw new Error('not a permit')
+    return { kind: 'permit2' as const, permit2Canonical: s.canonical, erc20Bundles: [undefined] }
+  }
+
+  it('refuses an undeployed wallet', () => {
+    expect(() =>
+      buildSignOffchainPayload({ ...header, accountDeployed: false, ...single() })
+    ).toThrow('deployed wallet')
+  })
+
+  it('needs one ERC-20 slot per token and at most one name bundle', () => {
+    expect(() => buildSignOffchainPayload({ ...header, ...single(), erc20Bundles: [] })).toThrow(
+      '0 ERC-20 slots for 1 tokens'
+    )
+    const twoNames = [new Uint8Array(1), new Uint8Array(1)]
+    expect(() =>
+      buildSignOffchainPayload({ ...header, ...single(), nameBundles: twoNames })
+    ).toThrow('2 name bundles > 1')
+  })
+
+  it('refuses a canonical permit with a byte after its last token', () => {
+    const request = single()
+    const padded = new Uint8Array(request.permit2Canonical.length + 1)
+    padded.set(request.permit2Canonical)
+    expect(() =>
+      buildSignOffchainPayload({ ...header, ...request, permit2Canonical: padded })
+    ).toThrow("can't be 115 bytes")
   })
 })

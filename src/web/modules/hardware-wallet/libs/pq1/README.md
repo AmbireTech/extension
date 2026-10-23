@@ -47,7 +47,8 @@ selectors/   function names, for calls the device has no other decoder for
 erc7730/     ERC-7730 descriptors, for contract calls and EIP-712 typed data
 safe/        Safe transactions: execTransaction, approveHash, MultiSendCallOnly
 cowswap/     CoW Protocol orders: setPreSignature and order typed data
-offchain/    Safe / CoW typed data shown natively by the device
+permit2/     Uniswap Permit2 permits: the canonical permit and its digest
+offchain/    Safe / CoW / Permit2 typed data shown natively by the device
 config.ts    protocol constants and size caps; errors.ts, importAccounts.ts
 ```
 
@@ -72,11 +73,16 @@ data (a token transfer whose ERC-7730 descriptor is missing, for example).
 - **Messages**: `personal_sign` messages are shown as text, or as hex when
   they aren't text. A message too long for the device's pages is signed as
   its EIP-191 hash (`transport/personalSignView.ts`).
-- **Typed data** takes the first route that fits: a Safe `SafeTx` or CoW
-  `Order` is shown by the device's own screens, on firmware that reports
-  the capability bit for it; then an ERC-7730 descriptor; otherwise the
-  EIP-712 hash is signed blind, and the device shows a loud BLIND HASH
-  warning. A request sent on one route is never retried on a weaker one.
+- **Typed data** takes the first route that fits: a Safe `SafeTx`, a CoW
+  `Order` or a Uniswap Permit2 permit (`PermitSingle`, `PermitBatch`,
+  `PermitTransferFrom`, `PermitBatchTransferFrom`) is shown by the device's
+  own screens, on firmware that reports the capability bit for it; then an
+  ERC-7730 descriptor; otherwise the EIP-712 hash is signed blind, and the
+  device shows a loud BLIND HASH warning. A request sent on one route is
+  never retried on a weaker one. A Permit2 permit the device would refuse
+  (the same token twice, more than 6 tokens, an empty address) is refused
+  on every firmware rather than signed blind. UniswapX's witness permits
+  are not among the shapes the device shows, so they are signed blind.
 
 ## Device handling
 
@@ -147,7 +153,7 @@ rebuild `erc7730/catalog.review.json`, the per-descriptor summary that
 npx jest --config=./jest.config.js src/web/modules/hardware-wallet/libs/pq1 src/web/modules/hardware-wallet/libs/PQ1Signer src/common/modules/hardware-wallet/libs/pq1DappProvider
 ```
 
-249 tests. They include:
+280 tests. They include:
 - the send pipeline against a fake device, chain and bundler (`aa/broadcast.test.ts`);
 - the WebHID transport against a fake device (`transport/hid.test.ts`);
 - what dapps are told about a PQ1 account (`pq1DappProvider.test.ts`);

@@ -14,15 +14,18 @@ import {
   MAX_OFFCHAIN_COW_ORDER_LEN,
   MAX_OFFCHAIN_EIP712_ENCODED_DATA_LEN,
   MAX_OFFCHAIN_EIP712_TYPED_LEN,
+  MAX_OFFCHAIN_PERMIT2_LEN,
   MAX_OFFCHAIN_PERSONAL_SIGN_LEN,
   MAX_OFFCHAIN_SAFE_TX_LEN,
   NAME_BUNDLE_MAX_LEN,
   OFFCHAIN_FLAG_ACCOUNT_DEPLOYED,
   OFFCHAIN_KIND_COW_ORDER,
   OFFCHAIN_KIND_EIP712_TYPED,
+  OFFCHAIN_KIND_PERMIT2,
   OFFCHAIN_KIND_PERSONAL_SIGN,
   OFFCHAIN_KIND_RAW32,
   OFFCHAIN_KIND_SAFE_TX,
+  PERMIT2_MAX_NAME_BUNDLES,
   SAFE_TX_BUNDLE_MAX_LEN,
   SAFE_TX_CANONICAL_LEN,
   SIGN_OFFCHAIN_HEADER_LEN,
@@ -30,6 +33,7 @@ import {
   SIGN_OFFCHAIN_OUTPUT_LEN,
   SIGN_OFFCHAIN_OUTPUT_LEN_COUNTERFACTUAL
 } from '../config'
+import { readPermit2Framing } from '../permit2/canonical'
 import { concatBytes, readU16Be, readU64Be, u16be, u32be, u64be } from './bytes'
 
 type SignOffchainCommon = {
@@ -75,8 +79,9 @@ export type SignOffchainParams =
        *  A descriptor the device can't verify or bind is a refusal, and a
        *  refused request is never sent again as a blind hash. Typed data
        *  with no on-device route at all (no descriptor, not a Safe
-       *  transaction or CoW order) is signed as `raw32` over its EIP-712
-       *  hash, intentionally: the device then shows a loud BLIND HASH page. */
+       *  transaction, CoW order or Permit2 permit) is signed as `raw32` over
+       *  its EIP-712 hash, intentionally: the device then shows a loud BLIND
+       *  HASH page. */
       kind: 'eip712_typed'
       /** 32-byte `keccak256(EIP712Domain_typehash || encode(domain))`. */
       domainSeparator: Uint8Array
@@ -115,6 +120,19 @@ export type SignOffchainParams =
        *  (`packCowOrderBundle`). */
       cowOrderBundle: Uint8Array
     })
+  | (SignOffchainCommon & {
+      /** A Uniswap Permit2 permit (kind 6). The device recomputes the permit
+       *  digest from `permit2Canonical`, shows the permit and signs exactly
+       *  what a raw32 sign of that digest would. Deployed wallets only. */
+      kind: 'permit2'
+      /** The canonical permit (`encodePermit2Canonical`). */
+      permit2Canonical: Uint8Array
+      /** One ERC-20 bundle per token, in the permit's token order;
+       *  `undefined` for a token without one. */
+      erc20Bundles: (Uint8Array | undefined)[]
+      /** The spender's name bundle, if it has one. */
+      nameBundles?: Uint8Array[]
+    })
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 
@@ -123,6 +141,18 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K>
 export type SignOffchainRequest = DistributiveOmit<SignOffchainParams, keyof SignOffchainCommon>
 
 const lenPrefixed = (bytes: Uint8Array): Uint8Array[] => [u16be(bytes.length), bytes]
+
+/** At most `max` name bundles, none empty or longer than the device takes. */
+function assertNameBundles(names: Uint8Array[], max: number): void {
+  if (names.length > max) {
+    throw new Error(`signOffchain: ${names.length} name bundles > ${max}`)
+  }
+  for (const n of names) {
+    if (n.length === 0 || n.length > NAME_BUNDLE_MAX_LEN) {
+      throw new Error(`signOffchain: name bundle is ${n.length} bytes`)
+    }
+  }
+}
 
 /** Kind-4 payload:
  *  `[u16][safe_v1] [u16][erc20] [u16][cow] [u8 n]{[u16][name]}×n`. */
@@ -154,14 +184,7 @@ function buildSafeTxOffchainPayload(p: {
   ) {
     throw new Error(`signOffchain: CoW section is ${cow.length} bytes`)
   }
-  if (names.length > MAX_NAME_BUNDLES) {
-    throw new Error(`signOffchain: ${names.length} name bundles > ${MAX_NAME_BUNDLES}`)
-  }
-  for (const n of names) {
-    if (n.length === 0 || n.length > NAME_BUNDLE_MAX_LEN) {
-      throw new Error(`signOffchain: name bundle is ${n.length} bytes`)
-    }
-  }
+  assertNameBundles(names, MAX_NAME_BUNDLES)
   const out = concatBytes([
     ...lenPrefixed(p.safeV1Bundle),
     ...lenPrefixed(erc20),
@@ -194,6 +217,38 @@ function buildCowOrderOffchainPayload(cowOrderBundle: Uint8Array): Uint8Array {
     throw new Error('signOffchain: cow_order legs do not end the payload')
   }
   return cowOrderBundle
+}
+
+/** Kind-6 payload: `[canonical permit] {[u16][erc20]}×count [u8 n]{[u16][name]}×n`,
+ *  one ERC-20 slot per token (length 0: none) and at most the spender's
+ *  name. */
+function buildPermit2OffchainPayload(p: {
+  permit2Canonical: Uint8Array
+  erc20Bundles: (Uint8Array | undefined)[]
+  nameBundles?: Uint8Array[]
+}): Uint8Array {
+  const { count } = readPermit2Framing(p.permit2Canonical)
+  if (p.erc20Bundles.length !== count) {
+    throw new Error(`signOffchain: ${p.erc20Bundles.length} ERC-20 slots for ${count} tokens`)
+  }
+  const erc20Slots = p.erc20Bundles.map((bundle) => bundle ?? new Uint8Array(0))
+  for (const bundle of erc20Slots) {
+    if (bundle.length > ERC20_BUNDLE_MAX_LEN) {
+      throw new Error(`signOffchain: erc20 bundle ${bundle.length} > ${ERC20_BUNDLE_MAX_LEN}`)
+    }
+  }
+  const names = p.nameBundles ?? []
+  assertNameBundles(names, PERMIT2_MAX_NAME_BUNDLES)
+  const out = concatBytes([
+    p.permit2Canonical,
+    ...erc20Slots.flatMap(lenPrefixed),
+    new Uint8Array([names.length]),
+    ...names.flatMap(lenPrefixed)
+  ])
+  if (out.length > MAX_OFFCHAIN_PERMIT2_LEN) {
+    throw new Error(`signOffchain: permit2 payload ${out.length} > ${MAX_OFFCHAIN_PERMIT2_LEN}`)
+  }
+  return out
 }
 
 /** Kind-2 payload: `[u16 1] [domain separator] [primary type hash]
@@ -266,6 +321,8 @@ function kindAndPayload(p: SignOffchainParams): [number, Uint8Array] {
       return [OFFCHAIN_KIND_SAFE_TX, buildSafeTxOffchainPayload(p)]
     case 'cow_order':
       return [OFFCHAIN_KIND_COW_ORDER, buildCowOrderOffchainPayload(p.cowOrderBundle)]
+    case 'permit2':
+      return [OFFCHAIN_KIND_PERMIT2, buildPermit2OffchainPayload(p)]
   }
 }
 
@@ -281,9 +338,13 @@ export function buildSignOffchainPayload(p: SignOffchainParams): Uint8Array {
   if (!p.accountDeployed && p.slotIndex !== 0) {
     throw new Error(`signOffchain: counterfactual path requires slot_index=0, got ${p.slotIndex}`)
   }
-  if ((p.kind === 'safe_tx' || p.kind === 'cow_order') && !p.accountDeployed) {
-    // Neither a Safe nor GPv2Settlement unwraps an ERC-6492 signature, and
-    // the device refuses the kind for an undeployed wallet.
+  if (
+    (p.kind === 'safe_tx' || p.kind === 'cow_order' || p.kind === 'permit2') &&
+    !p.accountDeployed
+  ) {
+    // None of a Safe, GPv2Settlement and Permit2 unwraps an ERC-6492
+    // signature (Permit2 checks a signer without code with ecrecover), and
+    // the device refuses these kinds for an undeployed wallet.
     throw new Error(`signOffchain: ${p.kind} needs a deployed wallet`)
   }
 

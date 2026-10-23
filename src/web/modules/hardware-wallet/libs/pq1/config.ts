@@ -150,7 +150,7 @@ export const TRAILERS_TOTAL_MAX_LEN = 24 * 1024
 export const SIGN_OFFCHAIN_HEADER_LEN = 1 + 8 + 4 + 1 + 2 + 1 // 17
 /** Payload kinds. The firmware also has kind 3, for typed data with nested
  *  structs, which Ambire doesn't send: such typed data is signed as its
- *  EIP-712 hash. */
+ *  EIP-712 hash, unless one of the kinds below covers it. */
 export const OFFCHAIN_KIND_RAW32 = 0
 export const OFFCHAIN_KIND_PERSONAL_SIGN = 1
 /** EIP-712 typed data with an ERC-7730 descriptor. */
@@ -161,6 +161,9 @@ export const OFFCHAIN_KIND_SAFE_TX = 4
 /** An EIP-712 CoW Protocol order. The device recomputes the order digest
  *  from the order it shows. */
 export const OFFCHAIN_KIND_COW_ORDER = 5
+/** A Uniswap Permit2 permit (`permit2/`). The device recomputes the permit
+ *  digest from the canonical permit it shows. */
+export const OFFCHAIN_KIND_PERMIT2 = 6
 /** Flags bit: the wallet is deployed on the chain. Without it the device
  *  returns an ERC-6492 signature that deploys the wallet when verified. */
 export const OFFCHAIN_FLAG_ACCOUNT_DEPLOYED = 0x01
@@ -188,6 +191,37 @@ export const MAX_OFFCHAIN_SAFE_TX_LEN =
   MAX_NAME_BUNDLES * (2 + NAME_BUNDLE_MAX_LEN) // 12,334
 /** A kind-5 payload is the CoW order bundle itself. */
 export const MAX_OFFCHAIN_COW_ORDER_LEN = COW_ORDER_BUNDLE_MAX_LEN
+
+// ── Permit2 (kind 6) ────────────────────────────────────────────────
+// A kind-6 payload is the canonical permit (`permit2/canonical.ts`), one
+// u16-length-prefixed ERC-20 bundle per token (length 0: none), then
+// `[u8 n]` and n u16-length-prefixed name bundles, n ≤ 1 (the spender's).
+
+/** The canonical permit's variant byte, one per Permit2 primary type. */
+export const PERMIT2_VARIANT_SINGLE = 0 // PermitSingle
+export const PERMIT2_VARIANT_BATCH = 1 // PermitBatch
+export const PERMIT2_VARIANT_TRANSFER = 2 // PermitTransferFrom
+export const PERMIT2_VARIANT_BATCH_TRANSFER = 3 // PermitBatchTransferFrom
+/** Most tokens a batch permit may name: the device shows each of them. */
+export const PERMIT2_MAX_TOKENS = 6
+/** One token of the canonical permit: `token(20) amount(20) expiration(6)
+ *  nonce(6)` for an allowance, `token(20) amount(32)` for a transfer. */
+export const PERMIT2_ENTRY_LEN = 52
+/** The canonical allowance permit before its tokens: `variant(1)
+ *  chainId(8) spender(20) sigDeadline(32) count(1)`. */
+export const PERMIT2_ALLOWANCE_HEAD_LEN = 62
+/** The canonical transfer permit before its tokens: `variant(1)
+ *  chainId(8) spender(20) nonce(32) deadline(32) count(1)`. */
+export const PERMIT2_TRANSFER_HEAD_LEN = 94
+/** Name bundles a kind-6 payload may carry: the spender's. */
+export const PERMIT2_MAX_NAME_BUNDLES = 1
+/** The largest kind-6 payload: six transfer tokens with their ERC-20
+ *  bundles and the spender's name. */
+export const MAX_OFFCHAIN_PERMIT2_LEN =
+  PERMIT2_TRANSFER_HEAD_LEN +
+  PERMIT2_MAX_TOKENS * (PERMIT2_ENTRY_LEN + 2 + ERC20_BUNDLE_MAX_LEN) +
+  1 +
+  PERMIT2_MAX_NAME_BUNDLES * (2 + NAME_BUNDLE_MAX_LEN) // 8,234
 /** The largest SIGN_OFFCHAIN input; the kind-4 payload dominates. */
 export const SIGN_OFFCHAIN_INPUT_MAX_LEN =
   SIGN_OFFCHAIN_HEADER_LEN +
@@ -195,7 +229,8 @@ export const SIGN_OFFCHAIN_INPUT_MAX_LEN =
     MAX_OFFCHAIN_PERSONAL_SIGN_LEN,
     MAX_OFFCHAIN_EIP712_TYPED_LEN,
     MAX_OFFCHAIN_SAFE_TX_LEN,
-    MAX_OFFCHAIN_COW_ORDER_LEN
+    MAX_OFFCHAIN_COW_ORDER_LEN,
+    MAX_OFFCHAIN_PERMIT2_LEN
   )
 
 /** The reply for a deployed wallet: off-chain count (8) and a raw signature. */
@@ -207,7 +242,7 @@ export const ERC6492_WRAPPED_BLOB_LEN = 8608
  *  signature. */
 export const SIGN_OFFCHAIN_OUTPUT_LEN_COUNTERFACTUAL = 8 + ERC6492_WRAPPED_BLOB_LEN // 8616
 
-/** GET_DEVICE_INFO capability bits. Ambire sends off-chain kinds 4 and 5
+/** GET_DEVICE_INFO capability bits. Ambire sends off-chain kinds 4, 5 and 6
  *  only to a device that reports their bit, never as a retry. */
 export const CAP_OFFCHAIN_SAFE_TX = 1 << 3
 export const CAP_OFFCHAIN_COW_ORDER = 1 << 4
@@ -218,6 +253,10 @@ export const CAP_SIGN_USEROP_DATA_8K = 1 << 5
 /** The longest calldata of one call that a device with `capabilities` takes. */
 export const maxCallDataLen = (capabilities: number): number =>
   capabilities & CAP_SIGN_USEROP_DATA_8K ? MAX_TX_LEN : MAX_TX_LEN_LEGACY
+/** The device clear-signs Uniswap Permit2 permits (off-chain kind 6).
+ *  Firmware without it signs a permit as its EIP-712 hash, with its
+ *  blind-signing warning. */
+export const CAP_OFFCHAIN_PERMIT2 = 1 << 6
 
 /** How long to wait for the device's reply. Commands that can wait for the
  *  user (PIN, sign confirmations, a signature-count update) get longer. */

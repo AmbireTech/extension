@@ -1,8 +1,8 @@
 // PQ1Signer against a fake device: it refuses another PQ1 and damaged key
 // details, words device and unexpected failures for the user while leaving
-// bundler rejections and RPC failures to Ambire, and routes Safe / CoW typed
-// data to the device's own screens (when its firmware has them) without ever
-// retrying a refused request blind.
+// bundler rejections and RPC failures to Ambire, and routes Safe / CoW /
+// Permit2 typed data to the device's own screens (when its firmware has them)
+// without ever retrying a refused request blind.
 
 import type { JsonRpcProvider } from 'ethers'
 
@@ -10,8 +10,14 @@ import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 
 import { pq1BroadcastAccountOp } from '../pq1/aa/broadcast'
 import { BundlerError } from '../pq1/aa/bundler'
-import { C10_SIG_LEN, CAP_OFFCHAIN_COW_ORDER, CAP_OFFCHAIN_SAFE_TX } from '../pq1/config'
+import {
+  C10_SIG_LEN,
+  CAP_OFFCHAIN_COW_ORDER,
+  CAP_OFFCHAIN_PERMIT2,
+  CAP_OFFCHAIN_SAFE_TX
+} from '../pq1/config'
 import { GPV2_SETTLEMENT_ADDRESS } from '../pq1/cowswap/eip712'
+import { PERMIT2_ADDRESS } from '../pq1/permit2/eip712'
 import { PQ1_SEND_FAILED_MESSAGE } from '../pq1/errors'
 import { DeviceError } from '../pq1/transport/hid'
 import { buildSignOffchainPayload, type SignOffchainParams } from '../pq1/transport/offchain'
@@ -102,6 +108,51 @@ const COW_ORDER = {
   }
 }
 
+const PERMIT_BATCH = {
+  domain: { name: 'Permit2', chainId: 1, verifyingContract: PERMIT2_ADDRESS },
+  types: {
+    PermitBatch: [
+      { name: 'details', type: 'PermitDetails[]' },
+      { name: 'spender', type: 'address' },
+      { name: 'sigDeadline', type: 'uint256' }
+    ],
+    PermitDetails: [
+      { name: 'token', type: 'address' },
+      { name: 'amount', type: 'uint160' },
+      { name: 'expiration', type: 'uint48' },
+      { name: 'nonce', type: 'uint48' }
+    ]
+  },
+  primaryType: 'PermitBatch',
+  message: {
+    details: [
+      {
+        token: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+        amount: '1000000000',
+        expiration: '1798761600',
+        nonce: '0'
+      },
+      {
+        token: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+        amount: '500000000000000000',
+        expiration: '1798761600',
+        nonce: '0'
+      }
+    ],
+    spender: '0x66a9893cC07D91D95644AEDD05D03f95e1dBA8Af',
+    sigDeadline: '1767225600'
+  }
+}
+
+/** `PERMIT_BATCH` naming its first token twice, which the device refuses. */
+const PERMIT_BATCH_SAME_TOKEN_TWICE = {
+  ...PERMIT_BATCH,
+  message: {
+    ...PERMIT_BATCH.message,
+    details: [PERMIT_BATCH.message.details[0], PERMIT_BATCH.message.details[0]]
+  }
+}
+
 function signerWith(caps: number, refuse = false, key: { deviceId?: string; index?: number } = {}) {
   const sent: string[] = []
   const commands = {
@@ -142,7 +193,7 @@ function signerWith(caps: number, refuse = false, key: { deviceId?: string; inde
 
 const ctx = (chainId = 1n) => ({ chainId, provider: {} as JsonRpcProvider })
 
-describe('PQ1Signer.signTypedData — Safe / CoW routing', () => {
+describe('PQ1Signer.signTypedData — Safe / CoW / Permit2 routing', () => {
   beforeEach(() => {
     mockAccountState.isDeployed = true
     jest.spyOn(console, 'warn').mockImplementation(() => {})
@@ -189,6 +240,37 @@ describe('PQ1Signer.signTypedData — Safe / CoW routing', () => {
     mockAccountState.isDeployed = false
     const { signer, sent } = signerWith(CAP_OFFCHAIN_COW_ORDER)
     await expect(signer.signTypedData(COW_ORDER as never, ctx())).rejects.toThrow("isn't set up")
+    expect(sent).toEqual([])
+  })
+
+  it('sends a Permit2 permit as kind 6 when the device can show it', async () => {
+    const { signer, sent } = signerWith(CAP_OFFCHAIN_PERMIT2)
+    await signer.signTypedData(PERMIT_BATCH as never, ctx())
+    expect(sent).toEqual(['permit2'])
+  })
+
+  it('signs a Permit2 permit blind on firmware without the capability bit', async () => {
+    const { signer, sent } = signerWith(CAP_OFFCHAIN_SAFE_TX | CAP_OFFCHAIN_COW_ORDER)
+    await signer.signTypedData(PERMIT_BATCH as never, ctx())
+    expect(sent).toEqual(['raw32'])
+  })
+
+  it('refuses a permit the device would refuse, even on firmware without the bit', async () => {
+    for (const caps of [CAP_OFFCHAIN_PERMIT2, 0]) {
+      const { signer, sent } = signerWith(caps)
+      await expect(
+        signer.signTypedData(PERMIT_BATCH_SAME_TOKEN_TWICE as never, ctx())
+      ).rejects.toThrow('the same token more than once')
+      expect(sent).toEqual([])
+    }
+  })
+
+  it("tells an undeployed account that Permit2 can't check its signature yet", async () => {
+    mockAccountState.isDeployed = false
+    const { signer, sent } = signerWith(CAP_OFFCHAIN_PERMIT2)
+    await expect(signer.signTypedData(PERMIT_BATCH as never, ctx())).rejects.toThrow(
+      "so Permit2 can't check this signature"
+    )
     expect(sent).toEqual([])
   })
 })

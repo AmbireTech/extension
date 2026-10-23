@@ -11,7 +11,8 @@
 // recursively, arrays are hashed), so its output equals the EIP-712 struct
 // body only for messages of static fields (address, uintN, intN, bytesN,
 // bool). Other messages (Permit2's nested types, for example) get no parts
-// here, and the signer signs their EIP-712 hash blind.
+// here: the signer signs their EIP-712 hash blind, unless the device has
+// screens of its own for them (`offchain/structuredTypedData.ts`).
 
 import { encodeAbiParameters, hashDomain, keccak256, toBytes } from 'viem'
 

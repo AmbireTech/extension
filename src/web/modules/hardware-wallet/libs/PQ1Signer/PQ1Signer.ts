@@ -39,8 +39,8 @@ import { DeviceError } from '../pq1/transport/hid'
 import type { SignOffchainBundle, SignOffchainRequest } from '../pq1/transport/offchain'
 import { personalSignFitsDevice } from '../pq1/transport/personalSignView'
 
-/** A Safe / CoW typed-data request whose domain names a different chain
- *  than the one the request was made on. */
+/** A Safe / CoW / Permit2 typed-data request whose domain names a different
+ *  chain than the one the request was made on. */
 const STRUCTURED_WRONG_NETWORK_MESSAGE =
   "This signature request is for a different network than the one you're on. Switch to that network in the app and try again. Nothing was signed."
 
@@ -48,6 +48,11 @@ const STRUCTURED_WRONG_NETWORK_MESSAGE =
  *  this network: neither a Safe nor CoW Swap can check its signature. */
 const STRUCTURED_UNDEPLOYED_MESSAGE =
   "Your PQ1 account isn't set up on this network yet, so a Safe or CoW Swap can't check this signature. Send one transaction from the account on this network first, then try again. Nothing was signed."
+
+/** The same for a Permit2 permit: Permit2 checks a smart account's
+ *  signature only once the account's code is on the network. */
+const PERMIT2_UNDEPLOYED_MESSAGE =
+  "Your PQ1 account isn't set up on this network yet, so Permit2 can't check this signature. Send one transaction from the account on this network first, then try again. Nothing was signed."
 
 type TypedMessage = Parameters<KeystoreSignerInterface['signTypedData']>[0]
 
@@ -317,8 +322,9 @@ class PQ1Signer implements KeystoreSignerInterface {
     const common = { accountIndex, slotIndex, chainId, accountDeployed: isDeployed } as const
 
     // The first route that fits: the device's own Safe transaction / CoW
-    // order screens, an ERC-7730 descriptor, or the EIP-712 hash signed
-    // blind. A request sent on one route is never retried on a weaker one.
+    // order / Permit2 screens, an ERC-7730 descriptor, or the EIP-712 hash
+    // signed blind. A request sent on one route is never retried on a
+    // weaker one.
     try {
       const request =
         (await this.#structuredRequest(typedData, chainId, isDeployed)) ??
@@ -333,10 +339,11 @@ class PQ1Signer implements KeystoreSignerInterface {
     }
   }
 
-  /** A Safe transaction or CoW order the device can show natively (off-chain
-   *  kinds 4 / 5), or null. The device re-derives the EIP-712 hash and signs
-   *  what a blind sign of it would. The route is chosen by the device's
-   *  capability bit only, so a refusal on this route is final. */
+  /** A Safe transaction, CoW order or Permit2 permit the device can show
+   *  natively (off-chain kinds 4 / 5 / 6), or null. The device re-derives
+   *  the EIP-712 hash and signs what a blind sign of it would. The route is
+   *  chosen by the device's capability bit only, so a refusal on this route
+   *  is final. */
   async #structuredRequest(
     typedData: TypedMessage,
     chainId: bigint,
@@ -347,6 +354,11 @@ class PQ1Signer implements KeystoreSignerInterface {
     if (structured.chainId !== chainId) {
       throw new ExternalSignerError(STRUCTURED_WRONG_NETWORK_MESSAGE, { sendCrashReport: false })
     }
+    // Refused whatever the firmware, so a shape the device knows is never
+    // signed as its hash instead.
+    if (structured.kind === 'refused') {
+      throw new ExternalSignerError(structured.message, { sendCrashReport: false })
+    }
     const capabilities = await this.#withDevice((sdk) => sdk.commands.getCapabilities())
     if (!(capabilities & structuredCapability(structured))) {
       console.warn(
@@ -355,7 +367,9 @@ class PQ1Signer implements KeystoreSignerInterface {
       return null
     }
     if (!isDeployed) {
-      throw new ExternalSignerError(STRUCTURED_UNDEPLOYED_MESSAGE, { sendCrashReport: false })
+      const message =
+        structured.kind === 'permit2' ? PERMIT2_UNDEPLOYED_MESSAGE : STRUCTURED_UNDEPLOYED_MESSAGE
+      throw new ExternalSignerError(message, { sendCrashReport: false })
     }
     return buildStructuredOffchainRequest(structured)
   }
