@@ -3,7 +3,6 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
-import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -18,15 +17,12 @@ import SpeedUpHistory from './SpeedUpHistory'
 import getStyles from './styles'
 import SummaryDetailsSheet from './SummaryDetailsSheet'
 import SummaryHeader from './SummaryHeader'
+import SummarySkeleton from './SummarySkeleton'
 import { Props } from './types'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 export { preloadSummaryPreview }
-
-// Matches ActivityPositionsSkeleton's row height so the loading state is visually seamless
-// and the whole row swaps to its final content in one step (no intra-row layout shift).
-const ROW_SKELETON_HEIGHT = 96
 
 const { isTab } = getUiType()
 
@@ -66,9 +62,9 @@ const SubmittedTransactionSummaryInner = ({
 
   return (
     <>
-      <Suspense
-        fallback={<SkeletonLoader width="100%" height={ROW_SKELETON_HEIGHT} style={style} />}
-      >
+      {/* The same row ActivityPositionsSkeleton is made of, so the loading state is visually
+      seamless and the whole row swaps to its final content in one step */}
+      <Suspense fallback={<SummarySkeleton style={style} />}>
         <AnimatedPressable
           onPress={handleOpenDetails}
           style={[
