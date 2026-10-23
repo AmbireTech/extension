@@ -27,7 +27,7 @@ jest.mock('@common/config/analytics/CrashAnalytics.web', () => ({
  *  `SELECTOR_DB_ROOT`, `ERC7730_DESCRIPTORS_ROOT`). */
 const FIRMWARE_ROOTS = {
   erc20: 'c435c576df0aa21956c5add530563780d2d878d115b4523ea84d9834e55bf203',
-  names: '5320d4c40deb7aeeffd3ae9b995cc1fc1818df0341341f682f208eff5f1d6abc',
+  names: '52553ed9175b57c60f631b7c71890b5838af4781541b36f37a0c0c933e81f7aa',
   selectors: '751caf5205a4ff5901ab6478af91ff36338f874b868378c610b693947456e46a',
   erc7730: '8c3dc4b2b1789106a1043aed08114b7827d56052dd920eb0dd6671a84db643e6'
 }

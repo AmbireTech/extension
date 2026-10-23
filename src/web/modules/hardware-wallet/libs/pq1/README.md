@@ -15,7 +15,7 @@ the mobile bundle, only uses the chain list and the small dapp-provider
 helpers in `src/common/modules/hardware-wallet/`. Browsers without WebHID
 (Firefox, Safari) get a plain "your browser doesn't support WebHID" message.
 
-The firmware is open source: [EthereumPhone/PQ1](https://github.com/EthereumPhone/PQ1/tree/0b0e6ac1).
+The firmware is open source: [EthereumPhone/PQ1](https://github.com/EthereumPhone/PQ1/tree/0313a2ef).
 File paths in comments that point "to the firmware repo" (`secure/src/...`,
 `proto/src/lib.rs`, `docs/companion/...`) are relative to it. The wire
 format, the size caps in `config.ts` and the catalogs below match that
@@ -124,7 +124,7 @@ root:
 | File | Size | Contents |
 | --- | ---: | --- |
 | `erc20_db.bin` | 9.6 MB | ERC-20 name, symbol and decimals per (chain, contract) |
-| `names_db.bin` | 105 KB | names of well-known contracts and addresses |
+| `names_db.bin` | 112 KB | names of well-known contracts and addresses |
 | `erc7730_db.bin` | 331 KB | ERC-7730 clear-signing descriptors (365) |
 | `selectors_db.bin` | 775 KB | function signatures, shown when a call is blind-signed |
 
