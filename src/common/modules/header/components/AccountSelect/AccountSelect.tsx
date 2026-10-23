@@ -99,7 +99,9 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
   const access = useAccountSelectAccess({
     accounts,
     walletAccountAddr: selectedAccount?.addr,
-    accountPreferences: dapp?.accountPreferences
+    accountPreferences: dapp?.accountPreferences,
+    // A connected app gets its own account, while connecting goes with the wallet's
+    pinsPickedAccount: !!dappToManage
   })
   const {
     accountAddr,

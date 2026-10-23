@@ -9,6 +9,8 @@ type Params = {
   /** The account selected in the wallet */
   walletAccountAddr: string | undefined
   accountPreferences: Dapp['accountPreferences']
+  /** Makes a picked account the app's alone, instead of switching the wallet's to it */
+  pinsPickedAccount?: boolean
 }
 
 /**
@@ -16,7 +18,12 @@ type Params = {
  * so they can be applied together on Save (Done when connecting) or thrown away on Cancel.
  * The picked account is always visible to the app.
  */
-const useAccountSelectAccess = ({ accounts, walletAccountAddr, accountPreferences }: Params) => {
+const useAccountSelectAccess = ({
+  accounts,
+  walletAccountAddr,
+  accountPreferences,
+  pinsPickedAccount
+}: Params) => {
   const [pendingAccountAddr, setPendingAccountAddr] = useState<string | null>(null)
   // `null` means untouched, so the saved preferences keep showing through
   const [pendingPreferences, setPendingPreferences] = useState<DappAccountPreferences | null>(null)
@@ -50,16 +57,21 @@ const useAccountSelectAccess = ({ accounts, walletAccountAddr, accountPreference
   // An app that can see every account follows whatever the user selects, which is
   // what the preferences being off means
   const setVisibleAccounts = useCallback(
-    (nextAddrs: string[], nextAccountAddr: string) => {
+    (
+      nextAddrs: string[],
+      nextAccountAddr: string,
+      isPinned = !!preferences?.isSelectedAccountPinned
+    ) => {
       const isEveryAccountVisible = accounts.every((acc) => nextAddrs.includes(acc.addr))
 
       setPendingPreferences({
         enabled: !isEveryAccountVisible,
         accounts: nextAddrs,
-        selectedAccount: nextAccountAddr
+        selectedAccount: nextAccountAddr,
+        ...(isPinned && { isSelectedAccountPinned: true })
       })
     },
-    [accounts]
+    [accounts, preferences?.isSelectedAccountPinned]
   )
 
   const visibleAddrs = useMemo(() => visibleAccounts.map((acc) => acc.addr), [visibleAccounts])
@@ -67,12 +79,17 @@ const useAccountSelectAccess = ({ accounts, walletAccountAddr, accountPreference
   const pickAccount = useCallback(
     (addr: string) => {
       setPendingAccountAddr(addr)
-      if (!isLimited) return
+      if (!isLimited && !pinsPickedAccount) return
 
       // The previously picked account stays visible, as it was shown to the user that way
-      setVisibleAccounts([...new Set([...visibleAddrs, addr])], addr)
+      const nextAddrs = [...new Set([...visibleAddrs, addr])]
+      if (pinsPickedAccount) {
+        setVisibleAccounts(nextAddrs, addr, true)
+        return
+      }
+      setVisibleAccounts(nextAddrs, addr)
     },
-    [isLimited, visibleAddrs, setVisibleAccounts]
+    [isLimited, pinsPickedAccount, visibleAddrs, setVisibleAccounts]
   )
 
   const hideAccount = useCallback(
@@ -109,7 +126,8 @@ const useAccountSelectAccess = ({ accounts, walletAccountAddr, accountPreference
     setPendingPreferences(null)
   }, [])
 
-  // Then the wallet switches to the picked account too, or the app wouldn't end up with it
+  // Then the wallet switches to the picked account too, or the app wouldn't end up with it.
+  // Never when the pick is pinned for the app, as the app ends up with it anyway
   const hasAccountChanged = !!pendingAccountAddr && pendingAccountAddr !== appAccountAddr
   const hasPreferencesChanged = !!pendingPreferences
 
