@@ -1,6 +1,7 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import { View } from 'react-native'
 
+import { WARNINGS } from '@ambire-common/consts/signAccountOp/errorHandling'
 import { Hex } from '@ambire-common/interfaces/hex'
 import { Network } from '@ambire-common/interfaces/network'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
@@ -33,11 +34,17 @@ const PendingTransactions: FC<Props> = ({
   const { isCompactLayout } = useCompactLayout()
   const { humanization, banners } = signAccountOpState || controllerSignAccountOpState || {}
 
+  // The significant balance decrease warning is shown on the simulation's "Assets out" card
+  const visibleBanners = useMemo(
+    () => banners?.filter((banner) => banner.id !== WARNINGS.significantBalanceDecrease.id),
+    [banners]
+  )
+
   return (
     <View style={isCompactLayout ? spacings.mbSm : spacings.mbMd}>
-      {!!banners && !!banners.length && (
+      {!!visibleBanners && !!visibleBanners.length && (
         <View style={spacings.mbTy}>
-          {banners.map((banner) => (
+          {visibleBanners.map((banner) => (
             <SafetyChecksBanner
               key={banner.id}
               type={banner.type}

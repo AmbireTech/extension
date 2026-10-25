@@ -12,6 +12,9 @@ interface Style {
   simulationContainer: ViewStyle
   simulationContainerWide: ViewStyle
   simulationContainerHeader: ViewStyle
+  simulationContainerWarning: ViewStyle
+  simulationContainerHeaderWarning: ViewStyle
+  simulationWarningFooter: ViewStyle
   spinner: ViewStyle
 }
 
@@ -51,6 +54,20 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween
+    },
+    simulationContainerWarning: {
+      borderColor: theme.warningDecorative
+    },
+    simulationContainerHeaderWarning: {
+      backgroundColor: theme.warningBackground
+    },
+    simulationWarningFooter: {
+      borderTopWidth: 1,
+      borderTopColor: theme.primaryBorder,
+      ...spacings.phSm,
+      ...spacings.pvTy,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
     },
     spinner: {
       alignSelf: 'center'

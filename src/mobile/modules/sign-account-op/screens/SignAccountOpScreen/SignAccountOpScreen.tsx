@@ -125,8 +125,6 @@ const SignAccountOpScreen = () => {
     handleChangeFeePayerKeyType,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
-    signingKeyType,
-    feePayerKeyType,
     shouldDisplayLedgerConnectModal,
     network,
     isSignDisabled,
@@ -317,8 +315,6 @@ const SignAccountOpScreen = () => {
         gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
         handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
         handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
-        feePayerKeyType={feePayerKeyType}
-        signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
         shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
         handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}

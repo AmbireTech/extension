@@ -87,8 +87,6 @@ const OneClickEstimation = ({
   const {
     isViewOnly,
     hasEstimation,
-    signingKeyType,
-    feePayerKeyType,
     handleDismissLedgerConnectModal,
     shouldDisplayLedgerConnectModal,
     isChooseSignerShown,
@@ -372,8 +370,6 @@ const OneClickEstimation = ({
         gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
         handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
         handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
-        feePayerKeyType={feePayerKeyType}
-        signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
         shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
         handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
