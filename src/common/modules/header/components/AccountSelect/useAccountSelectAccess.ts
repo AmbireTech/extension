@@ -29,13 +29,16 @@ const useAccountSelectAccess = ({
   const [pendingPreferences, setPendingPreferences] = useState<DappAccountPreferences | null>(null)
 
   const preferences = pendingPreferences ?? accountPreferences
-  // The account the app ends up with without switching the wallet's - the wallet's own when the
-  // app may see it, otherwise the one it last used
-  const [preferredAddr] = getAccountsForDapp(preferences, walletAccountAddr)
-  // A removed account can still be in the saved preferences
-  const appAccountAddr = accounts.some((acc) => acc.addr === preferredAddr)
-    ? preferredAddr
-    : walletAccountAddr
+  // The account the app ends up with without switching the wallet's - the one picked for it,
+  // otherwise the wallet's own when the app may see it, otherwise the one it last used
+  const getAppAccountAddr = (appPreferences: Dapp['accountPreferences']) => {
+    const [preferredAddr] = getAccountsForDapp(appPreferences, walletAccountAddr)
+    // A removed account can still be in the saved preferences
+    return accounts.some((acc) => acc.addr === preferredAddr) ? preferredAddr : walletAccountAddr
+  }
+  const appAccountAddr = getAppAccountAddr(preferences)
+  // The account the app has before the unsaved edits
+  const savedAppAccountAddr = getAppAccountAddr(accountPreferences)
   const accountAddr = pendingAccountAddr ?? appAccountAddr ?? ''
   const isLimited = !!preferences?.enabled
 
@@ -54,8 +57,8 @@ const useAccountSelectAccess = ({
     [accounts, isVisible]
   )
 
-  // An app that can see every account follows whatever the user selects, which is
-  // what the preferences being off means
+  // An app that can see every account follows the wallet's, which is what the preferences being
+  // off means - unless an account is pinned for it, until the wallet switches to another one
   const setVisibleAccounts = useCallback(
     (
       nextAddrs: string[],
@@ -78,6 +81,9 @@ const useAccountSelectAccess = ({
 
   const pickAccount = useCallback(
     (addr: string) => {
+      // Picking the account that's already picked changes nothing, so there's nothing to save
+      if (addr === accountAddr) return
+
       setPendingAccountAddr(addr)
       if (!isLimited && !pinsPickedAccount) return
 
@@ -89,7 +95,7 @@ const useAccountSelectAccess = ({
       }
       setVisibleAccounts(nextAddrs, addr)
     },
-    [isLimited, pinsPickedAccount, visibleAddrs, setVisibleAccounts]
+    [accountAddr, isLimited, pinsPickedAccount, visibleAddrs, setVisibleAccounts]
   )
 
   const hideAccount = useCallback(
@@ -138,6 +144,8 @@ const useAccountSelectAccess = ({
     hiddenAccounts,
     pendingPreferences,
     hasAccountChanged,
+    // Unlike `hasAccountChanged`, also false for an unsaved account picked for the app alone
+    isSavedAccountPicked: accountAddr === savedAppAccountAddr,
     isDirty: hasAccountChanged || hasPreferencesChanged,
     pickAccount,
     hideAccount,

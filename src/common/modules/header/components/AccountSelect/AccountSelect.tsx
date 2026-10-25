@@ -110,6 +110,7 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
     hiddenAccounts,
     pendingPreferences,
     hasAccountChanged,
+    isSavedAccountPicked,
     isDirty,
     pickAccount,
     hideAccount: hideAccountAction,
@@ -254,7 +255,7 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
   ])
 
   // A connected app's account is "Connected" until another one is picked, which isn't saved yet
-  const isConnectedAccountPicked = !!dappToManage?.isConnected && !hasAccountChanged
+  const isConnectedAccountPicked = !!dappToManage?.isConnected && isSavedAccountPicked
   const selectedBadgeText = isConnectedAccountPicked ? t('Connected') : t('Selected')
   // Names the account like its badge does
   const limitActionText = canLimit
