@@ -7,7 +7,8 @@ import {
   canBuildReplacementAccountOp,
   getReplacementAccountOp,
   getReplacementBlocker,
-  isPartiallyMinedBatch
+  isPartiallyMinedBatch,
+  isReplaceableBroadcast
 } from './replacement'
 import { SubmittedAccountOpLike } from './types'
 
@@ -100,6 +101,28 @@ describe('isPartiallyMinedBatch', () => {
     })
 
     expect(isPartiallyMinedBatch(op)).toBe(false)
+  })
+})
+
+describe('isReplaceableBroadcast', () => {
+  test.each([
+    ['an EOA', BROADCAST_OPTIONS.bySelf],
+    ['a 7702 EOA', BROADCAST_OPTIONS.bySelf7702],
+    ['an EOA that delegates', BROADCAST_OPTIONS.delegation],
+    ['a smart account sent by another account', BROADCAST_OPTIONS.byOtherEOA]
+  ])('a transaction sent by %s can be replaced', (_, broadcastOption) => {
+    expect(isReplaceableBroadcast(withBroadcastOption(broadcastOption))).toBe(true)
+  })
+
+  test.each([
+    ['the relayer', BROADCAST_OPTIONS.byRelayer],
+    ['a bundler', BROADCAST_OPTIONS.byBundler]
+  ])('a transaction sent by %s cannot be replaced', (_, broadcastOption) => {
+    expect(isReplaceableBroadcast(withBroadcastOption(broadcastOption))).toBe(false)
+  })
+
+  test('a transaction without its fee payment cannot be replaced', () => {
+    expect(isReplaceableBroadcast(buildPendingAccountOp({ gasFeePayment: null }))).toBe(false)
   })
 })
 

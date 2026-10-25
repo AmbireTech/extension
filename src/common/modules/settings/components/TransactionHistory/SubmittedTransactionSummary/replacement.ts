@@ -37,6 +37,17 @@ const REPLACEABLE_BROADCAST_OPTIONS = [
   BROADCAST_OPTIONS.delegation
 ]
 
+/**
+ * Whether the transaction was sent in a way that can be replaced (see
+ * `REPLACEABLE_BROADCAST_OPTIONS`). Only then does the activity offer Cancel and Speed up while
+ * it's pending; otherwise it keeps its usual buttons
+ */
+export const isReplaceableBroadcast = (submittedAccountOp: SubmittedAccountOpLike): boolean => {
+  const broadcastOption = submittedAccountOp.gasFeePayment?.broadcastOption
+
+  return !!broadcastOption && REPLACEABLE_BROADCAST_OPTIONS.includes(broadcastOption)
+}
+
 type ReplaceableAccountOp = SubmittedAccountOpLike &
   Required<
     Pick<
@@ -75,9 +86,7 @@ export const getReplacementBlocker = (
   if (submittedAccountOp.activitySource === 'external') return 'external'
   if (!isOwnTransaction) return 'otherAccount'
 
-  const broadcastOption = submittedAccountOp.gasFeePayment?.broadcastOption
-  if (!broadcastOption || !REPLACEABLE_BROADCAST_OPTIONS.includes(broadcastOption))
-    return 'notReplaceable'
+  if (!isReplaceableBroadcast(submittedAccountOp)) return 'notReplaceable'
   if (!canBuildReplacementAccountOp(submittedAccountOp)) return 'missingDetails'
   // A batch sent as one transaction per call is replaced from its first transaction on, so
   // once one of them went through, the replacement would be turned down

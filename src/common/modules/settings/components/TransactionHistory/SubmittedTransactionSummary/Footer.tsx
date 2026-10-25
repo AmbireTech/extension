@@ -23,7 +23,7 @@ import { openInTab } from '@common/utils/links'
 
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
 import PendingTransactionFooter from './PendingTransactionFooter'
-import { isPartiallyMinedBatch } from './replacement'
+import { isPartiallyMinedBatch, isReplaceableBroadcast } from './replacement'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
 
@@ -71,6 +71,9 @@ const Footer: FC<Props> = ({
   const isExternal = submittedAccountOp.activitySource === 'external'
   const isOwnTransaction = selectedAccount?.addr === accountAddr && !isExternal
   const canRepeatTransaction = !!rawCalls?.length && isOwnTransaction
+  // A pending transaction sent by a relayer or a bundler can't be replaced, so it keeps the
+  // usual buttons instead of Cancel and Speed up
+  const showsReplacementButtons = isPendingTransaction && isReplaceableBroadcast(submittedAccountOp)
   const benzinLink = `https://explorer.ambire.com/${getBenzinUrlParams({
     txnId,
     chainId: Number(chainId),
@@ -133,11 +136,11 @@ const Footer: FC<Props> = ({
     }
   }, [txnId, addToast, chainId, network.explorerUrl, t])
 
-  if (!isPendingTransaction && !canRepeatTransaction && !isMinedTransaction) return null
+  if (!showsReplacementButtons && !canRepeatTransaction && !isMinedTransaction) return null
 
   const buttonSize = isMobile ? 'regular' : 'smaller'
 
-  if (isPendingTransaction)
+  if (showsReplacementButtons)
     return (
       <PendingTransactionFooter
         submittedAccountOp={submittedAccountOp}
