@@ -1,13 +1,13 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Control, Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
-import AccountKeyIcons from '@common/components/AccountKeyIcons'
+import AccountKeysBadge from '@common/components/AccountKeysBadge'
 import Avatar from '@common/components/Avatar'
-import Editable from '@common/components/Editable'
+import EditableAccountName from '@common/components/EditableAccountName'
 import { isMobile, isWeb } from '@common/config/env'
 import useAccountKeys from '@common/hooks/useAccountKeys'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -17,6 +17,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+const NAME_TEXT_PROPS = { weight: 'medium' } as const
+
 type Props = {
   account: Account
   index: number
@@ -25,7 +27,7 @@ type Props = {
   }>
   hasBottomSpacing?: boolean
   disableEdit?: boolean
-  onSave: (value: string) => void
+  onSaveName: (addr: Account['addr'], name: string) => Promise<void>
 }
 
 const AccountPersonalizeCard = ({
@@ -34,12 +36,17 @@ const AccountPersonalizeCard = ({
   control,
   hasBottomSpacing = true,
   disableEdit,
-  onSave
+  onSaveName
 }: Props) => {
   const { addr: address, preferences } = account
   const reverseLookup = useReverseLookup({ address })
   const accountKeys = useAccountKeys(account)
   const { styles } = useTheme(getStyles)
+
+  const handleSaveName = useCallback(
+    (name: string) => onSaveName(address, name),
+    [address, onSaveName]
+  )
 
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
@@ -58,20 +65,18 @@ const AccountPersonalizeCard = ({
               <Controller
                 control={control}
                 name={`accounts.${index}.preferences.label`}
-                render={({ field: { onChange, value } }) => (
-                  <Editable
-                    setCustomValue={onChange}
-                    customValue={value}
-                    initialValue={preferences.label}
+                render={({ field: { value } }) => (
+                  <EditableAccountName
+                    account={account}
+                    name={value}
+                    onSave={handleSaveName}
                     testID={`edit-name-field-${index}`}
-                    height={24}
-                    textProps={{ weight: 'medium' }}
+                    textProps={NAME_TEXT_PROPS}
                     disabled={disableEdit}
-                    onSave={onSave}
                   />
                 )}
               />
-              {/* On mobile the key icons and badges move to the row below the address */}
+              {/* On mobile the keys badge and the other badges move to the row below the address */}
               {isWeb && <AccountBadges accountData={account} accountKeys={accountKeys} />}
             </View>
             <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
@@ -91,16 +96,12 @@ const AccountPersonalizeCard = ({
                   { columnGap: SPACING_TY }
                 ]}
               >
-                <AccountKeyIcons
-                  isExtended
-                  account={account}
-                  accountKeys={accountKeys}
-                  withContainerSpacing={false}
-                />
+                <AccountKeysBadge account={account} accountKeys={accountKeys} />
                 <AccountBadges
                   accountData={account}
                   accountKeys={accountKeys}
                   withSpacing={false}
+                  withViewOnly={false}
                 />
               </View>
             )}

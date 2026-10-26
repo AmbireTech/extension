@@ -85,7 +85,8 @@ const ToTokenSelect: React.FC<Props> = ({
     toChainId,
     supportedChainIds,
     swapProviders,
-    disabledSwapProviderIds
+    disabledSwapProviderIds,
+    toTokenListLoadingProviderNames
   } = useController('SwapAndBridgeController').state
   const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
   const [didAttemptSearchingTokenByAddress, setDidAttemptSearchingTokenByAddress] =
@@ -135,9 +136,18 @@ const ToTokenSelect: React.FC<Props> = ({
   )
 
   const isAttemptingToAddToTokenByAddress = addToTokenByAddressStatus !== 'INITIAL'
-  const notFoundPlaceholderText = didAttemptSearchingTokenByAddress
-    ? t('Not found. Wrong receive network?') // TODO: Add "... or unsupported token" when UI allows longer messages
-    : t('Not found. Try with token address?')
+  const notFoundPlaceholderText = useMemo(() => {
+    // A provider that is still loading may have it
+    if (toTokenListLoadingProviderNames.length) {
+      return t('Not found yet. Still loading tokens from {{providerNames}}', {
+        providerNames: toTokenListLoadingProviderNames.join(', ')
+      })
+    }
+
+    return didAttemptSearchingTokenByAddress
+      ? t('Not found. Wrong receive network or unsupported token?')
+      : t('Not found. Try with token address?')
+  }, [didAttemptSearchingTokenByAddress, t, toTokenListLoadingProviderNames])
 
   const enabledProviderNames = useMemo(
     () =>

@@ -106,12 +106,14 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
     keyboardAwareFooter && (!isSheetOpen || isKeyboardUp) && !keepSuppressedUntilKeyboardHidden
 
   return (
-    // `behavior="height"` shrinks the whole container by the keyboard's overlap,
+    // `behavior="padding"` pads the container's bottom by the keyboard's overlap,
     // so the flex:1 content area compresses and the footer is pushed up above the
     // keyboard instead of being covered by it. The overlap is measured from the
     // view's on-screen frame, so the bottom safe-area inset is accounted for.
+    // Not "height": once closed it returns no style, and Reanimated keeps the last height
+    // it set, so at times the footer stayed lifted after the keyboard hid
     <KeyboardAvoidingView
-      behavior="height"
+      behavior="padding"
       enabled={isKeyboardAvoidingEnabled}
       style={[
         flexbox.flex1,

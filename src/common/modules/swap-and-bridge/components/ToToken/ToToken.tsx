@@ -61,7 +61,8 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
     supportedChainIds,
     disabledSwapProviderIds,
     signAccountOpController,
-    toTokenMarketData
+    toTokenMarketData,
+    isToTokenSelectionPending
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
@@ -72,6 +73,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
   )
   const networks = useNetworks({
     acc: account,
+    allowUndeployedSafeOnChainId: fromSelectedToken?.chainId,
     additionalCheck: {
       chainIds: supportedChainIds,
       reason: t(
@@ -142,6 +144,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
     token: toSelectedToken ? getTokenId(toSelectedToken) : '',
     networks,
     isLoading: !toTokenShortList.length && updateToTokenListStatus !== 'INITIAL',
+    isSelectionPending: isToTokenSelectionPending,
     isToToken: true,
     exchangesInfo
   })

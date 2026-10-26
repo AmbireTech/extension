@@ -23,7 +23,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 
 ## Useful commands (not exhaustive):
 
-- Check for typescript errors - `yarn extension:type:check-new`
+- Check for typescript errors - `yarn type:check-new`
 - Lint and auto-fix source files: `yarn lint:fix`
 
 ## Rules

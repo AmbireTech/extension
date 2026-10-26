@@ -95,19 +95,18 @@ const RecoveryPhrasesSettingsScreen = () => {
             <SettingsIcon width={20} height={20} style={spacings.mrMi} color={theme.primaryText} />
           </Button>
         </View>
-        {associatedAccounts.map((a) => {
+        {associatedAccounts.map((a, accountIndex) => {
           return (
             <Account
               key={a.addr}
               account={a}
               withSettings={false}
               isSelectable={false}
-              containerStyle={{
-                marginBottom: 0,
-                paddingHorizontal: 0,
-                minHeight: 82,
-                maxHeight: 82
-              }}
+              isOnSecondaryBackground
+              withBadges={false}
+              containerStyle={
+                accountIndex === associatedAccounts.length - 1 ? spacings.mb0 : undefined
+              }
               withKeyType={false}
               withCopy={false}
             />

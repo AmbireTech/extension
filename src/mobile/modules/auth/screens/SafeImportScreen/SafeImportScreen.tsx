@@ -101,7 +101,7 @@ const SafeImportScreen = () => {
                         width={20 * SAFE_ICON_INLINE_SCALE}
                         height={20 * SAFE_ICON_INLINE_SCALE}
                       />
-                      <Text style={spacings.mlTy}>{t('Deployed on:')}</Text>
+                      <Text style={spacings.mlTy}>{t('Active on:')}</Text>
                     </View>
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                       {safeInfo.deployedOn.map((c, i) => (

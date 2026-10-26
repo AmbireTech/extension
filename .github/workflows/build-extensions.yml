@@ -113,6 +113,7 @@ jobs:
           WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
           SENTRY_DSN_BROWSER_EXTENSION: ${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_BROWSER_EXTENSIONS }}
+          NODE_OPTIONS: '--max-old-space-size=4096'
         run: yarn build:extensions:${{ matrix.build_variant }}
 
       # Firefox requires the full source code (including .env) to reproduce the

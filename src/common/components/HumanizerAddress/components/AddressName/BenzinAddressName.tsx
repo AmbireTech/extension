@@ -19,6 +19,8 @@ interface Props extends TextProps {
   actionsMode?: 'tooltip' | 'inline'
   fallbackLabel?: string
   isToken?: boolean
+  /** Shows only names already known locally, with no lookup that sends the address out. */
+  isLocalLabelOnly?: boolean
 }
 
 const selectContractNames = (state: AllControllersMappingType['ContractNamesController']) =>
@@ -31,9 +33,13 @@ const BenzinAddressName: FC<Props> = ({
   actionsMode = 'tooltip',
   fallbackLabel,
   isToken,
+  isLocalLabelOnly,
   ...rest
 }) => {
-  const { isLoading: isLoadingEns, name } = useReverseLookup({ address })
+  const { isLoading: isLoadingEns, name } = useReverseLookup({
+    address,
+    privacyUpdateMode: isLocalLabelOnly ? 'never' : undefined
+  })
 
   const { state: contractNames, dispatch } = useController(
     'ContractNamesController',
@@ -41,13 +47,13 @@ const BenzinAddressName: FC<Props> = ({
   )
 
   useEffect(() => {
-    if (!contractNames[address]) {
+    if (!contractNames[address] && !isLocalLabelOnly) {
       dispatch({
         type: 'method',
         params: { method: 'getName', args: [address, chainId] }
       })
     }
-  }, [address, chainId, contractNames, dispatch])
+  }, [address, chainId, contractNames, dispatch, isLocalLabelOnly])
 
   const foundContractName = useMemo(() => {
     const name = contractNames?.[address]?.name

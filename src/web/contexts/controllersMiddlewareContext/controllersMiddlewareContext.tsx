@@ -4,7 +4,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 
 import { NavigateOptions } from '@ambire-common/interfaces/ui'
 import wait from '@ambire-common/utils/wait'
-import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
+import { captureException, captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
@@ -380,7 +380,20 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
       if (getUiType().isPopup) {
         const win = await chrome.windows.getCurrent()
         setWindowId(win.id)
-      } else if (getUiType().isTab || getUiType().isSidePanel) {
+      } else if (getUiType().isSidePanel) {
+        // A side panel has no tab of its own, so its window comes from `windows.getCurrent`. The
+        // background is told once, so app requests go to the panel of the app's own window.
+        try {
+          const win = await chrome.windows.getCurrent()
+          if (win.id === undefined) return
+
+          setWindowId(win.id)
+          globalDispatch({ type: 'SET_SIDE_PANEL_WINDOW_ID', params: { windowId: win.id } })
+        } catch (error) {
+          console.error('Failed to resolve the side panel window', error)
+          captureException(error)
+        }
+      } else if (getUiType().isTab) {
         const tab = await chrome.tabs.getCurrent()
         if (tab) setWindowId(tab.windowId)
       }
@@ -484,7 +497,10 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     if (!isExtension) return
 
     try {
-      chrome.runtime.onMessage.addListener(async (message: any) => {
+      // Must stay synchronous: a listener that returns a promise (like an `async` one) answers
+      // every runtime message with `undefined` before its real recipient can (e.g. the OneKey
+      // offscreen document), because the browser takes the first answer it gets.
+      chrome.runtime.onMessage.addListener((message: any) => {
         if (!hasConnectedToTheBackground.current) return
 
         if (message.action === 'sw-started') {

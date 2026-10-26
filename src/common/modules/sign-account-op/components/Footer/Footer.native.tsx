@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
+import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -32,9 +33,12 @@ const Footer = ({
   inProgressButtonText,
   buttonText,
   shouldHoldToProceed,
+  holdToProceedButtonText,
   shouldRejectOnchain,
   isRejectDisabled,
-  signButtonType = 'primary'
+  holdToProceedButtonType = 'primary',
+  signButtonType = 'primary',
+  onClose
 }: Props) => {
   const { t } = useTranslation()
   const { state: userRequests } = useController('RequestsController', selectUserRequests)
@@ -57,6 +61,20 @@ const Footer = ({
     // '0x' is a placeholder used by self-broadcast account ops, not a real signature.
     return !!signature && signature !== '0x'
   }, [signature])
+
+  if (onClose) {
+    return (
+      <Button
+        testID="transaction-button-close"
+        type="primary"
+        text={t('Close')}
+        onPress={onClose}
+        hasBottomSpacing={false}
+        size="regular"
+        style={{ width: '100%' }}
+      />
+    )
+  }
 
   return (
     <CompactFooterButtons
@@ -93,13 +111,13 @@ const Footer = ({
         >
           {shouldHoldToProceed && (
             <HoldToProceedButton
-              text={t('Hold to sign')}
+              text={holdToProceedButtonText}
               buttonType={
                 signButtonType === 'dangerFilled'
                   ? 'dangerFilled'
                   : signButtonType === 'warning'
                     ? 'warning'
-                    : 'primary'
+                    : holdToProceedButtonType
               }
               disabled={isSignDisabled}
               onHoldComplete={onSign}

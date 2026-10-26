@@ -58,12 +58,12 @@ const REDACTION_RULES: RedactionRule[] = [
     // (?:["'])? after the label handles JSON-quoted keys, e.g. "privateKey":"0x...".
     pattern:
       /\b(private\s*key|privatekey|priv\s*key|privkey|secret\s*key|wallet\s*key)\b(?:["'])?\s*[:=]\s*(["']?)(0x[a-fA-F0-9]{64}|[a-fA-F0-9]{64})\2/gi,
-    replacement: '$1=[REDACTED_PRIVATE_KEY]'
+    replacement: '$1=[REDACTED_HEX]'
   },
   {
     // Matches likely raw private keys without a label.
     pattern: /\b0x[a-fA-F0-9]{64}\b|\b[a-fA-F0-9]{64}\b/g,
-    replacement: '[REDACTED_PRIVATE_KEY]'
+    replacement: '[REDACTED_HEX]'
   },
   {
     // Matches common seed phrase labels and the following run of words.

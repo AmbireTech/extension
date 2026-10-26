@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, Easing, LayoutChangeEvent, View } from 'react-native'
 
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
@@ -12,6 +13,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import PendingCancellationRow from './PendingCancellationRow'
 import PendingTransactionBundle from './PendingTransactionBundle'
 import getStyles from './styles'
 
@@ -29,6 +31,24 @@ interface Props {
 const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  // The cancellation covers every transaction of the nonce, so hovering it outlines the whole
+  // container in red. The border color fades in and out.
+  const [cancellationHoverAnim] = useState(() => new Animated.Value(0))
+  const handleCancellationHoverChange = useCallback(
+    (isHovered: boolean) => {
+      Animated.timing(cancellationHoverAnim, {
+        toValue: isHovered ? 1 : 0,
+        duration: 200,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: false
+      }).start()
+    },
+    [cancellationHoverAnim]
+  )
+  const chainBorderColor = cancellationHoverAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [theme.primaryAccent as string, theme.errorDecorative as string]
+  })
   const [manuallySelectedNonceIndex, setManuallySelectedNonceIndex] = useState<number | null>(null)
 
   // Until the user navigates, the nonce that executes next is displayed. Falls back to the
@@ -55,6 +75,35 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   let nonceColor
   if (isCurrentNonce) nonceColor = theme.primaryAccent
   else if (waitsForPrecedingNonce) nonceColor = theme.warningText
+  // A cancellation replaces every transaction on its nonce, so it is not listed as a
+  // transaction of its own. A row below the transactions stands for it instead.
+  const { transactionRequests, cancellationRequest, transactionToCancel } = useMemo(() => {
+    const requests = nonceGroup?.requests ?? []
+    const isCancellation = (request: (typeof requests)[number]) =>
+      isSafeRejectionCall(
+        request.signAccountOp.accountOp.calls,
+        request.signAccountOp.accountOp.accountAddr
+      )
+    const getSignedCount = (request: (typeof requests)[number]) =>
+      new Set((request.signAccountOp.accountOp.signed || []).map((addr) => addr.toLowerCase())).size
+
+    // Should several cancellations exist, the one closest to being executed represents them
+    const cancellations = requests
+      .filter(isCancellation)
+      .sort((a, b) => getSignedCount(b) - getSignedCount(a))
+
+    const transactions = requests.filter((request) => !isCancellation(request))
+    // The cancellation gets prepared from the transaction that has collected the most signatures
+    const [transactionToCancel] = [...transactions].sort(
+      (a, b) => getSignedCount(b) - getSignedCount(a)
+    )
+
+    return {
+      transactionRequests: transactions,
+      cancellationRequest: cancellations[0] as (typeof requests)[number] | undefined,
+      transactionToCancel
+    }
+  }, [nonceGroup])
   const hasPrevNonce = nonceIndex > 0
   const hasNextNonce = nonceIndex < group.nonceGroups.length - 1
 
@@ -95,13 +144,32 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   )
 
   useEffect(() => {
-    return () => animatedHeight.stopAnimation()
-  }, [animatedHeight])
+    return () => {
+      animatedHeight.stopAnimation()
+      cancellationHoverAnim.stopAnimation()
+    }
+  }, [animatedHeight, cancellationHoverAnim])
+
+  const renderOrDivider = () => (
+    <View pointerEvents="none" style={styles.orDivider}>
+      <View style={styles.orDividerLine} />
+      <View style={[styles.orDividerLabel, flexbox.center]}>
+        <Text
+          fontSize={14}
+          weight="medium"
+          appearance="primaryText"
+          style={[styles.orDividerText, spacings.phSm]}
+        >
+          {t('OR')}
+        </Text>
+      </View>
+    </View>
+  )
 
   if (!nonceGroup) return null
 
   return (
-    <View style={[styles.chainWrapper, spacings.mbSm]}>
+    <Animated.View style={[styles.chainWrapper, spacings.mbSm, { borderColor: chainBorderColor }]}>
       <View
         style={[
           styles.chainHeader,
@@ -120,9 +188,8 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
         </View>
         <View style={flexbox.alignEnd}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {/* The colon is kept out of the key, because i18next treats it as a namespace separator */}
             <Text fontSize={16} weight="semiBold">
-              {t('Nonce')}:
+              {t('Nonce')}
             </Text>
             <HoverablePressable
               testID={`pending-transactions-prev-nonce-${group.network.chainId.toString()}`}
@@ -134,11 +201,11 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
               style={[
                 styles.nonceNavigationButton,
                 flexbox.center,
-                spacings.mlTy,
+                spacings.mlSm,
                 !hasPrevNonce && styles.nonceNavigationButtonDisabled
               ]}
             >
-              <LeftArrowIcon width={6} height={11} color={theme.iconPrimary} />
+              <LeftArrowIcon width={6} height={11} color={theme.tertiaryText} />
             </HoverablePressable>
             <Text fontSize={16} weight="semiBold" color={nonceColor} style={spacings.mhTy}>
               {nonceGroup.nonce.toString()}
@@ -156,21 +223,21 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
                 !hasNextNonce && styles.nonceNavigationButtonDisabled
               ]}
             >
-              <RightArrowIcon width={6} height={11} color={theme.iconPrimary} />
+              <RightArrowIcon width={6} height={11} color={theme.tertiaryText} />
             </HoverablePressable>
           </View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtTy]}>
             {isCurrentNonce && (
-              <View style={[styles.currentNoncePill, flexbox.center, spacings.phMi]}>
-                <Text fontSize={11} weight="medium" color={theme.primaryAccent}>
+              <View style={[styles.currentNoncePill, flexbox.center, spacings.phTy]}>
+                <Text fontSize={12} weight="medium" color={theme.primaryAccent}>
                   {t('Next to execute')}
                 </Text>
               </View>
             )}
             {waitsForPrecedingNonce && (
-              <View style={[styles.futureNoncePill, flexbox.center, spacings.phMi]}>
-                <Text fontSize={11} weight="medium" color={theme.warningText}>
-                  {t('Waits for nonce {{nonce}}', { nonce: (nonceGroup.nonce - 1n).toString() })}
+              <View style={[styles.futureNoncePill, flexbox.center, spacings.phTy]}>
+                <Text fontSize={12} weight="medium" color={theme.warningText}>
+                  {t('waits for nonce {{nonce}}', { nonce: (nonceGroup.nonce - 1n).toString() })}
                 </Text>
               </View>
             )}
@@ -179,37 +246,23 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
       </View>
 
       <Animated.View style={[styles.animatedContentWrapper, { height: animatedHeight }]}>
-        {/* The bundles bring their own padding and span the box up to its border, so that
-            the transaction summaries keep as much space as possible */}
         <View onLayout={handleContentLayout} style={styles.measuredContent}>
-          {nonceGroup.requests.map((request, index) => (
+          {transactionRequests.map((request, index) => (
             <Fragment key={request.id}>
-              {index > 0 && (
-                <View pointerEvents="none" style={styles.orDividerAnchor}>
-                  <View style={[styles.orDividerRow, flexbox.directionRow, flexbox.alignCenter]}>
-                    <View style={[styles.orDividerLine, flexbox.flex1]} />
-                    <View
-                      style={[styles.orDividerPill, flexbox.center, spacings.phTy, spacings.mhTy]}
-                    >
-                      <Text fontSize={11} weight="medium" color={theme.warningText}>
-                        {t('OR')}
-                      </Text>
-                    </View>
-                    <View style={[styles.orDividerLine, flexbox.flex1]} />
-                  </View>
-                </View>
-              )}
-              <PendingTransactionBundle
-                request={request}
-                isCurrentNonce={isCurrentNonce}
-                hasDividerAbove={index > 0}
-                hasDividerBelow={index < nonceGroup.requests.length - 1}
-              />
+              {index > 0 && renderOrDivider()}
+              <PendingTransactionBundle request={request} isCurrentNonce={isCurrentNonce} />
             </Fragment>
           ))}
+          {transactionRequests.length > 0 && renderOrDivider()}
+          <PendingCancellationRow
+            cancellationRequest={cancellationRequest}
+            transactionRequest={transactionToCancel}
+            hasMultipleTransactions={transactionRequests.length > 1}
+            onHoverChange={handleCancellationHoverChange}
+          />
         </View>
       </Animated.View>
-    </View>
+    </Animated.View>
   )
 }
 

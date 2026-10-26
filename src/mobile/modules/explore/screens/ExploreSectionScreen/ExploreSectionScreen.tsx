@@ -278,6 +278,7 @@ const ExploreSectionScreen = () => {
             data={dapps}
             renderItem={renderItem}
             keyExtractor={(item: Dapp) => item.id}
+            keyboardDismissMode="on-drag"
             ListHeaderComponent={
               sectionType === 'apps' && isWalletStakingVisible ? WalletStakingCard : undefined
             }

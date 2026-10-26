@@ -2,6 +2,7 @@ import type AccountPickerController from '@ambire-common/controllers/accountPick
 import type { AccountsController } from '@ambire-common/controllers/accounts/accounts'
 import type { ActivityController } from '@ambire-common/controllers/activity/activity'
 import type { AddressBookController } from '@ambire-common/controllers/addressBook/addressBook'
+import type { AppDataSyncController } from '@ambire-common/controllers/appDataSync/appDataSync'
 import type { AutoLoginController } from '@ambire-common/controllers/autoLogin/autoLogin'
 import type { BannerController } from '@ambire-common/controllers/banner/banner'
 import type { ContractInfoController } from '@ambire-common/controllers/contractInfo/contractInfo'
@@ -18,6 +19,7 @@ import type { MainController } from '@ambire-common/controllers/main/main'
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
 import type { PhishingController } from '@ambire-common/controllers/phishing/phishing'
 import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
+import type { PrivacyPoolsController } from '@ambire-common/controllers/privacyPools/privacyPools'
 import type { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import type { RequestsController } from '@ambire-common/controllers/requests/requests'
 import type { SafeController } from '@ambire-common/controllers/safe/safe'
@@ -48,6 +50,7 @@ export type ControllersNestedInMainMappingType = {
   KeystoreController: KeystoreController
   SignMessageController: SignMessageController
   PortfolioController: PortfolioController
+  PrivacyPoolsController: PrivacyPoolsController
   ActivityController: ActivityController
   EmailVaultController: EmailVaultController
   SignAccountOpController: SignAccountOpController
@@ -72,6 +75,7 @@ export type ControllersNestedInMainMappingType = {
   SurveyController: SurveyController
   DebugController: DebugController
   VerificationController: VerificationController
+  AppDataSyncController: AppDataSyncController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
@@ -89,6 +93,7 @@ export const controllersNestedInMainMapping =
     'KeystoreController',
     'SignMessageController',
     'PortfolioController',
+    'PrivacyPoolsController',
     'ActivityController',
     'EmailVaultController',
     'SignAccountOpController',
@@ -112,7 +117,8 @@ export const controllersNestedInMainMapping =
     'WalletTokenController',
     'SurveyController',
     'DebugController',
-    'VerificationController'
+    'VerificationController',
+    'AppDataSyncController'
   ] as const)
 
 export type AllControllersMappingType = {

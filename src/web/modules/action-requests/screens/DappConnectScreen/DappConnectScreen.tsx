@@ -57,7 +57,7 @@ const DappConnectScreen = () => {
                 testID="dapp-connect-button"
                 onHoldComplete={handleAuthorizeButtonPress}
                 holdDuration={1600}
-                style={{ height: 56 }}
+                size="regular"
                 text={resolveButtonText}
                 buttonType={
                   !!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED'

@@ -8,7 +8,7 @@ describe('scrubSentryEventSecrets', () => {
     const result = scrubSentryEventSecrets(event)
 
     expect(result.extra.info).not.toContain(key)
-    expect(result.extra.info).toContain('[REDACTED_PRIVATE_KEY]')
+    expect(result.extra.info).toContain('[REDACTED_HEX]')
   })
 
   it('redacts a labeled private key using a colon separator', () => {
@@ -62,7 +62,7 @@ describe('scrubSentryEventSecrets', () => {
     expect(result.message).not.toContain(key)
     // Asserts the labeled rule actually matched (not just the unlabeled bare-hex
     // rule catching the value independently and masking a broken label match).
-    expect(result.message).toContain('privateKey=[REDACTED_PRIVATE_KEY]')
+    expect(result.message).toContain('privateKey=[REDACTED_HEX]')
   })
 
   it('redacts a JSON-quoted labeled seed phrase embedded in a larger non-JSON string, via the labeled rule specifically', () => {

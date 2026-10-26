@@ -1,0 +1,39 @@
+diff --git a/node_modules/ffjavascript/build/browser.esm.js b/node_modules/ffjavascript/build/browser.esm.js
+index 09713f3..606e55d 100644
+--- a/node_modules/ffjavascript/build/browser.esm.js
++++ b/node_modules/ffjavascript/build/browser.esm.js
+@@ -15681,7 +15681,7 @@ let workerSource;
+ 
+ const threadStr = `(${"function thread(self) {\n    const MAXMEM = 32767;\n    let instance;\n    let memory;\n\n    if (self) {\n        self.onmessage = function(e) {\n            let data;\n            if (e.data) {\n                data = e.data;\n            } else {\n                data = e;\n            }\n\n            if (data[0].cmd == \"INIT\") {\n                init(data[0]).then(function() {\n                    self.postMessage(data.result);\n                });\n            } else if (data[0].cmd == \"TERMINATE\") {\n                self.close();\n            } else {\n                const res = runTask(data);\n                self.postMessage(res);\n            }\n        };\n    }\n\n    async function init(data) {\n        const code = new Uint8Array(data.code);\n        const wasmModule = await WebAssembly.compile(code);\n        memory = new WebAssembly.Memory({initial:data.init, maximum: MAXMEM});\n\n        instance = await WebAssembly.instantiate(wasmModule, {\n            env: {\n                \"memory\": memory\n            }\n        });\n    }\n\n\n\n    function alloc(length) {\n        const u32 = new Uint32Array(memory.buffer, 0, 1);\n        while (u32[0] & 3) u32[0]++;  // Return always aligned pointers\n        const res = u32[0];\n        u32[0] += length;\n        if (u32[0] + length > memory.buffer.byteLength) {\n            const currentPages = memory.buffer.byteLength / 0x10000;\n            let requiredPages = Math.floor((u32[0] + length) / 0x10000)+1;\n            if (requiredPages>MAXMEM) requiredPages=MAXMEM;\n            memory.grow(requiredPages-currentPages);\n        }\n        return res;\n    }\n\n    function allocBuffer(buffer) {\n        const p = alloc(buffer.byteLength);\n        setBuffer(p, buffer);\n        return p;\n    }\n\n    function getBuffer(pointer, length) {\n        const u8 = new Uint8Array(memory.buffer);\n        return new Uint8Array(u8.buffer, u8.byteOffset + pointer, length);\n    }\n\n    function setBuffer(pointer, buffer) {\n        const u8 = new Uint8Array(memory.buffer);\n        u8.set(new Uint8Array(buffer), pointer);\n    }\n\n    function runTask(task) {\n        if (task[0].cmd == \"INIT\") {\n            return init(task[0]);\n        }\n        const ctx = {\n            vars: [],\n            out: []\n        };\n        const u32a = new Uint32Array(memory.buffer, 0, 1);\n        const oldAlloc = u32a[0];\n        for (let i=0; i<task.length; i++) {\n            switch (task[i].cmd) {\n            case \"ALLOCSET\":\n                ctx.vars[task[i].var] = allocBuffer(task[i].buff);\n                break;\n            case \"ALLOC\":\n                ctx.vars[task[i].var] = alloc(task[i].len);\n                break;\n            case \"SET\":\n                setBuffer(ctx.vars[task[i].var], task[i].buff);\n                break;\n            case \"CALL\": {\n                const params = [];\n                for (let j=0; j<task[i].params.length; j++) {\n                    const p = task[i].params[j];\n                    if (typeof p.var !== \"undefined\") {\n                        params.push(ctx.vars[p.var] + (p.offset || 0));\n                    } else if (typeof p.val != \"undefined\") {\n                        params.push(p.val);\n                    }\n                }\n                instance.exports[task[i].fnName](...params);\n                break;\n            }\n            case \"GET\":\n                ctx.out[task[i].out] = getBuffer(ctx.vars[task[i].var], task[i].len).slice();\n                break;\n            default:\n                throw new Error(\"Invalid cmd\");\n            }\n        }\n        const u32b = new Uint32Array(memory.buffer, 0, 1);\n        u32b[0] = oldAlloc;\n        return ctx.out;\n    }\n\n\n    return runTask;\n}"})(self)`;
+ {
+-    if(globalThis?.Blob) {
++    if(globalThis?.Blob && typeof URL.createObjectURL === "function") {
+         const threadBytes= new TextEncoder().encode(threadStr);
+         const workerBlob = new Blob([threadBytes], { type: "application/javascript" }) ;
+         workerSource = URL.createObjectURL(workerBlob);
+diff --git a/node_modules/ffjavascript/build/main.cjs b/node_modules/ffjavascript/build/main.cjs
+index 5bb247b..a1cd09e 100644
+--- a/node_modules/ffjavascript/build/main.cjs
++++ b/node_modules/ffjavascript/build/main.cjs
+@@ -4408,7 +4408,7 @@ let workerSource;
+ 
+ const threadStr = `(${thread.toString()})(self)`;
+ if(process.browser) {
+-    if(globalThis?.Blob) {
++    if(globalThis?.Blob && typeof URL.createObjectURL === "function") {
+         const threadBytes= new TextEncoder().encode(threadStr);
+         const workerBlob = new Blob([threadBytes], { type: "application/javascript" }) ;
+         workerSource = URL.createObjectURL(workerBlob);
+diff --git a/node_modules/ffjavascript/src/threadman.js b/node_modules/ffjavascript/src/threadman.js
+index f80901b..5dc49e2 100644
+--- a/node_modules/ffjavascript/src/threadman.js
++++ b/node_modules/ffjavascript/src/threadman.js
+@@ -42,7 +42,7 @@ let workerSource;
+ 
+ const threadStr = `(${thread.toString()})(self)`;
+ if(process.browser) {
+-    if(globalThis?.Blob) {
++    if(globalThis?.Blob && typeof URL.createObjectURL === "function") {
+         const threadBytes= new TextEncoder().encode(threadStr);
+         const workerBlob = new Blob([threadBytes], { type: "application/javascript" }) ;
+         workerSource = URL.createObjectURL(workerBlob);

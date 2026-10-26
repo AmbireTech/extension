@@ -47,7 +47,7 @@ const QrSignRequestScreen = ({
   const { t } = useTranslation()
   const { themeType } = useTheme()
   const { width: windowWidth } = useWindowDimensions()
-  // Same sizing as the accounts sync export sheet: stretch the code to the full width
+  // Same sizing as the app data sync export sheet: stretch the code to the full width
   // available inside the sheet (padded by SPACING_SM on both sides), but cap it on
   // larger devices so it stays centered. The desktop panel has a fixed larger code.
   const qrSize = isMobile

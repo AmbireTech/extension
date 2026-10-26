@@ -20,13 +20,15 @@ const selectAccountStates = (state: AllControllersMappingType['AccountsControlle
 
 const useNetworks = ({
   acc,
-  additionalCheck
+  additionalCheck,
+  allowUndeployedSafeOnChainId
 }: {
   acc?: Account | null
   additionalCheck?: {
     chainIds: bigint[]
     reason: string
   }
+  allowUndeployedSafeOnChainId?: bigint
 }) => {
   const { state: networks } = useController('NetworksController', selectNetworks)
 
@@ -68,8 +70,14 @@ const useNetworks = ({
   }, [additionalCheckChainIdsKey, additionalCheckReason])
 
   const supportedNetworks = useMemo(() => {
-    return getSupportedNetworks(networks, accountStates, acc, knownAdditionalCheck)
-  }, [networks, accountStates, acc, knownAdditionalCheck])
+    return getSupportedNetworks(
+      networks,
+      accountStates,
+      acc,
+      knownAdditionalCheck,
+      allowUndeployedSafeOnChainId
+    )
+  }, [networks, accountStates, acc, knownAdditionalCheck, allowUndeployedSafeOnChainId])
 
   return supportedNetworks
 }

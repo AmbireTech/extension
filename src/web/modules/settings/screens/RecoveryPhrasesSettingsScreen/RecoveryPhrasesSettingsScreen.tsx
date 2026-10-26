@@ -103,10 +103,13 @@ const RecoveryPhraseSettingsScreen = () => {
               account={a}
               withSettings={false}
               isSelectable={false}
+              isOnSecondaryBackground
+              withBadges={false}
               containerStyle={{
                 marginBottom: accIdx < associatedAccounts.length - 1 ? SPACING_TY : 0
               }}
               withKeyType={false}
+              withCopy={false}
             />
           )
         })}
