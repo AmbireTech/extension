@@ -66,7 +66,7 @@ export default function useAccountPersonalize() {
   // screen stays up and shows them as added
   const [addedAccounts, setAddedAccounts] = useState<Account[] | null>(null)
 
-  const { control, getValues, reset } = useForm({
+  const { control, getValues, setValue, reset } = useForm({
     defaultValues: { accounts: accountsToName }
   })
   const { fields } = useFieldArray({ control, name: 'accounts' })
@@ -117,6 +117,17 @@ export default function useAccountPersonalize() {
       )
     })
   }, [accountsToName, isAdding, addedAccounts, getValues, reset])
+
+  // Only renames the account in the form - the names are saved with the accounts on Proceed
+  const handleSaveAccountName = useCallback(
+    async (addr: Account['addr'], label: string) => {
+      const index = getValues('accounts').findIndex((account) => account.addr === addr)
+      if (index === -1) throw new Error('The account to rename is missing from the form')
+
+      setValue(`accounts.${index}.preferences.label`, label)
+    },
+    [getValues, setValue]
+  )
 
   // Where the flow goes on depends on the accounts just added, so the latest one is read
   const goToNextRouteRef = useRef(goToNextRoute)
@@ -174,6 +185,7 @@ export default function useAccountPersonalize() {
     hasBackButton: !isLoading && !isSyncedMode,
     isAdding,
     addedAccounts,
+    handleSaveAccountName,
     handleProceed,
     // A blank title while loading: the header (and its height) shows only with a title or a
     // back arrow

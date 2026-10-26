@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -11,38 +11,25 @@ import SelectNetwork from './SelectNetwork'
 import DashboardSearch from './DashboardSearch'
 import { FloatingBottomBarProps } from './FloatingBottomBar'
 
-const VISIBLE_BOTTOM_OFFSET = 0
-
 const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
   networkFilterTab,
   displayCurrentApp = false,
-  isHidden,
   searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
 
-  const baseBottom = useMemo(() => SPACING + safeBottom, [safeBottom])
-
-  const translateY = useMemo(
-    () => (isHidden ? 60 + safeBottom + SPACING : VISIBLE_BOTTOM_OFFSET),
-    [isHidden, safeBottom]
-  )
-
+  // Hiding it is the carousel's, which moves it together with the overview
   return (
     <View
       style={[
         {
           position: 'absolute',
-          bottom: baseBottom,
+          bottom: SPACING + safeBottom,
           zIndex: 3,
           left: 0,
           width: '100%',
           pointerEvents: 'none',
-          transform: `translateY(${translateY}px)`,
-          transitionProperty: 'transform',
-          transitionDuration: '450ms',
-          transitionTimingFunction: 'cubic-bezier(0.45, 0, 0.55, 1)',
           ...flexbox.center
         } as any
       ]}

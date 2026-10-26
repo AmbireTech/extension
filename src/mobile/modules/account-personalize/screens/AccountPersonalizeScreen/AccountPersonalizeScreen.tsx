@@ -34,6 +34,7 @@ const AccountPersonalizeScreen = () => {
     isLoading,
     hasBackButton,
     isAdding,
+    handleSaveAccountName,
     handleProceed,
     title,
     noAccountsText,
@@ -111,6 +112,7 @@ const AccountPersonalizeScreen = () => {
                   account={field}
                   hasBottomSpacing={index !== fields.length - 1}
                   disableEdit={isAdding}
+                  onSaveName={handleSaveAccountName}
                 />
               ))
             ) : (

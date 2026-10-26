@@ -42,6 +42,7 @@ const AccountPersonalizeScreen = () => {
     hasBackButton,
     isAdding,
     addedAccounts,
+    handleSaveAccountName,
     handleProceed,
     title,
     noAccountsText,
@@ -76,6 +77,7 @@ const AccountPersonalizeScreen = () => {
                     account={account}
                     hasBottomSpacing={index !== addedAccounts.length - 1}
                     disableEdit
+                    onSaveName={handleSaveAccountName}
                   />
                 ))}
               </ScrollView>
@@ -129,6 +131,7 @@ const AccountPersonalizeScreen = () => {
                       account={field}
                       hasBottomSpacing={index !== fields.length - 1}
                       disableEdit={isAdding}
+                      onSaveName={handleSaveAccountName}
                     />
                   ))
                 ) : (
