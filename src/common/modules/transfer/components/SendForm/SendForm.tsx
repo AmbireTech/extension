@@ -21,6 +21,7 @@ import useTheme from '@common/hooks/useTheme'
 import PrivacyPoolsRecipient from '@common/modules/transfer/components/PrivacyPoolsRecipient'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
@@ -108,7 +109,7 @@ const SendForm = ({
 
   useEffect(() => {
     if (!isTopUp) return
-    fetch(`${RELAYER_URL}/gas-tank/assets`)
+    fetchWithRelayerCustomHeaders(`${RELAYER_URL}/gas-tank/assets`)
       .then((r) => r.json())
       .then((assets) => {
         const safeAssets = Array.isArray(assets)
