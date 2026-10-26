@@ -2,10 +2,9 @@ import { parseUnits } from 'ethers'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { LayoutChangeEvent } from 'react-native'
 import { useModalize } from 'react-native-modalize'
-import { SvgProps } from 'react-native-svg'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import LogOutIcon from '@common/assets/svg/LogOutIcon'
+import ExitIcon from '@common/assets/svg/ExitIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
@@ -34,13 +33,6 @@ const selectSelectedType = (state: AllControllersMappingType['SelectedAccountCon
   state.selectedType
 const selectIsPrivacyModeEnabled = (state: AllControllersMappingType['WalletStateController']) =>
   state.isPrivacyModeEnabled
-
-/** The door icon, in the color of an action that cannot be undone. */
-const RagequitIcon = React.memo(({ width }: SvgProps) => {
-  const { theme } = useTheme()
-
-  return <LogOutIcon width={width} height={width} color={theme.errorDecorative} />
-})
 
 /**
  * A Privacy Pools token's details, laid out like the regular token details: for now only the
@@ -124,6 +116,7 @@ const PrivacyPoolsTokenDetailsScreen = () => {
         icon: SendIcon,
         onPress: openSend,
         isDisabled: !canSend,
+        // Only why it is blocked
         tooltipText: canSend
           ? ''
           : t('Nothing is ready to send yet. Deposits can be sent once they are verified.'),
@@ -133,16 +126,17 @@ const PrivacyPoolsTokenDetailsScreen = () => {
       {
         id: 'ragequit',
         text: t('Rage quit'),
-        icon: RagequitIcon,
+        icon: ExitIcon,
+        // The color of an action that cannot be undone
+        iconColor: theme.errorDecorative,
+        strokeWidth: 1.5,
         onPress: openRagequit,
         isDisabled: !canRagequit,
-        tooltipText: canRagequit
-          ? t('Take back a deposit that is still being verified, to the account it came from.')
-          : t('All of it is verified, so use Send to move it.'),
+        tooltipText: canRagequit ? '' : t('All of it is verified, so use Send to move it.'),
         testID: 'privacy-pools-token-ragequit'
       }
     ],
-    [canRagequit, canSend, openRagequit, openSend, t]
+    [canRagequit, canSend, openRagequit, openSend, t, theme.errorDecorative]
   )
 
   if (!balance || !token || !formatted) return null
