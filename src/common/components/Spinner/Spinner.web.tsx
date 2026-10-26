@@ -4,6 +4,7 @@ import LottieView from '@common/components/LottieView'
 
 import SpinnerAnimation from './spinner-animation.json'
 import BlackSpinnerAnimation from './spinner-black-animation.json'
+import DangerSpinnerAnimation from './spinner-danger-animation.json'
 import InfoSpinnerAnimation from './spinner-info-animation.json'
 import WhiteSpinnerAnimation from './spinner-white-animation.json'
 
@@ -12,9 +13,10 @@ const Spinner = ({
   variant = 'gradient'
 }: {
   style?: any
-  variant?: 'gradient' | 'white' | 'info' | 'black'
+  variant?: 'gradient' | 'white' | 'info' | 'black' | 'danger'
 }) => {
   const animation = useMemo(() => {
+    if (variant === 'danger') return DangerSpinnerAnimation
     if (variant === 'white') return WhiteSpinnerAnimation
     if (variant === 'black') return BlackSpinnerAnimation
     if (variant === 'info') return InfoSpinnerAnimation
