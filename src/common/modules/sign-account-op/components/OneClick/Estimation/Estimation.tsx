@@ -27,6 +27,7 @@ import CompactFooterButtons, {
   COMPACT_FEE_TO_BUTTONS_SPACING
 } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
@@ -46,7 +47,7 @@ export type OneClickEstimationProps = {
   errors?: SignAccountOpError[]
   signAccountOpController: ISignAccountOpController | null
   hasProceeded: boolean
-  updateType: 'Swap&Bridge' | 'Transfer&TopUp'
+  updateType: 'Swap&Bridge' | 'Transfer&TopUp' | 'SafeOwnerApproval'
   serviceFee?: SwapAndBridgeRoute['serviceFee']
   shouldShowTxnDetails?: boolean
   Modals: React.ComponentType<ModalsProps>
@@ -57,6 +58,15 @@ const { isRequestWindow, isTab, isSidePanel } = getUiType()
 const isEstimationSheetModal = isTab && !isSidePanel
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
+const ONE_CLICK_MODALS_ACTION_TYPES: Record<
+  OneClickEstimationProps['updateType'],
+  ModalsProps['actionType']
+> = {
+  'Swap&Bridge': 'swapAndBridge',
+  'Transfer&TopUp': 'transfer',
+  SafeOwnerApproval: 'safeOwnerApproval'
+}
 
 const OneClickEstimation = ({
   closeEstimationModal,
@@ -122,7 +132,8 @@ const OneClickEstimation = ({
     signingStep,
     signingAuthSheetRef,
     cancelSigningAuth,
-    signingAuthProps
+    signingAuthProps,
+    showSafeSigners
   } = useSign({
     signAccountOpState: signAccountOpController,
     handleUpdate: updateController,
@@ -213,6 +224,22 @@ const OneClickEstimation = ({
             setIsChooseFeePayerKeyShown(false)
           }}
         />
+        {/* A Safe collects the signatures of its owners before it can be sent */}
+        {!!signAccountOpController.account.safeCreation &&
+          !signAccountOpController.canBroadcast &&
+          showSafeSigners && (
+            <SafeOwners
+              account={signAccountOpController.account}
+              onSign={handleChangeSigningKey}
+              isSignLoading={isSignLoading}
+              signingKeyAddr={signAccountOpController.accountOp.signingKeyAddr}
+              chainId={signAccountOpController.accountOp.chainId.toString()}
+              signed={signAccountOpController.accountOp.signed || []}
+              importedKeys={signAccountOpController.accountKeyStoreKeys}
+              threshold={signAccountOpController.threshold}
+              style={spacings.mb}
+            />
+          )}
         {signAccountOpController?.canBroadcast && (
           <Estimation
             updateType={updateType}
@@ -305,6 +332,7 @@ const OneClickEstimation = ({
     signButtonText,
     holdToSignButtonText,
     signingErrors,
+    showSafeSigners,
     t,
     updateType
   ])
@@ -395,7 +423,7 @@ const OneClickEstimation = ({
               ? 'gas-fee-updated'
               : undefined
         }
-        actionType={updateType === 'Swap&Bridge' ? 'swapAndBridge' : 'transfer'}
+        actionType={ONE_CLICK_MODALS_ACTION_TYPES[updateType]}
       />
     </>
   )

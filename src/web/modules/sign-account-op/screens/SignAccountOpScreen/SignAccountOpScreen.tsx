@@ -21,6 +21,9 @@ import PendingTransactions from '@common/modules/sign-account-op/components/Pend
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
+import SafeOwnerApprovalSheet, {
+  useSafeOwnerApproval
+} from '@common/modules/sign-account-op/components/SafeOwnerApproval'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
@@ -148,6 +151,8 @@ const SignAccountOpScreen = () => {
     hasReachedBottom,
     onSafeSignComplete: handleAddToCart
   })
+  const { approvingOwnerAddr, approvalToReview, startApproval, closeApproval } =
+    useSafeOwnerApproval(signAccountOpState)
 
   const accountOpRequest = useMemo(() => {
     if (currentUserRequest?.kind !== 'calls') return undefined
@@ -329,6 +334,10 @@ const SignAccountOpScreen = () => {
             chainId={signAccountOpState.accountOp.chainId.toString()}
             signed={signAccountOpState.accountOp.signed || []}
             importedKeys={signAccountOpState.accountKeyStoreKeys}
+            smartAccountOwners={signAccountOpState.safeSmartAccountOwners}
+            pendingApprovalOwners={signAccountOpState.pendingSafeOwnerApprovals}
+            approvingOwnerAddr={approvingOwnerAddr}
+            onApprove={startApproval}
             threshold={signAccountOpState.threshold}
             style={isNarrowWebLayout ? spacings.mbXl : spacings.mb}
           />
@@ -399,6 +408,13 @@ const SignAccountOpScreen = () => {
             : undefined
         }
       />
+      {!!approvalToReview && (
+        <SafeOwnerApprovalSheet
+          approval={approvalToReview}
+          onClose={closeApproval}
+          Modals={Modals}
+        />
+      )}
       <TabLayoutContainer
         width="full"
         backgroundColor={theme.primaryBackground}

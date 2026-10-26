@@ -5,6 +5,7 @@ import { View, ViewStyle } from 'react-native'
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
 import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -35,13 +36,14 @@ const OWNERS_LIST_MAX_HEIGHT =
 const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
   address,
   chainId,
-  isDisabled,
+  tooltipText,
   type
 }: {
   address: string
   chainId: bigint
-  isDisabled: boolean
-  type: Key['type']
+  tooltipText: string | null
+  /** `smart` for owners that are smart accounts, `safe` for Safe accounts among them */
+  type: Key['type'] | 'smart' | 'safe'
 }) {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -76,15 +78,19 @@ const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
       ]}
     >
       <View style={spacings.mrTy}>
-        <AccountKeyIcon iconSize={20} type={type} color={theme.neutral600} />
+        {type === 'smart' ? (
+          <WalletIcon width={20} height={20} color={theme.neutral600} />
+        ) : (
+          <AccountKeyIcon iconSize={20} type={type} color={theme.neutral600} />
+        )}
       </View>
       <View
         style={[flexbox.flex1, { minWidth: 0 }]}
         dataSet={
-          isDisabled
+          tooltipText
             ? createGlobalTooltipDataSet({
-                id: `safe-owner-${address}-not-imported-tooltip`,
-                content: t('Not imported')
+                id: `safe-owner-${address}-tooltip`,
+                content: tooltipText
               })
             : undefined
         }
@@ -119,6 +125,7 @@ const SafeOwnerAddress = React.memo(function SafeOwnerAddress({
 
 const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
   state.accountStates
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 const SafeOwners = ({
   account,
@@ -129,6 +136,10 @@ const SafeOwners = ({
   chainId,
   signed = [],
   importedKeys,
+  smartAccountOwners = [],
+  pendingApprovalOwners = [],
+  approvingOwnerAddr = null,
+  onApprove,
   threshold,
   style
 }: {
@@ -140,11 +151,22 @@ const SafeOwners = ({
   chainId: string
   signed: string[]
   importedKeys: Key[]
+  /**
+   * Owners that are smart accounts imported in the wallet. They approve onchain with a
+   * transaction of their own (onApprove). Pass them only where that's supported
+   */
+  smartAccountOwners?: string[]
+  /** Smart account owners whose approval was sent but isn't confirmed yet */
+  pendingApprovalOwners?: string[]
+  /** The smart account owner whose approval the user is going through */
+  approvingOwnerAddr?: string | null
+  onApprove?: (ownerAddr: string) => void
   threshold: number
   style?: ViewStyle
 }) => {
   const { t } = useTranslation()
   const { state: accountStates } = useController('AccountsController', selectAccountStates)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const [ownerAddrToChooseKeyFor, setOwnerAddrToChooseKeyFor] = useState<Key['addr'] | null>(null)
 
   const owners = useMemo(() => {
@@ -153,6 +175,21 @@ const SafeOwners = ({
 
     return state.associatedKeys
       .map((assKey) => {
+        // A smart account owner approves with a transaction of its own instead of a key
+        if (onApprove && smartAccountOwners.includes(assKey)) {
+          const isSafeOwner = !!accounts.find((a) => a.addr === assKey)?.safeCreation
+          return {
+            addr: assKey,
+            type: (isSafeOwner ? 'safe' : 'smart') as Key['type'] | 'smart' | 'safe',
+            hasSigned: signed.includes(assKey),
+            isImported: true,
+            isSmartAccount: true,
+            isApprovalPending: pendingApprovalOwners.includes(assKey),
+            tooltipText: t('Approves with a transaction from this account, which costs a fee'),
+            keys: [] as Key[]
+          }
+        }
+
         // The same owner address can be imported with more than one key type
         // (e.g. an NFC card and a QR signer), so keep all of them
         const ownerKeys = importedKeys.filter((k) => k.addr === assKey)
@@ -160,16 +197,23 @@ const SafeOwners = ({
         if (!firstOwnerKey)
           return {
             addr: assKey,
-            type: 'internal' as Key['type'],
+            type: 'internal' as Key['type'] | 'smart' | 'safe',
             hasSigned: signed.includes(assKey),
             isImported: false,
+            isSmartAccount: false,
+            isApprovalPending: false,
+            tooltipText: t('Not imported'),
             keys: ownerKeys
           }
 
         return {
-          ...firstOwnerKey,
+          addr: assKey,
+          type: firstOwnerKey.type as Key['type'] | 'smart' | 'safe',
           hasSigned: signed.includes(assKey),
           isImported: true,
+          isSmartAccount: false,
+          isApprovalPending: false,
+          tooltipText: null,
           keys: ownerKeys
         }
       })
@@ -178,7 +222,18 @@ const SafeOwners = ({
         if (!a.isImported && b.isImported) return 1
         return 0
       })
-  }, [importedKeys, account.addr, chainId, accountStates, signed])
+  }, [
+    importedKeys,
+    account.addr,
+    chainId,
+    accountStates,
+    signed,
+    accounts,
+    smartAccountOwners,
+    pendingApprovalOwners,
+    onApprove,
+    t
+  ])
 
   const signAndCloseOwnerAddr = useMemo(
     () => getSignAndCloseOwnerAddr(owners, threshold),
@@ -196,13 +251,14 @@ const SafeOwners = ({
 
   // Owners with more than one imported key type must pick which one signs
   const getOwnerSignHandler = useCallback(
-    (owner: { addr: Key['addr']; keys: Key[] }) => {
+    (owner: { addr: Key['addr']; keys: Key[]; isSmartAccount: boolean }) => {
+      if (owner.isSmartAccount) return onApprove
       if (owner.keys.length > 1) return openKeySelect
       if (signAndCloseOwnerAddr === owner.addr && onSignAndClose) return onSignAndClose
 
       return onSign
     },
-    [openKeySelect, signAndCloseOwnerAddr, onSign, onSignAndClose]
+    [openKeySelect, signAndCloseOwnerAddr, onSign, onSignAndClose, onApprove]
   )
 
   const handleChooseKey = useCallback(
@@ -239,16 +295,22 @@ const SafeOwners = ({
             isDisabled={!o.isImported}
             hasSigned={o.hasSigned}
             addr={o.addr}
-            type={o.type}
+            type={o.keys[0]?.type ?? 'internal'}
             shouldSignAndClose={signAndCloseOwnerAddr === o.addr && !!onSignAndClose}
             style={[i === owners.length - 1 ? spacings.mb0 : spacings.mbTy, { width: '100%' }]}
             onSign={getOwnerSignHandler(o)}
-            isSignLoading={isSignLoading && signingKeyAddr === o.addr}
+            isSignLoading={
+              o.isSmartAccount
+                ? // until the user goes back, or the sent approval is confirmed or fails
+                  approvingOwnerAddr === o.addr || o.isApprovalPending
+                : isSignLoading && signingKeyAddr === o.addr
+            }
+            signButtonText={o.isSmartAccount ? t('Approve') : undefined}
           >
             <SafeOwnerAddress
               address={o.addr}
               chainId={BigInt(chainId)}
-              isDisabled={!o.isImported}
+              tooltipText={o.tooltipText}
               type={o.type}
             />
           </SafeKeyWrapper>
