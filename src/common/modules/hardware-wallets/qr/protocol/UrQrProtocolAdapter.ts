@@ -6,9 +6,18 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq/bc-ur-registry-eth'
 
-import { QrProtocolAdapter, QrSignaturePayload } from '@common/modules/hardware-wallets/qr/types'
-import { isSignatureParts, normalizeOriginHdPath, toDecimalUintFields } from '../utils'
-import { QrRequest } from '@ambire-common/interfaces/keystore'
+import {
+  QrProtocolAdapter,
+  QrSignaturePayload,
+  QrSignRequest
+} from '@common/modules/hardware-wallets/qr/types'
+import {
+  exceedsQrRequestSizeLimit,
+  exceedsQrTypedDataDisplayLimits,
+  isSignatureParts,
+  normalizeOriginHdPath,
+  toDecimalUintFields
+} from '../utils'
 
 function normalizeTypedDataForQr(
   typedData: TypedMessageUserRequest['meta']['params']
@@ -83,7 +92,7 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
     masterFingerprint: string
     address?: string
     chainId?: bigint
-  }): Promise<QrRequest> {
+  }): Promise<QrSignRequest> {
     try {
       const strippedHex = stripHexPrefix(args.hex)
 
@@ -116,7 +125,8 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         type: 'sign-message',
         requestId,
         urType: ur.type,
-        urCborHex: ur.cbor.toString('hex')
+        urCborHex: ur.cbor.toString('hex'),
+        isTooLargeForDevice: exceedsQrRequestSizeLimit(ur.cbor.length)
       }
     } catch (e: any) {
       throw new ExternalSignerError(e?.message || 'Failed to build UR sign-message request.', {
@@ -130,7 +140,7 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
     masterFingerprint: string
     derivationPath: string
     address?: string
-  }): Promise<QrRequest> {
+  }): Promise<QrSignRequest> {
     try {
       const normalizedTypedData = normalizeTypedDataForQr(args.typedData)
       const typedDataJson = JSON.stringify(normalizedTypedData)
@@ -159,11 +169,24 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
 
       const ur = request.toUR()
 
+      // TEMP: debug log for the size warning, remove before committing
+      console.log('[QR] typed data request', {
+        primaryType: normalizedTypedData.primaryType,
+        cborBytes: ur.cbor.length,
+        displayBytes: Buffer.byteLength(JSON.stringify(normalizedTypedData.message, null, 2)),
+        isTooLargeForDevice:
+          exceedsQrRequestSizeLimit(ur.cbor.length) ||
+          exceedsQrTypedDataDisplayLimits(normalizedTypedData.message)
+      })
+
       return {
         type: 'sign-typed-data',
         requestId,
         urType: ur.type,
-        urCborHex: ur.cbor.toString('hex')
+        urCborHex: ur.cbor.toString('hex'),
+        isTooLargeForDevice:
+          exceedsQrRequestSizeLimit(ur.cbor.length) ||
+          exceedsQrTypedDataDisplayLimits(normalizedTypedData.message)
       }
     } catch (e: any) {
       throw new ExternalSignerError(e?.message || 'Failed to build UR sign-typed-data request.', {
@@ -179,7 +202,7 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
     address?: string
     chainId?: bigint
     type?: number
-  }): Promise<QrRequest> {
+  }): Promise<QrSignRequest> {
     try {
       const strippedHex = stripHexPrefix(args.txHex)
 
@@ -208,7 +231,8 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         type: 'sign-transaction',
         requestId,
         urType: ur.type,
-        urCborHex: ur.cbor.toString('hex')
+        urCborHex: ur.cbor.toString('hex'),
+        isTooLargeForDevice: exceedsQrRequestSizeLimit(ur.cbor.length)
       }
     } catch (e: any) {
       throw new ExternalSignerError(e?.message || 'Failed to build UR sign-transaction request.', {

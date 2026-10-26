@@ -3,6 +3,17 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
 export type QrSigningStep = 'idle' | 'show-request' | 'scan-response'
 
+/**
+ * A QR signing request as built by the QR protocol adapter.
+ */
+export type QrSignRequest = QrRequest & {
+  /**
+   * Set when the request is larger than what QR hardware wallets like Keystone 3 can show or
+   * scan, so the device will most likely reject it with "Invalid QR Code".
+   */
+  isTooLargeForDevice?: boolean
+}
+
 export type ActiveQrSigningSession = {
   type: 'sign-message' | 'sign-typed-data' | 'sign-transaction'
   request: QrRequest
@@ -27,14 +38,14 @@ export interface QrProtocolAdapter {
     masterFingerprint: string
     address?: string
     chainId?: bigint
-  }): Promise<QrRequest>
+  }): Promise<QrSignRequest>
 
   buildSignTypedDataRequest(args: {
     typedData: TypedMessageUserRequest['meta']['params']
     derivationPath: string
     masterFingerprint: string
     address?: string
-  }): Promise<QrRequest>
+  }): Promise<QrSignRequest>
 
   buildSignTransactionRequest(args: {
     txHex: string
@@ -43,7 +54,7 @@ export interface QrProtocolAdapter {
     address?: string
     chainId?: bigint
     type?: number
-  }): Promise<QrRequest>
+  }): Promise<QrSignRequest>
 
   parseSignatureResponse(
     payload: string | Uint8Array,
