@@ -7,7 +7,7 @@ import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq/bc-ur-registry-eth'
 
 import { QrProtocolAdapter, QrSignaturePayload } from '@common/modules/hardware-wallets/qr/types'
-import { isSignatureParts, normalizeOriginHdPath } from '../utils'
+import { isSignatureParts, normalizeOriginHdPath, toDecimalUintFields } from '../utils'
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 
 function normalizeTypedDataForQr(
@@ -40,12 +40,19 @@ function normalizeTypedDataForQr(
     if (Number.isFinite(parsed)) domain.chainId = parsed
   }
 
+  const primaryType = String((typedData as any).primaryType)
+
   // Keycard parser expects exactly these top-level keys for EIP-712 payloads.
   return {
     types: normalizedTypes,
-    primaryType: String((typedData as any).primaryType),
+    primaryType,
     domain,
-    message: { ...((typedData as any).message || {}) }
+    // Keystone 3 rejects Safe transactions whose numbers are written as hex strings
+    message: toDecimalUintFields(
+      primaryType,
+      { ...((typedData as any).message || {}) },
+      normalizedTypes
+    )
   }
 }
 
