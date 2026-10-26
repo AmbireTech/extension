@@ -84,8 +84,10 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import PQ1Controller from '@web/modules/hardware-wallet/controllers/PQ1Controller'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
+import PQ1Signer from '@web/modules/hardware-wallet/libs/PQ1Signer'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
@@ -414,6 +416,7 @@ const init = async () => {
   })
 
   qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+  const pq1Ctrl = new PQ1Controller(eventEmitterRegistry)
 
   // Retried once, because openAmbireIdb() gives up after a second so a blocked upgrade cannot
   // hang the boot — and this is the only call, so a merely slow open (cold browser start, busy
@@ -478,13 +481,15 @@ const init = async () => {
       ledger: LedgerSigner,
       trezor: TrezorSigner,
       lattice: LatticeSigner,
-      qr: QrHardwareSigner
+      qr: QrHardwareSigner,
+      pq1: PQ1Signer
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
       lattice: latticeCtrl,
-      qr: qrCtrl
+      qr: qrCtrl,
+      pq1: pq1Ctrl
     } as any,
     uiManager: {
       window: {
