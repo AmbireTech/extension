@@ -1,12 +1,42 @@
 import { formatUnits, ZeroAddress } from 'ethers'
 
+import { CallsUserRequestParams } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import { generateUuid } from '@ambire-common/utils/uuid'
 import formatDateTime from '@common/utils/formatDateTime'
 
 import { DisplayBalanceChange, SubmittedAccountOpLike } from './types'
 
 export const MAX_VISIBLE_BALANCE_CHANGES = 3
+
+/**
+ * Builds the request params for repeating a past transaction.
+ * The `swapTxn` of a repeated swap/bridge is not carried over, as it links an account op to its
+ * swap route - when batched, the repeat would replace the `swapTxn` of a swap from the swap form
+ * and that swap would stop being tracked. The activity still shows the repeat as a swap/bridge
+ * by its calls' `activeRouteId`.
+ * The calls get a new route id though, as the past route is matched to calls by it - e.g.
+ * rejecting the repeat would otherwise remove the past route.
+ */
+export const getRepeatTransactionRequestParams = ({
+  calls,
+  chainId,
+  accountAddr
+}: {
+  calls: SubmittedAccountOpLike['calls']
+  chainId: bigint
+  accountAddr: string
+}): CallsUserRequestParams => {
+  const repeatedRouteId = `${generateUuid()}-repeat`
+
+  return {
+    calls: calls.map((call) =>
+      call.activeRouteId ? { ...call, activeRouteId: repeatedRouteId } : call
+    ),
+    meta: { chainId, accountAddr }
+  }
+}
 
 export const isNftBalanceChange = (
   change: DisplayBalanceChange
