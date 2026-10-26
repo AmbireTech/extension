@@ -1,25 +1,19 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
 import CollectionCard from '@common/components/CollectionCard'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
-import useTheme from '@common/hooks/useTheme'
-import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
-import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
-import FloatingBottomBar from '../FloatingBottomBar'
 import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
 
@@ -29,18 +23,11 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 interface Props {
   openTab: TabType
-  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: {
     [key: string]: boolean
   }
-  sessionId: string
-  onScroll?: FlatListProps<any>['onScroll']
   networks: Network[]
   dashboardNetworkFilterName: string | null
-  animatedOverviewHeight: Animated.Value
-  isSearchHidden?: boolean
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 const SEARCH_DEBOUNCE_MS = 200
@@ -60,19 +47,7 @@ const selectDashboardNetworkFilter = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.dashboardNetworkFilter
 
-const Collections: FC<Props> = ({
-  openTab,
-  setOpenTab,
-  initTab,
-  sessionId,
-  onScroll,
-  networks,
-  dashboardNetworkFilterName,
-  animatedOverviewHeight,
-  isSearchHidden,
-  refreshing,
-  onRefresh
-}) => {
+const Collections: FC<Props> = ({ openTab, initTab, networks, dashboardNetworkFilterName }) => {
   const { state: collections } = useController(
     'SelectedAccountController',
     selectPortfolioCollections
@@ -91,7 +66,6 @@ const Collections: FC<Props> = ({
   )
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { t } = useTranslation()
-  const { theme } = useTheme()
   const [selectedCollectible, setSelectedCollectible] = useState<SelectedCollectible | null>(null)
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const inputSearchValue = watch('search')
@@ -141,14 +115,6 @@ const Collections: FC<Props> = ({
 
   const renderItem = useCallback(
     ({ item }: any) => {
-      if (item === 'header') {
-        return (
-          <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
-          </View>
-        )
-      }
-
       if (item === 'empty') {
         return (
           <Text
@@ -202,10 +168,6 @@ const Collections: FC<Props> = ({
       initTab?.collectibles,
       openCollectibleModal,
       networks,
-      theme.primaryBackground,
-      openTab,
-      setOpenTab,
-      sessionId,
       searchValue,
       dashboardNetworkFilterName,
       t,
@@ -224,7 +186,7 @@ const Collections: FC<Props> = ({
     setValue('search', '')
   }, [openTab, setValue])
 
-  // Rendered above the carousel on mobile, so it stays put through a swipe
+  // Rendered by the carousel above the pages, so it stays put through a swipe
   const floatingBar = useMemo(
     () => ({
       control,
@@ -246,9 +208,7 @@ const Collections: FC<Props> = ({
         floatingBar={floatingBar}
         tab="collectibles"
         openTab={openTab}
-        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         data={[
-          ...(isMobile ? [] : ['header']),
           ...(initTab?.collectibles ? filteredPortfolioCollections : []),
           !filteredPortfolioCollections.length && isPortfolioAllReady ? 'empty' : '',
           !isReadyToVisualizeCollections ? 'skeleton' : 'keep-this-to-avoid-key-warning'
@@ -257,16 +217,8 @@ const Collections: FC<Props> = ({
         keyExtractor={keyExtractor}
         initialNumToRender={isPopup ? 4 : 10}
         windowSize={15}
-        animatedOverviewHeight={animatedOverviewHeight}
-        onScroll={onScroll}
         scrollEventThrottle={16}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
       />
-      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
-      {!isMobile && openTab === 'collectibles' && (
-        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
-      )}
     </>
   )
 }

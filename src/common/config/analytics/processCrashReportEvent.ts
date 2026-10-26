@@ -4,6 +4,10 @@ import {
   isSuccessfulRpcStatusCode
 } from '@common/config/analytics/crashReportPolicy'
 import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
+import {
+  CRASH_REPORT_ACCOUNT_TAGS,
+  PRIVACY_POOLS_CONTROLLER_NAME
+} from '@common/constants/crashAnalytics'
 
 import type { ProviderError } from '@ambire-common/classes/ProviderError'
 import type { Event as SentryEvent } from '@sentry/browser'
@@ -43,6 +47,34 @@ const JSON_MESSAGE_SUBSTRING = 'json'
  * service returns during an outage. Other syntax errors, like a BigInt built from a bad string,
  * give false.
  */
+/**
+ * Strips a Privacy Pools event down to the error's type and stack, in place. Privacy Pools errors,
+ * their logs and the requests before them can hold the recipient, amounts or notes, and the user
+ * id or account traits would link them to the install. Any error is treated so while a Privacy
+ * Pools account is selected, as it can come from any controller. A deposit runs from a regular
+ * account, so the controller's own errors are treated so too.
+ */
+export const stripPrivacyPoolsCrashReportEvent = (
+  event: SentryEvent,
+  isPrivacyPoolsAccountSelected: boolean
+) => {
+  const isPrivacyPoolsEvent =
+    isPrivacyPoolsAccountSelected || event.extra?.controllerName === PRIVACY_POOLS_CONTROLLER_NAME
+  if (!isPrivacyPoolsEvent) return
+
+  delete event.breadcrumbs
+  delete event.user
+  Object.values(CRASH_REPORT_ACCOUNT_TAGS).forEach((tagKey) => {
+    delete event.tags?.[tagKey]
+  })
+  delete event.contexts
+  delete event.message
+  delete event.extra
+  event.exception?.values?.forEach((exception) => {
+    delete exception.value
+  })
+}
+
 export const isJsonSyntaxError = (error: unknown): boolean =>
   error instanceof Error &&
   error.name === 'SyntaxError' &&

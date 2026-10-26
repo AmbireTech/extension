@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
+import { TouchableOpacity, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import {
@@ -12,15 +12,12 @@ import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Banner from '@common/components/Banner'
 import HourglassIconAnimated from '@common/components/HourglassIconAnimated'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllerSession from '@common/hooks/useControllerSession'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
-import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -29,7 +26,6 @@ import { openInTab } from '@common/utils/links'
 import { searchWithNetworkName } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
-import FloatingBottomBar from '../FloatingBottomBar'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import { getHasPendingDefiUpdate } from './helpers'
@@ -39,15 +35,9 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 interface Props {
   openTab: TabType
-  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
-  animatedOverviewHeight: Animated.Value
-  isSearchHidden?: boolean
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
@@ -70,18 +60,7 @@ const selectDashboardNetworkFilter = (
 const selectBanners = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.banners
 
-const DeFiPositions: FC<Props> = ({
-  openTab,
-  setOpenTab,
-  initTab,
-  sessionId,
-  onScroll,
-  dashboardNetworkFilterName,
-  animatedOverviewHeight,
-  isSearchHidden,
-  refreshing,
-  onRefresh
-}) => {
+const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetworkFilterName }) => {
   const { t } = useTranslation()
   const { flags } = useController('FeatureFlagsController').state
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
@@ -187,14 +166,6 @@ const DeFiPositions: FC<Props> = ({
 
   const renderItem = useCallback(
     ({ item }: any) => {
-      if (item === 'header') {
-        return (
-          <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
-          </View>
-        )
-      }
-
       if (item === 'banners') {
         return (
           <View style={spacings.mbMi}>
@@ -291,12 +262,8 @@ const DeFiPositions: FC<Props> = ({
     },
     [
       initTab?.defi,
-      theme.primaryBackground,
       theme.linkText,
       theme.infoText,
-      openTab,
-      setOpenTab,
-      sessionId,
       currentAccountBanners,
       searchValue,
       dashboardNetworkFilterName,
@@ -312,7 +279,7 @@ const DeFiPositions: FC<Props> = ({
   }, [])
 
   const dataItems = useMemo(() => {
-    const items: string[] = isMobile ? [] : ['header']
+    const items: string[] = []
 
     if (currentAccountBanners.length > 0) {
       items.push('banners')
@@ -341,36 +308,25 @@ const DeFiPositions: FC<Props> = ({
     isPortfolioAllReady
   ])
 
-  // Rendered above the carousel on mobile, so it stays put through a swipe
+  // Rendered by the carousel above the pages, so it stays put through a swipe
   const floatingBar = useMemo(
     () => ({ control, networkFilterTab: 'defi' as const, searchPlaceholder: t('Search DeFi') }),
     [control, t]
   )
 
   return (
-    <>
-      <DashboardPageScrollContainer
-        floatingBar={floatingBar}
-        tab="defi"
-        openTab={openTab}
-        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
-        data={dataItems}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        onEndReachedThreshold={isPopup ? 5 : 2.5}
-        initialNumToRender={isPopup ? 10 : 20}
-        windowSize={9} // Larger values can cause performance issues.
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        animatedOverviewHeight={animatedOverviewHeight}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-      />
-      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
-      {!isMobile && openTab === 'defi' && (
-        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
-      )}
-    </>
+    <DashboardPageScrollContainer
+      floatingBar={floatingBar}
+      tab="defi"
+      openTab={openTab}
+      data={dataItems}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      onEndReachedThreshold={isPopup ? 5 : 2.5}
+      initialNumToRender={isPopup ? 10 : 20}
+      windowSize={9} // Larger values can cause performance issues.
+      scrollEventThrottle={16}
+    />
   )
 }
 

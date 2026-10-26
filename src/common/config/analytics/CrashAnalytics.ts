@@ -22,6 +22,8 @@ import CONFIG, {
 import {
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
   CRASH_REPORT_CONTENT,
+  CRASH_REPORT_ID_STORAGE_KEY,
+  CRASH_REPORT_ID_UNASSIGNED,
   TURBO_MODULE_CONTEXT_INTEGRATION_NAME
 } from '@common/constants/crashAnalytics'
 // This file only runs on mobile, the extension and the websites resolve CrashAnalytics.web.ts
@@ -44,6 +46,9 @@ let isCrashAnalyticsEnabled = getStorageValueSync(
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
   CRASH_ANALYTICS_ENABLED_DEFAULT
 )
+
+// Kept here because `beforeSend` has no access to the controllers
+let isPrivacyPoolsAccountSelected = false
 
 /** Why crash reporting can't start in this build. Null when only the user's choice decides it. */
 export const crashAnalyticsUnavailableReason = getCrashAnalyticsUnavailableReason({
@@ -73,12 +78,27 @@ if (!crashAnalyticsUnavailableReason && isCrashAnalyticsEnabled) {
     // crashes, unscrubbed.
     integrations: (defaultIntegrations) =>
       excludeIntegrationsByName(defaultIntegrations, [TURBO_MODULE_CONTEXT_INTEGRATION_NAME]),
+    initialScope: {
+      user: {
+        id: getStorageValueSync(CRASH_REPORT_ID_STORAGE_KEY, '') || CRASH_REPORT_ID_UNASSIGNED
+      }
+    },
     beforeBreadcrumb: filterCrashReportBreadcrumb,
     beforeSend: (event, hint) =>
-      processMobileCrashReportEvent(event, hint.originalException, isCrashAnalyticsEnabled)
+      processMobileCrashReportEvent(
+        event,
+        hint.originalException,
+        isCrashAnalyticsEnabled,
+        isPrivacyPoolsAccountSelected
+      )
   })
 
   logSentryDeliveryWhenTesting(Sentry.getClient())
+}
+
+/** Tells `beforeSend` whether a Privacy Pools account is selected, so it strips those reports. */
+export const syncPrivacyPoolsAccountSelected = (isSelected: boolean) => {
+  isPrivacyPoolsAccountSelected = isSelected
 }
 
 /**
@@ -123,9 +143,12 @@ export const captureWebViewMessage = (
   captureContext?: CrashReportCaptureContext
 ) => Sentry.captureMessage(message, withContentTag(CRASH_REPORT_CONTENT.WEBVIEW, captureContext))
 
-export const setUserContext = Sentry.setUser
-
-export const setExtraContext = Sentry.setExtra
+/**
+ * Puts the crash report id on later reports, native crashes included. Without a user id the
+ * native SDKs fill in an install id of their own, so a fixed placeholder is set when there is no id.
+ */
+export const setCrashReportId = (crashReportId: string | null) =>
+  Sentry.setUser({ id: crashReportId || CRASH_REPORT_ID_UNASSIGNED })
 
 /** Sets a tag on every later report, native crashes included, since it's synced to the native layer. */
 export const setTagContext = Sentry.setTag
