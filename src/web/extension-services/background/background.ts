@@ -15,7 +15,6 @@ import { EventEmitterRegistryController } from '@ambire-common/controllers/event
 import { MainController } from '@ambire-common/controllers/main/main'
 import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
-import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
@@ -25,17 +24,23 @@ import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
 import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import wait from '@ambire-common/utils/wait'
 import {
+  createCrashReportAccountTagsSync,
   excludeIntegrationsByName,
-  getCrashReportAccountAddr,
-  getCrashReportUserId,
+  getCrashReportAccountTags,
   getReportableAction,
   logSentryDeliveryWhenTesting,
   reportControllerError
 } from '@common/config/analytics/crashReportHelpers'
-import { processCrashReportEvent } from '@common/config/analytics/processCrashReportEvent'
+import {
+  processCrashReportEvent,
+  stripPrivacyPoolsCrashReportEvent
+} from '@common/config/analytics/processCrashReportEvent'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
-import { CULTURE_CONTEXT_INTEGRATION_NAME } from '@common/constants/crashAnalytics'
+import {
+  CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS,
+  CULTURE_CONTEXT_INTEGRATION_NAME
+} from '@common/constants/crashAnalytics'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
@@ -101,8 +106,8 @@ import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 import {
   captureBackgroundException,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
-  setBackgroundExtraContext,
-  setBackgroundUserContext
+  setBackgroundCrashReportId,
+  setBackgroundTagContext
 } from './CrashAnalytics'
 import { sendCriticalControllerStates } from './criticalControllerStates'
 
@@ -164,7 +169,7 @@ function stateDebug(
  */
 const IDB_OPEN_ATTEMPTS = 2
 
-const PRIVACY_POOLS_CONTROLLER_NAME = 'PrivacyPoolsController'
+const syncCrashReportAccountTags = createCrashReportAccountTagsSync(setBackgroundTagContext)
 
 let isInitialized = false
 const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
@@ -193,24 +198,10 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
       const processedEvent = processCrashReportEvent(event, hint.originalException)
       if (!processedEvent) return null
 
-      // Privacy Pools errors, their logs and the requests before them can hold the recipient,
-      // amounts or notes, and the user ID would link them to the install, so only the error's
-      // type and stack are sent. Any error is treated so while a Privacy Pools account is
-      // selected, as it can come from any controller. A deposit runs from a regular account,
-      // so the controller's own errors are treated so too.
-      const isPrivacyPoolsEvent =
-        mainCtrl?.selectedAccount.selectedType === 'privacyPools' ||
-        processedEvent.extra?.controllerName === PRIVACY_POOLS_CONTROLLER_NAME
-      if (isPrivacyPoolsEvent) {
-        delete processedEvent.breadcrumbs
-        delete processedEvent.user
-        delete processedEvent.contexts
-        delete processedEvent.message
-        delete processedEvent.extra
-        processedEvent.exception?.values?.forEach((exception) => {
-          delete exception.value
-        })
-      }
+      stripPrivacyPoolsCrashReportEvent(
+        processedEvent,
+        mainCtrl?.selectedAccount.selectedType === 'privacyPools'
+      )
 
       // We don't want to miss errors that occur before the controllers are initialized.
       // processCrashReportEvent has already scrubbed it -- only the crashAnalyticsEnabled gate below,
@@ -403,9 +394,6 @@ const init = async () => {
           if (ctrl.name === 'KeystoreController') {
             const keystoreCtrl = ctrl as IKeystoreController
             if (keystoreCtrl.isReadyToStoreKeys) {
-              setBackgroundUserContext({
-                id: getCrashReportUserId(keystoreCtrl, mainCtrl.invite.verifiedCode)
-              })
               if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
               } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
@@ -416,12 +404,19 @@ const init = async () => {
             }
           }
 
-          if (ctrl.name === 'SelectedAccountController') {
-            const accountAddr = getCrashReportAccountAddr(ctrl as ISelectedAccountController)
+          if (ctrl.name === 'WalletStateController') {
+            setBackgroundCrashReportId((ctrl as WalletStateController).crashReportId)
+          }
 
-            if (accountAddr) {
-              setBackgroundExtraContext('account', accountAddr)
-            }
+          if (CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS.includes(ctrl.name)) {
+            syncCrashReportAccountTags(
+              getCrashReportAccountTags({
+                selectedAccount: mainCtrl.selectedAccount.account,
+                accountStates: mainCtrl.accounts.accountStates,
+                keys: mainCtrl.keystore.keys,
+                accounts: mainCtrl.accounts.accounts
+              })
+            )
           }
         }, 'background')
       }

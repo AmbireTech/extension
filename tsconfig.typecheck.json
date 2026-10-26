@@ -28,8 +28,6 @@
     "jest.config.js",
     "index.js",
     "src/ambire-common/**/*",
-    "src/benzin/**/*",
-    "src/legends/**/*",
     "e2e-playwright-tests/**/*"
   ]
 }

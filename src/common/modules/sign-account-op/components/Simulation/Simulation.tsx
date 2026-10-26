@@ -2,10 +2,13 @@ import { isHexString } from 'ethers'
 import React, { FC, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
+import { WARNINGS } from '@ambire-common/consts/signAccountOp/errorHandling'
 import { Network } from '@ambire-common/interfaces/network'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
@@ -245,6 +248,18 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     network?.rpcNoStateOverride
   ])
 
+  const hasSignificantBalanceDecrease = useMemo(
+    () =>
+      !!signAccountOpState?.banners.some(
+        (banner) => banner.id === WARNINGS.significantBalanceDecrease.id
+      ),
+    [signAccountOpState?.banners]
+  )
+  // The warning is about the assets leaving the account, so it's shown only on the "Assets out"
+  // card - without a simulation that has assets out, there's nothing to attach it to
+  const isBalanceDecreaseShownOnAssetsOut =
+    hasSignificantBalanceDecrease && simulationView === 'changes' && hasAssetsOut
+
   useEffect(() => {
     if (simulationView && !initialSimulationLoaded) {
       setInitialSimulationLoaded(true)
@@ -260,13 +275,39 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
               style={[
                 styles.simulationContainer,
                 !isCompactLayout && styles.simulationContainerWide,
+                isBalanceDecreaseShownOnAssetsOut && styles.simulationContainerWarning,
                 hasAssetsIn && (isCompactLayout ? spacings.mbTy : spacings.mrTy)
               ]}
             >
-              <View style={styles.simulationContainerHeader}>
-                <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
-                  {t('Assets out')}
-                </Text>
+              <View
+                style={[
+                  styles.simulationContainerHeader,
+                  isBalanceDecreaseShownOnAssetsOut && styles.simulationContainerHeaderWarning
+                ]}
+              >
+                {isBalanceDecreaseShownOnAssetsOut ? (
+                  <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+                    <WarningIcon width={16} height={16} color={theme.warningDecorative} />
+                    <Text
+                      fontSize={14}
+                      weight="semiBold"
+                      color={theme.warningText}
+                      numberOfLines={1}
+                      style={[spacings.mlMi, flexbox.flex1]}
+                    >
+                      {t('Assets out · large decrease')}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text
+                    fontSize={14}
+                    weight="semiBold"
+                    appearance="secondaryText"
+                    numberOfLines={1}
+                  >
+                    {t('Assets out')}
+                  </Text>
+                )}
                 {!hasAssetsIn && <TenderlySimulation />}
               </View>
               <ScrollableWrapper
@@ -309,6 +350,20 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                   )
                   .flat()}
               </ScrollableWrapper>
+              {isBalanceDecreaseShownOnAssetsOut && (
+                <View style={styles.simulationWarningFooter}>
+                  <InfoIcon width={14} height={14} color={theme.warningText} />
+                  <Text
+                    fontSize={12}
+                    color={theme.warningText}
+                    style={[spacings.mlTy, flexbox.flex1]}
+                  >
+                    {t(
+                      'May be inaccurate when moving funds to another network or providing liquidity.'
+                    )}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
           {hasAssetsIn && (

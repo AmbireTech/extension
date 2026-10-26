@@ -104,6 +104,13 @@ textarea[data-seed-phrase-input='true']::selection {
   border-radius: 13px;
 }
 
+/* The dashboard pages hide their scrollbars while the carousel moves between them, and show
+   them again once it settles on one. Transparent rather than removed, so nothing is laid out again */
+[data-pager-moving='true'] ::-webkit-scrollbar-track,
+[data-pager-moving='true'] ::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
 .button-icon g,
 .button-icon path {
   transition:

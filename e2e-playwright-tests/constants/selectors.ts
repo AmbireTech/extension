@@ -34,8 +34,9 @@ const selectors = {
     viewOnlyBtnImport: 'view-only-button-import',
     importBtn: 'import-button',
     openDashboardButton: 'onboarding-completed-open-dashboard-btn',
-    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0', // same id used for clearing input field; after edit for checking confirmation pill 'Save'
+    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0', // opens the edit account name modal
     editAccountNameInputField: 'edit-name-field-0',
+    saveFirstAccNameButton: 'edit-name-field-0-save-button',
     saveAndContinueBtn: 'button-save-and-continue',
     hdPathLegerLive: 'hd-path-option-ledger-live',
     changeHDPathButton: 'change-hd-path-btn',

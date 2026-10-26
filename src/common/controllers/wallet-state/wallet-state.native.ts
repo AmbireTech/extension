@@ -1,10 +1,14 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
+import { nanoid } from 'nanoid'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { Storage } from '@ambire-common/interfaces/storage'
 import { CRASH_ANALYTICS_ENABLED_DEFAULT } from '@common/config/analytics/CrashAnalytics'
 import { APP_VERSION } from '@common/config/env'
-import { CRASH_ANALYTICS_ENABLED_STORAGE_KEY } from '@common/constants/crashAnalytics'
+import {
+  CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
+  CRASH_REPORT_ID_STORAGE_KEY
+} from '@common/constants/crashAnalytics'
 import { THEME_TYPES } from '@common/styles/theme/types'
 import { ThemeType } from '@common/styles/themeConfig'
 import { DEFAULT_LOG_LEVEL, LOG_LEVELS, setLoggerInstanceLogLevel } from '@common/utils/logger'
@@ -31,6 +35,12 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
   logLevel: LOG_LEVELS = DEFAULT_LOG_LEVEL
 
   crashAnalyticsEnabled: boolean = CRASH_ANALYTICS_ENABLED_DEFAULT
+
+  /**
+   * The random id that tags this install's crash reports, so support can find them when the user
+   * shares it. It is null while crash analytics is off, and it changes each time it is turned on.
+   */
+  crashReportId: string | null = null
 
   // Holds the initial load promise, so that one can wait until it completes
   initialLoadPromise: Promise<void>
@@ -82,6 +92,12 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
       CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
       this.crashAnalyticsEnabled
     )
+    this.crashReportId = await this.#storage.get(CRASH_REPORT_ID_STORAGE_KEY, null)
+    // Installs that had crash analytics on before the id existed get theirs here
+    if (this.crashAnalyticsEnabled && !this.crashReportId) {
+      this.crashReportId = nanoid()
+      await this.#persistCrashReportId()
+    }
 
     this.isReady = true
     this.emitUpdate()
@@ -114,11 +130,23 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
     this.emitUpdate()
   }
 
+  async #persistCrashReportId() {
+    if (!this.crashReportId) {
+      await this.#storage.remove(CRASH_REPORT_ID_STORAGE_KEY)
+      return
+    }
+
+    await this.#storage.set(CRASH_REPORT_ID_STORAGE_KEY, this.crashReportId)
+  }
+
   async setCrashAnalytics(enabled: boolean) {
     this.crashAnalyticsEnabled = enabled
+    // Turning it on always gives a new id, so toggling off and on resets it
+    this.crashReportId = enabled ? nanoid() : null
     this.emitUpdate()
 
     await this.#storage.set(CRASH_ANALYTICS_ENABLED_STORAGE_KEY, enabled)
+    await this.#persistCrashReportId()
   }
 
   async togglePrivacyMode() {

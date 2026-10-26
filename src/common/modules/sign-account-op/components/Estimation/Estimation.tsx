@@ -9,9 +9,15 @@ import {
   EstimationStatus
 } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import { FeeSpeed, SpeedCalc, Warning } from '@ambire-common/interfaces/signAccountOp'
+import {
+  FeeSpeed,
+  SigningStatus,
+  SpeedCalc,
+  Warning
+} from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
+import { getMinReplacementFees } from '@ambire-common/libs/gasPrice/speedUp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
@@ -25,6 +31,7 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { RenderSelectedOptionParams, SelectValue } from '@common/components/Select/types'
@@ -41,6 +48,7 @@ import EstimationSkeleton from '@common/modules/sign-account-op/components/Estim
 import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
+import SpeedUpFeeComparison from '@common/modules/sign-account-op/components/Estimation/components/SpeedUpFeeComparison'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -557,6 +565,13 @@ const Estimation = ({
     return mappedFeeOption
   }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts, isViewOnly])
 
+  const speedUpMeta = signAccountOpState?.accountOp.meta?.speedUp
+  const speedUpMinFees = useMemo(() => {
+    if (!speedUpMeta?.enabled || !speedUpMeta.replacedFees) return undefined
+
+    return getMinReplacementFees(speedUpMeta.replacedFees)
+  }, [speedUpMeta])
+
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
   }, [signAccountOpState?.warnings])
@@ -595,8 +610,19 @@ const Estimation = ({
   // The fee token select needs the opposite fill of what it sits on to stay visible
   const selectBackgroundColor =
     isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground
+  // The replacement must be paid the same way as the pending transaction it replaces
+  const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled
+  // Not compared once the speed up is no longer needed, as the new fee won't be paid
+  const speedUpOriginalFeeAmount =
+    speedUpMeta?.enabled && signAccountOpState?.status?.type !== SigningStatus.SpeedUpNotNeeded
+      ? speedUpMeta.replacedFees?.amount
+      : undefined
+  const selectedFeeSpeedAmount = feeSpeeds.find(
+    (speed) => speed.type === signAccountOpState?.selectedFeeSpeed
+  )?.amount
   const isFeeTokenSelectDisabled =
     disabled ||
+    isFeeTokenLockedBySpeedUp ||
     (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
     (!signAccountOpState?.selectedOption && !isSafeFeePayerChoiceRequired)
 
@@ -672,6 +698,10 @@ const Estimation = ({
     return t('Network fee')
   }, [signAccountOpState?.canAccountBroadcastByItself, t])
 
+  // A fee set in the advanced options is used for every speed, so picking one changes nothing
+  const isFeeSpeedLockedByCustomGasPrices = !!signAccountOpState?.hasCustomGasPrices
+  const isFeeSpeedSelectDisabled = !!disabled || isFeeSpeedLockedByCustomGasPrices
+
   const renderFeeSpeedSelectedOption = useCallback(
     ({ toggleMenu, isMenuOpen, selectRef }: RenderSelectedOptionParams) => {
       if (!selectedFee) return null
@@ -679,8 +709,12 @@ const Estimation = ({
       return (
         <HoverablePressable
           onPress={toggleMenu}
-          disabled={disabled}
-          style={[flexbox.directionRow, flexbox.alignCenter, disabled && { opacity: 0.6 }]}
+          disabled={isFeeSpeedSelectDisabled}
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            isFeeSpeedSelectDisabled && { opacity: 0.6 }
+          ]}
           testID="fee-speed-select-trigger"
         >
           <View ref={selectRef} style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -704,35 +738,46 @@ const Estimation = ({
         </HoverablePressable>
       )
     },
-    [disabled, selectedFee, t]
+    [isFeeSpeedSelectDisabled, selectedFee, t]
   )
 
   const renderFeeSpeedSelect = useCallback(() => {
     if (!selectedFee) return null
 
     return (
-      <Select
-        value={selectedFee}
-        // @ts-expect-error TODO: types mismatch
-        setValue={onFeeSelect}
-        options={feeSpeedOptions}
-        renderSelectedOption={renderFeeSpeedSelectedOption}
-        menuOptionHeight={isWeb ? 40 : undefined}
-        // Grows the menu to the left, as the select sits at the right of the row.
-        // Wider still if the fee token price is unavailable as the token amount takes up more space
-        menuLeftHorizontalOffset={
-          FEE_SPEED_MENU_EXTRA_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
-        }
-        menuPosition="top"
-        bottomSheetTitle={t('Transaction speed')}
-        withSearch={false}
-        containerStyle={{ ...spacings.mb0, width: 'auto' }}
-        disabled={disabled}
-        testID="fee-speed-select"
-      />
+      <View
+        dataSet={createGlobalTooltipDataSet({
+          id: 'fee-speed-select-custom-gas-prices',
+          content: t(
+            'You set the fee yourself in the advanced options, so the same fee is used for every speed'
+          ),
+          hidden: !isFeeSpeedLockedByCustomGasPrices
+        })}
+      >
+        <Select
+          value={selectedFee}
+          // @ts-expect-error TODO: types mismatch
+          setValue={onFeeSelect}
+          options={feeSpeedOptions}
+          renderSelectedOption={renderFeeSpeedSelectedOption}
+          menuOptionHeight={isWeb ? 40 : undefined}
+          // Grows the menu to the left, as the select sits at the right of the row.
+          // Wider still if the fee token price is unavailable as the token amount takes up more space
+          menuLeftHorizontalOffset={
+            FEE_SPEED_MENU_EXTRA_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
+          }
+          menuPosition="top"
+          bottomSheetTitle={t('Transaction speed')}
+          withSearch={false}
+          containerStyle={{ ...spacings.mb0, width: 'auto' }}
+          disabled={isFeeSpeedSelectDisabled}
+          testID="fee-speed-select"
+        />
+      </View>
     )
   }, [
-    disabled,
+    isFeeSpeedLockedByCustomGasPrices,
+    isFeeSpeedSelectDisabled,
     feeSpeedOptions,
     feeTokenPriceUnavailableWarning,
     onFeeSelect,
@@ -828,6 +873,7 @@ const Estimation = ({
         }
         selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
+        speedUpMinFees={speedUpMinFees}
       />
       <View>
         {!isViewOnly && (
@@ -872,25 +918,42 @@ const Estimation = ({
           )}
         </View>
       </View>
-      <SectionedSelect
-        setValue={setFeeOption}
-        testID="fee-option-select"
-        headerHeight={FEE_SECTION_LIST_MENU_HEADER_HEIGHT}
-        sections={feeOptionSelectSections}
-        renderSectionHeader={renderFeeOptionSectionHeader}
-        containerStyle={spacings.mb0}
-        value={
-          payValue || (isSafeFeePayerChoiceRequired ? chooseSafeFeePayerOption : NO_FEE_OPTIONS)
-        }
-        disabled={isFeeTokenSelectDisabled}
-        selectStyle={{ backgroundColor: selectBackgroundColor, ...spacings.phSm }}
-        defaultValue={payValue ?? undefined}
-        withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
-        stickySectionHeadersEnabled
-        menuPosition="top"
-        bottomSheetTitle={t('Network fee')}
-      />
+      <View
+        dataSet={createGlobalTooltipDataSet({
+          id: 'fee-option-select-speed-up-locked',
+          content: t('To speed up, the fee is paid the same way as your original transaction'),
+          hidden: !isFeeTokenLockedBySpeedUp
+        })}
+      >
+        <SectionedSelect
+          setValue={setFeeOption}
+          testID="fee-option-select"
+          headerHeight={FEE_SECTION_LIST_MENU_HEADER_HEIGHT}
+          sections={feeOptionSelectSections}
+          renderSectionHeader={renderFeeOptionSectionHeader}
+          containerStyle={spacings.mb0}
+          value={
+            payValue || (isSafeFeePayerChoiceRequired ? chooseSafeFeePayerOption : NO_FEE_OPTIONS)
+          }
+          disabled={isFeeTokenSelectDisabled}
+          selectStyle={{ backgroundColor: selectBackgroundColor, ...spacings.phSm }}
+          defaultValue={payValue ?? undefined}
+          withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
+          stickySectionHeadersEnabled
+          menuPosition="top"
+          bottomSheetTitle={t('Network fee')}
+        />
+      </View>
       {notLinkedToSafeWarning}
+      {speedUpOriginalFeeAmount !== undefined &&
+        selectedFeeSpeedAmount !== undefined &&
+        !!signAccountOpState.selectedOption && (
+          <SpeedUpFeeComparison
+            token={signAccountOpState.selectedOption.token}
+            originalAmount={speedUpOriginalFeeAmount}
+            newAmount={selectedFeeSpeedAmount}
+          />
+        )}
       <DefaultFeeSelector
         networkName={network?.name}
         payValue={payValue}
