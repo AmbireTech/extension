@@ -177,8 +177,14 @@ export default function useAccountPersonalize() {
     goToNextRouteRef.current = goToNextRoute
   }, [goToNextRoute])
 
+  // The button disables on re-render, so a second press landing before it would add the
+  // accounts twice - a ref, as it is set before that render
+  const isProceedingRef = useRef(false)
+
   const handleProceed = useCallback(async () => {
-    if (isAdding) return
+    if (isProceedingRef.current) return
+    // Left set after a sync, as the screen moves on or shows them as added
+    isProceedingRef.current = true
 
     const namedAccounts = getValues('accounts')
     const names = namedAccounts.map(({ addr, preferences }) => ({ addr, preferences }))
@@ -207,10 +213,10 @@ export default function useAccountPersonalize() {
       // The controller reports its own failures, here the button only becomes usable again
       console.error('Failed to add the accounts', error)
     } finally {
+      isProceedingRef.current = false
       setIsAdding(false)
     }
   }, [
-    isAdding,
     isSyncedMode,
     getValues,
     accountsDispatch,
