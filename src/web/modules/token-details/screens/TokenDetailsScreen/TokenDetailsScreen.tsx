@@ -78,8 +78,11 @@ const TokenDetailsScreen = () => {
         contentContainerStyle={[
           flexbox.flex1,
           spacings.phSm,
-          // In a narrow view the footer sits under the content, so no space has to be reserved for it
-          !isNarrowWebLayout && { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 124 }
+          // In a narrow view the footer sits under the content, so no space has to be reserved for it.
+          // Otherwise reserve the footer's height, its bottom offset (SPACING_SM) and a visible gap above it.
+          !isNarrowWebLayout && {
+            paddingBottom: footerHeight ? footerHeight + SPACING_SM * 2 : 124
+          }
         ]}
       >
         <HideTokenModal

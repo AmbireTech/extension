@@ -46,6 +46,8 @@ interface Props extends InputProps {
   // When provided, a scan icon is shown that opens a camera QR scanner
   // (mobile only) and passes the scanned address back. No-op on web.
   onScanAddress?: (address: string) => void
+  // Shortens the address of the entered contact, for a container too narrow to fit a full one.
+  plainAddressMaxLength?: number
 }
 
 const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
@@ -67,6 +69,7 @@ const AddressInput: React.FC<Props> = ({
   value,
   renderConfirmAddress,
   onScanAddress,
+  plainAddressMaxLength,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -208,6 +211,7 @@ const AddressInput: React.FC<Props> = ({
                 }}
                 address={address}
                 addressHighlight={addressHighlight}
+                plainAddressMaxLength={plainAddressMaxLength}
                 name={
                   (contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name ||
                     resolvedDomainName) ??

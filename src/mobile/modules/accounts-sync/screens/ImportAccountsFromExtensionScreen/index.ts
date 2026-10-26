@@ -1,3 +1,0 @@
-import ImportAccountsFromExtensionScreen from './ImportAccountsFromExtensionScreen'
-
-export default ImportAccountsFromExtensionScreen

@@ -50,4 +50,16 @@ const formatResultTime = (timeInMs: number) => {
   return `${timeInMs}ms`
 }
 
-export { getCellStyle, getTimeAgo, formatResultTime }
+/** Formats a duration as `840ms`, `12.4s` or `3m 05s`. */
+const formatSyncDuration = (timeInMs: number) => {
+  if (timeInMs < 1000) return `${timeInMs}ms`
+  if (timeInMs < 60_000) return `${(timeInMs / 1000).toFixed(1)}s`
+
+  const totalSeconds = Math.round(timeInMs / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`
+}
+
+export { getCellStyle, getTimeAgo, formatResultTime, formatSyncDuration }

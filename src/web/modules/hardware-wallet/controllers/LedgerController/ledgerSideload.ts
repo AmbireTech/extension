@@ -11,7 +11,13 @@ import {
 import { speculosTransportFactory } from '@ledgerhq/device-transport-kit-speculos'
 import { webHidTransportFactory } from '@ledgerhq/device-transport-kit-web-hid'
 
-import { getInstallErrorMessage, isSuccessStatusWord, parseLedgerAppApdus } from './ledgerAppLoader'
+import {
+  getInstallErrorMessage,
+  getLoadScriptApiLevel,
+  getOsMismatchMessage,
+  isSuccessStatusWord,
+  parseLedgerAppApdus
+} from './ledgerAppLoader'
 import {
   ecdhSharedSecret,
   LedgerScp,
@@ -151,6 +157,17 @@ export const installLedgerApp = async (
     onProgress('confirmingInstall', 0)
     const versionInfo = await exchange(INS_GET_VERSION)
     const targetId = new Uint8Array(versionInfo.slice(0, 4))
+
+    // The same response carries the OS version (`targetId | serialize(osVersion) | ...`),
+    // so an OS mismatch is caught before any on-device prompt.
+    const [osVersionBytes] = unserialize(versionInfo.slice(4))
+    const osMismatchMessage = getOsMismatchMessage(
+      connectedModel,
+      new TextDecoder().decode(osVersionBytes),
+      getLoadScriptApiLevel(commands)
+    )
+    if (osMismatchMessage) throw new ExternalSignerError(osMismatchMessage)
+
     await exchange(INS_VALIDATE_TARGET_ID, targetId)
 
     // 2) SCP v2 mutual authentication. With no custom CA we present a fresh

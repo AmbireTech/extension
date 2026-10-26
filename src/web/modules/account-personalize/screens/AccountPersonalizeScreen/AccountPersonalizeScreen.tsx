@@ -42,6 +42,7 @@ const AccountPersonalizeScreen = () => {
     accountsToPersonalize,
     accounts,
     handleSave,
+    handleSaveAccountName,
     handleComplete,
     handleContactSupport
   } = useAccountPersonalize()
@@ -115,7 +116,7 @@ const AccountPersonalizeScreen = () => {
                       index={index}
                       account={acc}
                       hasBottomSpacing={index !== fields.length - 1}
-                      onSave={handleSave as any}
+                      onSaveName={handleSaveAccountName}
                       disableEdit={!!completed}
                     />
                   ))}

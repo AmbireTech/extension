@@ -82,7 +82,7 @@ const AddressBookSettingsScreen = () => {
           control={control}
           containerStyle={spacings.mbTy}
         />
-        <ScrollableWrapper style={flexbox.flex1}>
+        <ScrollableWrapper style={flexbox.flex1} keyboardDismissMode="on-drag">
           {walletAccountsSourcedContacts.length > 0 ? (
             <View style={spacings.mbSm}>
               <TitleAndIcon

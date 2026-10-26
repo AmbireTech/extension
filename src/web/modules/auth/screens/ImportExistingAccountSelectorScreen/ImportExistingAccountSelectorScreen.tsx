@@ -6,6 +6,7 @@ import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -129,6 +130,13 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(WEB_ROUTES.ledgerConnect)
         },
         icon: LedgerBadgeIcon
+      },
+      {
+        title: t('OneKey'),
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.oneKeyConnect)
+        },
+        icon: OneKeyIcon
       },
       {
         title: 'Grid Plus',

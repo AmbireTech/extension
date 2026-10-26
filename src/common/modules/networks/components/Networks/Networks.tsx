@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useNetworksBalances from '@common/modules/networks/hooks/useNetworksBalances'
 import spacings from '@common/styles/spacings'
 import { compareChainIdsByBalance } from '@common/utils/sorting'
 
@@ -25,9 +26,7 @@ const Networks = ({
   onPress: (chainId: bigint | string) => void
 }) => {
   const { state: networks } = useController('NetworksController', selectNetworks)
-  const {
-    state: { account, portfolio }
-  } = useController('SelectedAccountController')
+  const { isAccountSelected, chainIds, balancePerNetwork } = useNetworksBalances()
 
   // Use this map to avoid searching the network name for every network using find
   const networkChainIdToNameMap = useMemo(() => {
@@ -39,14 +38,14 @@ const Networks = ({
   }, [networks])
 
   const filteredAndSortedPortfolio = useMemo(() => {
-    const nonInternalNetworks = Object.keys(portfolio.balancePerNetwork || [])
+    const nonInternalNetworks = chainIds
       .filter((chainId) => {
         const name = networkChainIdToNameMap[chainId]
 
         // Done to filter out internal networks
         return !!name
       })
-      .sort((a, b) => compareChainIdsByBalance(a, b, portfolio.balancePerNetwork))
+      .sort((a, b) => compareChainIdsByBalance(a, b, balancePerNetwork))
 
     if (!search) {
       return nonInternalNetworks
@@ -66,11 +65,11 @@ const Networks = ({
     const result = fuse.search(search)
 
     return result.map(({ item }) => item.chainId)
-  }, [networkChainIdToNameMap, portfolio.balancePerNetwork, search])
+  }, [balancePerNetwork, chainIds, networkChainIdToNameMap, search])
 
   return (
     <View style={isWeb ? spacings.mbLg : {}}>
-      {!!account &&
+      {isAccountSelected &&
         filteredAndSortedPortfolio.map((chainId) => (
           <NetworkComponent
             key={chainId}

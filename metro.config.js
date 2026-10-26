@@ -1,14 +1,36 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
 const { getDefaultConfig } = require('expo/metro-config')
 const { getBundleModeMetroConfig } = require('react-native-worklets/bundleMode')
+const { getSentryExpoConfig } = require('@sentry/react-native/metro')
 const path = require('path')
+const {
+  ENV_TARGETS,
+  PRODUCTION_APP_ENV,
+  validateEnvVariables
+} = require('./scripts/validateEnv')
 
-const config = getDefaultConfig(__dirname)
+// Release bundles, store builds and OTAs alike, inline the env, so a missing value would ship.
+// Only CI builds what reaches users. Local production builds may point at staging or leave out
+// the crash report DSN, and dev sessions don't need the production values.
+if (
+  process.env.CI &&
+  process.env.APP_ENV === PRODUCTION_APP_ENV &&
+  process.env.IS_TESTING !== 'true'
+) {
+  validateEnvVariables(process.env.APP_ENV, ENV_TARGETS.MOBILE)
+}
 
-// Worklets Bundle Mode loads the whole Metro bundle into every worklet runtime, which is
-// what makes `require`, and therefore libraries usable inside a worklet. Reanimated's UI
-// runtime is the one that benefits here — the app runs no worklets of its own.
-getBundleModeMetroConfig(config)
+// Sentry's Expo config gives the Hermes bundle and its source map the same debug ID.
+// Worklets Bundle Mode replaces the resolver without chaining, so it must run before Sentry wraps it.
+const config = getSentryExpoConfig(__dirname, {
+  getDefaultConfig: (projectRoot, options) => {
+    const defaultConfig = getDefaultConfig(projectRoot, options)
+    // Worklets Bundle Mode loads the whole Metro bundle into every worklet runtime, which is
+    // what makes `require`, and therefore libraries usable inside a worklet. Reanimated's UI
+    // runtime is the one that benefits here — the app runs no worklets of its own.
+    return getBundleModeMetroConfig(defaultConfig)
+  }
+})
 
 config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles']
 
@@ -64,7 +86,12 @@ config.transformer.minifierConfig = {
 const shimRedirects = {
   'scrypt-js': path.resolve(__dirname, 'src/mobile/shims/scrypt-js.ts'),
   pbkdf2: path.resolve(__dirname, 'src/mobile/shims/pbkdf2.ts'),
-  'eth-crypto': path.resolve(__dirname, 'src/mobile/shims/eth-crypto.ts')
+  'eth-crypto': path.resolve(__dirname, 'src/mobile/shims/eth-crypto.ts'),
+  // Proves with snarkjs, which needs Node built-ins and WebAssembly - see the shim
+  '@fatsolutions/privacy-pools-core-circuits': path.resolve(
+    __dirname,
+    'src/mobile/shims/privacyPoolsCircuits.ts'
+  )
 }
 
 // Swap two of viem's own modules for Rust-backed shims. Redirecting these
@@ -127,7 +154,11 @@ const nodeCoreRedirects = {
   // entry below is still load-bearing for everything else that does require it, ethers v5
   // (`@ethersproject/providers`), Sentry and the crypto-browserify family among them.
   crypto: 'react-native-quick-crypto',
-  stream: 'readable-stream',
+  // Same polyfill as the web build. The hoisted `readable-stream` (1.0.33) can't stand in for
+  // `stream`: it requires `stream` itself, so it would resolve to its own half-loaded module and
+  // crash with "Object prototype argument must be an Object or null" on the first use - e.g.
+  // `create-hash` (via `cipher-base`) when bs58check encodes the xpub on QR wallet import.
+  stream: 'stream-browserify',
   buffer: 'buffer',
   http: 'stream-http',
   https: 'https-browserify',

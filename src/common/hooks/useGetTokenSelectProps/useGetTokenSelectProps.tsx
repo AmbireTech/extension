@@ -70,6 +70,7 @@ const useGetTokenSelectProps = ({
   token,
   networks,
   isLoading,
+  isSelectionPending,
   isToToken: _isToToken = false,
   exchangesInfo
 }: {
@@ -77,6 +78,8 @@ const useGetTokenSelectProps = ({
   token: string
   networks: SupportedNetworks[]
   isLoading?: boolean
+  /** Shows the value as loading. The options stay usable. */
+  isSelectionPending?: boolean
   isToToken?: boolean
   exchangesInfo?: ExchangeInfoMap
 }) => {
@@ -235,9 +238,11 @@ const useGetTokenSelectProps = ({
     const options = tokens.map((tk) => buildOption(tk, false))
     const selectedToken = tokens.find((tk) => getTokenId(tk) === token)
 
+    const noSelectionValue = isSelectionPending ? LOADING_TOKEN_ITEMS[0] : NO_VALUE_SELECTED[0]
+
     return {
       options,
-      value: selectedToken ? buildOption(selectedToken, true) : NO_VALUE_SELECTED[0],
+      value: selectedToken ? buildOption(selectedToken, true) : noSelectionValue,
       amountSelectDisabled: false
     }
   }, [
@@ -245,6 +250,7 @@ const useGetTokenSelectProps = ({
     token,
     networks,
     isLoading,
+    isSelectionPending,
     _isToToken,
     portfolioTokensToIndex,
     networkSimulatedAccountOp,

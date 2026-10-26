@@ -32,6 +32,8 @@ interface Props {
   openTab: TabType
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   handleChangeQuery: (openTab: string) => void
+  /** The tabs to show, in their usual order. All by default. */
+  tabs?: TabType[]
 }
 
 const TABS: {
@@ -62,7 +64,7 @@ const TABS: {
   }
 ]
 
-const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
+const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery, tabs }) => {
   const { styles, theme } = useTheme(getStyles)
   const { minWidthSize } = useWindowSize()
   const { state: banners } = useController('ActivityController', selectActivityBanners)
@@ -85,6 +87,11 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
     return getCurrentAccountBanners(banners, accountAddr)
   }, [banners, accountAddr])
 
+  const visibleTabs = useMemo(
+    () => (tabs ? TABS.filter(({ type }) => tabs.includes(type)) : TABS),
+    [tabs]
+  )
+
   const pendingBanner = useMemo(() => {
     return currentAccountBanners.find((b) => b.category === 'pending-to-be-confirmed-acc-ops')
   }, [currentAccountBanners])
@@ -102,7 +109,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
         isWeb && { columnGap: SPACING_SM }
       ]}
     >
-      {TABS.map(({ type, tabLabel, disabled, testID }) => {
+      {visibleTabs.map(({ type, tabLabel, disabled, testID }) => {
         const isActive = openTab === type
 
         const withBadge =

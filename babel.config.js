@@ -137,7 +137,8 @@ module.exports = function (api) {
             // Use react-native-quick-crypto for high-performance native crypto operations instead of slow JS polyfills
             crypto: 'react-native-quick-crypto',
             // Polyfill Node.js built-ins for compatibility with libraries using Node.js features (e.g. ethers.js, stream-based libs)
-            stream: 'readable-stream',
+            // Must match the `stream` entry in metro.config.js - see there why it isn't `readable-stream`
+            stream: 'stream-browserify',
             // Provide Buffer global for cryptographic and binary data processing
             buffer: 'buffer',
             // Redirect http/https to browser-compatible versions for networking libraries

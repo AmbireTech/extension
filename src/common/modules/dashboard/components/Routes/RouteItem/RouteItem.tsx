@@ -1,13 +1,16 @@
-import React, { FC } from 'react'
+import React, { FC, useContext } from 'react'
 import { Pressable, View } from 'react-native'
 
 import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import OverviewBackdropBlur, {
+  OverviewBackdropContext
+} from '@common/modules/dashboard/components/DashboardOverview/OverviewBackdropBlur'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
@@ -38,12 +41,19 @@ interface Props {
 
 const ITEM_HEIGHT = 40
 const ICON_SIZE = 24
+// GlassView's default
+const BLUR_AMOUNT = 4
 
 const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength, isNarrowWebLayout }) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { addToast } = useToast()
   const { theme } = useTheme()
+  const overviewBackdrop = useContext(OverviewBackdropContext)
+  // On the overview card, web blurs a copy of the card's background instead of what is behind
+  // the button: the pages slide over it, and a backdrop filter under them makes them flicker
+  const isOnOverviewBackdrop = isWeb && !!overviewBackdrop
+  const itemWidth = routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : 48
 
   return (
     <Pressable
@@ -81,16 +91,24 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength, isNarrowWebL
       {({ hovered }: any) => (
         <>
           <View>
+            {isOnOverviewBackdrop && (
+              <OverviewBackdropBlur
+                width={itemWidth}
+                height={ITEM_HEIGHT}
+                blurRadius={BLUR_AMOUNT}
+              />
+            )}
             <GlassView
               tintColor1={hovered ? '#fff' : undefined}
               tintColor2={hovered ? '#fff' : undefined}
               shineColor="#aaaaaa"
               testID={routeItem.testID}
+              blurAmount={isOnOverviewBackdrop ? 0 : BLUR_AMOUNT}
               cssStyle={{
                 marginBottom: 4,
                 height: ITEM_HEIGHT,
                 overflow: 'hidden',
-                width: routeItem.route === WEB_ROUTES.swapAndBridge ? 88 : 48
+                width: itemWidth
               }}
             >
               <View style={[flexbox.center, flexbox.alignCenter, flexbox.flex1]}>

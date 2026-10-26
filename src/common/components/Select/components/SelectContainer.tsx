@@ -66,6 +66,7 @@ const SelectContainer: FC<Props> = ({
   sectionListProps,
   flatListProps,
   renderHeaderChildren,
+  menuHeader,
   onBottomSheetClosed,
   isBottomSheetFullHeight
 }) => {
@@ -112,9 +113,11 @@ const SelectContainer: FC<Props> = ({
             containerStyle={spacings.mb}
           />
         )}
+        {menuHeader}
       </View>
     ),
     [
+      menuHeader,
       bottomSheetTitle,
       closeMenu,
       toggleMenu,
@@ -181,6 +184,7 @@ const SelectContainer: FC<Props> = ({
                 }}
               />
             )}
+            {menuHeader}
             {sectionListProps ? (
               <SectionList {...sectionListProps} />
             ) : flatListProps ? (

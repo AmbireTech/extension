@@ -73,7 +73,11 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                     weight="semiBold"
                     numberOfLines={isNarrowWebLayout ? 1 : undefined}
                   >
-                    {interaction.id === 'fallback:cancel' ? t('Cancel') : interaction.name}
+                    {interaction.id === 'fallback:cancel'
+                      ? t('Cancel')
+                      : interaction.id === 'fallback:safeDeploy'
+                        ? t('Activate Safe account')
+                        : interaction.name}
                   </Text>
                   {interaction.safeNonce !== undefined && (
                     <Text fontSize={12} appearance="secondaryText">

@@ -57,7 +57,7 @@ const useReceive = () => {
 
   const warningMessage = account?.safeCreation
     ? t(
-        "Only receive assets on networks where this Safe account is deployed on. Assets sent on other networks won't be accessible."
+        "Only receive assets on networks where this Safe account is active. Assets sent on other networks won't be accessible."
       )
     : isViewOnly
       ? t('The account is view-only.')

@@ -4,7 +4,14 @@ import { Platform } from 'react-native'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
+import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
+import {
+  captureWebViewException,
+  captureWebViewMessage
+} from '@common/config/analytics/CrashAnalytics'
+import { shouldReportControllerError } from '@common/config/analytics/crashReportHelpers'
+import { CRASH_REPORT_CONTENT } from '@common/constants/crashAnalytics'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
 import { getAllSerialized, storage } from '@common/services/storage'
@@ -75,11 +82,41 @@ const getDevServerUrl = () => {
   return `http://${WEBVIEW_DEV_HOST}:${WEBVIEW_DEV_SERVER_PORT}`
 }
 
+type WorkerErrorPayload = {
+  name?: string
+  message?: string
+  stack?: string
+  url?: string
+  lineNo?: number
+  // Set only for controller errors, the global handlers report every error
+  level?: ErrorRef['level']
+  sendCrashReport?: boolean
+}
+
+// The worker sends plain objects, not Errors, so each one is rebuilt here. Its own stack and
+// location go in extra, because they point into the worker bundle, not the RN one. The rebuilt
+// errors all share this function's stack, so they're grouped by message instead. The name is
+// restored so the noise filters that match on it also apply to worker errors.
+const reportWorkerErrors = (ctrlName: string, errors: WorkerErrorPayload[]) => {
+  errors.forEach(({ name, message = '', level, sendCrashReport, ...location }) => {
+    if (!shouldReportControllerError({ level, sendCrashReport })) return
+
+    const error = new Error(message)
+    if (name) error.name = name
+    captureWebViewException(error, {
+      extra: { ctrlName, ...location },
+      fingerprint: [CRASH_REPORT_CONTENT.WEBVIEW, ctrlName, message]
+    })
+  })
+}
+
 // Global error handler injected into the WebView HTML
 const globalErrorHandler = `
   window.onerror = function(msg, url, lineNo, columnNo, error) {
-    var errMessage = error ? error.stack || error.message : msg;
-    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ message: errMessage, url: url, lineNo: lineNo }] } }));
+    var errMessage = error ? error.message : msg;
+    var errStack = error ? error.stack : undefined;
+    var errName = error ? error.name : undefined;
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ name: errName, message: errMessage, stack: errStack, url: url, lineNo: lineNo }] } }));
     return false;
   };
 `
@@ -219,7 +256,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           try {
             window.postMessage(${embedded}, '*');
           } catch (e) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ name: e.name, message: e.message, stack: e.stack }] } }));
           }
         })();
         true;
@@ -388,6 +425,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
         case 'ctrl.error':
           eventBus.emit('error', { errors: data.payload.errors, controller: data.payload.ctrlName })
+          reportWorkerErrors(data.payload.ctrlName, data.payload.errors)
           break
 
         case 'ctrl.debug':
@@ -746,6 +784,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   const handleRenderProcessGone = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent || {}
     console.warn('[WebViewWorker] WebView process terminated, remounting worker...', nativeEvent)
+    captureWebViewMessage('The WebView worker process was terminated and is being remounted', {
+      level: 'warning',
+      extra: { didCrash: nativeEvent?.didCrash }
+    })
     isReadyRef.current = false
     setIsReady(false)
     setIsLoaded(false)

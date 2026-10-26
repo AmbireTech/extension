@@ -1,7 +1,9 @@
 import { RPC_HARDCODED_ERRORS } from '@ambire-common/libs/errorDecoder/handlers/rpc'
 
+import type { Event as SentryEvent, SeverityLevel } from '@sentry/browser'
+
 /**
- * Decides what happens to a crash report before it leaves the browser.
+ * Decides what happens to a crash report before it leaves the browser or the mobile app.
  *
  * Every Sentry event - controller errors, unhandled rejections, uncaught exceptions and
  * direct `captureException` calls alike - passes through here. Most of what the wallet
@@ -59,8 +61,12 @@ const PROVIDER_ERROR_NAME = 'ProviderError'
 const SWAP_AND_BRIDGE_PROVIDER_API_ERROR_NAME = 'SwapAndBridgeProviderApiError'
 /** What `fetchWithTimeout` rejects with. The whole message, nothing appended. */
 const RPC_REQUEST_TIMEOUT_MESSAGE = 'request-timeout'
+/** The `DOMException` React Native's fetch rejects with when its signal aborts. Browsers word theirs differently. */
+const REACT_NATIVE_ABORT_ERROR = { name: 'AbortError', message: 'Aborted' }
 const HTTP_STATUS_OK = 200
 const HTTP_STATUS_MULTIPLE_CHOICES = 300
+/** The level the React Native SDK gives a JS error that crashed the app. */
+const FATAL_LEVEL: SeverityLevel = 'fatal'
 
 const readString = (value: unknown) => (typeof value === 'string' ? value : '')
 
@@ -180,7 +186,12 @@ const CRASH_REPORT_RULES: CrashReportRule[] = [
     id: 'rpc-unreachable',
     matches: (details) =>
       isProviderError(details) &&
-      includesAny(details.message, ['NetworkError when attempting to fetch', 'Failed to fetch']),
+      includesAny(details.message, [
+        'NetworkError when attempting to fetch',
+        'Failed to fetch',
+        // React Native's fetch
+        'Network request failed'
+      ]),
     severity: CRASH_REPORT_SEVERITY.DROP
   },
   {
@@ -267,8 +278,9 @@ const CRASH_REPORT_RULES: CrashReportRule[] = [
   },
   {
     id: 'request-aborted',
-    matches: ({ message }) =>
-      includesAny(message, ['signal is aborted without reason', 'Aborted by timeout']),
+    matches: ({ name, message }) =>
+      includesAny(message, ['signal is aborted without reason', 'Aborted by timeout']) ||
+      (name === REACT_NATIVE_ABORT_ERROR.name && message === REACT_NATIVE_ABORT_ERROR.message),
     severity: CRASH_REPORT_SEVERITY.DROP
   },
   {
@@ -304,4 +316,30 @@ export const classifyCrashReport = (error: unknown): CrashReportDecision => {
     level: rule.severity,
     fingerprint: [rule.id]
   }
+}
+
+/**
+ * Applies the crash report policy to a Sentry event, in place. Returns false when a rule
+ * drops that error shape and the event must not be sent.
+ *
+ * `processCrashReportEvent` calls this first, before scrubbing - there is no point scrubbing
+ * an event that is about to be discarded. The extension UI, the extension background and the
+ * mobile app all run their `beforeSend` through `processCrashReportEvent`.
+ */
+export const applyCrashReportPolicy = (event: SentryEvent, originalException: unknown): boolean => {
+  const decision = classifyCrashReport(originalException)
+
+  if (!decision.shouldSend) return false
+
+  // A matched rule always decides the level and the issue. Otherwise the level and the
+  // fingerprint the capture site chose are kept.
+  const isUnclassified = decision === UNCLASSIFIED_CRASH_REPORT_DECISION
+  const keepsCaptureLevel = isUnclassified && !!event.level
+  const keepsCaptureFingerprint = isUnclassified && !!event.fingerprint?.length
+
+  // A crash stays a crash, whatever level the policy gives its error
+  if (event.level !== FATAL_LEVEL && !keepsCaptureLevel) event.level = decision.level
+  if (!keepsCaptureFingerprint) event.fingerprint = decision.fingerprint
+
+  return true
 }

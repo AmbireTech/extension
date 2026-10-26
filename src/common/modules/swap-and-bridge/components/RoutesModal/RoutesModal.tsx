@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FlatList, Pressable, View } from 'react-native'
+import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FlatList, Pressable, ScrollView, View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
@@ -17,7 +17,14 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import RouteStepsPreview from '@common/modules/swap-and-bridge/components/RouteStepsPreview'
-import spacings, { SPACING_LG } from '@common/styles/spacings'
+import {
+  formatRouteToTokenAmount,
+  getRouteExtraBridgeFeeLabel,
+  getRouteMinReceiveAmount,
+  getRouteNetworkFeeInToToken,
+  getRouteNetworkFeeInUsd
+} from '@common/modules/swap-and-bridge/components/RouteStepsPreview/helpers'
+import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -28,13 +35,18 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 import getStyles from './styles'
 
-const FLAT_LIST_ITEM_HEIGHT = 138.5
+// The approximate height of a swap route card with two route details rows (min receive and
+// network fee), including its bottom margin. Used only for cards that haven't rendered yet,
+// as the rendered cards are measured (bridge cards are taller by 28px per extra row).
+const FLAT_LIST_ITEM_HEIGHT = 199.5
 
 const { isPopup } = getUiType()
 
 const selectDisabledSwapProviderIds = (
   state: AllControllersMappingType['SwapAndBridgeController']
 ) => state.disabledSwapProviderIds
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const RoutesModal = ({
   sheetRef,
@@ -55,7 +67,13 @@ const RoutesModal = ({
     selectDisabledSwapProviderIds
   )
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const scrollRef = useRef<FlatList<SwapAndBridgeRoute>>(null)
+  // Measured card heights (without the bottom margin), keyed by route id
+  const routeCardHeightsRef = useRef<Record<string, number>>({})
+  const scrollToSelectedRouteTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  )
   const shouldOpenProviderSettingsOnClose = useRef(false)
   const { height } = useWindowSize()
   // there's a small discrepancy between ticks and we want to capture that
@@ -72,6 +90,34 @@ const RoutesModal = ({
   useEffect(() => {
     setUserSelectedRoute(persistedSelectedRoute)
   }, [persistedSelectedRoute])
+
+  // The extra bridge fee is paid in the native token of the network the tokens are sent from
+  const fromNetworkNativeSymbol = useMemo(() => {
+    if (!quote?.fromChainId) return undefined
+    const fromChainId = BigInt(quote.fromChainId)
+
+    return networks.find((network) => network.chainId === fromChainId)?.nativeAssetSymbol
+  }, [networks, quote?.fromChainId])
+
+  // Fills the empty space left of the provider logo, aligned with the route details labels
+  const providerLabel = useMemo(
+    () => (
+      <Text fontSize={12} weight="medium" appearance="secondaryText">
+        {t('Provider')}
+      </Text>
+    ),
+    [t]
+  )
+
+  useEffect(() => {
+    const currentRouteIds = new Set((quote?.routes || []).map((route) => String(route.routeId)))
+
+    Object.keys(routeCardHeightsRef.current).forEach((routeId) => {
+      if (!currentRouteIds.has(routeId)) delete routeCardHeightsRef.current[routeId]
+    })
+  }, [quote?.routes])
+
+  useEffect(() => () => clearTimeout(scrollToSelectedRouteTimeoutRef.current), [])
 
   const disabledRoutes = useMemo(() => {
     if (!quote) return []
@@ -197,6 +243,8 @@ const RoutesModal = ({
       const { steps, inputValueInUsd, outputValueInUsd } = item
       const isEstimatingRoute = isEstimationLoading && item.routeId === userSelectedRoute?.routeId
       const isSelected = item.routeId === userSelectedRoute?.routeId && !isEstimatingRoute
+      const minReceiveAmount = getRouteMinReceiveAmount(item)
+      const networkFeeInToToken = getRouteNetworkFeeInToToken(item)
 
       return (
         <Pressable
@@ -209,6 +257,9 @@ const RoutesModal = ({
             isEstimationLoading && !isEstimatingRoute && styles.otherItemLoading
           ]}
           testID={isSelected ? 'selected-route' : ''}
+          onLayout={(event) => {
+            routeCardHeightsRef.current[String(item.routeId)] = event.nativeEvent.layout.height
+          }}
           onPress={() => handleSelectRoute(item)}
           // Disable route selection if any route is being estimated
           disabled={isEstimationLoading || item.disabled}
@@ -236,10 +287,23 @@ const RoutesModal = ({
             inputValueInUsd={inputValueInUsd}
             outputValueInUsd={outputValueInUsd}
             estimationInSeconds={item.serviceTime}
+            minReceiveLabel={
+              minReceiveAmount
+                ? formatRouteToTokenAmount(minReceiveAmount, item.toToken)
+                : undefined
+            }
+            networkFeeInToTokenLabel={
+              networkFeeInToToken
+                ? formatRouteToTokenAmount(networkFeeInToToken, item.toToken, 'amount')
+                : undefined
+            }
+            networkFeeInUsd={getRouteNetworkFeeInUsd(item)}
+            extraBridgeFeeLabel={getRouteExtraBridgeFeeLabel(item, fromNetworkNativeSymbol)}
             isDisabled={item.disabled}
             disabledReason={item.disabledReason}
             providerId={item.providerId}
             isBridge={getIsBridgeRoute(item)}
+            bottomLeftSlot={providerLabel}
           />
         </Pressable>
       )
@@ -254,7 +318,9 @@ const RoutesModal = ({
       quote?.routes?.length,
       handleSelectRoute,
       theme,
-      listHeight
+      listHeight,
+      fromNetworkNativeSymbol,
+      providerLabel
     ]
   )
 
@@ -268,12 +334,28 @@ const RoutesModal = ({
     return selectedRouteIdx
   }, [quote?.routes, userSelectedRoute])
 
+  const getSelectedRouteOffset = useCallback(() => {
+    if (!quote?.routes) return 0
+
+    return quote.routes.slice(0, selectedRouteIndex).reduce((offset, route) => {
+      const measuredCardHeight = routeCardHeightsRef.current[String(route.routeId)]
+      if (measuredCardHeight === undefined) return offset + FLAT_LIST_ITEM_HEIGHT
+
+      return offset + measuredCardHeight + SPACING_TY
+    }, 0)
+  }, [quote?.routes, selectedRouteIndex])
+
   if ((!quote?.routes || !quote.routes.length) && updateQuoteStatus !== 'LOADING') return null
 
   return (
     <BottomSheet
       id="select-routes-modal"
       sheetRef={sheetRef}
+      // On mobile, the list is rendered by Modalize, which ignores `flatListProps.ref` and
+      // attaches this ref instead. On web, the list is rendered by the BottomSheet, so the
+      // ref is passed with `flatListProps`. The cast is needed because the prop is typed
+      // as a ScrollView, while Modalize attaches it to the FlatList it renders.
+      scrollViewRef={isMobile ? (scrollRef as unknown as RefObject<ScrollView>) : undefined}
       closeBottomSheet={closeBottomSheet}
       adjustToContentHeight={isWeb}
       onClosed={handleRoutesModalClosed}
@@ -292,6 +374,9 @@ const RoutesModal = ({
         </ModalHeader>
       }
       flatListProps={{
+        // Spread, as Modalize's `flatListProps` type doesn't include `ref`, though the web
+        // BottomSheet renders the FlatList with these props and attaches it
+        ...{ ref: scrollRef },
         data: isQuoteLoading || !quote ? ([{ isSkeleton: true }] as any) : quote?.routes,
         renderItem,
         keyExtractor: (r: SwapAndBridgeRoute) =>
@@ -320,7 +405,8 @@ const RoutesModal = ({
       onOpen={() => {
         if (!selectedRouteIndex) return
 
-        setTimeout(() => {
+        clearTimeout(scrollToSelectedRouteTimeoutRef.current)
+        scrollToSelectedRouteTimeoutRef.current = setTimeout(() => {
           try {
             scrollRef?.current?.scrollToIndex({
               index: selectedRouteIndex,
@@ -329,7 +415,7 @@ const RoutesModal = ({
             })
           } catch (e) {
             scrollRef?.current?.scrollToOffset({
-              offset: selectedRouteIndex * FLAT_LIST_ITEM_HEIGHT - SPACING_LG,
+              offset: getSelectedRouteOffset() - SPACING_LG,
               animated: true
             })
           }
