@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import Badge from '@common/components/Badge'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
@@ -38,7 +39,7 @@ const SummaryHeader = ({
           size="md"
           type="primaryAccent"
           weight="medium"
-          text={t('Speeding up')}
+          text={isCancelAccountOp(submittedAccountOp) ? t('Canceling') : t('Speeding up')}
           withRightSpacing
         />
       ) : (
