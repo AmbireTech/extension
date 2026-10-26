@@ -10,6 +10,7 @@ import DriveIcon from '@common/assets/svg/DriveIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
+import PQ1BadgeIcon from '@common/assets/svg/PQ1BadgeIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -34,7 +35,8 @@ type Props = {
 const iconByKeyType = {
   trezor: TrezorBadgeIcon,
   ledger: LedgerBadgeIcon,
-  lattice: GridPlusIcon
+  lattice: GridPlusIcon,
+  pq1: PQ1BadgeIcon
 }
 
 const { isTab } = getUiType()

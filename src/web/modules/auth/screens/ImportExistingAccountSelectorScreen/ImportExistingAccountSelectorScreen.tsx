@@ -6,6 +6,7 @@ import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import PQ1BadgeIcon from '@common/assets/svg/PQ1BadgeIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -144,6 +145,13 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(WEB_ROUTES.qrConnect)
         },
         icon: ReceiveIcon
+      },
+      {
+        title: 'PQ1 (post-quantum)',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.pq1Connect)
+        },
+        icon: PQ1BadgeIcon
       },
       {
         title: 'JSON backup file',
