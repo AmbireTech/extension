@@ -1,10 +1,11 @@
 import React, { FC, memo } from 'react'
-import { View } from 'react-native'
+import { TextStyle, View } from 'react-native'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Collectible from '@common/components/Collectible'
 import ItemPanel from '@common/components/ItemPanel'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -19,6 +20,9 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const NFT_IMAGE_SIZE = 56
+// Long ids (e.g. the 77 digits of an ENS name) have no spaces to wrap at, which the web
+// needs to be told to do; native wraps them on its own
+const TOKEN_ID_TEXT_STYLE = isWeb ? ({ wordBreak: 'break-all' } as TextStyle) : undefined
 
 type Props = {
   nft: TransferNft
@@ -57,13 +61,8 @@ const SendNft: FC<Props> = ({ nft, validation }) => {
               <Text fontSize={16} weight="semiBold" numberOfLines={1} ellipsizeMode="tail">
                 {collectionName}
               </Text>
-              <Text
-                fontSize={14}
-                appearance="secondaryText"
-                numberOfLines={1}
-                ellipsizeMode="middle"
-                selectable
-              >
+              {/* In full, so the user can check exactly which NFT they send */}
+              <Text fontSize={14} appearance="secondaryText" style={TOKEN_ID_TEXT_STYLE} selectable>
                 #{nft.tokenId.toString()}
               </Text>
               {!!network && (

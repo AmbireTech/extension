@@ -166,12 +166,8 @@ const CollectibleModal = ({
             text={t('Send')}
             style={{ width: '100%', ...spacings.mb0, ...spacings.mtMd }}
           >
-            <SendIcon
-              style={spacings.mlTy}
-              color={theme.primaryBackground}
-              width={26}
-              height={26}
-            />
+            {/* The same white as the text of a primary button, in both themes */}
+            <SendIcon style={spacings.mlTy} color="#fff" width={26} height={26} />
           </Button>
         )}
       </>

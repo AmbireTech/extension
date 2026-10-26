@@ -330,8 +330,9 @@ const SendForm = ({
             isRecipientDomainResolving={addressState.isDomainResolving}
             selectedTokenSymbol={selectedToken?.symbol}
             addressPoisoningMatch={addressPoisoningMatch}
-            privacyPoolsAccounts={privacyPoolsAccounts}
-            onSelectPrivacyPoolsAccount={onSelectPrivacyPoolsRecipient}
+            // Privacy Pools accounts hold tokens only, so they aren't offered for an NFT
+            privacyPoolsAccounts={selectedNft ? undefined : privacyPoolsAccounts}
+            onSelectPrivacyPoolsAccount={selectedNft ? undefined : onSelectPrivacyPoolsRecipient}
           />
         )}
       </View>
