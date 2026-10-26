@@ -9,6 +9,8 @@ import textStyles from '@common/styles/utils/text'
 type Props = {
   /** The transaction being sped up was already processed, so the fee no longer applies */
   isSpeedUpNotNeeded: boolean
+  /** The pending transaction was being canceled rather than sped up */
+  isCancel?: boolean
   children: ReactNode
 }
 
@@ -17,7 +19,7 @@ type Props = {
  * stops it from being changed and explains why. The wrapper stays mounted either way,
  * so the fee keeps its state when this changes
  */
-const SpeedUpNotNeededFee = ({ isSpeedUpNotNeeded, children }: Props) => {
+const SpeedUpNotNeededFee = ({ isSpeedUpNotNeeded, isCancel, children }: Props) => {
   const { t } = useTranslation()
 
   return (
@@ -30,9 +32,13 @@ const SpeedUpNotNeededFee = ({ isSpeedUpNotNeeded, children }: Props) => {
           appearance="secondaryText"
           style={[spacings.mtSm, textStyles.center]}
         >
-          {t(
-            "Your original transaction has already been processed, so there's nothing to speed up."
-          )}
+          {isCancel
+            ? t(
+                'Your original transaction has already been processed, so it can no longer be canceled.'
+              )
+            : t(
+                "Your original transaction has already been processed, so there's nothing to speed up."
+              )}
         </Text>
       )}
     </View>

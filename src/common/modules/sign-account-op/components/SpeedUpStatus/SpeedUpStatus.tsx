@@ -19,13 +19,15 @@ type Props = {
   sentAt?: number
   /** The pending transaction was processed before the speed up, so there's nothing to speed up */
   isCompleted?: boolean
+  /** The pending transaction is being canceled rather than sped up */
+  isCancel?: boolean
 }
 
 /**
  * Shown under the title of the sign screen during a speed up,
  * so it's clear whether the transaction being replaced is still waiting.
  */
-const SpeedUpStatus = ({ sentAt, isCompleted }: Props) => {
+const SpeedUpStatus = ({ sentAt, isCompleted, isCancel }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [now, setNow] = useState(() => Date.now())
@@ -63,7 +65,9 @@ const SpeedUpStatus = ({ sentAt, isCompleted }: Props) => {
       >
         <CheckIcon width={14} height={14} color={theme.successDecorative} style={spacings.mrMi} />
         <Text fontSize={12} appearance="successText" numberOfLines={1}>
-          {t('Completed · no need to speed up')}
+          {isCancel
+            ? t('Completed · it can no longer be canceled')
+            : t('Completed · no need to speed up')}
         </Text>
       </View>
     )
