@@ -2,6 +2,8 @@ import { wordlists } from 'ethers'
 
 type RedactionRule = {
   pattern: RegExp
+  // 32-byte values (hex rules) that a hash-like key name proves to be public data.
+  isHexRule?: boolean
   replacement: string | ((...match: string[]) => string)
 }
 
@@ -58,12 +60,23 @@ const REDACTION_RULES: RedactionRule[] = [
     // (?:["'])? after the label handles JSON-quoted keys, e.g. "privateKey":"0x...".
     pattern:
       /\b(private\s*key|privatekey|priv\s*key|privkey|secret\s*key|wallet\s*key)\b(?:["'])?\s*[:=]\s*(["']?)(0x[a-fA-F0-9]{64}|[a-fA-F0-9]{64})\2/gi,
-    replacement: '$1=[REDACTED_HEX]'
+    replacement: '$1=[REDACTED_HEX]',
+    isHexRule: true
   },
   {
     // Matches likely raw private keys without a label.
     pattern: /\b0x[a-fA-F0-9]{64}\b|\b[a-fA-F0-9]{64}\b/g,
-    replacement: '[REDACTED_HEX]'
+    replacement: '[REDACTED_HEX]',
+    isHexRule: true
+  },
+  {
+    // Wallet addresses link a report to a person. Runs after the 64-hex rules, so a
+    // longer value is never cut in the middle, and the trailing lookahead keeps a
+    // 40-hex prefix of a longer hex string (e.g. calldata) untouched. No leading
+    // boundary on purpose, so `address0x...` and URL paths are still caught.
+    // Case-insensitive, so checksummed addresses match as well.
+    pattern: /0x[a-f0-9]{40}(?![a-f0-9])/gi,
+    replacement: '[REDACTED_ADDRESS]'
   },
   {
     // Matches common seed phrase labels and the following run of words.
@@ -84,8 +97,14 @@ const REDACTION_RULES: RedactionRule[] = [
   }
 ]
 
-const scrubString = (value: string): string => {
-  return REDACTION_RULES.reduce((result, { pattern, replacement }) => {
+/**
+ * Applies every shape-based rule to a string. With `isPublicHash` the 64-hex rules
+ * are skipped, because the key holding the value says it is a hash and not a key.
+ * All other rules, addresses included, always apply.
+ */
+const scrubString = (value: string, isPublicHash = false): string => {
+  return REDACTION_RULES.reduce((result, { pattern, replacement, isHexRule }) => {
+    if (isPublicHash && isHexRule) return result
     return result.replace(pattern, replacement as (...match: string[]) => string)
   }, value)
 }
@@ -113,17 +132,18 @@ const isSensitiveKey = (key: string): boolean => {
 }
 
 // Transaction hashes, block hashes, and other 32-byte digests are structurally
-// identical to a raw private key, so the shape-based rule above would otherwise
-// redact them too. A key name that clearly identifies public, non-secret
-// blockchain/request data is trusted over the shape-based rule. Checked separately
-// from (and after) SENSITIVE_KEY_SUBSTRINGS, so e.g. `privateKeyAddress` still
-// redacts. Deliberately NOT a bare 'data' -- that matched (and skipped shape-based
-// redaction for) unrelated keys like `requestData`/`keyData`/`userData`, which can
-// legitimately hold secrets; 'calldata' is specific enough to avoid that.
+// identical to a raw private key, so the 64-hex rules would otherwise redact them
+// too. A key name that clearly identifies public blockchain/request data is trusted
+// over those rules, and only over those: every other rule, wallet addresses
+// included, still runs on the value. Checked separately from (and after)
+// SENSITIVE_KEY_SUBSTRINGS, so e.g. `privateKeyHash` still redacts wholesale.
+// Deliberately NOT a bare 'data' -- that matched unrelated keys like
+// `requestData`/`keyData`/`userData`, which can legitimately hold secrets;
+// 'calldata' is specific enough to avoid that.
 // Only helps when the value is reachable under one of these key names -- the same
 // value sitting unlabeled in a message string, or in a positional args array,
 // still gets redacted (see the GAP test for the latter).
-const NON_SECRET_KEY_SUBSTRINGS = [
+const HASH_LIKE_KEY_SUBSTRINGS = [
   'hash', // covers txHash, transactionHash, safeTxHash, safeTxnHash, messageHash, callbackHash, sighash, userOpHash, blockHash
   'txid',
   'txnid',
@@ -134,14 +154,12 @@ const NON_SECRET_KEY_SUBSTRINGS = [
   'salt',
   'nonce',
   'calldata',
-  'blocknumber',
-  'address',
-  'addr'
+  'blocknumber'
 ]
 
-const isNonSecretKey = (key: string): boolean => {
+const isHashLikeKey = (key: string): boolean => {
   const normalizedKey = key.toLowerCase()
-  return NON_SECRET_KEY_SUBSTRINGS.some((term) => normalizedKey.includes(term))
+  return HASH_LIKE_KEY_SUBSTRINGS.some((term) => normalizedKey.includes(term))
 }
 
 // Realm-independent Error check: unlike `instanceof Error`, this still works
@@ -235,13 +253,13 @@ const scrubUnknown = (value: unknown, seen: Map<object, unknown>): unknown => {
       return
     }
 
-    if (isNonSecretKey(key) && typeof objectValue[key] === 'string') {
-      // Trust the key name; skip shape-based redaction for known-public data.
-      clonedObject[key] = objectValue[key]
+    const keyValue = objectValue[key]
+    if (isHashLikeKey(key) && typeof keyValue === 'string') {
+      clonedObject[key] = scrubString(keyValue, true)
       return
     }
 
-    const scrubbed = scrubUnknown(objectValue[key], seen)
+    const scrubbed = scrubUnknown(keyValue, seen)
     if (scrubbed !== undefined) {
       clonedObject[key] = scrubbed
     }

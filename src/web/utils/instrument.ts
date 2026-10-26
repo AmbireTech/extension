@@ -5,7 +5,10 @@ import {
 } from '@common/config/analytics/CrashAnalytics.web'
 import { logSentryDeliveryWhenTesting } from '@common/config/analytics/crashReportHelpers'
 import { isDev, isTesting } from '@common/config/env'
-import { CRASH_ANALYTICS_ENABLED_STORAGE_KEY } from '@common/constants/crashAnalytics'
+import {
+  CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
+  CRASH_REPORT_ID_STORAGE_KEY
+} from '@common/constants/crashAnalytics'
 import { storage } from '@common/services/storage'
 import { getUiType } from '@common/utils/uiType'
 import { SENTRY_DSN_BROWSER_EXTENSION } from '@env'
@@ -44,9 +47,12 @@ const initializeSentry = async () => {
     return
   }
 
+  const crashReportId = await storage.get(CRASH_REPORT_ID_STORAGE_KEY, null)
+
   Sentry.init({
     ...CRASH_ANALYTICS_WEB_CONFIG,
     initialScope: {
+      user: crashReportId ? { id: crashReportId } : undefined,
       tags: {
         content: 'ui',
         uiType
