@@ -3,6 +3,12 @@ import { v4 as uuidv4 } from 'uuid'
 import eventBus from '@common/services/event/eventBus'
 
 /**
+ * The controller didn't reply in time. It may still be working on the call, unlike when it
+ * replies with an error.
+ */
+export class ReplyTimeoutError extends Error {}
+
+/**
  * Sends a request with a fresh request id and resolves with the controller's reply to it
  * (`receiveOneTimeData` with that id), or rejects with its error or once `timeoutMs` passes.
  * `label` names the call in the errors.
@@ -42,7 +48,7 @@ export const waitForReply = <R = any>(
       settled = true
 
       cleanup()
-      reject(new Error(`Calling ${label} timed out after ${timeoutMs / 1000} seconds`))
+      reject(new ReplyTimeoutError(`Calling ${label} timed out after ${timeoutMs / 1000} seconds`))
     }, timeoutMs)
 
     // Listen before sending: on mobile the controllers run in this realm and

@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 
 import { Account } from '@ambire-common/interfaces/account'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import useController from '@common/hooks/useController'
+import { ReplyTimeoutError } from '@common/hooks/useController/waitForReply'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -31,6 +33,8 @@ const selectSubType = (state: AllControllersMappingType['AccountPickerController
 const selectIsWaitingToStart = (state: AllControllersMappingType['AccountPickerController']) =>
   !!state.initParams && !state.isInitialized && !state.readyToAddAccounts.length
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectAddAccountsStatus = (state: AllControllersMappingType['AccountPickerController']) =>
+  state.addAccountsStatus
 // Takes the swipe and Android's back over, to go nowhere
 const stayOnScreen = () => {}
 // A stable empty list, so the callbacks depending on it keep their identity
@@ -190,6 +194,31 @@ export default function useAccountPersonalize() {
   // The button disables on re-render, so a second press landing before it would add the
   // accounts twice - a ref, as it is set before that render
   const isProceedingRef = useRef(false)
+  const { state: addAccountsStatus } = useController(
+    'AccountPickerController',
+    selectAddAccountsStatus
+  )
+  // Read once adding outlasts the wait for its reply, after the await
+  const addAccountsStatusRef = useRef(addAccountsStatus)
+  const accountsRef = useRef(accounts)
+  const resolveAddingDoneRef = useRef<((status: typeof addAccountsStatus) => void) | null>(null)
+  useEffect(() => {
+    accountsRef.current = accounts
+  }, [accounts])
+  // Tells a Proceed still waiting how adding ended, once the picker is no longer busy with it
+  useEffect(() => {
+    addAccountsStatusRef.current = addAccountsStatus
+    if (addAccountsStatus === 'LOADING') return
+
+    resolveAddingDoneRef.current?.(addAccountsStatus)
+    resolveAddingDoneRef.current = null
+  }, [addAccountsStatus])
+
+  const finishAdding = useCallback((namedAccounts: Account[], removedAccounts: Account[]) => {
+    setRemovedAccounts(removedAccounts)
+    setAddedAccounts(namedAccounts)
+    goToNextRouteRef.current()
+  }, [])
 
   const handleProceed = useCallback(async () => {
     if (isProceedingRef.current) return
@@ -216,23 +245,41 @@ export default function useAccountPersonalize() {
         { type: 'method', params: { method: 'addPreparedAccounts', args: [names] } },
         ADD_ACCOUNTS_TIMEOUT_MS
       )
-      setRemovedAccounts(accountsToRemove)
-      setAddedAccounts(namedAccounts)
-      goToNextRouteRef.current()
+      finishAdding(namedAccounts, accountsToRemove)
     } catch (error) {
-      // The controller reports its own failures, here the button only becomes usable again
-      console.error('Failed to add the accounts', error)
-    } finally {
-      isProceedingRef.current = false
-      setIsAdding(false)
+      if (error instanceof ReplyTimeoutError) {
+        // Unexpected, but the picker can still be adding them (e.g. on a slow connection), so
+        // the screen keeps showing it rather than offering to add them again
+        captureException(error)
+        const endStatus =
+          addAccountsStatusRef.current === 'LOADING'
+            ? await new Promise<typeof addAccountsStatus>((resolve) => {
+                resolveAddingDoneRef.current = resolve
+              })
+            : addAccountsStatusRef.current
+        // Either one tells, as one update can arrive later than the other
+        const walletAddrs = new Set(accountsRef.current.map(({ addr }) => addr))
+        const isAdded =
+          endStatus === 'SUCCESS' ||
+          (namedAccounts.every(({ addr }) => walletAddrs.has(addr)) &&
+            accountsToRemove.every(({ addr }) => !walletAddrs.has(addr)))
+        if (isAdded) finishAdding(namedAccounts, accountsToRemove)
+        // Otherwise it failed, which the controller reports itself
+      } else {
+        // The controller reports its own failures, here the button only becomes usable again
+        console.error('Failed to add the accounts', error)
+      }
     }
+    isProceedingRef.current = false
+    setIsAdding(false)
   }, [
     isSyncedMode,
     getValues,
     accountsDispatch,
     setSyncedAccountAddrs,
     accountPickerDispatchAndWait,
-    accountsToRemove
+    accountsToRemove,
+    finishAdding
   ])
 
   const isRemovalOnly = !fields.length && !!accountsToRemove.length
