@@ -23,6 +23,7 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
+import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
 import CompactFooterButtons, {
   COMPACT_FEE_TO_BUTTONS_SPACING
 } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
@@ -238,6 +239,10 @@ const OneClickEstimation = ({
         {!isViewOnly && signingErrors && signingErrors[0] && (
           <Alert title={t(signingErrors[0].title)} type="error" style={spacings.mt} />
         )}
+        <EarlierPendingTransaction
+          style={spacings.mt}
+          signAccountOpState={signAccountOpController}
+        />
         <BundlerWarning
           signAccountOpState={signAccountOpController}
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}

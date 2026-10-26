@@ -2,6 +2,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'reac
 import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import {
   getReplacementAccountOp,
   getReplacementBlocker,
@@ -37,6 +38,11 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 interface Props {
   style?: ViewStyle
+  /**
+   * The transaction being signed, when it isn't the one of the sign screen (e.g. a one-click
+   * transfer or swap, which have their own). Null while it's not ready yet
+   */
+  signAccountOpState?: ISignAccountOpController | null
 }
 
 /**
@@ -48,8 +54,10 @@ const REPLACEMENT_REQUEST_TIMEOUT_MS = 15_000
 
 const selectAccountOp = (state: AllControllersMappingType['SignAccountOpController']) =>
   state?.accountOp
+// The store holds an empty object for a controller that isn't there (e.g. no sign screen is
+// open on a one-click transfer or swap), so every nested field is read optionally
 const selectIsSafeAccount = (state: AllControllersMappingType['SignAccountOpController']) =>
-  !!state?.account.safeCreation
+  !!state?.account?.safeCreation
 const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
   state.accountStates
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
@@ -63,7 +71,7 @@ const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['Acti
  * sent but isn't confirmed yet, and offers to speed up or cancel that pending transaction.
  * Shown for every account type: a Safe, an EOA, a 7702 EOA and an Ambire smart account.
  */
-const EarlierPendingTransaction = ({ style }: Props) => {
+const EarlierPendingTransaction = ({ style, signAccountOpState }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
@@ -75,8 +83,17 @@ const EarlierPendingTransaction = ({ style }: Props) => {
     fromRequestId: string | number | undefined
   } | null>(null)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { state: accountOp } = useController('SignAccountOpController', selectAccountOp)
-  const { state: isSafeAccount } = useController('SignAccountOpController', selectIsSafeAccount)
+  const { state: signScreenAccountOp } = useController('SignAccountOpController', selectAccountOp)
+  const { state: isSignScreenSafeAccount } = useController(
+    'SignAccountOpController',
+    selectIsSafeAccount
+  )
+  // Never falls back to the sign screen's transaction once one is passed, even while it's null
+  const hasOwnSignAccountOp = signAccountOpState !== undefined
+  const accountOp = hasOwnSignAccountOp ? signAccountOpState?.accountOp : signScreenAccountOp
+  const isSafeAccount = hasOwnSignAccountOp
+    ? !!signAccountOpState?.account?.safeCreation
+    : isSignScreenSafeAccount
   const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: broadcastedButNotConfirmed } = useController(
@@ -92,13 +109,13 @@ const EarlierPendingTransaction = ({ style }: Props) => {
   const pendingAccountOp = useMemo(() => {
     if (!accountOp) return null
 
-    const network = networks.find((n) => n.chainId === accountOp.chainId)
+    const network = networks?.find((n) => n.chainId === accountOp.chainId)
 
     return getEarliestPendingAccountOp({
       accountOp,
       isSafeAccount,
       accountStateNonce:
-        accountStates[accountOp.accountAddr]?.[accountOp.chainId.toString()]?.nonce,
+        accountStates?.[accountOp.accountAddr]?.[accountOp.chainId.toString()]?.nonce,
       // An unknown network is treated like one read from the pending block, so a pending
       // transaction is never hidden by mistake
       isAccountStateNonceConfirmed:
