@@ -5,15 +5,18 @@ import { useModalize } from 'react-native-modalize'
 
 import { EmailVaultState } from '@ambire-common/controllers/emailVault/emailVault'
 import { isEmail } from '@ambire-common/services/validations'
+import CloseIcon from '@common/assets/svg/CloseIcon'
 import DisabledPasswordRecovery from '@common/assets/svg/DisabledPasswordRecovery'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import HoverablePressable from '@common/components/HoverablePressable'
 import Input from '@common/components/Input'
 import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -25,6 +28,8 @@ import EmailConfirmation from '@web/modules/keystore/components/EmailConfirmatio
 import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
+const CLOSE_ICON_SIZE = 14
+
 const DevicePasswordRecoverySettingsScreen = () => {
   const { state: ev, dispatch: evDispatch } = useController('EmailVaultController')
   const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
@@ -32,6 +37,10 @@ const DevicePasswordRecoverySettingsScreen = () => {
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { navigate } = useNavigation()
   const { theme } = useTheme()
+  const { canEnableBiometrics } = useBiometricsAvailability()
+  // Same conditions under which the Biometrics unlock option is offered in Settings → General
+  const shouldSuggestBiometrics =
+    keystoreState.hasPasswordSecret && canEnableBiometrics && !keystoreState.hasBiometricsSecret
   const {
     ref: passwordConfirmationModalRef,
     open: openPasswordConfirmationModal,
@@ -121,6 +130,10 @@ const DevicePasswordRecoverySettingsScreen = () => {
     closePasswordConfirmation()
     handleFormSubmit()
   }, [closePasswordConfirmation, handleFormSubmit])
+
+  const navigateToGeneralSettings = useCallback(() => {
+    navigate(ROUTES.generalSettings)
+  }, [navigate])
 
   const handleCancelLoginAttempt = useCallback(() => {
     evDispatch({
@@ -229,14 +242,31 @@ const DevicePasswordRecoverySettingsScreen = () => {
       <BottomSheet id="backup-password-confirmation-modal" sheetRef={confirmationModalRef}>
         <EmailConfirmation email={email} handleCancelLoginAttempt={handleCancelLoginAttempt} />
       </BottomSheet>
-      <BottomSheet id="backup-password-success-modal" sheetRef={successModalRef}>
-        <PanelTitle title={t('Disabled password recovery')} style={spacings.mbXl} />
+      <BottomSheet
+        id="backup-password-success-modal"
+        sheetRef={successModalRef}
+        closeBottomSheet={closeSuccessModal}
+        // This screen is hidden from the sidebar once recovery is off, so send the user to biometrics unlock
+        onClosed={navigateToGeneralSettings}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
+          {/* Balances the close button, so the title stays centered */}
+          <View style={{ width: CLOSE_ICON_SIZE }} />
+          <PanelTitle title={t('Email recovery is off')} />
+          <HoverablePressable onPress={() => closeSuccessModal()}>
+            <CloseIcon width={CLOSE_ICON_SIZE} height={CLOSE_ICON_SIZE} />
+          </HoverablePressable>
+        </View>
         <DisabledPasswordRecovery style={[flexbox.alignSelfCenter, spacings.mbXl]} />
         <Text fontSize={16} style={[spacings.mbXl, text.center]} appearance="secondaryText">
-          {t('Your extension password recovery was successfully disabled!')}
+          {t('You can no longer reset your extension password by email on this device.')}
+          {shouldSuggestBiometrics &&
+            ` ${t(
+              "Consider using biometrics unlock as an alternative that doesn't rely on Ambire infrastructure."
+            )}`}
         </Text>
         <Button
-          text={t('Got it')}
+          text={shouldSuggestBiometrics ? t('Set up biometrics unlock') : t('Continue')}
           hasBottomSpacing={false}
           onPress={() => {
             closeSuccessModal()
