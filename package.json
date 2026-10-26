@@ -188,6 +188,8 @@
     "ox": "0.8.9",
     "pako": "2.1.0",
     "path-browserify": "0.0.0",
+    "pq1-sdk": "0.1.0",
+    "pq1-sdk-catalogs": "0.1.0",
     "process": "0.11.10",
     "purify-ts": "2.1.0",
     "qr-scanner": "1.4.2",

@@ -14778,6 +14778,16 @@ postinstall-postinstall@2.1.0:
   resolved "https://registry.yarnpkg.com/postinstall-postinstall/-/postinstall-postinstall-2.1.0.tgz#4f7f77441ef539d1512c40bd04c71b06a4704ca3"
   integrity sha512-7hQX6ZlZXIoRiWNrbMQaLzUUfH+sSx39u8EJ9HYuDc1kLo9IXKWjM5RSquZN1ad5GnH8CGFM78fsAAQi3OKEEQ==
 
+pq1-sdk-catalogs@0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/pq1-sdk-catalogs/-/pq1-sdk-catalogs-0.1.0.tgz#c6f7b13d52268e4cad6d80632657cbced905efed"
+  integrity sha512-Sgb5KWswxC5XISUMzdqZ4rcOsRF9j6idHA3Fl6MVi2XVT+bqykKuxYJp2pcZjssyElz8HjQSpD/0+D44KZOO5g==
+
+pq1-sdk@0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/pq1-sdk/-/pq1-sdk-0.1.0.tgz#33c28cc0bf088af67f38c1a04d756fa3435eeef7"
+  integrity sha512-/9TvOS/1GN/Lllf7NbFj0P4/hMnmPAnp9K9OPTrGn61DBUr9dQGFZ0dNManhK3Sinyz+dP8zHm0cyyEH/JgG3g==
+
 prelude-ls@^1.2.1:
   version "1.2.1"
   resolved "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz"
