@@ -57,14 +57,6 @@ const QrSigningFlowScreen = ({
   const { bottom } = useSafeAreaInsets()
 
   const request = useMemo(() => currentRequest, [currentRequest])
-  // TEMP: debug log for the size warning, remove before committing
-  useEffect(() => {
-    console.log('[QR] UI request', {
-      step: signingStep,
-      type: currentRequest?.type,
-      isTooLargeForDevice: currentRequest?.isTooLargeForDevice
-    })
-  }, [currentRequest, signingStep])
   const step = useMemo(() => signingStep, [signingStep])
 
   useEffect(() => {

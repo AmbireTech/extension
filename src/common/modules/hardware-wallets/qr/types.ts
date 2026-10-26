@@ -8,8 +8,8 @@ export type QrSigningStep = 'idle' | 'show-request' | 'scan-response'
  */
 export type QrSignRequest = QrRequest & {
   /**
-   * Set when the request is larger than what QR hardware wallets like Keystone 3 can show or
-   * scan, so the device will most likely reject it with "Invalid QR Code".
+   * Set when the request is larger than what some QR hardware wallets can display or scan
+   * (the limits mirror Keystone 3, the strictest one), so the device may reject it.
    */
   isTooLargeForDevice?: boolean
 }

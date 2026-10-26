@@ -169,16 +169,6 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
 
       const ur = request.toUR()
 
-      // TEMP: debug log for the size warning, remove before committing
-      console.log('[QR] typed data request', {
-        primaryType: normalizedTypedData.primaryType,
-        cborBytes: ur.cbor.length,
-        displayBytes: Buffer.byteLength(JSON.stringify(normalizedTypedData.message, null, 2)),
-        isTooLargeForDevice:
-          exceedsQrRequestSizeLimit(ur.cbor.length) ||
-          exceedsQrTypedDataDisplayLimits(normalizedTypedData.message)
-      })
-
       return {
         type: 'sign-typed-data',
         requestId,
