@@ -147,18 +147,28 @@ export default function useAccountPersonalize() {
   const isPreparing = !isSyncedMode && !readyToAddAccounts.length && preparedCount !== 0
   const isLoading = !hasMinLoadingPassed || (isPreparing && !hasMaxLoadingPassed)
 
+  // Every controller update hands over a new list, so the form follows the addresses instead -
+  // resetting it remounts the cards, which closes a rename the user is in the middle of
+  const accountsToNameAddrs = accountsToName.map(({ addr }) => addr).join(',')
+  const accountsToNameRef = useRef(accountsToName)
+  useEffect(() => {
+    accountsToNameRef.current = accountsToName
+  }, [accountsToName])
+
   // The prepared accounts change when more are added from the picker. The names the
   // user gave the ones already there are kept.
   useEffect(() => {
     if (isAdding || addedAccounts) return
 
     const namedAccounts = getValues('accounts')
+    if (namedAccounts.map(({ addr }) => addr).join(',') === accountsToNameAddrs) return
+
     reset({
-      accounts: accountsToName.map(
+      accounts: accountsToNameRef.current.map(
         (account) => namedAccounts.find((named) => named.addr === account.addr) || account
       )
     })
-  }, [accountsToName, isAdding, addedAccounts, getValues, reset])
+  }, [accountsToNameAddrs, isAdding, addedAccounts, getValues, reset])
 
   // Only renames the account in the form - the names are saved with the accounts on Proceed
   const handleSaveAccountName = useCallback(
