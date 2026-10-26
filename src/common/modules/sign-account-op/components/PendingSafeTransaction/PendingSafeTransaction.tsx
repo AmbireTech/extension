@@ -3,6 +3,11 @@ import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
+import {
+  getReplacementAccountOp,
+  getReplacementBlocker,
+  Replacement
+} from '@ambire-common/libs/accountOp/replacement'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
@@ -15,12 +20,9 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import {
-  canBuildReplacementAccountOp,
   getReplacementBuildRequest,
   getResendAccountOp,
-  getSafeCancellationAccountOp,
-  getSpeedUpAccountOp,
-  isSentThroughBundler
+  getSafeCancellationAccountOp
 } from '@common/modules/sign-account-op/helpers/replacementAccountOps'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -35,8 +37,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 interface Props {
   style?: ViewStyle
 }
-
-type ReplacementAction = 'cancel' | 'speedUp'
 
 /**
  * How long the sheet waits for the cancel / speed up request to open before letting the user
@@ -68,7 +68,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
   // The action whose request is being opened and the request that was open when it started.
   // The sheet stays open until another request becomes the current one
   const [replacementInProgress, setReplacementInProgress] = useState<{
-    action: ReplacementAction
+    action: Replacement
     fromRequestId: string | number | undefined
   } | null>(null)
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -133,7 +133,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
   }, [closeBottomSheet, currentUserRequestId, replacementInProgress])
 
   const openReplacementRequest = useCallback(
-    (action: ReplacementAction, replacementAccountOp: AccountOp) => {
+    (action: Replacement, replacementAccountOp: AccountOp) => {
       setReplacementInProgress({ action, fromRequestId: currentUserRequestId })
       requestsDispatch({
         type: 'method',
@@ -148,26 +148,36 @@ const PendingSafeTransaction = ({ style }: Props) => {
     [openBottomSheet, t]
   )
 
+  // Replaced in the mempool the same way as from the activity, when the way it was sent allows
+  // it. The pending transaction is always the selected Safe's own, as it's the one being signed
+  const canReplaceInMempool = useMemo(
+    () => !!pendingAccountOp && getReplacementBlocker(pendingAccountOp, true) === null,
+    [pendingAccountOp]
+  )
+
   const handleSpeedUp = useCallback(() => {
     if (!pendingAccountOp) return
 
-    // A transaction sent through a bundler can't be replaced, so it's simply sent again
-    let speedUpAccountOp = null
-    if (isSentThroughBundler(pendingAccountOp)) {
-      speedUpAccountOp = getResendAccountOp(pendingAccountOp)
-    } else if (canBuildReplacementAccountOp(pendingAccountOp)) {
-      speedUpAccountOp = getSpeedUpAccountOp(pendingAccountOp)
-    }
+    // Otherwise (e.g. sent through a bundler) it can't be replaced, so it's simply sent again
+    const speedUpAccountOp = canReplaceInMempool
+      ? getReplacementAccountOp(pendingAccountOp, 'speedUp')
+      : getResendAccountOp(pendingAccountOp)
     if (!speedUpAccountOp) return
 
     openReplacementRequest('speedUp', speedUpAccountOp)
-  }, [openReplacementRequest, pendingAccountOp])
+  }, [canReplaceInMempool, openReplacementRequest, pendingAccountOp])
 
   const handleCancel = useCallback(() => {
     if (!pendingAccountOp) return
 
-    openReplacementRequest('cancel', getSafeCancellationAccountOp(pendingAccountOp))
-  }, [openReplacementRequest, pendingAccountOp])
+    // Otherwise the owners sign a new Safe transaction that takes its place, sent any way
+    const cancelAccountOp = canReplaceInMempool
+      ? getReplacementAccountOp(pendingAccountOp, 'cancel')
+      : getSafeCancellationAccountOp(pendingAccountOp)
+    if (!cancelAccountOp) return
+
+    openReplacementRequest('cancel', cancelAccountOp)
+  }, [canReplaceInMempool, openReplacementRequest, pendingAccountOp])
 
   const sheetHeader = useMemo(
     () => (
