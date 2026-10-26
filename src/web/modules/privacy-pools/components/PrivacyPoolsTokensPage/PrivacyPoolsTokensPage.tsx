@@ -1,15 +1,11 @@
-import React, { FC, ReactElement, useCallback, useMemo } from 'react'
+import React, { FC, useCallback, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
-import { Animated, View } from 'react-native'
 
 import { PrivacyPoolsUnavailableReason } from '@ambire-common/interfaces/privacyPools'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
-import useTheme from '@common/hooks/useTheme'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
-import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
-import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import TokensEmptyState from '@common/modules/dashboard/components/Tokens/TokensEmptyState'
 import { searchWithNetworkName } from '@common/utils/search'
@@ -21,13 +17,14 @@ import {
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-/** A Privacy Pools account has no NFTs or DeFi positions. */
+/** A Privacy Pools account has no NFTs or DeFi positions. In the order its pages are rendered in. */
 export const PRIVACY_POOLS_TABS: TabType[] = ['tokens', 'activity']
 
 // Same as the regular token list
 const SEARCH_DEBOUNCE_MS = 200
 const SEARCH_KEYS = ['symbol', 'tokenAddress']
 const NO_NETWORKS: never[] = []
+const DATA = ['balances']
 
 const selectDashboardNetworkFilter = (
   state: AllControllersMappingType['SelectedAccountController']
@@ -35,11 +32,6 @@ const selectDashboardNetworkFilter = (
 
 interface Props {
   openTab: TabType
-  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
-  sessionId: string
-  animatedOverviewHeight: Animated.Value
-  /** Shown above the tabs, like the regular dashboard's banners. */
-  banners: ReactElement
   balances: PrivacyPoolsBalanceDisplay[]
   state: PrivacyPoolsBalancesState
   unavailableReason: PrivacyPoolsUnavailableReason | null
@@ -49,13 +41,9 @@ interface Props {
   networkFilterName: string | null
 }
 
-/** The Tokens page of a Privacy Pools account, laid out like the regular dashboard's. */
+/** The Tokens page of a Privacy Pools account, a slide of the dashboard carousel. */
 const PrivacyPoolsTokensPage: FC<Props> = ({
   openTab,
-  setOpenTab,
-  sessionId,
-  animatedOverviewHeight,
-  banners,
   balances,
   state,
   unavailableReason,
@@ -63,7 +51,6 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
   networkFilterName
 }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
     selectDashboardNetworkFilter
@@ -88,76 +75,53 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
 
   const isFiltered = !!searchValue || !!dashboardNetworkFilter
 
-  const renderItem = useCallback(
-    ({ item }: { item: string }) => {
-      if (item === 'header')
-        return (
-          <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              sessionId={sessionId}
-              tabs={PRIVACY_POOLS_TABS}
-            />
-          </View>
-        )
-
-      // Has balances, but none match the filters
-      if (state === 'ready' && isFiltered && !filteredBalances.length && balances.length)
-        return (
-          <TokensEmptyState
-            searchValue={searchValue}
-            dashboardNetworkFilterName={networkFilterName}
-          />
-        )
-
+  const renderItem = useCallback(() => {
+    // Has balances, but none match the filters
+    if (state === 'ready' && isFiltered && !filteredBalances.length && balances.length)
       return (
-        <PrivacyPoolsBalances
-          balances={filteredBalances}
-          state={state}
-          unavailableReason={unavailableReason}
-          isWaitingForBackup={isWaitingForBackup}
+        <TokensEmptyState
+          searchValue={searchValue}
+          dashboardNetworkFilterName={networkFilterName}
         />
       )
-    },
-    [
-      balances.length,
-      filteredBalances,
-      isFiltered,
-      networkFilterName,
-      openTab,
-      searchValue,
-      sessionId,
-      setOpenTab,
-      state,
-      theme.primaryBackground,
-      unavailableReason,
-      isWaitingForBackup
-    ]
-  )
+
+    return (
+      <PrivacyPoolsBalances
+        balances={filteredBalances}
+        state={state}
+        unavailableReason={unavailableReason}
+        isWaitingForBackup={isWaitingForBackup}
+      />
+    )
+  }, [
+    balances.length,
+    filteredBalances,
+    isFiltered,
+    networkFilterName,
+    searchValue,
+    state,
+    unavailableReason,
+    isWaitingForBackup
+  ])
 
   const keyExtractor = useCallback((item: string) => item, [])
 
+  // Rendered by the carousel above the pages, like the regular dashboard's
   const floatingBar = useMemo(
     () => ({ control, networkFilterTab: 'tokens' as const, searchPlaceholder: t('Search token') }),
     [control, t]
   )
 
   return (
-    <>
-      <DashboardPageScrollContainer
-        floatingBar={floatingBar}
-        tab="tokens"
-        openTab={openTab}
-        ListHeaderComponent={banners}
-        animatedOverviewHeight={animatedOverviewHeight}
-        data={['header', 'balances']}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        scrollEventThrottle={16}
-      />
-      {openTab === 'tokens' && <FloatingBottomBar {...floatingBar} isHidden={false} />}
-    </>
+    <DashboardPageScrollContainer
+      floatingBar={floatingBar}
+      tab="tokens"
+      openTab={openTab}
+      data={DATA}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      scrollEventThrottle={16}
+    />
   )
 }
 

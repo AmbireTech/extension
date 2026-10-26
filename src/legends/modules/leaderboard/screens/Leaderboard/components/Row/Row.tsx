@@ -13,7 +13,7 @@ type Props = Omit<
   'projectedRewards' | 'projectedRewardsUsd'
 > & {
   stickyPosition: string | null
-  currentUserRef: React.RefObject<HTMLDivElement>
+  currentUserRef: React.RefObject<HTMLDivElement | null>
   image_avatar?: string
 }
 

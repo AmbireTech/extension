@@ -4,12 +4,7 @@ import {
   useKeyboardHandler,
   useReanimatedKeyboardAnimation
 } from 'react-native-keyboard-controller'
-import Animated, {
-  useAnimatedStyle,
-  useDerivedValue,
-  useSharedValue,
-  withSpring
-} from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ScanIcon from '@common/assets/svg/ScanIcon'
@@ -27,7 +22,6 @@ import { FloatingBottomBarProps } from './FloatingBottomBar'
 const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
   networkFilterTab,
-  isHidden,
   searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
@@ -63,19 +57,12 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     navigate(ROUTES.qrReader)
   }, [navigate])
 
-  const animatedBottom = useDerivedValue(() => {
-    const toValue = isHidden ? -60 - safeBottom : SPACING + safeBottom
-    return withSpring(toValue, {
-      damping: 20,
-      stiffness: 90,
-      overshootClamping: true
-    })
-  }, [isHidden, safeBottom])
-
+  // Follows the keyboard by a transform rather than by `bottom`, so it never relayouts anything.
+  // Hiding it is the carousel's, which moves it together with the overview
   const animatedStyle = useAnimatedStyle(() => {
     const keyboardOffset = isKeyboardHeightStale.value ? 0 : Math.abs(height.value)
     return {
-      bottom: animatedBottom.value + keyboardOffset
+      transform: [{ translateY: -keyboardOffset }]
     }
   }, [height, isKeyboardHeightStale])
 
@@ -84,6 +71,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
       style={[
         {
           position: 'absolute',
+          bottom: SPACING + safeBottom,
           zIndex: 3,
           ...flexbox.center,
           ...flexbox.alignSelfCenter,
