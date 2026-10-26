@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { Control, Controller } from 'react-hook-form'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import AccountAddress from '@common/components/AccountAddress'
@@ -25,6 +25,7 @@ type Props = {
   disableEdit?: boolean
   // The name lives in the form until the accounts are added, so this only updates the form
   onSaveName: (addr: Account['addr'], name: string) => Promise<void>
+  style?: ViewStyle
 }
 
 const AccountPersonalizeCard = ({
@@ -33,7 +34,8 @@ const AccountPersonalizeCard = ({
   control,
   hasBottomSpacing = true,
   disableEdit,
-  onSaveName
+  onSaveName,
+  style
 }: Props) => {
   const { addr: address, preferences } = account
   const reverseLookup = useReverseLookup({ address })
@@ -45,7 +47,7 @@ const AccountPersonalizeCard = ({
   )
 
   return (
-    <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
+    <View style={[styles.container, !hasBottomSpacing && spacings.mb0, style]}>
       <View style={[flexbox.justifySpaceBetween, flexbox.alignCenter, flexbox.directionRow]}>
         <View
           testID="personalize-account"

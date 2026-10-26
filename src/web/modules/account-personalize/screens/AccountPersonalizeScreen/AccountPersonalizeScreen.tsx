@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { ScrollView, View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import EditAccountIcon from '@common/assets/svg/EditAccountIcon'
+import RemoveAccountIcon from '@common/assets/svg/RemoveAccountIcon'
 import Button from '@common/components/Button'
 import DotsLoadingAnimation from '@common/components/DotsLoadingAnimation'
 import Panel from '@common/components/Panel'
@@ -12,6 +13,9 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
+import AccountsSectionTitle from '@common/modules/account-personalize/components/AccountsSectionTitle'
+import AccountsToRemoveSection from '@common/modules/account-personalize/components/AccountsToRemoveSection'
+import PersonalizeAccountsList from '@common/modules/account-personalize/components/PersonalizeAccountsList'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { FORWARD_NAVIGATION_STATE, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -42,12 +46,28 @@ const AccountPersonalizeScreen = () => {
     hasBackButton,
     isAdding,
     addedAccounts,
+    accountsToRemove,
+    removedAccounts,
+    isRemovalOnly,
+    canProceed,
     handleSaveAccountName,
     handleProceed,
     title,
+    proceedText,
+    removalOnlyText,
+    removalNote,
     noAccountsText,
     addMoreText
   } = useAccountPersonalize()
+
+  const listEmpty = useMemo(
+    () => (
+      <Text appearance="secondaryText" weight="medium" style={text.center}>
+        {noAccountsText}
+      </Text>
+    ),
+    [noAccountsText]
+  )
 
   // Added, and the flow went on in the popup - this tab stays up to show them
   if (addedAccounts) {
@@ -66,9 +86,12 @@ const AccountPersonalizeScreen = () => {
                 fontSize={20}
                 style={{ alignSelf: 'center', ...spacings.mbXl }}
               >
-                {t('Added successfully')}
+                {removedAccounts.length ? t('Accounts updated') : t('Added successfully')}
               </Text>
               <ScrollView style={spacings.mbLg}>
+                {!!addedAccounts.length && !!removedAccounts.length && (
+                  <AccountsSectionTitle title={t('Added')} count={addedAccounts.length} />
+                )}
                 {addedAccounts.map((account, index) => (
                   <AccountPersonalizeCard
                     key={account.addr}
@@ -80,6 +103,15 @@ const AccountPersonalizeScreen = () => {
                     onSaveName={handleSaveAccountName}
                   />
                 ))}
+                {!!removedAccounts.length && (
+                  <View style={!!addedAccounts.length && spacings.mtXl}>
+                    <AccountsToRemoveSection
+                      accounts={removedAccounts}
+                      title={t('Removed')}
+                      withBadge={false}
+                    />
+                  </View>
+                )}
               </ScrollView>
               <Text appearance="secondaryText" weight="medium" style={text.center}>
                 {t('You can access your accounts from the dashboard via the extension icon.')}
@@ -119,34 +151,31 @@ const AccountPersonalizeScreen = () => {
                 testID="personalize-accounts-header"
                 style={[flexbox.alignCenter, spacings.mbXl]}
               >
-                <EditAccountIcon />
+                {isRemovalOnly ? <RemoveAccountIcon /> : <EditAccountIcon />}
               </View>
-              <ScrollView style={spacings.mbLg}>
-                {fields.length ? (
-                  fields.map((field, index) => (
-                    <AccountPersonalizeCard
-                      key={field.id}
-                      control={control}
-                      index={index}
-                      account={field}
-                      hasBottomSpacing={index !== fields.length - 1}
-                      disableEdit={isAdding}
-                      onSaveName={handleSaveAccountName}
-                    />
-                  ))
-                ) : (
-                  <Text appearance="secondaryText" weight="medium" style={text.center}>
-                    {noAccountsText}
-                  </Text>
-                )}
-              </ScrollView>
+              {!!removalOnlyText && (
+                <Text appearance="secondaryText" style={[text.center, spacings.mbXl]}>
+                  {removalOnlyText}
+                </Text>
+              )}
+              <PersonalizeAccountsList
+                fields={fields}
+                control={control}
+                accountsToRemove={accountsToRemove}
+                isAdding={isAdding}
+                onSaveName={handleSaveAccountName}
+                removalNote={removalNote}
+                ListEmptyComponent={listEmpty}
+                style={spacings.mbLg}
+              />
               <Button
                 testID="button-proceed"
                 size="large"
+                type={isRemovalOnly ? 'danger' : 'primary'}
                 onPress={handleProceed}
                 hasBottomSpacing={false}
-                text={isAdding ? t('Adding...') : t('Proceed')}
-                disabled={!fields.length || isAdding}
+                text={proceedText}
+                disabled={!canProceed}
               />
               {!!addMoreText && (
                 <Button

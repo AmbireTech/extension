@@ -23,6 +23,9 @@ const MAX_LOADING_MS = 5000
 
 const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
   state.readyToAddAccounts
+// The already added accounts deselected on the picker, removed once the user proceeds
+const selectReadyToRemoveAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
+  state.readyToRemoveAccounts
 const selectSubType = (state: AllControllersMappingType['AccountPickerController']) => state.subType
 // Set up by a flow that only sets the picker up, and not started yet
 const selectIsWaitingToStart = (state: AllControllersMappingType['AccountPickerController']) =>
@@ -30,18 +33,25 @@ const selectIsWaitingToStart = (state: AllControllersMappingType['AccountPickerC
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 // Takes the swipe and Android's back over, to go nowhere
 const stayOnScreen = () => {}
+// A stable empty list, so the callbacks depending on it keep their identity
+const NO_ACCOUNTS: Account[] = []
 
 /**
  * The personalize step of every account adding flow: shows the accounts the flow prepared
  * (or prepares them, see below), lets the user name them, and adds them once the user
  * proceeds. Nothing is added before - going back only resets the flow. Accounts a sync
- * added already are only named here.
+ * added already are only named here. The already added accounts deselected on the picker
+ * are listed too, and removed on proceeding as well.
  */
 export default function useAccountPersonalize() {
   const { t } = useTranslation()
   const { goToNextRoute, syncedAccountAddrs, setSyncedAccountAddrs } = useOnboardingNavigation()
   const { state: readyToAddAccounts, dispatchAndWait: accountPickerDispatchAndWait } =
     useController('AccountPickerController', selectReadyToAddAccounts)
+  const { state: readyToRemoveAccounts } = useController(
+    'AccountPickerController',
+    selectReadyToRemoveAccounts
+  )
   const { state: subType } = useController('AccountPickerController', selectSubType)
   const { state: isWaitingToStart } = useController(
     'AccountPickerController',
@@ -58,6 +68,7 @@ export default function useAccountPersonalize() {
     return accounts.filter(({ addr }) => syncedAddrs.includes(addr.toLowerCase()))
   }, [accounts, syncedAccountAddrs])
   const accountsToName = isSyncedMode ? syncedAccounts : readyToAddAccounts
+  const accountsToRemove = isSyncedMode ? NO_ACCOUNTS : readyToRemoveAccounts
 
   // A sync has added its accounts already, so there is nothing to go back to - only Proceed
   // (the browser's back is handled by the onboarding navigation)
@@ -76,6 +87,7 @@ export default function useAccountPersonalize() {
   // Kept once added: where the flow ends in the popup rather than here (web tabs), the
   // screen stays up and shows them as added
   const [addedAccounts, setAddedAccounts] = useState<Account[] | null>(null)
+  const [removedAccounts, setRemovedAccounts] = useState<Account[]>([])
 
   const { control, getValues, setValue, reset } = useForm({
     defaultValues: { accounts: accountsToName }
@@ -188,6 +200,7 @@ export default function useAccountPersonalize() {
         { type: 'method', params: { method: 'addPreparedAccounts', args: [names] } },
         ADD_ACCOUNTS_TIMEOUT_MS
       )
+      setRemovedAccounts(accountsToRemove)
       setAddedAccounts(namedAccounts)
       goToNextRouteRef.current()
     } catch (error) {
@@ -202,10 +215,34 @@ export default function useAccountPersonalize() {
     getValues,
     accountsDispatch,
     setSyncedAccountAddrs,
-    accountPickerDispatchAndWait
+    accountPickerDispatchAndWait,
+    accountsToRemove
   ])
 
-  const canAddMore = !isSyncedMode && !addedAccounts && !isLoading
+  const isRemovalOnly = !fields.length && !!accountsToRemove.length
+  // Removing only changes what was picked already, so there is nothing more to pick
+  const canAddMore = !isSyncedMode && !addedAccounts && !isLoading && !isRemovalOnly
+
+  const getTitle = () => {
+    // A blank title while loading: the header (and its height) shows only with a title or a
+    // back arrow
+    if (isLoading) return ' '
+    if (isRemovalOnly)
+      return accountsToRemove.length > 1 ? t('Remove accounts') : t('Remove account')
+    if (accountsToRemove.length) return t('Review changes')
+    if (!fields.length) return t('No new accounts added')
+
+    return fields.length > 1 ? t('Personalize accounts') : t('Personalize account')
+  }
+
+  const getProceedText = () => {
+    if (isAdding) return isRemovalOnly ? t('Removing...') : t('Adding...')
+    if (!isRemovalOnly) return t('Proceed')
+
+    return accountsToRemove.length > 1
+      ? t('Remove {{count}} accounts', { count: accountsToRemove.length })
+      : t('Remove 1 account')
+  }
 
   return {
     control,
@@ -215,17 +252,30 @@ export default function useAccountPersonalize() {
     hasBackButton: !isLoading && !isSyncedMode,
     isAdding,
     addedAccounts,
+    accountsToRemove,
+    removedAccounts,
+    isRemovalOnly,
+    canProceed: (!!fields.length || !!accountsToRemove.length) && !isAdding,
     handleSaveAccountName,
     handleProceed,
-    // A blank title while loading: the header (and its height) shows only with a title or a
-    // back arrow
-    title: isLoading
-      ? ' '
-      : !fields.length
-        ? t('No new accounts added')
-        : fields.length > 1
-          ? t('Personalize accounts')
-          : t('Personalize account'),
+    title: getTitle(),
+    proceedText: getProceedText(),
+    removalOnlyText: isRemovalOnly
+      ? t('You deselected accounts you already have. They will be taken out of Ambire.')
+      : null,
+    // Removing deletes nothing that can't be brought back, which the user should know
+    removalNote:
+      subType === 'seed'
+        ? t(
+            'Removing only takes an account out of Ambire. Its funds stay where they are, and you can add it back at any time from this recovery phrase.'
+          )
+        : subType === 'hw'
+          ? t(
+              'Removing only takes an account out of Ambire. Its funds stay where they are, and you can add it back at any time from this hardware wallet.'
+            )
+          : t(
+              'Removing only takes an account out of Ambire. Its funds stay where they are, and you can add it back at any time.'
+            ),
     // Preparing failed, every account was deselected on the picker, or the prepared accounts
     // are gone (the app or browser was restarted) - nothing to add, only to go back from
     noAccountsText:

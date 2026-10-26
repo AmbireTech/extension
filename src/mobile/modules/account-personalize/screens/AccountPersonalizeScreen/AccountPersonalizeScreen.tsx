@@ -1,15 +1,16 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import EditAccountIcon from '@common/assets/svg/EditAccountIcon'
+import RemoveAccountIcon from '@common/assets/svg/RemoveAccountIcon'
 import Button from '@common/components/Button'
 import DotsLoadingAnimation from '@common/components/DotsLoadingAnimation'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
+import PersonalizeAccountsList from '@common/modules/account-personalize/components/PersonalizeAccountsList'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { FORWARD_NAVIGATION_STATE, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -34,12 +35,27 @@ const AccountPersonalizeScreen = () => {
     isLoading,
     hasBackButton,
     isAdding,
+    accountsToRemove,
+    isRemovalOnly,
+    canProceed,
     handleSaveAccountName,
     handleProceed,
     title,
+    proceedText,
+    removalOnlyText,
+    removalNote,
     noAccountsText,
     addMoreText
   } = useAccountPersonalize()
+
+  const listEmpty = useMemo(
+    () => (
+      <Text appearance="secondaryText" weight="medium" style={text.center}>
+        {noAccountsText}
+      </Text>
+    ),
+    [noAccountsText]
+  )
 
   return (
     <MobileLayoutContainer
@@ -49,10 +65,11 @@ const AccountPersonalizeScreen = () => {
             <Button
               testID="button-proceed"
               size="large"
+              type={isRemovalOnly ? 'danger' : 'primary'}
               onPress={handleProceed}
               hasBottomSpacing={false}
-              text={isAdding ? t('Adding...') : t('Proceed')}
-              disabled={!fields.length || isAdding}
+              text={proceedText}
+              disabled={!canProceed}
             />
             {!!addMoreText && (
               <Button
@@ -86,7 +103,6 @@ const AccountPersonalizeScreen = () => {
         headerStyle={HEADER_STYLE}
         onBackButtonPress={goToPrevRoute}
         title={title}
-        withScroll
       >
         {isLoading ? (
           <View style={flexbox.alignCenter}>
@@ -101,25 +117,23 @@ const AccountPersonalizeScreen = () => {
         ) : (
           <>
             <View testID="personalize-accounts-header" style={[flexbox.alignCenter, spacings.mbXl]}>
-              <EditAccountIcon />
+              {isRemovalOnly ? <RemoveAccountIcon /> : <EditAccountIcon />}
             </View>
-            {fields.length ? (
-              fields.map((field, index) => (
-                <AccountPersonalizeCard
-                  key={field.id}
-                  control={control}
-                  index={index}
-                  account={field}
-                  hasBottomSpacing={index !== fields.length - 1}
-                  disableEdit={isAdding}
-                  onSaveName={handleSaveAccountName}
-                />
-              ))
-            ) : (
-              <Text appearance="secondaryText" weight="medium" style={text.center}>
-                {noAccountsText}
+            {!!removalOnlyText && (
+              <Text appearance="secondaryText" style={[text.center, spacings.mbXl]}>
+                {removalOnlyText}
               </Text>
             )}
+            <PersonalizeAccountsList
+              fields={fields}
+              control={control}
+              accountsToRemove={accountsToRemove}
+              isAdding={isAdding}
+              onSaveName={handleSaveAccountName}
+              removalNote={removalNote}
+              ListEmptyComponent={listEmpty}
+              style={flexbox.flex1}
+            />
           </>
         )}
       </MobileLayoutWrapperMainContent>

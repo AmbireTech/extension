@@ -218,18 +218,21 @@ const useSafeImportByOwner = () => {
           selectedAddressSet.has(address.toLowerCase()) &&
           !importedAddressSet.has(address.toLowerCase())
       )
-    // Already imported accounts keep their preferences, so only the new ones get a default label
+    // Only the new ones - the imported Safes that stay selected are left as they are, so the
+    // personalize step doesn't list them as added
     const accountsToImport: Account[] = currentDisplayableData.accounts
-      .filter((account) => selectedAddressSet.has(account.addr.toLowerCase()))
-      .map(({ addr, associatedKeys, initialPrivileges, creation, safeCreation, preferences }) => ({
+      .filter((account) => newAddresses.includes(account.addr))
+      .map(({ addr, associatedKeys, initialPrivileges, creation, safeCreation }) => ({
         addr,
         associatedKeys,
         initialPrivileges,
         creation,
         safeCreation,
-        preferences: newAddresses.includes(addr)
-          ? getDefaultAccountPreferences(addr, accountsLeftAfterRemoval, newAddresses.indexOf(addr))
-          : preferences
+        preferences: getDefaultAccountPreferences(
+          addr,
+          accountsLeftAfterRemoval,
+          newAddresses.indexOf(addr)
+        )
       }))
 
     setIsPreparing(true)
