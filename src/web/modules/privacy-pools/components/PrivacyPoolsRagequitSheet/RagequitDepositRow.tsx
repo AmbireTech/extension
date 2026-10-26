@@ -3,7 +3,6 @@ import { View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { PrivacyPoolsRagequitDeposit } from '@ambire-common/interfaces/privacyPools'
-import { getTimeAgo } from '@ambire-common/services/validations/validate'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -23,8 +22,7 @@ export type RagequitDepositView = PrivacyPoolsRagequitDeposit & {
   amountFormatted: string
 }
 
-const columnStyles: { timestamp: ViewStyle; from: ViewStyle; amount: ViewStyle } = {
-  timestamp: { width: 100 },
+const columnStyles: { from: ViewStyle; amount: ViewStyle } = {
   from: { flex: 1, minWidth: 0 },
   amount: { width: 100 }
 }
@@ -46,8 +44,8 @@ const Column: FC<{ label: string; value: string; style: ViewStyle }> = ({
 )
 
 /**
- * One deposit that can be taken back, with when it was made, the account it came from and goes
- * back to, and its own Rage quit. That is disabled when the account is not in the wallet or is
+ * One deposit that can be taken back, with the account it came from and goes back to, and its
+ * own Rage quit. That is disabled when the account is not in the wallet or is
  * view-only, as nothing could sign for it; its tooltip says why.
  */
 const RagequitDepositRow: FC<{
@@ -82,12 +80,6 @@ const RagequitDepositRow: FC<{
       ]}
       testID={`privacy-pools-ragequit-deposit-${labelString}`}
     >
-      <Column
-        label={t('Timestamp:')}
-        // Estimated from the deposit's block, so the network is not asked when it was made
-        value={deposit.depositedAt === null ? '-' : getTimeAgo(new Date(deposit.depositedAt))}
-        style={columnStyles.timestamp}
-      />
       <Column
         label={t('From:')}
         value={deposit.account?.preferences.label || shortenAddress(deposit.depositorAddr, 13)}
