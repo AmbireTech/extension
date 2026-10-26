@@ -82,12 +82,14 @@ export const handleCleanUpOnPortDisconnect = async ({
   )
 
   // An account adding flow closed midway is dropped, so it does not come back the next time
-  // the extension is opened - unless it was closed on its last step: the prepared accounts
-  // wait there, for the user to add or go back from (see `getInitialRoute`).
+  // the extension is opened - unless it was closed on its last step while the wallet has no
+  // accounts: the prepared accounts wait there, for the user to add or go back from (see
+  // `getInitialRoute`). With accounts, nothing would lead back to them.
   if (isOnboardingRoute) {
     const { isInitialized, initParams, readyToAddAccounts } = mainCtrl.accountPicker
     const isOnPersonalizeStep = url.pathname.includes(ROUTES.accountPersonalize)
-    const isWaitingToBeAdded = isOnPersonalizeStep && !!readyToAddAccounts.length
+    const isWaitingToBeAdded =
+      isOnPersonalizeStep && !!readyToAddAccounts.length && !mainCtrl.selectedAccount.selectedType
 
     if ((isInitialized || initParams || readyToAddAccounts.length) && !isWaitingToBeAdded) {
       await mainCtrl.accountPicker.reset()

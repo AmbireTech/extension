@@ -93,8 +93,15 @@ const getInitialRoute = ({
   }
 
   // Accounts prepared by a flow the user left on its last step (e.g. by closing the tab)
-  // wait there, for them to add or go back from - the background keeps them while it runs
-  if (!isRequestWindow && !isSidePanel && accountPickerState?.readyToAddAccounts.length) {
+  // wait there, for them to add or go back from - the background keeps them while it runs.
+  // Only while the wallet has no accounts: the step is tab-only, so the popup focuses its tab
+  // instead of showing nothing. With accounts, the popup opens as usual.
+  if (
+    !isRequestWindow &&
+    !isSidePanel &&
+    authStatus === AUTH_STATUS.NOT_AUTHENTICATED &&
+    accountPickerState?.readyToAddAccounts.length
+  ) {
     return ROUTES.accountPersonalize
   }
 
