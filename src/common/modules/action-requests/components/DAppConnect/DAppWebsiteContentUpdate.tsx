@@ -87,6 +87,8 @@ const DAppWebsiteContentUpdate: FC<{
             fontSize={14}
             weight={isRecentlyUpdated ? 'semiBold' : 'regular'}
             color={isRecentlyUpdated ? theme.warningDecorative : theme.primaryText}
+            // Wraps under itself on narrow screens instead of overflowing the box
+            style={[flexbox.flex1, { textAlign: 'right' }]}
           >
             {updatedAtText}
           </Text>
