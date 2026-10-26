@@ -65,10 +65,10 @@ const AccountPersonalizeCard = ({
               <Controller
                 control={control}
                 name={`accounts.${index}.preferences.label`}
-                render={({ field: { value } }) => (
+                render={() => (
                   <EditableAccountName
                     account={account}
-                    name={value}
+                    name={account.preferences.label}
                     onSave={handleSaveName}
                     testID={`edit-name-field-${index}`}
                     textProps={NAME_TEXT_PROPS}
