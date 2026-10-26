@@ -24,6 +24,9 @@ const MAX_LOADING_MS = 5000
 const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
   state.readyToAddAccounts
 const selectSubType = (state: AllControllersMappingType['AccountPickerController']) => state.subType
+// Set up by a flow that only sets the picker up, and not started yet
+const selectIsWaitingToStart = (state: AllControllersMappingType['AccountPickerController']) =>
+  !!state.initParams && !state.isInitialized && !state.readyToAddAccounts.length
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 // Takes the swipe and Android's back over, to go nowhere
 const stayOnScreen = () => {}
@@ -40,6 +43,10 @@ export default function useAccountPersonalize() {
   const { state: readyToAddAccounts, dispatchAndWait: accountPickerDispatchAndWait } =
     useController('AccountPickerController', selectReadyToAddAccounts)
   const { state: subType } = useController('AccountPickerController', selectSubType)
+  const { state: isWaitingToStart } = useController(
+    'AccountPickerController',
+    selectIsWaitingToStart
+  )
   const { state: accounts, dispatch: accountsDispatch } = useController(
     'AccountsController',
     selectAccounts
@@ -60,7 +67,11 @@ export default function useAccountPersonalize() {
   )
   const [hasMinLoadingPassed, setHasMinLoadingPassed] = useState(false)
   const [hasMaxLoadingPassed, setHasMaxLoadingPassed] = useState(false)
-  const hasStartedPreparing = useRef(false)
+  // A new run starts once another flow sets the picker up while the screen is up - on web the
+  // popup only focuses this tab when it is on personalize already
+  const [prepareRun, setPrepareRun] = useState(0)
+  const startedPrepareRun = useRef<number | null>(null)
+  const hasShownPreparedAccounts = useRef(false)
   const [isAdding, setIsAdding] = useState(false)
   // Kept once added: where the flow ends in the popup rather than here (web tabs), the
   // screen stays up and shows them as added
@@ -72,22 +83,41 @@ export default function useAccountPersonalize() {
   const { fields } = useFieldArray({ control, name: 'accounts' })
 
   // Create, a recovery phrase and a private key only set the picker up, so it is started here,
-  // once. The controller decides whether to start, as the state here can lag behind the flow.
+  // once per run. The controller decides whether to start, as the state here can lag behind the flow.
   useEffect(() => {
-    if (hasStartedPreparing.current || isSyncedMode) return
+    if (startedPrepareRun.current === prepareRun || isSyncedMode) return
 
-    hasStartedPreparing.current = true
+    startedPrepareRun.current = prepareRun
+    const isCurrentRun = () => startedPrepareRun.current === prepareRun
     accountPickerDispatchAndWait(
       { type: 'method', params: { method: 'initIfNotStarted', args: [] } },
       PREPARE_ACCOUNTS_TIMEOUT_MS
     )
-      .then((preparedCount: number) => setPrepareResult({ preparedCount }))
+      .then((preparedCount: number) => {
+        if (isCurrentRun()) setPrepareResult({ preparedCount })
+      })
       .catch((error) => {
         // The controller reports its own failures, here the screen only stops loading
         console.error('Failed to prepare the accounts', error)
-        setPrepareResult('failed')
+        if (isCurrentRun()) setPrepareResult('failed')
       })
-  }, [accountPickerDispatchAndWait, isSyncedMode])
+  }, [accountPickerDispatchAndWait, isSyncedMode, prepareRun])
+
+  useEffect(() => {
+    if (readyToAddAccounts.length) hasShownPreparedAccounts.current = true
+  }, [readyToAddAccounts.length])
+
+  // The picker was set up anew after this run's accounts were prepared, so the step starts over.
+  // Waiting for them to show first keeps a lagging state from restarting the run it belongs to.
+  useEffect(() => {
+    if (!isWaitingToStart || !hasShownPreparedAccounts.current || isAdding || addedAccounts) return
+
+    hasShownPreparedAccounts.current = false
+    setPrepareResult(null)
+    setHasMinLoadingPassed(false)
+    setHasMaxLoadingPassed(false)
+    setPrepareRun((run) => run + 1)
+  }, [isWaitingToStart, isAdding, addedAccounts])
 
   useEffect(() => {
     const minTimeout = setTimeout(() => setHasMinLoadingPassed(true), MIN_LOADING_MS)
@@ -97,7 +127,7 @@ export default function useAccountPersonalize() {
       clearTimeout(minTimeout)
       clearTimeout(maxTimeout)
     }
-  }, [])
+  }, [prepareRun])
 
   // Until the reply, then until the accounts it reports reach the state - the reply can come
   // first (mobile holds updates back while a screen transition runs)
