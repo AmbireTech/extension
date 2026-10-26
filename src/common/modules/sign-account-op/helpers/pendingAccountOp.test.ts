@@ -85,6 +85,56 @@ describe('getEarliestPendingAccountOp', () => {
     })
   })
 
+  describe('sped up transactions', () => {
+    const EOA = '0x77777777789A8BBEE6C64381e5E89E501fb0e4c8'
+    // Sent by the same EOA with the same EOA nonce, so they replace each other
+    const buildSentByEoa = (id: string, timestamp: number) =>
+      buildPendingAccountOp(id, {
+        eoaNonce: 5n,
+        timestamp,
+        gasFeePayment: {
+          paidBy: EOA,
+          paidByKeyType: 'internal',
+          broadcastOption: 'bySelf',
+          isGasTank: false,
+          inToken: '0x0000000000000000000000000000000000000000',
+          feeTokenChainId: 1n,
+          amount: 1n,
+          simulatedGasLimit: 1n,
+          gasPrice: 1n,
+          maxPriorityFeePerGas: 1n
+        }
+      })
+
+    test.each([true, false])(
+      'returns the newest of a transaction and its speed ups (Safe: %s)',
+      (isSafeAccount) => {
+        const result = getEarliestPendingAccountOp({
+          accountOp: buildAccountOp(),
+          isSafeAccount,
+          accountStateNonce: 7n,
+          pendingAccountOps: [buildSentByEoa('original', 1000), buildSentByEoa('speed-up', 2000)]
+        })
+
+        expect(result?.id).toBe('speed-up')
+      }
+    )
+
+    test('skips the original once its newest speed up is the one being replaced', () => {
+      const speedUp = buildSentByEoa('speed-up', 2000)
+      const result = getEarliestPendingAccountOp({
+        accountOp: buildAccountOp({
+          meta: { speedUp: { enabled: true, replacedIdentifiedBy: speedUp.identifiedBy } }
+        }),
+        isSafeAccount: false,
+        accountStateNonce: 10n,
+        pendingAccountOps: [buildSentByEoa('original', 1000), speedUp]
+      })
+
+      expect(result).toBeNull()
+    })
+  })
+
   describe('other accounts', () => {
     test('returns the first sent pending transaction on the same network, whatever its nonce', () => {
       const result = getEarliestPendingAccountOp({

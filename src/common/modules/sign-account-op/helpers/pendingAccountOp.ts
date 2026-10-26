@@ -1,5 +1,6 @@
 import { AccountOp, getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import { collapseReplacedAccountOps } from '@ambire-common/libs/activity/replacements'
 
 type Params = {
   /** The transaction being signed */
@@ -70,9 +71,19 @@ const getEarliestPendingNonSafeAccountOp = ({
 
 /**
  * The earliest transaction that was already sent from the account but isn't confirmed yet, and
- * has to go through before the one being signed can. Null if nothing holds it back
+ * has to go through before the one being signed can. Null if nothing holds it back.
+ * A pending transaction and its speed ups replace each other, so only the newest of them is
+ * considered, as the activity shows it: it pays the highest fee, so speeding up or cancelling
+ * must outbid it, and the older ones never hold anything back on their own
  */
-export const getEarliestPendingAccountOp = ({ isSafeAccount, ...params }: Params) =>
-  isSafeAccount
-    ? getEarliestPendingSafeAccountOp(params)
-    : getEarliestPendingNonSafeAccountOp(params)
+export const getEarliestPendingAccountOp = ({
+  isSafeAccount,
+  pendingAccountOps,
+  ...params
+}: Params) => {
+  const latestPendingAccountOps = collapseReplacedAccountOps(pendingAccountOps)
+
+  return isSafeAccount
+    ? getEarliestPendingSafeAccountOp({ ...params, pendingAccountOps: latestPendingAccountOps })
+    : getEarliestPendingNonSafeAccountOp({ ...params, pendingAccountOps: latestPendingAccountOps })
+}
