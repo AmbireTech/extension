@@ -85,6 +85,7 @@ const WEB_ROUTES = {
   qrPermission: 'qr-permission',
   exportToMobile: 'export-to-mobile',
   importFromMobile: 'import-from-mobile',
+  pq1Connect: 'pq1-connect',
   // INTERNAL ROUTES
   internalLogs: 'internal/logs'
 }
@@ -151,6 +152,7 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.safeImportAddress,
   COMMON_ROUTES.safeImportByOwner,
   COMMON_ROUTES.qrConnect,
+  WEB_ROUTES.pq1Connect,
   WEB_ROUTES.importFromMobile,
   MOBILE_ROUTES.importFromExtension
 ] as const

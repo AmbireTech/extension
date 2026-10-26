@@ -330,7 +330,21 @@ module.exports = async function buildExtension(
         // are still escaped. Unescape them so the emitted file is valid JavaScript.
         return match[1].replace(/\\`/g, '`').replace(/\\\$/g, '$')
       }
-    }
+    },
+    // PQ1 hardware-wallet clear-signing catalogs (ERC-20 metadata, address
+    // names, ERC-7730 descriptors, function names) from the `pq1-sdk-catalogs`
+    // package. Fetched lazily from the extension's own assets by `pq1-sdk`
+    // (see `src/web/modules/hardware-wallet/libs/pq1/context.ts`); the README
+    // in `libs/pq1/` says why they ship with the build. Chromium builds only:
+    // PQ1 needs WebHID, which Firefox and Safari don't have.
+    ...(isWebkit && !isSafari
+      ? [
+          {
+            from: './node_modules/pq1-sdk-catalogs/data',
+            to: 'pq1'
+          }
+        ]
+      : [])
   ]
 
   config.plugins = [

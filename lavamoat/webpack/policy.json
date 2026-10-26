@@ -2313,6 +2313,35 @@
         "@ngraveio/bc-ur>sha.js>to-buffer": true
       }
     },
+    "pq1-sdk": {
+      "globals": {
+        "AbortController": true,
+        "TextEncoder": true,
+        "chrome.runtime.getURL": true,
+        "chrome.runtime.id": true,
+        "chrome.runtime.onMessage.addListener": true,
+        "chrome.runtime.onMessage.removeListener": true,
+        "chrome.runtime.sendMessage": true,
+        "chrome.storage.local.get": true,
+        "chrome.storage.local.set": true,
+        "clearTimeout": true,
+        "console.error": true,
+        "console.warn": true,
+        "fetch": true,
+        "navigator.hid": true,
+        "setTimeout": true
+      },
+      "meta": {
+        "webpack-optimization": [
+          "Dependency 'viem' reexports from 'ox>abitype' and webpack collapsed that to a direct import."
+        ]
+      },
+      "packages": {
+        "ox>abitype": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "viem": true
+      }
+    },
     "process": {
       "globals": {
         "clearTimeout": true,

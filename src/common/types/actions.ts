@@ -87,6 +87,15 @@ type MainControllerAccountPickerInitNfcWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET'
   params: { payload: NfcExportedKey }
 }
+type ImportPq1AccountsAction = {
+  type: 'IMPORT_PQ1_ACCOUNTS'
+  params: {
+    /** Read from the device by `PQ1Controller` for the connect screen: each
+     *  account's number on the device and its wallet address. */
+    entries: Array<{ accountIndex: number; addr: string }>
+    deviceId: string
+  }
+}
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
   params: { id: string }
@@ -264,6 +273,7 @@ export type Action =
   | SetViewFocusAction
   | MainControllerAccountPickerInitQrWalletAction
   | MainControllerAccountPickerInitNfcWalletAction
+  | ImportPq1AccountsAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
