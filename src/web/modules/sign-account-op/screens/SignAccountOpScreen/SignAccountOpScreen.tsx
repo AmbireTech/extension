@@ -21,7 +21,7 @@ import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
-import PendingSafeTransaction from '@common/modules/sign-account-op/components/PendingSafeTransaction'
+import PendingTransaction from '@common/modules/sign-account-op/components/PendingTransaction'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
@@ -568,7 +568,7 @@ const SignAccountOpScreen = () => {
                     chainId={signAccountOpState?.accountOp?.chainId}
                   />
                 )}
-                <PendingSafeTransaction style={spacings.mt} />
+                <PendingTransaction style={spacings.mt} />
               </>
             ) : (
               // The Hashes/Parsed/Raw sub-tabs are flattened into SafeAccountTabs above, so the

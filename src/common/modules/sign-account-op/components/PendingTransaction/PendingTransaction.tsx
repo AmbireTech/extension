@@ -2,13 +2,11 @@ import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'reac
 import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
 import {
   getReplacementAccountOp,
   getReplacementBlocker,
   Replacement
 } from '@ambire-common/libs/accountOp/replacement'
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -19,6 +17,8 @@ import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import { REPLACEMENT_BLOCKER_MESSAGES } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
+import { getEarliestPendingAccountOp } from '@common/modules/sign-account-op/helpers/pendingAccountOp'
 import {
   getReplacementBuildRequest,
   getResendAccountOp,
@@ -57,10 +57,11 @@ const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['Acti
   state.broadcastedButNotConfirmed
 
 /**
- * Lets the user know that the Safe transaction being signed is queued after one that was already
+ * Lets the user know that the transaction being signed is queued after one that was already
  * sent but isn't confirmed yet, and offers to speed up or cancel that pending transaction.
+ * Shown for every account type: a Safe, an EOA, a 7702 EOA and an Ambire smart account.
  */
-const PendingSafeTransaction = ({ style }: Props) => {
+const PendingTransaction = ({ style }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
@@ -86,30 +87,15 @@ const PendingSafeTransaction = ({ style }: Props) => {
 
   // The earliest pending transaction is the one holding back every transaction after it
   const pendingAccountOp = useMemo(() => {
-    if (!isSafeAccount || !accountOp) return null
+    if (!accountOp) return null
 
-    const currentNonce = getAccountOpNonce(accountOp)
-    if (currentNonce === null) return null
-    // A pending transaction below the Safe's onchain nonce can never be confirmed, as its nonce
-    // was already used, so it doesn't hold back the transaction being signed
-    const onchainNonce =
-      accountStates[accountOp.accountAddr]?.[accountOp.chainId.toString()]?.nonce ?? 0n
-
-    return (
-      broadcastedButNotConfirmed?.[accountOp.accountAddr] || []
-    ).reduce<SubmittedAccountOp | null>((earliest, submittedAccountOp) => {
-      if (
-        submittedAccountOp.chainId !== accountOp.chainId ||
-        submittedAccountOp.nonce === null ||
-        submittedAccountOp.nonce < onchainNonce ||
-        submittedAccountOp.nonce >= currentNonce
-      )
-        return earliest
-
-      return !earliest || earliest.nonce === null || submittedAccountOp.nonce < earliest.nonce
-        ? submittedAccountOp
-        : earliest
-    }, null)
+    return getEarliestPendingAccountOp({
+      accountOp,
+      isSafeAccount,
+      accountStateNonce:
+        accountStates[accountOp.accountAddr]?.[accountOp.chainId.toString()]?.nonce,
+      pendingAccountOps: broadcastedButNotConfirmed?.[accountOp.accountAddr] || []
+    })
   }, [accountOp, accountStates, broadcastedButNotConfirmed, isSafeAccount])
 
   const handleSheetOpen = useCallback(() => setShouldRenderCalls(true), [])
@@ -149,14 +135,18 @@ const PendingSafeTransaction = ({ style }: Props) => {
   )
 
   // Replaced in the mempool the same way as from the activity, when the way it was sent allows
-  // it. The pending transaction is always the selected Safe's own, as it's the one being signed
-  const canReplaceInMempool = useMemo(
-    () => !!pendingAccountOp && getReplacementBlocker(pendingAccountOp, true) === null,
+  // it. The pending transaction is always the account's own, as it's the one being signed
+  const replacementBlocker = useMemo(
+    () => (pendingAccountOp ? getReplacementBlocker(pendingAccountOp, true) : null),
     [pendingAccountOp]
   )
+  const canReplaceInMempool = !!pendingAccountOp && replacementBlocker === null
+  // A Safe transaction that can't be replaced in the mempool is still resent or cancelled with
+  // a new Safe transaction at its nonce. Any other account has no such way around it
+  const isReplacementDisabled = !isSafeAccount && !canReplaceInMempool
 
   const handleSpeedUp = useCallback(() => {
-    if (!pendingAccountOp) return
+    if (!pendingAccountOp || isReplacementDisabled) return
 
     // Otherwise (e.g. sent through a bundler) it can't be replaced, so it's simply sent again
     const speedUpAccountOp = canReplaceInMempool
@@ -165,10 +155,10 @@ const PendingSafeTransaction = ({ style }: Props) => {
     if (!speedUpAccountOp) return
 
     openReplacementRequest('speedUp', speedUpAccountOp)
-  }, [canReplaceInMempool, openReplacementRequest, pendingAccountOp])
+  }, [canReplaceInMempool, isReplacementDisabled, openReplacementRequest, pendingAccountOp])
 
   const handleCancel = useCallback(() => {
-    if (!pendingAccountOp) return
+    if (!pendingAccountOp || isReplacementDisabled) return
 
     // Otherwise the owners sign a new Safe transaction that takes its place, sent any way
     const cancelAccountOp = canReplaceInMempool
@@ -177,7 +167,19 @@ const PendingSafeTransaction = ({ style }: Props) => {
     if (!cancelAccountOp) return
 
     openReplacementRequest('cancel', cancelAccountOp)
-  }, [canReplaceInMempool, openReplacementRequest, pendingAccountOp])
+  }, [canReplaceInMempool, isReplacementDisabled, openReplacementRequest, pendingAccountOp])
+
+  const replacementDescription = useMemo(() => {
+    if (isSafeAccount)
+      return t(
+        'Speeding it up sends the same transaction again so it gets confirmed sooner, without new signatures from the owners. Cancelling replaces it with a transaction that does nothing, which the owners need to sign.'
+      )
+    if (replacementBlocker) return t(REPLACEMENT_BLOCKER_MESSAGES[replacementBlocker])
+
+    return t(
+      'Speeding it up sends it again with a higher fee so it gets confirmed sooner. Cancelling replaces it with a transaction that does nothing, so it never goes through.'
+    )
+  }, [isSafeAccount, replacementBlocker, t])
 
   const sheetHeader = useMemo(
     () => (
@@ -194,13 +196,11 @@ const PendingSafeTransaction = ({ style }: Props) => {
           )}
         </Text>
         <Text appearance="secondaryText" fontSize={14} style={spacings.mtSm}>
-          {t(
-            'Speeding it up sends the same transaction again so it gets confirmed sooner, without new signatures from the owners. Cancelling replaces it with a transaction that does nothing, which the owners need to sign.'
-          )}
+          {replacementDescription}
         </Text>
       </View>
     ),
-    [handleClose, t]
+    [handleClose, replacementDescription, t]
   )
 
   const sheetContent = useMemo(() => {
@@ -225,7 +225,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
               size="small"
               text={replacementInProgress?.action === 'cancel' ? t('Canceling...') : t('Cancel')}
               onPress={handleCancel}
-              disabled={!!replacementInProgress}
+              disabled={!!replacementInProgress || isReplacementDisabled}
               hasBottomSpacing={false}
               style={flexbox.flex1}
             />
@@ -236,7 +236,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
                 replacementInProgress?.action === 'speedUp' ? t('Speeding up...') : t('Speed up')
               }
               onPress={handleSpeedUp}
-              disabled={!!replacementInProgress}
+              disabled={!!replacementInProgress || isReplacementDisabled}
               hasBottomSpacing={false}
               style={[flexbox.flex1, spacings.mlTy]}
             />
@@ -247,6 +247,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
   }, [
     handleCancel,
     handleSpeedUp,
+    isReplacementDisabled,
     pendingAccountOp,
     replacementInProgress,
     shouldRenderCalls,
@@ -269,7 +270,7 @@ const PendingSafeTransaction = ({ style }: Props) => {
         style={style}
       />
       <BottomSheet
-        id="pending-safe-transaction"
+        id="pending-transaction"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
         onOpen={handleSheetOpen}
@@ -284,4 +285,4 @@ const PendingSafeTransaction = ({ style }: Props) => {
   )
 }
 
-export default React.memo(PendingSafeTransaction)
+export default React.memo(PendingTransaction)
