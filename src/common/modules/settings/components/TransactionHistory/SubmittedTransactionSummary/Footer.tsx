@@ -4,6 +4,10 @@ import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Network } from '@ambire-common/interfaces/network'
+import {
+  isPartiallyMinedBatch,
+  isReplaceableBroadcast
+} from '@ambire-common/libs/accountOp/replacement'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -23,7 +27,6 @@ import { openInTab } from '@common/utils/links'
 
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
 import PendingTransactionFooter from './PendingTransactionFooter'
-import { isPartiallyMinedBatch, isReplaceableBroadcast } from './replacement'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
 

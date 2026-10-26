@@ -2,6 +2,12 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import {
+  getReplacementAccountOp,
+  getReplacementBlocker,
+  Replacement,
+  ReplacementBlocker
+} from '@ambire-common/libs/accountOp/replacement'
 import SpeedUpIcon from '@common/assets/svg/SpeedUpIcon'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -12,12 +18,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 
-import {
-  getReplacementAccountOp,
-  getReplacementBlocker,
-  Replacement,
-  ReplacementBlocker
-} from './replacement'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
 
