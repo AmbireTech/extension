@@ -7,6 +7,7 @@ import {
   getReplacementBlocker,
   Replacement
 } from '@ambire-common/libs/accountOp/replacement'
+import { getPendingBlockTagIfSupported } from '@ambire-common/utils/getBlockTag'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -51,6 +52,7 @@ const selectIsSafeAccount = (state: AllControllersMappingType['SignAccountOpCont
   !!state?.account.safeCreation
 const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
   state.accountStates
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 const selectCurrentUserRequestId = (state: AllControllersMappingType['RequestsController']) =>
   state.currentUserRequest?.id
 const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['ActivityController']) =>
@@ -61,7 +63,7 @@ const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['Acti
  * sent but isn't confirmed yet, and offers to speed up or cancel that pending transaction.
  * Shown for every account type: a Safe, an EOA, a 7702 EOA and an Ambire smart account.
  */
-const PendingTransaction = ({ style }: Props) => {
+const EarlierPendingTransaction = ({ style }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
@@ -76,6 +78,7 @@ const PendingTransaction = ({ style }: Props) => {
   const { state: accountOp } = useController('SignAccountOpController', selectAccountOp)
   const { state: isSafeAccount } = useController('SignAccountOpController', selectIsSafeAccount)
   const { state: accountStates } = useController('AccountsController', selectAccountStates)
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: broadcastedButNotConfirmed } = useController(
     'ActivityController',
     selectBroadcastedButNotConfirmed
@@ -89,14 +92,20 @@ const PendingTransaction = ({ style }: Props) => {
   const pendingAccountOp = useMemo(() => {
     if (!accountOp) return null
 
+    const network = networks.find((n) => n.chainId === accountOp.chainId)
+
     return getEarliestPendingAccountOp({
       accountOp,
       isSafeAccount,
       accountStateNonce:
         accountStates[accountOp.accountAddr]?.[accountOp.chainId.toString()]?.nonce,
+      // An unknown network is treated like one read from the pending block, so a pending
+      // transaction is never hidden by mistake
+      isAccountStateNonceConfirmed:
+        !!network && getPendingBlockTagIfSupported(network) === 'latest',
       pendingAccountOps: broadcastedButNotConfirmed?.[accountOp.accountAddr] || []
     })
-  }, [accountOp, accountStates, broadcastedButNotConfirmed, isSafeAccount])
+  }, [accountOp, accountStates, broadcastedButNotConfirmed, isSafeAccount, networks])
 
   const handleSheetOpen = useCallback(() => setShouldRenderCalls(true), [])
   const handleSheetClosed = useCallback(() => setShouldRenderCalls(false), [])
@@ -270,7 +279,7 @@ const PendingTransaction = ({ style }: Props) => {
         style={style}
       />
       <BottomSheet
-        id="pending-transaction"
+        id="earlier-pending-transaction"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
         onOpen={handleSheetOpen}
@@ -285,4 +294,4 @@ const PendingTransaction = ({ style }: Props) => {
   )
 }
 
-export default React.memo(PendingTransaction)
+export default React.memo(EarlierPendingTransaction)

@@ -8,18 +8,27 @@ type Params = {
   isSafeAccount: boolean
   /** The account's nonce from its latest known state on the transaction's network */
   accountStateNonce: bigint | undefined
+  /**
+   * Whether `accountStateNonce` counts confirmed transactions only. On networks where the state
+   * is read from the pending block (Ethereum, see `getPendingBlockTagIfSupported`), it may
+   * already count the pending transactions too, so it can't tell which nonces were used
+   */
+  isAccountStateNonceConfirmed: boolean
   /** The account's transactions that were sent but aren't confirmed yet (any network) */
   pendingAccountOps: SubmittedAccountOp[]
 }
 
 /**
  * A Safe transaction is held back by a pending one with a lower Safe nonce. One below the Safe's
- * nonce can never be confirmed, as its nonce was already used, so it holds nothing back. The
+ * confirmed nonce can never be confirmed, as its nonce was already used, so it holds nothing
+ * back. When the nonce may count pending transactions too, every pending one is kept: the
+ * activity marks the ones whose nonce was used once it sees them fail or get replaced. The
  * earliest one is returned, as it holds back every transaction after it
  */
 const getEarliestPendingSafeAccountOp = ({
   accountOp,
   accountStateNonce,
+  isAccountStateNonceConfirmed,
   pendingAccountOps
 }: Omit<Params, 'isSafeAccount'>): SubmittedAccountOp | null => {
   const currentNonce = getAccountOpNonce(accountOp)
@@ -30,7 +39,7 @@ const getEarliestPendingSafeAccountOp = ({
     if (
       submittedAccountOp.chainId !== accountOp.chainId ||
       submittedAccountOp.nonce === null ||
-      submittedAccountOp.nonce < onchainNonce ||
+      (isAccountStateNonceConfirmed && submittedAccountOp.nonce < onchainNonce) ||
       submittedAccountOp.nonce >= currentNonce
     )
       return earliest
@@ -54,6 +63,10 @@ const getEarliestPendingNonSafeAccountOp = ({
   pendingAccountOps
 }: Pick<Params, 'accountOp' | 'pendingAccountOps'>): SubmittedAccountOp | null => {
   const replacedIdentifier = accountOp.meta?.speedUp?.replacedIdentifiedBy?.identifier
+  // A speed up holds the place of the transaction it replaces, so it's ordered by when that
+  // one was first sent, not by when the speed up was
+  const getFirstSentAt = (submittedAccountOp: SubmittedAccountOp) =>
+    submittedAccountOp.meta?.speedUp?.replacedSentAt ?? submittedAccountOp.timestamp
 
   return pendingAccountOps.reduce<SubmittedAccountOp | null>((earliest, submittedAccountOp) => {
     if (
@@ -63,7 +76,7 @@ const getEarliestPendingNonSafeAccountOp = ({
     )
       return earliest
 
-    return !earliest || submittedAccountOp.timestamp < earliest.timestamp
+    return !earliest || getFirstSentAt(submittedAccountOp) < getFirstSentAt(earliest)
       ? submittedAccountOp
       : earliest
   }, null)

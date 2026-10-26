@@ -39,6 +39,7 @@ describe('getEarliestPendingAccountOp', () => {
         accountOp: buildAccountOp(),
         isSafeAccount: true,
         accountStateNonce: 7n,
+        isAccountStateNonceConfirmed: true,
         pendingAccountOps: [
           buildPendingAccountOp('second', { nonce: 9n, timestamp: 1 }),
           buildPendingAccountOp('first', { nonce: 8n, timestamp: 2 })
@@ -53,6 +54,7 @@ describe('getEarliestPendingAccountOp', () => {
         accountOp: buildAccountOp(),
         isSafeAccount: true,
         accountStateNonce: 9n,
+        isAccountStateNonceConfirmed: true,
         pendingAccountOps: [buildPendingAccountOp('used', { nonce: 8n })]
       })
 
@@ -64,6 +66,7 @@ describe('getEarliestPendingAccountOp', () => {
         accountOp: buildAccountOp(),
         isSafeAccount: true,
         accountStateNonce: 7n,
+        isAccountStateNonceConfirmed: true,
         pendingAccountOps: [
           buildPendingAccountOp('same', { nonce: 10n }),
           buildPendingAccountOp('later', { nonce: 11n })
@@ -73,11 +76,26 @@ describe('getEarliestPendingAccountOp', () => {
       expect(result).toBeNull()
     })
 
+    test('keeps pending transactions below a nonce that may count them too (Ethereum)', () => {
+      // The state is read from the pending block, so the pending transaction at 8 already
+      // raised the nonce to 9 there, and the transaction being signed got 9
+      const result = getEarliestPendingAccountOp({
+        accountOp: buildAccountOp({ nonce: 9n }),
+        isSafeAccount: true,
+        accountStateNonce: 9n,
+        isAccountStateNonceConfirmed: false,
+        pendingAccountOps: [buildPendingAccountOp('pending', { nonce: 8n })]
+      })
+
+      expect(result?.id).toBe('pending')
+    })
+
     test('ignores pending transactions on other networks', () => {
       const result = getEarliestPendingAccountOp({
         accountOp: buildAccountOp(),
         isSafeAccount: true,
         accountStateNonce: 7n,
+        isAccountStateNonceConfirmed: true,
         pendingAccountOps: [buildPendingAccountOp('other-chain', { chainId: 10n })]
       })
 
@@ -113,12 +131,32 @@ describe('getEarliestPendingAccountOp', () => {
           accountOp: buildAccountOp(),
           isSafeAccount,
           accountStateNonce: 7n,
+          isAccountStateNonceConfirmed: true,
           pendingAccountOps: [buildSentByEoa('original', 1000), buildSentByEoa('speed-up', 2000)]
         })
 
         expect(result?.id).toBe('speed-up')
       }
     )
+
+    test('orders a speed up by when the transaction it replaces was first sent', () => {
+      const speedUp = buildSentByEoa('speed-up', 3000)
+      speedUp.meta = { speedUp: { enabled: true, replacedSentAt: 1000 } }
+      const result = getEarliestPendingAccountOp({
+        accountOp: buildAccountOp(),
+        isSafeAccount: false,
+        accountStateNonce: 10n,
+        isAccountStateNonceConfirmed: true,
+        pendingAccountOps: [
+          buildSentByEoa('original', 1000),
+          // sent after the original, but before it was sped up
+          buildPendingAccountOp('next', { timestamp: 2000 }),
+          speedUp
+        ]
+      })
+
+      expect(result?.id).toBe('speed-up')
+    })
 
     test('skips the original once its newest speed up is the one being replaced', () => {
       const speedUp = buildSentByEoa('speed-up', 2000)
@@ -128,6 +166,7 @@ describe('getEarliestPendingAccountOp', () => {
         }),
         isSafeAccount: false,
         accountStateNonce: 10n,
+        isAccountStateNonceConfirmed: true,
         pendingAccountOps: [buildSentByEoa('original', 1000), speedUp]
       })
 
@@ -141,6 +180,7 @@ describe('getEarliestPendingAccountOp', () => {
         accountOp: buildAccountOp(),
         isSafeAccount: false,
         accountStateNonce: 10n,
+        isAccountStateNonceConfirmed: true,
         pendingAccountOps: [
           // a bundler nonce, unrelated to the account's own
           buildPendingAccountOp('later', { nonce: 3n, timestamp: 2000 }),
@@ -160,6 +200,7 @@ describe('getEarliestPendingAccountOp', () => {
         }),
         isSafeAccount: false,
         accountStateNonce: 10n,
+        isAccountStateNonceConfirmed: true,
         pendingAccountOps: [replaced, buildPendingAccountOp('after', { timestamp: 2000 })]
       })
 
@@ -171,6 +212,7 @@ describe('getEarliestPendingAccountOp', () => {
         accountOp: buildAccountOp(),
         isSafeAccount: false,
         accountStateNonce: 10n,
+        isAccountStateNonceConfirmed: true,
         pendingAccountOps: [buildPendingAccountOp('signing-op')]
       })
 
@@ -182,6 +224,7 @@ describe('getEarliestPendingAccountOp', () => {
         accountOp: buildAccountOp(),
         isSafeAccount: false,
         accountStateNonce: 10n,
+        isAccountStateNonceConfirmed: true,
         pendingAccountOps: []
       })
 

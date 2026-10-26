@@ -15,6 +15,7 @@ import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import { getReplacementBuildRequest } from '@common/modules/sign-account-op/helpers/replacementAccountOps'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 
 import { REPLACEMENT_BLOCKER_MESSAGES } from './constants'
@@ -64,21 +65,7 @@ const PendingTransactionFooter: FC<Props> = ({ submittedAccountOp, isOwnTransact
 
       requestsDispatch({
         type: 'method',
-        params: {
-          method: 'build',
-          args: [
-            {
-              type: 'calls',
-              params: {
-                userRequestParams: {
-                  calls: accountOp.calls,
-                  meta: { chainId: accountOp.chainId, accountAddr: accountOp.accountAddr },
-                  accountOp
-                }
-              }
-            }
-          ]
-        }
+        params: { method: 'build', args: [getReplacementBuildRequest(accountOp)] }
       })
     },
     [submittedAccountOp, requestsDispatch]

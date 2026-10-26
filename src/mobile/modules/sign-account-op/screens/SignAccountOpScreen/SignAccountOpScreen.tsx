@@ -25,7 +25,7 @@ import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
-import PendingTransaction from '@common/modules/sign-account-op/components/PendingTransaction'
+import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
@@ -542,7 +542,7 @@ const SignAccountOpScreen = () => {
                   chainId={signAccountOpState?.accountOp?.chainId}
                 />
               )}
-              <PendingTransaction style={spacings.mt} />
+              <EarlierPendingTransaction style={spacings.mt} />
             </>
           ) : (
             <SafeEip712Data
