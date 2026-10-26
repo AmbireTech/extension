@@ -7,12 +7,14 @@ interface Props extends SvgProps {
   width?: number
   height?: number
   strokeWidth?: string
+  strokeLinecap?: 'butt' | 'round' | 'square'
 }
 
 const CloseIcon: React.FC<Props> = ({
   width = 14,
   height = 14,
   strokeWidth = '1.5',
+  strokeLinecap = 'round',
   color,
   ...rest
 }) => {
@@ -26,7 +28,7 @@ const CloseIcon: React.FC<Props> = ({
           transform="translate(71.871 463.879)"
           fill="none"
           stroke={color || theme.iconPrimary}
-          strokeLinecap="round"
+          strokeLinecap={strokeLinecap}
           strokeWidth={strokeWidth}
         />
         <Line
@@ -35,7 +37,7 @@ const CloseIcon: React.FC<Props> = ({
           transform="translate(71.871 463.879)"
           fill="none"
           stroke={color || theme.iconPrimary}
-          strokeLinecap="round"
+          strokeLinecap={strokeLinecap}
           strokeWidth={strokeWidth}
         />
       </G>

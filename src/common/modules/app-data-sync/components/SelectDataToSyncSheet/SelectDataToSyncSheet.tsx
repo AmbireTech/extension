@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Account } from '@ambire-common/interfaces/account'
 import BottomSheet from '@common/components/BottomSheet'
@@ -82,7 +81,6 @@ const SelectDataToSyncSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { bottom } = useSafeAreaInsets()
 
   const renderItem = useCallback(
     ({ item }: { item: Account }) => (
@@ -91,8 +89,9 @@ const SelectDataToSyncSheet = ({
         onSelect={onToggleAccount}
         switchAccountOnPress={false}
         withSettings={false}
-        withBalance={false}
         maxAccountAddrLength={SHORTENED_ADDRESS_LENGTH}
+        // A Safe's signers are synced only when picked, so the user is told which ones they are
+        withSafeSignerBadges
         renderLeftChildren={() => (
           <Checkbox
             value={selectedAddrs.includes(item.addr)}
@@ -194,7 +193,6 @@ const SelectDataToSyncSheet = ({
             spacings.ptSm,
             {
               paddingHorizontal: SHEET_HORIZONTAL_PADDING,
-              paddingBottom: isWeb ? 0 : bottom || SPACING_SM,
               backgroundColor: theme.primaryBackground
             }
           ]}

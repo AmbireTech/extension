@@ -1,4 +1,4 @@
-import { toBeHex } from 'ethers'
+import { formatUnits, toBeHex } from 'ethers'
 import { memo, RefObject, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, View } from 'react-native'
@@ -123,7 +123,7 @@ type Props = {
   closeBottomSheet: () => void
   canSetCustomGas: boolean
   /** Why the fee can't be set manually. Shown instead of the fields */
-  unavailableReason?: string
+  unavailableReason?: { title: string; text: string }
   currentGas: string
   currentMaxFeePerGas: string
   currentMaxPriorityFeePerGas: string
@@ -131,6 +131,10 @@ type Props = {
   onSaveCustomGasPrices: (gasPrices: GasSpeeds, customGasLimit?: bigint) => void
   selectedOption: ISignAccountOpController['selectedOption']
   sheetRef: RefObject<Modalize>
+  /** When speeding up a transaction, the lowest fees (in wei) the network accepts as a replacement */
+  speedUpMinFees?: { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint }
+  /** The pending transaction is being canceled rather than sped up */
+  isCancel?: boolean
 }
 
 const CustomGasPrice = ({
@@ -143,7 +147,9 @@ const CustomGasPrice = ({
   is1559,
   onSaveCustomGasPrices,
   selectedOption,
-  sheetRef
+  sheetRef,
+  speedUpMinFees,
+  isCancel
 }: Props) => {
   const { t } = useTranslation()
   const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
@@ -173,15 +179,17 @@ const CustomGasPrice = ({
         maxPriorityFeePerGas,
         gas,
         is1559: !!is1559,
-        canSetCustomGas
+        canSetCustomGas,
+        speedUpMinFees
       }),
-    [canSetCustomGas, gas, is1559, maxFeePerGas, maxPriorityFeePerGas]
+    [canSetCustomGas, gas, is1559, maxFeePerGas, maxPriorityFeePerGas, speedUpMinFees]
   )
 
   const customGasPriceErrorMessages = useMemo(() => {
     const getFeeErrorMessage = (
       reason: CustomGasPriceErrorReason | undefined,
-      invalidMessage: string
+      invalidMessage: string,
+      speedUpMinFee?: bigint
     ) => {
       if (reason === 'tooManyDecimals') {
         return t('Use up to {{decimals}} digits after the decimal point', {
@@ -191,6 +199,13 @@ const CustomGasPrice = ({
       if (reason === 'aboveMaxFee') {
         return t('The max priority fee cannot be higher than the max fee')
       }
+      if (reason === 'belowSpeedUpMinimum' && speedUpMinFee !== undefined) {
+        const minFee = formatUnits(speedUpMinFee, 'gwei')
+
+        return isCancel
+          ? t('To cancel your transaction, enter at least {{minFee}} GWEI', { minFee })
+          : t('To speed up your transaction, enter at least {{minFee}} GWEI', { minFee })
+      }
       if (reason === 'invalid') return invalidMessage
 
       return false
@@ -199,16 +214,18 @@ const CustomGasPrice = ({
     return {
       maxFeePerGas: getFeeErrorMessage(
         customGasPriceErrors.maxFeePerGas,
-        t('Enter a max fee greater than 0')
+        t('Enter a max fee greater than 0'),
+        speedUpMinFees?.maxFeePerGas
       ),
       maxPriorityFeePerGas: getFeeErrorMessage(
         customGasPriceErrors.maxPriorityFeePerGas,
-        t('Enter a max priority fee greater than 0')
+        t('Enter a max priority fee greater than 0'),
+        speedUpMinFees?.maxPriorityFeePerGas
       ),
       gas:
         !!customGasPriceErrors.gas && t('Enter a gas limit that is a whole number greater than 0')
     }
-  }, [customGasPriceErrors, t])
+  }, [customGasPriceErrors, speedUpMinFees, isCancel, t])
 
   const saveCustomGasPrice = useCallback(() => {
     if (!selectedOption || !customGasPriceValues) return
@@ -299,8 +316,8 @@ const CustomGasPrice = ({
         <Alert
           type="info"
           size="sm"
-          title={t('The fee is set automatically')}
-          text={unavailableReason}
+          title={unavailableReason.title}
+          text={unavailableReason.text}
         />
       ) : (
         <View>

@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import type { Account } from '@ambire-common/interfaces/account'
+import { getAppDataSyncKeyAddrs } from '@ambire-common/libs/appDataSync/appDataSync'
 import type { AppDataSyncExportOptions } from '@ambire-common/libs/appDataSync/appDataSync'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -37,6 +39,7 @@ const ALL_SYNC_OPTIONS: Record<SyncOption, boolean> = {
  * confirmed, so it is never prepared needlessly.
  */
 const useAppDataSyncExport = () => {
+  const { t } = useTranslation()
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: keys } = useController('KeystoreController', selectKeys)
   const { state: themeType } = useController('WalletStateController', selectThemeType)
@@ -83,10 +86,10 @@ const useAppDataSyncExport = () => {
    * from. Zero means there is no phrase that could travel along with the export.
    */
   const selectedSeedsCount = useMemo(() => {
+    const selectedAccounts = accounts.filter((account) => selectedAddrs.includes(account.addr))
     const seedIds = new Set(
-      accounts
-        .filter((account) => selectedAddrs.includes(account.addr))
-        .flatMap((account) => account.associatedKeys.map((keyAddr) => seedIdByKeyAddr.get(keyAddr)))
+      getAppDataSyncKeyAddrs(selectedAccounts)
+        .map((keyAddr) => seedIdByKeyAddr.get(keyAddr))
         .filter(Boolean)
     )
 
@@ -177,9 +180,27 @@ const useAppDataSyncExport = () => {
     themeType
   ])
 
+  // Names the settings, networks and Address Book too, so a selection without accounts does not
+  // read as "0 accounts selected", which sounds like nothing will be synced
+  const selectionSummary = useMemo(() => {
+    const items = [
+      !!selectedAddrs.length &&
+        t('{{count}} account{{s}}', {
+          count: selectedAddrs.length,
+          s: selectedAddrs.length !== 1 ? 's' : ''
+        }),
+      syncOptions.settings && t('Settings'),
+      syncOptions.networks && t('Networks'),
+      syncOptions.addressBook && t('Address book')
+    ].filter(Boolean)
+
+    return t('{{items}} selected.', { items: items.join(', ') })
+  }, [selectedAddrs.length, syncOptions, t])
+
   return {
     accounts,
     selectedAddrs,
+    selectionSummary,
     areAllSelected,
     hasSelection,
     selectedSeedsCount,

@@ -52,6 +52,7 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const {
     accounts,
     selectedAddrs,
+    selectionSummary,
     areAllSelected,
     hasSelection,
     selectedSeedsCount,
@@ -147,10 +148,7 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
               />
             )}
             <Text fontSize={14} appearance="secondaryText" style={spacings.mtSm}>
-              {t('{{count}} account{{s}} selected.', {
-                count: selectedAddrs.length,
-                s: selectedAddrs.length !== 1 ? 's' : ''
-              })}{' '}
+              {selectionSummary}{' '}
               <Text
                 fontSize={14}
                 weight="medium"

@@ -5,7 +5,7 @@ import type { HumanizerVisualization } from '@ambire-common/libs/humanizer/inter
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import ManifestImage from '@common/components/ManifestImage'
-import Text from '@common/components/Text'
+import Text, { TextWeight } from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
@@ -41,6 +41,9 @@ interface Props {
   imageSize: number
   erc7730Mode: 'summary' | 'description'
   showErc7730DescriptionTitle: boolean
+  erc7730TitleTextSize?: number
+  erc7730LabelTextSize?: number
+  erc7730LabelWeight?: TextWeight
   hideNestedErc7730Rows: boolean
   hideMobileErc7730Title: boolean
   isErc7730TransactionSummaryLayout: boolean
@@ -60,6 +63,9 @@ const HumanizedVisualizationItem: FC<Props> = ({
   imageSize,
   erc7730Mode,
   showErc7730DescriptionTitle,
+  erc7730TitleTextSize,
+  erc7730LabelTextSize,
+  erc7730LabelWeight,
   hideNestedErc7730Rows,
   hideMobileErc7730Title,
   isErc7730TransactionSummaryLayout,
@@ -79,6 +85,9 @@ const HumanizedVisualizationItem: FC<Props> = ({
         textSize={textSize}
         mode={erc7730Mode}
         showDescriptionTitle={showErc7730DescriptionTitle}
+        titleTextSize={erc7730TitleTextSize}
+        labelTextSize={erc7730LabelTextSize}
+        labelWeight={erc7730LabelWeight}
         editApprovalCallInfo={editApprovalCallInfo}
         hideNestedRows={hideNestedErc7730Rows}
         hideMobileSummaryTitle={hideMobileErc7730Title}

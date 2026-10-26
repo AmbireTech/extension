@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import { COMPACT_LAYOUT_BUTTON_HEIGHT } from '@common/components/Button'
+import Button, { COMPACT_LAYOUT_BUTTON_HEIGHT } from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -44,10 +44,12 @@ const Footer = ({
   inProgressButtonText,
   buttonText,
   shouldHoldToProceed,
+  holdToProceedButtonText,
   shouldRejectOnchain,
   isRejectDisabled,
   holdToProceedButtonType = 'primary',
-  signButtonType = 'primary'
+  signButtonType = 'primary',
+  onClose
 }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -80,6 +82,20 @@ const Footer = ({
   }, [accountOp?.signature, account?.safeCreation])
 
   const batchBadgeCount = batchCount > 1 ? batchCount : 0
+
+  if (onClose) {
+    return (
+      <Button
+        testID="transaction-button-close"
+        type="primary"
+        text={t('Close')}
+        onPress={onClose}
+        hasBottomSpacing={false}
+        size={isCompactLayout ? 'regular' : 'large'}
+        style={{ width: '100%', ...(!isCompactLayout && { height: FOOTER_BUTTON_HEIGHT }) }}
+      />
+    )
+  }
 
   const rejectButton = (
     <RejectButton
@@ -115,7 +131,7 @@ const Footer = ({
     >
       {shouldHoldToProceed && (
         <HoldToProceedButton
-          text={t('Hold to sign')}
+          text={holdToProceedButtonText}
           buttonType={
             signButtonType === 'dangerFilled'
               ? 'dangerFilled'

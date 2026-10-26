@@ -1,13 +1,10 @@
-import type { ViewStyle } from 'react-native'
+import type { TextStyle, ViewStyle } from 'react-native'
 import { StyleSheet } from 'react-native'
 
-import { SPACING_SM } from '@common/styles/spacings'
+import { SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import common, { hexToRgba } from '@common/styles/utils/common'
 
 import type { ThemeProps } from '@common/styles/themeConfig'
-/** The height the OR divider floats over. The bundles on both sides of it reserve half of
- * it each, so that the divider needs no background of its own. */
-export const OR_DIVIDER_HEIGHT = 28
 
 interface Styles {
   pendingHeader: ViewStyle
@@ -18,13 +15,16 @@ interface Styles {
   animatedContentWrapper: ViewStyle
   measuredContent: ViewStyle
   bundle: ViewStyle
-  bundleWithDividerAbove: ViewStyle
-  bundleWithDividerBelow: ViewStyle
+  bundleCard: ViewStyle
+  bundleFooter: ViewStyle
+  cancellationRow: ViewStyle
+  actionButtonText: TextStyle
+  actionButton: ViewStyle
   divider: ViewStyle
-  orDividerAnchor: ViewStyle
-  orDividerRow: ViewStyle
+  orDivider: ViewStyle
   orDividerLine: ViewStyle
-  orDividerPill: ViewStyle
+  orDividerLabel: ViewStyle
+  orDividerText: ViewStyle
   currentNoncePill: ViewStyle
   futureNoncePill: ViewStyle
   readyPill: ViewStyle
@@ -48,14 +48,10 @@ const getStyles = (theme: ThemeProps) =>
     fetchButtonLoading: {
       backgroundColor: theme.tertiaryBackground
     },
-    // Hidden overflow, so that a bundle filling the box gets clipped by the rounded corners
+    // Hidden overflow, so that the header gets clipped by the rounded corners
     chainWrapper: {
-      borderWidth: 2,
-      // Not primaryBorder, because it is the same color as the box body and leaves the block
-      // without a visible outline
-      borderColor: theme.neutral600,
-      // The same color as the bundles, the header and the OR divider, so that the padding
-      // around them does not show up as a lighter strip
+      borderWidth: 1,
+      borderColor: theme.primaryAccent,
       backgroundColor: theme.secondaryBackground,
       overflow: 'hidden',
       ...common.borderRadiusPrimary
@@ -63,7 +59,7 @@ const getStyles = (theme: ThemeProps) =>
     chainHeader: {
       borderBottomWidth: 1,
       borderBottomColor: theme.secondaryBorder,
-      backgroundColor: theme.secondaryBackground
+      backgroundColor: theme.hoverBackground
     },
     animatedContentWrapper: {
       overflow: 'hidden'
@@ -73,61 +69,79 @@ const getStyles = (theme: ThemeProps) =>
       position: 'absolute',
       left: 0,
       right: 0,
-      top: 0
+      top: 0,
+      paddingTop: SPACING_SM
     },
-    // The bundles span the whole width of the chain box, so they carry no frame of their own
-    // - the OR divider separates them
+    // The OR dividers span the whole width of the chain box, so the bundles bring their own
+    // horizontal padding
     bundle: {
-      backgroundColor: theme.secondaryBackground
+      paddingHorizontal: SPACING_SM
     },
-    // The halves of the divider the bundles reserve, added on top of their own padding
-    bundleWithDividerAbove: {
-      paddingTop: SPACING_SM + OR_DIVIDER_HEIGHT / 2
+    bundleCard: {
+      backgroundColor: theme.primaryBackground,
+      // The more specific paddings, because the frame of the humanized calls sets them too
+      paddingHorizontal: SPACING_SM,
+      paddingVertical: SPACING_SM,
+      ...common.borderRadiusPrimary
     },
-    bundleWithDividerBelow: {
-      paddingBottom: SPACING_SM + OR_DIVIDER_HEIGHT / 2
+    bundleFooter: {
+      marginTop: SPACING_SM
+    },
+    // Sits under an OR divider, below the bundles of the nonce. The paddings are not on the
+    // spacing scale. The bottom one is the 10 of the row plus the 12 bottom padding of the box.
+    cancellationRow: {
+      paddingTop: 10,
+      paddingBottom: 22,
+      paddingHorizontal: SPACING_SM
+    },
+    // The 12px button text, the same as the one of the Open button
+    actionButtonText: {
+      fontSize: 12
+    },
+    // Wider than the default small button, to match the design
+    actionButton: {
+      height: 40,
+      paddingHorizontal: SPACING_MD
     },
     divider: {
       height: 1,
       backgroundColor: theme.secondaryBorder
     },
-    // The divider paints no background of its own. It is a zero height anchor at the seam of
-    // two bundles, over which the lines and the OR pill float, so that the bundles fill the
-    // space above and below it with their own color
-    orDividerAnchor: {
-      height: 0,
-      zIndex: 1
-    },
-    orDividerRow: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      top: -OR_DIVIDER_HEIGHT / 2,
-      height: OR_DIVIDER_HEIGHT
+    // The margins are measured to the label, which is as tall as the row, and the line is
+    // laid through the middle of it
+    orDivider: {
+      height: 21,
+      marginVertical: SPACING_MD
     },
     orDividerLine: {
+      position: 'absolute',
+      top: 10,
+      left: 0,
+      right: 0,
       height: 2,
-      backgroundColor: hexToRgba(theme.warningDecorative, 0.5)
+      backgroundColor: theme.hoverBackground
     },
-    orDividerPill: {
-      height: 20,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: hexToRgba(theme.warningDecorative, 0.5),
-      backgroundColor: theme.warningBackground
+    orDividerLabel: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 21
+    },
+    // Hides the part of the line behind the label
+    orDividerText: {
+      backgroundColor: theme.secondaryBackground
     },
     currentNoncePill: {
-      height: 18,
-      borderRadius: 6,
+      height: 24,
+      borderRadius: 8,
       borderWidth: 1,
       borderColor: hexToRgba(theme.primaryAccent, 0.16),
       backgroundColor: theme.primaryAccent100
     },
     futureNoncePill: {
-      height: 18,
-      borderRadius: 6,
-      borderWidth: 1,
-      borderColor: hexToRgba(theme.warningDecorative, 0.5),
+      height: 24,
+      borderRadius: 8,
       backgroundColor: theme.warningBackground
     },
     readyPill: {
@@ -145,12 +159,8 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.primaryAccent100
     },
     nonceNavigationButton: {
-      width: 22,
-      height: 22,
-      borderRadius: 11,
-      borderWidth: 1,
-      borderColor: theme.secondaryBorder,
-      backgroundColor: theme.secondaryBackground
+      width: 24,
+      height: 24
     },
     nonceNavigationButtonDisabled: {
       opacity: 0.4

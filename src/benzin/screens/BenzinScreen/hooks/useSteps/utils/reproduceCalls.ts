@@ -138,7 +138,7 @@ export const reproduceCallsFromTxn = (txn: TransactionResponse) => {
     // v1
     [deployAndCallInterface.getFunction('deployAndCall')!.selector]: (txData: string) => {
       const data = deployAndCallInterface.decodeFunctionData('deployAndCall', txData)
-      return non4337Matcher[data[3].slice(0, 10)](data[3])
+      return non4337Matcher[data[3].slice(0, 10)]!(data[3])
     },
     // v1
     [quickAccManagerSendInterface.getFunction('send')!.selector]: (txData: string) => {

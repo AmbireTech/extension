@@ -39,7 +39,7 @@ export class SettingsPage extends BasePage {
 
   async removeLastAccount() {
     const account = this.page.getByTestId(selectors.settings.manageAccountTreeDotsButton).last()
-    await account.locator('div>div>div>div>svg').last().click() // should be last, try to add ID for more test
+    await account.locator('[data-testid^="account-options-"]').click()
 
     await this.page.locator(selectors.settings.removeAccountButton).click({ timeout: 5000 })
     await this.click(selectors.settings.confirmRemoveAccountButton)

@@ -2,15 +2,16 @@ import { hexlify } from 'ethers'
 import { useCallback, useState } from 'react'
 
 import {
+  AppDataSyncNewerVersionError,
   AppDataSyncSettings,
   parseAppDataSyncPayload
 } from '@ambire-common/libs/appDataSync/appDataSync'
 import { useTranslation } from '@common/config/localization'
-import type { AvatarType } from '@common/controllers/wallet-state'
 import useController from '@common/hooks/useController'
 import { APP_DATA_SYNC_IMPORT_TIMEOUT } from '@common/modules/app-data-sync/consts'
 import { THEME_TYPES, ThemeType } from '@common/styles/theme/types'
 
+import type { AvatarType } from '@common/controllers/wallet-state'
 import type { Account } from '@ambire-common/interfaces/account'
 
 const SYNCABLE_THEME_TYPES: string[] = Object.values(THEME_TYPES)
@@ -71,13 +72,17 @@ const useAppDataSyncImport = ({
         setScannedExtrasLabel(extras.join(', '))
         setPayload(hexlify(scannedBytes))
         setScanError(null)
-      } catch {
+      } catch (error) {
         setScannedAccounts([])
         setScannedAppSettings(undefined)
         setScannedExtrasLabel('')
         setPayload(null)
         setScanError(
-          t('This QR code does not come from Ambire. Please scan the one from your other device.')
+          error instanceof AppDataSyncNewerVersionError
+            ? t('This QR code comes from a newer version of Ambire. Please update this app first.')
+            : t(
+                'This QR code does not come from Ambire. Please scan the one from your other device.'
+              )
         )
       }
     },

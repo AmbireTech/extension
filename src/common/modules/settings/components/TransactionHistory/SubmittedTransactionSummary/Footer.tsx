@@ -4,12 +4,15 @@ import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Network } from '@ambire-common/interfaces/network'
+import {
+  isPartiallyMinedBatch,
+  isReplaceableBroadcast
+} from '@ambire-common/libs/accountOp/replacement'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
-import SpeedUpIcon from '@common/assets/svg/SpeedUpIcon'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isMobile } from '@common/config/env'
@@ -18,16 +21,12 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import {
-  canReplacePendingAccountOp,
-  getReplacementBuildRequest,
-  getSpeedUpAccountOp
-} from '@common/modules/sign-account-op/helpers/replacementAccountOps'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
+import PendingTransactionFooter from './PendingTransactionFooter'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
 
@@ -69,17 +68,15 @@ const Footer: FC<Props> = ({
   const isMinedTransaction =
     status === AccountOpStatus.Failure ||
     status === AccountOpStatus.Success ||
-    (submittedAccountOp.identifiedBy.type === 'MultipleTxns' &&
-      submittedAccountOp.calls.find(
-        (c) => c.status === AccountOpStatus.Failure || c.status === AccountOpStatus.Success
-      ))
+    isPartiallyMinedBatch(submittedAccountOp)
   const areExplorerButtonsDisabled =
     submittedAccountOp.identifiedBy.type === 'MultipleTxns' && submittedAccountOp.calls.length > 1
-  const shouldShowSpeedUp = isPendingTransaction && canReplacePendingAccountOp(submittedAccountOp)
   const isExternal = submittedAccountOp.activitySource === 'external'
-  const canRepeatTransaction =
-    !!rawCalls?.length && selectedAccount?.addr === accountAddr && !isExternal
-
+  const isOwnTransaction = selectedAccount?.addr === accountAddr && !isExternal
+  const canRepeatTransaction = !!rawCalls?.length && isOwnTransaction
+  // A pending transaction sent by a relayer or a bundler can't be replaced, so it keeps the
+  // usual buttons instead of Cancel and Speed up
+  const showsReplacementButtons = isPendingTransaction && isReplaceableBroadcast(submittedAccountOp)
   const benzinLink = `https://explorer.ambire.com/${getBenzinUrlParams({
     txnId,
     chainId: Number(chainId),
@@ -122,18 +119,6 @@ const Footer: FC<Props> = ({
     })
   }, [rawCalls, requestsDispatch, network.chainId, accountAddr])
 
-  const handleSpeedUpTransaction = useCallback(() => {
-    if (!canReplacePendingAccountOp(submittedAccountOp)) return
-
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'build',
-        args: [getReplacementBuildRequest(getSpeedUpAccountOp(submittedAccountOp))]
-      }
-    })
-  }, [submittedAccountOp, requestsDispatch])
-
   const handleOpenExplorer = useCallback(async () => {
     if (!chainId || !network.explorerUrl || !txnId) {
       const message = t(
@@ -154,9 +139,17 @@ const Footer: FC<Props> = ({
     }
   }, [txnId, addToast, chainId, network.explorerUrl, t])
 
-  if (!canRepeatTransaction && !isMinedTransaction) return null
+  if (!showsReplacementButtons && !canRepeatTransaction && !isMinedTransaction) return null
 
   const buttonSize = isMobile ? 'regular' : 'smaller'
+
+  if (showsReplacementButtons)
+    return (
+      <PendingTransactionFooter
+        submittedAccountOp={submittedAccountOp}
+        isOwnTransaction={isOwnTransaction}
+      />
+    )
 
   const openExplorerButton = (
     <View
@@ -205,8 +198,8 @@ const Footer: FC<Props> = ({
     >
       <Button
         type="tertiary"
-        text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
-        onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
+        text={t('Repeat')}
+        onPress={handleRepeatTransaction}
         size={buttonSize}
         hasBottomSpacing={false}
         disabled={!canRepeatTransaction}
@@ -223,11 +216,7 @@ const Footer: FC<Props> = ({
         ]}
         childrenPosition="left"
       >
-        {shouldShowSpeedUp ? (
-          <SpeedUpIcon style={spacings.mrMi} width={20} height={20} />
-        ) : (
-          <RefreshIcon style={spacings.mrMi} width={20} height={20} strokeWidth="2" />
-        )}
+        <RefreshIcon style={spacings.mrMi} width={20} height={20} strokeWidth="2" />
       </Button>
     </View>
   )

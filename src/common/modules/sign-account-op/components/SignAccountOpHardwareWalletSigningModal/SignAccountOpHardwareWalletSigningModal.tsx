@@ -1,26 +1,24 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
-import { Key } from '@ambire-common/interfaces/keystore'
+import { ExternalKey, Key } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import Text from '@common/components/Text'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useToast from '@common/hooks/useToast'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 
 const { isPopup } = getUiType()
 
 interface Props {
-  signingKeyType?: AccountOp['signingKeyType']
-  feePayerKeyType?: Key['type'] | null
-  isSignAndBroadcastInProgress: boolean
-  signAccountOpStatusType?: SigningStatus
+  activeSigningKeyType?: Key['type'] | null
   shouldSignAuth: {
     type: 'V2Deploy' | '7702'
     text: string
@@ -30,43 +28,36 @@ interface Props {
   actionType?: 'swapAndBridge' | 'transfer'
   cancelReq?: () => void
   hardwareWalletSigningRequest?: HardwareWalletSigningRequest | null
+  isPaymasterSlow?: boolean
 }
 
 const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
-  signingKeyType,
-  feePayerKeyType,
-  isSignAndBroadcastInProgress,
-  signAccountOpStatusType,
+  activeSigningKeyType,
   shouldSignAuth,
   signedTransactionsCount,
   accountOp,
   actionType,
   cancelReq,
-  hardwareWalletSigningRequest
+  hardwareWalletSigningRequest,
+  isPaymasterSlow
 }: Props) => {
+  const { t } = useTranslation()
   const { dispatch: requestsCtrlDispatch } = useController('RequestsController')
   const { addToast } = useToast()
 
   const prevTransactionCount = usePrevious<number | null | undefined>(signedTransactionsCount)
 
-  const shouldBeVisible = useMemo(() => {
-    // we're not signing or broadcasting on paused updates
-    if (signAccountOpStatusType === SigningStatus.UpdatesPaused) return false
+  // The controller sets the active signing key type only while the flow is on
+  // a key's signature, so the modal doesn't guess it from the signing status
+  const shouldBeVisible = !!activeSigningKeyType && activeSigningKeyType !== 'internal'
 
-    const isCurrentlyBroadcastingWithExternalKey =
-      isSignAndBroadcastInProgress && !!feePayerKeyType && feePayerKeyType !== 'internal'
-    const isCurrentlySigningWithExternalKey =
-      signAccountOpStatusType === SigningStatus.InProgress &&
-      !!signingKeyType &&
-      signingKeyType !== 'internal'
-
-    return isCurrentlyBroadcastingWithExternalKey || isCurrentlySigningWithExternalKey
-  }, [isSignAndBroadcastInProgress, feePayerKeyType, signAccountOpStatusType, signingKeyType])
-
-  const currentlyInvolvedSignOrBroadcastKeyType = useMemo(
-    () => (signAccountOpStatusType === SigningStatus.InProgress ? signingKeyType : feePayerKeyType),
-    [feePayerKeyType, signAccountOpStatusType, signingKeyType]
-  )
+  // Keep the last device after the controller clears the key type, so the
+  // modal plays its closing animation instead of disappearing at once
+  const [lastExternalKeyType, setLastExternalKeyType] = useState<Key['type'] | null>(null)
+  if (shouldBeVisible && activeSigningKeyType !== lastExternalKeyType) {
+    setLastExternalKeyType(activeSigningKeyType)
+  }
+  const displayedKeyType = shouldBeVisible ? activeSigningKeyType : lastExternalKeyType
 
   useEffect(() => {
     const isSigningOneOfMultipleAsEoa = typeof signedTransactionsCount === 'number'
@@ -87,12 +78,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   }, [accountOp?.calls.length, addToast, prevTransactionCount, signedTransactionsCount])
 
   useEffect(() => {
-    if (
-      shouldBeVisible &&
-      actionType &&
-      isPopup &&
-      currentlyInvolvedSignOrBroadcastKeyType === 'trezor'
-    ) {
+    if (actionType && isPopup && activeSigningKeyType === 'trezor') {
       const idSuffix = actionType === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
 
       // If the user needs to sign using a hardware wallet, we need to open the
@@ -121,27 +107,16 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
       })
       window.close()
     }
-  }, [
-    actionType,
-    currentlyInvolvedSignOrBroadcastKeyType,
-    requestsCtrlDispatch,
-    shouldBeVisible,
-    accountOp.accountAddr
-  ])
+  }, [actionType, activeSigningKeyType, requestsCtrlDispatch, accountOp.accountAddr])
 
   // Note: QR signing is handled by the QrSigningModal component and NFC card
   // signing by the NfcCardSessionModal, so this modal is not needed for either.
-  if (
-    !currentlyInvolvedSignOrBroadcastKeyType ||
-    currentlyInvolvedSignOrBroadcastKeyType === 'qr' ||
-    currentlyInvolvedSignOrBroadcastKeyType === 'nfc'
-  )
-    return null
+  if (!displayedKeyType || displayedKeyType === 'qr' || displayedKeyType === 'nfc') return null
 
   return (
     <HardwareWalletSigningModal
       isVisible={shouldBeVisible}
-      keyType={currentlyInvolvedSignOrBroadcastKeyType as 'trezor' | 'ledger' | 'lattice' | 'qr'}
+      keyType={displayedKeyType as ExternalKey['type']}
       cancelReq={cancelReq}
       signingRequest={hardwareWalletSigningRequest}
     >
@@ -158,6 +133,14 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
         <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>
           <Text weight="medium" fontSize={16}>
             {shouldSignAuth.text}
+          </Text>
+        </View>
+      ) : null}
+
+      {isPaymasterSlow ? (
+        <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>
+          <Text fontSize={14} appearance="secondaryText" style={text.center}>
+            {t('Sending the transaction is taking longer than expected. Please wait...')}
           </Text>
         </View>
       ) : null}

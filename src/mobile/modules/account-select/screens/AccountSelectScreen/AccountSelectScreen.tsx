@@ -67,7 +67,10 @@ const AccountSelectScreen = () => {
     control,
     keyExtractor,
     getItemLayout,
+    onAccountExtraHeightChange,
     onListContentSizeChange,
+    onListLayout,
+    onListTouchStart,
     initialScrollIndex,
     shouldDisplayAccounts,
     isReadyToRender
@@ -106,7 +109,7 @@ const AccountSelectScreen = () => {
   )
 
   const renderItem = useCallback(
-    ({ item: acc }: { item: AccountType }) => {
+    ({ item: acc, index }: { item: AccountType; index: number }) => {
       return (
         <Account
           onSelect={onAccountSelect}
@@ -116,10 +119,12 @@ const AccountSelectScreen = () => {
           withReceive
           withCopy={false}
           maxAccountAddrLength={32}
+          onExtraHeightChange={onAccountExtraHeightChange}
+          containerStyle={index === accounts.length - 1 ? spacings.mb0 : undefined}
         />
       )
     },
-    [onAccountSelect]
+    [onAccountSelect, onAccountExtraHeightChange, accounts.length]
   )
 
   useEffect(() => {
@@ -188,7 +193,11 @@ const AccountSelectScreen = () => {
               getItemLayout={getItemLayout}
               keyExtractor={keyExtractor}
               onContentSizeChange={onListContentSizeChange}
+              onLayout={onListLayout}
+              onTouchStart={onListTouchStart}
               initialScrollIndex={initialScrollIndex}
+              // The search keyboard covers the list, so it goes away once the list is scrolled
+              keyboardDismissMode="on-drag"
               ListEmptyComponent={
                 <View style={[flexbox.flex1, flexbox.center]}>
                   <Text>{t('No accounts found')}</Text>

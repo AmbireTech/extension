@@ -1,14 +1,16 @@
 import Fuse from 'fuse.js'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FlatList, useWindowDimensions } from 'react-native'
+import { FlatList, LayoutChangeEvent, useWindowDimensions } from 'react-native'
 import { isAddress } from 'viem'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
+import { usePendingAccountAddrs } from '@common/hooks/usePendingRequestsCount'
 import {
   ACCOUNT_SELECT_ACCOUNT_HEIGHT,
   ACCOUNT_SELECT_ACCOUNT_MB
@@ -27,7 +29,9 @@ const FUSE_KEYS = [
   { name: 'domainNames', weight: 0.3 },
   { name: 'address', weight: 0.1 },
   { name: 'keyLabels', weight: 0.2 },
-  { name: 'smart', weight: 0.1 }
+  { name: 'smart', weight: 0.1 },
+  // Lets "pending" find the accounts with the pending badge
+  { name: 'pending', weight: 0.1 }
 ]
 
 const FUSE_OPTIONS = {
@@ -83,12 +87,15 @@ const useAccountsList = ({
   // the filtering, which walks every account across five fields
   const debouncedSearch = useDebounce({ value: search, delay: SEARCH_DEBOUNCE_IN_MS })
   const [isListPositioned, setIsListPositioned] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
+  if (debouncedSearch && !hasSearched) setHasSearched(true)
   const { state: domains } = useController('DomainsController', selectDomains)
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: keys } = useController('KeystoreController', selectKeys)
   const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { height: windowHeight } = useWindowDimensions()
   const prevSearchRef = useRef(debouncedSearch)
+  const pendingAccountAddrs = usePendingAccountAddrs(accounts)
 
   const searchableAccounts = useMemo(
     () =>
@@ -101,9 +108,10 @@ const useAccountsList = ({
           .join(' '),
         domainNames: getSearchableNames(domains[account.addr]?.names),
         address: account.addr.toLowerCase(),
-        smart: isSmartAccount(account) ? 'smart' : ''
+        smart: isSmartAccount(account) ? 'smart' : '',
+        pending: pendingAccountAddrs.has(account.addr) ? 'pending' : ''
       })),
-    [accounts, domains, keys]
+    [accounts, domains, keys, pendingAccountAddrs]
   )
 
   // Indexing is the expensive half of Fuse and depends only on the list, so it is built
@@ -136,14 +144,47 @@ const useAccountsList = ({
 
   const keyExtractor = useCallback((account: AccountType) => account.addr, [])
 
-  const getItemLayout = useCallback(
-    (_: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * index,
-      index
-    }),
+  /** How far each row's height is from the default one, mostly because its badges wrapped */
+  const [extraHeights, setExtraHeights] = useState<Record<AccountType['addr'], number>>({})
+
+  const onAccountExtraHeightChange = useCallback(
+    (addr: AccountType['addr'], extraHeight: number) =>
+      setExtraHeights((prev) =>
+        (prev[addr] ?? 0) === extraHeight ? prev : { ...prev, [addr]: extraHeight }
+      ),
     []
   )
+
+  /** The height a row takes in the list, including the gap below it */
+  const getAccountItemHeight = useCallback(
+    (addr: AccountType['addr']) => ITEM_HEIGHT + (extraHeights[addr] ?? 0),
+    [extraHeights]
+  )
+
+  const getItemLayout = useMemo(() => {
+    // The offsets add up the heights of the rows above, so they are worked out once per
+    // list instead of on every call
+    let offsetsFor: ArrayLike<AccountType> | null | undefined
+    let offsets: number[] = []
+
+    return (data: ArrayLike<AccountType> | null | undefined, index: number) => {
+      if (data !== offsetsFor) {
+        offsetsFor = data
+        offsets = []
+        let offset = 0
+        for (let i = 0; i < (data?.length ?? 0); i++) {
+          offsets.push(offset)
+          offset += getAccountItemHeight(data![i]!.addr)
+        }
+      }
+
+      return {
+        length: data?.[index] ? getAccountItemHeight(data[index].addr) : ITEM_HEIGHT,
+        offset: offsets[index] ?? ITEM_HEIGHT * index,
+        index
+      }
+    }
+  }, [getAccountItemHeight])
 
   /**
    * `initialScrollIndex` only fixes which rows are rendered. react-native-web still
@@ -152,20 +193,78 @@ const useAccountsList = ({
    * Our callback runs in that same commit, right after the scroll, which is the point
    * at which the list is safe to show.
    */
-  const onListContentSizeChange = useCallback(() => setIsListPositioned(true), [])
+  const [listContentHeight, setListContentHeight] = useState(0)
+  const onListContentSizeChange = useCallback((_width: number, height: number) => {
+    setIsListPositioned(true)
+    setListContentHeight(height)
+  }, [])
+
+  const [listHeight, setListHeight] = useState(0)
+  const onListLayout = useCallback(
+    ({ nativeEvent }: LayoutChangeEvent) => setListHeight(nativeEvent.layout.height),
+    []
+  )
 
   /**
    * Positions the list in its first commit, instead of rendering it from the top and
    * scrolling it afterwards (which leaves the rows now in the viewport blank until the
    * batching scheduler catches up). `getItemLayout` lets the list resolve the offset on
    * its own and clamp it to the content.
+   *
+   * Dropped after the first search, as the list then starts at the top. Kept, it stops the
+   * list from keeping its first rows rendered, so clearing a search with no results left it
+   * blank until scrolled.
    */
-  const initialScrollIndex = getInitialScrollIndex({
-    selectedAccountIndex,
-    accountsCount: filteredAccounts.length,
-    itemHeight: ITEM_HEIGHT,
-    windowHeight
-  })
+  const initialScrollIndex = hasSearched
+    ? undefined
+    : getInitialScrollIndex({
+        selectedAccountIndex,
+        accountsCount: filteredAccounts.length,
+        itemHeight: ITEM_HEIGHT,
+        windowHeight
+      })
+
+  /**
+   * The rows above the selected account are not rendered when the list opens, so they are
+   * placed by the estimated height until they mount and report their own. Until the user
+   * touches the list, it goes back to the selected account whenever they do. Capped by the
+   * list's own height rather than the window's, which `initialScrollIndex` has to guess.
+   */
+  const isUserInListRef = useRef(false)
+  const onListTouchStart = useCallback(() => {
+    isUserInListRef.current = true
+  }, [])
+
+  useLayoutEffect(() => {
+    // A list that opens at the top is already shown, so it is left there rather than moved
+    if (isUserInListRef.current || initialScrollIndex === undefined || selectedAccountIndex < 0)
+      return
+    if (!isListPositioned || !listHeight || !listContentHeight) return
+
+    const { offset } = getItemLayout(filteredAccounts, selectedAccountIndex)
+    const maxOffset = Math.max(0, listContentHeight - listHeight)
+    flatlistRef?.current?.scrollToOffset({ offset: Math.min(offset, maxOffset), animated: false })
+  }, [
+    filteredAccounts,
+    flatlistRef,
+    getItemLayout,
+    initialScrollIndex,
+    isListPositioned,
+    listContentHeight,
+    listHeight,
+    selectedAccountIndex
+  ])
+
+  // The web has no touch for the mouse wheel, the scrollbar or the keyboard
+  useEffect(() => {
+    const node = isWeb && isListPositioned ? flatlistRef?.current?.getScrollableNode() : null
+    if (!node) return
+
+    const events = ['wheel', 'mousedown', 'keydown', 'touchstart']
+    events.forEach((event) => node.addEventListener(event, onListTouchStart, { passive: true }))
+
+    return () => events.forEach((event) => node.removeEventListener(event, onListTouchStart))
+  }, [flatlistRef, isListPositioned, onListTouchStart])
 
   // Scrolls to top on search
   useEffect(() => {
@@ -182,7 +281,11 @@ const useAccountsList = ({
     search,
     keyExtractor,
     getItemLayout,
+    getAccountItemHeight,
+    onAccountExtraHeightChange,
     onListContentSizeChange,
+    onListLayout,
+    onListTouchStart,
     initialScrollIndex,
     // Nothing to hide when the list starts at the top, so it shows right away
     shouldDisplayAccounts: initialScrollIndex === undefined || isListPositioned,

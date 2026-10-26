@@ -4,6 +4,7 @@ import { SvgProps } from 'react-native-svg'
 
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import Alert from '@common/components/Alert'
 import Recipient from '@common/components/Recipient'
 import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
@@ -15,7 +16,9 @@ import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
+import { PrivacyPoolsAccountDisplay } from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
+import PrivacyPoolsRecipient from '@common/modules/transfer/components/PrivacyPoolsRecipient'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
@@ -49,7 +52,9 @@ const SendForm = ({
   setAmountFieldValue,
   addressStateFieldValue,
   setAddressStateFieldValue,
-  amountAdjustmentInfo
+  amountAdjustmentInfo,
+  privacyPoolsAccounts,
+  onSelectPrivacyPoolsRecipient
 }: {
   addressInputState: ReturnType<typeof useAddressInput>
   canUseGasTank: boolean
@@ -62,6 +67,10 @@ const SendForm = ({
   addressStateFieldValue: string
   setAddressStateFieldValue: (value: string) => void
   amountAdjustmentInfo?: AmountAdjustmentInfo | null
+  /** Offered as recipients where Privacy Pools is available. */
+  privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
+  /** Picks a Privacy Pools account by its recovery phrase id, or null to go back to an address. */
+  onSelectPrivacyPoolsRecipient?: (seedId: string | null) => void
 }) => {
   const { validation } = addressInputState
   const {
@@ -75,7 +84,9 @@ const SendForm = ({
       addressState,
       amount: controllerAmount,
       areDefaultsSet,
-      addressPoisoningMatch
+      addressPoisoningMatch,
+      privacyPoolsRecipient,
+      privacyPoolsDepositError
     },
     dispatch: transferDispatch
   } = useController('TransferController')
@@ -258,6 +269,19 @@ const SendForm = ({
     })
   }, [transferDispatch])
 
+  const privacyPoolsRecipientAccount = useMemo(
+    () =>
+      privacyPoolsRecipient
+        ? (privacyPoolsAccounts || []).find(({ seedId }) => seedId === privacyPoolsRecipient)
+        : undefined,
+    [privacyPoolsAccounts, privacyPoolsRecipient]
+  )
+
+  const clearPrivacyPoolsRecipient = useCallback(
+    () => onSelectPrivacyPoolsRecipient?.(null),
+    [onSelectPrivacyPoolsRecipient]
+  )
+
   const switchAmountFieldMode = useCallback(() => {
     transferDispatch({
       type: 'method',
@@ -275,7 +299,13 @@ const SendForm = ({
   return (
     <>
       <View>
-        {!isTopUp && (
+        {!isTopUp && !!privacyPoolsRecipient && (
+          <PrivacyPoolsRecipient
+            label={privacyPoolsRecipientAccount?.label || t('Privacy Pools account')}
+            onClear={clearPrivacyPoolsRecipient}
+          />
+        )}
+        {!isTopUp && !privacyPoolsRecipient && (
           <Recipient
             disabled={disableForm}
             address={addressStateFieldValue}
@@ -292,9 +322,22 @@ const SendForm = ({
             isRecipientDomainResolving={addressState.isDomainResolving}
             selectedTokenSymbol={selectedToken?.symbol}
             addressPoisoningMatch={addressPoisoningMatch}
+            privacyPoolsAccounts={privacyPoolsAccounts}
+            onSelectPrivacyPoolsAccount={onSelectPrivacyPoolsRecipient}
           />
         )}
       </View>
+
+      {!!privacyPoolsRecipient && !tokens.length && areDefaultsSet && (
+        <Alert
+          type="info"
+          size="sm"
+          style={spacings.mbTy}
+          text={t(
+            'None of your tokens can be sent to a Privacy Pools account. It accepts ETH, USDC, USDT and a few other tokens on Ethereum.'
+          )}
+        />
+      )}
 
       {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
         <SkeletonLoader width="100%" height={180} />
@@ -326,6 +369,10 @@ const SendForm = ({
           simulationFailed={!!simulationError}
           amountAdjustmentInfo={amountAdjustmentInfo}
         />
+      )}
+
+      {!!privacyPoolsRecipient && !!tokens.length && !!privacyPoolsDepositError && (
+        <Alert type="error" size="sm" style={spacings.mtSm} text={privacyPoolsDepositError} />
       )}
     </>
   )

@@ -378,10 +378,10 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
                             {accountState?.[net.chainId.toString()]?.delegatedContractName ===
                               'METAMASK' && <MetamaskIcon width={20} height={20} />}
                             {accountState?.[net.chainId.toString()]?.delegatedContractName ===
-                              'UNKNOWN' && <Badge type="success" text={t('unknown')} />}
+                              'UNKNOWN' && <Badge type="success" text={t('Unknown')} />}
                           </>
                         ) : (
-                          <Badge type="default" text={t('disabled')} />
+                          <Badge type="default" text={t('Disabled')} />
                         )}
                       </View>
                     ) : (

@@ -12,17 +12,33 @@ import spacings from '@common/styles/spacings'
 import getStyles from './styles'
 
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import type { TextWeight } from '@common/components/Text'
 interface Props {
   humanization: IrCall[]
   chainId: bigint
-  /** Extra style for each call's container, e.g. to drop its background inside another card */
+  /** The base text size of the visualization. The titles are 2px bigger. */
+  textSize?: number
+  /** The size of the title of a call. Defaults to `textSize`. */
+  titleTextSize?: number
+  /** The size of the row labels of a call. Defaults to `textSize`. */
+  labelTextSize?: number
+  labelWeight?: TextWeight
+  /** Style applied to the frame of every call, on top of the default one. */
   itemStyle?: StyleProp<ViewStyle>
 }
 
 const visualizationStyle = { width: '100%', minWidth: 0 } as const
 const dappIconSize = 24 * sizeMultiplier.md
 
-const CompactHumanizedCalls = ({ humanization, chainId, itemStyle }: Props) => {
+const CompactHumanizedCalls = ({
+  humanization,
+  chainId,
+  textSize = 12,
+  titleTextSize,
+  labelTextSize,
+  labelWeight,
+  itemStyle
+}: Props) => {
   const { styles } = useTheme(getStyles)
 
   return humanization.map((call, index) => {
@@ -38,8 +54,8 @@ const CompactHumanizedCalls = ({ humanization, chainId, itemStyle }: Props) => {
           styles.item,
           spacings.phTy,
           spacings.pvTy,
-          index !== humanization.length - 1 && spacings.mbTy,
-          itemStyle
+          itemStyle,
+          index !== humanization.length - 1 && spacings.mbTy
         ]}
       >
         {call.fullVisualization?.length ? (
@@ -47,11 +63,14 @@ const CompactHumanizedCalls = ({ humanization, chainId, itemStyle }: Props) => {
             data={call.fullVisualization}
             chainId={chainId}
             sizeMultiplierSize={0.5}
-            textSize={12}
-            imageSize={12}
+            textSize={textSize}
+            imageSize={textSize}
             hasPadding={false}
             erc7730Mode={shouldUseDetailedErc7730Layout ? 'description' : 'summary'}
             showErc7730DescriptionTitle={shouldUseDetailedErc7730Layout}
+            erc7730TitleTextSize={titleTextSize}
+            erc7730LabelTextSize={labelTextSize}
+            erc7730LabelWeight={labelWeight}
             isErc7730TransactionSummaryLayout={!shouldUseDetailedErc7730Layout}
             disableFlex
             inlineDappIcon
@@ -63,7 +82,7 @@ const CompactHumanizedCalls = ({ humanization, chainId, itemStyle }: Props) => {
           <FallbackVisualization
             call={call}
             sizeMultiplierSize={0.5}
-            textSize={12}
+            textSize={textSize}
             hasPadding={false}
           />
         )}
