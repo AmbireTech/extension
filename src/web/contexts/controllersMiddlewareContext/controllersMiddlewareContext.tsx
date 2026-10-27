@@ -25,8 +25,8 @@ import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import { PortMessenger } from '@web/extension-services/messengers'
 import useAutoLockControllerHelpers from '@web/hooks/useAutoLockControllerHelpers'
+import useCrashReportContext from '@web/hooks/useCrashReportContext'
 import useDappsControllerHelpers from '@web/hooks/useDappsControllerHelpers'
-import useKeystoreControllerHelpers from '@web/hooks/useKeystoreControllerHelpers'
 import useSelectedAccountControllerHelpers from '@web/hooks/useSelectedAccountControllerHelpers'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -535,7 +535,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
 
   useDappsControllerHelpers(dispatch)
   useAutoLockControllerHelpers(dispatch)
-  useKeystoreControllerHelpers()
+  useCrashReportContext()
   useSelectedAccountControllerHelpers()
 
   return (

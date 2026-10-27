@@ -33,6 +33,7 @@ import useDebounce from '@common/hooks/useDebounce'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
+import useDappConnectedAccount from '@common/modules/explore/hooks/useDappConnectedAccount'
 import eventBus from '@common/services/event/eventBus'
 import { setWebViewGoBackHandler } from '@common/services/webview/webViewBackNavigation'
 import spacings from '@common/styles/spacings'
@@ -41,8 +42,6 @@ import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
-
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
 // Cross-origin iframes cannot read main-frame globals (Same-Origin Policy), so they
@@ -248,9 +247,6 @@ const EDGE_SWIPE_ACTIVATION_OFFSET_X = 5
 const EDGE_SWIPE_FAIL_OFFSET_Y = 20
 const EDGE_SWIPE_VELOCITY_IMPACT = 0.3
 
-const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.account
-
 const DappWebViewScreen = () => {
   const [devAmbireCode, setDevAmbireCode] = useState<string | null>(null)
   const [devEthereumCode, setDevEthereumCode] = useState<string | null>(null)
@@ -378,7 +374,8 @@ const DappWebViewScreen = () => {
     [searchControl, t]
   )
 
-  const { state: account } = useController('SelectedAccountController', selectAccount)
+  // The app may see another account than the selected one
+  const account = useDappConnectedAccount(currentDapp)
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
