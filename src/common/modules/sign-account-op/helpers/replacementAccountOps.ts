@@ -12,9 +12,10 @@ import type { BuildRequest } from '@ambire-common/interfaces/requests'
  * transaction that can't be replaced while waiting (see `getReplacementBlocker` in
  * ambire-common), e.g. one sent through a bundler; the rest are cancelled with
  * `getReplacementAccountOp`. It's a regular request: it needs fresh owner signatures, as its
- * calls differ, and the fee and the payer are picked like for any other transaction. When the same EOA that sent the pending transaction
- * pays, the EOA's nonce is the pending one's (it isn't confirmed yet), so the cancellation
- * replaces it while waiting, as long as its fee is high enough.
+ * calls differ, and the fee and the payer are picked like for any other transaction. When the same
+ * EOA that sent the pending transaction pays, it still takes the next free EOA nonce, as the one
+ * of the pending transaction is reserved, so the cancellation doesn't replace the pending
+ * transaction in the mempool.
  */
 export const getSafeCancellationAccountOp = (
   submittedAccountOp: SubmittedAccountOpLike

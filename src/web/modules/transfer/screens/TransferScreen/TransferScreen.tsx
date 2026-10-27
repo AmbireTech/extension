@@ -284,6 +284,24 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     },
     [transferDispatch]
   )
+  const replacePendingAccountOp = useCallback(() => {
+    transferDispatch({
+      type: 'method',
+      params: {
+        method: 'callSignAccountOpMethod',
+        args: ['replacePendingAccountOp', []]
+      }
+    })
+  }, [transferDispatch])
+  const stopReplacingPendingAccountOp = useCallback(() => {
+    transferDispatch({
+      type: 'method',
+      params: {
+        method: 'callSignAccountOpMethod',
+        args: ['stopReplacingPendingAccountOp', []]
+      }
+    })
+  }, [transferDispatch])
 
   // Used to resolve ENS and keep the controller in sync with the resolved field value
   const setAddressState = useCallback(
@@ -779,6 +797,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalAndDispatch}
           updateController={updateController}
+          onReplace={replacePendingAccountOp}
+          onStopReplacing={stopReplacingPendingAccountOp}
           handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}

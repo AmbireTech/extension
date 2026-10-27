@@ -193,6 +193,24 @@ const SwapAndBridgeScreen = () => {
     },
     [swapAndBridgeDispatch]
   )
+  const replacePendingAccountOp = useCallback(() => {
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: {
+        method: 'callSignAccountOpMethod',
+        args: ['replacePendingAccountOp', []]
+      }
+    })
+  }, [swapAndBridgeDispatch])
+  const stopReplacingPendingAccountOp = useCallback(() => {
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: {
+        method: 'callSignAccountOpMethod',
+        args: ['stopReplacingPendingAccountOp', []]
+      }
+    })
+  }, [swapAndBridgeDispatch])
 
   const buttons = useMemo(() => {
     return (
@@ -304,6 +322,8 @@ const SwapAndBridgeScreen = () => {
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalWrapped}
           updateController={updateController}
+          onReplace={replacePendingAccountOp}
+          onStopReplacing={stopReplacingPendingAccountOp}
           handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}

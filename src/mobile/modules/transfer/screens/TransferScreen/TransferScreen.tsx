@@ -60,6 +60,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     closeEstimationModalAndDispatch,
     handleEstimationModalClosed,
     updateController,
+    replacePendingAccountOp,
+    stopReplacingPendingAccountOp,
     handleUpdateStatus,
     portfolio,
     account
@@ -243,6 +245,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           closeEstimationModal={closeEstimationModalAndDispatch}
           onEstimationModalClosed={handleEstimationModalClosed}
           updateController={updateController}
+          onReplace={replacePendingAccountOp}
+          onStopReplacing={stopReplacingPendingAccountOp}
           handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}

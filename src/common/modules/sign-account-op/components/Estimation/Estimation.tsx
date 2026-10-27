@@ -17,6 +17,8 @@ import {
 } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
+import { findPendingAccountOpById } from '@ambire-common/libs/accountOp/earlierPendingAccountOp'
+import { getReplacementAccountOp } from '@ambire-common/libs/accountOp/replacement'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { getMinReplacementFees } from '@ambire-common/libs/gasPrice/speedUp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
@@ -116,6 +118,8 @@ const FeeSpeedLabel = ({
   )
 }
 
+const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['ActivityController']) =>
+  state.broadcastedButNotConfirmed
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const Estimation = ({
@@ -136,6 +140,10 @@ const Estimation = ({
   const { dispatch: transferDispatch } = useController('TransferController')
   const { state } = useController('AddressBookController')
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: broadcastedButNotConfirmed } = useController(
+    'ActivityController',
+    selectBroadcastedButNotConfirmed
+  )
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const {
@@ -569,11 +577,28 @@ const Estimation = ({
   const speedUpMeta = signAccountOpState?.accountOp.meta?.speedUp
   const isCancelTransaction =
     !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
+  const isReplacingPendingAccountOp = !!signAccountOpState?.earlierPendingAccountOp?.isReplacing
+  const earlierPendingAccountOpId = signAccountOpState?.earlierPendingAccountOp?.id
+  // A Replace must pay at least as much more as a speed up of the pending transaction would
   const speedUpMinFees = useMemo(() => {
-    if (!speedUpMeta?.enabled || !speedUpMeta.replacedFees) return undefined
+    if (speedUpMeta?.enabled && speedUpMeta.replacedFees)
+      return getMinReplacementFees(speedUpMeta.replacedFees)
+    if (!isReplacingPendingAccountOp) return undefined
 
-    return getMinReplacementFees(speedUpMeta.replacedFees)
-  }, [speedUpMeta])
+    const pendingAccountOp = findPendingAccountOpById(
+      broadcastedButNotConfirmed,
+      earlierPendingAccountOpId
+    )
+    const replacedFees = pendingAccountOp
+      ? getReplacementAccountOp(pendingAccountOp, 'speedUp')?.meta?.speedUp?.replacedFees
+      : undefined
+    return replacedFees ? getMinReplacementFees(replacedFees) : undefined
+  }, [
+    broadcastedButNotConfirmed,
+    earlierPendingAccountOpId,
+    isReplacingPendingAccountOp,
+    speedUpMeta
+  ])
 
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
@@ -614,7 +639,7 @@ const Estimation = ({
   const selectBackgroundColor =
     isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground
   // The replacement must be paid the same way as the pending transaction it replaces
-  const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled
+  const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled || isReplacingPendingAccountOp
   // Not compared once the speed up is no longer needed, as the new fee won't be paid
   const speedUpOriginalFeeAmount =
     speedUpMeta?.enabled && signAccountOpState?.status?.type !== SigningStatus.SpeedUpNotNeeded
@@ -925,9 +950,11 @@ const Estimation = ({
       <View
         dataSet={createGlobalTooltipDataSet({
           id: 'fee-option-select-speed-up-locked',
-          content: isCancelTransaction
-            ? t('To cancel, the fee is paid the same way as your original transaction')
-            : t('To speed up, the fee is paid the same way as your original transaction'),
+          content: isReplacingPendingAccountOp
+            ? t('To replace the earlier transaction, the fee is paid the same way as for it')
+            : isCancelTransaction
+              ? t('To cancel, the fee is paid the same way as your original transaction')
+              : t('To speed up, the fee is paid the same way as your original transaction'),
           hidden: !isFeeTokenLockedBySpeedUp
         })}
       >

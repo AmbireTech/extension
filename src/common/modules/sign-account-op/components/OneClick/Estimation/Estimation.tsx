@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import { EARLIER_PENDING_TRANSACTION_ERROR_CODE } from '@ambire-common/consts/signAccountOp/errorHandling'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -43,6 +44,10 @@ export type OneClickEstimationProps = {
   onEstimationModalClosed?: () => void
   handleUpdateStatus: (status: SigningStatus) => void
   updateController: (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => void
+  /** Sends this transaction in place of the earlier pending one, see `replacePendingAccountOp` */
+  onReplace: () => void
+  /** Goes back to waiting for the earlier pending transaction, see `stopReplacingPendingAccountOp` */
+  onStopReplacing: () => void
   estimationModalRef: React.RefObject<any>
   errors?: SignAccountOpError[]
   signAccountOpController: ISignAccountOpController | null
@@ -64,6 +69,8 @@ const OneClickEstimation = ({
   onEstimationModalClosed,
   handleUpdateStatus,
   updateController,
+  onReplace,
+  onStopReplacing,
   estimationModalRef,
   signAccountOpController,
   hasProceeded,
@@ -84,6 +91,11 @@ const OneClickEstimation = ({
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
     return [...(errors || []), ...signAccountOpErrors]
   }, [errors, signAccountOpController])
+  // The earlier pending transaction box already explains this error
+  const visibleSigningErrors = useMemo(
+    () => signingErrors.filter((error) => error.code !== EARLIER_PENDING_TRANSACTION_ERROR_CODE),
+    [signingErrors]
+  )
 
   const {
     isViewOnly,
@@ -236,12 +248,14 @@ const OneClickEstimation = ({
             chainId={signAccountOpController?.accountOp?.chainId}
           />
         )}
-        {!isViewOnly && signingErrors && signingErrors[0] && (
-          <Alert title={t(signingErrors[0].title)} type="error" style={spacings.mt} />
+        {!isViewOnly && visibleSigningErrors[0] && (
+          <Alert title={t(visibleSigningErrors[0].title)} type="error" style={spacings.mt} />
         )}
         <EarlierPendingTransaction
           style={spacings.mt}
           signAccountOpState={signAccountOpController}
+          onReplace={onReplace}
+          onStopReplacing={onStopReplacing}
         />
         <BundlerWarning
           signAccountOpState={signAccountOpController}
@@ -311,7 +325,10 @@ const OneClickEstimation = ({
     holdToSignButtonText,
     signingErrors,
     t,
-    updateType
+    updateType,
+    visibleSigningErrors,
+    onReplace,
+    onStopReplacing
   ])
 
   return (
