@@ -6,11 +6,25 @@ import useElementSize from '@common/hooks/useElementSize'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { SPACING } from '@common/styles/spacings'
 
-const useSelect = (props?: { maxMenuHeight?: number; menuPosition?: 'top' | 'bottom' }) => {
-  const { maxMenuHeight = 400, menuPosition } = props || {}
+const useSelect = (props?: {
+  maxMenuHeight?: number
+  menuPosition?: 'top' | 'bottom'
+  /** Controls the menu from outside, e.g. when it's opened from elsewhere than its trigger */
+  isMenuOpen?: boolean
+  setIsMenuOpen?: (isMenuOpen: boolean) => void
+}) => {
+  const {
+    maxMenuHeight = 400,
+    menuPosition,
+    isMenuOpen: controlledIsMenuOpen,
+    setIsMenuOpen: setControlledIsMenuOpen
+  } = props || {}
   const selectRef: React.MutableRefObject<any> = useRef(null)
   const menuRef: React.MutableRefObject<any> = useRef(null)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [uncontrolledIsMenuOpen, setUncontrolledIsMenuOpen] = useState(false)
+  const isMenuOpen = controlledIsMenuOpen ?? uncontrolledIsMenuOpen
+  const setIsMenuOpen: (isMenuOpen: boolean) => void =
+    setControlledIsMenuOpen ?? setUncontrolledIsMenuOpen
   const { control, watch, setValue: setSearch } = useForm({ defaultValues: { search: '' } })
   const { x, y, height, width, forceUpdate } = useElementSize(selectRef)
   const { height: windowHeight } = useWindowSize()
@@ -38,13 +52,13 @@ const useSelect = (props?: { maxMenuHeight?: number; menuPosition?: 'top' | 'bot
       if (!isWeb) return
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isMenuOpen, setSearch])
+  }, [isMenuOpen, setIsMenuOpen, setSearch])
 
   const toggleMenu = useCallback(() => {
-    setIsMenuOpen((prev) => !prev)
+    setIsMenuOpen(!isMenuOpen)
 
     forceUpdate() // calculate menu position
-  }, [forceUpdate])
+  }, [isMenuOpen, setIsMenuOpen, forceUpdate])
 
   const dynamicMenuPosition: 'top' | 'bottom' = useMemo(() => {
     if (menuPosition) return menuPosition

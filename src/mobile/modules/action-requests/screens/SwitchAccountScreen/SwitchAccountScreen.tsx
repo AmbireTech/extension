@@ -1,23 +1,19 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import DownArrowLongIcon from '@common/assets/svg/DownArrowLongIcon'
-import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
-import Alert from '@common/components/Alert'
-import ManifestImage from '@common/components/ManifestImage'
 import SkeletonLoader from '@common/components/SkeletonLoader'
-import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
-import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
+import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
+import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
+import SwitchAccountBody from '@common/modules/action-requests/components/SwitchAccount/SwitchAccountBody'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
-import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
-import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
-
-import getStyles from './styles'
+import spacings from '@common/styles/spacings'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
 
 const SwitchAccountScreen = () => {
   const {
@@ -27,16 +23,16 @@ const SwitchAccountScreen = () => {
     isRequestBroken,
     nextAccount,
     nextAccountData,
-    nextRequestLabel,
+    nextRequestType,
     dAppData,
     handleDenyButtonPress,
-    handleAuthorizeButtonPress,
-    responsiveSizeMultiplier
+    handleAuthorizeButtonPress
   } = useSwitchAccount()
-  const { theme, styles } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
 
   return (
     <MobileLayoutContainer
+      withHorizontalPadding
       header={<ActionHeader />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
@@ -44,130 +40,37 @@ const SwitchAccountScreen = () => {
           onReject={handleDenyButtonPress}
           onResolve={handleAuthorizeButtonPress}
           resolveButtonText={isAuthorizing ? t('Switching...') : t('Switch Account')}
+          resolveButtonShortText={isAuthorizing ? undefined : t('Switch')}
           resolveDisabled={isAuthorizing || isRequestBroken}
           rejectButtonText={t('Deny')}
           resolveButtonTestID="switch-account-button"
         />
       }
     >
-      <View style={[styles.container]}>
-        {!isAuthorizing ? (
-          <View style={flexbox.flex1}>
-            <View
-              style={{
-                ...flexbox.center,
-                backgroundColor: theme.tertiaryBackground,
-                ...spacings.pv,
-                ...spacings.phSm
-              }}
-            >
-              <Text fontSize={20} weight="medium" style={!!dAppData && spacings.mbLg}>
-                {t('Switch Account Request')}
-              </Text>
-              {!!dAppData && (
-                <View
-                  style={[
-                    flexbox.center,
-                    {
-                      marginBottom: SPACING_SM * responsiveSizeMultiplier
-                    }
-                  ]}
-                >
-                  <ManifestImage
-                    uri={dAppData.icon}
-                    size={responsiveSizeMultiplier * 48}
-                    containerStyle={{
-                      backgroundColor: theme.secondaryBackground
-                    }}
-                    iconScale={1}
-                    imageStyle={{
-                      backgroundColor: theme.secondaryBackground
-                    }}
-                    fallback={() => (
-                      <ManifestFallbackIcon
-                        width={responsiveSizeMultiplier * 48}
-                        height={responsiveSizeMultiplier * 48}
-                      />
-                    )}
-                  />
-                </View>
-              )}
-              {!!dAppData && (
-                <Text appearance="secondaryText" style={text.center} fontSize={16}>
-                  <Text appearance="primaryText" fontSize={16} weight="medium">
-                    {dAppData.name}
-                  </Text>{' '}
-                  {t(`requires a ${nextRequestLabel} from `)}
-                  <Text appearance="primaryText" fontSize={16} weight="medium">
-                    {nextAccountData?.preferences.label ||
-                      nextAccountData?.addr ||
-                      'Unknown Account'}
-                  </Text>
-                </Text>
-              )}
-            </View>
-            <View
-              style={{
-                backgroundColor: theme.primaryBackground,
-                ...flexbox.alignCenter,
-                ...spacings.pv,
-                ...flexbox.flex1,
-                ...spacings.phSm
-              }}
-            >
-              {account && <Account style={spacings.mbSm} {...account} />}
-              <DownArrowLongIcon
-                style={[spacings.mbSm]}
-                color={theme.secondaryText}
-                width={16}
-                height={16}
-              />
-              {nextAccountData ? (
-                <Account
-                  addr={nextAccountData?.addr || ''}
-                  creation={nextAccountData?.creation || null}
-                  preferences={
-                    nextAccountData?.preferences || {
-                      pfp: '',
-                      label: ''
-                    }
-                  }
-                  style={spacings.mbLg}
-                />
-              ) : (
-                <Text appearance="errorText" style={spacings.mbLg} fontSize={16}>
-                  {nextAccount || t('Invalid account data')}
-                </Text>
-              )}
-              {isRequestBroken ? (
-                <Alert
-                  type="error"
-                  title={t('Unable to switch account')}
-                  text={t(
-                    'The requested account is not available. Add the account or reconnect the app to continue. If the issue persists, please contact support.'
-                  )}
-                />
-              ) : (
-                <Text style={text.center} appearance="secondaryText" fontSize={16}>
-                  {t(
-                    'Would you like to switch to this account now to continue with the signing process?'
-                  )}
-                </Text>
-              )}
-            </View>
-          </View>
+      {/* Scrolls on short screens, so the whole body can be seen */}
+      <MobileLayoutWrapperMainContent withScroll withHorizontalPadding={false}>
+        {isAuthorizing ? (
+          <SkeletonLoader width="100%" height={450} appearance="primaryBackground" />
         ) : (
-          <SkeletonLoader
-            style={{
-              ...styles.container,
-              paddingVertical: SPACING_LG * responsiveSizeMultiplier
-            }}
-            width={responsiveSizeMultiplier * 450}
-            height={responsiveSizeMultiplier * 450}
-            appearance="primaryBackground"
-          />
+          <View style={styles.content}>
+            {!!dAppData && (
+              <DAppConnectHeader
+                title={t('Switch account request from')}
+                name={dAppData.name}
+                id={dAppData.id}
+                icon={dAppData.icon}
+              />
+            )}
+            <SwitchAccountBody
+              account={account}
+              nextAccount={nextAccount}
+              nextAccountData={nextAccountData}
+              nextRequestKind={nextRequestType}
+              isRequestBroken={isRequestBroken}
+            />
+          </View>
         )}
-      </View>
+      </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )
 }

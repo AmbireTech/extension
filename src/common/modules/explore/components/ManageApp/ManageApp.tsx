@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -18,15 +18,15 @@ import useController from '@common/hooks/useController'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
-import AccountPreferencesBottomSheet from '@common/modules/explore/components/ManageApp/AccountPreferencesBottomSheet'
 import DisguiseAsMetaMask from '@common/modules/explore/components/ManageApp/DisguiseAsMetaMask'
+import useDappConnectedAccount from '@common/modules/explore/hooks/useDappConnectedAccount'
 import useManageApp from '@common/modules/explore/hooks/useManageApp'
+import AccountSelect from '@common/modules/header/components/AccountSelect'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { sortNetworksByBalance } from '@common/utils/sorting'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 // The same footprint the sheet's other row action ("Manage") has, with a floor on the width so
 // flipping between "Trust" and "Untrust" cannot shift the row. Both labels sit well below it.
 const TRUST_BUTTON_STYLE: ViewStyle = { ...spacings.mlSm, height: 50, minWidth: 90 }
@@ -41,9 +41,6 @@ interface ManageAppProps {
   onReloadDapp?: () => void
 }
 
-const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
-  state.account
-
 const ManageApp = ({
   dapp,
   children,
@@ -53,22 +50,18 @@ const ManageApp = ({
   onReloadDapp
 }: ManageAppProps) => {
   const { theme } = useTheme()
-  const { account, accounts, networks, onDisconnect, onSelectNetwork, onToggleTrust } =
-    useManageApp(dapp)
+  const { networks, onDisconnect, onSelectNetwork, onToggleTrust } = useManageApp(dapp)
   const { ref: sheetRef, open, close } = useModalize()
   const {
     ref: disconnectChooserRef,
     open: openDisconnectChooser,
     close: closeDisconnectChooser
   } = useModalize()
-  const {
-    ref: accountPreferencesRef,
-    open: openAccountPreferences,
-    close: closeAccountPreferences
-  } = useModalize()
+  const [isManageAccountsOpen, setIsManageAccountsOpen] = useState(false)
+  // Every app in Explore has its own ManageApp, so the account sheet mounts only once this one
+  // opens - before its Manage button can be pressed, so the sheet is ready to open by then
+  const [hasOpened, setHasOpened] = useState(false)
   const { t } = useTranslation()
-  const { dispatch: mainDispatch } = useController('MainController')
-  const { state: selectedAccount } = useController('SelectedAccountController', selectAccount)
   const { state: balancePerNetwork } = useController(
     'SelectedAccountController',
     (state) => state.portfolio.balancePerNetwork
@@ -76,6 +69,11 @@ const ManageApp = ({
 
   const connectedSources = dapp.connectedSources ?? []
   const hasMultipleSources = connectedSources.length > 1
+
+  const handleOpen = useCallback(() => {
+    setHasOpened(true)
+    open()
+  }, [open])
 
   const handleDisconnect = useCallback(
     (source?: ConnectionSource) => {
@@ -122,46 +120,13 @@ const ManageApp = ({
     [onSelectNetwork]
   )
 
-  const accountsOptions: SelectValue[] = useMemo(
-    () =>
-      accounts.map((acc) => ({
-        value: acc.addr,
-        label: <AccountOption acc={acc} />
-      })),
-    [accounts]
-  )
-
-  // On web the dapp can be scoped to a subset of accounts. The account it "sees" is the
-  // currently selected one when it's part of the allowed list, otherwise the last selected
-  // account that was active during the dapp session.
-  const connectedAccount = useMemo(() => {
-    const preferences = dapp.accountPreferences
-
-    if (preferences?.enabled && account && !preferences.accounts.includes(account.addr)) {
-      return accounts.find((acc) => acc.addr === preferences.selectedAccount) ?? account
-    }
-
-    return account
-  }, [dapp.accountPreferences, account, accounts])
-
-  const handleSelectAccount = useCallback(
-    (option: SelectValue) => {
-      const addr = option.value
-
-      if (selectedAccount?.addr !== addr) {
-        mainDispatch({
-          type: 'method',
-          params: { method: 'selectAccount', args: [addr as string] }
-        })
-      }
-    },
-    [mainDispatch, selectedAccount]
-  )
+  // The dapp can be scoped to a subset of accounts, so it may not see the selected one
+  const connectedAccount = useDappConnectedAccount(dapp)
 
   return (
     <>
       <AnimatedPressable
-        onPress={open}
+        onPress={handleOpen}
         hitSlop={{ top: 8, bottom: 8, left: 10, right: 10 }}
         {...(buttonProps as any)}
       >
@@ -250,20 +215,7 @@ const ManageApp = ({
           selectStyle={{ backgroundColor: theme.tertiaryBackground }}
         />
 
-        {isMobile && !!account && (
-          <Select
-            value={{
-              value: account.addr,
-              label: <AccountOption acc={account} />
-            }}
-            setValue={handleSelectAccount}
-            options={accountsOptions}
-            label={t('Account')}
-            selectStyle={{ backgroundColor: theme.tertiaryBackground }}
-          />
-        )}
-
-        {isWeb && !!connectedAccount && (
+        {!!connectedAccount && (
           <View style={spacings.mbSm}>
             <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
               {t('Account')}
@@ -284,7 +236,7 @@ const ManageApp = ({
               <Button
                 type="tertiary"
                 text={t('Manage')}
-                onPress={() => openAccountPreferences()}
+                onPress={() => setIsManageAccountsOpen(true)}
                 hasBottomSpacing={false}
                 style={{ ...spacings.mlSm, height: 50 }}
               />
@@ -401,11 +353,13 @@ const ManageApp = ({
         />
       </BottomSheet>
 
-      {isWeb && (
-        <AccountPreferencesBottomSheet
-          dapp={dapp}
-          sheetRef={accountPreferencesRef}
-          closeBottomSheet={closeAccountPreferences}
+      {hasOpened && (
+        // Remounted per app, so unsaved edits made for one app are never saved for the next
+        <AccountSelect
+          key={dapp.id}
+          dappToManage={dapp}
+          isOpen={isManageAccountsOpen}
+          setIsOpen={setIsManageAccountsOpen}
         />
       )}
     </>

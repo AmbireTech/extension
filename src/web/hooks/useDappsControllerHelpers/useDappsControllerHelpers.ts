@@ -105,7 +105,7 @@ export default function useDappsControllerHelpers(
   }, [dispatch, dappSessions])
 
   const refreshCurrentDapp = useCallback(
-    async ({ force = false }: { force?: boolean } = {}) => {
+    async ({ force = false, isSilent = false }: { force?: boolean; isSilent?: boolean } = {}) => {
       const tab = await getCurrentTab()
       const tabId = tab?.id
       const tabUrl = tab?.url
@@ -129,7 +129,7 @@ export default function useDappsControllerHelpers(
       lastFetchedTabKeyRef.current = tabKey
       const requestId = ++refreshRequestIdRef.current
 
-      updateHelpers({ isLoadingCurrentDapp: true })
+      if (!isSilent) updateHelpers({ isLoadingCurrentDapp: true })
 
       try {
         const dapp = await getCurrentDapp()
@@ -255,4 +255,10 @@ export default function useDappsControllerHelpers(
   useEffect(() => {
     refreshCurrentDapp({ force: true })
   }, [dappSessions, refreshCurrentDapp])
+
+  // Saved changes to an app (e.g. which accounts it can see) don't touch its sessions, so they
+  // need their own refetch. Silent, as it runs on every update and would dim the app's button
+  useEffect(() => {
+    void refreshCurrentDapp({ force: true, isSilent: true })
+  }, [state.dapps, refreshCurrentDapp])
 }
