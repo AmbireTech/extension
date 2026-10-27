@@ -695,6 +695,7 @@ const useSign = ({
   const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
   const isCancelTransaction =
     !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
+  const isReplacingPendingAccountOp = !!signAccountOpState?.earlierPendingAccountOp?.isReplacing
 
   const primaryButtonText = useMemo(() => {
     // Replaces Sign, Execute and Begin signing, so it's clear the pending transaction gets replaced.
@@ -703,6 +704,7 @@ const useSign = ({
       return isSignLoading ? t('Canceling...') : t('Cancel transaction')
     if (isSpeedUpTransaction && !isCancelTransaction)
       return isSignLoading ? t('Speeding up...') : t('Speed up')
+    if (isReplacingPendingAccountOp) return isSignLoading ? t('Replacing...') : t('Replace')
 
     let buttonLabelType: ButtonMode =
       updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
@@ -727,6 +729,7 @@ const useSign = ({
   }, [
     isSpeedUpTransaction,
     isCancelTransaction,
+    isReplacingPendingAccountOp,
     isAtLeastOneOfTheKeysInvolvedExternal,
     isSignLoading,
     t,
