@@ -39,7 +39,7 @@ const NftImagesDisabledHint = ({ style }: Props) => {
         id: TOOLTIP_ID,
         title: t('Missing image'),
         content: t(
-          'The image is missing because of the token and NFT privacy setting. You can turn it back on in the privacy settings.'
+          'The image is missing because of the token and NFT privacy setting, which also hides token icons. You can turn it back on in the privacy settings.'
         )
       }),
     [t]
