@@ -10,6 +10,7 @@ import {
   Replacement
 } from '@ambire-common/libs/accountOp/replacement'
 import isSameAddr from '@ambire-common/utils/isSameAddr'
+import OpenIcon from '@common/assets/svg/OpenIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -20,7 +21,9 @@ import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import { REPLACEMENT_BLOCKER_MESSAGES } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
+import FooterActionLink from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/FooterActionLink'
 import {
   getReplacementBuildRequest,
   getResendAccountOp,
@@ -29,6 +32,7 @@ import {
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links'
 
 import PendingAccountOpCalls from './lazyPendingAccountOpCalls'
 import getStyles from './styles'
@@ -47,6 +51,11 @@ interface Props {
   onReplace?: () => void
   /** Goes back to waiting for the earlier transaction, when it's not the one of the sign screen */
   onStopReplacing?: () => void
+  /**
+   * Called once a speed up or cancel request is opened, when the transaction being signed isn't
+   * the one of the sign screen, so it doesn't stay proceeded while the user does something else
+   */
+  onReplacementRequestOpen?: () => void
 }
 
 /**
@@ -55,6 +64,11 @@ interface Props {
  * shown by the controller.
  */
 const REPLACEMENT_REQUEST_TIMEOUT_MS = 15_000
+/**
+ * How long after a speed up or cancel is sent the user is asked to wait for it, with no actions.
+ * After that the usual actions come back, e.g. to speed it up again if it's stuck
+ */
+const JUST_SENT_REPLACEMENT_MAX_AGE_MS = 60_000
 
 const selectEarlierPendingAccountOpId = (
   state: AllControllersMappingType['SignAccountOpController']
@@ -75,6 +89,7 @@ const selectSelectedAccountAddr = (state: AllControllersMappingType['SelectedAcc
   state.account?.addr
 const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['ActivityController']) =>
   state.broadcastedButNotConfirmed
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 /**
  * Lets the user know that the transaction being signed waits for one that was already sent but
@@ -85,11 +100,13 @@ const EarlierPendingTransaction = ({
   style,
   signAccountOpState,
   onReplace,
-  onStopReplacing
+  onStopReplacing,
+  onReplacementRequestOpen
 }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
+  const { addToast } = useToast()
   const [shouldRenderCalls, setShouldRenderCalls] = useState(false)
   // The action whose request is being opened and the request that was open when it started.
   // The sheet stays open until another request becomes the current one
@@ -134,6 +151,7 @@ const EarlierPendingTransaction = ({
     'ActivityController',
     selectBroadcastedButNotConfirmed
   )
+  const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: currentUserRequestId, dispatch: requestsDispatch } = useController(
     'RequestsController',
     selectCurrentUserRequestId
@@ -143,17 +161,45 @@ const EarlierPendingTransaction = ({
     () => findPendingAccountOpById(broadcastedButNotConfirmed, earlierPendingAccountOpId),
     [broadcastedButNotConfirmed, earlierPendingAccountOpId]
   )
+  // Right after a speed up or a cancel is sent, this transaction waits for it instead, so the
+  // user is asked to wait rather than shown the same actions again
+  const isReplacementOp = !!pendingAccountOp?.meta?.speedUp || !!pendingAccountOp?.meta?.isResend
+  const waitForReplacementUntil = isReplacementOp
+    ? pendingAccountOp.timestamp + JUST_SENT_REPLACEMENT_MAX_AGE_MS
+    : null
+  // Only moved forward when the wait ends, so the banner switches back to the usual one
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (waitForReplacementUntil === null) return undefined
+
+    const timeoutId = setTimeout(
+      // A timer may fire a little early, which would keep the wait on for good
+      () => setNow(Math.max(Date.now(), waitForReplacementUntil)),
+      Math.max(waitForReplacementUntil - Date.now(), 0)
+    )
+    return () => clearTimeout(timeoutId)
+  }, [waitForReplacementUntil])
+
+  const isWaitingForReplacement = waitForReplacementUntil !== null && now < waitForReplacementUntil
+  const isPendingCancel = !!pendingAccountOp?.meta?.speedUp?.isCancel
 
   const handleSheetOpen = useCallback(() => setShouldRenderCalls(true), [])
-  const handleSheetClosed = useCallback(() => setShouldRenderCalls(false), [])
+  const handleSheetClosed = useCallback(() => {
+    setShouldRenderCalls(false)
+    setReplacementInProgress(null)
+  }, [])
   const handleClose = useCallback(() => closeBottomSheet(), [closeBottomSheet])
+
+  // Closing the sheet clears it, see `handleSheetClosed`
+  const hasReplacementRequestOpened =
+    !!replacementInProgress && currentUserRequestId !== replacementInProgress.fromRequestId
 
   useEffect(() => {
     if (!replacementInProgress) return undefined
 
-    if (currentUserRequestId !== replacementInProgress.fromRequestId) {
+    if (hasReplacementRequestOpened) {
       closeBottomSheet()
-      setReplacementInProgress(null)
       return undefined
     }
 
@@ -162,7 +208,7 @@ const EarlierPendingTransaction = ({
       REPLACEMENT_REQUEST_TIMEOUT_MS
     )
     return () => clearTimeout(timeoutId)
-  }, [closeBottomSheet, currentUserRequestId, replacementInProgress])
+  }, [closeBottomSheet, hasReplacementRequestOpened, replacementInProgress])
 
   const openReplacementRequest = useCallback(
     (action: Replacement, replacementAccountOp: AccountOp) => {
@@ -171,9 +217,30 @@ const EarlierPendingTransaction = ({
         type: 'method',
         params: { method: 'build', args: [getReplacementBuildRequest(replacementAccountOp)] }
       })
+      onReplacementRequestOpen?.()
     },
-    [currentUserRequestId, requestsDispatch]
+    [currentUserRequestId, onReplacementRequestOpen, requestsDispatch]
   )
+
+  // Null while the transaction has no hash yet, e.g. one sent through a bundler or the relayer
+  const explorerTxnUrl = useMemo(() => {
+    const explorerUrl = networks?.find(
+      ({ chainId }) => chainId === pendingAccountOp?.chainId
+    )?.explorerUrl
+    if (!explorerUrl || !pendingAccountOp?.txnId) return null
+
+    return `${explorerUrl.replace(/\/$/, '')}/tx/${pendingAccountOp.txnId}`
+  }, [networks, pendingAccountOp])
+
+  const handleOpenExplorer = useCallback(async () => {
+    if (!explorerTxnUrl) return
+
+    try {
+      await openInTab({ url: explorerTxnUrl })
+    } catch (e: any) {
+      addToast(e?.message || t('Could not open the transaction details.'), { type: 'error' })
+    }
+  }, [addToast, explorerTxnUrl, t])
 
   const alertButtonProps = useMemo(
     () => ({ text: t('View pending transaction'), onPress: () => openBottomSheet() }),
@@ -255,7 +322,20 @@ const EarlierPendingTransaction = ({
     closeBottomSheet()
   }, [closeBottomSheet, hasOwnSignAccountOp, onStopReplacing, signAccountOpDispatch])
 
+  const alertTitle = useMemo(() => {
+    if (!isWaitingForReplacement) return t('Pending transaction detected')
+
+    return isPendingCancel
+      ? t('Canceling your earlier transaction')
+      : t('Speeding up your earlier transaction')
+  }, [isPendingCancel, isWaitingForReplacement, t])
+
   const alertText = useMemo(() => {
+    if (isWaitingForReplacement)
+      return t(
+        'Please wait. You can send this transaction after that is done. This usually takes less than a minute.'
+      )
+
     if (isReplacingPendingAccountOp)
       return t(
         'This transaction will replace the earlier one, so the earlier one will not go through. The fee is higher, as the network requires it to replace a transaction.'
@@ -283,6 +363,7 @@ const EarlierPendingTransaction = ({
     isReplacementDisabled,
     isReplacingPendingAccountOp,
     isSafeAccount,
+    isWaitingForReplacement,
     t
   ])
 
@@ -306,19 +387,26 @@ const EarlierPendingTransaction = ({
         <ModalHeader
           title={t('Pending transaction')}
           handleClose={handleClose}
-          style={spacings.mbMi}
-        />
+          style={spacings.mbSm}
+        >
+          {explorerTxnUrl ? (
+            <FooterActionLink
+              label={t('View in explorer')}
+              onPress={handleOpenExplorer}
+              textSize={12}
+              iconSize={14}
+              Icon={OpenIcon}
+            />
+          ) : null}
+        </ModalHeader>
         <Text appearance="secondaryText" fontSize={14} style={isMobile ? text.center : undefined}>
           {t(
-            'This transaction was sent earlier and is still waiting to be confirmed. The transaction you are signing now can only go through after it.'
+            'Sent earlier and not confirmed yet. The transaction you are signing now can only go through after it.'
           )}
-        </Text>
-        <Text appearance="secondaryText" fontSize={14} style={spacings.mtSm}>
-          {replacementDescription}
         </Text>
       </View>
     ),
-    [handleClose, replacementDescription, t]
+    [explorerTxnUrl, handleClose, handleOpenExplorer, t]
   )
 
   const sheetContent = useMemo(() => {
@@ -338,50 +426,55 @@ const EarlierPendingTransaction = ({
           ) : null}
           <View style={styles.transactionCardDivider} />
           <View style={styles.transactionCardActions}>
-            <Button
-              type="danger"
-              size="small"
-              text={replacementInProgress?.action === 'cancel' ? t('Canceling...') : t('Cancel')}
-              onPress={handleCancel}
-              disabled={!!replacementInProgress || isReplacementDisabled}
-              hasBottomSpacing={false}
-              style={flexbox.flex1}
-            />
-            <Button
-              type="primary"
-              size="small"
-              text={
-                replacementInProgress?.action === 'speedUp' ? t('Speeding up...') : t('Speed up')
-              }
-              onPress={handleSpeedUp}
-              disabled={!!replacementInProgress || isReplacementDisabled}
-              hasBottomSpacing={false}
-              style={[flexbox.flex1, spacings.mlTy]}
-            />
+            <View style={styles.transactionCardActionsRow}>
+              <Button
+                type="danger"
+                size="small"
+                text={replacementInProgress?.action === 'cancel' ? t('Canceling...') : t('Cancel')}
+                onPress={handleCancel}
+                disabled={!!replacementInProgress || isReplacementDisabled}
+                hasBottomSpacing={false}
+                style={flexbox.flex1}
+              />
+              <Button
+                type="primary"
+                size="small"
+                text={
+                  replacementInProgress?.action === 'speedUp' ? t('Speeding up...') : t('Speed up')
+                }
+                onPress={handleSpeedUp}
+                disabled={!!replacementInProgress || isReplacementDisabled}
+                hasBottomSpacing={false}
+                style={[flexbox.flex1, spacings.mlTy]}
+              />
+            </View>
+            {isReplacingPendingAccountOp && (
+              <Button
+                type="outline"
+                size="small"
+                text={t('Keep the earlier transaction')}
+                onPress={handleStopReplacing}
+                disabled={!!replacementInProgress}
+                hasBottomSpacing={false}
+                style={spacings.mtTy}
+              />
+            )}
+            {canReplacePendingAccountOp && !isReplacingPendingAccountOp && (
+              <Button
+                type="outline"
+                size="small"
+                text={t('Replace with this transaction')}
+                onPress={handleReplace}
+                disabled={!!replacementInProgress}
+                hasBottomSpacing={false}
+                style={spacings.mtTy}
+              />
+            )}
           </View>
-          {isReplacingPendingAccountOp && (
-            <Button
-              type="secondary"
-              size="small"
-              text={t('Keep the earlier transaction')}
-              onPress={handleStopReplacing}
-              disabled={!!replacementInProgress}
-              hasBottomSpacing={false}
-              style={spacings.mtTy}
-            />
-          )}
-          {canReplacePendingAccountOp && !isReplacingPendingAccountOp && (
-            <Button
-              type="secondary"
-              size="small"
-              text={t('Replace with this transaction')}
-              onPress={handleReplace}
-              disabled={!!replacementInProgress}
-              hasBottomSpacing={false}
-              style={spacings.mtTy}
-            />
-          )}
         </View>
+        <Text appearance="secondaryText" fontSize={12} style={spacings.mtSm}>
+          {replacementDescription}
+        </Text>
       </>
     )
   }, [
@@ -391,6 +484,7 @@ const EarlierPendingTransaction = ({
     isReplacingPendingAccountOp,
     handleCancel,
     handleSpeedUp,
+    replacementDescription,
     isReplacementDisabled,
     pendingAccountOp,
     replacementInProgress,
@@ -406,9 +500,9 @@ const EarlierPendingTransaction = ({
       <Alert
         type="info"
         size="sm"
-        title={t('Pending transaction detected')}
+        title={alertTitle}
         text={alertText}
-        buttonProps={alertButtonProps}
+        buttonProps={isWaitingForReplacement ? undefined : alertButtonProps}
         style={style}
       />
       <BottomSheet

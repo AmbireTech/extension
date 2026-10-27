@@ -12,6 +12,7 @@ interface Styles {
   transactionCardCall: ViewStyle
   transactionCardDivider: ViewStyle
   transactionCardActions: ViewStyle
+  transactionCardActionsRow: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -32,10 +33,12 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.primaryBorder
     },
     transactionCardActions: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
       ...spacings.phTy,
       ...spacings.pvTy
+    },
+    transactionCardActionsRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
     }
   })
 
