@@ -220,6 +220,7 @@ const useSign = ({
 
   const signingKeyType = signAccountOpState?.accountOp?.signingKeyType
   const feePayerKeyType = signAccountOpState?.accountOp?.gasFeePayment?.paidByKeyType
+  const canChangeSigningKey = !!signAccountOpState?.canChangeSigningKey
 
   const getIsKeyTypeInvolved = useCallback(
     (keyType: Key['type']) => {
@@ -496,12 +497,19 @@ const useSign = ({
     (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => {
       handleUpdate({ signingKeyAddr, signingKeyType: _chosenSigningKeyType })
 
+      // The controller keeps the signer of the pending transaction a speed up replaces,
+      // so the key in the state is the one that signs, not the just-chosen one
+      if (!canChangeSigningKey) {
+        handleSign()
+        return
+      }
+
       // Explicitly pass the currently selected signing key, because
       // the signing key in the state might not be updated yet,
       // and Sign Account Op controller assigns a default signing upfront
       handleSign([_chosenSigningKeyType], undefined, signingKeyAddr)
     },
-    [handleSign, handleUpdate]
+    [canChangeSigningKey, handleSign, handleUpdate]
   )
 
   const handleChangeSigningKeyAndClose = useCallback(
