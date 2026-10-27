@@ -15,6 +15,8 @@ import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -367,8 +369,30 @@ const EarlierPendingTransaction = ({
     t
   ])
 
+  // Why Cancel and Speed up are disabled, null while they aren't
+  const replacementDisabledReason = useMemo(() => {
+    if (!isReplacementDisabled || !replacementBlocker) return null
+    if (replacementBlocker === 'otherAccount')
+      return t(
+        'Sent from another of your accounts. Switch to that account to speed up or cancel this transaction.'
+      )
+
+    return t(REPLACEMENT_BLOCKER_MESSAGES[replacementBlocker])
+  }, [isReplacementDisabled, replacementBlocker, t])
+
+  const getDisabledTooltipDataSet = useCallback(
+    (id: string) =>
+      createGlobalTooltipDataSet({
+        id: `earlier-pending-${id}-disabled`,
+        content: replacementDisabledReason ?? '',
+        hidden: !replacementDisabledReason
+      }),
+    [replacementDisabledReason]
+  )
+
   const replacementDescription = useMemo(() => {
-    if (replacementBlocker === 'otherAccount') return t(REPLACEMENT_BLOCKER_MESSAGES.otherAccount)
+    if (replacementBlocker === 'otherAccount' && replacementDisabledReason)
+      return replacementDisabledReason
     if (isSafeAccount)
       return t(
         'Speeding it up sends the same transaction again so it gets confirmed sooner, without new signatures from the owners. Cancelling replaces it with a transaction that does nothing, which the owners need to sign.'
@@ -378,7 +402,7 @@ const EarlierPendingTransaction = ({
     return t(
       'Speeding it up sends it again with a higher fee so it gets confirmed sooner. Cancelling replaces it with a transaction that does nothing, so it never goes through.'
     )
-  }, [isSafeAccount, replacementBlocker, t])
+  }, [isSafeAccount, replacementBlocker, replacementDisabledReason, t])
 
   const sheetHeader = useMemo(
     () => (
@@ -416,6 +440,20 @@ const EarlierPendingTransaction = ({
       <>
         {/* The actions live in the transaction's card, so it's clear they act on it */}
         <View style={styles.transactionCard}>
+          {!isOwnPendingAccountOp && (
+            <View style={styles.transactionCardSender}>
+              <Text appearance="secondaryText" fontSize={12} style={spacings.mrMi}>
+                {t('Sent from')}
+              </Text>
+              <HumanizerAddress
+                address={pendingAccountOp.accountAddr}
+                chainId={pendingAccountOp.chainId}
+                fontSize={12}
+                numberOfLines={1}
+                hideActions
+              />
+            </View>
+          )}
           {shouldRenderCalls ? (
             <Suspense fallback={null}>
               <PendingAccountOpCalls
@@ -427,26 +465,35 @@ const EarlierPendingTransaction = ({
           <View style={styles.transactionCardDivider} />
           <View style={styles.transactionCardActions}>
             <View style={styles.transactionCardActionsRow}>
-              <Button
-                type="danger"
-                size="small"
-                text={replacementInProgress?.action === 'cancel' ? t('Canceling...') : t('Cancel')}
-                onPress={handleCancel}
-                disabled={!!replacementInProgress || isReplacementDisabled}
-                hasBottomSpacing={false}
-                style={flexbox.flex1}
-              />
-              <Button
-                type="primary"
-                size="small"
-                text={
-                  replacementInProgress?.action === 'speedUp' ? t('Speeding up...') : t('Speed up')
-                }
-                onPress={handleSpeedUp}
-                disabled={!!replacementInProgress || isReplacementDisabled}
-                hasBottomSpacing={false}
+              <View style={flexbox.flex1} dataSet={getDisabledTooltipDataSet('cancel')}>
+                <Button
+                  type="danger"
+                  size="small"
+                  text={
+                    replacementInProgress?.action === 'cancel' ? t('Canceling...') : t('Cancel')
+                  }
+                  onPress={handleCancel}
+                  disabled={!!replacementInProgress || isReplacementDisabled}
+                  hasBottomSpacing={false}
+                />
+              </View>
+              <View
                 style={[flexbox.flex1, spacings.mlTy]}
-              />
+                dataSet={getDisabledTooltipDataSet('speed-up')}
+              >
+                <Button
+                  type="primary"
+                  size="small"
+                  text={
+                    replacementInProgress?.action === 'speedUp'
+                      ? t('Speeding up...')
+                      : t('Speed up')
+                  }
+                  onPress={handleSpeedUp}
+                  disabled={!!replacementInProgress || isReplacementDisabled}
+                  hasBottomSpacing={false}
+                />
+              </View>
             </View>
             {isReplacingPendingAccountOp && (
               <Button
@@ -484,6 +531,8 @@ const EarlierPendingTransaction = ({
     isReplacingPendingAccountOp,
     handleCancel,
     handleSpeedUp,
+    getDisabledTooltipDataSet,
+    isOwnPendingAccountOp,
     replacementDescription,
     isReplacementDisabled,
     pendingAccountOp,
