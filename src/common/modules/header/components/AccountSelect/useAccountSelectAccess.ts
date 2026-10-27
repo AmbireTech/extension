@@ -57,8 +57,9 @@ const useAccountSelectAccess = ({
     [accounts, isVisible]
   )
 
-  // An app that can see every account follows the wallet's, which is what the preferences being
-  // off means - unless an account is pinned for it, until the wallet switches to another one
+  // An app that can see every account follows the wallet's and sees the accounts added later, which
+  // is what the preferences being off means. The controller drops them, unless an account is pinned
+  // for the app, until the wallet switches to another one
   const setVisibleAccounts = useCallback(
     (
       nextAddrs: string[],
@@ -69,7 +70,7 @@ const useAccountSelectAccess = ({
 
       setPendingPreferences({
         enabled: !isEveryAccountVisible,
-        accounts: nextAddrs,
+        accounts: isEveryAccountVisible ? [nextAccountAddr] : nextAddrs,
         selectedAccount: nextAccountAddr,
         ...(isPinned && { isSelectedAccountPinned: true })
       })
