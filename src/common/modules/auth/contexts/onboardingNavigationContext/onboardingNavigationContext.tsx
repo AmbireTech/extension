@@ -376,7 +376,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     setHistory([])
   }, [onboardingRoutesTree, goBackThePlatformWay, accountPickerDispatch])
 
-  // Whether the last route (the root aside) was an onboarding one. Never in the popup.
+  // Whether the last route (the root aside) was an onboarding one. Never in the popup or the side
+  // panel: their flow steps only hand over to a tab (see `TabOnlyRoute`), and leaving them for the
+  // dashboard then must not end the flow the tab goes on with.
   const wasOnOnboardingRouteRef = useRef(false)
 
   // Ends the account adding flow on a move off its steps - flows prepare on their own screen,
@@ -387,7 +389,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
     const wasOnOnboardingRoute = wasOnOnboardingRouteRef.current
     wasOnOnboardingRouteRef.current =
-      !getUiType().isPopup && ONBOARDING_WEB_ROUTES.includes(currentRoute)
+      !getUiType().isPopup &&
+      !getUiType().isSidePanel &&
+      ONBOARDING_WEB_ROUTES.includes(currentRoute)
 
     if (!wasOnOnboardingRoute || path === prevPath) return
 
