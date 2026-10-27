@@ -34,7 +34,7 @@ export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
 
 const OnboardingNavigationContext = createContext<{
   isOnboardingRoute: boolean
-  goToNextRoute: (routeName?: OnboardingRoute, routeState?: Record<string, unknown>) => void
+  goToNextRoute: (routeName?: OnboardingRoute | '/', routeState?: Record<string, unknown>) => void
   goToPrevRoute: () => void
   /** Accounts a sync added already, which the personalize step shows for naming */
   syncedAccountAddrs: string[]
@@ -127,11 +127,6 @@ const ACCOUNT_ADDING_STEPS_AFTER_PASSWORD: string[] = [
 
 const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.hasPasswordSecret
-// Read before the controller states are loaded too
-const selectAccountsCount = (state: AllControllersMappingType['AccountsController']) =>
-  state.accounts?.length ?? 0
-const selectIsSetupComplete = (state: AllControllersMappingType['WalletStateController']) =>
-  state.isSetupComplete
 const selectRecoverKeyStoreStatus = (state: AllControllersMappingType['EmailVaultController']) =>
   state.statuses?.recoverKeyStore
 const selectPickerSubType = (state: AllControllersMappingType['AccountPickerController']) =>
@@ -158,8 +153,6 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const routerHistory = useRouterHistory()
   const { authStatus } = useAuth()
   const { dispatch } = useControllersMiddleware()
-  const { state: isSetupComplete } = useController('WalletStateController', selectIsSetupComplete)
-  const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
   const { state: subType, dispatch: accountPickerDispatch } = useController(
     'AccountPickerController',
     selectPickerSubType
@@ -179,10 +172,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     const afterPersonalizeRoutes = getUiType().isMobileApp
       ? [route('/')]
       : [
-          route(WEB_ROUTES.onboardingCompleted, [route('/')], {
-            disabled: isSetupComplete || !accountsCount,
-            isProtected: true
-          }),
+          // Only for the wallet's first accounts - personalize goes on to '/' for the rest
+          route(WEB_ROUTES.onboardingCompleted, [route('/')], { isProtected: true }),
           route('/')
         ]
     // Nothing to add or name, so the flow skips it
@@ -236,15 +227,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       ],
       { disabled: authStatus !== AUTH_STATUS.NOT_AUTHENTICATED }
     )
-  }, [
-    hasPasswordSecret,
-    authStatus,
-    isSetupComplete,
-    subType,
-    accountsCount,
-    hasAccountAddingFlow,
-    hasSyncedAccounts
-  ])
+  }, [hasPasswordSecret, authStatus, subType, hasAccountAddingFlow, hasSyncedAccounts])
 
   const [history, setHistory] = useState<string[]>(loadHistory)
 
@@ -289,7 +272,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   }, [routerHistory, getCameFrom])
 
   const goToNextRoute = useCallback(
-    (routeName?: OnboardingRoute, routeState?: Record<string, unknown>) => {
+    (routeName?: OnboardingRoute | '/', routeState?: Record<string, unknown>) => {
       const currentRoute = routerHistory.location.pathname?.substring(1) || '/'
 
       let nextRoute: RouteNode | null = null

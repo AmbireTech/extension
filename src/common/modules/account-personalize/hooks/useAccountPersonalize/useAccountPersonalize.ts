@@ -41,6 +41,18 @@ const stayOnScreen = () => {}
 const NO_ACCOUNTS: Account[] = []
 
 /**
+ * Where the flow goes on once the accounts are added: "Ambire Wallet is ready to use" greets only
+ * the wallet's first accounts, the rest go on to the dashboard. Told by the wallet before adding,
+ * as the accounts state lags behind the reply.
+ */
+const getNextRoute = (walletAccounts: Account[], namedAccounts: Account[]) => {
+  const namedAddrs = new Set(namedAccounts.map(({ addr }) => addr))
+  const hadAccounts = walletAccounts.some(({ addr }) => !namedAddrs.has(addr))
+
+  return hadAccounts ? '/' : undefined
+}
+
+/**
  * The personalize step of every account adding flow: shows the accounts the flow prepared
  * (or prepares them, see below), lets the user name them, and adds them once the user
  * proceeds. Nothing is added before - going back only resets the flow. Accounts a sync
@@ -234,11 +246,18 @@ export default function useAccountPersonalize() {
     []
   )
 
-  const finishAdding = useCallback((namedAccounts: Account[], removedAccounts: Account[]) => {
-    setRemovedAccounts(removedAccounts)
-    setAddedAccounts(namedAccounts)
-    goToNextRouteRef.current()
-  }, [])
+  const finishAdding = useCallback(
+    (
+      namedAccounts: Account[],
+      removedAccounts: Account[],
+      nextRoute: ReturnType<typeof getNextRoute>
+    ) => {
+      setRemovedAccounts(removedAccounts)
+      setAddedAccounts(namedAccounts)
+      goToNextRouteRef.current(nextRoute)
+    },
+    []
+  )
 
   const handleProceed = useCallback(async () => {
     if (isProceedingRef.current) return
@@ -247,6 +266,7 @@ export default function useAccountPersonalize() {
 
     const namedAccounts = getValues('accounts')
     const names = namedAccounts.map(({ addr, preferences }) => ({ addr, preferences }))
+    const nextRoute = getNextRoute(accountsRef.current, namedAccounts)
     if (isSyncedMode) {
       accountsDispatch({
         type: 'method',
@@ -255,7 +275,7 @@ export default function useAccountPersonalize() {
       setAddedAccounts(namedAccounts)
       // Dropped first, as the way back is closed only while they are set
       setSyncedAccountAddrs([])
-      goToNextRouteRef.current()
+      goToNextRouteRef.current(nextRoute)
       return
     }
 
@@ -265,7 +285,7 @@ export default function useAccountPersonalize() {
         { type: 'method', params: { method: 'addPreparedAccounts', args: [names] } },
         ADD_ACCOUNTS_TIMEOUT_MS
       )
-      finishAdding(namedAccounts, accountsToRemove)
+      finishAdding(namedAccounts, accountsToRemove, nextRoute)
     } catch (error) {
       if (error instanceof ReplyTimeoutError) {
         // Unexpected, but the picker can still be adding them (e.g. on a slow connection), so
@@ -289,7 +309,7 @@ export default function useAccountPersonalize() {
           (!toAdd.length && !toRemove.length) ||
           (namedAccounts.every(({ addr }) => walletAddrs.has(addr)) &&
             accountsToRemove.every(({ addr }) => !walletAddrs.has(addr)))
-        if (isAdded) finishAdding(namedAccounts, accountsToRemove)
+        if (isAdded) finishAdding(namedAccounts, accountsToRemove, nextRoute)
         // Otherwise it failed, which the controller reports itself
       } else {
         // The controller reports its own failures, here the button only becomes usable again
