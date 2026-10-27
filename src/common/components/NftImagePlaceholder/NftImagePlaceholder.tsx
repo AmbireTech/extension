@@ -16,7 +16,7 @@ type Props = {
 }
 
 /**
- * Displayed in place of an NFT image when the `nftImages` privacy opt-out is off,
+ * Displayed in place of an NFT image when the `tokenAndDefiAutoDiscovery` privacy opt-out is off,
  * because loading the image exposes the IP of the user and the NFT to the image CDN
  */
 const NftImagePlaceholder = ({ iconSize, backgroundColor, withHint = false }: Props) => {

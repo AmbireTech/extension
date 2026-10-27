@@ -28,7 +28,7 @@ const NftImagesDisabledHint = ({ style }: Props) => {
         id: TOOLTIP_ID,
         title: t('NFT images are turned off'),
         content: t(
-          'NFT images are turned off in the privacy settings. Showing them lets the image provider see your IP address and which NFTs you own. You can turn them on in Settings > Privacy opt-outs.'
+          'NFT images are turned off by the "Tokens, NFTs & DeFi positions auto discovery" privacy setting. Showing them lets the image provider see your IP address and which NFTs you own. You can turn it on in Settings > Privacy opt-outs.'
         )
       }),
     [t]
