@@ -120,20 +120,24 @@ export default function useAccountPersonalize() {
   }, [accountPickerDispatchAndWait, isSyncedMode, prepareRun])
 
   useEffect(() => {
-    if (readyToAddAccounts.length) hasShownPreparedAccounts.current = true
-  }, [readyToAddAccounts.length])
+    if (readyToAddAccounts.length || readyToRemoveAccounts.length)
+      hasShownPreparedAccounts.current = true
+  }, [readyToAddAccounts.length, readyToRemoveAccounts.length])
 
-  // The picker was set up anew after this run's accounts were prepared, so the step starts over.
-  // Waiting for them to show first keeps a lagging state from restarting the run it belongs to.
+  // The picker was set up anew after this run's accounts were prepared, so the step starts over,
+  // also from the done view a web tab keeps showing. Waiting for them to show first keeps a
+  // lagging state from restarting the run it belongs to.
   useEffect(() => {
-    if (!isWaitingToStart || !hasShownPreparedAccounts.current || isAdding || addedAccounts) return
+    if (!isWaitingToStart || !hasShownPreparedAccounts.current || isAdding) return
 
     hasShownPreparedAccounts.current = false
+    setAddedAccounts(null)
+    setRemovedAccounts([])
     setPrepareResult(null)
     setHasMinLoadingPassed(false)
     setHasMaxLoadingPassed(false)
     setPrepareRun((run) => run + 1)
-  }, [isWaitingToStart, isAdding, addedAccounts])
+  }, [isWaitingToStart, isAdding])
 
   useEffect(() => {
     const minTimeout = setTimeout(() => setHasMinLoadingPassed(true), MIN_LOADING_MS)
@@ -201,10 +205,18 @@ export default function useAccountPersonalize() {
   // Read once adding outlasts the wait for its reply, after the await
   const addAccountsStatusRef = useRef(addAccountsStatus)
   const accountsRef = useRef(accounts)
-  const resolveAddingDoneRef = useRef<((status: typeof addAccountsStatus) => void) | null>(null)
+  const preparedRef = useRef({ readyToAddAccounts, readyToRemoveAccounts })
+  // Called with how adding ended, or with `null` once the screen is gone
+  const resolveAddingDoneRef = useRef<((status: typeof addAccountsStatus | null) => void) | null>(
+    null
+  )
   useEffect(() => {
     accountsRef.current = accounts
   }, [accounts])
+  // Before the effect below, so a Proceed it resumes reads the same update
+  useEffect(() => {
+    preparedRef.current = { readyToAddAccounts, readyToRemoveAccounts }
+  }, [readyToAddAccounts, readyToRemoveAccounts])
   // Tells a Proceed still waiting how adding ended, once the picker is no longer busy with it
   useEffect(() => {
     addAccountsStatusRef.current = addAccountsStatus
@@ -213,6 +225,14 @@ export default function useAccountPersonalize() {
     resolveAddingDoneRef.current?.(addAccountsStatus)
     resolveAddingDoneRef.current = null
   }, [addAccountsStatus])
+  // A Proceed still waiting stops with the screen, rather than waiting for good
+  useEffect(
+    () => () => {
+      resolveAddingDoneRef.current?.(null)
+      resolveAddingDoneRef.current = null
+    },
+    []
+  )
 
   const finishAdding = useCallback((namedAccounts: Account[], removedAccounts: Account[]) => {
     setRemovedAccounts(removedAccounts)
@@ -253,14 +273,20 @@ export default function useAccountPersonalize() {
         captureException(error)
         const endStatus =
           addAccountsStatusRef.current === 'LOADING'
-            ? await new Promise<typeof addAccountsStatus>((resolve) => {
+            ? await new Promise<typeof addAccountsStatus | null>((resolve) => {
                 resolveAddingDoneRef.current = resolve
               })
             : addAccountsStatusRef.current
-        // Either one tells, as one update can arrive later than the other
+        if (!endStatus) return
+
+        // Done once the picker drops what it prepared, which it does in the same update that
+        // ends adding - a failure keeps them. The accounts in the wallet tell it too, but
+        // their update can come later.
+        const { readyToAddAccounts: toAdd, readyToRemoveAccounts: toRemove } = preparedRef.current
         const walletAddrs = new Set(accountsRef.current.map(({ addr }) => addr))
         const isAdded =
           endStatus === 'SUCCESS' ||
+          (!toAdd.length && !toRemove.length) ||
           (namedAccounts.every(({ addr }) => walletAddrs.has(addr)) &&
             accountsToRemove.every(({ addr }) => !walletAddrs.has(addr)))
         if (isAdded) finishAdding(namedAccounts, accountsToRemove)
