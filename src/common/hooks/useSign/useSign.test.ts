@@ -31,6 +31,7 @@ const buildSignAccountOpState = (
     accountKeyStoreKeys: [mockLedgerKey, mockQrKey],
     feePayerKeyStoreKeys: [mockLedgerKey],
     threshold: 1,
+    canChangeSigningKey: true,
     fromRequestId: 'req-1',
     accountOp: {
       id: 'op-1',
@@ -276,6 +277,35 @@ describe('useSign - signing flow selection after choosing a key', () => {
     expect(getHookResult().shouldDisplayLedgerConnectModal).toBe(true)
     expect(getHookResult().renderedButNotNecessarilyVisibleModal).toBe('ledger-connect')
     expect(broadcastDispatches()).toHaveLength(0)
+  })
+
+  it('follows the pending transaction signer when a speed up keeps it, even if another key is chosen', () => {
+    // A speed up keeps the Ledger that signed the pending transaction, so it still has to be connected
+    mockSignAccountOpState.current = buildSignAccountOpState({ canChangeSigningKey: false })
+    mount()
+
+    act(() => {
+      getHookResult().handleChangeSigningKey(mockQrKey.addr, 'qr')
+    })
+
+    expect(getHookResult().shouldDisplayLedgerConnectModal).toBe(true)
+    expect(getHookResult().renderedButNotNecessarilyVisibleModal).toBe('ledger-connect')
+    expect(getHookResult().shouldDisplayQrSigningModal).toBe(false)
+    expect(broadcastDispatches()).toHaveLength(0)
+  })
+
+  it('does not open the QR flow in a speed up signed by the connected Ledger when a QR key is chosen', () => {
+    mockIsLedgerConnected.value = true
+    mockSignAccountOpState.current = buildSignAccountOpState({ canChangeSigningKey: false })
+    mount()
+
+    act(() => {
+      getHookResult().handleChangeSigningKey(mockQrKey.addr, 'qr')
+    })
+
+    expect(getHookResult().shouldDisplayQrSigningModal).toBe(false)
+    expect(getHookResult().renderedButNotNecessarilyVisibleModal).not.toBe('qr-sign')
+    expect(broadcastDispatches()).toHaveLength(1)
   })
 
   it('falls back to the controller state when no key was just chosen', () => {
