@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 
+import { isExtensionOverlayView } from '@ambire-common/interfaces/ui'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import EditAccountIcon from '@common/assets/svg/EditAccountIcon'
 import RemoveAccountIcon from '@common/assets/svg/RemoveAccountIcon'
@@ -10,6 +11,8 @@ import Panel from '@common/components/Panel'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { selectIsPinned } from '@common/controllers/wallet-state/selectors'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
@@ -30,10 +33,15 @@ import PinExtension from '@web/modules/auth/components/PinExtension'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const CARD_WIDTH = 400
 
 // As tall as the header's back button (28), also while the button is hidden
 const HEADER_STYLE = { minHeight: 28 }
+
+const selectIsWalletOpen = (state: AllControllersMappingType['UiController']) =>
+  state.views.some(isExtensionOverlayView)
 
 const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
@@ -59,6 +67,14 @@ const AccountPersonalizeScreen = () => {
     noAccountsText,
     addMoreText
   } = useAccountPersonalize()
+  const { state: isPinned } = useController('WalletStateController', selectIsPinned)
+  const { state: isWalletOpen } = useController('UiController', selectIsWalletOpen)
+  // Once added, the wallet opens on its own (see `openWallet`). Kept for these accounts after it
+  // closes again, and not for the next ones the tab adds.
+  const [walletOpenedFor, setWalletOpenedFor] = useState<typeof addedAccounts>(null)
+  if (addedAccounts && isWalletOpen && walletOpenedFor !== addedAccounts)
+    setWalletOpenedFor(addedAccounts)
+  const hasWalletOpened = !!addedAccounts && walletOpenedFor === addedAccounts
 
   const listEmpty = useMemo(
     () => (
@@ -73,7 +89,8 @@ const AccountPersonalizeScreen = () => {
   if (addedAccounts) {
     return (
       <>
-        <PinExtension />
+        {/* Pinned, it only says to open the wallet, which has opened already */}
+        {!(isPinned && hasWalletOpened) && <PinExtension />}
         <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
           <TabLayoutWrapperMainContent>
             <Panel type="onboarding" spacingsSize="small" style={spacings.ptMd}>
