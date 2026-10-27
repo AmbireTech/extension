@@ -37,9 +37,9 @@ const NftImagesDisabledHint = ({ style }: Props) => {
     () =>
       createGlobalTooltipDataSet({
         id: TOOLTIP_ID,
-        title: t('NFT images are turned off'),
+        title: t('Missing image'),
         content: t(
-          'NFT images are turned off by the "Tokens, NFTs & DeFi positions auto discovery" privacy setting. Showing them lets the image provider see your IP address and which NFTs you own. You can turn it on in Settings > Privacy opt-outs.'
+          'The image is missing because of the token and NFT privacy setting. You can turn it back on in the privacy settings.'
         )
       }),
     [t]
@@ -49,13 +49,13 @@ const NftImagesDisabledHint = ({ style }: Props) => {
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, style]}>
-      <Text fontSize={14} appearance="secondaryText" style={spacings.mrMi}>
+      <Text fontSize={14} appearance="primaryAccent" style={spacings.mrMi}>
         {t('Missing image?')}
       </Text>
       <InfoIcon
         dataSet={tooltipDataSet}
         data-tooltip-id={TOOLTIP_ID}
-        color={theme.secondaryText}
+        color={theme.primaryAccent}
         width={16}
         height={16}
       />
