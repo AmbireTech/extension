@@ -153,7 +153,8 @@ const SafeOwners = ({
   importedKeys: Key[]
   /**
    * Owners that are smart accounts imported in the wallet. They approve onchain with a
-   * transaction of their own (onApprove). Pass them only where that's supported
+   * transaction of their own (onApprove). Pass them only where that's supported.
+   * Ignored without onApprove, so these owners show as not imported
    */
   smartAccountOwners?: string[]
   /** Smart account owners whose approval was sent but isn't confirmed yet */
