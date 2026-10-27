@@ -4,6 +4,7 @@ import { ScrollView, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -63,6 +64,9 @@ const SignAccountOpScreen = () => {
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
   const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
+  // A cancel is a speed up that replaces the pending transaction with an empty one
+  const isCancelTransaction =
+    !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
   // The transaction being sped up was processed first, so all that's left is closing the request
   const isSpeedUpNotNeeded = signAccountOpState?.status?.type === SigningStatus.SpeedUpNotNeeded
   const { t } = useTranslation()
@@ -180,8 +184,9 @@ const SignAccountOpScreen = () => {
 
   const shouldRejectOnchain = useMemo(() => {
     if (!signAccountOpState?.account.safeCreation) return false
-    // A speed up reuses the signatures of the pending transaction it replaces, so canceling
-    // it only closes the request. The pending transaction itself is left as it is
+    // A speed up reuses the signatures of the pending transaction it replaces, and a cancel
+    // replaces it with an empty transaction, so rejecting either only closes the request.
+    // The pending transaction itself is left as it is
     if (isSpeedUpTransaction) return false
     const { signature, signed } = signAccountOpState.accountOp
     const signedCount = signed?.length || 0
@@ -303,7 +308,10 @@ const SignAccountOpScreen = () => {
         <View
           style={isNarrowWebLayout ? { marginBottom: COMPACT_FEE_TO_BUTTONS_SPACING } : spacings.mb}
         >
-          <SpeedUpNotNeededFee isSpeedUpNotNeeded={isSpeedUpNotNeeded}>
+          <SpeedUpNotNeededFee
+            isSpeedUpNotNeeded={isSpeedUpNotNeeded}
+            isCancel={isCancelTransaction}
+          >
             <Estimation
               signAccountOpState={signAccountOpState}
               disabled={isSignLoading || isSpeedUpNotNeeded}
@@ -466,6 +474,7 @@ const SignAccountOpScreen = () => {
                   <SpeedUpStatus
                     sentAt={signAccountOpState?.accountOp.meta?.speedUp?.replacedSentAt}
                     isCompleted={isSpeedUpNotNeeded}
+                    isCancel={isCancelTransaction}
                   />
                 </View>
               )}
@@ -487,12 +496,17 @@ const SignAccountOpScreen = () => {
             >
               <View>
                 <SectionHeading withMb={false}>
-                  {isSpeedUpTransaction ? t('Speed up') : t('Overview')}
+                  {isCancelTransaction
+                    ? t('Cancel transaction')
+                    : isSpeedUpTransaction
+                      ? t('Speed up')
+                      : t('Overview')}
                 </SectionHeading>
                 {isSpeedUpTransaction && (
                   <SpeedUpStatus
                     sentAt={signAccountOpState?.accountOp.meta?.speedUp?.replacedSentAt}
                     isCompleted={isSpeedUpNotNeeded}
+                    isCancel={isCancelTransaction}
                   />
                 )}
               </View>

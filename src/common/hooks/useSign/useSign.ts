@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import useCallSignAccountOpMethod, { getSignAccountOpType } from '@common/hooks/useCallSignAccountOpMethod'
 import useController from '@common/hooks/useController'
 import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
@@ -667,10 +668,16 @@ const useSign = ({
   ])
 
   const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
+  const isCancelTransaction =
+    !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
 
   const primaryButtonText = useMemo(() => {
-    // Replaces Sign, Execute and Begin signing, so it's clear the pending transaction gets replaced
-    if (isSpeedUpTransaction) return isSignLoading ? t('Speeding up...') : t('Speed up')
+    // Replaces Sign, Execute and Begin signing, so it's clear the pending transaction gets replaced.
+    // Not for a Safe cancel: it's a new Safe transaction, so the owners sign it before executing
+    if (isCancelTransaction && !signAccountOpState?.account.safeCreation)
+      return isSignLoading ? t('Canceling...') : t('Cancel transaction')
+    if (isSpeedUpTransaction && !isCancelTransaction)
+      return isSignLoading ? t('Speeding up...') : t('Speed up')
 
     let buttonLabelType: ButtonMode =
       updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
@@ -694,6 +701,7 @@ const useSign = ({
     )
   }, [
     isSpeedUpTransaction,
+    isCancelTransaction,
     isAtLeastOneOfTheKeysInvolvedExternal,
     isSignLoading,
     t,
