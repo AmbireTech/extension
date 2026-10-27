@@ -1,5 +1,5 @@
 import { execSync } from 'child_process'
-import { IOS_MOBILE_INVITE_CODE } from 'constants/env'
+import { MOBILE_INVITE_CODE } from 'constants/env'
 import selectors from 'constants/selectors'
 import { join } from 'path'
 
@@ -37,6 +37,14 @@ export async function resetAppToCleanState({
     // A system dialog can appear right after clearing data — dismiss it if present.
     const systemDialogOkButton = screen.getByTestId('android:id/button1')
     if (await systemDialogOkButton.count()) await systemDialogOkButton.tap()
+
+    // The OS's "Android App Compatibility" 16 KB page-size warning (not an app bug - it's
+    // flagging the build's native .so libraries aren't yet 16KB-aligned) is tracked by the
+    // system/package manager, not app data, so `pm clear` above doesn't suppress it and it
+    // can reappear on a fresh launch. "Don't Show Again" persists the dismissal at the OS
+    // level, unlike "OK", so later resets on this same device/emulator stop hitting it too.
+    const dontShowAgainButton = screen.getByText('Don’t Show Again').or(screen.getByText("Don't Show Again"))
+    if (await dontShowAgainButton.count()) await dontShowAgainButton.tap()
   }
 
   if (projectName === 'ios') {
@@ -48,18 +56,39 @@ export async function resetAppToCleanState({
       .trim()
     execSync(`rm -rf "${dataContainer}"`)
     await device.launchApp(bundleId)
+  }
 
-    const inviteCodeInput = screen.getByTestId(selectors.invite.codeInput)
-    if (await inviteCodeInput.count()) {
-      if (!IOS_MOBILE_INVITE_CODE) {
-        throw new Error(
-          'App is showing the invite gate but MOBILE_INVITE_CODE is not set (see e2e-playwright-tests/constants/env.ts).'
-        )
-      }
-
-      await inviteCodeInput.fill(IOS_MOBILE_INVITE_CODE)
-      await screen.getByTestId(selectors.invite.verifyBtn).tap()
-      await expect(inviteCodeInput).not.toBeVisible()
+  // The invite gate (useMobileInviteGate) is enforced identically on both platforms, with one
+  // shared code for both - must run regardless of which branch above just reset the device.
+  const inviteCodeInput = screen.getByTestId(selectors.invite.codeInput)
+  if (await inviteCodeInput.count()) {
+    if (!MOBILE_INVITE_CODE) {
+      throw new Error(
+        'App is showing the invite gate but MOBILE_INVITE_CODE is not set (see e2e-playwright-tests/constants/env.ts).'
+      )
     }
+
+    // The verify tap hits the relayer directly (InviteController#verify). A dropped/slow
+    // response - common on Android's virtualized, NAT'd emulator network, rarer on iOS
+    // simulators which share the host's real network - leaves the code input on screen with
+    // InviteController's UNREACHABLE_MESSAGE ("We could not check your code right now...")
+    // rather than rejecting the code itself. Retry the tap a few times before giving up, since
+    // this is transient connectivity, not a wrong code.
+    const VERIFY_RETRY_ATTEMPTS = 3
+    let lastError: unknown
+    for (let attempt = 1; attempt <= VERIFY_RETRY_ATTEMPTS; attempt += 1) {
+      await inviteCodeInput.fill(MOBILE_INVITE_CODE)
+      await screen.getByTestId(selectors.invite.verifyBtn).tap()
+
+      try {
+        await expect(inviteCodeInput).not.toBeVisible({ timeout: 10000 })
+        lastError = undefined
+        break
+      } catch (error) {
+        lastError = error
+      }
+    }
+
+    if (lastError) throw lastError
   }
 }

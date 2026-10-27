@@ -30,7 +30,7 @@ test.describe('gasTank - Basic Account', { tag: '@gasTank-mobile' }, () => {
     }
   )
 
-  test.only('should top up Gas Tank with 0.01 USDC on Base', async ({ pages }) => {
+  test('should top up Gas Tank with 0.01 USDC on Base', async ({ screen, pages }) => {
     const sendToken = tokens.usdc.base
     const message = 'Top up ready!'
 
@@ -53,6 +53,15 @@ test.describe('gasTank - Basic Account', { tag: '@gasTank-mobile' }, () => {
     // When the fee is above the $0.10 test limit, signSlowSpeedTransaction skips signing on
     // purpose. Nothing was broadcasted, so skip the test instead of failing the assertion below.
     test.skip(!signed, 'Transaction fee exceeded the $0.10 limit; signing was skipped.')
+
+    await test.step('assert activity information page', async () => {
+      await pages.dashboard.checkActivityInformation({
+        actionMessage: 'Fuel gas tank with',
+        amount: '0.01',
+        tokenName: 'USDC',
+        confirmationText: 'Confirmed'
+      })
+    })
 
     await test.step('assert new transaction on Activity tab', async () => {
       await pages.dashboard.checkSendTransactionOnActivityTab('Fuel gas tank')

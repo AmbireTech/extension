@@ -46,6 +46,9 @@ jobs:
       BA_SECRETS: ${{ secrets.BA_SECRETS }}
       SA_SECRETS: ${{ secrets.SA_SECRETS }}
       SA_ACCOUNT_JSON: ${{ secrets.SA_ACCOUNT_JSON }}
+      # Unlocks the mobile app's invite gate (useMobileInviteGate) - required on every
+      # fresh install, both platforms. See auth.spec.ts's beforeEach.
+      MOBILE_INVITE_CODE: ${{ secrets.MOBILE_INVITE_CODE }}
 
     steps:
       - name: Checkout

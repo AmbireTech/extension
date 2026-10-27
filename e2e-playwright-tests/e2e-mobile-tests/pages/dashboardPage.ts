@@ -20,7 +20,7 @@ export class DashboardPage extends BasePageMobile {
   }
 
   async checkNoTransactionOnActivityTab(): Promise<void> {
-    // await this.screen.getByTestId(selectors.dashboard.activityTabButton).tap()
+    await this.screen.getByTestId(selectors.dashboard.activityTabButton).tap()
     await expect(
       this.screen.getByTestId(selectors.dashboard.noTransactionOnActivityTab)
     ).toContainText(
@@ -45,5 +45,22 @@ export class DashboardPage extends BasePageMobile {
     await expect(
       this.screen.getByTestId(selectors.dashboard.activityTransactionConfirmed)
     ).toContainText('Confirmed')
+  }
+
+  async checkActivityInformation({
+    actionMessage,
+    amount,
+    tokenName,
+    confirmationText
+  }: {
+    actionMessage: string
+    amount: string
+    tokenName: string
+    confirmationText: string
+  }): Promise<void> {
+    const fuelMessage = screen.getByRole('text', { name: 'Fuel gas tank with' })
+    const amount = screen.getByRole('text', { name: '0.01' })
+    const token = screen.getByLabel('USDC')
+    const confirmedText = screen.getByRole('text', { name: 'Confirmed' })
   }
 }
