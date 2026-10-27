@@ -153,6 +153,12 @@ type OpenExtensionPopupAction = {
      * mode, so the two can never disagree about what was opened.
      */
     hasOpenedFirefoxSidebar?: boolean
+    /**
+     * Set by the UI on Chrome once the side panel is open - opened by the UI itself, as the
+     * background can't once the user's gesture has gone by, or open already (see `openWallet`).
+     * The background doesn't open it again.
+     */
+    isChromeSidePanelOpen?: boolean
   }
 }
 

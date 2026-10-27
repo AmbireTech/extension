@@ -274,8 +274,8 @@ export const handleActions = async (
 
       const focusOverlay = async () => {
         if (isSidePanelModeEnabled) {
-          // Already opened by the UI (see above)
-          if (engine === 'gecko') return
+          // Already opened by the UI (see above, and `openWallet` on Chrome)
+          if (engine === 'gecko' || params?.isChromeSidePanelOpen) return
 
           await openPanel(targetWindowId)
           return

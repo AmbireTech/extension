@@ -26,6 +26,7 @@ import {
 } from '@common/modules/router/constants/common'
 import { goBackInStack } from '@common/services/navigation/stackBackNavigation'
 import { syncSessionStorage } from '@common/services/storage'
+import { openWallet } from '@common/utils/openWallet'
 import { getUiType } from '@common/utils/uiType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -309,7 +310,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       const isLeavingPasswordSetup = currentRoute === WEB_ROUTES.keyStoreSetup
 
       if (nextRoute.name === '/' && !getUiType().isMobileApp) {
-        dispatch({ type: 'OPEN_EXTENSION_POPUP' })
+        openWallet(dispatch)
       } else {
         navigateRef.current(nextRoute.name, {
           state: { ...routeState, internal: true },
