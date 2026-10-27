@@ -44,6 +44,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     backgroundColor = 'primaryBackground',
     autoWidth = false,
     shouldBeClosableOnDrag = true,
+    withHandle = true,
     withBackdropBlur,
     customRenderer,
     customZIndex,
@@ -210,6 +211,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 : {}
             ]}
             handlePosition="inside"
+            withHandle={withHandle}
             useNativeDriver={false}
             avoidKeyboardLikeIOS
             modalTopOffset={modalTopOffset}
