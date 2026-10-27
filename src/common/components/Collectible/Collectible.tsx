@@ -7,7 +7,7 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { SelectedCollectible } from '@common/components/CollectibleModal'
 import ManifestImage from '@common/components/ManifestImage'
 import NftImagePlaceholder from '@common/components/NftImagePlaceholder'
-import useNftImagesStatus from '@common/hooks/useNftImagesStatus'
+import useAreNftImagesEnabled from '@common/hooks/useAreNftImagesEnabled'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -62,8 +62,7 @@ const Collectible: FC<Props> = ({
   networks
 }) => {
   const { theme } = useTheme()
-  const nftImagesStatus = useNftImagesStatus()
-  const areNftImagesEnabled = nftImagesStatus === 'enabled'
+  const areNftImagesEnabled = useAreNftImagesEnabled()
   const [bindAnim, animStyle] = useCustomHover({
     property: 'scaleX',
     values: {
@@ -137,7 +136,7 @@ const Collectible: FC<Props> = ({
             imageStyle={{ ...styles.image, borderRadius }}
           />
         ) : (
-          <NftImagePlaceholder iconSize={size / 2} isLoading={nftImagesStatus === 'loading'} />
+          <NftImagePlaceholder iconSize={size / 2} />
         )}
       </Animated.View>
     </Pressable>
