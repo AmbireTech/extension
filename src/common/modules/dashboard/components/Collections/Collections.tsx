@@ -12,7 +12,6 @@ import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
-import useAreNftImagesEnabled from '@common/hooks/useAreNftImagesEnabled'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
@@ -91,7 +90,6 @@ const Collections: FC<Props> = ({
     'SelectedAccountController',
     selectDashboardNetworkFilter
   )
-  const areNftImagesEnabled = useAreNftImagesEnabled()
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -256,7 +254,7 @@ const Collections: FC<Props> = ({
         ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         data={[
           ...(isMobile ? [] : ['header']),
-          ...(!areNftImagesEnabled && filteredPortfolioCollections.length ? ['images-hint'] : []),
+          ...(filteredPortfolioCollections.length ? ['images-hint'] : []),
           ...(initTab?.collectibles ? filteredPortfolioCollections : []),
           !filteredPortfolioCollections.length && isPortfolioAllReady ? 'empty' : '',
           !isReadyToVisualizeCollections ? 'skeleton' : 'keep-this-to-avoid-key-warning'

@@ -4,19 +4,16 @@ import { Pressable, View } from 'react-native'
 
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import BottomSheet from '@common/components/BottomSheet'
-import ManifestImage from '@common/components/ManifestImage'
-import NftImagePlaceholder from '@common/components/NftImagePlaceholder'
+import NftImage from '@common/components/NftImage'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
-import useAreNftImagesEnabled from '@common/hooks/useAreNftImagesEnabled'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
-import ImageIcon from '@web/assets/svg/ImageIcon'
 
 import HideCollectibleButton from './HideCollectibleButton'
 import Row from './Row'
@@ -56,7 +53,6 @@ const CollectibleModal = ({
   const { styles, theme } = useTheme(getStyles)
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
-  const areNftImagesEnabled = useAreNftImagesEnabled()
   // No actions on a collectible that is only being previewed (in a simulation)
   const shouldDisplayHideCollectionAction = !hideSendNft && !!canHideCollectible
 
@@ -68,45 +64,14 @@ const CollectibleModal = ({
     return (
       <>
         <View style={styles.imageContainer}>
-          {areNftImagesEnabled ? (
-            <ManifestImage
-              uri={image}
-              size={COLLECTIBLE_IMAGE_SIZE}
-              imageStyle={styles.image}
-              fallback={() => (
-                <View
-                  style={[
-                    flexbox.flex1,
-                    flexbox.center,
-                    { backgroundColor: theme.primaryBackground, width: '100%' }
-                  ]}
-                >
-                  <ImageIcon
-                    color={theme.secondaryText}
-                    width={COLLECTIBLE_IMAGE_SIZE / 2}
-                    height={COLLECTIBLE_IMAGE_SIZE / 2}
-                  />
-                </View>
-              )}
-            />
-          ) : (
-            <View
-              style={[
-                styles.image,
-                {
-                  height: COLLECTIBLE_IMAGE_SIZE,
-                  width: COLLECTIBLE_IMAGE_SIZE,
-                  overflow: 'hidden'
-                }
-              ]}
-            >
-              <NftImagePlaceholder
-                withHint
-                iconSize={COLLECTIBLE_IMAGE_SIZE / 3}
-                backgroundColor={theme.primaryBackground}
-              />
-            </View>
-          )}
+          <NftImage
+            withHint
+            uri={image}
+            size={COLLECTIBLE_IMAGE_SIZE}
+            iconSize={COLLECTIBLE_IMAGE_SIZE / 2}
+            backgroundColor={theme.primaryBackground}
+            imageStyle={styles.image}
+          />
           {shouldDisplayHideCollectionAction && (
             <HideCollectibleButton
               address={address}
@@ -186,7 +151,6 @@ const CollectibleModal = ({
       </>
     )
   }, [
-    areNftImagesEnabled,
     handleClose,
     networks,
     selectedCollectible,

@@ -1,19 +1,16 @@
 import React, { FC } from 'react'
-import { Animated, Pressable, View, ViewStyle } from 'react-native'
+import { Animated, Pressable, ViewStyle } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { SelectedCollectible } from '@common/components/CollectibleModal'
-import ManifestImage from '@common/components/ManifestImage'
-import NftImagePlaceholder from '@common/components/NftImagePlaceholder'
-import useAreNftImagesEnabled from '@common/hooks/useAreNftImagesEnabled'
+import NftImage from '@common/components/NftImage'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { NFT_CDN_URL } from '@env'
-import ImageIcon from '@web/assets/svg/ImageIcon'
 
 import styles, { COLLECTIBLE_SIZE } from './styles'
 
@@ -62,7 +59,6 @@ const Collectible: FC<Props> = ({
   networks
 }) => {
   const { theme } = useTheme()
-  const areNftImagesEnabled = useAreNftImagesEnabled()
   const [bindAnim, animStyle] = useCustomHover({
     property: 'scaleX',
     values: {
@@ -97,7 +93,7 @@ const Collectible: FC<Props> = ({
           id,
           chainId: collectionData.chainId,
           lastPrice: collectionData.priceIn ? formatCollectiblePrice(collectionData.priceIn) : '',
-          image: areNftImagesEnabled ? imageUrl : '',
+          image: imageUrl,
           collectionName
         })
       }}
@@ -112,32 +108,15 @@ const Collectible: FC<Props> = ({
           }
         ]}
       >
-        {areNftImagesEnabled ? (
-          <ManifestImage
-            uri={imageUrl}
-            size="100%"
-            skeletonAppearance="primaryBackground"
-            fallback={() => (
-              <View
-                // Matches the placeholder of a collection without an image
-                style={[
-                  flexbox.flex1,
-                  flexbox.center,
-                  { backgroundColor: theme.neutral200, width: '100%' }
-                ]}
-              >
-                <ImageIcon
-                  color={theme.secondaryText}
-                  width={COLLECTIBLE_SIZE / 2}
-                  height={COLLECTIBLE_SIZE / 2}
-                />
-              </View>
-            )}
-            imageStyle={{ ...styles.image, borderRadius }}
-          />
-        ) : (
-          <NftImagePlaceholder iconSize={size / 2} />
-        )}
+        <NftImage
+          uri={imageUrl}
+          size="100%"
+          skeletonAppearance="primaryBackground"
+          iconSize={size / 2}
+          // Matches the placeholder of a collection without an image
+          backgroundColor={theme.neutral200}
+          imageStyle={{ ...styles.image, borderRadius }}
+        />
       </Animated.View>
     </Pressable>
   )
