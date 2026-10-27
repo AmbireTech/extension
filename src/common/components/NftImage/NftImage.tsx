@@ -1,7 +1,6 @@
 import React from 'react'
 import { View, ViewStyle } from 'react-native'
 
-import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import ManifestImage from '@common/components/ManifestImage'
 import NftImagesDisabledHint from '@common/components/NftImagesDisabledHint'
 import { SkeletonLoaderProps } from '@common/components/SkeletonLoader/types'
@@ -58,11 +57,7 @@ const NftImage = ({
       imageStyle={imageStyle}
       fallback={() => (
         <View style={[flexbox.flex1, flexbox.center, { backgroundColor, width: '100%' }]}>
-          {areNftImagesEnabled ? (
-            <ImageIcon color={theme.secondaryText} width={iconSize} height={iconSize} />
-          ) : (
-            <InvisibilityIcon color={theme.secondaryText} width={iconSize} height={iconSize} />
-          )}
+          <ImageIcon color={theme.secondaryText} width={iconSize} height={iconSize} />
           {withHint && <NftImagesDisabledHint style={spacings.mtTy} />}
         </View>
       )}

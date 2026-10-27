@@ -49,7 +49,7 @@ const NftImagesDisabledHint = ({ style }: Props) => {
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, style]}>
-      <Text fontSize={14} appearance="primaryAccent" style={spacings.mrMi}>
+      <Text fontSize={14} appearance="primary" style={spacings.mrMi}>
         {t('Missing image?')}
       </Text>
       <InfoIcon
