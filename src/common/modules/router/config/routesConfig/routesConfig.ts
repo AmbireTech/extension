@@ -182,6 +182,14 @@ const routesConfig: RouteConfig = {
     }),
     name: Platform.select({ default: i18n.t('Transaction Builder') })
   },
+  [ROUTES.privacyPoolsSend]: {
+    route: ROUTES.privacyPoolsSend,
+    title: Platform.select({
+      default: i18n.t('Send')
+    }),
+    name: Platform.select({ default: i18n.t('Send') }),
+    withTitlePrefix: false
+  },
   [ROUTES.transfer]: {
     route: ROUTES.transfer,
     title: Platform.select({

@@ -15,6 +15,11 @@ export type Props = {
   isRejectDisabled: boolean
   holdToProceedButtonType?: 'dangerFilled' | 'warning' | 'primary'
   signButtonType?: 'dangerFilled' | 'warning' | 'primary'
+  /**
+   * When set, there's nothing left to sign (e.g. the transaction being sped up was already
+   * processed), so the footer shows only a Close button that calls it
+   */
+  onClose?: () => void
 }
 
 declare const Footer: React.FC<Props>

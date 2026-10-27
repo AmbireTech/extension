@@ -34,8 +34,9 @@ const selectors = {
     viewOnlyBtnImport: 'view-only-button-import',
     importBtn: 'import-button',
     openDashboardButton: 'onboarding-completed-open-dashboard-btn',
-    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0', // same id used for clearing input field; after edit for checking confirmation pill 'Save'
+    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0', // opens the edit account name modal
     editAccountNameInputField: 'edit-name-field-0',
+    saveFirstAccNameButton: 'edit-name-field-0-save-button',
     saveAndContinueBtn: 'button-save-and-continue',
     hdPathLegerLive: 'hd-path-option-ledger-live',
     changeHDPathButton: 'change-hd-path-btn',
@@ -339,10 +340,12 @@ const selectors = {
   switchAccountDenyButton: 'switch-account-deny-button',
   rejectRequestOptionCurrent: 'reject-request-option-current',
   transactionCallDyn: (index: number) => `recipient-address-${index}`, // one card per call on the sign transaction screen
-  dappScopedAccountsToggle: 'dapp-scoped-accounts-toggle',
-  dappScopedAccountsSelectorButton: 'dapp-scoped-accounts-selector-button',
-  dappScopedAccountsContinueButton: 'dapp-scoped-accounts-continue-button',
-  dappAccountRow: (addr: string) => `dapp-account-row-${addr}`,
+  // The account select in the header of the dapp connect screen
+  dappConnectAccountSelect: 'account-select-toggle',
+  dappConnectAccountOption: (addr: string) => `account-select-option-${addr}`,
+  dappConnectShowAccount: (addr: string) => `account-select-show-${addr}`,
+  dappConnectLimitToSelectedAccount: 'account-select-visible-section-action',
+  dappConnectAccountSelectDone: 'account-select-done',
   // Notifications
   networkSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE

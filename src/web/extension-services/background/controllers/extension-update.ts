@@ -80,12 +80,12 @@ export class ExtensionUpdateController extends EventEmitter {
         {
           id: 'update-available',
           type: 'info',
-          title: 'Update Available',
-          text: 'A new version is ready! It will be applied automatically on next reload. Reload now to update immediately.',
+          title: 'New version available',
+          text: 'Update Ambire to the newest version.',
           actions: [
             {
               actionName: 'update-extension-version',
-              label: 'Reload'
+              label: 'Update'
             }
           ]
         }

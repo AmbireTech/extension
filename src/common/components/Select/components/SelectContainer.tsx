@@ -66,8 +66,11 @@ const SelectContainer: FC<Props> = ({
   sectionListProps,
   flatListProps,
   renderHeaderChildren,
+  menuHeader,
   onBottomSheetClosed,
-  isBottomSheetFullHeight
+  isBottomSheetFullHeight,
+  renderBottomSheetFooter,
+  withBottomSheetBackButton = true
 }) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -101,7 +104,10 @@ const SelectContainer: FC<Props> = ({
   const bottomSheetHeader = useMemo(
     () => (
       <View>
-        <ModalHeader title={bottomSheetTitle} handleClose={closeMenu} />
+        <ModalHeader
+          title={bottomSheetTitle}
+          handleClose={withBottomSheetBackButton ? closeMenu : undefined}
+        />
         {renderHeaderChildren?.({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef })}
         {!!withSearch && (
           <Search
@@ -112,10 +118,13 @@ const SelectContainer: FC<Props> = ({
             containerStyle={spacings.mb}
           />
         )}
+        {menuHeader}
       </View>
     ),
     [
+      menuHeader,
       bottomSheetTitle,
+      withBottomSheetBackButton,
       closeMenu,
       toggleMenu,
       renderHeaderChildren,
@@ -128,6 +137,12 @@ const SelectContainer: FC<Props> = ({
       setInputRef,
       control
     ]
+  )
+
+  // Memoized like the header, so the BottomSheet only re-renders when the footer changes
+  const bottomSheetFooter = useMemo(
+    () => renderBottomSheetFooter?.({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef }),
+    [renderBottomSheetFooter, toggleMenu, setIsMenuOpen, isMenuOpen, selectRef]
   )
 
   return (
@@ -181,6 +196,7 @@ const SelectContainer: FC<Props> = ({
                 }}
               />
             )}
+            {menuHeader}
             {sectionListProps ? (
               <SectionList {...sectionListProps} />
             ) : flatListProps ? (
@@ -211,6 +227,7 @@ const SelectContainer: FC<Props> = ({
           sectionListProps={sectionListProps}
           flatListProps={flatListProps}
           HeaderComponent={bottomSheetHeader}
+          FooterComponent={bottomSheetFooter}
           onBottomSheetClosed={onBottomSheetClosed}
           isFullHeight={isBottomSheetFullHeight}
         >

@@ -23,7 +23,8 @@ export type DappInteraction = {
   iconType?: 'send' | 'swap' | 'receive' | 'ambire' | 'walletStaking' | 'safe'
   description?: string
   address?: string
-  safeNonce?: bigint
+  /** The nonce of the transaction a cancel takes the place of */
+  nonce?: bigint
   token?: string
   amount?: bigint
 }

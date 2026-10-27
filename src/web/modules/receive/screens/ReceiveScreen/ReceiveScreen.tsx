@@ -17,6 +17,7 @@ import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import useReceive from '@common/modules/receive/hooks/useReceive'
+import RegularAccountRoute from '@common/modules/router/components/RegularAccountRoute'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -48,6 +49,9 @@ const ReceiveScreen: FC = () => {
     setShowAllNetworks
   } = useReceive()
 
+  // With a Privacy Pools account selected, only another account's address, passed in, can show
+  if (!account) return <RegularAccountRoute />
+
   return (
     <LayoutWrapper>
       <HeaderWithTitle />
@@ -57,8 +61,8 @@ const ReceiveScreen: FC = () => {
           <Avatar
             size={40}
             pfp={pfp}
-            address={account?.addr || ''}
-            smartAccountType={(account?.creation && 'Ambire') || (account?.safeCreation && 'Safe')}
+            address={account.addr}
+            smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
             style={spacings.pr0}
           />
           <Text weight="semiBold" fontSize={14} style={spacings.mtMi}>
@@ -66,7 +70,7 @@ const ReceiveScreen: FC = () => {
           </Text>
         </View>
         <View style={styles.qrCodeContainer}>
-          {!!account && !qrCodeError && (
+          {!qrCodeError && (
             <View style={styles.qrCode}>
               <QRCode
                 value={account.addr}
@@ -105,7 +109,7 @@ const ReceiveScreen: FC = () => {
                 isLoading={isDomainResolving}
                 name={name}
                 type={type}
-                address={account?.addr || ''}
+                address={account.addr}
                 plainAddressMaxLength={42}
                 fontSize={14}
               />

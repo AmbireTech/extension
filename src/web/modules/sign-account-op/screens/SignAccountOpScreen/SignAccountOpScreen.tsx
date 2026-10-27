@@ -4,6 +4,7 @@ import { ScrollView, View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -24,6 +25,8 @@ import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
+import SpeedUpNotNeededFee from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpNotNeededFee'
+import SpeedUpStatus from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpStatus'
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
@@ -34,7 +37,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
-import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 import getStyles from './styles'
@@ -58,6 +60,12 @@ const SignAccountOpScreen = () => {
   } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
+  const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
+  // A cancel is a speed up that replaces the pending transaction with an empty one
+  const isCancelTransaction =
+    !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
+  // The transaction being sped up was processed first, so all that's left is closing the request
+  const isSpeedUpNotNeeded = signAccountOpState?.status?.type === SigningStatus.SpeedUpNotNeeded
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const closeActionWindow = useCloseActionWindow()
@@ -117,8 +125,6 @@ const SignAccountOpScreen = () => {
     handleChangeFeePayerKeyType,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
-    signingKeyType,
-    feePayerKeyType,
     shouldDisplayLedgerConnectModal,
     network,
     isSignDisabled,
@@ -128,6 +134,7 @@ const SignAccountOpScreen = () => {
     holdToSignButtonText,
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
+    holdToProceedButtonType,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
@@ -172,11 +179,15 @@ const SignAccountOpScreen = () => {
 
   const shouldRejectOnchain = useMemo(() => {
     if (!signAccountOpState?.account.safeCreation) return false
+    // A speed up reuses the signatures of the pending transaction it replaces, and a cancel
+    // replaces it with an empty transaction, so rejecting either only closes the request.
+    // The pending transaction itself is left as it is
+    if (isSpeedUpTransaction) return false
     const { signature, signed } = signAccountOpState.accountOp
     const signedCount = signed?.length || 0
 
     return !!signature && signature !== '0x' && signedCount > 0
-  }, [signAccountOpState])
+  }, [signAccountOpState, isSpeedUpTransaction])
 
   const isCancelDisabled = useMemo(() => {
     if (!shouldRejectOnchain || !signAccountOpState) return false
@@ -184,6 +195,23 @@ const SignAccountOpScreen = () => {
     const { calls, accountAddr } = signAccountOpState.accountOp
     return isSafeRejectionCall(calls, accountAddr)
   }, [shouldRejectOnchain, signAccountOpState])
+
+  // Removes the request without an onchain Safe rejection, even if Safe signatures were collected
+  const handleCloseAccountOp = useCallback(() => {
+    if (!accountOpRequest) return
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [
+          'User rejected the transaction request.',
+          [accountOpRequest.id],
+          { shouldOpenNextRequest: visibleUserRequests.length > 1 }
+        ]
+      }
+    })
+  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
 
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
@@ -206,23 +234,13 @@ const SignAccountOpScreen = () => {
       return
     }
 
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'rejectUserRequests',
-        args: [
-          'User rejected the transaction request.',
-          [accountOpRequest.id],
-          { shouldOpenNextRequest: visibleUserRequests.length > 1 }
-        ]
-      }
-    })
+    handleCloseAccountOp()
   }, [
     requestsDispatch,
     accountOpRequest,
     shouldRejectOnchain,
     isCancelDisabled,
-    visibleUserRequests.length
+    handleCloseAccountOp
   ])
 
   useEffect(() => {
@@ -275,7 +293,6 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
-  const holdToProceedButtonType = useDappVerificationHoldButtonType(signAccountOpState?.banners)
 
   const footerContent = (
     <>
@@ -286,17 +303,22 @@ const SignAccountOpScreen = () => {
         <View
           style={isNarrowWebLayout ? { marginBottom: COMPACT_FEE_TO_BUTTONS_SPACING } : spacings.mb}
         >
-          <Estimation
-            signAccountOpState={signAccountOpState}
-            disabled={isSignLoading}
-            hasEstimation={!!hasEstimation}
-            slowRequest={slowRequest}
-            isViewOnly={isViewOnly}
-            isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
-            sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
-            updateType="Requests"
-            bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
-          />
+          <SpeedUpNotNeededFee
+            isSpeedUpNotNeeded={isSpeedUpNotNeeded}
+            isCancel={isCancelTransaction}
+          >
+            <Estimation
+              signAccountOpState={signAccountOpState}
+              disabled={isSignLoading || isSpeedUpNotNeeded}
+              hasEstimation={!!hasEstimation}
+              slowRequest={slowRequest}
+              isViewOnly={isViewOnly}
+              isSponsored={signAccountOpState ? signAccountOpState.isSponsored : false}
+              sponsor={signAccountOpState ? signAccountOpState.sponsor : undefined}
+              updateType="Requests"
+              bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+            />
+          </SpeedUpNotNeededFee>
         </View>
       ) : null}
 
@@ -327,7 +349,9 @@ const SignAccountOpScreen = () => {
         isAddToCartDisplayed={
           !!signAccountOpState &&
           !!network &&
-          signAccountOpState.accountOp.meta?.setDelegation === undefined
+          signAccountOpState.accountOp.meta?.setDelegation === undefined &&
+          // A speed up replaces the pending transaction as it is, so nothing can be added to it
+          !isSpeedUpTransaction
         }
         isSignLoading={isSignLoading}
         isSignDisabled={isSignDisabled || !hasReachedBottom}
@@ -344,6 +368,7 @@ const SignAccountOpScreen = () => {
         isRejectDisabled={isCancelDisabled}
         holdToProceedButtonType={holdToProceedButtonType}
         signButtonType={extremeGasFeeSignButtonType}
+        onClose={isSpeedUpNotNeeded ? handleCloseAccountOp : undefined}
       />
     </>
   )
@@ -362,8 +387,6 @@ const SignAccountOpScreen = () => {
         gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
         handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
         handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
-        feePayerKeyType={feePayerKeyType}
-        signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
         shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
         handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
@@ -429,6 +452,16 @@ const SignAccountOpScreen = () => {
           {shouldUseSafeAccountTabs ? (
             <>
               {isNarrowWebLayout && <SafeNonce withNetwork />}
+              {/* A Safe has tabs instead of the title the speed up status is shown under */}
+              {isSpeedUpTransaction && (
+                <View style={spacings.mbSm}>
+                  <SpeedUpStatus
+                    sentAt={signAccountOpState?.accountOp.meta?.speedUp?.replacedSentAt}
+                    isCompleted={isSpeedUpNotNeeded}
+                    isCancel={isCancelTransaction}
+                  />
+                </View>
+              )}
               <SafeAccountTabs
                 activeTab={activeSafeAccountTab}
                 networkChainId={network?.chainId}
@@ -445,7 +478,22 @@ const SignAccountOpScreen = () => {
                 isNarrowWebLayout ? spacings.mbSm : spacings.mb
               ]}
             >
-              <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+              <View>
+                <SectionHeading withMb={false}>
+                  {isCancelTransaction
+                    ? t('Cancel transaction')
+                    : isSpeedUpTransaction
+                      ? t('Speed up')
+                      : t('Overview')}
+                </SectionHeading>
+                {isSpeedUpTransaction && (
+                  <SpeedUpStatus
+                    sentAt={signAccountOpState?.accountOp.meta?.speedUp?.replacedSentAt}
+                    isCompleted={isSpeedUpNotNeeded}
+                    isCancel={isCancelTransaction}
+                  />
+                )}
+              </View>
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                 <SafeNonce />
                 <NetworkBadge
@@ -485,11 +533,14 @@ const SignAccountOpScreen = () => {
                   <ErrorInformation />
                 ) : (
                   <>
-                    <Simulation
-                      network={network}
-                      isViewOnly={isViewOnly}
-                      isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
-                    />
+                    {/* What the speed up would change no longer matters once it can't go through */}
+                    {!isSpeedUpNotNeeded && (
+                      <Simulation
+                        network={network}
+                        isViewOnly={isViewOnly}
+                        isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
+                      />
+                    )}
                     {!shouldUseSafeAccountTabs && (
                       <SafeEip712Data
                         accountAddr={signAccountOpState?.accountOp.accountAddr}

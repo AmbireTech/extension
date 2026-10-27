@@ -4,13 +4,15 @@ import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Network } from '@ambire-common/interfaces/network'
+import {
+  isPartiallyMinedBatch,
+  isReplaceableBroadcast
+} from '@ambire-common/libs/accountOp/replacement'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
-import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
-import SpeedUpIcon from '@common/assets/svg/SpeedUpIcon'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isMobile } from '@common/config/env'
@@ -24,6 +26,7 @@ import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
+import PendingTransactionFooter from './PendingTransactionFooter'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
 
@@ -34,26 +37,7 @@ type Props = {
   size: 'sm' | 'md' | 'lg'
   rawCalls?: SubmittedAccountOpLike['calls']
   submittedAccountOp: SubmittedAccountOpLike
-} & Pick<
-  SubmittedAccountOpLike,
-  'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status'
->
-
-const increaseByFifteenPercent = (value: bigint) => (value * 115n + 99n) / 100n
-const canBuildSpeedUpAccountOp = (
-  submittedAccountOp: SubmittedAccountOpLike
-): submittedAccountOp is SubmittedAccountOpLike &
-  Required<
-    Pick<
-      SubmittedAccountOpLike,
-      'signingKeyAddr' | 'signingKeyType' | 'nonce' | 'gasLimit' | 'signature'
-    >
-  > =>
-  submittedAccountOp.signingKeyAddr !== undefined &&
-  submittedAccountOp.signingKeyType !== undefined &&
-  submittedAccountOp.nonce !== undefined &&
-  submittedAccountOp.gasLimit !== undefined &&
-  submittedAccountOp.signature !== undefined
+} & Pick<SubmittedAccountOpLike, 'txnId' | 'identifiedBy' | 'accountAddr' | 'status'>
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
@@ -65,7 +49,6 @@ const Footer: FC<Props> = ({
   submittedAccountOp,
   identifiedBy,
   accountAddr,
-  gasFeePayment,
   status
 }) => {
   const { styles } = useTheme(getStyles)
@@ -85,21 +68,15 @@ const Footer: FC<Props> = ({
   const isMinedTransaction =
     status === AccountOpStatus.Failure ||
     status === AccountOpStatus.Success ||
-    (submittedAccountOp.identifiedBy.type === 'MultipleTxns' &&
-      submittedAccountOp.calls.find(
-        (c) => c.status === AccountOpStatus.Failure || c.status === AccountOpStatus.Success
-      ))
+    isPartiallyMinedBatch(submittedAccountOp)
   const areExplorerButtonsDisabled =
     submittedAccountOp.identifiedBy.type === 'MultipleTxns' && submittedAccountOp.calls.length > 1
-  const shouldShowSpeedUp =
-    isPendingTransaction &&
-    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
-    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler &&
-    canBuildSpeedUpAccountOp(submittedAccountOp)
   const isExternal = submittedAccountOp.activitySource === 'external'
-  const canRepeatTransaction =
-    !!rawCalls?.length && selectedAccount?.addr === accountAddr && !isExternal
-
+  const isOwnTransaction = selectedAccount?.addr === accountAddr && !isExternal
+  const canRepeatTransaction = !!rawCalls?.length && isOwnTransaction
+  // A pending transaction sent by a relayer or a bundler can't be replaced, so it keeps the
+  // usual buttons instead of Cancel and Speed up
+  const showsReplacementButtons = isPendingTransaction && isReplaceableBroadcast(submittedAccountOp)
   const benzinLink = `https://explorer.ambire.com/${getBenzinUrlParams({
     txnId,
     chainId: Number(chainId),
@@ -142,68 +119,6 @@ const Footer: FC<Props> = ({
     })
   }, [rawCalls, requestsDispatch, network.chainId, accountAddr])
 
-  const handleSpeedUpTransaction = useCallback(() => {
-    if (!submittedAccountOp.gasFeePayment || !canBuildSpeedUpAccountOp(submittedAccountOp)) return
-
-    const nextGasFeePayment = {
-      ...submittedAccountOp.gasFeePayment,
-      gasPrice: increaseByFifteenPercent(submittedAccountOp.gasFeePayment.gasPrice),
-      maxPriorityFeePerGas:
-        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas &&
-        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas !== 0n
-          ? increaseByFifteenPercent(submittedAccountOp.gasFeePayment.maxPriorityFeePerGas)
-          : submittedAccountOp.gasFeePayment.maxPriorityFeePerGas
-    }
-
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'build',
-        args: [
-          {
-            type: 'calls',
-            params: {
-              userRequestParams: {
-                calls: submittedAccountOp.calls,
-                meta: {
-                  chainId: submittedAccountOp.chainId,
-                  accountAddr: submittedAccountOp.accountAddr
-                },
-                accountOp: {
-                  id: submittedAccountOp.id,
-                  accountAddr: submittedAccountOp.accountAddr,
-                  chainId: submittedAccountOp.chainId,
-                  signingKeyAddr: submittedAccountOp.signingKeyAddr,
-                  signingKeyType: submittedAccountOp.signingKeyType,
-                  nonce: submittedAccountOp.nonce,
-                  eoaNonce: submittedAccountOp.eoaNonce,
-                  calls: submittedAccountOp.calls,
-                  feeCall: submittedAccountOp.feeCall,
-                  activatorCall: submittedAccountOp.activatorCall,
-                  gasLimit: submittedAccountOp.gasLimit,
-                  signature: submittedAccountOp.signature,
-                  gasFeePayment: nextGasFeePayment,
-                  txnId: submittedAccountOp.txnId,
-                  asUserOperation: submittedAccountOp.asUserOperation,
-                  signers: submittedAccountOp.signers,
-                  signed: submittedAccountOp.signed,
-                  safeTx: submittedAccountOp.safeTx,
-                  flags: submittedAccountOp.flags,
-                  meta: {
-                    ...submittedAccountOp.meta,
-                    speedUp: {
-                      enabled: true
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    })
-  }, [submittedAccountOp, requestsDispatch])
-
   const handleOpenExplorer = useCallback(async () => {
     if (!chainId || !network.explorerUrl || !txnId) {
       const message = t(
@@ -224,9 +139,17 @@ const Footer: FC<Props> = ({
     }
   }, [txnId, addToast, chainId, network.explorerUrl, t])
 
-  if (!canRepeatTransaction && !isMinedTransaction) return null
+  if (!showsReplacementButtons && !canRepeatTransaction && !isMinedTransaction) return null
 
   const buttonSize = isMobile ? 'regular' : 'smaller'
+
+  if (showsReplacementButtons)
+    return (
+      <PendingTransactionFooter
+        submittedAccountOp={submittedAccountOp}
+        isOwnTransaction={isOwnTransaction}
+      />
+    )
 
   const openExplorerButton = (
     <View
@@ -275,8 +198,8 @@ const Footer: FC<Props> = ({
     >
       <Button
         type="tertiary"
-        text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
-        onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
+        text={t('Repeat')}
+        onPress={handleRepeatTransaction}
         size={buttonSize}
         hasBottomSpacing={false}
         disabled={!canRepeatTransaction}
@@ -293,11 +216,7 @@ const Footer: FC<Props> = ({
         ]}
         childrenPosition="left"
       >
-        {shouldShowSpeedUp ? (
-          <SpeedUpIcon style={spacings.mrMi} width={20} height={20} />
-        ) : (
-          <RefreshIcon style={spacings.mrMi} width={20} height={20} strokeWidth="2" />
-        )}
+        <RefreshIcon style={spacings.mrMi} width={20} height={20} strokeWidth="2" />
       </Button>
     </View>
   )

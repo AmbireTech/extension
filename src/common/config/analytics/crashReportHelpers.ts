@@ -1,9 +1,17 @@
+import { Account, AccountStates } from '@ambire-common/interfaces/account'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
-import { IKeystoreController } from '@ambire-common/interfaces/keystore'
-import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
+import { Key } from '@ambire-common/interfaces/keystore'
+import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { isTesting } from '@common/config/env'
+import {
+  CRASH_REPORT_ACCOUNT_COUNT,
+  CRASH_REPORT_ACCOUNT_TAGS,
+  CRASH_REPORT_ACCOUNT_TYPE,
+  CRASH_REPORT_FEW_ACCOUNTS_MAX,
+  CRASH_REPORT_KEY_TYPE,
+  CrashReportAccountTagKey
+} from '@common/constants/crashAnalytics'
 import { Action, MethodAction } from '@common/types/actions'
-import { getAppInstanceId } from '@common/utils/analytics'
 
 /**
  * Gives back the Sentry integrations without the ones named in `excludedNames`. Meant for the
@@ -95,22 +103,68 @@ export const reportControllerError = (
   capture(errorRef.error, { extra: { controllerName } })
 }
 
-/**
- * The anonymous user ID that crash reports carry, shared by the extension background and the
- * mobile app. Gives undefined until the keystore is ready to store keys.
- */
-export const getCrashReportUserId = (
-  keystoreCtrl: Pick<IKeystoreController, 'isReadyToStoreKeys' | 'keyStoreUid'>,
-  verifiedInviteCode: string | null
-): string | undefined =>
-  keystoreCtrl.isReadyToStoreKeys
-    ? getAppInstanceId(keystoreCtrl.keyStoreUid, verifiedInviteCode)
-    : undefined
+type CrashReportAccountTags = Partial<Record<CrashReportAccountTagKey, string>>
 
 /**
- * The selected account address that crash reports carry, shared by the extension background and
- * the mobile app. Gives undefined when no account is selected.
+ * Describes the selected account by its traits, in place of its address, which would identify the
+ * user. Gives an empty object when no account is selected. The key type is `internal` when any key
+ * of the account is stored in the wallet, `hardware` when all of them are on external devices and
+ * `none` for a view-only account.
  */
-export const getCrashReportAccountAddr = (
-  selectedAccountCtrl: Pick<ISelectedAccountController, 'account'>
-): string | undefined => selectedAccountCtrl.account?.addr
+export const getCrashReportAccountTags = ({
+  selectedAccount,
+  accountStates,
+  keys,
+  accounts
+}: {
+  selectedAccount: Account | null | undefined
+  accountStates: AccountStates
+  keys: Key[]
+  accounts: Account[]
+}): CrashReportAccountTags => {
+  if (!selectedAccount) return {}
+
+  const isSmarterEoa = Object.values(accountStates[selectedAccount.addr] || {}).some(
+    (state) => state.isSmarterEoa
+  )
+  let accountType: string = CRASH_REPORT_ACCOUNT_TYPE.EOA
+  if (isSmartAccount(selectedAccount)) accountType = CRASH_REPORT_ACCOUNT_TYPE.SMART
+  else if (isSmarterEoa) accountType = CRASH_REPORT_ACCOUNT_TYPE.SMARTER_EOA
+
+  const accountKeys = keys.filter((key) => selectedAccount.associatedKeys.includes(key.addr))
+  let keyType: string = CRASH_REPORT_KEY_TYPE.NONE
+  if (accountKeys.some((key) => key.type === 'internal')) keyType = CRASH_REPORT_KEY_TYPE.INTERNAL
+  else if (accountKeys.length) keyType = CRASH_REPORT_KEY_TYPE.HARDWARE
+
+  let accountCount: string = CRASH_REPORT_ACCOUNT_COUNT.MANY
+  if (accounts.length <= 1) accountCount = CRASH_REPORT_ACCOUNT_COUNT.ONE
+  else if (accounts.length <= CRASH_REPORT_FEW_ACCOUNTS_MAX)
+    accountCount = CRASH_REPORT_ACCOUNT_COUNT.FEW
+
+  return {
+    [CRASH_REPORT_ACCOUNT_TAGS.ACCOUNT_TYPE]: accountType,
+    [CRASH_REPORT_ACCOUNT_TAGS.KEY_TYPE]: keyType,
+    [CRASH_REPORT_ACCOUNT_TAGS.ACCOUNT_COUNT]: accountCount
+  }
+}
+
+/**
+ * Gives a function that puts account tags on a Sentry scope with the given `setTag`, clearing the
+ * ones no longer present. It skips the call when the tags are the same as last time, as the mobile
+ * SDK copies every scope change to the native layer. Each context (background, UI, mobile) makes
+ * its own, since each has its own Sentry scope.
+ */
+export const createCrashReportAccountTagsSync = (
+  setTag: (key: CrashReportAccountTagKey, value: string | undefined) => void
+) => {
+  let lastTags: CrashReportAccountTags = {}
+
+  return (tags: CrashReportAccountTags) => {
+    Object.values(CRASH_REPORT_ACCOUNT_TAGS).forEach((key) => {
+      if (tags[key] === lastTags[key]) return
+
+      setTag(key, tags[key])
+    })
+    lastTags = tags
+  }
+}

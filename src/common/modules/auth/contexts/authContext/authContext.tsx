@@ -3,6 +3,8 @@ import React, { createContext, useMemo } from 'react'
 import useController from '@common/hooks/useController'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type AuthContextData = {
   authStatus: AUTH_STATUS
 }
@@ -11,21 +13,26 @@ const AuthContext = createContext<AuthContextData>({
   authStatus: AUTH_STATUS.LOADING
 })
 
+type SelectedAccountState = AllControllersMappingType['SelectedAccountController']
+
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectSelectedType = (state: SelectedAccountState) => state.selectedType
+const selectIsSelectedAccountReady = (state: SelectedAccountState) => state.isReady
+
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const accountsState = useController('AccountsController').state
-  const {
-    state: { account, isReady }
-  } = useController('SelectedAccountController')
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
+  const { state: isReady } = useController(
+    'SelectedAccountController',
+    selectIsSelectedAccountReady
+  )
 
   const authStatus = useMemo(() => {
-    if (!accountsState.accounts || !isReady) return AUTH_STATUS.LOADING
+    if (!accounts || !isReady) return AUTH_STATUS.LOADING
 
-    if (!accountsState.accounts?.length || !account) {
-      return AUTH_STATUS.NOT_AUTHENTICATED
-    }
-
-    return AUTH_STATUS.AUTHENTICATED
-  }, [accountsState.accounts, isReady, account])
+    // A Privacy Pools account counts too, and it may be the only account
+    return selectedType ? AUTH_STATUS.AUTHENTICATED : AUTH_STATUS.NOT_AUTHENTICATED
+  }, [accounts, isReady, selectedType])
 
   return (
     <AuthContext.Provider value={useMemo(() => ({ authStatus }), [authStatus])}>

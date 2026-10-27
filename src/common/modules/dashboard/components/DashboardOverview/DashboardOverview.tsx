@@ -1,5 +1,5 @@
-import React, { FC, useCallback, useMemo, useState } from 'react'
-import { Animated, Pressable, View } from 'react-native'
+import React, { FC, useCallback, useMemo, useRef, useState } from 'react'
+import { Pressable, View } from 'react-native'
 
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -11,37 +11,45 @@ import DashboardHeader from '@common/modules/dashboard/components/DashboardHeade
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
-import spacings, { SPACING, SPACING_SM, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
 
 import BalanceAffectingErrors from './BalanceAffectingErrors'
 import ColibriVerificationBadge from './ColibriVerificationBadge'
 import GasTankButton from './GasTankButton'
+import { OverviewBackdrop, OverviewBackdropContext } from './OverviewBackdropBlur'
 import { OverviewBackground } from './OverviewBackground'
+import OverviewCollapsible from './OverviewCollapsible'
+import type { OverviewCollapsibleProps } from './OverviewCollapsible/OverviewCollapsible'
+import type { OverviewCollapse } from '../DashboardPagesCarousel/DashboardPagesCarousel'
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
 import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
-export const OVERVIEW_CONTENT_MAX_HEIGHT = 162
 
 interface Props {
   openGasTankModal?: () => void
-  animatedOverviewHeight: Animated.Value
-  dashboardOverviewSize: {
-    width: number
-    height: number
-  }
-  setDashboardOverviewSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
+  /** The overview is never resized: the pages slide over its collapsing part instead. */
+  onCollapsibleHeightChange?: OverviewCollapsibleProps['onHeightChange']
+  /** How far the pages have slid over the collapsing part. Moves the background. */
+  overviewCollapse?: OverviewCollapse
 }
+
+/** The card's inset from the sides. `OverviewCollapseCover` lines its corners up with it. */
+export const OVERVIEW_CARD_INSET_STYLE = spacings.phSm
+/** The gap below the card, which `OverviewCollapseCover` fills as the pages slide over it. */
+export const OVERVIEW_CARD_GAP = SPACING_TY
+/** The card's corner radius, which `OverviewCollapseCover` rounds the cut-off card by. */
+export const OVERVIEW_CARD_RADIUS = BORDER_RADIUS_PRIMARY
 
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
 
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
-  animatedOverviewHeight,
-  setDashboardOverviewSize
+  onCollapsibleHeightChange,
+  overviewCollapse
 }) => {
   const { theme } = useTheme(getStyles)
   const { state: isOffline } = useController('MainController', 'isOffline')
@@ -81,6 +89,13 @@ const DashboardOverview: FC<Props> = ({
 
   const { reloadAccount } = useDashboardReload()
 
+  const cardRef = useRef<View>(null)
+  const address = account?.addr || ''
+  const backdrop = useMemo<OverviewBackdrop>(
+    () => ({ address, collapse: overviewCollapse, cardRef }),
+    [address, overviewCollapse]
+  )
+
   const togglePrivacyMode = useCallback(() => {
     walletStateDispatch({
       type: 'method',
@@ -92,46 +107,25 @@ const DashboardOverview: FC<Props> = ({
   }, [walletStateDispatch])
 
   return (
-    <View style={[spacings.phSm, spacings.mbTy]}>
-      <Animated.View
+    <View style={[OVERVIEW_CARD_INSET_STYLE, { marginBottom: OVERVIEW_CARD_GAP }]}>
+      <View
+        ref={cardRef}
         style={[
-          common.borderRadiusPrimary,
+          { borderRadius: OVERVIEW_CARD_RADIUS },
           spacings.ptTy,
           isWeb && spacings.phSm,
           isMobile && spacings.phTy,
           {
-            paddingBottom: isMobile
-              ? SPACING_SM
-              : animatedOverviewHeight.interpolate({
-                  inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
-                  outputRange: [SPACING_TY, SPACING],
-                  extrapolate: 'clamp'
-                }),
+            // The rest of the open padding is covered together with the content
+            paddingBottom: SPACING_TY,
             overflow: 'hidden'
           }
         ]}
-        onLayout={(e) => {
-          setDashboardOverviewSize({
-            width: e.nativeEvent.layout.width,
-            height: e.nativeEvent.layout.height
-          })
-        }}
       >
-        <OverviewBackground address={account?.addr || ''} />
+        <OverviewBackground address={address} collapse={overviewCollapse} />
         <View style={{ zIndex: 2 }}>
           <DashboardHeader />
-          <Animated.View
-            style={{
-              ...flexbox.alignCenter,
-              paddingTop: animatedOverviewHeight.interpolate({
-                inputRange: [0, SPACING_XL],
-                outputRange: [0, isMobile ? SPACING_SM : SPACING],
-                extrapolate: 'clamp'
-              }),
-              maxHeight: animatedOverviewHeight,
-              overflow: isWeb ? 'hidden' : 'visible'
-            }}
-          >
+          <OverviewCollapsible onHeightChange={onCollapsibleHeightChange}>
             {/* These width: 100%s are needed to make sure that hovering the entire row of the balance
             displays the refresh button */}
             <View style={[{ width: '100%' }, spacings.mb, flexbox.alignCenter]}>
@@ -220,10 +214,12 @@ const DashboardOverview: FC<Props> = ({
                 <GasTankButton onPress={() => openGasTankModal?.()} account={account} />
               </View>
             </View>
-            <Routes />
-          </Animated.View>
+            <OverviewBackdropContext.Provider value={backdrop}>
+              <Routes />
+            </OverviewBackdropContext.Provider>
+          </OverviewCollapsible>
         </View>
-      </Animated.View>
+      </View>
     </View>
   )
 }

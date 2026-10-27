@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -32,11 +32,15 @@ const DappConnectScreen = () => {
     toggleTrust
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
+  const accountSelectProps = useMemo(
+    () => ({ dappToConnect: dappToConnect || undefined }),
+    [dappToConnect]
+  )
 
   return (
     <MobileLayoutContainer
       withHorizontalPadding
-      header={<ActionHeader />}
+      header={<ActionHeader accountSelectProps={accountSelectProps} />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter

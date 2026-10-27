@@ -23,6 +23,7 @@ interface Props extends TextProps {
   chainId: bigint
   verification?: BlacklistedStatus
   isToken?: boolean
+  isLocalLabelOnly?: boolean
 }
 
 const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -37,6 +38,7 @@ const HumanizerAddressInner: FC<Props> = ({
   actionsMode = 'tooltip',
   chainId,
   isToken,
+  isLocalLabelOnly,
   ...rest
 }) => {
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
@@ -81,6 +83,7 @@ const HumanizerAddressInner: FC<Props> = ({
           actionsMode={actionsMode}
           fallbackLabel={localAddressLabel || undefined}
           isToken={isToken}
+          isLocalLabelOnly={isLocalLabelOnly}
           {...rest}
         />
       )
@@ -93,6 +96,7 @@ const HumanizerAddressInner: FC<Props> = ({
         actionsMode={actionsMode}
         fallbackLabel={localAddressLabel || undefined}
         isToken={isToken}
+        isLocalLabelOnly={isLocalLabelOnly}
         {...rest}
       />
     )
@@ -121,6 +125,7 @@ const HumanizerAddressInner: FC<Props> = ({
         hideActions={hideActions}
         actionsMode={actionsMode}
         isToken={isToken}
+        isLocalLabelOnly={isLocalLabelOnly}
         {...rest}
       />
     )
@@ -132,6 +137,7 @@ const HumanizerAddressInner: FC<Props> = ({
       hideActions={hideActions}
       actionsMode={actionsMode}
       isToken={isToken}
+      isLocalLabelOnly={isLocalLabelOnly}
       {...rest}
     />
   )
