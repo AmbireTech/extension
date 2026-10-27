@@ -6,6 +6,8 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { SelectedCollectible } from '@common/components/CollectibleModal'
 import ManifestImage from '@common/components/ManifestImage'
+import NftImagePlaceholder from '@common/components/NftImagePlaceholder'
+import useController from '@common/hooks/useController'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -14,6 +16,10 @@ import { NFT_CDN_URL } from '@env'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 
 import styles, { COLLECTIBLE_SIZE } from './styles'
+
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
+
+const selectAreNftImagesEnabled = (state: IFeatureFlagsController) => !!state.flags?.nftImages
 
 /** The last price a collectible was traded at, in the currency it was traded in */
 const formatCollectiblePrice = ({
@@ -60,6 +66,10 @@ const Collectible: FC<Props> = ({
   networks
 }) => {
   const { theme } = useTheme()
+  const { state: areNftImagesEnabled } = useController(
+    'FeatureFlagsController',
+    selectAreNftImagesEnabled
+  )
   const [bindAnim, animStyle] = useCustomHover({
     property: 'scaleX',
     values: {
@@ -94,7 +104,7 @@ const Collectible: FC<Props> = ({
           id,
           chainId: collectionData.chainId,
           lastPrice: collectionData.priceIn ? formatCollectiblePrice(collectionData.priceIn) : '',
-          image: imageUrl,
+          image: areNftImagesEnabled ? imageUrl : '',
           collectionName
         })
       }}
@@ -109,28 +119,32 @@ const Collectible: FC<Props> = ({
           }
         ]}
       >
-        <ManifestImage
-          uri={imageUrl}
-          size="100%"
-          skeletonAppearance="primaryBackground"
-          fallback={() => (
-            <View
-              // Matches the placeholder of a collection without an image
-              style={[
-                flexbox.flex1,
-                flexbox.center,
-                { backgroundColor: theme.neutral200, width: '100%' }
-              ]}
-            >
-              <ImageIcon
-                color={theme.secondaryText}
-                width={COLLECTIBLE_SIZE / 2}
-                height={COLLECTIBLE_SIZE / 2}
-              />
-            </View>
-          )}
-          imageStyle={{ ...styles.image, borderRadius }}
-        />
+        {areNftImagesEnabled ? (
+          <ManifestImage
+            uri={imageUrl}
+            size="100%"
+            skeletonAppearance="primaryBackground"
+            fallback={() => (
+              <View
+                // Matches the placeholder of a collection without an image
+                style={[
+                  flexbox.flex1,
+                  flexbox.center,
+                  { backgroundColor: theme.neutral200, width: '100%' }
+                ]}
+              >
+                <ImageIcon
+                  color={theme.secondaryText}
+                  width={COLLECTIBLE_SIZE / 2}
+                  height={COLLECTIBLE_SIZE / 2}
+                />
+              </View>
+            )}
+            imageStyle={{ ...styles.image, borderRadius }}
+          />
+        ) : (
+          <NftImagePlaceholder iconSize={size / 2} />
+        )}
       </Animated.View>
     </Pressable>
   )

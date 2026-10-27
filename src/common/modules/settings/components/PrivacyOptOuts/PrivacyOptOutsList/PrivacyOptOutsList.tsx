@@ -14,6 +14,7 @@ import AmbireApiOptions from '@common/modules/settings/components/PrivacyOptOuts
 import OptOutControlOption from '@common/modules/settings/components/PrivacyOptOuts/OptOutControlOption'
 import SwapProviderControlOption from '@common/modules/settings/components/PrivacyOptOuts/SwapProviderControlOption'
 import spacings from '@common/styles/spacings'
+import ImageIcon from '@web/assets/svg/ImageIcon'
 
 const PrivacyOptOutsList = () => {
   const { theme } = useTheme()
@@ -68,6 +69,14 @@ const PrivacyOptOutsList = () => {
         )}
         icon={<EnsIcon width={20} height={20} color={theme.iconPrimary} />}
         flag="keepEnsProfilesUpToDate"
+      />
+      <OptOutControlOption
+        title={t('Show NFT images')}
+        description={t(
+          'Load the images of your NFTs from an image provider. This lets the provider see your IP address and which NFTs you own, so it can link them to you. If you turn this off, a placeholder is shown instead of the image.'
+        )}
+        icon={<ImageIcon width={24} height={24} color={theme.iconPrimary} />}
+        flag="nftImages"
       />
       <SwapProviderControlOption />
       <CrashAnalyticsControlOption />
