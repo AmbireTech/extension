@@ -1,14 +1,16 @@
 import { useCallback } from 'react'
 
-import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
-import {
-  SafeOwnerApprovalUiMethod,
-  SignAccountOpController
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import useController from '@common/hooks/useController'
 
+import type { SafeOwnerApprovalUiMethod } from '@ambire-common/controllers/signAccountOp/types'
+import type { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
+import type { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 /** The flows whose SignAccountOpController is shown in a sign or one-click estimation screen */
-export type SignAccountOpUpdateType = 'Requests' | 'Swap&Bridge' | 'Transfer&TopUp' | 'SafeOwnerApproval'
+export type SignAccountOpUpdateType =
+  | 'Requests'
+  | 'Swap&Bridge'
+  | 'Transfer&TopUp'
+  | 'SafeOwnerApproval'
 
 /** Which SignAccountOpController a screen of the given flow shows */
 export const getSignAccountOpType = (updateType?: SignAccountOpUpdateType): SignAccountOpType => {
@@ -32,7 +34,7 @@ const useCallSignAccountOpMethod = (type: SignAccountOpType = 'default') => {
   return useCallback(
     <M extends SafeOwnerApprovalUiMethod>(
       method: M,
-      args: Parameters<SignAccountOpController[M]>
+      args: Parameters<ISignAccountOpController[M]>
     ) => {
       if (type === 'one-click-swap-and-bridge') {
         swapAndBridgeDispatch({
