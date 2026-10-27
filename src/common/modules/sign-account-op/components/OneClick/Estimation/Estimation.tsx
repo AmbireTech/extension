@@ -256,6 +256,7 @@ const OneClickEstimation = ({
           signAccountOpState={signAccountOpController}
           onReplace={onReplace}
           onStopReplacing={onStopReplacing}
+          onReplacementRequestOpen={closeEstimationModal}
         />
         <BundlerWarning
           signAccountOpState={signAccountOpController}
