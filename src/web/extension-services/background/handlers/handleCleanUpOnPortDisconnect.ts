@@ -2,7 +2,33 @@ import { MainController } from '@ambire-common/controllers/main/main'
 import { ONBOARDING_WEB_ROUTES, ROUTES } from '@common/modules/router/constants/common'
 import { IS_FIREFOX } from '@web/constants/common'
 import { forgetPanelWindowId } from '@web/extension-services/background/webapi/panel'
+import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
 import { Port } from '@web/extension-services/messengers'
+
+// Long enough for a reloaded tab to come back and report its route
+const PERSONALIZE_RELOAD_GRACE_MS = 10000
+
+let personalizeResetTimeout: ReturnType<typeof setTimeout> | undefined
+
+/**
+ * Drops the accounts prepared on personalize once its tab is closed for good. A reload disconnects
+ * the tab the same way, so this waits and skips the reset if a tab is back in an onboarding step.
+ */
+const resetPreparedAccountsUnlessReopened = (mainCtrl: MainController) => {
+  clearTimeout(personalizeResetTimeout)
+  personalizeResetTimeout = setTimeout(() => {
+    personalizeResetTimeout = undefined
+    const isOnboardingTabOpen = mainCtrl.ui.views.some(
+      (v) => v.type === 'tab' && !!v.currentRoute && ONBOARDING_WEB_ROUTES.includes(v.currentRoute)
+    )
+    if (isOnboardingTabOpen) return
+
+    mainCtrl.accountPicker.reset().catch((error: unknown) => {
+      console.error('Failed to reset the accounts left on personalize', error)
+      captureBackgroundException(error)
+    })
+  }, PERSONALIZE_RELOAD_GRACE_MS)
+}
 
 export const handleCleanUpOnPortDisconnect = async ({
   port,
@@ -84,8 +110,8 @@ export const handleCleanUpOnPortDisconnect = async ({
   // An account adding flow closed midway is dropped, so it does not come back the next time
   // the extension is opened - unless it was closed on its last step: the prepared accounts
   // (or removals) wait there, for the user to add or go back from (see `getInitialRoute`).
-  // Kept with accounts in the wallet too, as reloading the tab disconnects it the same way.
-  // The next flow drops them anyway.
+  // With accounts in the wallet nothing leads back there, so they are dropped too, after the
+  // grace period that keeps them over a reload.
   if (isOnboardingRoute) {
     const { isInitialized, initParams, readyToAddAccounts, readyToRemoveAccounts } =
       mainCtrl.accountPicker
@@ -98,6 +124,8 @@ export const handleCleanUpOnPortDisconnect = async ({
 
     if (hasFlow && !isWaitingToBeAdded) {
       await mainCtrl.accountPicker.reset()
+    } else if (isWaitingToBeAdded && mainCtrl.selectedAccount.selectedType) {
+      resetPreparedAccountsUnlessReopened(mainCtrl)
     }
   }
 
