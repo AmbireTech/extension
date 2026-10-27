@@ -1,8 +1,7 @@
 import { formatUnits } from 'ethers'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
-import { PrivacyPoolsPoolStats as PoolStats } from '@ambire-common/interfaces/privacyPools'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
@@ -31,9 +30,10 @@ type Row = {
 }
 
 /** One placeholder per row the numbers fill. */
-const SKELETON_ROW_IDS = ['total', 'approved', 'pending', 'deposits24h', 'withdrawals24h']
+const SKELETON_ROW_IDS = ['total', 'approved', 'deposits24h', 'withdrawals24h']
 
-const selectChains = (state: AllControllersMappingType['PrivacyPoolsController']) => state.chains
+const selectPoolStats = (state: AllControllersMappingType['PrivacyPoolsController']) =>
+  state.poolStats
 
 const Label = React.memo(({ text }: { text: string }) => (
   <Text
@@ -49,45 +49,16 @@ const Label = React.memo(({ text }: { text: string }) => (
 
 /**
  * The numbers of a token's pool, as rows of the token details' "About" (see `TokenData`): what it holds,
- * how many deposits a withdrawal hides among, and the last day's activity. Read from this device's
- * copy of the pool's history (see `PrivacyPoolsController.getPoolStats`), so they are reloaded
- * whenever the network is read again, and nothing is asked of anyone.
+ * how many deposits a withdrawal hides among, and the last day's activity. Computed in the
+ * background from this device's copy of the pool's history after every read of the network (see
+ * `PrivacyPoolsController.poolStats`), so they are there when the screen opens, and nothing is
+ * asked of anyone.
  */
 const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price }: Props) => {
   const { t } = useTranslation()
-  const { dispatchAndWait } = useController('PrivacyPoolsController')
-  const { state: chains } = useController('PrivacyPoolsController', selectChains)
-  const lastSyncedAt = chains?.[chainId]?.lastSyncedAt ?? null
-  // Undefined while the first answer is on its way. Null before the network is read
-  const [stats, setStats] = useState<PoolStats | null | undefined>(undefined)
-  const [loadError, setLoadError] = useState<string | null>(null)
-  // Only the latest request's answer is shown, and none after the screen is gone
-  const latestRequestRef = useRef(0)
-
-  useEffect(() => {
-    latestRequestRef.current += 1
-    const requestNumber = latestRequestRef.current
-
-    // The previous numbers stay on screen until the new ones arrive
-    dispatchAndWait<'getPoolStatsAndSendResToUi', PoolStats | null>({
-      type: 'method',
-      params: { method: 'getPoolStatsAndSendResToUi', args: [chainId, tokenAddress] }
-    })
-      .then((result) => {
-        if (requestNumber !== latestRequestRef.current) return
-        setStats(result)
-        setLoadError(null)
-      })
-      .catch((error) => {
-        // Already reported by the controller
-        console.error('privacyPools: could not load the pool stats', error)
-        if (requestNumber === latestRequestRef.current) setLoadError(error.message)
-      })
-
-    return () => {
-      latestRequestRef.current += 1
-    }
-  }, [chainId, dispatchAndWait, lastSyncedAt, tokenAddress])
+  const { state: poolStats } = useController('PrivacyPoolsController', selectPoolStats)
+  const chainPoolStats = poolStats?.[chainId]
+  const stats = chainPoolStats?.byToken[tokenAddress.toLowerCase()]
 
   const rows: Row[] = useMemo(() => {
     if (!stats) return []
@@ -98,7 +69,6 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
     const formatValue = (amount: bigint) =>
       price === null ? null : formatDecimals(Number(formatUnits(amount, decimals)) * price, 'value')
     const totalValue = formatValue(stats.totalAmount)
-    const pendingValue = formatValue(stats.pendingAmount)
 
     return [
       {
@@ -113,14 +83,6 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
         value: formatDecimals(stats.approvedDepositsCount, 'noDecimal')
       },
       {
-        id: 'pending',
-        label: t('Pending deposits'),
-        value: formatDecimals(stats.pendingDepositsCount, 'noDecimal'),
-        subValue: stats.pendingDepositsCount
-          ? [pendingValue, formatAmount(stats.pendingAmount)].filter(Boolean).join(' · ')
-          : undefined
-      },
-      {
         id: 'deposits24h',
         label: t('Deposits (24h)'),
         value: formatDecimals(stats.depositsCount24h, 'noDecimal')
@@ -133,17 +95,15 @@ const PrivacyPoolsPoolStats = ({ chainId, tokenAddress, symbol, decimals, price 
     ]
   }, [decimals, price, stats, symbol, t])
 
-  // Nothing to show before the network is read: the screen is reached only after, so it is brief
-  if (stats === null && !loadError) return null
-
-  if (loadError && !stats)
+  if (chainPoolStats?.error)
     return (
       <Text fontSize={14} appearance="secondaryText">
         {t('Could not load the numbers of this pool.')}
       </Text>
     )
 
-  if (stats === undefined)
+  // Only until the background has read the network, which this screen is reached after
+  if (!stats)
     return (
       <>
         {SKELETON_ROW_IDS.map((id, index) => (
