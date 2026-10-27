@@ -79,10 +79,10 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                         ? t('Activate Safe account')
                         : interaction.name}
                   </Text>
-                  {interaction.safeNonce !== undefined && (
+                  {interaction.nonce !== undefined && (
                     <Text fontSize={12} appearance="secondaryText">
-                      {t('transaction with nonce {{safeNonce}}', {
-                        safeNonce: interaction.safeNonce.toString()
+                      {t('transaction with nonce {{nonce}}', {
+                        nonce: interaction.nonce.toString()
                       })}
                     </Text>
                   )}

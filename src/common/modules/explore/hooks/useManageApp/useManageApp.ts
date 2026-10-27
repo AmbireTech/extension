@@ -8,9 +8,7 @@ import useTrustDapp from '@common/hooks/useTrustDapp'
 const useManageApp = (dapp: Dapp) => {
   const { dispatch } = useControllersMiddleware()
   const { trustDapp, untrustDapp } = useTrustDapp()
-  const { state: account } = useController('SelectedAccountController', 'account')
   const { state: networks } = useController('NetworksController', 'networks')
-  const { state: accounts } = useController('AccountsController', 'accounts')
 
   const onDisconnect = useCallback(
     (source?: ConnectionSource) => {
@@ -45,8 +43,6 @@ const useManageApp = (dapp: Dapp) => {
   )
 
   return {
-    account,
-    accounts,
     networks,
     onDisconnect,
     onSelectNetwork,

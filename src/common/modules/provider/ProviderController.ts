@@ -58,18 +58,12 @@ const handleSignMessage = (requestRes: RequestRes) => {
 }
 
 function getSelectedAccount(mainCtrl: IMainController, id: string): string | undefined {
-  const extensionSelectedAccount = mainCtrl.selectedAccount.account?.addr
-  const preferences = mainCtrl.dapps.getDapp(id)?.accountPreferences
+  const [selectedAccount] = getAccountsForDapp(
+    mainCtrl.dapps.getDapp(id)?.accountPreferences,
+    mainCtrl.selectedAccount.account?.addr
+  )
 
-  if (
-    !preferences ||
-    !preferences.enabled ||
-    (extensionSelectedAccount && preferences.accounts.includes(extensionSelectedAccount))
-  ) {
-    return extensionSelectedAccount
-  }
-
-  return preferences.selectedAccount
+  return selectedAccount
 }
 
 export class ProviderController {
@@ -88,8 +82,8 @@ export class ProviderController {
   }
 
   _getSelectedAccount(id: string) {
-    // If enabled and the extension's selected account is not a part of the allowed accounts, return
-    // the last selected account from the dapp preferences
+    // The account picked for the dapp, else the extension's selected account if the dapp may see it,
+    // else the last selected account from the dapp preferences
     return getSelectedAccount(this.mainCtrl, id)
   }
 
