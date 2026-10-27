@@ -9,6 +9,7 @@ import NftImagePlaceholder from '@common/components/NftImagePlaceholder'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
+import useNftImagesStatus from '@common/hooks/useNftImagesStatus'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -21,11 +22,9 @@ import HideCollectibleButton from './HideCollectibleButton'
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
 
-import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
-const selectAreNftImagesEnabled = (state: IFeatureFlagsController) => !!state.flags?.nftImages
 
 const { isTab } = getUiType()
 
@@ -57,10 +56,7 @@ const CollectibleModal = ({
   const { styles, theme } = useTheme(getStyles)
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
-  const { state: areNftImagesEnabled } = useController(
-    'FeatureFlagsController',
-    selectAreNftImagesEnabled
-  )
+  const nftImagesStatus = useNftImagesStatus()
   // No actions on a collectible that is only being previewed (in a simulation)
   const shouldDisplayHideCollectionAction = !hideSendNft && !!canHideCollectible
 
@@ -72,7 +68,7 @@ const CollectibleModal = ({
     return (
       <>
         <View style={styles.imageContainer}>
-          {areNftImagesEnabled ? (
+          {nftImagesStatus === 'enabled' ? (
             <ManifestImage
               uri={image}
               size={COLLECTIBLE_IMAGE_SIZE}
@@ -106,6 +102,7 @@ const CollectibleModal = ({
             >
               <NftImagePlaceholder
                 withHint
+                isLoading={nftImagesStatus === 'loading'}
                 iconSize={COLLECTIBLE_IMAGE_SIZE / 3}
                 backgroundColor={theme.primaryBackground}
               />
@@ -190,7 +187,7 @@ const CollectibleModal = ({
       </>
     )
   }, [
-    areNftImagesEnabled,
+    nftImagesStatus,
     handleClose,
     networks,
     selectedCollectible,

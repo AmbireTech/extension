@@ -12,6 +12,7 @@ import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
+import useNftImagesStatus from '@common/hooks/useNftImagesStatus'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
@@ -26,10 +27,7 @@ import styles from './styles'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 
-import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const selectAreNftImagesEnabled = (state: IFeatureFlagsController) => !!state.flags?.nftImages
 
 interface Props {
   openTab: TabType
@@ -93,10 +91,7 @@ const Collections: FC<Props> = ({
     'SelectedAccountController',
     selectDashboardNetworkFilter
   )
-  const { state: areNftImagesEnabled } = useController(
-    'FeatureFlagsController',
-    selectAreNftImagesEnabled
-  )
+  const nftImagesStatus = useNftImagesStatus()
   const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -261,7 +256,9 @@ const Collections: FC<Props> = ({
         ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         data={[
           ...(isMobile ? [] : ['header']),
-          ...(!areNftImagesEnabled && filteredPortfolioCollections.length ? ['images-hint'] : []),
+          ...(nftImagesStatus === 'disabled' && filteredPortfolioCollections.length
+            ? ['images-hint']
+            : []),
           ...(initTab?.collectibles ? filteredPortfolioCollections : []),
           !filteredPortfolioCollections.length && isPortfolioAllReady ? 'empty' : '',
           !isReadyToVisualizeCollections ? 'skeleton' : 'keep-this-to-avoid-key-warning'
