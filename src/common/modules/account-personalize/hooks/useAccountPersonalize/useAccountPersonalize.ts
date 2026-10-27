@@ -16,7 +16,8 @@ export default function useAccountPersonalize() {
     useController('AccountPickerController')
   const {
     state: { statuses, accounts },
-    dispatch: accountsDispatch
+    dispatch: accountsDispatch,
+    dispatchAndWait: accountsDispatchAndWait
   } = useController('AccountsController')
   const { isSetupComplete } = useController('WalletStateController').state
   const { addToast } = useToast()
@@ -261,6 +262,31 @@ export default function useAccountPersonalize() {
     [accountsDispatch, getValues]
   )
 
+  /**
+   * Saves the new name of one account right away. The name also goes into
+   * `accountsToPersonalize`, as the form is reset from it when more accounts are added
+   * and `Complete` would otherwise save the old name over it
+   */
+  const handleSaveAccountName = useCallback(
+    async (addr: Account['addr'], label: string) => {
+      const account = getValues('accounts').find((a) => a.addr === addr)
+      if (!account) throw new Error('The account to rename is missing from the form')
+
+      const preferences = { ...account.preferences, label }
+      await accountsDispatchAndWait({
+        type: 'method',
+        params: {
+          method: 'updateAccountPreferences',
+          args: [[{ addr, preferences }]]
+        }
+      })
+      setAccountsToPersonalize((prev) =>
+        prev.map((acc) => (acc.addr === addr ? { ...acc, preferences } : acc))
+      )
+    },
+    [accountsDispatchAndWait, getValues, setAccountsToPersonalize]
+  )
+
   useEffect(() => {
     const handleBeforeUnload = () => handleSave()
     window.addEventListener('beforeunload', handleBeforeUnload)
@@ -321,6 +347,7 @@ export default function useAccountPersonalize() {
     accountPickerState,
     accountsToPersonalize,
     handleSave,
+    handleSaveAccountName,
     handleComplete,
     handleContactSupport
   }

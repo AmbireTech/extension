@@ -113,7 +113,12 @@ const PendingCancellationRow: FC<Props> = ({
         flexbox.justifySpaceBetween
       ]}
     >
-      <Text fontSize={14} weight="medium" appearance="secondaryText" style={flexbox.flex1}>
+      <Text
+        fontSize={14}
+        weight="medium"
+        appearance="secondaryText"
+        style={[flexbox.flex1, spacings.phSm]}
+      >
         {t('{{signedCount}}/{{threshold}} signatures', { signedCount, threshold })}
       </Text>
       <Button
@@ -126,7 +131,8 @@ const PendingCancellationRow: FC<Props> = ({
         onHoverIn={handleHoverIn}
         onHoverOut={handleHoverOut}
         hasBottomSpacing={false}
-        style={[spacings.ml, { minWidth: 76, height: 40 }]}
+        textStyle={styles.actionButtonText}
+        style={[spacings.ml, styles.actionButton]}
       />
     </View>
   )

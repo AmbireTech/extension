@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Animated, FlatListProps, View } from 'react-native'
+import { View } from 'react-native'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
 import { Network } from '@ambire-common/interfaces/network'
@@ -17,15 +17,12 @@ import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getTokenId } from '@common/utils/token'
 import { getUiType } from '@common/utils/uiType'
 
-import DashboardBanners from '../DashboardBanners'
 import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
-import FloatingBottomBar from '../FloatingBottomBar'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import HiddenTokensFooter from './HiddenTokensFooter'
 import OtherTokensSummary from './OtherTokensSummary'
 import TokenItem from './TokenItem'
 import TokensEmptyState from './TokensEmptyState'
-import TokensListHeader from './TokensListHeader'
 import Skeleton from './TokensSkeleton'
 
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
@@ -42,17 +39,10 @@ const selectDashboardNetworkFilter = (state: SelectedAccountController) =>
 
 interface Props {
   openTab: TabType
-  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
-  sessionId: string
   initTab?: {
     [key: string]: boolean
   }
-  onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
-  animatedOverviewHeight: Animated.Value
-  isSearchHidden?: boolean
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 // if any of the post amount (during simulation) or the current state
@@ -124,18 +114,7 @@ const isCollapsibleToken = (
 
 const { isPopup } = getUiType()
 
-const Tokens = ({
-  openTab,
-  setOpenTab,
-  initTab,
-  sessionId,
-  onScroll,
-  animatedOverviewHeight,
-  dashboardNetworkFilterName,
-  isSearchHidden,
-  refreshing,
-  onRefresh
-}: Props) => {
+const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const {
@@ -327,7 +306,7 @@ const Tokens = ({
   const hasAnyTokens = visibleTokens.length > 0 || dustTokens.length > 0
 
   const listData = useMemo(() => {
-    const data: any[] = isMobile ? [] : ['header']
+    const data: any[] = []
 
     // Skeleton 1, order matters
     if (!hasAnyTokens && !isPortfolioAllReady) {
@@ -368,10 +347,6 @@ const Tokens = ({
 
   const renderItem = useCallback(
     ({ item }: any) => {
-      if (item === 'header') {
-        return <TokensListHeader openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
-      }
-
       if (item === 'empty') {
         return (
           <TokensEmptyState
@@ -423,9 +398,6 @@ const Tokens = ({
     },
     [
       initTab?.tokens,
-      openTab,
-      setOpenTab,
-      sessionId,
       searchValue,
       dashboardNetworkFilterName,
       hiddenTokensCount,
@@ -449,7 +421,7 @@ const Tokens = ({
     setValue('search', '')
   }, [setValue])
 
-  // Rendered above the carousel on mobile, so it stays put through a swipe
+  // Rendered by the carousel above the pages, so it stays put through a swipe
   const floatingBar = useMemo(
     () => ({
       control,
@@ -461,29 +433,18 @@ const Tokens = ({
   )
 
   return (
-    <>
-      <DashboardPageScrollContainer
-        floatingBar={floatingBar}
-        tab="tokens"
-        openTab={openTab}
-        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
-        animatedOverviewHeight={animatedOverviewHeight}
-        data={listData}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        onEndReachedThreshold={isPopup ? 5 : 2.5}
-        initialNumToRender={isPopup ? 10 : 20}
-        windowSize={isMobile ? 3 : 9} // Larger values can cause performance issues.
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-      />
-      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
-      {!isMobile && openTab === 'tokens' && (
-        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
-      )}
-    </>
+    <DashboardPageScrollContainer
+      floatingBar={floatingBar}
+      tab="tokens"
+      openTab={openTab}
+      data={listData}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      onEndReachedThreshold={isPopup ? 5 : 2.5}
+      initialNumToRender={isPopup ? 10 : 20}
+      windowSize={isMobile ? 3 : 9} // Larger values can cause performance issues.
+      scrollEventThrottle={16}
+    />
   )
 }
 

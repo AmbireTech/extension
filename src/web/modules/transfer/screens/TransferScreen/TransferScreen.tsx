@@ -11,6 +11,7 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { findAccountOpOrReplacement } from '@ambire-common/libs/activity/replacements'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
@@ -148,12 +149,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressState.fieldValue !== addressStateFieldValue
 
   const submittedAccountOp = useMemo(() => {
-    if (!accountsOps.transfer || !latestBroadcastedAccountOp?.signature) return
+    if (!accountsOps.transfer || !latestBroadcastedAccountOp) return
 
-    return accountsOps.transfer.result.items.find(
-      (accOp) => accOp.signature === latestBroadcastedAccountOp.signature
-    )
-  }, [accountsOps.transfer, latestBroadcastedAccountOp?.signature])
+    // Once sped up, the activity shows its speed up instead of it
+    return findAccountOpOrReplacement(accountsOps.transfer.result.items, latestBroadcastedAccountOp)
+  }, [accountsOps.transfer, latestBroadcastedAccountOp])
 
   const accountUserRequests = useMemo(() => {
     if (!account || !userRequests.length) return []

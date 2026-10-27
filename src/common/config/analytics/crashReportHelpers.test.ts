@@ -1,4 +1,8 @@
-import { getReportableAction } from './crashReportHelpers'
+import {
+  createCrashReportAccountTagsSync,
+  getCrashReportAccountTags,
+  getReportableAction
+} from './crashReportHelpers'
 
 jest.mock('@common/config/env', () => ({ isTesting: false }))
 
@@ -59,5 +63,82 @@ describe('getReportableAction', () => {
     it(`passes non-method actions through unchanged: ${action.type}`, () => {
       expect(getReportableAction(action as any)).toBe(action)
     })
+  })
+})
+
+describe('getCrashReportAccountTags', () => {
+  const EOA_ADDR = '0xEoa'
+  const buildAccount = (overrides: any = {}): any => ({
+    addr: EOA_ADDR,
+    associatedKeys: [EOA_ADDR],
+    ...overrides
+  })
+  const buildInput = (overrides: any = {}) => ({
+    selectedAccount: buildAccount(),
+    accountStates: {},
+    keys: [{ addr: EOA_ADDR, type: 'internal' }] as any,
+    accounts: [buildAccount()],
+    ...overrides
+  })
+
+  it('gives no tags when no account is selected', () => {
+    expect(getCrashReportAccountTags(buildInput({ selectedAccount: null }))).toEqual({})
+  })
+
+  it('tells a 7702 account by any chain with isSmarterEoa, not by the first chain', () => {
+    const accountStates = { [EOA_ADDR]: { 1: { isSmarterEoa: false }, 10: { isSmarterEoa: true } } }
+
+    expect(getCrashReportAccountTags(buildInput({ accountStates })).accountType).toBe('7702')
+  })
+
+  it('reports a smart account as smart even when its state says smarter EOA', () => {
+    const selectedAccount = buildAccount({ creation: {} })
+    const accountStates = { [EOA_ADDR]: { 1: { isSmarterEoa: true } } }
+
+    expect(
+      getCrashReportAccountTags(buildInput({ selectedAccount, accountStates })).accountType
+    ).toBe('smart')
+  })
+
+  it('tells key types apart, with view-only as none', () => {
+    const hardwareKeys = [{ addr: EOA_ADDR, type: 'ledger' }]
+    const mixedKeys = [...hardwareKeys, { addr: EOA_ADDR, type: 'internal' }]
+    const otherAccountKeys = [{ addr: '0xOther', type: 'internal' }]
+
+    expect(getCrashReportAccountTags(buildInput({ keys: hardwareKeys })).keyType).toBe('hardware')
+    expect(getCrashReportAccountTags(buildInput({ keys: mixedKeys })).keyType).toBe('internal')
+    expect(getCrashReportAccountTags(buildInput({ keys: otherAccountKeys })).keyType).toBe('none')
+  })
+
+  it.each([
+    [1, '1'],
+    [2, '2-5'],
+    [5, '2-5'],
+    [6, '6+']
+  ])('buckets %i accounts as %s', (count, bucket) => {
+    const accounts = Array.from({ length: count }, () => buildAccount())
+
+    expect(getCrashReportAccountTags(buildInput({ accounts })).accountCount).toBe(bucket)
+  })
+})
+
+describe('createCrashReportAccountTagsSync', () => {
+  it('sets only the changed tags and clears the ones that went away', () => {
+    const setTag = jest.fn()
+    const sync = createCrashReportAccountTagsSync(setTag)
+
+    sync({ accountType: 'eoa', keyType: 'internal', accountCount: '1' })
+    setTag.mockClear()
+
+    sync({ accountType: 'eoa', keyType: 'none', accountCount: '1' })
+    expect(setTag.mock.calls).toEqual([['keyType', 'none']])
+
+    setTag.mockClear()
+    sync({})
+    expect(setTag.mock.calls).toEqual([
+      ['accountType', undefined],
+      ['keyType', undefined],
+      ['accountCount', undefined]
+    ])
   })
 })

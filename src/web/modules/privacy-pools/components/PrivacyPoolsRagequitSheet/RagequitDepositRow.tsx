@@ -1,15 +1,15 @@
 import React, { FC, useCallback, useMemo } from 'react'
-import { View } from 'react-native'
+import { TextStyle, View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { PrivacyPoolsRagequitDeposit } from '@ambire-common/interfaces/privacyPools'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
-import Avatar from '@common/components/Avatar'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -22,35 +22,38 @@ export type RagequitDepositView = PrivacyPoolsRagequitDeposit & {
   amountFormatted: string
 }
 
-/** The account a deposit goes back to: its avatar, name and address. */
-const RagequitAccount: FC<{ deposit: RagequitDepositView }> = ({ deposit }) => {
-  const { t } = useTranslation()
-  const { account, depositorAddr } = deposit
-
-  return (
-    <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-      <Avatar
-        pfp={account?.preferences.pfp || depositorAddr}
-        address={depositorAddr}
-        size={32}
-        displayTypeBadge={false}
-        style={spacings.mrTy}
-      />
-      <View style={flexbox.flex1}>
-        <Text fontSize={14} weight="semiBold" numberOfLines={1}>
-          {account?.preferences.label || t('Account not in this wallet')}
-        </Text>
-        <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-          {shortenAddress(depositorAddr, 13)}
-        </Text>
-      </View>
-    </View>
-  )
+const ragequitButtonStyles: { container: ViewStyle; text: TextStyle } = {
+  container: { width: 116, height: 40, paddingHorizontal: SPACING },
+  text: { fontSize: 12, lineHeight: 24 }
 }
 
+/** The sides take the same share of the row, so the amount sits in its middle. */
+const columnStyles: { from: ViewStyle; amount: ViewStyle; action: ViewStyle } = {
+  from: { flex: 1, minWidth: 0 },
+  amount: { width: 100, alignItems: 'center' },
+  action: { flex: 1, alignItems: 'flex-end' }
+}
+
+/** One labelled value of the row, like "Amount: 50 USDT". */
+const Column: FC<{ label: string; value: string; style: ViewStyle }> = ({
+  label,
+  value,
+  style
+}) => (
+  <View style={style}>
+    <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
+      {label}
+    </Text>
+    <Text fontSize={14} weight="medium" numberOfLines={1}>
+      {value}
+    </Text>
+  </View>
+)
+
 /**
- * One deposit that can be taken back, with its own Rage quit button. Without one when its account
- * is not in the wallet or is view-only, as nothing could sign for it; the row says why.
+ * One deposit that can be taken back, with the account it came from and goes back to, and its
+ * own Rage quit. That is disabled when the account is not in the wallet or is
+ * view-only, as nothing could sign for it; its tooltip says why.
  */
 const RagequitDepositRow: FC<{
   deposit: RagequitDepositView
@@ -70,40 +73,52 @@ const RagequitDepositRow: FC<{
   }, [deposit.account, deposit.isViewOnly, t])
 
   const handleRagequit = useCallback(() => onRagequit(deposit.label), [deposit.label, onRagequit])
+  const labelString = deposit.label.toString()
 
   return (
     <View
       style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
         spacings.phSm,
         spacings.pvSm,
         spacings.mbTy,
-        { borderRadius: BORDER_RADIUS_PRIMARY, backgroundColor: theme.secondaryBackground }
+        {
+          // The same space on both sides of the amount, so it stays centered
+          gap: SPACING_SM,
+          borderRadius: BORDER_RADIUS_PRIMARY,
+          backgroundColor: theme.secondaryBackground
+        }
       ]}
-      testID={`privacy-pools-ragequit-deposit-${deposit.label.toString()}`}
+      testID={`privacy-pools-ragequit-deposit-${labelString}`}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <RagequitAccount deposit={deposit} />
-        <Text fontSize={14} weight="number_bold" style={spacings.mhSm}>
-          {deposit.amountFormatted}
-        </Text>
-        {!blockedReason && (
-          <ButtonWithLoader
-            testID={`privacy-pools-ragequit-${deposit.label.toString()}`}
-            type="danger"
-            size="small"
-            text={isSubmitting ? t('Preparing...') : t('Rage quit')}
-            isLoading={isSubmitting}
-            disabled={isSubmitting || isDisabled}
-            onPress={handleRagequit}
-            hasBottomSpacing={false}
-          />
-        )}
+      <Column
+        label={t('From:')}
+        value={deposit.account?.preferences.label || shortenAddress(deposit.depositorAddr, 13)}
+        style={columnStyles.from}
+      />
+      <Column label={t('Amount:')} value={deposit.amountFormatted} style={columnStyles.amount} />
+      <View
+        style={columnStyles.action}
+        dataSet={
+          blockedReason
+            ? createGlobalTooltipDataSet({ id: `ragequit-${labelString}`, content: blockedReason })
+            : undefined
+        }
+      >
+        <ButtonWithLoader
+          testID={`privacy-pools-ragequit-${labelString}`}
+          type="danger"
+          size="small"
+          text={t('Quit')}
+          isLoading={isSubmitting}
+          spinnerVariant="danger"
+          style={ragequitButtonStyles.container}
+          textStyle={ragequitButtonStyles.text}
+          disabled={!!blockedReason || isSubmitting || isDisabled}
+          onPress={handleRagequit}
+        />
       </View>
-      {!!blockedReason && (
-        <Text fontSize={12} appearance="warningText" style={spacings.mtTy}>
-          {blockedReason}
-        </Text>
-      )}
     </View>
   )
 }

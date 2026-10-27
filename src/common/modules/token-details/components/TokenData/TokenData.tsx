@@ -28,6 +28,8 @@ type Props = {
   token: TokenResult
   /** More rows, shown in the same card after the token's own. */
   children?: ReactNode
+  /** Hides the contract address, e.g. for a Privacy Pools token, whose About is about its pool. */
+  hideContractAddress?: boolean
 }
 
 type Row = {
@@ -106,7 +108,7 @@ const Row = memo(
   }
 )
 
-const TokenData: FC<Props> = ({ token, children }) => {
+const TokenData: FC<Props> = ({ token, hideContractAddress, children }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [bindWebsiteAnim, websiteAnimStyle] = useCustomHover({
@@ -124,11 +126,12 @@ const TokenData: FC<Props> = ({ token, children }) => {
         label: t('Chain'),
         value: token.chainId
       },
-      !isNative(token) && {
-        id: 'address',
-        label: t('Contract address'),
-        value: token.address
-      },
+      !isNative(token) &&
+        !hideContractAddress && {
+          id: 'address',
+          label: t('Contract address'),
+          value: token.address
+        },
       typeof usdMarketData?.marketCap === 'number' && {
         label: t('Market cap'),
         value: `${formatDecimals(usdMarketData.marketCap, 'value')}`
@@ -146,7 +149,7 @@ const TokenData: FC<Props> = ({ token, children }) => {
         value: `${formatDecimals(usdMarketData.volume24h, 'value')}`
       }
     ].filter(Boolean) as Row[]
-  }, [token, t])
+  }, [token, hideContractAddress, t])
 
   return (
     <>

@@ -1,6 +1,7 @@
 import { formatUnits, ZeroAddress } from 'ethers'
 
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { getFeeIncreasePercent } from '@ambire-common/libs/gasPrice/speedUp'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import formatDateTime from '@common/utils/formatDateTime'
 
@@ -155,6 +156,28 @@ export const getVisibleSummaryBalanceChanges = (balanceChanges: DisplayBalanceCh
       .slice(0, MAX_VISIBLE_BALANCE_CHANGES - 1),
     gasTankBalanceChange
   ]
+}
+
+/**
+ * A speed up that is still waiting to go through. The Activity shows it in place of the
+ * transaction it replaces (see collapseReplacedAccountOps), so its row tells it's speeding up
+ */
+export const isSpeedingUp = (submittedAccountOp: SubmittedAccountOpLike) =>
+  submittedAccountOp.status === AccountOpStatus.BroadcastedButNotConfirmed &&
+  !!submittedAccountOp.meta?.speedUp?.enabled
+
+/**
+ * How much more a speed up pays than the transaction it replaces, in whole percent.
+ * Null when it's unknown or not higher, e.g. when the speed up needs less gas
+ */
+export const getSpeedUpFeeIncreasePercent = (
+  submittedAccountOp: SubmittedAccountOpLike
+): number | null => {
+  const replacedAmount = submittedAccountOp.meta?.speedUp?.replacedFees?.amount
+  const newAmount = submittedAccountOp.gasFeePayment?.amount
+  if (replacedAmount === undefined || newAmount === undefined) return null
+
+  return getFeeIncreasePercent(replacedAmount, newAmount)
 }
 
 export const getPresentationalStatus = (

@@ -11,7 +11,6 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import PendingCancellationRow from './PendingCancellationRow'
@@ -48,7 +47,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   )
   const chainBorderColor = cancellationHoverAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [hexToRgba(theme.primaryAccent, 0.5), theme.errorDecorative as string]
+    outputRange: [theme.primaryAccent as string, theme.errorDecorative as string]
   })
   const [manuallySelectedNonceIndex, setManuallySelectedNonceIndex] = useState<number | null>(null)
 
@@ -158,7 +157,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
         <Text
           fontSize={14}
           weight="medium"
-          appearance="secondaryText"
+          appearance="primaryText"
           style={[styles.orDividerText, spacings.phSm]}
         >
           {t('OR')}
@@ -202,7 +201,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
               style={[
                 styles.nonceNavigationButton,
                 flexbox.center,
-                spacings.mlTy,
+                spacings.mlSm,
                 !hasPrevNonce && styles.nonceNavigationButtonDisabled
               ]}
             >
@@ -227,17 +226,17 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
               <RightArrowIcon width={6} height={11} color={theme.tertiaryText} />
             </HoverablePressable>
           </View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtTy]}>
             {isCurrentNonce && (
-              <View style={[styles.currentNoncePill, flexbox.center, spacings.phMi]}>
-                <Text fontSize={14} color={theme.primaryAccent}>
+              <View style={[styles.currentNoncePill, flexbox.center, spacings.phTy]}>
+                <Text fontSize={12} weight="medium" color={theme.primaryAccent}>
                   {t('Next to execute')}
                 </Text>
               </View>
             )}
             {waitsForPrecedingNonce && (
-              <View style={[styles.futureNoncePill, flexbox.center, spacings.phMi]}>
-                <Text fontSize={14} color={theme.warningText}>
+              <View style={[styles.futureNoncePill, flexbox.center, spacings.phTy]}>
+                <Text fontSize={12} weight="medium" color={theme.warningText}>
                   {t('waits for nonce {{nonce}}', { nonce: (nonceGroup.nonce - 1n).toString() })}
                 </Text>
               </View>

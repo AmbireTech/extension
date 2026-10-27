@@ -1,26 +1,24 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { ExternalKey, Key } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import Text from '@common/components/Text'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useToast from '@common/hooks/useToast'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 
 const { isPopup } = getUiType()
 
 interface Props {
-  signingKeyType?: AccountOp['signingKeyType']
-  feePayerKeyType?: Key['type'] | null
-  isSignAndBroadcastInProgress: boolean
-  signAccountOpStatusType?: SigningStatus
+  activeSigningKeyType?: Key['type'] | null
   shouldSignAuth: {
     type: 'V2Deploy' | '7702'
     text: string
@@ -30,54 +28,36 @@ interface Props {
   actionType?: 'swapAndBridge' | 'transfer'
   cancelReq?: () => void
   hardwareWalletSigningRequest?: HardwareWalletSigningRequest | null
+  isPaymasterSlow?: boolean
 }
 
 const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
-  signingKeyType,
-  feePayerKeyType,
-  isSignAndBroadcastInProgress,
-  signAccountOpStatusType,
+  activeSigningKeyType,
   shouldSignAuth,
   signedTransactionsCount,
   accountOp,
   actionType,
   cancelReq,
-  hardwareWalletSigningRequest
+  hardwareWalletSigningRequest,
+  isPaymasterSlow
 }: Props) => {
+  const { t } = useTranslation()
   const { dispatch: requestsCtrlDispatch } = useController('RequestsController')
   const { addToast } = useToast()
 
   const prevTransactionCount = usePrevious<number | null | undefined>(signedTransactionsCount)
 
-  // The signing key may be used while the status is InProgress, but not every
-  // InProgress reaches the device (e.g. a fully signed Safe that is only executed).
-  // WaitingForPaymaster isn't listed because useSign renders the warnings modal
-  // instead of this one while the paymaster is loading.
-  // SafeQuickBroadcastBundler sits between the two sign() calls of a Safe quick
-  // broadcast - treating it as signing keeps the modal from hiding and reappearing,
-  // even though the second sign() reuses the Safe signature without the device
-  const isSigningPhase =
-    signAccountOpStatusType === SigningStatus.InProgress ||
-    (isSignAndBroadcastInProgress &&
-      signAccountOpStatusType === SigningStatus.SafeQuickBroadcastBundler)
-  // The fee payer key can only be used after signing is Done and the broadcast begins,
-  // and only by raw-transaction broadcasts (bundler and relayer broadcasts don't use it).
-  // Before that, the flow may never reach broadcasting (e.g. a Safe txn that still
-  // needs more signatures gets queued), so the fee payer's modal must not show.
-  const isBroadcastPhase =
-    isSignAndBroadcastInProgress && signAccountOpStatusType === SigningStatus.Done
+  // The controller sets the active signing key type only while the flow is on
+  // a key's signature, so the modal doesn't guess it from the signing status
+  const shouldBeVisible = !!activeSigningKeyType && activeSigningKeyType !== 'internal'
 
-  const isCurrentlyBroadcastingWithExternalKey =
-    isBroadcastPhase && !!feePayerKeyType && feePayerKeyType !== 'internal'
-  const isCurrentlySigningWithExternalKey =
-    isSigningPhase && !!signingKeyType && signingKeyType !== 'internal'
-  const shouldBeVisible =
-    isCurrentlyBroadcastingWithExternalKey || isCurrentlySigningWithExternalKey
-
-  const currentlyInvolvedSignOrBroadcastKeyType = useMemo(
-    () => (isSigningPhase ? signingKeyType : feePayerKeyType),
-    [feePayerKeyType, isSigningPhase, signingKeyType]
-  )
+  // Keep the last device after the controller clears the key type, so the
+  // modal plays its closing animation instead of disappearing at once
+  const [lastExternalKeyType, setLastExternalKeyType] = useState<Key['type'] | null>(null)
+  if (shouldBeVisible && activeSigningKeyType !== lastExternalKeyType) {
+    setLastExternalKeyType(activeSigningKeyType)
+  }
+  const displayedKeyType = shouldBeVisible ? activeSigningKeyType : lastExternalKeyType
 
   useEffect(() => {
     const isSigningOneOfMultipleAsEoa = typeof signedTransactionsCount === 'number'
@@ -98,12 +78,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   }, [accountOp?.calls.length, addToast, prevTransactionCount, signedTransactionsCount])
 
   useEffect(() => {
-    if (
-      shouldBeVisible &&
-      actionType &&
-      isPopup &&
-      currentlyInvolvedSignOrBroadcastKeyType === 'trezor'
-    ) {
+    if (actionType && isPopup && activeSigningKeyType === 'trezor') {
       const idSuffix = actionType === 'swapAndBridge' ? 'swap-and-bridge-sign' : 'transfer-sign'
 
       // If the user needs to sign using a hardware wallet, we need to open the
@@ -132,27 +107,16 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
       })
       window.close()
     }
-  }, [
-    actionType,
-    currentlyInvolvedSignOrBroadcastKeyType,
-    requestsCtrlDispatch,
-    shouldBeVisible,
-    accountOp.accountAddr
-  ])
+  }, [actionType, activeSigningKeyType, requestsCtrlDispatch, accountOp.accountAddr])
 
   // Note: QR signing is handled by the QrSigningModal component and NFC card
   // signing by the NfcCardSessionModal, so this modal is not needed for either.
-  if (
-    !currentlyInvolvedSignOrBroadcastKeyType ||
-    currentlyInvolvedSignOrBroadcastKeyType === 'qr' ||
-    currentlyInvolvedSignOrBroadcastKeyType === 'nfc'
-  )
-    return null
+  if (!displayedKeyType || displayedKeyType === 'qr' || displayedKeyType === 'nfc') return null
 
   return (
     <HardwareWalletSigningModal
       isVisible={shouldBeVisible}
-      keyType={currentlyInvolvedSignOrBroadcastKeyType as ExternalKey['type']}
+      keyType={displayedKeyType as ExternalKey['type']}
       cancelReq={cancelReq}
       signingRequest={hardwareWalletSigningRequest}
     >
@@ -169,6 +133,14 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
         <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>
           <Text weight="medium" fontSize={16}>
             {shouldSignAuth.text}
+          </Text>
+        </View>
+      ) : null}
+
+      {isPaymasterSlow ? (
+        <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>
+          <Text fontSize={14} appearance="secondaryText" style={text.center}>
+            {t('Sending the transaction is taking longer than expected. Please wait...')}
           </Text>
         </View>
       ) : null}

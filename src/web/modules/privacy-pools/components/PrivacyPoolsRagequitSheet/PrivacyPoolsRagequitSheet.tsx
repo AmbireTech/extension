@@ -207,7 +207,7 @@ const PrivacyPoolsRagequitSheet: FC<Props> = ({
       </Text>
 
       <Text fontSize={14} appearance="secondaryText" style={spacings.mbMd}>
-        {t('Pick a deposit to take back. It goes back in full to the account it came from.')}
+        {t('Cancel a deposit and return the full amount to the account it was sent from.')}
       </Text>
       {renderList()}
     </BottomSheet>
