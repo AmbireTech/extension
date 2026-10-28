@@ -64,13 +64,12 @@ const usePrivacyPoolsAccounts = () => {
 
         return {
           seedId,
-          sourceLabel:
-            seed?.withPassphrase && seed.passphraseLabel
-              ? t('{{seedLabel}} · Passphrase {{passphraseLabel}}', {
-                  seedLabel: label,
-                  passphraseLabel: seed.passphraseLabel
-                })
-              : label,
+          sourceLabel: seed?.passphraseLabel
+            ? t('{{seedLabel}} · Passphrase {{passphraseLabel}}', {
+                seedLabel: label,
+                passphraseLabel: seed.passphraseLabel
+              })
+            : label,
           isBackedUp: !seed?.notBackedUp
         }
       }),

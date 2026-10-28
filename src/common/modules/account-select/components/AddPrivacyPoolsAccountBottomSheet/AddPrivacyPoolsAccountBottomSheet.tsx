@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
@@ -12,7 +12,9 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
-import EnterSeedPassphraseBottomSheet from '@common/modules/account-select/components/EnterSeedPassphraseBottomSheet'
+import EnterSeedPassphraseBottomSheet, {
+  useSeedPassphraseGate
+} from '@common/modules/account-select/components/EnterSeedPassphraseBottomSheet'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -40,30 +42,12 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
     onAdded
   })
 
-  const [seedToEnterPassphraseFor, setSeedToEnterPassphraseFor] = useState<
-    NonNullable<typeof seeds>[number] | null
-  >(null)
-
-  const handleAdd = useCallback(
-    (seed: NonNullable<typeof seeds>[number]) => {
-      if (seed.withPassphrase && !seed.isPassphraseSaved) {
-        setSeedToEnterPassphraseFor(seed)
-        return
-      }
-
-      addFromStoredSeed(seed.id)
-    },
-    [addFromStoredSeed]
-  )
-
-  const handlePassphraseConfirmed = useCallback(
-    (passphrase: { seedPassphrase: string; shouldSavePassphrase: boolean }) => {
-      if (seedToEnterPassphraseFor) addFromStoredSeed(seedToEnterPassphraseFor.id, passphrase)
-    },
-    [addFromStoredSeed, seedToEnterPassphraseFor]
-  )
-
-  const unmountPassphraseSheet = useCallback(() => setSeedToEnterPassphraseFor(null), [])
+  const {
+    seedToEnterPassphraseFor,
+    requestSeed: handleAdd,
+    handlePassphraseConfirmed,
+    unmountPassphraseSheet
+  } = useSeedPassphraseGate(addFromStoredSeed)
 
   const seedIdsWithAccount = useMemo(
     () => new Set(accounts.map(({ seedId }) => seedId)),
