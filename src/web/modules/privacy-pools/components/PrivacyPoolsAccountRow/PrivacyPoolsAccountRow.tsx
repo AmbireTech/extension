@@ -52,7 +52,8 @@ const PrivacyPoolsAccountRow = ({
   )
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
-    values: { from: theme.primaryBackground, to: theme.secondaryBackground }
+    // The same as the regular account
+    values: { from: theme.secondaryBackground, to: theme.hoverBackground }
   })
 
   // The same as the selected regular account
