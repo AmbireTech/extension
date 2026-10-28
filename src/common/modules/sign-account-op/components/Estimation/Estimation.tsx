@@ -579,26 +579,29 @@ const Estimation = ({
     !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
   const isReplacingPendingAccountOp = !!signAccountOpState?.earlierPendingAccountOp?.isReplacing
   const earlierPendingAccountOpId = signAccountOpState?.earlierPendingAccountOp?.id
-  // A Replace must pay at least as much more as a speed up of the pending transaction would
-  const speedUpMinFees = useMemo(() => {
-    if (speedUpMeta?.enabled && speedUpMeta.replacedFees)
-      return getMinReplacementFees(speedUpMeta.replacedFees)
+  // The fees of the transaction that this one speeds up, or replaces while in replace mode
+  const replacedFees = useMemo(() => {
+    if (speedUpMeta?.enabled && speedUpMeta.replacedFees) return speedUpMeta.replacedFees
     if (!isReplacingPendingAccountOp) return undefined
 
     const pendingAccountOp = findPendingAccountOpById(
       broadcastedButNotConfirmed,
       earlierPendingAccountOpId
     )
-    const replacedFees = pendingAccountOp
+    return pendingAccountOp
       ? getReplacementAccountOp(pendingAccountOp, 'speedUp')?.meta?.speedUp?.replacedFees
       : undefined
-    return replacedFees ? getMinReplacementFees(replacedFees) : undefined
   }, [
     broadcastedButNotConfirmed,
     earlierPendingAccountOpId,
     isReplacingPendingAccountOp,
     speedUpMeta
   ])
+  // A Replace must pay at least as much more as a speed up of the pending transaction would
+  const speedUpMinFees = useMemo(
+    () => (replacedFees ? getMinReplacementFees(replacedFees) : undefined),
+    [replacedFees]
+  )
 
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
@@ -641,10 +644,10 @@ const Estimation = ({
   // The replacement must be paid the same way as the pending transaction it replaces
   const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled || isReplacingPendingAccountOp
   // Not compared once the speed up is no longer needed, as the new fee won't be paid
-  const speedUpOriginalFeeAmount =
-    speedUpMeta?.enabled && signAccountOpState?.status?.type !== SigningStatus.SpeedUpNotNeeded
-      ? speedUpMeta.replacedFees?.amount
-      : undefined
+  const isFeeComparisonNeeded =
+    isReplacingPendingAccountOp ||
+    (!!speedUpMeta?.enabled && signAccountOpState?.status?.type !== SigningStatus.SpeedUpNotNeeded)
+  const speedUpOriginalFeeAmount = isFeeComparisonNeeded ? replacedFees?.amount : undefined
   const selectedFeeSpeedAmount = feeSpeeds.find(
     (speed) => speed.type === signAccountOpState?.selectedFeeSpeed
   )?.amount
