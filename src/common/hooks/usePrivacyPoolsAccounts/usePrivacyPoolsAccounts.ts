@@ -10,6 +10,8 @@ export type PrivacyPoolsAccountDisplay = {
   seedId: string
   /** Its recovery phrase's label - the account has no name or address of its own. */
   label: string
+  /** Its recovery phrase's label, with the passphrase's name for a phrase added with one */
+  sourceLabel: string
   /** Whether its recovery phrase is backed up - the only way to recover the account. */
   isBackedUp: boolean
 }
@@ -55,9 +57,18 @@ const usePrivacyPoolsAccounts = () => {
       (privacyPoolsAccounts || []).map(({ seedId }) => {
         const seed = (seeds || []).find(({ id }) => id === seedId)
 
+        const label: string = seed?.label || t('Privacy Pools account')
+
         return {
           seedId,
-          label: seed?.label || t('Privacy Pools account'),
+          label,
+          sourceLabel:
+            seed?.withPassphrase && seed.passphraseLabel
+              ? t('{{seedLabel}} · Passphrase {{passphraseLabel}}', {
+                  seedLabel: label,
+                  passphraseLabel: seed.passphraseLabel
+                })
+              : label,
           isBackedUp: !seed?.notBackedUp
         }
       }),

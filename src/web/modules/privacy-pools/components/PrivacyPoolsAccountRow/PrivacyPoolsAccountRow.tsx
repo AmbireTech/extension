@@ -118,7 +118,7 @@ const PrivacyPoolsAccountRow = ({
             </Text>
             {/* The account has no name or address of its own, so its recovery phrase tells it apart */}
             <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-              {t('Added from {{seedLabel}}', { seedLabel: account.label })}
+              {t('Added from {{seedLabel}}', { seedLabel: account.sourceLabel })}
             </Text>
           </View>
           {!!onRemove && (
