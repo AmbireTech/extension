@@ -37,11 +37,15 @@ const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
   // The status may be left from an earlier selection, so it counts only after this one loads
   const hasSeenLoading = useRef(false)
 
+  /** A phrase whose passphrase isn't saved needs it, entered by the user */
   const addFromStoredSeed = useCallback(
-    (seedId: string) => {
+    (seedId: string, passphrase?: { seedPassphrase: string; shouldSavePassphrase: boolean }) => {
       hasSeenLoading.current = false
       setPending({ kind: 'stored-seed', seedId })
-      mainDispatch({ type: 'method', params: { method: 'addPrivacyPoolsAccount', args: [seedId] } })
+      mainDispatch({
+        type: 'method',
+        params: { method: 'addPrivacyPoolsAccount', args: [seedId, passphrase] }
+      })
     },
     [mainDispatch]
   )

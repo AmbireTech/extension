@@ -6,8 +6,8 @@ import Button from '@common/components/Button'
 import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import Panel from '@common/components/Panel'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SavePassphraseToggle from '@common/components/SavePassphraseToggle'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -103,18 +103,13 @@ const SeedPhraseImportScreen = () => {
                           backgroundColor={theme.secondaryBackground}
                           onChangeText={onChange}
                           value={value}
-                          placeholder="Recovery phrase passphrase"
+                          placeholder="Passphrase"
                           containerStyle={flexbox.flex1}
                         />
                       )}
                       name="passphrase"
                     />
                   </View>
-                  <Text fontSize={12} appearance="secondaryText" style={spacings.mvSm}>
-                    {t(
-                      'By default, only the recovery phrase is saved on this device, not its passphrase.'
-                    )}
-                  </Text>
                   <SavePassphraseToggle
                     testID="save-passphrase-toggle"
                     isOn={shouldSavePassphrase}

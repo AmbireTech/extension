@@ -20,7 +20,10 @@ import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
   seed: { id: string; label: string; passphraseLabel?: string }
-  accountsCount: number
+  /** Shown next to the phrase name, when set */
+  accountsCount?: number
+  /** What the passphrase is needed for. Defaults to adding accounts */
+  description?: string
   /** Called with the passphrase once it is confirmed to be the one the phrase was added with */
   onConfirmed: (params: { seedPassphrase: string; shouldSavePassphrase: boolean }) => void
   /** Called once the closing animation ends, so the caller can unmount the sheet */
@@ -31,7 +34,13 @@ type Props = {
  * Asks for the passphrase of a saved recovery phrase whose passphrase isn't saved, before adding
  * accounts from it. Opens itself on mount and closes itself once the passphrase is confirmed.
  */
-const EnterSeedPassphraseBottomSheet = ({ seed, accountsCount, onConfirmed, onClosed }: Props) => {
+const EnterSeedPassphraseBottomSheet = ({
+  seed,
+  accountsCount,
+  description,
+  onConfirmed,
+  onClosed
+}: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
@@ -102,7 +111,7 @@ const EnterSeedPassphraseBottomSheet = ({ seed, accountsCount, onConfirmed, onCl
       }
     >
       <Text fontSize={14} appearance="secondaryText" style={spacings.mbMd}>
-        {t('To add accounts from this recovery phrase, enter its passphrase.')}
+        {description ?? t('To add accounts from this recovery phrase, enter its passphrase.')}
       </Text>
       <View
         style={[
@@ -120,9 +129,14 @@ const EnterSeedPassphraseBottomSheet = ({ seed, accountsCount, onConfirmed, onCl
           </Text>
           <PassphraseBadge passphraseLabel={seed.passphraseLabel} />
         </View>
-        <Text fontSize={12} appearance="secondaryText" style={spacings.mlSm}>
-          {t('{{count}} account{{s}}', { count: accountsCount, s: accountsCount === 1 ? '' : 's' })}
-        </Text>
+        {accountsCount !== undefined && (
+          <Text fontSize={12} appearance="secondaryText" style={spacings.mlSm}>
+            {t('{{count}} account{{s}}', {
+              count: accountsCount,
+              s: accountsCount === 1 ? '' : 's'
+            })}
+          </Text>
+        )}
       </View>
       <InputPassword
         {...NO_AUTOFILL_PROPS}

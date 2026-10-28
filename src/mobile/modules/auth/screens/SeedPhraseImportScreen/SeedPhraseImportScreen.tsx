@@ -106,18 +106,13 @@ const SeedPhraseImportScreen = () => {
                     backgroundColor={theme.secondaryBackground}
                     onChangeText={onChange}
                     value={value}
-                    placeholder="Recovery phrase passphrase"
+                    placeholder="Passphrase"
                     containerStyle={flexbox.flex1}
                   />
                 )}
                 name="passphrase"
               />
             </View>
-            <Text fontSize={12} appearance="secondaryText" style={spacings.mvSm}>
-              {t(
-                'By default, only the recovery phrase is saved on this device, not its passphrase.'
-              )}
-            </Text>
             <SavePassphraseToggle
               testID="save-passphrase-toggle"
               isOn={shouldSavePassphrase}
