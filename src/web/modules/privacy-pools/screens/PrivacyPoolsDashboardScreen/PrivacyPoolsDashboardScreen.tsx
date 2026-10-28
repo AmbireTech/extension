@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
@@ -12,6 +13,7 @@ import useRoute from '@common/hooks/useRoute'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import RecoveryPhraseBackupBanner from '@common/modules/dashboard/components/DashboardBanners/RecoveryPhraseBackupBanner'
+import SessionIdInUrl from '@common/modules/dashboard/components/DashboardPages/SessionIdInUrl'
 import DashboardPagesCarousel from '@common/modules/dashboard/components/DashboardPagesCarousel'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import getDashboardStyles from '@common/modules/dashboard/screens/styles'
@@ -26,8 +28,6 @@ import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const SESSION_ID = 'privacy-pools-dashboard'
 
 // Both pages read what they show from the Privacy Pools hooks, so there is nothing to populate
 const noop = () => {}
@@ -58,6 +58,9 @@ const PrivacyPoolsDashboardScreen = () => {
   const isBackedUp = !!selectedAccount?.isBackedUp
   const { t } = useTranslation()
   const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
+
+  // Per window, like the regular dashboard's, so closing one does not close another's sessions
+  const [sessionId] = useState(`privacy-pools-dashboard-${nanoid()}`)
 
   const route = useRoute()
   // Reopens on the tab it was left on, like the regular dashboard
@@ -164,6 +167,8 @@ const PrivacyPoolsDashboardScreen = () => {
 
   return (
     <LayoutWrapper>
+      {/* So the background closes this window's sessions with it */}
+      <SessionIdInUrl sessionId={sessionId} />
       {/* Laid out like the regular dashboard */}
       <View style={styles.container}>
         <PrivacyPoolsOverview
@@ -181,7 +186,7 @@ const PrivacyPoolsDashboardScreen = () => {
           banners={banners}
           openTab={openTab}
           setOpenTab={setOpenTab}
-          sessionId={SESSION_ID}
+          sessionId={sessionId}
           initAllTabs={noop}
         >
           <PrivacyPoolsTokensPage
@@ -192,7 +197,7 @@ const PrivacyPoolsDashboardScreen = () => {
             isWaitingForBackup={!!selectedAccount && !isBackedUp}
             networkFilterName={networkFilterName}
           />
-          <PrivacyPoolsActivityPage openTab={openTab} />
+          <PrivacyPoolsActivityPage openTab={openTab} sessionId={sessionId} />
         </DashboardPagesCarousel>
       </View>
     </LayoutWrapper>
