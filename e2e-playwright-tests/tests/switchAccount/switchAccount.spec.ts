@@ -17,9 +17,9 @@ const ZERO_VALUE = '0x0'
 const ONE_WEI = '0x1'
 const MESSAGE = 'Ambire e2e - sign after switching accounts'
 
-const TRANSACTION_SIGNATURE_LABEL = 'transaction signature'
-const MESSAGE_SIGNATURE_LABEL = 'message signature'
-const SWITCH_ACCOUNT_TITLE = 'Switch Account Request'
+const TRANSACTION_SWITCH_REASON = 'Switch to this account to sign the transaction.'
+const MESSAGE_SWITCH_REASON = 'Switch to this account to sign the message.'
+const SWITCH_ACCOUNT_TITLE = 'Switch account request from'
 
 const REQUEST_SCREEN_TIMEOUT = 30000
 const REQUEST_WINDOW_CLOSE_TIMEOUT = 15000
@@ -44,11 +44,11 @@ const buildTransactionParams = (method: TransactionMethod, from: string, value: 
   ]
 }
 
-const expectSwitchAccountPrompt = async (requestWindow: Page, nextRequestLabel: string) => {
+const expectSwitchAccountPrompt = async (requestWindow: Page, switchReason: string) => {
   await expect(requestWindow.getByText(SWITCH_ACCOUNT_TITLE)).toBeVisible({
     timeout: REQUEST_SCREEN_TIMEOUT
   })
-  await expect(requestWindow.getByText(`requires a ${nextRequestLabel}`)).toBeVisible()
+  await expect(requestWindow.getByText(switchReason)).toBeVisible()
 }
 
 const getOpenRequestWindows = (context: BrowserContext) =>
@@ -78,7 +78,7 @@ const rejectRequest = async (requestWindow: Page, rejectButtonTestID: string) =>
 
 type DenySwitchCase = {
   name: string
-  nextRequestLabel: string
+  switchReason: string
   method: string
   getParams: () => unknown[]
 }
@@ -87,13 +87,13 @@ type DenySwitchCase = {
 const DENY_CASES: DenySwitchCase[] = [
   {
     name: 'message',
-    nextRequestLabel: MESSAGE_SIGNATURE_LABEL,
+    switchReason: MESSAGE_SWITCH_REASON,
     method: 'personal_sign',
     getParams: () => [hexlify(toUtf8Bytes(MESSAGE)), BASIC_ACCOUNT_ADDR]
   },
   {
     name: 'transaction',
-    nextRequestLabel: TRANSACTION_SIGNATURE_LABEL,
+    switchReason: TRANSACTION_SWITCH_REASON,
     method: 'eth_sendTransaction',
     getParams: () => buildTransactionParams('eth_sendTransaction', BASIC_ACCOUNT_ADDR!, ZERO_VALUE)
   }
@@ -141,7 +141,7 @@ test.describe('switchAccount', { tag: '@switchAccount' }, () => {
             buildTransactionParams(method, SMART_ACCOUNT_ADDR, ZERO_VALUE)
           )
 
-          await expectSwitchAccountPrompt(requestWindow, TRANSACTION_SIGNATURE_LABEL)
+          await expectSwitchAccountPrompt(requestWindow, TRANSACTION_SWITCH_REASON)
         })
 
         await test.step(`${method}: switching shows the transaction for the smart account`, async () => {
@@ -204,7 +204,7 @@ test.describe('switchAccount', { tag: '@switchAccount' }, () => {
           buildTransactionParams('eth_sendTransaction', SMART_ACCOUNT_ADDR, ONE_WEI)
         )
 
-        await expectSwitchAccountPrompt(requestWindow, TRANSACTION_SIGNATURE_LABEL)
+        await expectSwitchAccountPrompt(requestWindow, TRANSACTION_SWITCH_REASON)
         expect(await pages.dashboard.getSelectedAccount()).toBe(BASIC_ACCOUNT_ADDR)
       })
 
@@ -236,6 +236,8 @@ test.describe('switchAccount', { tag: '@switchAccount' }, () => {
   test.describe('connected with only the basic account', () => {
     test.beforeEach(async ({ pages }) => {
       await pages.stubDapp.connect(CHAIN_ID, [BASIC_ACCOUNT_ADDR!])
+      // Connecting picked the basic account for the app, which also selected it in the wallet
+      await pages.dashboard.selectAccount(SMART_ACCOUNT_ADDR)
     })
 
     test("a message for an account that isn't selected is shown in the same window after the switch", async ({
@@ -250,7 +252,7 @@ test.describe('switchAccount', { tag: '@switchAccount' }, () => {
           BASIC_ACCOUNT_ADDR
         ])
 
-        await expectSwitchAccountPrompt(requestWindow, MESSAGE_SIGNATURE_LABEL)
+        await expectSwitchAccountPrompt(requestWindow, MESSAGE_SWITCH_REASON)
       })
 
       await test.step('switching shows the message in the same window', async () => {
@@ -278,13 +280,13 @@ test.describe('switchAccount', { tag: '@switchAccount' }, () => {
     test('denying the switch for a message or a transaction tells the app the user refused', async ({
       pages
     }) => {
-      for (const { name, nextRequestLabel, method, getParams } of DENY_CASES) {
+      for (const { name, switchReason, method, getParams } of DENY_CASES) {
         const requestId = `denied-${name}`
 
         await test.step(`the app asks for a ${name} from the basic account`, async () => {
           const requestWindow = await pages.stubDapp.sendRequest(requestId, method, getParams())
 
-          await expectSwitchAccountPrompt(requestWindow, nextRequestLabel)
+          await expectSwitchAccountPrompt(requestWindow, switchReason)
           await rejectRequest(requestWindow, selectors.switchAccountDenyButton)
         })
 

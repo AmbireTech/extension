@@ -66,7 +66,8 @@ const Backdrop = ({
           zIndex: customZIndex || styles.backDrop.zIndex
         }
       ]}
-      nativeID={withBlur ? 'modalBackdrop' : undefined}
+      // Dropped as the sheet starts closing, so the page blur fades out along with the dimming
+      nativeID={withBlur && isBottomSheetVisible ? 'modalBackdrop' : undefined}
       pointerEvents={isVisible ? 'auto' : 'none'}
     >
       <TouchableOpacity style={flexboxStyles.flex1} activeOpacity={1} onPress={onPress}>
