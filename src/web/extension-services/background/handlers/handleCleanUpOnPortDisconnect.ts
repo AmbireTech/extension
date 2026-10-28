@@ -1,5 +1,5 @@
-import { MainController } from '@ambire-common/controllers/main/main'
-import { ONBOARDING_WEB_ROUTES } from '@common/modules/router/constants/common'
+import type { MainController } from '@ambire-common/controllers/main/main'
+import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import { IS_FIREFOX } from '@web/constants/common'
 import { forgetPanelWindowId } from '@web/extension-services/background/webapi/panel'
 import { Port } from '@web/extension-services/messengers'
@@ -81,11 +81,17 @@ export const handleCleanUpOnPortDisconnect = async ({
     (r) => url.pathname.includes(r) && port.name === 'tab'
   )
 
+  const isAccountPickerFlowRoute = [WEB_ROUTES.accountPersonalize, WEB_ROUTES.accountPicker].some(
+    (r) => url.pathname.includes(r)
+  )
+
   // The logic below ensures that if the onboarding flow was forcefully closed,
   // the AccountsPersonalize screen will not be shown the next time the extension is opened.
   if (isOnboardingRoute) {
-    // handles the case when the accountPicker is initialized
-    if (mainCtrl.accountPicker.isInitialized) {
+    // handles the case when the accountPicker is initialized. Only closing the tab that runs
+    // the account picker flow resets it - closing another onboarding tab would kill an import
+    // running in a different tab.
+    if (isAccountPickerFlowRoute && mainCtrl.accountPicker.isInitialized) {
       await mainCtrl.accountPicker.reset()
     }
 

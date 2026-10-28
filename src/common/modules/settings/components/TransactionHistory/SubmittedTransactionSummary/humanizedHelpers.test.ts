@@ -158,3 +158,57 @@ describe('getDappInteractions Safe deployment', () => {
     ])
   })
 })
+
+describe('getDappInteractions swap/bridge', () => {
+  const SWAP_ROUTER = '0x0000000000000000000000000000000000000001'
+  const RECIPIENT = '0x0000000000000000000000000000000000000002'
+  const getNames = (overrides: Partial<SubmittedAccountOpLike>) =>
+    getDappInteractions(buildSubmittedAccountOp(overrides)).map(({ name }) => name)
+
+  test('shows a swap from the swap form as a swap/bridge', () => {
+    expect(
+      getNames({
+        calls: [{ to: SWAP_ROUTER, value: 0n, data: '0x1234', activeRouteId: 'route' }],
+        meta: {
+          swapTxn: {
+            activeRouteId: 'route',
+            approvalData: null,
+            chainId: 1,
+            txData: '0x1234',
+            txTarget: SWAP_ROUTER,
+            userTxIndex: 0,
+            value: '0'
+          }
+        }
+      })
+    ).toEqual(['Swap/Bridge'])
+  })
+
+  test('shows a swap without swap route info (e.g. a repeated one) as a swap/bridge', () => {
+    expect(
+      getNames({
+        calls: [{ to: SWAP_ROUTER, value: 0n, data: '0x1234', activeRouteId: 'route-repeat' }]
+      })
+    ).toEqual(['Swap/Bridge'])
+  })
+
+  test('shows a batch of a send and a repeated swap as a swap/bridge', () => {
+    expect(
+      getNames({
+        calls: [
+          { to: RECIPIENT, value: 1n, data: '0x' },
+          { to: SWAP_ROUTER, value: 0n, data: '0x1234', activeRouteId: 'route-repeat' }
+        ]
+      })
+    ).toEqual(['Swap/Bridge'])
+  })
+
+  test.each([undefined, ''])(
+    'does not show a call with activeRouteId %p as a swap/bridge',
+    (activeRouteId) => {
+      expect(
+        getNames({ calls: [{ to: RECIPIENT, value: 1n, data: '0x', activeRouteId }] })
+      ).toEqual(['Send'])
+    }
+  )
+})

@@ -379,29 +379,37 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     }
   }, [goToNextRoute, initParams, type, triggeredHwWalletFlow, path])
 
-  // Reset the AccountPickerController if it is initialized and
-  // the current route is not one of 'account-personalize' or 'account-picker'
+  const wasOnAccountPickerFlowRef = useRef(false)
+
+  // Reset the AccountPickerController if it is initialized and this tab navigated away
+  // from 'account-personalize' or 'account-picker'. Other tabs sitting on an onboarding
+  // route must not reset it, because that kills an import running in this tab.
   useEffect(() => {
     if (!onboardingInitialized) return
-    if (!isInitialized) return
 
     const currentRoute = path?.substring(1) || ''
     if (!currentRoute) return
 
-    const shouldResetAccountPicker = ![
-      WEB_ROUTES.accountPersonalize,
-      WEB_ROUTES.accountPicker
-    ].some((r) => currentRoute.includes(r))
+    const isOnAccountPickerFlow = [WEB_ROUTES.accountPersonalize, WEB_ROUTES.accountPicker].some(
+      (r) => currentRoute.includes(r)
+    )
 
-    if (shouldResetAccountPicker) {
-      accountPickerDispatch({
-        type: 'method',
-        params: {
-          method: 'reset',
-          args: []
-        }
-      })
+    if (isOnAccountPickerFlow) {
+      wasOnAccountPickerFlowRef.current = true
+      return
     }
+
+    if (!wasOnAccountPickerFlowRef.current) return
+    wasOnAccountPickerFlowRef.current = false
+    if (!isInitialized) return
+
+    accountPickerDispatch({
+      type: 'method',
+      params: {
+        method: 'reset',
+        args: []
+      }
+    })
   }, [onboardingInitialized, path, accountPickerDispatch, isInitialized, history])
 
   // Some routes are protected and should only be accessed through internal navigation.
