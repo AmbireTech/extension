@@ -243,7 +243,7 @@ const ManageRecoveryPhrase = ({
             />
           )}
         </View>
-        {isPassphraseNotSaved && (
+        {isSeedRevealed && isPassphraseNotSaved && (
           <Alert
             type="info"
             isTypeLabelHidden
@@ -263,7 +263,7 @@ const ManageRecoveryPhrase = ({
             isWeb && flexbox.justifySpaceBetween,
             isWeb ? spacings.mtTy : spacings.mtSm,
             isWeb && { marginHorizontal: -SPACING_SM },
-            isMobile && spacings.mbLg
+            isWeb ? spacings.mbSm : spacings.mbLg
           ]}
         >
           <View
