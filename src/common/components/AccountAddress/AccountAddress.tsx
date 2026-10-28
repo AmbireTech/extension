@@ -109,12 +109,16 @@ const AccountAddress: FC<Props> = ({
     return `${name} (${t('Updated {{timeAgo}}', { timeAgo: getTimeAgo(new Date(updatedAt)) })})`
   }, [name, updatedAt, t])
 
+  // Shortened further next to a resolved name in a narrow view, so the name isn't the part
+  // that gets truncated. Shared by the address with and without a copy button
+  const webMaxLength = showResolvedName && isNarrowWebLayout ? 10 : 16
+
   // On mobile, and in a narrow view, the address takes most of the row width,
   // but when a resolved name is displayed next to it, keep it short so the name isn't
   // truncated (shortened further in a narrow view, where space is tighter)
   const getWithCopyMaxLength = () => {
     if (addressHighlight || withWrap) return 42
-    if (!isMobile) return showResolvedName && isNarrowWebLayout ? 10 : 16
+    if (!isMobile) return webMaxLength
 
     return showResolvedName ? 13 : 42
   }
@@ -189,7 +193,7 @@ const AccountAddress: FC<Props> = ({
           ) : (
             <>
               <PlainAddress
-                maxLength={isMobile ? 13 : 16}
+                maxLength={isMobile ? 13 : webMaxLength}
                 address={address}
                 // A shortened address already hides its middle, so letting it shrink would add a
                 // trailing ellipsis on top of that and hide the suffix. On a narrow view
