@@ -5,8 +5,6 @@ import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
-import { Key } from '@ambire-common/interfaces/keystore'
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { findAccountOpOrReplacement } from '@ambire-common/libs/activity/replacements'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
@@ -244,49 +242,6 @@ const useTransfer = (isTopUpScreen: boolean) => {
     })
     openEstimationModal()
   }, [openEstimationModal, transferDispatch])
-
-  const handleUpdateStatus = useCallback(
-    (status: SigningStatus) => {
-      transferDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['update', [status]]
-        }
-      })
-    },
-    [transferDispatch]
-  )
-  const updateController = useCallback(
-    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      transferDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['update', [params]]
-        }
-      })
-    },
-    [transferDispatch]
-  )
-  const replacePendingAccountOp = useCallback(() => {
-    transferDispatch({
-      type: 'method',
-      params: {
-        method: 'callSignAccountOpMethod',
-        args: ['replacePendingAccountOp', []]
-      }
-    })
-  }, [transferDispatch])
-  const stopReplacingPendingAccountOp = useCallback(() => {
-    transferDispatch({
-      type: 'method',
-      params: {
-        method: 'callSignAccountOpMethod',
-        args: ['stopReplacingPendingAccountOp', []]
-      }
-    })
-  }, [transferDispatch])
 
   // Used to resolve ENS and keep the controller in sync with the resolved field value
   const setAddressState = useCallback(
@@ -579,10 +534,6 @@ const useTransfer = (isTopUpScreen: boolean) => {
     estimationModalRef,
     closeEstimationModalAndDispatch,
     handleEstimationModalClosed,
-    updateController,
-    replacePendingAccountOp,
-    stopReplacingPendingAccountOp,
-    handleUpdateStatus,
     portfolio,
     account
   }

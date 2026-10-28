@@ -30,6 +30,7 @@ import CompactFooterButtons, {
 } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
+import useSignAccountOpMethodDispatch from '@common/modules/sign-account-op/hooks/useSignAccountOpMethodDispatch'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
@@ -42,12 +43,6 @@ export type OneClickEstimationProps = {
   closeEstimationModal: () => void
   /** Called once the sheet closed. Must only reset state, closing the sheet from it loops */
   onEstimationModalClosed?: () => void
-  handleUpdateStatus: (status: SigningStatus) => void
-  updateController: (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => void
-  /** Sends this transaction in place of the earlier pending one, see `replacePendingAccountOp` */
-  onReplace: () => void
-  /** Goes back to waiting for the earlier pending transaction, see `stopReplacingPendingAccountOp` */
-  onStopReplacing: () => void
   estimationModalRef: React.RefObject<any>
   errors?: SignAccountOpError[]
   signAccountOpController: ISignAccountOpController | null
@@ -67,10 +62,6 @@ const selectNetworks = (state: AllControllersMappingType['NetworksController']) 
 const OneClickEstimation = ({
   closeEstimationModal,
   onEstimationModalClosed,
-  handleUpdateStatus,
-  updateController,
-  onReplace,
-  onStopReplacing,
   estimationModalRef,
   signAccountOpController,
   hasProceeded,
@@ -86,6 +77,25 @@ const OneClickEstimation = ({
   const chainId = signAccountOpController?.accountOp.chainId
   const network = useMemo(() => networks.find((n) => n.chainId === chainId), [networks, chainId])
   const hasFreshActionPressRef = useRef(false)
+  const dispatchSignAccountOpMethod = useSignAccountOpMethodDispatch(updateType)
+
+  const handleUpdateStatus = useCallback(
+    (status: SigningStatus) => dispatchSignAccountOpMethod('updateStatus', [status]),
+    [dispatchSignAccountOpMethod]
+  )
+  const updateController = useCallback(
+    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) =>
+      dispatchSignAccountOpMethod('update', [params]),
+    [dispatchSignAccountOpMethod]
+  )
+  const replacePendingAccountOp = useCallback(
+    () => dispatchSignAccountOpMethod('replacePendingAccountOp', []),
+    [dispatchSignAccountOpMethod]
+  )
+  const stopReplacingPendingAccountOp = useCallback(
+    () => dispatchSignAccountOpMethod('stopReplacingPendingAccountOp', []),
+    [dispatchSignAccountOpMethod]
+  )
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -254,13 +264,14 @@ const OneClickEstimation = ({
         <EarlierPendingTransaction
           style={spacings.mt}
           signAccountOpState={signAccountOpController}
-          onReplace={onReplace}
-          onStopReplacing={onStopReplacing}
+          onReplace={replacePendingAccountOp}
+          onStopReplacing={stopReplacingPendingAccountOp}
           onReplacementRequestOpen={closeEstimationModal}
         />
         <BundlerWarning
           signAccountOpState={signAccountOpController}
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+          updateType={updateType}
           hasMarginTop
         />
         {isCompactLayout ? (
@@ -328,8 +339,8 @@ const OneClickEstimation = ({
     t,
     updateType,
     visibleSigningErrors,
-    onReplace,
-    onStopReplacing
+    replacePendingAccountOp,
+    stopReplacingPendingAccountOp
   ])
 
   return (

@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -32,7 +31,6 @@ import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
-import type { Key } from '@ambire-common/interfaces/keystore'
 const { isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
@@ -169,49 +167,6 @@ const SwapAndBridgeScreen = () => {
     }
   }, [requestsCtrlDispatch, account, navigate, sessionId, swapAndBridgeDispatch])
 
-  const handleUpdateStatus = useCallback(
-    (status: SigningStatus) => {
-      swapAndBridgeDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['updateStatus', [status]]
-        }
-      })
-    },
-    [swapAndBridgeDispatch]
-  )
-  const updateController = useCallback(
-    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      swapAndBridgeDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['update', [params]]
-        }
-      })
-    },
-    [swapAndBridgeDispatch]
-  )
-  const replacePendingAccountOp = useCallback(() => {
-    swapAndBridgeDispatch({
-      type: 'method',
-      params: {
-        method: 'callSignAccountOpMethod',
-        args: ['replacePendingAccountOp', []]
-      }
-    })
-  }, [swapAndBridgeDispatch])
-  const stopReplacingPendingAccountOp = useCallback(() => {
-    swapAndBridgeDispatch({
-      type: 'method',
-      params: {
-        method: 'callSignAccountOpMethod',
-        args: ['stopReplacingPendingAccountOp', []]
-      }
-    })
-  }, [swapAndBridgeDispatch])
-
   const buttons = useMemo(() => {
     return (
       <Buttons
@@ -321,10 +276,6 @@ const SwapAndBridgeScreen = () => {
           updateType="Swap&Bridge"
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalWrapped}
-          updateController={updateController}
-          onReplace={replacePendingAccountOp}
-          onStopReplacing={stopReplacingPendingAccountOp}
-          handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           serviceFee={quote?.selectedRoute?.serviceFee}

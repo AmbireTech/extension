@@ -53,6 +53,7 @@ import PayOption from '@common/modules/sign-account-op/components/Estimation/com
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import SpeedUpFeeComparison from '@common/modules/sign-account-op/components/Estimation/components/SpeedUpFeeComparison'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
+import useSignAccountOpMethodDispatch from '@common/modules/sign-account-op/hooks/useSignAccountOpMethodDispatch'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -135,9 +136,7 @@ const Estimation = ({
   isOneClick,
   isViewOnly
 }: Props) => {
-  const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
-  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
-  const { dispatch: transferDispatch } = useController('TransferController')
+  const dispatchSignAccountOpMethod = useSignAccountOpMethodDispatch(updateType)
   const { state } = useController('AddressBookController')
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: broadcastedButNotConfirmed } = useController(
@@ -205,63 +204,14 @@ const Estimation = ({
   const [baselineFeeOption, setBaselineFeeOption] = useState<SelectValue['value'] | null>(null)
 
   const dispatchUpdate = useCallback<DispatchUpdate>(
-    (update) => {
-      if (updateType === 'Swap&Bridge') {
-        swapAndBridgeDispatch({
-          type: 'method',
-          params: {
-            method: 'callSignAccountOpMethod',
-            args: ['update', [update]]
-          }
-        })
-      } else if (updateType === 'Transfer&TopUp') {
-        transferDispatch({
-          type: 'method',
-          params: {
-            method: 'callSignAccountOpMethod',
-            args: ['update', [update]]
-          }
-        })
-      } else {
-        signAccountOpDispatch({
-          type: 'method',
-          params: {
-            method: 'update',
-            args: [update]
-          }
-        })
-      }
-    },
-    [swapAndBridgeDispatch, transferDispatch, signAccountOpDispatch, updateType]
+    (update) => dispatchSignAccountOpMethod('update', [update]),
+    [dispatchSignAccountOpMethod]
   )
 
-  const enableErc4337AndReestimate = useCallback(() => {
-    if (updateType === 'Swap&Bridge') {
-      swapAndBridgeDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['enableErc4337AndReestimate', []]
-        }
-      })
-    } else if (updateType === 'Transfer&TopUp') {
-      transferDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['enableErc4337AndReestimate', []]
-        }
-      })
-    } else {
-      signAccountOpDispatch({
-        type: 'method',
-        params: {
-          method: 'enableErc4337AndReestimate',
-          args: []
-        }
-      })
-    }
-  }, [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType])
+  const enableErc4337AndReestimate = useCallback(
+    () => dispatchSignAccountOpMethod('enableErc4337AndReestimate', []),
+    [dispatchSignAccountOpMethod]
+  )
 
   const dismissEnableErc4337Prompt = useCallback(() => {
     setIsEnableErc4337PromptDismissed(true)
@@ -917,6 +867,7 @@ const Estimation = ({
         <BundlerWarning
           signAccountOpState={signAccountOpState}
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+          updateType={updateType}
         />
         {enableErc4337Prompt}
       </View>
