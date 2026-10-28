@@ -1,0 +1,3 @@
+import EnterSeedPassphraseBottomSheet from './EnterSeedPassphraseBottomSheet'
+
+export default EnterSeedPassphraseBottomSheet

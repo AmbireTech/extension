@@ -8,6 +8,7 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
+import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -15,6 +16,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
+import EnterSeedPassphraseBottomSheet from '@common/modules/account-select/components/EnterSeedPassphraseBottomSheet'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -26,6 +28,8 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const selectStatuses = (state: AllControllersMappingType['StorageController']) => state.statuses
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
+type SavedSeed = AllControllersMappingType['KeystoreController']['seeds'][number]
 
 const SavedSeedPhrasesBottomSheet = ({
   sheetRef,
@@ -46,6 +50,8 @@ const SavedSeedPhrasesBottomSheet = ({
   const { dispatch } = useControllersMiddleware()
   const { subType, initParams } = useController('AccountPickerController').state
   const [addAccountButtonPressed, setAddAccountButtonPressed] = useState(false)
+  // The phrase whose passphrase is asked for, as it isn't saved. The sheet is mounted only then
+  const [seedToEnterPassphraseFor, setSeedToEnterPassphraseFor] = useState<SavedSeed | null>(null)
   const { goToNextRoute } = useOnboardingNavigation()
   const { navigate } = useNavigation()
 
@@ -67,23 +73,38 @@ const SavedSeedPhrasesBottomSheet = ({
     [keys, accounts]
   )
 
-  const handleAddAddressFromSeed = useCallback(
-    (id: string) => {
+  const initAccountPickerFromSeed = useCallback(
+    (params: { id: string; seedPassphrase?: string; shouldSavePassphrase?: boolean }) => {
       setAddAccountButtonPressed(true)
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE',
-        params: { id }
-      })
+      dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE', params })
     },
     [dispatch]
   )
 
-  const renderItem = ({
-    item,
-    index
-  }: ListRenderItemInfo<
-    ReturnType<typeof useController<'KeystoreController'>>['state']['seeds'][number]
-  >) => {
+  const handleAddAddressFromSeed = useCallback(
+    (seed: SavedSeed) => {
+      if (seed.withPassphrase && !seed.isPassphraseSaved) {
+        setSeedToEnterPassphraseFor(seed)
+        return
+      }
+
+      initAccountPickerFromSeed({ id: seed.id })
+    },
+    [initAccountPickerFromSeed]
+  )
+
+  const handlePassphraseConfirmed = useCallback(
+    (params: { seedPassphrase: string; shouldSavePassphrase: boolean }) => {
+      if (!seedToEnterPassphraseFor) return
+
+      initAccountPickerFromSeed({ id: seedToEnterPassphraseFor.id, ...params })
+    },
+    [initAccountPickerFromSeed, seedToEnterPassphraseFor]
+  )
+
+  const unmountPassphraseSheet = useCallback(() => setSeedToEnterPassphraseFor(null), [])
+
+  const renderItem = ({ item, index }: ListRenderItemInfo<SavedSeed>) => {
     const seedAccounts = getAccountsForSeed(item.id) || []
 
     return (
@@ -106,15 +127,20 @@ const SavedSeedPhrasesBottomSheet = ({
             spacings.mbSm
           ]}
         >
-          <Text weight="medium" appearance="secondaryText" numberOfLines={1} style={spacings.plSm}>
-            {item.label}
-          </Text>
+          <View style={[flexbox.flex1, flexbox.alignStart, spacings.plSm, spacings.mrSm]}>
+            <Text weight="medium" appearance="secondaryText" numberOfLines={1}>
+              {item.label}
+            </Text>
+            {item.withPassphrase && (
+              <PassphraseBadge passphraseLabel={item.passphraseLabel} style={spacings.mtMi} />
+            )}
+          </View>
           <Button
             text={t('Add account')}
             hasBottomSpacing={false}
             size="smaller"
             type="secondary"
-            onPress={() => handleAddAddressFromSeed(item.id)}
+            onPress={() => handleAddAddressFromSeed(item)}
             childrenPosition="left"
             // On mobile secondary buttons share the card's background, so it takes the web one
             style={isMobile ? { backgroundColor: theme.primaryBackground } : undefined}
@@ -160,33 +186,43 @@ const SavedSeedPhrasesBottomSheet = ({
   }
 
   return (
-    <BottomSheet
-      id="seed-phrases-bottom-sheet"
-      sheetRef={sheetRef}
-      closeBottomSheet={close}
-      HeaderComponent={
-        <ModalHeader handleClose={handleClose} title={t('Add from recovery phrase')}>
-          <Pressable
-            onPress={() => {
-              navigate(ROUTES.recoveryPhrasesSettings)
-            }}
-          >
-            {({ hovered }: any) => (
-              <SettingsIcon
-                width={28}
-                height={28}
-                color={hovered ? theme.primaryText : theme.iconPrimary}
-              />
-            )}
-          </Pressable>
-        </ModalHeader>
-      }
-      flatListProps={{
-        data: seeds,
-        renderItem,
-        keyExtractor: (item) => item.id
-      }}
-    />
+    <>
+      <BottomSheet
+        id="seed-phrases-bottom-sheet"
+        sheetRef={sheetRef}
+        closeBottomSheet={close}
+        HeaderComponent={
+          <ModalHeader handleClose={handleClose} title={t('Add from recovery phrase')}>
+            <Pressable
+              onPress={() => {
+                navigate(ROUTES.recoveryPhrasesSettings)
+              }}
+            >
+              {({ hovered }: any) => (
+                <SettingsIcon
+                  width={28}
+                  height={28}
+                  color={hovered ? theme.primaryText : theme.iconPrimary}
+                />
+              )}
+            </Pressable>
+          </ModalHeader>
+        }
+        flatListProps={{
+          data: seeds,
+          renderItem,
+          keyExtractor: (item) => item.id
+        }}
+      />
+      {seedToEnterPassphraseFor && (
+        <EnterSeedPassphraseBottomSheet
+          seed={seedToEnterPassphraseFor}
+          accountsCount={getAccountsForSeed(seedToEnterPassphraseFor.id).length}
+          onConfirmed={handlePassphraseConfirmed}
+          onClosed={unmountPassphraseSheet}
+        />
+      )}
+    </>
   )
 }
 

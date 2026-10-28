@@ -93,7 +93,7 @@ type MainControllerAccountPickerInitNfcWalletAction = {
 }
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
-  params: { id: string }
+  params: { id: string; seedPassphrase?: string | null; shouldSavePassphrase?: boolean }
 }
 
 type ResetAccountAddingOnPageErrorAction = {

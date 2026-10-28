@@ -7,6 +7,8 @@ import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import SavePassphraseToggle from '@common/components/SavePassphraseToggle'
+import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -29,6 +31,8 @@ const SeedPhraseImportScreen = () => {
     isValid,
     enablePassphrase,
     setEnablePassphrase,
+    shouldSavePassphrase,
+    setShouldSavePassphrase,
     seedPhraseStatus,
     seedPhraseError,
     seedCaretPosition,
@@ -87,24 +91,36 @@ const SeedPhraseImportScreen = () => {
                 style={flexbox.alignSelfStart}
               />
               {enablePassphrase ? (
-                <View style={styles.passphraseContainer}>
-                  <Controller
-                    control={control}
-                    rules={{ required: enablePassphrase }}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <InputPassword
-                        testID="input-passphrase"
-                        onBlur={onBlur}
-                        backgroundColor={theme.secondaryBackground}
-                        onChangeText={onChange}
-                        value={value}
-                        placeholder="Recovery phrase passphrase"
-                        containerStyle={flexbox.flex1}
-                      />
+                <>
+                  <View style={styles.passphraseContainer}>
+                    <Controller
+                      control={control}
+                      rules={{ required: enablePassphrase }}
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <InputPassword
+                          testID="input-passphrase"
+                          onBlur={onBlur}
+                          backgroundColor={theme.secondaryBackground}
+                          onChangeText={onChange}
+                          value={value}
+                          placeholder="Recovery phrase passphrase"
+                          containerStyle={flexbox.flex1}
+                        />
+                      )}
+                      name="passphrase"
+                    />
+                  </View>
+                  <Text fontSize={12} appearance="secondaryText" style={spacings.mvSm}>
+                    {t(
+                      'By default, only the recovery phrase is saved on this device, not its passphrase.'
                     )}
-                    name="passphrase"
+                  </Text>
+                  <SavePassphraseToggle
+                    testID="save-passphrase-toggle"
+                    isOn={shouldSavePassphrase}
+                    onToggle={() => setShouldSavePassphrase((prev) => !prev)}
                   />
-                </View>
+                </>
               ) : null}
             </ScrollableWrapper>
             <View style={spacings.pt}>

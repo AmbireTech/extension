@@ -6,6 +6,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Option from '@common/components/Option'
+import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -84,15 +85,19 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
 
         return (
           <View key={seed.id} style={[styles.seedRow, hasAccount && styles.seedRowWithAccount]}>
-            <Text
-              fontSize={16}
-              weight="medium"
-              appearance={hasAccount ? 'secondaryText' : 'primaryText'}
-              numberOfLines={1}
-              style={[flexbox.flex1, spacings.mrSm]}
-            >
-              {seed.label}
-            </Text>
+            <View style={[flexbox.flex1, flexbox.alignStart, spacings.mrSm]}>
+              <Text
+                fontSize={16}
+                weight="medium"
+                appearance={hasAccount ? 'secondaryText' : 'primaryText'}
+                numberOfLines={1}
+              >
+                {seed.label}
+              </Text>
+              {seed.withPassphrase && (
+                <PassphraseBadge passphraseLabel={seed.passphraseLabel} style={spacings.mtMi} />
+              )}
+            </View>
             {hasAccount ? (
               <Text fontSize={16} weight="medium" appearance="secondaryText" style={spacings.phSm}>
                 {t('Already added')}

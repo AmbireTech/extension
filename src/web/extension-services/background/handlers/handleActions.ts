@@ -1,7 +1,6 @@
 import { MainController } from '@ambire-common/controllers/main/main'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
-import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
@@ -134,15 +133,7 @@ export const handleActions = async (
       return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
-      const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
-      if (!keystoreSavedSeed) return
-
-      const keyIterator = new KeyIterator(keystoreSavedSeed.seed, keystoreSavedSeed.seedPassphrase)
-      mainCtrl.accountPicker.setInitParams({
-        keyIterator,
-        hdPathTemplate: keystoreSavedSeed.hdPathTemplate
-      })
-      break
+      return await mainCtrl.accountPickerSetInitParamsFromSavedSeed(params)
     }
 
     case 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR': {
