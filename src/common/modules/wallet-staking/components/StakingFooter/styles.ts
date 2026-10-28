@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import { isWeb } from '@common/config/env'
-import { COMPACT_LAYOUT_BUTTON_HEIGHT } from '@common/components/Button'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 
 interface Styles {
@@ -36,13 +36,13 @@ const getStyles = () =>
     footerButton: {
       ...spacings.mb0,
       ...(isWeb ? spacings.phLg : {}),
-      height: isWeb ? 48 : 56,
+      height: isWeb ? 48 : BUTTON_HEIGHT,
       borderRadius: 18
     },
     // Halves of the row, as tall as the regular size buttons in the other narrow view footers
     footerButtonCompact: {
       flex: 1,
-      height: COMPACT_LAYOUT_BUTTON_HEIGHT
+      height: BUTTON_HEIGHT
     }
   })
 

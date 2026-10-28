@@ -50,11 +50,8 @@ const OnboardingCompletedScreen = () => {
         {/* No padding of its own, so the panel starts where the other onboarding ones do.
         The pin info floats above it and needs no room reserved for it. */}
         <TabLayoutWrapperMainContent withScroll={false}>
-          <Panel
-            type="onboarding"
-            spacingsSize="small"
-            style={{ overflow: 'visible', minHeight: 520 }}
-          >
+          {/* The onboarding panel's own min height, as tall as the other onboarding steps */}
+          <Panel type="onboarding" spacingsSize="small" style={{ overflow: 'visible' }}>
             <View style={[flexbox.flex1, flexbox.alignCenter, spacings.pt3Xl]}>
               <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
                 <ConfettiAnimation

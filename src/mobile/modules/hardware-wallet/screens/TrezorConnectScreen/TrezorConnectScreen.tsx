@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
@@ -9,8 +9,8 @@ import Text from '@common/components/Text'
 import { isiOS } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -25,37 +25,23 @@ import {
 // Suite) and advances to account selection once the picker is ready.
 const TrezorConnectScreen = () => {
   const { t } = useTranslation()
-  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const { dispatch } = useControllersMiddleware()
+  const { goToPrevRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
   const mainCtrlState = useController('MainController').state
-  const { initParams, type } = useController('AccountPickerController').state
 
-  // Set when the user explicitly starts the import on this screen. The deep-link
-  // to Suite must only happen on that action, never on mount — otherwise every
-  // entry (including navigating back from the account picker) would instantly
+  // The deep-link to Suite happens only on this explicit action, never on mount -
+  // otherwise every entry (including a back from the account picker) would instantly
   // redirect to Suite and trap the user.
-  const [importStarted, setImportStarted] = useState(false)
-
-  // Guards against navigating twice if the picker-ready effect re-fires before
-  // this screen unmounts.
-  const hasNavigatedRef = useRef(false)
-
-  const startImport = useCallback(() => {
-    // Retrieving the accounts triggers an ethereumGetPublicKey call that deep-links into
-    // Trezor Suite app; the user approves there and Suite returns the result.
-    setImportStarted(true)
-    dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
-  }, [dispatch])
-
-  // Advance to account selection only after the user started the import HERE and
-  // the picker became ready. Gating on `importStarted` prevents auto-forwarding
-  // when the user navigates back and `initParams` is still set from before.
-  useEffect(() => {
-    if (importStarted && initParams && type === 'trezor' && !hasNavigatedRef.current) {
-      hasNavigatedRef.current = true
-      goToNextRoute()
+  const startImport = useCallback(async () => {
+    try {
+      // Retrieving the accounts triggers an ethereumGetPublicKey call that deep-links into
+      // Trezor Suite app; the user approves there and Suite returns the result.
+      await initAccountPicker({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
+    } catch (error) {
+      // The controller reports its own failures, here the button only becomes usable again
+      console.error('Failed to set the account picker up for Trezor', error)
     }
-  }, [importStarted, initParams, type, goToNextRoute])
+  }, [initAccountPicker])
 
   const isLoading = mainCtrlState.statuses.handleAccountPickerInitTrezor === 'LOADING'
 

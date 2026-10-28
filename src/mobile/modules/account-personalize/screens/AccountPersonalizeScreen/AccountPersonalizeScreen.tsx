@@ -1,17 +1,16 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import Alert from '@common/components/Alert'
+import EditAccountIcon from '@common/assets/svg/EditAccountIcon'
+import RemoveAccountIcon from '@common/assets/svg/RemoveAccountIcon'
 import Button from '@common/components/Button'
 import DotsLoadingAnimation from '@common/components/DotsLoadingAnimation'
-import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
-import { Trans, useTranslation } from '@common/config/localization'
+import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
+import PersonalizeAccountsList from '@common/modules/account-personalize/components/PersonalizeAccountsList'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { FORWARD_NAVIGATION_STATE, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -23,60 +22,65 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
-import getStyles from './styles'
+// As tall as the header's back button (28), also while the button is hidden
+const HEADER_STYLE = { minHeight: 28 }
 
 const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
-  const { theme } = useTheme(getStyles)
-
   const {
-    isLoading,
-    fields,
     control,
-    accountPickerState,
-    accounts,
-    accountsToPersonalize,
-    handleSave,
+    fields,
+    isLoading,
+    hasBackButton,
+    isAdding,
+    accountsToRemove,
+    isRemovalOnly,
+    canProceed,
     handleSaveAccountName,
-    handleComplete,
-    handleContactSupport
+    handleProceed,
+    title,
+    proceedText,
+    removalOnlyText,
+    removalNote,
+    noAccountsText,
+    addMoreText
   } = useAccountPersonalize()
+
+  const listEmpty = useMemo(
+    () => (
+      <Text appearance="secondaryText" weight="medium" style={text.center}>
+        {noAccountsText}
+      </Text>
+    ),
+    [noAccountsText]
+  )
 
   return (
     <MobileLayoutContainer
       footer={
-        !isLoading &&
-        !accountPickerState.pageError && (
+        !isLoading && (
           <>
             <Button
-              testID="button-save-and-continue"
+              testID="button-proceed"
               size="large"
-              onPress={handleComplete}
+              type={isRemovalOnly ? 'danger' : 'primary'}
+              onPress={handleProceed}
               hasBottomSpacing={false}
-              text={t('Complete')}
-              disabled={!accounts.length}
+              text={proceedText}
+              disabled={!canProceed}
             />
-
-            {['seed', 'hw'].includes(accountPickerState.subType as any) && (
+            {!!addMoreText && (
               <Button
                 testID="add-more-accounts-btn"
                 type="outline"
-                text={t('Add more accounts from this {{source}}', {
-                  source:
-                    accountPickerState.subType === 'hw' ? 'hardware wallet' : 'recovery phrase'
-                })}
-                onPress={() => {
-                  handleSave()
-                  // Adding more accounts is a step forward, even when the picker
-                  // is the screen this flow arrived from (hardware wallets).
-                  goToNextRoute(WEB_ROUTES.accountPicker, FORWARD_NAVIGATION_STATE)
-                }}
-                style={{
-                  ...spacings.phMi,
-                  ...spacings.mtSm,
-                  height: isWeb ? 40 : 44
-                }}
+                text={addMoreText}
+                // Adding more accounts is a step forward, even when the picker
+                // is the screen this flow arrived from (hardware wallets).
+                onPress={() => goToNextRoute(WEB_ROUTES.accountPicker, FORWARD_NAVIGATION_STATE)}
+                disabled={isAdding}
+                style={{ ...spacings.phMi, ...spacings.mtSm, height: 44 }}
                 size="tiny"
                 hasBottomSpacing={false}
                 childrenPosition="left"
@@ -94,21 +98,14 @@ const AccountPersonalizeScreen = () => {
       }
     >
       <MobileLayoutWrapperMainContent
-        withBackButton
+        // The header stays, as tall as with the back button, so nothing moves once it shows up
+        withBackButton={hasBackButton}
+        headerStyle={HEADER_STYLE}
         onBackButtonPress={goToPrevRoute}
-        title={
-          accountPickerState.pageError
-            ? t('Accounts')
-            : !isLoading
-              ? accountsToPersonalize.length
-                ? t('Added successfully')
-                : t('No new accounts added')
-              : undefined
-        }
-        withScroll
+        title={title}
       >
-        {isLoading && !accountPickerState.pageError ? (
-          <View style={[flexbox.alignCenter]}>
+        {isLoading ? (
+          <View style={flexbox.alignCenter}>
             <View style={spacings.mbLg}>
               <AccountsLoadingAnimation />
             </View>
@@ -117,43 +114,26 @@ const AccountPersonalizeScreen = () => {
             </Text>
             <DotsLoadingAnimation />
           </View>
-        ) : accountPickerState.pageError ? (
-          <View style={flexbox.alignCenter}>
-            <Alert
-              type="warning"
-              title={accountPickerState.pageError}
-              text={
-                <Trans>
-                  <Alert.Text type="warning">
-                    Please go back and start the account-adding process again. If the problem
-                    persists, please{' '}
-                    <Text
-                      appearance="primary"
-                      style={text.underline}
-                      onPress={handleContactSupport}
-                    >
-                      contact our support team
-                    </Text>
-                    .
-                  </Alert.Text>
-                </Trans>
-              }
-            />
-          </View>
         ) : (
           <>
-            <SuccessAnimation style={{ ...spacings.mbXl, ...flexbox.alignSelfCenter }} />
-
-            {accountsToPersonalize.map((acc, index) => (
-              <AccountPersonalizeCard
-                key={acc.addr}
-                control={control}
-                index={index}
-                account={acc}
-                hasBottomSpacing={index !== fields.length - 1}
-                onSaveName={handleSaveAccountName}
-              />
-            ))}
+            <View testID="personalize-accounts-header" style={[flexbox.alignCenter, spacings.mbXl]}>
+              {isRemovalOnly ? <RemoveAccountIcon /> : <EditAccountIcon />}
+            </View>
+            {!!removalOnlyText && (
+              <Text appearance="secondaryText" style={[text.center, spacings.mbXl]}>
+                {removalOnlyText}
+              </Text>
+            )}
+            <PersonalizeAccountsList
+              fields={fields}
+              control={control}
+              accountsToRemove={accountsToRemove}
+              isAdding={isAdding}
+              onSaveName={handleSaveAccountName}
+              removalNote={removalNote}
+              ListEmptyComponent={listEmpty}
+              style={flexbox.flex1}
+            />
           </>
         )}
       </MobileLayoutWrapperMainContent>

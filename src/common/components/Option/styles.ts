@@ -14,7 +14,6 @@ const getStyles = () =>
   StyleSheet.create<Style>({
     container: {
       ...spacings.phTy,
-      ...spacings.pvTy,
       ...common.borderRadiusPrimary
     },
     iconWrapper: {

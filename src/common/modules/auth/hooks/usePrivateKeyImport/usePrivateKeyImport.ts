@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 
 import {
@@ -12,13 +12,13 @@ import {
   getAddressFromPrivateKey,
   getDuplicatePrivateKeyIndexes
 } from '@common/modules/auth/utils/privateKeys'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const DEFAULT_FORM_VALUES = { privateKeys: [{ value: '' }] }
 
-const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectKeystoreKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 
@@ -37,17 +37,11 @@ export default function usePrivateKeyImport() {
   const { goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
 
-  const { state: mainStatuses, dispatch: mainDispatch } = useController(
-    'MainController',
-    selectMainStatuses
-  )
+  const { dispatchAndWait: mainDispatchAndWait } = useController('MainController')
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: keystoreKeys } = useController('KeystoreController', selectKeystoreKeys)
   const [agreedToBackupWarning, setAgreedToBackupWarning] = useState(false)
   const [importButtonPressed, setImportButtonPressed] = useState(false)
-  // The account picker may already hold init params from an abandoned attempt, so waiting
-  // for them to appear is not enough. The status tells us the background is done.
-  const hasSeenLoading = useRef(false)
 
   const duplicatePrivateKeyIndexes = useMemo(
     () => getDuplicatePrivateKeyIndexes(privateKeys),
@@ -91,49 +85,41 @@ export default function usePrivateKeyImport() {
 
     await storage.set('agreedToBackupWarning', { acceptedAt: Date.now() })
 
-    await handleSubmit((formValues) => {
-      hasSeenLoading.current = false
+    await handleSubmit(async (formValues) => {
       setImportButtonPressed(true)
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'accountPickerSetInitParamsFromPrivateKeys',
-          args: [
-            {
-              privateKeys: formValues.privateKeys
-                .map(({ value }) => value)
-                .filter((value) => value.trim())
-            }
-          ]
-        }
-      })
+      try {
+        // Sets the picker up with the keys - personalize prepares their accounts
+        await mainDispatchAndWait({
+          type: 'method',
+          params: {
+            method: 'accountPickerSetInitParamsFromPrivateKeys',
+            args: [
+              {
+                privateKeys: formValues.privateKeys
+                  .map(({ value }) => value)
+                  .filter((value) => value.trim())
+              }
+            ]
+          }
+        })
+        // The keys are already in the background, so they shouldn't stay in the form's memory
+        reset(DEFAULT_FORM_VALUES)
+        goToNextRoute(WEB_ROUTES.accountPersonalize)
+      } catch (error) {
+        // The background shows the error, and the entered keys stay so the user can fix them
+        console.error('Failed to set the account picker up with the private keys', error)
+      } finally {
+        setImportButtonPressed(false)
+      }
     })()
-  }, [isValid, agreedToBackupWarning, importButtonPressed, mainDispatch, handleSubmit])
-
-  useEffect(() => {
-    if (!importButtonPressed) return
-
-    const status = mainStatuses.accountPickerSetInitParamsFromPrivateKeys
-    if (status === 'LOADING') {
-      hasSeenLoading.current = true
-      return
-    }
-
-    if (!hasSeenLoading.current) return
-
-    setImportButtonPressed(false)
-
-    // The background shows the error, and the entered keys stay so the user can fix them
-    if (status === 'ERROR') return
-
-    // The keys are already in the background, so they shouldn't stay in the form's memory
-    reset(DEFAULT_FORM_VALUES)
-    goToNextRoute()
   }, [
-    goToNextRoute,
+    isValid,
+    agreedToBackupWarning,
     importButtonPressed,
-    mainStatuses.accountPickerSetInitParamsFromPrivateKeys,
-    reset
+    mainDispatchAndWait,
+    handleSubmit,
+    reset,
+    goToNextRoute
   ])
 
   const handleValidation = useCallback(

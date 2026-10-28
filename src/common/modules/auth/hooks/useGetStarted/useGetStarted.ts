@@ -39,7 +39,7 @@ export default function useGetStarted() {
   const handleAuthButtonPress = useCallback(
     async (flow: 'create-new-account' | 'import-existing-account') => {
       if (flow === 'create-new-account') {
-        createNewSeedAccount()
+        await createNewSeedAccount()
         return
       }
       if (flow === 'import-existing-account') {

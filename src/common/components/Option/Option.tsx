@@ -7,6 +7,7 @@ import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -55,6 +56,8 @@ const Option = ({
       style={[
         styles.container,
         withBottomSpacing && spacings.mb,
+        // Keeps the space below the expanded options
+        !!children && spacings.pbTy,
         animStyle,
         status === 'expanded' && {
           backgroundColor: theme.secondaryBackground
@@ -68,7 +71,7 @@ const Option = ({
       accessibilityRole="button"
       ref={ref}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, { height: BUTTON_HEIGHT }]}>
         <View style={styles.iconWrapper}>
           <Icon
             color={

@@ -1,20 +1,27 @@
-import React from 'react'
-import { Pressable, ScrollView, View } from 'react-native'
+import React, { useMemo, useState } from 'react'
+import { ScrollView, View } from 'react-native'
 
+import { isExtensionOverlayView } from '@ambire-common/interfaces/ui'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import Alert from '@common/components/Alert'
+import EditAccountIcon from '@common/assets/svg/EditAccountIcon'
+import RemoveAccountIcon from '@common/assets/svg/RemoveAccountIcon'
 import Button from '@common/components/Button'
 import DotsLoadingAnimation from '@common/components/DotsLoadingAnimation'
 import Panel from '@common/components/Panel'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
-import { Trans, useTranslation } from '@common/config/localization'
+import { useTranslation } from '@common/config/localization'
+import { selectIsPinned } from '@common/controllers/wallet-state/selectors'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
+import AccountsSectionTitle from '@common/modules/account-personalize/components/AccountsSectionTitle'
+import AccountsToRemoveSection from '@common/modules/account-personalize/components/AccountsToRemoveSection'
+import PersonalizeAccountsList from '@common/modules/account-personalize/components/PersonalizeAccountsList'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { FORWARD_NAVIGATION_STATE, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -26,150 +33,194 @@ import PinExtension from '@web/modules/auth/components/PinExtension'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const CARD_WIDTH = 400
+
+// As tall as the header's back button (28), also while the button is hidden
+const HEADER_STYLE = { minHeight: 28 }
+
+const selectIsWalletOpen = (state: AllControllersMappingType['UiController']) =>
+  state.views.some(isExtensionOverlayView)
 
 const AccountPersonalizeScreen = () => {
   const { t } = useTranslation()
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const { theme } = useTheme(getStyles)
-
   const {
-    isLoading,
-    completed,
-    fields,
     control,
-    accountPickerState,
-    accountsToPersonalize,
-    accounts,
-    handleSave,
+    fields,
+    isLoading,
+    hasBackButton,
+    isAdding,
+    addedAccounts,
+    accountsToRemove,
+    removedAccounts,
+    isRemovalOnly,
+    canProceed,
     handleSaveAccountName,
-    handleComplete,
-    handleContactSupport
+    handleProceed,
+    title,
+    proceedText,
+    removalOnlyText,
+    removalNote,
+    noAccountsText,
+    addMoreText
   } = useAccountPersonalize()
+  const { state: isPinned } = useController('WalletStateController', selectIsPinned)
+  const { state: isWalletOpen } = useController('UiController', selectIsWalletOpen)
+  // Once added, the wallet opens on its own (see `openWallet`). Kept for these accounts after it
+  // closes again, and not for the next ones the tab adds.
+  const [walletOpenedFor, setWalletOpenedFor] = useState<typeof addedAccounts>(null)
+  if (addedAccounts && isWalletOpen && walletOpenedFor !== addedAccounts)
+    setWalletOpenedFor(addedAccounts)
+  const hasWalletOpened = !!addedAccounts && walletOpenedFor === addedAccounts
+
+  const listEmpty = useMemo(
+    () => (
+      <Text appearance="secondaryText" weight="medium" style={text.center}>
+        {noAccountsText}
+      </Text>
+    ),
+    [noAccountsText]
+  )
+
+  // Added, and the flow went on in the popup - this tab stays up to show them
+  if (addedAccounts) {
+    return (
+      <>
+        {/* Pinned, it only says to open the wallet, which has opened already */}
+        {!(isPinned && hasWalletOpened) && <PinExtension />}
+        <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
+          <TabLayoutWrapperMainContent>
+            <Panel type="onboarding" spacingsSize="small" style={spacings.ptMd}>
+              <SuccessAnimation
+                style={{ ...spacings.mb2Xl, ...flexbox.alignSelfCenter, ...spacings.mt }}
+              />
+              <Text
+                testID="added-successfully-text"
+                weight="medium"
+                fontSize={20}
+                style={{ alignSelf: 'center', ...spacings.mbXl }}
+              >
+                {removedAccounts.length ? t('Accounts updated') : t('Added successfully')}
+              </Text>
+              <ScrollView style={spacings.mbLg}>
+                {!!addedAccounts.length && !!removedAccounts.length && (
+                  <AccountsSectionTitle title={t('Added')} count={addedAccounts.length} />
+                )}
+                {addedAccounts.map((account, index) => (
+                  <AccountPersonalizeCard
+                    key={account.addr}
+                    control={control}
+                    index={index}
+                    account={account}
+                    hasBottomSpacing={index !== addedAccounts.length - 1}
+                    disableEdit
+                    onSaveName={handleSaveAccountName}
+                  />
+                ))}
+                {!!removedAccounts.length && (
+                  <View style={!!addedAccounts.length && spacings.mtXl}>
+                    <AccountsToRemoveSection
+                      accounts={removedAccounts}
+                      title={t('Removed')}
+                      withBadge={false}
+                    />
+                  </View>
+                )}
+              </ScrollView>
+              <Text appearance="secondaryText" weight="medium" style={text.center}>
+                {t('You can access your accounts from the dashboard via the extension icon.')}
+              </Text>
+            </Panel>
+          </TabLayoutWrapperMainContent>
+        </TabLayoutContainer>
+      </>
+    )
+  }
 
   return (
-    <>
-      {!!completed && !isLoading && <PinExtension />}
-      <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
-        <TabLayoutWrapperMainContent>
-          <Panel
-            type="onboarding"
-            spacingsSize="small"
-            style={!accountPickerState.pageError && spacings.ptMd}
-            withBackButton={!!accountPickerState.pageError}
-            onBackButtonPress={() => {
-              goToPrevRoute()
-            }}
-            title={accountPickerState.pageError ? t('Accounts') : undefined}
-          >
-            {isLoading && !accountPickerState.pageError ? (
-              <View style={[flexbox.alignCenter]}>
-                <View style={spacings.mbXl}>
-                  <AccountsLoadingAnimation />
-                </View>
-                <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
-                  {t('Loading accounts')}
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
+      <TabLayoutWrapperMainContent>
+        <Panel
+          type="onboarding"
+          spacingsSize="small"
+          // The header stays, as tall as with the back button, so nothing moves once it shows up
+          withBackButton={hasBackButton}
+          titleContainerStyle={HEADER_STYLE}
+          onBackButtonPress={goToPrevRoute}
+          title={title}
+        >
+          {isLoading ? (
+            <View style={flexbox.alignCenter}>
+              <View style={spacings.mbXl}>
+                <AccountsLoadingAnimation />
+              </View>
+              <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
+                {t('Loading accounts')}
+              </Text>
+              <DotsLoadingAnimation />
+            </View>
+          ) : (
+            <>
+              <View
+                testID="personalize-accounts-header"
+                style={[flexbox.alignCenter, spacings.mbXl]}
+              >
+                {isRemovalOnly ? <RemoveAccountIcon /> : <EditAccountIcon />}
+              </View>
+              {!!removalOnlyText && (
+                <Text appearance="secondaryText" style={[text.center, spacings.mbXl]}>
+                  {removalOnlyText}
                 </Text>
-                <DotsLoadingAnimation />
-              </View>
-            ) : accountPickerState.pageError ? (
-              <View style={flexbox.alignCenter}>
-                <Alert
-                  type="warning"
-                  title={accountPickerState.pageError}
-                  text={
-                    <Trans>
-                      <Alert.Text type="warning">
-                        Please go back and start the account-adding process again. If the problem
-                        persists, please{' '}
-                        <Pressable onPress={handleContactSupport}>
-                          <Alert.Text type="warning" style={text.underline}>
-                            contact our support team
-                          </Alert.Text>
-                        </Pressable>
-                        .
-                      </Alert.Text>
-                    </Trans>
-                  }
-                />
-              </View>
-            ) : (
-              <>
-                <SuccessAnimation
-                  style={{ ...spacings.mb2Xl, ...flexbox.alignSelfCenter, ...spacings.mt }}
-                />
-                <Text
-                  testID="added-successfully-text"
-                  weight="medium"
-                  fontSize={20}
-                  style={{ alignSelf: 'center', ...spacings.mbXl }}
+              )}
+              <PersonalizeAccountsList
+                fields={fields}
+                control={control}
+                accountsToRemove={accountsToRemove}
+                isAdding={isAdding}
+                onSaveName={handleSaveAccountName}
+                removalNote={removalNote}
+                ListEmptyComponent={listEmpty}
+                style={spacings.mbLg}
+              />
+              <Button
+                testID="button-proceed"
+                size="large"
+                type={isRemovalOnly ? 'danger' : 'primary'}
+                onPress={handleProceed}
+                hasBottomSpacing={false}
+                text={proceedText}
+                disabled={!canProceed}
+              />
+              {!!addMoreText && (
+                <Button
+                  testID="add-more-accounts-btn"
+                  type="outline"
+                  text={addMoreText}
+                  // Adding more accounts is a step forward, even when the picker is the screen
+                  // this flow arrived from (hardware wallets)
+                  onPress={() => goToNextRoute(WEB_ROUTES.accountPicker, FORWARD_NAVIGATION_STATE)}
+                  disabled={isAdding}
+                  style={{ ...spacings.phMi, ...spacings.mtSm, height: 40 }}
+                  size="tiny"
+                  hasBottomSpacing={false}
+                  childrenPosition="left"
                 >
-                  {accountsToPersonalize.length
-                    ? t('Added successfully')
-                    : t('No new accounts added')}
-                </Text>
-                <ScrollView style={spacings.mbLg}>
-                  {accountsToPersonalize.map((acc, index) => (
-                    <AccountPersonalizeCard
-                      key={acc.addr + completed}
-                      control={control}
-                      index={index}
-                      account={acc}
-                      hasBottomSpacing={index !== fields.length - 1}
-                      onSaveName={handleSaveAccountName}
-                      disableEdit={!!completed}
-                    />
-                  ))}
-                </ScrollView>
-                {completed ? (
-                  <Text appearance="secondaryText" weight="medium" style={[text.center]}>
-                    {t('You can access your accounts from the dashboard via the extension icon.')}
-                  </Text>
-                ) : (
-                  <Button
-                    testID="button-save-and-continue"
-                    size="large"
-                    onPress={handleComplete}
-                    hasBottomSpacing={false}
-                    text={t('Complete')}
-                    disabled={!accounts.length}
+                  <AddCircularIcon
+                    width={20}
+                    height={20}
+                    color={theme.primaryText}
+                    style={spacings.mrMi}
                   />
-                )}
-                {!completed && ['seed', 'hw'].includes(accountPickerState.subType as any) && (
-                  <Button
-                    testID="add-more-accounts-btn"
-                    type="outline"
-                    text={t('Add more accounts from this {{source}}', {
-                      source:
-                        accountPickerState.subType === 'hw' ? 'hardware wallet' : 'recovery phrase'
-                    })}
-                    onPress={() => {
-                      handleSave()
-                      goToNextRoute(WEB_ROUTES.accountPicker)
-                    }}
-                    style={{
-                      ...spacings.phMi,
-                      ...spacings.mtSm,
-                      height: 40
-                    }}
-                    size="tiny"
-                    hasBottomSpacing={false}
-                    childrenPosition="left"
-                  >
-                    <AddCircularIcon
-                      width={20}
-                      height={20}
-                      color={theme.primaryText}
-                      style={spacings.mrMi}
-                    />
-                  </Button>
-                )}
-              </>
-            )}
-          </Panel>
-        </TabLayoutWrapperMainContent>
-      </TabLayoutContainer>
-    </>
+                </Button>
+              )}
+            </>
+          )}
+        </Panel>
+      </TabLayoutWrapperMainContent>
+    </TabLayoutContainer>
   )
 }
 

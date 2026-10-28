@@ -26,7 +26,8 @@ const isAvatarType = (value: unknown): value is AvatarType =>
 export type AppDataSyncImportResult = {
   /** The password of the exporting device, which this one can adopt as its own */
   password: string
-  importedAccountsCount: number
+  /** The addresses of the synced accounts, for the personalize step to show */
+  importedAccountAddrs: string[]
   /** The names of what came along with the accounts, e.g. "Settings, Networks" */
   syncedExtrasLabel: string
 }
@@ -141,7 +142,7 @@ const useAppDataSyncImport = ({
 
         await onImported({
           password,
-          importedAccountsCount: scannedAccounts.length,
+          importedAccountAddrs: scannedAccounts.map(({ addr }) => addr),
           syncedExtrasLabel: scannedExtrasLabel
         })
       } catch {
@@ -157,7 +158,7 @@ const useAppDataSyncImport = ({
       isImporting,
       onImported,
       payload,
-      scannedAccounts.length,
+      scannedAccounts,
       scannedExtrasLabel
     ]
   )

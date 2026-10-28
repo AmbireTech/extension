@@ -163,6 +163,10 @@ test.describe('trezor', { tag: '@trezorTests' }, () => {
       await page.getByTestId(`add-account-${mainConstants.addresses.trezorAccount2}`).click()
       await page.getByTestId(selectors.getStarted.importAccountButton).click()
       await page.getByTestId(selectors.getStarted.saveAndContinueBtn).click()
+      // Proceed adds the accounts - leaving before they are added would cut it short
+      await expect(page.getByTestId(selectors.getStarted.personalizeAccountsHeader)).toBeHidden({
+        timeout: 30000
+      })
     })
 
     await test.step('make sure accounts are imported', async () => {

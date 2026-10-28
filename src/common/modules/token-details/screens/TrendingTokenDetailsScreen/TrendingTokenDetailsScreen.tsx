@@ -26,6 +26,7 @@ import TokenBalanceCard from '@common/modules/token-details/components/TokenBala
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import useTokenActions from '@common/modules/token-details/hooks/useTokenActions'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -194,7 +195,7 @@ const TrendingTokenDetailsScreen = () => {
               flexbox.alignCenter,
               spacings.phSm,
               spacings.mbTy,
-              { height: 56, borderRadius: BORDER_RADIUS_PRIMARY },
+              { height: BUTTON_HEIGHT, borderRadius: BORDER_RADIUS_PRIMARY },
               coingeckoAnimStyle
             ]}
           >

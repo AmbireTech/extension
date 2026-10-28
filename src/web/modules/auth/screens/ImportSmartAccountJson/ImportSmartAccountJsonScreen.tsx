@@ -1,5 +1,5 @@
 import { computeAddress, getAddress, isAddress, isHexString } from 'ethers'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Linking, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -18,9 +18,9 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -178,13 +178,12 @@ const SmartAccountImportScreen = () => {
     iv: string
   } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const { dispatch } = useControllersMiddleware()
+  const { dispatchAndWait: accountPickerDispatchAndWait } = useController('AccountPickerController')
 
   const {
     state: { accounts }
   } = useController('AccountsController')
   const { dispatch: keystoreDispatch } = useController('KeystoreController')
-  const newAccounts: Account[] = useMemo(() => accounts.filter((a) => a.newlyAdded), [accounts])
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
 
   const {
@@ -194,7 +193,7 @@ const SmartAccountImportScreen = () => {
   } = useModalize()
 
   const importSmartAccountJson = useCallback(
-    (readyToAddAccount: Account, privateKey: string) => {
+    async (readyToAddAccount: Account, privateKey: string) => {
       const keys: ReadyToAddKeys['internal'] = [
         {
           addr: computeAddress(privateKey),
@@ -206,18 +205,32 @@ const SmartAccountImportScreen = () => {
         }
       ]
 
-      dispatch({
-        type: 'IMPORT_SMART_ACCOUNT_JSON',
-        params: { readyToAddAccount, keys }
-      })
+      try {
+        // Prepared for the personalize step, which adds the account and its key once the
+        // user proceeds
+        await accountPickerDispatchAndWait({
+          type: 'method',
+          params: {
+            method: 'prepareAccounts',
+            args: [{ accounts: [readyToAddAccount], keys: { internal: keys, external: [] } }]
+          }
+        })
+        setAccountToImport(null)
+        goToNextRoute(WEB_ROUTES.accountPersonalize)
+      } catch (e) {
+        // The controller reports its own failures, here the screen only becomes usable again
+        console.error('Failed to prepare the account from the JSON file', e)
+      } finally {
+        setIsLoading(false)
+      }
     },
-    [dispatch]
+    [accountPickerDispatchAndWait, goToNextRoute]
   )
 
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {
       if (!data.privateKey || !accountToImport) return
-      importSmartAccountJson(accountToImport, data.privateKey)
+      void importSmartAccountJson(accountToImport, data.privateKey)
     }
 
     eventBus.addEventListener('receiveOneTimeData', onReceiveOneTimeData)
@@ -268,7 +281,7 @@ const SmartAccountImportScreen = () => {
         setAccountToImport(readyToAddAccount)
 
         if (accountData.privateKey) {
-          importSmartAccountJson(readyToAddAccount, accountData.privateKey)
+          void importSmartAccountJson(readyToAddAccount, accountData.privateKey)
           return
         }
 
@@ -287,17 +300,6 @@ const SmartAccountImportScreen = () => {
       }
     })
   }
-
-  useEffect(() => {
-    if (!accountToImport) return
-
-    const hasImportedAccount = newAccounts.some((acc) => acc.addr === accountToImport.addr)
-    if (!hasImportedAccount) return
-
-    setIsLoading(false)
-    setAccountToImport(null)
-    goToNextRoute()
-  }, [newAccounts, accountToImport, goToNextRoute])
 
   const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
     onDrop: handleFileUpload

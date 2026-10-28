@@ -8,6 +8,7 @@ import Text from '@common/components/Text'
 import useExchangesInfo from '@common/hooks/useExchangesInfo'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -50,7 +51,7 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
             ...flexbox.alignCenter,
             ...flexbox.justifySpaceBetween,
             ...spacings.phSm,
-            height: 56,
+            height: BUTTON_HEIGHT,
             borderRadius: BORDER_RADIUS_PRIMARY
           },
           animStyle

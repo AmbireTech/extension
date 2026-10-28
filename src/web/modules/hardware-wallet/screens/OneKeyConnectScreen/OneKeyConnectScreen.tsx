@@ -6,11 +6,11 @@ import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import requestOneKeyDevicePermission, {
   isOneKeyWebUsbSupported
 } from '@common/modules/hardware-wallets/onekey/requestOneKeyDevicePermission'
@@ -22,18 +22,12 @@ import {
 import { isSafari } from '@web/constants/browserapi'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const selectOneKeyInitStatus = (state: AllControllersMappingType['MainController']) =>
-  state.statuses.handleAccountPickerInitOneKey
-
 const OneKeyConnectScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
-  const { goToPrevRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
-  const { state: oneKeyInitStatus } = useController('MainController', selectOneKeyInitStatus)
+  const { goToPrevRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { search } = useRoute()
   // Opened from a signing flow that couldn't reach the device, rather than to import accounts
@@ -47,13 +41,7 @@ const OneKeyConnectScreen = () => {
   // Blocks a second press while the first one is still running, without a re-render that
   // could happen before the browser's device prompt opens
   const isPressInProgressRef = useRef(false)
-  // Covers the moment between dispatching the init and the controller reporting it's loading
-  const [isWaitingForInit, setIsWaitingForInit] = useState(false)
-  const [prevOneKeyInitStatus, setPrevOneKeyInitStatus] = useState(oneKeyInitStatus)
-  if (oneKeyInitStatus !== prevOneKeyInitStatus) {
-    setPrevOneKeyInitStatus(oneKeyInitStatus)
-    if (oneKeyInitStatus !== 'INITIAL') setIsWaitingForInit(false)
-  }
+  const [isConnecting, setIsConnecting] = useState(false)
 
   const onPressConnect = useCallback(async () => {
     if (isPressInProgressRef.current) return
@@ -86,13 +74,19 @@ const OneKeyConnectScreen = () => {
         return
       }
 
-      // The onboarding navigation moves to the next screen once the account picker is ready
-      setTriggeredHwWalletFlow('onekey')
-      setIsWaitingForInit(true)
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY',
-        params: { preferredDeviceId }
-      })
+      setIsConnecting(true)
+      try {
+        // Moves on to the account picker once the controller has set it up
+        await initAccountPicker({
+          type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY',
+          params: { preferredDeviceId }
+        })
+      } catch (error) {
+        // The controller reports its own failures, here the button only becomes usable again
+        console.error('Failed to set the account picker up for OneKey', error)
+      } finally {
+        setIsConnecting(false)
+      }
     } catch (error: any) {
       const message =
         error?.name === 'NotFoundError'
@@ -102,17 +96,7 @@ const OneKeyConnectScreen = () => {
     } finally {
       isPressInProgressRef.current = false
     }
-  }, [
-    addToast,
-    dispatch,
-    isReauthorization,
-    requestId,
-    requestsDispatch,
-    setTriggeredHwWalletFlow,
-    t
-  ])
-
-  const isLoading = isWaitingForInit || oneKeyInitStatus === 'LOADING'
+  }, [addToast, initAccountPicker, isReauthorization, requestId, requestsDispatch, t])
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
@@ -137,8 +121,8 @@ const OneKeyConnectScreen = () => {
             )}
           </Text>
           <Button
-            text={isLoading ? t('Connecting...') : t('Authorize & connect')}
-            disabled={isLoading}
+            text={isConnecting ? t('Connecting...') : t('Authorize & connect')}
+            disabled={isConnecting}
             onPress={onPressConnect}
             hasBottomSpacing={false}
           />

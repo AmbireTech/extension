@@ -3,6 +3,7 @@ import { Image, ImageSourcePropType, LayoutChangeEvent, View } from 'react-nativ
 import { useModalize } from 'react-native-modalize'
 import Carousel from 'react-native-reanimated-carousel'
 
+import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheExtension from '@common/assets/images/sync-steps-on-the-extension.gif'
 import Alert from '@common/components/Alert'
@@ -27,7 +28,7 @@ import type { AppDataSyncImportResult } from '@common/modules/app-data-sync/hook
 import useSyncedPasswordSetup from '@common/modules/app-data-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
-import { ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import spacings from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY, BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
@@ -58,7 +59,7 @@ const ImportFromExtensionScreen = () => {
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack } = useNavigation()
   const { addToast } = useToast()
-  const { goToPrevRoute } = useOnboardingNavigation()
+  const { goToPrevRoute, goToNextRoute, setSyncedAccountAddrs } = useOnboardingNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
   const {
@@ -147,15 +148,15 @@ const ImportFromExtensionScreen = () => {
 
   const handlePasswordSet = useCallback(() => {
     closePasswordSheet()
-    navigate(ROUTES.accountPersonalize)
-  }, [closePasswordSheet, navigate])
+    goToNextRoute(WEB_ROUTES.accountPersonalize)
+  }, [closePasswordSheet, goToNextRoute])
 
   const { setPasswordFromSync, isSettingPassword } = useSyncedPasswordSetup({
     onPasswordSet: handlePasswordSet
   })
 
   const leaveScreen = useCallback(() => {
-    // Without accounts this is the onboarding flow, which came from the get started screen
+    // Without accounts this is the onboarding flow, which came from the import method screen
     if (!accountsCount) return goToPrevRoute()
 
     // Going back instead of navigating, so the screen the user came from doesn't end up
@@ -166,16 +167,19 @@ const ImportFromExtensionScreen = () => {
   }, [accountsCount, canGoBack, goBack, goToPrevRoute, navigate])
 
   const handleImported = useCallback(
-    async ({ password, importedAccountsCount, syncedExtrasLabel }: AppDataSyncImportResult) => {
+    async ({ password, importedAccountAddrs, syncedExtrasLabel }: AppDataSyncImportResult) => {
       // Only the settings, networks or Address Book came over, so there are no accounts to
-      // set up or name. Onboarding stays on the get started screen, as there is still no
+      // set up or name. Onboarding goes back to the import method screen, as there is still no
       // account to go on with.
-      if (!importedAccountsCount) {
+      if (!importedAccountAddrs.length) {
         closePasswordSheet()
         addToast(t('Synced: {{items}}.', { items: syncedExtrasLabel }), { type: 'success' })
         leaveScreen()
         return
       }
+
+      // Added already - personalize shows them for naming
+      setSyncedAccountAddrs(importedAccountAddrs)
 
       // During onboarding the accounts arrive before this device has a password of its
       // own. Reusing the extension's one sets it (and biometrics) right here, so the
@@ -196,20 +200,20 @@ const ImportFromExtensionScreen = () => {
       }
 
       closePasswordSheet()
-      // Without a password of its own, setting one comes next. Otherwise the freshly
-      // imported accounts can be named right away.
-      navigate(hasPasswordSecret ? ROUTES.accountPersonalize : ROUTES.keyStoreSetup)
+      // Without a password of its own, setting one comes next, then naming the accounts
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
     },
     [
       addToast,
       closePasswordSheet,
+      goToNextRoute,
       hasPasswordSecret,
       isBiometricsEnabled,
       isPasswordReused,
       leaveScreen,
-      navigate,
       saveBiometricsSecret,
       setPasswordFromSync,
+      setSyncedAccountAddrs,
       t
     ]
   )
@@ -261,6 +265,10 @@ const ImportFromExtensionScreen = () => {
 
     leaveScreen()
   }, [handleStepIndexChange, isScanning, leaveScreen, retryScan, stepIndex])
+
+  // The swipe and Android's back step back like the arrow while there is a step to go back
+  // to, and leave the screen (as the arrow does then) from the first one
+  useScreenBackHandler(isScanning || stepIndex ? handleBackButtonPress : null)
 
   const handleStartScanning = useCallback(() => {
     setScanProgress(null)

@@ -30,6 +30,8 @@ export interface MobileLayoutWrapperMainContentProps extends WrapperProps {
   withHorizontalPadding?: boolean
   rightIcon?: ReactNode
   title?: string
+  /** Extra style for the header row (the back button and the title) */
+  headerStyle?: ViewStyle
   /**
    * Content that floats on top of the main content, starting right under the
    * header (e.g. a popover pointing to `rightIcon`). It doesn't scroll with the

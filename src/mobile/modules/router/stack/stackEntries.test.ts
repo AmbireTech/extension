@@ -1,6 +1,6 @@
 import type { Location } from 'react-router-native'
 
-import { reduceStack, StackState } from './stackEntries'
+import { getDismissDelta, reduceStack, StackState } from './stackEntries'
 
 const loc = (pathname: string, key: string, state: any = null): Location => ({
   pathname,
@@ -278,5 +278,42 @@ describe('reduceStack', () => {
 
       expect(next[0]!.replaceAnimation).toBe('pop')
     })
+  })
+})
+
+describe('getDismissDelta', () => {
+  it('goes back one entry when the dismissed screen owns one', () => {
+    const entries = [entry('/get-started', 'a', 0), entry('/import', 'b', 1)]
+
+    expect(getDismissDelta(entries, 1, 1)).toBe(-1)
+  })
+
+  it('goes back past every entry a dismissed screen owns', () => {
+    // A redundant navigation to the screen on top keeps its card but adds an entry
+    const entries = push(
+      [entry('/get-started', 'a', 0), entry('/import', 'b', 1)],
+      '/import',
+      'c',
+      2
+    )
+
+    expect(paths(entries)).toEqual(['/get-started', '/import'])
+    expect(getDismissDelta(entries, 2, 1)).toBe(-2)
+  })
+
+  it('goes back to the screen below several dismissed at once', () => {
+    const entries = [
+      entry('/a', 'a', 0),
+      entry('/b', 'b', 1),
+      { ...entry('/c', 'c', 3), firstIndex: 2 }
+    ]
+
+    expect(getDismissDelta(entries, 3, 2)).toBe(-3)
+  })
+
+  it('treats a dismiss count of zero as one screen', () => {
+    const entries = [entry('/a', 'a', 0), entry('/b', 'b', 1)]
+
+    expect(getDismissDelta(entries, 1, 0)).toBe(-1)
   })
 })

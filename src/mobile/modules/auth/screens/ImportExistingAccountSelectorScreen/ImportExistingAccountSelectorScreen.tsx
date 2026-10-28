@@ -1,7 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { Pressable, ScrollView, View } from 'react-native'
+import { ColorValue, Pressable, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
@@ -13,7 +14,7 @@ import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
-import Button from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -30,8 +31,6 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
-// Keeps the expandable NFC section the same height as the regular size buttons
-const ROW_HEIGHT = 56
 const ICON_SLOT_SIZE = 24
 
 type ImportMethod = {
@@ -43,13 +42,15 @@ type ImportMethod = {
    * to match the ones that draw a circle inset in it. The slot keeps the labels aligned.
    */
   iconSize?: number
+  /** Overrides the icon color, e.g. for a brand mark */
+  iconColor?: ColorValue
 }
 
 const toTestID = (title: string) =>
   `import-method-${title.toLocaleLowerCase().split(' ').join('-')}`
 
 const ImportMethodButton = React.memo(
-  ({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE }: ImportMethod) => {
+  ({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE, iconColor }: ImportMethod) => {
     const { theme } = useTheme()
     const { t } = useTranslation()
 
@@ -67,7 +68,11 @@ const ImportMethodButton = React.memo(
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <View style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}>
-            <IconComponent width={iconSize} height={iconSize} color={theme.iconPrimary} />
+            <IconComponent
+              width={iconSize}
+              height={iconSize}
+              color={iconColor || theme.iconPrimary}
+            />
           </View>
           <Text style={spacings.mlSm} fontSize={16} weight="medium">
             {t(title)}
@@ -115,7 +120,8 @@ const NfcCardSection = React.memo(
             flexbox.alignCenter,
             flexbox.justifySpaceBetween,
             spacings.phSm,
-            { height: ROW_HEIGHT }
+            // Keeps the expandable NFC section the same height as the regular size buttons
+            { height: BUTTON_HEIGHT }
           ]}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -170,6 +176,7 @@ NfcCardSection.displayName = 'NfcCardSection'
 
 const ImportExistingAccountSelectorScreen = () => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const [areNfcCardsExpanded, setAreNfcCardsExpanded] = useState(false)
@@ -179,6 +186,16 @@ const ImportExistingAccountSelectorScreen = () => {
 
   const buttons: ImportMethod[] = useMemo(
     () => [
+      {
+        // Accounts the user already has in the Ambire extension come over with a sync
+        title: 'Already an Ambire user',
+        onPress: () => {
+          goToNextRoute(ROUTES.importFromExtension)
+        },
+        icon: AmbireLogoSquare,
+        // The full Ambire purple, not the logo's default lighter tint
+        iconColor: theme.primary
+      },
       {
         title: 'Private key',
         onPress: () => {
@@ -223,7 +240,7 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: ScanIcon
       }
     ],
-    [goToNextRoute]
+    [goToNextRoute, theme.primary]
   )
 
   const goToViewOnlyAccountAdder = useCallback(

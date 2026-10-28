@@ -50,6 +50,10 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
       await firstLedgerAccount.click()
       await page.getByTestId(selectors.getStarted.importAccountButton).click()
       await page.getByTestId(selectors.getStarted.saveAndContinueBtn).click()
+      // Proceed adds the account - leaving before it is added would cut it short
+      await expect(page.getByTestId(selectors.getStarted.personalizeAccountsHeader)).toBeHidden({
+        timeout: 30000
+      })
     })
 
     await test.step('make sure account is imported', async () => {
