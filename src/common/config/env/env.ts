@@ -43,6 +43,8 @@ export const DEV_PREFILLED_PASSWORD =
  * production webkit builds with different branding for testing purposes.
  */
 export const isAmbireNext = process.env.AMBIRE_NEXT === 'true'
+/** The Firefox build of the extension (popup, tab, request window or sidebar). False on mobile. */
+export const isFirefoxBuild = process.env.WEB_ENGINE === 'gecko'
 
 /** On Android, this is the package name. On iOS, this is the bundle ID. */
 export const APP_ID = Application.applicationId
@@ -62,6 +64,16 @@ export const isMobile = Platform.OS === 'ios' || Platform.OS === 'android'
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
 export const isWeb = Platform.OS === 'web'
+
+/**
+ * Privacy Pools reach dev and Ambire Next builds first, for internal testing before production.
+ * Extension only: mobile cannot prove (Hermes has no WebAssembly) and has no Privacy Pools screens.
+ * Not on Firefox either, as it has no offscreen document and no proof finishes there.
+ * Gates only the way into the feature (adding a Privacy Pools account); everything else shows up
+ * only once such an account exists. Keep in sync with `isPrivacyPoolsBundled` in webpack/env.js.
+ */
+export const isPrivacyPoolsEnabled =
+  isWeb && process.env.WEB_ENGINE !== 'gecko' && (isDev || isAmbireNext)
 
 enum APP_ENV {
   PROD = 'production',

@@ -1,18 +1,19 @@
 import React, { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView, View } from 'react-native'
+import { ScrollView } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import NetworkStatusesHeader from './NetworkStatusesHeader'
 import NetworkStatusRow from './NetworkStatusRow'
+import PrivacyPoolsNetworkStatuses from './PrivacyPoolsNetworkStatuses'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -26,17 +27,35 @@ interface Props {
  * with a breakdown of the time taken for discovery, price updates, and deployless calls.
  *
  * It's not displayed in production and can be used to monitor the performance of the portfolio.
+ * A Privacy Pools account gets `PrivacyPoolsNetworkStatuses` instead, shown in production too.
  */
 const selectPortfolioState = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio?.portfolioState
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectPrivacyPoolsAccountId = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.privacyPoolsAccountId
 
 const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: portfolioState } = useController('SelectedAccountController', selectPortfolioState)
+  const { state: privacyPoolsAccountId } = useController(
+    'SelectedAccountController',
+    selectPrivacyPoolsAccountId
+  )
   const { theme } = useTheme()
+
+  const portfolioColumns = useMemo(
+    () => [
+      { label: t('Total Time'), flex: 1.5 },
+      { label: t('Discovery'), flex: 1 },
+      { label: t('Prices'), flex: 1 },
+      { label: t('Deployless'), flex: 1 }
+    ],
+    [t]
+  )
 
   const sortedNetworks = useMemo(() => {
     return networks
@@ -87,75 +106,31 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         {t('Network Statuses')}
       </Text>
 
-      {/* Table Header */}
-      <View
-        style={[
-          flexbox.directionRow,
-          spacings.pbTy,
-          {
-            borderBottomWidth: 2,
-            borderBottomColor: theme.secondaryBackground
-          }
-        ]}
-      >
-        <View style={{ flex: 1.75 }}>
-          <Text
-            fontSize={isMobile ? 10 : 12}
-            weight="semiBold"
-            appearance="secondaryText"
-            style={spacings.plTy}
-          >
-            {t('Network')}
-          </Text>
-        </View>
-        <Text
-          fontSize={isMobile ? 10 : 12}
-          weight="semiBold"
-          appearance="secondaryText"
-          style={{ flex: 1.5, textAlign: 'center' }}
-        >
-          {t('Total Time')}
-        </Text>
-        <Text
-          fontSize={isMobile ? 10 : 12}
-          weight="semiBold"
-          appearance="secondaryText"
-          style={{ ...flexbox.flex1, textAlign: 'center' }}
-        >
-          {t('Discovery')}
-        </Text>
-        <Text
-          fontSize={isMobile ? 10 : 12}
-          weight="semiBold"
-          appearance="secondaryText"
-          style={{ ...flexbox.flex1, textAlign: 'center' }}
-        >
-          {t('Prices')}
-        </Text>
-        <Text
-          fontSize={isMobile ? 10 : 12}
-          weight="semiBold"
-          appearance="secondaryText"
-          style={{ ...flexbox.flex1, textAlign: 'center' }}
-        >
-          {t('Deployless')}
-        </Text>
-      </View>
-      <ScrollView style={flexbox.flex1} contentContainerStyle={spacings.ptTy}>
-        {/* Table Rows */}
-        {sortedNetworks.map(({ networkKey, totalTime, isLoading, result, lastUpdatedAt, name }) => (
-          <NetworkStatusRow
-            key={networkKey}
-            networkKey={networkKey}
-            name={name as string}
-            lastUpdatedAt={lastUpdatedAt}
-            totalTime={totalTime}
-            isLoading={isLoading}
-            result={result}
-            theme={theme}
-          />
-        ))}
-      </ScrollView>
+      {privacyPoolsAccountId ? (
+        <PrivacyPoolsNetworkStatuses />
+      ) : (
+        <>
+          {/* Table Header */}
+          <NetworkStatusesHeader networkLabel={t('Network')} columns={portfolioColumns} />
+          <ScrollView style={flexbox.flex1} contentContainerStyle={spacings.ptTy}>
+            {/* Table Rows */}
+            {sortedNetworks.map(
+              ({ networkKey, totalTime, isLoading, result, lastUpdatedAt, name }) => (
+                <NetworkStatusRow
+                  key={networkKey}
+                  networkKey={networkKey}
+                  name={name as string}
+                  lastUpdatedAt={lastUpdatedAt}
+                  totalTime={totalTime}
+                  isLoading={isLoading}
+                  result={result}
+                  theme={theme}
+                />
+              )
+            )}
+          </ScrollView>
+        </>
+      )}
     </BottomSheet>
   )
 }

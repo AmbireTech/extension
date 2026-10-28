@@ -29,6 +29,7 @@
     "crash:analytics": "npx playwright test -g @crashAnalytics",
     "switch:account": "npx playwright test -g @switchAccount",
     "dapp:account:permissions": "npx playwright test -g @dappAccountPermissions",
+    "benzin": "npx playwright test --config playwright.benzin.config.ts",
     "postinstall": "patch-package"
   },
   "author": "Filip",

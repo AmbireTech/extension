@@ -25,6 +25,7 @@ const selectors = {
     importMethodWatchAddress: 'import-method-watch-an-address',
     enterSeedPhraseField: 'enter-seed-phrase-field',
     enterPrivateKeyField: 'enter-private-key-field',
+    addOneMorePrivateKey: 'add-one-more-private-key',
     advancedPassPhraseSwitch: 'enable-passphrase-toggle',
     recoveryPhrasePassphraseField: 'input-passphrase',
     warningCheckbox: 'backup-warning-checkbox',
