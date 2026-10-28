@@ -113,9 +113,12 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
     return shortenAddress(account.addr, 13)
   }, [account, isNarrowWebLayout])
 
-  // A Privacy Pools account has no name or address of its own, so it is named by its kind
+  // A Privacy Pools account has no name or address of its own, so it is named by its kind and
+  // told apart by its recovery phrase
   const label = account ? account.preferences.label : t('Private account')
-  const subtitle = account ? `(${formattedAddress})` : t('Privacy Pools')
+  const subtitle = account
+    ? `(${formattedAddress})`
+    : t('From {{seedLabel}}', { seedLabel: privacyPoolsAccount?.sourceLabel })
   const canCopyAddress = isWeb && !!account
 
   if (!account && !privacyPoolsAccount) return null
@@ -232,7 +235,8 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
               <>
                 <Text
                   color="#B9BFC9"
-                  style={[isWeb ? spacings.mrTy : undefined]}
+                  numberOfLines={1}
+                  style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
                   weight={account ? 'mono_regular' : 'regular'}
                   fontSize={12}
                 >

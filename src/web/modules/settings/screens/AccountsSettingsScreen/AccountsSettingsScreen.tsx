@@ -461,15 +461,15 @@ const AccountsSettingsScreen = () => {
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
           <PanelBackButton onPress={cancelRemovePrivacyPoolsAccount} style={spacings.mrSm} />
           <PanelTitle
-            title={t('Remove {{ label }}', {
-              label: privacyPoolsAccountToRemove?.label || t('account')
-            })}
+            title={t('Remove {{ label }}', { label: t('Private account') })}
             style={text.left}
           />
         </View>
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Text fontSize={16} weight="medium" style={{ ...spacings.mbSm, textAlign: 'center' }}>
-            {t('Are you sure you want to remove this Privacy Pools account?')}
+            {t('Are you sure you want to remove the Private account from {{seedLabel}}?', {
+              seedLabel: privacyPoolsAccountToRemove?.sourceLabel
+            })}
           </Text>
           <Text fontSize={14} appearance="secondaryText" style={{ textAlign: 'center' }}>
             {t(
