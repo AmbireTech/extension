@@ -242,7 +242,8 @@ const PersonalizeAccountsList = ({
   )
 
   return (
-    <View style={[flexbox.flex1, style]}>
+    // Measured here, as the list also reports the layout of its empty component as its own
+    <View style={[flexbox.flex1, style]} onLayout={handleLayout}>
       <SectionList
         sections={sections}
         keyExtractor={keyExtractor}
@@ -250,7 +251,6 @@ const PersonalizeAccountsList = ({
         renderSectionHeader={renderSectionHeader}
         getItemLayout={getItemLayout as any}
         stickySectionHeadersEnabled={hasBothSections}
-        onLayout={handleLayout}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         ListEmptyComponent={ListEmptyComponent}
