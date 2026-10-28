@@ -419,7 +419,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
                 {t('Private account')}
               </Text>
               <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-                {t('Added from {{seedLabel}}', { seedLabel: sourceLabel })}
+                {t('From {{seedLabel}}', { seedLabel: sourceLabel })}
               </Text>
             </View>
           </View>

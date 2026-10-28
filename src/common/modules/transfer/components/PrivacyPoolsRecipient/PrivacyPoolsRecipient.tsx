@@ -46,14 +46,14 @@ const PrivacyPoolsRecipient = ({ sourceLabel, onClear }: Props) => {
           }
         ]}
       >
-        <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+        <PrivacyPoolsAccountAvatar size={36} style={spacings.mrTy} />
         <View style={flexbox.flex1}>
           <Text fontSize={14} weight="medium" numberOfLines={1}>
             {t('Private account')}
           </Text>
           {!!sourceLabel && (
             <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-              {t('Added from {{seedLabel}}', { seedLabel: sourceLabel })}
+              {t('From {{seedLabel}}', { seedLabel: sourceLabel })}
             </Text>
           )}
         </View>
