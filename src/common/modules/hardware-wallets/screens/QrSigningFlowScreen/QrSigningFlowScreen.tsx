@@ -3,7 +3,6 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { QrRequest } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -14,7 +13,7 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
+import { QrSigningStep, QrSignRequest } from '@common/modules/hardware-wallets/qr/types'
 import QrSignRequestScreen from '@common/modules/hardware-wallets/screens/QrSignRequestScreen'
 import QrSignResponseScanner from '@common/modules/hardware-wallets/screens/QrSignResponseScanner'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
@@ -26,7 +25,7 @@ const { isTab } = getUiType()
 type Props = {
   isVisible: boolean
   handleClose?: () => void
-  currentRequest: QrRequest | null
+  currentRequest: QrSignRequest | null
   signingStep: QrSigningStep
   signingRequest?: HardwareWalletSigningRequest | null
   transactionProgress?: {
@@ -169,6 +168,7 @@ const QrSigningFlowScreen = ({
           onReject={handleOnRejectPressed}
           transactionProgress={transactionProgress}
           signingRequest={signingRequest}
+          isTooLargeForDevice={!!request.isTooLargeForDevice}
         />
       ) : step === 'scan-response' ? (
         <QrSignResponseScanner

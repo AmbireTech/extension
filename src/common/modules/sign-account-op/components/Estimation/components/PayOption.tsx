@@ -1,17 +1,19 @@
 import { formatUnits } from 'ethers'
-import React, { useMemo } from 'react'
+import React, { useId, useMemo } from 'react'
 import { View } from 'react-native'
 
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
+import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Avatar from '@common/components/Avatar'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -50,6 +52,9 @@ const PayOption = ({
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: account } = useController('SelectedAccountController', selectAccount)
   const signAccountOpState = useController('SignAccountOpController').state
+  // The global tooltip anchors to the first element with a matching id, and this option renders
+  // in several places at once (each menu row and the selected value), so each needs its own id
+  const safeFeeOptionTooltipId = useId()
 
   const paidByAccountData = useMemo(
     () => accounts.find((a) => a.addr === feeOption.paidBy),
@@ -73,6 +78,32 @@ const PayOption = ({
   // Note: Under discussion
   // const showWalletBalanceBadge =
   //   showAccountBalanceBadge && !isGasTank && !isPaidByAnotherAccount
+
+  // Web only: explains the two ways a Safe can pay by itself, as it can't send its own transactions
+  const safeFeeOptionTooltip = useMemo(() => {
+    if (!isWeb || !account?.safeCreation || isPaidByAnotherAccount) return null
+
+    if (isGasTank)
+      return t(
+        'The fee is paid from your Gas Tank and the transaction is relayed for you. The most private way to pay - none of your other accounts get publicly linked to this Safe.'
+      )
+
+    if (feeOption.token.address === ZERO_ADDRESS)
+      // This row is the network's native token, so its symbol is the one the other accounts pay in
+      return t(
+        `A Safe can't submit transactions by itself, so another account has to send them and pay the gas. Pick one of your other accounts below that holds enough {{nativeSymbol}}.`,
+        { nativeSymbol: feeOption.token.symbol }
+      )
+
+    return null
+  }, [
+    account?.safeCreation,
+    feeOption.token.address,
+    feeOption.token.symbol,
+    isGasTank,
+    isPaidByAnotherAccount,
+    t
+  ])
 
   if (!paidByAccountData) return null
 
@@ -107,7 +138,7 @@ const PayOption = ({
       )}
 
       <View style={[flexbox.flex1, spacings.mlTy, spacings.mrTy]}>
-        {disabledReason ? (
+        {disabledReason && !isPaidByAnotherAccount ? (
           <View>
             <Text weight="semiBold" fontSize={14} numberOfLines={1}>
               {formatDecimals(Number(amountUsd), 'value')}
@@ -128,24 +159,43 @@ const PayOption = ({
         ) : (
           <View>
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text
-                weight="semiBold"
-                fontSize={14}
-                numberOfLines={1}
-                appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
-              >
-                {formatDecimals(Number(amountUsd), 'value')}
-              </Text>
-              {isPaidByAnotherAccount && (
-                <Text
-                  appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
-                  weight="medium"
-                  fontSize={12}
-                  numberOfLines={1}
-                  style={[spacings.mlTy, { flexShrink: 1 }]}
-                >
-                  {formattedAmount} {feeOption.token.symbol}
-                </Text>
+              {/* An option that can't pay shows only what it lacks, so its cost in USD is left out */}
+              {disabledReason ? (
+                <>
+                  <Text weight="semiBold" fontSize={14} numberOfLines={1} style={spacings.mrTy}>
+                    {formattedAmount} {feeOption.token.symbol}
+                  </Text>
+                  <Text
+                    fontSize={isMobile ? 10 : 12}
+                    numberOfLines={1}
+                    appearance={disabledTextAppearance}
+                    style={{ flexShrink: 1 }}
+                  >
+                    {disabledReason}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text
+                    weight="semiBold"
+                    fontSize={14}
+                    numberOfLines={1}
+                    appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
+                  >
+                    {formatDecimals(Number(amountUsd), 'value')}
+                  </Text>
+                  {isPaidByAnotherAccount && (
+                    <Text
+                      appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
+                      weight="medium"
+                      fontSize={12}
+                      numberOfLines={1}
+                      style={[spacings.mlTy, { flexShrink: 1 }]}
+                    >
+                      {formattedAmount} {feeOption.token.symbol}
+                    </Text>
+                  )}
+                </>
               )}
               {/* Note: Under discussion */}
               {/* {showWalletBalanceBadge && (
@@ -206,6 +256,18 @@ const PayOption = ({
           </View>
         )}
       </View>
+      {!!safeFeeOptionTooltip && (
+        <InfoIcon
+          width={16}
+          height={16}
+          color={theme.secondaryText}
+          style={spacings.mlTy}
+          dataSet={createGlobalTooltipDataSet({
+            id: safeFeeOptionTooltipId,
+            content: safeFeeOptionTooltip
+          })}
+        />
+      )}
       {warning && (
         <WarningIcon
           width={20}

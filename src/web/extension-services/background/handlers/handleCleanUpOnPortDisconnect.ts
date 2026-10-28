@@ -1,26 +1,36 @@
-import { MainController } from '@ambire-common/controllers/main/main'
-import { isSidePanelView } from '@ambire-common/interfaces/ui'
+import type { MainController } from '@ambire-common/controllers/main/main'
 import { ONBOARDING_WEB_ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import { IS_FIREFOX } from '@web/constants/common'
+import { forgetPanelWindowId } from '@web/extension-services/background/webapi/panel'
 import { Port } from '@web/extension-services/messengers'
 
 export const handleCleanUpOnPortDisconnect = async ({
   port,
-  mainCtrl
+  mainCtrl,
+  isSidePanelModeEnabled
 }: {
   port: Port
   mainCtrl: MainController
+  isSidePanelModeEnabled: boolean
 }) => {
   if (port.name === 'side-panel') {
+    forgetPanelWindowId(port.id)
+
     // The panel renders action requests inline, so closing it discards their UI. Handle the
     // pending requests like a request window close: transactions stay queued, the rest get
     // rejected. Skipped while another panel or a request window still shows the request.
-    const isAnotherPanelOpen = mainCtrl.ui.views.some(isSidePanelView)
+    // Nothing is discarded while panel mode is off: turning it off moves a pending app request to a
+    // request window instead and leaves transactions queued (see background.ts) - and on Firefox
+    // the sidebar can be open while the mode is off, showing the "mode off" notice, which never
+    // showed the requests.
+    // The closed panel's port is already gone, so this only counts the panels still open (every
+    // open panel shows the current request), with the same checks that decide where requests go.
+    const isAnotherPanelOpen = !!mainCtrl.ui.panel?.isOpen()
     const isRequestInOwnWindow = !!mainCtrl.requests.requestWindow.windowProps
 
     // Not counted against the apps that were waiting - a port also drops on an extension
     // reload or a service worker restart, which is not the user refusing anything.
-    if (!isAnotherPanelOpen && !isRequestInOwnWindow)
+    if (isSidePanelModeEnabled && !isAnotherPanelOpen && !isRequestInOwnWindow)
       await mainCtrl.requests.closeRequestWindow({ isUserInitiated: false })
   }
 

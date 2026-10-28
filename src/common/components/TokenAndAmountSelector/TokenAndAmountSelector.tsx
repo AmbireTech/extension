@@ -181,8 +181,10 @@ const TokenAndAmountSelector: FC<Props> = ({
             <View style={flexbox.flex1}>
               <AmountSlider
                 value={slider.value}
-                maximumValue={disabled ? 0n : slider.maximumValue}
+                maximumValue={slider.maximumValue}
                 onValueChange={slider.onValueChange}
+                // Still shows the amount, e.g. while a transfer is being prepared from it
+                disabled={disabled}
                 tierOffset={slider.tierOffset}
                 marks={slider.marks}
               />

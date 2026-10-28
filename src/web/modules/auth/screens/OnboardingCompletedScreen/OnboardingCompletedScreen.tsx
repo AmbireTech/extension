@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { View } from 'react-native'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
@@ -6,8 +6,8 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { selectIsPinned } from '@common/controllers/wallet-state/selectors'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
 import spacings from '@common/styles/spacings'
@@ -17,19 +17,19 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { engine } from '@web/constants/browserapi'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
+import useOpenWalletFromClick from '@web/hooks/useOpenWalletFromClick'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
 export const CARD_WIDTH = 400
 
 const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
-  const {
-    state: { isPinned },
-    dispatch: walletStateDispatch
-  } = useController('WalletStateController')
+  const { openWalletFromClick, canOpenWalletFromClick } = useOpenWalletFromClick()
+  const { state: isPinned, dispatch: walletStateDispatch } = useController(
+    'WalletStateController',
+    selectIsPinned
+  )
 
   const { theme } = useTheme()
 
@@ -42,10 +42,6 @@ const OnboardingCompletedScreen = () => {
       }
     })
   }, [walletStateDispatch])
-
-  const handleOpenDashboardPress = useCallback(async () => {
-    dispatch({ type: 'OPEN_EXTENSION_POPUP' })
-  }, [dispatch])
 
   return (
     <>
@@ -86,14 +82,16 @@ const OnboardingCompletedScreen = () => {
                   {t('You can access your accounts from the dashboard via the extension icon.')}
                 </Text>
               )}
-              {engine !== 'gecko' && (
+              {/* Firefox can't open the popup from here, but it can open the sidebar from this
+              click (see useOpenWalletFromClick) */}
+              {canOpenWalletFromClick && (
                 <View style={{ ...flexbox.flex1, width: '100%', ...flexbox.justifyEnd }}>
                   <Button
                     testID="onboarding-completed-open-dashboard-btn"
                     text={t('Open wallet')}
                     hasBottomSpacing={false}
                     style={{ width: '100%' }}
-                    onPress={handleOpenDashboardPress}
+                    onPress={openWalletFromClick}
                   />
                 </View>
               )}

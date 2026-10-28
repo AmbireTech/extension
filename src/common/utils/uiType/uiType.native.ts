@@ -6,6 +6,7 @@ const MOBILE_APP_UI_TYPE: UiTypeCheck = {
   isRequestWindow: false,
   isPopup: false,
   isSidePanel: false,
+  isFirefoxSidebar: false,
   isTab: false,
   isMobileApp: true,
   uiType: 'mobile-app'

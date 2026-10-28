@@ -16,11 +16,18 @@ import PendingActionWindowModal from '@common/modules/dashboard/components/Pendi
 import getStyles from '@common/modules/dashboard/screens/styles'
 import { getUiType } from '@common/utils/uiType'
 import MobileAppPromoBanner from '@web/modules/dashboard/components/MobileAppPromoBanner'
+import PrivacyPoolsDashboardShell from '@web/modules/privacy-pools/components/PrivacyPoolsDashboardShell'
+import PrivacyPoolsDashboardScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsDashboardScreen'
 import commonWebStyles from '@web/styles/utils/common'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const { isPopup } = getUiType()
 
-const DashboardScreen = () => {
+const selectSelectedType = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.selectedType
+
+const AccountDashboardScreen = () => {
   const { styles } = useTheme(getStyles)
   const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useModalize()
   const lastOffsetY = useRef(0)
@@ -120,6 +127,20 @@ const DashboardScreen = () => {
       )}
     </LayoutWrapper>
   )
+}
+
+/** The regular dashboard, or the Privacy Pools one when such an account (no address) is selected. */
+const DashboardScreen = () => {
+  const { state: selectedType } = useController('SelectedAccountController', selectSelectedType)
+  const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+
+  if (selectedType !== 'privacyPools') return <AccountDashboardScreen />
+
+  // Privacy Pools state is not pushed before the first paint, so a shell with the same card
+  // holds the place until it arrives
+  if (!areAllControllerStatesLoaded) return <PrivacyPoolsDashboardShell />
+
+  return <PrivacyPoolsDashboardScreen />
 }
 
 export default React.memo(DashboardScreen)

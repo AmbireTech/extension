@@ -136,7 +136,7 @@ describe('QrKeyIterator', () => {
 
       expect(keyIterator.hdPathTemplate).toBe(BIP44_LEDGER_DERIVATION_TEMPLATE)
       expect(keyIterator.derivableHdPathTemplates).toEqual([BIP44_LEDGER_DERIVATION_TEMPLATE])
-      expect(keyIterator.retrievableKeysCount).toBe(3)
+      expect(keyIterator.keysCount).toBe(3)
       expect(await keyIterator.retrieve([{ from: 1, to: 2 }])).toEqual([
         getAddressAtPath(getLedgerLivePath(1)),
         getAddressAtPath(getLedgerLivePath(2))

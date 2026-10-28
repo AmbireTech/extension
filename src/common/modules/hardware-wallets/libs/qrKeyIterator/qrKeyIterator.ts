@@ -85,7 +85,7 @@ class QrKeyIterator implements KeyIteratorInterface {
     return getDerivableHdPathTemplates(this.#originHdPath)
   }
 
-  get retrievableKeysCount() {
+  get keysCount() {
     return this.#exportedAddresses?.length
   }
 

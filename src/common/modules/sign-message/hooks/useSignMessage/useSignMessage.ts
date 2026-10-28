@@ -10,11 +10,12 @@ import { EIP_1271_NOT_SUPPORTED_BY, toPersonalSignHex } from '@ambire-common/lib
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
+import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useSigningAuth from '@common/hooks/useSigningAuth'
 import useToast from '@common/hooks/useToast'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
+import useOneKey from '@common/modules/hardware-wallets/hooks/useOneKey'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
-import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -41,6 +42,7 @@ const useSignMessage = () => {
   >(undefined)
   const { dispatch } = useControllersMiddleware()
   const { isLedgerConnected } = useLedger()
+  const { ensureOneKeyAccess } = useOneKey()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const {
@@ -260,12 +262,36 @@ const useSignMessage = () => {
         return
       }
 
-      dispatch({
-        type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
-        params: { signers: chosenSigners }
+      const signWithChosenSigners = () => {
+        dispatch({
+          type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE',
+          params: { signers: chosenSigners }
+        })
+      }
+
+      const isOneKeyKeyChosen = chosenSigners.some((s) => s.type === 'onekey')
+      if (!isOneKeyKeyChosen) {
+        signWithChosenSigners()
+        return
+      }
+
+      // When the OneKey is unplugged or the browser no longer lets Ambire use it, this opens
+      // the tab the browser asks for access to a device from, instead of signing
+      //
+      // ensureOneKeyAccess() catches every error itself and always resolves
+      void ensureOneKeyAccess().then((hasOneKeyAccess) => {
+        if (hasOneKeyAccess) signWithChosenSigners()
       })
     },
-    [isLedgerConnected, dispatch, addToast, t, signMessageState.signers, requestSigningAuth]
+    [
+      isLedgerConnected,
+      ensureOneKeyAccess,
+      dispatch,
+      addToast,
+      t,
+      signMessageState.signers,
+      requestSigningAuth
+    ]
   )
 
   useEffect(() => {

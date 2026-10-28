@@ -1,13 +1,14 @@
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
-import { ExternalSignerController, QrRequest } from '@ambire-common/interfaces/keystore'
+import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
 import {
   QrProtocolAdapter,
   QrSignaturePayload,
-  QrSigningStep
+  QrSigningStep,
+  QrSignRequest
 } from '@common/modules/hardware-wallets/qr/types'
 
 /**
@@ -32,7 +33,7 @@ class QrHardwareController extends EventEmitter implements ExternalSignerControl
 
   protocolAdapter: QrProtocolAdapter
 
-  currentRequest: QrRequest | null = null
+  currentRequest: QrSignRequest | null = null
 
   activeRequestId: string | null = null
 
@@ -54,7 +55,7 @@ class QrHardwareController extends EventEmitter implements ExternalSignerControl
   unlockedPath = ''
   unlockedPathKeyAddr = ''
 
-  async requestSignature(request: QrRequest): Promise<string | Uint8Array> {
+  async requestSignature(request: QrSignRequest): Promise<string | Uint8Array> {
     if (this.currentRequest) {
       throw new ExternalSignerError('A QR signing session is already in progress.')
     }
