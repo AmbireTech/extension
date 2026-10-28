@@ -4,8 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Key } from '@ambire-common/interfaces/keystore'
-import { isSmartAccount } from '@ambire-common/libs/account/account'
-import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import {
   ISignAccountOpController,
   SignAccountOpError,
@@ -111,14 +109,13 @@ const OneClickEstimation = ({
   const canChangeFee = useMemo(() => {
     if (!signAccountOpController) return false
 
-    const { status, earlierPendingAccountOp, account, accountOp } = signAccountOpController
+    const { status, earlierPendingAccountOp } = signAccountOpController
     if (status?.type === SigningStatus.ReadyToSign) return true
     if (status?.type !== SigningStatus.UnableToSign) return false
-    if (!earlierPendingAccountOp || !isSmartAccount(account)) return false
 
-    // A smart account held back by a pending transaction of the EOA that pays its fee can pay
-    // another way instead
-    return accountOp.gasFeePayment?.broadcastOption === BROADCAST_OPTIONS.byOtherEOA
+    // Held back by a pending transaction of the account that pays the fee, so it can pay another
+    // way instead, e.g. a smart account by itself or an EOA through the bundler
+    return !!earlierPendingAccountOp
   }, [signAccountOpController])
 
   const {
