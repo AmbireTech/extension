@@ -82,6 +82,9 @@ const selectCanReplacePendingAccountOp = (
 const selectIsReplacingPendingAccountOp = (
   state: AllControllersMappingType['SignAccountOpController']
 ) => !!state?.earlierPendingAccountOp?.isReplacing
+const selectIsReplacedPendingAccountOpProcessed = (
+  state: AllControllersMappingType['SignAccountOpController']
+) => !!state?.isReplacedPendingAccountOpProcessed
 // The store holds an empty object for a controller that isn't there (e.g. no sign screen is
 // open on a one-click transfer or swap), so every nested field is read optionally
 const selectIsSafeAccount = (state: AllControllersMappingType['SignAccountOpController']) =>
@@ -132,6 +135,10 @@ const EarlierPendingTransaction = ({
     'SignAccountOpController',
     selectIsReplacingPendingAccountOp
   )
+  const { state: signScreenIsReplacedProcessed } = useController(
+    'SignAccountOpController',
+    selectIsReplacedPendingAccountOpProcessed
+  )
   const { state: isSignScreenSafeAccount } = useController(
     'SignAccountOpController',
     selectIsSafeAccount
@@ -151,6 +158,9 @@ const EarlierPendingTransaction = ({
   const isReplacingPendingAccountOp = hasOwnSignAccountOp
     ? !!signAccountOpState?.earlierPendingAccountOp?.isReplacing
     : signScreenIsReplacing
+  const isReplacedPendingAccountOpProcessed = hasOwnSignAccountOp
+    ? !!signAccountOpState?.isReplacedPendingAccountOpProcessed
+    : signScreenIsReplacedProcessed
   const isSafeAccount = hasOwnSignAccountOp
     ? !!signAccountOpState?.account?.safeCreation
     : isSignScreenSafeAccount
@@ -199,13 +209,15 @@ const EarlierPendingTransaction = ({
   const isWaitingForReplacement = waitForReplacementUntil !== null && now < waitForReplacementUntil
   const isPendingCancel = !!pendingAccountOp?.meta?.speedUp?.isCancel
 
-  // Only a confirmed pending transaction takes the place the replacement was going to use. Going
-  // back to waiting (Don't replace) keeps it pending, and a closed or sent screen has no more
-  // transaction to tell about
+  // Only a processed pending transaction takes the place the replacement was going to use. Going
+  // back to waiting (Don't replace) keeps it pending, the replacement may also stop for another
+  // reason (e.g. a changed fee payer) while it's still pending, and a closed or sent screen has
+  // no more transaction to tell about
   const wasReplacingPendingAccountOp = usePrevious<boolean>(isReplacingPendingAccountOp)
   useEffect(() => {
     if (
       !wasReplacingPendingAccountOp ||
+      !isReplacedPendingAccountOpProcessed ||
       isReplacingPendingAccountOp ||
       earlierPendingAccountOpId ||
       !isSignAccountOpActive
@@ -218,6 +230,7 @@ const EarlierPendingTransaction = ({
   }, [
     addToast,
     earlierPendingAccountOpId,
+    isReplacedPendingAccountOpProcessed,
     isReplacingPendingAccountOp,
     isSignAccountOpActive,
     t,
@@ -397,11 +410,7 @@ const EarlierPendingTransaction = ({
     const waitSentence = isSafeAccount
       ? t('This one will be signed now and can be executed after the earlier one is confirmed.')
       : t('You can send this one after it is confirmed.')
-    if (isReplacementDisabled && !canReplacePendingAccountOp)
-      return `${pendingSentence} ${waitSentence}`
-
-    if (isReplacementDisabled)
-      return `${pendingSentence} ${waitSentence} ${t('You can also replace the earlier one.')}`
+    if (isReplacementDisabled) return `${pendingSentence} ${waitSentence}`
 
     const actionsSentence = canReplacePendingAccountOp
       ? t('You can also replace, speed up or cancel the earlier one.')
@@ -419,10 +428,14 @@ const EarlierPendingTransaction = ({
 
   // Why Cancel and Speed up are disabled, null while they aren't
   const replacementDisabledReason = useMemo(() => {
+    if (isReplacingPendingAccountOp)
+      return t(
+        'The transaction you are signing now replaces this one. To speed up or cancel it instead, choose "Don\'t replace" first.'
+      )
     if (!isReplacementDisabled || !replacementBlocker) return null
 
     return t(REPLACEMENT_BLOCKER_MESSAGES[replacementBlocker])
-  }, [isReplacementDisabled, replacementBlocker, t])
+  }, [isReplacementDisabled, isReplacingPendingAccountOp, replacementBlocker, t])
 
   const getDisabledTooltipDataSet = useCallback(
     (id: string) =>
@@ -519,7 +532,9 @@ const EarlierPendingTransaction = ({
                     replacementInProgress?.action === 'cancel' ? t('Canceling...') : t('Cancel')
                   }
                   onPress={handleCancel}
-                  disabled={!!replacementInProgress || isReplacementDisabled}
+                  disabled={
+                    !!replacementInProgress || isReplacementDisabled || isReplacingPendingAccountOp
+                  }
                   hasBottomSpacing={false}
                 />
               </View>
@@ -536,7 +551,9 @@ const EarlierPendingTransaction = ({
                       : t('Speed up')
                   }
                   onPress={handleSpeedUp}
-                  disabled={!!replacementInProgress || isReplacementDisabled}
+                  disabled={
+                    !!replacementInProgress || isReplacementDisabled || isReplacingPendingAccountOp
+                  }
                   hasBottomSpacing={false}
                 />
               </View>
@@ -555,6 +572,7 @@ const EarlierPendingTransaction = ({
     isOwnPendingAccountOp,
     replacementDescription,
     isReplacementDisabled,
+    isReplacingPendingAccountOp,
     pendingAccountOp,
     replacementInProgress,
     shouldRenderCalls,
