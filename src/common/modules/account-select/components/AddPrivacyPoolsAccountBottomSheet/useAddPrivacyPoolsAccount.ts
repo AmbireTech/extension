@@ -44,7 +44,11 @@ const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
       setPending({ kind: 'stored-seed', seedId })
       mainDispatch({
         type: 'method',
-        params: { method: 'addPrivacyPoolsAccount', args: [seedId, passphrase] }
+        // Left out when not needed, as messaging turns undefined into null, which skips the default
+        params: {
+          method: 'addPrivacyPoolsAccount',
+          args: passphrase ? [seedId, passphrase] : [seedId]
+        }
       })
     },
     [mainDispatch]
