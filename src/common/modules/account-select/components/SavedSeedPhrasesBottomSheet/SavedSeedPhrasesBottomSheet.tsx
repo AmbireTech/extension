@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ListRenderItemInfo, Pressable, View } from 'react-native'
 import { IHandles } from 'react-native-modalize/lib/options'
@@ -28,6 +28,8 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const selectStatuses = (state: AllControllersMappingType['StorageController']) => state.statuses
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectInitFromSavedSeedStatus = (state: AllControllersMappingType['MainController']) =>
+  state.statuses.accountPickerSetInitParamsFromSavedSeed
 
 type SavedSeed = AllControllersMappingType['KeystoreController']['seeds'][number]
 
@@ -48,19 +50,35 @@ const SavedSeedPhrasesBottomSheet = ({
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { seeds, keys } = useController('KeystoreController').state
   const { dispatch } = useControllersMiddleware()
-  const { subType, initParams } = useController('AccountPickerController').state
+  const { state: initFromSavedSeedStatus } = useController(
+    'MainController',
+    selectInitFromSavedSeedStatus
+  )
   const [addAccountButtonPressed, setAddAccountButtonPressed] = useState(false)
+  // Only this call's own status counts, not one left over from an earlier call
+  const hasSeenLoading = useRef(false)
   // The phrase whose passphrase is asked for, as it isn't saved. The sheet is mounted only then
   const [seedToEnterPassphraseFor, setSeedToEnterPassphraseFor] = useState<SavedSeed | null>(null)
   const { goToNextRoute } = useOnboardingNavigation()
   const { navigate } = useNavigation()
 
   useEffect(() => {
-    if (addAccountButtonPressed && initParams && subType === 'seed') {
-      setAddAccountButtonPressed(false)
-      goToNextRoute(WEB_ROUTES.accountPersonalize)
+    if (!addAccountButtonPressed) return
+
+    if (initFromSavedSeedStatus === 'LOADING') {
+      hasSeenLoading.current = true
+      return
     }
-  }, [addAccountButtonPressed, goToNextRoute, initParams, subType])
+
+    if (!hasSeenLoading.current) return
+
+    setAddAccountButtonPressed(false)
+
+    // The background shows the error, and the user stays on the list
+    if (initFromSavedSeedStatus === 'ERROR') return
+
+    goToNextRoute(WEB_ROUTES.accountPersonalize)
+  }, [addAccountButtonPressed, goToNextRoute, initFromSavedSeedStatus])
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {
@@ -75,6 +93,7 @@ const SavedSeedPhrasesBottomSheet = ({
 
   const initAccountPickerFromSeed = useCallback(
     (params: { id: string; seedPassphrase?: string; shouldSavePassphrase?: boolean }) => {
+      hasSeenLoading.current = false
       setAddAccountButtonPressed(true)
       dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE', params })
     },
