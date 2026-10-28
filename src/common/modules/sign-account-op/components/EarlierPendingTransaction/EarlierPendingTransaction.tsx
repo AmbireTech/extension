@@ -15,7 +15,6 @@ import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
@@ -421,12 +420,8 @@ const EarlierPendingTransaction = ({
       : t('You can send this one after it is confirmed.')
     if (isReplacementDisabled) return `${pendingSentence} ${waitSentence}`
 
-    const actionsSentence = canReplacePendingAccountOp
-      ? t('You can also replace, speed up or cancel the earlier one.')
-      : t('You can also speed up or cancel the earlier one.')
-    return `${pendingSentence} ${waitSentence} ${actionsSentence}`
+    return `${pendingSentence} ${waitSentence}`
   }, [
-    canReplacePendingAccountOp,
     isOwnPendingAccountOp,
     isReplacementDisabled,
     isReplacingPendingAccountOp,
@@ -434,27 +429,6 @@ const EarlierPendingTransaction = ({
     isWaitingForReplacement,
     t
   ])
-
-  // Why Cancel and Speed up are disabled, null while they aren't
-  const replacementDisabledReason = useMemo(() => {
-    if (isReplacingPendingAccountOp)
-      return t(
-        'The transaction you are signing now replaces this one. To speed up or cancel it instead, choose "Don\'t replace" first.'
-      )
-    if (!isReplacementDisabled || !replacementBlocker) return null
-
-    return t(REPLACEMENT_BLOCKER_MESSAGES[replacementBlocker])
-  }, [isReplacementDisabled, isReplacingPendingAccountOp, replacementBlocker, t])
-
-  const getDisabledTooltipDataSet = useCallback(
-    (id: string) =>
-      createGlobalTooltipDataSet({
-        id: `earlier-pending-${id}-disabled`,
-        content: replacementDisabledReason ?? '',
-        hidden: !replacementDisabledReason
-      }),
-    [replacementDisabledReason]
-  )
 
   const replacementDescription = useMemo(() => {
     if (!isPendingAccountSafe && replacementBlocker)
@@ -533,7 +507,7 @@ const EarlierPendingTransaction = ({
           <View style={styles.transactionCardDivider} />
           <View style={styles.transactionCardActions}>
             <View style={styles.transactionCardActionsRow}>
-              <View style={flexbox.flex1} dataSet={getDisabledTooltipDataSet('cancel')}>
+              <View style={flexbox.flex1}>
                 <Button
                   type="danger"
                   size="small"
@@ -541,16 +515,11 @@ const EarlierPendingTransaction = ({
                     replacementInProgress?.action === 'cancel' ? t('Canceling...') : t('Cancel')
                   }
                   onPress={handleCancel}
-                  disabled={
-                    !!replacementInProgress || isReplacementDisabled || isReplacingPendingAccountOp
-                  }
+                  disabled={!!replacementInProgress || isReplacementDisabled}
                   hasBottomSpacing={false}
                 />
               </View>
-              <View
-                style={[flexbox.flex1, spacings.mlTy]}
-                dataSet={getDisabledTooltipDataSet('speed-up')}
-              >
+              <View style={[flexbox.flex1, spacings.mlTy]}>
                 <Button
                   type="primary"
                   size="small"
@@ -560,9 +529,7 @@ const EarlierPendingTransaction = ({
                       : t('Speed up')
                   }
                   onPress={handleSpeedUp}
-                  disabled={
-                    !!replacementInProgress || isReplacementDisabled || isReplacingPendingAccountOp
-                  }
+                  disabled={!!replacementInProgress || isReplacementDisabled}
                   hasBottomSpacing={false}
                 />
               </View>
@@ -577,11 +544,9 @@ const EarlierPendingTransaction = ({
   }, [
     handleCancel,
     handleSpeedUp,
-    getDisabledTooltipDataSet,
     isOwnPendingAccountOp,
     replacementDescription,
     isReplacementDisabled,
-    isReplacingPendingAccountOp,
     pendingAccountOp,
     replacementInProgress,
     shouldRenderCalls,
@@ -601,7 +566,7 @@ const EarlierPendingTransaction = ({
     if (!canReplacePendingAccountOp) return undefined
 
     return {
-      text: t('Replace it'),
+      text: t('Replace pending'),
       onPress: handleReplace,
       disabled: !!replacementInProgress
     }
