@@ -386,15 +386,24 @@ const EarlierPendingTransaction = ({
   }, [closeBottomSheet, hasOwnSignAccountOp, onStopReplacing, signAccountOpDispatch])
 
   const alertTitle = useMemo(() => {
-    if (!isWaitingForReplacement)
-      return isReplacingPendingAccountOp
-        ? t('Replacing your pending transaction')
-        : t('Pending transaction detected')
+    if (!isWaitingForReplacement) {
+      if (isReplacingPendingAccountOp) return t('Replacing your pending transaction')
+
+      return isOwnPendingAccountOp
+        ? t('Pending transaction detected')
+        : t('Pending transaction detected (of the fee payer)')
+    }
 
     return isPendingCancel
       ? t('Canceling your earlier transaction')
       : t('Speeding up your earlier transaction')
-  }, [isPendingCancel, isReplacingPendingAccountOp, isWaitingForReplacement, t])
+  }, [
+    isOwnPendingAccountOp,
+    isPendingCancel,
+    isReplacingPendingAccountOp,
+    isWaitingForReplacement,
+    t
+  ])
 
   const alertText = useMemo(() => {
     if (isWaitingForReplacement)

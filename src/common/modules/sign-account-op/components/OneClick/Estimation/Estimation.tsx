@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Key } from '@ambire-common/interfaces/keystore'
+import { isSmartAccount } from '@ambire-common/libs/account/account'
+import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import {
   ISignAccountOpController,
   SignAccountOpError,
@@ -106,6 +108,18 @@ const OneClickEstimation = ({
     () => signingErrors.filter((error) => error.code !== EARLIER_PENDING_TRANSACTION_ERROR_CODE),
     [signingErrors]
   )
+  const canChangeFee = useMemo(() => {
+    if (!signAccountOpController) return false
+
+    const { status, earlierPendingAccountOp, account, accountOp } = signAccountOpController
+    if (status?.type === SigningStatus.ReadyToSign) return true
+    if (status?.type !== SigningStatus.UnableToSign) return false
+    if (!earlierPendingAccountOp || !isSmartAccount(account)) return false
+
+    // A smart account held back by a pending transaction of the EOA that pays its fee can pay
+    // another way instead
+    return accountOp.gasFeePayment?.broadcastOption === BROADCAST_OPTIONS.byOtherEOA
+  }, [signAccountOpController])
 
   const {
     isViewOnly,
@@ -240,7 +254,7 @@ const OneClickEstimation = ({
           <Estimation
             updateType={updateType}
             signAccountOpState={signAccountOpController}
-            disabled={signAccountOpController.status?.type !== SigningStatus.ReadyToSign}
+            disabled={!canChangeFee}
             hasEstimation={!!hasEstimation}
             // TODO<oneClickSwap>
             slowRequest={false}
@@ -314,6 +328,7 @@ const OneClickEstimation = ({
   }, [
     signAccountOpController,
     banners,
+    canChangeFee,
     isLinkingNewFeePayerToSafe,
     bundlerNonceDiscrepancy,
     closeEstimationModal,
