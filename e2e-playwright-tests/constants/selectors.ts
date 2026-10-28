@@ -340,10 +340,12 @@ const selectors = {
   switchAccountDenyButton: 'switch-account-deny-button',
   rejectRequestOptionCurrent: 'reject-request-option-current',
   transactionCallDyn: (index: number) => `recipient-address-${index}`, // one card per call on the sign transaction screen
-  dappScopedAccountsToggle: 'dapp-scoped-accounts-toggle',
-  dappScopedAccountsSelectorButton: 'dapp-scoped-accounts-selector-button',
-  dappScopedAccountsContinueButton: 'dapp-scoped-accounts-continue-button',
-  dappAccountRow: (addr: string) => `dapp-account-row-${addr}`,
+  // The account select in the header of the dapp connect screen
+  dappConnectAccountSelect: 'account-select-toggle',
+  dappConnectAccountOption: (addr: string) => `account-select-option-${addr}`,
+  dappConnectShowAccount: (addr: string) => `account-select-show-${addr}`,
+  dappConnectLimitToSelectedAccount: 'account-select-visible-section-action',
+  dappConnectAccountSelectDone: 'account-select-done',
   // Notifications
   networkSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE

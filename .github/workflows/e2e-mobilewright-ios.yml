@@ -42,9 +42,9 @@ jobs:
     environment: testing
     env:
       KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
-      # Unlocks the mobile app's invite gate (useMobileInviteGate) — required on every
+      # Unlocks the mobile app's invite gate (useMobileInviteGate) - required on every
       # fresh install, both platforms. See auth.spec.ts's beforeEach.
-      IOS_MOBILE_INVITE_CODE: ${{ secrets.IOS_MOBILE_INVITE_CODE }}
+      MOBILE_INVITE_CODE: ${{ secrets.MOBILE_INVITE_CODE }}
       SEED: ${{ secrets.SEED }}
       SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}

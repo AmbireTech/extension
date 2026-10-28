@@ -1,56 +1,24 @@
-import { execSync } from 'child_process'
-import { IOS_MOBILE_INVITE_CODE, KEYSTORE_PASS } from 'constants/env'
+import { KEYSTORE_PASS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
-import { join } from 'path'
 
 import { expect, test } from '../../fixtures/pageObjects'
-
-const ANDROID_HOME = process.env.ANDROID_HOME ?? join(process.env.HOME ?? '', 'Library/Android/sdk')
-const ADB_BIN = join(ANDROID_HOME, 'platform-tools', 'adb')
+import { resetAppToCleanState } from '../../utils/resetDevice'
 
 test.describe('auth', { tag: '@auth-mobile' }, () => {
   test.beforeEach('Reset app to a clean state', async ({ screen, device, bundleId }, testInfo) => {
-    if (!bundleId) throw new Error(`No bundleId configured for project "${testInfo.project.name}"`)
-
-    if (testInfo.project.name === 'android') {
-      // `pm clear` wipes all app data and force-stops it; relaunch for a clean start.
-      execSync(`"${ADB_BIN}" shell pm clear ${bundleId}`)
-      await device.launchApp(bundleId)
-
-      // A system dialog can appear right after clearing data — dismiss it if present.
-      const systemDialogOkButton = screen.getByTestId('android:id/button1')
-      if (await systemDialogOkButton.count()) await systemDialogOkButton.tap()
-    }
-
-    if (testInfo.project.name === 'ios') {
-      // mobilewright has no equivalent for clearAppData()/pm-clear, but xcrun simctl does
-      // clearing just the app data container
-      await device.terminateApp(bundleId).catch(() => {})
-      const dataContainer = execSync(`xcrun simctl get_app_container ${device.id} ${bundleId} data`)
-        .toString()
-        .trim()
-      execSync(`rm -rf "${dataContainer}"`)
-      await device.launchApp(bundleId)
-    }
-
-    const inviteCodeInput = screen.getByTestId(selectors.invite.codeInput)
-    if (await inviteCodeInput.count()) {
-      if (!IOS_MOBILE_INVITE_CODE) {
-        throw new Error(
-          'App is showing the invite gate but MOBILE_INVITE_CODE is not set (see e2e-playwright-tests/constants/env.ts).'
-        )
-      }
-
-      await inviteCodeInput.fill(IOS_MOBILE_INVITE_CODE)
-      await screen.getByTestId(selectors.invite.verifyBtn).tap()
-      await expect(inviteCodeInput).not.toBeVisible()
-    }
+    await resetAppToCleanState({
+      screen,
+      device,
+      bundleId,
+      projectName: testInfo.project.name
+    })
   })
 
   test('should import view-only Basic account', async ({ screen, pages }) => {
     await test.step('select import view-only option', async () => {
-      await screen.getByTestId(selectors.settings.watchAnAddressButton).tap()
+      await screen.getByTestId(selectors.getStarted.importExistingAccBtn).tap()
+      await screen.getByTestId(selectors.getStarted.importMethodWatchAddress).tap()
     })
     await test.step('import address', async () => {
       await screen

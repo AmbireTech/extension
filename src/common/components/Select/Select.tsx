@@ -28,7 +28,9 @@ const Select = ({
     menuOptionHeight,
     attemptToFetchMoreOptions,
     mode: props.mode,
-    onSearch
+    onSearch,
+    renderOption: props.renderOption,
+    closeMenuOnSelect: props.closeMenuOnSelect
   })
   const {
     listRef,
