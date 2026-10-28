@@ -61,8 +61,13 @@ export const getResendAccountOp = (submittedAccountOp: SubmittedAccountOpLike): 
 
 /**
  * The request that opens the given replacement accountOp for signing, as its own request.
+ * With `allowAccountSwitch`, a replacement of another account than the selected one waits behind
+ * a request to switch to that account.
  */
-export const getReplacementBuildRequest = (accountOp: AccountOp): BuildRequest => ({
+export const getReplacementBuildRequest = (
+  accountOp: AccountOp,
+  allowAccountSwitch = false
+): BuildRequest => ({
   type: 'calls',
   params: {
     userRequestParams: {
@@ -72,6 +77,7 @@ export const getReplacementBuildRequest = (accountOp: AccountOp): BuildRequest =
         accountAddr: accountOp.accountAddr
       },
       accountOp
-    }
+    },
+    allowAccountSwitch
   }
 })

@@ -2,7 +2,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'reac
 import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { findPendingAccountOpById } from '@ambire-common/libs/accountOp/earlierPendingAccountOp'
 import {
   getReplacementAccountOp,
@@ -22,6 +22,7 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
+import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { REPLACEMENT_BLOCKER_MESSAGES } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
@@ -85,6 +86,10 @@ const selectIsReplacingPendingAccountOp = (
 // open on a one-click transfer or swap), so every nested field is read optionally
 const selectIsSafeAccount = (state: AllControllersMappingType['SignAccountOpController']) =>
   !!state?.account?.safeCreation
+// Tells a sign screen that is still being used from one that is gone or already sent
+const selectIsSignAccountOpActive = (state: AllControllersMappingType['SignAccountOpController']) =>
+  !!state?.accountOp && state.status?.type !== SigningStatus.Done
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectCurrentUserRequestId = (state: AllControllersMappingType['RequestsController']) =>
   state.currentUserRequest?.id
 const selectSelectedAccountAddr = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -131,6 +136,10 @@ const EarlierPendingTransaction = ({
     'SignAccountOpController',
     selectIsSafeAccount
   )
+  const { state: isSignScreenActive } = useController(
+    'SignAccountOpController',
+    selectIsSignAccountOpActive
+  )
   // Never falls back to the sign screen's transaction once one is passed, even while it's null
   const hasOwnSignAccountOp = signAccountOpState !== undefined
   const earlierPendingAccountOpId = hasOwnSignAccountOp
@@ -145,6 +154,9 @@ const EarlierPendingTransaction = ({
   const isSafeAccount = hasOwnSignAccountOp
     ? !!signAccountOpState?.account?.safeCreation
     : isSignScreenSafeAccount
+  const isSignAccountOpActive = hasOwnSignAccountOp
+    ? !!signAccountOpState && signAccountOpState.status?.type !== SigningStatus.Done
+    : isSignScreenActive
   const { state: selectedAccountAddr } = useController(
     'SelectedAccountController',
     selectSelectedAccountAddr
@@ -154,6 +166,7 @@ const EarlierPendingTransaction = ({
     selectBroadcastedButNotConfirmed
   )
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: currentUserRequestId, dispatch: requestsDispatch } = useController(
     'RequestsController',
     selectCurrentUserRequestId
@@ -186,6 +199,31 @@ const EarlierPendingTransaction = ({
   const isWaitingForReplacement = waitForReplacementUntil !== null && now < waitForReplacementUntil
   const isPendingCancel = !!pendingAccountOp?.meta?.speedUp?.isCancel
 
+  // Only a confirmed pending transaction takes the place the replacement was going to use. Going
+  // back to waiting (Don't replace) keeps it pending, and a closed or sent screen has no more
+  // transaction to tell about
+  const wasReplacingPendingAccountOp = usePrevious<boolean>(isReplacingPendingAccountOp)
+  useEffect(() => {
+    if (
+      !wasReplacingPendingAccountOp ||
+      isReplacingPendingAccountOp ||
+      earlierPendingAccountOpId ||
+      !isSignAccountOpActive
+    )
+      return
+
+    addToast(t('Your pending transaction was confirmed. This one is now a new transaction.'), {
+      type: 'info'
+    })
+  }, [
+    addToast,
+    earlierPendingAccountOpId,
+    isReplacingPendingAccountOp,
+    isSignAccountOpActive,
+    t,
+    wasReplacingPendingAccountOp
+  ])
+
   const handleSheetOpen = useCallback(() => setShouldRenderCalls(true), [])
   const handleSheetClosed = useCallback(() => {
     setShouldRenderCalls(false)
@@ -212,16 +250,45 @@ const EarlierPendingTransaction = ({
     return () => clearTimeout(timeoutId)
   }, [closeBottomSheet, hasReplacementRequestOpened, replacementInProgress])
 
+  // The pending transaction may be of another account, when the account that's signing only
+  // pays its fee. Its speed up or cancel is a request for that account, so the user is asked to
+  // switch to it first
+  const isOwnPendingAccountOp =
+    !!pendingAccountOp &&
+    !!selectedAccountAddr &&
+    isSameAddr(pendingAccountOp.accountAddr, selectedAccountAddr)
+  const isPendingAccountSafe = useMemo(
+    () =>
+      !!pendingAccountOp &&
+      accounts.some(
+        (account) =>
+          !!account.safeCreation && isSameAddr(account.addr, pendingAccountOp.accountAddr)
+      ),
+    [accounts, pendingAccountOp]
+  )
+  // Replaced in the mempool the same way as from the activity, when the way it was sent allows it
+  const replacementBlocker = useMemo(
+    () => (pendingAccountOp ? getReplacementBlocker(pendingAccountOp, true) : null),
+    [pendingAccountOp]
+  )
+  const canReplaceInMempool = !!pendingAccountOp && replacementBlocker === null
+  // A Safe transaction that can't be replaced in the mempool is still resent or cancelled with
+  // a new Safe transaction at its nonce. Any other account has no such way around it
+  const isReplacementDisabled = !isPendingAccountSafe && !canReplaceInMempool
+
   const openReplacementRequest = useCallback(
     (action: Replacement, replacementAccountOp: AccountOp) => {
       setReplacementInProgress({ action, fromRequestId: currentUserRequestId })
       requestsDispatch({
         type: 'method',
-        params: { method: 'build', args: [getReplacementBuildRequest(replacementAccountOp)] }
+        params: {
+          method: 'build',
+          args: [getReplacementBuildRequest(replacementAccountOp, !isOwnPendingAccountOp)]
+        }
       })
       onReplacementRequestOpen?.()
     },
-    [currentUserRequestId, onReplacementRequestOpen, requestsDispatch]
+    [currentUserRequestId, isOwnPendingAccountOp, onReplacementRequestOpen, requestsDispatch]
   )
 
   // Null while the transaction has no hash yet, e.g. one sent through a bundler or the relayer
@@ -245,28 +312,9 @@ const EarlierPendingTransaction = ({
   }, [addToast, explorerTxnUrl, t])
 
   const alertButtonProps = useMemo(
-    () => ({ text: t('View pending transaction'), onPress: () => openBottomSheet() }),
+    () => ({ text: t('View pending'), onPress: () => openBottomSheet() }),
     [openBottomSheet, t]
   )
-
-  // The pending transaction may be of another account, when the account that's signing only
-  // pays its fee. Its speed up or cancel is a request for that account, so it can't be opened
-  // from here
-  const isOwnPendingAccountOp =
-    !!pendingAccountOp &&
-    !!selectedAccountAddr &&
-    isSameAddr(pendingAccountOp.accountAddr, selectedAccountAddr)
-  // Replaced in the mempool the same way as from the activity, when the way it was sent allows it
-  const replacementBlocker = useMemo(
-    () =>
-      pendingAccountOp ? getReplacementBlocker(pendingAccountOp, isOwnPendingAccountOp) : null,
-    [isOwnPendingAccountOp, pendingAccountOp]
-  )
-  const canReplaceInMempool = !!pendingAccountOp && replacementBlocker === null
-  // A Safe transaction that can't be replaced in the mempool is still resent or cancelled with
-  // a new Safe transaction at its nonce. Any other account has no such way around it, and no
-  // account can do it for the transaction of another one
-  const isReplacementDisabled = !isOwnPendingAccountOp || (!isSafeAccount && !canReplaceInMempool)
 
   const handleSpeedUp = useCallback(() => {
     if (!pendingAccountOp || isReplacementDisabled) return
@@ -325,12 +373,15 @@ const EarlierPendingTransaction = ({
   }, [closeBottomSheet, hasOwnSignAccountOp, onStopReplacing, signAccountOpDispatch])
 
   const alertTitle = useMemo(() => {
-    if (!isWaitingForReplacement) return t('Pending transaction detected')
+    if (!isWaitingForReplacement)
+      return isReplacingPendingAccountOp
+        ? t('Replacing your pending transaction')
+        : t('Pending transaction detected')
 
     return isPendingCancel
       ? t('Canceling your earlier transaction')
       : t('Speeding up your earlier transaction')
-  }, [isPendingCancel, isWaitingForReplacement, t])
+  }, [isPendingCancel, isReplacingPendingAccountOp, isWaitingForReplacement, t])
 
   const alertText = useMemo(() => {
     if (isWaitingForReplacement)
@@ -338,10 +389,7 @@ const EarlierPendingTransaction = ({
         'Please wait. You can send this transaction after that is done. This usually takes less than a minute.'
       )
 
-    if (isReplacingPendingAccountOp)
-      return t(
-        'This transaction will replace the earlier one, so the earlier one will not go through. The fee is higher, as the network requires it to replace a transaction.'
-      )
+    if (isReplacingPendingAccountOp) return t('Your pending transaction will not go through.')
 
     const pendingSentence = isOwnPendingAccountOp
       ? t('A transaction you sent earlier is not confirmed yet.')
@@ -372,10 +420,6 @@ const EarlierPendingTransaction = ({
   // Why Cancel and Speed up are disabled, null while they aren't
   const replacementDisabledReason = useMemo(() => {
     if (!isReplacementDisabled || !replacementBlocker) return null
-    if (replacementBlocker === 'otherAccount')
-      return t(
-        'Sent from another of your accounts. Switch to that account to speed up or cancel this transaction.'
-      )
 
     return t(REPLACEMENT_BLOCKER_MESSAGES[replacementBlocker])
   }, [isReplacementDisabled, replacementBlocker, t])
@@ -391,18 +435,20 @@ const EarlierPendingTransaction = ({
   )
 
   const replacementDescription = useMemo(() => {
-    if (replacementBlocker === 'otherAccount' && replacementDisabledReason)
-      return replacementDisabledReason
-    if (isSafeAccount)
-      return t(
-        'Speeding it up sends the same transaction again so it gets confirmed sooner, without new signatures from the owners. Cancelling replaces it with a transaction that does nothing, which the owners need to sign.'
-      )
-    if (replacementBlocker) return t(REPLACEMENT_BLOCKER_MESSAGES[replacementBlocker])
+    if (!isPendingAccountSafe && replacementBlocker)
+      return t(REPLACEMENT_BLOCKER_MESSAGES[replacementBlocker])
 
-    return t(
-      'Speeding it up sends it again with a higher fee so it gets confirmed sooner. Cancelling replaces it with a transaction that does nothing, so it never goes through.'
-    )
-  }, [isSafeAccount, replacementBlocker, replacementDisabledReason, t])
+    const actionsSentence = isPendingAccountSafe
+      ? t(
+          'Speeding it up sends the same transaction again so it gets confirmed sooner, without new signatures from the owners. Cancelling replaces it with a transaction that does nothing, which the owners need to sign.'
+        )
+      : t(
+          'Speeding it up sends it again with a higher fee so it gets confirmed sooner. Cancelling replaces it with a transaction that does nothing, so it never goes through.'
+        )
+    if (isOwnPendingAccountOp) return actionsSentence
+
+    return `${actionsSentence} ${t('You will be asked to switch to the account that sent it first.')}`
+  }, [isOwnPendingAccountOp, isPendingAccountSafe, replacementBlocker, t])
 
   const sheetHeader = useMemo(
     () => (
@@ -495,28 +541,6 @@ const EarlierPendingTransaction = ({
                 />
               </View>
             </View>
-            {isReplacingPendingAccountOp && (
-              <Button
-                type="outline"
-                size="small"
-                text={t('Keep the earlier transaction')}
-                onPress={handleStopReplacing}
-                disabled={!!replacementInProgress}
-                hasBottomSpacing={false}
-                style={spacings.mtTy}
-              />
-            )}
-            {canReplacePendingAccountOp && !isReplacingPendingAccountOp && (
-              <Button
-                type="outline"
-                size="small"
-                text={t('Replace with this transaction')}
-                onPress={handleReplace}
-                disabled={!!replacementInProgress}
-                hasBottomSpacing={false}
-                style={spacings.mtTy}
-              />
-            )}
           </View>
         </View>
         <Text appearance="secondaryText" fontSize={12} style={spacings.mtSm}>
@@ -525,10 +549,6 @@ const EarlierPendingTransaction = ({
       </>
     )
   }, [
-    canReplacePendingAccountOp,
-    handleReplace,
-    handleStopReplacing,
-    isReplacingPendingAccountOp,
     handleCancel,
     handleSpeedUp,
     getDisabledTooltipDataSet,
@@ -542,6 +562,32 @@ const EarlierPendingTransaction = ({
     t
   ])
 
+  const alertSecondaryButtonProps = useMemo(() => {
+    if (isWaitingForReplacement) return undefined
+
+    if (isReplacingPendingAccountOp)
+      return {
+        text: t("Don't replace"),
+        onPress: handleStopReplacing,
+        disabled: !!replacementInProgress
+      }
+    if (!canReplacePendingAccountOp) return undefined
+
+    return {
+      text: t('Replace it'),
+      onPress: handleReplace,
+      disabled: !!replacementInProgress
+    }
+  }, [
+    canReplacePendingAccountOp,
+    handleReplace,
+    handleStopReplacing,
+    isReplacingPendingAccountOp,
+    isWaitingForReplacement,
+    replacementInProgress,
+    t
+  ])
+
   if (!pendingAccountOp) return null
 
   return (
@@ -552,6 +598,7 @@ const EarlierPendingTransaction = ({
         title={alertTitle}
         text={alertText}
         buttonProps={isWaitingForReplacement ? undefined : alertButtonProps}
+        secondaryButtonProps={alertSecondaryButtonProps}
         style={style}
       />
       <BottomSheet
