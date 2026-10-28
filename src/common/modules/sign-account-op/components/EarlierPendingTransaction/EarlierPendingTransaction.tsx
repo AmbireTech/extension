@@ -555,7 +555,8 @@ const EarlierPendingTransaction = ({
   ])
 
   const alertSecondaryButtonProps = useMemo(() => {
-    if (isWaitingForReplacement) return undefined
+    // Not once a Safe owner signed, so neither Replace nor Don't replace is offered
+    if (isWaitingForReplacement || !canReplacePendingAccountOp) return undefined
 
     if (isReplacingPendingAccountOp)
       return {
@@ -563,7 +564,6 @@ const EarlierPendingTransaction = ({
         onPress: handleStopReplacing,
         disabled: !!replacementInProgress
       }
-    if (!canReplacePendingAccountOp) return undefined
 
     return {
       text: t('Replace pending'),
