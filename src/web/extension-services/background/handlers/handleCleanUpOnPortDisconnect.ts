@@ -1,4 +1,4 @@
-import { MainController } from '@ambire-common/controllers/main/main'
+import type { MainController } from '@ambire-common/controllers/main/main'
 import { ONBOARDING_WEB_ROUTES, ROUTES } from '@common/modules/router/constants/common'
 import { IS_FIREFOX } from '@web/constants/common'
 import { forgetPanelWindowId } from '@web/extension-services/background/webapi/panel'
@@ -107,12 +107,20 @@ export const handleCleanUpOnPortDisconnect = async ({
     (r) => url.pathname.includes(r) && port.name === 'tab'
   )
 
+  // Only the tab that runs the account adding flow ends it - closing another onboarding tab
+  // (e.g. one left on "wallet-setup-completed") would kill an import running in a different tab.
+  const isAccountAddingFlowRoute = [
+    ROUTES.keyStoreSetup,
+    ROUTES.accountPicker,
+    ROUTES.accountPersonalize
+  ].some((r) => url.pathname.includes(r))
+
   // An account adding flow closed midway is dropped, so it does not come back the next time
   // the extension is opened - unless it was closed on its last step: the prepared accounts
   // (or removals) wait there, for the user to add or go back from (see `getInitialRoute`).
   // With accounts in the wallet nothing leads back there, so they are dropped too, after the
   // grace period that keeps them over a reload.
-  if (isOnboardingRoute) {
+  if (isOnboardingRoute && isAccountAddingFlowRoute) {
     const { isInitialized, initParams, readyToAddAccounts, readyToRemoveAccounts } =
       mainCtrl.accountPicker
     const isOnPersonalizeStep = url.pathname.includes(ROUTES.accountPersonalize)

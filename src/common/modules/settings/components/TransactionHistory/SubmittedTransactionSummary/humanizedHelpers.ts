@@ -163,7 +163,11 @@ export const getDappInteractionsFromHumanizedCalls = (
     })
   })
 
-  const isSwap = !!submittedAccountOp.meta?.swapTxn
+  // Only swap/bridge calls have an `activeRouteId`. Checked as well as `meta.swapTxn`, as a
+  // swap repeated from the activity has only the calls - it's not linked to a swap route
+  const isSwap =
+    !!submittedAccountOp.meta?.swapTxn ||
+    submittedAccountOp.calls.some((call) => !!call.activeRouteId)
   if (isSwap) {
     addInteraction({
       id: 'fallback:swap',

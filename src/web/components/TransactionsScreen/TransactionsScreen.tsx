@@ -1,14 +1,13 @@
 import React, { FC, useState } from 'react'
-import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
+import ItemPanel from '@common/components/ItemPanel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import useCompactLayout from '@common/hooks/useCompactLayout'
-import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -23,29 +22,6 @@ type WrapperProps = {
 type ContentProps = {
   children: React.ReactNode
   buttons: React.ReactNode
-}
-
-type ItemPanelProps = {
-  children: React.ReactNode
-  style?: ViewStyle
-}
-
-const ItemPanel: FC<ItemPanelProps> = ({ children, style = {} }) => {
-  const { theme } = useTheme()
-
-  return (
-    <View
-      style={{
-        ...spacings.phSm,
-        ...spacings.pvSm,
-        backgroundColor: theme.secondaryBackground,
-        borderRadius: BORDER_RADIUS_PRIMARY,
-        ...style
-      }}
-    >
-      {children}
-    </View>
-  )
 }
 
 const Wrapper: FC<WrapperProps> = ({ children }) => {
