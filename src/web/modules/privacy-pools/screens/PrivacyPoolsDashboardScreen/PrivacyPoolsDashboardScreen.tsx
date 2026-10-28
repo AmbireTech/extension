@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 
 import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
 import Alert from '@common/components/Alert'
@@ -19,6 +19,7 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import getDashboardStyles from '@common/modules/dashboard/screens/styles'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import PrivacyPoolsActivityPage from '@web/modules/privacy-pools/components/PrivacyPoolsActivityPage'
 import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyPoolsOverview'
 import PrivacyPoolsTokensPage, {
@@ -58,6 +59,15 @@ const PrivacyPoolsDashboardScreen = () => {
   const isBackedUp = !!selectedAccount?.isBackedUp
   const { t } = useTranslation()
   const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
+  // As on the regular dashboard: the pager starts where the collapsed overview ends and slides
+  // over the part that collapses, which hides the network filter with it. Both heights are static.
+  const [overviewHeight, setOverviewHeight] = useState(0)
+  const [collapsibleOverviewHeight, setCollapsibleOverviewHeight] = useState(0)
+  const onOverviewLayout = useCallback(({ nativeEvent }: LayoutChangeEvent) => {
+    setOverviewHeight(nativeEvent.layout.height)
+  }, [])
+  // Until then the pager doesn't know where to start, and would be drawn over the overview
+  const isOverviewMeasured = !!overviewHeight && !!collapsibleOverviewHeight
 
   // Per window, like the regular dashboard's, so closing one does not close another's sessions
   const [sessionId] = useState(`privacy-pools-dashboard-${nanoid()}`)
@@ -169,36 +179,52 @@ const PrivacyPoolsDashboardScreen = () => {
     <LayoutWrapper>
       {/* So the background closes this window's sessions with it */}
       <SessionIdInUrl sessionId={sessionId} />
-      {/* Laid out like the regular dashboard */}
-      <View style={styles.container}>
-        <PrivacyPoolsOverview
-          hasSyncedAnyChain={hasSyncedAnyChain}
-          isSyncing={isSyncingAnyChain}
-          hasSyncError={hasSyncError}
-          totalPrivateBalance={totalPrivateBalance}
-          canSend={!!withdrawTokens.length}
-          onRefresh={syncAllChains}
-          onSend={openSend}
-        />
-        {/* Nothing collapses here, so the overview stays above the pages */}
-        <DashboardPagesCarousel
-          tabs={PRIVACY_POOLS_TABS}
-          banners={banners}
-          openTab={openTab}
-          setOpenTab={setOpenTab}
-          sessionId={sessionId}
-          initAllTabs={noop}
-        >
-          <PrivacyPoolsTokensPage
-            openTab={openTab}
-            balances={balances}
-            state={balancesState}
-            unavailableReason={unavailableReason}
-            isWaitingForBackup={!!selectedAccount && !isBackedUp}
-            networkFilterName={networkFilterName}
+      {/* Laid out like the regular dashboard. The overview is padded instead, as it is laid out
+      of the flow */}
+      <View style={[styles.container, spacings.pt0]}>
+        {/* Rendered before the pager, which has to be drawn over it */}
+        <View style={[styles.overviewOverlay, spacings.ptSm]} onLayout={onOverviewLayout}>
+          <PrivacyPoolsOverview
+            hasSyncedAnyChain={hasSyncedAnyChain}
+            isSyncing={isSyncingAnyChain}
+            hasSyncError={hasSyncError}
+            totalPrivateBalance={totalPrivateBalance}
+            canSend={!!withdrawTokens.length}
+            onRefresh={syncAllChains}
+            onSend={openSend}
+            onCollapsibleHeightChange={setCollapsibleOverviewHeight}
           />
-          <PrivacyPoolsActivityPage openTab={openTab} sessionId={sessionId} />
-        </DashboardPagesCarousel>
+        </View>
+        <View
+          style={[
+            flexbox.flex1,
+            {
+              marginTop: overviewHeight - collapsibleOverviewHeight,
+              opacity: isOverviewMeasured ? 1 : 0
+            }
+          ]}
+          pointerEvents="box-none"
+        >
+          <DashboardPagesCarousel
+            tabs={PRIVACY_POOLS_TABS}
+            banners={banners}
+            openTab={openTab}
+            setOpenTab={setOpenTab}
+            sessionId={sessionId}
+            initAllTabs={noop}
+            overviewHeight={collapsibleOverviewHeight}
+          >
+            <PrivacyPoolsTokensPage
+              openTab={openTab}
+              balances={balances}
+              state={balancesState}
+              unavailableReason={unavailableReason}
+              isWaitingForBackup={!!selectedAccount && !isBackedUp}
+              networkFilterName={networkFilterName}
+            />
+            <PrivacyPoolsActivityPage openTab={openTab} sessionId={sessionId} />
+          </DashboardPagesCarousel>
+        </View>
       </View>
     </LayoutWrapper>
   )
