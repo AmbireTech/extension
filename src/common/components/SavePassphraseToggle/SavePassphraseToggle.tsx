@@ -23,7 +23,7 @@ const SavePassphraseToggle = ({ isOn, onToggle, style, testID }: Props) => {
       description={t("You won't be asked for it next time you add accounts.")}
       descriptionFontSize={12}
       forceDescriptionOnMobile
-      style={style}
+      style={{ ...spacings.pvTy, ...style }}
     >
       <FatToggle
         testID={testID}

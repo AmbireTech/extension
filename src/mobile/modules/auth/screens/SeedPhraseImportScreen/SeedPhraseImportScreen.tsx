@@ -3,6 +3,7 @@ import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
+import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import SavePassphraseToggle from '@common/components/SavePassphraseToggle'
@@ -12,6 +13,7 @@ import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
 import getStyles from '@common/modules/auth/styles/seedPhraseImportScreenStyles'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
@@ -81,15 +83,22 @@ const SeedPhraseImportScreen = () => {
             </View>
           )}
         />
-        <FatToggle
-          testID="enable-passphrase-toggle"
-          isOn={enablePassphrase}
-          onToggle={() => setEnablePassphrase((prev) => !prev)}
-          label={t('Advanced mode')}
-          width={44}
-          height={24}
-          style={flexbox.alignSelfStart}
-        />
+        <ControlOption
+          title={t('I have a passphrase')}
+          description={t('Not sure? Leave it off.')}
+          descriptionFontSize={12}
+          forceDescriptionOnMobile
+          style={spacings.pvTy}
+        >
+          <FatToggle
+            testID="enable-passphrase-toggle"
+            isOn={enablePassphrase}
+            onToggle={() => setEnablePassphrase((prev) => !prev)}
+            width={44}
+            height={24}
+            trackStyle={spacings.mr0}
+          />
+        </ControlOption>
         {enablePassphrase ? (
           <>
             <View style={styles.passphraseContainer}>
