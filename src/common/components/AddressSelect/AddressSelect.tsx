@@ -113,6 +113,7 @@ const SelectedMenuOption: React.FC<{
     prefix: number
     suffix: number
     color: 'errorText'
+    differingFrom?: string
   }
   inputBackgroundColor?: ColorValue
   plainAddressMaxLength?: number
@@ -596,15 +597,16 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     ]
   )
 
-  // Highlights the matching edges of a poisoning lookalike. A near-identical address matches
-  // almost everywhere, so highlighting it would only hide the few differing characters.
+  // Highlights what differs from the known address: everything between the matching edges of a
+  // poisoning lookalike, or only the few mistyped chars of a near-identical address.
   const selectedAddressHighlight = useMemo(
     () =>
-      addressPoisoningMatch && !nearIdenticalAddressMatch
+      addressPoisoningMatch
         ? {
             prefix: addressPoisoningMatch.matchedPrefixCharsCount,
             suffix: addressPoisoningMatch.matchedSuffixCharsCount,
-            color: 'errorText' as const
+            color: 'errorText' as const,
+            differingFrom: nearIdenticalAddressMatch?.matchedAddress
           }
         : undefined,
     [addressPoisoningMatch, nearIdenticalAddressMatch]

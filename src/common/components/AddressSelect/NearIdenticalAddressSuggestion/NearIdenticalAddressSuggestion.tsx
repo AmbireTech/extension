@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { View } from 'react-native'
 
+import shortenAddress from '@ambire-common/utils/shortenAddress'
 import getAddToAddressBookStyles from '@common/components/AddressSelect/AddToAddressBook/styles'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -45,7 +46,7 @@ const NearIdenticalAddressSuggestion = ({ suggestedAddress, setAddress }: Props)
           {...bindAnim}
         >
           <Text fontSize={12} weight="medium" color={theme.primaryAccent300}>
-            {t('Use the address you sent to before')}
+            {t('Use {{address}}', { address: shortenAddress(suggestedAddress, 17, 6) })}
           </Text>
         </AnimatedPressable>
       </View>
