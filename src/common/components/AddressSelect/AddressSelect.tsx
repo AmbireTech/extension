@@ -7,6 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
+import { isNearIdenticalAddressMatch } from '@ambire-common/libs/transfer/address-poisoning'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
@@ -22,6 +23,7 @@ import AddressInput from '@common/components/AddressInput'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
+import NearIdenticalAddressSuggestion from '@common/components/AddressSelect/NearIdenticalAddressSuggestion'
 import { InputProps } from '@common/components/Input'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import { SectionedSelect } from '@common/components/Select'
@@ -555,20 +557,35 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     [bindManageBtnAnim, manageBtnAnimStyle, onManagePress, t, theme.secondaryText]
   )
 
+  // A near-identical address is most likely a typo of a known recipient, not a poisoning lookalike
+  const nearIdenticalAddressMatch =
+    addressPoisoningMatch && isNearIdenticalAddressMatch(addressPoisoningMatch)
+      ? addressPoisoningMatch
+      : null
+
   const renderConfirmAddress = useCallback(
-    () => (
-      <AddToAddressBook
-        isRecipientHumanizerKnownTokenOrSmartContract={
-          isRecipientHumanizerKnownTokenOrSmartContract
-        }
-        isRecipientAddressUnknown={isRecipientAddressUnknown}
-        isRecipientAddressSameAsSender={actualAddress === account?.addr}
-        addressValidationMsg={addressValidationMsg}
-        domainVerificationMessage={domainVerificationMessage}
-        onAddToAddressBookPress={openBottomSheet}
-      />
-    ),
+    () =>
+      nearIdenticalAddressMatch ? (
+        // Saving a likely typo to the address book would only make it look trusted later
+        <NearIdenticalAddressSuggestion
+          suggestedAddress={nearIdenticalAddressMatch.matchedAddress}
+          setAddress={setAddress}
+        />
+      ) : (
+        <AddToAddressBook
+          isRecipientHumanizerKnownTokenOrSmartContract={
+            isRecipientHumanizerKnownTokenOrSmartContract
+          }
+          isRecipientAddressUnknown={isRecipientAddressUnknown}
+          isRecipientAddressSameAsSender={actualAddress === account?.addr}
+          addressValidationMsg={addressValidationMsg}
+          domainVerificationMessage={domainVerificationMessage}
+          onAddToAddressBookPress={openBottomSheet}
+        />
+      ),
     [
+      nearIdenticalAddressMatch,
+      setAddress,
       isRecipientHumanizerKnownTokenOrSmartContract,
       isRecipientAddressUnknown,
       actualAddress,
@@ -579,16 +596,18 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     ]
   )
 
+  // Highlights the matching edges of a poisoning lookalike. A near-identical address matches
+  // almost everywhere, so highlighting it would only hide the few differing characters.
   const selectedAddressHighlight = useMemo(
     () =>
-      addressPoisoningMatch
+      addressPoisoningMatch && !nearIdenticalAddressMatch
         ? {
             prefix: addressPoisoningMatch.matchedPrefixCharsCount,
             suffix: addressPoisoningMatch.matchedSuffixCharsCount,
             color: 'errorText' as const
           }
         : undefined,
-    [addressPoisoningMatch]
+    [addressPoisoningMatch, nearIdenticalAddressMatch]
   )
 
   const renderSelectedOption = useCallback(
