@@ -1,6 +1,7 @@
 import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
+import { getDomain } from 'tldts'
 
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
@@ -31,6 +32,22 @@ type Props = Partial<DappProviderRequest['session']> & {
    * the app isn't known to be malicious, not that it's verified.
    */
   isInAppCatalog?: boolean
+  /** Whether the site pretends to be a well-known app it is not */
+  isImpersonating?: boolean
+}
+
+/**
+ * Splits a hostname into its subdomain part and its root domain (e.g. "app." and "uniswap.org"),
+ * so the root domain - the part a phishing site can't fake - can be shown more prominently.
+ * When there is no root domain (localhost, IP address, internal), the whole id is the root domain.
+ */
+const splitByRootDomain = (id: string) => {
+  const rootDomain = getDomain(id)
+  if (!rootDomain || rootDomain === id || !id.endsWith(`.${rootDomain}`)) {
+    return { subdomainPrefix: '', rootDomain: id }
+  }
+
+  return { subdomainPrefix: id.slice(0, id.length - rootDomain.length), rootDomain }
 }
 
 const DAppConnectHeader: FC<Props> = ({
@@ -41,7 +58,8 @@ const DAppConnectHeader: FC<Props> = ({
   securityCheck,
   isTrustedByUser = false,
   isScamCheckerEnabled = true,
-  isInAppCatalog
+  isInAppCatalog,
+  isImpersonating = false
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -52,8 +70,11 @@ const DAppConnectHeader: FC<Props> = ({
     isScamCheckerEnabled && securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
   const isBlacklisted = isScamCheckerEnabled && securityCheck === 'BLACKLISTED'
   const hasFailedToGet = isScamCheckerEnabled && securityCheck === 'FAILED_TO_GET'
+  const hasWarning = isSuspiciousHosting || hasFailedToGet || isImpersonating
 
   const { minHeightSize } = useWindowSize()
+
+  const { subdomainPrefix, rootDomain } = useMemo(() => splitByRootDomain(id ?? ''), [id])
 
   const spacingsStyle = useMemo(() => {
     return {
@@ -70,7 +91,7 @@ const DAppConnectHeader: FC<Props> = ({
         {
           backgroundColor: isBlacklisted
             ? theme.errorBackground
-            : isSuspiciousHosting || hasFailedToGet
+            : hasWarning
               ? theme.warningBackground
               : theme.tertiaryBackground
         },
@@ -138,7 +159,7 @@ const DAppConnectHeader: FC<Props> = ({
               <ErrorFilledIcon width={18} height={18} />
             </View>
           )}
-          {(isSuspiciousHosting || hasFailedToGet) && (
+          {hasWarning && (
             <View
               style={{
                 position: 'absolute',
@@ -164,12 +185,28 @@ const DAppConnectHeader: FC<Props> = ({
           >
             {name}
           </Text>
+          {/* The domain is the one thing a site can't fake, so it is as prominent as the name */}
           <Text
-            fontSize={14 * responsiveSizeMultiplier}
-            appearance="secondaryText"
-            style={isMobile && text.center}
+            fontSize={responsiveSizeMultiplier * 20}
+            weight="semiBold"
+            style={[
+              isWeb && {
+                // @ts-expect-error web-only style for wrapping long domains
+                wordBreak: 'break-all'
+              },
+              isMobile && text.center
+            ]}
           >
-            {id}
+            {!!subdomainPrefix && (
+              <Text
+                fontSize={responsiveSizeMultiplier * 20}
+                weight="medium"
+                appearance="secondaryText"
+              >
+                {subdomainPrefix}
+              </Text>
+            )}
+            {rootDomain}
           </Text>
         </View>
       </View>

@@ -33,7 +33,8 @@ const DappConnectScreen = () => {
     canBeTrustedByUser,
     isScamCheckerEnabled,
     handleEnableScamChecker,
-    toggleTrust
+    toggleTrust,
+    impersonation
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
   const { minHeightSize } = useWindowSize()
@@ -108,6 +109,7 @@ const DappConnectScreen = () => {
                 isTrustedByUser={isTrustedByUser}
                 isScamCheckerEnabled={isScamCheckerEnabled}
                 isInAppCatalog={!dappToConnect.isCustom}
+                isImpersonating={!!impersonation}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
               <DAppConnectBody
@@ -117,6 +119,8 @@ const DappConnectScreen = () => {
                 onToggleTrust={toggleTrust}
                 onEnableScamChecker={handleEnableScamChecker}
                 isScamCheckerEnabled={isScamCheckerEnabled}
+                isInAppCatalog={!dappToConnect.isCustom}
+                impersonation={impersonation}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>

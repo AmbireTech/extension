@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
+import { getImpersonation } from '@ambire-common/libs/dapps/impersonation'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTrustDapp from '@common/hooks/useTrustDapp'
@@ -32,6 +33,21 @@ const useDappConnect = () => {
 
   const isSuspiciousHosting =
     isScamCheckerEnabled && dappToConnect?.blacklisted === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+
+  // Checked once the scam lists are, as a site that is already on them gets the stronger warning
+  const impersonation = useMemo(() => {
+    if (!dappToConnect || !isScamCheckerEnabled) return null
+    if (dappToConnect.blacklisted === 'LOADING' || dappToConnect.blacklisted === 'BLACKLISTED') {
+      return null
+    }
+
+    return getImpersonation({
+      hostname: dappToConnect.id,
+      name: dappToConnect.name,
+      icon: dappToConnect.icon,
+      isInAppCatalog: !dappToConnect.isCustom
+    })
+  }, [dappToConnect, isScamCheckerEnabled])
 
   const toggleTrust = useCallback(() => {
     if (!dappToConnect) return
@@ -90,15 +106,16 @@ const useDappConnect = () => {
       isScamCheckerEnabled &&
       (dappToConnect.blacklisted === 'BLACKLISTED' ||
         isSuspiciousHosting ||
-        dappToConnect.blacklisted === 'FAILED_TO_GET')
+        dappToConnect.blacklisted === 'FAILED_TO_GET' ||
+        !!impersonation)
     )
-  }, [dappToConnect, isScamCheckerEnabled, isSuspiciousHosting])
+  }, [dappToConnect, isScamCheckerEnabled, isSuspiciousHosting, impersonation])
 
   const resolveButtonText = useMemo(() => {
     if (!dappToConnect) return t('Loading...')
     if (isAuthorizing) return t('Connecting...')
     if (!isScamCheckerEnabled) return t('Connect')
-    if (dappToConnect.blacklisted === 'BLACKLISTED' || isSuspiciousHosting)
+    if (dappToConnect.blacklisted === 'BLACKLISTED' || isSuspiciousHosting || impersonation)
       return t('Hold to continue anyway')
     if (dappToConnect.blacklisted === 'LOADING') return t('Loading...')
 
@@ -109,7 +126,8 @@ const useDappConnect = () => {
     isAuthorizing,
     shouldHoldToProceed,
     isSuspiciousHosting,
-    isScamCheckerEnabled
+    isScamCheckerEnabled,
+    impersonation
   ])
 
   return {
@@ -124,6 +142,7 @@ const useDappConnect = () => {
     isTrustedByUser,
     canBeTrustedByUser,
     isScamCheckerEnabled,
+    impersonation,
     handleEnableScamChecker,
     toggleTrust
   }
