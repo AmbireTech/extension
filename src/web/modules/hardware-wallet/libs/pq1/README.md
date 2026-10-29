@@ -88,8 +88,11 @@ with a firmware release that changes the roots.
 
 `pq1-sdk` runs in the background under LavaMoat with its own entry in
 `lavamoat/webpack/policy.json`: WebHID (`navigator.hid`), `fetch` (bundler,
-CoW and Safe APIs, the extension's catalogs) and `chrome.storage` / `runtime`
-(the init-code cache, the catalogs' URL), plus `viem`.
+CoW and Safe APIs, the extension's catalogs) and `chrome.runtime.id` /
+`getURL` (the catalogs' URL), plus `viem`. `lavamoat/webpack/policy-override.json`
+denies it `chrome.storage.local`, which also holds the keystore, and runtime
+messaging: `PQ1Controller` passes in the init-code cache
+(`pq1InitCodeCache` in `context.ts`), so the SDK never needs them.
 
 ## Testing
 

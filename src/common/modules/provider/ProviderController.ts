@@ -137,26 +137,37 @@ export class ProviderController {
     }
     if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
 
-    // A PQ1 account is a smart-contract wallet, but one not deployed on this
-    // chain yet has no code, so a dapp connected to it would take it for an
-    // EOA. Its answer comes from the PQ1 module — see
-    // `hardware-wallet/libs/pq1DappProvider.ts`.
-    if (
-      method === 'eth_getCode' &&
-      isEthGetCodeParams(params) &&
-      this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) &&
-      this.isUnlocked &&
-      isPq1AccountCodeQuery(
-        this.mainCtrl.keystore.keys,
-        this._internalGetAccounts(id),
-        chainId,
-        params[0]
-      )
-    ) {
-      return resolvePq1AccountCode(provider, params)
-    }
-
     return provider.send(method, params)
+  }
+
+  // A PQ1 account is a smart-contract wallet, but one not deployed on this
+  // chain yet has no code, so a dapp connected to it would take it for an
+  // EOA. Its answer comes from the PQ1 module — see
+  // `hardware-wallet/libs/pq1DappProvider.ts`. Every other query is a plain
+  // `ethRpc` read. SAFE, like the `ethRpc` fallback in `rpcFlow`, so reading
+  // code never asks the user to unlock or connect.
+  @metadata('SAFE', true)
+  ethGetCode = async (request: DappProviderRequest) => {
+    const { params, session } = request
+    const { id } = session
+
+    const isConnectedAndUnlocked =
+      this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) && this.isUnlocked
+    if (!isConnectedAndUnlocked || !isEthGetCodeParams(params)) return this.ethRpc(request)
+
+    const chainId = this.getDappNetwork(id).chainId
+    const isPq1Query = isPq1AccountCodeQuery(
+      this.mainCtrl.keystore.keys,
+      this._internalGetAccounts(id),
+      chainId,
+      params[0]
+    )
+    if (!isPq1Query) return this.ethRpc(request)
+
+    const provider = this.mainCtrl.providers.providers[chainId.toString()]
+    if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
+
+    return resolvePq1AccountCode(provider, params)
   }
 
   ethRequestAccounts = async ({ session }: DappProviderRequest) => {
