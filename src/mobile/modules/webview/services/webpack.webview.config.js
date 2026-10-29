@@ -497,7 +497,8 @@ const inpageConfig = {
   output: {
     path: path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services'),
     filename: '[name]-bundle.js',
-    libraryTarget: 'window',
+    // Deliberately no `libraryTarget: 'window'`: it copies the entry exports onto the dapp's
+    // window, `__esModule` included, which breaks webpack-bundled dapps reading `window` (#8387).
     publicPath: isDev ? '/' : ''
   },
   resolve: sharedResolve,
