@@ -27,9 +27,11 @@ type Props = {
   address: string
   /** Looked up once for the whole list, see `useExchangesInfo` */
   exchangesInfo?: ExchangeInfoMap
+  /** The unverified token warning already covers the missing exchanges info of such a token */
+  isUnverified?: boolean
 }
 
-const TokenExchanges: FC<Props> = ({ chainId, address, exchangesInfo }) => {
+const TokenExchanges: FC<Props> = ({ chainId, address, exchangesInfo, isUnverified }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const marketData = useTokenExchanges(chainId, address)
@@ -51,7 +53,9 @@ const TokenExchanges: FC<Props> = ({ chainId, address, exchangesInfo }) => {
   // Nothing to show while loading or for a failed fetch, the controller retries it shortly
   if (marketData.status === 'FAIL') return null
 
-  if (marketData.status === 'NOT_FOUND')
+  if (marketData.status === 'NOT_FOUND') {
+    if (isUnverified) return null
+
     return (
       <View
         dataSet={createGlobalTooltipDataSet({
@@ -63,6 +67,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address, exchangesInfo }) => {
         <WarningIcon width={LOGO_SIZE} height={LOGO_SIZE} color={theme.secondaryText} />
       </View>
     )
+  }
 
   if (!exchangesWithData.length) return null
 
