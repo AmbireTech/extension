@@ -82,7 +82,6 @@ const InviteCodeInput = ({ value, onChange, onSubmitEditing, editable = true, er
       nativeInputStyle={{ fontSize: 16, fontFamily: GEIST_MONO_FONT_FAMILIES.REGULAR }}
       containerStyle={spacings.mbLg}
       backgroundColor={theme.secondaryBackground}
-      autoFocus
       autoCapitalize="none"
       autoCorrect={false}
       autoComplete="off"

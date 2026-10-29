@@ -19,6 +19,7 @@ import useTransfer from '@common/modules/transfer/hooks/useTransfer'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+import { getVisibleNftTokenId } from '@common/utils/nft'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -45,6 +46,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientAddressUnknown,
     signAccountOpController,
     latestBroadcastedToken,
+    latestBroadcastedNft,
     hasProceeded,
     batchNetworkUserRequestsCount,
     transferState,
@@ -59,8 +61,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     estimationModalRef,
     closeEstimationModalAndDispatch,
     handleEstimationModalClosed,
-    updateController,
-    handleUpdateStatus,
     portfolio,
     account
   } = useTransfer(!!isTopUpScreen)
@@ -109,9 +109,14 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 ? t('Almost there!')
                 : isTopUp
                   ? t('You can now use your gas tank')
-                  : t('{{symbol}} delivered!', {
-                      symbol: latestBroadcastedToken?.symbol || 'Token'
-                    })
+                  : latestBroadcastedNft
+                    ? t('{{name}} #{{tokenId}} delivered!', {
+                        name: latestBroadcastedNft.collectionName || t('NFT'),
+                        tokenId: getVisibleNftTokenId(latestBroadcastedNft.tokenId.toString())
+                      })
+                    : t('{{symbol}} delivered!', {
+                        symbol: latestBroadcastedToken?.symbol || 'Token'
+                      })
             }
             explorerLink={explorerLink}
             openExplorerText="View Transfer"
@@ -242,8 +247,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalAndDispatch}
           onEstimationModalClosed={handleEstimationModalClosed}
-          updateController={updateController}
-          handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           Modals={Modals}

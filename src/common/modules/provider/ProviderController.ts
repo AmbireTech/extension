@@ -5,9 +5,9 @@ import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
 import { Session } from '@ambire-common/classes/session'
-import { MainController } from '@ambire-common/controllers/main/main'
 import { Account } from '@ambire-common/interfaces/account'
 import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { IMainController } from '@ambire-common/interfaces/main'
 import { Network } from '@ambire-common/interfaces/network'
 import { UiManager } from '@ambire-common/interfaces/ui'
 import {
@@ -17,6 +17,7 @@ import {
   getVersion
 } from '@ambire-common/libs/5792/5792'
 import { getBaseAccount } from '@ambire-common/libs/account/getBaseAccount'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import {
   AccountOpIdentifiedBy,
   isIdentifiedByMultipleTxn
@@ -57,28 +58,22 @@ const handleSignMessage = (requestRes: RequestRes) => {
   throw new Error('Internal error: request result not found', requestRes)
 }
 
-function getSelectedAccount(mainCtrl: MainController, id: string): string | undefined {
-  const extensionSelectedAccount = mainCtrl.selectedAccount.account?.addr
-  const preferences = mainCtrl.dapps.getDapp(id)?.accountPreferences
+function getSelectedAccount(mainCtrl: IMainController, id: string): string | undefined {
+  const [selectedAccount] = getAccountsForDapp(
+    mainCtrl.dapps.getDapp(id)?.accountPreferences,
+    mainCtrl.selectedAccount.account?.addr
+  )
 
-  if (
-    !preferences ||
-    !preferences.enabled ||
-    (extensionSelectedAccount && preferences.accounts.includes(extensionSelectedAccount))
-  ) {
-    return extensionSelectedAccount
-  }
-
-  return preferences.selectedAccount
+  return selectedAccount
 }
 
 export class ProviderController {
-  mainCtrl: MainController
+  mainCtrl: IMainController
 
   isUnlocked: boolean
   private notificationManager: UiManager['notification']
 
-  constructor(mainCtrl: MainController, notificationManager: UiManager['notification']) {
+  constructor(mainCtrl: IMainController, notificationManager: UiManager['notification']) {
     this.mainCtrl = mainCtrl
     this.notificationManager = notificationManager
 
@@ -88,8 +83,8 @@ export class ProviderController {
   }
 
   _getSelectedAccount(id: string) {
-    // If enabled and the extension's selected account is not a part of the allowed accounts, return
-    // the last selected account from the dapp preferences
+    // The account picked for the dapp, else the extension's selected account if the dapp may see it,
+    // else the last selected account from the dapp preferences
     return getSelectedAccount(this.mainCtrl, id)
   }
 
@@ -352,7 +347,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'AddChain',
-    ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       const chainParams = request.params[0]
 
       if (!chainParams)
@@ -577,12 +572,26 @@ export class ProviderController {
 
     const selectedAccount = this._getSelectedAccount(data.session.id)
 
-    const accOp = selectedAccount
+    const requestedAccOp = selectedAccount
       ? this.mainCtrl.activity.findByIdentifiedBy(identifiedBy, selectedAccount, network.chainId)
       : undefined
-    const version = getVersion(accOp)
+    const version = getVersion(requestedAccOp)
 
-    if (!accOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+    if (!requestedAccOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+
+    // A speed up or a cancel takes the place of the op the app sent, so the app is told how the
+    // op that went through in its place did
+    const canBeReplaced =
+      requestedAccOp.status === AccountOpStatus.UnknownButPastNonce ||
+      requestedAccOp.status === AccountOpStatus.BroadcastButStuck
+    const accOp =
+      (canBeReplaced &&
+        this.mainCtrl.activity.findReplacement(
+          identifiedBy,
+          requestedAccOp.accountAddr,
+          network.chainId
+        )) ||
+      requestedAccOp
 
     if (
       accOp.status === AccountOpStatus.Rejected ||
@@ -605,6 +614,13 @@ export class ProviderController {
       }
     }
 
+    // A cancel never runs the calls the app sent
+    if (isCancelAccountOp(accOp)) {
+      return {
+        status: getFailureStatus(version)
+      }
+    }
+
     const provider = this.mainCtrl.providers.providers[network.chainId.toString()]
 
     // check to satisfy the TS; should never happen
@@ -614,7 +630,7 @@ export class ProviderController {
       )
     }
 
-    if (identifiedBy.type === 'UserOperation') {
+    if (accOp.identifiedBy.type === 'UserOperation') {
       return {
         version,
         id: identifiedBy,
@@ -635,7 +651,7 @@ export class ProviderController {
     }
 
     const receipts = []
-    const isMultipleTxn = isIdentifiedByMultipleTxn(identifiedBy)
+    const isMultipleTxn = isIdentifiedByMultipleTxn(accOp.identifiedBy)
     if (!isMultipleTxn) {
       receipts.push({
         logs: [],
@@ -728,7 +744,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'AddChain',
-    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       const chainParams = request.params[0]
       if (!chainParams)
         throw ethErrors.rpc.invalidParams(
@@ -807,7 +823,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'WalletWatchAsset',
-    ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       const options = request.params?.options
       const tokenAddress = options?.address
 
@@ -858,7 +874,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'GetEncryptionPublicKey',
-    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       let incomingAddress
       try {
         incomingAddress = getAddress(request.params?.[0])
@@ -896,7 +912,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'Decrypt',
-    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       let incomingAddress
       try {
         incomingAddress = getAddress(request.params?.[1])

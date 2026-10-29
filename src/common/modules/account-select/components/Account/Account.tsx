@@ -49,6 +49,8 @@ const selectSelectAccountStatus = (state: AllControllersMappingType['MainControl
   state.statuses.selectAccount
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
+const selectIsPrivacyModeEnabled = (state: AllControllersMappingType['WalletStateController']) =>
+  state.isPrivacyModeEnabled
 
 const Account = ({
   account,
@@ -130,6 +132,10 @@ const Account = ({
     [addr]
   )
   const { state: balance } = useController('SelectedAccountController', selectBalance)
+  const { state: isPrivacyModeEnabled } = useController(
+    'WalletStateController',
+    selectIsPrivacyModeEnabled
+  )
   const { dispatchAndWait: accountsDispatchAndWait } = useController('AccountsController')
   const reverseLookup = useReverseLookup({ address: addr, privacyUpdateMode: 'never' })
   const accountKeys = useAccountKeys(account)
@@ -193,6 +199,7 @@ const Account = ({
     account,
     accountKeys,
     balance,
+    isPrivacyModeEnabled,
     pendingRequestsCount,
     safeDeployedChainIds,
     withBadges,
@@ -337,7 +344,7 @@ const Account = ({
         { columnGap: SPACING_MI, rowGap: SPACING_MI }
       ]}
     >
-      {balance !== null && withBalance && (
+      {balance !== null && withBalance && !isPrivacyModeEnabled && (
         <Badge
           style={{
             columnGap: SPACING_MI,

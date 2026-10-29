@@ -26,7 +26,7 @@ const PrivacyOptOutsConfiguration = () => {
         />
       }
     >
-      <MobileLayoutWrapperMainContent withBackButton title="Privacy Opt-outs">
+      <MobileLayoutWrapperMainContent withScroll withBackButton title="Privacy Opt-outs">
         <PrivacyOptOutsList />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>

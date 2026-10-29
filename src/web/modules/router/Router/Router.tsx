@@ -120,7 +120,8 @@ const Router = () => {
   }
 
   return (
-    <View style={styles.container}>
+    // The page that `backdrop-style.css` blurs behind an open bottom sheet
+    <View style={styles.container} dataSet={{ blurredBehindSheets: true }}>
       <Routes>
         <Route element={<KeystoreUnlockedRoute />}>
           <Route element={<AuthenticatedRoute />}>

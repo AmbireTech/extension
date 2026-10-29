@@ -7,6 +7,9 @@ import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import commonStyles from '@common/styles/utils/common'
 import text from '@common/styles/utils/text'
 
+/** The height of the tallest buttons (`large` and `regular`) */
+export const BUTTON_HEIGHT = 50
+
 interface Style {
   buttonContainer: ViewStyle
   buttonText: TextStyle
@@ -81,13 +84,13 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
 
     // Button sizes (large/regular/small)
     buttonContainerStylesSizeLarge: {
-      height: 56,
+      height: BUTTON_HEIGHT,
       ...spacings.pvMi,
       ...spacings.phXl,
       ...spacings.mbSm
     },
     buttonContainerStylesSizeRegular: {
-      height: 56,
+      height: BUTTON_HEIGHT,
       ...spacings.pvMi,
       ...spacings.phSm,
       ...spacings.mbSm

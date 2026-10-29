@@ -62,6 +62,10 @@ type SignerEth = ReturnType<SignerEthBuilder['build']>
 // DiscoveredDevice.transport identifiers exposed by the RN transports.
 const TRANSPORT_ID: Record<LedgerTransportType, string> = { ble: 'RN_BLE', usb: 'RN_HID' }
 
+// How long cleanUp waits for a Bluetooth link to close, for a device that never reports it
+const BLE_DISCONNECT_WAIT_MS = 3000
+const BLE_TEARDOWN_SETTLE_MS = 200
+
 // The device is reachable but needs the user to act (unlock / open the Ethereum
 // app) — retrying the connect probe won't clear it, so surface it right away.
 const isDeviceActionNeededError = (e: any): boolean => {
@@ -439,6 +443,29 @@ class LedgerTransportService {
     this.#rejectSigningSubscription = null
   }
 
+  /**
+   * DMK's BLE disconnect returns before the link is closed. A connect in that window
+   * reuses the closing link, and its teardown then drops the new session too.
+   */
+  #waitForBleDisconnect = async (deviceId: string): Promise<void> => {
+    if (!this.#bleManager) this.#bleManager = new BleManager()
+    const bleManager = this.#bleManager
+
+    let disconnectSub: { remove: () => void } | undefined
+    let timeout: ReturnType<typeof setTimeout> | undefined
+    await new Promise<void>((resolve) => {
+      disconnectSub = bleManager.onDeviceDisconnected(deviceId, () => resolve())
+      timeout = setTimeout(resolve, BLE_DISCONNECT_WAIT_MS)
+      bleManager.isDeviceConnected(deviceId).then((isConnected) => {
+        if (!isConnected) resolve()
+      }, resolve)
+    })
+    disconnectSub?.remove()
+    clearTimeout(timeout)
+    // The transport forgets the link right after it closes
+    await wait(BLE_TEARDOWN_SETTLE_MS)
+  }
+
   cleanUp = async (): Promise<void> => {
     this.#sessionStateSub?.unsubscribe()
     this.#sessionStateSub = null
@@ -446,6 +473,9 @@ class LedgerTransportService {
     if (this.#dmk && this.#sessionId) {
       try {
         await this.#dmk.disconnect({ sessionId: this.#sessionId })
+        if (this.#lastDevice?.transport === TRANSPORT_ID.ble) {
+          await this.#waitForBleDisconnect(this.#lastDevice.id)
+        }
       } catch {
         // The device may already be gone (unplugged/out of range); disconnecting
         // a dead session is not actionable, just reset our state.
