@@ -17,6 +17,7 @@ import {
   getVersion
 } from '@ambire-common/libs/5792/5792'
 import { getBaseAccount } from '@ambire-common/libs/account/getBaseAccount'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import {
   AccountOpIdentifiedBy,
   isIdentifiedByMultipleTxn
@@ -571,12 +572,26 @@ export class ProviderController {
 
     const selectedAccount = this._getSelectedAccount(data.session.id)
 
-    const accOp = selectedAccount
+    const requestedAccOp = selectedAccount
       ? this.mainCtrl.activity.findByIdentifiedBy(identifiedBy, selectedAccount, network.chainId)
       : undefined
-    const version = getVersion(accOp)
+    const version = getVersion(requestedAccOp)
 
-    if (!accOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+    if (!requestedAccOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+
+    // A speed up or a cancel takes the place of the op the app sent, so the app is told how the
+    // op that went through in its place did
+    const canBeReplaced =
+      requestedAccOp.status === AccountOpStatus.UnknownButPastNonce ||
+      requestedAccOp.status === AccountOpStatus.BroadcastButStuck
+    const accOp =
+      (canBeReplaced &&
+        this.mainCtrl.activity.findReplacement(
+          identifiedBy,
+          requestedAccOp.accountAddr,
+          network.chainId
+        )) ||
+      requestedAccOp
 
     if (
       accOp.status === AccountOpStatus.Rejected ||
@@ -599,6 +614,13 @@ export class ProviderController {
       }
     }
 
+    // A cancel never runs the calls the app sent
+    if (isCancelAccountOp(accOp)) {
+      return {
+        status: getFailureStatus(version)
+      }
+    }
+
     const provider = this.mainCtrl.providers.providers[network.chainId.toString()]
 
     // check to satisfy the TS; should never happen
@@ -608,7 +630,7 @@ export class ProviderController {
       )
     }
 
-    if (identifiedBy.type === 'UserOperation') {
+    if (accOp.identifiedBy.type === 'UserOperation') {
       return {
         version,
         id: identifiedBy,
@@ -629,7 +651,7 @@ export class ProviderController {
     }
 
     const receipts = []
-    const isMultipleTxn = isIdentifiedByMultipleTxn(identifiedBy)
+    const isMultipleTxn = isIdentifiedByMultipleTxn(accOp.identifiedBy)
     if (!isMultipleTxn) {
       receipts.push({
         logs: [],
