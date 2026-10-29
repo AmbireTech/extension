@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { ExternalKey, Key } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
+import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -119,6 +120,9 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
       keyType={displayedKeyType as ExternalKey['type']}
       cancelReq={cancelReq}
       signingRequest={hardwareWalletSigningRequest}
+      isAccountUpgradeTransaction={
+        accountOp?.gasFeePayment?.broadcastOption === BROADCAST_OPTIONS.delegation
+      }
     >
       {typeof signedTransactionsCount === 'number' ? (
         <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>

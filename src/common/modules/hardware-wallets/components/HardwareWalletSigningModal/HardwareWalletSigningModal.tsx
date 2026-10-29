@@ -30,6 +30,8 @@ type Props = {
   children?: React.ReactNode
   cancelReq?: () => void
   signingRequest?: HardwareWalletSigningRequest | null
+  /** The transaction is signed together with an account upgrade (type 4) */
+  isAccountUpgradeTransaction?: boolean
 }
 
 const iconByKeyType = {
@@ -46,7 +48,8 @@ const HardwareWalletSigningModal = ({
   isVisible,
   children,
   cancelReq,
-  signingRequest
+  signingRequest,
+  isAccountUpgradeTransaction
 }: Props) => {
   const { t } = useTranslation()
   const { ref, open, close } = useModalize()
@@ -64,30 +67,26 @@ const HardwareWalletSigningModal = ({
       deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType]
     })
 
-    // On native a <Text> is not a flexbox container, so an icon nested directly
-    // in it is baseline-aligned and ends up vertically misaligned with the
-    // title. Wrapping the title in a <View> row makes flexbox centering apply.
-    if (isMobile)
-      return (
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text fontSize={18} weight="medium">
-            {text}
-          </Text>
-          {icon}
-        </View>
-      )
-
+    // On native, and in the narrow web header, the title is rendered in a
+    // <Text> that is not a flexbox container, so an icon nested directly in
+    // it is baseline-aligned and ends up vertically misaligned with the
+    // title. Wrapping the title in a centered <View> row makes flexbox
+    // centering apply everywhere.
     return (
-      <>
-        {text}
+      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter]}>
+        <Text fontSize={isMobile ? 18 : 20} weight="medium" style={{ flexShrink: 1 }}>
+          {text}
+        </Text>
         {icon}
-      </>
+      </View>
     )
   }, [keyType, t])
 
   const isTrezor = useMemo(() => {
     return HARDWARE_WALLET_DEVICE_NAMES[keyType] === 'Trezor'
   }, [keyType])
+
+  const deviceName = HARDWARE_WALLET_DEVICE_NAMES[keyType]
 
   return (
     <BottomSheet
@@ -102,35 +101,62 @@ const HardwareWalletSigningModal = ({
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
     >
       <ModalHeader title={title} style={flexbox.justifyCenter} />
-      <View
-        style={[flexbox.directionRow, flexbox.alignSelfCenter, flexbox.alignCenter, spacings.mvXl]}
-      >
-        <DriveIcon style={spacings.mrLg} />
-        <View style={spacings.mrLg}>
-          <LeftPointerArrowIcon color={theme.successDecorative} />
-          <LeftPointerArrowIcon
-            color={theme.successDecorative}
-            style={[spacings.mtMi, { transform: [{ rotate: '180deg' }] }]}
-          />
+      {/* Without a request to check, the illustration is all there is to show */}
+      {!signingRequest && (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignSelfCenter,
+            flexbox.alignCenter,
+            spacings.mvXl
+          ]}
+        >
+          <DriveIcon style={spacings.mrLg} />
+          <View style={spacings.mrLg}>
+            <LeftPointerArrowIcon color={theme.successDecorative} />
+            <LeftPointerArrowIcon
+              color={theme.successDecorative}
+              style={[spacings.mtMi, { transform: [{ rotate: '180deg' }] }]}
+            />
+          </View>
+          <AmbireDevice />
         </View>
-        <AmbireDevice />
-      </View>
+      )}
       <View
         style={[
           flexbox.alignSelfCenter,
           spacings.mbLg,
           flexbox.alignCenter,
-          { width: '100%', maxWidth: 420 }
+          { width: '100%', maxWidth: 460 }
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}>
-          <Text weight="regular" fontSize={20}>
-            {t('Sending signing request...')}
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            spacings.phSm,
+            spacings.pvTy,
+            spacings.mtSm,
+            { borderRadius: 50, backgroundColor: theme.infoBackground }
+          ]}
+        >
+          <View
+            style={[
+              spacings.mrTy,
+              { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.infoDecorative }
+            ]}
+          />
+          <Text fontSize={13} weight="medium" appearance="infoText">
+            {t('Waiting for you to approve on your {{deviceName}}', { deviceName })}
           </Text>
         </View>
         {children}
         {!!signingRequest && (
-          <SigningRequestDetails signingRequest={signingRequest} style={spacings.mtLg} />
+          <SigningRequestDetails
+            signingRequest={signingRequest}
+            deviceName={deviceName}
+            isAccountUpgradeTransaction={isAccountUpgradeTransaction}
+          />
         )}
         {isTrezor && !!cancelReq && (
           <Button
