@@ -17,6 +17,7 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
@@ -62,6 +63,12 @@ const ManageRecoveryPhrase = ({
   const { addToast } = useToast()
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
+  // Removed along with the phrase, the only way to recover it
+  const hasPrivacyPoolsAccount = useMemo(
+    () => privacyPoolsAccounts.some(({ seedId }) => seedId === recoveryPhrase.id),
+    [privacyPoolsAccounts, recoveryPhrase.id]
+  )
 
   const isSeedRevealed = !blurred && seed !== DUMMY_SEED
 
@@ -302,6 +309,19 @@ const ManageRecoveryPhrase = ({
           />
         </View>
         <View style={[flexbox.flex1, flexbox.justifyEnd]}>
+          {hasPrivacyPoolsAccount && (
+            <Alert
+              type="error"
+              isTypeLabelHidden
+              titleWeight="semiBold"
+              size="md"
+              title={t('This recovery phrase has a Privacy Pools account.')}
+              text={t(
+                'Removing the phrase also removes that account. Whatever it holds can then only be recovered by importing the phrase again, so make sure it is written down.'
+              )}
+              style={spacings.mbSm}
+            />
+          )}
           <Alert
             type="warning"
             isTypeLabelHidden

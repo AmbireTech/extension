@@ -3,6 +3,8 @@ import locators from 'constants/locators'
 import selectors from 'constants/selectors'
 import BootstrapContext from 'interfaces/bootstrapContext'
 
+import { expect } from '@playwright/test'
+
 import mainConstants from '../constants/mainConstants'
 import { BasePage } from './basePage'
 
@@ -37,10 +39,7 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.viewOnlyInputAddressField).fill(account)
     await this.click(selectors.getStarted.viewOnlyBtnImport)
     await this.setExtensionPassword()
-    await this.compareText(
-      selectors.getStarted.confirmationMessageForViewOnly,
-      'Added successfully'
-    )
+    await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
     await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
@@ -56,10 +55,7 @@ export class AuthPage extends BasePage {
     await this.click(selectors.getStarted.createNewAccountButton)
     await this.setExtensionPassword()
     // assertion on Dashboard after login
-    await this.compareText(
-      selectors.getStarted.confirmationMessageForViewOnly,
-      'Added successfully'
-    )
+    await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
     await this.compareText(selectors.getStarted.addMoreAccountsButton, 'Add more accounts')
     await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
@@ -71,18 +67,27 @@ export class AuthPage extends BasePage {
   }
 
   // TODO: imporove method assertions
-  async importExistingAccount(): Promise<void> {
+  async importExistingAccount(privateKeys: string[] = [PRIVATE_KEY]): Promise<void> {
     await this.click(selectors.getStarted.importExistingAccBtn)
     await this.click(selectors.getStarted.importMethodPrivateBtn)
-    await this.entertext(selectors.getStarted.enterPrivateKeyField, PRIVATE_KEY)
+    for (const [index, privateKey] of privateKeys.entries()) {
+      if (index > 0) await this.click(selectors.getStarted.addOneMorePrivateKey)
+      const fieldSelector =
+        index === 0
+          ? selectors.getStarted.enterPrivateKeyField
+          : `${selectors.getStarted.enterPrivateKeyField}-${index}`
+      await this.entertext(fieldSelector, privateKey)
+    }
     await this.click(selectors.getStarted.warningCheckbox)
     await this.click(selectors.getStarted.importBtn)
     await this.setExtensionPassword()
-    // assertion on Dashboard after login
-    await this.compareText(
-      selectors.getStarted.confirmationMessageForViewOnly,
-      'Added successfully'
+    // every private key is imported as its own account
+    await expect(this.page.getByTestId(selectors.personalizeAccount)).toHaveCount(
+      privateKeys.length,
+      { timeout: 30000 }
     )
+    // assertion on Dashboard after login
+    await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
     await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
@@ -118,10 +123,10 @@ export class AuthPage extends BasePage {
   }
 
   async personalizeAccountName(name: string): Promise<void> {
-    // clear field input first
+    // opens the edit account name modal
     await this.click(selectors.getStarted.editFirstAccNameButton)
     await this.entertext(selectors.getStarted.editAccountNameInputField, name)
-    await this.compareText(selectors.getStarted.editFirstAccNameButton, 'Save')
+    await this.click(selectors.getStarted.saveFirstAccNameButton)
   }
 
   // TODO: imporove method assertions
@@ -139,10 +144,7 @@ export class AuthPage extends BasePage {
     // set pass and name
     await this.setExtensionPassword()
     // assertion on Dashboard after login
-    await this.compareText(
-      selectors.getStarted.confirmationMessageForViewOnly,
-      'Added successfully'
-    )
+    await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
     await this.personalizeAccountName('Name 1')
     await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
@@ -160,10 +162,7 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.smartAccountPicker).click()
     // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
     await this.click(selectors.getStarted.importAccountButton)
-    await this.compareText(
-      selectors.getStarted.confirmationMessageForViewOnly,
-      'Added successfully'
-    )
+    await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
     await this.personalizeAccountName('Name 1')
     await this.isVisible(selectors.getStarted.addMoreAccountsButton)
     await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
@@ -182,6 +181,9 @@ export class AuthPage extends BasePage {
     await this.isVisible(path)
     await this.click(path)
     await this.click(selectors.getStarted.hdPathConfirmButton)
+    // The accounts on the new path are derived after the confirm - a click right away lands on
+    // the previous path's list and is ignored, leaving nothing selected
+    await this.page.waitForTimeout(3000)
   }
 
   async createAccountAndImportFromDifferentHDPath(): Promise<void> {
@@ -195,22 +197,17 @@ export class AuthPage extends BasePage {
     await this.page.locator(locators.smartAccountPicker).click()
     // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
     await this.click(selectors.getStarted.importAccountButton)
-    await this.compareText(
-      selectors.getStarted.confirmationMessageForViewOnly,
-      'Added successfully'
-    )
-    // add another acc
+    await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
+    // add another acc - the one prepared above stays selected, so a click on it would deselect it.
+    // The page lists a single smart account (the prepared one), so a basic one is added instead
     await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)
     await this.click(selectors.getStarted.addMoreAccountsButton)
     await this.page.waitForTimeout(3000)
     await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
-    await this.page.locator(locators.smartAccountPicker).click()
+    await this.page.locator(locators.secondBasicAccountPicker).click()
     // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
     await this.click(selectors.getStarted.importAccountButton)
-    await this.compareText(
-      selectors.getStarted.confirmationMessageForViewOnly,
-      'Added successfully'
-    )
+    await this.expectElementVisible(selectors.getStarted.personalizeAccountsHeader)
     await this.isVisible(selectors.getStarted.addMoreAccountsButton)
     await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)

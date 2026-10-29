@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import spacings from '@common/styles/spacings'
 
@@ -16,7 +17,7 @@ const Skeletons = () => {
       {skeletonItems.map(({ key }) => (
         <SkeletonLoader
           key={key}
-          height={56}
+          height={BUTTON_HEIGHT}
           style={spacings.mbTy}
           width="100%"
           appearance="secondaryBackground"

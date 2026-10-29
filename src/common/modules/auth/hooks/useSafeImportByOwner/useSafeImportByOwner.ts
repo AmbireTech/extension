@@ -1,5 +1,5 @@
 import { getAddress, isAddress } from 'ethers'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
@@ -10,6 +10,7 @@ import { Hex } from '@ambire-common/interfaces/hex'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
 import type { AccountsController } from '@ambire-common/controllers/accounts/accounts'
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
@@ -27,9 +28,9 @@ const useSafeImportByOwner = () => {
   } = useController('SafeController')
   const { state: importedAccounts } = useController('AccountsController', selectAccounts)
   const {
-    dispatch: mainDispatch,
     state: { statuses: mainStatuses }
   } = useController('MainController')
+  const { dispatchAndWait: accountPickerDispatchAndWait } = useController('AccountPickerController')
   const { state: enabledNetworks } = useController('NetworksController', selectNetworks)
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const {
@@ -54,8 +55,7 @@ const useSafeImportByOwner = () => {
     selectedAddresses: string[]
     deselectedAddresses: string[]
   }>({ owner: '', selectedAddresses: [], deselectedAddresses: [] })
-  const isImportRequested = useRef(false)
-  const hasSeenUpdateAccountsLoading = useRef(false)
+  const [isPreparing, setIsPreparing] = useState(false)
 
   const setOwnerAddressState = useCallback(
     (newState: AddressStateOptional) => {
@@ -115,25 +115,6 @@ const useSafeImportByOwner = () => {
       safeDispatch({ type: 'method', params: { method: 'resetSearchByOwner', args: [] } })
   }, [owner, safeDispatch])
 
-  useEffect(() => {
-    if (!isImportRequested.current) return
-    if (mainStatuses.updateAccounts === 'LOADING') {
-      hasSeenUpdateAccountsLoading.current = true
-      return
-    }
-    if (!hasSeenUpdateAccountsLoading.current) return
-    if (mainStatuses.updateAccounts === 'SUCCESS') {
-      isImportRequested.current = false
-      hasSeenUpdateAccountsLoading.current = false
-      goToNextRoute()
-      return
-    }
-    if (mainStatuses.updateAccounts === 'ERROR') {
-      isImportRequested.current = false
-      hasSeenUpdateAccountsLoading.current = false
-    }
-  }, [goToNextRoute, mainStatuses.updateAccounts])
-
   const currentDisplayableData = useMemo(
     () =>
       owner && owner === ownerCurrentlyDisplayingFor ? safeOwnerSearches[owner] || null : null,
@@ -180,7 +161,6 @@ const useSafeImportByOwner = () => {
 
   const failedNetworkNames = useMemo(() => {
     if (!currentDisplayableData) return []
-    console.log(currentDisplayableData.failedNetworks)
     return currentDisplayableData.failedNetworks.map(
       (chainId) =>
         enabledNetworks.find((network) => network.chainId === chainId)?.name || chainId.toString()
@@ -212,8 +192,8 @@ const useSafeImportByOwner = () => {
     [owner]
   )
 
-  const handleImport = useCallback(() => {
-    if (isSearching || isMainBusy || !currentDisplayableData?.accounts) return
+  const handleImport = useCallback(async () => {
+    if (isSearching || isMainBusy || isPreparing || !currentDisplayableData?.accounts) return
 
     const selectedAddressSet = new Set(selectedAddresses.map((address) => address.toLowerCase()))
     const importedAddressSet = new Set(
@@ -238,34 +218,55 @@ const useSafeImportByOwner = () => {
           selectedAddressSet.has(address.toLowerCase()) &&
           !importedAddressSet.has(address.toLowerCase())
       )
-    // Already imported accounts keep their preferences, so only the new ones get a default label
+    // Only the new ones - the imported Safes that stay selected are left as they are, so the
+    // personalize step doesn't list them as added
     const accountsToImport: Account[] = currentDisplayableData.accounts
-      .filter((account) => selectedAddressSet.has(account.addr.toLowerCase()))
-      .map(({ addr, associatedKeys, initialPrivileges, creation, safeCreation, preferences }) => ({
+      .filter((account) => newAddresses.includes(account.addr))
+      .map(({ addr, associatedKeys, initialPrivileges, creation, safeCreation }) => ({
         addr,
         associatedKeys,
         initialPrivileges,
         creation,
         safeCreation,
-        preferences: newAddresses.includes(addr)
-          ? getDefaultAccountPreferences(addr, accountsLeftAfterRemoval, newAddresses.indexOf(addr))
-          : preferences
+        preferences: getDefaultAccountPreferences(
+          addr,
+          accountsLeftAfterRemoval,
+          newAddresses.indexOf(addr)
+        )
       }))
 
-    hasSeenUpdateAccountsLoading.current = false
-    isImportRequested.current = true
-    mainDispatch({
-      type: 'method',
-      params: {
-        method: 'updateAccounts',
-        args: [{ accountsToAdd: accountsToImport, accountAddressesToRemove }]
-      }
-    })
+    setIsPreparing(true)
+    try {
+      // Prepared for the personalize step, which adds them (and removes the deselected
+      // ones) once the user proceeds
+      await accountPickerDispatchAndWait({
+        type: 'method',
+        params: {
+          method: 'prepareAccounts',
+          args: [
+            {
+              accounts: accountsToImport,
+              accountsToRemove: importedAccounts.filter((account) =>
+                accountAddressesToRemove.includes(account.addr)
+              )
+            }
+          ]
+        }
+      })
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
+    } catch (error) {
+      // The controller reports its own failures, here the button only becomes usable again
+      console.error('Failed to prepare the Safe accounts', error)
+    } finally {
+      setIsPreparing(false)
+    }
   }, [
     importedAccounts,
     isMainBusy,
+    isPreparing,
     isSearching,
-    mainDispatch,
+    accountPickerDispatchAndWait,
+    goToNextRoute,
     currentDisplayableData,
     selectedAddresses
   ])
@@ -274,6 +275,7 @@ const useSafeImportByOwner = () => {
     !isValid ||
     isSearching ||
     isMainBusy ||
+    isPreparing ||
     (hasSearchCompleted && !currentDisplayableData.accounts?.length)
 
   return {

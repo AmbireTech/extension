@@ -1,0 +1,3 @@
+import useAccountPickerHardwareInit from './useAccountPickerHardwareInit'
+
+export default useAccountPickerHardwareInit

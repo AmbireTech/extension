@@ -86,7 +86,12 @@ config.transformer.minifierConfig = {
 const shimRedirects = {
   'scrypt-js': path.resolve(__dirname, 'src/mobile/shims/scrypt-js.ts'),
   pbkdf2: path.resolve(__dirname, 'src/mobile/shims/pbkdf2.ts'),
-  'eth-crypto': path.resolve(__dirname, 'src/mobile/shims/eth-crypto.ts')
+  'eth-crypto': path.resolve(__dirname, 'src/mobile/shims/eth-crypto.ts'),
+  // Proves with snarkjs, which needs Node built-ins and WebAssembly - see the shim
+  '@fatsolutions/privacy-pools-core-circuits': path.resolve(
+    __dirname,
+    'src/mobile/shims/privacyPoolsCircuits.ts'
+  )
 }
 
 // Swap two of viem's own modules for Rust-backed shims. Redirecting these

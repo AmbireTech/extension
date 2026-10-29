@@ -13,28 +13,34 @@ import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
-import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
-import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
-import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
+import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
+import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import wait from '@ambire-common/utils/wait'
 import {
+  createCrashReportAccountTagsSync,
   excludeIntegrationsByName,
-  getCrashReportAccountAddr,
-  getCrashReportUserId,
+  getCrashReportAccountTags,
   getReportableAction,
   logSentryDeliveryWhenTesting,
   reportControllerError
 } from '@common/config/analytics/crashReportHelpers'
-import { processCrashReportEvent } from '@common/config/analytics/processCrashReportEvent'
+import {
+  processCrashReportEvent,
+  stripPrivacyPoolsCrashReportEvent
+} from '@common/config/analytics/processCrashReportEvent'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
-import { CULTURE_CONTEXT_INTEGRATION_NAME } from '@common/constants/crashAnalytics'
+import {
+  CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS,
+  CULTURE_CONTEXT_INTEGRATION_NAME
+} from '@common/constants/crashAnalytics'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
@@ -60,9 +66,10 @@ import {
   VELCRO_URL
 } from '@env'
 import * as Sentry from '@sentry/browser'
-import { browser, platform } from '@web/constants/browserapi'
+import { browser, engine, platform } from '@web/constants/browserapi'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
+import { getRequestToMoveOutOfPanel } from '@web/extension-services/background/handlers/getRequestToMoveOutOfPanel'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
@@ -73,7 +80,8 @@ import {
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import {
   getDappTabFocusDispatcher,
-  getPanelManager
+  getPanelManager,
+  handleFirefoxActionClicked
 } from '@web/extension-services/background/webapi/panel'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -82,11 +90,17 @@ import {
   Port,
   PortMessenger
 } from '@web/extension-services/messengers'
+import {
+  canUseOffscreenProver,
+  createOffscreenProverFactory
+} from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import OneKeyController from '@web/modules/hardware-wallet/controllers/OneKeyController'
 import PQ1Controller from '@web/modules/hardware-wallet/controllers/PQ1Controller'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
+import OneKeySigner from '@web/modules/hardware-wallet/libs/OneKeySigner'
 import PQ1Signer from '@web/modules/hardware-wallet/libs/PQ1Signer'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
@@ -94,8 +108,8 @@ import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 import {
   captureBackgroundException,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
-  setBackgroundExtraContext,
-  setBackgroundUserContext
+  setBackgroundCrashReportId,
+  setBackgroundTagContext
 } from './CrashAnalytics'
 import { sendCriticalControllerStates } from './criticalControllerStates'
 
@@ -157,6 +171,8 @@ function stateDebug(
  */
 const IDB_OPEN_ATTEMPTS = 2
 
+const syncCrashReportAccountTags = createCrashReportAccountTagsSync(setBackgroundTagContext)
+
 let isInitialized = false
 const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
 let mainCtrl: MainController
@@ -168,6 +184,7 @@ let autoLockCtrl: AutoLockController
 let pm: PortMessenger
 let ledgerCtrl: LedgerController
 let trezorCtrl: TrezorController
+let oneKeyCtrl: OneKeyController
 let qrCtrl: QrHardwareController
 let eventEmitterRegistry: EventEmitterRegistryController
 
@@ -182,6 +199,11 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
     beforeSend(event, hint) {
       const processedEvent = processCrashReportEvent(event, hint.originalException)
       if (!processedEvent) return null
+
+      stripPrivacyPoolsCrashReportEvent(
+        processedEvent,
+        mainCtrl?.selectedAccount.selectedType === 'privacyPools'
+      )
 
       // We don't want to miss errors that occur before the controllers are initialized.
       // processCrashReportEvent has already scrubbed it -- only the crashAnalyticsEnabled gate below,
@@ -208,6 +230,10 @@ handleKeepAlive()
 providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) => {
   // wait for mainCtrl to be initialized before handling dapp requests
   while (!mainCtrl || !walletStateCtrl) await wait(200)
+  // ...and for the stored settings, as the side panel mode decides whether a request is shown in an
+  // open side panel - until it loads it reads as off (e.g. right after a browser restart)
+  // (Never rejects - settings that fail to load keep their defaults)
+  await walletStateCtrl.initialLoadPromise
 
   const senderTab = meta.sender?.tab
   const tabId = senderTab?.id
@@ -294,6 +320,7 @@ const init = async () => {
     () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
   )
   trezorCtrl = new TrezorController(windowManager as UiManager['window'])
+  oneKeyCtrl = new OneKeyController()
   const latticeCtrl = new LatticeController()
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
@@ -369,9 +396,6 @@ const init = async () => {
           if (ctrl.name === 'KeystoreController') {
             const keystoreCtrl = ctrl as IKeystoreController
             if (keystoreCtrl.isReadyToStoreKeys) {
-              setBackgroundUserContext({
-                id: getCrashReportUserId(keystoreCtrl, mainCtrl.invite.verifiedCode)
-              })
               if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
               } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
@@ -382,12 +406,19 @@ const init = async () => {
             }
           }
 
-          if (ctrl.name === 'SelectedAccountController') {
-            const accountAddr = getCrashReportAccountAddr(ctrl as ISelectedAccountController)
+          if (ctrl.name === 'WalletStateController') {
+            setBackgroundCrashReportId((ctrl as WalletStateController).crashReportId)
+          }
 
-            if (accountAddr) {
-              setBackgroundExtraContext('account', accountAddr)
-            }
+          if (CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS.includes(ctrl.name)) {
+            syncCrashReportAccountTags(
+              getCrashReportAccountTags({
+                selectedAccount: mainCtrl.selectedAccount.account,
+                accountStates: mainCtrl.accounts.accountStates,
+                keys: mainCtrl.keystore.keys,
+                accounts: mainCtrl.accounts.accounts
+              })
+            )
           }
         }, 'background')
       }
@@ -407,7 +438,8 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
+            // mainCtrl may not exist yet - WalletStateController is created and loads before it
+            params: { errors: ctrl.emittedErrors, controller: mainCtrl?.name }
           })
           reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')
@@ -417,6 +449,20 @@ const init = async () => {
 
   qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
   const pq1Ctrl = new PQ1Controller(eventEmitterRegistry)
+
+  // Created before mainCtrl, whose UI manager reads the side panel mode. It doesn't need mainCtrl
+  // itself - the log level callback only runs on a log level change, long after both exist.
+  walletStateCtrl = new WalletStateController({
+    eventEmitterRegistry,
+    onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
+      // A log level change comes from a view, which can only talk to the controllers once init()
+      // has created mainCtrl - guarded anyway, as no app can be connected before that
+      await mainCtrl?.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
+    },
+    storage
+  })
+
+  const getIsSidePanelModeEnabled = () => walletStateCtrl.isSidePanelModeEnabled
 
   // Retried once, because openAmbireIdb() gives up after a second so a blocked upgrade cannot
   // hang the boot — and this is the only call, so a merely slow open (cold browser start, busy
@@ -461,12 +507,23 @@ const init = async () => {
 
   const idb = await openIdbWithRetry()
 
+  // Copied at build time and served same-origin - see webpack/extension.js
+  const privacyPoolsCircuitsBaseUrl = browser.runtime.getURL('privacy-pools-circuits/')
+
   mainCtrl = new MainController({
     eventEmitterRegistry,
     appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,
+    privacyPoolsCircuitsBaseUrl,
+    // On Chrome, in an offscreen document using every core; elsewhere or if it fails, right here
+    privacyPoolsProverFactory: canUseOffscreenProver()
+      ? createOffscreenProverFactory({
+          fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
+          onError: (error) => captureBackgroundException(error)
+        })
+      : undefined,
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
@@ -480,6 +537,7 @@ const init = async () => {
       // TODO: there is a mismatch in hw signer types, it's not a big deal
       ledger: LedgerSigner,
       trezor: TrezorSigner,
+      onekey: OneKeySigner,
       lattice: LatticeSigner,
       qr: QrHardwareSigner,
       pq1: PQ1Signer
@@ -487,6 +545,7 @@ const init = async () => {
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
+      onekey: oneKeyCtrl,
       lattice: latticeCtrl,
       qr: qrCtrl,
       pq1: pq1Ctrl
@@ -519,8 +578,8 @@ const init = async () => {
           await windowManager.remove(winId, pm)
         }
       },
-      panel: getPanelManager(pm),
-      dispatchDappTabFocus: getDappTabFocusDispatcher(pm),
+      panel: getPanelManager(pm, getIsSidePanelModeEnabled),
+      dispatchDappTabFocus: getDappTabFocusDispatcher(pm, getIsSidePanelModeEnabled),
       notification: notificationManager,
       message: {
         sendToastMessage: (text, options) => {
@@ -546,15 +605,31 @@ const init = async () => {
   void mainCtrl.phishing.init()
   void mainCtrl.dapps.init()
 
-  walletStateCtrl = new WalletStateController({
-    eventEmitterRegistry,
-    onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
-      await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
-    },
-    storage
-  })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
+
+  // Turning side panel mode off leaves nothing to show a pending app request (Chrome closes its
+  // panel, Firefox's sidebar shows the "mode off" notice), so it's moved to a request window
+  let wasSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
+  walletStateCtrl.onUpdate(() => {
+    const isSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
+    const hasSidePanelModeBeenTurnedOff = wasSidePanelModeEnabled && !isSidePanelModeEnabled
+    wasSidePanelModeEnabled = isSidePanelModeEnabled
+
+    if (!hasSidePanelModeBeenTurnedOff || mainCtrl.requests.requestWindow.windowProps) return
+
+    const requestToMove = getRequestToMoveOutOfPanel(mainCtrl.requests.visibleUserRequests)
+    if (!requestToMove) return
+
+    mainCtrl.requests
+      .setCurrentUserRequestById(requestToMove.request.id, {
+        baseWindowId: requestToMove.baseWindowId
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to move a request out of the side panel', error)
+        captureBackgroundException(error)
+      })
+  })
   autoLockCtrl = new AutoLockController(
     eventEmitterRegistry,
     () => {
@@ -780,7 +855,15 @@ browser.runtime.onConnect.addListener(async (port: Port) => {
 
     pm.addDisconnectListener(port.id, (disconnectedPort) => {
       mainCtrl.ui.removeView(port.id)
-      handleCleanUpOnPortDisconnect({ port, mainCtrl })
+      // Not awaited - nothing below depends on the cleanup finishing
+      handleCleanUpOnPortDisconnect({
+        port,
+        mainCtrl,
+        isSidePanelModeEnabled: walletStateCtrl.isSidePanelModeEnabled
+      }).catch((error: unknown) => {
+        console.error('Failed to clean up after a disconnected view', error)
+        captureBackgroundException(error)
+      })
 
       // The selectedAccount portfolio is reset onLoad of the popup
       // (from the background) while the portfolio update is triggered
@@ -798,6 +881,13 @@ browser.runtime.onConnect.addListener(async (port: Port) => {
     })
   })
 })
+
+// Firefox's toolbar click (see handleFirefoxActionClicked). Registered here because no UI page
+// bundles background.ts - registering it from a UI page too (panel.ts is also imported by UI code)
+// breaks Firefox's extension messaging: every later `browser.*` call hangs.
+if (engine === 'gecko') {
+  browser.action?.onClicked?.addListener(handleFirefoxActionClicked)
+}
 
 // Ensures controllers are initialized when the browser starts.
 browser.runtime.onStartup.addListener(() => {
@@ -881,7 +971,7 @@ if ('hid' in navigator) navigator.hid.addEventListener('disconnect', () => {})
 try {
   browser.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
     if (newState !== 'active') return
-    if (!mainCtrl || !mainCtrl.selectedAccount.account) {
+    if (!mainCtrl || !mainCtrl.selectedAccount.selectedType) {
       console.error(
         'Idle state changed to active but mainCtrl or selected account is not initialized',
         mainCtrl

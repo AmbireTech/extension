@@ -1,14 +1,18 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import OpenIcon from '@common/assets/svg/OpenIcon'
+import SendIcon from '@common/assets/svg/SendIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import Button from '@common/components/Button'
 import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -54,8 +58,17 @@ const CollectibleModal = ({
   const { styles, theme } = useTheme(getStyles)
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { navigate } = useNavigation()
   // No actions on a collectible that is only being previewed (in a simulation)
   const shouldDisplayHideCollectionAction = !hideSendNft && !!canHideCollectible
+
+  const handleSendNft = useCallback(() => {
+    if (!selectedCollectible) return
+
+    const { address, chainId, id } = selectedCollectible
+    handleClose()
+    navigate(`${ROUTES.transfer}?address=${address}&chainId=${chainId}&tokenId=${id}`)
+  }, [handleClose, navigate, selectedCollectible])
 
   const modalContent = useMemo(() => {
     if (!selectedCollectible) return null
@@ -145,26 +158,24 @@ const CollectibleModal = ({
           <Row title={t('Chain')} text={networkData?.name || 'Unknown Network'} />
           <Row title={t('Last Price')} text={lastPrice || '$-'} noMb />
         </View>
-        {/* @TODO: Implement NFT transfer */}
-        {/* {!hideSendNft && (
+        {!hideSendNft && (
           <Button
-            disabled
+            testID="send-nft-button"
+            onPress={handleSendNft}
             childrenPosition="right"
-            text="Send"
-            style={{ width: '100%', ...spacings.mb0 }}
+            text={t('Send')}
+            style={{ width: '100%', ...spacings.mb0, ...spacings.mtMd }}
           >
-            <SendIcon
-              style={spacings.mlTy}
-              color={theme.primaryBackground}
-              width={26}
-              height={26}
-            />
+            {/* The same white as the text of a primary button, in both themes */}
+            <SendIcon style={spacings.mlTy} color="#fff" width={26} height={26} />
           </Button>
-        )} */}
+        )}
       </>
     )
   }, [
     handleClose,
+    handleSendNft,
+    hideSendNft,
     networks,
     selectedCollectible,
     shouldDisplayHideCollectionAction,

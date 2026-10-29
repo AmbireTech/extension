@@ -8,6 +8,7 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import useNetworksBalances from '@common/modules/networks/hooks/useNetworksBalances'
 import getStyles from '@common/modules/networks/styles'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
@@ -19,8 +20,9 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const {
-    state: { portfolio: selectedAccountPortfolio, dashboardNetworkFilter }
+    state: { dashboardNetworkFilter }
   } = useController('SelectedAccountController')
+  const { totalBalance } = useNetworksBalances()
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [
@@ -74,7 +76,7 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
         </Text>
       </View>
       <Text fontSize={20} weight="semiBold" appearance="primaryText">
-        {`$${formatDecimals(Number(selectedAccountPortfolio?.totalBalance || 0))}` || '$-'}
+        {`$${formatDecimals(Number(totalBalance || 0))}` || '$-'}
       </Text>
     </AnimatedPressable>
   )

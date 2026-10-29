@@ -1,7 +1,8 @@
 export {
+  runWhenScreenIsOnTop,
   ScreenFocusProvider,
+  ScreenTouchArea,
   useIsScreenFocused,
-  useIsScreenFocusedRef,
   useIsScreenSettled,
   useScreenFocusStore
 } from './screenFocusContext'

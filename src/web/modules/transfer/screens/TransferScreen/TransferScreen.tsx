@@ -5,11 +5,13 @@ import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
+import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { findAccountOpOrReplacement } from '@ambire-common/libs/activity/replacements'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
@@ -29,6 +31,7 @@ import useController from '@common/hooks/useController'
 import useControllerSession from '@common/hooks/useControllerSession'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
@@ -40,9 +43,11 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
+import getTransferBuildRequest from '@common/modules/transfer/utils/getTransferBuildRequest'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+import { getVisibleNftTokenId } from '@common/utils/nft'
 import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
@@ -69,20 +74,22 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressState,
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressUnknown,
-    isRecipientAddressUnknownAgreed,
-    isRecipientAddressFirstTimeSend,
     isFormValid,
     signAccountOpController,
     latestBroadcastedAccountOp,
     latestBroadcastedToken,
+    latestBroadcastedNft,
     hasProceeded,
-    selectedToken,
+    selectedNft,
+    selectedChainId,
     amountFieldMode,
     amount: controllerAmount,
     amountInFiat,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch
+    privacyPoolsRecipient,
+    isPreparingPrivacyPoolsDeposit,
+    privacyPoolsDepositError
   } = transferState
+  const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
 
   const amountInFiatBigInt = useMemo(() => {
     try {
@@ -146,12 +153,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressState.fieldValue !== addressStateFieldValue
 
   const submittedAccountOp = useMemo(() => {
-    if (!accountsOps.transfer || !latestBroadcastedAccountOp?.signature) return
+    if (!accountsOps.transfer || !latestBroadcastedAccountOp) return
 
-    return accountsOps.transfer.result.items.find(
-      (accOp) => accOp.signature === latestBroadcastedAccountOp.signature
-    )
-  }, [accountsOps.transfer, latestBroadcastedAccountOp?.signature])
+    // Once sped up, the activity shows its speed up instead of it
+    return findAccountOpOrReplacement(accountsOps.transfer.result.items, latestBroadcastedAccountOp)
+  }, [accountsOps.transfer, latestBroadcastedAccountOp])
 
   const accountUserRequests = useMemo(() => {
     if (!account || !userRequests.length) return []
@@ -166,10 +172,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [userRequests, account])
 
   const networkUserRequests = useMemo(() => {
-    if (!selectedToken || !account || !userRequests.length) return []
+    if (!selectedChainId || !account || !userRequests.length) return []
 
-    return accountUserRequests.filter((r) => r.meta.chainId === selectedToken.chainId)
-  }, [selectedToken, account, userRequests.length, accountUserRequests])
+    return accountUserRequests.filter((r) => r.meta.chainId === selectedChainId)
+  }, [selectedChainId, account, userRequests.length, accountUserRequests])
 
   const batchNetworkUserRequestsCount = useMemo(() => {
     if (!latestBatchedNetwork || !account || !accountUserRequests.length) return 0
@@ -297,6 +303,16 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [transferDispatch]
   )
 
+  const selectPrivacyPoolsRecipient = useCallback(
+    (seedId: string | null) => {
+      transferDispatch({
+        type: 'method',
+        params: { method: 'update', args: [{ privacyPoolsRecipient: seedId }] }
+      })
+    },
+    [transferDispatch]
+  )
+
   const onRecipientAddressUnknownAgree = useCallback(() => {
     transferDispatch({
       type: 'method',
@@ -319,11 +335,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   })
 
   /**
-   * True if the user has pending user requests and there is no amount set in the form.
+   * True if the user has pending user requests and there is nothing to send in the form
+   * (no amount set and no NFT selected).
    * Used to allow the user to open the SignAccountOp window to sign the requests.
    */
   const isSendingBatch =
-    accountUserRequests.length > 0 && !transferState.amount && visibleUserRequests.length > 0
+    accountUserRequests.length > 0 &&
+    !transferState.amount &&
+    !selectedNft &&
+    visibleUserRequests.length > 0
 
   const submitButtonText = useMemo(() => {
     const callsCount = getCallsCount(isSendingBatch ? accountUserRequests : networkUserRequests)
@@ -338,10 +358,21 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
   const isTransferFormValid = useMemo(() => {
+    // No address to validate, but the deposit calls must be prepared, which takes a while
+    if (privacyPoolsRecipient)
+      return !!isFormValid && !isPreparingPrivacyPoolsDeposit && !privacyPoolsDepositError
+
     return !!(isTopUp
       ? isFormValid
       : isFormValid && addressInputState.validation.severity !== 'error')
-  }, [addressInputState.validation.severity, isFormValid, isTopUp])
+  }, [
+    addressInputState.validation.severity,
+    isFormValid,
+    isTopUp,
+    privacyPoolsRecipient,
+    isPreparingPrivacyPoolsDeposit,
+    privacyPoolsDepositError
+  ])
 
   const resetTransferForm = useCallback(() => {
     transferDispatch({
@@ -383,31 +414,25 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         return
       }
 
-      if (isFormValid && transferState.selectedToken) {
+      const buildRequest = getTransferBuildRequest({
+        selectedNft: transferState.selectedNft,
+        selectedToken: transferState.selectedToken,
+        amount: transferState.amount,
+        amountInFiat: amountInFiatBigInt, // used only for topUp calcs
+        recipientAddress: isTopUp ? FEE_COLLECTOR : getAddressFromAddressState(addressState),
+        recipientDomain: getResolvedDomainName(domains, addressState),
+        executionType,
+        privacyPoolsSeedId: privacyPoolsRecipient || undefined
+      })
+
+      if (isFormValid && buildRequest) {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
           if (!!account?.safeCreation || networkUserRequests.length > 0) {
             requestsDispatch({
               type: 'method',
-              params: {
-                method: 'build',
-                args: [
-                  {
-                    type: 'transferRequest',
-                    params: {
-                      amount: transferState.amount,
-                      amountInFiat: amountInFiatBigInt, // used only for topUp calcs
-                      selectedToken: transferState.selectedToken,
-                      recipientAddress: isTopUp
-                        ? FEE_COLLECTOR
-                        : getAddressFromAddressState(addressState),
-                      executionType,
-                      recipientDomain: getResolvedDomainName(domains, addressState)
-                    }
-                  }
-                ]
-              }
+              params: { method: 'build', args: [buildRequest] }
             })
             if (isPopup) window.close()
           } else {
@@ -419,28 +444,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         // Batch
         requestsDispatch({
           type: 'method',
-          params: {
-            method: 'build',
-            args: [
-              {
-                type: 'transferRequest',
-                params: {
-                  amount: transferState.amount,
-                  amountInFiat: amountInFiatBigInt, // used only for topUp calcs
-                  selectedToken: transferState.selectedToken,
-                  recipientAddress: isTopUp
-                    ? FEE_COLLECTOR
-                    : getAddressFromAddressState(addressState),
-                  executionType,
-                  recipientDomain: getResolvedDomainName(domains, addressState)
-                }
-              }
-            ]
-          }
+          params: { method: 'build', args: [buildRequest] }
         })
 
         setShowAddedToBatch(true)
-        setLatestBatchedNetwork(transferState.selectedToken?.chainId)
+        setLatestBatchedNetwork(transferState.selectedChainId)
 
         resetTransferForm()
       }
@@ -462,21 +470,22 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       account?.safeCreation,
       navigate,
       shouldRenderRequestInPanel,
-      domains
+      domains,
+      privacyPoolsRecipient
     ]
   )
 
   const isSignAccountOpInProgress = useMemo(() => {
-    if (!account || !userRequests.length || !selectedToken) return false
+    if (!account || !userRequests.length || !selectedChainId) return false
 
     const signAccountOpRequest = userRequests.find(
       (r) =>
         r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
-        r.meta.chainId === selectedToken.chainId
+        r.meta.chainId === selectedChainId
     ) as CallsUserRequest | undefined
     return !!signAccountOpRequest?.signAccountOp.isSignAndBroadcastInProgress
-  }, [account, selectedToken, userRequests])
+  }, [account, selectedChainId, userRequests])
 
   const buttons = useMemo(() => {
     return (
@@ -487,18 +496,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
         isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
+        // See `isTransferFormValid`
+        isLoading={!!privacyPoolsRecipient && isPreparingPrivacyPoolsDeposit}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
-        shouldHoldToProceed={
-          (isRecipientAddressUnknown &&
-            !isRecipientAddressUnknownAgreed &&
-            !isRecipientHumanizerKnownTokenOrSmartContract &&
-            isRecipientAddressFirstTimeSend) ||
-          isRecipientAddressViewOnly ||
-          // poisoning detected - require hold-to-proceed as an additional safety step
-          !!addressPoisoningMatch
-        }
+        shouldHoldToProceed={!!validationFormMsgs.recipientAddress.shouldHold}
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
     )
@@ -509,14 +512,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isTransferFormValid,
     networkUserRequests,
     isLocalStateOutOfSync,
-    isRecipientAddressUnknown,
-    isRecipientAddressUnknownAgreed,
-    isRecipientHumanizerKnownTokenOrSmartContract,
-    isRecipientAddressFirstTimeSend,
-    isRecipientAddressViewOnly,
-    addressPoisoningMatch,
+    validationFormMsgs.recipientAddress.shouldHold,
     onRecipientAddressUnknownAgree,
-    addTransaction
+    addTransaction,
+    privacyPoolsRecipient,
+    isPreparingPrivacyPoolsDeposit
   ])
 
   const handleGoBackPress = useCallback(() => {
@@ -564,6 +564,16 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     )
   }
 
+  // Read from the sent op, as the form and its recipient are reset after sending
+  const privacyPoolsEntrypoint = latestBroadcastedAccountOp
+    ? getPrivacyPoolsChainConfig(latestBroadcastedAccountOp.chainId)?.entrypointAddress
+    : undefined
+  const wasSentToPrivacyPoolsAccount =
+    !!privacyPoolsEntrypoint &&
+    !!latestBroadcastedAccountOp?.calls.some(
+      ({ to }) => to?.toLowerCase() === privacyPoolsEntrypoint.toLowerCase()
+    )
+
   if (displayedView === 'track') {
     return (
       <TrackProgress
@@ -590,13 +600,29 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         {(submittedAccountOp?.status === AccountOpStatus.Success ||
           submittedAccountOp?.status === AccountOpStatus.UnknownButPastNonce) && (
           <Completed
-            title={isTopUp ? t('Top up ready!') : t('Transfer done!')}
+            title={
+              isTopUp
+                ? t('Top up ready!')
+                : // Like the Privacy Pools account's own Send
+                  wasSentToPrivacyPoolsAccount
+                  ? t('Sending successfully')
+                  : t('Transfer done!')
+            }
             titleSecondary={
               isTopUp
                 ? t('You can now use your gas tank')
-                : t('{{symbol}} delivered!', {
-                    symbol: latestBroadcastedToken?.symbol || 'Token'
-                  })
+                : latestBroadcastedNft
+                  ? t('{{name}} #{{tokenId}} delivered!', {
+                      name: latestBroadcastedNft.collectionName || t('NFT'),
+                      tokenId: getVisibleNftTokenId(latestBroadcastedNft.tokenId.toString())
+                    })
+                  : wasSentToPrivacyPoolsAccount
+                    ? t('Your {{symbol}} is on its way to your Privacy Pools account.', {
+                        symbol: latestBroadcastedToken?.symbol || 'Token'
+                      })
+                    : t('{{symbol}} delivered!', {
+                        symbol: latestBroadcastedToken?.symbol || 'Token'
+                      })
             }
             explorerLink={explorerLink}
             openExplorerText="View Transfer"
@@ -673,6 +699,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 setAmountFieldValue={setAmountFieldValue}
                 addressStateFieldValue={addressStateFieldValue}
                 setAddressStateFieldValue={setAddressStateFieldValue}
+                privacyPoolsAccounts={privacyPoolsAccounts}
+                onSelectPrivacyPoolsRecipient={selectPrivacyPoolsRecipient}
               />
             </ScrollableWrapper>
             {isTopUp && !canUseGasTank && (

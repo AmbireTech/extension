@@ -9,6 +9,7 @@ export type GlassViewProps = {
   tintColor1?: string
   tintColor2?: string
   shineColor?: string
+  /** Web only. 0 leaves out the `backdrop-filter` altogether. */
   blurAmount?: number
   borderRadius?: number
   /**

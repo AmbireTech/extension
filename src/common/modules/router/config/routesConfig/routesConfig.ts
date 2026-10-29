@@ -88,6 +88,11 @@ const routesConfig: RouteConfig = {
       web: i18n.t('Connect Trezor')
     })
   },
+  [ROUTES.oneKeyConnect]: {
+    route: ROUTES.oneKeyConnect,
+    title: Platform.select({ default: i18n.t('Welcome to Ambire Wallet') }),
+    name: Platform.select({ default: i18n.t('Connect OneKey') })
+  },
   [ROUTES.authEmailAccount]: {
     route: ROUTES.authEmailAccount,
     title: Platform.select({
@@ -176,6 +181,14 @@ const routesConfig: RouteConfig = {
       default: i18n.t('Transaction Builder')
     }),
     name: Platform.select({ default: i18n.t('Transaction Builder') })
+  },
+  [ROUTES.privacyPoolsSend]: {
+    route: ROUTES.privacyPoolsSend,
+    title: Platform.select({
+      default: i18n.t('Send')
+    }),
+    name: Platform.select({ default: i18n.t('Send') }),
+    withTitlePrefix: false
   },
   [ROUTES.transfer]: {
     route: ROUTES.transfer,

@@ -1,7 +1,6 @@
-import { Account } from '@ambire-common/interfaces/account'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
-import { Key, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
+import { Key } from '@ambire-common/interfaces/keystore'
 import { NfcExportedKey } from '@common/modules/hardware-wallets/nfc/types'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -70,22 +69,31 @@ type SetViewFocusAction = {
   params: { id?: string }
 }
 
+// The account picker set up for a hardware wallet. `requestId` is replied to once it is
+// done (see `useAccountPickerHardwareInit`).
 type MainControllerAccountPickerInitLedgerAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER'
+  params?: { requestId?: string }
 }
 type MainControllerAccountPickerInitTrezorAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR'
+  params?: { requestId?: string }
+}
+type MainControllerAccountPickerInitOneKeyAction = {
+  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY'
+  params: { preferredDeviceId?: string; requestId?: string }
 }
 type MainControllerAccountPickerInitLatticeAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
+  params?: { requestId?: string }
 }
 type MainControllerAccountPickerInitQrWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET'
-  params: { payload: string | Uint8Array }
+  params: { payload: string | Uint8Array; requestId?: string }
 }
 type MainControllerAccountPickerInitNfcWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET'
-  params: { payload: NfcExportedKey }
+  params: { payload: NfcExportedKey; requestId?: string }
 }
 type ImportPq1AccountsAction = {
   type: 'IMPORT_PQ1_ACCOUNTS'
@@ -95,14 +103,6 @@ type ImportPq1AccountsAction = {
     entries: Array<{ accountIndex: number; addr: string }>
     deviceId: string
   }
-}
-type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
-  params: { id: string }
-}
-
-type ResetAccountAddingOnPageErrorAction = {
-  type: 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR'
 }
 
 type MainControllerHandleSignMessage = {
@@ -153,13 +153,31 @@ type ChangeCurrentDappNetworkAction = {
   params: { chainId: number; id: string }
 }
 
-type ImportSmartAccountJson = {
-  type: 'IMPORT_SMART_ACCOUNT_JSON'
-  params: { readyToAddAccount: Account; keys: ReadyToAddKeys['internal'] }
-}
-
 type OpenExtensionPopupAction = {
   type: 'OPEN_EXTENSION_POPUP'
+  params?: {
+    /**
+     * Set by the UI on Firefox once it has opened the sidebar itself (only the UI can - see
+     * useOpenWalletFromClick). On Firefox the background trusts this over its stored side panel
+     * mode, so the two can never disagree about what was opened.
+     */
+    hasOpenedFirefoxSidebar?: boolean
+    /**
+     * Set by the UI on Chrome once the side panel is open - opened by the UI itself, as the
+     * background can't once the user's gesture has gone by, or open already (see `openWallet`).
+     * The background doesn't open it again.
+     */
+    isChromeSidePanelOpen?: boolean
+  }
+}
+
+/**
+ * Sent once by a side panel, right after it connects, so app requests can be shown in the panel of
+ * the app's own window (until then the panel doesn't count as open for any specific window).
+ */
+type SetSidePanelWindowIdAction = {
+  type: 'SET_SIDE_PANEL_WINDOW_ID'
+  params: { windowId: number }
 }
 
 type WindowRemovedAction = {
@@ -276,18 +294,17 @@ export type Action =
   | ImportPq1AccountsAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
+  | MainControllerAccountPickerInitOneKeyAction
   | MainControllerAccountPickerInitLedgerAction
-  | MainControllerAccountPickerInitFromSavedSeedPhraseAction
   | HandshakeAction
-  | ResetAccountAddingOnPageErrorAction
   | MainControllerHandleSignMessage
   | DappsControllerRemoveConnectedSiteAction
   | DappsControllerDisconnectAllDappsAction
   | AddressBookControllerAddContact
   | AddressBookControllerRenameContact
   | ChangeCurrentDappNetworkAction
-  | ImportSmartAccountJson
   | OpenExtensionPopupAction
+  | SetSidePanelWindowIdAction
   | InitAllControllersAction
   | WindowRemovedAction
   | GetAllControllerNamesAction
