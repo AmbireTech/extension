@@ -14,6 +14,12 @@ import useToast from '@common/hooks/useToast'
 export const isSafeDeploymentRequestError = (value: string): value is SafeDeploymentRequestError =>
   value === 'unavailable' || value === 'preparation-failed'
 
+type SafeActivationInProgress = {
+  id: string
+  accountAddr: Account['addr']
+  chainId: string
+}
+
 /**
  * Starts the activation (deployment) of a Safe account on a network by queueing its
  * deployment request, which the user then signs like any other transaction.
@@ -25,7 +31,17 @@ const useSafeActivation = (account: Account | null | undefined) => {
   const { dispatchAndWait: requestsDispatchAndWait } = useController('RequestsController')
   const activationsInProgressRef = useRef(new Set<string>())
   const isMountedRef = useRef(true)
-  const [activatingChainIds, setActivatingChainIds] = useState<string[]>([])
+  const [activationsInProgress, setActivationsInProgress] = useState<SafeActivationInProgress[]>([])
+  const accountAddr = account?.addr
+  // Only the given account's, so after switching accounts an activation that is still
+  // being prepared for the previous one isn't shown as the new account's
+  const activatingChainIds = useMemo(
+    () =>
+      activationsInProgress
+        .filter((activation) => activation.accountAddr === accountAddr)
+        .map((activation) => activation.chainId),
+    [activationsInProgress, accountAddr]
+  )
   const activationErrorTexts: Record<SafeDeploymentRequestError, string> = useMemo(
     () => ({
       unavailable: t(
@@ -55,7 +71,10 @@ const useSafeActivation = (account: Account | null | undefined) => {
       if (activationsInProgressRef.current.has(activationId)) return
 
       activationsInProgressRef.current.add(activationId)
-      setActivatingChainIds((current) => [...current, chainIdKey])
+      setActivationsInProgress((current) => [
+        ...current,
+        { id: activationId, accountAddr: account.addr, chainId: chainIdKey }
+      ])
 
       try {
         await requestsDispatchAndWait(
@@ -92,7 +111,9 @@ const useSafeActivation = (account: Account | null | undefined) => {
       } finally {
         activationsInProgressRef.current.delete(activationId)
         if (isMountedRef.current) {
-          setActivatingChainIds((current) => current.filter((id) => id !== chainIdKey))
+          setActivationsInProgress((current) =>
+            current.filter((activation) => activation.id !== activationId)
+          )
         }
       }
     },
