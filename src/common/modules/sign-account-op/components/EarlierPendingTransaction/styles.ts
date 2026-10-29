@@ -9,9 +9,11 @@ import type { ThemeProps } from '@common/styles/themeConfig'
 
 interface Styles {
   transactionCard: ViewStyle
+  transactionCardSender: ViewStyle
   transactionCardCall: ViewStyle
   transactionCardDivider: ViewStyle
   transactionCardActions: ViewStyle
+  transactionCardActionsRow: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -21,6 +23,12 @@ const getStyles = (theme: ThemeProps) =>
       borderRadius: 8,
       overflow: 'hidden',
       backgroundColor: hexToRgba(theme.primaryBackground, 0.75)
+    },
+    transactionCardSender: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...spacings.phTy,
+      ...spacings.ptTy
     },
     // The card already has the background, so the call inside it must not add another one
     transactionCardCall: {
@@ -32,10 +40,12 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.primaryBorder
     },
     transactionCardActions: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
       ...spacings.phTy,
       ...spacings.pvTy
+    },
+    transactionCardActionsRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
     }
   })
 
