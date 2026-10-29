@@ -28,6 +28,12 @@ interface Props {
   size?: 'sm' | 'md'
   isTypeLabelHidden?: boolean
   buttonProps?: ButtonProps
+  /**
+   * An outline button shown next to the main one, on its left. Only the default layout supports
+   * it, `isButtonTopRight` ignores it. Moves to its own line above the main button when there is
+   * no room.
+   */
+  secondaryButtonProps?: ButtonProps
   /** Places the action button on the top-right, aligned with the title row */
   isButtonTopRight?: boolean
   customIcon?: React.FC<SvgProps>
@@ -122,6 +128,7 @@ const Alert = ({
   size = 'md',
   isTypeLabelHidden = true,
   buttonProps,
+  secondaryButtonProps,
   isButtonTopRight = false,
   customIcon: CustomIcon,
   withIcon = true,
@@ -166,6 +173,16 @@ const Alert = ({
       />
     )
   }
+
+  const secondaryButton = !!secondaryButtonProps && (
+    <Button
+      type="outline"
+      size="small"
+      hasBottomSpacing={false}
+      {...secondaryButtonProps}
+      style={[spacings.mlTy, spacings.mtTy, secondaryButtonProps.style] as StyleProp<ViewStyle>}
+    />
+  )
 
   const closeButton = !!onClose && (
     <HoverablePressable
@@ -285,7 +302,12 @@ const Alert = ({
               {closeButton}
             </View>
             {textContent}
-            {renderButton({ alignSelf: 'flex-end', ...spacings.mtTy })}
+            {(!!buttonProps || !!secondaryButtonProps) && (
+              <View style={[flexbox.directionRow, flexbox.wrap, flexbox.justifyEnd]}>
+                {secondaryButton}
+                {renderButton({ ...spacings.mlTy, ...spacings.mtTy })}
+              </View>
+            )}
           </>
         )}
         {children}
