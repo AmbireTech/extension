@@ -78,16 +78,6 @@ export const getDappInteractionsFromHumanizedCalls = (
   submittedAccountOp: SubmittedAccountOpLike,
   humanizedCalls: IrCall[]
 ): DappInteraction[] => {
-  if (submittedAccountOp.meta?.isSafeDeploy) {
-    return [
-      {
-        id: 'fallback:safeDeploy',
-        name: 'Activate Safe account',
-        iconType: 'safe'
-      }
-    ]
-  }
-
   // Must come before the Safe cancellation check: a delegation change is also an empty,
   // 0-value call and would otherwise be mistaken for a cancellation
   if (submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta) {
@@ -95,6 +85,16 @@ export const getDappInteractionsFromHumanizedCalls = (
       submittedAccountOp.meta.setDelegation === false
         ? { id: 'fallback:revoke', name: 'Revoke delegation', iconType: 'ambire' }
         : { id: 'fallback:delegation', name: 'Enable smart settings', iconType: 'ambire' }
+    ]
+  }
+
+  if (submittedAccountOp.meta?.isSafeDeploy) {
+    return [
+      {
+        id: 'fallback:safeDeploy',
+        name: 'Activate Safe account',
+        iconType: 'safe'
+      }
     ]
   }
 
