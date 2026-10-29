@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import { EARLIER_PENDING_TRANSACTION_ERROR_CODE } from '@ambire-common/consts/signAccountOp/errorHandling'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -29,6 +30,7 @@ import CompactFooterButtons, {
 } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
+import useSignAccountOpMethodDispatch from '@common/modules/sign-account-op/hooks/useSignAccountOpMethodDispatch'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
@@ -41,8 +43,6 @@ export type OneClickEstimationProps = {
   closeEstimationModal: () => void
   /** Called once the sheet closed. Must only reset state, closing the sheet from it loops */
   onEstimationModalClosed?: () => void
-  handleUpdateStatus: (status: SigningStatus) => void
-  updateController: (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => void
   estimationModalRef: React.RefObject<any>
   errors?: SignAccountOpError[]
   signAccountOpController: ISignAccountOpController | null
@@ -62,8 +62,6 @@ const selectNetworks = (state: AllControllersMappingType['NetworksController']) 
 const OneClickEstimation = ({
   closeEstimationModal,
   onEstimationModalClosed,
-  handleUpdateStatus,
-  updateController,
   estimationModalRef,
   signAccountOpController,
   hasProceeded,
@@ -79,11 +77,46 @@ const OneClickEstimation = ({
   const chainId = signAccountOpController?.accountOp.chainId
   const network = useMemo(() => networks.find((n) => n.chainId === chainId), [networks, chainId])
   const hasFreshActionPressRef = useRef(false)
+  const dispatchSignAccountOpMethod = useSignAccountOpMethodDispatch(updateType)
+
+  const handleUpdateStatus = useCallback(
+    (status: SigningStatus) => dispatchSignAccountOpMethod('updateStatus', [status]),
+    [dispatchSignAccountOpMethod]
+  )
+  const updateController = useCallback(
+    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) =>
+      dispatchSignAccountOpMethod('update', [params]),
+    [dispatchSignAccountOpMethod]
+  )
+  const replacePendingAccountOp = useCallback(
+    () => dispatchSignAccountOpMethod('replacePendingAccountOp', []),
+    [dispatchSignAccountOpMethod]
+  )
+  const stopReplacingPendingAccountOp = useCallback(
+    () => dispatchSignAccountOpMethod('stopReplacingPendingAccountOp', []),
+    [dispatchSignAccountOpMethod]
+  )
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
     return [...(errors || []), ...signAccountOpErrors]
   }, [errors, signAccountOpController])
+  // The earlier pending transaction box already explains this error
+  const visibleSigningErrors = useMemo(
+    () => signingErrors.filter((error) => error.code !== EARLIER_PENDING_TRANSACTION_ERROR_CODE),
+    [signingErrors]
+  )
+  const canChangeFee = useMemo(() => {
+    if (!signAccountOpController) return false
+
+    const { status, earlierPendingAccountOp } = signAccountOpController
+    if (status?.type === SigningStatus.ReadyToSign) return true
+    if (status?.type !== SigningStatus.UnableToSign) return false
+
+    // Held back by a pending transaction of the account that pays the fee, so it can pay another
+    // way instead, e.g. a smart account by itself or an EOA through the bundler
+    return !!earlierPendingAccountOp
+  }, [signAccountOpController])
 
   const {
     isViewOnly,
@@ -216,7 +249,7 @@ const OneClickEstimation = ({
           <Estimation
             updateType={updateType}
             signAccountOpState={signAccountOpController}
-            disabled={signAccountOpController.status?.type !== SigningStatus.ReadyToSign}
+            disabled={!canChangeFee}
             hasEstimation={!!hasEstimation}
             // TODO<oneClickSwap>
             slowRequest={false}
@@ -234,16 +267,20 @@ const OneClickEstimation = ({
             chainId={signAccountOpController?.accountOp?.chainId}
           />
         )}
-        {!isViewOnly && signingErrors && signingErrors[0] && (
-          <Alert title={t(signingErrors[0].title)} type="error" style={spacings.mt} />
+        {!isViewOnly && visibleSigningErrors[0] && (
+          <Alert title={t(visibleSigningErrors[0].title)} type="error" style={spacings.mt} />
         )}
         <EarlierPendingTransaction
           style={spacings.mt}
           signAccountOpState={signAccountOpController}
+          onReplace={replacePendingAccountOp}
+          onStopReplacing={stopReplacingPendingAccountOp}
+          onReplacementRequestOpen={closeEstimationModal}
         />
         <BundlerWarning
           signAccountOpState={signAccountOpController}
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+          updateType={updateType}
           hasMarginTop
         />
         {isCompactLayout ? (
@@ -286,6 +323,7 @@ const OneClickEstimation = ({
   }, [
     signAccountOpController,
     banners,
+    canChangeFee,
     isLinkingNewFeePayerToSafe,
     bundlerNonceDiscrepancy,
     closeEstimationModal,
@@ -309,7 +347,10 @@ const OneClickEstimation = ({
     holdToSignButtonText,
     signingErrors,
     t,
-    updateType
+    updateType,
+    visibleSigningErrors,
+    replacePendingAccountOp,
+    stopReplacingPendingAccountOp
   ])
 
   return (
