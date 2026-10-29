@@ -248,8 +248,12 @@ const AccountSelectScreen = () => {
         <Search autoFocus control={control} style={styles.searchBar} />
         {isPrivacyPoolsEnabled && <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />}
         <View style={flexbox.flex1}>
+          {/* Each tab gets its own list. A shared one keeps the render window of the other tab,
+          and with `initialScrollIndex` set it isn't recomputed until scrolled, so coming back
+          from an empty Private tab left the Public one blank. */}
           {isPrivateTabOpen ? (
             <ScrollableWrapper
+              key="private"
               type={WRAPPER_TYPES.FLAT_LIST}
               style={listStyle}
               contentContainerStyle={listContentContainerStyle}
@@ -262,6 +266,7 @@ const AccountSelectScreen = () => {
             // Without a regular account selected there is no row to scroll to, so nothing to wait for
             (isReadyToRender || !account) && (
               <ScrollableWrapper
+                key="public"
                 type={WRAPPER_TYPES.FLAT_LIST}
                 style={[listStyle, { opacity: shouldDisplayAccounts ? 1 : 0 }]}
                 contentContainerStyle={listContentContainerStyle}

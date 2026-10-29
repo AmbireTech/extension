@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef } from 'react'
 
 import { NfcWalletType } from '@ambire-common/interfaces/keystore'
 import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useToast from '@common/hooks/useToast'
-import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import { NFC_CANCELLED_MESSAGE } from '@common/modules/hardware-wallets/nfc/consts'
+import { NfcExportedKey } from '@common/modules/hardware-wallets/nfc/types'
 import { NfcWalletRegistry } from '@common/modules/hardware-wallets/nfc/wallets'
-import { ROUTES } from '@common/modules/router/constants/common'
 import { getNfcCardService } from '@mobile/services/nfc'
 
 /**
@@ -22,11 +20,7 @@ import { getNfcCardService } from '@mobile/services/nfc'
 const useNfcAccountImport = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
-  const { goToNextRoute, isOnboardingRoute } = useOnboardingNavigation()
-  const { initParams, type } = useController('AccountPickerController').state
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const initAccountPicker = useAccountPickerHardwareInit()
   // Guards against a second scan being started while one is already running
   const isScanningRef = useRef(false)
 
@@ -57,15 +51,11 @@ const useNfcAccountImport = () => {
 
       isScanningRef.current = true
 
+      let exportedKey: NfcExportedKey
       try {
-        const exportedKey = await cardService.exportAccountKey()
-
-        setIsSubmitting(true)
-        dispatch({
-          type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET',
-          params: { payload: exportedKey }
-        })
+        exportedKey = await cardService.exportAccountKey()
       } catch (e: any) {
+        isScanningRef.current = false
         // Backing out of the card session is not a failure worth reporting
         if (e?.message === NFC_CANCELLED_MESSAGE) return
 
@@ -73,24 +63,23 @@ const useNfcAccountImport = () => {
           e?.message || t('Could not read your {{cardLabel}}. Please try again.', { cardLabel }),
           { type: 'error' }
         )
+        return
+      }
+
+      try {
+        await initAccountPicker({
+          type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET',
+          params: { payload: exportedKey }
+        })
+      } catch (error) {
+        // The controller reports its own failures, here a new scan only becomes possible again
+        console.error('Failed to set the account picker up for the card', error)
       } finally {
         isScanningRef.current = false
       }
     },
-    [addToast, dispatch, t]
+    [addToast, initAccountPicker, t]
   )
-
-  // Keyed off the durable account picker state rather than the transient SUCCESS
-  // status, which can be collapsed away before the UI ever renders it on mobile.
-  useEffect(() => {
-    if (!isSubmitting || !initParams || type !== 'nfc') return
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsSubmitting(false)
-    // Outside onboarding (the account select and settings screens) there is no next
-    // route to walk to, so the picker is named explicitly.
-    goToNextRoute(isOnboardingRoute ? undefined : ROUTES.accountPicker)
-  }, [isSubmitting, initParams, type, goToNextRoute, isOnboardingRoute])
 
   return { scanCard }
 }
