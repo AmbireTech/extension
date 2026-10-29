@@ -1,3 +1,4 @@
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 import { LeaderboardResponse } from '@legends/modules/leaderboard/types'
 
@@ -5,7 +6,7 @@ export const getLeaderboard = async (
   currentUser?: string
 ): Promise<LeaderboardResponse | undefined> => {
   try {
-    const res = await fetch(
+    const res = await fetchWithRelayerCustomHeaders(
       `${RELAYER_URL}/legends/leaderboard${currentUser ? `?identity=${currentUser}` : ''}`
     )
     const body = (await res.json()) as LeaderboardResponse
