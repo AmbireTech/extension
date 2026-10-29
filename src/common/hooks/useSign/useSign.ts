@@ -220,6 +220,7 @@ const useSign = ({
 
   const signingKeyType = signAccountOpState?.accountOp?.signingKeyType
   const feePayerKeyType = signAccountOpState?.accountOp?.gasFeePayment?.paidByKeyType
+  const canChangeSigningKey = !!signAccountOpState?.canChangeSigningKey
 
   const getIsKeyTypeInvolved = useCallback(
     (keyType: Key['type']) => {
@@ -368,11 +369,20 @@ const useSign = ({
   // Lets the signing authentication prompt resume the very call it interrupted, without
   // handleSign having to depend on itself
   const handleSignRef = useRef<
-    ((_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => void) | null
+    | ((
+        _chosenSigningKeyTypes?: Key['type'][],
+        _warningAccepted?: boolean,
+        _chosenSigningKeyAddr?: Key['addr']
+      ) => void)
+    | null
   >(null)
 
   const handleSign = useCallback(
-    (_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => {
+    (
+      _chosenSigningKeyTypes?: Key['type'][],
+      _warningAccepted?: boolean,
+      _chosenSigningKeyAddr?: Key['addr']
+    ) => {
       // Prioritize warning(s) modals over all others
       // Warning modals are not displayed in the one-click swap flow
       if (warningToPromptBeforeSign && !_warningAccepted) {
@@ -385,22 +395,33 @@ const useSign = ({
       // only when the keystore holds the signing key - a hardware wallet confirms on the device
       if (
         getIsSigningWithInternalKey(_chosenSigningKeyTypes) &&
-        requestSigningAuth(() => handleSignRef.current?.(_chosenSigningKeyTypes, _warningAccepted))
+        requestSigningAuth(() =>
+          handleSignRef.current?.(_chosenSigningKeyTypes, _warningAccepted, _chosenSigningKeyAddr)
+        )
       )
         return
 
-      const isExternalQr =
-        signAccountOpState?.accountOp.signingKeyType === 'qr' ||
-        signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType === 'qr'
+      // The signing key update is async, so the state may still hold the old key
+      // (the default signer, e.g. Ledger). Prefer the just-chosen key.
+      const effectiveSigningKeyAddr =
+        _chosenSigningKeyAddr ?? signAccountOpState?.accountOp.signingKeyAddr
       const isFeePayerSameAsSigner =
-        signAccountOpState?.accountOp.signingKeyAddr ===
-        signAccountOpState?.accountOp.gasFeePayment?.paidBy
+        effectiveSigningKeyAddr === signAccountOpState?.accountOp.gasFeePayment?.paidBy
+
+      const chosenKeyType = _chosenSigningKeyTypes?.[0]
+      const effectiveSigningKeyType = chosenKeyType ?? signAccountOpState?.accountOp.signingKeyType
+      // The fee payer follows the signing key only when the just-chosen key pays the fee
+      // (see update() in SignAccountOpController)
+      const effectiveFeePayerKeyType =
+        chosenKeyType && isFeePayerSameAsSigner ? chosenKeyType : feePayerKeyType
+
+      const isExternalQr = effectiveSigningKeyType === 'qr' || effectiveFeePayerKeyType === 'qr'
       const getIsKeyTypeInvolvedInTheJustChosenKeys = (
         keyType: Key['type'],
         isInvolvedInTheAccountOp: boolean
       ) =>
         _chosenSigningKeyTypes && _chosenSigningKeyTypes.length
-          ? _chosenSigningKeyTypes.indexOf(keyType) !== -1 || feePayerKeyType === keyType
+          ? _chosenSigningKeyTypes.indexOf(keyType) !== -1 || effectiveFeePayerKeyType === keyType
           : isInvolvedInTheAccountOp
       const isLedgerKeyInvolvedInTheJustChosenKeys = getIsKeyTypeInvolvedInTheJustChosenKeys(
         'ledger',
@@ -454,7 +475,6 @@ const useSign = ({
       signAccountOpState?.feePayerKeyStoreKeys?.length,
       signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signingKeyType,
-      signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType,
       warningToPromptBeforeSign,
       feePayerKeyType,
       isAtLeastOneOfTheKeysInvolvedLedger,
@@ -477,12 +497,19 @@ const useSign = ({
     (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => {
       handleUpdate({ signingKeyAddr, signingKeyType: _chosenSigningKeyType })
 
-      // Explicitly pass the currently selected signing key type, because
-      // the signing key type in the state might not be updated yet,
+      // The controller keeps the signer of the pending transaction a speed up replaces,
+      // so the key in the state is the one that signs, not the just-chosen one
+      if (!canChangeSigningKey) {
+        handleSign()
+        return
+      }
+
+      // Explicitly pass the currently selected signing key, because
+      // the signing key in the state might not be updated yet,
       // and Sign Account Op controller assigns a default signing upfront
-      handleSign([_chosenSigningKeyType])
+      handleSign([_chosenSigningKeyType], undefined, signingKeyAddr)
     },
-    [handleSign, handleUpdate]
+    [canChangeSigningKey, handleSign, handleUpdate]
   )
 
   const handleChangeSigningKeyAndClose = useCallback(
