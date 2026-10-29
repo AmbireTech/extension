@@ -15,7 +15,7 @@ type Props = {
 }
 
 /**
- * Shown next to a receive token that none of the swap providers lists. The token data was read
+ * Shown next to a receive token that none of the enabled swap providers lists. The token data was read
  * from the network, so no swap provider has checked the token.
  */
 const UnverifiedTokenWarning: FC<Props> = ({ chainId, address }) => {
@@ -27,7 +27,7 @@ const UnverifiedTokenWarning: FC<Props> = ({ chainId, address }) => {
       dataSet={createGlobalTooltipDataSet({
         id: `token-${chainId}-${address}-unverified`,
         content: t(
-          'None of the swap providers lists this token. Make sure it is the token you want before you swap.'
+          'None of your enabled swap providers lists this token. Make sure it is the token you want before you swap.'
         )
       })}
       style={spacings.mlTy}
