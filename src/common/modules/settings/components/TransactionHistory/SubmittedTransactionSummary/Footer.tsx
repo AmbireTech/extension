@@ -26,6 +26,7 @@ import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
+import { getRepeatTransactionRequestParams } from './helpers'
 import PendingTransactionFooter from './PendingTransactionFooter'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
@@ -108,10 +109,11 @@ const Footer: FC<Props> = ({
           {
             type: 'calls',
             params: {
-              userRequestParams: {
+              userRequestParams: getRepeatTransactionRequestParams({
                 calls: rawCalls,
-                meta: { chainId: network.chainId, accountAddr }
-              }
+                chainId: network.chainId,
+                accountAddr
+              })
             }
           }
         ]

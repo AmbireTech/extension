@@ -115,53 +115,28 @@ export const handleActions = async (
       break
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER': {
-      return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator)
+      return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator, params?.requestId)
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR': {
-      return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator)
+      return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator, params?.requestId)
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_ONEKEY': {
       return await mainCtrl.handleAccountPickerInitOneKey(
         OneKeyKeyIterator,
-        params.preferredDeviceId
+        params.preferredDeviceId,
+        params.requestId
       )
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE': {
-      return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator)
+      return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator, params?.requestId)
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
-      return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
+      return await mainCtrl.handleAccountPickerInitQr(
+        QrKeyIterator,
+        params.payload,
+        params.requestId
+      )
     }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
-      return await mainCtrl.accountPickerSetInitParamsFromSavedSeed(params)
-    }
-
-    case 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR': {
-      await mainCtrl.accountPicker.reset()
-      const accounts = [...mainCtrl.accounts.accounts]
-
-      for (const account of accounts) {
-        if (account.newlyAdded) {
-          await mainCtrl.removeAccount(account.addr)
-        }
-      }
-
-      break
-    }
-    case 'IMPORT_SMART_ACCOUNT_JSON': {
-      // Add accounts first, because some of the next steps have validation
-      // if accounts exists.
-      await mainCtrl.accounts.addAccounts([params.readyToAddAccount])
-
-      // Then add keys, because some of the next steps could have validation
-      // if keys exists. Should be separate (not combined in Promise.all,
-      // since firing multiple keystore actions is not possible
-      // (the #wrapKeystoreAction listens for the first one to finish and
-      // skips the parallel one, if one is requested).
-
-      return await mainCtrl.keystore.addKeys(params.keys)
-    }
-
     case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
       mainCtrl.signMessage.setSigners(params.signers)
       return await mainCtrl.handleSignMessage()
@@ -299,8 +274,8 @@ export const handleActions = async (
 
       const focusOverlay = async () => {
         if (isSidePanelModeEnabled) {
-          // Already opened by the UI (see above)
-          if (engine === 'gecko') return
+          // Already opened by the UI (see above, and `openWallet` on Chrome)
+          if (engine === 'gecko' || params?.isChromeSidePanelOpen) return
 
           await openPanel(targetWindowId)
           return

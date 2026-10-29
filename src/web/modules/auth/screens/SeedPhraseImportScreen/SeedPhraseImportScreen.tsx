@@ -26,6 +26,7 @@ export const CARD_WIDTH = 400
 
 const SeedPhraseImportScreen = () => {
   const {
+    importButtonPressed,
     control,
     isValid,
     enablePassphrase,
@@ -120,7 +121,7 @@ const SeedPhraseImportScreen = () => {
                 text={t('Confirm')}
                 hasBottomSpacing={false}
                 onPress={handleFormSubmit}
-                disabled={!isValid}
+                disabled={!isValid || importButtonPressed}
               />
             </View>
           </View>
