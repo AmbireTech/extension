@@ -12,7 +12,8 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TrustAppButton from '@common/components/TrustAppButton'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_LG, SPACING_MI } from '@common/styles/spacings'
+import { isMobile } from '@common/config/env'
+import spacings, { SPACING, SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
@@ -54,7 +55,7 @@ const DAppConnectBody: FC<{
 
   const spacingsStyle = useMemo(() => {
     return {
-      paddingHorizontal: SPACING_LG * responsiveSizeMultiplier,
+      paddingHorizontal: (isMobile ? SPACING_SM : SPACING) * responsiveSizeMultiplier,
       paddingTop: SPACING * responsiveSizeMultiplier,
       paddingBottom: SPACING * responsiveSizeMultiplier
     }

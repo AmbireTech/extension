@@ -38,12 +38,6 @@ const useSwitchAccount = () => {
 
     return accounts.find((acc) => acc.addr === nextAccount) || null
   }, [accounts, nextAccount])
-  const nextRequestLabel = useMemo(() => {
-    if (nextRequestType === 'calls') return 'transaction signature'
-    if (nextRequestType === 'message') return 'message signature'
-
-    return 'unknown request'
-  }, [nextRequestType])
 
   const dAppData = useMemo(() => userRequest?.dappPromises[0]?.session, [userRequest])
 
@@ -111,7 +105,6 @@ const useSwitchAccount = () => {
     nextAccount,
     nextRequestType,
     nextAccountData,
-    nextRequestLabel,
     dAppData,
     handleDenyButtonPress,
     handleAuthorizeButtonPress,

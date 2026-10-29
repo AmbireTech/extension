@@ -24,6 +24,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
+import SendNft from '@common/modules/transfer/components/SendNft'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 
 import type { AmountAdjustmentInfo } from '@ambire-common/interfaces/transfer'
@@ -81,6 +82,7 @@ const SendForm = ({
       amountFieldMode,
       amountInFiat,
       selectedToken,
+      selectedNft,
       isTopUp,
       addressState,
       amount: controllerAmount,
@@ -138,7 +140,13 @@ const SendForm = ({
 
   const { simulationError } = useSimulationError({ chainId: selectedToken?.chainId })
 
-  const disableForm = (!canUseGasTank && isTopUp) || !tokens.length
+  // An account may hold only NFTs and still send them
+  const disableForm = (!canUseGasTank && isTopUp) || (!tokens.length && !selectedNft)
+
+  const nftValidation = useMemo(
+    () => ({ severity: amountErrorSeverity || 'error', message: amountErrorMessage }),
+    [amountErrorMessage, amountErrorSeverity]
+  )
 
   const renderSectionHeader: SectionedSelectProps['renderSectionHeader'] = useCallback(
     ({ section }: { section: NonNullable<SectionedSelectProps['sections']>[number] }) => {
@@ -323,8 +331,9 @@ const SendForm = ({
             isRecipientDomainResolving={addressState.isDomainResolving}
             selectedTokenSymbol={selectedToken?.symbol}
             addressPoisoningMatch={addressPoisoningMatch}
-            privacyPoolsAccounts={privacyPoolsAccounts}
-            onSelectPrivacyPoolsAccount={onSelectPrivacyPoolsRecipient}
+            // Privacy Pools accounts hold tokens only, so they aren't offered for an NFT
+            privacyPoolsAccounts={selectedNft ? undefined : privacyPoolsAccounts}
+            onSelectPrivacyPoolsAccount={selectedNft ? undefined : onSelectPrivacyPoolsRecipient}
           />
         )}
       </View>
@@ -340,7 +349,9 @@ const SendForm = ({
         />
       )}
 
-      {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
+      {selectedNft ? (
+        <SendNft nft={selectedNft} validation={nftValidation} />
+      ) : (!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
         <SkeletonLoader width="100%" height={180} />
       ) : (
         <SendToken

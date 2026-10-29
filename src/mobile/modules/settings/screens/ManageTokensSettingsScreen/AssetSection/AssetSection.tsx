@@ -5,6 +5,7 @@ import { CustomToken } from '@ambire-common/libs/portfolio/customToken'
 import { getAssetPreferenceId } from '@ambire-common/libs/portfolio/customToken'
 import { CollectionResult, TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import { ManagedAsset } from '@common/modules/settings/hooks/useManageAssets/useManageAssets'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -35,7 +36,7 @@ const AssetSection: FC<Props> = ({ standard, variant, isLoading, data }) => {
         ? Array.from({ length: SKELETONS_TO_DISPLAY }, (_, index) => (
             <SkeletonLoader
               key={`${standard}-${variant}-skeleton-${index.toString()}`}
-              height={56}
+              height={BUTTON_HEIGHT}
               width="100%"
               style={spacings.mbTy}
               appearance="secondaryBackground"

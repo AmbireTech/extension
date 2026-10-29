@@ -16,6 +16,7 @@ import {
   Warning
 } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { getMinReplacementFees } from '@ambire-common/libs/gasPrice/speedUp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
@@ -566,6 +567,8 @@ const Estimation = ({
   }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts, isViewOnly])
 
   const speedUpMeta = signAccountOpState?.accountOp.meta?.speedUp
+  const isCancelTransaction =
+    !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
   const speedUpMinFees = useMemo(() => {
     if (!speedUpMeta?.enabled || !speedUpMeta.replacedFees) return undefined
 
@@ -874,6 +877,7 @@ const Estimation = ({
         selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
         speedUpMinFees={speedUpMinFees}
+        isCancel={isCancelTransaction}
       />
       <View>
         {!isViewOnly && (
@@ -921,7 +925,9 @@ const Estimation = ({
       <View
         dataSet={createGlobalTooltipDataSet({
           id: 'fee-option-select-speed-up-locked',
-          content: t('To speed up, the fee is paid the same way as your original transaction'),
+          content: isCancelTransaction
+            ? t('To cancel, the fee is paid the same way as your original transaction')
+            : t('To speed up, the fee is paid the same way as your original transaction'),
           hidden: !isFeeTokenLockedBySpeedUp
         })}
       >
