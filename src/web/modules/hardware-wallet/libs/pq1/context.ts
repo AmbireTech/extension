@@ -1,15 +1,45 @@
 // What `pq1-sdk` needs from Ambire: where its clear-signing catalogs are,
 // how to reach the Safe Transaction Service and the bundler, how to read a
-// chain, and where to report problems. The SDK itself has no Ambire code.
+// chain, where to cache init codes, and where to report problems. The SDK
+// itself has no Ambire code.
 
 import type { JsonRpcProvider } from 'ethers'
-import { createChainReader, createPq1Context, pimlicoBundler, type Pq1Logger } from 'pq1-sdk'
+import {
+  createChainReader,
+  createPq1Context,
+  type KeyValueStore,
+  pimlicoBundler,
+  type Pq1Logger
+} from 'pq1-sdk'
 import { extensionCatalogs } from 'pq1-sdk/extension'
 
 import { SAFE_API_TIMEOUT_MS } from '@ambire-common/consts/safe'
 import { getApiKit } from '@ambire-common/libs/safe/safe'
 import { withTimeout } from '@ambire-common/utils/with-timeout'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
+import { browser } from '@web/constants/browserapi'
+
+/** The prefix of the SDK's own `chromeStorageCache()`, kept so init codes
+ *  cached before this store existed are still found. */
+const PQ1_CACHE_KEY_PREFIX = 'pq1-sdk:'
+
+/**
+ * The SDK's init-code cache, written by Ambire instead of the SDK. Passing
+ * it keeps the SDK off `chrome.storage.local`, which also holds the
+ * keystore - so the LavaMoat policy can deny it that access
+ * (`lavamoat/webpack/policy-override.json`). Losing an entry costs the device
+ * another signature with its few-time bootstrap key, so entries are kept.
+ */
+export const pq1InitCodeCache: KeyValueStore = {
+  get: async (key) => {
+    const storageKey = PQ1_CACHE_KEY_PREFIX + key
+    const { [storageKey]: value } = await browser.storage.local.get(storageKey)
+    return typeof value === 'string' ? value : undefined
+  },
+  set: async (key, value) => {
+    await browser.storage.local.set({ [PQ1_CACHE_KEY_PREFIX + key]: value })
+  }
+}
 
 /** Sends the SDK's warnings to the console and its unexpected errors to
  *  Sentry too: a catalog that stops loading quietly turns every PQ1 request

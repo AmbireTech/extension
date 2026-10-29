@@ -6,7 +6,7 @@ import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController, Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 
-import { pq1Logger } from '../../libs/pq1/context'
+import { pq1InitCodeCache, pq1Logger } from '../../libs/pq1/context'
 import { toUserFacingPq1Error } from '../../libs/pq1/errors'
 
 /** How many of the device's accounts the connect screen offers. */
@@ -57,6 +57,8 @@ class PQ1Controller extends EventEmitter implements ExternalSignerController {
   constructor(eventEmitterRegistry: IEventEmitterRegistryController) {
     super(eventEmitterRegistry)
     this.#manager = new Pq1DeviceManager({
+      // Never left to the SDK's default, which reads chrome.storage.local itself
+      cache: pq1InitCodeCache,
       logger: pq1Logger,
       onChange: (connected) => {
         this.isConnected = connected
