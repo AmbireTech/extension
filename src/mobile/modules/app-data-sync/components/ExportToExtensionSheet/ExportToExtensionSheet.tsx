@@ -36,6 +36,10 @@ const SHORT_SCREEN_HEIGHT = 700
 // Dummy value rendered behind the blur before the accounts are picked, so the
 // placeholder hints at a QR code instead of showing a flat empty box.
 const PLACEHOLDER_QR_VALUE = '0123456789ABCDEF'.repeat(24)
+const PLACEHOLDER_BLUR_INTENSITY = 40
+// Android blurs by `intensity / blurReductionFactor`, and below Android 12 any radius
+// above 25 throws a native exception that closes the app.
+const MAX_ANDROID_BLUR_RADIUS = 25
 
 interface Props {
   sheetRef: React.RefObject<any>
@@ -185,11 +189,11 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
             {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView,
                 plus a dark scrim, to leave only a faint hint of the dummy QR code behind */}
             <BlurView
-              intensity={40}
+              intensity={PLACEHOLDER_BLUR_INTENSITY}
               // Android renders a barely visible tint instead of a blur unless this
               // experimental method is on, leaving the dummy QR code recognizable
               experimentalBlurMethod="dimezisBlurView"
-              blurReductionFactor={1}
+              blurReductionFactor={PLACEHOLDER_BLUR_INTENSITY / MAX_ANDROID_BLUR_RADIUS}
               tint="dark"
               style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop }]}
               pointerEvents="none"
