@@ -64,10 +64,19 @@ const useAmbireSignerInstall = () => {
     return null
   }, [installStep, t])
 
+  const installButtonText = useMemo(() => {
+    if (installStep === 'loading')
+      return t('Installing... {{progress}}%', { progress: installProgress })
+    if (installStep) return t('Check your Ledger')
+
+    return t('Install')
+  }, [installProgress, installStep, t])
+
   return {
     installStep,
     installProgress,
     installStepText,
+    installButtonText,
     isAmbireSignerInstalled,
     installAmbireSigner
   }

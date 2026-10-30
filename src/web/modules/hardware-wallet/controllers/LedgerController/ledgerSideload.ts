@@ -15,8 +15,6 @@ import {
 import { speculosTransportFactory } from '@ledgerhq/device-transport-kit-speculos'
 import { webHidTransportFactory } from '@ledgerhq/device-transport-kit-web-hid'
 
-export type { LedgerAppInstallStep }
-
 /**
  * Sideloads a custom Ledger app (the "Ambire Signer" EIP-7702 delegation app)
  * over WebHID; the protocol itself lives in `installLedgerAppOverSession`. Runs

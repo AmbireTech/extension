@@ -106,7 +106,7 @@ const AccountSmartSettingsScreen = () => {
     is7702,
     canInstallAmbireSigner,
     isUnsupportedLedger,
-    unsupportedLedgerModelName,
+    unsupportedLedgerTitle,
     isEip7702Enabled,
     networkRows,
     enableEip7702,
@@ -114,8 +114,8 @@ const AccountSmartSettingsScreen = () => {
   } = useAccountSmartSettings(account)
   const {
     installStep,
-    installProgress,
     installStepText,
+    installButtonText,
     isAmbireSignerInstalled,
     installAmbireSigner
   } = useAmbireSignerInstall()
@@ -139,14 +139,6 @@ const AccountSmartSettingsScreen = () => {
     [installAmbireSigner]
   )
 
-  const installButtonText = useMemo(() => {
-    if (installStep === 'loading')
-      return t('Installing... {{progress}}%', { progress: installProgress })
-    if (installStep) return t('Check your Ledger')
-
-    return t('Install')
-  }, [installProgress, installStep, t])
-
   const features = useMemo(
     () => [
       {
@@ -166,16 +158,6 @@ const AccountSmartSettingsScreen = () => {
       }
     ],
     [t]
-  )
-
-  const unsupportedLedgerTitle = useMemo(
-    () =>
-      unsupportedLedgerModelName
-        ? t('Smart features are not available on {{modelName}}', {
-            modelName: unsupportedLedgerModelName
-          })
-        : t('Smart features are not available on this Ledger model'),
-    [t, unsupportedLedgerModelName]
   )
 
   const canUpgrade = is7702 && networkRows.length > 0
@@ -277,7 +259,7 @@ const AccountSmartSettingsScreen = () => {
               />
             )}
 
-            {isUnsupportedLedger && (
+            {!!unsupportedLedgerTitle && (
               <Alert
                 type="warning"
                 size="md"

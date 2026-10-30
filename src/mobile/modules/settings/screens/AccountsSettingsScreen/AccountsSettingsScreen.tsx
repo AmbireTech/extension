@@ -126,18 +126,17 @@ const AccountsSettingsScreen = () => {
   }, [accountSettingsAccount, openAccountDeploySettings])
 
   // Smart settings is a screen of its own, while activation settings is a sheet
-  const openAccountSettings: React.Dispatch<React.SetStateAction<AccountInterface | null>> =
-    useCallback(
-      (account) => {
-        if (!account || typeof account === 'function' || account.safeCreation) {
-          setAccountSettingsAccount(account)
-          return
-        }
+  const openAccountSettings = useCallback(
+    (account: AccountInterface) => {
+      if (account.safeCreation) {
+        setAccountSettingsAccount(account)
+        return
+      }
 
-        navigate(`${ROUTES.accountSmartSettings}?${SMART_SETTINGS_ACCOUNT_PARAM}=${account.addr}`)
-      },
-      [navigate]
-    )
+      navigate(`${ROUTES.accountSmartSettings}?${SMART_SETTINGS_ACCOUNT_PARAM}=${account.addr}`)
+    },
+    [navigate]
+  )
 
   const shortenAccountAddr = useCallback(() => {
     if (maxElementWidthSize(800)) return undefined

@@ -89,7 +89,7 @@ const Account = ({
     withOptionsButton?: boolean
     markSelected?: boolean
     setAccountToImportOrExport?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
-    setAccountSettingsAccount?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
+    setAccountSettingsAccount?: (account: AccountInterface) => void
     setAccountToRemove?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
   }
   containerStyle?: ViewStyle

@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo } from 'react'
+import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
@@ -48,7 +48,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
     is7702,
     canInstallAmbireSigner,
     isUnsupportedLedger,
-    unsupportedLedgerModelName,
+    unsupportedLedgerTitle,
     isEip7702Enabled,
     networkRows,
     enableEip7702,
@@ -56,8 +56,8 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
   } = useAccountSmartSettings(account)
   const {
     installStep,
-    installProgress,
     installStepText,
+    installButtonText,
     isAmbireSignerInstalled,
     installAmbireSigner
   } = useAmbireSignerInstall()
@@ -72,16 +72,6 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
         await installLedgerApp(await loadAmbireSignerApdus(), onProgress)
       }),
     [installAmbireSigner]
-  )
-
-  const unsupportedLedgerTitle = useMemo(
-    () =>
-      unsupportedLedgerModelName
-        ? t('Smart features are not available on {{modelName}}', {
-            modelName: unsupportedLedgerModelName
-          })
-        : t('Smart features are not available on this Ledger model'),
-    [t, unsupportedLedgerModelName]
   )
 
   return (
@@ -149,13 +139,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
                           disabled={!!installStep}
                           style={spacings.mb0}
                           onPress={installAmbireSignerOverWebHid}
-                          text={
-                            installStep === 'loading'
-                              ? t('Installing... {{progress}}%', { progress: installProgress })
-                              : installStep
-                                ? t('Check your Ledger')
-                                : t('Install')
-                          }
+                          text={installButtonText}
                         />
                       </Step>
                     )}
@@ -175,7 +159,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
                 )}
               </Text>
 
-              {isUnsupportedLedger && (
+              {!!unsupportedLedgerTitle && (
                 <Alert
                   type="warning"
                   size="md"

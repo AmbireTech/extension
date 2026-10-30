@@ -5,6 +5,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import { has7702 } from '@ambire-common/libs/7702/7702'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AMBIRE_SIGNER_DEVICE_MODELS } from '@common/modules/hardware-wallet/libs/ledgerAppInstall/artifacts'
 import { DeviceModelId } from '@ledgerhq/device-management-kit'
@@ -51,6 +52,7 @@ const selectIsEip7702Enabled = (state: AllControllersMappingType['FeatureFlagsCo
  * the extension's modal and the mobile screen.
  */
 const useAccountSmartSettings = (account: Account | null) => {
+  const { t } = useTranslation()
   const { state: accountStates, dispatch: accountsDispatch } = useController(
     'AccountsController',
     selectAccountStates
@@ -125,9 +127,17 @@ const useAccountSmartSettings = (account: Account | null) => {
   // A Ledger that can't get Ambire Signer can neither enable nor revoke, as both
   // sign with it. A key stored in the app can still sign instead
   const isUnsupportedLedger = ledgerKeys.length > 0 && !canInstallAmbireSigner && !hasInternalKey
-  // Null when the saved model is 'unknown'
-  const unsupportedLedgerModelName =
-    (isUnsupportedLedger && UNSUPPORTED_LEDGER_MODEL_NAMES[ledgerKeys[0]!.meta.deviceModel]) || null
+  const unsupportedLedgerTitle = useMemo(() => {
+    if (!isUnsupportedLedger) return null
+    // The first Ledger key with a known model, as older keys can be saved as 'unknown'
+    const modelName = ledgerKeys
+      .map((k) => UNSUPPORTED_LEDGER_MODEL_NAMES[k.meta.deviceModel])
+      .find(Boolean)
+
+    return modelName
+      ? t('Smart features are not available on {{modelName}}', { modelName })
+      : t('Smart features are not available on this Ledger model')
+  }, [isUnsupportedLedger, ledgerKeys, t])
 
   const networkRows: SmartSettingsNetworkRow[] = useMemo(
     () =>
@@ -197,7 +207,7 @@ const useAccountSmartSettings = (account: Account | null) => {
     is7702,
     canInstallAmbireSigner,
     isUnsupportedLedger,
-    unsupportedLedgerModelName,
+    unsupportedLedgerTitle,
     isEip7702Enabled,
     networkRows,
     enableEip7702,
