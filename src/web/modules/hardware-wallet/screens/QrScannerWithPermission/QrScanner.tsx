@@ -1,10 +1,11 @@
 import QrScannerLib from 'qr-scanner'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { Path, Svg } from 'react-native-svg'
 
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import QrScanProgressBar from '@common/modules/hardware-wallets/components/QrScanProgressBar'
 import {
   emptyQrScanLastRead,
   getQrCodeCoverage,
@@ -12,6 +13,7 @@ import {
   QR_SCAN_FEEDBACK_INTERVAL
 } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
+import flexbox from '@common/styles/utils/flexbox'
 import { browser, engine, isExtension } from '@web/constants/browserapi'
 
 import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
@@ -35,6 +37,7 @@ type Props = {
 
 const SCAN_REGION_RATIO = 0.9
 const SCAN_REGION_RESOLUTION = 512
+const SCAN_REGION_INSET = ((1 - SCAN_REGION_RATIO) / 2) * 100
 
 const getCameraErrorMessage = (error: any, t: (message: string) => string) => {
   const rawMessage = typeof error === 'string' ? error : error?.message
@@ -116,6 +119,8 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
   const scannerRef = useRef<QrScannerLib | null>(null)
   const decoderRef = useRef(new UrFragmentDecoder())
   const isCompletedRef = useRef(false)
+  // How much of an animated (multi-part) code is read, undefined while no such code is being read
+  const [animatedScanProgress, setAnimatedScanProgress] = useState<number>()
   // Kept in a ref so that a caller re-creating the callback does not restart the camera
   const onProgressRef = useRef(onProgress)
 
@@ -163,6 +168,9 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
             if (!decoderRef.current.isComplete()) return
 
             isCompletedRef.current = true
+            // The progress is not polled anymore once the scan completes, so the bar is
+            // filled up here
+            setAnimatedScanProgress(decoderRef.current.expectedPartCount() > 1 ? 1 : undefined)
             const payload = decoderRef.current.result()
             void scanner.stop()
 
@@ -200,13 +208,17 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
     )
 
     const progressInterval = setInterval(() => {
-      if (!onProgressRef.current || isCompletedRef.current || disposed) return
+      if (isCompletedRef.current || disposed) return
 
       const progress = {
         feedback: getQrScanFeedback(lastRead),
         expectedParts: decoderRef.current.expectedPartCount(),
         progress: decoderRef.current.progress()
       }
+
+      setAnimatedScanProgress(progress.expectedParts > 1 ? progress.progress : undefined)
+
+      if (!onProgressRef.current) return
 
       // Only on change, so that the message the user is reading is not re-rendered while
       // nothing about the scan moved
@@ -277,13 +289,23 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
           display: 'block'
         }}
       />
+      {/* Blurs the whole camera view. Only what is shown is blurred - the scanner reads the
+          frames straight from the video */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          backdropFilter: 'blur(12px)'
+        }}
+      />
       <Svg
         pointerEvents="none"
         viewBox="0 0 238 238"
         style={{
           position: 'absolute',
-          top: `${((1 - SCAN_REGION_RATIO) / 2) * 100}%`,
-          left: `${((1 - SCAN_REGION_RATIO) / 2) * 100}%`,
+          top: `${SCAN_REGION_INSET}%`,
+          left: `${SCAN_REGION_INSET}%`,
           width: `${SCAN_REGION_RATIO * 100}%`,
           height: `${SCAN_REGION_RATIO * 100}%`
         }}
@@ -297,6 +319,24 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
           strokeLinejoin="round"
         />
       </Svg>
+      {animatedScanProgress !== undefined && (
+        <View
+          pointerEvents="none"
+          style={[
+            flexbox.justifyCenter,
+            {
+              position: 'absolute',
+              bottom: 0,
+              left: `${SCAN_REGION_INSET}%`,
+              right: `${SCAN_REGION_INSET}%`,
+              // The strip between the scan region and the bottom edge
+              height: `${SCAN_REGION_INSET}%`
+            }
+          ]}
+        >
+          <QrScanProgressBar progress={animatedScanProgress} />
+        </View>
+      )}
     </View>
   )
 }

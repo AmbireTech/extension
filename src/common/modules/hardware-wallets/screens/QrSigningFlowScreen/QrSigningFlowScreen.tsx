@@ -156,7 +156,7 @@ const QrSigningFlowScreen = ({
               onPress={() => close()}
               size={withMobileLayout ? 'regular' : 'smaller'}
               hasBottomSpacing={false}
-              type="secondary"
+              type={withMobileLayout ? 'tertiary' : 'secondary'}
             />
           </FooterGlassView>
         </View>
