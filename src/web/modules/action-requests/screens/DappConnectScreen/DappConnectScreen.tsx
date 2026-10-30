@@ -23,6 +23,7 @@ const DappConnectScreen = () => {
   const {
     t,
     dappToConnect,
+    websiteContentUpdate,
     isAuthorizing,
     handleDenyButtonPress,
     handleAuthorizeButtonPress,
@@ -114,12 +115,14 @@ const DappConnectScreen = () => {
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
               <DAppConnectBody
+                id={dappToConnect.id}
                 securityCheck={dappToConnect.blacklisted}
                 isTrustedByUser={isTrustedByUser}
                 canBeTrustedByUser={canBeTrustedByUser}
                 onToggleTrust={toggleTrust}
                 onEnableScamChecker={handleEnableScamChecker}
                 isScamCheckerEnabled={isScamCheckerEnabled}
+                websiteContentUpdate={websiteContentUpdate}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>
