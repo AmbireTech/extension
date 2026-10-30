@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
@@ -109,14 +109,18 @@ const CheckRow = ({ check }: { check: SafeTransactionCheck }) => {
  * sent (ready to paste into a hashing tool), and, for Safe transactions,
  * the checks that can be confirmed by reading the request.
  */
-const SigningRequestDetails = ({
-  signingRequest,
+const SigningRequestDetailsContent = ({
+  signingRequest: initialSigningRequest,
   deviceName,
   isAccountUpgradeTransaction,
   humanization,
   style
 }: Props) => {
   const { t } = useTranslation()
+  // The request object is re-created on every update with the same content,
+  // and a new content mounts these details again, so the first one is kept
+  // to read and hash the request once
+  const [signingRequest] = useState(initialSigningRequest)
 
   const {
     requestKind,
@@ -124,7 +128,8 @@ const SigningRequestDetails = ({
     missingHashReason,
     safeHashFormula,
     safeTransactionChecks,
-    requestJson
+    requestJson,
+    requestCalls
   } = useMemo(
     () => getSigningRequestVerification(signingRequest, { isAccountUpgradeTransaction }),
     [signingRequest, isAccountUpgradeTransaction]
@@ -136,14 +141,6 @@ const SigningRequestDetails = ({
   // Hidden by default on every screen, as the details are for users who verify on their own
   const [isExpanded, setIsExpanded] = useState(false)
   const toggleIsExpanded = useCallback(() => setIsExpanded((prev) => !prev), [])
-
-  // Requests can come one after another without the details closing in
-  // between (e.g. an account upgrade, then its transaction), so each new
-  // request starts hidden too. Its content is compared, as the request object
-  // is re-created on every update
-  useEffect(() => {
-    setIsExpanded(false)
-  }, [requestJson])
 
   const requestTitle = useMemo(() => {
     const device = deviceName || t('device')
@@ -194,14 +191,14 @@ const SigningRequestDetails = ({
       <>
         {requestSection}
         {hashesSection}
-        <DecodedRequest signingRequest={signingRequest} humanization={humanization} />
+        <DecodedRequest requestCalls={requestCalls} humanization={humanization} />
       </>
     ) : (
       <>
         {hashesSection}
         {checksSection}
         {requestSection}
-        <DecodedRequest signingRequest={signingRequest} humanization={humanization} />
+        <DecodedRequest requestCalls={requestCalls} humanization={humanization} />
       </>
     )
 
@@ -236,6 +233,18 @@ const SigningRequestDetails = ({
       {isExpanded && details}
     </View>
   )
+}
+
+const SigningRequestDetails = (props: Props) => {
+  const { signingRequest } = props
+  // Requests can come one after another without the details closing in
+  // between (e.g. an account upgrade, then its transaction). Keyed on the
+  // request's content, each new request mounts its own details, so it starts
+  // hidden from its first frame, while the same request re-created on an
+  // update keeps them as they are
+  const requestKey = useMemo(() => JSON.stringify(signingRequest), [signingRequest])
+
+  return <SigningRequestDetailsContent key={requestKey} {...props} />
 }
 
 export default React.memo(SigningRequestDetails)

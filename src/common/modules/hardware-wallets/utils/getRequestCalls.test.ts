@@ -78,6 +78,30 @@ describe('getRequestCalls', () => {
     })
   })
 
+  test('a list of calls a device sends on its own makes each of its calls', () => {
+    expect(
+      getRequestCalls({
+        type: 'raw-transaction',
+        data: {
+          chainId: '137',
+          from: SAFE,
+          calls: [
+            { to: TOKEN, value: '0', data: TRANSFER_DATA },
+            'oops',
+            { to: RECIPIENT, value: '7' }
+          ]
+        }
+      })
+    ).toEqual({
+      kind: 'transaction',
+      chainId: 137n,
+      calls: [
+        { id: 'call-1', to: TOKEN, value: 0n, data: TRANSFER_DATA },
+        { id: 'call-3', to: RECIPIENT, value: 7n, data: '0x' }
+      ]
+    })
+  })
+
   test('a Safe transaction makes its one call, on the chain of its domain', () => {
     const result = getRequestCalls(getSafeRequest(safeTxMessage))
 

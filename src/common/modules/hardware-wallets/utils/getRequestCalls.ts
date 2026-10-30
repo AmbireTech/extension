@@ -1,13 +1,12 @@
-import { getAddress, Interface } from 'ethers'
+import { getAddress } from 'ethers'
 
 import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
-import { getAbiBytesCalldataWithPadding } from '@ambire-common/libs/humanizer/erc7730/calldata'
 import {
-  decodeMultiSend,
-  multiCallAbi,
-  SAFE_DELEGATE_CALL_OPERATION
-} from '@ambire-common/libs/safe/helpers'
+  getAbiBytesCalldataWithPadding,
+  multiSendInterface
+} from '@ambire-common/libs/humanizer/erc7730/calldata'
+import { decodeMultiSend, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
 
 import {
   isRecord,
@@ -19,7 +18,7 @@ import {
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 /** A call taken from the signed request, with its call data still to be decoded */
 export type RequestCall = {
-  /** The position of the call in the request, e.g. `transaction-2` */
+  /** The position of the call in the request, e.g. `transaction-2` or `call-2` */
   id: string
   to: string | null
   value: bigint
@@ -51,7 +50,6 @@ export type DecodedCallLine = {
   text: string
 }
 
-const multiSendInterface = new Interface(multiCallAbi)
 const MULTI_SEND_SELECTOR = multiSendInterface.getFunction('multiSend')?.selector ?? '0x8d80ff0a'
 
 const toBigIntOrZero = (value: unknown): bigint => toBigIntOrNull(value) ?? 0n
@@ -68,11 +66,36 @@ const toChecksumAddress = (value: unknown): string | null => {
 }
 
 const getTransactionCalls = (data: unknown): RequestCalls | null => {
-  if (!isRecord(data) || typeof data.data !== 'string') return null
+  if (!isRecord(data)) return null
+
+  const chainId = toBigIntOrNull(data.chainId)
+
+  // A device that sends the account's calls itself (e.g. as a UserOperation)
+  // gets the list of calls instead of a transaction
+  if (Array.isArray(data.calls)) {
+    return {
+      kind: 'transaction',
+      chainId,
+      calls: data.calls.flatMap((call, index) =>
+        isRecord(call)
+          ? [
+              {
+                id: `call-${index + 1}`,
+                to: toChecksumAddress(call.to),
+                value: toBigIntOrZero(call.value),
+                data: typeof call.data === 'string' ? call.data : '0x'
+              }
+            ]
+          : []
+      )
+    }
+  }
+
+  if (typeof data.data !== 'string') return null
 
   return {
     kind: 'transaction',
-    chainId: toBigIntOrNull(data.chainId),
+    chainId,
     calls: [
       {
         id: 'transaction',
@@ -160,8 +183,9 @@ const getSafeTransactionCalls = (data: unknown): RequestCalls | null => {
 /**
  * Lists the calls a signing request will make, read from the request itself
  * (not from what Ambire showed earlier), so they always match what's signed.
- * A transaction makes one call. A Safe transaction makes its call, or the
- * calls of its batch one by one.
+ * A transaction makes one call, and a device that sends the account's calls
+ * itself gets them all. A Safe transaction makes its call, or the calls of
+ * its batch one by one.
  */
 export const getRequestCalls = (
   signingRequest: HardwareWalletSigningRequest

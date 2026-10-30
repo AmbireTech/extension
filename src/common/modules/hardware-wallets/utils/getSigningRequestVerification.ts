@@ -5,14 +5,9 @@ import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAcco
 import { SAFE_CALL_OPERATION, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 
-import { getRequestCalls } from './getRequestCalls'
+import { getRequestCalls, RequestCalls } from './getRequestCalls'
 import { getUnsignedTransaction } from './getUnsignedTransaction'
-import {
-  isRecord,
-  isSafeBatchContract,
-  isSafeTxTypedData,
-  toBigIntOrNull
-} from './signingRequestData'
+import { isRecord, isSafeTxTypedData, toBigIntOrNull } from './signingRequestData'
 
 /** A hash the user can rebuild from the request and compare with their device */
 export type VerificationHash = {
@@ -42,7 +37,12 @@ export type SigningRequestVerification = {
   safeTransactionChecks: SafeTransactionCheck[]
   /** The request as sent to the device, in the standard shape hashing tools accept */
   requestJson: string
+  /** The calls the request makes, read once for both the checks and the decoded data */
+  requestCalls: RequestCalls | null
 }
+
+/** Everything but the calls, which are read once for the whole request */
+type RequestVerification = Omit<SigningRequestVerification, 'requestCalls'>
 
 type Options = {
   /**
@@ -133,8 +133,8 @@ const getUnsignedTransactionHash = (data: Record<string, unknown>): string | nul
 const getTransactionVerification = (
   data: unknown,
   { isAccountUpgradeTransaction }: Options
-): SigningRequestVerification => {
-  const base: SigningRequestVerification = {
+): RequestVerification => {
+  const base: RequestVerification = {
     requestKind: 'transaction',
     hashes: [],
     missingHashReason: null,
@@ -143,6 +143,14 @@ const getTransactionVerification = (
     requestJson: stringify(data)
   }
   if (!isRecord(data)) return base
+
+  if (Array.isArray(data.calls)) {
+    return {
+      ...base,
+      missingHashReason:
+        "There's no transaction hash to compare, as your device builds the transaction from these calls on its own."
+    }
+  }
 
   if (isAccountUpgradeTransaction) {
     return {
@@ -176,25 +184,48 @@ const getTransactionVerification = (
 const isEmptyAddress = (value: unknown) =>
   value === undefined || (typeof value === 'string' && value.toLowerCase() === ZeroAddress)
 
-/** Whether a transaction inside a Safe batch is a delegate call, which gets full control of the Safe */
-const hasDelegateCallInBatch = (signingRequest: HardwareWalletSigningRequest): boolean => {
-  const requestCalls = getRequestCalls(signingRequest)
-  if (requestCalls?.kind !== 'safe-transaction' || !requestCalls.isBatch) return false
+/** The checks of the batch a Safe transaction runs. A readable batch without delegate calls adds nothing */
+const getSafeBatchChecks = (
+  safeCalls: Extract<RequestCalls, { kind: 'safe-transaction' }>
+): SafeTransactionCheck[] => {
+  const checks: SafeTransactionCheck[] = []
 
-  return requestCalls.calls.some(({ operation }) => operation === SAFE_DELEGATE_CALL_OPERATION)
+  // The batch contract passing doesn't cover what the batch runs, so a
+  // delegate call inside it is flagged on its own
+  if (safeCalls.calls.some(({ operation }) => operation === SAFE_DELEGATE_CALL_OPERATION)) {
+    checks.push({
+      id: 'batch-operation',
+      label:
+        'operation 1 inside the batch: a transaction in it is a delegate call. It gets full control of the Safe.',
+      isPassing: false
+    })
+  }
+  // A delegate call could hide in the part that couldn't be read
+  if (safeCalls.batchError) {
+    checks.push({
+      id: 'batch-unreadable',
+      label: "Part of the batch couldn't be read, so it can't be checked for delegate calls.",
+      isPassing: false
+    })
+  }
+
+  return checks
 }
 
 const getSafeTransactionChecks = (
   message: Record<string, unknown>,
-  signingRequest: HardwareWalletSigningRequest
+  requestCalls: RequestCalls | null
 ): SafeTransactionCheck[] => {
   const checks: SafeTransactionCheck[] = []
   const operation = toBigIntOrNull(message.operation)
-  const isBatchContract = isSafeBatchContract(message.to)
+  // The same batch the decoded data lists: a delegate call to Safe's batch
+  // contract that calls its multiSend function
+  const safeBatchCalls =
+    requestCalls?.kind === 'safe-transaction' && requestCalls.isBatch ? requestCalls : null
 
   if (operation === BigInt(SAFE_CALL_OPERATION)) {
     checks.push({ id: 'operation', label: 'operation 0: a normal call', isPassing: true })
-  } else if (operation === BigInt(SAFE_DELEGATE_CALL_OPERATION) && isBatchContract) {
+  } else if (operation === BigInt(SAFE_DELEGATE_CALL_OPERATION) && safeBatchCalls) {
     checks.push({
       id: 'operation',
       label: "operation 1: a delegate call to Safe's batch contract, which is normal for batches",
@@ -204,23 +235,14 @@ const getSafeTransactionChecks = (
     checks.push({
       id: 'operation',
       label:
-        'operation 1: a delegate call to an unknown contract. It gets full control of the Safe.',
+        "operation 1: a delegate call that isn't a Safe batch. The contract it calls gets full control of the Safe.",
       isPassing: false
     })
   } else {
     checks.push({ id: 'operation', label: 'operation has an unknown value', isPassing: false })
   }
 
-  // The batch contract passing above doesn't cover what the batch runs, so a
-  // delegate call inside it is flagged on its own. A batch without one adds nothing
-  if (hasDelegateCallInBatch(signingRequest)) {
-    checks.push({
-      id: 'batch-operation',
-      label:
-        'operation 1 inside the batch: a transaction in it is a delegate call. It gets full control of the Safe.',
-      isPassing: false
-    })
-  }
+  if (safeBatchCalls) checks.push(...getSafeBatchChecks(safeBatchCalls))
 
   const hasGasRefund =
     (toBigIntOrNull(message.gasPrice) ?? 0n) !== 0n ||
@@ -245,10 +267,10 @@ const getSafeTransactionChecks = (
 }
 
 const getTypedDataVerification = (
-  signingRequest: HardwareWalletSigningRequest
-): SigningRequestVerification => {
-  const { data } = signingRequest
-  const base: SigningRequestVerification = {
+  data: unknown,
+  requestCalls: RequestCalls | null
+): RequestVerification => {
+  const base: RequestVerification = {
     requestKind: 'typed-data',
     hashes: [],
     missingHashReason: null,
@@ -310,7 +332,7 @@ const getTypedDataVerification = (
     hashes,
     safeHashFormula,
     safeTransactionChecks: isSafeTransaction
-      ? getSafeTransactionChecks(data.message, signingRequest)
+      ? getSafeTransactionChecks(data.message, requestCalls)
       : [],
     // Only the typed data itself, so it can be pasted into a hashing tool as is
     requestJson: stringify(pickKeys(data, TYPED_DATA_KEYS))
@@ -320,17 +342,21 @@ const getTypedDataVerification = (
 /**
  * Prepares what a user needs to verify a hardware wallet signing request on
  * their own: the request exactly as sent (ready to paste into a hashing
- * tool), the hashes Ambire computed from it, and for Safe transactions, the
- * checks that can be confirmed by reading the request.
+ * tool), the hashes Ambire computed from it, for Safe transactions, the
+ * checks that can be confirmed by reading the request, and the calls it makes.
  */
 export const getSigningRequestVerification = (
   signingRequest: HardwareWalletSigningRequest,
   options: Options = {}
 ): SigningRequestVerification => {
+  const requestCalls = getRequestCalls(signingRequest)
+
   if (signingRequest.type === 'raw-transaction') {
-    return getTransactionVerification(signingRequest.data, options)
+    return { ...getTransactionVerification(signingRequest.data, options), requestCalls }
   }
-  if (signingRequest.type === 'eip-712') return getTypedDataVerification(signingRequest)
+  if (signingRequest.type === 'eip-712') {
+    return { ...getTypedDataVerification(signingRequest.data, requestCalls), requestCalls }
+  }
 
   return {
     requestKind: 'other',
@@ -338,6 +364,7 @@ export const getSigningRequestVerification = (
     missingHashReason: null,
     safeHashFormula: null,
     safeTransactionChecks: [],
-    requestJson: stringify(signingRequest.data)
+    requestJson: stringify(signingRequest.data),
+    requestCalls
   }
 }

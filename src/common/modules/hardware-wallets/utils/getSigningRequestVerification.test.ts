@@ -125,10 +125,21 @@ describe('getSigningRequestVerification', () => {
       expect(result.missingHashReason).toBeTruthy()
     })
 
-    test('a request with fields a transaction does not have gets no hash', () => {
+    test('a list of calls a device sends on its own gets no hash, but its calls', () => {
       const result = getSigningRequestVerification({
         type: 'raw-transaction',
         data: { chainId: '1', from: RECIPIENT, calls: [{ to: TOKEN, value: '0', data: '0x' }] }
+      })
+
+      expect(result.hashes).toEqual([])
+      expect(result.missingHashReason).toBeTruthy()
+      expect(result.requestCalls?.calls).toHaveLength(1)
+    })
+
+    test('a request with fields a transaction does not have gets no hash', () => {
+      const result = getSigningRequestVerification({
+        type: 'raw-transaction',
+        data: { ...eip1559Transaction, from: RECIPIENT }
       })
 
       expect(result.hashes).toEqual([])
@@ -186,12 +197,41 @@ describe('getSigningRequestVerification', () => {
       ])
     })
 
-    test("a delegate call to Safe's batch contract passes", () => {
+    test("a delegate call to Safe's batch contract that isn't a batch fails", () => {
       const result = getSigningRequestVerification(
         getSafeTxRequest({ ...safeTxMessage, to: multiSendAddr.toLowerCase(), operation: '1' })
       )
 
-      expect(result.safeTransactionChecks[0]?.isPassing).toBe(true)
+      expect(result.safeTransactionChecks[0]?.isPassing).toBe(false)
+      expect(result.requestCalls?.kind === 'safe-transaction' && result.requestCalls.isBatch).toBe(
+        false
+      )
+    })
+
+    test("a batch that can't be read fails, as it could hide a delegate call", () => {
+      const result = getSigningRequestVerification(
+        getSafeTxRequest({
+          ...safeTxMessage,
+          to: multiSendAddr,
+          data: '0x8d80ff0a1234',
+          operation: 1
+        })
+      )
+
+      expect(result.safeTransactionChecks.map(({ id, isPassing }) => [id, isPassing])).toEqual([
+        ['operation', true],
+        ['batch-unreadable', false],
+        ['gas-refund', true]
+      ])
+    })
+
+    test('the calls are read once and returned with the checks', () => {
+      const result = getSigningRequestVerification(
+        getSafeTxRequest(getBatchMessage([{ operation: 0, to: TOKEN, data: TRANSFER_DATA }]))
+      )
+
+      expect(result.requestCalls?.kind).toBe('safe-transaction')
+      expect(result.requestCalls?.calls).toHaveLength(1)
     })
 
     test('a batch of normal calls adds no check for the calls inside it', () => {

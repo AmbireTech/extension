@@ -1,7 +1,6 @@
 import React, { Suspense, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { SAFE_CALL_OPERATION, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
 import Text from '@common/components/Text'
@@ -11,9 +10,9 @@ import type { DecodedCallsByData } from '@common/hooks/useDecodedCallsByData'
 import {
   findHumanizedCall,
   getDecodedCallLines,
-  getRequestCalls,
   isEmptyCallData,
-  RequestCall
+  RequestCall,
+  RequestCalls
 } from '@common/modules/hardware-wallets/utils/getRequestCalls'
 import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls/lazyCompactHumanizedCalls'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
@@ -21,7 +20,8 @@ import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { MonoBox, MonoText, SectionHeader } from './DetailsPrimitives'
 
 type Props = {
-  signingRequest: HardwareWalletSigningRequest
+  /** The calls of the signed request, read once with its hashes and checks */
+  requestCalls: RequestCalls | null
   /** The calls as Ambire humanized them on the sign screen */
   humanization?: IrCall[]
 }
@@ -118,9 +118,8 @@ const CallCard = ({
  * call, or the calls of its batch one by one. Each call also shows how Ambire
  * humanized it, when the humanized call is exactly the signed one.
  */
-const DecodedRequest = ({ signingRequest, humanization }: Props) => {
+const DecodedRequest = ({ requestCalls, humanization }: Props) => {
   const { t } = useTranslation()
-  const requestCalls = useMemo(() => getRequestCalls(signingRequest), [signingRequest])
   const callDatas = useMemo(
     () =>
       (requestCalls?.calls ?? []).map(({ data }) => data).filter((data) => !isEmptyCallData(data)),
@@ -156,10 +155,11 @@ const DecodedRequest = ({ signingRequest, humanization }: Props) => {
         )}
       </Text>
       {requestCalls.kind === 'transaction' ? (
-        requestCalls.calls.map((call) => (
+        requestCalls.calls.map((call, index) => (
           <CallCard
             key={call.id}
             call={call}
+            title={requestCalls.calls.length > 1 ? `#${index + 1}` : undefined}
             humanizedCall={humanizedCallsById.get(call.id)}
             chainId={requestCalls.chainId}
             decodedCallsByData={decodedCallsByData}
