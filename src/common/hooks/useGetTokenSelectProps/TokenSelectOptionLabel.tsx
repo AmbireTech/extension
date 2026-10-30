@@ -19,6 +19,7 @@ import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
 import { TokenExchanges } from '@common/modules/swap-and-bridge/components/ToToken/TokenExchanges'
+import { UnverifiedTokenWarning } from '@common/modules/swap-and-bridge/components/ToToken/UnverifiedTokenWarning'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -150,6 +151,7 @@ const TokenSelectOptionLabel = React.memo(
       </View>
     )
 
+    const isUnverified = 'unverified' in currentToken && !!currentToken.unverified
     const isNameDifferentThanSymbol = !!name && name.toLowerCase() !== symbol.toLowerCase()
 
     if (isToToken)
@@ -180,12 +182,19 @@ const TokenSelectOptionLabel = React.memo(
               >
                 {symbol}
               </Text>
+              {isUnverified && (
+                <UnverifiedTokenWarning
+                  chainId={Number(currentToken.chainId)}
+                  address={currentToken.address}
+                />
+              )}
               {/* The tokens in the current account are represented by their balance instead */}
               {!isSelected && !tokenInPortfolio && (
                 <TokenExchanges
                   chainId={Number(currentToken.chainId)}
                   address={currentToken.address}
                   exchangesInfo={exchangesInfo}
+                  isUnverified={isUnverified}
                 />
               )}
             </View>
