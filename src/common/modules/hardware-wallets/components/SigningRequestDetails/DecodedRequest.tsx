@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo } from 'react'
+import React, { Suspense, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
@@ -26,13 +26,13 @@ type Props = {
   humanization?: IrCall[]
 }
 
-const DecodedCallBody = ({
+const DecodedCallBody = React.memo(function DecodedCallBody({
   call,
   decodedCallsByData
 }: {
   call: RequestCall
   decodedCallsByData: DecodedCallsByData
-}) => {
+}) {
   const { t } = useTranslation()
   const decodedCall = decodedCallsByData.get(call.data)
   const lines = useMemo(() => (decodedCall ? getDecodedCallLines(decodedCall) : []), [decodedCall])
@@ -75,9 +75,9 @@ const DecodedCallBody = ({
       ))}
     </View>
   )
-}
+})
 
-const CallCard = ({
+const CallCard = React.memo(function CallCard({
   call,
   title,
   humanizedCall,
@@ -90,27 +90,31 @@ const CallCard = ({
   humanizedCall?: IrCall
   chainId: bigint | null
   decodedCallsByData: DecodedCallsByData
-}) => (
-  <View style={spacings.mbTy}>
-    <MonoBox>
-      {!!title && (
-        <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mbMi}>
-          {title}
-        </Text>
-      )}
-      {!!humanizedCall && chainId !== null && (
-        <Suspense fallback={null}>
-          <View style={spacings.mbTy}>
-            <CompactHumanizedCalls humanization={[humanizedCall]} chainId={chainId} />
-          </View>
-        </Suspense>
-      )}
-      <MonoText>{`to: ${call.to ?? '-'}`}</MonoText>
-      <MonoText>{`value: ${call.value.toString()}`}</MonoText>
-      <DecodedCallBody call={call} decodedCallsByData={decodedCallsByData} />
-    </MonoBox>
-  </View>
-)
+}) {
+  const humanization = useMemo(() => (humanizedCall ? [humanizedCall] : []), [humanizedCall])
+
+  return (
+    <View style={spacings.mbTy}>
+      <MonoBox>
+        {!!title && (
+          <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mbMi}>
+            {title}
+          </Text>
+        )}
+        {!!humanization.length && chainId !== null && (
+          <Suspense fallback={null}>
+            <View style={spacings.mbTy}>
+              <CompactHumanizedCalls humanization={humanization} chainId={chainId} />
+            </View>
+          </Suspense>
+        )}
+        <MonoText>{`to: ${call.to ?? '-'}`}</MonoText>
+        <MonoText>{`value: ${call.value.toString()}`}</MonoText>
+        <DecodedCallBody call={call} decodedCallsByData={decodedCallsByData} />
+      </MonoBox>
+    </View>
+  )
+})
 
 /**
  * The calls of the signed request with their data decoded, shown last as
@@ -137,14 +141,17 @@ const DecodedRequest = ({ requestCalls, humanization }: Props) => {
     [requestCalls, humanization]
   )
 
+  const getOperationLabel = useCallback(
+    (call: RequestCall) => {
+      if (call.operation === SAFE_CALL_OPERATION) return t('call')
+      if (call.operation === SAFE_DELEGATE_CALL_OPERATION) return t('delegate call')
+
+      return t('unknown operation')
+    },
+    [t]
+  )
+
   if (!requestCalls) return null
-
-  const getOperationLabel = (call: RequestCall) => {
-    if (call.operation === SAFE_CALL_OPERATION) return t('call')
-    if (call.operation === SAFE_DELEGATE_CALL_OPERATION) return t('delegate call')
-
-    return t('unknown operation')
-  }
 
   return (
     <>

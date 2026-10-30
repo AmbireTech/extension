@@ -7,21 +7,29 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-// @ts-ignore web-only style, so long hex values wrap instead of overflowing
+// @ts-expect-error web-only style, so long hex values wrap instead of overflowing
 const wrapAnywhereStyle: TextStyle = { wordBreak: 'break-all' }
 
-export const MonoText = ({ children, style }: { children: string; style?: StyleProp<TextStyle> }) => (
-  <Text
-    selectable
-    fontSize={12}
-    weight="mono_regular"
-    style={[{ lineHeight: 18 }, wrapAnywhereStyle, style]}
-  >
-    {children}
-  </Text>
-)
+export const MonoText = React.memo(function MonoText({
+  children,
+  style
+}: {
+  children: string
+  style?: StyleProp<TextStyle>
+}) {
+  return (
+    <Text
+      selectable
+      fontSize={12}
+      weight="mono_regular"
+      style={[{ lineHeight: 18 }, wrapAnywhereStyle, style]}
+    >
+      {children}
+    </Text>
+  )
+})
 
-export const MonoBox = ({ children }: { children: React.ReactNode }) => {
+export const MonoBox = React.memo(function MonoBox({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme()
 
   return (
@@ -35,9 +43,15 @@ export const MonoBox = ({ children }: { children: React.ReactNode }) => {
       {children}
     </View>
   )
-}
+})
 
-export const SectionHeader = ({ title, copyText }: { title: string; copyText?: string }) => {
+export const SectionHeader = React.memo(function SectionHeader({
+  title,
+  copyText
+}: {
+  title: string
+  copyText?: string
+}) {
   const { theme } = useTheme()
 
   return (
@@ -56,4 +70,4 @@ export const SectionHeader = ({ title, copyText }: { title: string; copyText?: s
       {!!copyText && <CopyText text={copyText} iconSize={16} iconColor={theme.secondaryText} />}
     </View>
   )
-}
+})

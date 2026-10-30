@@ -35,7 +35,7 @@ type Props = {
   style?: StyleProp<ViewStyle>
 }
 
-const HashBlock = ({ hash }: { hash: VerificationHash }) => {
+const HashBlock = React.memo(function HashBlock({ hash }: { hash: VerificationHash }) {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
@@ -57,13 +57,13 @@ const HashBlock = ({ hash }: { hash: VerificationHash }) => {
       </MonoBox>
     </View>
   )
-}
+})
 
-const SafeHashFormula = ({
+const SafeHashFormula = React.memo(function SafeHashFormula({
   formula
 }: {
   formula: NonNullable<SigningRequestVerification['safeHashFormula']>
-}) => {
+}) {
   const { t } = useTranslation()
 
   return (
@@ -83,9 +83,9 @@ const SafeHashFormula = ({
       </Text>
     </View>
   )
-}
+})
 
-const CheckRow = ({ check }: { check: SafeTransactionCheck }) => {
+const CheckRow = React.memo(function CheckRow({ check }: { check: SafeTransactionCheck }) {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
@@ -101,7 +101,7 @@ const CheckRow = ({ check }: { check: SafeTransactionCheck }) => {
       </Text>
     </View>
   )
-}
+})
 
 /**
  * Everything a user needs to verify a hardware wallet signing request on
