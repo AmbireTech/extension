@@ -258,6 +258,64 @@ describe('getSigningRequestVerification', () => {
     })
   })
 
+  describe('Safe transactions from dapps, without the Safe hash', () => {
+    const getDappSafeTxRequest = (message: Record<string, unknown> = safeTxMessage) => ({
+      type: 'eip-712' as const,
+      data: Object.fromEntries(
+        Object.entries(getSafeTxRequest(message).data).filter(([key]) => key !== 'safeTxHash')
+      )
+    })
+
+    test('the Safe hash is calculated from the domain and message hashes, without the formula check', () => {
+      const result = getSigningRequestVerification(getDappSafeTxRequest())
+
+      expect(result.hashes.map(({ id, value }) => [id, value])).toEqual([
+        ['safeTxHash', SAFE_HASH],
+        ['domainHash', DOMAIN_HASH],
+        ['messageHash', MESSAGE_HASH]
+      ])
+      expect(result.hashes[0]?.note).toBeTruthy()
+      expect(result.safeHashFormula).toBeNull()
+    })
+
+    test('the Safe checks run', () => {
+      const result = getSigningRequestVerification(getDappSafeTxRequest())
+
+      expect(result.safeTransactionChecks.map(({ id, isPassing }) => [id, isPassing])).toEqual([
+        ['operation', true],
+        ['gas-refund', true]
+      ])
+    })
+
+    test('a delegate call to an unknown contract fails', () => {
+      const result = getSigningRequestVerification(
+        getDappSafeTxRequest({ ...safeTxMessage, operation: '1' })
+      )
+
+      expect(result.safeTransactionChecks[0]?.isPassing).toBe(false)
+    })
+
+    test('a delegate call inside the batch fails', () => {
+      const result = getSigningRequestVerification(
+        getDappSafeTxRequest(getBatchMessage([{ operation: 1, to: RECIPIENT, data: '0x' }]))
+      )
+
+      expect(
+        result.safeTransactionChecks.find(({ id }) => id === 'batch-operation')?.isPassing
+      ).toBe(false)
+    })
+
+    test('typed data with a SafeTx primary type but no message object gets no checks', () => {
+      const { data } = getDappSafeTxRequest()
+      const result = getSigningRequestVerification({
+        type: 'eip-712',
+        data: { ...data, message: 'oops' }
+      })
+
+      expect(result.safeTransactionChecks).toEqual([])
+    })
+  })
+
   test('Safe message: the Safe message hash and the formula, but no transaction checks', () => {
     const result = getSigningRequestVerification({
       type: 'eip-712',

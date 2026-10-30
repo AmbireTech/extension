@@ -125,12 +125,28 @@ describe('getRequestCalls', () => {
     expect(result.batchError).toBeTruthy()
   })
 
-  test('other typed data, messages and malformed data have no calls', () => {
+  test('a Safe transaction a dapp sends, without the Safe hash, still makes its call', () => {
     const typedDataWithoutSafeHash = Object.fromEntries(
       Object.entries(getSafeRequest(safeTxMessage).data).filter(([key]) => key !== 'safeTxHash')
     )
+    const result = getRequestCalls({ type: 'eip-712', data: typedDataWithoutSafeHash })
 
-    expect(getRequestCalls({ type: 'eip-712', data: typedDataWithoutSafeHash })).toBeNull()
+    expect(result?.kind).toBe('safe-transaction')
+    expect(result?.calls).toEqual([
+      { id: 'transaction-1', to: TOKEN, value: 0n, data: TRANSFER_DATA, operation: 0 }
+    ])
+  })
+
+  test('other typed data, messages and malformed data have no calls', () => {
+    const otherTypedData = { ...getSafeRequest(safeTxMessage).data, primaryType: 'Permit' }
+
+    expect(getRequestCalls({ type: 'eip-712', data: otherTypedData })).toBeNull()
+    expect(
+      getRequestCalls({
+        type: 'eip-712',
+        data: { ...getSafeRequest(safeTxMessage).data, message: 'oops' }
+      })
+    ).toBeNull()
     expect(getRequestCalls({ type: 'message', data: { message: HASH } })).toBeNull()
     expect(getRequestCalls({ type: 'raw-transaction', data: null })).toBeNull()
   })

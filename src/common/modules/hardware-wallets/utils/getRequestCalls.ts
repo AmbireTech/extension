@@ -8,7 +8,12 @@ import {
   SAFE_DELEGATE_CALL_OPERATION
 } from '@ambire-common/libs/safe/helpers'
 
-import { isRecord, isSafeBatchContract, toBigIntOrNull } from './signingRequestData'
+import {
+  isRecord,
+  isSafeBatchContract,
+  isSafeTxTypedData,
+  toBigIntOrNull
+} from './signingRequestData'
 
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 /** A call taken from the signed request, with its call data still to be decoded */
@@ -106,9 +111,7 @@ const getBatchCalls = (data: string): { calls: RequestCall[]; batchError: string
 }
 
 const getSafeTransactionCalls = (data: unknown): RequestCalls | null => {
-  if (!isRecord(data) || typeof data.safeTxHash !== 'string' || !isRecord(data.message)) {
-    return null
-  }
+  if (!isSafeTxTypedData(data)) return null
 
   const { message } = data
   const callData = typeof message.data === 'string' ? message.data : '0x'

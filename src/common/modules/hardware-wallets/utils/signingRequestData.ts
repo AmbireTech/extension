@@ -1,4 +1,5 @@
 import { allowedMulticallContracts } from '@ambire-common/consts/safe'
+import { SAFE_TX_PRIMARY_TYPE } from '@ambire-common/libs/humanizer/erc7730/consts'
 
 /** Narrows request data (`unknown` once serialized for the UI) to a plain object */
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -16,6 +17,16 @@ export const toBigIntOrNull = (value: unknown): bigint | null => {
     return null
   }
 }
+
+/**
+ * Whether typed data is a Safe transaction. Read from the typed data itself,
+ * so it covers a Safe transaction a dapp asks a basic account to sign, which
+ * has no Safe hash added by Ambire
+ */
+export const isSafeTxTypedData = (
+  data: unknown
+): data is Record<string, unknown> & { message: Record<string, unknown> } =>
+  isRecord(data) && data.primaryType === SAFE_TX_PRIMARY_TYPE && isRecord(data.message)
 
 /**
  * Whether the address is one of Safe's batch contracts, which a Safe

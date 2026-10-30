@@ -5,7 +5,12 @@ import { SAFE_CALL_OPERATION, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-commo
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 
 import { getRequestCalls } from './getRequestCalls'
-import { isRecord, isSafeBatchContract, toBigIntOrNull } from './signingRequestData'
+import {
+  isRecord,
+  isSafeBatchContract,
+  isSafeTxTypedData,
+  toBigIntOrNull
+} from './signingRequestData'
 
 /** A hash the user can rebuild from the request and compare with their device */
 export type VerificationHash = {
@@ -245,13 +250,30 @@ const getTypedDataVerification = (
   if (!isRecord(data)) return base
 
   const { domainHash, messageHash, safeTxHash, safeMessageHash } = data
-  const safeHash = isHash(safeTxHash) ? safeTxHash : null
+  const isSafeTransaction = isSafeTxTypedData(data)
+  const sentSafeTxHash = isHash(safeTxHash) ? safeTxHash : null
+  // A Safe transaction from a dapp comes without the Safe hash, so it's
+  // calculated from the domain and message hashes, the same way Safe does it
+  const calculatedSafeTxHash =
+    !sentSafeTxHash && isSafeTransaction && isHash(domainHash) && isHash(messageHash)
+      ? keccak256(concat(['0x1901', domainHash, messageHash]))
+      : null
   const safeMessageHashValue = isHash(safeMessageHash) ? safeMessageHash : null
-  const safeHashValue = safeHash ?? safeMessageHashValue
+  // Only a Safe hash sent with the request is checked against the formula, as
+  // checking the calculated one would only repeat the calculation
+  const sentSafeHashValue = sentSafeTxHash ?? safeMessageHashValue
   const hashes: VerificationHash[] = []
 
-  if (safeHash) {
-    hashes.push({ id: 'safeTxHash', label: 'Safe transaction hash', value: safeHash })
+  if (sentSafeTxHash) {
+    hashes.push({ id: 'safeTxHash', label: 'Safe transaction hash', value: sentSafeTxHash })
+  }
+  if (calculatedSafeTxHash) {
+    hashes.push({
+      id: 'safeTxHash',
+      label: 'Safe transaction hash',
+      value: calculatedSafeTxHash,
+      note: 'keccak256(0x1901 ‖ Domain hash ‖ Message hash), calculated by Ambire. Compare it with the one in the Safe app.'
+    })
   }
   if (safeMessageHashValue) {
     hashes.push({
@@ -266,23 +288,20 @@ const getTypedDataVerification = (
   }
 
   const safeHashFormula =
-    safeHashValue && isHash(domainHash) && isHash(messageHash)
+    sentSafeHashValue && isHash(domainHash) && isHash(messageHash)
       ? {
           isMatch:
             keccak256(concat(['0x1901', domainHash, messageHash])).toLowerCase() ===
-            safeHashValue.toLowerCase()
+            sentSafeHashValue.toLowerCase()
         }
       : null
-
-  const message = isRecord(data.message) ? data.message : null
-  const isSafeTransaction = !!safeHash && !!message
 
   return {
     ...base,
     hashes,
     safeHashFormula,
     safeTransactionChecks: isSafeTransaction
-      ? getSafeTransactionChecks(message, signingRequest)
+      ? getSafeTransactionChecks(data.message, signingRequest)
       : [],
     // Only the typed data itself, so it can be pasted into a hashing tool as is
     requestJson: stringify(pickKeys(data, TYPED_DATA_KEYS))
