@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
-import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
@@ -24,6 +23,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import DecodedRequest from './DecodedRequest'
 import { MonoBox, MonoText, SectionHeader } from './DetailsPrimitives'
 
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 type Props = {
   signingRequest: HardwareWalletSigningRequest
   /** Shown in the request title, e.g. "Typed data sent to your Ledger" */
@@ -214,13 +214,7 @@ const SigningRequestDetails = ({
         accessibilityRole="button"
         accessibilityState={{ expanded: isExpanded }}
         onPress={toggleIsExpanded}
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifyCenter,
-          spacings.pvTy,
-          spacings.mtSm
-        ]}
+        style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter, spacings.pvTy]}
       >
         <Text fontSize={13} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
           {isExpanded ? t('Hide verification details') : t('Show verification details')}

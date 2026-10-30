@@ -105,27 +105,19 @@ const HardwareWalletSigningModal = ({
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
     >
       <ModalHeader title={title} style={flexbox.justifyCenter} />
-      {/* Without a request to check, the illustration is all there is to show */}
-      {!signingRequest && (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignSelfCenter,
-            flexbox.alignCenter,
-            spacings.mvXl
-          ]}
-        >
-          <DriveIcon style={spacings.mrLg} />
-          <View style={spacings.mrLg}>
-            <LeftPointerArrowIcon color={theme.successDecorative} />
-            <LeftPointerArrowIcon
-              color={theme.successDecorative}
-              style={[spacings.mtMi, { transform: [{ rotate: '180deg' }] }]}
-            />
-          </View>
-          <AmbireDevice />
+      <View
+        style={[flexbox.directionRow, flexbox.alignSelfCenter, flexbox.alignCenter, spacings.mvXl]}
+      >
+        <DriveIcon style={spacings.mrLg} />
+        <View style={spacings.mrLg}>
+          <LeftPointerArrowIcon color={theme.successDecorative} />
+          <LeftPointerArrowIcon
+            color={theme.successDecorative}
+            style={[spacings.mtMi, { transform: [{ rotate: '180deg' }] }]}
+          />
         </View>
-      )}
+        <AmbireDevice />
+      </View>
       <View
         style={[
           flexbox.alignSelfCenter,
@@ -134,26 +126,6 @@ const HardwareWalletSigningModal = ({
           { width: '100%', maxWidth: 460 }
         ]}
       >
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.phSm,
-            spacings.pvTy,
-            spacings.mtSm,
-            { borderRadius: 50, backgroundColor: theme.infoBackground }
-          ]}
-        >
-          <View
-            style={[
-              spacings.mrTy,
-              { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.infoDecorative }
-            ]}
-          />
-          <Text fontSize={13} weight="medium" appearance="infoText">
-            {t('Waiting for you to approve on your {{deviceName}}', { deviceName })}
-          </Text>
-        </View>
         {children}
         {!!signingRequest && (
           <SigningRequestDetails
