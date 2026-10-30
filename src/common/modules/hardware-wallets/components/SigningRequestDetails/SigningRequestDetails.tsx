@@ -214,12 +214,16 @@ const SigningRequestDetails = ({
         accessibilityRole="button"
         accessibilityState={{ expanded: isExpanded }}
         onPress={toggleIsExpanded}
-        style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter, spacings.pvTy]}
       >
-        <Text fontSize={13} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
-          {isExpanded ? t('Hide verification details') : t('Show verification details')}
-        </Text>
-        {isExpanded ? <UpArrowIcon /> : <DownArrowIcon />}
+        {/* The layout is on an inner view, as a style on the pressable replaces its hover style */}
+        <View
+          style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter, spacings.pvTy]}
+        >
+          <Text fontSize={13} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
+            {isExpanded ? t('Hide verification details') : t('Show verification details')}
+          </Text>
+          {isExpanded ? <UpArrowIcon /> : <DownArrowIcon />}
+        </View>
       </HoverablePressable>
       {isExpanded && details}
     </View>

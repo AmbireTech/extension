@@ -1,9 +1,10 @@
 import { concat, isHexString, keccak256, Transaction, ZeroAddress } from 'ethers'
 
-import { allowedMulticallContracts } from '@ambire-common/consts/safe'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { SAFE_CALL_OPERATION, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
+
+import { isRecord, isSafeBatchContract, toBigIntOrNull } from './signingRequestData'
 
 /** A hash the user can rebuild from the request and compare with their device */
 export type VerificationHash = {
@@ -59,39 +60,19 @@ const TRANSACTION_KEYS = [
 
 const TYPED_DATA_KEYS = ['domain', 'types', 'primaryType', 'message']
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  !!value && typeof value === 'object' && !Array.isArray(value)
-
 const isHash = (value: unknown): value is string => isHexString(value, 32)
-
-const toBigIntOrNull = (value: unknown): bigint | null => {
-  if (typeof value === 'bigint') return value
-  if (typeof value !== 'string' && typeof value !== 'number') return null
-  if (value === '') return null
-
-  try {
-    return BigInt(value)
-  } catch {
-    return null
-  }
-}
 
 const toOptionalString = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value
-  if (typeof value === 'number' || typeof value === 'bigint') return value.toString()
+  if (typeof value === 'number') return value.toString()
 
   return undefined
 }
 
 const stringify = (data: unknown): string => {
   try {
-    return (
-      JSON.stringify(
-        data,
-        (_, value) => (typeof value === 'bigint' ? value.toString() : value),
-        2
-      ) || String(data)
-    )
+    // The request is already serialized for the UI, so it has no bigints left
+    return JSON.stringify(data, null, 2) || String(data)
   } catch {
     return String(data)
   }
@@ -183,8 +164,7 @@ const isEmptyAddress = (value: unknown) =>
 const getSafeTransactionChecks = (message: Record<string, unknown>): SafeTransactionCheck[] => {
   const checks: SafeTransactionCheck[] = []
   const operation = toBigIntOrNull(message.operation)
-  const to = typeof message.to === 'string' ? message.to.toLowerCase() : ''
-  const isBatchContract = allowedMulticallContracts.some((addr) => addr.toLowerCase() === to)
+  const isBatchContract = isSafeBatchContract(message.to)
 
   if (operation === BigInt(SAFE_CALL_OPERATION)) {
     checks.push({ id: 'operation', label: 'operation 0: a normal call', isPassing: true })

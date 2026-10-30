@@ -123,9 +123,14 @@ const HardwareWalletSigningModal = ({
           flexbox.alignSelfCenter,
           spacings.mbLg,
           flexbox.alignCenter,
-          { width: '100%', maxWidth: 460 }
+          { width: '100%', maxWidth: 420 }
         ]}
       >
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}>
+          <Text weight="regular" fontSize={20}>
+            {t('Sending signing request...')}
+          </Text>
+        </View>
         {children}
         {!!signingRequest && (
           <SigningRequestDetails

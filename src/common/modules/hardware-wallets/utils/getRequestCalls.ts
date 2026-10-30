@@ -1,15 +1,16 @@
 import { getAddress, Interface } from 'ethers'
 
-import { allowedMulticallContracts } from '@ambire-common/consts/safe'
 import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
-import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
   decodeMultiSend,
   multiCallAbi,
   SAFE_DELEGATE_CALL_OPERATION
 } from '@ambire-common/libs/safe/helpers'
 
+import { isRecord, isSafeBatchContract, toBigIntOrNull } from './signingRequestData'
+
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 /** A call taken from the signed request, with its call data still to be decoded */
 export type RequestCall = {
   /** The position of the call in the request, e.g. `transaction-2` */
@@ -44,21 +45,6 @@ export type DecodedCallLine = {
 const multiSendInterface = new Interface(multiCallAbi)
 const MULTI_SEND_SELECTOR = multiSendInterface.getFunction('multiSend')?.selector ?? '0x8d80ff0a'
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  !!value && typeof value === 'object' && !Array.isArray(value)
-
-const toBigIntOrNull = (value: unknown): bigint | null => {
-  if (typeof value === 'bigint') return value
-  if (typeof value !== 'string' && typeof value !== 'number') return null
-  if (value === '') return null
-
-  try {
-    return BigInt(value)
-  } catch {
-    return null
-  }
-}
-
 const toBigIntOrZero = (value: unknown): bigint => toBigIntOrNull(value) ?? 0n
 
 const toChecksumAddress = (value: unknown): string | null => {
@@ -79,14 +65,17 @@ const getTransactionCalls = (data: unknown): RequestCalls | null => {
     kind: 'transaction',
     chainId: toBigIntOrNull(data.chainId),
     calls: [
-      { id: 'transaction', to: toChecksumAddress(data.to), value: toBigIntOrZero(data.value), data: data.data }
+      {
+        id: 'transaction',
+        to: toChecksumAddress(data.to),
+        value: toBigIntOrZero(data.value),
+        data: data.data
+      }
     ]
   }
 }
 
-const getBatchCalls = (
-  data: string
-): { calls: RequestCall[]; batchError: string | null } => {
+const getBatchCalls = (data: string): { calls: RequestCall[]; batchError: string | null } => {
   let transactionsHex: string
 
   try {
@@ -127,8 +116,7 @@ const getSafeTransactionCalls = (data: unknown): RequestCalls | null => {
   const to = toChecksumAddress(message.to)
   const isBatch =
     operation === SAFE_DELEGATE_CALL_OPERATION &&
-    !!to &&
-    allowedMulticallContracts.some((addr) => addr.toLowerCase() === to.toLowerCase()) &&
+    isSafeBatchContract(to) &&
     callData.toLowerCase().startsWith(MULTI_SEND_SELECTOR)
 
   const chainId = isRecord(data.domain) ? toBigIntOrNull(data.domain.chainId) : null
@@ -160,7 +148,9 @@ const getSafeTransactionCalls = (data: unknown): RequestCalls | null => {
  * A transaction makes one call. A Safe transaction makes its call, or the
  * calls of its batch one by one.
  */
-export const getRequestCalls = (signingRequest: HardwareWalletSigningRequest): RequestCalls | null => {
+export const getRequestCalls = (
+  signingRequest: HardwareWalletSigningRequest
+): RequestCalls | null => {
   if (signingRequest.type === 'raw-transaction') return getTransactionCalls(signingRequest.data)
   if (signingRequest.type === 'eip-712') return getSafeTransactionCalls(signingRequest.data)
 
@@ -170,7 +160,11 @@ export const getRequestCalls = (signingRequest: HardwareWalletSigningRequest): R
 const isDecodedCall = (value: unknown): value is DecodedCall =>
   isRecord(value) && typeof value.signature === 'string' && Array.isArray(value.args)
 
-const getArgLines = (args: DecodedCall['args'], depth: number, parentId: string): DecodedCallLine[] =>
+const getArgLines = (
+  args: DecodedCall['args'],
+  depth: number,
+  parentId: string
+): DecodedCallLine[] =>
   args.flatMap((arg, index) => {
     const id = parentId ? `${parentId}.${index}` : `${index}`
     const { key, val } = arg
@@ -201,10 +195,7 @@ export const getDecodedCallLines = (decodedCall: DecodedCall): DecodedCallLine[]
  * the same recipient, value and data. Calls Ambire added on its own (e.g. the
  * fee) have no match.
  */
-export const findHumanizedCall = (
-  call: RequestCall,
-  humanization: IrCall[]
-): IrCall | undefined =>
+export const findHumanizedCall = (call: RequestCall, humanization: IrCall[]): IrCall | undefined =>
   humanization.find(
     (humanizedCall) =>
       (humanizedCall.to ?? '').toLowerCase() === (call.to ?? '').toLowerCase() &&
