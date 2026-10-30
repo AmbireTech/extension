@@ -500,9 +500,12 @@ class LedgerTransportService {
 
     onProgress('connecting', 0)
     try {
-      const sessionId = await dmk.connect({
-        device: discovered,
-        sessionRefresherOptions: { isRefresherDisabled: true }
+      const connect = () =>
+        dmk.connect({ device: discovered, sessionRefresherOptions: { isRefresherDisabled: true } })
+      // BLE's first connect right after a scan is flaky; retry once with a short settle
+      const sessionId = await connect().catch(async () => {
+        await wait(500)
+        return connect()
       })
       // Tracked so cleanUp closes it, and so signing afterwards reuses this device
       this.#sessionId = sessionId

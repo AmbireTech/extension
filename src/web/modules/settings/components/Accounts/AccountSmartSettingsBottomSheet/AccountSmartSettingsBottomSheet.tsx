@@ -17,7 +17,7 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import { AMBIRE_SIGNER_APDUS } from '@common/modules/hardware-wallet/libs/ledgerAppInstall/artifacts'
+import { loadAmbireSignerApdus } from '@common/modules/hardware-wallet/libs/ledgerAppInstall/artifacts'
 import Step from '@common/modules/settings/components/AccountSmartSettingsStep'
 import useAccountSmartSettings from '@common/modules/settings/hooks/useAccountSmartSettings'
 import useAmbireSignerInstall from '@common/modules/settings/hooks/useAmbireSignerInstall'
@@ -69,7 +69,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
     () =>
       installAmbireSigner(async (onProgress) => {
         await LedgerController.grantDevicePermissionIfNeeded()
-        await installLedgerApp(AMBIRE_SIGNER_APDUS, onProgress)
+        await installLedgerApp(await loadAmbireSignerApdus(), onProgress)
       }),
     [installAmbireSigner]
   )

@@ -20,7 +20,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import { AMBIRE_SIGNER_APDUS } from '@common/modules/hardware-wallet/libs/ledgerAppInstall/artifacts'
+import { loadAmbireSignerApdus } from '@common/modules/hardware-wallet/libs/ledgerAppInstall/artifacts'
 import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import Step from '@common/modules/settings/components/AccountSmartSettingsStep'
 import useAccountSmartSettings, {
@@ -132,8 +132,8 @@ const AccountSmartSettingsScreen = () => {
     (device: { id: string }) => {
       setIsLedgerInstallModalVisible(false)
       // Reports its own errors with a toast
-      void installAmbireSigner((onProgress) =>
-        ledgerTransportService.installApp(device, AMBIRE_SIGNER_APDUS, onProgress)
+      void installAmbireSigner(async (onProgress) =>
+        ledgerTransportService.installApp(device, await loadAmbireSignerApdus(), onProgress)
       )
     },
     [installAmbireSigner]
