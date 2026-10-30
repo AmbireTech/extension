@@ -7,6 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Network } from '@ambire-common/interfaces/network'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
 import CollectionCard from '@common/components/CollectionCard'
+import NftImagesDisabledHint from '@common/components/NftImagesDisabledHint'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -149,6 +150,10 @@ const Collections: FC<Props> = ({
         )
       }
 
+      if (item === 'images-hint') {
+        return <NftImagesDisabledHint style={styles.imagesHint} />
+      }
+
       if (item === 'empty') {
         return (
           <Text
@@ -249,6 +254,7 @@ const Collections: FC<Props> = ({
         ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         data={[
           ...(isMobile ? [] : ['header']),
+          ...(filteredPortfolioCollections.length ? ['images-hint'] : []),
           ...(initTab?.collectibles ? filteredPortfolioCollections : []),
           !filteredPortfolioCollections.length && isPortfolioAllReady ? 'empty' : '',
           !isReadyToVisualizeCollections ? 'skeleton' : 'keep-this-to-avoid-key-warning'
