@@ -21,6 +21,15 @@ import ledgerTransportService from '@mobile/services/ledger/ledgerTransportServi
 export type { LedgerSignature }
 
 class LedgerController implements ExternalSignerController, LedgerControllerInterface {
+  /** Called once the device proved it holds a key, with the model of that device */
+  #onKeyConfirmed?: (keyAddr: string, deviceModel: string) => void
+
+  constructor({
+    onKeyConfirmed
+  }: { onKeyConfirmed?: (keyAddr: string, deviceModel: string) => void } = {}) {
+    this.#onKeyConfirmed = onKeyConfirmed
+  }
+
   unlockedPath: string = ''
 
   unlockedPathKeyAddr: string = ''
@@ -59,6 +68,9 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       this.unlockedPath = path
       this.unlockedPathKeyAddr = address
       this.walletSDK = true
+
+      if (expectedKeyOnThisPath && address.toLowerCase() === expectedKeyOnThisPath.toLowerCase())
+        this.#onKeyConfirmed?.(expectedKeyOnThisPath, this.deviceModel)
 
       return wasAlreadyUnlocked ? 'ALREADY_UNLOCKED' : 'JUST_UNLOCKED'
     } catch (e: any) {
