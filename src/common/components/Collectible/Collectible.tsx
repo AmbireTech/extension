@@ -69,7 +69,7 @@ const Collectible: FC<Props> = ({
 
   const network = networks.find((n) => n.chainId === collectionData.chainId)
 
-  const imageUrl = `${NFT_CDN_URL}/proxy?rpc=${network?.rpcUrls[0]}&contract=${collectionData.address}&id=${id}&chain_id=${network?.chainId}`
+  const imageUrl = `${NFT_CDN_URL}/proxy?contract=${collectionData.address}&id=${id}&chain_id=${network?.chainId}`
 
   return (
     <Pressable
