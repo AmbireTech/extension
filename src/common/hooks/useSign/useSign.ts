@@ -221,11 +221,16 @@ const useSign = ({
   const signingKeyType = signAccountOpState?.accountOp?.signingKeyType
   const feePayerKeyType = signAccountOpState?.accountOp?.gasFeePayment?.paidByKeyType
   const canChangeSigningKey = !!signAccountOpState?.canChangeSigningKey
+  // Adding a Safe owner's signature before the threshold is reached sends nothing, so the
+  // fee payer's device isn't needed until the transaction is executed
+  const feePayerKeyTypeToSignWith = signAccountOpState?.isCollectingSafeSignatureOnly
+    ? null
+    : feePayerKeyType
 
   const getIsKeyTypeInvolved = useCallback(
     (keyType: Key['type']) => {
       // if we're broadcasting with this key type, return true
-      if (feePayerKeyType === keyType) return true
+      if (feePayerKeyTypeToSignWith === keyType) return true
 
       // if the account is not a Safe, check the txn signer
       if (!signAccountOpState?.account.safeCreation) return signingKeyType === keyType
@@ -237,7 +242,7 @@ const useSign = ({
       signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signers,
       signingKeyType,
-      feePayerKeyType
+      feePayerKeyTypeToSignWith
     ]
   )
 
@@ -411,9 +416,12 @@ const useSign = ({
       const chosenKeyType = _chosenSigningKeyTypes?.[0]
       const effectiveSigningKeyType = chosenKeyType ?? signAccountOpState?.accountOp.signingKeyType
       // The fee payer follows the signing key only when the just-chosen key pays the fee
-      // (see update() in SignAccountOpController)
+      // (see update() in SignAccountOpController). Stays null while only collecting a Safe
+      // owner's signature, because the fee payer's device isn't needed then
       const effectiveFeePayerKeyType =
-        chosenKeyType && isFeePayerSameAsSigner ? chosenKeyType : feePayerKeyType
+        chosenKeyType && isFeePayerSameAsSigner && feePayerKeyTypeToSignWith
+          ? chosenKeyType
+          : feePayerKeyTypeToSignWith
 
       const isExternalQr = effectiveSigningKeyType === 'qr' || effectiveFeePayerKeyType === 'qr'
       const getIsKeyTypeInvolvedInTheJustChosenKeys = (
@@ -477,6 +485,7 @@ const useSign = ({
       signAccountOpState?.accountOp.signingKeyType,
       warningToPromptBeforeSign,
       feePayerKeyType,
+      feePayerKeyTypeToSignWith,
       isAtLeastOneOfTheKeysInvolvedLedger,
       isLedgerConnected,
       isAtLeastOneOfTheKeysInvolvedOneKey,
