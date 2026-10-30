@@ -47,6 +47,8 @@ type Props = {
   children?: any
 }
 
+const DEFAULT_MAX_PAGES = 1000
+
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const AccountsOnPageList = ({
@@ -126,6 +128,9 @@ const AccountsOnPageList = ({
   }, [])
 
   const isImportingFromPrivateKey = subType === 'private-key'
+  // `maxPage` is set when the accounts can only be listed from what was scanned, not derived
+  // (e.g. a Ledger Live export from a QR wallet), so there is nothing to show past that page
+  const maxPages = state.maxPage ?? DEFAULT_MAX_PAGES
 
   const getAccounts = useCallback(
     ({
@@ -403,7 +408,13 @@ const AccountsOnPageList = ({
                   ]}
                 >
                   {!isImportingFromPrivateKey && (
-                    <Pagination page={state.page} maxPages={1000} setPage={setPage} hideLastPage />
+                    <Pagination
+                      page={state.page}
+                      maxPages={maxPages}
+                      setPage={setPage}
+                      isNextDisabled={state.page >= maxPages}
+                      hideLastPage={state.maxPage === undefined}
+                    />
                   )}
                 </View>
               )}
@@ -415,7 +426,13 @@ const AccountsOnPageList = ({
       {!isMobile && (
         <View style={[flexbox.alignEnd, spacings.mbMd]}>
           {!isImportingFromPrivateKey && (
-            <Pagination page={state.page} maxPages={1000} setPage={setPage} hideLastPage />
+            <Pagination
+              page={state.page}
+              maxPages={maxPages}
+              setPage={setPage}
+              isNextDisabled={state.page >= maxPages}
+              hideLastPage={state.maxPage === undefined}
+            />
           )}
         </View>
       )}
