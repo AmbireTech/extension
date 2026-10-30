@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native'
 
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import BottomSheet from '@common/components/BottomSheet'
-import ManifestImage from '@common/components/ManifestImage'
+import NftImage from '@common/components/NftImage'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -14,7 +14,6 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
-import ImageIcon from '@web/assets/svg/ImageIcon'
 
 import HideCollectibleButton from './HideCollectibleButton'
 import Row from './Row'
@@ -65,25 +64,13 @@ const CollectibleModal = ({
     return (
       <>
         <View style={styles.imageContainer}>
-          <ManifestImage
+          <NftImage
+            withHint
             uri={image}
             size={COLLECTIBLE_IMAGE_SIZE}
+            iconSize={COLLECTIBLE_IMAGE_SIZE / 2}
+            backgroundColor={theme.primaryBackground}
             imageStyle={styles.image}
-            fallback={() => (
-              <View
-                style={[
-                  flexbox.flex1,
-                  flexbox.center,
-                  { backgroundColor: theme.primaryBackground, width: '100%' }
-                ]}
-              >
-                <ImageIcon
-                  color={theme.secondaryText}
-                  width={COLLECTIBLE_IMAGE_SIZE / 2}
-                  height={COLLECTIBLE_IMAGE_SIZE / 2}
-                />
-              </View>
-            )}
           />
           {shouldDisplayHideCollectionAction && (
             <HideCollectibleButton
