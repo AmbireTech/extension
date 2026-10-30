@@ -13,7 +13,6 @@ import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -38,7 +37,8 @@ type Props = Partial<DappProviderRequest['session']> & {
 
 /**
  * Splits a hostname into its subdomain part and its root domain (e.g. "app." and "uniswap.org"),
- * so the root domain - the part a phishing site can't fake - can be shown more prominently.
+ * so the root domain - the part a phishing site can't fake in the browser - can be shown more
+ * prominently.
  * When there is no root domain (localhost, IP address, internal), the whole id is the root domain.
  */
 const splitByRootDomain = (id: string) => {
@@ -52,7 +52,6 @@ const splitByRootDomain = (id: string) => {
 
 const DAppConnectHeader: FC<Props> = ({
   id,
-  name = 'Unknown App',
   icon,
   responsiveSizeMultiplier = 1,
   securityCheck,
@@ -71,8 +70,6 @@ const DAppConnectHeader: FC<Props> = ({
   const isBlacklisted = isScamCheckerEnabled && securityCheck === 'BLACKLISTED'
   const hasFailedToGet = isScamCheckerEnabled && securityCheck === 'FAILED_TO_GET'
   const hasWarning = isSuspiciousHosting || hasFailedToGet || isImpersonating
-
-  const { minHeightSize } = useWindowSize()
 
   const { subdomainPrefix, rootDomain } = useMemo(() => splitByRootDomain(id ?? ''), [id])
 
@@ -172,20 +169,9 @@ const DAppConnectHeader: FC<Props> = ({
           )}
         </View>
         <View style={isWeb ? flexbox.flex1 : { flexGrow: 1 }}>
-          <Text
-            style={[
-              isWeb && !minHeightSize('m') && spacings.mbMi,
-              isWeb && flexbox.flex1,
-              { lineHeight: 23 },
-              isMobile && text.center
-            ]}
-            fontSize={responsiveSizeMultiplier * 20}
-            weight="semiBold"
-            numberOfLines={2}
-          >
-            {name}
-          </Text>
-          {/* The domain is the one thing a site can't fake, so it is as prominent as the name */}
+          {/* Only the domain is shown - the name is chosen by the site itself, so a phishing site
+              can simply copy it. In the browser the domain can't be faked, but over WalletConnect
+              it is declared by the app itself as well */}
           <Text
             fontSize={responsiveSizeMultiplier * 20}
             weight="semiBold"

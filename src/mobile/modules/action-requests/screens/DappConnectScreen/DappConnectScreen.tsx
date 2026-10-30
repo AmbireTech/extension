@@ -78,7 +78,6 @@ const DappConnectScreen = () => {
         <MobileLayoutWrapperMainContent withScroll withHorizontalPadding={false}>
           <View style={styles.content}>
             <DAppConnectHeader
-              name={dappToConnect.name}
               id={dappToConnect.id}
               icon={dappToConnect.icon!}
               securityCheck={dappToConnect.blacklisted}

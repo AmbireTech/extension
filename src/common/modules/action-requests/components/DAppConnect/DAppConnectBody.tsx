@@ -63,8 +63,11 @@ const DAppConnectBody: FC<{
   // The trust action takes the severity badge's slot; the warning text below and the box's own
   // border still carry the severity, so nothing is lost by swapping them.
   const shouldOfferTrust = isSuspiciousHosting && canBeTrustedByUser
+  // When the scam checker is off, the "Activate" button takes the badge's slot
   const shouldShowWarningBadge =
-    !shouldOfferTrust && (isSuspiciousHosting || hasFailedToGet || isImpersonating)
+    !shouldOfferTrust &&
+    !isScamCheckerDisabled &&
+    (isSuspiciousHosting || hasFailedToGet || isImpersonating)
   const hasWarning = isSuspiciousHosting || hasFailedToGet || isImpersonating
 
   const impersonationWarning = useMemo(() => {
@@ -191,14 +194,14 @@ const DAppConnectBody: FC<{
         </View>
         {(isScamCheckerDisabled || isBlacklisted || hasWarning) && (
           <View style={spacings.ptTy}>
-            {!isScamCheckerDisabled && (
+            {(!isScamCheckerDisabled || isImpersonating) && (
               <Text
                 fontSize={18 * responsiveSizeMultiplier}
                 weight="semiBold"
                 color={
                   isBlacklisted
                     ? theme.errorDecorative
-                    : isScamCheckerDisabled
+                    : isScamCheckerDisabled && !isImpersonating
                       ? theme.primaryText
                       : theme.warningDecorative
                 }
@@ -276,7 +279,7 @@ const DAppConnectBody: FC<{
                 fontSize={12 * responsiveSizeMultiplier}
                 color={theme.warningDecorative}
                 style={[
-                  (hasFailedToGet || isSuspiciousHosting) && spacings.ptTy,
+                  (hasFailedToGet || isSuspiciousHosting || isScamCheckerDisabled) && spacings.ptTy,
                   { lineHeight: 18 * responsiveSizeMultiplier }
                 ]}
               >

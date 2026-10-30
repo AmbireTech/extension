@@ -102,7 +102,6 @@ const DappConnectScreen = () => {
               ]}
             >
               <DAppConnectHeader
-                name={dappToConnect.name}
                 id={dappToConnect.id}
                 icon={dappToConnect.icon!}
                 securityCheck={dappToConnect.blacklisted}

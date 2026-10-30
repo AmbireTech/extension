@@ -34,9 +34,11 @@ const useDappConnect = () => {
   const isSuspiciousHosting =
     isScamCheckerEnabled && dappToConnect?.blacklisted === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
 
-  // Checked once the scam lists are, as a site that is already on them gets the stronger warning
+  // Checked once the scam lists are, as a site that is already on them gets the stronger warning.
+  // Not tied to the scam checker - it can be turned off to avoid its network requests, while this
+  // check runs fully on the device.
   const impersonation = useMemo(() => {
-    if (!dappToConnect || !isScamCheckerEnabled) return null
+    if (!dappToConnect) return null
     if (dappToConnect.blacklisted === 'LOADING' || dappToConnect.blacklisted === 'BLACKLISTED') {
       return null
     }
@@ -47,7 +49,7 @@ const useDappConnect = () => {
       icon: dappToConnect.icon,
       isInAppCatalog: !dappToConnect.isCustom
     })
-  }, [dappToConnect, isScamCheckerEnabled])
+  }, [dappToConnect])
 
   const toggleTrust = useCallback(() => {
     if (!dappToConnect) return
@@ -101,21 +103,23 @@ const useDappConnect = () => {
   }, [dappsDispatch])
 
   const shouldHoldToProceed = useMemo(() => {
+    if (!dappToConnect) return false
+    if (impersonation) return true
+
     return (
-      !!dappToConnect &&
       isScamCheckerEnabled &&
       (dappToConnect.blacklisted === 'BLACKLISTED' ||
         isSuspiciousHosting ||
-        dappToConnect.blacklisted === 'FAILED_TO_GET' ||
-        !!impersonation)
+        dappToConnect.blacklisted === 'FAILED_TO_GET')
     )
   }, [dappToConnect, isScamCheckerEnabled, isSuspiciousHosting, impersonation])
 
   const resolveButtonText = useMemo(() => {
     if (!dappToConnect) return t('Loading...')
     if (isAuthorizing) return t('Connecting...')
+    if (impersonation) return t('Hold to continue anyway')
     if (!isScamCheckerEnabled) return t('Connect')
-    if (dappToConnect.blacklisted === 'BLACKLISTED' || isSuspiciousHosting || impersonation)
+    if (dappToConnect.blacklisted === 'BLACKLISTED' || isSuspiciousHosting)
       return t('Hold to continue anyway')
     if (dappToConnect.blacklisted === 'LOADING') return t('Loading...')
 
