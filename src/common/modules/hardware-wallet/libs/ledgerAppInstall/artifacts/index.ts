@@ -15,3 +15,6 @@ export const AMBIRE_SIGNER_APDUS: Partial<Record<DeviceModelId, string>> = {
   [DeviceModelId.FLEX]: AMBIRE_SIGNER_FLEX_APDU,
   [DeviceModelId.APEX]: AMBIRE_SIGNER_APEX_APDU
 }
+
+/** The Ledger models that can install Ambire Signer, as stored in a key's `meta.deviceModel` */
+export const AMBIRE_SIGNER_DEVICE_MODELS = Object.keys(AMBIRE_SIGNER_APDUS)

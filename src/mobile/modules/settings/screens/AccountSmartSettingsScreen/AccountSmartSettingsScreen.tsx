@@ -35,11 +35,18 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import { DeviceModelId } from '@ledgerhq/device-management-kit'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 /** The search param that names the account whose smart settings are shown */
 export const SMART_SETTINGS_ACCOUNT_PARAM = 'accountAddr'
+
+// The Ledger models that can't install Ambire Signer, by DMK model id
+const UNSUPPORTED_LEDGER_MODEL_NAMES: Record<string, string> = {
+  [DeviceModelId.NANO_S]: 'Ledger Nano S',
+  [DeviceModelId.NANO_X]: 'Ledger Nano X'
+}
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
@@ -102,8 +109,16 @@ const AccountSmartSettingsScreen = () => {
     return accounts.find((acc) => acc.addr === accountAddr) || null
   }, [accounts, search])
 
-  const { is7702, hasLedgerKey, isEip7702Enabled, networkRows, enableEip7702, delegate } =
-    useAccountSmartSettings(account)
+  const {
+    is7702,
+    canInstallAmbireSigner,
+    isUnsupportedLedger,
+    unsupportedLedgerModel,
+    isEip7702Enabled,
+    networkRows,
+    enableEip7702,
+    delegate
+  } = useAccountSmartSettings(account)
   const {
     installStep,
     installProgress,
@@ -159,6 +174,15 @@ const AccountSmartSettingsScreen = () => {
     ],
     [t]
   )
+
+  const unsupportedLedgerTitle = useMemo(() => {
+    const modelName =
+      unsupportedLedgerModel && UNSUPPORTED_LEDGER_MODEL_NAMES[unsupportedLedgerModel]
+
+    return modelName
+      ? t('Smart features are not available on {{modelName}}', { modelName })
+      : t('Smart features are not available on this Ledger model')
+  }, [t, unsupportedLedgerModel])
 
   const canUpgrade = is7702 && networkRows.length > 0
 
@@ -248,7 +272,7 @@ const AccountSmartSettingsScreen = () => {
               )}
             </Text>
 
-            {!isEip7702Enabled && (
+            {!isEip7702Enabled && !isUnsupportedLedger && (
               <Alert
                 type="info"
                 size="md"
@@ -259,7 +283,19 @@ const AccountSmartSettingsScreen = () => {
               />
             )}
 
-            {hasLedgerKey && isEip7702Enabled && (
+            {isUnsupportedLedger && (
+              <Alert
+                type="warning"
+                size="md"
+                style={spacings.mbMd}
+                title={unsupportedLedgerTitle}
+                text={t(
+                  'Enabling or revoking them needs a small companion app that this Ledger does not allow. Managing delegation works on newer devices like Ledger Nano S Plus, Stax, Flex and Nano Gen5.'
+                )}
+              />
+            )}
+
+            {canInstallAmbireSigner && isEip7702Enabled && (
               <Alert
                 type="info"
                 size="md"
@@ -338,9 +374,11 @@ const AccountSmartSettingsScreen = () => {
                       </Text>
                       <NetworkStatus row={row} />
                     </View>
-                    {row.isLoading ? (
+                    {/* The warning above explains why an unsupported Ledger has no buttons */}
+                    {row.isLoading && !isUnsupportedLedger && (
                       <SkeletonLoader width={84} height={40} />
-                    ) : (
+                    )}
+                    {!row.isLoading && !isUnsupportedLedger && (
                       <Button
                         type={row.delegatedContract ? 'danger' : 'success'}
                         size="small"

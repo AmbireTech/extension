@@ -29,7 +29,10 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
   type = 'ledger'
 
-  deviceModel = 'unknown'
+  // The connected model, which the account picker stores in the key meta
+  get deviceModel(): string {
+    return ledgerTransportService.getDeviceModel() || 'unknown'
+  }
 
   deviceId = ''
 

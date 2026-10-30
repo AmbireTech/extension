@@ -6,6 +6,7 @@ import { has7702 } from '@ambire-common/libs/7702/7702'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import useController from '@common/hooks/useController'
+import { AMBIRE_SIGNER_DEVICE_MODELS } from '@common/modules/hardware-wallet/libs/ledgerAppInstall/artifacts'
 
 import { getIsDelegationEnableDisabled } from './helpers'
 
@@ -80,11 +81,33 @@ const useAccountSmartSettings = (account: Account | null) => {
     )
   }, [account, keys])
 
-  const hasLedgerKey = useMemo(
+  const ledgerKeys = useMemo(
     () =>
-      !!account && keys.some((k) => account.associatedKeys.includes(k.addr) && k.type === 'ledger'),
+      account
+        ? keys.filter((k) => account.associatedKeys.includes(k.addr) && k.type === 'ledger')
+        : [],
     [account, keys]
   )
+
+  // Only for the Ledger models Ambire Signer can be installed on. An unknown
+  // model (keys imported on mobile before it was recorded) is left out too
+  const canInstallAmbireSigner = useMemo(
+    () => ledgerKeys.some((k) => AMBIRE_SIGNER_DEVICE_MODELS.includes(k.meta.deviceModel)),
+    [ledgerKeys]
+  )
+
+  const hasInternalKey = useMemo(
+    () =>
+      !!account &&
+      keys.some((k) => account.associatedKeys.includes(k.addr) && k.type === 'internal'),
+    [account, keys]
+  )
+
+  // A Ledger that can't get Ambire Signer can neither enable nor revoke, as both
+  // sign with it. A key stored in the app can still sign instead
+  const isUnsupportedLedger = ledgerKeys.length > 0 && !canInstallAmbireSigner && !hasInternalKey
+  // DMK's model id ('nanoX'), or 'unknown'
+  const unsupportedLedgerModel = isUnsupportedLedger ? ledgerKeys[0]!.meta.deviceModel : null
 
   const networkRows: SmartSettingsNetworkRow[] = useMemo(
     () =>
@@ -152,7 +175,9 @@ const useAccountSmartSettings = (account: Account | null) => {
 
   return {
     is7702,
-    hasLedgerKey,
+    canInstallAmbireSigner,
+    isUnsupportedLedger,
+    unsupportedLedgerModel,
     isEip7702Enabled,
     networkRows,
     enableEip7702,

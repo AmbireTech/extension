@@ -44,7 +44,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { is7702, hasLedgerKey, isEip7702Enabled, networkRows, enableEip7702, delegate } =
+  const { is7702, canInstallAmbireSigner, isEip7702Enabled, networkRows, enableEip7702, delegate } =
     useAccountSmartSettings(account)
   const {
     installStep,
@@ -89,7 +89,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
         <Authorization7702>
           {is7702 && networkRows.length ? (
             <>
-              {hasLedgerKey && isEip7702Enabled && (
+              {canInstallAmbireSigner && isEip7702Enabled && (
                 <Alert
                   type="info"
                   size="md"

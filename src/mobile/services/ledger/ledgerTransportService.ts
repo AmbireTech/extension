@@ -123,6 +123,11 @@ class LedgerTransportService {
    */
   #lastDevice: DiscoveredDevice | null = null
 
+  /** Model of the last connected device (stored in the key meta on import). */
+  #deviceModel: DeviceModelId | null = null
+
+  getDeviceModel = () => this.#deviceModel
+
   /** Raw discovered devices by id, so connect can pass DMK the device object. */
   #discovered = new Map<string, DiscoveredDevice>()
 
@@ -321,6 +326,7 @@ class LedgerTransportService {
     })
     this.#sessionId = sessionId
     this.#lastDevice = device
+    this.#deviceModel = this.#dmk.getConnectedDevice({ sessionId }).modelId
 
     const contextModule = buildLedgerContextModule({
       loggerFactory: createContextLogger,
