@@ -30,7 +30,6 @@ import useAmbireSignerInstall from '@common/modules/settings/hooks/useAmbireSign
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { DeviceModelId } from '@ledgerhq/device-management-kit'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -41,12 +40,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 /** The search param that names the account whose smart settings are shown */
 export const SMART_SETTINGS_ACCOUNT_PARAM = 'accountAddr'
-
-// The Ledger models that can't install Ambire Signer, by DMK model id
-const UNSUPPORTED_LEDGER_MODEL_NAMES: Record<string, string> = {
-  [DeviceModelId.NANO_S]: 'Ledger Nano S',
-  [DeviceModelId.NANO_X]: 'Ledger Nano X'
-}
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
@@ -113,7 +106,7 @@ const AccountSmartSettingsScreen = () => {
     is7702,
     canInstallAmbireSigner,
     isUnsupportedLedger,
-    unsupportedLedgerModel,
+    unsupportedLedgerModelName,
     isEip7702Enabled,
     networkRows,
     enableEip7702,
@@ -175,14 +168,15 @@ const AccountSmartSettingsScreen = () => {
     [t]
   )
 
-  const unsupportedLedgerTitle = useMemo(() => {
-    const modelName =
-      unsupportedLedgerModel && UNSUPPORTED_LEDGER_MODEL_NAMES[unsupportedLedgerModel]
-
-    return modelName
-      ? t('Smart features are not available on {{modelName}}', { modelName })
-      : t('Smart features are not available on this Ledger model')
-  }, [t, unsupportedLedgerModel])
+  const unsupportedLedgerTitle = useMemo(
+    () =>
+      unsupportedLedgerModelName
+        ? t('Smart features are not available on {{modelName}}', {
+            modelName: unsupportedLedgerModelName
+          })
+        : t('Smart features are not available on this Ledger model'),
+    [t, unsupportedLedgerModelName]
+  )
 
   const canUpgrade = is7702 && networkRows.length > 0
 

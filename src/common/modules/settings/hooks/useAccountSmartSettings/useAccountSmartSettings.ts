@@ -7,6 +7,7 @@ import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import useController from '@common/hooks/useController'
 import { AMBIRE_SIGNER_DEVICE_MODELS } from '@common/modules/hardware-wallet/libs/ledgerAppInstall/artifacts'
+import { DeviceModelId } from '@ledgerhq/device-management-kit'
 
 import { getIsDelegationEnableDisabled } from './helpers'
 
@@ -21,6 +22,12 @@ export interface SmartSettingsNetworkRow {
   delegatedContractName?: AccountOnchainState['delegatedContractName']
   /** Turning the upgrade on needs the EIP-7702 feature flag first */
   isEnableDisabled: boolean
+}
+
+// The Ledger models that can't install Ambire Signer, by DMK model id
+const UNSUPPORTED_LEDGER_MODEL_NAMES: Record<string, string> = {
+  [DeviceModelId.NANO_S]: 'Ledger Nano S',
+  [DeviceModelId.NANO_X]: 'Ledger Nano X'
 }
 
 const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
@@ -106,8 +113,9 @@ const useAccountSmartSettings = (account: Account | null) => {
   // A Ledger that can't get Ambire Signer can neither enable nor revoke, as both
   // sign with it. A key stored in the app can still sign instead
   const isUnsupportedLedger = ledgerKeys.length > 0 && !canInstallAmbireSigner && !hasInternalKey
-  // DMK's model id ('nanoX'), or 'unknown'
-  const unsupportedLedgerModel = isUnsupportedLedger ? ledgerKeys[0]!.meta.deviceModel : null
+  // Null when the saved model is 'unknown'
+  const unsupportedLedgerModelName =
+    (isUnsupportedLedger && UNSUPPORTED_LEDGER_MODEL_NAMES[ledgerKeys[0]!.meta.deviceModel]) || null
 
   const networkRows: SmartSettingsNetworkRow[] = useMemo(
     () =>
@@ -177,7 +185,7 @@ const useAccountSmartSettings = (account: Account | null) => {
     is7702,
     canInstallAmbireSigner,
     isUnsupportedLedger,
-    unsupportedLedgerModel,
+    unsupportedLedgerModelName,
     isEip7702Enabled,
     networkRows,
     enableEip7702,

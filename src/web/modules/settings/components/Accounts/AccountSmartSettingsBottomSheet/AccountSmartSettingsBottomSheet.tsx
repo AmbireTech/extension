@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react'
+import React, { FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
@@ -44,8 +44,16 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { is7702, canInstallAmbireSigner, isEip7702Enabled, networkRows, enableEip7702, delegate } =
-    useAccountSmartSettings(account)
+  const {
+    is7702,
+    canInstallAmbireSigner,
+    isUnsupportedLedger,
+    unsupportedLedgerModelName,
+    isEip7702Enabled,
+    networkRows,
+    enableEip7702,
+    delegate
+  } = useAccountSmartSettings(account)
   const {
     installStep,
     installProgress,
@@ -64,6 +72,16 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
         await installLedgerApp(AMBIRE_SIGNER_APDUS, onProgress)
       }),
     [installAmbireSigner]
+  )
+
+  const unsupportedLedgerTitle = useMemo(
+    () =>
+      unsupportedLedgerModelName
+        ? t('Smart features are not available on {{modelName}}', {
+            modelName: unsupportedLedgerModelName
+          })
+        : t('Smart features are not available on this Ledger model'),
+    [t, unsupportedLedgerModelName]
   )
 
   return (
@@ -157,7 +175,19 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
                 )}
               </Text>
 
-              {!isEip7702Enabled && (
+              {isUnsupportedLedger && (
+                <Alert
+                  type="warning"
+                  size="md"
+                  style={spacings.mbMd}
+                  title={unsupportedLedgerTitle}
+                  text={t(
+                    'Enabling or revoking them needs a small companion app that this Ledger does not allow. Managing delegation works on newer devices like Ledger Nano S Plus, Stax, Flex and Nano Gen5.'
+                  )}
+                />
+              )}
+
+              {!isEip7702Enabled && !isUnsupportedLedger && (
                 <View
                   style={[
                     {
@@ -272,7 +302,8 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
                         <View
                           style={[flexbox.directionRow]}
                           dataSet={
-                            isEnableDisabled
+                            // The warning above already explains an unsupported Ledger
+                            isEnableDisabled && !isUnsupportedLedger
                               ? createGlobalTooltipDataSet({
                                   id: `enable-eip-7702-${net.chainId.toString()}`,
                                   content: t('Enable EIP-7702 first')
@@ -281,10 +312,23 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
                           }
                         >
                           <Button
-                            type={!delegatedContract ? 'secondary' : 'danger'}
+                            type={!delegatedContract ? 'success' : 'danger'}
                             size="tiny"
-                            style={[spacings.mb0, { minWidth: 78, height: 32 }]}
-                            disabled={isEnableDisabled}
+                            style={[
+                              spacings.mb0,
+                              { minWidth: 78, height: 32 },
+                              // A light green Enable, to match the light red Revoke
+                              !delegatedContract && {
+                                backgroundColor: theme.successBackground,
+                                borderWidth: 1,
+                                borderColor: theme.successDecorative
+                              }
+                            ]}
+                            textStyle={!delegatedContract && { color: theme.successText }}
+                            // An unsupported Ledger can't sign either, as the warning above explains
+                            disabled={isEnableDisabled || isUnsupportedLedger}
+                            // Fainter than the default disabled look, so it clearly isn't an action
+                            disabledStyle={{ opacity: 0.4 }}
                             onPress={() => delegate(net.chainId)}
                             text={!delegatedContract ? t('Enable') : t('Revoke')}
                           />
