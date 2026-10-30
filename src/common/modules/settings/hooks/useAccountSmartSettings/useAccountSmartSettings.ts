@@ -30,6 +30,15 @@ const UNSUPPORTED_LEDGER_MODEL_NAMES: Record<string, string> = {
   [DeviceModelId.NANO_X]: 'Ledger Nano X'
 }
 
+// The ids that the pre-DMK @ledgerhq/devices saved, where they differ from DMK's
+const LEGACY_LEDGER_MODEL_IDS: Record<string, string> = {
+  europa: DeviceModelId.FLEX,
+  apex: DeviceModelId.APEX
+}
+
+const getLedgerModelId = (deviceModel: string) =>
+  LEGACY_LEDGER_MODEL_IDS[deviceModel] || deviceModel
+
 const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
   state.accountStates
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
@@ -99,7 +108,10 @@ const useAccountSmartSettings = (account: Account | null) => {
   // Only for the Ledger models Ambire Signer can be installed on. An unknown
   // model (keys imported on mobile before it was recorded) is left out too
   const canInstallAmbireSigner = useMemo(
-    () => ledgerKeys.some((k) => AMBIRE_SIGNER_DEVICE_MODELS.includes(k.meta.deviceModel)),
+    () =>
+      ledgerKeys.some((k) =>
+        AMBIRE_SIGNER_DEVICE_MODELS.includes(getLedgerModelId(k.meta.deviceModel))
+      ),
     [ledgerKeys]
   )
 

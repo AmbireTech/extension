@@ -62,7 +62,8 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     if (!expectedKeyOnThisPath && this.isUnlocked(path)) return 'ALREADY_UNLOCKED'
 
     try {
-      const address = await ledgerTransportService.getAddress(path)
+      // An expected key means signing comes next
+      const address = await ledgerTransportService.getAddress(path, !!expectedKeyOnThisPath)
 
       const wasAlreadyUnlocked = this.unlockedPath === path && this.unlockedPathKeyAddr === address
       this.unlockedPath = path

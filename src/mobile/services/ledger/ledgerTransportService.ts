@@ -378,7 +378,11 @@ class LedgerTransportService {
     this.#emitConnection()
   }
 
-  getAddress = async (path: string): Promise<string> => {
+  /**
+   * @param isBeforeSigning - waits for the user to open the Ethereum app, like
+   * signing does, as an upgrade leaves Ambire Signer open between its signatures
+   */
+  getAddress = async (path: string, isBeforeSigning = false): Promise<string> => {
     const signerEth = await this.#ensureSession()
     return this.#handleLedgerSubscription<string>(
       signerEth.getAddress(getHdPathWithoutRoot(path), {
@@ -387,7 +391,8 @@ class LedgerTransportService {
       }).observable,
       {
         onCompleted: (output) => output.address,
-        errorMessage: 'Failed to get address from Ledger device'
+        errorMessage: 'Failed to get address from Ledger device',
+        isSign: isBeforeSigning
       }
     )
   }
