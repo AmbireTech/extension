@@ -2,6 +2,7 @@ import { getAddress, Interface } from 'ethers'
 
 import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import { getAbiBytesCalldataWithPadding } from '@ambire-common/libs/humanizer/erc7730/calldata'
 import {
   decodeMultiSend,
   multiCallAbi,
@@ -23,8 +24,11 @@ export type RequestCall = {
   to: string | null
   value: bigint
   data: string
-  /** Only set for Safe calls: 0 is a normal call, 1 a delegate call */
-  operation?: number
+  /**
+   * Only set for Safe calls: 0 is a normal call, 1 a delegate call. `null`
+   * when the request has no operation that can be read
+   */
+  operation?: number | null
 }
 
 export type RequestCalls =
@@ -84,7 +88,12 @@ const getBatchCalls = (data: string): { calls: RequestCall[]; batchError: string
   let transactionsHex: string
 
   try {
-    transactionsHex = multiSendInterface.decodeFunctionData('multiSend', data)[0]
+    // The batch contract doesn't need the batch padded to 32 bytes, but the
+    // decoder does, so it's padded first, the same way the humanizer reads it
+    transactionsHex = multiSendInterface.decodeFunctionData(
+      'multiSend',
+      getAbiBytesCalldataWithPadding(data)
+    )[0]
   } catch {
     return { calls: [], batchError: "The batch couldn't be read." }
   }
@@ -115,7 +124,10 @@ const getSafeTransactionCalls = (data: unknown): RequestCalls | null => {
 
   const { message } = data
   const callData = typeof message.data === 'string' ? message.data : '0x'
-  const operation = Number(toBigIntOrZero(message.operation))
+  // A missing or malformed operation stays unknown rather than read as a
+  // normal call, so the call and the Safe checks describe it the same way
+  const operationValue = toBigIntOrNull(message.operation)
+  const operation = operationValue === null ? null : Number(operationValue)
   const to = toChecksumAddress(message.to)
   const isBatch =
     operation === SAFE_DELEGATE_CALL_OPERATION &&

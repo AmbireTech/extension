@@ -4,7 +4,7 @@ import { View } from 'react-native'
 import type { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import { SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
+import { SAFE_CALL_OPERATION, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
@@ -186,8 +186,12 @@ const DecodedRequest = ({ signingRequest, humanization }: Props) => {
 
   if (!requestCalls) return null
 
-  const getOperationLabel = (call: RequestCall) =>
-    call.operation === SAFE_DELEGATE_CALL_OPERATION ? t('delegate call') : t('call')
+  const getOperationLabel = (call: RequestCall) => {
+    if (call.operation === SAFE_CALL_OPERATION) return t('call')
+    if (call.operation === SAFE_DELEGATE_CALL_OPERATION) return t('delegate call')
+
+    return t('unknown operation')
+  }
 
   return (
     <>

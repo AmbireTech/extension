@@ -1,4 +1,13 @@
-import { concat, getAddress, Interface, solidityPacked, ZeroAddress } from 'ethers'
+import {
+  concat,
+  dataLength,
+  getAddress,
+  Interface,
+  solidityPacked,
+  toBeHex,
+  ZeroAddress,
+  zeroPadValue
+} from 'ethers'
 
 import { multiSendAddr } from '@ambire-common/consts/safe'
 import { multiCallAbi } from '@ambire-common/libs/safe/helpers'
@@ -82,6 +91,15 @@ describe('getRequestCalls', () => {
     ])
   })
 
+  test.each([
+    ['missing', undefined],
+    ['malformed', 'oops']
+  ])('a %s operation stays unknown instead of being read as a normal call', (_, operation) => {
+    const result = getRequestCalls(getSafeRequest({ ...safeTxMessage, operation }))
+
+    expect(result?.calls[0]?.operation).toBeNull()
+  })
+
   test('a Safe batch is split into its transactions, one by one', () => {
     const batchData = encodeBatch([
       { to: TOKEN, value: 0n, data: TRANSFER_DATA },
@@ -98,6 +116,30 @@ describe('getRequestCalls', () => {
     expect(result.calls).toEqual([
       { id: 'transaction-1', to: TOKEN, value: 0n, data: TRANSFER_DATA, operation: 0 },
       { id: 'transaction-2', to: getAddress(RECIPIENT), value: 7n, data: '0x', operation: 0 }
+    ])
+  })
+
+  test('a batch not padded to 32 bytes is still read, as the batch contract accepts it', () => {
+    const packedTransactions = solidityPacked(
+      ['uint8', 'address', 'uint256', 'uint256', 'bytes'],
+      [0, TOKEN, 0n, BigInt(dataLength(TRANSFER_DATA)), TRANSFER_DATA]
+    )
+    const unpaddedBatchData = concat([
+      new Interface(multiCallAbi).getFunction('multiSend')?.selector ?? '0x8d80ff0a',
+      zeroPadValue(toBeHex(32), 32),
+      zeroPadValue(toBeHex(dataLength(packedTransactions)), 32),
+      packedTransactions
+    ])
+    const result = getRequestCalls(
+      getSafeRequest({ ...safeTxMessage, to: multiSendAddr, data: unpaddedBatchData, operation: 1 })
+    )
+
+    if (result?.kind !== 'safe-transaction') throw new Error('expected a Safe transaction')
+
+    expect(dataLength(packedTransactions) % 32).not.toBe(0)
+    expect(result.batchError).toBeNull()
+    expect(result.calls).toEqual([
+      { id: 'transaction-1', to: TOKEN, value: 0n, data: TRANSFER_DATA, operation: 0 }
     ])
   })
 

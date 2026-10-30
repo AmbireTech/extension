@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
@@ -136,6 +136,14 @@ const SigningRequestDetails = ({
   // Hidden by default on every screen, as the details are for users who verify on their own
   const [isExpanded, setIsExpanded] = useState(false)
   const toggleIsExpanded = useCallback(() => setIsExpanded((prev) => !prev), [])
+
+  // Requests can come one after another without the details closing in
+  // between (e.g. an account upgrade, then its transaction), so each new
+  // request starts hidden too. Its content is compared, as the request object
+  // is re-created on every update
+  useEffect(() => {
+    setIsExpanded(false)
+  }, [requestJson])
 
   const requestTitle = useMemo(() => {
     const device = deviceName || t('device')
