@@ -33,8 +33,6 @@ export type SigningRequestVerification = {
   safeTransactionChecks: SafeTransactionCheck[]
   /** The request as sent to the device, in the standard shape hashing tools accept */
   requestJson: string
-  /** The serialized unsigned transaction, which the transaction hash is computed from */
-  unsignedTransaction: string | null
 }
 
 type Options = {
@@ -102,9 +100,8 @@ const stringify = (data: unknown): string => {
 const pickKeys = (record: Record<string, unknown>, keys: string[]) =>
   Object.fromEntries(keys.filter((key) => key in record).map((key) => [key, record[key]]))
 
-const getUnsignedTransaction = (
-  data: Record<string, unknown>
-): { hash: string; serialized: string } | null => {
+/** The hash of the unsigned transaction, which is what the device signs */
+const getUnsignedTransactionHash = (data: Record<string, unknown>): string | null => {
   // Anything else in the request means it's not a plain transaction, so
   // a hash built from it may not be what the device signs
   if (Object.keys(data).some((key) => !TRANSACTION_KEYS.includes(key))) return null
@@ -128,7 +125,7 @@ const getUnsignedTransaction = (
       maxPriorityFeePerGas: toOptionalString(data.maxPriorityFeePerGas)
     })
 
-    return { hash: transaction.unsignedHash, serialized: transaction.unsignedSerialized }
+    return transaction.unsignedHash
   } catch (error) {
     // The request has the shape of a transaction, so failing to serialize it is unexpected
     console.error('hardware wallet signing: could not serialize the transaction', error)
@@ -147,8 +144,7 @@ const getTransactionVerification = (
     missingHashReason: null,
     safeHashFormula: null,
     safeTransactionChecks: [],
-    requestJson: stringify(data),
-    unsignedTransaction: null
+    requestJson: stringify(data)
   }
   if (!isRecord(data)) return base
 
@@ -160,8 +156,8 @@ const getTransactionVerification = (
     }
   }
 
-  const unsignedTransaction = getUnsignedTransaction(data)
-  if (!unsignedTransaction) {
+  const transactionHash = getUnsignedTransactionHash(data)
+  if (!transactionHash) {
     return {
       ...base,
       missingHashReason: "The transaction hash couldn't be calculated for this request."
@@ -174,11 +170,10 @@ const getTransactionVerification = (
       {
         id: 'transactionHash',
         label: 'Transaction hash',
-        value: unsignedTransaction.hash,
-        note: 'keccak256 of the unsigned transaction above.'
+        value: transactionHash,
+        note: 'keccak256 of the unsigned transaction serialized from the fields above.'
       }
-    ],
-    unsignedTransaction: unsignedTransaction.serialized
+    ]
   }
 }
 
@@ -239,8 +234,7 @@ const getTypedDataVerification = (data: unknown): SigningRequestVerification => 
     missingHashReason: null,
     safeHashFormula: null,
     safeTransactionChecks: [],
-    requestJson: stringify(data),
-    unsignedTransaction: null
+    requestJson: stringify(data)
   }
   if (!isRecord(data)) return base
 
@@ -308,7 +302,6 @@ export const getSigningRequestVerification = (
     missingHashReason: null,
     safeHashFormula: null,
     safeTransactionChecks: [],
-    requestJson: stringify(signingRequest.data),
-    unsignedTransaction: null
+    requestJson: stringify(signingRequest.data)
   }
 }

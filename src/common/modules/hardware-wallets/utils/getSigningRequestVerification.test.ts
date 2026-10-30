@@ -69,8 +69,7 @@ describe('getSigningRequestVerification', () => {
       expect(result.hashes).toEqual([
         expect.objectContaining({ id: 'transactionHash', value: expected.unsignedHash })
       ])
-      expect(result.unsignedTransaction).toBe(expected.unsignedSerialized)
-      expect(result.unsignedTransaction?.startsWith('0x02')).toBe(true)
+      expect(expected.unsignedSerialized.startsWith('0x02')).toBe(true)
       expect(result.missingHashReason).toBeNull()
       expect(JSON.parse(result.requestJson)).toEqual(eip1559Transaction)
     })
@@ -103,7 +102,6 @@ describe('getSigningRequestVerification', () => {
       )
 
       expect(result.hashes).toEqual([])
-      expect(result.unsignedTransaction).toBeNull()
       expect(result.missingHashReason).toBeTruthy()
     })
 

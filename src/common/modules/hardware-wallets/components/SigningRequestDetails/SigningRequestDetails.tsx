@@ -1,10 +1,14 @@
-import React, { useMemo } from 'react'
-import { StyleProp, TextStyle, View, ViewStyle } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import CheckIcon from '@common/assets/svg/CheckIcon'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import CopyText from '@common/components/CopyText'
+import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -17,64 +21,18 @@ import {
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import DecodedRequest from './DecodedRequest'
+import { MonoBox, MonoText, SectionHeader } from './DetailsPrimitives'
+
 type Props = {
   signingRequest: HardwareWalletSigningRequest
   /** Shown in the request title, e.g. "Typed data sent to your Ledger" */
   deviceName?: string
   /** The transaction is signed together with an account upgrade (type 4) */
   isAccountUpgradeTransaction?: boolean
+  /** The calls as Ambire humanized them on the sign screen */
+  humanization?: IrCall[]
   style?: StyleProp<ViewStyle>
-}
-
-// @ts-ignore web-only style, so long hex values wrap instead of overflowing
-const wrapAnywhereStyle: TextStyle = { wordBreak: 'break-all' }
-
-const MonoText = ({ children, style }: { children: string; style?: StyleProp<TextStyle> }) => (
-  <Text
-    selectable
-    fontSize={12}
-    weight="mono_regular"
-    style={[{ lineHeight: 18 }, wrapAnywhereStyle, style]}
-  >
-    {children}
-  </Text>
-)
-
-const MonoBox = ({ children }: { children: React.ReactNode }) => {
-  const { theme } = useTheme()
-
-  return (
-    <View
-      style={[
-        spacings.phSm,
-        spacings.pvTy,
-        { borderRadius: 8, backgroundColor: theme.secondaryBackground }
-      ]}
-    >
-      {children}
-    </View>
-  )
-}
-
-const SectionHeader = ({ title, copyText }: { title: string; copyText?: string }) => {
-  const { theme } = useTheme()
-
-  return (
-    <View
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        flexbox.justifySpaceBetween,
-        spacings.mtLg,
-        spacings.mbTy
-      ]}
-    >
-      <Text fontSize={14} weight="semiBold" style={[flexbox.flex1, spacings.mrSm]}>
-        {title}
-      </Text>
-      {!!copyText && <CopyText text={copyText} iconSize={16} iconColor={theme.secondaryText} />}
-    </View>
-  )
 }
 
 const HashBlock = ({ hash }: { hash: VerificationHash }) => {
@@ -155,6 +113,7 @@ const SigningRequestDetails = ({
   signingRequest,
   deviceName,
   isAccountUpgradeTransaction,
+  humanization,
   style
 }: Props) => {
   const { t } = useTranslation()
@@ -165,12 +124,18 @@ const SigningRequestDetails = ({
     missingHashReason,
     safeHashFormula,
     safeTransactionChecks,
-    requestJson,
-    unsignedTransaction
+    requestJson
   } = useMemo(
     () => getSigningRequestVerification(signingRequest, { isAccountUpgradeTransaction }),
     [signingRequest, isAccountUpgradeTransaction]
   )
+  const failingChecks = useMemo(
+    () => safeTransactionChecks.filter(({ isPassing }) => !isPassing),
+    [safeTransactionChecks]
+  )
+  // Hidden by default on every screen, as the details are for users who verify on their own
+  const [isExpanded, setIsExpanded] = useState(false)
+  const toggleIsExpanded = useCallback(() => setIsExpanded((prev) => !prev), [])
 
   const requestTitle = useMemo(() => {
     const device = deviceName || t('device')
@@ -205,39 +170,64 @@ const SigningRequestDetails = ({
     </>
   )
 
-  const unsignedTransactionSection = !!unsignedTransaction && (
+  const checksSection = !!safeTransactionChecks.length && (
     <>
-      <SectionHeader title={t('Unsigned transaction')} copyText={unsignedTransaction} />
-      <MonoBox>
-        <MonoText>{unsignedTransaction}</MonoText>
-      </MonoBox>
+      <SectionHeader title={t('Checks')} />
+      {safeTransactionChecks.map((check) => (
+        <CheckRow key={check.id} check={check} />
+      ))}
     </>
   )
 
-  // A transaction reads in the order its hash is built: the fields, the
-  // unsigned transaction serialized from them, then the hash of that
-  if (requestKind === 'transaction') {
-    return (
-      <View style={[{ width: '100%' }, style]}>
+  // A transaction reads in the order its hash is built: the fields, then
+  // the hash of the unsigned transaction serialized from them
+  const details =
+    requestKind === 'transaction' ? (
+      <>
         {requestSection}
-        {unsignedTransactionSection}
         {hashesSection}
-      </View>
+        <DecodedRequest signingRequest={signingRequest} humanization={humanization} />
+      </>
+    ) : (
+      <>
+        {hashesSection}
+        {checksSection}
+        {requestSection}
+        <DecodedRequest signingRequest={signingRequest} humanization={humanization} />
+      </>
     )
-  }
 
   return (
     <View style={[{ width: '100%' }, style]}>
-      {hashesSection}
-      {!!safeTransactionChecks.length && (
+      {/* Warnings stay visible while the details are hidden, so they're never missed */}
+      {!isExpanded && (
         <>
-          <SectionHeader title={t('Checks')} />
-          {safeTransactionChecks.map((check) => (
+          {failingChecks.map((check) => (
             <CheckRow key={check.id} check={check} />
           ))}
+          {!!safeHashFormula && !safeHashFormula.isMatch && (
+            <SafeHashFormula formula={safeHashFormula} />
+          )}
         </>
       )}
-      {requestSection}
+      <HoverablePressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isExpanded }}
+        onPress={toggleIsExpanded}
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifyCenter,
+          spacings.pvTy,
+          spacings.mtSm
+        ]}
+      >
+        <Text fontSize={13} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
+          {isExpanded ? t('Hide verification details') : t('Show verification details')}
+        </Text>
+        {isExpanded ? <UpArrowIcon /> : <DownArrowIcon />}
+      </HoverablePressable>
+      {isExpanded && details}
     </View>
   )
 }

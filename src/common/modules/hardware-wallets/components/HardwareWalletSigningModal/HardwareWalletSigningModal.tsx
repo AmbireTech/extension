@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { ExternalKey } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
 import DriveIcon from '@common/assets/svg/DriveIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
@@ -32,6 +33,8 @@ type Props = {
   signingRequest?: HardwareWalletSigningRequest | null
   /** The transaction is signed together with an account upgrade (type 4) */
   isAccountUpgradeTransaction?: boolean
+  /** The calls as Ambire humanized them on the sign screen */
+  humanization?: IrCall[]
 }
 
 const iconByKeyType = {
@@ -49,7 +52,8 @@ const HardwareWalletSigningModal = ({
   children,
   cancelReq,
   signingRequest,
-  isAccountUpgradeTransaction
+  isAccountUpgradeTransaction,
+  humanization
 }: Props) => {
   const { t } = useTranslation()
   const { ref, open, close } = useModalize()
@@ -156,6 +160,7 @@ const HardwareWalletSigningModal = ({
             signingRequest={signingRequest}
             deviceName={deviceName}
             isAccountUpgradeTransaction={isAccountUpgradeTransaction}
+            humanization={humanization}
           />
         )}
         {isTrezor && !!cancelReq && (

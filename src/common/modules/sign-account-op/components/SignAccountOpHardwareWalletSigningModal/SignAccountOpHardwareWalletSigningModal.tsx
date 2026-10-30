@@ -5,6 +5,7 @@ import { ExternalKey, Key } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -30,6 +31,8 @@ interface Props {
   cancelReq?: () => void
   hardwareWalletSigningRequest?: HardwareWalletSigningRequest | null
   isPaymasterSlow?: boolean
+  /** The calls as Ambire humanized them on the sign screen */
+  humanization?: IrCall[]
 }
 
 const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
@@ -40,7 +43,8 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   actionType,
   cancelReq,
   hardwareWalletSigningRequest,
-  isPaymasterSlow
+  isPaymasterSlow,
+  humanization
 }: Props) => {
   const { t } = useTranslation()
   const { dispatch: requestsCtrlDispatch } = useController('RequestsController')
@@ -123,6 +127,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
       isAccountUpgradeTransaction={
         accountOp?.gasFeePayment?.broadcastOption === BROADCAST_OPTIONS.delegation
       }
+      humanization={humanization}
     >
       {typeof signedTransactionsCount === 'number' ? (
         <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>
