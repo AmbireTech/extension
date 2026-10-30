@@ -219,11 +219,16 @@ const useSign = ({
 
   const signingKeyType = signAccountOpState?.accountOp?.signingKeyType
   const feePayerKeyType = signAccountOpState?.accountOp?.gasFeePayment?.paidByKeyType
+  // Adding a Safe owner's signature before the threshold is reached sends nothing, so the
+  // fee payer's device isn't needed until the transaction is executed
+  const feePayerKeyTypeToSignWith = signAccountOpState?.isCollectingSafeSignatureOnly
+    ? null
+    : feePayerKeyType
 
   const getIsKeyTypeInvolved = useCallback(
     (keyType: Key['type']) => {
       // if we're broadcasting with this key type, return true
-      if (feePayerKeyType === keyType) return true
+      if (feePayerKeyTypeToSignWith === keyType) return true
 
       // if the account is not a Safe, check the txn signer
       if (!signAccountOpState?.account.safeCreation) return signingKeyType === keyType
@@ -235,7 +240,7 @@ const useSign = ({
       signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signers,
       signingKeyType,
-      feePayerKeyType
+      feePayerKeyTypeToSignWith
     ]
   )
 
@@ -389,8 +394,7 @@ const useSign = ({
         return
 
       const isExternalQr =
-        signAccountOpState?.accountOp.signingKeyType === 'qr' ||
-        signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType === 'qr'
+        signAccountOpState?.accountOp.signingKeyType === 'qr' || feePayerKeyTypeToSignWith === 'qr'
       const isFeePayerSameAsSigner =
         signAccountOpState?.accountOp.signingKeyAddr ===
         signAccountOpState?.accountOp.gasFeePayment?.paidBy
@@ -399,7 +403,7 @@ const useSign = ({
         isInvolvedInTheAccountOp: boolean
       ) =>
         _chosenSigningKeyTypes && _chosenSigningKeyTypes.length
-          ? _chosenSigningKeyTypes.indexOf(keyType) !== -1 || feePayerKeyType === keyType
+          ? _chosenSigningKeyTypes.indexOf(keyType) !== -1 || feePayerKeyTypeToSignWith === keyType
           : isInvolvedInTheAccountOp
       const isLedgerKeyInvolvedInTheJustChosenKeys = getIsKeyTypeInvolvedInTheJustChosenKeys(
         'ledger',
@@ -453,9 +457,9 @@ const useSign = ({
       signAccountOpState?.feePayerKeyStoreKeys?.length,
       signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signingKeyType,
-      signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType,
       warningToPromptBeforeSign,
       feePayerKeyType,
+      feePayerKeyTypeToSignWith,
       isAtLeastOneOfTheKeysInvolvedLedger,
       isLedgerConnected,
       isAtLeastOneOfTheKeysInvolvedOneKey,
