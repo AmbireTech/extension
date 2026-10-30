@@ -284,7 +284,7 @@ const Account = ({
     ]
     const settingsOption = account.safeCreation
       ? [{ label: t('Activation settings'), value: 'deploySettings' }]
-      : add7702Option && isWeb
+      : add7702Option
         ? [{ label: t('Smart settings'), value: 'toSmarter' }]
         : []
 

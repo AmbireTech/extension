@@ -3,15 +3,22 @@ import { BleManager, State as BleState } from 'react-native-ble-plx'
 import { Observable } from 'rxjs'
 import { Hex } from 'viem'
 
+import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { BIP44_LEDGER_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
+import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import wait from '@ambire-common/utils/wait'
 import { isProd } from '@common/config/env'
 import { buildLedgerContextModule } from '@common/modules/hardware-wallet/libs/buildLedgerContextModule'
 import {
+  installLedgerAppOverSession,
+  LedgerAppInstallStep
+} from '@common/modules/hardware-wallet/libs/ledgerAppInstall/installLedgerApp'
+import {
   DeviceActionStatus,
   DeviceManagementKitBuilder,
+  DeviceModelId,
   DeviceStatus,
   DiscoveredDevice,
   UserInteractionRequired
@@ -434,6 +441,77 @@ class LedgerTransportService {
   }
 
   /**
+   * Signs an EIP-7702 delegation. The patched signDelegationAuthorization targets
+   * the sideloaded "Ambire Signer" app instead of the official Ethereum app, and
+   * lets the device open it (the user confirms on-device), mirroring the extension.
+   */
+  sign7702 = async (
+    path: string,
+    chainId: bigint,
+    delegationAddr: Hex,
+    nonce: bigint
+  ): Promise<LedgerTransportSignature> => {
+    const signerEth = await this.#ensureSession()
+    return this.#handleLedgerSubscription<LedgerTransportSignature>(
+      signerEth.signDelegationAuthorization(
+        getHdPathWithoutRoot(path),
+        Number(chainId),
+        delegationAddr,
+        Number(nonce)
+      ).observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign message with Ledger device',
+        isSign: true
+      }
+    )
+  }
+
+  /**
+   * Sideloads a custom app (Ambire Signer) on a discovered device, which must be
+   * on its dashboard. Opens its own session, without the Ethereum app probe, and
+   * closes it afterwards. Unlike the rest of this service it throws user-facing
+   * messages, as installLedgerAppOverSession does.
+   */
+  installApp = async (
+    device: { id: string },
+    apdusByModel: Partial<Record<DeviceModelId, string>>,
+    onProgress: (step: LedgerAppInstallStep, percent: number) => void
+  ): Promise<void> => {
+    const discovered = this.#discovered.get(device.id)
+    if (!discovered)
+      throw new Error('Ledger device is no longer available. Please rescan and try again.')
+
+    this.#stopDiscovering()
+    await this.cleanUp()
+    if (!this.#dmk) this.#dmk = buildDmk()
+    const dmk = this.#dmk
+
+    onProgress('connecting', 0)
+    try {
+      const sessionId = await dmk.connect({
+        device: discovered,
+        sessionRefresherOptions: { isRefresherDisabled: true }
+      })
+      // Tracked so cleanUp closes it, and so signing afterwards reuses this device
+      this.#sessionId = sessionId
+      this.#lastDevice = discovered
+
+      await installLedgerAppOverSession({
+        sendApdu: ({ apdu, abortTimeout }) => dmk.sendApdu({ sessionId, apdu, abortTimeout }),
+        modelId: dmk.getConnectedDevice({ sessionId }).modelId,
+        apdusByModel,
+        onProgress
+      })
+    } catch (e: any) {
+      if (e instanceof ExternalSignerError) throw e
+      throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
+    } finally {
+      await this.cleanUp()
+    }
+  }
+
+  /**
    * Cancels the in-flight signing subscription after an abandoned/rejected sign
    * so the next command starts clean (mirrors the extension). Not a device flush.
    */
@@ -491,12 +569,21 @@ class LedgerTransportService {
    * Bridges a DMK device-action observable to a promise: rejects (raw) on a
    * required user interaction (unlock / open app) or device error, resolves on
    * completion. Mirrors the extension's #handleLedgerSubscription.
+   * Signing waits for the user to confirm opening the app on-device instead, as
+   * an upgrade signs with Ambire Signer and then with the Ethereum app.
    */
   #handleLedgerSubscription<T>(
     observable: Observable<any>,
-    options: { onCompleted: (output: any) => T; errorMessage: string; isSign?: boolean }
+    options: {
+      onCompleted: (output: any) => T
+      errorMessage: string
+      isSign?: boolean
+    }
   ): Promise<T> {
     const { onCompleted, errorMessage, isSign } = options
+    const blockingInteractions = isSign
+      ? [UserInteractionRequired.UnlockDevice]
+      : [UserInteractionRequired.UnlockDevice, UserInteractionRequired.ConfirmOpenApp]
 
     const subscriptionPromise = new Promise<T>((resolve, reject) => {
       let subscription: { unsubscribe: () => void } | undefined
@@ -510,9 +597,7 @@ class LedgerTransportService {
           // user (both callers normalize these raw strings).
           const missingRequiredUserInteraction =
             response.status === DeviceActionStatus.Pending &&
-            [UserInteractionRequired.UnlockDevice, UserInteractionRequired.ConfirmOpenApp].includes(
-              response.intermediateValue.requiredUserInteraction
-            )
+            blockingInteractions.includes(response.intermediateValue.requiredUserInteraction)
 
           if (missingRequiredUserInteraction) {
             subscription?.unsubscribe()

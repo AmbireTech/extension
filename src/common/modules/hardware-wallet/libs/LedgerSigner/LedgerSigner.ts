@@ -179,16 +179,11 @@ class LedgerSigner implements KeystoreSignerInterface {
 
     try {
       const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
-      // sign7702 is deliberately NOT on LedgerControllerInterface: only the web
-      // controller implements it (it needs the sideloaded "Ambire Signer" app,
-      // which is extension-only). Don't "fix" this by adding it to the interface -
-      // on mobile the call would still blow up at runtime.
-      // @ts-expect-error see above
       const signature = await this.controller.sign7702(path, chainId, contract, nonce)
       const v = Signature.getNormalizedV(signature.v)
 
       const yParity = v === 27 ? '0x00' : '0x01'
-      return { r: signature.r, s: signature.s, yParity }
+      return { r: signature.r as Hex, s: signature.s as Hex, yParity }
     } catch (e: any) {
       throw new ExternalSignerError(
         e?.message || 'ledgerSigner: singing failed for unknown reason',

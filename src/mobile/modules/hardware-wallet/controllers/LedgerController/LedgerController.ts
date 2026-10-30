@@ -1,5 +1,7 @@
 import { hexlify } from 'ethers'
 
+import { Hex } from '@ambire-common/interfaces/hex'
+
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -111,6 +113,14 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
         message,
         primaryType
       } as any)
+    } catch (e: any) {
+      throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
+    }
+  }
+
+  async sign7702(derivationPath: string, chainId: bigint, delegationAddr: Hex, nonce: bigint) {
+    try {
+      return await ledgerTransportService.sign7702(derivationPath, chainId, delegationAddr, nonce)
     } catch (e: any) {
       throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
     }

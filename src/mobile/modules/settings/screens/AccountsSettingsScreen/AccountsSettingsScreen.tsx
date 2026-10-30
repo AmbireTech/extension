@@ -35,7 +35,7 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import ExportToExtensionSheet from '@mobile/modules/app-data-sync/components/ExportToExtensionSheet'
-import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
+import { SMART_SETTINGS_ACCOUNT_PARAM } from '@mobile/modules/settings/screens/AccountSmartSettingsScreen'
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
@@ -70,11 +70,6 @@ const AccountsSettingsScreen = () => {
     close: closeSyncBottomSheet
   } = useModalize()
   const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useModalize()
-  const {
-    ref: sheetRefAccountSmartSettings,
-    open: openAccountSmartSettings,
-    close: closeAccountSmartSettings
-  } = useModalize()
   const {
     ref: sheetRefAccountDeploySettings,
     open: openAccountDeploySettings,
@@ -127,15 +122,22 @@ const AccountsSettingsScreen = () => {
   }, [openRemoveAccount, accountToRemove])
 
   useEffect(() => {
-    if (!accountSettingsAccount) return
+    if (accountSettingsAccount?.safeCreation) openAccountDeploySettings()
+  }, [accountSettingsAccount, openAccountDeploySettings])
 
-    if (accountSettingsAccount.safeCreation) {
-      openAccountDeploySettings()
-      return
-    }
+  // Smart settings is a screen of its own, while activation settings is a sheet
+  const openAccountSettings: React.Dispatch<React.SetStateAction<AccountInterface | null>> =
+    useCallback(
+      (account) => {
+        if (!account || typeof account === 'function' || account.safeCreation) {
+          setAccountSettingsAccount(account)
+          return
+        }
 
-    openAccountSmartSettings()
-  }, [accountSettingsAccount, openAccountDeploySettings, openAccountSmartSettings])
+        navigate(`${ROUTES.accountSmartSettings}?${SMART_SETTINGS_ACCOUNT_PARAM}=${account.addr}`)
+      },
+      [navigate]
+    )
 
   const shortenAccountAddr = useCallback(() => {
     if (maxElementWidthSize(800)) return undefined
@@ -149,10 +151,10 @@ const AccountsSettingsScreen = () => {
     () => ({
       withOptionsButton: true,
       setAccountToImportOrExport: setExportImportAccount,
-      setAccountSettingsAccount,
+      setAccountSettingsAccount: openAccountSettings,
       setAccountToRemove
     }),
-    [setExportImportAccount, setAccountSettingsAccount, setAccountToRemove]
+    [setExportImportAccount, openAccountSettings, setAccountToRemove]
   )
 
   const removeAccount = useCallback(() => {
@@ -295,12 +297,6 @@ const AccountsSettingsScreen = () => {
           closeBottomSheet={closeAccountDeploySettings}
           onClosed={clearAccountSettingsAccount}
           account={accountSettingsAccount?.safeCreation ? accountSettingsAccount : null}
-        />
-        <AccountSmartSettingsBottomSheet
-          sheetRef={sheetRefAccountSmartSettings}
-          closeBottomSheet={closeAccountSmartSettings}
-          onClosed={clearAccountSettingsAccount}
-          account={accountSettingsAccount?.safeCreation ? null : accountSettingsAccount}
         />
         <AccountKeysBottomSheet
           sheetRef={sheetRefExportImportKey}

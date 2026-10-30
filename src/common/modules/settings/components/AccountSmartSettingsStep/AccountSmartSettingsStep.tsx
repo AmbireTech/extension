@@ -17,7 +17,7 @@ interface Props {
   children?: React.ReactNode
 }
 
-const Step = ({ number, title, description, isCompleted, children }: Props) => {
+const AccountSmartSettingsStep = ({ number, title, description, isCompleted, children }: Props) => {
   const { theme } = useTheme()
 
   return (
@@ -51,4 +51,4 @@ const Step = ({ number, title, description, isCompleted, children }: Props) => {
   )
 }
 
-export default React.memo(Step)
+export default React.memo(AccountSmartSettingsStep)
