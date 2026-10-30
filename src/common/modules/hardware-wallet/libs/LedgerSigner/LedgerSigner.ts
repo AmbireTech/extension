@@ -12,6 +12,7 @@ import {
   LedgerControllerInterface,
   LedgerSignature
 } from '@common/modules/hardware-wallet/interfaces/ledgerController'
+import { getUnsignedTransaction } from '@common/modules/hardware-wallets/utils/getUnsignedTransaction'
 
 class LedgerSigner implements KeystoreSignerInterface {
   key: ExternalKey & { isExternallyStored: boolean }
@@ -77,12 +78,8 @@ class LedgerSigner implements KeystoreSignerInterface {
   signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (txnRequest) => {
     await this.#prepareForSigning()
 
-    // In case `maxFeePerGas` is provided, treat as an EIP-1559 transaction,
-    // since there's no other better way to distinguish between the two in here.
-    const type = typeof txnRequest.maxFeePerGas === 'bigint' ? 2 : 0
-
     try {
-      const unsignedTxn: TransactionLike = { ...txnRequest, type }
+      const unsignedTxn = getUnsignedTransaction(txnRequest)
       const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
       const strippedTxn = stripHexPrefix(unsignedSerializedTxn)
       const transactionBytes = hexStringToUint8Array(strippedTxn)

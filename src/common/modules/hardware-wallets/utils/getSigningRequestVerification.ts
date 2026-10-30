@@ -1,10 +1,12 @@
 import { concat, isHexString, keccak256, Transaction, ZeroAddress } from 'ethers'
 
+import { TxnRequest } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { SAFE_CALL_OPERATION, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 
 import { getRequestCalls } from './getRequestCalls'
+import { getUnsignedTransaction } from './getUnsignedTransaction'
 import {
   isRecord,
   isSafeBatchContract,
@@ -68,11 +70,31 @@ const TYPED_DATA_KEYS = ['domain', 'types', 'primaryType', 'message']
 
 const isHash = (value: unknown): value is string => isHexString(value, 32)
 
-const toOptionalString = (value: unknown): string | undefined => {
-  if (typeof value === 'string') return value
-  if (typeof value === 'number') return value.toString()
+const toOptionalBigInt = (value: unknown): bigint | undefined => toBigIntOrNull(value) ?? undefined
 
-  return undefined
+/**
+ * Reads the transaction request back from the request as it was serialized
+ * for the UI, so it can be built into a transaction like the signers do it
+ */
+const toTxnRequest = (data: Record<string, unknown>): TxnRequest | null => {
+  const chainId = toBigIntOrNull(data.chainId)
+  const nonce = toBigIntOrNull(data.nonce)
+  const gasLimit = toBigIntOrNull(data.gasLimit)
+  if (chainId === null || nonce === null || gasLimit === null) return null
+  if (typeof data.data !== 'string') return null
+  if (data.to !== undefined && data.to !== null && typeof data.to !== 'string') return null
+
+  return {
+    to: typeof data.to === 'string' ? data.to : undefined,
+    value: toOptionalBigInt(data.value),
+    data: data.data,
+    chainId,
+    nonce: Number(nonce),
+    gasLimit,
+    gasPrice: toOptionalBigInt(data.gasPrice),
+    maxFeePerGas: toOptionalBigInt(data.maxFeePerGas),
+    maxPriorityFeePerGas: toOptionalBigInt(data.maxPriorityFeePerGas)
+  }
 }
 
 const stringify = (data: unknown): string => {
@@ -93,26 +115,13 @@ const getUnsignedTransactionHash = (data: Record<string, unknown>): string | nul
   // a hash built from it may not be what the device signs
   if (Object.keys(data).some((key) => !TRANSACTION_KEYS.includes(key))) return null
 
-  const nonce = toBigIntOrNull(data.nonce)
-  if (nonce === null) return null
+  const txnRequest = toTxnRequest(data)
+  if (!txnRequest) return null
 
   try {
-    // Built the same way the hardware wallet signers do it: a max fee per gas
-    // means an EIP-1559 transaction, otherwise it's a legacy one
-    const transaction = Transaction.from({
-      type: data.maxFeePerGas !== undefined && data.maxFeePerGas !== null ? 2 : 0,
-      to: toOptionalString(data.to),
-      value: toOptionalString(data.value),
-      data: toOptionalString(data.data),
-      chainId: toOptionalString(data.chainId),
-      nonce: Number(nonce),
-      gasLimit: toOptionalString(data.gasLimit),
-      gasPrice: toOptionalString(data.gasPrice),
-      maxFeePerGas: toOptionalString(data.maxFeePerGas),
-      maxPriorityFeePerGas: toOptionalString(data.maxPriorityFeePerGas)
-    })
-
-    return transaction.unsignedHash
+    // Built with the same helper the hardware wallet signers use, so the hash
+    // can't drift from what the device signs
+    return Transaction.from(getUnsignedTransaction(txnRequest)).unsignedHash
   } catch (error) {
     // The request has the shape of a transaction, so failing to serialize it is unexpected
     console.error('hardware wallet signing: could not serialize the transaction', error)

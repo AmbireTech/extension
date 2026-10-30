@@ -1,14 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { Suspense, useMemo } from 'react'
 import { View } from 'react-native'
 
-import type { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { SAFE_CALL_OPERATION, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
 import Text from '@common/components/Text'
-import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
+import useDecodedCallsByData from '@common/hooks/useDecodedCallsByData'
+import type { DecodedCallsByData } from '@common/hooks/useDecodedCallsByData'
 import {
   findHumanizedCall,
   getDecodedCallLines,
@@ -16,7 +15,7 @@ import {
   isEmptyCallData,
   RequestCall
 } from '@common/modules/hardware-wallets/utils/getRequestCalls'
-import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls'
+import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls/lazyCompactHumanizedCalls'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 
 import { MonoBox, MonoText, SectionHeader } from './DetailsPrimitives'
@@ -25,54 +24,6 @@ type Props = {
   signingRequest: HardwareWalletSigningRequest
   /** The calls as Ambire humanized them on the sign screen */
   humanization?: IrCall[]
-}
-
-/** Decoded calls by their call data. A call data that is still being decoded isn't in the map */
-type DecodedCallsByData = Map<string, DecodedCall | null>
-
-/**
- * Decodes the call datas with the function signatures the wallet has saved.
- * Nothing is fetched, so a call with a signature the wallet has never seen
- * stays undecoded.
- */
-const useDecodedCallsByData = (callDatas: string[]): DecodedCallsByData => {
-  const { dispatchAndWait } = useController('ContractInfoController')
-  const [decodedCallsByData, setDecodedCallsByData] = useState<DecodedCallsByData>(
-    () => new Map()
-  )
-
-  useEffect(() => {
-    const callDatasToDecode = [...new Set(callDatas)].filter((data) => !isEmptyCallData(data))
-    if (!callDatasToDecode.length) return undefined
-
-    let isCancelled = false
-
-    dispatchAndWait<'decodeCallsForUi', (DecodedCall | null)[]>({
-      type: 'method',
-      params: { method: 'decodeCallsForUi', args: [callDatasToDecode] }
-    })
-      .then((decodedCalls) => {
-        if (isCancelled) return
-
-        setDecodedCallsByData(
-          new Map(callDatasToDecode.map((data, index) => [data, decodedCalls[index] ?? null]))
-        )
-      })
-      .catch((error) => {
-        if (isCancelled) return
-
-        // The calls stay readable from the data above, so this is not worth interrupting the user over
-        console.error('hardware wallet signing: could not decode the calls', error)
-        captureException(error)
-        setDecodedCallsByData(new Map(callDatasToDecode.map((data) => [data, null])))
-      })
-
-    return () => {
-      isCancelled = true
-    }
-  }, [callDatas, dispatchAndWait])
-
-  return decodedCallsByData
 }
 
 const DecodedCallBody = ({
@@ -148,9 +99,11 @@ const CallCard = ({
         </Text>
       )}
       {!!humanizedCall && chainId !== null && (
-        <View style={spacings.mbTy}>
-          <CompactHumanizedCalls humanization={[humanizedCall]} chainId={chainId} />
-        </View>
+        <Suspense fallback={null}>
+          <View style={spacings.mbTy}>
+            <CompactHumanizedCalls humanization={[humanizedCall]} chainId={chainId} />
+          </View>
+        </Suspense>
       )}
       <MonoText>{`to: ${call.to ?? '-'}`}</MonoText>
       <MonoText>{`value: ${call.value.toString()}`}</MonoText>
@@ -169,7 +122,8 @@ const DecodedRequest = ({ signingRequest, humanization }: Props) => {
   const { t } = useTranslation()
   const requestCalls = useMemo(() => getRequestCalls(signingRequest), [signingRequest])
   const callDatas = useMemo(
-    () => requestCalls?.calls.map(({ data }) => data) ?? [],
+    () =>
+      (requestCalls?.calls ?? []).map(({ data }) => data).filter((data) => !isEmptyCallData(data)),
     [requestCalls]
   )
   const decodedCallsByData = useDecodedCallsByData(callDatas)
