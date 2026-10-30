@@ -1,6 +1,7 @@
-import { concat, keccak256, Transaction, ZeroAddress } from 'ethers'
+import { concat, Interface, keccak256, solidityPacked, Transaction, ZeroAddress } from 'ethers'
 
 import { multiSendAddr } from '@ambire-common/consts/safe'
+import { multiCallAbi } from '@ambire-common/libs/safe/helpers'
 
 import { getSigningRequestVerification } from './getSigningRequestVerification'
 
@@ -51,6 +52,25 @@ const getSafeTxRequest = (message: Record<string, unknown> = safeTxMessage) => (
     domainHash: DOMAIN_HASH,
     messageHash: MESSAGE_HASH
   }
+})
+
+const encodeBatch = (calls: { operation: number; to: string; data: string }[]) =>
+  new Interface(multiCallAbi).encodeFunctionData('multiSend', [
+    concat(
+      calls.map(({ operation, to, data }) =>
+        solidityPacked(
+          ['uint8', 'address', 'uint256', 'uint256', 'bytes'],
+          [operation, to, 0n, BigInt((data.length - 2) / 2), data]
+        )
+      )
+    )
+  ])
+
+const getBatchMessage = (calls: { operation: number; to: string; data: string }[]) => ({
+  ...safeTxMessage,
+  to: multiSendAddr,
+  data: encodeBatch(calls),
+  operation: 1
 })
 
 describe('getSigningRequestVerification', () => {
@@ -172,6 +192,39 @@ describe('getSigningRequestVerification', () => {
       )
 
       expect(result.safeTransactionChecks[0]?.isPassing).toBe(true)
+    })
+
+    test('a batch of normal calls adds no check for the calls inside it', () => {
+      const result = getSigningRequestVerification(
+        getSafeTxRequest(
+          getBatchMessage([
+            { operation: 0, to: TOKEN, data: TRANSFER_DATA },
+            { operation: 0, to: RECIPIENT, data: '0x' }
+          ])
+        )
+      )
+
+      expect(result.safeTransactionChecks.map(({ id, isPassing }) => [id, isPassing])).toEqual([
+        ['operation', true],
+        ['gas-refund', true]
+      ])
+    })
+
+    test('a delegate call inside the batch fails, even though the batch contract passes', () => {
+      const result = getSigningRequestVerification(
+        getSafeTxRequest(
+          getBatchMessage([
+            { operation: 0, to: TOKEN, data: TRANSFER_DATA },
+            { operation: 1, to: RECIPIENT, data: '0x' }
+          ])
+        )
+      )
+
+      expect(result.safeTransactionChecks.map(({ id, isPassing }) => [id, isPassing])).toEqual([
+        ['operation', true],
+        ['batch-operation', false],
+        ['gas-refund', true]
+      ])
     })
 
     test('a delegate call to any other contract fails', () => {

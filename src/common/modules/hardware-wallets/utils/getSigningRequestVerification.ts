@@ -4,6 +4,7 @@ import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAcco
 import { SAFE_CALL_OPERATION, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 
+import { getRequestCalls } from './getRequestCalls'
 import { isRecord, isSafeBatchContract, toBigIntOrNull } from './signingRequestData'
 
 /** A hash the user can rebuild from the request and compare with their device */
@@ -161,7 +162,18 @@ const getTransactionVerification = (
 const isEmptyAddress = (value: unknown) =>
   value === undefined || (typeof value === 'string' && value.toLowerCase() === ZeroAddress)
 
-const getSafeTransactionChecks = (message: Record<string, unknown>): SafeTransactionCheck[] => {
+/** Whether a transaction inside a Safe batch is a delegate call, which gets full control of the Safe */
+const hasDelegateCallInBatch = (signingRequest: HardwareWalletSigningRequest): boolean => {
+  const requestCalls = getRequestCalls(signingRequest)
+  if (requestCalls?.kind !== 'safe-transaction' || !requestCalls.isBatch) return false
+
+  return requestCalls.calls.some(({ operation }) => operation === SAFE_DELEGATE_CALL_OPERATION)
+}
+
+const getSafeTransactionChecks = (
+  message: Record<string, unknown>,
+  signingRequest: HardwareWalletSigningRequest
+): SafeTransactionCheck[] => {
   const checks: SafeTransactionCheck[] = []
   const operation = toBigIntOrNull(message.operation)
   const isBatchContract = isSafeBatchContract(message.to)
@@ -183,6 +195,17 @@ const getSafeTransactionChecks = (message: Record<string, unknown>): SafeTransac
     })
   } else {
     checks.push({ id: 'operation', label: 'operation has an unknown value', isPassing: false })
+  }
+
+  // The batch contract passing above doesn't cover what the batch runs, so a
+  // delegate call inside it is flagged on its own. A batch without one adds nothing
+  if (hasDelegateCallInBatch(signingRequest)) {
+    checks.push({
+      id: 'batch-operation',
+      label:
+        'operation 1 inside the batch: a transaction in it is a delegate call. It gets full control of the Safe.',
+      isPassing: false
+    })
   }
 
   const hasGasRefund =
@@ -207,7 +230,10 @@ const getSafeTransactionChecks = (message: Record<string, unknown>): SafeTransac
   return checks
 }
 
-const getTypedDataVerification = (data: unknown): SigningRequestVerification => {
+const getTypedDataVerification = (
+  signingRequest: HardwareWalletSigningRequest
+): SigningRequestVerification => {
+  const { data } = signingRequest
   const base: SigningRequestVerification = {
     requestKind: 'typed-data',
     hashes: [],
@@ -255,7 +281,9 @@ const getTypedDataVerification = (data: unknown): SigningRequestVerification => 
     ...base,
     hashes,
     safeHashFormula,
-    safeTransactionChecks: isSafeTransaction ? getSafeTransactionChecks(message) : [],
+    safeTransactionChecks: isSafeTransaction
+      ? getSafeTransactionChecks(message, signingRequest)
+      : [],
     // Only the typed data itself, so it can be pasted into a hashing tool as is
     requestJson: stringify(pickKeys(data, TYPED_DATA_KEYS))
   }
@@ -274,7 +302,7 @@ export const getSigningRequestVerification = (
   if (signingRequest.type === 'raw-transaction') {
     return getTransactionVerification(signingRequest.data, options)
   }
-  if (signingRequest.type === 'eip-712') return getTypedDataVerification(signingRequest.data)
+  if (signingRequest.type === 'eip-712') return getTypedDataVerification(signingRequest)
 
   return {
     requestKind: 'other',
