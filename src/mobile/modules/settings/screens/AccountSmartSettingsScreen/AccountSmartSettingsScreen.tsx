@@ -20,8 +20,8 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import { AMBIRE_SIGNER_APDUS } from '@common/modules/hardware-wallet/libs/ledgerAppInstall/artifacts'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import Step from '@common/modules/settings/components/AccountSmartSettingsStep'
 import useAccountSmartSettings, {
   SmartSettingsNetworkRow
@@ -30,12 +30,12 @@ import useAmbireSignerInstall from '@common/modules/settings/hooks/useAmbireSign
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { DeviceModelId } from '@ledgerhq/device-management-kit'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
-import { DeviceModelId } from '@ledgerhq/device-management-kit'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -382,11 +382,8 @@ const AccountSmartSettingsScreen = () => {
                       </Text>
                       <NetworkStatus row={row} />
                     </View>
-                    {/* The warning above explains why an unsupported Ledger has no buttons */}
-                    {row.isLoading && !isUnsupportedLedger && (
-                      <SkeletonLoader width={84} height={40} />
-                    )}
-                    {!row.isLoading && !isUnsupportedLedger && (
+                    {row.isLoading && <SkeletonLoader width={84} height={40} />}
+                    {!row.isLoading && (
                       <Button
                         type={row.delegatedContract ? 'danger' : 'success'}
                         size="small"
@@ -401,7 +398,10 @@ const AccountSmartSettingsScreen = () => {
                           }
                         ]}
                         textStyle={!row.delegatedContract && { color: theme.successText }}
-                        disabled={row.isEnableDisabled}
+                        // An unsupported Ledger can't sign either, as the warning above explains
+                        disabled={row.isEnableDisabled || isUnsupportedLedger}
+                        // Fainter than the default disabled look, so it clearly isn't an action
+                        disabledStyle={{ opacity: 0.4 }}
                         onPress={() => delegate(row.network.chainId)}
                         text={row.delegatedContract ? t('Revoke') : t('Enable')}
                       />
