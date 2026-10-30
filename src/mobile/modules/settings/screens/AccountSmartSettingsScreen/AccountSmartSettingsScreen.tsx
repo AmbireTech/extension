@@ -27,7 +27,7 @@ import useAccountSmartSettings, {
   SmartSettingsNetworkRow
 } from '@common/modules/settings/hooks/useAccountSmartSettings'
 import useAmbireSignerInstall from '@common/modules/settings/hooks/useAmbireSignerInstall'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -302,11 +302,19 @@ const AccountSmartSettingsScreen = () => {
                 style={spacings.mbMd}
                 customIcon={LedgerLetterIcon}
                 title={
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  // Wraps the badge under the title when both don't fit on one line
+                  <View
+                    style={[
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      flexbox.wrap,
+                      { columnGap: SPACING_TY, rowGap: SPACING_MI }
+                    ]}
+                  >
                     <Text fontSize={14} weight="semiBold">
                       {t('One more step for Ledger')}
                     </Text>
-                    <Badge type="warning" text={t('Experimental')} style={spacings.mlTy} />
+                    <Badge type="warning" text={t('Experimental')} />
                   </View>
                 }
                 text={t(
