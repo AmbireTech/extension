@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
@@ -26,6 +27,8 @@ type Props = {
     total: number
   } | null
   signingRequest?: HardwareWalletSigningRequest | null
+  /** The calls as Ambire humanized them on the sign screen */
+  humanization?: IrCall[]
   /**
    * Set when the request is larger than what some QR wallets can show or scan, so the user
    * is warned before scanning that the device may reject it.
@@ -48,6 +51,7 @@ const QrSignRequestScreen = ({
   urCborHex,
   transactionProgress = null,
   signingRequest = null,
+  humanization,
   isTooLargeForDevice = false
 }: Props) => {
   const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactLayout()
@@ -114,6 +118,7 @@ const QrSignRequestScreen = ({
         {!!signingRequest && (
           <SigningRequestDetails
             signingRequest={signingRequest}
+            humanization={humanization}
             style={
               withMobileLayout
                 ? [spacings.mtSm, { width: '100%' }]
