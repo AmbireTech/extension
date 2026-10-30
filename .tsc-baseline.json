@@ -538,12 +538,6 @@
       "count": 1,
       "message": "Object is possibly 'undefined'."
     },
-    "023dcf94cdf7b23da92b2ef5c21f74d43a074e07": {
-      "file": "src/web/modules/settings/screens/AccountsSettingsScreen/AccountsSettingsScreen.tsx",
-      "code": "TS2322",
-      "count": 1,
-      "message": "Type '(item: AccountInterface, index: number, isDragging: boolean, listeners: any, attributes: any) => React.JSX.Element' is not assignable to type 'ListRenderItem<any> & SectionListRenderItem<any, any> & ((item: any, index: number, isDragging: boolean, listeners: any, attributes: any) => ReactElement<...> | null)'."
-    },
     "f6bff974665bae80f4f01072d1040151d7cafb22": {
       "file": "src/web/modules/settings/screens/TransactionHistorySettingsScreen/Tabs/Tabs.tsx",
       "code": "TS2532",
