@@ -358,9 +358,16 @@ const ManageRecoveryPhrase = ({
             value={deleteSeedIsConfirmed}
             onValueChange={() => setDeleteSeedIsConfirmed(!deleteSeedIsConfirmed)}
             uncheckedBorderColor={theme.secondaryText}
-            label={t(
-              `I acknowledge ${label} will no longer be available as a backup in the extension`
-            )}
+            label={
+              isMobile
+                ? t('I acknowledge {{label}} will no longer be available as a backup in the app', {
+                    label
+                  })
+                : t(
+                    'I acknowledge {{label}} will no longer be available as a backup in the extension',
+                    { label }
+                  )
+            }
             labelProps={{
               style: { color: theme.secondaryText, fontSize: 14 },
               weight: 'medium'
