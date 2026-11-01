@@ -16,6 +16,7 @@ import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useOneKey from '@common/modules/hardware-wallets/hooks/useOneKey'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
+import useSignAccountOpMethodDispatch from '@common/modules/sign-account-op/hooks/useSignAccountOpMethodDispatch'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
 import type { SignAccountOpUpdateProps } from '@ambire-common/controllers/signAccountOp/signAccountOp'
@@ -73,9 +74,7 @@ const useSign = ({
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { dispatch: mainControllerDispatch } = useController('MainController')
-  const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
-  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
-  const { dispatch: transferDispatch } = useController('TransferController')
+  const dispatchSignAccountOpMethod = useSignAccountOpMethodDispatch(updateType)
   const {
     state: { accountStates }
   } = useController('AccountsController')
@@ -221,11 +220,16 @@ const useSign = ({
   const signingKeyType = signAccountOpState?.accountOp?.signingKeyType
   const feePayerKeyType = signAccountOpState?.accountOp?.gasFeePayment?.paidByKeyType
   const canChangeSigningKey = !!signAccountOpState?.canChangeSigningKey
+  // Adding a Safe owner's signature before the threshold is reached sends nothing, so the
+  // fee payer's device isn't needed until the transaction is executed
+  const feePayerKeyTypeToSignWith = signAccountOpState?.isCollectingSafeSignatureOnly
+    ? null
+    : feePayerKeyType
 
   const getIsKeyTypeInvolved = useCallback(
     (keyType: Key['type']) => {
       // if we're broadcasting with this key type, return true
-      if (feePayerKeyType === keyType) return true
+      if (feePayerKeyTypeToSignWith === keyType) return true
 
       // if the account is not a Safe, check the txn signer
       if (!signAccountOpState?.account.safeCreation) return signingKeyType === keyType
@@ -237,7 +241,7 @@ const useSign = ({
       signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signers,
       signingKeyType,
-      feePayerKeyType
+      feePayerKeyTypeToSignWith
     ]
   )
 
@@ -307,37 +311,10 @@ const useSign = ({
     })
   }, [mainControllerDispatch, signAccountOpState, updateType])
 
-  const dismissGasFeeChangedConfirmation = useCallback(() => {
-    if (updateType === 'Swap&Bridge') {
-      swapAndBridgeDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['dismissGasFeeChangedConfirmation', []]
-        }
-      })
-      return
-    }
-
-    if (updateType === 'Transfer&TopUp') {
-      transferDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['dismissGasFeeChangedConfirmation', []]
-        }
-      })
-      return
-    }
-
-    signAccountOpDispatch({
-      type: 'method',
-      params: {
-        method: 'dismissGasFeeChangedConfirmation',
-        args: []
-      }
-    })
-  }, [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType])
+  const dismissGasFeeChangedConfirmation = useCallback(
+    () => dispatchSignAccountOpMethod('dismissGasFeeChangedConfirmation', []),
+    [dispatchSignAccountOpMethod]
+  )
 
   const handleDismissGasFeeUpdate = useCallback(() => {
     dismissGasFeeChangedConfirmation()
@@ -411,9 +388,12 @@ const useSign = ({
       const chosenKeyType = _chosenSigningKeyTypes?.[0]
       const effectiveSigningKeyType = chosenKeyType ?? signAccountOpState?.accountOp.signingKeyType
       // The fee payer follows the signing key only when the just-chosen key pays the fee
-      // (see update() in SignAccountOpController)
+      // (see update() in SignAccountOpController). Stays null while only collecting a Safe
+      // owner's signature, because the fee payer's device isn't needed then
       const effectiveFeePayerKeyType =
-        chosenKeyType && isFeePayerSameAsSigner ? chosenKeyType : feePayerKeyType
+        chosenKeyType && isFeePayerSameAsSigner && feePayerKeyTypeToSignWith
+          ? chosenKeyType
+          : feePayerKeyTypeToSignWith
 
       const isExternalQr = effectiveSigningKeyType === 'qr' || effectiveFeePayerKeyType === 'qr'
       const getIsKeyTypeInvolvedInTheJustChosenKeys = (
@@ -477,6 +457,7 @@ const useSign = ({
       signAccountOpState?.accountOp.signingKeyType,
       warningToPromptBeforeSign,
       feePayerKeyType,
+      feePayerKeyTypeToSignWith,
       isAtLeastOneOfTheKeysInvolvedLedger,
       isLedgerConnected,
       isAtLeastOneOfTheKeysInvolvedOneKey,
@@ -722,6 +703,7 @@ const useSign = ({
   const isSpeedUpTransaction = !!signAccountOpState?.accountOp.meta?.speedUp?.enabled
   const isCancelTransaction =
     !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
+  const isReplacingPendingAccountOp = !!signAccountOpState?.earlierPendingAccountOp?.isReplacing
 
   const primaryButtonText = useMemo(() => {
     // Replaces Sign, Execute and Begin signing, so it's clear the pending transaction gets replaced.
@@ -730,6 +712,7 @@ const useSign = ({
       return isSignLoading ? t('Canceling...') : t('Cancel transaction')
     if (isSpeedUpTransaction && !isCancelTransaction)
       return isSignLoading ? t('Speeding up...') : t('Speed up')
+    if (isReplacingPendingAccountOp) return isSignLoading ? t('Replacing...') : t('Replace')
 
     let buttonLabelType: ButtonMode =
       updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
@@ -754,6 +737,7 @@ const useSign = ({
   }, [
     isSpeedUpTransaction,
     isCancelTransaction,
+    isReplacingPendingAccountOp,
     isAtLeastOneOfTheKeysInvolvedExternal,
     isSignLoading,
     t,

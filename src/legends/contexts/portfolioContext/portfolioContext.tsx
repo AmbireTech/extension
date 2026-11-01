@@ -12,6 +12,7 @@ import {
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { calculateRewardsStats } from '@ambire-common/utils/rewards'
 import { storage } from '@common/services/storage'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 import { LEGENDS_SUPPORTED_NETWORKS_BY_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
@@ -133,7 +134,7 @@ const PortfolioProvider: React.FC<any> = ({ children }) => {
     }
     try {
       setIsLoadingPortfolioProjectionData(true)
-      const additionalPortfolioResponse = await fetch(
+      const additionalPortfolioResponse = await fetchWithRelayerCustomHeaders(
         `${RELAYER_URL}/v2/identity/${connectedAccount}/portfolio-additional`
       )
 
@@ -274,7 +275,7 @@ const PortfolioProvider: React.FC<any> = ({ children }) => {
   const fetchWalletTokenInfo = useCallback(async () => {
     try {
       setIsLoadingWalletTokenInfo(true)
-      const response = await fetch(`${RELAYER_URL}/wallet-token/info`)
+      const response = await fetchWithRelayerCustomHeaders(`${RELAYER_URL}/wallet-token/info`)
       if (!response.ok) throw new Error('Failed to fetch wallet token info')
       const data = await response.json()
       setWalletTokenInfo(data)

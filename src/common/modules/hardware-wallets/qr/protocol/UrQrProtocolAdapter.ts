@@ -1,10 +1,17 @@
-import { hexlify } from 'ethers'
+import { computeAddress, hexlify } from 'ethers'
 import { stringify as uuidStringify, v4 as uuidv4 } from 'uuid'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
-import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq/bc-ur-registry-eth'
+import {
+  CryptoAccount,
+  CryptoHDKey,
+  DataType,
+  decodeToDataItem,
+  ETHSignature,
+  EthSignRequest
+} from '@keystonehq/bc-ur-registry-eth'
 
 import {
   QrProtocolAdapter,
@@ -18,6 +25,34 @@ import {
   normalizeOriginHdPath,
   toDecimalUintFields
 } from '../utils'
+import { ParsedQrAccount } from '@ambire-common/interfaces/keystore'
+
+const DEFAULT_DEVICE_MODEL = 'QR Hardware'
+const UNSUPPORTED_ACCOUNT_PAYLOAD_MSG =
+  "This QR code doesn't contain accounts Ambire can import. Please scan the QR code your hardware wallet shows for connecting a software wallet."
+const UNREADABLE_ACCOUNT_PAYLOAD_MSG =
+  "Ambire couldn't read the accounts in this QR code. Please scan it again, and make sure it's the QR code your hardware wallet shows for connecting a software wallet."
+
+/** Keys of the CBOR maps the account exports are encoded in, as the UR registry defines them. */
+const CRYPTO_HDKEY_KEY_DATA_FIELD = 3
+const CRYPTO_ACCOUNT_OUTPUT_DESCRIPTORS_FIELD = 2
+
+/**
+ * Which UR type an account export is: a single extended public key (`crypto-hdkey`, which
+ * the standard and Ledger Legacy paths are exported as) or a list of separate accounts
+ * (`crypto-account`, which Ledger Live is exported as). The scanner hands over the CBOR
+ * payload without its type, so it is told by the fields each type requires.
+ */
+function getAccountPayloadType(cbor: Buffer): 'crypto-hdkey' | 'crypto-account' | null {
+  // Both exports are CBOR maps, but a scan can hold any other CBOR value too
+  const fields: Record<number, unknown> | null = decodeToDataItem(cbor).getData()
+  if (!fields || typeof fields !== 'object' || Array.isArray(fields)) return null
+
+  if (Buffer.isBuffer(fields[CRYPTO_HDKEY_KEY_DATA_FIELD])) return 'crypto-hdkey'
+  if (Array.isArray(fields[CRYPTO_ACCOUNT_OUTPUT_DESCRIPTORS_FIELD])) return 'crypto-account'
+
+  return null
+}
 
 function normalizeTypedDataForQr(
   typedData: TypedMessageUserRequest['meta']['params']
@@ -299,48 +334,92 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
     }
   }
 
-  async parseAccountPayload(payload: string | Uint8Array) {
+  async parseAccountPayload(payload: string | Uint8Array): Promise<ParsedQrAccount> {
     try {
       const cbor =
         typeof payload === 'string'
           ? Buffer.from(stripHexPrefix(payload), 'hex')
           : Buffer.from(payload)
 
-      const hdKey = CryptoHDKey.fromCBOR(cbor)
-      const parentFingerprintHex = hdKey.getParentFingerprint().toString('hex')
-      const origin = hdKey.getOrigin()
-      const originPath = origin?.getPath?.()
-      const normalizedOriginPath = normalizeOriginHdPath(originPath)
-      const xpub = hdKey.getBip32Key()
-      if (!xpub) throw new Error('Missing BIP32 key in UR payload')
-      const masterFingerprint =
-        origin?.getSourceFingerprint?.()?.toString('hex') || parentFingerprintHex
+      const payloadType = getAccountPayloadType(cbor)
 
-      const deviceModel = hdKey.getName?.() || 'QR Hardware'
-      const deviceId = `${masterFingerprint || 'unknown'}`
-      // Says where the wallet puts its addresses below the exported key, which is the
-      // only thing telling a standard export apart from a Ledger Legacy one when both
-      // are exported from the same account-level path.
-      const childrenPath = hdKey.getChildren?.()?.getPath?.()
+      if (payloadType === 'crypto-account') return this.#parseCryptoAccountPayload(cbor)
+      if (payloadType === 'crypto-hdkey') return this.#parseCryptoHdKeyPayload(cbor)
 
-      return {
-        deviceModel,
-        deviceId,
-        masterFingerprint,
-        hdPath: normalizedOriginPath,
-        childrenPath,
-        accounts: [
-          {
-            xpub,
-            index: 0,
-            hdPath: normalizedOriginPath
-          }
-        ]
-      }
+      throw new ExternalSignerError(UNSUPPORTED_ACCOUNT_PAYLOAD_MSG)
     } catch (e: any) {
-      throw new ExternalSignerError(e?.message || 'Failed to parse UR account payload', {
+      if (e instanceof ExternalSignerError) throw e
+
+      const error = new ExternalSignerError(UNREADABLE_ACCOUNT_PAYLOAD_MSG, {
         sendCrashReport: true
       })
+      // Keeps the reason the scan could not be read for the crash report
+      error.cause = e
+      throw error
+    }
+  }
+
+  /**
+   * An export of separate accounts, each with its own public key. Wallets export these for
+   * the paths a single extended public key cannot derive, like Ledger Live, whose account
+   * index is hardened. Their addresses are taken from the keys as they are.
+   */
+  #parseCryptoAccountPayload(cbor: Buffer): ParsedQrAccount {
+    const cryptoAccount = CryptoAccount.fromCBOR(cbor)
+    const hdKeys = cryptoAccount
+      .getOutputDescriptors()
+      .flatMap((outputDescriptor) => outputDescriptor.getHDKey() ?? [])
+
+    if (!hdKeys.length) {
+      throw new ExternalSignerError('No accounts were found in the scanned QR code.')
+    }
+
+    const masterFingerprint = cryptoAccount.getMasterFingerprint().toString('hex')
+
+    return {
+      deviceModel: hdKeys[0]?.getName() || DEFAULT_DEVICE_MODEL,
+      deviceId: masterFingerprint,
+      masterFingerprint,
+      accounts: hdKeys.map((hdKey) => ({
+        addr: computeAddress(hexlify(hdKey.getKey())),
+        hdPath: normalizeOriginHdPath(hdKey.getOrigin()?.getPath())
+      }))
+    }
+  }
+
+  /** An export of one extended public key, which all the addresses get derived from. */
+  #parseCryptoHdKeyPayload(cbor: Buffer): ParsedQrAccount {
+    const hdKey = CryptoHDKey.fromCBOR(cbor)
+    // Optional in the export - the source fingerprint below is what gets used when present
+    const parentFingerprintHex = hdKey.getParentFingerprint()?.toString('hex')
+    const origin = hdKey.getOrigin()
+    const originPath = origin?.getPath?.()
+    const normalizedOriginPath = normalizeOriginHdPath(originPath)
+    const xpub = hdKey.getBip32Key()
+    if (!xpub) throw new Error('Missing BIP32 key in UR payload')
+    const masterFingerprint =
+      origin?.getSourceFingerprint?.()?.toString('hex') || parentFingerprintHex
+
+    const deviceModel = hdKey.getName?.() || DEFAULT_DEVICE_MODEL
+    const deviceId = `${masterFingerprint || 'unknown'}`
+    // Says where the wallet puts its addresses below the exported key, which is the
+    // only thing telling a standard export apart from a Ledger Legacy one when both
+    // are exported from the same account-level path.
+    const childrenPath = hdKey.getChildren?.()?.getPath?.()
+
+    return {
+      deviceModel,
+      deviceId,
+      masterFingerprint,
+      hdPath: normalizedOriginPath,
+      childrenPath,
+      accounts: [
+        {
+          xpub,
+          index: 0,
+          hdPath: normalizedOriginPath
+        }
+      ]
     }
   }
 }

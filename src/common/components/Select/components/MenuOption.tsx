@@ -117,7 +117,7 @@ const MenuOption = React.memo(
               backgroundColor: theme.secondaryBackground
             },
           // @ts-ignore
-          disabled && { opacity: 0.6, cursor: 'not-allowed' }
+          disabled && !item.keepEnabledLook && { opacity: 0.6, cursor: 'not-allowed' }
         ]}
         onHoverIn={handleHoverIn}
         onHoverOut={onHoverOut}
