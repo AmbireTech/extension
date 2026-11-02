@@ -108,13 +108,9 @@ const AmountInput = ({
           {value || '0'}
         </RNText>
       </View>
+      {/* Centred on the value as is - the web's 1px lift (styles.fiatSign) puts it 1pt high here */}
       {type === 'fiat' && (
-        <Text
-          fontSize={fontSize}
-          weight="medium"
-          appearance="secondaryText"
-          style={styles.fiatSign}
-        >
+        <Text fontSize={fontSize} weight="medium" appearance="secondaryText">
           $
         </Text>
       )}
