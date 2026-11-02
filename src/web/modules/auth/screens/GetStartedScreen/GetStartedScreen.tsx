@@ -5,7 +5,6 @@ import { useModalize } from 'react-native-modalize'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -16,8 +15,7 @@ import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useGetStarted from '@common/modules/auth/hooks/useGetStarted'
-import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -35,7 +33,6 @@ const GetStartedScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { handleAuthButtonPress, isCreatingNewAccount } = useGetStarted()
-  const { goToNextRoute } = useOnboardingNavigation()
 
   const {
     ref: customizeSheetRef,
@@ -72,7 +69,9 @@ const GetStartedScreen = () => {
                 </Text>
               </Pressable>
             </View>
-            <View style={[flexbox.justifyCenter, flexbox.alignCenter]}>
+            {/* The space below the header is split evenly between the logo and the buttons,
+            each centered in its half */}
+            <View style={[flexbox.flex1, flexbox.justifyCenter, flexbox.alignCenter]}>
               <AmbireLogoWithBackgroundAndLogotype />
               <Text style={[spacings.mtLg, text.center]} weight="medium" appearance="secondaryText">
                 {t('The Web3 wallet that makes self-custody easy and secure.')}
@@ -94,6 +93,7 @@ const GetStartedScreen = () => {
                 type="tertiary"
                 text={t('Import existing account')}
                 onPress={() => handleAuthButtonPress('import-existing-account')}
+                disabled={isCreatingNewAccount}
                 childrenPosition="left"
                 hasBottomSpacing={false}
               >
@@ -105,17 +105,6 @@ const GetStartedScreen = () => {
                 />
               </Button>
             </View>
-            {/* Set apart from the two buttons above, as this one is for the users who
-            already have accounts on the Ambire mobile app */}
-            <Button
-              testID="already-an-ambire-user-button"
-              type="outline"
-              hasBottomSpacing={false}
-              onPress={() => goToNextRoute(WEB_ROUTES.importFromMobile)}
-              text={t('Already an Ambire user')}
-            >
-              <RightArrowIcon color={theme.primaryText} style={spacings.mlTy} />
-            </Button>
           </View>
         </Panel>
       </TabLayoutWrapperMainContent>

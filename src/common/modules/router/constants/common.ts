@@ -56,7 +56,8 @@ const MOBILE_ROUTES = {
   dappWebView: 'explore/webview',
   qrReader: 'qr-reader',
   migrationOnboarding: 'migration-onboarding',
-  importFromExtension: 'import-from-extension'
+  importFromExtension: 'import-from-extension',
+  accountSmartSettings: 'settings/accounts/smart-settings'
 }
 
 const WEB_ROUTES = {

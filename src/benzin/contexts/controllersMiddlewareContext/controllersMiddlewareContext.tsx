@@ -16,6 +16,7 @@ import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 
 import type { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
@@ -95,14 +96,14 @@ export const ControllersMiddlewareProvider: React.FC<{
         providers: ctrls.ProvidersController,
         callRelayer: relayerCall.bind({
           url: RELAYER_URL,
-          fetch: window.fetch.bind(window) as any
+          fetch: fetchWithRelayerCustomHeaders as any
         }),
         ui: uiCtrl
       })
 
       ctrls.ContractNamesController = new ContractNamesController({
         eventEmitterRegistry: eventEmitterRegistry.current,
-        fetch: window.fetch.bind(window) as any
+        fetch: fetchWithRelayerCustomHeaders as any
       })
 
       return ctrls

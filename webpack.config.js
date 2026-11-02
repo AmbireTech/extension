@@ -3,11 +3,15 @@ const { isExtension, isAmbireExplorer, isLegends } = require('./webpack/env')
 const buildExtension = require('./webpack/extension')
 const buildBenzin = require('./webpack/benzin')
 const buildLegends = require('./webpack/legends')
+const { validateRelayerCustomHeaders } = require('./scripts/validateEnv')
 
 // Expo's CLI (expo start --web / expo export:web) loads this file as its webpack
 // config. It builds the shared base config, then delegates to the per-environment
 // module selected by WEBPACK_BUILD_OUTPUT_PATH (see ./webpack/env.js).
 module.exports = async function (env, argv) {
+  // Runs on every build, because CI builds must never inline the custom headers.
+  validateRelayerCustomHeaders(process.env)
+
   const base = await createBaseConfig(env, argv)
 
   if (isExtension) return buildExtension(base, env)
