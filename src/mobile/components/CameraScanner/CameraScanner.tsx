@@ -101,6 +101,9 @@ const CameraScanner = ({
       <BlurView
         intensity={60}
         tint="dark"
+        // Android renders only a dark tint instead of a blur unless this experimental
+        // method is on
+        experimentalBlurMethod="dimezisBlurView"
         style={[StyleSheet.absoluteFill, { zIndex: 100 }]}
         pointerEvents="none"
       />
