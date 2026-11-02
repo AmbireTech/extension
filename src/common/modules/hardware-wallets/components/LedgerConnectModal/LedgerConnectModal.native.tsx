@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -30,9 +30,17 @@ type Props = {
   // Web-only affordance (HID re-authorize hint); accepted for a shared interface
   // with the web modal, unused on mobile.
   displayOptionToAuthorize?: boolean
+  // Picks a device to install an app on (it stays on its home screen) instead of
+  // connecting to the Ethereum app
+  onSelectDeviceForAppInstall?: (device: LedgerDiscoveredDevice) => void
 }
 
-const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect }: Props) => {
+const LedgerConnectModal = ({
+  isVisible,
+  handleClose = () => {},
+  handleOnConnect,
+  onSelectDeviceForAppInstall
+}: Props) => {
   const { ref, open, close } = useModalize()
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -66,6 +74,11 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
 
   const handleSelectDevice = useCallback(
     async (device: LedgerDiscoveredDevice) => {
+      if (onSelectDeviceForAppInstall) {
+        onSelectDeviceForAppInstall(device)
+        return
+      }
+
       setIsConnecting(true)
       try {
         await ledgerTransportService.connectAndProbe(device)
@@ -77,10 +90,22 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
         setIsConnecting(false)
       }
     },
-    [addToast, handleOnConnect, t]
+    [addToast, handleOnConnect, onSelectDeviceForAppInstall, t]
   )
 
   const isUsbTab = tab === 'usb'
+
+  const stepTwoText = useMemo(() => {
+    if (onSelectDeviceForAppInstall) {
+      return isUsbTab
+        ? t('2. Stay on its home screen and connect it with a USB cable.')
+        : t('2. Stay on its home screen, with no app open.')
+    }
+
+    return isUsbTab
+      ? t('2. Open the Ethereum app and connect it with a USB cable.')
+      : t('2. Open the Ethereum app on the device.')
+  }, [isUsbTab, onSelectDeviceForAppInstall, t])
 
   return (
     <BottomSheet
@@ -103,9 +128,7 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
         {t('1. Turn on your Ledger and unlock it with your PIN.')}
       </Text>
       <Text weight="regular" style={spacings.mbLg} fontSize={14}>
-        {isUsbTab
-          ? t('2. Open the Ethereum app and connect it with a USB cable.')
-          : t('2. Open the Ethereum app on the device.')}
+        {stepTwoText}
       </Text>
 
       {isAndroid && (
