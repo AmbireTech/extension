@@ -118,6 +118,10 @@ const composeAssetLists = <T extends PortfolioAsset>({
   const toDisplayedAssets = (storedAssets: StoredAsset[], areCustom: boolean) => {
     const assets = storedAssets
       .filter(({ chainId }) => {
+        // Records whose networkId was never migrated to a chainId (e.g. their network was
+        // removed before the migration) have none. The portfolio ignores them, so they are
+        // not listed either, as the rows can't be displayed without a network.
+        if (chainId === undefined) return false
         if (networkFilter === ALL_NETWORKS_FILTER) return true
 
         return networks.find((n) => n.chainId === chainId)?.name === networkFilter

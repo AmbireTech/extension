@@ -28,6 +28,7 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import SettingsLink from '@common/modules/settings/components/SettingsLink'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -145,7 +146,7 @@ const OTHER_LINKS = [
 const Sidebar = ({ activeLink }: { activeLink?: string }) => {
   const { theme, styles } = useTheme(getStyles)
   const keystoreState = useController('KeystoreController').state
-  const { isReady: evIsReady, emailVaultStates } = useController('EmailVaultController').state
+  const { isReady: evIsReady, hasKeystoreRecovery } = useController('EmailVaultController').state
   const { state } = useRoute()
   const { navigate } = useNavigation()
   const [validBackRoute, setValidBackRoute] = useState<'dashboard' | 'transfer' | null>(null)
@@ -193,7 +194,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
           </View>
           {!!validBackRoute && (
             <Pressable
-              style={{ width: 56, height: 56, ...flexbox.center }}
+              style={{ width: BUTTON_HEIGHT, height: BUTTON_HEIGHT, ...flexbox.center }}
               onPress={() => {
                 navigate(WEB_ROUTES.dashboard)
               }}
@@ -206,10 +207,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
         </View>
         <ScrollableWrapper>
           {SETTINGS_LINKS.map((_link, i) => {
-            if (
-              (!evIsReady || !Object.keys(emailVaultStates?.email || {}).length) &&
-              _link.key === 'device-password-recovery'
-            )
+            if ((!evIsReady || !hasKeystoreRecovery) && _link.key === 'device-password-recovery')
               return null
             // If the KeyStore device password is not configured yet, redirect to DevicePassword->Set route under the hood,
             // instead of loading DevicePassword->Change route.

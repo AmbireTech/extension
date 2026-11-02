@@ -133,6 +133,8 @@ type Props = {
   sheetRef: RefObject<Modalize>
   /** When speeding up a transaction, the lowest fees (in wei) the network accepts as a replacement */
   speedUpMinFees?: { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint }
+  /** The pending transaction is being canceled rather than sped up */
+  isCancel?: boolean
 }
 
 const CustomGasPrice = ({
@@ -146,7 +148,8 @@ const CustomGasPrice = ({
   onSaveCustomGasPrices,
   selectedOption,
   sheetRef,
-  speedUpMinFees
+  speedUpMinFees,
+  isCancel
 }: Props) => {
   const { t } = useTranslation()
   const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
@@ -197,9 +200,11 @@ const CustomGasPrice = ({
         return t('The max priority fee cannot be higher than the max fee')
       }
       if (reason === 'belowSpeedUpMinimum' && speedUpMinFee !== undefined) {
-        return t('To speed up your transaction, enter at least {{minFee}} GWEI', {
-          minFee: formatUnits(speedUpMinFee, 'gwei')
-        })
+        const minFee = formatUnits(speedUpMinFee, 'gwei')
+
+        return isCancel
+          ? t('To cancel your transaction, enter at least {{minFee}} GWEI', { minFee })
+          : t('To speed up your transaction, enter at least {{minFee}} GWEI', { minFee })
       }
       if (reason === 'invalid') return invalidMessage
 
@@ -220,7 +225,7 @@ const CustomGasPrice = ({
       gas:
         !!customGasPriceErrors.gas && t('Enter a gas limit that is a whole number greater than 0')
     }
-  }, [customGasPriceErrors, speedUpMinFees, t])
+  }, [customGasPriceErrors, speedUpMinFees, isCancel, t])
 
   const saveCustomGasPrice = useCallback(() => {
     if (!selectedOption || !customGasPriceValues) return
