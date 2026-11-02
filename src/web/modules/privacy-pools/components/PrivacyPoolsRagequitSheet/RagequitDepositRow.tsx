@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo } from 'react'
-import { TextStyle, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { PrivacyPoolsRagequitDeposit } from '@ambire-common/interfaces/privacyPools'
@@ -9,9 +9,8 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
+
+import getStyles from './styles'
 
 /** A deposit as the Rage quit sheet lists it: with the wallet's account it came from, if any. */
 export type RagequitDepositView = PrivacyPoolsRagequitDeposit & {
@@ -20,18 +19,6 @@ export type RagequitDepositView = PrivacyPoolsRagequitDeposit & {
   isViewOnly: boolean
   /** What it gets back, formatted with the token's decimals and symbol. */
   amountFormatted: string
-}
-
-const ragequitButtonStyles: { container: ViewStyle; text: TextStyle } = {
-  container: { width: 116, height: 40, paddingHorizontal: SPACING },
-  text: { fontSize: 12, lineHeight: 24 }
-}
-
-/** The sides take the same share of the row, so the amount sits in its middle. */
-const columnStyles: { from: ViewStyle; amount: ViewStyle; action: ViewStyle } = {
-  from: { flex: 1, minWidth: 0 },
-  amount: { width: 100, alignItems: 'center' },
-  action: { flex: 1, alignItems: 'flex-end' }
 }
 
 /** One labelled value of the row, like "Amount: 50 USDT". */
@@ -64,7 +51,7 @@ const RagequitDepositRow: FC<{
   isDisabled: boolean
 }> = ({ deposit, onRagequit, isSubmitting, isDisabled }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { styles } = useTheme(getStyles)
   const blockedReason = useMemo(() => {
     if (!deposit.account) return t('Add this account to your wallet to take this deposit back.')
     if (deposit.isViewOnly) return t('Import the key of this account to take this deposit back.')
@@ -76,30 +63,15 @@ const RagequitDepositRow: FC<{
   const labelString = deposit.label.toString()
 
   return (
-    <View
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        spacings.phSm,
-        spacings.pvSm,
-        spacings.mbTy,
-        {
-          // The same space on both sides of the amount, so it stays centered
-          gap: SPACING_SM,
-          borderRadius: BORDER_RADIUS_PRIMARY,
-          backgroundColor: theme.secondaryBackground
-        }
-      ]}
-      testID={`privacy-pools-ragequit-deposit-${labelString}`}
-    >
+    <View style={styles.row} testID={`privacy-pools-ragequit-deposit-${labelString}`}>
       <Column
         label={t('From:')}
         value={deposit.account?.preferences.label || shortenAddress(deposit.depositorAddr, 13)}
-        style={columnStyles.from}
+        style={styles.fromColumn}
       />
-      <Column label={t('Amount:')} value={deposit.amountFormatted} style={columnStyles.amount} />
+      <Column label={t('Amount:')} value={deposit.amountFormatted} style={styles.amountColumn} />
       <View
-        style={columnStyles.action}
+        style={styles.actionColumn}
         dataSet={
           blockedReason
             ? createGlobalTooltipDataSet({ id: `ragequit-${labelString}`, content: blockedReason })
@@ -113,8 +85,8 @@ const RagequitDepositRow: FC<{
           text={t('Quit')}
           isLoading={isSubmitting}
           spinnerVariant="danger"
-          style={ragequitButtonStyles.container}
-          textStyle={ragequitButtonStyles.text}
+          style={styles.ragequitButton}
+          textStyle={styles.ragequitButtonText}
           disabled={!!blockedReason || isSubmitting || isDisabled}
           onPress={handleRagequit}
         />
