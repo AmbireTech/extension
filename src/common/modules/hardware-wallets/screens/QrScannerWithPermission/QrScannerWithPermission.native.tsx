@@ -160,7 +160,7 @@ const QrScannerWithPermission = ({
           {t('To scan a QR code, camera access needs to be enabled.')}
         </Text>
         <Button
-          type="tertiary"
+          type="secondary"
           text={canAskAgain ? t('Grant camera access') : t('Open settings')}
           onPress={() => (canAskAgain ? void requestPermission() : void Linking.openSettings())}
           hasBottomSpacing={false}
@@ -176,7 +176,7 @@ const QrScannerWithPermission = ({
           {errorMessage}
         </Text>
         <Button
-          type="tertiary"
+          type="secondary"
           text={t('Try again')}
           onPress={handleRetry}
           hasBottomSpacing={false}

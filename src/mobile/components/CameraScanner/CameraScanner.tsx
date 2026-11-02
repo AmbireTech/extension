@@ -2,7 +2,6 @@ import { BlurView } from 'expo-blur'
 import { CameraView } from 'expo-camera'
 import { memo, useCallback, useState } from 'react'
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
-import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
 import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
 import useTheme from '@common/hooks/useTheme'
@@ -10,9 +9,8 @@ import QrScanProgressBar from '@common/modules/hardware-wallets/components/QrSca
 import { getQrCodeCoverage } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import MaskedView from '@react-native-masked-view/masked-view'
 
-import getStyles, { CORNER_RADIUS, SCAN_FRAME_SIZE } from './styles'
+import getStyles, { SCAN_FRAME_SIZE } from './styles'
 
 import type { BarcodeScanningResult } from 'expo-camera'
 interface Props {
@@ -30,8 +28,8 @@ interface Props {
   progress?: number
 }
 
-// Reusable camera surface: renders the back-facing QR camera with a blurred
-// overlay that cuts out a rounded scan frame. Permission gating is the caller's
+// Reusable camera surface: renders the back-facing QR camera, blurred, with the
+// corners of the scan frame on top. Permission gating is the caller's
 // responsibility — mount this only once camera access is granted.
 const CameraScanner = ({
   onScan,
@@ -98,52 +96,14 @@ const CameraScanner = ({
         />
       )}
 
-      {/* Blur overlay with a rounded hole where the camera shows through */}
-      {containerSize && (
-        <MaskedView
-          style={[StyleSheet.absoluteFill, { zIndex: 100 }]}
-          maskElement={
-            <Svg
-              width={containerSize.width}
-              height={containerSize.height}
-              viewBox={`0 0 ${containerSize.width} ${containerSize.height}`}
-            >
-              <Defs>
-                <Mask id="hole">
-                  {/* White = visible (blur shows) */}
-                  <Rect
-                    x="0"
-                    y="0"
-                    width={containerSize.width}
-                    height={containerSize.height}
-                    fill="white"
-                  />
-                  {/* Black = hidden (hole where camera shows through) */}
-                  <Rect
-                    x={frameLeft}
-                    y={frameTop}
-                    width={frameSize}
-                    height={frameSize}
-                    rx={CORNER_RADIUS}
-                    ry={CORNER_RADIUS}
-                    fill="black"
-                  />
-                </Mask>
-              </Defs>
-              <Rect
-                x="0"
-                y="0"
-                width={containerSize.width}
-                height={containerSize.height}
-                fill="white"
-                mask="url(#hole)"
-              />
-            </Svg>
-          }
-        >
-          <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
-        </MaskedView>
-      )}
+      {/* Blurs the whole camera view. Only what is shown is blurred - the scanner reads the
+          frames straight from the camera */}
+      <BlurView
+        intensity={60}
+        tint="dark"
+        style={[StyleSheet.absoluteFill, { zIndex: 100 }]}
+        pointerEvents="none"
+      />
 
       <CameraView
         active={isFocused}

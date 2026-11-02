@@ -91,7 +91,7 @@ const QrSigningFlowScreen = ({
         <Button
           size="regular"
           hasBottomSpacing={false}
-          type="secondary"
+          type="tertiary"
           text={t('Back')}
           onPress={handleOnRejectPressed}
           style={[flexbox.flex1, spacings.mrSm]}
