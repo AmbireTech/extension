@@ -24,7 +24,9 @@ import TokenData from '@common/modules/token-details/components/TokenData'
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { privateValue } from '@common/utils/ui'
-import PrivacyPoolsPoolStats from '@web/modules/privacy-pools/components/PrivacyPoolsPoolStats'
+import PrivacyPoolsPoolStats, {
+  shouldShowPrivacyPoolsPoolStats
+} from '@web/modules/privacy-pools/components/PrivacyPoolsPoolStats'
 import PrivacyPoolsRagequitSheet from '@web/modules/privacy-pools/components/PrivacyPoolsRagequitSheet'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 
@@ -34,6 +36,8 @@ const selectSelectedType = (state: AllControllersMappingType['SelectedAccountCon
   state.selectedType
 const selectIsPrivacyModeEnabled = (state: AllControllersMappingType['WalletStateController']) =>
   state.isPrivacyModeEnabled
+const selectPoolStats = (state: AllControllersMappingType['PrivacyPoolsController']) =>
+  state.poolStats
 
 /**
  * A Privacy Pools token's details, laid out like the regular token details: the balance, and only
@@ -54,6 +58,7 @@ const PrivacyPoolsTokenDetailsScreen = () => {
     'WalletStateController',
     selectIsPrivacyModeEnabled
   )
+  const { state: poolStats } = useController('PrivacyPoolsController', selectPoolStats)
   const { balances, balancesState, getTokenPrice } = usePrivacyPools()
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
   // Reserves as much scroll space as the floating footer takes, as on the regular token details
@@ -79,6 +84,10 @@ const PrivacyPoolsTokenDetailsScreen = () => {
   useEffect(() => {
     if (shouldLeave) navigate(ROUTES.dashboard)
   }, [navigate, shouldLeave])
+
+  const chainPoolStats = poolStats?.[chainId]
+  // Read here, as `TokenData` spaces its last row by whether it is given anything to show under it
+  const shouldShowPoolStats = shouldShowPrivacyPoolsPoolStats(chainPoolStats, tokenAddress)
 
   const price = balance ? getTokenPrice(balance.chainId, balance.tokenAddress) : null
 
@@ -174,13 +183,15 @@ const PrivacyPoolsTokenDetailsScreen = () => {
           change24hFormatted={formatted.change24hFormatted}
         />
         <TokenData token={token} hideContractAddress>
-          <PrivacyPoolsPoolStats
-            chainId={balance.chainId}
-            tokenAddress={balance.tokenAddress}
-            symbol={balance.symbol}
-            decimals={balance.decimals}
-            price={price}
-          />
+          {shouldShowPoolStats && (
+            <PrivacyPoolsPoolStats
+              chainPoolStats={chainPoolStats}
+              tokenAddress={balance.tokenAddress}
+              symbol={balance.symbol}
+              decimals={balance.decimals}
+              price={price}
+            />
+          )}
         </TokenData>
       </ScrollableWrapper>
       <FooterGlassView
