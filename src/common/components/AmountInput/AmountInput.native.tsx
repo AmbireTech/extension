@@ -108,9 +108,15 @@ const AmountInput = ({
           {value || '0'}
         </RNText>
       </View>
-      {/* Centred on the value as is - the web's 1px lift (styles.fiatSign) puts it 1pt high here */}
+      {/* Centred as is - the web's 1px lift (styles.fiatSign) puts it 1pt high. Above the input (whose
+          container is at zIndex 10), on the panel's background, to cover a too long value's digits */}
       {type === 'fiat' && (
-        <Text fontSize={fontSize} weight="medium" appearance="secondaryText">
+        <Text
+          fontSize={fontSize}
+          weight="medium"
+          appearance="secondaryText"
+          style={{ zIndex: 11, backgroundColor: theme.secondaryBackground }}
+        >
           $
         </Text>
       )}
