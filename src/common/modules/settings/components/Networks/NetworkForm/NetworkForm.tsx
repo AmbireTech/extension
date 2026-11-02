@@ -45,6 +45,7 @@ import { setStringAsync } from '@common/utils/clipboard'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type RpcSelectorItemType = {
   index: number
   url: string
@@ -182,6 +183,9 @@ const COLLAPSED_RPC_URLS_COUNT = 4
 // and `initial` would show the "?" rows instead of spinners.
 const RPC_CHECK_IN_PROGRESS_FEATURES: NetworkFeature[] = getLoadingFeatures()
 
+const selectIsTokenPricesEnabled = (state: AllControllersMappingType['FeatureFlagsController']) =>
+  state.flags?.tokenPrices !== false
+
 /**
  * Reads the chain id the RPC endpoint reports. Throws when the endpoint is unreachable
  * or is not a JSON-RPC node.
@@ -213,6 +217,10 @@ const NetworkForm = ({
     state: { allNetworks, networkToAddOrUpdate, statuses },
     dispatch: networksDispatch
   } = useController('NetworksController')
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectIsTokenPricesEnabled
+  )
   // Which kind of RPC check is running, if any. A 'change' run is about to replace the
   // rendered network info, an 'add' run only validates a URL and leaves it alone.
   const [pendingRpcCheckType, setPendingRpcCheckType] = useState<'add' | 'change' | null>(null)
@@ -298,13 +306,14 @@ const NetworkForm = ({
       return RPC_CHECK_IN_PROGRESS_FEATURES
 
     return networkToAddOrUpdate?.info
-      ? getFeatures(networkToAddOrUpdate?.info, selectedNetwork)
+      ? getFeatures(networkToAddOrUpdate?.info, selectedNetwork, isTokenPricesEnabled)
       : errors.chainId
-        ? getFeatures(undefined, selectedNetwork)
-        : selectedNetwork?.features || getFeatures(undefined, selectedNetwork)
+        ? getFeatures(undefined, selectedNetwork, isTokenPricesEnabled)
+        : selectedNetwork?.features || getFeatures(undefined, selectedNetwork, isTokenPricesEnabled)
   }, [
     errors.chainId,
     isAwaitingNetworkInfo,
+    isTokenPricesEnabled,
     pendingRpcCheckType,
     networkToAddOrUpdate?.info,
     selectedNetwork

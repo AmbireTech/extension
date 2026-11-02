@@ -10,8 +10,12 @@ import {
 import useController from '@common/hooks/useController'
 import validateRequestParams from '@common/modules/action-requests/utils/validateRequestParams'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 // Initial state
 const NETWORK_INFO_PENDING_FEATURES: NetworkFeature[] = getLoadingFeatures()
+
+const selectIsTokenPricesEnabled = (state: AllControllersMappingType['FeatureFlagsController']) =>
+  state.flags?.tokenPrices !== false
 
 const useAddOrUpdateNetwork = () => {
   const { t } = useTranslation()
@@ -23,6 +27,10 @@ const useAddOrUpdateNetwork = () => {
     state: { statuses, networkToAddOrUpdate, disabledNetworks, networks },
     dispatch: networksDispatch
   } = useController('NetworksController')
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectIsTokenPricesEnabled
+  )
 
   const [rpcUrlIndex, setRpcUrlIndex] = useState<number>(0)
   const [existingNetwork, setExistingNetwork] = useState<Network | null | undefined>(undefined)
@@ -144,13 +152,14 @@ const useAddOrUpdateNetwork = () => {
           isOptimistic: !!existingNetwork.isOptimistic,
           flagged: !!existingNetwork.flagged
         },
-        existingNetwork
+        existingNetwork,
+        isTokenPricesEnabled
       )
 
     if (!networkInfo) return NETWORK_INFO_PENDING_FEATURES
 
-    return getFeatures(networkInfo, undefined)
-  }, [existingNetwork, networkInfo])
+    return getFeatures(networkInfo, undefined, isTokenPricesEnabled)
+  }, [existingNetwork, networkInfo, isTokenPricesEnabled])
 
   const isCheckingNetwork = useMemo(
     () => !existingNetwork && isNetworkInfoPending(networkInfo),
