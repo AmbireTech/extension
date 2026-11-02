@@ -266,7 +266,12 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
   try {
     setCriticalControllers(config.criticalControllers)
 
-    const ledgerCtrl = new LedgerController()
+    const ledgerCtrl = new LedgerController({
+      // Ledger keys imported on mobile before the model was stored have it as 'unknown'
+      onKeyConfirmed: (addr, deviceModel) => {
+        void mainCtrl?.keystore.updateUnknownKeyDeviceModel({ addr, type: 'ledger', deviceModel })
+      }
+    })
     ledgerTransportService.setIsSigningReportAllowed(
       () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
     )
