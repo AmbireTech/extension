@@ -54,7 +54,13 @@ class TrezorController implements ExternalSignerController {
 
   async #init() {
     try {
-      await this.walletSDK.init({ manifest: TREZOR_CONNECT_MANIFEST, lazyLoad: true, popup: true })
+      await this.walletSDK.init({
+        manifest: TREZOR_CONNECT_MANIFEST,
+        lazyLoad: true,
+        // Prefer Suite from initialization; the SDK falls back to the popup if Suite is unavailable.
+        coreMode: 'suite-desktop',
+        popup: true
+      })
       this.isInitiated = true
     } catch (error) {
       console.error('TrezorController: failed to init the Trezor SDK', error)
