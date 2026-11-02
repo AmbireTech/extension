@@ -440,8 +440,7 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            // mainCtrl may not exist yet - WalletStateController is created and loads before it
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl?.name }
+            params: { errors: ctrl.emittedErrors, controller: ctrl.name }
           })
           reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')
