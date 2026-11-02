@@ -73,8 +73,27 @@ const DAppConnectBody: FC<{
   const impersonationWarning = useMemo(() => {
     if (!impersonation) return ''
 
-    const { appName, appDomain, reason } = impersonation
+    const { appName, appDomain, reason, isConnectedApp } = impersonation
     const params = { appName, appDomain }
+    if (isConnectedApp) {
+      if (reason === 'icon') {
+        return t(
+          "This site uses the logo of {{appName}}, but it isn't the {{appName}} website you connected to before ({{appDomain}}). Scam sites often copy apps people use - only connect if you are sure you are on the right website.",
+          params
+        )
+      }
+      if (reason === 'name') {
+        return t(
+          "This site calls itself {{appName}}, but it isn't the {{appName}} website you connected to before ({{appDomain}}). Scam sites often copy apps people use - only connect if you are sure you are on the right website.",
+          params
+        )
+      }
+
+      return t(
+        "This site's address looks like the {{appName}} website you connected to before ({{appDomain}}), but it is a different website. Scam sites often copy apps people use - only connect if you are sure you are on the right website.",
+        params
+      )
+    }
     if (reason === 'icon') {
       return t(
         "This site uses the logo of {{appName}}, but it isn't the official {{appName}} website ({{appDomain}}). Scam sites often copy well-known apps - only connect if you are sure you are on the right website.",

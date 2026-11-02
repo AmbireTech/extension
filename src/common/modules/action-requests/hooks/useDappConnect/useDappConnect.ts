@@ -25,6 +25,11 @@ const useDappConnect = () => {
   const { trustDapp, untrustDapp } = useTrustDapp()
 
   const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
+  const connectedApps = useMemo(
+    () =>
+      dappsState.dapps.filter((dapp) => dapp.isConnected).map(({ name, url }) => ({ name, url })),
+    [dappsState.dapps]
+  )
 
   // Both flags are only ever set on an app the hosting check flagged, so the suspicious-hosting
   // warning is the only thing they speak about.
@@ -47,9 +52,10 @@ const useDappConnect = () => {
       hostname: dappToConnect.id,
       name: dappToConnect.name,
       icon: dappToConnect.icon,
-      isInAppCatalog: !dappToConnect.isCustom
+      isInAppCatalog: !dappToConnect.isCustom,
+      connectedApps
     })
-  }, [dappToConnect])
+  }, [dappToConnect, connectedApps])
 
   const toggleTrust = useCallback(() => {
     if (!dappToConnect) return
