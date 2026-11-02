@@ -7,7 +7,6 @@ import Avatar from '@common/components/Avatar'
 import BadgeWithPreset from '@common/components/BadgeWithPreset'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAccountKeys from '@common/hooks/useAccountKeys'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -125,16 +124,12 @@ const AccountDataDetailed = () => {
         <View
           style={[flexbox.directionRow, flexbox.alignCenter, isNarrowWebLayout && { minWidth: 0 }]}
         >
-          {isNarrowWebLayout ? (
-            <AccountAddress
-              {...reverseLookup}
-              address={account.addr}
-              plainAddressMaxLength={16}
-              withCopy={false}
-            />
-          ) : (
-            <AccountAddress {...reverseLookup} address={account.addr} withCopy={isWeb} />
-          )}
+          <AccountAddress
+            {...reverseLookup}
+            address={account.addr}
+            plainAddressMaxLength={isNarrowWebLayout ? 16 : 42}
+            withCopy={false}
+          />
         </View>
       </View>
     </View>

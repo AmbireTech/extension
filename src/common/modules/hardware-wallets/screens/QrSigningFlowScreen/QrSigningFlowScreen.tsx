@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { QrRequest } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
@@ -13,7 +13,7 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
+import { QrSigningStep, QrSignRequest } from '@common/modules/hardware-wallets/qr/types'
 import QrSignRequestScreen from '@common/modules/hardware-wallets/screens/QrSignRequestScreen'
 import QrSignResponseScanner from '@common/modules/hardware-wallets/screens/QrSignResponseScanner'
 import spacings from '@common/styles/spacings'
@@ -25,9 +25,11 @@ const { isTab } = getUiType()
 type Props = {
   isVisible: boolean
   handleClose?: () => void
-  currentRequest: QrRequest | null
+  currentRequest: QrSignRequest | null
   signingStep: QrSigningStep
   signingRequest?: HardwareWalletSigningRequest | null
+  /** The calls as Ambire humanized them on the sign screen */
+  humanization?: IrCall[]
   transactionProgress?: {
     current: number
     total: number
@@ -44,6 +46,7 @@ const QrSigningFlowScreen = ({
   currentRequest,
   signingStep,
   signingRequest = null,
+  humanization,
   transactionProgress = null,
   onContinue,
   submitSignatureResponse,
@@ -165,6 +168,8 @@ const QrSigningFlowScreen = ({
           onReject={handleOnRejectPressed}
           transactionProgress={transactionProgress}
           signingRequest={signingRequest}
+          humanization={humanization}
+          isTooLargeForDevice={!!request.isTooLargeForDevice}
         />
       ) : step === 'scan-response' ? (
         <QrSignResponseScanner

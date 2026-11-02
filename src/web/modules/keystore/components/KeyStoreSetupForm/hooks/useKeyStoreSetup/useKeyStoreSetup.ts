@@ -19,7 +19,6 @@ const useKeyStoreSetup = () => {
     }
   })
 
-  const [biometricsEnabled, setBiometricsEnabled] = useState(false)
   const [isKeystoreReady, setKeystoreReady] = useState(false)
   const password = watch('password', '')
   const confirmPassword = watch('confirmPassword', '')
@@ -62,9 +61,7 @@ const useKeyStoreSetup = () => {
     password,
     confirmPassword,
     handleKeystoreSetup,
-    hasPasswordSecret: state.hasPasswordSecret,
-    setBiometricsEnabled,
-    biometricsEnabled
+    hasPasswordSecret: state.hasPasswordSecret
   }
 }
 

@@ -1,3 +1,9 @@
-#modalBackdrop {
-  backdrop-filter: blur(3px);
+/* Blurs the page instead of a backdrop-filter on the backdrop - lighter when a sheet's list scrolls, as the page
+   doesn't change. Fixes a visual bug: Chrome (GPU) sometimes dropped the whole sheet for a frame on scroll */
+[data-blurred-behind-sheets] {
+  transition: filter 250ms linear;
+}
+
+body:has(#modalBackdrop) [data-blurred-behind-sheets] {
+  filter: blur(3px);
 }

@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, ScrollView, View } from 'react-native'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Animated, ColorValue, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
-import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
@@ -12,20 +13,19 @@ import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
-import Button from '@common/components/Button'
+import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -37,7 +37,7 @@ import { isSafari } from '@web/constants/browserapi'
 import getStyles from './styles'
 
 export const CARD_WIDTH = 400
-const VISIBLE_BUTTONS_COUNT = 5
+const VISIBLE_BUTTONS_COUNT = 6
 const ICON_SLOT_SIZE = 24
 
 type ButtonType = {
@@ -49,20 +49,35 @@ type ButtonType = {
    * to match the ones that draw a circle inset in it. The slot keeps the labels aligned.
    */
   iconSize?: number
+  /** Overrides the icon color, e.g. for a brand mark */
+  iconColor?: ColorValue
 }
 
 const ImportExistingAccountSelectorScreen = () => {
-  const { theme, themeType } = useTheme(getStyles)
+  const { theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const wrapperRef = useRef<View | null>(null)
 
-  const { goToPrevRoute, goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
+  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
+  // Trezor and GridPlus connect from here, as their own windows ask for the device
+  const connectHardwareWallet = useCallback(
+    (
+      type:
+        | 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR'
+        | 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
+    ) =>
+      initAccountPicker({ type }).catch((error) => {
+        // The controller reports its own failures
+        console.error('Failed to set the account picker up for the hardware wallet', error)
+      }),
+    [initAccountPicker]
+  )
   const [showMore, setShowMore] = useState(false)
 
   const animatedHeight = useRef(new Animated.Value(0)).current
   const animatedOpacity = useRef(new Animated.Value(0)).current
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
   const [bindAnim, animStyle] = useMultiHover({
     values: [
       {
@@ -85,6 +100,16 @@ const ImportExistingAccountSelectorScreen = () => {
 
   const buttons: ButtonType[] = useMemo(
     () => [
+      {
+        // Accounts the user already has in the Ambire mobile app come over with a sync
+        title: 'Already an Ambire user',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.importFromMobile)
+        },
+        icon: AmbireLogoSquare,
+        // The full Ambire purple, not the logo's default lighter tint
+        iconColor: theme.primary
+      },
       {
         title: 'Private key',
         onPress: () => {
@@ -118,8 +143,7 @@ const ImportExistingAccountSelectorScreen = () => {
               { type: 'error' }
             )
           } else {
-            setTriggeredHwWalletFlow('trezor')
-            dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
+            void connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR')
           }
         },
         icon: TrezorBadgeIcon
@@ -141,8 +165,7 @@ const ImportExistingAccountSelectorScreen = () => {
       {
         title: 'Grid Plus',
         onPress: () => {
-          setTriggeredHwWalletFlow('lattice')
-          dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
+          void connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE')
         },
         icon: GridPlusIcon
       },
@@ -168,7 +191,7 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: ViewOnlyIcon
       }
     ],
-    [goToNextRoute, addToast, dispatch, t, setTriggeredHwWalletFlow]
+    [goToNextRoute, addToast, connectHardwareWallet, t, theme.primary]
   )
 
   useEffect(() => {
@@ -179,11 +202,45 @@ const ImportExistingAccountSelectorScreen = () => {
     }).start()
 
     Animated.timing(animatedHeight, {
-      toValue: showMore ? (buttons.length - VISIBLE_BUTTONS_COUNT) * 70 : 0,
+      toValue: showMore
+        ? (buttons.length - VISIBLE_BUTTONS_COUNT) * (BUTTON_HEIGHT + SPACING_SM)
+        : 0,
       duration: 300,
       useNativeDriver: false
     }).start()
   }, [animatedHeight, animatedOpacity, showMore, buttons.length])
+
+  const renderImportMethod = useCallback(
+    ({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE, iconColor }: ButtonType) => (
+      <Button
+        key={title}
+        type="tertiary"
+        onPress={onPress}
+        testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
+        childrenContainerStyle={{
+          ...flexbox.directionRow,
+          ...flexbox.alignCenter,
+          ...flexbox.justifySpaceBetween,
+          ...flexbox.flex1
+        }}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}>
+            <IconComponent
+              width={iconSize}
+              height={iconSize}
+              color={iconColor || theme.iconPrimary}
+            />
+          </View>
+          <Text style={spacings.mlSm} fontSize={16} weight="medium">
+            {t(title)}
+          </Text>
+        </View>
+        <RightArrowIcon color={theme.iconPrimary} />
+      </Button>
+    ),
+    [t, theme.iconPrimary]
+  )
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
@@ -197,78 +254,11 @@ const ImportExistingAccountSelectorScreen = () => {
         >
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
             <ScrollView contentContainerStyle={[flexbox.justifySpaceBetween]}>
-              {buttons
-                .slice(0, VISIBLE_BUTTONS_COUNT)
-                .map(({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE }) => (
-                  <Button
-                    key={title}
-                    type="tertiary"
-                    onPress={onPress}
-                    testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
-                    childrenContainerStyle={{
-                      ...flexbox.directionRow,
-                      ...flexbox.alignCenter,
-                      ...flexbox.justifySpaceBetween,
-                      ...flexbox.flex1
-                    }}
-                  >
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <View
-                        style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}
-                      >
-                        <IconComponent
-                          width={iconSize}
-                          height={iconSize}
-                          color={theme.iconPrimary}
-                        />
-                      </View>
-                      <Text style={spacings.mlSm} fontSize={16} weight="medium">
-                        {t(title)}
-                      </Text>
-                    </View>
-                    <RightArrowIcon color={theme.iconPrimary} />
-                  </Button>
-                ))}
+              {buttons.slice(0, VISIBLE_BUTTONS_COUNT).map(renderImportMethod)}
               <Animated.View
                 style={{ height: animatedHeight, opacity: animatedOpacity, overflow: 'hidden' }}
               >
-                {buttons
-                  .slice(VISIBLE_BUTTONS_COUNT)
-                  .map(({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE }) => (
-                    <Button
-                      key={title}
-                      type="tertiary"
-                      onPress={onPress}
-                      testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
-                      childrenContainerStyle={{
-                        ...flexbox.directionRow,
-                        ...flexbox.alignCenter,
-                        ...flexbox.justifySpaceBetween,
-                        ...flexbox.flex1
-                      }}
-                    >
-                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <View
-                          style={[
-                            flexbox.center,
-                            { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }
-                          ]}
-                        >
-                          <IconComponent
-                            width={iconSize}
-                            height={iconSize}
-                            color={theme.iconPrimary}
-                          />
-                        </View>
-                        <Text style={spacings.mlSm} fontSize={14} weight="medium">
-                          {t(title)}
-                        </Text>
-                      </View>
-                      <RightArrowIcon
-                        {...(themeType === THEME_TYPES.DARK ? { color: theme.primaryText } : {})}
-                      />
-                    </Button>
-                  ))}
+                {buttons.slice(VISIBLE_BUTTONS_COUNT).map(renderImportMethod)}
               </Animated.View>
             </ScrollView>
             {buttons.length > VISIBLE_BUTTONS_COUNT && (

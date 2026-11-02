@@ -16,6 +16,9 @@ import {
   Warning
 } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
+import { findPendingAccountOpById } from '@ambire-common/libs/accountOp/earlierPendingAccountOp'
+import { getReplacementAccountOp } from '@ambire-common/libs/accountOp/replacement'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { getMinReplacementFees } from '@ambire-common/libs/gasPrice/speedUp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
@@ -50,6 +53,7 @@ import PayOption from '@common/modules/sign-account-op/components/Estimation/com
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import SpeedUpFeeComparison from '@common/modules/sign-account-op/components/Estimation/components/SpeedUpFeeComparison'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
+import useSignAccountOpMethodDispatch from '@common/modules/sign-account-op/hooks/useSignAccountOpMethodDispatch'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -115,6 +119,8 @@ const FeeSpeedLabel = ({
   )
 }
 
+const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['ActivityController']) =>
+  state.broadcastedButNotConfirmed
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const Estimation = ({
@@ -130,11 +136,13 @@ const Estimation = ({
   isOneClick,
   isViewOnly
 }: Props) => {
-  const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
-  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
-  const { dispatch: transferDispatch } = useController('TransferController')
+  const dispatchSignAccountOpMethod = useSignAccountOpMethodDispatch(updateType)
   const { state } = useController('AddressBookController')
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: broadcastedButNotConfirmed } = useController(
+    'ActivityController',
+    selectBroadcastedButNotConfirmed
+  )
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const {
@@ -196,63 +204,14 @@ const Estimation = ({
   const [baselineFeeOption, setBaselineFeeOption] = useState<SelectValue['value'] | null>(null)
 
   const dispatchUpdate = useCallback<DispatchUpdate>(
-    (update) => {
-      if (updateType === 'Swap&Bridge') {
-        swapAndBridgeDispatch({
-          type: 'method',
-          params: {
-            method: 'callSignAccountOpMethod',
-            args: ['update', [update]]
-          }
-        })
-      } else if (updateType === 'Transfer&TopUp') {
-        transferDispatch({
-          type: 'method',
-          params: {
-            method: 'callSignAccountOpMethod',
-            args: ['update', [update]]
-          }
-        })
-      } else {
-        signAccountOpDispatch({
-          type: 'method',
-          params: {
-            method: 'update',
-            args: [update]
-          }
-        })
-      }
-    },
-    [swapAndBridgeDispatch, transferDispatch, signAccountOpDispatch, updateType]
+    (update) => dispatchSignAccountOpMethod('update', [update]),
+    [dispatchSignAccountOpMethod]
   )
 
-  const enableErc4337AndReestimate = useCallback(() => {
-    if (updateType === 'Swap&Bridge') {
-      swapAndBridgeDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['enableErc4337AndReestimate', []]
-        }
-      })
-    } else if (updateType === 'Transfer&TopUp') {
-      transferDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['enableErc4337AndReestimate', []]
-        }
-      })
-    } else {
-      signAccountOpDispatch({
-        type: 'method',
-        params: {
-          method: 'enableErc4337AndReestimate',
-          args: []
-        }
-      })
-    }
-  }, [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType])
+  const enableErc4337AndReestimate = useCallback(
+    () => dispatchSignAccountOpMethod('enableErc4337AndReestimate', []),
+    [dispatchSignAccountOpMethod]
+  )
 
   const dismissEnableErc4337Prompt = useCallback(() => {
     setIsEnableErc4337PromptDismissed(true)
@@ -566,11 +525,33 @@ const Estimation = ({
   }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts, isViewOnly])
 
   const speedUpMeta = signAccountOpState?.accountOp.meta?.speedUp
-  const speedUpMinFees = useMemo(() => {
-    if (!speedUpMeta?.enabled || !speedUpMeta.replacedFees) return undefined
+  const isCancelTransaction =
+    !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
+  const isReplacingPendingAccountOp = !!signAccountOpState?.earlierPendingAccountOp?.isReplacing
+  const earlierPendingAccountOpId = signAccountOpState?.earlierPendingAccountOp?.id
+  // The fees of the transaction that this one speeds up, or replaces while in replace mode
+  const replacedFees = useMemo(() => {
+    if (speedUpMeta?.enabled && speedUpMeta.replacedFees) return speedUpMeta.replacedFees
+    if (!isReplacingPendingAccountOp) return undefined
 
-    return getMinReplacementFees(speedUpMeta.replacedFees)
-  }, [speedUpMeta])
+    const pendingAccountOp = findPendingAccountOpById(
+      broadcastedButNotConfirmed,
+      earlierPendingAccountOpId
+    )
+    return pendingAccountOp
+      ? getReplacementAccountOp(pendingAccountOp, 'speedUp')?.meta?.speedUp?.replacedFees
+      : undefined
+  }, [
+    broadcastedButNotConfirmed,
+    earlierPendingAccountOpId,
+    isReplacingPendingAccountOp,
+    speedUpMeta
+  ])
+  // A Replace must pay at least as much more as a speed up of the pending transaction would
+  const speedUpMinFees = useMemo(
+    () => (replacedFees ? getMinReplacementFees(replacedFees) : undefined),
+    [replacedFees]
+  )
 
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
@@ -611,12 +592,12 @@ const Estimation = ({
   const selectBackgroundColor =
     isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground
   // The replacement must be paid the same way as the pending transaction it replaces
-  const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled
+  const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled || isReplacingPendingAccountOp
   // Not compared once the speed up is no longer needed, as the new fee won't be paid
-  const speedUpOriginalFeeAmount =
-    speedUpMeta?.enabled && signAccountOpState?.status?.type !== SigningStatus.SpeedUpNotNeeded
-      ? speedUpMeta.replacedFees?.amount
-      : undefined
+  const isFeeComparisonNeeded =
+    isReplacingPendingAccountOp ||
+    (!!speedUpMeta?.enabled && signAccountOpState?.status?.type !== SigningStatus.SpeedUpNotNeeded)
+  const speedUpOriginalFeeAmount = isFeeComparisonNeeded ? replacedFees?.amount : undefined
   const selectedFeeSpeedAmount = feeSpeeds.find(
     (speed) => speed.type === signAccountOpState?.selectedFeeSpeed
   )?.amount
@@ -874,6 +855,7 @@ const Estimation = ({
         selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
         speedUpMinFees={speedUpMinFees}
+        isCancel={isCancelTransaction}
       />
       <View>
         {!isViewOnly && (
@@ -885,6 +867,7 @@ const Estimation = ({
         <BundlerWarning
           signAccountOpState={signAccountOpState}
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+          updateType={updateType}
         />
         {enableErc4337Prompt}
       </View>
@@ -921,7 +904,11 @@ const Estimation = ({
       <View
         dataSet={createGlobalTooltipDataSet({
           id: 'fee-option-select-speed-up-locked',
-          content: t('To speed up, the fee is paid the same way as your original transaction'),
+          content: isReplacingPendingAccountOp
+            ? t('To replace the earlier transaction, the fee is paid the same way as for it')
+            : isCancelTransaction
+              ? t('To cancel, the fee is paid the same way as your original transaction')
+              : t('To speed up, the fee is paid the same way as your original transaction'),
           hidden: !isFeeTokenLockedBySpeedUp
         })}
       >
