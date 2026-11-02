@@ -9,13 +9,10 @@ import {
 } from '@ambire-common/libs/networks/networks'
 import useController from '@common/hooks/useController'
 import validateRequestParams from '@common/modules/action-requests/utils/validateRequestParams'
+import { selectIsTokenPricesEnabled } from '@common/selectors/featureFlags'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 // Initial state
 const NETWORK_INFO_PENDING_FEATURES: NetworkFeature[] = getLoadingFeatures()
-
-const selectIsTokenPricesEnabled = (state: AllControllersMappingType['FeatureFlagsController']) =>
-  state.flags?.tokenPrices !== false
 
 const useAddOrUpdateNetwork = () => {
   const { t } = useTranslation()

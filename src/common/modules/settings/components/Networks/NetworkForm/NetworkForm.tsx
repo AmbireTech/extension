@@ -38,6 +38,7 @@ import {
   getEmptyRequiredNetworkFields,
   handleErrors
 } from '@common/modules/settings/components/Networks/NetworkForm/helpers'
+import { selectIsTokenPricesEnabled } from '@common/selectors/featureFlags'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -45,7 +46,6 @@ import { setStringAsync } from '@common/utils/clipboard'
 
 import getStyles from './styles'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type RpcSelectorItemType = {
   index: number
   url: string
@@ -182,9 +182,6 @@ const COLLAPSED_RPC_URLS_COUNT = 4
 // While the form is checking an RPC URL itself there is no controller info to render yet,
 // and `initial` would show the "?" rows instead of spinners.
 const RPC_CHECK_IN_PROGRESS_FEATURES: NetworkFeature[] = getLoadingFeatures()
-
-const selectIsTokenPricesEnabled = (state: AllControllersMappingType['FeatureFlagsController']) =>
-  state.flags?.tokenPrices !== false
 
 /**
  * Reads the chain id the RPC endpoint reports. Throws when the endpoint is unreachable
