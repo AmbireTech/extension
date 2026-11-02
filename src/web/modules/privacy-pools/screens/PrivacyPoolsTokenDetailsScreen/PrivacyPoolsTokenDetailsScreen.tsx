@@ -24,6 +24,9 @@ import TokenData from '@common/modules/token-details/components/TokenData'
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { privateValue } from '@common/utils/ui'
+import PrivacyPoolsPoolStats, {
+  shouldShowPrivacyPoolsPoolStats
+} from '@web/modules/privacy-pools/components/PrivacyPoolsPoolStats'
 import PrivacyPoolsRagequitSheet from '@web/modules/privacy-pools/components/PrivacyPoolsRagequitSheet'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 
@@ -33,11 +36,13 @@ const selectSelectedType = (state: AllControllersMappingType['SelectedAccountCon
   state.selectedType
 const selectIsPrivacyModeEnabled = (state: AllControllersMappingType['WalletStateController']) =>
   state.isPrivacyModeEnabled
+const selectPoolStats = (state: AllControllersMappingType['PrivacyPoolsController']) =>
+  state.poolStats
 
 /**
- * A Privacy Pools token's details, laid out like the regular token details: for now only the
- * balance and the network, so nothing is looked up for this account. The token is in the URL
- * (`?chainId=&address=`), like Send.
+ * A Privacy Pools token's details, laid out like the regular token details: the balance, and only
+ * what is the same for everyone holding the token (the network and the numbers of its pool), so
+ * nothing is looked up for this account. The token is in the URL (`?chainId=&address=`), like Send.
  *
  * Send moves what is verified, privately. Rage quit takes back a deposit still being verified,
  * publicly, to the account it came from - see `PrivacyPoolsRagequitSheet`.
@@ -53,6 +58,7 @@ const PrivacyPoolsTokenDetailsScreen = () => {
     'WalletStateController',
     selectIsPrivacyModeEnabled
   )
+  const { state: poolStats } = useController('PrivacyPoolsController', selectPoolStats)
   const { balances, balancesState, getTokenPrice } = usePrivacyPools()
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
   // Reserves as much scroll space as the floating footer takes, as on the regular token details
@@ -78,6 +84,10 @@ const PrivacyPoolsTokenDetailsScreen = () => {
   useEffect(() => {
     if (shouldLeave) navigate(ROUTES.dashboard)
   }, [navigate, shouldLeave])
+
+  const chainPoolStats = poolStats?.[chainId]
+  // Read here, as `TokenData` spaces its last row by whether it is given anything to show under it
+  const shouldShowPoolStats = shouldShowPrivacyPoolsPoolStats(chainPoolStats, tokenAddress)
 
   const price = balance ? getTokenPrice(balance.chainId, balance.tokenAddress) : null
 
@@ -172,8 +182,17 @@ const PrivacyPoolsTokenDetailsScreen = () => {
           change24h={formatted.change24h}
           change24hFormatted={formatted.change24hFormatted}
         />
-        {/* Only the network for now; what else to show here (e.g. about the pool) is to come */}
-        <TokenData token={token} hideContractAddress />
+        <TokenData token={token} hideContractAddress>
+          {shouldShowPoolStats && (
+            <PrivacyPoolsPoolStats
+              chainPoolStats={chainPoolStats}
+              tokenAddress={balance.tokenAddress}
+              symbol={balance.symbol}
+              decimals={balance.decimals}
+              price={price}
+            />
+          )}
+        </TokenData>
       </ScrollableWrapper>
       <FooterGlassView
         size="sm"

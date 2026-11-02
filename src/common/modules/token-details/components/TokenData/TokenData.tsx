@@ -1,4 +1,4 @@
-import { FC, memo, useMemo } from 'react'
+import { FC, memo, ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -27,7 +27,9 @@ import type { NetworksController } from '@ambire-common/controllers/networks/net
 const selectNetworks = (state: NetworksController) => state.networks
 type Props = {
   token: TokenResult
-  /** Shows only the network, e.g. for a Privacy Pools token, whose details are still to come. */
+  /** More rows, shown in the same card after the token's own. */
+  children?: ReactNode
+  /** Hides the contract address, e.g. for a Privacy Pools token, whose About is about its pool. */
   hideContractAddress?: boolean
 }
 
@@ -107,7 +109,7 @@ const Row = memo(
   }
 )
 
-const TokenData: FC<Props> = ({ token, hideContractAddress }) => {
+const TokenData: FC<Props> = ({ token, hideContractAddress, children }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [bindWebsiteAnim, websiteAnimStyle] = useCustomHover({
@@ -168,10 +170,11 @@ const TokenData: FC<Props> = ({ token, hideContractAddress }) => {
           <Row
             key={row.id || row.label}
             {...row}
-            isLast={index === rows.length - 1}
+            isLast={index === rows.length - 1 && !children}
             chainId={token.chainId}
           />
         ))}
+        {children}
       </View>
       {!!website && (
         <AnimatedPressable
