@@ -12,6 +12,7 @@ import SparklesIcon from '@common/assets/svg/SparklesIcon'
 import Banner from '@common/components/Banner'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -23,6 +24,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
 
 import applyOtaUpdate from './applyOtaUpdate'
 
@@ -114,6 +116,29 @@ const DashboardBanner = ({
     )
   }, [isPendingAccountOp, isUpdateAvailable, meta, networks, t, text])
 
+  const openExternalUrl = useCallback(
+    async (url?: string, shouldOpenInAppBrowser?: boolean) => {
+      if (!url) {
+        addToast(t('Could not open the link.'), { type: 'error' })
+        return
+      }
+
+      // Dapp pages open in the mobile in-app browser, where the user can connect the wallet
+      if (isMobile && shouldOpenInAppBrowser) {
+        navigate(ROUTES.dappWebView, { state: { url, showBackButton: true } })
+        return
+      }
+
+      try {
+        await openInTab({ url })
+      } catch (error) {
+        captureException(error, { extra: { url } })
+        addToast(t('Could not open the link.'), { type: 'error' })
+      }
+    },
+    [addToast, navigate, t]
+  )
+
   const handleActionPress = useCallback(
     (action: Action) => {
       switch (action.actionName) {
@@ -177,13 +202,7 @@ const DashboardBanner = ({
           break
 
         case 'open-external-url': {
-          if (action.meta?.url) {
-            window.open(action.meta.url, '_blank')
-          } else {
-            addToast('Could not open block explorer.', {
-              type: 'error'
-            })
-          }
+          void openExternalUrl(action.meta?.url, action.meta?.shouldOpenInAppBrowser)
           break
         }
 
@@ -315,7 +334,7 @@ const DashboardBanner = ({
       emailVaultDispatch,
       mainDispatch,
       navigate,
-      addToast,
+      openExternalUrl,
       visibleUserRequests,
       shouldRenderRequestInPanel,
       transferState,
