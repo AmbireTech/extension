@@ -37,6 +37,7 @@ interface Props extends InputProps {
     prefix: number
     suffix: number
     color: 'errorText'
+    differingFrom?: string
   }
   isRecipientDomainResolving: boolean
   validation: Validation
