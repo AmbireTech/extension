@@ -99,6 +99,7 @@ const NetworkAvailableFeatures = ({
       },
       prices: {
         success: t('Token prices available'),
+        warning: t('Token prices turned off'),
         danger: t('Token prices not available')
       }
     }),

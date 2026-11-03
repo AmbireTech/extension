@@ -89,6 +89,7 @@ export interface AddressSelectProps extends InputProps {
 
 // Marks a Privacy Pools account option - see `setAddressWrapped`
 const PRIVACY_POOLS_OPTION_VALUE_PREFIX = 'privacy-pools-account:'
+const NO_PRIVACY_POOLS_ACCOUNTS: PrivacyPoolsAccountDisplay[] = []
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
   severity: 'error', // Don't let the user submit, just in case there is an error
@@ -380,16 +381,21 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     return results.map((result) => result.item.contact)
   }, [selectableContacts, actualAddress, searchableContacts])
 
+  // Mobile lists every account and contact; web narrows them to what's typed. Typing on mobile
+  // must not rebuild the options, or every row re-renders on each keystroke
+  const privacyPoolsSearch = isMobile ? '' : actualAddress
+  const listedContacts = isMobile ? selectableContacts : filteredContacts
+
   const filteredPrivacyPoolsAccounts = useMemo(
     () =>
       privacyPoolsAccounts && onSelectPrivacyPoolsAccount
         ? filterPrivacyPoolsAccountsBySearch(
             privacyPoolsAccounts,
-            isMobile ? '' : actualAddress,
+            privacyPoolsSearch,
             t('Privacy Pools')
           )
-        : [],
-    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, actualAddress, t]
+        : NO_PRIVACY_POOLS_ACCOUNTS,
+    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, privacyPoolsSearch, t]
   )
 
   // Looked up rather than parsed back from the option value
@@ -446,7 +452,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      (isMobile ? selectableContacts : filteredContacts)
+      listedContacts
         .filter((contact) => contact.isWalletAccount)
         .map((contact, index) => ({
           value: contact.address,
@@ -468,12 +474,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             />
           )
         })),
-    [selectableContacts, filteredContacts, contactAddressMaxLength]
+    [listedContacts, contactAddressMaxLength]
   )
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      (isMobile ? selectableContacts : filteredContacts)
+      listedContacts
         .filter((contact) => !contact.isWalletAccount)
         .map((contact) => ({
           value: contact.address,
@@ -493,7 +499,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             />
           )
         })),
-    [selectableContacts, filteredContacts, contactAddressMaxLength]
+    [listedContacts, contactAddressMaxLength]
   )
 
   const selectedOption = useMemo(
@@ -590,7 +596,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           isRecipientHumanizerKnownTokenOrSmartContract={
             isRecipientHumanizerKnownTokenOrSmartContract
           }
-          isRecipientAddressUnknown={isRecipientAddressUnknown}
+          isRecipientAddressSavable={isRecipientAddressUnknown && !addressPoisoningMatch}
           isRecipientAddressSameAsSender={actualAddress === account?.addr}
           addressValidationMsg={addressValidationMsg}
           domainVerificationMessage={domainVerificationMessage}
@@ -602,6 +608,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       setAddress,
       isRecipientHumanizerKnownTokenOrSmartContract,
       isRecipientAddressUnknown,
+      addressPoisoningMatch,
       actualAddress,
       account,
       addressValidationMsg,
